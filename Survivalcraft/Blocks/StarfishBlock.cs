@@ -1,0 +1,140 @@
+using Engine.Graphics;
+
+namespace Game.Blocks;
+
+public class StarfishBlock : BottomSuckerBlock
+{
+    public new const int Index = 229;
+
+    public static Color[] Colors =
+    [
+        new(100, 40, 20),
+        new(90, 30, 20),
+        new(100, 30, 30),
+        new(80, 20, 10)
+    ];
+
+    public static Vector2[] Offsets =
+    [
+        0.15f * new Vector2(-0.8f, -1f),
+        0.15f * new Vector2(1f, -0.75f),
+        0.15f * new Vector2(-0.65f, 1f),
+        0.15f * new Vector2(0.9f, 0.7f)
+    ];
+
+    public BlockMesh[] BlockMeshes = new BlockMesh[24];
+
+    public BoundingBox[][] CollisionBoxes = new BoundingBox[24][];
+
+    public BlockMesh StandaloneBlockMesh = new();
+
+    public override void Initialize()
+    {
+        var num = 63;
+        var model = ContentManager.Get<Model>("Models/Starfish");
+        var starfishMesh = model.FindMesh("Starfish")!;
+        var boneAbsoluteTransform = BlockMesh.GetBoneAbsoluteTransform(
+            starfishMesh.ParentBone ??
+            throw new InvalidOperationException("Required StarfishMesh.ParentBone is null")
+        );
+        var bottomMesh = model.FindMesh("Bottom")!;
+        var boneAbsoluteTransform2 = BlockMesh.GetBoneAbsoluteTransform(
+            bottomMesh.ParentBone ??
+            throw new InvalidOperationException("Required BottomMesh.ParentBone is null")
+        );
+        for (var i = 0; i < 6; i++)
+        for (var j = 0; j < 4; j++)
+        {
+            var zero = Vector2.Zero;
+            if (i < 4)
+            {
+                zero.Y = i * (float)Math.PI / 2f;
+            }
+            else
+            {
+                zero.X = i == 4 ? -(float)Math.PI / 2f : (float)Math.PI / 2f;
+            }
+
+            var m = Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateRotationZ(0.3f + 2f * j) *
+                    Matrix.CreateTranslation(Offsets[j].X, Offsets[j].Y, -0.49f) * Matrix.CreateRotationX(zero.X) *
+                    Matrix.CreateRotationY(zero.Y) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+            var num2 = 4 * i + j;
+            BlockMeshes[num2] = new BlockMesh();
+            BlockMeshes[num2].AppendModelMeshPart(starfishMesh.MeshParts[0], boneAbsoluteTransform * m,
+                false, false, false, false, Color.White);
+            BlockMeshes[num2]
+                .TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
+            CollisionBoxes[num2] = [BlockMeshes[num2].CalculateBoundingBox()];
+        }
+
+        StandaloneBlockMesh = new BlockMesh();
+        StandaloneBlockMesh.AppendModelMeshPart(starfishMesh.MeshParts[0],
+            boneAbsoluteTransform * Matrix.CreateTranslation(0f, -0.1f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.AppendModelMeshPart(bottomMesh.MeshParts[0],
+            boneAbsoluteTransform2 * Matrix.CreateTranslation(0f, -0.1f, 0f), false, false, false, false, Color.White);
+        StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
+        base.Initialize();
+    }
+
+    public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
+    {
+        var data = Terrain.ExtractData(value);
+        var face = GetFace(data);
+        var subvariant = GetSubvariant(data);
+        return CollisionBoxes[4 * face + subvariant];
+    }
+
+    public override void GenerateTerrainVertices(
+        BlockGeometryGenerator generator,
+        TerrainGeometry geometry,
+        int value,
+        int x,
+        int y,
+        int z
+    )
+    {
+        var data = Terrain.ExtractData(value);
+        var face = GetFace(data);
+        var subvariant = GetSubvariant(data);
+        var color = Colors[subvariant];
+        generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[4 * face + subvariant], color, null,
+            geometry.SubsetOpaque);
+        base.GenerateTerrainVertices(generator, geometry, value, x, y, z);
+    }
+
+    public override void DrawBlock(
+        PrimitivesRenderer3D primitivesRenderer,
+        int value,
+        Color color,
+        float size,
+        ref Matrix matrix,
+        DrawBlockEnvironmentData environmentData
+    )
+    {
+        BlocksManager.DrawMeshBlock(
+            primitivesRenderer,
+            StandaloneBlockMesh,
+            color * Colors[0],
+            3f * size,
+            ref matrix,
+            environmentData
+        );
+    }
+
+    public override BlockDebrisParticleSystem CreateDebrisParticleSystem(
+        SubsystemTerrain subsystemTerrain,
+        Vector3 position,
+        int value,
+        float strength
+    )
+    {
+        return new BlockDebrisParticleSystem(
+            subsystemTerrain,
+            position,
+            0.75f * strength,
+            DestructionDebrisScale,
+            new Color(64, 64, 64),
+            TextureSlot
+        );
+    }
+}

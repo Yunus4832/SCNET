@@ -1,0 +1,12 @@
+<Project>
+    <PropertyGroup>
+        <!-- 项目版本号 -->
+        <ScNetworkVersion>0.0.0.1</ScNetworkVersion>
+        <!-- 全局的 TargetFramewor -->
+        <GlobalTargetFramework>net10.0</GlobalTargetFramework>
+        <!-- 安卓项目的 TargetFramework -->
+        <AndroidTargetFramework>net10.0-android36.0</AndroidTargetFramework>
+        <!--安卓最低的版本支持 安卓 6 -->
+        <MinAndroidApiVersion>23</MinAndroidApiVersion>
+    </PropertyGroup>
+</Project>

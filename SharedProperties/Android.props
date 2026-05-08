@@ -1,0 +1,22 @@
+<Project>
+    <!-- 安卓相关配置-->
+    <PropertyGroup>
+        <ApplicationId>com.candy.scnet</ApplicationId>
+        <AndroidKeyStore>true</AndroidKeyStore>
+        <AndroidSigningKeyAlias>survivalcraftnet</AndroidSigningKeyAlias>
+        <AndroidSigningKeyPass>survivalcraftnet</AndroidSigningKeyPass>
+        <AndroidSigningKeyStore>sign.keystore</AndroidSigningKeyStore>
+        <AndroidSigningStorePass>survivalcraftnet</AndroidSigningStorePass>
+        <AndroidDexTool>d8</AndroidDexTool>
+        <AndroidEnableSGenConcurrent>false</AndroidEnableSGenConcurrent>
+        <AndroidPackageFormat>apk</AndroidPackageFormat>
+        <AndroidStripILAfterAOT>true</AndroidStripILAfterAOT>
+        <AndroidUseInterpreter>false</AndroidUseInterpreter>
+        <EnableLLVM>true</EnableLLVM>
+        <RunAOTCompilation>false</RunAOTCompilation>
+        <AndroidLinkMode>None</AndroidLinkMode>
+        <LinkAll>true</LinkAll>
+        <PublishTrimmed>false</PublishTrimmed>
+        <TrimMode>partial</TrimMode>
+    </PropertyGroup>
+</Project>

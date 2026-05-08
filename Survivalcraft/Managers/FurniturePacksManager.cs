@@ -1,0 +1,144 @@
+using System.Xml.Linq;
+using EntitySystem.TemplatesDatabase;
+
+namespace Game.Managers;
+
+public static class FurniturePacksManager
+{
+    private static readonly List<string> _furniturePackNames = [];
+
+    public static ReadOnlyList<string> ReadOnlyFurniturePackNames => new(_furniturePackNames);
+
+    public static event Action<string>? FurniturePackDeleted;
+
+    public static void Initialize()
+    {
+        Storage.CreateDirectory(ModsManager.FurniturePacksDirectoryName);
+    }
+
+    public static string GetFileName(string name)
+    {
+        return Storage.CombinePaths(ModsManager.FurniturePacksDirectoryName, name);
+    }
+
+    public static string GetDisplayName(string name)
+    {
+        return Storage.GetFileNameWithoutExtension(name);
+    }
+
+    public static DateTime GetCreationDate(string name)
+    {
+        try
+        {
+            return Storage.GetFileLastWriteTime(GetFileName(name));
+        }
+        catch
+        {
+            return new DateTime(2000, 1, 1);
+        }
+    }
+
+    public static string ImportFurniturePack(string name, Stream stream)
+    {
+        ValidateFurniturePack(stream);
+        stream.Position = 0L;
+        var fileNameWithoutExtension = Storage.GetFileNameWithoutExtension(name);
+        name = fileNameWithoutExtension + ".scfpack";
+        var fileName = GetFileName(name);
+        var num = 0;
+        while (Storage.FileExists(fileName))
+        {
+            num++;
+            if (num > 9)
+            {
+                throw new InvalidOperationException("Duplicate name. Delete existing content with conflicting names.");
+            }
+
+            name = $"{fileNameWithoutExtension} ({num}).scfpack";
+            fileName = GetFileName(name);
+        }
+
+        using var destination = Storage.OpenFile(fileName, OpenFileMode.Create);
+        stream.CopyTo(destination);
+        return name;
+    }
+
+    public static void ExportFurniturePack(string name, Stream stream)
+    {
+        using var stream2 = Storage.OpenFile(GetFileName(name), OpenFileMode.Read);
+        stream2.CopyTo(stream);
+    }
+
+    public static string CreateFurniturePack(string name, ICollection<FurnitureDesign?> designs)
+    {
+        var memoryStream = new MemoryStream();
+        using (var zipArchive = ZipArchive.ZipArchive.Create(memoryStream, true))
+        {
+            var valuesDictionary = new ValuesDictionary();
+            SubsystemFurnitureBlockBehavior.SaveFurnitureDesigns(valuesDictionary, designs);
+            var xElement = new XElement("FurnitureDesigns");
+            valuesDictionary.Save(xElement);
+            var memoryStream2 = new MemoryStream();
+            xElement.Save(memoryStream2);
+            memoryStream2.Position = 0L;
+            zipArchive.AddStream("FurnitureDesigns.xml", memoryStream2);
+        }
+
+        memoryStream.Position = 0L;
+        return ImportFurniturePack(name, memoryStream);
+    }
+
+    public static void DeleteFurniturePack(string name)
+    {
+        try
+        {
+            Storage.DeleteFile(GetFileName(name));
+            FurniturePackDeleted?.Invoke(name);
+        }
+        catch (Exception e)
+        {
+            ExceptionManager.ReportExceptionToUser($"Unable to delete furniture pack \"{name}\"", e);
+        }
+    }
+
+    public static void UpdateFurniturePacksList()
+    {
+        _furniturePackNames.Clear();
+        foreach (var item in Storage.ListFileNames(ModsManager.FurniturePacksDirectoryName))
+        {
+            if (Storage.GetExtension(item).ToLower() == ".scfpack")
+            {
+                _furniturePackNames.Add(item);
+            }
+        }
+    }
+
+    public static List<FurnitureDesign> LoadFurniturePack(SubsystemTerrain? subsystemTerrain, string name)
+    {
+        using var stream = Storage.OpenFile(GetFileName(name), OpenFileMode.Read);
+        return LoadFurniturePack(subsystemTerrain, stream);
+    }
+
+    private static void ValidateFurniturePack(Stream stream)
+    {
+        LoadFurniturePack(null, stream);
+    }
+
+    private static List<FurnitureDesign> LoadFurniturePack(SubsystemTerrain? subsystemTerrain, Stream stream)
+    {
+        using var zipArchive = ZipArchive.ZipArchive.Open(stream, true);
+        var list = zipArchive.ReadCentralDir();
+        if (list.Count != 1 || list[0].FilenameInZip != "FurnitureDesigns.xml")
+        {
+            throw new InvalidOperationException("Invalid furniture pack.");
+        }
+
+        var memoryStream = new MemoryStream();
+        zipArchive.ExtractFile(list[0], memoryStream);
+        memoryStream.Position = 0L;
+        var overridesNode = XElement.Load(memoryStream);
+        var valuesDictionary = new ValuesDictionary();
+        valuesDictionary.ApplyOverrides(overridesNode);
+        return SubsystemFurnitureBlockBehavior.LoadFurnitureDesigns(subsystemTerrain, valuesDictionary);
+    }
+}

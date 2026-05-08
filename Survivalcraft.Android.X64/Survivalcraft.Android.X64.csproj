@@ -1,0 +1,67 @@
+<Project Sdk="Microsoft.NET.Sdk" InitialTargets="PackResource">
+    <PropertyGroup>
+        <AssemblyName>SurvivalcraftStarter</AssemblyName>
+        <Platforms>AnyCPU</Platforms>
+        <TargetFramework>$(AndroidTargetFramework)</TargetFramework>
+        <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
+        <RuntimeIdentifier>android-x64</RuntimeIdentifier>
+        <OutputType>Exe</OutputType>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <DefineConstants>ANDROID</DefineConstants>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+
+    <!-- 安卓相关配置 -->
+    <Import Project="..\SharedProperties\Android.props"/>
+
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <WarningsAsErrors>Nullable</WarningsAsErrors>
+        <NoWarn>$(NoWarn);CA1416;CA1422</NoWarn>
+    </PropertyGroup>
+
+    <!--声明需要打包资源-->
+    <PropertyGroup>
+        <UsePackResourceTarget>true</UsePackResourceTarget>
+    </PropertyGroup>
+
+    <!-- Debug 配置 -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    </PropertyGroup>
+
+    <!-- Release 配置 -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <DebugType>none</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>$(ProjectDir)..\Publish\Android\Content-X64</OutputPath>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+        <OutputApkName>SCNET_X64-$(Version).apk</OutputApkName>
+        <UseRenameApkTarget>true</UseRenameApkTarget>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Survivalcraft.Android\**\*.cs" Exclude="..\Survivalcraft.Android\obj\**\*.cs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AndroidAsset Include="Content.scpak" Link="Assets\Content.scpak"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AndroidResource Include="..\Survivalcraft.Android\Resources\values\colors.xml" Link="Resources\values\colors.xml"/>
+        <AndroidResource Include="..\Survivalcraft.Android\Resources\values\styles.xml" Link="Resources\values\styles.xml"/>
+        <AndroidResource Include="..\Survivalcraft.Android\Resources\mipmap\icon.png" Link="Resources\mipmap\icon.png"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- 这里的 TargetFramework, RuntimeIdendifier 必须硬编码，MSBuid 的限制，请勿修改 -->
+        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj" SetTargetFramework="TargetFramework=net10.0-android36.0">
+            <AdditionalProperties>RuntimeIdentifier=android-x64</AdditionalProperties>
+        </ProjectReference>
+    </ItemGroup>
+
+    <Import Project="..\SharedProperties\GlobalUsing.props"/>
+
+</Project>

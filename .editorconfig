@@ -1,0 +1,39 @@
+root = true
+
+[*]
+end_of_line = crlf # 行尾 DOS 格式 CRLF
+charset = utf-8 # 文件编码字符集为 UTF-8
+trim_trailing_whitespace = true # 删除文件末尾空格
+insert_final_newline = true # 末尾插入新行
+indent_style = space # 以空格代替 tab
+indent_size = 4 # 代替 tab 的空格数量
+
+[*.cs]
+# 代码风格
+csharp_prefer_braces = true:error
+csharp_style_var_for_built_in_types = true:warning
+csharp_style_var_when_type_is_apparent = true:warning
+csharp_style_var_elsewhere = true:warning
+csharp_style_namespace_declarations = false:error
+
+# Using 规则
+dotnet_sort_system_directives_first = true
+dotnet_separate_import_directive_groups = true
+
+# === 命名规范 ===
+# 私有字段：强制使用 _camelCase（小写开头 + 下划线前缀）
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.private_field_style.capitalization = camel_case
+dotnet_naming_style.private_field_style.required_prefix = _
+dotnet_naming_rule.private_fields_should_be_prefixed_with_underscore.severity = error
+dotnet_naming_rule.private_fields_should_be_prefixed_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_prefixed_with_underscore.style = private_field_style
+
+# ---- 5. protected / internal 字段：强制 camelCase（无下划线）----
+dotnet_naming_symbols.nonprivate_fields_camel.applicable_kinds = field
+dotnet_naming_symbols.nonprivate_fields_camel.applicable_accessibilities = protected, internal, protected_internal
+dotnet_naming_style.camel_case_no_underscore.capitalization = camel_case
+dotnet_naming_rule.nonprivate_fields_should_be_camel_case.severity = error
+dotnet_naming_rule.nonprivate_fields_should_be_camel_case.symbols = nonprivate_fields_camel
+dotnet_naming_rule.nonprivate_fields_should_be_camel_case.style = camel_case_no_underscore

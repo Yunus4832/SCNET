@@ -1,0 +1,58 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Survivalcraft</AssemblyName>
+        <Version>$(ScNetworkVersion)</Version>
+        <Platforms>AnyCPU</Platforms>
+        <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>Game</RootNamespace>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
+        <DefineConstants>DESKTOP</DefineConstants>
+        <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
+    </PropertyGroup>
+
+    <PropertyGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
+        <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
+        <RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
+        <DefineConstants>ANDROID</DefineConstants>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <Nullable>enable</Nullable>
+        <WarningsAsErrors>Nullable</WarningsAsErrors>
+        <NoWarn>$(NoWarn);CA1416;CA1422</NoWarn>
+    </PropertyGroup>
+
+    <!-- Debug 配置 -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    </PropertyGroup>
+
+    <!-- Release 配置 -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <DebugType>none</DebugType>
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
+        <PackageReference Include="Clipboard.CSharp" Version="1.0.1"/>
+        <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
+        <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Engine\Engine.csproj"/>
+        <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
+    </ItemGroup>
+
+    <Import Project="..\SharedProperties\GlobalUsing.props"/>
+
+</Project>

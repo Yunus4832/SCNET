@@ -1,0 +1,3 @@
+<ShortInventoryWidget xmlns="runtime-namespace:Game.Widgets">
+    <GridPanelWidget Name="InventoryGrid"/>
+</ShortInventoryWidget>

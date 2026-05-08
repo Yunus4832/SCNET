@@ -1,0 +1,52 @@
+namespace Game.Blocks;
+
+public class AnalogToDigitalConverterBlock()
+    : RotatableMountedElectricElementBlock("Models/Gates", "AnalogToDigitalConverter", 0.375f)
+{
+    public const int Index = 181;
+
+    public override ElectricElement CreateElectricElement(
+        SubsystemElectricity subsystemElectricity,
+        int value,
+        int x,
+        int y,
+        int z
+    )
+    {
+        return new AnalogToDigitalConverterElectricElement(subsystemElectricity, new CellFace(x, y, z, GetFace(value)));
+    }
+
+    public override ElectricConnectorType? GetConnectorType(
+        SubsystemTerrain terrain,
+        int value,
+        int face,
+        int connectorFace,
+        int x,
+        int y,
+        int z
+    )
+    {
+        var data = Terrain.ExtractData(value);
+        if (GetFace(value) != face)
+        {
+            return null;
+        }
+
+        var connectorDirection =
+            SubsystemElectricity.GetConnectorDirection(GetFace(value), GetRotation(data), connectorFace);
+        if (connectorDirection == ElectricConnectorDirection.In)
+        {
+            return ElectricConnectorType.Input;
+        }
+
+        if (connectorDirection is ElectricConnectorDirection.Bottom or
+            ElectricConnectorDirection.Top or
+            ElectricConnectorDirection.Right or
+            ElectricConnectorDirection.Left)
+        {
+            return ElectricConnectorType.Output;
+        }
+
+        return null;
+    }
+}

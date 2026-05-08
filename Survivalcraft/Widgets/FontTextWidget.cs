@@ -1,0 +1,386 @@
+using Engine.Graphics;
+using Engine.Media;
+
+namespace Game.Widgets;
+
+public class FontTextWidget : Widget
+{
+    private List<string> _lines = [];
+
+    private float? _linesAvailableHeight;
+
+    private float? _linesAvailableWidth;
+
+    private Vector2 _linesSize;
+
+    public override bool IsHitTestVisible { get; set; } = false;
+
+    public Vector2 Size { get; set; }
+
+    public virtual string Text
+    {
+        get;
+        set
+        {
+            if (string.Equals(field, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            field = value;
+        }
+    } = string.Empty;
+
+    public TextAnchor TextAnchor { get; set; }
+
+    public TextOrientation TextOrientation
+    {
+        get;
+        set
+        {
+            if (Equals(value, field))
+            {
+                return;
+            }
+
+            field = value;
+        }
+    }
+
+    public BitmapFont Font
+    {
+        get => LabelWidget.BitmapFont;
+        set
+        {
+            if (Equals(value, LabelWidget.BitmapFont))
+            {
+                return;
+            }
+
+            LabelWidget.BitmapFont = value;
+        }
+    }
+
+    public float FontScale
+    {
+        get;
+        set
+        {
+            if (value.CloseTo(field))
+            {
+                return;
+            }
+
+            field = value;
+        }
+    }
+
+    public Vector2 FontSpacing
+    {
+        get;
+        set
+        {
+            if (value.Equals(field))
+            {
+                return;
+            }
+
+            field = value;
+        }
+    }
+
+    public bool WordWrap
+    {
+        get;
+        set
+        {
+            if (value.Equals(field))
+            {
+                return;
+            }
+
+            field = value;
+        }
+    }
+
+    public bool Ellipsis
+    {
+        get;
+        set
+        {
+            if (value.Equals(field))
+            {
+                return;
+            }
+
+            field = value;
+        }
+    }
+
+    public int MaxLines
+    {
+        get;
+        set
+        {
+            if (value.Equals(field))
+            {
+                return;
+            }
+
+            field = value;
+        }
+    } = int.MaxValue;
+
+    public Color Color { get; set; }
+
+    public bool DropShadow { get; set; }
+
+    public bool TextureLinearFilter { get; set; }
+
+    public FontTextWidget()
+    {
+        FontScale = 1f;
+        Color = Color.White;
+        Font = BitmapFont.DebugFont;
+        TextureLinearFilter = true;
+        Size = new Vector2(-1f);
+    }
+
+    public override void Draw(DrawContext dc)
+    {
+        if (string.IsNullOrEmpty(Text) || Color.A == 0)
+        {
+            return;
+        }
+
+        var samplerState = TextureLinearFilter ? SamplerState.LinearClamp : SamplerState.PointClamp;
+        var fontBatch2D =
+            dc.PrimitivesRenderer2D.FontBatch(Font, 1, DepthStencilState.None, null, null, samplerState);
+        var count = fontBatch2D.TriangleVertices.Count;
+        var num = 0f;
+        if ((TextAnchor & TextAnchor.VerticalCenter) != 0)
+        {
+            var num2 = Font.GlyphHeight * FontScale * Font.Scale + (_lines.Count - 1) *
+                ((Font.GlyphHeight + Font.Spacing.Y) * FontScale * Font.Scale + FontSpacing.Y);
+            num = (ActualSize.Y - num2) / 2f;
+        }
+        else if ((TextAnchor & TextAnchor.Bottom) != 0)
+        {
+            var num3 = Font.GlyphHeight * FontScale * Font.Scale + (_lines.Count - 1) *
+                ((Font.GlyphHeight + Font.Spacing.Y) * FontScale * Font.Scale + FontSpacing.Y);
+            num = ActualSize.Y - num3;
+        }
+
+        var anchor = TextAnchor & ~(TextAnchor.VerticalCenter | TextAnchor.Bottom);
+        var color = Color * GlobalColorTransform;
+        var num4 = CalculateLineHeight();
+        foreach (var line in _lines)
+        {
+            var x = 0f;
+            if ((TextAnchor & TextAnchor.HorizontalCenter) != 0)
+            {
+                x = ActualSize.X / 2f;
+            }
+            else if ((TextAnchor & TextAnchor.Right) != 0)
+            {
+                x = ActualSize.X;
+            }
+
+            var flag = true;
+            var vector = Vector2.Zero;
+            var angle = 0f;
+            if (TextOrientation == TextOrientation.Horizontal)
+            {
+                vector = new Vector2(x, num);
+                angle = 0f;
+                _ = Display.ScissorRectangle;
+                flag = true;
+            }
+            else if (TextOrientation == TextOrientation.VerticalLeft)
+            {
+                vector = new Vector2(x, ActualSize.Y + num);
+                angle = MathUtils.DegToRad(-90f);
+                flag = true;
+            }
+
+            if (flag)
+            {
+                if (DropShadow)
+                {
+                    fontBatch2D.QueueText(line, vector + 1f * new Vector2(FontScale), 0f,
+                        new Color((byte)0, (byte)0, (byte)0, color.A), anchor, new Vector2(FontScale), FontSpacing,
+                        angle);
+                }
+
+                fontBatch2D.QueueText(line, vector, 0f, color, anchor, new Vector2(FontScale), FontSpacing, angle);
+            }
+
+            num += num4;
+        }
+
+        fontBatch2D.TransformTriangles(GlobalTransform, count);
+    }
+
+    protected override void MeasureOverride(Vector2 parentAvailableSize)
+    {
+        IsDrawRequired = !string.IsNullOrEmpty(Text) && Color.A != 0;
+        if (TextOrientation == TextOrientation.Horizontal)
+        {
+            UpdateLines(parentAvailableSize.X, parentAvailableSize.Y);
+            DesiredSize = new Vector2(Size.X < 0f ? _linesSize.X : Size.X,
+                Size.Y < 0f ? _linesSize.Y : Size.Y);
+        }
+        else if (TextOrientation == TextOrientation.VerticalLeft)
+        {
+            UpdateLines(parentAvailableSize.Y, parentAvailableSize.X);
+            DesiredSize = new Vector2(Size.X < 0f ? _linesSize.Y : Size.X,
+                Size.Y < 0f ? _linesSize.X : Size.Y);
+        }
+    }
+
+    public float CalculateLineHeight()
+    {
+        return (Font.GlyphHeight + Font.Spacing.Y + FontSpacing.Y) * FontScale * Font.Scale;
+    }
+
+    public void UpdateLines(float availableWidth, float availableHeight)
+    {
+        if (_linesAvailableHeight.HasValue && _linesAvailableHeight.Value.CloseTo(availableHeight) &&
+            _linesAvailableWidth.HasValue)
+        {
+            var num = MathUtils.Min(_linesSize.X, _linesAvailableWidth.Value) - 0.1f;
+            var num2 = MathUtils.Max(_linesSize.X, _linesAvailableWidth.Value) + 0.1f;
+            if (availableWidth >= num && availableWidth <= num2)
+            {
+                return;
+            }
+        }
+
+        availableWidth += 0.1f;
+        _lines.Clear();
+        var array = Text.Split(["\n"], StringSplitOptions.None);
+        const string text = "...";
+        var x = Font.MeasureText(text, new Vector2(FontScale), FontSpacing).X;
+        if (WordWrap)
+        {
+            var num3 = (int)MathUtils.Min(MathUtils.Floor(availableHeight / CalculateLineHeight()), MaxLines);
+            foreach (var item in array)
+            {
+                var text2 = item.TrimEnd();
+                if (text2.Length == 0)
+                {
+                    _lines.Add(string.Empty);
+                    continue;
+                }
+
+                while (text2.Length > 0)
+                {
+                    bool flag;
+                    int num4;
+                    if (Ellipsis && _lines.Count + 1 >= num3)
+                    {
+                        num4 = Font.FitText(MathUtils.Max(availableWidth - x, 0f), text2, 0, text2.Length, FontScale,
+                            FontSpacing.X);
+                        flag = true;
+                    }
+                    else
+                    {
+                        num4 = Font.FitText(availableWidth, text2, 0, text2.Length, FontScale, FontSpacing.X);
+                        num4 = MathUtils.Max(num4, 1);
+                        flag = false;
+                        if (num4 < text2.Length)
+                        {
+                            var num5 = num4;
+                            var num6 = num5 - 2;
+                            while (num6 >= 0 && !char.IsWhiteSpace(text2[num6]) &&
+                                   !char.IsPunctuation(text2[num6]))
+                            {
+                                num6--;
+                            }
+
+                            if (num6 < 0)
+                            {
+                                num6 = num5 - 1;
+                            }
+
+                            num4 = num6 + 1;
+                        }
+                    }
+
+                    string text3;
+                    if (num4 == text2.Length)
+                    {
+                        text3 = text2;
+                        text2 = string.Empty;
+                    }
+                    else
+                    {
+                        text3 = text2[..num4].TrimEnd();
+                        if (flag)
+                        {
+                            text3 += text;
+                        }
+
+                        text2 = text2.Substring(num4, text2.Length - num4).TrimStart();
+                    }
+
+                    _lines.Add(text3);
+                    if (!flag)
+                    {
+                        continue;
+                    }
+
+                    if (_lines.Count > MaxLines)
+                    {
+                        _lines = _lines.Take(MaxLines).ToList();
+                    }
+                }
+            }
+        }
+        else if (Ellipsis)
+        {
+            foreach (var item in array)
+            {
+                var text4 = item.TrimEnd();
+                var num7 = Font.FitText(MathUtils.Max(availableWidth - x, 0f), text4, 0, text4.Length, FontScale,
+                    FontSpacing.X);
+                if (num7 < text4.Length)
+                {
+                    _lines.Add(text4[..num7].TrimEnd() + text);
+                }
+                else
+                {
+                    _lines.Add(text4);
+                }
+            }
+        }
+        else
+        {
+            _lines.AddRange(array);
+        }
+
+        if (_lines.Count > MaxLines)
+        {
+            _lines = _lines.Take(MaxLines).ToList();
+        }
+
+        var zero = Vector2.Zero;
+        for (var k = 0; k < _lines.Count; k++)
+        {
+            var vector = Font.MeasureText(_lines[k], new Vector2(FontScale), FontSpacing);
+            zero.X = MathUtils.Max(zero.X, vector.X);
+            if (k < _lines.Count - 1)
+            {
+                zero.Y += (Font.GlyphHeight + Font.Spacing.Y + FontSpacing.Y) * FontScale * Font.Scale;
+            }
+            else
+            {
+                zero.Y += Font.GlyphHeight * FontScale * Font.Scale;
+            }
+        }
+
+        _linesSize = zero;
+        _linesAvailableWidth = availableWidth;
+        _linesAvailableHeight = availableHeight;
+    }
+}

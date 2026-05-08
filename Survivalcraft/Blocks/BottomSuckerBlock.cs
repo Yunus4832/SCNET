@@ -1,0 +1,57 @@
+namespace Game.Blocks;
+
+public abstract class BottomSuckerBlock : WaterBlock
+{
+    public override BlockPlacementData GetPlacementValue(
+        SubsystemTerrain subsystemTerrain,
+        ComponentMiner componentMiner,
+        int value,
+        TerrainRaycastResult raycastResult
+    )
+    {
+        var point = raycastResult.CellFace.Point + CellFace.FaceToPoint3(raycastResult.CellFace.Face);
+        var cellValue = subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
+        var num = Terrain.ExtractContents(cellValue);
+        var data = Terrain.ExtractData(cellValue);
+        var obj = BlocksManager.Blocks[num];
+        var face = Time.FrameIndex % 4;
+        BlockPlacementData result;
+        if (obj is WaterBlock)
+        {
+            result = default;
+            result.CellFace = raycastResult.CellFace;
+            result.Value = Terrain.MakeBlockValue(BlockIndex, 0,
+                SetSubvariant(SetFace(data, raycastResult.CellFace.Face), face));
+            return result;
+        }
+
+        result = default;
+        return result;
+    }
+
+    public static int GetFace(int data)
+    {
+        return (data >> 8) & 7;
+    }
+
+    public static int SetFace(int data, int face)
+    {
+        return (data & -1793) | ((face & 7) << 8);
+    }
+
+    public static int GetSubvariant(int data)
+    {
+        return (data >> 11) & 3;
+    }
+
+    public static int SetSubvariant(int data, int face)
+    {
+        return (data & -6145) | ((face & 3) << 11);
+    }
+
+    public override bool IsMovableByPiston(int value, int pistonFace, int y, out bool isEnd)
+    {
+        isEnd = false;
+        return false;
+    }
+}

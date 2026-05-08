@@ -1,0 +1,4 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets">
+    <LabelWidget Name="Label" FontScale="1" HorizontalAlignment="Center" VerticalAlignment="Far"
+                 TextAnchor="HorizontalCenter, Bottom" Margin="0, 0" DropShadow="true" WordWrap="true"/>
+</CanvasWidget>

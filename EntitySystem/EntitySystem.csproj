@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>EngineSystem</AssemblyName>
+        <TargetFrameworks>$(GlobalTargetFramework)</TargetFrameworks>
+        <Platforms>AnyCPU</Platforms>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+        <Nullable>enable</Nullable>
+        <WarningsAsErrors>Nullable</WarningsAsErrors>
+    </PropertyGroup>
+
+    <!-- Debug 配置 -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    </PropertyGroup>
+
+    <!-- Release 配置 -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <DebugType>none</DebugType>
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="MessagePack" Version="3.1.3"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="System.Reflection"/>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
+      <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj" />
+    </ItemGroup>
+
+</Project>

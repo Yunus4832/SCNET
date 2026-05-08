@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <AssemblyName>Server</AssemblyName>
+        <Version>$(ScNetworkVersion)</Version>
+        <TargetFrameworks>$(GlobalTargetFramework)</TargetFrameworks>
+        <Platforms>AnyCPU</Platforms>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>Game</RootNamespace>
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <LangVersion>latest</LangVersion>
+        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+        <Nullable>enable</Nullable>
+        <WarningsAsErrors>Nullable</WarningsAsErrors>
+    </PropertyGroup>
+
+    <!-- Debug 配置 -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    </PropertyGroup>
+
+    <!-- Release 配置 -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <DebugType>none</DebugType>
+        <Optimize>true</Optimize>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Using Include="System.Reflection"/>
+        <Using Include="System.Diagnostics"/>
+        <Using Include="Engine.Core"/>
+        <Using Include="EntitySystem.Core"/>
+        <Using Include="Game.Components"/>
+        <Using Include="Game.Subsystems"/>
+        <Using Include="Game.Utils"/>
+        <Using Include="Game.Extensions"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
+    </ItemGroup>
+
+</Project>

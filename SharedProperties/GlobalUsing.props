@@ -1,0 +1,28 @@
+<Project>
+    <!-- 全局导入的名称空间 -->
+    <ItemGroup>
+        <Using Include="System.Reflection"/>
+        <Using Include="System.Diagnostics"/>
+        <Using Include="Engine.Core"/>
+        <Using Include="Engine.Core.Random" Alias="Random"/>
+        <Using Include="Engine.FileStorage"/>
+        <Using Include="Engine.Windowing"/>
+        <Using Include="Game.Utils"/>
+        <Using Include="Game.Blocks"/>
+        <Using Include="Game.Terrains"/>
+        <Using Include="Game.ElectricElements"/>
+        <Using Include="Game.ParticleSystems"/>
+        <Using Include="Game.Subsystems"/>
+        <Using Include="Game.Extensions"/>
+        <Using Include="Game.Cameras"/>
+        <Using Include="Game.Widgets"/>
+        <Using Include="Game.Screens"/>
+        <Using Include="Game.Components"/>
+        <Using Include="Game.Managers"/>
+        <Using Include="Game.Dialogs"/>
+        <Using Include="Game.ModManager"/>
+        <Using Include="Game.ModManager.Changes"/>
+        <Using Include="Game.Managers.GameManager" Alias="GameManager"/>
+        <Using Include="Game.Dialogs.AlertDialog" Alias="AlertDialog"/>
+    </ItemGroup>
+</Project>

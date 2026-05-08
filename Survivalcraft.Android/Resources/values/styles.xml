@@ -1,0 +1,8 @@
+<resources>
+    <style name="MainTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <!--by把红色赋予黑海，解决异形屏黑边问题-->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+    </style>
+</resources>
