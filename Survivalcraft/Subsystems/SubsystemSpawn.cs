@@ -1,9 +1,13 @@
 using System.Globalization;
 using System.Text;
+
 using Engine.Serialization;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
+
+using Game.Network;
+using Game.Network.Enums;
 
 namespace Game.Subsystems;
 

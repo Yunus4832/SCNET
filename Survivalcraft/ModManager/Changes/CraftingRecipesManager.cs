@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Xml.Linq;
+
 using EntitySystem.XmlUtilities;
 
 namespace Game.ModManager.Changes;
@@ -25,16 +26,13 @@ public static class CraftingRecipesManager
         }
 
         _recipes.Clear();
-        XElement? source1 = null;
+        XElement source1 = null!;
         foreach (var modEntity in ModsManager.ModList)
         {
-            if (source1 != null)
-            {
-                modEntity.LoadCr(ref source1);
-            }
+            modEntity.LoadCr(ref source1);
         }
 
-        if (source1 != null)
+        if ((XElement?)source1 != null)
         {
             var source2 = source1.Descendants("Recipe");
             foreach (var item in source2)
@@ -86,7 +84,7 @@ public static class CraftingRecipesManager
                         throw new InvalidOperationException($"Block with craftingId \"{item2.Value}\" not found.");
                     }
 
-                    if (data.HasValue && (data.Value < 0 || data.Value > 262143))
+                    if (data is < 0 or > 262143)
                     {
                         throw new InvalidOperationException(
                             $"Data in recipe ingredient \"{item2.Value}\" must be between 0 and 0x3FFFF.");
@@ -95,7 +93,7 @@ public static class CraftingRecipesManager
                     dictionary.Add(item2.Name.LocalName[0], item2.Value);
                 }
 
-                var array = item.Value.Trim().Split(new[] { "\n" }, StringSplitOptions.None);
+                var array = item.Value.Trim().Split(["\n"], StringSplitOptions.None);
                 for (var i = 0; i < array.Length; i++)
                 {
                     var num = array[i].IndexOf('"');
@@ -109,11 +107,13 @@ public static class CraftingRecipesManager
                     for (var j = 0; j < text.Length; j++)
                     {
                         var c = text[j];
-                        if (char.IsLower(c))
+                        if (!char.IsLower(c))
                         {
-                            var text2 = dictionary[c];
-                            craftingRecipe.Ingredients[j + i * 3] = text2;
+                            continue;
                         }
+
+                        var text2 = dictionary[c];
+                        craftingRecipe.Ingredients[j + i * 3] = text2;
                     }
                 }
 
@@ -157,8 +157,12 @@ public static class CraftingRecipesManager
         var blocks = BlocksManager.Blocks;
         foreach (var block in blocks)
         {
-            var adHocCraftingRecipe =
-                block.GetAdHocCraftingRecipe(terrain, ingredients, heatLevel, componentPlayer);
+            var adHocCraftingRecipe = block.GetAdHocCraftingRecipe(
+                terrain,
+                ingredients,
+                heatLevel,
+                componentPlayer
+            );
             if (adHocCraftingRecipe == null || !MatchRecipe(adHocCraftingRecipe.Ingredients, ingredients))
             {
                 continue;

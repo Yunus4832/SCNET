@@ -1,10 +1,14 @@
 using System.Globalization;
 using System.Text;
 using System.Text.RegularExpressions;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.NetSimulate;
+using Game.Network.Packages;
 
 namespace Game;
 
@@ -61,9 +65,9 @@ public partial class PlayerData : IDisposable
 
     public Project Project { get; }
 
-    public Client Client => CommonLib.Net.GetClientByGUID(PlayerGUID, true)!;
+    public Client? Client => CommonLib.Net.GetClientByGUID(PlayerGUID, false);
 
-    public byte ClientId => Client.ID;
+    public byte ClientId => Client?.ID ?? 0;
 
     public bool IsMainPlayer { get; private set; }
 
@@ -656,8 +660,10 @@ public partial class PlayerData : IDisposable
         }
 
         ComponentPlayer = componentPlayer;
+#if !SERVER
         GameWidget.ActiveCamera = GameWidget.FindCamera<FppCamera>()!;
         GameWidget.Target = componentPlayer;
+#endif
         if (FirstSpawnTime < 0.0)
         {
             FirstSpawnTime = SubsystemGameInfo.TotalElapsedGameTime;
@@ -1044,6 +1050,10 @@ public partial class PlayerData : IDisposable
 
     public void UpdateSpawnDialog(string largeMessage, string smallMessage, float progress, bool resetProgress)
     {
+#if SERVER
+        return;
+#endif
+
         if (resetProgress)
         {
             _progress = 0f;
@@ -1064,6 +1074,10 @@ public partial class PlayerData : IDisposable
 
     public void HideSpawnDialog()
     {
+#if SERVER
+        return;
+#endif
+
         if (_spawnDialog != null)
         {
             DialogsManager.HideDialog(_spawnDialog);

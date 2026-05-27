@@ -1,8 +1,11 @@
 #if ANDROID
 using System.Collections.Concurrent;
+
 using Android.Views;
 #endif
+
 using Engine.Core;
+
 using Window = Engine.Windowing.Window;
 
 namespace Engine.Input;

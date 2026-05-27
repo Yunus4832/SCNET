@@ -2,6 +2,10 @@
 
 这是一个 生存战争（Survivalcraft）联机版仓库。
 
+## 法律与版权声明
+
+请先阅读免责声明：[DISCLAIMER.md](./DISCLAIMER.md)。
+
 ## 环境要求
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/zh-cn/download/dotnet/10.0)
@@ -53,4 +57,3 @@ dotnet test Survivalcraft.Test/
 2. 基于主分支创建功能分支
 3. 提交代码并推送
 4. 在 Gitee 上创建 Pull Request
-

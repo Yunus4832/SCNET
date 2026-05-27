@@ -1,6 +1,8 @@
 using System.Diagnostics;
+
 using Engine.Core;
 using Engine.Windowing;
+
 using Silk.NET.OpenGLES;
 
 namespace Engine.Graphics;

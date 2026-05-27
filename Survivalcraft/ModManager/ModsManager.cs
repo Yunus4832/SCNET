@@ -3,9 +3,12 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Xml.Linq;
+
 using Engine.Graphics;
 using Engine.Media;
+
 using EntitySystem.XmlUtilities;
+
 using static Game.Screens.NetPlayScreen;
 
 namespace Game.ModManager;
@@ -189,24 +192,6 @@ public static class ModsManager
         }
     }
 
-#if DEBUG
-    public static void StreamCompress(Stream input, MemoryStream data)
-    {
-        var dat = data.ToArray();
-        using var stream = new GZipStream(input, CompressionMode.Compress);
-        stream.Write(dat, 0, dat.Length);
-    }
-
-    public static Stream StreamDecompress(Stream input)
-    {
-        var outStream = new MemoryStream();
-        using var zipStream = new GZipStream(input, CompressionMode.Decompress);
-        zipStream.CopyTo(outStream);
-        zipStream.Close();
-        outStream.Seek(0, SeekOrigin.Begin);
-        return outStream;
-    }
-#endif
     public static T GetInPakOrStorageFile<T>(string filepath, string suffix = ".txt") where T : class
     {
         return ContentManager.Get<T>(filepath, suffix);
@@ -485,48 +470,6 @@ public static class ModsManager
         // 设置当前流的位置为流的开始
         return bytes;
     }
-
-#if DEBUG
-    /// <summary>
-    /// 将 byte[] 转成 Stream
-    /// </summary>
-    public static Stream BytesToStream(byte[] bytes)
-    {
-        Stream stream = new MemoryStream(bytes);
-        return stream;
-    }
-
-    /// <summary>
-    /// 将 Stream 写入文件
-    /// </summary>
-    public static void StreamToFile(Stream stream, string fileName)
-    {
-        // 把 Stream 转换成 byte[]
-        var bytes = new byte[stream.Length];
-        stream.Seek(0, SeekOrigin.Begin);
-        stream.ReadExactly(bytes, 0, bytes.Length);
-        // 设置当前流的位置为流的开始
-        // 把 byte[] 写入文件
-        var fs = new FileStream(fileName, FileMode.Create);
-        var bw = new BinaryWriter(fs);
-        bw.Write(bytes);
-        bw.Close();
-        fs.Close();
-    }
-
-    /// <summary>
-    /// 从文件读取 Stream
-    /// </summary>
-    public static Stream FileToStream(string fileName)
-    {
-        var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read);
-        var bytes = new byte[fileStream.Length];
-        fileStream.ReadExactly(bytes, 0, bytes.Length);
-        fileStream.Close();
-        Stream stream = new MemoryStream(bytes);
-        return stream;
-    }
-#endif
 
     public static string GetMd5(string input)
     {
@@ -856,63 +799,4 @@ public static class ModsManager
         keepOpenStream.Position = 0L;
         return keepOpenStream;
     }
-
-#if DEBUG
-    public enum SourceType
-    {
-        Positions,
-        Normals,
-        Map,
-        Vertices,
-        Texcoord,
-        Vertex,
-        Normal
-    }
-
-    public static string ObjectsToStr<T>(T[]? arr)
-    {
-        if (arr == null)
-        {
-            return string.Empty;
-        }
-
-        var stringBuilder = new StringBuilder();
-        foreach (var item in arr)
-        {
-            stringBuilder.Append(item + " ");
-        }
-
-        var res = stringBuilder.ToString();
-        return res[..^1];
-    }
-
-    /// <summary>
-    /// 计算三点成面的法向量
-    /// </summary>
-    /// <param name="v1"></param>
-    /// <param name="v2"></param>
-    /// <param name="v3"></param>
-    /// <returns></returns>
-    public static Vector3 Cal_Normal_3D(Vector3 v1, Vector3 v2, Vector3 v3)
-    {
-        var na = (v2.Y - v1.Y) * (v3.Z - v1.Z) - (v2.Z - v1.Z) * (v3.Y - v1.Y);
-        var nb = (v2.Z - v1.Z) * (v3.X - v1.X) - (v2.X - v1.Z) * (v3.Z - v1.Z);
-        var nc = (v2.X - v1.X) * (v3.Y - v1.Y) - (v2.Y - v1.Y) * (v3.X - v1.X);
-        return new Vector3(na, nb, nc);
-    }
-
-    public static void SaveToImage(string name, RenderTarget2D renderTarget2D)
-    {
-        var image = new Image(renderTarget2D.Width, renderTarget2D.Height);
-        renderTarget2D.GetData(image.Pixels, 0, new Rectangle(0, 0, renderTarget2D.Width, renderTarget2D.Height));
-        try
-        {
-            Image.Save(image, Storage.CombinePaths("app:", name + ".png"), ImageFileFormat.Png, true);
-        }
-        catch (Exception e)
-        {
-            Log.Error($"保存图片失败: {e.Message}");
-        }
-    }
-#endif
 }

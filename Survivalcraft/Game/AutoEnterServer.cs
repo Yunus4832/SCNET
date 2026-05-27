@@ -1,4 +1,4 @@
-using Game.NetWork;
+using Game.Network;
 
 namespace Game;
 

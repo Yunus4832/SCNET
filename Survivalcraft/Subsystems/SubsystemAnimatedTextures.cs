@@ -1,7 +1,10 @@
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
+
+using Game.Network;
+using Game.Network.Enums;
 
 namespace Game.Subsystems;
 
@@ -23,7 +26,11 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
 
     private readonly Random _random = new();
 
+#if SERVER
+    private readonly ScreenSpaceFireRenderer? _screenSpaceFireRenderer;
+#else
     private readonly ScreenSpaceFireRenderer _screenSpaceFireRenderer = new(200);
+#endif
 
     private SubsystemBlocksTexture _subsystemBlocksTexture = null!;
 
@@ -59,6 +66,9 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
+#if SERVER
+        return;
+#endif
         if (_disableTextureAnimation || _subsystemTime.FixedTimeStep.HasValue)
         {
             return;
@@ -110,13 +120,17 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
     {
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemBlocksTexture = Project.FindSubsystem<SubsystemBlocksTexture>(true)!;
+#if !SERVER
         Display.DeviceReset += DisplayDeviceReset;
+#endif
     }
 
     public override void Dispose()
     {
         Utilities.Dispose(ref _animatedBlocksTexture);
+#if !SERVER
         Display.DeviceReset -= DisplayDeviceReset;
+#endif
     }
 
     private void DisplayDeviceReset()
@@ -267,6 +281,9 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
 
     private Rectangle AnimateFireBlocksTexture(float dt, int textureWidth)
     {
+#if SERVER
+        return Rectangle.Empty;
+#else
         var defaultTextureSlot = BlocksManager.Blocks[104].TextureSlot;
         float num = textureWidth / 16;
         var num2 = defaultTextureSlot % 16;
@@ -285,6 +302,7 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
         _screenSpaceFireRenderer.Update(dt);
         _screenSpaceFireRenderer.Draw(_primitivesRenderer, 0f, Matrix.Identity, Color.White);
         return new Rectangle((int)(num2 * num), (int)(num3 * num), (int)num, (int)(num * 3f));
+#endif
     }
 
     private void DrawBlocksTextureSlot(

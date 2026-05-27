@@ -1,9 +1,12 @@
 using Engine.Graphics;
 using Engine.Serialization;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Components;
 
@@ -365,7 +368,9 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             _lastTotalElapsedGameTime = _subsystemGameInfo.TotalElapsedGameTime;
         }
 
+#if !SERVER
         UpdateRenderTargets();
+#endif
     }
 
     public ReadOnlyList<int> GetClothes(ClothingSlot slot)
@@ -383,12 +388,13 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
         _clothes[slot].Clear();
         _clothes[slot].AddRange(clothesArray);
+        SanitizeInvalidClothes();
         _clothedTexturesValid = false;
         var num = (from clothe in _clothes
             from item in clothe.Value
-            select BlocksManager.Blocks[Terrain.ExtractContents(item)]
-                .GetClothingData(Terrain.ExtractData(item))
+            select GetClothingDataSafe(item)
             into clothingData
+            where clothingData != null
             select clothingData.DensityModifier).Sum();
 
         var num2 = num - _densityModifierApplied;
@@ -401,32 +407,44 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         var num6 = 2f;
         foreach (var clothe2 in GetClothes(ClothingSlot.Head))
         {
-            var clothingData2 = BlocksManager.Blocks[Terrain.ExtractContents(clothe2)]
-                .GetClothingData(Terrain.ExtractData(clothe2));
+            var clothingData2 = GetClothingDataSafe(clothe2);
+            if (clothingData2 == null)
+            {
+                continue;
+            }
             num3 += clothingData2.Insulation;
             SteedMovementSpeedFactor *= clothingData2.SteedMovementSpeedFactor;
         }
 
         foreach (var clothe3 in GetClothes(ClothingSlot.Torso))
         {
-            var clothingData3 = BlocksManager.Blocks[Terrain.ExtractContents(clothe3)]
-                .GetClothingData(Terrain.ExtractData(clothe3));
+            var clothingData3 = GetClothingDataSafe(clothe3);
+            if (clothingData3 == null)
+            {
+                continue;
+            }
             num4 += clothingData3.Insulation;
             SteedMovementSpeedFactor *= clothingData3.SteedMovementSpeedFactor;
         }
 
         foreach (var clothe4 in GetClothes(ClothingSlot.Legs))
         {
-            var clothingData4 = BlocksManager.Blocks[Terrain.ExtractContents(clothe4)]
-                .GetClothingData(Terrain.ExtractData(clothe4));
+            var clothingData4 = GetClothingDataSafe(clothe4);
+            if (clothingData4 == null)
+            {
+                continue;
+            }
             num5 += clothingData4.Insulation;
             SteedMovementSpeedFactor *= clothingData4.SteedMovementSpeedFactor;
         }
 
         foreach (var clothe5 in GetClothes(ClothingSlot.Feet))
         {
-            var clothingData5 = BlocksManager.Blocks[Terrain.ExtractContents(clothe5)]
-                .GetClothingData(Terrain.ExtractData(clothe5));
+            var clothingData5 = GetClothingDataSafe(clothe5);
+            if (clothingData5 == null)
+            {
+                continue;
+            }
             num6 += clothingData5.Insulation;
             SteedMovementSpeedFactor *= clothingData5.SteedMovementSpeedFactor;
         }
@@ -448,6 +466,38 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         else if (num6.CloseTo(num7))
         {
             LeastInsulatedSlot = ClothingSlot.Feet;
+        }
+    }
+
+    private ClothingData? GetClothingDataSafe(int value)
+    {
+        try
+        {
+            return BlocksManager.Blocks[Terrain.ExtractContents(value)].GetClothingData(Terrain.ExtractData(value));
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Ignore invalid clothing value={value}. {ex.Message}");
+            return null;
+        }
+    }
+
+    private void SanitizeInvalidClothes()
+    {
+        foreach (var pair in _clothes)
+        {
+            var list = pair.Value;
+            var i = 0;
+            while (i < list.Count)
+            {
+                if (GetClothingDataSafe(list[i]) == null)
+                {
+                    list.RemoveAt(i);
+                    continue;
+                }
+
+                i++;
+            }
         }
     }
 

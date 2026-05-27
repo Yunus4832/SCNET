@@ -1,4 +1,5 @@
 using Engine.Serialization;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 

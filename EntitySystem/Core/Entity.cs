@@ -1,6 +1,8 @@
 using System.Collections;
+
 using Engine.Core;
 using Engine.Serialization;
+
 using EntitySystem.TemplatesDatabase;
 
 namespace EntitySystem.Core;
@@ -9,7 +11,7 @@ public class Entity : IDisposable
 {
     private readonly List<Component> _components;
 
-    public ushort EntityId { get; set; }
+    public int EntityId { get; set; }
 
     public Project Project { get; }
 
@@ -23,6 +25,8 @@ public class Entity : IDisposable
 
     public event EventHandler? EntityRemoved;
 
+    public Entity(Project project, ValuesDictionary valuesDictionary, int id) : this(project, valuesDictionary) =>
+        EntityId = id;
 
     public Entity(Project project, ValuesDictionary valuesDictionary)
     {
@@ -59,7 +63,9 @@ public class Entity : IDisposable
             }
             catch (TargetInvocationException ex)
             {
-                throw ex.InnerException ?? ex;
+                throw new InvalidOperationException(
+                    $"Error constructing component \"{value2}\" for entity template \"{valuesDictionary.DatabaseObject.Name}\".",
+                    ex.InnerException ?? ex);
             }
 
             if (obj is not Component component)
@@ -186,6 +192,22 @@ public class Entity : IDisposable
     public void FireEntityRemovedEvent()
     {
         EntityRemoved?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void InternalLoadEntity(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
+    {
+        foreach (var component in _components)
+        {
+            try
+            {
+                component.Load(component.ValuesDictionary, idToEntityMap);
+            }
+            catch (Exception innerException)
+            {
+                throw new InvalidOperationException($"Error loading component {component.GetType().FullName}.",
+                    innerException);
+            }
+        }
     }
 
     public readonly struct FilteredComponentsEnumerable<T>(Entity entity) : IEnumerable<T>

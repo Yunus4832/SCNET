@@ -1,7 +1,9 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Components;
 
@@ -275,8 +277,11 @@ public class ComponentHealth : Component, IUpdateable
         {
             _componentCreature.ComponentCreatureSounds.PlayPainSound();
             RedScreenFactor += -4f * HealthChange;
-            _componentPlayer?.ComponentGui.HealthBarWidget.Flash(MathUtils.Clamp((int)((0f - HealthChange) * 30f), 0,
-                10));
+#if !SERVER
+            _componentPlayer?.ComponentGui.HealthBarWidget.Flash(
+                MathUtils.Clamp((int)((0f - HealthChange) * 30f), 0, 10)
+            );
+#endif
         }
 
         if (_componentPlayer != null)
@@ -285,10 +290,12 @@ public class ComponentHealth : Component, IUpdateable
                 MathUtils.Max(_componentPlayer.ComponentScreenOverlays.RedOutFactor, RedScreenFactor);
         }
 
+#if !SERVER
         if (_componentPlayer != null)
         {
             _componentPlayer.ComponentGui.HealthBarWidget.Value = Health;
         }
+#endif
 
         if (Health == 0f && HealthChange < 0f)
         {
@@ -304,7 +311,9 @@ public class ComponentHealth : Component, IUpdateable
                 var position2 = _componentCreature.ComponentBody.Position +
                                 new Vector3(0f, _componentCreature.ComponentBody.BoxSize.Y / 2f, 0f);
                 var x = _componentCreature.ComponentBody.StanceBoxSize.X;
+#if !SERVER
                 _subsystemParticles.AddParticleSystem(new KillParticleSystem(_subsystemTerrain, position2, x));
+#endif
                 var position3 = (_componentCreature.ComponentBody.BoundingBox.Min +
                                  _componentCreature.ComponentBody.BoundingBox.Max) / 2f;
                 foreach (var item in Entity.FindComponents<IInventory>())

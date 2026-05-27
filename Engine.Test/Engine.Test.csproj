@@ -2,8 +2,6 @@
 
     <PropertyGroup>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
     </PropertyGroup>
 
@@ -19,7 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Engine\Engine.csproj"/>
+        <ProjectReference Include="..\Engine\Engine.csproj"/>
     </ItemGroup>
 
 </Project>

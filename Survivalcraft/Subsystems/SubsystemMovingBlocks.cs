@@ -1,11 +1,15 @@
 using System.Globalization;
 using System.Text;
+
 using Engine.Graphics;
 using Engine.Serialization;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -45,6 +49,9 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
+#if SERVER
+        return;
+#else
         _vertices.Clear();
         _indices.Clear();
         foreach (var movingBlockSet2 in MovingBlockSets)
@@ -97,6 +104,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             vertexBuffer.Dispose();
             indexBuffer.Dispose();
         }
+#endif
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -344,7 +352,9 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemAnimatedTextures = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
+#if !SERVER
         _shader = ContentManager.Get<Shader>("Shaders/AlphaTested");
+#endif
         foreach (ValuesDictionary value9 in valuesDictionary.GetValue<ValuesDictionary>("MovingBlockSets").Values)
         {
             LoadAndAddMovingItem(value9);
@@ -406,7 +416,10 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             valuesDictionary3.SetValue("Id", movingBlockSet.Id);
         }
 
-        valuesDictionary3.SetValue("Tag", movingBlockSet.Tag);
+        if (HumanReadableConverter.IsTypeSupported(movingBlockSet.Tag.GetType()))
+        {
+            valuesDictionary3.SetValue("Tag", movingBlockSet.Tag);
+        }
         var stringBuilder = new StringBuilder();
         foreach (var block in movingBlockSet.Blocks)
         {

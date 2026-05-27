@@ -7,7 +7,7 @@ using System.Xml.Linq;
 using EntitySystem.XmlUtilities;
 
 using Game.ContentProviders;
-using Game.NetWork;
+using Game.Network;
 
 namespace Game.Managers;
 
@@ -107,7 +107,7 @@ public static class MotdManager
             };
             var dictionary = new Dictionary<string, string>
             {
-                { "version", ProjectNet.ServerVersion }
+                { "version", VersionsManager.ServerVersion }
             };
             WebManager.Post(
                 SchubExternalContentProvider.GetPath("/com/api/zh/forceCheckCode"),

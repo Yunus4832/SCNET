@@ -1,4 +1,5 @@
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
@@ -20,6 +21,9 @@ public class SubsystemGlow : Subsystem, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
+#if SERVER
+        return;
+#else
         foreach (var key in _glowPoints.Keys)
         {
             if (key.Color.A <= 0)
@@ -59,6 +63,7 @@ public class SubsystemGlow : Subsystem, IDrawable
         }
 
         _primitivesRenderer.Flush(camera.ViewProjectionMatrix);
+#endif
     }
 
     public GlowPoint AddGlowPoint()
@@ -76,6 +81,7 @@ public class SubsystemGlow : Subsystem, IDrawable
     public override void Load(ValuesDictionary valuesDictionary)
     {
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
+#if !SERVER
         _batchesByType[0] = _primitivesRenderer.TexturedBatch(ContentManager.Get<Texture2D>("Textures/RoundGlow"),
             false, 0, DepthStencilState.DepthRead, RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend,
             SamplerState.LinearClamp);
@@ -88,5 +94,6 @@ public class SubsystemGlow : Subsystem, IDrawable
         _batchesByType[3] = _primitivesRenderer.TexturedBatch(
             ContentManager.Get<Texture2D>("Textures/VerticalRectGlow"), false, 0, DepthStencilState.DepthRead,
             RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend, SamplerState.LinearClamp);
+#endif
     }
 }

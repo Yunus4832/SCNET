@@ -1,9 +1,12 @@
 using System.Globalization;
 using System.Text;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 

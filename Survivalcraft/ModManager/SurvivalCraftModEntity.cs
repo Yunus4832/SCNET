@@ -1,6 +1,9 @@
 using System.Xml.Linq;
+
 using Engine.Media;
+
 using Game.ContentReaders;
+
 using StringReader = Game.ContentReaders.StringReader;
 
 namespace Game.ModManager;
@@ -41,7 +44,9 @@ public class SurvivalCraftModEntity : ModEntity
         ResourcesMd5 = ModsManager.GetMd5(memoryStream.ToArray());
         ModArchive = ZipArchive.ZipArchive.Open(memoryStream, true);
         InitResources();
+#if !SERVER
         LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+#endif
     }
 
     public override bool IsSystemMod => true;

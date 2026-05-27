@@ -32,7 +32,9 @@ public class FastDebugModEntity : ModEntity
             };
         }
 
+#if !SERVER
         GetFile("icon.png", LoadIcon);
+#endif
         foreach (var c in FModFiles)
         {
             GetFile(c.Key, stream =>
@@ -199,6 +201,13 @@ public class FastDebugModEntity : ModEntity
 
     protected override bool GetFile(string filename, Action<Stream> stream)
     {
+        if (string.Equals(filename, "icon.png", StringComparison.OrdinalIgnoreCase))
+        {
+#if SERVER
+            return false;
+#endif
+        }
+
         if (!FModFiles.TryGetValue(filename, out var fileInfo))
         {
             return false;

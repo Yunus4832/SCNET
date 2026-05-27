@@ -1,6 +1,8 @@
 using System.Collections.Concurrent;
+
 using Engine.Core;
 using Engine.Media;
+
 using Silk.NET.OpenAL;
 
 namespace Engine.Audio;
@@ -94,7 +96,8 @@ public sealed class StreamingSound : BaseSound
             {
                 Log.Error(message);
             }
-        });
+            });
+        Mixer.soundsToStopPoll.Add(this);
     }
 
     /// <summary>
@@ -187,7 +190,7 @@ public sealed class StreamingSound : BaseSound
             return;
         }
 
-        Mixer.AL.SourcePlay(MSource);
+        Mixer.AL.SourcePlay(Source);
         Mixer.CheckALError();
     }
 
@@ -206,7 +209,7 @@ public sealed class StreamingSound : BaseSound
             return;
         }
 
-        Mixer.AL.SourcePause(MSource);
+        Mixer.AL.SourcePause(Source);
         Mixer.CheckALError();
     }
 
@@ -225,7 +228,7 @@ public sealed class StreamingSound : BaseSound
             return;
         }
 
-        Mixer.AL.SourceStop(MSource);
+        Mixer.AL.SourceStop(Source);
         Mixer.CheckALError();
         StreamingSource.Position = 0L;
         _noMoreData = false;
@@ -236,12 +239,14 @@ public sealed class StreamingSound : BaseSound
     /// </summary>
     internal override void InternalDispose()
     {
+        Mixer.soundsToStopPoll.Remove(this);
         _stopTaskEvent.Set();
         _task.Wait();
         _task = null!;
         _stopTaskEvent.Dispose();
         _stopTaskEvent = null!;
 
+        _noMoreData = true;
         StreamingSource.Dispose();
         StreamingSource = null!;
 
@@ -290,10 +295,10 @@ public sealed class StreamingSound : BaseSound
                 if (!_noMoreData)
                 {
                     // 获取已播放完毕的缓冲区并回收到列表
-                    Mixer.AL.GetSourceProperty(MSource, GetSourceInteger.BuffersProcessed, out var processedBufferCount);
+                    Mixer.AL.GetSourceProperty(Source, GetSourceInteger.BuffersProcessed, out var processedBufferCount);
                     Mixer.CheckALError();
                     var processedBuffers = new uint[processedBufferCount];
-                    Mixer.AL.SourceUnqueueBuffers(MSource, processedBuffers);
+                    Mixer.AL.SourceUnqueueBuffers(Source, processedBuffers);
                     for (var processedIndex = 0; processedIndex < processedBufferCount; processedIndex++)
                     {
                         Mixer.CheckALError();
@@ -325,25 +330,25 @@ public sealed class StreamingSound : BaseSound
                     Mixer.CheckALError();
 
                     // 将填充好的缓冲区加入播放队列
-                    Mixer.AL.SourceQueueBuffers(MSource, [bufferToFill]);
+                    Mixer.AL.SourceQueueBuffers(Source, [bufferToFill]);
                     Mixer.CheckALError();
                     availableBuffers.RemoveAt(availableBuffers.Count - 1);
 
                     // 如果源未在播放状态，启动播放
-                    Mixer.AL.GetSourceProperty(MSource, GetSourceInteger.SourceState, out var sourceState);
+                    Mixer.AL.GetSourceProperty(Source, GetSourceInteger.SourceState, out var sourceState);
                     Mixer.CheckALError();
                     if ((SourceState)sourceState == SourceState.Playing)
                     {
                         continue;
                     }
 
-                    Mixer.AL.SourcePlay(MSource);
+                    Mixer.AL.SourcePlay(Source);
                     Mixer.CheckALError();
                 }
                 else
                 {
                     // 数据已读完，检查播放是否结束
-                    Mixer.AL.GetSourceProperty(MSource, GetSourceInteger.SourceState, out var sourceState);
+                    Mixer.AL.GetSourceProperty(Source, GetSourceInteger.SourceState, out var sourceState);
                     if ((SourceState)sourceState == SourceState.Stopped)
                     {
                         Dispatcher.Dispatch(Stop);
@@ -353,18 +358,20 @@ public sealed class StreamingSound : BaseSound
         } while (!_stopTaskEvent.WaitOne(threadSleepInterval));
 
         // 清理：停止播放、分离缓冲区、删除缓冲区
-        Mixer.AL.SourceStop(MSource);
+        Mixer.AL.SourceStop(Source);
         Mixer.CheckALError();
-        Mixer.AL.SetSourceProperty(MSource, SourceInteger.Buffer, 0);
+        Mixer.AL.SetSourceProperty(Source, SourceInteger.Buffer, 0);
         Mixer.CheckALError();
         for (var cleanupIndex = 0; cleanupIndex < bufferCount; cleanupIndex++)
         {
-            if (openAlBuffers[cleanupIndex] != 0)
+            if (openAlBuffers[cleanupIndex] == 0)
             {
-                Mixer.AL.DeleteBuffer(openAlBuffers[cleanupIndex]);
-                Mixer.CheckALError();
-                openAlBuffers[cleanupIndex] = 0;
+                continue;
             }
+
+            Mixer.AL.DeleteBuffer(openAlBuffers[cleanupIndex]);
+            Mixer.CheckALError();
+            openAlBuffers[cleanupIndex] = 0;
         }
     }
 }

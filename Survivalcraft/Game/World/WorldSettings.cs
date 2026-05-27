@@ -1,4 +1,5 @@
 using System.Xml;
+
 using EntitySystem.TemplatesDatabase;
 
 namespace Game;
@@ -17,7 +18,7 @@ public class WorldSettings
 
     public string BlocksTextureName = string.Empty;
 
-    public float DaySpeed;
+    public float DaySpeed = 1f;
 
     public string DisableBlocks = string.Empty;
 
@@ -33,7 +34,7 @@ public class WorldSettings
 
     public Vector2 IslandSize = new(400f, 400f);
 
-    public bool IsNeedCommunityLogin = true;
+    public bool IsNeedCommunityLogin;
 
     public string KeywordBlocking = string.Empty;
 
@@ -49,7 +50,7 @@ public class WorldSettings
 
     public bool RandomSpawnPosition;
 
-    public float RecoverFactor;
+    public float RecoverFactor = 1f;
 
     public bool RunServer;
 

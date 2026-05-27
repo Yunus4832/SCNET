@@ -1,12 +1,12 @@
-
 using System.Text;
-using Engine.Core;
-using Engine.Windowing;
+
 #if ANDROID
+using Engine.Windowing;
 using AndroidEnvironment = Android.OS.Environment;
 using Environment = System.Environment;
 using Android.OS;
 #endif
+
 #if DESKTOP
 using System.Diagnostics;
 #endif
@@ -400,7 +400,7 @@ public static class Storage
 
     public static void DeleteDirectoryRecursive(string path)
     {
-        Directory.Delete(ProcessPath(path, true, false));
+        Directory.Delete(ProcessPath(path, true, false), true);
     }
 
     public static DirectoryInfo GetDirectoryInfo(string path) => new(ProcessPath(path, true, false));

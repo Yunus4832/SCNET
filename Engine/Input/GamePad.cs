@@ -1,6 +1,8 @@
 #if ANDROID
 using System.Collections.Concurrent;
+
 using Android.Views;
+
 using Axis = Android.Views.Axis;
 #endif
 #if DESKTOP
@@ -8,6 +10,7 @@ using Silk.NET.Input;
 #endif
 
 using Engine.Core;
+
 using Window = Engine.Windowing.Window;
 
 namespace Engine.Input;

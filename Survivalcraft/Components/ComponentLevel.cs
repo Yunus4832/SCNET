@@ -1,8 +1,11 @@
 using System.Globalization;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Components;
 
@@ -78,6 +81,7 @@ public class ComponentLevel : Component, IUpdateable
         SpeedFactor = CalculateSpeedFactor([]);
         HungerFactor = CalculateHungerFactor([]);
         ResilienceFactor = CalculateResilienceFactor([]);
+#if !SERVER
         if (!_lastLevelTextValue.HasValue ||
             _lastLevelTextValue.Value.UncloseTo(MathUtils.Floor(_componentPlayer.PlayerData.Level)))
         {
@@ -85,6 +89,7 @@ public class ComponentLevel : Component, IUpdateable
                 "等级 " + MathUtils.Floor(_componentPlayer.PlayerData.Level);
             _lastLevelTextValue = MathUtils.Floor(_componentPlayer.PlayerData.Level);
         }
+#endif
 
         _componentPlayer.PlayerStats.HighestLevel = MathUtils.Max(_componentPlayer.PlayerStats.HighestLevel,
             _componentPlayer.PlayerData.Level);

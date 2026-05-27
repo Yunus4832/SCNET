@@ -1,9 +1,13 @@
 using System.Globalization;
+
 using Engine.Audio;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Components;
 
@@ -101,6 +105,9 @@ public class ComponentVitalStats : Component, IUpdateable
 
     public void Update(float dt)
     {
+#if SERVER
+        return;
+#endif
         if (_componentPlayer.ComponentHealth.Health > 0f)
         {
             UpdateFood();

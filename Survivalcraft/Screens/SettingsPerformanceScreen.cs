@@ -1,5 +1,7 @@
 using System.Xml.Linq;
-using Game.NetWork;
+
+using Game.Network;
+using Game.Network.Enums;
 
 namespace Game.Screens;
 

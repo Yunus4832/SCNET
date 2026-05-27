@@ -1,6 +1,8 @@
 using System.Xml.Linq;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Widgets;
 
@@ -97,7 +99,7 @@ public class DispenserWidget : CanvasWidget
             CommonLib.Net.QueuePackage(p);
             if (CommonLib.WorkType != WorkType.Client)
             {
-                p.Handle(ProjectNet.Project, CommonLib.Net, false);
+                p.Handle(CommonLib.Net, false);
             }
         }
 

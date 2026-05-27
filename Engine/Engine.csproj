@@ -3,7 +3,6 @@
         <AssemblyName>Engine</AssemblyName>
         <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
         <Platforms>AnyCPU</Platforms>
-        <ImplicitUsings>enable</ImplicitUsings>
         <Configurations>Debug;Release</Configurations>
     </PropertyGroup>
 
@@ -19,11 +18,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <LangVersion>latest</LangVersion>
         <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <Nullable>enable</Nullable>
-        <WarningsAsErrors>Nullable</WarningsAsErrors>
-        <NoWarn>$(NoWarn);CA1416;CA1422</NoWarn>
     </PropertyGroup>
 
     <!-- Debug 配置 -->
@@ -50,7 +45,7 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
-        <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" />
+        <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
@@ -72,8 +67,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
-      <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj" />
+        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj"/>
+        <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj"/>
     </ItemGroup>
 
 </Project>

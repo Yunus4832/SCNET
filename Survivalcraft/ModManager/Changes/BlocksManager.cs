@@ -79,7 +79,14 @@ public static class BlocksManager
         {
             try
             {
+#if SERVER
+                if (block is ClothingBlock)
+                {
+                    block.Initialize();
+                }
+#else
                 block.Initialize();
+#endif
                 if (string.IsNullOrEmpty(block.CraftingId))
                 {
                     block.CraftingId = block.GetType().Name;

@@ -1,11 +1,15 @@
 using System.Net;
 using System.Text;
 using System.Xml.Linq;
+
 using Engine.Graphics;
 using Engine.Media;
-using Game.NetWork;
-using Game.NetWork.Packages;
-using static Game.NetWork.NetNode;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
+
+using static Game.Network.NetNode;
 
 namespace Game.Screens;
 
@@ -62,7 +66,7 @@ public class GameLoadingScreen : Screen
                         DialogsManager.ShowDialog(this, SpawnDialog);
                         _stateMachine.TransitionTo("WaitServerReply");
                         // 客户端开启包处理
-                        CommonLib.Net.OnRecieve += Handle;
+                        CommonLib.Net.OnReceive += Handle;
                     }
                     else
                     {
@@ -187,7 +191,7 @@ public class GameLoadingScreen : Screen
             {
                 try
                 {
-                    clientPackage.Handle(null, node, false);
+                    clientPackage.Handle(node, false);
                 }
                 catch (Exception e)
                 {
@@ -198,15 +202,14 @@ public class GameLoadingScreen : Screen
             {
                 try
                 {
-                    projectPackage.Handle(null, node, false);
+                    projectPackage.Handle(node, false);
                 }
                 catch (Exception e)
                 {
                     Log.Error($"[{package.GetType().Name}]{e.Message}");
                 }
             }
-            else
-                // 无法处理的包在Project加载后进行处理
+            else // 无法处理的包在Project加载后进行处理
             {
                 CommonLib.Net.AddPendingHandlePackage(package);
             }
@@ -215,7 +218,7 @@ public class GameLoadingScreen : Screen
 
     public void ReplyCall(bool hasTexture, byte[] textureData, byte[] projectData)
     {
-        CommonLib.Net.OnRecieve -= Handle;
+        CommonLib.Net.OnReceive -= Handle;
         _isServerReply = true;
         if (hasTexture)
         {

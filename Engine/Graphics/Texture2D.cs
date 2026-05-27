@@ -1,10 +1,14 @@
 using System.Runtime.InteropServices;
+
 using Engine.Core;
 using Engine.FileStorage;
 using Engine.Media;
+
 using Silk.NET.OpenGLES;
+
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
+
 using Image = Engine.Media.Image;
 
 namespace Engine.Graphics;

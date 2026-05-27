@@ -1,7 +1,9 @@
 using System.Text;
+
 using Engine.Graphics;
 using Engine.Serialization;
-using Game.NetWork;
+
+using Game.Network;
 
 namespace Game.Widgets;
 

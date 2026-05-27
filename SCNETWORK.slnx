@@ -47,10 +47,7 @@
         </Project>
     </Folder>
 
-    <Folder Name="/03 Server/">
-    </Folder>
-
-    <Folder Name="/04 Survivalcraft/">
+    <Folder Name="/03 Survivalcraft/">
         <Project Path="Survivalcraft\Survivalcraft.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
@@ -65,6 +62,17 @@
             <Build Solution="SERVER|*" Project="false"/>
         </Project>
     </Folder>
+
+    <Folder Name="/04 Server/">
+        <Project Path="Server\Server.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <BuildType Solution="SERVER|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+            <Build Solution="DESKTOP|*" Project="false"/>
+        </Project>
+    </Folder>
+
 
     <Folder Name="/05 Desktop/">
         <Project Path="Survivalcraft.Linux\Survivalcraft.Linux.csproj">

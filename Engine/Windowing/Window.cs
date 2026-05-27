@@ -2,8 +2,10 @@
 using Android.Content;
 using Android.OS;
 using Android.Views;
+
 using Org.Libsdl.App;
 #endif
+
 #if DESKTOP
 using Monitor = Silk.NET.Windowing.Monitor;
 using Silk.NET.Core;
@@ -11,12 +13,15 @@ using System.Runtime.CompilerServices;
 using Silk.NET.Input;
 using SixLabors.ImageSharp.PixelFormats;
 #endif
+
 using Engine.Audio;
 using Engine.Core;
 using Engine.Graphics;
 using Engine.Input;
+
 using Silk.NET.Maths;
 using Silk.NET.Windowing;
+
 using Display = Engine.Graphics.Display;
 using Environment = System.Environment;
 
@@ -92,6 +97,9 @@ public static class Window
 #if DESKTOP
         get
         {
+#if SERVER
+            return new Point2(1280, 720);
+#else
             var monitor = ((IWindow?)GameWindow)?.Monitor;
             if (monitor is null)
             {
@@ -101,13 +109,14 @@ public static class Window
                 }
                 catch (Exception e)
                 {
-                    Log.Error("Get screen size failed {exception}", e);
+                    Log.Error(e);
                     return Point2.Zero;
                 }
             }
 
             var size = monitor.Bounds.Size;
             return new Point2(size.X, size.Y);
+#endif
         }
 #endif
     }

@@ -1,7 +1,9 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -81,7 +83,8 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 
         foreach (var playerData in _toRemove)
         {
-            MakePlayerOffline(playerData.PlayerGUID);
+            // Startup/recovery cleanup for stale disconnected players should not emit "退出游戏" broadcast.
+            MakePlayerOffline(playerData.PlayerGUID, false);
         }
 
         _toRemove.Clear();
@@ -92,15 +95,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 
     public bool IsPlayer(Entity entity)
     {
-        foreach (var componentPlayer in _componentPlayers)
-        {
-            if (entity == componentPlayer.Entity)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return _componentPlayers.Any(componentPlayer => entity == componentPlayer.Entity);
     }
 
     public ComponentPlayer? FindNearestPlayer(Vector3 position)
@@ -126,12 +121,13 @@ public class SubsystemPlayers : Subsystem, IUpdateable
     {
         for (var i = 0; i < int.MaxValue; i++)
         {
-            if (!_usedIndies.ContainsKey(i))
+            if (!_usedIndies.TryAdd(i, playerData))
             {
-                _usedIndies.Add(i, playerData);
-                playerData.PlayerIndex = i;
-                return;
+                continue;
             }
+
+            playerData.PlayerIndex = i;
+            return;
         }
     }
 
@@ -148,9 +144,6 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 
         PlayerAdded?.Invoke(playerData);
 
-#if DEBUG
-        Log.Information($"注册PlayerIndex::{playerData.PlayerIndex}");
-#endif
         if (string.IsNullOrEmpty(playerData.CurrentState))
         {
             playerData.TransitionTo("FirstUpdate");
@@ -159,7 +152,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         if (CommonLib.WorkType == WorkType.Server)
         {
             var client = playerData.Client;
-            if (client != null && !string.IsNullOrEmpty(client.Nickname))
+            if (client is not null && !string.IsNullOrEmpty(client.Nickname))
             {
                 playerData.Name = client.Nickname;
             }
@@ -347,7 +340,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         //同步Project情况下不保存_offlinePlayerEntities数据
-        if (Project is ProjectNet { SendToClientMode: true })
+        if (Project is { SendToClientMode: true })
         {
             return;
         }
@@ -393,61 +386,68 @@ public class SubsystemPlayers : Subsystem, IUpdateable
     public void MakePlayerOffline(Guid playerGuid, bool showMsg = true)
     {
         var pd = _playersData.Find(p => p.PlayerGUID == playerGuid);
-        if (pd != null)
+        if (pd == null)
         {
-            var updater = _subsystemTerrain.TerrainUpdater;
-            updater.WaitChunkList.Remove(pd.Client);
-            var componentPlayer = pd.ComponentPlayer;
-            if (componentPlayer == null && _offlinePlayerEntities.TryGetValue(playerGuid, out var entityDataPlayer))
-            {
-                var list = new EntityDataList
-                {
-                    EntitiesData =
-                    [
-                        entityDataPlayer
-                    ]
-                };
-                _offlinePlayerEntities.Remove(playerGuid);
-                var e = Project.LoadEntities(list)[0];
-                componentPlayer = e.FindComponent<ComponentPlayer>();
-            }
-
-            if (componentPlayer != null)
-            {
-                Project.RemoveEntity(componentPlayer.Entity, true);
-                if (showMsg && CommonLib.WorkType == WorkType.Server)
-                {
-                    _subsystemGameWidgets.AddMessage(pd.Name + " 退出游戏");
-                }
-
-                if (CommonLib.WorkType == WorkType.Server)
-                {
-                    var list = Project.SaveEntities([componentPlayer.Entity]);
-                    var dict = new ValuesDictionary();
-                    var vdict = new ValuesDictionary();
-                    var pdict = new ValuesDictionary();
-                    list.EntitiesData[0].Save(vdict);
-                    pd.Save(pdict);
-                    var entityFileDir = Storage.CombinePaths(_subsystemGameInfo.DirectoryName, "PlayerEntities/");
-                    if (!Storage.DirectoryExists(entityFileDir))
-                    {
-                        Storage.CreateDirectory(entityFileDir);
-                    }
-
-                    dict.SetValue("Entity", vdict);
-                    dict.SetValue("Data", pdict);
-                    using var stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{pd.PlayerGUID}.json"),
-                        OpenFileMode.Create);
-                    var streamWriter = new StreamWriter(stream);
-                    streamWriter.Write(dict.ToJsonText());
-                    streamWriter.Flush();
-                    streamWriter.Dispose();
-                }
-            }
-
-            _subsystemTerrain.TerrainUpdater.RemoveUpdateLocation(pd.PlayerIndex);
-            RemovePlayerData(pd);
+            return;
         }
+
+        var updater = _subsystemTerrain.TerrainUpdater;
+        if (pd.Client != null)
+        {
+            updater.WaitChunkList.Remove(pd.Client);
+        }
+        var componentPlayer = pd.ComponentPlayer;
+        if (componentPlayer == null && _offlinePlayerEntities.TryGetValue(playerGuid, out var entityDataPlayer))
+        {
+            var list = new EntityDataList
+            {
+                EntitiesData =
+                [
+                    entityDataPlayer
+                ]
+            };
+            _offlinePlayerEntities.Remove(playerGuid);
+            var entityList = GameManager.Project?.InitializeAndLoadEntities(list) ?? [];
+            GameManager.Project?.AttachEntities(entityList, true);
+            var entity = entityList.Count != 0 ? entityList[0] : null;
+            componentPlayer = entity?.FindComponent<ComponentPlayer>();
+        }
+
+        if (componentPlayer != null)
+        {
+            Project.RemoveEntity(componentPlayer.Entity, true);
+            if (showMsg && CommonLib.WorkType == WorkType.Server)
+            {
+                _subsystemGameWidgets.AddMessage(pd.Name + " 退出游戏");
+            }
+
+            if (CommonLib.WorkType == WorkType.Server)
+            {
+                var list = Project.SaveEntities([componentPlayer.Entity]);
+                var dict = new ValuesDictionary();
+                var vDict = new ValuesDictionary();
+                var pDict = new ValuesDictionary();
+                list.EntitiesData[0].Save(vDict);
+                pd.Save(pDict);
+                var entityFileDir = Storage.CombinePaths(_subsystemGameInfo.DirectoryName, "PlayerEntities/");
+                if (!Storage.DirectoryExists(entityFileDir))
+                {
+                    Storage.CreateDirectory(entityFileDir);
+                }
+
+                dict.SetValue("Entity", vDict);
+                dict.SetValue("Data", pDict);
+                using var stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{pd.PlayerGUID}.json"),
+                    OpenFileMode.Create);
+                var streamWriter = new StreamWriter(stream);
+                streamWriter.Write(dict.ToJsonText());
+                streamWriter.Flush();
+                streamWriter.Dispose();
+            }
+        }
+
+        _subsystemTerrain.TerrainUpdater.RemoveUpdateLocation(pd.PlayerIndex);
+        RemovePlayerData(pd);
     }
 
     private bool CheckPlayerDataExists(Guid playerGuid, out string entityFilePath)
@@ -473,7 +473,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
     {
         if (CheckPlayerDataExists(playerGuid, out var entityFilePath) && CommonLib.WorkType == WorkType.Server)
         {
-            playerData = new PlayerData(Project);
+            var existing = _playersData.Find(p => p.PlayerGUID == playerGuid);
             var dict = new ValuesDictionary();
             using (var s = Storage.OpenFile(entityFilePath, OpenFileMode.Read))
             {
@@ -493,9 +493,17 @@ public class SubsystemPlayers : Subsystem, IUpdateable
                 }
             }
 
-            var entityData = new EntityData(Project.GameDatabase, dict.GetValue<ValuesDictionary>("Entity"));
-            playerData.Load(dict.GetValue<ValuesDictionary>("Data"));
-            AddPlayerData(playerData);
+            if (existing != null)
+            {
+                playerData = existing;
+            }
+            else
+            {
+                playerData = new PlayerData(Project);
+                playerData.Load(dict.GetValue<ValuesDictionary>("Data"));
+                AddPlayerData(playerData);
+            }
+
             playerData.WaitEntityAdded();
             //如果队伍不存在了自动退出组队
             if (!ServerGroups.ContainsKey(playerData.GroupKey))
@@ -503,6 +511,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
                 playerData.GroupKey = string.Empty;
             }
 
+            var entityData = new EntityData(Project.GameDatabase, dict.GetValue<ValuesDictionary>("Entity"));
             var list = new EntityDataList
             {
                 EntitiesData =
@@ -510,11 +519,11 @@ public class SubsystemPlayers : Subsystem, IUpdateable
                     entityData
                 ]
             };
-            var elist = Project.LoadEntities(list);
-            if (elist.Count > 0)
+            var entityList = GameManager.Project?.InitializeAndLoadEntities(list) ?? [];
+            GameManager.Project?.AttachEntities(entityList, true);
+            if (entityList.Count > 0)
             {
-                entity = elist[0];
-                entity.EntityId = 0;
+                entity = entityList[0];
                 var componentPlayer = entity.FindComponent<ComponentPlayer>();
                 if (componentPlayer != null && componentPlayer.PlayerData.PlayerGUID != playerGuid)
                 {
@@ -585,7 +594,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         BlackPlayerGuidList.Add(guid, playerData.Name);
-        CommonLib.Net.RemoveClientImmediate(playerData.Client, "服务器管理已将你拉入黑名单");
+        CommonLib.Net.RemoveClientImmediate(playerData.Client!, "服务器管理已将你拉入黑名单");
         DialogsManager.Alert($"已成功将{playerData.Name}拉入黑名单");
     }
 

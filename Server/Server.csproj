@@ -1,8 +1,10 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk" InitialTargets="PackResource">
     <PropertyGroup>
         <AssemblyName>Server</AssemblyName>
+        <OutputType>Exe</OutputType>
         <Version>$(ScNetworkVersion)</Version>
         <TargetFrameworks>$(GlobalTargetFramework)</TargetFrameworks>
+        <DefineConstants>$(DefineConstants);SERVER</DefineConstants>
         <Platforms>AnyCPU</Platforms>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Game</RootNamespace>
@@ -26,6 +28,10 @@
         <Optimize>true</Optimize>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <UsePackResourceTarget>true</UsePackResourceTarget>
+    </PropertyGroup>
+
     <ItemGroup>
         <Using Include="System.Reflection"/>
         <Using Include="System.Diagnostics"/>
@@ -38,7 +44,17 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
+        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj" SetTargetFramework="TargetFramework=net10.0">
+            <AdditionalProperties>DefineConstants=DESKTOP;SERVER</AdditionalProperties>
+        </ProjectReference>
     </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Content.scpak">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <Import Project="..\SharedProperties\GlobalUsing.props"/>
 
 </Project>

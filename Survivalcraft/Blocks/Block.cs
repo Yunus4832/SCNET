@@ -693,6 +693,11 @@ public abstract class Block
         var array = useInteractionBoxes
             ? GetCustomInteractionBoxes(subsystemTerrain, value)
             : GetCustomCollisionBoxes(subsystemTerrain, value);
+        if (array.Length == 0)
+        {
+            return null;
+        }
+
         for (var i = 0; i < array.Length; i++)
         {
             var num = ray.Intersection(array[i]);

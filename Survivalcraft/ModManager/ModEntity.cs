@@ -1,8 +1,11 @@
 using System.Text;
 using System.Xml.Linq;
+
 using Engine.Graphics;
+
 using Game.ContentReaders;
-using Game.NetWork;
+using Game.Network.Packages;
+using Game.Network.Serialization;
 using Game.ZipArchive;
 
 namespace Game.ModManager;
@@ -61,8 +64,12 @@ public class ModEntity
 
     public virtual void LoadIcon(Stream stream)
     {
+#if SERVER
+        return;
+#else
         Icon = Texture2D.Load(stream);
         stream.Close();
+#endif
     }
 
     /// <summary>
@@ -104,6 +111,13 @@ public class ModEntity
     /// <returns></returns>
     protected virtual bool GetFile(string filename, Action<Stream> stream)
     {
+        if (string.Equals(filename, "icon.png", StringComparison.OrdinalIgnoreCase))
+        {
+#if SERVER
+            return false;
+#endif
+        }
+
         if (!_modFiles.TryGetValue(filename, out var entry))
         {
             return false;
@@ -169,7 +183,9 @@ public class ModEntity
                 ModInfo = ModsManager.DeserializeJson<ModInfo>(ModsManager.StreamToString(stream))
                           ?? throw new InvalidOperationException("Deserialize ModFile error");
             });
+#if !SERVER
         GetFile("icon.png", LoadIcon);
+#endif
         foreach (var c in _modFiles)
         {
             var zipArchiveEntry = c.Value;

@@ -1,11 +1,13 @@
 using System.Runtime.InteropServices;
 using System.Text;
+
 using Android;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Provider;
 using Android.Runtime;
+
 using Game;
 
 namespace Survivalcraft.Android;
@@ -25,6 +27,7 @@ using Permission = Permission;
                            ConfigChanges.ScreenLayout |
                            ConfigChanges.SmallestScreenSize
 )]
+[Register("com.candy.scnet.MainActivity")]
 [IntentFilter(
     ["android.intent.action.VIEW"],
     DataScheme = "com.candy.scnet",

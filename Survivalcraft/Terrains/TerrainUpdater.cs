@@ -1,5 +1,6 @@
-using Game.NetWork;
-using Game.NetWork.Packages;
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Terrains;
 
@@ -545,14 +546,11 @@ public class TerrainUpdater
                     Log.Information($"本次处理{toSendList.Count}个Chunk");
 #endif
                     CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(toSendList) { To = item.Key });
-                    Log.Information("区块处理执行成功1");
                 }
 
                 if (result.Count > 0)
                 {
-                    Log.Information("区块result处理");
                     CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(result, 0) { To = item.Key });
-                    Log.Information("区块处理执行成功2");
                 }
             }
 
@@ -730,7 +728,9 @@ public class TerrainUpdater
 
                 _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
                 _terrain.FreeChunk(terrainChunk);
+#if !SERVER
                 _subsystemTerrain.TerrainRenderer.DisposeTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
+#endif
             }
         }
 
@@ -1108,6 +1108,10 @@ public class TerrainUpdater
             }
             case TerrainChunkState.InvalidVertices1:
             {
+#if SERVER
+                chunk.ThreadState = TerrainChunkState.Valid;
+                chunk.WasUpgraded = true;
+#else
                 CalculateChunkSliceContentsHash(chunk);
                 lock (chunk.Geometry)
                 {
@@ -1122,10 +1126,15 @@ public class TerrainUpdater
 
                 chunk.ThreadState = TerrainChunkState.InvalidVertices2;
                 chunk.WasUpgraded = true;
+#endif
                 break;
             }
             case TerrainChunkState.InvalidVertices2:
             {
+#if SERVER
+                chunk.ThreadState = TerrainChunkState.Valid;
+                chunk.WasUpgraded = true;
+#else
                 lock (chunk.Geometry)
                 {
                     GenerateChunkVertices(chunk, false);
@@ -1139,6 +1148,7 @@ public class TerrainUpdater
 
                 chunk.ThreadState = TerrainChunkState.Valid;
                 chunk.WasUpgraded = true;
+#endif
                 break;
             }
         }

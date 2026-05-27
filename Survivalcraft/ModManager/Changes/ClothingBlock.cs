@@ -1,5 +1,7 @@
 using System.Xml.Linq;
+
 using Engine.Graphics;
+
 using EntitySystem.XmlUtilities;
 
 namespace Game.ModManager.Changes;
@@ -61,7 +63,12 @@ public class ClothingBlock : Block
                 CanBeDyed = XmlUtils.GetAttributeValue<bool>(item, "CanBeDyed"),
                 Layer = XmlUtils.GetAttributeValue<int>(item, "Layer"),
                 PlayerLevelRequired = XmlUtils.GetAttributeValue<int>(item, "PlayerLevelRequired"),
+#if SERVER
+                // Headless server only needs clothing metadata for gameplay calculations.
+                Texture = null!,
+#else
                 Texture = ContentManager.Get<Texture2D>(XmlUtils.GetAttributeValue<string>(item, "TextureName")),
+#endif
                 ImpactSoundsFolder = XmlUtils.GetAttributeValue<string>(item, "ImpactSoundsFolder"),
                 Description = newDescription ?? string.Empty
             };
@@ -91,6 +98,7 @@ public class ClothingBlock : Block
         }
 
         LoadClothingData(xElement);
+#if !SERVER
         var playerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass.Male);
         var array = new Matrix[playerModel.Bones.Count];
         playerModel.CopyAbsoluteBoneTransformsTo(array);
@@ -130,6 +138,7 @@ public class ClothingBlock : Block
                 _outerMesh.AppendModelMeshPart(meshPart2, matrix2, false, true, false, true, color2);
             }
         }
+#endif
 
         base.Initialize();
     }
@@ -185,7 +194,23 @@ public class ClothingBlock : Block
     public override ClothingData GetClothingData(int data)
     {
         var num = GetClothingIndex(data);
-        return _clothingData[num];
+        if (num >= 0 && num < _clothingData.Count && _clothingData[num] != null)
+        {
+            return _clothingData[num];
+        }
+
+        for (var i = 0; i < _clothingData.Count; i++)
+        {
+            if (_clothingData[i] == null)
+            {
+                continue;
+            }
+
+            Log.Warning($"Invalid clothing index {num}, fallback to {i}.");
+            return _clothingData[i];
+        }
+
+        throw new InvalidOperationException($"No clothing data available. Requested index={num}.");
     }
 
     public override IEnumerable<int> GetCreativeValues()

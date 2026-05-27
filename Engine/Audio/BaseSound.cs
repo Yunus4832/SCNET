@@ -1,4 +1,5 @@
 using Engine.Core;
+
 using Silk.NET.OpenAL;
 
 namespace Engine.Audio;
@@ -11,7 +12,7 @@ public abstract class BaseSound : IDisposable
 
     protected readonly Lock stateSync = new();
 
-    public uint MSource;
+    public uint Source;
 
     internal BaseSound()
     {
@@ -25,7 +26,7 @@ public abstract class BaseSound : IDisposable
             return;
         }
 
-        MSource = Mixer.AL.GenSource();
+        Source = Mixer.AL.GenSource();
         Mixer.CheckALError();
         Mixer.AL.DistanceModel(DistanceModel.None);
         Mixer.CheckALError();
@@ -186,7 +187,7 @@ public abstract class BaseSound : IDisposable
 
     private void InternalSetVolume(float volume)
     {
-        if (MSource == 0)
+        if (Source == 0)
         {
             return;
         }
@@ -196,13 +197,13 @@ public abstract class BaseSound : IDisposable
             return;
         }
 
-        Mixer.AL.SetSourceProperty(MSource, SourceFloat.Gain, volume);
+        Mixer.AL.SetSourceProperty(Source, SourceFloat.Gain, volume);
         Mixer.CheckALError();
     }
 
     private void InternalSetPitch(float pitch)
     {
-        if (MSource == 0)
+        if (Source == 0)
         {
             return;
         }
@@ -212,13 +213,13 @@ public abstract class BaseSound : IDisposable
             return;
         }
 
-        Mixer.AL.SetSourceProperty(MSource, SourceFloat.Pitch, pitch);
+        Mixer.AL.SetSourceProperty(Source, SourceFloat.Pitch, pitch);
         Mixer.CheckALError();
     }
 
     private void InternalSetPan(float pan)
     {
-        if (MSource == 0)
+        if (Source == 0)
         {
             return;
         }
@@ -230,7 +231,7 @@ public abstract class BaseSound : IDisposable
 
         const float value = 0f;
         const float value2 = -0.1f;
-        Mixer.AL.SetSourceProperty(MSource, SourceVector3.Position, pan, value, value2);
+        Mixer.AL.SetSourceProperty(Source, SourceVector3.Position, pan, value, value2);
         Mixer.CheckALError();
     }
 
@@ -242,7 +243,7 @@ public abstract class BaseSound : IDisposable
 
     internal virtual void InternalDispose()
     {
-        if (MSource == 0)
+        if (Source == 0)
         {
             return;
         }
@@ -252,10 +253,10 @@ public abstract class BaseSound : IDisposable
             return;
         }
 
-        Mixer.AL.SourceStop(MSource);
+        Mixer.AL.SourceStop(Source);
         Mixer.CheckALError();
-        Mixer.AL.DeleteSource(MSource);
+        Mixer.AL.DeleteSource(Source);
         Mixer.CheckALError();
-        MSource = 0;
+        Source = 0;
     }
 }

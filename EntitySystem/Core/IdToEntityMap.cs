@@ -2,6 +2,8 @@ namespace EntitySystem.Core;
 
 public class IdToEntityMap(Dictionary<int, Entity> map)
 {
+    public static readonly IdToEntityMap Default = new IdToEntityMap(new Dictionary<int, Entity>());
+
     public Entity? FindEntity(int id)
     {
         return map.GetValueOrDefault(id);

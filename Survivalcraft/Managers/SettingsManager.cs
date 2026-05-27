@@ -1,7 +1,10 @@
 using System.Globalization;
 using System.Xml.Linq;
+
 using Engine.Serialization;
+
 using EntitySystem.XmlUtilities;
+
 using Game.ContentProviders;
 
 namespace Game.Managers;
@@ -277,7 +280,11 @@ public static class SettingsManager
         CreatureAreaRadiusConstant = 2;
         CreatureSpawnIntervalTime = 60f;
         CreatureConstantSpawnIntervalTime = 1f;
+#if SERVER
+        CommunityAccessToken = string.Empty;
+#else
         CommunityAccessToken = Guid.NewGuid().ToString();
+#endif
         ServerPort = 28887;
         BroadcastPort = 28888;
         DisplayLog = false;
@@ -340,7 +347,11 @@ public static class SettingsManager
         MotdLastDownloadedData = string.Empty;
         UserId = string.Empty;
         LastLaunchedVersion = string.Empty;
+#if SERVER
+        CommunityContentMode = CommunityContentMode.Disabled;
+#else
         CommunityContentMode = CommunityContentMode.Normal;
+#endif
         MultithreadedTerrainUpdate = true;
         NewYearCelebrationLastYear = 2015;
         ScreenLayout1 = ScreenLayout.Single;
@@ -492,6 +503,12 @@ public static class SettingsManager
             {
                 try
                 {
+#if SERVER
+                    if (item.Name == nameof(FullScreenMode))
+                    {
+                        continue;
+                    }
+#endif
                     var value = HumanReadableConverter.ConvertToString(item.GetValue(null, null) ?? string.Empty);
                     var node = XmlUtils.AddElement(xElement, "Setting");
                     XmlUtils.SetAttributeValue(node, "Name", item.Name);

@@ -1,4 +1,5 @@
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
@@ -56,6 +57,11 @@ public class ComponentModel : Component
 
     public void CalculateAbsoluteBonesTransforms(Camera camera)
     {
+        if (_model == null)
+        {
+            return;
+        }
+
         ProcessBoneHierarchy(
             Model.RootBone ?? throw new InvalidOperationException("Required Model.RootBone is null"),
             camera.ViewMatrix,
@@ -97,6 +103,12 @@ public class ComponentModel : Component
     {
         subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         componentFrame = Entity.FindComponent<ComponentFrame>(true)!;
+#if SERVER
+        CastsShadow = false;
+        TextureOverride = null;
+        PrepareOrder = valuesDictionary.GetValue<int>("PrepareOrder");
+        _boundingSphereRadius = valuesDictionary.GetValue<float>("BoundingSphereRadius");
+#else
         var value = valuesDictionary.GetValue<string>("ModelName");
         Model = ContentManager.Get<Model>(value);
         CastsShadow = valuesDictionary.GetValue<bool>("CastsShadow");
@@ -104,6 +116,7 @@ public class ComponentModel : Component
         TextureOverride = string.IsNullOrEmpty(value2) ? null : ContentManager.Get<Texture2D>(value2);
         PrepareOrder = valuesDictionary.GetValue<int>("PrepareOrder");
         _boundingSphereRadius = valuesDictionary.GetValue<float>("BoundingSphereRadius");
+#endif
     }
 
     public virtual void SetModel(Model model)

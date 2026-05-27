@@ -1,4 +1,5 @@
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
@@ -28,6 +29,9 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
+#if SERVER
+        return;
+#else
         if (camera.GameWidget.PlayerData != _componentPlayer.PlayerData)
         {
             return;
@@ -43,12 +47,16 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         {
             DrawRayHighlight(camera);
         }
+#endif
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.BlockHighlight;
 
     public void Update(float dt)
     {
+#if SERVER
+        return;
+#else
         var activeCamera = _componentPlayer.GameWidget.ActiveCamera;
         var ray = new Ray3?(new Ray3(activeCamera.ViewPosition, activeCamera.ViewDirection));
         NearbyEditableCell = null;
@@ -83,10 +91,14 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         {
             _highlightRaycastResult = null;
         }
+#endif
     }
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
+#if SERVER
+        return;
+#else
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemAnimatedTextures = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
@@ -96,6 +108,7 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
             ModsManager.GetInPakOrStorageFile<string>("Shaders/Highlight", ".psh"),
             new ShaderMacro("ShadowShader")
         );
+#endif
     }
 
     public void DrawRayHighlight(Camera camera)

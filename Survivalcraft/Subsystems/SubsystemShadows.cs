@@ -1,4 +1,5 @@
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
@@ -18,11 +19,18 @@ public class SubsystemShadows : Subsystem, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
+#if SERVER
+        return;
+#else
         _primitivesRenderer.Flush(camera.ViewProjectionMatrix);
+#endif
     }
 
     public void QueueShadow(Camera camera, Vector3 shadowPosition, float shadowDiameter, float alpha)
     {
+#if SERVER
+        return;
+#else
         if (!SettingsManager.ObjectsShadowsEnabled)
         {
             return;
@@ -87,14 +95,17 @@ public class SubsystemShadows : Subsystem, IDrawable
                 }
             }
         }
+#endif
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
         SubsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
+#if !SERVER
         _batch = _primitivesRenderer.TexturedBatch(ContentManager.Get<Texture2D>("Textures/Shadow"), false, 0,
             DepthStencilState.DepthRead, RasterizerState.CullCounterClockwiseScissor, BlendState.AlphaBlend,
             SamplerState.LinearClamp);
+#endif
     }
 
     public void DrawShadowOverQuad(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, Vector3 shadowPosition,

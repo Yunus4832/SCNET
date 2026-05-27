@@ -1,6 +1,9 @@
 using System.Xml.Linq;
+
 using Engine.Media;
-using Game.NetWork;
+
+using Game.Network;
+using Game.Network.Enums;
 
 namespace Game.Screens;
 
@@ -67,13 +70,13 @@ public class PlayersScreen : Screen
                     );
                 }
                 else if (_subsystemPlayers.PlayersData.Count >=
-                         ProjectNet.SubsystemGameInfo.WorldSettings.MaxOnlinePlayerCount)
+                         GameManager.Project!.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount)
                 {
                     DialogsManager.ShowDialog(
                         null,
                         new MessageDialog(
                             LanguageControl.Unavailable,
-                            $"超出最大玩家数量{ProjectNet.SubsystemGameInfo.WorldSettings.MaxOnlinePlayerCount}",
+                            $"超出最大玩家数量{GameManager.Project!.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount}",
                             LanguageControl.Ok
                         )
                     );

@@ -1,7 +1,9 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -206,20 +208,33 @@ public class SubsystemBodies : Subsystem, IUpdateable
         }
     }
 
-    public void FindBodyByCreatureID(ushort creatureId, Action<ComponentBody>? action = null, Action? fail = null)
+    public void FindBodyByCreatureID(int creatureId, Action<ComponentBody>? action = null, Action? fail = null)
     {
-        Project.FindEntityById(creatureId, e =>
+        if (creatureId <= 0)
         {
-            var body = e.FindComponent<ComponentBody>();
-            if (body != null)
+            fail?.Invoke();
+            return;
+        }
+
+        if (_idBodies.TryGetValue((ushort)creatureId, out var body))
+        {
+            action?.Invoke(body);
+            return;
+        }
+
+        foreach (var componentBody in Bodies)
+        {
+            if (componentBody.Entity.EntityId != creatureId)
             {
-                action?.Invoke(body);
+                continue;
             }
-            else
-            {
-                fail?.Invoke();
-            }
-        });
+
+            _idBodies[(ushort)creatureId] = componentBody;
+            action?.Invoke(componentBody);
+            return;
+        }
+
+        fail?.Invoke();
     }
 
     public override void OnEntityRemoved(Entity entity)
@@ -259,6 +274,11 @@ public class SubsystemBodies : Subsystem, IUpdateable
         }
 
         value.Add(componentBody);
+        if (componentBody.Entity.EntityId != 0)
+        {
+            _idBodies[(ushort)componentBody.Entity.EntityId] = componentBody;
+        }
+
         componentBody.PositionChanged += ComponentBodyPositionChanged;
     }
 
@@ -267,6 +287,11 @@ public class SubsystemBodies : Subsystem, IUpdateable
         if (_areaByComponentBody.Remove(componentBody, out var key))
         {
             _componentBodiesByArea[key].Remove(componentBody);
+        }
+
+        if (componentBody.Entity.EntityId != 0)
+        {
+            _idBodies.Remove((ushort)componentBody.Entity.EntityId);
         }
 
         componentBody.PositionChanged -= ComponentBodyPositionChanged;

@@ -1,5 +1,6 @@
-using Game.NetWork;
-using Game.NetWork.Packages;
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Widgets;
 

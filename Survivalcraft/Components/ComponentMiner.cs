@@ -1,8 +1,11 @@
 using System.Globalization;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Components;
 
@@ -273,9 +276,11 @@ public class ComponentMiner : Component, IUpdateable
 
             result = true;
 
+#if !SERVER
             var particleSystem = block.CreateDebrisParticleSystem(_subsystemTerrain, raycastResult.HitPoint(0.1f),
                 cellValue, 0.65f);
             Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
+#endif
         }
         else
         {

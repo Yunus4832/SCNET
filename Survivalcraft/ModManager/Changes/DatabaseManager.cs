@@ -1,5 +1,7 @@
 using System.Xml.Linq;
+
 using Engine.Serialization;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
@@ -115,7 +117,6 @@ public static class DatabaseManager
             }
 #if DEBUG
             Log.Information($"本次检测Database数据耗时：{useTime:0.000}s");
-
 #endif
         });
     }

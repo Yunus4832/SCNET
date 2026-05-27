@@ -1,5 +1,7 @@
 ﻿using System.Reflection;
+
 using Engine.Windowing;
+
 using Game;
 
 namespace Survivalcraft.Linux;

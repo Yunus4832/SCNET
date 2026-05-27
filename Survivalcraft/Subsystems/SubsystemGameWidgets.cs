@@ -1,7 +1,8 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -129,14 +130,17 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
     {
         _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
         SubsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
+#if !SERVER
         _subsystemPlayers.PlayerAdded += AddGameWidgetForPlayer;
         _subsystemPlayers.PlayerRemoved += delegate(PlayerData playerData) { RemoveGameWidget(playerData.GameWidget); };
+#endif
         if (CommonLib.MainPlayer != null)
         {
             MainPlayerData = CommonLib.MainPlayer.PlayerData;
         }
 
         GamesWidget = valuesDictionary.GetValue<GamesWidget>("GamesWidget");
+#if !SERVER
         foreach (var playersDatum in _subsystemPlayers.PlayersData)
         {
 #if DEBUG
@@ -144,6 +148,7 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 #endif
             AddGameWidgetForPlayer(playersDatum);
         }
+#endif
         /*
         var listDict = valuesDictionary.GetValue<ValuesDictionary>("Messages", null);
         if (CommonLib.WorkType == WorkType.Client && listDict != null)

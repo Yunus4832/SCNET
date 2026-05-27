@@ -1,4 +1,5 @@
 <Project>
+    <!-- 项目全局的配置-->
     <PropertyGroup>
         <!-- 项目版本号 -->
         <ScNetworkVersion>0.0.0.1</ScNetworkVersion>
@@ -8,5 +9,19 @@
         <AndroidTargetFramework>net10.0-android36.0</AndroidTargetFramework>
         <!--安卓最低的版本支持 安卓 6 -->
         <MinAndroidApiVersion>23</MinAndroidApiVersion>
+    </PropertyGroup>
+
+    <!-- 语言相关配置 -->
+    <PropertyGroup>
+        <!-- 使用最新的语法特性-->
+        <LangVersion>latest</LangVersion>
+        <!-- 启用空支持-->
+        <Nullable>enable</Nullable>
+        <!-- 可空警告视为错误-->
+        <WarningsAsErrors>Nullable</WarningsAsErrors>
+        <!-- 忽略的警告列表-->
+        <NoWarn>$(NoWarn);CA1416;CA1422</NoWarn>
+        <!-- 启用隐式 Using-->
+        <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 </Project>

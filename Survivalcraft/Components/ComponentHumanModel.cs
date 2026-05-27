@@ -1,9 +1,11 @@
 using Engine.Graphics;
 using Engine.Media;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Packages;
 
 namespace Game.Components;
 
@@ -484,10 +486,11 @@ public class ComponentHumanModel : ComponentCreatureModel
                     MathUtils.Saturate((position.Length() - 4f) / 3f));
                 if (color.A > 8)
                 {
+                    const float nameTagScale = 0.007f;
                     var right = Vector3.TransformNormal(
-                        0.005f * Vector3.Normalize(Vector3.Cross(camera.ViewDirection, Vector3.UnitY)),
+                        nameTagScale * Vector3.Normalize(Vector3.Cross(camera.ViewDirection, Vector3.UnitY)),
                         camera.ViewMatrix);
-                    var down = Vector3.TransformNormal(-0.005f * Vector3.UnitY, camera.ViewMatrix);
+                    var down = Vector3.TransformNormal(-nameTagScale * Vector3.UnitY, camera.ViewMatrix);
                     var font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
                     _subsystemModelsRenderer.PrimitivesRenderer
                         .FontBatch(font, 1, DepthStencilState.DepthRead, RasterizerState.CullNoneScissor,

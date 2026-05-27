@@ -1,7 +1,9 @@
 using System.Xml.Linq;
+
 using Engine.Audio;
 using Engine.Graphics;
-using Game.NetWork;
+
+using Game.Network.Serialization;
 
 namespace Game.Screens;
 

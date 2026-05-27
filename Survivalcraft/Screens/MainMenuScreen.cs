@@ -1,6 +1,8 @@
 using System.Xml.Linq;
+
 using Engine.Input;
-using Game.NetWork;
+
+using Game.Network;
 using Game.VersionConverts;
 
 namespace Game.Screens;

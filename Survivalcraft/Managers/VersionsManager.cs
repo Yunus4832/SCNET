@@ -1,7 +1,9 @@
 using System.Xml.Linq;
+
 using Engine.Serialization;
+
 using EntitySystem.XmlUtilities;
-using Game.NetWork;
+
 using Game.VersionConverts;
 
 namespace Game.Managers;
@@ -27,7 +29,7 @@ public static class VersionsManager
 
     public static string Version { get; set; }
 
-    public static string ServerVersion { get; set; } = ProjectNet.ServerVersion;
+    public static string ServerVersion { get; set; } = "0.0.0.1";
 
     public static string LastLaunchedVersion { get; set; } = string.Empty;
 

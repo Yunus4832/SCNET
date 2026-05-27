@@ -1,5 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
+
 using Game.TerrainSerializers;
 
 namespace Game.Components;

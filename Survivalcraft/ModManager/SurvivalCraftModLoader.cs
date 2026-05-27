@@ -1,5 +1,7 @@
 using Engine.Graphics;
-using Game.NetWork;
+
+using Game.Network;
+using Game.Network.Enums;
 
 namespace Game.ModManager;
 
@@ -75,7 +77,10 @@ public class SurvivalCraftModLoader : ModLoader
 
     public override void OnPlayerDead(PlayerData playerData)
     {
+#if !SERVER
         playerData.GameWidget.ActiveCamera = playerData.GameWidget.FindCamera<DeathCamera>()!;
+#endif
+
         if (playerData.ComponentPlayer != null)
         {
             var text = playerData.ComponentPlayer.ComponentHealth.CauseOfDeath;
@@ -84,6 +89,7 @@ public class SurvivalCraftModLoader : ModLoader
                 text = LanguageControl.Get(PlayerData.TypeName, 12);
             }
 
+#if !SERVER
             var arg = string.Format(LanguageControl.Get(PlayerData.TypeName, 13), text);
             if (playerData.SubsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel)
             {
@@ -103,6 +109,7 @@ public class SurvivalCraftModLoader : ModLoader
                 playerData.ComponentPlayer.ComponentGui.DisplayLargeMessage(LanguageControl.Get(PlayerData.TypeName, 6),
                     string.Format(LanguageControl.Get(PlayerData.TypeName, 9), arg), 30f, 1.5f);
             }
+#endif
 
             if (CommonLib.WorkType == WorkType.Server)
             {
@@ -120,44 +127,7 @@ public class SurvivalCraftModLoader : ModLoader
         float? alphaThreshold
     )
     {
-        if (componentModel is not ComponentHumanModel)
-        {
-            return;
-        }
-
-        var componentPlayer = componentModel.Entity.FindComponent<ComponentPlayer>();
-        if (componentPlayer == null || camera.GameWidget.PlayerData == componentPlayer.PlayerData)
-        {
-            return;
-        }
-
-        var componentCreature = componentPlayer.ComponentMiner.ComponentCreature;
-        var position =
-            Vector3.Transform(
-                componentCreature.ComponentBody.Position +
-                1.02f * Vector3.UnitY * componentCreature.ComponentBody.BoxSize.Y, camera.ViewMatrix);
-        if (!(position.Z < 0f))
-        {
-            return;
-        }
-
-        var color = Color.Lerp(Color.White, Color.Transparent,
-            MathUtils.Saturate((position.Length() - 4f) / 3f));
-        if (color.A <= 8)
-        {
-            return;
-        }
-
-        var right = Vector3.TransformNormal(
-            0.005f * Vector3.Normalize(Vector3.Cross(camera.ViewDirection, Vector3.UnitY)),
-            camera.ViewMatrix);
-        var down = Vector3.TransformNormal(-0.005f * Vector3.UnitY, camera.ViewMatrix);
-        var font = LabelWidget.BitmapFont;
-        modelsRenderer.PrimitivesRenderer
-            .FontBatch(font, 1, DepthStencilState.DepthRead, RasterizerState.CullNoneScissor,
-                BlendState.AlphaBlend, SamplerState.LinearClamp).QueueText(
-                componentPlayer.PlayerData.Name, position, right, down, color,
-                TextAnchor.HorizontalCenter | TextAnchor.Bottom);
+        // Player name rendering is handled by ComponentHumanModel.DrawExtras.
     }
 
     public override int GetMaxInstancesCount()

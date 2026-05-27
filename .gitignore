@@ -343,4 +343,4 @@ Content.scpak
 Publish/*
 
 # 避免被 NuGet 规则忽略
-!Survivalcraft/NetWork/Packages/*
+!Survivalcraft/Network/Packages/*

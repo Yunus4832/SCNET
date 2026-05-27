@@ -1,6 +1,8 @@
 using Engine.Graphics;
 using Engine.Media;
-using Game.NetWork;
+
+using Game.Network;
+using Game.Network.Enums;
 
 namespace Game.Managers;
 

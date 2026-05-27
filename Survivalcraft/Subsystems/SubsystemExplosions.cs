@@ -1,7 +1,9 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -11,7 +13,11 @@ public class SubsystemExplosions : Subsystem, IUpdateable
 
     private readonly Dictionary<Point2, List<(Point3, float)>> _explosionCells = new();
 
+#if SERVER
+    public ExplosionParticleSystem? ExplosionParticleSystem;
+#else
     public ExplosionParticleSystem ExplosionParticleSystem = null!;
+#endif
 
     private readonly Dictionary<Projectile, bool> _generatedProjectiles = new();
 
@@ -175,8 +181,10 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         _subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true)!;
         _subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!;
         _subsystemFireBlockBehavior = Project.FindSubsystem<SubsystemFireBlockBehavior>(true)!;
+#if !SERVER
         ExplosionParticleSystem = new ExplosionParticleSystem();
         _subsystemParticles.AddParticleSystem(ExplosionParticleSystem);
+#endif
     }
 
     public virtual void SimulateExplosion(
@@ -460,7 +468,9 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     _explosionCells[chunk].Add((item.Key, num5));
                 }
 
+#if !SERVER
                 ExplosionParticleSystem.SetExplosionCell(item.Key, num5);
+#endif
             }
         }
 

@@ -1,8 +1,11 @@
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 using Game.TerrainSerializers;
 using Game.TerrainSerializers.NetWork;
 
@@ -502,6 +505,9 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
+#if SERVER
+        return;
+#else
         if (TerrainRenderingEnabled)
         {
             if (drawOrder == _drawOrders[0])
@@ -516,6 +522,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 TerrainRenderer.DrawTransparent(camera);
             }
         }
+#endif
     }
 
     public void Update(float dt)
@@ -535,7 +542,9 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         SubsystemFurnitureBlockBehavior = Project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
         SubsystemPalette = Project.FindSubsystem<SubsystemPalette>(true)!;
         Terrain = new Terrain();
+#if !SERVER
         TerrainRenderer = new TerrainRenderer(this);
+#endif
         TerrainUpdater = new TerrainUpdater(this);
         TerrainSerializer = CommonLib.WorkType != WorkType.Client
             ? new TerrainSerializer24(SubsystemGameInfo.DirectoryName)
@@ -611,8 +620,10 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public override void Dispose()
     {
+#if !SERVER
         TerrainRenderer.Dispose();
         TerrainRenderer = null!;
+#endif
 
         TerrainUpdater.Dispose();
         TerrainUpdater = null!;

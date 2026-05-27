@@ -1,5 +1,6 @@
 using Engine.Core;
 using Engine.Serialization;
+
 using EntitySystem.TemplatesDatabase;
 
 namespace EntitySystem.Core;
@@ -24,7 +25,13 @@ public class Project : IDisposable
 
     public event EventHandler<EntityAddRemoveEventArgs>? EntityRemoved;
 
+    public static event Action<Project>? BeforeSubsystemsAndEntitiesLoad;
+
     public static event Action<Project>? OnProjectLoad;
+
+    public int NextEntityID = 1;
+
+    public bool PostponeFireEntityAddedEvents = true;
 
     public Project()
     {
@@ -61,7 +68,8 @@ public class Project : IDisposable
                 }
                 catch (TargetInvocationException ex)
                 {
-                    throw ex.InnerException ?? ex;
+                    var root = ex.InnerException ?? ex;
+                    throw new InvalidOperationException($"Failed to create subsystem \"{value2}\".", root);
                 }
 
                 if (obj is not Subsystem subsystem)
@@ -76,14 +84,28 @@ public class Project : IDisposable
             }
 
             var loadedSubsystems = new Dictionary<Subsystem, bool>();
+            List<Entity> entities = [];
+            if (projectData.EntityDataList.EntitiesData.Count != 0)
+            {
+                entities = InitializeEntities(projectData.EntityDataList);
+                NextEntityID = projectData.NextEntityID;
+            }
+
+            BeforeSubsystemsAndEntitiesLoad?.Invoke(this);
             foreach (var value3 in dictionary.Values)
             {
                 LoadSubsystem(value3, dictionary, loadedSubsystems, 0);
             }
 
+            LoadEntities(projectData.EntityDataList, entities);
+            if (entities.Count != 0)
+            {
+                AddEntities(entities);
+            }
+
             OnProjectLoad?.Invoke(this);
-            var entities = LoadEntities(projectData.EntityDataList);
-            AddEntities(entities);
+
+            OnProjectLoad?.Invoke(this);
         }
         catch (Exception)
         {
@@ -153,11 +175,6 @@ public class Project : IDisposable
         return FindSubsystem(typeof(T), null, throwOnError) as T;
     }
 
-    public virtual bool FindEntityById(ushort id, Action<Entity>? action = null)
-    {
-        return false;
-    }
-
     public T? FindSubsystem<T>(string name, bool throwOnError) where T : class
     {
         return FindSubsystem(typeof(T), name, throwOnError) as T;
@@ -175,6 +192,19 @@ public class Project : IDisposable
 
     public virtual void GenerateEntityId(Entity entity)
     {
+    }
+
+    public bool SendToClientMode { get; set; }
+
+    public bool FindEntityById(int id, Action<Entity>? action = null)
+    {
+        foreach (var entity in entityDictionary.Keys.Where(entity => entity.EntityId == id))
+        {
+            action?.Invoke(entity);
+            return true;
+        }
+
+        return false;
     }
 
     public Entity CreateEntity(ValuesDictionary valuesDictionary)
@@ -247,83 +277,46 @@ public class Project : IDisposable
         }
     }
 
-    public virtual List<Entity> LoadEntities(EntityDataList entityDataList)
+    public virtual void LoadEntityData(EntityDataList entityDataList, List<Entity> entityList)
     {
-        var list = new List<Entity>(entityDataList.EntitiesData.Count);
-        var dictionary = new Dictionary<int, Entity>();
-        var idToEntityMap = new IdToEntityMap(dictionary);
-        foreach (var entitiesDatum in entityDataList.EntitiesData)
+        var num = 0;
+        if (entityDataList.EntitiesData.Count == 0)
         {
-            try
-            {
-                var entity = new Entity(this, entitiesDatum.ValuesDictionary);
-                list.Add(entity);
-                if (entitiesDatum.Id != 0)
-                {
-                    dictionary.Add(entitiesDatum.Id, entity);
-                }
-            }
-            catch (Exception innerException)
-            {
-                throw new Exception(
-                    $"Error creating entity from template \"{entitiesDatum.ValuesDictionary.DatabaseObject.Name}\".",
-                    innerException);
-            }
+            return;
         }
 
-        var num = 0;
-        var entitiesToRemove = new List<Entity>();
         foreach (var entitiesDatum2 in entityDataList.EntitiesData)
         {
-            try
-            {
-                list[num].PublicLoadEntity(entitiesDatum2.ValuesDictionary, idToEntityMap);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to load entity {entitiesDatum2.Id}, will skip it. Error: {ex.Message}");
-                entitiesToRemove.Add(list[num]);
-            }
+            entityList[num].InternalLoadEntity(entitiesDatum2.ValuesDictionary, IdToEntityMap.Default);
             num++;
         }
+    }
 
-        foreach (var entity in entitiesToRemove)
+    public virtual void LoadEntities(EntityDataList entityDataList, List<Entity> entityList)
+    {
+        LoadEntityData(entityDataList, entityList);
+        foreach (var entity in EntityKeys)
         {
-            list.Remove(entity);
+            FireEntityAddedEvents(entity);
         }
 
-        return list;
+        PostponeFireEntityAddedEvents = false;
     }
+
+    public virtual List<Entity> LoadEntitiesAll(EntityDataList entityDataList)
+    {
+        return DeserializeEntityDataList(entityDataList, useIdMap: true);
+    }
+
 
     public virtual EntityDataList SaveEntities(IEnumerable<Entity> entities)
     {
-        var dictionary = DetermineNotOwnedEntities(entities);
-        var dictionary2 = new Dictionary<Entity, int>();
-        var entityToIdMap = new EntityToIdMap(dictionary2);
-        foreach (var key in dictionary.Keys)
-        {
-            dictionary2.Add(key, key.EntityId);
-        }
+        return SerializeEntities(DetermineNotOwnedEntities(entities).Keys);
+    }
 
-        var entityDataList = new EntityDataList
-        {
-            EntitiesData = new List<EntityData>(dictionary.Keys.Count)
-        };
-        foreach (var key2 in dictionary.Keys)
-        {
-            var entityData = new EntityData
-            {
-                Id = entityToIdMap.FindId(key2),
-                ValuesDictionary = new ValuesDictionary
-                {
-                    DatabaseObject = key2.ValuesDictionary.DatabaseObject
-                }
-            };
-            key2.InternalSaveEntity(entityData.ValuesDictionary, entityToIdMap);
-            entityDataList.EntitiesData.Add(entityData);
-        }
-
-        return entityDataList;
+    public virtual EntityDataList SaveEntitiesAll(IEnumerable<Entity> entities)
+    {
+        return SerializeEntities(entities);
     }
 
     public ProjectData Save()
@@ -351,6 +344,11 @@ public class Project : IDisposable
 
     public void FireEntityAddedEvents(Entity entity)
     {
+        if (PostponeFireEntityAddedEvents)
+        {
+            return;
+        }
+
         BeforeEntityAdded?.Invoke(this, new EntityAddRemoveEventArgs(entity));
         foreach (var component in entity.Components)
         {
@@ -403,10 +401,13 @@ public class Project : IDisposable
         return dictionary;
     }
 
-    public void LoadSubsystem(Subsystem subsystem, Dictionary<string, Subsystem> subsystemsByName,
-        Dictionary<Subsystem, bool> loadedSubsystems, int depth)
+    public void LoadSubsystem(
+        Subsystem subsystem,
+        Dictionary<string, Subsystem> subsystemsByName,
+        Dictionary<Subsystem, bool> loadedSubsystems,
+        int depth
+    )
     {
-        var realTime1 = Time.RealTime;
         if (depth > 100)
         {
             throw new InvalidOperationException(
@@ -438,5 +439,161 @@ public class Project : IDisposable
 
         subsystem.Load(subsystem.ValuesDictionary);
         loadedSubsystems.Add(subsystem, true);
+    }
+
+    public virtual List<Entity> InitializeAndLoadEntities(EntityDataList entityDataList)
+    {
+        List<Entity> entities = [];
+        if (entityDataList.EntitiesData.Count != 0)
+        {
+            entities = InitializeEntities(entityDataList);
+        }
+
+        LoadEntityData(entityDataList, entities);
+        return entities;
+    }
+
+    public virtual void AttachEntities(IEnumerable<Entity> entities, bool fireAddedEvents)
+    {
+        var oldPostpone = PostponeFireEntityAddedEvents;
+        if (fireAddedEvents)
+        {
+            PostponeFireEntityAddedEvents = true;
+        }
+
+        var enumerable = entities as Entity[] ?? entities.ToArray();
+
+        foreach (var entity in enumerable)
+        {
+            AddEntity(entity);
+        }
+
+        PostponeFireEntityAddedEvents = oldPostpone;
+        if (!fireAddedEvents)
+        {
+            return;
+        }
+
+        foreach (var entity in enumerable)
+        {
+            FireEntityAddedEvents(entity);
+        }
+    }
+
+    public virtual List<Entity> InitializeEntities(EntityDataList entityDataList)
+    {
+        List<Entity> list = new(entityDataList.EntitiesData.Count);
+        Dictionary<int, Entity> dictionary = [];
+        foreach (var entitiesDatum in entityDataList.EntitiesData)
+        {
+            try
+            {
+                Entity entity = new(this, entitiesDatum.ValuesDictionary, entitiesDatum.Id);
+                list.Add(entity);
+                if (entitiesDatum.Id == 0)
+                {
+                    continue;
+                }
+
+                if (dictionary.ContainsKey(entitiesDatum.Id))
+                {
+                    Log.Warning($"Multiple Entities use the same ID{entitiesDatum.Id}");
+                }
+
+                dictionary[entitiesDatum.Id] = entity;
+            }
+            catch (Exception innerException)
+            {
+                throw new Exception(
+                    $"Error creating entity from template \"{entitiesDatum.ValuesDictionary.DatabaseObject.Name}\".",
+                    innerException
+                );
+            }
+        }
+
+        return list;
+    }
+
+    private List<Entity> DeserializeEntityDataList(EntityDataList entityDataList, bool useIdMap)
+    {
+        var entities = new List<Entity>();
+        var idMap = new Dictionary<int, Entity>();
+        var dataItems = new List<EntityData>();
+        foreach (var entityData in entityDataList.EntitiesData)
+        {
+            try
+            {
+                var entity = new Entity(this, entityData.ValuesDictionary, entityData.Id);
+                entities.Add(entity);
+                if (entityData.Id != 0)
+                {
+                    entity.EntityId = (ushort)entityData.Id;
+                    idMap[entityData.Id] = entity;
+                }
+
+                dataItems.Add(entityData);
+            }
+            catch (Exception innerException)
+            {
+                throw new Exception(
+                    $"Error creating entity from template \"{entityData.ValuesDictionary.DatabaseObject.Name}\".",
+                    innerException
+                );
+            }
+        }
+
+        var entitiesToRemove = new List<Entity>();
+        var idToEntityMap = useIdMap ? new IdToEntityMap(idMap) : IdToEntityMap.Default;
+        for (var i = 0; i < dataItems.Count; i++)
+        {
+            try
+            {
+                entities[i].PublicLoadEntity(dataItems[i].ValuesDictionary, idToEntityMap);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to load entity {dataItems[i].Id}, will skip it. Error: {ex.Message}");
+                entitiesToRemove.Add(entities[i]);
+            }
+        }
+
+        foreach (var entity in entitiesToRemove)
+        {
+            entities.Remove(entity);
+            idMap.Remove(entity.EntityId);
+        }
+
+        return entities;
+    }
+
+    private static EntityDataList SerializeEntities(IEnumerable<Entity> entities)
+    {
+        var idMap = new Dictionary<Entity, int>();
+        var entityToIdMap = new EntityToIdMap(idMap);
+        var entityArray = entities as Entity[] ?? entities.ToArray();
+        foreach (var entity in entityArray)
+        {
+            idMap[entity] = entity.EntityId;
+        }
+
+        var entityDataList = new EntityDataList
+        {
+            EntitiesData = new List<EntityData>(entityArray.Length)
+        };
+        foreach (var entity in entityArray)
+        {
+            var entityData = new EntityData
+            {
+                Id = entityToIdMap.FindId(entity),
+                ValuesDictionary = new ValuesDictionary
+                {
+                    DatabaseObject = entity.ValuesDictionary.DatabaseObject
+                }
+            };
+            entity.InternalSaveEntity(entityData.ValuesDictionary, entityToIdMap);
+            entityDataList.EntitiesData.Add(entityData);
+        }
+
+        return entityDataList;
     }
 }

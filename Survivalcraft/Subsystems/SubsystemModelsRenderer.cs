@@ -1,4 +1,5 @@
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
@@ -52,6 +53,9 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
+#if SERVER
+        return;
+#else
         if (drawOrder == _drawOrders[0])
         {
             ModelsDrawn = 0;
@@ -125,6 +129,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
         {
             PrimitivesRenderer.Clear();
         }
+#endif
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
@@ -138,10 +143,12 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             _maxInstancesCount = Math.Max(modLoader.GetMaxInstancesCount(), _maxInstancesCount);
             return false;
         });
+#if !SERVER
         _shaderOpaque = new ModelShader(ShaderCodeManager.GetFast("Shaders/Model.vsh"),
             ShaderCodeManager.GetFast("Shaders/Model.psh"), false, _maxInstancesCount);
         _shaderAlphaTested = new ModelShader(ShaderCodeManager.GetFast("Shaders/Model.vsh"),
             ShaderCodeManager.GetFast("Shaders/Model.psh"), true, _maxInstancesCount);
+#endif
     }
 
     public override void OnEntityAdded(Entity entity)

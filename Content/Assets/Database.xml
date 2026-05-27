@@ -6461,7 +6461,7 @@
                     <Parameter Name="FallResilience"
                                Description="Resilience of body to fall, in m/s. Any fall below that speed will not cause damage."
                                Guid="3520ac5f-492d-468f-a295-442dca639c85" Value="7.5" Type="float"/>
-                    <Parameter Name="Hitpoints" Description="Hitpoints value, 0 to 1"
+                    <Parameter Name="HitPoints" Description="HitPoints value, 0 to 1"
                                Guid="5d87c2b3-e047-466c-a4d5-458d373ad23f" Value="1" Type="float"/>
                     <Parameter Name="DebrisTextureSlot"
                                Description="Index of texture slot to use for destruction debris"

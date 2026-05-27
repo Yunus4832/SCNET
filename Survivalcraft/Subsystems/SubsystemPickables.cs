@@ -1,8 +1,11 @@
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -514,6 +517,10 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         return flag;
     }
 
+    public void RemovePickable(Pickable pickable)
+    {
+        _pickables.Remove(pickable);
+    }
 
     public override void Load(ValuesDictionary valuesDictionary)
     {

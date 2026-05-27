@@ -1,4 +1,5 @@
 using Engine.Core;
+
 using Silk.NET.OpenAL;
 
 namespace Engine.Audio;
@@ -83,14 +84,16 @@ public static class Mixer
             return;
         }
 
-        foreach (var sound in soundsToStopPoll)
+        var soundsSnapshot = new BaseSound[soundsToStopPoll.Count];
+        soundsToStopPoll.CopyTo(soundsSnapshot);
+        foreach (var sound in soundsSnapshot)
         {
-            sound.Stop();
+            sound.Dispose();
         }
 
         foreach (var sound in _soundsToStop)
         {
-            sound.Stop();
+            sound.Dispose();
         }
 
         soundsToStopPoll.Clear();
@@ -124,9 +127,11 @@ public static class Mixer
             return;
         }
 
-        foreach (var item in soundsToStopPoll)
+        var soundsSnapshot = new BaseSound[soundsToStopPoll.Count];
+        soundsToStopPoll.CopyTo(soundsSnapshot);
+        foreach (var item in soundsSnapshot)
         {
-            AL.GetSourceProperty(item.MSource, GetSourceInteger.SourceState, out var sourceState);
+            AL.GetSourceProperty(item.Source, GetSourceInteger.SourceState, out var sourceState);
             var flag = (SourceState)sourceState == SourceState.Stopped;
 
             if (item.State == SoundState.Playing && flag)

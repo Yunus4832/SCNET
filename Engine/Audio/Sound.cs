@@ -17,7 +17,7 @@ public sealed class Sound : BaseSound
     {
         if (Mixer.IsAudioInitialized)
         {
-            Mixer.AL!.SetSourceProperty(MSource, SourceInteger.Buffer, soundBuffer.mBuffer);
+            Mixer.AL!.SetSourceProperty(Source, SourceInteger.Buffer, soundBuffer.mBuffer);
             Mixer.CheckALError();
         }
 
@@ -51,8 +51,8 @@ public sealed class Sound : BaseSound
             return;
         }
 
-        Mixer.AL.SetSourceProperty(MSource, SourceBoolean.Looping, soundIsLooped);
-        Mixer.AL.SourcePlay(MSource);
+        Mixer.AL.SetSourceProperty(Source, SourceBoolean.Looping, soundIsLooped);
+        Mixer.AL.SourcePlay(Source);
         Mixer.CheckALError();
     }
 
@@ -68,7 +68,7 @@ public sealed class Sound : BaseSound
             return;
         }
 
-        Mixer.AL.SourcePause(MSource);
+        Mixer.AL.SourcePause(Source);
         Mixer.CheckALError();
     }
 
@@ -84,7 +84,7 @@ public sealed class Sound : BaseSound
             return;
         }
 
-        Mixer.AL.SourceRewind(MSource);
+        Mixer.AL.SourceRewind(Source);
         Mixer.CheckALError();
     }
 

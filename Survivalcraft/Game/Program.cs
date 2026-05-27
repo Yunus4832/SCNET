@@ -1,8 +1,12 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
+
 using Engine.Graphics;
 using Engine.Input;
+
+using Game.Network;
+
 using LiteNetLib;
 
 namespace Game;
@@ -52,6 +56,9 @@ public static class Program
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
+#if DEBUG
+        Log.AddLogSink(new ConsoleLogSink { MinimumLogType = LogType.Debug });
+#endif
         Log.AddLogSink(new GameLogSink());
 
         Window.HandleUri += HandleUriHandler;

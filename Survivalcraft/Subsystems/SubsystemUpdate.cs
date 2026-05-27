@@ -36,13 +36,13 @@ public class SubsystemUpdate : Subsystem
                     {
                         UpdateOrder = item.Key.UpdateOrder
                     });
-                    flag = true;
                 }
                 else
                 {
                     _updatable.Remove(item.Key);
-                    flag = true;
                 }
+
+                flag = true;
             }
 
             _toAddOrRemove.Clear();

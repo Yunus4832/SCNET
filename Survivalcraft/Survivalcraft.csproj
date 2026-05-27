@@ -4,7 +4,6 @@
         <Version>$(ScNetworkVersion)</Version>
         <Platforms>AnyCPU</Platforms>
         <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
-        <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Game</RootNamespace>
         <Configurations>Debug;Release</Configurations>
     </PropertyGroup>
@@ -18,13 +17,6 @@
         <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
         <RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
         <DefineConstants>ANDROID</DefineConstants>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <LangVersion>latest</LangVersion>
-        <Nullable>enable</Nullable>
-        <WarningsAsErrors>Nullable</WarningsAsErrors>
-        <NoWarn>$(NoWarn);CA1416;CA1422</NoWarn>
     </PropertyGroup>
 
     <!-- Debug 配置 -->

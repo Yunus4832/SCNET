@@ -1,8 +1,11 @@
 using Engine.Audio;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -112,6 +115,9 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
+#if SERVER
+        return;
+#endif
         var num = SettingsManager.VisibilityRange > 128 ? 9 : SettingsManager.VisibilityRange <= 64 ? 7 : 8;
         var num2 = num * num;
         var activeShafts = GetActiveShafts(camera.GameWidget);
@@ -245,6 +251,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
             }
         }
 
+#if !SERVER
         if (Time.PeriodicEvent(0.5, 0.0))
         {
             var num4 = 0f;
@@ -294,6 +301,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         {
             _rainSound.Pause();
         }
+#endif
 
         UpdateFog(dt);
     }
@@ -469,6 +477,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         FogIntensity = valuesDictionary.GetValue("FogIntensity", 0f);
         FogProgress = valuesDictionary.GetValue("FogProgress", 0f);
 
+#if !SERVER
         _rainSound = _subsystemAudio.CreateSound("Audio/Rain");
         _rainSound.IsLooped = true;
         _rainSound.Volume = 0f;
@@ -476,14 +485,17 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         _subsystemParticles.AddParticleSystem(RainSplashParticleSystem);
         SnowSplashParticleSystem = new SnowSplashParticleSystem();
         _subsystemParticles.AddParticleSystem(SnowSplashParticleSystem);
+#endif
         PrecipitationIntensity = valuesDictionary.GetValue("PrecipitationIntensity", 0f); //new2.4
         _rainVolumeFactor = 0f;
+#if !SERVER
         for (var i = -7; i <= 7; i++)
         for (var j = -7; j <= 7; j++)
         {
             var distance = MathUtils.Sqrt(i * i + j * j);
             _rainVolumeFactor += _subsystemAudio.CalculateVolume(distance, 1f);
         }
+#endif
 
         _subsystemBlocksScanner.ScanningChunkCompleted += delegate(TerrainChunk chunk)
         {

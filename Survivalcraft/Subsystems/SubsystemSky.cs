@@ -1,9 +1,13 @@
 using System.Globalization;
+
 using Engine.Graphics;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -19,9 +23,13 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
     public const float NightStart = 0.8f;
 
+#if SERVER
+    private static readonly UnlitShader? _shaderFlat = null;
+    private static readonly UnlitShader? _shaderTextured = null;
+#else
     private static readonly UnlitShader _shaderFlat = new(true, false, true, false);
-
     private static readonly UnlitShader _shaderTextured = new(true, true, false, false);
+#endif
 
     private static readonly int[] _lightValuesMoonless =
     [
@@ -165,6 +173,9 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
+#if SERVER
+        return;
+#else
         if (drawOrder == _drawOrders[0])
         {
             ViewUnderWaterDepth = 0f;
@@ -325,6 +336,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             DrawLightning(camera);
             _primitivesRenderer3D.Flush(camera.ViewProjectionMatrix);
         }
+#endif
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -474,6 +486,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
         _subsystemBodies = Project.FindSubsystem<SubsystemBodies>(true)!;
         _subsystemFluidBlockBehavior = Project.FindSubsystem<SubsystemFluidBlockBehavior>(true)!;
+#if !SERVER
         _sunTexture = ContentManager.Get<Texture2D>("Textures/Sun");
         _glowTexture = ContentManager.Get<Texture2D>("Textures/SkyGlow");
         _cloudsTexture = ContentManager.Get<Texture2D>("Textures/Clouds");
@@ -483,10 +496,13 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             _moonTextures[i] =
                 ContentManager.Get<Texture2D>("Textures/Moon" + (i + 1).ToString(CultureInfo.InvariantCulture));
         }
+#endif
 
         UpdateMoonPhase();
         UpdateLightAndViewParameters();
+#if !SERVER
         Display.DeviceReset += Display_DeviceReset;
+#endif
     }
 
     public void UpdateMoonPhase()
@@ -496,6 +512,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
     public override void Dispose()
     {
+#if !SERVER
         Display.DeviceReset -= Display_DeviceReset;
         Utilities.Dispose(ref _starsVertexBuffer);
         Utilities.Dispose(ref _starsIndexBuffer);
@@ -505,6 +522,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         }
 
         _skyDomes.Clear();
+#endif
     }
 
     public void Display_DeviceReset()
@@ -576,7 +594,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         Display.RasterizerState = RasterizerState.CullNoneScissor;
         var num = CalculateSkyFog(camera.ViewPosition);
         Display.BlendState = BlendState.Opaque;
-        _shaderFlat.Transforms.World[0] = Matrix.CreateTranslation(camera.ViewPosition) * camera.ViewProjectionMatrix;
+        _shaderFlat!.Transforms.World[0] = Matrix.CreateTranslation(camera.ViewPosition) * camera.ViewProjectionMatrix;
         _shaderFlat.Color = new Vector4(1f - num);
         _shaderFlat.AdditiveColor = num * new Vector4(ViewFogColor);
         Display.DrawIndexed(PrimitiveType.TriangleList, _shaderFlat, value.VertexBuffer, value.IndexBuffer, 0,
@@ -606,7 +624,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         }
 
         Display.BlendState = BlendState.Additive;
-        _shaderTextured.Transforms.World[0] = Matrix.CreateRotationZ(-2f * timeOfDay * (float)Math.PI) *
+        _shaderTextured!.Transforms.World[0] = Matrix.CreateRotationZ(-2f * timeOfDay * (float)Math.PI) *
                                              Matrix.CreateRotationX(CalculateSeasonAngle()) *
                                              Matrix.CreateTranslation(camera.ViewPosition) *
                                              camera.ViewProjectionMatrix;

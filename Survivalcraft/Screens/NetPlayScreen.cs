@@ -1,10 +1,14 @@
 using System.Net.Sockets;
 using System.Xml.Linq;
+
 using Game.ContentProviders;
-using Game.NetWork;
-using Game.NetWork.ModFileService;
-using Game.NetWork.Packages;
+using Game.Network;
+using Game.Network.ModFileService;
+using Game.Network.Packages;
+using Game.Network.Serialization;
+
 using LiteNetLib;
+
 using ThreadState = System.Threading.ThreadState;
 
 namespace Game.Screens;
@@ -483,7 +487,7 @@ public class NetPlayScreen : Screen
                     PackageManager.DecodePackage<ServerInfoPackage>(null, r, null, null, ep);
                 serverInfoPackage.Ping = (int)s.ElapsedMilliseconds;
                 serverInfoPackage.From?.IsLocalRemote = true;
-                serverInfoPackage.Handle(null, null, false);
+                serverInfoPackage.Handle(null, false);
                 received = true;
             };
             NetNode.SendWriterFromPackage(net, [new ServerInfoPackage(true)], null);
@@ -531,7 +535,7 @@ public class NetPlayScreen : Screen
                     var serverInfoPackage =
                         PackageManager.DecodePackage<ServerInfoPackage>(null, r, null, null, ep);
                     serverInfoPackage.Ping = (int)s.ElapsedMilliseconds;
-                    serverInfoPackage.Handle(null, null, false);
+                    serverInfoPackage.Handle(null, false);
                     received = true;
                 };
                 NetNode.SendWriterFromPackage(net, [new ServerInfoPackage(true)], cep);
@@ -616,9 +620,9 @@ public class NetPlayScreen : Screen
         {
             ModsManager.OnlineConnects.Clear();
             LoadExternalServerList(SchubExternalContentProvider.RedirectUri + "/com/serverlist?version=" +
-                                   ProjectNet.ServerVersion);
+                                   VersionsManager.ServerVersion);
             LoadExternalServerList("http://schelper.trk34.top:34340" + "/com/serverlist?version=" +
-                                   ProjectNet.ServerVersion);
+                                   VersionsManager.ServerVersion);
         }
     }
 

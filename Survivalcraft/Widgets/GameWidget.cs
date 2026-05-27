@@ -1,7 +1,11 @@
 using System.Xml.Linq;
+
 using Engine.Input;
+
 using EntitySystem.Core;
-using Game.NetWork;
+
+using Game.Network;
+using Game.Network.Enums;
 
 namespace Game.Widgets;
 

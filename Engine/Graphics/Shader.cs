@@ -1,5 +1,7 @@
 using System.Xml.Linq;
+
 using Engine.Core;
+
 using Silk.NET.OpenGLES;
 
 namespace Engine.Graphics;

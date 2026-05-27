@@ -1,6 +1,6 @@
 using System.Xml.Linq;
+
 using Engine.Graphics;
-using EntitySystem.Core;
 
 namespace Game.Screens;
 
@@ -29,7 +29,7 @@ public class GameScreen : Screen
 
     public override void Leave()
     {
-        if (GameManager.Project != null)
+        if (GameManager.Project is not null)
         {
             GameManager.Project.FindSubsystem<SubsystemAudio>(true)!.Mute();
             GameManager.SaveProject(true, true);

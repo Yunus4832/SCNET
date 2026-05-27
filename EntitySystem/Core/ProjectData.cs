@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
 
@@ -6,6 +7,8 @@ namespace EntitySystem.Core;
 
 public class ProjectData
 {
+    public int NextEntityID = 1;
+
     public EntityDataList EntityDataList = new();
 
     public ValuesDictionary ValuesDictionary = new();

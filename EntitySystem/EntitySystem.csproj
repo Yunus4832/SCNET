@@ -3,15 +3,7 @@
         <AssemblyName>EngineSystem</AssemblyName>
         <TargetFrameworks>$(GlobalTargetFramework)</TargetFrameworks>
         <Platforms>AnyCPU</Platforms>
-        <ImplicitUsings>enable</ImplicitUsings>
         <Configurations>Debug;Release</Configurations>
-    </PropertyGroup>
-
-    <PropertyGroup>
-        <LangVersion>latest</LangVersion>
-        <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-        <Nullable>enable</Nullable>
-        <WarningsAsErrors>Nullable</WarningsAsErrors>
     </PropertyGroup>
 
     <!-- Debug 配置 -->
@@ -33,8 +25,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Engine.Core\Engine.Core.csproj" />
-      <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj" />
+        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj"/>
+        <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj"/>
     </ItemGroup>
 
 </Project>

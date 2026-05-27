@@ -1,12 +1,14 @@
 #if ANDROID
-using Android.Views;
 using System.Collections.Concurrent;
+
+using Android.Views;
 #endif
 #if DESKTOP
 using Silk.NET.Input;
 #endif
 
 using Engine.Core;
+
 using Window = Engine.Windowing.Window;
 
 namespace Engine.Input;

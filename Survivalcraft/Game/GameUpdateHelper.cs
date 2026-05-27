@@ -1,4 +1,5 @@
-using Game.NetWork;
+using Game.Network;
+
 using Newtonsoft.Json;
 
 namespace Game;
@@ -7,8 +8,8 @@ public static class GameUpdateHelper
 {
     private const string _typeName = "GameUpdateHelper";
 
-    private const string _checkUpdateUrl =
-        $"http://schelper.trk34.top:34340/com/updatehelper?version={ProjectNet.ServerVersion}";
+    private static readonly string _checkUpdateUrl =
+        $"http://schelper.trk34.top:34340/com/updatehelper?version={VersionsManager.ServerVersion}";
 
     public static void CheckGameUpdate()
     {

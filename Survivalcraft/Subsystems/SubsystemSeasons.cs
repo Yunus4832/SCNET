@@ -1,9 +1,12 @@
 using Engine.Graphics;
 using Engine.Media;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
-using Game.NetWork;
-using Game.NetWork.Packages;
+
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
@@ -71,18 +74,30 @@ public class SubsystemSeasons : Subsystem, IUpdateable
 
     public static Color GetTimeOfYearColor(float timeOfYear)
     {
-
+#if SERVER
+        TimeOfYearToSeason(timeOfYear, out var season, out _);
+        return season switch
+        {
+            Season.Summer => new Color(255, 220, 120),
+            Season.Autumn => new Color(255, 170, 90),
+            Season.Winter => new Color(190, 220, 255),
+            _ => new Color(170, 235, 170)
+        };
+#else
         _seasonsGradient ??= (Image)ContentManager.Get<Texture2D>("Textures/Gui/SeasonsSlider").Tag!;
         var x = (int)MathUtils.Clamp(MathUtils.Round(timeOfYear * _seasonsGradient.Width), 0f,
             _seasonsGradient.Width - 1);
         return _seasonsGradient.GetPixel(x, 0);
+#endif
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
+#if !SERVER
         var seasonsGradient = (Image?)ContentManager.Get<Texture2D>("Textures/Gui/SeasonsSlider").Tag;
         _seasonsGradient = seasonsGradient ?? throw new InvalidOperationException("SeasonGradient is not initialized");
+#endif
     }
 
     private static void TimeOfYearToSeason(float timeOfYear, out Season season, out float timeOfSeason)
