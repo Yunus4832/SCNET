@@ -217,7 +217,7 @@ public static class ServerProgram
 
         ModsManager.ModListAllDo(mod => mod.LoadDll());
         ModsManager.ModListAllDo(mod => mod.LoadXdb(ref DatabaseManager.DatabaseNodeField));
-        if (DatabaseManager.DatabaseNodeField is XElement dbNode)
+        if (DatabaseManager.DatabaseNodeField is { } dbNode)
         {
             DatabaseManager.LoadDataBaseFromXml(dbNode);
         }

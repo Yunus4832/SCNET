@@ -57,7 +57,11 @@ public partial class PlayerData : IDisposable
 
     private bool _gameWidgetInitialized;
 
+#if SERVER
+    public Guid PlayerGUID { get; set; } = Guid.Empty;
+#else
     public Guid PlayerGUID { get; set; } = CommonLib.Net.Self!.GUID;
+#endif
 
     public bool ReadyToRestart;
 
@@ -597,7 +601,11 @@ public partial class PlayerData : IDisposable
         LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
         SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
         Name = valuesDictionary.GetValue("Name", "Walter");
+#if SERVER
+        PlayerGUID = valuesDictionary.GetValue("PlayerGUID", CommonLib.Net.Self?.GUID ?? Guid.Empty);
+#else
         PlayerGUID = valuesDictionary.GetValue("PlayerGUID", CommonLib.Net.Self!.GUID);
+#endif
         PlayerClass = valuesDictionary.GetValue("PlayerClass", PlayerClass.Male);
         Level = valuesDictionary.GetValue("Level", 1f);
         CharacterSkinName =
@@ -606,7 +614,11 @@ public partial class PlayerData : IDisposable
         GroupKey = valuesDictionary.GetValue("GroupKey", GroupKey);
         ServerManager = valuesDictionary.GetValue("ServerManager", ServerManager);
         _stateMachine.TransitionTo("FirstUpdate");
+#if SERVER
+        IsMainPlayer = CommonLib.Net.Self != null && PlayerGUID == CommonLib.Net.Self.GUID;
+#else
         IsMainPlayer = PlayerGUID == CommonLib.Net.Self.GUID;
+#endif
         if (IsMainPlayer && CommonLib.WorkType == WorkType.Server)
         {
             ServerManager = true;
