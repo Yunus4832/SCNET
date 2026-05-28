@@ -27,7 +27,6 @@
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
             <BuildType Solution="SERVER|*" Project="Debug"/>
-            <Build Solution="SERVER|*" Project="false"/>
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
@@ -43,7 +42,6 @@
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
             <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="Release|*" Project="false"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
     </Folder>
 
@@ -52,14 +50,12 @@
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
             <BuildType Solution="SERVER|*" Project="Debug"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
         <Project Path="Survivalcraft.Test\Survivalcraft.Test.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
             <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="Release|*" Project="false"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
     </Folder>
 
