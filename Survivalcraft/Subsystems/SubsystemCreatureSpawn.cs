@@ -1236,17 +1236,22 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             return;
         }
 
-        foreach (var gameWidget in _subsystemViews.GameWidgets)
+        var centers = new List<Vector3>();
+        foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
         {
-            var v = new Vector2(gameWidget.ActiveCamera.ViewPosition.X, gameWidget.ActiveCamera.ViewPosition.Z);
-            if (CountCreaturesInArea(v - new Vector2(60f), v + new Vector2(60f), false) >=
-                _maxPlayerAreaLimit)
+            centers.Add(componentPlayer.ComponentBody.Position);
+        }
+
+        foreach (var center in centers)
+        {
+            var v = new Vector2(center.X, center.Z);
+            if (CountCreaturesInArea(v - new Vector2(60f), v + new Vector2(60f), false) >= _maxPlayerAreaLimit)
             {
                 break;
             }
 
             var spawnLocationType = GetRandomSpawnLocationType();
-            var spawnPoint = GetRandomSpawnPoint(gameWidget.ActiveCamera, spawnLocationType);
+            var spawnPoint = GetRandomSpawnPoint(center, spawnLocationType);
             if (!spawnPoint.HasValue)
             {
                 continue;
@@ -1271,6 +1276,23 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             var creatureType = creatureTypes.ElementAt(randomWeightedItem);
             creatureType.SpawnFunction(creatureType, spawnPoint.Value);
         }
+    }
+
+    private Point3? GetRandomSpawnPoint(Vector3 center, SpawnLocationType spawnLocationType)
+    {
+        for (var i = 0; i < 10; i++)
+        {
+            var x = Terrain.ToCell(center.X) + _random.Sign() * _random.Int(20, 40);
+            var y = MathUtils.Clamp(Terrain.ToCell(center.Y) + _random.Int(-30, 30), 2, 510);
+            var z = Terrain.ToCell(center.Z) + _random.Sign() * _random.Int(20, 40);
+            var result = ProcessSpawnPoint(new Point3(x, y, z), spawnLocationType);
+            if (result.HasValue)
+            {
+                return result;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -1390,23 +1412,6 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             var x = 16 * chunk.Point.X + _random.Int(0, 15);
             var y = _random.Int(10, 246);
             var z = 16 * chunk.Point.Y + _random.Int(0, 15);
-            var result = ProcessSpawnPoint(new Point3(x, y, z), spawnLocationType);
-            if (result.HasValue)
-            {
-                return result;
-            }
-        }
-
-        return null;
-    }
-
-    private Point3? GetRandomSpawnPoint(Camera camera, SpawnLocationType spawnLocationType)
-    {
-        for (var i = 0; i < 10; i++)
-        {
-            var x = Terrain.ToCell(camera.ViewPosition.X) + _random.Sign() * _random.Int(20, 40);
-            var y = MathUtils.Clamp(Terrain.ToCell(camera.ViewPosition.Y) + _random.Int(-30, 30), 2, 510);
-            var z = Terrain.ToCell(camera.ViewPosition.Z) + _random.Sign() * _random.Int(20, 40);
             var result = ProcessSpawnPoint(new Point3(x, y, z), spawnLocationType);
             if (result.HasValue)
             {

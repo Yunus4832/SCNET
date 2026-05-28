@@ -215,9 +215,14 @@ public class SubsystemSpawn : Subsystem, IUpdateable
 
     private void SpawnChunks()
     {
-        foreach (var gameWidget in _subsystemViews.GameWidgets)
+        var centers = new List<Vector2>();
+        foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
         {
-            var v = new Vector2(gameWidget.ActiveCamera.ViewPosition.X, gameWidget.ActiveCamera.ViewPosition.Z);
+            centers.Add(new Vector2(componentPlayer.ComponentBody.Position.X, componentPlayer.ComponentBody.Position.Z));
+        }
+
+        foreach (var v in centers)
+        {
             var p = v - new Vector2(40f);
             var p2 = v + new Vector2(40f);
             var point = Terrain.ToChunk(p);
