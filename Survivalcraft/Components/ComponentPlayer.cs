@@ -679,7 +679,11 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         ComponentLevel = Entity.FindComponent<ComponentLevel>(true)!;
         ComponentClothing = Entity.FindComponent<ComponentClothing>(true)!;
         ComponentOuterClothingModel = Entity.FindComponent<ComponentOuterClothingModel>(true)!;
+#if SERVER
+        PlayerGuid = valuesDictionary.GetValue("PlayerGuid", CommonLib.Net.Self?.GUID ?? Guid.Empty);
+#else
         PlayerGuid = valuesDictionary.GetValue("PlayerGuid", CommonLib.Net.Self!.GUID);
+#endif
         var subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
         var playerData = subsystemPlayers.PlayersData.Find(d => d.PlayerGUID == PlayerGuid);
         PlayerData = playerData ?? throw new Exception($"Player data not found for guid {PlayerGuid}");
