@@ -37,6 +37,9 @@ public sealed class IndexBuffer : GraphicsResource
     public void SetData<T>(T[] source, int sourceStartIndex, int sourceCount, int targetStartIndex = 0) where T : struct
     {
         VerifyParametersSetData(source, sourceStartIndex, sourceCount, targetStartIndex);
+#if SERVER
+        return;
+#else
         var gCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
         try
         {
@@ -58,6 +61,7 @@ public sealed class IndexBuffer : GraphicsResource
         {
             gCHandle.Free();
         }
+#endif
     }
 
     public override void HandleDeviceLost()
@@ -72,6 +76,9 @@ public sealed class IndexBuffer : GraphicsResource
 
     public void AllocateBuffer()
     {
+#if SERVER
+        buffer = 0;
+#else
         GLWrapper.GL.GenBuffers(1, out uint uBuffer);
         buffer = (int)uBuffer;
         GLWrapper.BindBuffer(BufferTargetARB.ElementArrayBuffer, buffer);
@@ -84,6 +91,7 @@ public sealed class IndexBuffer : GraphicsResource
                 GLEnum.StaticDraw
             );
         }
+#endif
     }
 
     public void DeleteBuffer()
