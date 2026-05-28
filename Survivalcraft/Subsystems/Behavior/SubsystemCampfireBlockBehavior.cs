@@ -4,25 +4,42 @@ namespace Game.Subsystems;
 
 public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 {
+#if !SERVER
     private float _fireSoundVolume;
+#endif
 
+#if SERVER
+    private readonly HashSet<Point3> _campfireCells = [];
+#else
     private readonly Dictionary<Point3, FireParticleSystem> _particleSystemsByCell = new();
+#endif
 
     private readonly Random _random = new();
 
-    private  SubsystemAmbientSounds _subsystemAmbientSounds = null!;
+#if !SERVER
+    private SubsystemAmbientSounds _subsystemAmbientSounds = null!;
+    private SubsystemParticles _subsystemParticles = null!;
+#endif
 
-    private  SubsystemParticles _subsystemParticles = null!;
+    private SubsystemTime _subsystemTime = null!;
 
-    private  SubsystemTime _subsystemTime = null!;
-
-    private  SubsystemWeather _subsystemWeather = null!;
+    private SubsystemWeather _subsystemWeather = null!;
 
     private readonly List<Point3> _toReduce = [];
 
     private int _updateIndex;
 
-    public Dictionary<Point3, FireParticleSystem>.KeyCollection Campfires => _particleSystemsByCell.Keys;
+    public IEnumerable<Point3> Campfires
+    {
+        get
+        {
+#if SERVER
+            return _campfireCells;
+#else
+            return _particleSystemsByCell.Keys;
+#endif
+        }
+    }
 
     public override int[] HandledBlocks => [];
 
@@ -33,7 +50,7 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
         if (_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0))
         {
             _updateIndex++;
-            foreach (var key in _particleSystemsByCell.Keys)
+            foreach (var key in Campfires)
             {
                 var precipitationShaftInfo = _subsystemWeather.GetPrecipitationShaftInfo(key.X, key.Z);
                 if ((precipitationShaftInfo.Intensity > 0f && key.Y >= precipitationShaftInfo.YLimit - 1) ||
@@ -51,10 +68,11 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
             _toReduce.Clear();
         }
 
+#if !SERVER
         if (Time.PeriodicEvent(0.5, 0.0))
         {
             var num = float.MaxValue;
-            foreach (var key2 in _particleSystemsByCell.Keys)
+            foreach (var key2 in Campfires)
             {
                 var x = _subsystemAmbientSounds.SubsystemAudio.CalculateListenerDistanceSquared(new Vector3(key2.X,
                     key2.Y, key2.Z));
@@ -66,6 +84,7 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
 
         _subsystemAmbientSounds.FireSoundVolume =
             MathUtils.Max(_subsystemAmbientSounds.FireSoundVolume, _fireSoundVolume);
+#endif
     }
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
@@ -101,7 +120,7 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
     public override void OnChunkDiscarding(TerrainChunk chunk)
     {
         var list = new List<Point3>();
-        foreach (var key in _particleSystemsByCell.Keys)
+        foreach (var key in Campfires)
         {
             if (key.X >= chunk.Origin.X && key.X < chunk.Origin.X + 16 && key.Z >= chunk.Origin.Y &&
                 key.Z < chunk.Origin.Y + 16)
@@ -141,9 +160,11 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
     {
         base.Load(valuesDictionary);
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
-        _subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true)!;
         _subsystemWeather = Project.FindSubsystem<SubsystemWeather>(true)!;
+#if !SERVER
+        _subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true)!;
         _subsystemAmbientSounds = Project.FindSubsystem<SubsystemAmbientSounds>(true)!;
+#endif
     }
 
     public void AddCampfireParticleSystem(int value, int x, int y, int z)
@@ -151,22 +172,30 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
         var num = Terrain.ExtractData(value);
         if (num > 0)
         {
+#if SERVER
+            _campfireCells.Add(new Point3(x, y, z));
+#else
             var v = new Vector3(0.5f, 0.15f, 0.5f);
             var size = MathUtils.Lerp(0.2f, 0.5f, num / 15f);
             var fireParticleSystem = new FireParticleSystem(new Vector3(x, y, z) + v, size, 256f);
             _subsystemParticles.AddParticleSystem(fireParticleSystem);
             _particleSystemsByCell[new Point3(x, y, z)] = fireParticleSystem;
+#endif
         }
     }
 
     public void RemoveCampfireParticleSystem(int x, int y, int z)
     {
         var key = new Point3(x, y, z);
+#if !SERVER
         if (_particleSystemsByCell.TryGetValue(key, out var value))
         {
             value.IsStopped = true;
             _particleSystemsByCell.Remove(key);
         }
+#else
+        _campfireCells.Remove(key);
+#endif
     }
 
     public bool AddFuel(int x, int y, int z, int value, int count)
@@ -227,6 +256,7 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
             return true;
         }
 
+#if !SERVER
         if (steps >= 0)
         {
             _subsystemAmbientSounds.SubsystemAudio.PlaySound("Audio/BlockPlaced", 1f, 0f,
@@ -237,6 +267,7 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
             _subsystemAmbientSounds.SubsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, 0f,
                 new Vector3(x, y, z), 3f, true);
         }
+#endif
 
         return true;
 
