@@ -53,14 +53,12 @@ public class VersionConverter126To127 : VersionConverter
                     var num = MigrateFolder("app:/.config/.isolated-storage", "data:");
                     empty = "Migration Successful";
                     empty2 = $"{num} file(s) were migrated from 1.26 to 1.27.";
-                    AnalyticsManager.LogEvent("[Migration to 1.27]", new AnalyticsParameter("Details", empty2));
                 }
                 catch (Exception ex2)
                 {
                     empty = "Migration Failed";
                     empty2 = ex2.Message;
                     Log.Error("Migration to 1.27 failed, reason: {0}", ex2.Message);
-                    AnalyticsManager.LogError("Migration to 1.27 failed", ex2);
                 }
 
                 DialogsManager.HideDialog(dialog);
@@ -71,7 +69,6 @@ public class VersionConverter126To127 : VersionConverter
         catch (Exception ex)
         {
             Log.Error("Failed to migrate data. Reason: {0}", ex.Message);
-            AnalyticsManager.LogError("Migration to 1.27 failed", ex);
         }
     }
 

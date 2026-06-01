@@ -19,7 +19,6 @@ public class SurvivalCraftModEntity : ModEntity
             new ImageReader(),
             new JsonArrayReader(),
             new JsonObjectReader(),
-            new ContentReaders.JsonModelReader(),
             new MtllibStructReader(),
             new ContentReaders.ObjModelReader(),
             new ShaderReader(),

@@ -47,7 +47,6 @@ public class GameMenuDialog : Dialog
                     LanguageControl.Get("Usual", "ok")
                 )
             );
-            AnalyticsManager.LogEvent("[GameMenuScreen] IncreaseDetailDialog Shown");
         }
 
         if (!_decreaseDetailDialogShown && PerformanceManager.LongTermAverageFrameTime.HasValue &&
@@ -62,7 +61,6 @@ public class GameMenuDialog : Dialog
                     LanguageControl.Get("Usual", "ok")
                 )
             );
-            AnalyticsManager.LogEvent("[GameMenuScreen] DecreaseDetailDialog Shown");
         }
 
         _statsPanel.Children.Clear();

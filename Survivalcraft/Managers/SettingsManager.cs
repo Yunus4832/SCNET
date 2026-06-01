@@ -19,11 +19,11 @@ public static class SettingsManager
 
     public static bool UsePrimaryMemoryBank { get; set; }
 
-    public static bool AllowInitialIntro { get; set; }
+    public static bool AllowInitialIntro { get; set; } = true;
 
-    public static int ServerPort { get; set; }
+    public static int ServerPort { get; set; } = 28887;
 
-    public static int BroadcastPort { get; set; }
+    public static int BroadcastPort { get; set; } = 28888;
 
 
     public static bool DeleteWorldNeedToText { get; set; }
@@ -32,19 +32,19 @@ public static class SettingsManager
     {
         get;
         set => field = MathUtils.Saturate(value);
-    }
+    } = 0.5f;
 
     public static float MusicVolume
     {
         get;
         set => field = MathUtils.Saturate(value);
-    }
+    } = 0.5f;
 
-    public static int VisibilityRange { get; set; }
+    public static int VisibilityRange { get; set; } = 128;
 
     public static bool UseVr { get; set; }
 
-    public static float UIScale { get; set; }
+    public static float UIScale { get; set; } = 1f;
 
     public static ResolutionMode ResolutionMode
     {
@@ -59,15 +59,15 @@ public static class SettingsManager
             field = value;
             SettingChanged?.Invoke("ResolutionMode");
         }
-    }
+    } = ResolutionMode.High;
 
-    public static float ViewAngle { get; set; }
+    public static float ViewAngle { get; set; } = 1f;
 
-    public static SkyRenderingMode SkyRenderingMode { get; set; }
+    public static SkyRenderingMode SkyRenderingMode { get; set; } = SkyRenderingMode.Full;
 
-    public static bool TerrainMipmapsEnabled { get; set; }
+    public static bool TerrainMipmapsEnabled { get; set; } = true;
 
-    public static bool ObjectsShadowsEnabled { get; set; }
+    public static bool ObjectsShadowsEnabled { get; set; } = true;
 
     public static float Brightness
     {
@@ -83,15 +83,15 @@ public static class SettingsManager
             field = value;
             SettingChanged?.Invoke("Brightness");
         }
-    }
+    } = 0.5f;
 
     public static bool VSync { get; set; } = true;
 
     public static bool ShowGuiInScreenshots { get; set; }
 
-    public static bool ShowLogoInScreenshots { get; set; }
+    public static bool ShowLogoInScreenshots { get; set; } = true;
 
-    public static ScreenshotSize ScreenshotSize { get; set; }
+    public static ScreenshotSize ScreenshotSize { get; set; } = ScreenshotSize.ScreenSize;
 
     public static WindowMode WindowMode
     {
@@ -114,39 +114,40 @@ public static class SettingsManager
 
     public static string BlocksTextureFileName { get; set; } = string.Empty;
 
-    public static MoveControlMode MoveControlMode { get; set; }
+    public static MoveControlMode MoveControlMode { get; set; } = MoveControlMode.Pad;
 
-    public static LookControlMode LookControlMode { get; set; }
+    public static LookControlMode LookControlMode { get; set; } = LookControlMode.EntireScreen;
 
     public static bool LeftHandedLayout { get; set; }
 
     public static bool FlipVerticalAxis { get; set; }
 
-    public static float MoveSensitivity { get; set; }
+    public static float MoveSensitivity { get; set; } = 0.5f;
 
-    public static float LookSensitivity { get; set; }
+    public static float LookSensitivity { get; set; } = 0.5f;
 
-    public static float GamepadDeadZone { get; set; }
+    public static float GamepadDeadZone { get; set; } = 0.16f;
 
-    public static float GamepadCursorSpeed { get; set; }
+    public static float GamepadCursorSpeed { get; set; } = 1f;
 
-    public static float CreativeDigTime { get; set; }
+    public static float CreativeDigTime { get; set; } = 0.2f;
 
-    public static float CreativeReach { get; set; }
+    public static float CreativeReach { get; set; } = 7.5f;
 
-    public static float MinimumHoldDuration { get; set; }
+    public static float MinimumHoldDuration { get; set; } = 0.5f;
 
-    public static float MinimumDragDistance { get; set; }
+    public static float MinimumDragDistance { get; set; } = 10f;
 
-    public static bool AutoJump { get; set; }
+    public static bool AutoJump { get; set; } = true;
 
-    public static bool HorizontalCreativeFlight { get; set; }
+    public static bool HorizontalCreativeFlight { get; set; } = true;
 
     public static string DropboxAccessToken { get; set; } = string.Empty;
 
-    public static string MotdUpdateUrl { get; set; } = string.Empty;
+    public static string MotdUpdateUrl { get; set; } = SchubExternalContentProvider.GetPath("/com/motd?v={0}&l={1}");
 
-    public static string MotdUpdateCheckUrl { get; set; } = string.Empty;
+    public static string MotdUpdateCheckUrl { get; set; } =
+        SchubExternalContentProvider.GetPath("/com/motd?v={0}&cmd=version_check&platform={1}&apiv={2}&l={3}");
 
     public static string CommunityAccessUser { get; set; } = string.Empty;
 
@@ -156,9 +157,9 @@ public static class SettingsManager
 
     public static bool MotdUseBackupUrl { get; set; }
 
-    public static double MotdUpdatePeriodHours { get; set; }
+    public static double MotdUpdatePeriodHours { get; set; } = 12.0;
 
-    public static DateTime MotdLastUpdateTime { get; set; }
+    public static DateTime MotdLastUpdateTime { get; set; } = DateTime.MinValue;
 
     public static string MotdLastDownloadedData { get; set; } = string.Empty;
 
@@ -166,13 +167,13 @@ public static class SettingsManager
 
     public static string LastLaunchedVersion { get; set; } = string.Empty;
 
-    public static CommunityContentMode CommunityContentMode { get; set; }
+    public static CommunityContentMode CommunityContentMode { get; set; } = CommunityContentMode.Normal;
 
-    public static bool MultithreadedTerrainUpdate { get; set; }
+    public static bool MultithreadedTerrainUpdate { get; set; } = true;
 
     public static bool UseReducedZRange { get; set; }
 
-    public static bool EnableMod { get; set; }
+    public static bool EnableMod { get; set; } = true;
 
     public static int IsolatedStorageMigrationCounter { get; set; }
 
@@ -180,15 +181,15 @@ public static class SettingsManager
 
     public static bool DisplayFpsRibbon { get; set; }
 
-    public static int NewYearCelebrationLastYear { get; set; }
+    public static int NewYearCelebrationLastYear { get; set; } = 2015;
 
-    public static ScreenLayout ScreenLayout1 { get; set; }
+    public static ScreenLayout ScreenLayout1 { get; set; } = ScreenLayout.Single;
 
-    public static ScreenLayout ScreenLayout2 { get; set; }
+    public static ScreenLayout ScreenLayout2 { get; set; } = ScreenLayout.DoubleVertical;
 
-    public static ScreenLayout ScreenLayout3 { get; set; }
+    public static ScreenLayout ScreenLayout3 { get; set; } = ScreenLayout.TripleVertical;
 
-    public static ScreenLayout ScreenLayout4 { get; set; }
+    public static ScreenLayout ScreenLayout4 { get; set; } = ScreenLayout.Quadruple;
 
     public static bool UpsideDownLayout { get; set; }
 
@@ -207,46 +208,49 @@ public static class SettingsManager
     public static string CommunityNickName { get; set; } = string.Empty;
 
     /** 生物数量配置 **/
-    public static int CreatureTotalLimit { get; set; }
+    public static int CreatureTotalLimit { get; set; } = 24;
 
-    public static int CreatureAreaLimit { get; set; }
+    public static int CreatureAreaLimit { get; set; } = 3;
 
-    public static int CreatureMaxPlayerAreaLimit { get; set; }
+    public static int CreatureMaxPlayerAreaLimit { get; set; } = 48;
 
-    public static int CreatureMaxPointLimit { get; set; }
+    public static int CreatureMaxPointLimit { get; set; } = 3;
 
-    public static int CreatureAreaRadius { get; set; }
+    public static int CreatureAreaRadius { get; set; } = 16;
 
-    public static int CreatureTotalLimitConstant { get; set; }
+    public static int CreatureTotalLimitConstant { get; set; } = 18;
 
-    public static int CreatureAreaLimitConstant { get; set; }
+    public static int CreatureAreaLimitConstant { get; set; } = 4;
 
-    public static int CreatureAreaRadiusConstant { get; set; }
+    public static int CreatureAreaRadiusConstant { get; set; } = 2;
 
-    public static float CreatureSpawnIntervalTime { get; set; }
+    public static float CreatureSpawnIntervalTime { get; set; } = 60f;
 
-    public static float CreatureConstantSpawnIntervalTime { get; set; }
+    public static float CreatureConstantSpawnIntervalTime { get; set; } = 1f;
 
-    public static int ServerChunkCountSendPer { get; set; }
+    public static int ServerChunkCountSendPer { get; set; } = 100;
 
-    public static bool AutoGarbageCollect { get; set; }
+    public static bool AutoGarbageCollect { get; set; } = true;
 
     /// <summary>
     /// 告示牌通电是否广播所有玩家
     /// </summary>
-    public static bool GlobalSignBlockAlert { get; set; }
+    public static bool GlobalSignBlockAlert { get; set; } = true;
 
-    public static string LiteNetLibLogLevel { get; set; } = string.Empty;
+    /// <summary>
+    /// Warning,Error,Trace,Info
+    /// </summary>
+    public static string LiteNetLibLogLevel { get; set; } = "Error";
 
     public static string WillEnterServer { get; set; } = string.Empty;
 
     public static string WillEnterServerPwd { get; set; } = string.Empty;
 
-    public static bool StartModServer { get; set; }
+    public static bool StartModServer { get; set; } = true;
 
     public static string ModServerAddress { get; set; } = string.Empty;
 
-    public static int RejectedUpdateCount { get; set; }
+    public static int RejectedUpdateCount { get; set; } = 0;
 
     // 添加一个方法来设置 OnlineAccessToken，包含冷却时间检查
     public static void SetOnlineAccessToken(string newToken)
@@ -268,54 +272,8 @@ public static class SettingsManager
 
     public static void Initialize()
     {
-        LiteNetLibLogLevel = "Error"; //Warning,Error,Trace,Info
-        ServerChunkCountSendPer = 100;
-        CreatureTotalLimit = 24;
-        CreatureAreaLimit = 3;
-        CreatureMaxPlayerAreaLimit = 48;
-        CreatureMaxPointLimit = 3;
-        CreatureAreaRadius = 16;
-        CreatureTotalLimitConstant = 18;
-        CreatureAreaLimitConstant = 4;
-        CreatureAreaRadiusConstant = 2;
-        CreatureSpawnIntervalTime = 60f;
-        CreatureConstantSpawnIntervalTime = 1f;
-#if SERVER
-        CommunityAccessToken = string.Empty;
-#else
+#if !SERVER
         CommunityAccessToken = Guid.NewGuid().ToString();
-#endif
-        ServerPort = 28887;
-        BroadcastPort = 28888;
-        DisplayLog = false;
-        EnableMod = true;
-        AutoGarbageCollect = true;
-        GlobalSignBlockAlert = true;
-        VisibilityRange = 128;
-        ResolutionMode = ResolutionMode.High;
-        ViewAngle = 1f;
-        TerrainMipmapsEnabled = true;
-        SkyRenderingMode = SkyRenderingMode.Full;
-        ObjectsShadowsEnabled = true;
-        SoundsVolume = 0.5f;
-        MusicVolume = 0.5f;
-        Brightness = 0.5f;
-        VSync = true;
-        ShowGuiInScreenshots = false;
-        ShowLogoInScreenshots = true;
-        ScreenshotSize = ScreenshotSize.ScreenSize;
-        MoveControlMode = MoveControlMode.Pad;
-        HideMoveLookPads = false;
-        AllowInitialIntro = true;
-        DeleteWorldNeedToText = false;
-        BlocksTextureFileName = string.Empty;
-        LookControlMode = LookControlMode.EntireScreen;
-        FlipVerticalAxis = false;
-#if ANDROID
-        UIScale = 1f;
-#endif
-#if DESKTOP
-        UIScale = 0.8f;
 #endif
 #if ANDROID
         OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetAndroidID())
@@ -327,50 +285,16 @@ public static class SettingsManager
             ? ModsManager.GetMd5(GetMachineID.GetMachineGuid())
             : Guid.NewGuid().ToString();
 #endif
-        MoveSensitivity = 0.5f;
-        LookSensitivity = 0.5f;
-        GamepadDeadZone = 0.16f;
-        GamepadCursorSpeed = 1f;
-        CreativeDigTime = 0.2f;
-        CreativeReach = 7.5f;
-        MinimumHoldDuration = 0.5f;
-        MinimumDragDistance = 10f;
-        AutoJump = true;
-        HorizontalCreativeFlight = false;
-        DropboxAccessToken = string.Empty;
-        CommunityAccessUser = string.Empty;
-        MotdUpdateUrl = SchubExternalContentProvider.GetPath("/com/motd?v={0}&l={1}");
-        MotdUpdateCheckUrl =
-            SchubExternalContentProvider.GetPath("/com/motd?v={0}&cmd=version_check&platform={1}&apiv={2}&l={3}");
-        MotdUpdatePeriodHours = 12.0;
-        MotdLastUpdateTime = DateTime.MinValue;
-        MotdLastDownloadedData = string.Empty;
-        UserId = string.Empty;
-        LastLaunchedVersion = string.Empty;
 #if SERVER
         CommunityContentMode = CommunityContentMode.Disabled;
 #else
-        CommunityContentMode = CommunityContentMode.Normal;
 #endif
-        MultithreadedTerrainUpdate = true;
-        NewYearCelebrationLastYear = 2015;
-        ScreenLayout1 = ScreenLayout.Single;
         ScreenLayout2 = Window.ScreenSize.X / (float)Window.ScreenSize.Y > 1.33333337f
             ? ScreenLayout.DoubleVertical
             : ScreenLayout.DoubleHorizontal;
         ScreenLayout3 = Window.ScreenSize.X / (float)Window.ScreenSize.Y > 1.33333337f
             ? ScreenLayout.TripleVertical
             : ScreenLayout.TripleHorizontal;
-        ScreenLayout4 = ScreenLayout.Quadruple;
-        BulletinTime = string.Empty;
-        ScpboxUserInfo = string.Empty;
-        CommunityNickName = string.Empty;
-        HorizontalCreativeFlight = true;
-        WillEnterServer = string.Empty;
-        WillEnterServerPwd = string.Empty;
-        StartModServer = true;
-        ModServerAddress = "";
-        RejectedUpdateCount = 0;
 
         if (!Storage.DirectoryExists(ModsManager.ConfigPath))
         {

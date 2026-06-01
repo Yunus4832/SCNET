@@ -57,12 +57,6 @@ public static class VersionsManager
     {
         LastLaunchedVersion = SettingsManager.LastLaunchedVersion;
         SettingsManager.LastLaunchedVersion = Version;
-        if (Version != LastLaunchedVersion)
-        {
-            AnalyticsManager.LogEvent("[VersionsManager] Upgrade game",
-                new AnalyticsParameter("LastVersion", LastLaunchedVersion),
-                new AnalyticsParameter("CurrentVersion", Version));
-        }
     }
 
     public static void UpgradeProjectXml(XElement projectNode)
@@ -118,10 +112,6 @@ public static class VersionsManager
             throw new InvalidOperationException(
                 $"Upgrade produced invalid project version. Expected \"{SerializationVersion}\", found \"{worldInfo2.SerializationVersion}\".");
         }
-
-        AnalyticsManager.LogEvent("[VersionConverter] Upgrade world",
-            new AnalyticsParameter("SourceVersion", worldInfo.SerializationVersion),
-            new AnalyticsParameter("TargetVersion", SerializationVersion));
     }
 
     public static int CompareVersions(string v1, string v2)

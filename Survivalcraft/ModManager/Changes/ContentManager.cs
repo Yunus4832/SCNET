@@ -172,7 +172,6 @@ public static class ContentManager
             "System.String" => new StreamReader(stream).ReadToEnd(),
             "Engine.Media.Image" => Image.Load(stream),
             "Game.ObjModel" => ObjModelReader.Load(stream),
-            "Game.JsonModel" => JsonModelReader.Load(stream),
             "System.Xml.Linq.XElement" => XElement.Load(stream),
             "Engine.Graphics.Model" => Model.Load(stream, true),
             "Game.MtllibStruct" => MtllibStruct.Load(stream),

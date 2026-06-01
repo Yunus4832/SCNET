@@ -10,7 +10,6 @@ public static class ExceptionManager
     {
         var arg = MakeFullErrorMessage(additionalMessage, e);
         Log.Error($"{arg}\n{e.StackTrace}");
-        AnalyticsManager.LogError(additionalMessage, e);
     }
 
     public static void DrawExceptionScreen()
