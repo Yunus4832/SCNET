@@ -58,6 +58,8 @@ public static class Program
 
 #if DEBUG
         Log.AddLogSink(new ConsoleLogSink { MinimumLogType = LogType.Debug });
+#else
+        Log.AddLogSink(new ConsoleLogSink { MinimumLogType = LogType.Information });
 #endif
         Log.AddLogSink(new GameLogSink());
 
@@ -151,7 +153,8 @@ public static class Program
         var realTime = Time.RealTime;
         var currentCpuTime = Process.GetCurrentProcess().TotalProcessorTime;
         LastFrameTime = (float)(realTime - _frameBeginTime);
-        LastCpuFrameTime = (float)((_processCpuTimeEnd - _processCpuTimeBegin).TotalSeconds / Environment.ProcessorCount);
+        LastCpuFrameTime =
+            (float)((_processCpuTimeEnd - _processCpuTimeBegin).TotalSeconds / Environment.ProcessorCount);
         _frameBeginTime = realTime;
         _processCpuTimeBegin = currentCpuTime;
         if (Keyboard.IsKeyDownOnce(Key.F11))
