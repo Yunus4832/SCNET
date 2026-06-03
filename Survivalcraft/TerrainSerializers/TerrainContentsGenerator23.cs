@@ -203,7 +203,17 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
     /// </summary>
     private readonly float _tgTurbulenceZero;
 
-    private readonly ConcurrentDictionary<(int Seed, Point2 Coords), BrushPaint[]> _cleanTreeBrushCache = new();
+    private readonly ConcurrentDictionary<(int Seed, Point2 Coords), CleanTreeBrushCacheEntry> _cleanTreeBrushCache = new();
+
+    private long _cleanTreeBrushCleanupTicks;
+
+    private long _cleanTreeBrushRequestCount;
+
+    private const int _cleanTreeBrushCacheCleanupInterval = 256;
+
+    private const int _cleanTreeBrushCacheMaxEntries = 4096;
+
+    private const long _cleanTreeBrushCacheMaxAgeMs = 10 * 60 * 1000;
 
     static TerrainContentsGenerator23()
     {
@@ -1312,14 +1322,22 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
 
     private BrushPaint[] GetCleanTreeBrush(Point2 coords)
     {
-        return _cleanTreeBrushCache.GetOrAdd((_seed, coords), static (key, generator) =>
-            generator.GenerateCleanTreeBrush(key.Coords), this);
+        var entry = _cleanTreeBrushCache.GetOrAdd((_seed, coords), static (key, generator) =>
+            generator.CreateCleanTreeBrushEntry(key.Coords), this);
+        entry.LastAccessTicks = Environment.TickCount64;
+        MaybeCleanupCleanTreeBrushCache();
+        return entry.BrushPaints;
     }
 
     private BrushPaint[] GenerateCleanTreeBrush(Point2 coords)
     {
         using var sourceChunk = CreateTreeBrushSourceChunk(coords);
         return GenerateCleanTreeBrush(sourceChunk);
+    }
+
+    private CleanTreeBrushCacheEntry CreateCleanTreeBrushEntry(Point2 coords)
+    {
+        return new CleanTreeBrushCacheEntry(GenerateCleanTreeBrush(coords), Environment.TickCount64);
     }
 
     private TerrainChunk CreateTreeBrushSourceChunk(Point2 coords)
@@ -1397,6 +1415,57 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
             }
         }
         return result.ToArray();
+    }
+
+    private void MaybeCleanupCleanTreeBrushCache()
+    {
+        if ((Interlocked.Increment(ref _cleanTreeBrushRequestCount) & (_cleanTreeBrushCacheCleanupInterval - 1)) != 0)
+        {
+            return;
+        }
+
+        var now = Environment.TickCount64;
+        var previousCleanupTicks = Interlocked.Read(ref _cleanTreeBrushCleanupTicks);
+        if (now - previousCleanupTicks < 5000)
+        {
+            return;
+        }
+
+        if (Interlocked.CompareExchange(ref _cleanTreeBrushCleanupTicks, now, previousCleanupTicks) != previousCleanupTicks)
+        {
+            return;
+        }
+
+        foreach (var (key, entry) in _cleanTreeBrushCache)
+        {
+            if (now - entry.LastAccessTicks > _cleanTreeBrushCacheMaxAgeMs)
+            {
+                _cleanTreeBrushCache.TryRemove(key, out _);
+            }
+        }
+
+        var overflow = _cleanTreeBrushCache.Count - _cleanTreeBrushCacheMaxEntries;
+        if (overflow <= 0)
+        {
+            return;
+        }
+
+        var oldestEntries = _cleanTreeBrushCache
+            .OrderBy(pair => pair.Value.LastAccessTicks)
+            .Take(overflow)
+            .ToArray();
+
+        foreach (var (key, _) in oldestEntries)
+        {
+            _cleanTreeBrushCache.TryRemove(key, out _);
+        }
+    }
+
+    private sealed class CleanTreeBrushCacheEntry(BrushPaint[] brushPaints, long lastAccessTicks)
+    {
+        public readonly BrushPaint[] BrushPaints = brushPaints;
+
+        public long LastAccessTicks = lastAccessTicks;
     }
 
     public void GenerateBedrockAndAir(TerrainChunk chunk)
