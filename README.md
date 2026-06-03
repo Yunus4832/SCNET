@@ -39,7 +39,6 @@ dotnet build SCNETWORK.slnx --configuration Release
 | `Survivalcraft.Linux/` | Linux 启动器 |
 | `Survivalcraft.Windows/` | Windows 启动器 |
 | `Survivalcraft.Android/` | Android 启动器 |
-| `Scpack/` | 资源打包工具 |
 
 ## 测试
 

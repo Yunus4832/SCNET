@@ -13,18 +13,14 @@
             BeforeTargets="BeforeBuild"
             Condition="'$(UsePackResourceTarget)' == 'true'"
             Inputs="@(MyContentFiles)"
-            Outputs="$(MSBuildProjectDirectory)\Content.scpak">
+            Outputs="$(MSBuildProjectDirectory)\Content.zip">
         <PropertyGroup>
             <_CurDir>$(MSBuildProjectDirectory)\</_CurDir>
             <_ContentDir>$([System.IO.Path]::GetFullPath('$(_CurDir)..\Content').TrimEnd('\'))</_ContentDir>
-            <_ZipUtilsProj>$([System.IO.Path]::GetFullPath('$(_CurDir)..\ZipUtils'))</_ZipUtilsProj>
-            <_ScpackProj>$([System.IO.Path]::GetFullPath('$(_CurDir)..\Scpack'))</_ScpackProj>
         </PropertyGroup>
 
         <Message Text="[PackResource] 正在执行增量打包..." Importance="high"/>
         <ZipDirectory SourceDirectory="$(_ContentDir)" DestinationFile="$(_CurDir)Content.zip" Overwrite="true"/>
-        <Exec Command="dotnet run --project &quot;$(_ScpackProj)&quot;"/>
-        <Touch Files="$(_CurDir)Content.scpak"/>
     </Target>
 
     <!-- 检查是否定义了 OutputFileName 属性 -->

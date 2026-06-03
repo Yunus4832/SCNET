@@ -311,11 +311,11 @@ public static class ModsManager
             Storage.CreateDirectory(ModCachePath);
         }
 
-        var path = Storage.CombinePaths(ModCachePath, name + ".netmod");
+        var path = Storage.CombinePaths(ModCachePath, name + ".scmod");
         var num = 1;
         while (Storage.FileExists(path))
         {
-            path = Storage.CombinePaths(ModCachePath, name + "(" + num + ").netmod");
+            path = Storage.CombinePaths(ModCachePath, name + "(" + num + ").scmod");
             num++;
         }
 
@@ -429,10 +429,9 @@ public static class ModsManager
             using var stream = Storage.OpenFile(ks, OpenFileMode.Read);
             try
             {
-                if (ms == ".netmod")
+                if (ms == ".scmod")
                 {
-                    var keepOpenStream = GetDecipherStream(stream);
-                    var modEntity = new ModEntity(ks, ZipArchive.ZipArchive.Open(keepOpenStream, true));
+                    var modEntity = new ModEntity(ks, ZipArchive.ZipArchive.Open(stream, true));
                     if (string.IsNullOrEmpty(modEntity.ModInfo.PackageName))
                     {
                         continue;
@@ -742,61 +741,4 @@ public static class ModsManager
         }
     }
 
-    private static Stream GetDecipherStream(Stream stream)
-    {
-        const string headingCode = ModsManageContentScreen.HeadingCode;
-        const string headingCode2 = ModsManageContentScreen.HeadingCode2;
-        var keepOpenStream = new MemoryStream();
-        var buff = new byte[stream.Length];
-        stream.ReadExactly(buff, 0, buff.Length);
-        var hc = Encoding.UTF8.GetBytes(headingCode);
-        var decipher = !hc.Where((t, i) => t != buff[i]).Any();
-
-        var hc2 = Encoding.UTF8.GetBytes(headingCode2);
-        var decipher2 = !hc2.Where((t, i) => t != buff[i]).Any();
-
-        if (decipher)
-        {
-            var buff2 = new byte[buff.Length - hc.Length];
-            for (var i = 0; i < buff2.Length; i++)
-            {
-                buff2[i] = buff[buff.Length - 1 - i];
-            }
-
-            keepOpenStream.Write(buff2, 0, buff2.Length);
-            keepOpenStream.Flush();
-        }
-        else if (decipher2)
-        {
-            var buff2 = new byte[buff.Length - hc2.Length];
-            var k = 0;
-            var t = 0;
-            var l = (buff2.Length + 1) / 2;
-            for (var i = 0; i < buff2.Length; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    buff2[i] = buff[hc2.Length + k];
-                    k++;
-                }
-                else
-                {
-                    buff2[i] = buff[hc2.Length + l + t];
-                    t++;
-                }
-            }
-
-            keepOpenStream.Write(buff2, 0, buff2.Length);
-            keepOpenStream.Flush();
-        }
-        else
-        {
-            stream.Position = 0L;
-            stream.CopyTo(keepOpenStream);
-        }
-
-        stream.Dispose();
-        keepOpenStream.Position = 0L;
-        return keepOpenStream;
-    }
 }

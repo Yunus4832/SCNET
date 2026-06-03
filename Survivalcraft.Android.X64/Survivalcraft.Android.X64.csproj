@@ -38,7 +38,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <AndroidAsset Include="Content.scpak" Link="Assets\Content.scpak"/>
+        <AndroidAsset Include="Content.zip" Link="Assets\Content.zip"/>
     </ItemGroup>
 
     <ItemGroup>

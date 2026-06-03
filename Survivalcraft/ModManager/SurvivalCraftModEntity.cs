@@ -34,12 +34,11 @@ public class SurvivalCraftModEntity : ModEntity
             ContentManager.readerList.Add(reader.Type, reader);
         }
 
-        var stream = Storage.OpenFile("app:Content.scpak", OpenFileMode.Read);
+        var stream = Storage.OpenFile("app:Content.zip", OpenFileMode.Read);
         var memoryStream = new MemoryStream();
         stream.CopyTo(memoryStream);
         stream.Close();
         memoryStream.Position = 0L;
-        memoryStream = GetDecipherStream(memoryStream);
         ResourcesMd5 = ModsManager.GetMd5(memoryStream.ToArray());
         ModArchive = ZipArchive.ZipArchive.Open(memoryStream, true);
         InitResources();
@@ -145,45 +144,4 @@ public class SurvivalCraftModEntity : ModEntity
         BlocksManager.AddCategory("Fireworks");
     }
 
-    private static MemoryStream GetDecipherStream(Stream stream)
-    {
-        var keepOpenStream = new MemoryStream();
-        var buff = new byte[stream.Length];
-        stream.ReadExactly(buff, 0, buff.Length);
-        var hc = "再乱改就跑路，谁也别想玩！"u8.ToArray();
-        var decipher = !hc.Where((t, i) => t != buff[i]).Any();
-
-        if (decipher)
-        {
-            var buff2 = new byte[buff.Length - hc.Length];
-            var k = 0;
-            var t = 0;
-            var l = (buff2.Length + 1) / 2;
-            for (var i = 0; i < buff2.Length; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    buff2[i] = buff[hc.Length + k];
-                    k++;
-                }
-                else
-                {
-                    buff2[i] = buff[hc.Length + l + t];
-                    t++;
-                }
-            }
-
-            keepOpenStream.Write(buff2, 0, buff2.Length);
-            keepOpenStream.Flush();
-        }
-        else
-        {
-            stream.Position = 0L;
-            stream.CopyTo(keepOpenStream);
-        }
-
-        stream.Dispose();
-        keepOpenStream.Position = 0L;
-        return keepOpenStream;
-    }
 }

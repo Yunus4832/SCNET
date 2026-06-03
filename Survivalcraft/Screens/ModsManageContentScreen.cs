@@ -1,4 +1,3 @@
-using System.Text;
 using System.Xml.Linq;
 
 using Engine.Graphics;
@@ -15,15 +14,9 @@ public class ModsManageContentScreen : Screen
 
     private const string _typeName = "ModsManageContentScreen";
 
-    public const string HeadingCode = "有头有脸天才少年,耍猴表演敢为人先";
-
-    public const string HeadingCode2 = "修改他人mod请获得原作者授权，否则小心出名！";
-
     private readonly ButtonWidget _actionButton;
 
     private readonly ButtonWidget _actionButton2;
-
-    private readonly ButtonWidget _actionButton3;
 
     private const string _androidDataPath = "android:/Android/data";
 
@@ -58,8 +51,6 @@ public class ModsManageContentScreen : Screen
     private bool _firstEnterScreen;
 
     private readonly ButtonWidget _installFilterButton;
-
-    private bool _isAdmin;
 
     private readonly List<ModInfo> _lastInstallModInfo = [];
 
@@ -116,7 +107,7 @@ public class ModsManageContentScreen : Screen
         _modsContentLabel = Children.Find<LabelWidget>("ModsContentLabel")!;
         _actionButton = Children.Find<BevelledButtonWidget>("ActionButton")!;
         _actionButton2 = Children.Find<BevelledButtonWidget>("ActionButton2")!;
-        _actionButton3 = Children.Find<BevelledButtonWidget>("ActionButton3")!;
+        Children.Find<BevelledButtonWidget>("ActionButton3")!.IsVisible = false;
         _uninstallFilterButton = Children.Find<BevelledButtonWidget>("UninstallFilter")!;
         _installFilterButton = Children.Find<BevelledButtonWidget>("InstallFilter")!;
         _upDirectoryButton = Children.Find<BevelledButtonWidget>("UpDirectory")!;
@@ -124,7 +115,6 @@ public class ModsManageContentScreen : Screen
         _uninstallFilterButton.Text = LanguageControl.Get(_typeName, 44);
         _installFilterButton.Text = LanguageControl.Get(_typeName, 45);
         _firstEnterScreen = false;
-        _actionButton3.Text = LanguageControl.Get(_typeName, 73);
         _modsContentList.ItemWidgetFactory = delegate(object item)
         {
             var modItem = (ModItem)item;
@@ -274,11 +264,6 @@ public class ModsManageContentScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        CommunityContentManager.IsAdmin(
-            new CancellableProgress(),
-            delegate(bool isAdmin) { _isAdmin = isAdmin; },
-            delegate { }
-        );
         if (!Storage.DirectoryExists(_uninstallPath))
         {
             Storage.CreateDirectory(_uninstallPath);
@@ -403,7 +388,6 @@ public class ModsManageContentScreen : Screen
 
     public override void Update()
     {
-        _actionButton3.IsVisible = _isAdmin;
         _uninstallFilterButton.IsChecked = _filter != StateFilter.InstallState;
         _installFilterButton.IsChecked = _filter == StateFilter.InstallState;
         _uninstallFilterButton.Color = _filter == StateFilter.InstallState ? Color.White : Color.Green;
@@ -417,7 +401,7 @@ public class ModsManageContentScreen : Screen
         }
         else
         {
-            _actionButton2.Text = LanguageControl.Get(_typeName, 63);
+            _actionButton2.Text = string.Empty;
         }
 
         ModItem? modItem = null;
@@ -432,7 +416,7 @@ public class ModsManageContentScreen : Screen
                 ? LanguageControl.Get(_typeName, 18)
                 : LanguageControl.Get(_typeName, 19);
             _actionButton.IsEnabled = !(modItem.ModInfo == null && _filter != StateFilter.InstallState);
-            _actionButton2.IsEnabled = !(modItem.ModInfo == null && _filter == StateFilter.InstallState);
+            _actionButton2.IsEnabled = _filter != StateFilter.InstallState;
         }
         else if (modItem is { ExternalContentEntry.Type: ExternalContentType.Directory })
         {
@@ -638,139 +622,94 @@ public class ModsManageContentScreen : Screen
             }
         }
 
-        if (_actionButton2.IsClicked)
+        if (_actionButton2.IsClicked && _filter != StateFilter.InstallState)
         {
-            if (_filter == StateFilter.InstallState)
+            if (_path == _uninstallPath)
             {
-                if (modItem is { ExternalContentEntry.Type: ExternalContentType.Mod })
+                if (_cancellableBusyDialog != null)
                 {
-                    DialogsManager.ShowDialog(
-                        null,
-                        new MessageDialog(
-                            LanguageControl.Get(_typeName, 64),
-                            LanguageControl.Get(_typeName, 65), LanguageControl.Get(_typeName, 63),
-                            LanguageControl.Cancel,
-                            delegate(MessageDialogButton result)
-                            {
-                                if (result != MessageDialogButton.Button1)
-                                {
-                                    return;
-                                }
+                    DialogsManager.ShowDialog(null, _cancellableBusyDialog);
+                    return;
+                }
 
-                                try
-                                {
-                                    if (StrengtheningMod(modItem.ExternalContentEntry.Path))
+                _cancellableBusyDialog = new CancellableBusyDialog(LanguageControl.Get(_typeName, 26),
+                    LanguageControl.Get(_typeName, 62), true);
+                ReadyForScan(_cancellableBusyDialog);
+                Task.Run(delegate
+                {
+                    string scanPath;
+                    if (ModsManager.IsAndroid)
+                    {
+                        scanPath = "android:";
+                    }
+                    else
+                    {
+                        var systemPath = Storage.GetSystemPath(_path);
+                        systemPath = systemPath.Replace("\\", "/");
+                        var index = systemPath.IndexOf('/');
+                        scanPath = string.Concat("system:", systemPath.AsSpan(0, index), "/");
+                    }
+
+                    var allCount = ScanModFile(scanPath, _cancellableBusyDialog);
+                    DialogsManager.HideDialog(_cancellableBusyDialog);
+                    _cancellableBusyDialog = null;
+                    if (allCount == 0)
+                    {
+                        var tips = LanguageControl.Get(_typeName, 33);
+                        if (_scanFailPaths.Count > 0)
+                        {
+                            tips += "\n\n" + LanguageControl.Get(_typeName, 58) + "\n";
+                            tips = _scanFailPaths.Aggregate(tips, (current, p) => current + (p + "\n"));
+                        }
+
+                        DialogsManager.ShowDialog(null,
+                            new MessageDialog(LanguageControl.Get(_typeName, 4), tips,
+                                LanguageControl.Get(_typeName, 10)));
+                    }
+                    else
+                    {
+                        var tips = string.Format(LanguageControl.Get(_typeName, 35), allCount);
+                        if (_scanFailPaths.Count > 0)
+                        {
+                            tips += "\n\n" + LanguageControl.Get(_typeName, 58) + "\n";
+                            tips = _scanFailPaths.Aggregate(tips, (current, p) => current + (p + "\n"));
+                        }
+
+                        if (ScreensManager.CurrentScreen == this)
+                        {
+                            DialogsManager.ShowDialog(
+                                null,
+                                new MessageDialog(
+                                    LanguageControl.Get(_typeName, 28),
+                                    tips,
+                                    LanguageControl.Get(_typeName, 30),
+                                    string.Empty,
+                                    delegate
                                     {
-                                        Storage.DeleteFile(modItem.ExternalContentEntry.Path);
+                                        SetPath(_uninstallPath);
                                         UpdateListWithBusyDialog();
                                     }
-                                    else
-                                    {
-                                        DialogsManager.ShowDialog(null,
-                                            new MessageDialog(LanguageControl.Get(_typeName, 4),
-                                                LanguageControl.Get(_typeName, 66), LanguageControl.Ok));
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    DialogsManager.ShowDialog(null,
-                                        new MessageDialog(LanguageControl.Get(_typeName, 4),
-                                            LanguageControl.Get(_typeName, 67) + e, LanguageControl.Ok));
-                                }
-                            }
-                        )
-                    );
-                }
+                                )
+                            );
+                        }
+                        else
+                        {
+                            DialogsManager.ShowDialog(
+                                null,
+                                new MessageDialog(
+                                    LanguageControl.Get(_typeName, 28),
+                                    tips,
+                                    LanguageControl.Ok
+                                )
+                            );
+                        }
+                    }
+                });
             }
             else
             {
-                if (_path == _uninstallPath)
-                {
-                    if (_cancellableBusyDialog != null)
-                    {
-                        DialogsManager.ShowDialog(null, _cancellableBusyDialog);
-                        return;
-                    }
-
-                    _cancellableBusyDialog = new CancellableBusyDialog(LanguageControl.Get(_typeName, 26),
-                        LanguageControl.Get(_typeName, 62), true);
-                    ReadyForScan(_cancellableBusyDialog);
-                    Task.Run(delegate
-                    {
-                        string scanPath;
-                        if (ModsManager.IsAndroid)
-                        {
-                            scanPath = "android:";
-                        }
-                        else
-                        {
-                            var systemPath = Storage.GetSystemPath(_path);
-                            systemPath = systemPath.Replace("\\", "/");
-                            var index = systemPath.IndexOf('/');
-                            scanPath = string.Concat("system:", systemPath.AsSpan(0, index), "/");
-                        }
-
-                        var allCount = ScanModFile(scanPath, _cancellableBusyDialog);
-                        DialogsManager.HideDialog(_cancellableBusyDialog);
-                        _cancellableBusyDialog = null;
-                        if (allCount == 0)
-                        {
-                            var tips = LanguageControl.Get(_typeName, 33);
-                            if (_scanFailPaths.Count > 0)
-                            {
-                                tips += "\n\n" + LanguageControl.Get(_typeName, 58) + "\n";
-                                tips = _scanFailPaths.Aggregate(tips, (current, p) => current + (p + "\n"));
-                            }
-
-                            DialogsManager.ShowDialog(null,
-                                new MessageDialog(LanguageControl.Get(_typeName, 4), tips,
-                                    LanguageControl.Get(_typeName, 10)));
-                        }
-                        else
-                        {
-                            var tips = string.Format(LanguageControl.Get(_typeName, 35), allCount);
-                            if (_scanFailPaths.Count > 0)
-                            {
-                                tips += "\n\n" + LanguageControl.Get(_typeName, 58) + "\n";
-                                tips = _scanFailPaths.Aggregate(tips, (current, p) => current + (p + "\n"));
-                            }
-
-                            if (ScreensManager.CurrentScreen == this)
-                            {
-                                DialogsManager.ShowDialog(
-                                    null,
-                                    new MessageDialog(
-                                        LanguageControl.Get(_typeName, 28),
-                                        tips,
-                                        LanguageControl.Get(_typeName, 30),
-                                        string.Empty,
-                                        delegate
-                                        {
-                                            SetPath(_uninstallPath);
-                                            UpdateListWithBusyDialog();
-                                        }
-                                    )
-                                );
-                            }
-                            else
-                            {
-                                DialogsManager.ShowDialog(
-                                    null,
-                                    new MessageDialog(
-                                        LanguageControl.Get(_typeName, 28),
-                                        tips,
-                                        LanguageControl.Ok
-                                    )
-                                );
-                            }
-                        }
-                    });
-                }
-                else
-                {
-                    SetPath(_uninstallPath);
-                    UpdateListWithBusyDialog();
-                }
+                SetPath(_uninstallPath);
+                UpdateListWithBusyDialog();
             }
         }
 
@@ -793,30 +732,6 @@ public class ModsManageContentScreen : Screen
             }
 
             UpdateList(true);
-        }
-
-        if (_actionButton3.IsClicked && modItem != null &&
-            modItem.ExternalContentEntry.Type == ExternalContentType.Mod)
-        {
-            var stream = Storage.OpenFile(modItem.ExternalContentEntry.Path, OpenFileMode.ReadWrite);
-            var stream2 = GetDecipherStream(stream);
-            var fileStream = new FileStream(Storage.GetSystemPath(ModsManager.ModCachePath) + "/Original.netmod",
-                FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
-            var buff = new byte[stream2.Length];
-            stream2.ReadExactly(buff, 0, buff.Length);
-            fileStream.Write(buff, 0, buff.Length);
-            fileStream.Flush();
-            fileStream.Dispose();
-            stream.Dispose();
-            stream2.Dispose();
-            DialogsManager.ShowDialog(
-                null,
-                new MessageDialog(
-                    "操作成功",
-                    Storage.GetSystemPath(ModsManager.ModCachePath) + "/Original.netmod",
-                    LanguageControl.Ok
-                )
-            );
         }
 
         if (_upDirectoryButton.IsClicked)
@@ -933,7 +848,7 @@ public class ModsManageContentScreen : Screen
             foreach (var fileName in fileNameList)
             {
                 var extension = Storage.GetExtension(fileName);
-                if (!string.IsNullOrEmpty(extension) && extension.ToLower() == ".netmod")
+                if (!string.IsNullOrEmpty(extension) && extension.ToLower() == ".scmod")
                 {
                     var modItem = GetModItem(fileName, false);
                     if (modItem == null ||
@@ -1025,7 +940,7 @@ public class ModsManageContentScreen : Screen
                     }
 
                     var extension = Storage.GetExtension(fileName);
-                    if (string.IsNullOrEmpty(extension) || extension.ToLower() != ".netmod")
+                    if (string.IsNullOrEmpty(extension) || extension.ToLower() != ".scmod")
                     {
                         continue;
                     }
@@ -1036,7 +951,6 @@ public class ModsManageContentScreen : Screen
                     try
                     {
                         stream = Storage.OpenFile(pathName, OpenFileMode.Read);
-                        stream = GetDecipherStream(stream);
                         var zipArchive = ZipArchive.ZipArchive.Open(stream);
                         foreach (var zipArchiveEntry in zipArchive.ReadCentralDir())
                         {
@@ -1173,7 +1087,6 @@ public class ModsManageContentScreen : Screen
         var stream = Storage.OpenFile(pathName, OpenFileMode.Read);
         try
         {
-            stream = GetDecipherStream(stream);
             var zipArchive = ZipArchive.ZipArchive.Open(stream);
             foreach (var zipArchiveEntry in zipArchive.ReadCentralDir())
             {
@@ -1244,116 +1157,6 @@ public class ModsManageContentScreen : Screen
         {
             _commonPathList.Add(path);
         }
-    }
-
-    private static Stream GetDecipherStream(Stream stream)
-    {
-        var keepOpenStream = new MemoryStream();
-        var buff = new byte[stream.Length];
-        stream.ReadExactly(buff, 0, buff.Length);
-        var hc = Encoding.UTF8.GetBytes(HeadingCode);
-        var decipher = !hc.Where((t, i) => t != buff[i]).Any();
-
-        var hc2 = Encoding.UTF8.GetBytes(HeadingCode2);
-        var decipher2 = !hc2.Where((t, i) => t != buff[i]).Any();
-
-        if (decipher)
-        {
-            var buff2 = new byte[buff.Length - hc.Length];
-            for (var i = 0; i < buff2.Length; i++)
-            {
-                buff2[i] = buff[buff.Length - 1 - i];
-            }
-
-            keepOpenStream.Write(buff2, 0, buff2.Length);
-            keepOpenStream.Flush();
-        }
-        else if (decipher2)
-        {
-            var buff2 = new byte[buff.Length - hc2.Length];
-            var k = 0;
-            var t = 0;
-            var l = (buff2.Length + 1) / 2;
-            for (var i = 0; i < buff2.Length; i++)
-            {
-                if (i % 2 == 0)
-                {
-                    buff2[i] = buff[hc2.Length + k];
-                    k++;
-                }
-                else
-                {
-                    buff2[i] = buff[hc2.Length + l + t];
-                    t++;
-                }
-            }
-
-            keepOpenStream.Write(buff2, 0, buff2.Length);
-            keepOpenStream.Flush();
-        }
-        else
-        {
-            stream.Position = 0L;
-            stream.CopyTo(keepOpenStream);
-        }
-
-        stream.Dispose();
-        keepOpenStream.Position = 0L;
-        return keepOpenStream;
-    }
-
-    private static bool StrengtheningMod(string path)
-    {
-        var stream = Storage.OpenFile(path, OpenFileMode.Read);
-        var buff = new byte[stream.Length];
-        stream.ReadExactly(buff, 0, buff.Length);
-        var hc = Encoding.UTF8.GetBytes(HeadingCode);
-        var decipher = !hc.Where((t, i) => t != buff[i]).Any();
-
-        var hc2 = Encoding.UTF8.GetBytes(HeadingCode2);
-        var decipher2 = !hc2.Where((t, i) => t != buff[i]).Any();
-
-        if (decipher || decipher2)
-        {
-            return false;
-        }
-
-        var buff2 = new byte[buff.Length + hc2.Length];
-        var k = 0;
-        var l = hc2.Length;
-        for (var i = 0; i < hc2.Length; i++)
-        {
-            buff2[i] = hc2[i];
-        }
-
-        for (var i = 0; i < buff.Length; i++)
-        {
-            if (i % 2 == 0)
-            {
-                buff2[k + l] = buff[i];
-                k++;
-            }
-        }
-
-        k = 0;
-        l = hc2.Length + (buff.Length + 1) / 2;
-        for (var i = 0; i < buff.Length; i++)
-        {
-            if (i % 2 != 0)
-            {
-                buff2[k + l] = buff[i];
-                k++;
-            }
-        }
-
-        var newPath = $"{path[..path.LastIndexOf('.')]}({LanguageControl.Get(_typeName, 63)}).netmod";
-        var fileStream = new FileStream(Storage.GetSystemPath(newPath), FileMode.Create, FileAccess.ReadWrite,
-            FileShare.ReadWrite);
-        fileStream.Write(buff2, 0, buff2.Length);
-        fileStream.Flush();
-        stream.Dispose();
-        fileStream.Dispose();
-        return true;
     }
 
     public void UpdateModFromCommunity(ModInfo modInfo)

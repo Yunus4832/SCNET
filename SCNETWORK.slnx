@@ -120,16 +120,7 @@
         </Project>
     </Folder>
 
-    <Folder Name="/07 Utils/">
-        <Project Path="Scpack\Scpack.csproj">
-            <BuildType Solution="ANDROID|*" Project="Debug"/>
-            <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
-            <Build Project="false"/>
-        </Project>
-    </Folder>
-
-    <Folder Name="/08 SolutionItem/">
+    <Folder Name="/07 SolutionItem/">
         <File Path="SCNETWORK.slnx"/>
         <File Path="README.md"/>
         <File Path=".editorconfig"/>
@@ -137,8 +128,5 @@
         <File Path=".gitignore"/>
         <File Path="Directory.Build.props"/>
         <File Path="Directory.Build.targets"/>
-    </Folder>
-
-    <Folder Name="/09 Plugins/">
     </Folder>
 </Solution>
