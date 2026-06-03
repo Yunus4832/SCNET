@@ -203,21 +203,7 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
     /// </summary>
     private readonly float _tgTurbulenceZero;
 
-    /// <summary>
-    /// 树形笔刷缓存
-    /// </summary>
-    private readonly ConcurrentDictionary<(int Seed, Point2 Coords), IList<BrushPaint>> _treeBrushDict = new();
-
-    /// <summary>
-    /// 落叶树树叶方块索引（需要季节变化）
-    /// </summary>
-    private static readonly int[] _deciduousLeavesBlockIndices =
-    [
-        OakLeavesBlock.Index,      // 12
-        BirchLeavesBlock.Index,    // 13
-        MimosaLeavesBlock.Index,   // 256
-        PoplarLeavesBlock.Index    // 263
-    ];
+    private readonly ConcurrentDictionary<(int Seed, Point2 Coords), BrushPaint[]> _cleanTreeBrushCache = new();
 
     static TerrainContentsGenerator23()
     {
@@ -730,8 +716,8 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
                 if (!BlocksManager.Blocks[num5].Transparent)
                 {
                     var num6 = CalculateMountainRangeFactor(num, num2);
-                    var temperature = terrain.GetTemperature(num, num2);
-                    var humidity = terrain.GetHumidity(num, num2);
+                    var temperature = chunk.GetTemperatureFast(i, j);
+                    var humidity = chunk.GetHumidityFast(i, j);
                     int num7;
                     if (num5 == 4)
                     {
@@ -1314,132 +1300,40 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
 
-        var chunkTreeBrush = GetChunkTreeBrush(chunk);
-        ApplyTreeBrushWithCorrectSeason(chunk, chunkTreeBrush);
-
         for (var i = x - 1; i < x + 2; i++)
         for (var j = y - 1; j < y + 2; j++)
         {
-            if (i == x && j == y)
+            foreach (var brushPaint in GetCleanTreeBrush(new Point2(i, j)))
             {
-                continue;
-            }
-
-            var neighborCoords = new Point2(i, j);
-            var neighborChunk = _subsystemTerrain.Terrain.GetChunkAtCoords(i, j);
-
-            if (neighborChunk != null && neighborChunk.ThreadState > TerrainChunkState.InvalidContents4)
-            {
-                var neighborBrush = GetChunkTreeBrush(neighborChunk);
-                ApplyTreeBrushWithCorrectSeason(neighborChunk, chunkTreeBrush);
-                ApplyTreeBrushWithCorrectSeason(chunk, neighborBrush);
-            }
-            else if (_treeBrushDict.TryGetValue((_seed, neighborCoords), out var neighborCachedBrush))
-            {
-                ApplyTreeBrushWithCorrectSeason(chunk, neighborCachedBrush);
+                brushPaint.Brush.PaintFast(chunk, brushPaint.Position.X, brushPaint.Position.Y, brushPaint.Position.Z);
             }
         }
     }
 
-    /// <summary>
-    /// 应用树木笔刷，并根据当前游戏时间设置树叶的正确季节
-    /// </summary>
-    private void ApplyTreeBrushWithCorrectSeason(TerrainChunk chunk, IList<BrushPaint> brushPaints)
+    private BrushPaint[] GetCleanTreeBrush(Point2 coords)
     {
-        var timeOfYear = _worldSettings.TimeOfYear;
-
-        foreach (var brushPaint in brushPaints)
-        {
-            // 先应用笔刷
-            brushPaint.Brush.PaintFast(chunk, brushPaint.Position.X, brushPaint.Position.Y, brushPaint.Position.Z);
-
-            // 然后更新笔刷范围内所有树叶的季节
-            UpdateLeavesSeasonInBrush(chunk, brushPaint.Brush, brushPaint.Position, timeOfYear);
-        }
+        return _cleanTreeBrushCache.GetOrAdd((_seed, coords), static (key, generator) =>
+            generator.GenerateCleanTreeBrush(key.Coords), this);
     }
 
-    /// <summary>
-    /// 更新笔刷范围内所有落叶树树叶的季节为当前时间对应的季节
-    /// </summary>
-    private void UpdateLeavesSeasonInBrush(TerrainChunk chunk, TerrainBrush brush, Point3 position, float timeOfYear)
+    private BrushPaint[] GenerateCleanTreeBrush(Point2 coords)
     {
-        var originX = position.X - chunk.Origin.X;
-        var originZ = position.Z - chunk.Origin.Y;
-
-        foreach (var cell in brush.Cells)
-        {
-            var x = cell.X + originX;
-            var y = cell.Y + position.Y;
-            var z = cell.Z + originZ;
-
-            // 检查坐标是否在区块范围内
-            if (x < 0 || x >= 16 || y < 0 || y >= 500 || z < 0 || z >= 16)
-            {
-                continue;
-            }
-
-            var cellValue = chunk.GetCellValueFast(x, y, z);
-            var content = Terrain.ExtractContents(cellValue);
-
-            // 检查是否是落叶树树叶
-            if (IsDeciduousLeavesBlock(content))
-            {
-                // 计算正确的季节数据
-                var newData = CalculateLeavesSeasonData(cellValue, timeOfYear);
-                if (newData != Terrain.ExtractData(cellValue))
-                {
-                    var newValue = Terrain.ReplaceData(cellValue, newData);
-                    chunk.SetCellValueFast(x, y, z, newValue);
-                }
-            }
-        }
+        using var sourceChunk = CreateTreeBrushSourceChunk(coords);
+        return GenerateCleanTreeBrush(sourceChunk);
     }
 
-    /// <summary>
-    /// 检查是否是落叶树树叶方块
-    /// </summary>
-    private static bool IsDeciduousLeavesBlock(int blockIndex)
+    private TerrainChunk CreateTreeBrushSourceChunk(Point2 coords)
     {
-        foreach (var index in _deciduousLeavesBlockIndices)
-        {
-            if (index == blockIndex)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        var chunk = new TerrainChunk(_subsystemTerrain.Terrain, coords.X, coords.Y);
+        GenerateChunkContentsPass1(chunk);
+        GenerateChunkContentsPass2(chunk);
+        GenerateChunkContentsPass3(chunk);
+        return chunk;
     }
 
-    /// <summary>
-    /// 根据当前时间计算树叶方块的正确季节数据
-    /// </summary>
-    private static int CalculateLeavesSeasonData(int cellValue, float timeOfYear)
-    {
-        var data = Terrain.ExtractData(cellValue);
-        var blockIndex = Terrain.ExtractContents(cellValue);
-
-        // 获取树叶方块实例以访问季节计算方法
-        if (BlocksManager.Blocks[blockIndex] is not DeciduousLeavesBlock leavesBlock)
-        {
-            return data;
-        }
-
-        // 使用树叶方块的季节计算方法
-        return leavesBlock.SetTimeOfYear(data, timeOfYear);
-    }
-
-    private IList<BrushPaint> GetChunkTreeBrush(TerrainChunk chunk)
-    {
-        return _treeBrushDict.TryGetValue((_seed, chunk.Coords), out var brushPaints)
-            ? brushPaints
-            : GenerateTreeBrush(chunk);
-    }
-
-    private IList<BrushPaint> GenerateTreeBrush(TerrainChunk chunk)
+    private BrushPaint[] GenerateCleanTreeBrush(TerrainChunk chunk)
     {
         var result = new List<BrushPaint>();
-        var terrain = _subsystemTerrain.Terrain;
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
         for (var i = x; i <= x; i++)
@@ -1461,13 +1355,15 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
 
                 var randomX = i * 16 + random.Int(2, 13);
                 var randomZ = j * 16 + random.Int(2, 13);
-                var heightLimit = terrain.CalculateTopmostCellHeight(randomX, randomZ);
+                var localX = randomX & 0xF;
+                var localZ = randomZ & 0xF;
+                var heightLimit = chunk.CalculateTopmostCellHeight(localX, localZ);
                 if (heightLimit < 66)
                 {
                     continue;
                 }
 
-                var cellContentsFast = terrain.GetCellContentsFast(randomX, heightLimit, randomZ);
+                var cellContentsFast = chunk.GetCellContentsFast(localX, heightLimit, localZ);
                 if (cellContentsFast != 2 && cellContentsFast != 8)
                 {
                     continue;
@@ -1475,10 +1371,10 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
 
                 heightLimit++;
 
-                if (BlocksManager.Blocks[terrain.GetCellContentsFast(randomX + 1, heightLimit, randomZ)].Collidable ||
-                    BlocksManager.Blocks[terrain.GetCellContentsFast(randomX - 1, heightLimit, randomZ)].Collidable ||
-                    BlocksManager.Blocks[terrain.GetCellContentsFast(randomX, heightLimit, randomZ + 1)].Collidable ||
-                    BlocksManager.Blocks[terrain.GetCellContentsFast(randomX, heightLimit, randomZ - 1)].Collidable)
+                if (BlocksManager.Blocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
+                    BlocksManager.Blocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
+                    BlocksManager.Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
+                    BlocksManager.Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
                 {
                     continue;
                 }
@@ -1500,8 +1396,7 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
                 treeCount++;
             }
         }
-        _treeBrushDict.TryAdd((_seed, chunk.Coords), result);
-        return result;
+        return result.ToArray();
     }
 
     public void GenerateBedrockAndAir(TerrainChunk chunk)
