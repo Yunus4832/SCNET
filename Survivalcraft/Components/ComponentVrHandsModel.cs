@@ -119,7 +119,7 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
         }
         else
         {
-            if (num is >= 0 and <= 511)
+            if (num is >= 0 and <= 255)
             {
                 var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
                 if (chunkAtCell is { State: >= TerrainChunkState.InvalidVertices1 })

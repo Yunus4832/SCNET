@@ -96,7 +96,7 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
         }
 
         var list = new List<MovingBlock>();
-        for (var i = p.Y; i < 512; i++)
+        for (var i = p.Y; i < 256; i++)
         {
             var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(p.X, i, p.Z);
             if (!IsCollapsibleBlock(cellValue2))

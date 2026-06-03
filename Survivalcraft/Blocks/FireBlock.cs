@@ -17,18 +17,18 @@ public class FireBlock : Block
     {
         var alphaTestSubsetsByFace = geometry.AlphaTestSubsetsByFace;
         var data = Terrain.ExtractData(value);
-        var value2 = y + 1 < 512 ? generator.Terrain.GetCellValueFast(x, y + 1, z) : 0;
+        var value2 = y + 1 < 256 ? generator.Terrain.GetCellValueFast(x, y + 1, z) : 0;
         var num = Terrain.ExtractContents(value2);
         var data2 = Terrain.ExtractData(value2);
-        var value3 = y + 2 < 512 ? generator.Terrain.GetCellValueFast(x, y + 2, z) : 0;
+        var value3 = y + 2 < 256 ? generator.Terrain.GetCellValueFast(x, y + 2, z) : 0;
         var num2 = Terrain.ExtractContents(value3);
         var data3 = Terrain.ExtractData(value3);
         if (HasFireOnFace(data, 0))
         {
-            var value4 = y + 1 < 512 ? generator.Terrain.GetCellValueFast(x, y + 1, z + 1) : 0;
+            var value4 = y + 1 < 256 ? generator.Terrain.GetCellValueFast(x, y + 1, z + 1) : 0;
             var num3 = Terrain.ExtractContents(value4);
             var data4 = Terrain.ExtractData(value4);
-            var value5 = y + 2 < 512 ? generator.Terrain.GetCellValueFast(x, y + 2, z + 1) : 0;
+            var value5 = y + 2 < 256 ? generator.Terrain.GetCellValueFast(x, y + 2, z + 1) : 0;
             var num4 = Terrain.ExtractContents(value5);
             var data5 = Terrain.ExtractData(value5);
             var num5 = TextureSlot;
@@ -68,10 +68,10 @@ public class FireBlock : Block
 
         if (HasFireOnFace(data, 1))
         {
-            var value6 = y + 1 < 512 ? generator.Terrain.GetCellValueFast(x + 1, y + 1, z) : 0;
+            var value6 = y + 1 < 256 ? generator.Terrain.GetCellValueFast(x + 1, y + 1, z) : 0;
             var num6 = Terrain.ExtractContents(value6);
             var data6 = Terrain.ExtractData(value6);
-            var value7 = y + 2 < 512 ? generator.Terrain.GetCellValueFast(x + 1, y + 2, z) : 0;
+            var value7 = y + 2 < 256 ? generator.Terrain.GetCellValueFast(x + 1, y + 2, z) : 0;
             var num7 = Terrain.ExtractContents(value7);
             var data7 = Terrain.ExtractData(value7);
             var num8 = TextureSlot;
@@ -111,10 +111,10 @@ public class FireBlock : Block
 
         if (HasFireOnFace(data, 2))
         {
-            var value8 = y + 1 < 512 ? generator.Terrain.GetCellValueFast(x, y + 1, z - 1) : 0;
+            var value8 = y + 1 < 256 ? generator.Terrain.GetCellValueFast(x, y + 1, z - 1) : 0;
             var num9 = Terrain.ExtractContents(value8);
             var data8 = Terrain.ExtractData(value8);
-            var value9 = y + 2 < 512 ? generator.Terrain.GetCellValueFast(x, y + 2, z - 1) : 0;
+            var value9 = y + 2 < 256 ? generator.Terrain.GetCellValueFast(x, y + 2, z - 1) : 0;
             var num10 = Terrain.ExtractContents(value9);
             var data9 = Terrain.ExtractData(value9);
             var num11 = TextureSlot;
@@ -157,10 +157,10 @@ public class FireBlock : Block
             return;
         }
 
-        var value10 = y + 1 < 512 ? generator.Terrain.GetCellValueFast(x - 1, y + 1, z) : 0;
+        var value10 = y + 1 < 256 ? generator.Terrain.GetCellValueFast(x - 1, y + 1, z) : 0;
         var num12 = Terrain.ExtractContents(value10);
         var data10 = Terrain.ExtractData(value10);
-        var value11 = y + 2 < 512 ? generator.Terrain.GetCellValueFast(x - 1, y + 2, z) : 0;
+        var value11 = y + 2 < 256 ? generator.Terrain.GetCellValueFast(x - 1, y + 2, z) : 0;
         var num13 = Terrain.ExtractContents(value11);
         var data11 = Terrain.ExtractData(value11);
         var num14 = TextureSlot;

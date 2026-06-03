@@ -40,7 +40,7 @@ public static class LightingManager
         var num4 = (int)MathUtils.Ceiling(p.Y);
         var z = (int)MathUtils.Ceiling(p.Z);
         var terrain = subsystemTerrain.Terrain;
-        if (num2 < 0 || num4 > 511)
+        if (num2 < 0 || num4 > 255)
         {
             return null;
         }

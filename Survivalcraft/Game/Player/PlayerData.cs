@@ -806,7 +806,7 @@ public partial class PlayerData : IDisposable
     public float ScoreNoIntroSpawnPosition(Vector3 desiredSpawnPosition, int x, int y, int z)
     {
         var num = -0.01f * Vector3.Distance(new Vector3(x, y, z), desiredSpawnPosition);
-        if (y < 1 || y >= 511)
+        if (y < 1 || y >= 255)
         {
             num -= 100f;
         }

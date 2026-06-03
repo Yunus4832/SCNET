@@ -34,7 +34,7 @@ public abstract class SubsystemFluidBlockBehavior(
     public void UpdateIsTop(int value, int x, int y, int z)
     {
         var terrain = SubsystemTerrain.Terrain;
-        if (y >= 511)
+        if (y >= 255)
         {
             return;
         }
@@ -86,13 +86,13 @@ public abstract class SubsystemFluidBlockBehavior(
 
     public float? GetSurfaceHeight(int x, int y, int z, out FluidBlock? surfaceFluidBlock)
     {
-        if (y is >= 0 and < 511)
+        if (y is >= 0 and < 255)
         {
             var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
             if (chunkAtCell != null)
             {
                 var num = TerrainChunk.CalculateCellIndex(x & 0xF, 0, z & 0xF);
-                while (y < 511)
+                while (y < 255)
                 {
                     var num2 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num + y + 1));
                     if (BlocksManager.FluidBlocks[num2] == null)
@@ -350,8 +350,8 @@ public abstract class SubsystemFluidBlockBehavior(
         var terrain = SubsystemTerrain.Terrain;
         var num2 = Terrain.ToCell(p.X) - radius;
         var num3 = Terrain.ToCell(p.X) + radius;
-        var num4 = MathUtils.Clamp(Terrain.ToCell(p.Y) - radius, 0, 510);
-        var num5 = MathUtils.Clamp(Terrain.ToCell(p.Y) + radius, 0, 510);
+        var num4 = MathUtils.Clamp(Terrain.ToCell(p.Y) - radius, 0, 254);
+        var num5 = MathUtils.Clamp(Terrain.ToCell(p.Y) + radius, 0, 254);
         var num6 = Terrain.ToCell(p.Z) - radius;
         var num7 = Terrain.ToCell(p.Z) + radius;
         for (var i = num6; i <= num7; i++)

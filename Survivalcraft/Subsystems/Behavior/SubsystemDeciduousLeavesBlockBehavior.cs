@@ -65,7 +65,7 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
     public void CreateFallenLeaves(Point3 p, bool applyImmediately)
     {
         int? num = null;
-        while (p.Y >= 1 && p.Y < 512)
+        while (p.Y is >= 1 and < 256)
         {
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(p.X, p.Y, p.Z);
             if (num.HasValue)

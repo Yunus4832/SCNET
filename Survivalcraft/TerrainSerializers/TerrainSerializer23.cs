@@ -11,10 +11,10 @@ namespace Game.TerrainSerializers;
 public class TerrainSerializer23 : IDisposable
 {
     /// <summary>
-    /// 最大数据块大小: 一个 Cell 占 8 Byte, 一个 Chunk 数据块有 16 x 16 x 512 = 131_072 Cell
-    /// 因此，最糟糕的情况下，一个未经压缩的 Chunk 数据块的大小为 131_072 x 8 = 1_049_600
+    /// 最大数据块大小: 一个 Cell 占 8 Byte, 一个 Chunk 数据块有 16 x 16 x 256 = 65_536 Cell
+    /// 因此，最糟糕的情况下，一个未经压缩的 Chunk 数据块的大小为 65_536 x 8 = 524_800
     /// </summary>
-    private const int _worstCaseChunkDataSize = 1_049_600; // 524_800: 524_800 是区块高度为 256 时的最大数据块大小
+    private const int _worstCaseChunkDataSize = 524_800;
 
     private readonly byte[] _compressBuffer = new byte[_worstCaseChunkDataSize];
 
@@ -396,44 +396,6 @@ public class TerrainSerializer23 : IDisposable
         throw new InvalidOperationException("Count too large.");
     }
 
-    /// <summary>
-    /// 将存档的区块高度扩展到 512， 该方法只能在升级存档版本时使用，否则可能导致存档损坏
-    /// </summary>
-    public void ExtendHeightTo512(string regionsDirectoryName)
-    {
-        // 逐个文件进行转换
-        foreach (var item in Storage.ListFileNames(regionsDirectoryName))
-        {
-            if (Storage.GetExtension(item) == ".dat")
-            {
-                var parts = item.Split(new[] { ' ', ',', '.' }, StringSplitOptions.RemoveEmptyEntries);
-
-                if (parts is not ["Region", _, _, _])
-                {
-                    throw new InvalidDataException("Region 文件名格式错误");
-                }
-
-                if (!int.TryParse(parts[1], out var regionX) ||
-                    !int.TryParse(parts[2], out var regionY))
-                {
-                    throw new InvalidDataException("Region 文件名格式错误");
-                }
-
-                for (var i = 0; i < 16; i++)
-                for (var j = 0; j < 16; j++)
-                {
-                    var coords = new Point2((regionX << 4) + i, (regionY << 4) + j);
-                    var chunk = new TerrainChunk(new Terrain(), coords.X, coords.Y);
-                    if (LoadChunkData(chunk))
-                    {
-                        SaveChunkData(chunk, 512);
-                    }
-                }
-            }
-        }
-    }
-
-    /// <summary>
     /// 存储接口
     /// </summary>
     public interface IStorage : IDisposable
@@ -770,7 +732,7 @@ public class TerrainSerializer23 : IDisposable
                     using (var binaryWriter = new BinaryWriter(value, Encoding.UTF8, true))
                     {
                         binaryWriter.Write(_regionMagic);
-                        WriteDirectoryEntries(binaryWriter, new DirectoryEntry[512]);
+                        WriteDirectoryEntries(binaryWriter, new DirectoryEntry[256]);
                     }
                 }
                 else
@@ -826,7 +788,7 @@ public class TerrainSerializer23 : IDisposable
         private static DirectoryEntry[] ReadDirectoryEntries(BinaryReader reader)
         {
             reader.BaseStream.Position = 4L;
-            var array = new DirectoryEntry[512];
+            var array = new DirectoryEntry[256];
             for (var i = 0; i < 256; i++)
             {
                 array[i] = ReadDirectoryEntry(reader);

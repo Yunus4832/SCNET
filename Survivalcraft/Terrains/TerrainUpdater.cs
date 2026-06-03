@@ -1168,9 +1168,9 @@ public class TerrainUpdater
         for (var j = 0; j < 16; j++)
         {
             var num = 0;
-            var num2 = 511;
-            var num4 = 511;
-            var num5 = TerrainChunk.CalculateCellIndex(i, 511, j);
+            var num2 = 256;
+            var num4 = 255;
+            var num5 = TerrainChunk.CalculateCellIndex(i, 255, j);
             while (num4 >= 0)
             {
                 var cellValueFast = chunk.GetCellValueFast(num5);
@@ -1394,7 +1394,7 @@ public class TerrainUpdater
                 PropagateLightSource(lightSource.X, lightSource.Y - 1, lightSource.Z, light);
             }
 
-            if (lightSource.Y < 511)
+            if (lightSource.Y < 255)
             {
                 PropagateLightSource(lightSource.X, lightSource.Y + 1, lightSource.Z, light);
             }
@@ -1519,7 +1519,7 @@ public class TerrainUpdater
                     MathUtils.Min(bottomHeight, bottomHeight2, bottomHeight3, bottomHeight4));
                 var x2 = chunk.GetTopHeightFast(k, l) + 1;
                 var num7 = MathUtils.Max(16 * i, x, 1);
-                var num8 = MathUtils.Min(16 * (i + 1), x2, 511);
+                var num8 = MathUtils.Min(16 * (i + 1), x2, 256);
                 var num9 = TerrainChunk.CalculateCellIndex(k, 0, l);
                 for (var m = num7; m < num8; m++)
                 {
@@ -1583,7 +1583,7 @@ public class TerrainUpdater
         var num4 = chunk.Origin.Y - 1;
         var num5 = chunk.Origin.Y + 16 + 1;
         var x = MathUtils.Max(16 * sliceIndex - 1, 0);
-        var x2 = MathUtils.Min(16 * (sliceIndex + 1) + 1, 512);
+        var x2 = MathUtils.Min(16 * (sliceIndex + 1) + 1, 256);
         for (var i = num2; i < num3; i++)
         for (var j = num4; j < num5; j++)
         {
@@ -1672,7 +1672,7 @@ public class TerrainUpdater
             var num14 = MathUtils.Min(MathUtils.Min(num10, num11, num12, num13), num9 - 1);
             var num15 = num8 + 2;
             num14 = MathUtils.Max(num14, 0);
-            num15 = MathUtils.Min(num15, 512);
+            num15 = MathUtils.Min(num15, 256);
             var num16 = MathUtils.Max((num14 - 1) / 16, 0);
             var num17 = MathUtils.Min((num15 + 1) / 16, 31);
             var num18 = 1;
@@ -1723,7 +1723,7 @@ public class TerrainUpdater
             var z = j + chunk.Origin.Y;
             var num = TerrainChunk.CalculateCellIndex(i, 0, j);
             var num2 = 0;
-            while (num2 < 511)
+            while (num2 < 255)
             {
                 var cellValueFast = chunk.GetCellValueFast(num);
                 var num3 = Terrain.ExtractContents(cellValueFast);

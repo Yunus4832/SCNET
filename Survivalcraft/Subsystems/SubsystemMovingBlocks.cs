@@ -521,7 +521,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
 
         var p = new Point3(movingBlockSet.Box.Left, movingBlockSet.Box.Top, movingBlockSet.Box.Near);
         var point2 = new Point3(movingBlockSet.Box.Width, movingBlockSet.Box.Height, movingBlockSet.Box.Depth);
-        point2.Y = MathUtils.Min(point2.Y, 510);
+        point2.Y = MathUtils.Min(point2.Y, 254);
         var numk = point.Y + p.Y;
         if (_blockGeometryGenerator == null)
         {
@@ -578,7 +578,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         for (var num = 1; num < point2.Y + 1; num++)
         for (var num2 = 1; num2 < point2.Z + 1; num2++)
         {
-            if (num + numk > 0 && num + numk < 511)
+            if (num + numk > 0 && num + numk < 256)
             {
                 var cellValueFast = _blockGeometryGenerator.Terrain.GetCellValueFast(n, num, num2);
                 var num3 = Terrain.ExtractContents(cellValueFast);

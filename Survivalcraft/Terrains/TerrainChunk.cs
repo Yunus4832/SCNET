@@ -6,17 +6,17 @@ public class TerrainChunk : IDisposable
 {
     private const int _size = 16;
 
-    private const int _height = 512;
+    private const int _height = 256;
 
     private const int _slicesCount = 32;
 
-    private const int _heightMinusOne = 511;
+    private const int _heightMinusOne = 255;
 
     public const int SizeMinusOne = 15;
 
     public const int SizeBits = 4;
 
-    public const int HeightBits = 9;
+    public const int HeightBits = 8;
 
     public const int SliceHeight = 16;
 
@@ -80,7 +80,7 @@ public class TerrainChunk : IDisposable
         Coords = new Point2(x, z);
         Origin = new Point2(x * _size, z * _size);
         BoundingBox = new BoundingBox(new Vector3(Origin.X, 0f, Origin.Y),
-            new Vector3(Origin.X + _size, 512f, Origin.Y + _size));
+            new Vector3(Origin.X + _size, 256f, Origin.Y + _size));
         Center = new Vector2(Origin.X + 8f, Origin.Y + 8f);
     }
 

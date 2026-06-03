@@ -4,8 +4,6 @@ using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
 
-using Game.TerrainSerializers;
-
 namespace Game.VersionConverts;
 
 public class VersionConverter23To24 : VersionConverter
@@ -75,23 +73,9 @@ public class VersionConverter23To24 : VersionConverter
 
     public override void ConvertWorld(string directoryName)
     {
-        // 版本 2.4 区块高度更新为 512，因此需要将 2.3 版本扩展到 512，将 Region 的高度扩展到 512
-        ExtendChunkHeightTo512(directoryName);
-
         var path = Storage.GetSystemPath(Storage.CombinePaths(directoryName, "Project.json"));
         var json = File.ReadAllText(path);
         var convertedJson = ConvertProjectJson(json);
         File.WriteAllText(path, convertedJson);
-    }
-
-    /// <summary>
-    /// 版本 2.4 区块高度更新为 512，因此需要将 2.3 版本扩展到 512，将 Region 的高度扩展到 512
-    /// </summary>
-    private void ExtendChunkHeightTo512(string directoryName)
-    {
-        Log.Information("将 Region 的高度扩展到 512");
-        using var terrainSerializer23 = new TerrainSerializer23(directoryName);
-        var regionDirectoryName = Storage.CombinePaths(directoryName, "Regions");
-        terrainSerializer23.ExtendHeightTo512(regionDirectoryName);
     }
 }

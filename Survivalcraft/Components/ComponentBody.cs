@@ -1115,7 +1115,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         var point = Terrain.ToCell(box.Min);
         var point2 = Terrain.ToCell(box.Max);
         point.Y = MathUtils.Max(point.Y, 0);
-        point2.Y = MathUtils.Min(point2.Y, 511);
+        point2.Y = MathUtils.Min(point2.Y, 255);
         if (point.Y > point2.Y)
         {
             return;

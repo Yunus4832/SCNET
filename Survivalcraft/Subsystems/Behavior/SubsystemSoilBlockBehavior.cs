@@ -112,7 +112,7 @@ public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdat
 
     private bool DetermineHydration(int x, int y, int z, int steps)
     {
-        if (steps <= 0 || y is <= 0 or >= 510)
+        if (steps <= 0 || y is <= 0 or >= 255)
         {
             return false;
         }

@@ -6,15 +6,15 @@ using System.Text;
 namespace Game.TerrainSerializers;
 
 /// <summary>
-/// 版本 2.4 地形序列化工具，版本 2.4 的区块高度是 512
+/// 版本 2.4 地形序列化工具，版本 2.4 的区块高度是 256
 /// </summary>
 public class TerrainSerializer24 : IDisposable
 {
     /// <summary>
-    /// 最大数据块大小: 一个 Cell 占 8 Byte, 一个 Chunk 数据块有 16 x 16 x 512 = 131_072 Cell
-    /// 因此，最糟糕的情况下，一个未经压缩的 Chunk 数据块的大小为 131_072 x 8 = 1_049_600
+    /// 最大数据块大小: 一个 Cell 占 8 Byte, 一个 Chunk 数据块有 16 x 16 x 256 = 65_536 Cell
+    /// 因此，最糟糕的情况下，一个未经压缩的 Chunk 数据块的大小为 65_536 x 8 = 524_800
     /// </summary>
-    private const int _worstCaseChunkDataSize = 1_049_600; // 524_800: 524_800 是区块高度为 256 时的最大数据块大小
+    private const int _worstCaseChunkDataSize = 524_800;
 
     private readonly byte[] _compressBuffer = new byte[_worstCaseChunkDataSize];
 
@@ -149,10 +149,10 @@ public class TerrainSerializer24 : IDisposable
             throw new InvalidOperationException("Compression buffer overflow.");
         }
 
-        // 首先使用 RLE 算法压缩重复的数据, 版本 2.4 层高 512
+        // 首先使用 RLE 算法压缩重复的数据, 版本 2.4 层高 256
         var value = -1; // 值
         var count = 0; // 值重复的次数
-        for (var k = 0; k < 512; k++)
+        for (var k = 0; k < 256; k++)
         for (var l = 0; l < 16; l++)
         for (var m = 0; m < 16; m++)
         {
@@ -235,7 +235,7 @@ public class TerrainSerializer24 : IDisposable
         // Chunk 数据块的坐标系
         //       Y
         //       |
-        //       |-512 区块高度
+        //       |-256 区块高度
         //       |
         //       |
         //       |
@@ -259,7 +259,7 @@ public class TerrainSerializer24 : IDisposable
         {
             // 读取经过 RLE 压缩的 Cell 数据
             bufferIndex = ReadRleValueFromBuffer(_compressBuffer, bufferIndex, out var cellValue, out var count);
-            // 将获取到的 ValueCountPair 逐层 (16 x 16 x 512) 的填充到 TerrainChunk 的 Cells 中
+            // 将获取到的 ValueCountPair 逐层 (16 x 16 x 256) 的填充到 TerrainChunk 的 Cells 中
             for (var k = 0; k < count; k++)
             {
                 chunk.SetCellValueFast(cellX, cellY, cellZ, cellValue);
@@ -277,8 +277,8 @@ public class TerrainSerializer24 : IDisposable
             }
         }
 
-        // 层高 cellY 最终应该是区块的最大高度（版本 2.4 512 和 cellZ 此时应当归零，否则该数据块已损坏
-        if (cellX != 0 || cellY != 512 || cellZ != 0)
+        // 层高 cellY 最终应该是区块的最大高度（版本 2.4 256），且 cellZ 此时应当归零，否则该数据块已损坏
+        if (cellX != 0 || cellY != 256 || cellZ != 0)
         {
             throw new InvalidOperationException("Corrupt chunk data.");
         }
@@ -722,7 +722,7 @@ public class TerrainSerializer24 : IDisposable
                     using (var binaryWriter = new BinaryWriter(value, Encoding.UTF8, true))
                     {
                         binaryWriter.Write(_regionMagic);
-                        WriteDirectoryEntries(binaryWriter, new DirectoryEntry[512]);
+                        WriteDirectoryEntries(binaryWriter, new DirectoryEntry[256]);
                     }
                 }
                 else
@@ -778,7 +778,7 @@ public class TerrainSerializer24 : IDisposable
         private static DirectoryEntry[] ReadDirectoryEntries(BinaryReader reader)
         {
             reader.BaseStream.Position = 4L;
-            var array = new DirectoryEntry[512];
+            var array = new DirectoryEntry[256];
             for (var i = 0; i < 256; i++)
             {
                 array[i] = ReadDirectoryEntry(reader);

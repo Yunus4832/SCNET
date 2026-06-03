@@ -299,12 +299,12 @@ public class SubsystemTerrainPackage : IPackage
     {
         var p = reader.ReadPoint2();
         var chunk = new TerrainChunk(null!, p.X, p.Y);
-        for (var i = 0; i < 131072; i++)
+        for (var i = 0; i < chunk.Cells.Length; i++)
         {
             chunk.Cells[i] = reader.ReadInt32();
         }
 
-        for (var i = 0; i < 256; i++)
+        for (var i = 0; i < chunk.Shafts.Length; i++)
         {
             chunk.Shafts[i] = reader.ReadInt64();
         }

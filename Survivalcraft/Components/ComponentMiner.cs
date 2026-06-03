@@ -378,7 +378,7 @@ public class ComponentMiner : Component, IUpdateable
             return false; //海底方块吞领地石
         }
 
-        if (num3 is <= 0 or >= 511 || (!IsBlockPlacingAllowed(ComponentCreature.ComponentBody) &&
+        if (num3 is <= 0 or >= 256 || (!IsBlockPlacingAllowed(ComponentCreature.ComponentBody) &&
                                        _subsystemGameInfo.WorldSettings.GameMode > GameMode.Survival))
         {
             return false;

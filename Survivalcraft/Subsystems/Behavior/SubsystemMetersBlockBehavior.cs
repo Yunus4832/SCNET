@@ -173,8 +173,8 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
             var terrain = SubsystemTerrain.Terrain;
             var chunkAtCell = terrain.GetChunkAtCell(num11, num13, false);
-            if (chunkAtCell == null || num12 < 0 || num12 >= 512)
-                // 获取当前坐标所在的地形块。如果地形块不存在（如超出世界范围）或 y 坐标超出有效范围[0, 512)，则跳过。
+            if (chunkAtCell == null || num12 < 0 || num12 >= 256)
+                // 获取当前坐标所在的地形块。如果地形块不存在（如超出世界范围）或 y 坐标超出有效范围[0, 256)，则跳过。
             {
                 continue;
             }
@@ -296,7 +296,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 var x3 = (x + k) & 0xF;
                 var num33 = y + m;
                 var z3 = (z + l) & 0xF;
-                if (num33 is < 0 or >= 512)
+                if (num33 is < 0 or >= 256)
                 {
                     continue;
                 }

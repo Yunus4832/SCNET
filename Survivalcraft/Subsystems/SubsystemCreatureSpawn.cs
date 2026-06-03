@@ -1283,7 +1283,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
         for (var i = 0; i < 10; i++)
         {
             var x = Terrain.ToCell(center.X) + _random.Sign() * _random.Int(20, 40);
-            var y = MathUtils.Clamp(Terrain.ToCell(center.Y) + _random.Int(-30, 30), 2, 510);
+            var y = MathUtils.Clamp(Terrain.ToCell(center.Y) + _random.Int(-30, 30), 2, 253);
             var z = Terrain.ToCell(center.Z) + _random.Sign() * _random.Int(20, 40);
             var result = ProcessSpawnPoint(new Point3(x, y, z), spawnLocationType);
             if (result.HasValue)
@@ -1425,7 +1425,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
     private Point3? ProcessSpawnPoint(Point3 spawnPoint, SpawnLocationType spawnLocationType)
     {
         var x = spawnPoint.X;
-        var num = MathUtils.Clamp(spawnPoint.Y, 1, 510);
+        var num = MathUtils.Clamp(spawnPoint.Y, 1, 253);
         var z = spawnPoint.Z;
         var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
         if (chunkAtCell is not { State: > TerrainChunkState.InvalidPropagatedLight })
@@ -1456,7 +1456,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
         var x = spawnPoint.X;
         var y = spawnPoint.Y;
         var z = spawnPoint.Z;
-        if (y is <= 3 or >= 509)
+        if (y is <= 3 or >= 254)
         {
             return false;
         }

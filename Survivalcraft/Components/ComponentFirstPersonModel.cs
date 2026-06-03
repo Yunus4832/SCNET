@@ -130,7 +130,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
             m.Translation = _componentPlayer.ComponentCreatureModel.EyePosition;
             if (_value != 0)
             {
-                if (num5 is >= 0 and <= 511)
+                if (num5 is >= 0 and <= 255)
                 {
                     var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
                     if (chunkAtCell is { State: >= TerrainChunkState.InvalidVertices1 })

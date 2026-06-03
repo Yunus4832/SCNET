@@ -56,7 +56,7 @@ public class Terrain : IDisposable
     /// <summary>
     /// 区块高度
     /// </summary>
-    private const int _height = 512;
+    private const int _height = 256;
 
     /// <summary>
     /// 数据块区块坐标的偏移
