@@ -74,21 +74,21 @@ public class NetPlayScreen : Screen
 
         _filter0Button = Children.Find<ButtonWidget>("TabPage")!;
         _filter0Button.Text = LanguageControl.Get("NetPlayScreen", 1);
-        _filter0Button.Size = new Vector2(200, 60);
+        _filter0Button.Size = new Vector2(180, 60);
         _filter1Button = new BevelledButtonWidget
             { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
         _filter1Button.Text = LanguageControl.Get("NetPlayScreen", 2);
-        _filter1Button.Size = new Vector2(200, 60);
+        _filter1Button.Size = new Vector2(180, 60);
         _filter0Button.ParentWidget?.AddChildren(_filter1Button);
         _filter2Button = new BevelledButtonWidget
             { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
         _filter2Button.Text = LanguageControl.Get("NetPlayScreen", 3);
-        _filter2Button.Size = new Vector2(200, 60);
+        _filter2Button.Size = new Vector2(180, 60);
         _filter0Button.ParentWidget?.AddChildren(_filter2Button);
         _filter3Button = new BevelledButtonWidget
             { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
         _filter3Button.Text = LanguageControl.Get("NetPlayScreen", 4);
-        _filter3Button.Size = new Vector2(200, 60);
+        _filter3Button.Size = new Vector2(180, 60);
         _filter0Button.ParentWidget?.AddChildren(_filter3Button);
 
         _addButton = Children.Find<ButtonWidget>("Play")!;

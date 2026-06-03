@@ -11,10 +11,12 @@
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
 
             <CanvasWidget Size="Infinity, 10"/>
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="4, -8">
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="10, 4">
                 <BevelledButtonWidget Name="TabPage" Style="{Styles/ButtonStyle_310x60}" Text="[PlayScreen:3]"
                                       VerticalAlignment="Center"/>
             </StackPanelWidget>
+
+            <CanvasWidget Size="0, 8"/>
 
             <StackPanelWidget Direction="Vertical">
                 <CanvasWidget Margin="10, 0">
