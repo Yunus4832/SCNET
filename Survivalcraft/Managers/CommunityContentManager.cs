@@ -37,7 +37,7 @@ public static class CommunityContentManager
         {
             _idToAddressMap.Remove(MakeContentIdString(ExternalContentType.FurniturePack, path));
         };
-        Window.Deactivated += delegate { Save(); };
+        Window.Deactivated += Save;
     }
 
     public static string GetDownloadedContentAddress(ExternalContentType type, string name)

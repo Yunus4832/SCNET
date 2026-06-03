@@ -17,15 +17,7 @@ public static class DialogsManager
     public static bool HasDialogs(Widget? parentWidget)
     {
         parentWidget ??= ScreensManager.CurrentScreen ?? ScreensManager.RootWidget;
-        foreach (var dialog in _dialogs)
-        {
-            if (dialog.ParentWidget == parentWidget)
-            {
-                return true;
-            }
-        }
-
-        return false;
+        return _dialogs.Any(dialog => dialog.ParentWidget == parentWidget);
     }
 
     public static void ShowDialog(ContainerWidget? parentWidget, Dialog dialog)
@@ -141,20 +133,22 @@ public static class DialogsManager
 
     public static void Update()
     {
-        foreach (var animationDatum in _animationDataDict)
+        foreach (var (key, value) in _animationDataDict)
         {
-            var key = animationDatum.Key;
-            var value = animationDatum.Value;
-            if (value.Direction > 0)
+            switch (value.Direction)
             {
-                value.Factor = MathUtils.Min(value.Factor + 6f * Time.FrameDuration, 1f);
-            }
-            else if (value.Direction < 0)
-            {
-                value.Factor = MathUtils.Max(value.Factor - 6f * Time.FrameDuration, 0f);
-                if (value.Factor <= 0f)
+                case > 0:
+                    value.Factor = MathUtils.Min(value.Factor + 6f * Time.FrameDuration, 1f);
+                    break;
+                case < 0:
                 {
-                    _toRemove.Add(key);
+                    value.Factor = MathUtils.Max(value.Factor - 6f * Time.FrameDuration, 0f);
+                    if (value.Factor <= 0f)
+                    {
+                        _toRemove.Add(key);
+                    }
+
+                    break;
                 }
             }
 
