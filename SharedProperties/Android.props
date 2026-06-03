@@ -16,7 +16,5 @@
         <RunAOTCompilation>false</RunAOTCompilation>
         <AndroidLinkMode>None</AndroidLinkMode>
         <LinkAll>true</LinkAll>
-        <PublishTrimmed>false</PublishTrimmed>
-        <TrimMode>partial</TrimMode>
     </PropertyGroup>
 </Project>

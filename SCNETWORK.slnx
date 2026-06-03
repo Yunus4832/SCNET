@@ -60,7 +60,14 @@
     </Folder>
 
     <Folder Name="/04 Server/">
-        <Project Path="Server\Server.csproj">
+        <Project Path="Server.Linux\Server.Linux.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <BuildType Solution="SERVER|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+            <Build Solution="DESKTOP|*" Project="false"/>
+        </Project>
+        <Project Path="Server.Windows\Server.Windows.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
             <BuildType Solution="SERVER|*" Project="Debug"/>

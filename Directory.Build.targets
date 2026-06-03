@@ -2,6 +2,7 @@
     <!-- 检查是否定义了 UsePackResourceTarget 属性 -->
     <PropertyGroup>
         <UsePackResourceTarget Condition="'$(UsePackResourceTarget)' == ''">false</UsePackResourceTarget>
+        <SolutionRoot>$(MSBuildThisFileDirectory)</SolutionRoot>
     </PropertyGroup>
 
     <ItemGroup>
@@ -29,9 +30,9 @@
     </PropertyGroup>
 
     <!-- 只有当 UsePackOutputTarget 为 true 时才导入目标 -->
-    <Target Name="PackOutput" AfterTargets="Build" Condition="'$(UsePackOutputTarget)' == 'true'">
+    <Target Name="PackOutput" AfterTargets="Publish" Condition="'$(UsePackOutputTarget)' == 'true'">
         <!-- 执行打包操作 -->
-        <ZipDirectory SourceDirectory="$(OutputPath)" DestinationFile="$(OutputPath)/../$(OutputFileName)" Overwrite="true"/>
+        <ZipDirectory SourceDirectory="$(PublishDir)" DestinationFile="$(SolutionRoot)/Publish/$(OutputFileName)" Overwrite="true"/>
     </Target>
 
     <!-- 检查是否定义了 OutputApkName 属性 -->
@@ -43,6 +44,6 @@
     <Target Name="RenameApk" AfterTargets="Build" Condition="'$(UseRenameApkTarget)' == 'true'">
         <!-- 重命名 Apk -->
         <Copy SourceFiles="$([System.IO.Path]::GetFullPath('$(OutputPath)$(ApplicationId)-Signed.apk'))"
-              DestinationFiles="$([System.IO.Path]::GetFullPath('$(OutputPath)..\$(OutputApkName)'))"/>
+              DestinationFiles="$(SolutionRoot)/Publish/$(OutputApkName)"/>
     </Target>
 </Project>
