@@ -42,9 +42,10 @@ public class SurvivalCraftModEntity : ModEntity
         ResourcesMd5 = ModsManager.GetMd5(memoryStream.ToArray());
         ModArchive = ZipArchive.ZipArchive.Open(memoryStream, true);
         InitResources();
-#if !SERVER
-        LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+        }
     }
 
     public override bool IsSystemMod => true;
@@ -143,5 +144,4 @@ public class SurvivalCraftModEntity : ModEntity
         BlocksManager.AddCategory("Dyed");
         BlocksManager.AddCategory("Fireworks");
     }
-
 }

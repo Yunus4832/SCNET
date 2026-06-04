@@ -29,9 +29,11 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (camera.GameWidget.PlayerData != _componentPlayer.PlayerData)
         {
             return;
@@ -47,58 +49,53 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         {
             DrawRayHighlight(camera);
         }
-#endif
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.BlockHighlight;
 
     public void Update(float dt)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var activeCamera = _componentPlayer.GameWidget.ActiveCamera;
-        var ray = new Ray3?(new Ray3(activeCamera.ViewPosition, activeCamera.ViewDirection));
+        var ray = new Ray3(activeCamera.ViewPosition, activeCamera.ViewDirection);
         NearbyEditableCell = null;
-        if (ray.HasValue)
+        _highlightRaycastResult = _componentPlayer.ComponentMiner.Raycast(ray, RaycastMode.Digging);
+        if (_highlightRaycastResult is not TerrainRaycastResult terrainRaycastResult)
         {
-            _highlightRaycastResult = _componentPlayer.ComponentMiner.Raycast(ray.Value, RaycastMode.Digging);
-            if (_highlightRaycastResult is not TerrainRaycastResult terrainRaycastResult)
-            {
-                return;
-            }
-
-            if (!(terrainRaycastResult.Distance < 3f))
-            {
-                return;
-            }
-
-            var point = terrainRaycastResult.CellFace.Point;
-            var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-            var obj = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
-            if (obj is CrossBlock)
-            {
-                terrainRaycastResult.Distance = MathUtils.Max(terrainRaycastResult.Distance, 0.1f);
-                _highlightRaycastResult = terrainRaycastResult;
-            }
-
-            if (obj.IsEditable(cellValue))
-            {
-                NearbyEditableCell = terrainRaycastResult.CellFace.Point;
-            }
+            return;
         }
-        else
+
+        if (!(terrainRaycastResult.Distance < 3f))
         {
-            _highlightRaycastResult = null;
+            return;
         }
-#endif
+
+        var point = terrainRaycastResult.CellFace.Point;
+        var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
+        var obj = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
+        if (obj is CrossBlock)
+        {
+            terrainRaycastResult.Distance = MathUtils.Max(terrainRaycastResult.Distance, 0.1f);
+            _highlightRaycastResult = terrainRaycastResult;
+        }
+
+        if (obj.IsEditable(cellValue))
+        {
+            NearbyEditableCell = terrainRaycastResult.CellFace.Point;
+        }
     }
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemAnimatedTextures = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
@@ -108,40 +105,37 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
             ModsManager.GetInPakOrStorageFile<string>("Shaders/Highlight", ".psh"),
             new ShaderMacro("ShadowShader")
         );
-#endif
     }
 
     public void DrawRayHighlight(Camera camera)
     {
-        Ray3 ray = default;
+        Ray3 ray;
         float num;
-        if (_highlightRaycastResult is TerrainRaycastResult)
+        switch (_highlightRaycastResult)
         {
-            var obj = (TerrainRaycastResult)_highlightRaycastResult;
-            ray = obj.Ray;
-            num = MathUtils.Min(obj.Distance, 2f);
-        }
-        else if (_highlightRaycastResult is BodyRaycastResult)
-        {
-            var obj2 = (BodyRaycastResult)_highlightRaycastResult;
-            ray = obj2.Ray;
-            num = MathUtils.Min(obj2.Distance, 2f);
-        }
-        else if (_highlightRaycastResult is MovingBlocksRaycastResult)
-        {
-            var obj3 = (MovingBlocksRaycastResult)_highlightRaycastResult;
-            ray = obj3.Ray;
-            num = MathUtils.Min(obj3.Distance, 2f);
-        }
-        else
-        {
-            if (!(_highlightRaycastResult is Ray3))
+            case TerrainRaycastResult result:
+                ray = result.Ray;
+                num = MathUtils.Min(result.Distance, 2f);
+                break;
+            case BodyRaycastResult obj2:
+                ray = obj2.Ray;
+                num = MathUtils.Min(obj2.Distance, 2f);
+                break;
+            case MovingBlocksRaycastResult obj3:
+                ray = obj3.Ray;
+                num = MathUtils.Min(obj3.Distance, 2f);
+                break;
+            default:
             {
-                return;
-            }
+                if (_highlightRaycastResult is not Ray3 ray3)
+                {
+                    return;
+                }
 
-            ray = (Ray3)_highlightRaycastResult;
-            num = 2f;
+                ray = ray3;
+                num = 2f;
+                break;
+            }
         }
 
         var color = Color.White * 0.5f;
@@ -181,9 +175,9 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
             if (!_componentPlayer.ComponentAimingSights.IsSightsVisible &&
                 (SettingsManager.LookControlMode == LookControlMode.SplitTouch ||
                  !_componentPlayer.ComponentInput.IsControlledByTouch) &&
-                _highlightRaycastResult is TerrainRaycastResult)
+                _highlightRaycastResult is TerrainRaycastResult result)
             {
-                var cellFace = ((TerrainRaycastResult)_highlightRaycastResult).CellFace;
+                var cellFace = result.CellFace;
                 var cellFaceBoundingBox2 = GetCellFaceBoundingBox(cellFace.Point);
                 var num2 = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox2.Center());
                 var color2 = Color.MultiplyNotSaturated(Color.Black, 1f - num2);

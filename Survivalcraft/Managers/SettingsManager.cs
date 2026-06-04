@@ -268,9 +268,15 @@ public static class SettingsManager
 
     public static void Initialize()
     {
-#if !SERVER
-        CommunityAccessToken = Guid.NewGuid().ToString();
-#endif
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            CommunityContentMode = CommunityContentMode.Disabled;
+        }
+        else
+        {
+            CommunityAccessToken = Guid.NewGuid().ToString();
+        }
+
 #if ANDROID
         OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetAndroidID())
             ? ModsManager.GetMd5(GetMachineID.GetAndroidID())
@@ -280,10 +286,6 @@ public static class SettingsManager
         OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetMachineGuid())
             ? ModsManager.GetMd5(GetMachineID.GetMachineGuid())
             : Guid.NewGuid().ToString();
-#endif
-#if SERVER
-        CommunityContentMode = CommunityContentMode.Disabled;
-#else
 #endif
         ScreenLayout2 = Window.ScreenSize.X / (float)Window.ScreenSize.Y > 1.33333337f
             ? ScreenLayout.DoubleVertical
@@ -423,12 +425,14 @@ public static class SettingsManager
             {
                 try
                 {
-#if SERVER
-                    if (item.Name == nameof(FullScreenMode))
+                    if (RunMode.Value is RunModeType.HeadlessServer)
                     {
-                        continue;
+                        if (item.Name == nameof(FullScreenMode))
+                        {
+                            continue;
+                        }
                     }
-#endif
+
                     var value = HumanReadableConverter.ConvertToString(item.GetValue(null, null) ?? string.Empty);
                     var node = XmlUtils.AddElement(xElement, "Setting");
                     XmlUtils.SetAttributeValue(node, "Name", item.Name);

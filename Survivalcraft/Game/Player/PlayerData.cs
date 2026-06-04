@@ -57,11 +57,7 @@ public partial class PlayerData : IDisposable
 
     private bool _gameWidgetInitialized;
 
-#if SERVER
     public Guid PlayerGUID { get; set; } = Guid.Empty;
-#else
-    public Guid PlayerGUID { get; set; } = CommonLib.Net.Self!.GUID;
-#endif
 
     public bool ReadyToRestart;
 
@@ -174,6 +170,11 @@ public partial class PlayerData : IDisposable
 
     public PlayerData(Project project)
     {
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            PlayerGUID = CommonLib.Net.Self!.GUID;
+        }
+
         Project = project;
         SubsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
         SubsystemGameWidgets = project.FindSubsystem<SubsystemGameWidgets>(true)!;
@@ -601,11 +602,9 @@ public partial class PlayerData : IDisposable
         LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
         SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
         Name = valuesDictionary.GetValue("Name", "Walter");
-#if SERVER
-        PlayerGUID = valuesDictionary.GetValue("PlayerGUID", CommonLib.Net.Self?.GUID ?? Guid.Empty);
-#else
-        PlayerGUID = valuesDictionary.GetValue("PlayerGUID", CommonLib.Net.Self!.GUID);
-#endif
+        PlayerGUID = RunMode.Value is RunModeType.HeadlessServer
+            ? valuesDictionary.GetValue("PlayerGUID", CommonLib.Net.Self?.GUID ?? Guid.Empty)
+            : valuesDictionary.GetValue("PlayerGUID", CommonLib.Net.Self!.GUID);
         PlayerClass = valuesDictionary.GetValue("PlayerClass", PlayerClass.Male);
         Level = valuesDictionary.GetValue("Level", 1f);
         CharacterSkinName =
@@ -614,11 +613,15 @@ public partial class PlayerData : IDisposable
         GroupKey = valuesDictionary.GetValue("GroupKey", GroupKey);
         ServerManager = valuesDictionary.GetValue("ServerManager", ServerManager);
         _stateMachine.TransitionTo("FirstUpdate");
-#if SERVER
-        IsMainPlayer = CommonLib.Net.Self != null && PlayerGUID == CommonLib.Net.Self.GUID;
-#else
-        IsMainPlayer = PlayerGUID == CommonLib.Net.Self.GUID;
-#endif
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            IsMainPlayer = CommonLib.Net.Self is not null && PlayerGUID == CommonLib.Net.Self.GUID;
+        }
+        else
+        {
+            IsMainPlayer = PlayerGUID == CommonLib.Net.Self!.GUID;
+        }
+
         if (IsMainPlayer && CommonLib.WorkType == WorkType.Server)
         {
             ServerManager = true;
@@ -672,10 +675,12 @@ public partial class PlayerData : IDisposable
         }
 
         ComponentPlayer = componentPlayer;
-#if !SERVER
-        GameWidget.ActiveCamera = GameWidget.FindCamera<FppCamera>()!;
-        GameWidget.Target = componentPlayer;
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            GameWidget.ActiveCamera = GameWidget.FindCamera<FppCamera>()!;
+            GameWidget.Target = componentPlayer;
+        }
+
         if (FirstSpawnTime < 0.0)
         {
             FirstSpawnTime = SubsystemGameInfo.TotalElapsedGameTime;
@@ -687,7 +692,7 @@ public partial class PlayerData : IDisposable
             return;
         }
 
-        //如果客户端接收到实体，则立即进入WaitForTerrain，防止卡住
+        // 如果客户端接收到实体，则立即进入WaitForTerrain，防止卡住
         ClientCachePosition = ComponentPlayer.ComponentBody.Position;
         _stateMachine.TransitionTo("WaitForTerrain");
     }
@@ -1062,9 +1067,10 @@ public partial class PlayerData : IDisposable
 
     public void UpdateSpawnDialog(string largeMessage, string smallMessage, float progress, bool resetProgress)
     {
-#if SERVER
-        return;
-#endif
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
 
         if (resetProgress)
         {
@@ -1086,15 +1092,18 @@ public partial class PlayerData : IDisposable
 
     public void HideSpawnDialog()
     {
-#if SERVER
-        return;
-#endif
-
-        if (_spawnDialog != null)
+        if (RunMode.Value is RunModeType.HeadlessServer)
         {
-            DialogsManager.HideDialog(_spawnDialog);
-            _spawnDialog = null;
+            return;
         }
+
+        if (_spawnDialog == null)
+        {
+            return;
+        }
+
+        DialogsManager.HideDialog(_spawnDialog);
+        _spawnDialog = null;
     }
 
     public static string MakeClothingValue(int index, int color)

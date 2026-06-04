@@ -132,7 +132,7 @@ public class ComponentHealth : Component, IUpdateable
                 Terrain.ToCell(position.X),
                 Terrain.ToCell(_componentCreature.ComponentCreatureModel.EyePosition.Y),
                 Terrain.ToCell(position.Z)
-                );
+            );
             Air = BlocksManager.Blocks[cellContents] is FluidBlock || position.Y > 700f
                 ? MathUtils.Saturate(Air - dt / AirCapacity)
                 : 1f;
@@ -277,25 +277,24 @@ public class ComponentHealth : Component, IUpdateable
         {
             _componentCreature.ComponentCreatureSounds.PlayPainSound();
             RedScreenFactor += -4f * HealthChange;
-#if !SERVER
-            _componentPlayer?.ComponentGui.HealthBarWidget.Flash(
-                MathUtils.Clamp((int)((0f - HealthChange) * 30f), 0, 10)
+            if (RunMode.Value is RunModeType.Gui)
+            {
+                _componentPlayer?.ComponentGui.HealthBarWidget.Flash(
+                    MathUtils.Clamp((int)((0f - HealthChange) * 30f), 0, 10)
+                );
+            }
+        }
+
+        _componentPlayer?.ComponentScreenOverlays.RedOutFactor = MathUtils
+            .Max(
+                _componentPlayer.ComponentScreenOverlays.RedOutFactor,
+                RedScreenFactor
             );
-#endif
-        }
 
-        if (_componentPlayer != null)
+        if (RunMode.Value is RunModeType.Gui)
         {
-            _componentPlayer.ComponentScreenOverlays.RedOutFactor =
-                MathUtils.Max(_componentPlayer.ComponentScreenOverlays.RedOutFactor, RedScreenFactor);
+            _componentPlayer?.ComponentGui.HealthBarWidget.Value = Health;
         }
-
-#if !SERVER
-        if (_componentPlayer != null)
-        {
-            _componentPlayer.ComponentGui.HealthBarWidget.Value = Health;
-        }
-#endif
 
         if (Health == 0f && HealthChange < 0f)
         {
@@ -311,9 +310,11 @@ public class ComponentHealth : Component, IUpdateable
                 var position2 = _componentCreature.ComponentBody.Position +
                                 new Vector3(0f, _componentCreature.ComponentBody.BoxSize.Y / 2f, 0f);
                 var x = _componentCreature.ComponentBody.StanceBoxSize.X;
-#if !SERVER
-                _subsystemParticles.AddParticleSystem(new KillParticleSystem(_subsystemTerrain, position2, x));
-#endif
+                if (RunMode.Value is RunModeType.Gui)
+                {
+                    _subsystemParticles.AddParticleSystem(new KillParticleSystem(_subsystemTerrain, position2, x));
+                }
+
                 var position3 = (_componentCreature.ComponentBody.BoundingBox.Min +
                                  _componentCreature.ComponentBody.BoundingBox.Max) / 2f;
                 foreach (var item in Entity.FindComponents<IInventory>())

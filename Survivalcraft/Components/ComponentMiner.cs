@@ -58,11 +58,7 @@ public class ComponentMiner : Component, IUpdateable
 
     public float AutoInteractRate { get; private set; }
 
-    public IInventory Inventory
-    {
-        get;
-        private set;
-    } = InventoryDefault.Default;
+    public IInventory Inventory { get; private set; } = InventoryDefault.Default;
 
     public int ActiveBlockValue => Inventory.GetSlotValue(Inventory.ActiveSlotIndex);
 
@@ -276,11 +272,14 @@ public class ComponentMiner : Component, IUpdateable
 
             result = true;
 
-#if !SERVER
+            if (RunMode.Value is RunModeType.HeadlessServer)
+            {
+                return result;
+            }
+
             var particleSystem = block.CreateDebrisParticleSystem(_subsystemTerrain, raycastResult.HitPoint(0.1f),
                 cellValue, 0.65f);
             Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
-#endif
         }
         else
         {
@@ -537,7 +536,8 @@ public class ComponentMiner : Component, IUpdateable
 
         ModsManager.HookAction("OnMinerHit", modLoader =>
         {
-            modLoader.OnMinerHit(this, componentBody, hitPoint, hitDirection, ref damage, ref playerHitRate, ref creatureHitRate,
+            modLoader.OnMinerHit(this, componentBody, hitPoint, hitDirection, ref damage, ref playerHitRate,
+                ref creatureHitRate,
                 out var hit);
             return hit;
         });

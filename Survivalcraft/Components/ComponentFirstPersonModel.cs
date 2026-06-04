@@ -62,9 +62,11 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (!(_componentPlayer.ComponentHealth.Health > 0f) ||
             !camera.GameWidget.IsEntityFirstPersonTarget(Entity))
         {
@@ -211,16 +213,17 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
         {
             Display.Viewport = viewport;
         }
-#endif
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.FirstPersonModels;
 
     public void Update(float dt)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var vector = _componentPlayer.ComponentCreatureModel.EyeRotation.ToYawPitchRoll();
         _lagAngles *= MathUtils.Pow(0.2f, dt);
         if (_lastYpr.HasValue)
@@ -265,19 +268,19 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
         _itemRotation = Vector3.Lerp(_itemRotation, ItemRotationOrder, MathUtils.Saturate(10f * dt));
         ItemOffsetOrder = Vector3.Zero;
         ItemRotationOrder = Vector3.Zero;
-#endif
     }
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
         _componentRider = Entity.FindComponent<ComponentRider>(true)!;
         _componentMiner = Entity.FindComponent<ComponentMiner>(true)!;
         _handModel = ContentManager.Get<Model>(valuesDictionary.GetValue<string>("HandModelName"));
-#endif
     }
 }

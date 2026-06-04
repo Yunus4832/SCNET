@@ -74,30 +74,34 @@ public class SubsystemSeasons : Subsystem, IUpdateable
 
     public static Color GetTimeOfYearColor(float timeOfYear)
     {
-#if SERVER
-        TimeOfYearToSeason(timeOfYear, out var season, out _);
-        return season switch
+        if (RunMode.Value is RunModeType.HeadlessServer)
         {
-            Season.Summer => new Color(255, 220, 120),
-            Season.Autumn => new Color(255, 170, 90),
-            Season.Winter => new Color(190, 220, 255),
-            _ => new Color(170, 235, 170)
-        };
-#else
+            TimeOfYearToSeason(timeOfYear, out var season, out _);
+            return season switch
+            {
+                Season.Summer => new Color(255, 220, 120),
+                Season.Autumn => new Color(255, 170, 90),
+                Season.Winter => new Color(190, 220, 255),
+                _ => new Color(170, 235, 170)
+            };
+        }
+
         _seasonsGradient ??= (Image)ContentManager.Get<Texture2D>("Textures/Gui/SeasonsSlider").Tag!;
         var x = (int)MathUtils.Clamp(MathUtils.Round(timeOfYear * _seasonsGradient.Width), 0f,
             _seasonsGradient.Width - 1);
         return _seasonsGradient.GetPixel(x, 0);
-#endif
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var seasonsGradient = (Image?)ContentManager.Get<Texture2D>("Textures/Gui/SeasonsSlider").Tag;
         _seasonsGradient = seasonsGradient ?? throw new InvalidOperationException("SeasonGradient is not initialized");
-#endif
     }
 
     private static void TimeOfYearToSeason(float timeOfYear, out Season season, out float timeOfSeason)

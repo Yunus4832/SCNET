@@ -103,20 +103,22 @@ public class ComponentModel : Component
     {
         subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         componentFrame = Entity.FindComponent<ComponentFrame>(true)!;
-#if SERVER
-        CastsShadow = false;
-        TextureOverride = null;
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            CastsShadow = false;
+            TextureOverride = null;
+        }
+        else
+        {
+            var value = valuesDictionary.GetValue<string>("ModelName");
+            Model = ContentManager.Get<Model>(value);
+            CastsShadow = valuesDictionary.GetValue<bool>("CastsShadow");
+            var value2 = valuesDictionary.GetValue<string>("TextureOverride");
+            TextureOverride = string.IsNullOrEmpty(value2) ? null : ContentManager.Get<Texture2D>(value2);
+        }
+
         PrepareOrder = valuesDictionary.GetValue<int>("PrepareOrder");
         _boundingSphereRadius = valuesDictionary.GetValue<float>("BoundingSphereRadius");
-#else
-        var value = valuesDictionary.GetValue<string>("ModelName");
-        Model = ContentManager.Get<Model>(value);
-        CastsShadow = valuesDictionary.GetValue<bool>("CastsShadow");
-        var value2 = valuesDictionary.GetValue<string>("TextureOverride");
-        TextureOverride = string.IsNullOrEmpty(value2) ? null : ContentManager.Get<Texture2D>(value2);
-        PrepareOrder = valuesDictionary.GetValue<int>("PrepareOrder");
-        _boundingSphereRadius = valuesDictionary.GetValue<float>("BoundingSphereRadius");
-#endif
     }
 
     public virtual void SetModel(Model model)

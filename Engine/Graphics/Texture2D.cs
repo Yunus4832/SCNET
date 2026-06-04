@@ -78,9 +78,11 @@ public class Texture2D : GraphicsResource
     public void SetData<T>(int mipLevel, T[] source, int sourceStartIndex = 0) where T : struct
     {
         VerifyParametersSetData(mipLevel, source, sourceStartIndex);
-#if SERVER
-        return;
-#else
+        if (RunMode.Value == RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var gCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
         try
         {
@@ -107,7 +109,6 @@ public class Texture2D : GraphicsResource
         {
             gCHandle.Free();
         }
-#endif
     }
 
     public virtual void SetData(Image<Rgba32> source)
@@ -118,19 +119,22 @@ public class Texture2D : GraphicsResource
     public virtual unsafe void SetData(int mipLevel, Image<Rgba32> source)
     {
         VerifyParametersSetData(source);
-#if SERVER
-        return;
-#else
+        if (RunMode.Value == RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         source.DangerousTryGetSinglePixelMemory(out var memory);
         SetDataInternal(mipLevel, memory.Pin().Pointer);
-#endif
     }
 
     public virtual void SetDataInternal(int mipLevel, nint source)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value == RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var width = MathUtils.Max(Width >> mipLevel, 1);
         var height = MathUtils.Max(Height >> mipLevel, 1);
         GLWrapper.BindTexture(TextureTarget.Texture2D, texture, false);
@@ -145,14 +149,15 @@ public class Texture2D : GraphicsResource
             PixelType,
             in source
         );
-#endif
     }
 
     public virtual unsafe void SetDataInternal(int mipLevel, void* source)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value == RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var width = MathUtils.Max(Width >> mipLevel, 1);
         var height = MathUtils.Max(Height >> mipLevel, 1);
         GLWrapper.BindTexture(TextureTarget.Texture2D, texture, false);
@@ -167,7 +172,6 @@ public class Texture2D : GraphicsResource
             PixelType,
             source
         );
-#endif
     }
 
     public override void HandleDeviceLost()
@@ -182,9 +186,12 @@ public class Texture2D : GraphicsResource
 
     public void AllocateTexture()
     {
-#if SERVER
-        texture = 0;
-#else
+        if (RunMode.Value == RunModeType.HeadlessServer)
+        {
+            texture = 0;
+            return;
+        }
+
         GLWrapper.GL.GenTextures(1, out uint uTexture);
         texture = (int)uTexture;
         GLWrapper.BindTexture(TextureTarget.Texture2D, uTexture, false);
@@ -207,7 +214,6 @@ public class Texture2D : GraphicsResource
                 );
             }
         }
-#endif
     }
 
     public void DeleteTexture()
@@ -258,13 +264,14 @@ public class Texture2D : GraphicsResource
     {
         var texture2D = new Texture2D(image.Width, image.Height, mipLevelsCount, ColorFormat.Rgba8888);
         texture2D.SetData(image.TrueImage);
-#if !SERVER
-        if (mipLevelsCount > 1)
+        if (RunMode.Value is RunModeType.Gui)
         {
-            GLWrapper.BindTexture(TextureTarget.Texture2D, texture2D.texture, false);
-            GLWrapper.GL.GenerateMipmap(TextureTarget.Texture2D);
+            if (mipLevelsCount > 1)
+            {
+                GLWrapper.BindTexture(TextureTarget.Texture2D, texture2D.texture, false);
+                GLWrapper.GL.GenerateMipmap(TextureTarget.Texture2D);
+            }
         }
-#endif
 
         texture2D.Tag = image;
         return texture2D;

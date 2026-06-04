@@ -5,7 +5,6 @@
         <Version>$(ScNetworkVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-        <DefineConstants>SERVER</DefineConstants>
         <StartProgram>Starter</StartProgram>
     </PropertyGroup>
 
@@ -21,9 +20,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj" SetTargetFramework="TargetFramework=net10.0">
-            <AdditionalProperties>DefineConstants=DESKTOP;SERVER</AdditionalProperties>
-        </ProjectReference>
+        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj" SetTargetFramework="TargetFramework=net10.0"/>
     </ItemGroup>
 
     <ItemGroup>

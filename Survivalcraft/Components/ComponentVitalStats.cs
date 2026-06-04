@@ -105,9 +105,11 @@ public class ComponentVitalStats : Component, IUpdateable
 
     public void Update(float dt)
     {
-#if SERVER
-        return;
-#endif
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (_componentPlayer.ComponentHealth.Health > 0f)
         {
             UpdateFood();
@@ -220,7 +222,6 @@ public class ComponentVitalStats : Component, IUpdateable
 
         _componentPlayer.PlayerStats.FoodItemsEaten++;
         return true;
-
     }
 
     public void MakeSleepy(float sleepValue)
@@ -345,7 +346,8 @@ public class ComponentVitalStats : Component, IUpdateable
                     if (_subsystemTime.PeriodicGameTimeEvent(50.0, 0.0))
                     {
                         _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageControl.Get(_typeName, 9));
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 10), Color.White,
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 10),
+                            Color.White,
                             true, false);
                         _componentPlayer.ComponentGui.FoodBarWidget.Flash(10);
                     }
@@ -442,7 +444,8 @@ public class ComponentVitalStats : Component, IUpdateable
                     if (_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0))
                     {
                         _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageControl.Get(_typeName, 16));
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 17), Color.White,
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 17),
+                            Color.White,
                             true, false);
                     }
 

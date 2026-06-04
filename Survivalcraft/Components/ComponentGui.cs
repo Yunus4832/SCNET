@@ -13,13 +13,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public int CloseTime;
 
-#if !SERVER
     private readonly LabelWidget _closeTimeLabel = new()
     {
         Name = "CloseTime", HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Near,
         IsVisible = false
     };
-#endif
 
     private ButtonWidget _backButtonWidget = null!;
 
@@ -183,10 +181,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void Update(float dt)
     {
-#if SERVER
-        return;
-#else
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (CloseTime > 0)
         {
             _closeTimeLabel.IsVisible = true;
@@ -202,7 +201,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         {
             CommonLib.Net.StopImmediate();
         }
-#endif
 
         HandleInput();
         UpdateWidgets();
@@ -211,7 +209,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             modLoader.GuiUpdate(this);
             return false;
         });
-#endif
     }
 
     public void DisplayLargeMessage(string largeText, string smallText, float duration, float delay)
@@ -227,9 +224,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void DisplaySmallMessage(string text, Color color, bool blinking, bool playNotificationSound)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _messageWidget.DisplayMessage(text, color, blinking);
         if (CommonLib.WorkType != WorkType.Local)
         {
@@ -240,7 +239,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         {
             _subsystemAudio.PlaySound("Audio/UI/Message", 1f, 0f, ComponentPlayer.ComponentBody.Position, 2f, false);
         }
-#endif
     }
 
     public bool IsGameMenuDialogVisible()
@@ -253,9 +251,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     {
         SubsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         ComponentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
         _subsystemTimeOfDay = Project.FindSubsystem<SubsystemTimeOfDay>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
@@ -263,9 +263,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemWeather = Project.FindSubsystem<SubsystemWeather>(true)!;
         var guiWidget = ComponentPlayer.GuiWidget;
-#if !SERVER
         guiWidget.Children.Insert(0, _closeTimeLabel);
-#endif
         _backButtonWidget = guiWidget.Children.Find<ButtonWidget>("BackButton")!;
         _inventoryButtonWidget = guiWidget.Children.Find<ButtonWidget>("InventoryButton")!;
         _clothingButtonWidget = guiWidget.Children.Find<ButtonWidget>("ClothingButton")!;
@@ -311,7 +309,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _keyboardHelpMessageShown = valuesDictionary.GetValue<bool>("KeyboardHelpMessageShown");
         _keyboardHelpMessageShown = valuesDictionary.GetValue<bool>("KeyboardHelpMessageShown");
         _gamepadHelpMessageShown = valuesDictionary.GetValue<bool>("GamepadHelpMessageShown");
-#endif
     }
 
     public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
@@ -322,31 +319,35 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public override void OnEntityAdded()
     {
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         ShortInventoryWidget.AssignComponents(ComponentPlayer.ComponentMiner.Inventory);
-#endif
     }
 
     public override void OnEntityRemoved()
     {
-#if !SERVER
-        ShortInventoryWidget.AssignComponents(null);
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            ShortInventoryWidget.AssignComponents(null);
+        }
+
         _message = null;
     }
 
     public override void Dispose()
     {
-#if SERVER
-        return;
-#else
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         ComponentPlayer.GuiWidget.Children.Remove(_closeTimeLabel);
-#endif
         ModalPanelWidget = null;
         _keyboardHelpDialog = null;
         ShortInventoryWidget.AssignComponents(null);
-#endif
     }
 
     public void UpdateSidePanelsAnimation()

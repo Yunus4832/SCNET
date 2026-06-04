@@ -77,9 +77,10 @@ public class SurvivalCraftModLoader : ModLoader
 
     public override void OnPlayerDead(PlayerData playerData)
     {
-#if !SERVER
-        playerData.GameWidget.ActiveCamera = playerData.GameWidget.FindCamera<DeathCamera>()!;
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            playerData.GameWidget.ActiveCamera = playerData.GameWidget.FindCamera<DeathCamera>()!;
+        }
 
         if (playerData.ComponentPlayer != null)
         {
@@ -89,27 +90,31 @@ public class SurvivalCraftModLoader : ModLoader
                 text = LanguageControl.Get(PlayerData.TypeName, 12);
             }
 
-#if !SERVER
-            var arg = string.Format(LanguageControl.Get(PlayerData.TypeName, 13), text);
-            if (playerData.SubsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel)
+            if (RunMode.Value is RunModeType.Gui)
             {
-                playerData.ComponentPlayer.ComponentGui.DisplayLargeMessage(LanguageControl.Get(PlayerData.TypeName, 6),
-                    string.Format(LanguageControl.Get(PlayerData.TypeName, 7), arg,
-                        LanguageControl.Get("GameMode",
-                            playerData.SubsystemGameInfo.WorldSettings.GameMode.ToString())), 30f, 1.5f);
+                var arg = string.Format(LanguageControl.Get(PlayerData.TypeName, 13), text);
+                if (playerData.SubsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel)
+                {
+                    playerData.ComponentPlayer.ComponentGui.DisplayLargeMessage(
+                        LanguageControl.Get(PlayerData.TypeName, 6),
+                        string.Format(LanguageControl.Get(PlayerData.TypeName, 7), arg,
+                            LanguageControl.Get("GameMode",
+                                playerData.SubsystemGameInfo.WorldSettings.GameMode.ToString())), 30f, 1.5f);
+                }
+                else if (playerData.SubsystemGameInfo.WorldSettings is
+                         { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
+                {
+                    playerData.ComponentPlayer.ComponentGui.DisplayLargeMessage(
+                        LanguageControl.Get(PlayerData.TypeName, 6),
+                        string.Format(LanguageControl.Get(PlayerData.TypeName, 8), arg), 30f, 1.5f);
+                }
+                else
+                {
+                    playerData.ComponentPlayer.ComponentGui.DisplayLargeMessage(
+                        LanguageControl.Get(PlayerData.TypeName, 6),
+                        string.Format(LanguageControl.Get(PlayerData.TypeName, 9), arg), 30f, 1.5f);
+                }
             }
-            else if (playerData.SubsystemGameInfo.WorldSettings is
-                     { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
-            {
-                playerData.ComponentPlayer.ComponentGui.DisplayLargeMessage(LanguageControl.Get(PlayerData.TypeName, 6),
-                    string.Format(LanguageControl.Get(PlayerData.TypeName, 8), arg), 30f, 1.5f);
-            }
-            else
-            {
-                playerData.ComponentPlayer.ComponentGui.DisplayLargeMessage(LanguageControl.Get(PlayerData.TypeName, 6),
-                    string.Format(LanguageControl.Get(PlayerData.TypeName, 9), arg), 30f, 1.5f);
-            }
-#endif
 
             if (CommonLib.WorkType == WorkType.Server)
             {

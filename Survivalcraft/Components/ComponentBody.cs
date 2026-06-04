@@ -491,28 +491,36 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
 
         UpdateImmersionData();
-        if (ImmersionFluidBlock is WaterBlock && ImmersionDepth > 0.3f && !_fluidEffectsPlayed)
+        switch (ImmersionFluidBlock)
         {
-            _fluidEffectsPlayed = true;
-            _subsystemAudio.PlayRandomSound("Audio/WaterFallIn", _random.Float(0.75f, 1f), _random.Float(-0.3f, 0f),
-                position, 4f, true);
-#if !SERVER
-            _subsystemParticles.AddParticleSystem(new WaterSplashParticleSystem(_subsystemTerrain, position,
-                (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
-#endif
-        }
-        else if (ImmersionFluidBlock is MagmaBlock && ImmersionDepth > 0f && !_fluidEffectsPlayed)
-        {
-            _fluidEffectsPlayed = true;
-            _subsystemAudio.PlaySound("Audio/SizzleLong", 1f, 0f, position, 4f, true);
-#if !SERVER
-            _subsystemParticles.AddParticleSystem(new MagmaSplashParticleSystem(_subsystemTerrain, position,
-                (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
-#endif
-        }
-        else if (ImmersionFluidBlock == null)
-        {
-            _fluidEffectsPlayed = false;
+            case WaterBlock when ImmersionDepth > 0.3f && !_fluidEffectsPlayed:
+            {
+                _fluidEffectsPlayed = true;
+                _subsystemAudio.PlayRandomSound("Audio/WaterFallIn", _random.Float(0.75f, 1f), _random.Float(-0.3f, 0f),
+                    position, 4f, true);
+                if (RunMode.Value is RunModeType.Gui)
+                {
+                    _subsystemParticles.AddParticleSystem(new WaterSplashParticleSystem(_subsystemTerrain, position,
+                        (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
+                }
+
+                break;
+            }
+            case MagmaBlock when ImmersionDepth > 0f && !_fluidEffectsPlayed:
+            {
+                _fluidEffectsPlayed = true;
+                _subsystemAudio.PlaySound("Audio/SizzleLong", 1f, 0f, position, 4f, true);
+                if (RunMode.Value is RunModeType.Gui)
+                {
+                    _subsystemParticles.AddParticleSystem(new MagmaSplashParticleSystem(_subsystemTerrain, position,
+                        (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
+                }
+
+                break;
+            }
+            case null:
+                _fluidEffectsPlayed = false;
+                break;
         }
     }
 

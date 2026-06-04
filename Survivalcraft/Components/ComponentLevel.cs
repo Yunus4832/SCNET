@@ -81,15 +81,16 @@ public class ComponentLevel : Component, IUpdateable
         SpeedFactor = CalculateSpeedFactor([]);
         HungerFactor = CalculateHungerFactor([]);
         ResilienceFactor = CalculateResilienceFactor([]);
-#if !SERVER
-        if (!_lastLevelTextValue.HasValue ||
-            _lastLevelTextValue.Value.UncloseTo(MathUtils.Floor(_componentPlayer.PlayerData.Level)))
+        if (RunMode.Value is RunModeType.Gui)
         {
-            _componentPlayer.ComponentGui.LevelLabelWidget.Text =
-                "等级 " + MathUtils.Floor(_componentPlayer.PlayerData.Level);
-            _lastLevelTextValue = MathUtils.Floor(_componentPlayer.PlayerData.Level);
+            if (!_lastLevelTextValue.HasValue ||
+                _lastLevelTextValue.Value.UncloseTo(MathUtils.Floor(_componentPlayer.PlayerData.Level)))
+            {
+                _componentPlayer.ComponentGui.LevelLabelWidget.Text =
+                    "等级 " + MathUtils.Floor(_componentPlayer.PlayerData.Level);
+                _lastLevelTextValue = MathUtils.Floor(_componentPlayer.PlayerData.Level);
+            }
         }
-#endif
 
         _componentPlayer.PlayerStats.HighestLevel = MathUtils.Max(_componentPlayer.PlayerStats.HighestLevel,
             _componentPlayer.PlayerData.Level);
@@ -313,7 +314,8 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageControl.Get(Name, 2), MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
+                Description = string.Format(LanguageControl.Get(Name, 2),
+                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
             };
             factors.Add(item);
         }
@@ -393,7 +395,8 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageControl.Get(Name, 2), MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
+                Description = string.Format(LanguageControl.Get(Name, 2),
+                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
             };
             factors.Add(item);
         }
@@ -516,7 +519,8 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageControl.Get(Name, 2), MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
+                Description = string.Format(LanguageControl.Get(Name, 2),
+                    MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
             };
             factors.Add(item);
         }

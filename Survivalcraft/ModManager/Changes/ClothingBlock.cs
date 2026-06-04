@@ -63,12 +63,9 @@ public class ClothingBlock : Block
                 CanBeDyed = XmlUtils.GetAttributeValue<bool>(item, "CanBeDyed"),
                 Layer = XmlUtils.GetAttributeValue<int>(item, "Layer"),
                 PlayerLevelRequired = XmlUtils.GetAttributeValue<int>(item, "PlayerLevelRequired"),
-#if SERVER
-                // Headless server only needs clothing metadata for gameplay calculations.
-                Texture = null!,
-#else
-                Texture = ContentManager.Get<Texture2D>(XmlUtils.GetAttributeValue<string>(item, "TextureName")),
-#endif
+                Texture = RunMode.Value is RunModeType.HeadlessServer
+                    ? null!
+                    : ContentManager.Get<Texture2D>(XmlUtils.GetAttributeValue<string>(item, "TextureName")),
                 ImpactSoundsFolder = XmlUtils.GetAttributeValue<string>(item, "ImpactSoundsFolder"),
                 Description = newDescription ?? string.Empty
             };
@@ -98,7 +95,12 @@ public class ClothingBlock : Block
         }
 
         LoadClothingData(xElement);
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            base.Initialize();
+            return;
+        }
+
         var playerModel = CharacterSkinsManager.GetPlayerModel(PlayerClass.Male);
         var array = new Matrix[playerModel.Bones.Count];
         playerModel.CopyAbsoluteBoneTransformsTo(array);
@@ -138,7 +140,6 @@ public class ClothingBlock : Block
                 _outerMesh.AppendModelMeshPart(meshPart2, matrix2, false, true, false, true, color2);
             }
         }
-#endif
 
         base.Initialize();
     }
@@ -161,12 +162,7 @@ public class ClothingBlock : Block
 
     public override string GetCategory(int value)
     {
-        if (GetClothingColor(Terrain.ExtractData(value)) == 0)
-        {
-            return base.GetCategory(value);
-        }
-
-        return "Dyed";
+        return GetClothingColor(Terrain.ExtractData(value)) == 0 ? base.GetCategory(value) : "Dyed";
     }
 
     public override int GetDamage(int value)

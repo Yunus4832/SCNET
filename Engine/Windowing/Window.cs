@@ -8,9 +8,13 @@ using Org.Libsdl.App;
 
 #if DESKTOP
 using Monitor = Silk.NET.Windowing.Monitor;
+
 using Silk.NET.Core;
+
 using System.Runtime.CompilerServices;
+
 using Silk.NET.Input;
+
 using SixLabors.ImageSharp.PixelFormats;
 #endif
 
@@ -97,9 +101,11 @@ public static class Window
 #if DESKTOP
         get
         {
-#if SERVER
-            return new Point2(1280, 720);
-#else
+            if (RunMode.Value is RunModeType.HeadlessServer)
+            {
+                return new Point2(1280, 720);
+            }
+
             var monitor = ((IWindow?)GameWindow)?.Monitor;
             if (monitor is null)
             {
@@ -116,7 +122,6 @@ public static class Window
 
             var size = monitor.Bounds.Size;
             return new Point2(size.X, size.Y);
-#endif
         }
 #endif
     }

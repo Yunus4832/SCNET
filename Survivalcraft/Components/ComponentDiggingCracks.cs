@@ -40,9 +40,11 @@ public class ComponentDiggingCracks : Component, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (!_componentMiner.DigCellFace.HasValue ||
             !(_componentMiner.DigProgress > 0f) ||
             !(_componentMiner.DigTime > 0.2f))
@@ -123,7 +125,6 @@ public class ComponentDiggingCracks : Component, IDrawable
         {
             // ignored
         }
-#endif
     }
 
     private void DisposeBuffers()
@@ -138,9 +139,11 @@ public class ComponentDiggingCracks : Component, IDrawable
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _players = Project.FindSubsystem<SubsystemPlayers>(true)!;
         _defaultTexture = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!.AnimatedBlocksTexture;
         _drawItem = new Dictionary<Texture2D, TerrainGeometry[]>();
@@ -161,10 +164,9 @@ public class ComponentDiggingCracks : Component, IDrawable
         {
             _textures[i] = ContentManager.Get<Texture2D>($"Textures/Cracks{i + 1}");
         }
-#endif
     }
 
-    //暂时用不到的1.8版本的新函数
+    // 暂时用不到的1.8版本的新函数
     public class Geometry : TerrainGeometry
     {
         public Geometry()

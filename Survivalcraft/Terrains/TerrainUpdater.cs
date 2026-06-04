@@ -717,20 +717,23 @@ public class TerrainUpdater
         var allocatedChunks = _terrain.AllocatedChunks;
         foreach (var terrainChunk in allocatedChunks)
         {
-            if (!IsChunkInRange(terrainChunk.Center, locations))
+            if (IsChunkInRange(terrainChunk.Center, locations))
             {
-                result = true;
-                OnChunkDiscard?.Invoke(terrainChunk);
-                foreach (var blockBehavior in _subsystemBlockBehaviors.BlockBehaviors)
-                {
-                    blockBehavior.OnChunkDiscarding(terrainChunk);
-                }
+                continue;
+            }
 
-                _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
-                _terrain.FreeChunk(terrainChunk);
-#if !SERVER
+            result = true;
+            OnChunkDiscard?.Invoke(terrainChunk);
+            foreach (var blockBehavior in _subsystemBlockBehaviors.BlockBehaviors)
+            {
+                blockBehavior.OnChunkDiscarding(terrainChunk);
+            }
+
+            _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
+            _terrain.FreeChunk(terrainChunk);
+            if (RunMode.Value is RunModeType.Gui)
+            {
                 _subsystemTerrain.TerrainRenderer.DisposeTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
-#endif
             }
         }
 
@@ -1108,10 +1111,13 @@ public class TerrainUpdater
             }
             case TerrainChunkState.InvalidVertices1:
             {
-#if SERVER
-                chunk.ThreadState = TerrainChunkState.Valid;
-                chunk.WasUpgraded = true;
-#else
+                if (RunMode.Value is RunModeType.HeadlessServer)
+                {
+                    chunk.ThreadState = TerrainChunkState.Valid;
+                    chunk.WasUpgraded = true;
+                    break;
+                }
+
                 CalculateChunkSliceContentsHash(chunk);
                 lock (chunk.Geometry)
                 {
@@ -1126,15 +1132,17 @@ public class TerrainUpdater
 
                 chunk.ThreadState = TerrainChunkState.InvalidVertices2;
                 chunk.WasUpgraded = true;
-#endif
                 break;
             }
             case TerrainChunkState.InvalidVertices2:
             {
-#if SERVER
-                chunk.ThreadState = TerrainChunkState.Valid;
-                chunk.WasUpgraded = true;
-#else
+                if (RunMode.Value is RunModeType.HeadlessServer)
+                {
+                    chunk.ThreadState = TerrainChunkState.Valid;
+                    chunk.WasUpgraded = true;
+                    break;
+                }
+
                 lock (chunk.Geometry)
                 {
                     GenerateChunkVertices(chunk, false);
@@ -1148,7 +1156,6 @@ public class TerrainUpdater
 
                 chunk.ThreadState = TerrainChunkState.Valid;
                 chunk.WasUpgraded = true;
-#endif
                 break;
             }
         }

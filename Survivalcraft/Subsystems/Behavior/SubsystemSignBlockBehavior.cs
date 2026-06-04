@@ -27,11 +27,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     public bool CopySignsText;
 
-#if SERVER
-    private readonly BitmapFont _font = null!;
-#else
-    private readonly BitmapFont _font = LabelWidget.BitmapFont;
-#endif
+    private BitmapFont _font = null!;
 
     private readonly List<Vector3> _lastUpdatePositions = [];
 
@@ -74,11 +70,12 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     public void Draw(Camera camera, int drawOrder)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         DrawSigns(camera);
-#endif
     }
 
 
@@ -86,11 +83,12 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     public void Update(float dt)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         UpdateRenderTarget();
-#endif
     }
 
     public SignData? GetSignData(Point3 point)
@@ -216,15 +214,18 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            _font = LabelWidget.BitmapFont;
+            _subsystemViews = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
+            CreateRenderTarget();
+            Display.DeviceReset += DisplayDeviceReset;
+        }
+
         base.Load(valuesDictionary);
-#if !SERVER
-        _subsystemViews = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
-#endif
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
-#if !SERVER
-        CreateRenderTarget();
-#endif
+
         foreach (ValuesDictionary value11 in valuesDictionary.GetValue<ValuesDictionary>("Texts").Values)
         {
             var value = value11.GetValue<Point3>("Point");
@@ -254,10 +255,6 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
                 value10
             );
         }
-
-#if !SERVER
-        Display.DeviceReset += DisplayDeviceReset;
-#endif
     }
 
     public override void Save(ValuesDictionary valuesDictionary)
@@ -320,11 +317,14 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     public override void Dispose()
     {
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var renderTarget2D = RenderTarget;
         Utilities.Dispose(ref renderTarget2D);
         Display.DeviceReset -= DisplayDeviceReset;
-#endif
     }
 
     private void DisplayDeviceReset()

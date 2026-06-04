@@ -32,9 +32,11 @@ public class FastDebugModEntity : ModEntity
             };
         }
 
-#if !SERVER
-        GetFile("icon.png", LoadIcon);
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            GetFile("icon.png", LoadIcon);
+        }
+
         foreach (var c in FModFiles)
         {
             GetFile(c.Key, stream =>
@@ -203,9 +205,10 @@ public class FastDebugModEntity : ModEntity
     {
         if (string.Equals(filename, "icon.png", StringComparison.OrdinalIgnoreCase))
         {
-#if SERVER
-            return false;
-#endif
+            if (RunMode.Value is RunModeType.HeadlessServer)
+            {
+                return false;
+            }
         }
 
         if (!FModFiles.TryGetValue(filename, out var fileInfo))
@@ -224,7 +227,6 @@ public class FastDebugModEntity : ModEntity
         }
 
         return true;
-
     }
 
     protected override bool GetAssetsFile(string filename, Action<Stream> stream)

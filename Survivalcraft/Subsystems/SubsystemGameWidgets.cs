@@ -74,7 +74,8 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
             case 2: typeStr = "<c=Violet>[私]</c>"; break;
         }
 
-        var message = $"{typeStr}{(string.IsNullOrEmpty(playerName) ? "<c=red>[系统]</c>" : "[" + playerName + "]")}{msg}";
+        var message =
+            $"{typeStr}{(string.IsNullOrEmpty(playerName) ? "<c=red>[系统]</c>" : "[" + playerName + "]")}{msg}";
         if (toClients.Count > 0 && CommonLib.Net.Self != null && toClients.Contains(CommonLib.Net.Self.ID))
         {
             Insert(message, type, external);
@@ -130,17 +131,27 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
     {
         _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
         SubsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
-#if !SERVER
-        _subsystemPlayers.PlayerAdded += AddGameWidgetForPlayer;
-        _subsystemPlayers.PlayerRemoved += delegate(PlayerData playerData) { RemoveGameWidget(playerData.GameWidget); };
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            _subsystemPlayers.PlayerAdded += AddGameWidgetForPlayer;
+            _subsystemPlayers.PlayerRemoved += delegate(PlayerData playerData)
+            {
+                RemoveGameWidget(playerData.GameWidget);
+            };
+        }
+
         if (CommonLib.MainPlayer != null)
         {
             MainPlayerData = CommonLib.MainPlayer.PlayerData;
         }
 
         GamesWidget = valuesDictionary.GetValue<GamesWidget>("GamesWidget");
-#if !SERVER
+
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         foreach (var playersDatum in _subsystemPlayers.PlayersData)
         {
 #if DEBUG
@@ -148,20 +159,6 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 #endif
             AddGameWidgetForPlayer(playersDatum);
         }
-#endif
-        /*
-        var listDict = valuesDictionary.GetValue<ValuesDictionary>("Messages", null);
-        if (CommonLib.WorkType == WorkType.Client && listDict != null)
-        {
-            foreach (var pair in listDict)
-            {
-                if (pair.Value is string msg)
-                {
-                    insert(msg);
-                }
-            }
-        }
-        */
     }
 
     public override void Save(ValuesDictionary valuesDictionary)

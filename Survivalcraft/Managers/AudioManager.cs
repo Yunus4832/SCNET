@@ -10,9 +10,11 @@ public static class AudioManager
 
     public static void PlaySound(string name, float volume, float pitch, float pan)
     {
-#if SERVER
-        return;
-#endif
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (!(SettingsManager.SoundsVolume > 0f))
         {
             return;

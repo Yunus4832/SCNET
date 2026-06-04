@@ -393,7 +393,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                         if (miner == null ||
                             !SubsystemBedrockBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
                         {
-                            miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow, false,
+                            miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow,
+                                false,
                                 true);
                             return;
                         }
@@ -442,7 +443,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                         if (miner == null ||
                             !SubsystemBedrockBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
                         {
-                            miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow, false,
+                            miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow,
+                                false,
                                 true);
                             return;
                         }
@@ -505,24 +507,27 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
-#if SERVER
-        return;
-#else
-        if (TerrainRenderingEnabled)
+        if (RunMode.Value is RunModeType.HeadlessServer)
         {
-            if (drawOrder == _drawOrders[0])
-            {
-                TerrainUpdater.PrepareForDrawing(camera);
-                TerrainRenderer.PrepareForDrawing(camera);
-                TerrainRenderer.DrawOpaque(camera);
-                TerrainRenderer.DrawAlphaTested(camera);
-            }
-            else if (drawOrder == _drawOrders[1])
-            {
-                TerrainRenderer.DrawTransparent(camera);
-            }
+            return;
         }
-#endif
+
+        if (!TerrainRenderingEnabled)
+        {
+            return;
+        }
+
+        if (drawOrder == _drawOrders[0])
+        {
+            TerrainUpdater.PrepareForDrawing(camera);
+            TerrainRenderer.PrepareForDrawing(camera);
+            TerrainRenderer.DrawOpaque(camera);
+            TerrainRenderer.DrawAlphaTested(camera);
+        }
+        else if (drawOrder == _drawOrders[1])
+        {
+            TerrainRenderer.DrawTransparent(camera);
+        }
     }
 
     public void Update(float dt)
@@ -542,9 +547,11 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         SubsystemFurnitureBlockBehavior = Project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
         SubsystemPalette = Project.FindSubsystem<SubsystemPalette>(true)!;
         Terrain = new Terrain();
-#if !SERVER
-        TerrainRenderer = new TerrainRenderer(this);
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            TerrainRenderer = new TerrainRenderer(this);
+        }
+
         TerrainUpdater = new TerrainUpdater(this);
         TerrainSerializer = CommonLib.WorkType != WorkType.Client
             ? new TerrainSerializer24(SubsystemGameInfo.DirectoryName)
@@ -620,10 +627,11 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public override void Dispose()
     {
-#if !SERVER
-        TerrainRenderer.Dispose();
-        TerrainRenderer = null!;
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            TerrainRenderer.Dispose();
+            TerrainRenderer = null!;
+        }
 
         TerrainUpdater.Dispose();
         TerrainUpdater = null!;

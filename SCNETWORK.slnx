@@ -1,32 +1,27 @@
-﻿<Solution>
+<Solution>
     <Configurations>
         <BuildType Name="ANDROID"/>
         <BuildType Name="Debug"/>
         <BuildType Name="DESKTOP"/>
         <BuildType Name="Release"/>
-        <BuildType Name="SERVER"/>
     </Configurations>
 
     <Folder Name="/01 Engine/">
         <Project Path="Engine\Engine.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
         </Project>
         <Project Path="Engine.Core/Engine.Core.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
         </Project>
         <Project Path="Engine.Serialization/Engine.Serialization.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
         </Project>
         <Project Path="Engine.Test\Engine.Test.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
@@ -35,12 +30,10 @@
         <Project Path="EntitySystem\EntitySystem.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
         </Project>
         <Project Path="EntitySystem.Test\EntitySystem.Test.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
@@ -49,12 +42,10 @@
         <Project Path="Survivalcraft\Survivalcraft.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
         </Project>
         <Project Path="Survivalcraft.Test\Survivalcraft.Test.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
@@ -63,34 +54,27 @@
         <Project Path="Server.Linux\Server.Linux.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="ANDROID|*" Project="false"/>
             <Build Solution="DESKTOP|*" Project="false"/>
         </Project>
         <Project Path="Server.Windows\Server.Windows.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="ANDROID|*" Project="false"/>
             <Build Solution="DESKTOP|*" Project="false"/>
         </Project>
     </Folder>
 
-
     <Folder Name="/05 Desktop/">
         <Project Path="Survivalcraft.Linux\Survivalcraft.Linux.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="ANDROID|*" Project="false"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
         <Project Path="Survivalcraft.Windows\Survivalcraft.Windows.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="ANDROID|*" Project="false"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
     </Folder>
 
@@ -98,32 +82,24 @@
         <Project Path="Survivalcraft.Android\Survivalcraft.Android.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="DESKTOP|*" Project="false"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
         <Project Path="Survivalcraft.Android.Arm32\Survivalcraft.Android.Arm32.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="DESKTOP|*" Project="false"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
         <Project Path="Survivalcraft.Android.X64\Survivalcraft.Android.X64.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="DESKTOP|*" Project="false"/>
             <Build Solution="Release|*" Project="false"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
         <Project Path="Survivalcraft.Android.X86\Survivalcraft.Android.X86.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <BuildType Solution="SERVER|*" Project="Debug"/>
             <Build Solution="DESKTOP|*" Project="false"/>
             <Build Solution="Release|*" Project="false"/>
-            <Build Solution="SERVER|*" Project="false"/>
         </Project>
     </Folder>
 

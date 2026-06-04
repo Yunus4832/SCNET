@@ -37,9 +37,11 @@ public sealed class VertexBuffer : GraphicsResource
     public void SetData<T>(T[] source, int sourceStartIndex, int sourceCount, int targetStartIndex = 0) where T : struct
     {
         VerifyParametersSetData(source, sourceStartIndex, sourceCount, targetStartIndex);
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var gCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
         try
         {
@@ -61,7 +63,6 @@ public sealed class VertexBuffer : GraphicsResource
         {
             gCHandle.Free();
         }
-#endif
     }
 
     public override void HandleDeviceLost()
@@ -76,9 +77,12 @@ public sealed class VertexBuffer : GraphicsResource
 
     public void AllocateBuffer()
     {
-#if SERVER
-        buffer = 0;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            buffer = 0;
+            return;
+        }
+
         GLWrapper.GL.GenBuffers(1, out uint uBuffer);
         buffer = (int)uBuffer;
         GLWrapper.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
@@ -91,7 +95,6 @@ public sealed class VertexBuffer : GraphicsResource
                 BufferUsageARB.StaticDraw
             );
         }
-#endif
     }
 
     public void DeleteBuffer()

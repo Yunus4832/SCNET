@@ -94,9 +94,11 @@ public class SubsystemTorchBlockBehavior : SubsystemBlockBehavior
 
     public void AddTorch(int value, int x, int y, int z)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         Vector3 v;
         float size;
         switch (Terrain.ExtractContents(value))
@@ -126,16 +128,17 @@ public class SubsystemTorchBlockBehavior : SubsystemBlockBehavior
         var fireParticleSystem = new FireParticleSystem(new Vector3(x, y, z) + v, size, 24f);
         _subsystemParticles.AddParticleSystem(fireParticleSystem);
         _particleSystemsByCell[new Point3(x, y, z)] = fireParticleSystem;
-#endif
     }
 
     public void RemoveTorch(int x, int y, int z)
     {
         var key = new Point3(x, y, z);
-#if SERVER
-        _particleSystemsByCell.Remove(key);
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            _particleSystemsByCell.Remove(key);
+            return;
+        }
+
         if (!_particleSystemsByCell.TryGetValue(key, out var particleSystem))
         {
             return;
@@ -143,6 +146,5 @@ public class SubsystemTorchBlockBehavior : SubsystemBlockBehavior
 
         _subsystemParticles.RemoveParticleSystem(particleSystem);
         _particleSystemsByCell.Remove(key);
-#endif
     }
 }

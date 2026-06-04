@@ -17,18 +17,24 @@ public class SubsystemBlocksTexture : Subsystem
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         Display.DeviceReset += DisplayDeviceReset;
         LoadBlocksTexture();
-#endif
     }
 
     public override void Dispose()
     {
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         Display.DeviceReset -= DisplayDeviceReset;
         DisposeBlocksTexture();
-#endif
     }
 
     private void LoadBlocksTexture()

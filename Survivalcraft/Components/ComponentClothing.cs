@@ -82,9 +82,11 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
     private SubsystemTime _subsystemTime = null!;
 
-    public Texture2D InnerClothedTexture => _innerClothedTexture ?? throw new InvalidOperationException("InnerClothTexture is not initialized");
+    public Texture2D InnerClothedTexture => _innerClothedTexture ??
+                                            throw new InvalidOperationException("InnerClothTexture is not initialized");
 
-    public Texture2D OuterClothedTexture => _outerClothedTexture ?? throw new InvalidOperationException("OuterClothTexture is not initialized");
+    public Texture2D OuterClothedTexture => _outerClothedTexture ??
+                                            throw new InvalidOperationException("OuterClothTexture is not initialized");
 
     public float Insulation { get; set; }
 
@@ -356,21 +358,24 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     }
 
                     //服务器计算耐久
-                    if (flag2 && CommonLib.WorkType != WorkType.Client)
+                    if (!flag2 || CommonLib.WorkType == WorkType.Client)
                     {
-                        var slot = (ClothingSlot)enumValue2;
-                        SetClothes(slot, _clothesList);
-                        OnSlotChange(enumValue2);
+                        continue;
                     }
+
+                    var slot = (ClothingSlot)enumValue2;
+                    SetClothes(slot, _clothesList);
+                    OnSlotChange(enumValue2);
                 }
             }
 
             _lastTotalElapsedGameTime = _subsystemGameInfo.TotalElapsedGameTime;
         }
 
-#if !SERVER
-        UpdateRenderTargets();
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            UpdateRenderTargets();
+        }
     }
 
     public ReadOnlyList<int> GetClothes(ClothingSlot slot)
@@ -412,6 +417,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             {
                 continue;
             }
+
             num3 += clothingData2.Insulation;
             SteedMovementSpeedFactor *= clothingData2.SteedMovementSpeedFactor;
         }
@@ -423,6 +429,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             {
                 continue;
             }
+
             num4 += clothingData3.Insulation;
             SteedMovementSpeedFactor *= clothingData3.SteedMovementSpeedFactor;
         }
@@ -434,6 +441,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             {
                 continue;
             }
+
             num5 += clothingData4.Insulation;
             SteedMovementSpeedFactor *= clothingData4.SteedMovementSpeedFactor;
         }
@@ -445,6 +453,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             {
                 continue;
             }
+
             num6 += clothingData5.Insulation;
             SteedMovementSpeedFactor *= clothingData5.SteedMovementSpeedFactor;
         }
@@ -694,10 +703,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 }
             }
 
-            if (_skinTexture == null)
-            {
-                _skinTexture = CharacterSkinsManager.LoadTexture("$Male1")!;
-            }
+            _skinTexture ??= CharacterSkinsManager.LoadTexture("$Male1")!;
         }
 
         if (_innerClothedTexture == null || _innerClothedTexture.Width != _skinTexture.Width ||
@@ -718,68 +724,70 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             _clothedTexturesValid = false;
         }
 
-        if (_drawClothedTexture && !_clothedTexturesValid)
+        if (!_drawClothedTexture || _clothedTexturesValid)
         {
-            _clothedTexturesValid = true;
-            var scissorRectangle = Display.ScissorRectangle;
-            var renderTarget = Display.RenderTarget;
-            try
+            return;
+        }
+
+        _clothedTexturesValid = true;
+        var scissorRectangle = Display.ScissorRectangle;
+        var renderTarget = Display.RenderTarget;
+        try
+        {
+            Display.RenderTarget = _innerClothedTexture;
+            Display.Clear(new Vector4(Color.Transparent));
+            var num = 0;
+            var texturedBatch2D = _primitivesRenderer.TexturedBatch(_skinTexture, false, num++,
+                DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
+            texturedBatch2D.QueueQuad(Vector2.Zero,
+                new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height), 0f, Vector2.Zero,
+                Vector2.One, Color.White);
+            var innerSlotsOrder = _innerSlotsOrder;
+            foreach (var slot in innerSlotsOrder)
+            foreach (var cloth in GetClothes(slot))
             {
-                Display.RenderTarget = _innerClothedTexture;
-                Display.Clear(new Vector4(Color.Transparent));
-                var num = 0;
-                var texturedBatch2D = _primitivesRenderer.TexturedBatch(_skinTexture, false, num++,
+                var data = Terrain.ExtractData(cloth);
+                var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(cloth)].GetClothingData(data);
+                var fabricColor =
+                    SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data));
+                texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData.Texture, false, num++,
                     DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
-                texturedBatch2D.QueueQuad(Vector2.Zero,
-                    new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height), 0f, Vector2.Zero,
-                    Vector2.One, Color.White);
-                var innerSlotsOrder = _innerSlotsOrder;
-                foreach (var slot in innerSlotsOrder)
-                foreach (var cloth in GetClothes(slot))
+                if (!clothingData.IsOuter)
                 {
-                    var data = Terrain.ExtractData(cloth);
-                    var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(cloth)].GetClothingData(data);
-                    var fabricColor =
-                        SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data));
-                    texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData.Texture, false, num++,
-                        DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
-                    if (!clothingData.IsOuter)
-                    {
-                        texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
-                            new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height), 0f, Vector2.Zero,
-                            Vector2.One, fabricColor);
-                    }
+                    texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
+                        new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height), 0f, Vector2.Zero,
+                        Vector2.One, fabricColor);
                 }
-
-                _primitivesRenderer.Flush();
-                Display.RenderTarget = _outerClothedTexture;
-                Display.Clear(new Vector4(Color.Transparent));
-                num = 0;
-                innerSlotsOrder = _outerSlotsOrder;
-                foreach (var slot2 in innerSlotsOrder)
-                foreach (var clothe2 in GetClothes(slot2))
-                {
-                    var data2 = Terrain.ExtractData(clothe2);
-                    var clothingData2 = BlocksManager.Blocks[Terrain.ExtractContents(clothe2)].GetClothingData(data2);
-                    var fabricColor2 =
-                        SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data2));
-                    texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData2.Texture, false, num++,
-                        DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
-                    if (clothingData2.IsOuter)
-                    {
-                        texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
-                            new Vector2(_outerClothedTexture.Width, _outerClothedTexture.Height), 0f, Vector2.Zero,
-                            Vector2.One, fabricColor2);
-                    }
-                }
-
-                _primitivesRenderer.Flush();
             }
-            finally
+
+            _primitivesRenderer.Flush();
+            Display.RenderTarget = _outerClothedTexture;
+            Display.Clear(new Vector4(Color.Transparent));
+            num = 0;
+            innerSlotsOrder = _outerSlotsOrder;
+            foreach (var slot2 in innerSlotsOrder)
+            foreach (var clothe2 in GetClothes(slot2))
             {
-                Display.RenderTarget = renderTarget;
-                Display.ScissorRectangle = scissorRectangle;
+                var data2 = Terrain.ExtractData(clothe2);
+                var clothingData2 = BlocksManager.Blocks[Terrain.ExtractContents(clothe2)].GetClothingData(data2);
+                var fabricColor2 =
+                    SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data2));
+                texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData2.Texture, false, num++,
+                    DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
+                if (clothingData2.IsOuter)
+                {
+                    texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
+                        new Vector2(_outerClothedTexture.Width, _outerClothedTexture.Height), 0f, Vector2.Zero,
+                        Vector2.One, fabricColor2);
+                }
             }
+
+            _primitivesRenderer.Flush();
+        }
+        finally
+        {
+            Display.RenderTarget = renderTarget;
+            Display.ScissorRectangle = scissorRectangle;
         }
     }
 }

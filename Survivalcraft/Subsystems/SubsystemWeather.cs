@@ -115,9 +115,11 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
 
     public void Draw(Camera camera, int drawOrder)
     {
-#if SERVER
-        return;
-#endif
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         var num = SettingsManager.VisibilityRange > 128 ? 9 : SettingsManager.VisibilityRange <= 64 ? 7 : 8;
         var num2 = num * num;
         var activeShafts = GetActiveShafts(camera.GameWidget);
@@ -251,7 +253,12 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
             }
         }
 
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            UpdateFog(dt);
+            return;
+        }
+
         if (Time.PeriodicEvent(0.5, 0.0))
         {
             var num4 = 0f;
@@ -301,7 +308,6 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         {
             _rainSound.Pause();
         }
-#endif
 
         UpdateFog(dt);
     }
@@ -477,25 +483,28 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         FogIntensity = valuesDictionary.GetValue("FogIntensity", 0f);
         FogProgress = valuesDictionary.GetValue("FogProgress", 0f);
 
-#if !SERVER
-        _rainSound = _subsystemAudio.CreateSound("Audio/Rain");
-        _rainSound.IsLooped = true;
-        _rainSound.Volume = 0f;
-        RainSplashParticleSystem = new RainSplashParticleSystem();
-        _subsystemParticles.AddParticleSystem(RainSplashParticleSystem);
-        SnowSplashParticleSystem = new SnowSplashParticleSystem();
-        _subsystemParticles.AddParticleSystem(SnowSplashParticleSystem);
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            _rainSound = _subsystemAudio.CreateSound("Audio/Rain");
+            _rainSound.IsLooped = true;
+            _rainSound.Volume = 0f;
+            RainSplashParticleSystem = new RainSplashParticleSystem();
+            _subsystemParticles.AddParticleSystem(RainSplashParticleSystem);
+            SnowSplashParticleSystem = new SnowSplashParticleSystem();
+            _subsystemParticles.AddParticleSystem(SnowSplashParticleSystem);
+        }
+
         PrecipitationIntensity = valuesDictionary.GetValue("PrecipitationIntensity", 0f); //new2.4
         _rainVolumeFactor = 0f;
-#if !SERVER
-        for (var i = -7; i <= 7; i++)
-        for (var j = -7; j <= 7; j++)
+        if (RunMode.Value is RunModeType.Gui)
         {
-            var distance = MathUtils.Sqrt(i * i + j * j);
-            _rainVolumeFactor += _subsystemAudio.CalculateVolume(distance, 1f);
+            for (var i = -7; i <= 7; i++)
+            for (var j = -7; j <= 7; j++)
+            {
+                var distance = MathUtils.Sqrt(i * i + j * j);
+                _rainVolumeFactor += _subsystemAudio.CalculateVolume(distance, 1f);
+            }
         }
-#endif
 
         _subsystemBlocksScanner.ScanningChunkCompleted += delegate(TerrainChunk chunk)
         {
@@ -506,12 +515,14 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         };
         SubsystemTerrain.TerrainUpdater.ChunkInitialized += delegate(TerrainChunk chunk) //new
         {
-            if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode == EnvironmentBehaviorMode.Living)
+            if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != EnvironmentBehaviorMode.Living)
             {
-                FreezeThawAndDepositSnow(chunk, 1f, 1f, _subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled);
-                FreezeThawAndDepositSnow(chunk, 0.66f, 0.66f,
-                    _subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled);
+                return;
             }
+
+            FreezeThawAndDepositSnow(chunk, 1f, 1f, _subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled);
+            FreezeThawAndDepositSnow(chunk, 0.66f, 0.66f,
+                _subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled);
         };
     }
 

@@ -25,7 +25,7 @@ dotnet build SCNETWORK.slnx
 dotnet build SCNETWORK.slnx --configuration Release
 ```
 
-可选构建配置：`Debug`、`Release`、`ANDROID`、`DESKTOP`、`SERVER`。
+可选构建配置：`Debug`、`Release`、`ANDROID`、`DESKTOP`。
 
 ## 项目结构
 

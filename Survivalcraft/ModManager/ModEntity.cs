@@ -64,12 +64,13 @@ public class ModEntity
 
     public virtual void LoadIcon(Stream stream)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         Icon = Texture2D.Load(stream);
         stream.Close();
-#endif
     }
 
     /// <summary>
@@ -113,9 +114,10 @@ public class ModEntity
     {
         if (string.Equals(filename, "icon.png", StringComparison.OrdinalIgnoreCase))
         {
-#if SERVER
-            return false;
-#endif
+            if (RunMode.Value is RunModeType.HeadlessServer)
+            {
+                return false;
+            }
         }
 
         if (!_modFiles.TryGetValue(filename, out var entry))
@@ -183,9 +185,11 @@ public class ModEntity
                 ModInfo = ModsManager.DeserializeJson<ModInfo>(ModsManager.StreamToString(stream))
                           ?? throw new InvalidOperationException("Deserialize ModFile error");
             });
-#if !SERVER
-        GetFile("icon.png", LoadIcon);
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            GetFile("icon.png", LoadIcon);
+        }
+
         foreach (var c in _modFiles)
         {
             var zipArchiveEntry = c.Value;

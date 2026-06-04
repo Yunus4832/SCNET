@@ -49,9 +49,11 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _vertices.Clear();
         _indices.Clear();
         foreach (var movingBlockSet2 in MovingBlockSets)
@@ -104,7 +106,6 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             vertexBuffer.Dispose();
             indexBuffer.Dispose();
         }
-#endif
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -352,9 +353,11 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemAnimatedTextures = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
-#if !SERVER
-        _shader = ContentManager.Get<Shader>("Shaders/AlphaTested");
-#endif
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            _shader = ContentManager.Get<Shader>("Shaders/AlphaTested");
+        }
+
         foreach (ValuesDictionary value9 in valuesDictionary.GetValue<ValuesDictionary>("MovingBlockSets").Values)
         {
             LoadAndAddMovingItem(value9);
@@ -420,6 +423,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         {
             valuesDictionary3.SetValue("Tag", movingBlockSet.Tag);
         }
+
         var stringBuilder = new StringBuilder();
         foreach (var block in movingBlockSet.Blocks)
         {

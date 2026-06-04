@@ -13,11 +13,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
 
     private readonly Dictionary<Point2, List<(Point3, float)>> _explosionCells = new();
 
-#if SERVER
-    public ExplosionParticleSystem? ExplosionParticleSystem;
-#else
     public ExplosionParticleSystem ExplosionParticleSystem = null!;
-#endif
 
     private readonly Dictionary<Projectile, bool> _generatedProjectiles = new();
 
@@ -181,10 +177,13 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         _subsystemProjectiles = Project.FindSubsystem<SubsystemProjectiles>(true)!;
         _subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!;
         _subsystemFireBlockBehavior = Project.FindSubsystem<SubsystemFireBlockBehavior>(true)!;
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         ExplosionParticleSystem = new ExplosionParticleSystem();
         _subsystemParticles.AddParticleSystem(ExplosionParticleSystem);
-#endif
     }
 
     public virtual void SimulateExplosion(
@@ -393,7 +392,9 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                                         : ProjectileStoppedAction.TurnIntoPickable;
                                     if (SharedRandom.Float(0f, 1f) < 0.5f && _projectilesCount < 35)
                                     {
-                                        var num10 = num4 > 60f ? SharedRandom.Float(3f, 7f) : SharedRandom.Float(1f, 3f);
+                                        var num10 = num4 > 60f
+                                            ? SharedRandom.Float(3f, 7f)
+                                            : SharedRandom.Float(1f, 3f);
                                         if (isIncendiary)
                                         {
                                             num10 += 10f;
@@ -455,22 +456,25 @@ public class SubsystemExplosions : Subsystem, IUpdateable
 
             var num4 = 0.001f * MathUtils.Pow(num2, 0.5f);
             var num5 = MathUtils.Saturate(item.Value / 15f - num4) * SharedRandom.Float(0.2f, 1f);
-            if (num5 > 0.1f)
+            if (!(num5 > 0.1f))
             {
-                if (CommonLib.WorkType == WorkType.Server)
-                {
-                    var chunk = new Point2(item.Key.X >> 4, item.Key.Z >> 4);
-                    if (!_explosionCells.ContainsKey(chunk))
-                    {
-                        _explosionCells.Add(chunk, new List<(Point3, float)>());
-                    }
+                continue;
+            }
 
-                    _explosionCells[chunk].Add((item.Key, num5));
+            if (CommonLib.WorkType == WorkType.Server)
+            {
+                var chunk = new Point2(item.Key.X >> 4, item.Key.Z >> 4);
+                if (!_explosionCells.ContainsKey(chunk))
+                {
+                    _explosionCells.Add(chunk, []);
                 }
 
-#if !SERVER
+                _explosionCells[chunk].Add((item.Key, num5));
+            }
+
+            if (RunMode.Value is RunModeType.Gui)
+            {
                 ExplosionParticleSystem.SetExplosionCell(item.Key, num5);
-#endif
             }
         }
 
@@ -540,7 +544,8 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                         if (projectile != null)
                         {
                             _subsystemProjectiles.AddTrail(projectile, Vector3.Zero,
-                                new SmokeTrailParticleSystem(15, SharedRandom.Float(0.75f, 1.5f), SharedRandom.Float(1f, 6f),
+                                new SmokeTrailParticleSystem(15, SharedRandom.Float(0.75f, 1.5f),
+                                    SharedRandom.Float(1f, 6f),
                                     Color.White));
                         }
                     }
@@ -726,7 +731,6 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
 
             return default;
-
         }
 
         public void Set(int x, int y, int z, T value)

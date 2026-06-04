@@ -15,7 +15,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
 
     private readonly Dictionary<ComponentModel, ModelData> _componentModels = new();
 
-    private readonly int[] _drawOrders = [ -10000, 1, 99, 201 ];
+    private readonly int[] _drawOrders = [-10000, 1, 99, 201];
 
     private readonly List<ModelData>[] _modelsToDraw =
     [
@@ -53,9 +53,11 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
-#if SERVER
-        return;
-#else
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (drawOrder == _drawOrders[0])
         {
             ModelsDrawn = 0;
@@ -129,7 +131,6 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
         {
             PrimitivesRenderer.Clear();
         }
-#endif
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
@@ -143,12 +144,15 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             _maxInstancesCount = Math.Max(modLoader.GetMaxInstancesCount(), _maxInstancesCount);
             return false;
         });
-#if !SERVER
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _shaderOpaque = new ModelShader(ShaderCodeManager.GetFast("Shaders/Model.vsh"),
             ShaderCodeManager.GetFast("Shaders/Model.psh"), false, _maxInstancesCount);
         _shaderAlphaTested = new ModelShader(ShaderCodeManager.GetFast("Shaders/Model.vsh"),
             ShaderCodeManager.GetFast("Shaders/Model.psh"), true, _maxInstancesCount);
-#endif
     }
 
     public override void OnEntityAdded(Entity entity)
@@ -250,7 +254,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
         foreach (var modelsDatum in modelsData)
         {
             var componentModel = modelsDatum.ComponentModel;
-            if(componentModel == null)
+            if (componentModel == null)
             {
                 continue;
             }
