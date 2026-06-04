@@ -6,11 +6,16 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
 
     private readonly Random _random = new();
 
-    private readonly SubsystemTerrain _subsystemTerrain;
+    private readonly SubsystemTerrain _subsystemTerrain = null!;
 
     public PaintParticleSystem(SubsystemTerrain terrain, Vector3 position, Vector3 normal, Color color)
         : base(20)
     {
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _subsystemTerrain = terrain;
         Texture = terrain.Project.FindSubsystem<SubsystemBlocksTexture>(true)!.BlocksTexture;
         var num = Terrain.ToCell(position.X);

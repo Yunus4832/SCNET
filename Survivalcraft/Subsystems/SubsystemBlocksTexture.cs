@@ -30,6 +30,7 @@ public class SubsystemBlocksTexture : Subsystem
     {
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
+            BlocksTexture = null!;
             return;
         }
 

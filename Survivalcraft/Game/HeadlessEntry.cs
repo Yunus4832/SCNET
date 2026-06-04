@@ -44,7 +44,8 @@ public static class HeadlessEntry
             InitializeHeadless();
             var world = ResolveWorld(runningSetting);
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
-            Log.Information($"Server ports: game={SettingsManager.ServerPort}, broadcast={SettingsManager.BroadcastPort}");
+            Log.Information(
+                $"Server ports: game={SettingsManager.ServerPort}, broadcast={SettingsManager.BroadcastPort}");
             CommonLib.WorkType = WorkType.Server;
             var gamesWidget = new GamesWidget();
             GameManager.LoadProject(world, gamesWidget);
@@ -140,6 +141,7 @@ public static class HeadlessEntry
                 worldName = WorldsManager.GetWorldInfo(worldPath);
             }
         }
+
         if (worldName == null)
         {
             var worldSettings = new WorldSettings
@@ -160,6 +162,7 @@ public static class HeadlessEntry
             {
                 Log.Warning($"World already exists; ignoring provided seed \"{seedArg}\".");
             }
+
             Log.Information($"Using existing world seed: {worldName.WorldSettings.Seed}");
         }
 

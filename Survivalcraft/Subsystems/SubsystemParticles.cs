@@ -87,11 +87,21 @@ public class SubsystemParticles : Subsystem, IDrawable, IUpdateable
 
     public void AddParticleSystem(ParticleSystemBase particleSystem)
     {
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         AddNetParticleSystem(particleSystem);
     }
 
     public void AddNetParticleSystem(ParticleSystemBase particleSystem)
     {
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (particleSystem.SubsystemParticles == null)
         {
             _particleSystems.Add(particleSystem, true);

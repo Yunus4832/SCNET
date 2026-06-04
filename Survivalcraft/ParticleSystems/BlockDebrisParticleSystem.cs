@@ -4,7 +4,7 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
 {
     private readonly Random _random = new();
 
-    private readonly SubsystemTerrain _subsystemTerrain;
+    private readonly SubsystemTerrain _subsystemTerrain = null!;
 
     public BlockDebrisParticleSystem(
         SubsystemTerrain terrain,
@@ -15,6 +15,11 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
         int textureSlot
     ) : base((int)(50f * strength))
     {
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         _subsystemTerrain = terrain;
         Texture = terrain.Project.FindSubsystem<SubsystemBlocksTexture>(true)!.BlocksTexture;
         var num = Terrain.ToCell(position.X);
@@ -32,9 +37,8 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
         color *= num4;
         color.A = 255;
         var num5 = MathUtils.Sqrt(strength);
-        for (var i = 0; i < Particles.Length; i++)
+        foreach (var obj in Particles)
         {
-            var obj = Particles[i];
             obj.IsActive = true;
             var vector = new Vector3(_random.Float(-1f, 1f), _random.Float(-1f, 1f), _random.Float(-1f, 1f));
             obj.Position = position + strength * 0.45f * vector;
