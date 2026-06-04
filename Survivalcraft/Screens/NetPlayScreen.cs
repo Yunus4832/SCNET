@@ -176,7 +176,7 @@ public class NetPlayScreen : Screen
         _worldsListWidget.ScrollSpeed = 0f;
         _worldsListWidget.ItemClicked += OnItemClick;
 
-        Program.HandleUri += uri =>
+        GameEntry.HandleUri += uri =>
         {
             if (uri.Uri.Host != "online")
             {

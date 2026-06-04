@@ -112,7 +112,7 @@ public static class DatabaseManager
                 var b = llBase[i];
                 if (a.Value.ToString() != b.Value.ToString())
                 {
-                    Program.RamDataChangeException("Database", a.Name);
+                    GameEntry.RamDataChangeException("Database", a.Name);
                 }
             }
 #if DEBUG

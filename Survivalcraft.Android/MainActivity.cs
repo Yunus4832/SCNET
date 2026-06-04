@@ -144,7 +144,7 @@ public class MainActivity : EngineActivity
                 ContentResolver,
                 Settings.Secure.AndroidId
             ) ?? string.Empty;
-        Program.EntryPoint();
+        GameEntry.EntryPoint();
         Engine.Windowing.Window.Frame += CheckFunc;
     }
 
@@ -182,7 +182,7 @@ public class MainActivity : EngineActivity
                             var s = File.ReadAllText(appPath);
                             if (s.Contains("gameguardian.net"))
                             {
-                                Program.RamDataChangeException?.Invoke("InstallCheck", "安装了GG修改器");
+                                GameEntry.RamDataChangeException?.Invoke("InstallCheck", "安装了GG修改器");
                             }
                         }
                     }
@@ -213,7 +213,7 @@ public class MainActivity : EngineActivity
             }
 
             Engine.Windowing.Window.Frame -= CheckFunc;
-            Program.RamDataChangeException.Invoke("gameguardian", "使用GG修改器搜索");
+            GameEntry.RamDataChangeException.Invoke("gameguardian", "使用GG修改器搜索");
         }
         catch
         {

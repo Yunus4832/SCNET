@@ -27,6 +27,8 @@ dotnet build SCNETWORK.slnx --configuration Release
 
 可选构建配置：`Debug`、`Release`、`ANDROID`、`DESKTOP`。
 
+桌面版启动器支持 `-d` 或 `--server` 参数，传入后会直接进入无头服务端模式。
+
 ## 项目结构
 
 | 项目 | 说明 |

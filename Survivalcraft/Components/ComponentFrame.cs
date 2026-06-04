@@ -28,7 +28,7 @@ public class ComponentFrame : Component
                 field.Y.UncloseTo(_py.Get()) ||
                 field.Z.UncloseTo(_pz.Get()))
             {
-                Program.RamDataChangeException(GetType().FullName!, "Position");
+                GameEntry.RamDataChangeException(GetType().FullName!, "Position");
             }
 
             return field;

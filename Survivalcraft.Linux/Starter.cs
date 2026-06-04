@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 
+using Engine.Core;
 using Engine.Windowing;
 
 using Game;
@@ -10,11 +11,19 @@ public class Starter
 {
     public static void Main(string[] args)
     {
+        var filteredArgs = RemoveServerFlags(args, out var runServer);
+        if (runServer)
+        {
+            RunHeadlessServer(filteredArgs);
+            return;
+        }
+
+        RunMode.Value = RunModeType.Gui;
         // X11 Supported, Wayland not Supported
         Window.IconStream = LoadWindowIcon();
         // Generate Desktop file
         GenApplicationDesktopFile();
-        Program.Main(args);
+        GameEntry.Main(filteredArgs);
     }
 
     /// <summary>
@@ -84,5 +93,30 @@ public class Starter
                        """;
 
         File.WriteAllText(desktopFilePath, content);
+    }
+
+    private static void RunHeadlessServer(string[] args)
+    {
+        RunMode.Value = RunModeType.HeadlessServer;
+        HeadlessEntry.Main(args);
+    }
+
+    private static string[] RemoveServerFlags(string[] args, out bool runServer)
+    {
+        runServer = false;
+        var filteredArgs = new List<string>(args.Length);
+        foreach (var arg in args)
+        {
+            if (string.Equals(arg, "-d", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(arg, "--server", StringComparison.OrdinalIgnoreCase))
+            {
+                runServer = true;
+                continue;
+            }
+
+            filteredArgs.Add(arg);
+        }
+
+        return filteredArgs.ToArray();
     }
 }

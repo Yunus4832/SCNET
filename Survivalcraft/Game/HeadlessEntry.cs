@@ -8,7 +8,7 @@ using Game.Network.Serialization;
 
 namespace Game;
 
-public static class ServerProgram
+public static class HeadlessEntry
 {
     private static volatile bool _running = true;
 

@@ -16,7 +16,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
 
     public SchubExternalContentProvider()
     {
-        Program.HandleUri += HandleUri;
+        GameEntry.HandleUri += HandleUri;
         Window.Activated += WindowActivated;
     }
 
@@ -34,7 +34,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
 
     public void Dispose()
     {
-        Program.HandleUri -= HandleUri;
+        GameEntry.HandleUri -= HandleUri;
         Window.Activated -= WindowActivated;
     }
 
@@ -303,7 +303,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
         DialogsManager.ShowDialog(null, dialog);
     }
 
-    public void HandleUri(Program.HandleUriItem uri)
+    public void HandleUri(GameEntry.HandleUriItem uri)
     {
         _loginProcessData ??= new LoginProcessData
         {

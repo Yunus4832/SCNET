@@ -16,7 +16,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
 
     public DropboxExternalContentProvider()
     {
-        Program.HandleUri += HandleUri;
+        GameEntry.HandleUri += HandleUri;
         Window.Activated += WindowActivated;
     }
 
@@ -34,7 +34,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
 
     public void Dispose()
     {
-        Program.HandleUri -= HandleUri;
+        GameEntry.HandleUri -= HandleUri;
         Window.Activated -= WindowActivated;
     }
 
@@ -324,7 +324,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
         DialogsManager.ShowDialog(null, dialog);
     }
 
-    public void HandleUri(Program.HandleUriItem uri)
+    public void HandleUri(GameEntry.HandleUriItem uri)
     {
         _loginProcessData ??= new LoginProcessData
         {

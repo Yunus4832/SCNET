@@ -11,7 +11,7 @@ using LiteNetLib;
 
 namespace Game;
 
-public static class Program
+public static class GameEntry
 {
     public const string Scheme = "com.candy.survivalcraft";
 

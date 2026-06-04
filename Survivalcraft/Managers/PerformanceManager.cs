@@ -75,8 +75,8 @@ public static class PerformanceManager
                     return;
                 }
 
-                var lastFrameTime = Program.LastFrameTime;
-                var lastCpuFrameTime = Program.LastCpuFrameTime;
+                var lastFrameTime = GameEntry.LastFrameTime;
+                var lastCpuFrameTime = GameEntry.LastCpuFrameTime;
                 if (lastFrameTime is > 0f and < 1f && lastCpuFrameTime is > 0f and < 1f)
                 {
                     _totalFrameTime += lastFrameTime;
@@ -126,9 +126,9 @@ public static class PerformanceManager
 
     public static void Update()
     {
-        _averageFrameTime.AddSample(Program.LastFrameTime);
-        _cpuUtilSumNumerator += Program.LastCpuFrameTime;
-        _cpuUtilSumDenominator += Program.LastFrameTime;
+        _averageFrameTime.AddSample(GameEntry.LastFrameTime);
+        _cpuUtilSumNumerator += GameEntry.LastCpuFrameTime;
+        _cpuUtilSumDenominator += GameEntry.LastFrameTime;
         var timestamp = Stopwatch.GetTimestamp();
         if (_cpuUtilStartTicks < 0)
         {
@@ -198,8 +198,8 @@ public static class PerformanceManager
 
             _frameData[_frameDataIndex] = new FrameData
             {
-                CpuTime = Program.LastCpuFrameTime,
-                TotalTime = Program.LastFrameTime
+                CpuTime = GameEntry.LastCpuFrameTime,
+                TotalTime = GameEntry.LastFrameTime
             };
             _frameDataIndex = (_frameDataIndex + 1) % _frameData.Length;
             var flatBatch2D = _primitivesRenderer.FlatBatch();
