@@ -20,7 +20,7 @@ public class Starter
         }
 
         RunMode.Value = RunModeType.Gui;
-        // X11 Supported, Wayland not Supported
+        // Wayland is supported; window icon settings may not take effect there.
         Window.IconStream = LoadWindowIcon();
         // Generate Desktop file
         GenApplicationDesktopFile();
