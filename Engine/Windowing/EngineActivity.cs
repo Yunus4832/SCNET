@@ -76,6 +76,10 @@ public class EngineActivity : SilkActivity
 
     public event Action<Intent?>? NewIntent;
 
+    protected virtual bool ExitProcessOnDestroy => true;
+
+    protected virtual ScreenOrientation DefaultScreenOrientation => ScreenOrientation.SensorLandscape;
+
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         RequestWindowFeature(WindowFeatures.NoTitle);
@@ -85,7 +89,7 @@ public class EngineActivity : SilkActivity
                          WindowManagerFlags.TranslucentNavigation);
         EnableImmersiveMode();
         VolumeControlStream = AndroidStream.Music;
-        RequestedOrientation = ScreenOrientation.SensorLandscape;
+        RequestedOrientation = DefaultScreenOrientation;
         if (Build.VERSION.SdkInt >= (BuildVersionCodes)28 && Window != null)
         {
             ViewCompat.SetOnApplyWindowInsetsListener(Window.DecorView, new ApplyWindowInsetsListener());
@@ -251,7 +255,10 @@ public class EngineActivity : SilkActivity
         finally
         {
             Thread.Sleep(250);
-            Environment.Exit(0);
+            if (ExitProcessOnDestroy)
+            {
+                Environment.Exit(0);
+            }
         }
     }
 

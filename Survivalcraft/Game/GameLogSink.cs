@@ -160,12 +160,19 @@ public class GameLogSink : ILogSink
                 LogType.Error => "ERROR: ",
                 _ => string.Empty
             };
+            var line = $"{DateTime.Now:HH:mm:ss.fff} {value}{message}";
 
-            _writer.Write(DateTime.Now.ToString("HH:mm:ss.fff"));
-            _writer.Write(" ");
-            _writer.Write(value);
-            _writer.WriteLine(message);
+            _writer.WriteLine(line);
             _writer.Flush();
+
+            try
+            {
+                Engine.Core.Log.AddLogMsg(line);
+            }
+            catch
+            {
+                // ignored
+            }
         }
     }
 

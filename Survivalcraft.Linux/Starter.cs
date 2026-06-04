@@ -4,6 +4,7 @@ using Engine.Core;
 using Engine.Windowing;
 
 using Game;
+using Game.Managers;
 
 namespace Survivalcraft.Linux;
 
@@ -11,10 +12,10 @@ public class Starter
 {
     public static void Main(string[] args)
     {
-        var filteredArgs = RemoveServerFlags(args, out var runServer);
-        if (runServer)
+        var runningSetting = RunningSettingManager.Load(args);
+        if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
-            RunHeadlessServer(filteredArgs);
+            RunHeadlessServer(runningSetting);
             return;
         }
 
@@ -23,7 +24,7 @@ public class Starter
         Window.IconStream = LoadWindowIcon();
         // Generate Desktop file
         GenApplicationDesktopFile();
-        GameEntry.Main(filteredArgs);
+        GameEntry.Main(runningSetting.RemainingArgs);
     }
 
     /// <summary>
@@ -95,28 +96,9 @@ public class Starter
         File.WriteAllText(desktopFilePath, content);
     }
 
-    private static void RunHeadlessServer(string[] args)
+    private static void RunHeadlessServer(RunningSetting runningSetting)
     {
         RunMode.Value = RunModeType.HeadlessServer;
-        HeadlessEntry.Main(args);
-    }
-
-    private static string[] RemoveServerFlags(string[] args, out bool runServer)
-    {
-        runServer = false;
-        var filteredArgs = new List<string>(args.Length);
-        foreach (var arg in args)
-        {
-            if (string.Equals(arg, "-d", StringComparison.OrdinalIgnoreCase) ||
-                string.Equals(arg, "--server", StringComparison.OrdinalIgnoreCase))
-            {
-                runServer = true;
-                continue;
-            }
-
-            filteredArgs.Add(arg);
-        }
-
-        return filteredArgs.ToArray();
+        HeadlessEntry.Main(runningSetting);
     }
 }

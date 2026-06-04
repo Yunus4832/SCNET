@@ -28,6 +28,8 @@ dotnet build SCNETWORK.slnx --configuration Release
 可选构建配置：`Debug`、`Release`、`ANDROID`、`DESKTOP`。
 
 桌面版启动器支持 `-d` 或 `--server` 参数，传入后会直接进入无头服务端模式。
+启动配置文件为 `config:RunningSetting.xml`，缺失时会使用默认值，不影响正常启动。
+将其中的 `RunMode` 设为 `HeadlessServer`，即可让启动器直接进入无头服务端模式。
 
 ## 项目结构
 

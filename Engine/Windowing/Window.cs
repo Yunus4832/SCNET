@@ -101,11 +101,6 @@ public static class Window
 #if DESKTOP
         get
         {
-            if (RunMode.Value is RunModeType.HeadlessServer)
-            {
-                return new Point2(1280, 720);
-            }
-
             var monitor = ((IWindow?)GameWindow)?.Monitor;
             if (monitor is null)
             {

@@ -287,12 +287,11 @@ public static class SettingsManager
             ? ModsManager.GetMd5(GetMachineID.GetMachineGuid())
             : Guid.NewGuid().ToString();
 #endif
-        ScreenLayout2 = Window.ScreenSize.X / (float)Window.ScreenSize.Y > 1.33333337f
-            ? ScreenLayout.DoubleVertical
-            : ScreenLayout.DoubleHorizontal;
-        ScreenLayout3 = Window.ScreenSize.X / (float)Window.ScreenSize.Y > 1.33333337f
-            ? ScreenLayout.TripleVertical
-            : ScreenLayout.TripleHorizontal;
+        var screenWidth = RunMode.Value is RunModeType.HeadlessServer ? 1280 : Window.ScreenSize.X;
+        var screenHeight = RunMode.Value is RunModeType.HeadlessServer ? 720 : Window.ScreenSize.Y;
+        var isWideScreen = screenWidth / (float)screenHeight > 1.33333337f;
+        ScreenLayout2 = isWideScreen ? ScreenLayout.DoubleVertical : ScreenLayout.DoubleHorizontal;
+        ScreenLayout3 = isWideScreen ? ScreenLayout.TripleVertical : ScreenLayout.TripleHorizontal;
 
         if (!Storage.DirectoryExists(ModsManager.ConfigPath))
         {

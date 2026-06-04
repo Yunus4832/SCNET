@@ -37,6 +37,24 @@ public class MainActivity : EngineActivity
 {
     private const string _jniTrue = "1";
 
+    private bool _isHeadlessServer;
+
+    protected override bool ExitProcessOnDestroy => !_isHeadlessServer;
+    private ScreenOrientation _defaultScreenOrientation = ScreenOrientation.SensorLandscape;
+
+    protected override ScreenOrientation DefaultScreenOrientation => _defaultScreenOrientation;
+
+    protected override void OnCreate(Bundle? savedInstanceState)
+    {
+        var runningSetting = RunningSettingManager.Load([]);
+        if (runningSetting.RunMode is RunModeType.HeadlessServer)
+        {
+            _defaultScreenOrientation = ScreenOrientation.SensorPortrait;
+        }
+
+        base.OnCreate(savedInstanceState);
+    }
+
     // 初始化内存地
     [DllImport("check", EntryPoint = "initMemPtr")]
     private static extern IntPtr InitMemPtr();
@@ -52,17 +70,16 @@ public class MainActivity : EngineActivity
         {
             return;
         }
-
-        // 注册重启App事件
-        GameRestarter.OnRestartAppRequested += RestartApp;
-
-        Run();
+        BeginLaunch();
     }
 
     protected override void OnResume()
     {
         base.OnResume();
-        Task.Run(GetInstalledApkList);
+        if (!_isHeadlessServer)
+        {
+            Task.Run(GetInstalledApkList);
+        }
     }
 
     private void RestartApp()
@@ -78,7 +95,7 @@ public class MainActivity : EngineActivity
         var flag = grantResults.All(g => g == Permission.Granted);
         if (flag)
         {
-            Run();
+            BeginLaunch();
         }
     }
 
@@ -124,6 +141,8 @@ public class MainActivity : EngineActivity
 
     private void Run()
     {
+        RunMode.Value = RunModeType.Gui;
+        InitializeAndroidId();
         InitMemPtr();
         var intentFilter = new IntentFilter();
         intentFilter.AddAction(Intent.ActionPackageAdded);
@@ -131,21 +150,52 @@ public class MainActivity : EngineActivity
         var fileList = Assets!.List("");
         foreach (var dll in fileList!)
         {
-            if (dll.EndsWith(".dll"))
+            if (!dll.EndsWith(".dll"))
             {
-                var memoryStream = new MemoryStream();
-                Assets.Open(dll).CopyTo(memoryStream);
-                AppDomain.CurrentDomain.Load(memoryStream.ToArray());
+                continue;
             }
+
+            var memoryStream = new MemoryStream();
+            Assets.Open(dll).CopyTo(memoryStream);
+            AppDomain.CurrentDomain.Load(memoryStream.ToArray());
         }
 
+        GameEntry.EntryPoint();
+        Engine.Windowing.Window.Frame += CheckFunc;
+    }
+
+    private void BeginLaunch()
+    {
+        var runningSetting = RunningSettingManager.Load([]);
+        if (runningSetting.RunMode is RunModeType.HeadlessServer)
+        {
+            StartHeadlessServer(runningSetting);
+            return;
+        }
+
+        // 注册重启App事件
+        GameRestarter.OnRestartAppRequested += RestartApp;
+
+        Run();
+    }
+
+    private void StartHeadlessServer(RunningSetting runningSetting)
+    {
+        InitializeAndroidId();
+        RunMode.Value = RunModeType.HeadlessServer;
+        _isHeadlessServer = true;
+        _ = Task.Run(() => HeadlessEntry.Main(runningSetting));
+        StartActivity(new Intent(this, typeof(LogActivity)));
+        Finish();
+    }
+
+    private void InitializeAndroidId()
+    {
         GetMachineID.AndroidID = Settings.Secure
             .GetString(
                 ContentResolver,
                 Settings.Secure.AndroidId
             ) ?? string.Empty;
-        GameEntry.EntryPoint();
-        Engine.Windowing.Window.Frame += CheckFunc;
     }
 
     public void GetInstalledApkList()

@@ -12,10 +12,17 @@ public static class HeadlessEntry
 {
     private static volatile bool _running = true;
 
-    public static int Main(string[] args)
+    public static void RequestStop()
+    {
+        _running = false;
+    }
+
+    public static int Main(RunningSetting runningSetting)
     {
         try
         {
+            RunMode.Value = RunModeType.HeadlessServer;
+            _running = true;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
             Dispatcher.Initialize();
@@ -26,14 +33,16 @@ public static class HeadlessEntry
 #endif
             Log.AddLogSink(new GameLogSink());
 
+#if !ANDROID
             Console.CancelKeyPress += (_, e) =>
             {
                 e.Cancel = true;
                 _running = false;
             };
+#endif
 
             InitializeHeadless();
-            var world = ResolveWorld(args);
+            var world = ResolveWorld(runningSetting);
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information($"Server ports: game={SettingsManager.ServerPort}, broadcast={SettingsManager.BroadcastPort}");
             CommonLib.WorkType = WorkType.Server;
@@ -67,6 +76,9 @@ public static class HeadlessEntry
             {
                 Log.Error(ex);
             }
+#if ANDROID
+            Environment.Exit(0);
+#endif
         }
     }
 
@@ -95,44 +107,40 @@ public static class HeadlessEntry
 
             nextTickMs += tickMs;
             var delay = nextTickMs - sw.ElapsedMilliseconds;
-            if (delay > 0)
+            switch (delay)
             {
-                Thread.Sleep((int)delay);
-            }
-            else if (delay < -1000)
-            {
-                nextTickMs = sw.ElapsedMilliseconds;
+                case > 0:
+                    Thread.Sleep((int)delay);
+                    break;
+                case < -1000:
+                    nextTickMs = sw.ElapsedMilliseconds;
+                    break;
             }
         }
     }
 
-    private static WorldInfo ResolveWorld(string[] args)
+    private static WorldInfo ResolveWorld(RunningSetting runningSetting)
     {
-        var worldArg = GetArgumentValue(args, "--world") ?? "World";
-        if (string.IsNullOrWhiteSpace(worldArg))
-        {
-            worldArg = "World";
-        }
-
-        var seedArg = GetArgumentValue(args, "--seed");
+        var worldArg = string.IsNullOrWhiteSpace(runningSetting.World) ? "World" : runningSetting.World;
+        var seedArg = runningSetting.Seed;
 
         WorldsManager.UpdateWorldsList();
         var worlds = WorldsManager.WorldInfos.ToList();
         Log.Information($"Worlds directory: {ModsManager.WorldsDirectoryName}");
         Log.Information($"Detected worlds: {string.Join(", ", worlds.Select(w => w.WorldSettings.Name))}");
 
-        var byName = worlds.FirstOrDefault(w =>
+        var worldName = worlds.FirstOrDefault(w =>
             string.Equals(w.DirectoryName, worldArg, StringComparison.OrdinalIgnoreCase) ||
             string.Equals(w.WorldSettings.Name, worldArg, StringComparison.OrdinalIgnoreCase));
-        if (byName == null)
+        if (worldName == null)
         {
             var worldPath = Storage.CombinePaths(ModsManager.WorldsDirectoryName, worldArg);
             if (Storage.DirectoryExists(worldPath))
             {
-                byName = WorldsManager.GetWorldInfo(worldPath);
+                worldName = WorldsManager.GetWorldInfo(worldPath);
             }
         }
-        if (byName == null)
+        if (worldName == null)
         {
             var worldSettings = new WorldSettings
             {
@@ -144,7 +152,7 @@ public static class HeadlessEntry
             };
             var customWorldDirectoryName = Storage.CombinePaths(ModsManager.WorldsDirectoryName, worldArg);
             Log.Information($"Creating new world with seed: {worldSettings.Seed}");
-            byName = WorldsManager.CreateWorld(worldSettings, customWorldDirectoryName);
+            worldName = WorldsManager.CreateWorld(worldSettings, customWorldDirectoryName);
         }
         else
         {
@@ -152,23 +160,10 @@ public static class HeadlessEntry
             {
                 Log.Warning($"World already exists; ignoring provided seed \"{seedArg}\".");
             }
-            Log.Information($"Using existing world seed: {byName.WorldSettings.Seed}");
+            Log.Information($"Using existing world seed: {worldName.WorldSettings.Seed}");
         }
 
-        return byName;
-    }
-
-    private static string? GetArgumentValue(string[] args, string argumentName)
-    {
-        for (var i = 0; i < args.Length - 1; i++)
-        {
-            if (string.Equals(args[i], argumentName, StringComparison.OrdinalIgnoreCase))
-            {
-                return args[i + 1];
-            }
-        }
-
-        return null;
+        return worldName;
     }
 
     private static string GenerateRandomSeed()
