@@ -99,8 +99,6 @@ public static class Program
             Log.Error(e.Exception.Message);
             e.IsHandled = true;
         };
-        ScreensManager.OnEnterScreen += AutoEnterServer.EnterServer;
-
         Window.Run(0, 0, WindowMode.Resizable, VersionsManager.Title);
     }
 

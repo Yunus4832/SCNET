@@ -242,10 +242,6 @@ public static class SettingsManager
     /// </summary>
     public static string LiteNetLibLogLevel { get; set; } = "Error";
 
-    public static string WillEnterServer { get; set; } = string.Empty;
-
-    public static string WillEnterServerPwd { get; set; } = string.Empty;
-
     public static bool StartModServer { get; set; } = true;
 
     public static string ModServerAddress { get; set; } = string.Empty;

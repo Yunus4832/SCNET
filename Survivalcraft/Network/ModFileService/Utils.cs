@@ -1,5 +1,3 @@
-using System.Net;
-
 namespace Game.Network.ModFileService;
 
 public class ModInfoData
@@ -152,19 +150,6 @@ public static class Utils
     public static void RestartGameDueToInvalidModData()
     {
         CacheAllModFile();
-        var gameLoadingScreen = ScreensManager.Screens["GameLoading"];
-        var type = typeof(GameLoadingScreen);
-        var flags = BindingFlags.NonPublic | BindingFlags.Instance;
-
-        var proEpInfo = type.GetField("_serverEndPoint", flags)!;
-        var proPwdInfo = type.GetField("_password", flags)!;
-
-        var serverEp = (IPEndPoint)proEpInfo.GetValue(gameLoadingScreen)!;
-        var serverPwd = (string)proPwdInfo.GetValue(gameLoadingScreen)!;
-
-        SettingsManager.WillEnterServer = serverEp.ToString();
-        SettingsManager.WillEnterServerPwd = serverPwd;
-        SettingsManager.SaveSettings();
         GameRestarter.RestartGame();
     }
 }

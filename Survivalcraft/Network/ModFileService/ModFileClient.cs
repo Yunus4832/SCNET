@@ -57,9 +57,6 @@ public static class ModFileClient
                     }
                 }
 
-                SettingsManager.WillEnterServer = ep.ToString();
-                SettingsManager.WillEnterServerPwd = pwd;
-                SettingsManager.SaveSettings();
                 GameRestarter.RestartGame();
             }
         }
