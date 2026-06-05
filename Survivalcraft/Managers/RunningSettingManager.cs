@@ -14,6 +14,36 @@ public static class RunningSettingManager
         return runningSetting;
     }
 
+    public static void Save(RunningSetting runningSetting)
+    {
+        try
+        {
+            if (!Storage.DirectoryExists(ModsManager.ConfigPath))
+            {
+                Storage.CreateDirectory(ModsManager.ConfigPath);
+            }
+
+            using var stream = Storage.OpenFile(RunningSettingPath, OpenFileMode.Create);
+            var root = new XElement("RunningSetting",
+                new XAttribute(nameof(RunningSetting.RunMode), runningSetting.RunMode.ToString()),
+                new XAttribute(nameof(RunningSetting.World), runningSetting.World),
+                new XAttribute(nameof(RunningSetting.Seed), runningSetting.Seed)
+            );
+            root.Save(stream);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to save {RunningSettingPath}: {ex.Message}");
+        }
+    }
+
+    public static void SetRunMode(RunModeType runMode)
+    {
+        var runningSetting = Load([]);
+        runningSetting.RunMode = runMode;
+        Save(runningSetting);
+    }
+
     private static RunningSetting LoadFromFile()
     {
         var runningSetting = new RunningSetting();
@@ -91,13 +121,7 @@ public static class RunningSettingManager
                 Storage.CreateDirectory(ModsManager.ConfigPath);
             }
 
-            using var stream = Storage.OpenFile(RunningSettingPath, OpenFileMode.Create);
-            var root = new XElement("RunningSetting",
-                new XAttribute(nameof(RunningSetting.RunMode), runningSetting.RunMode.ToString()),
-                new XAttribute(nameof(RunningSetting.World), runningSetting.World),
-                new XAttribute(nameof(RunningSetting.Seed), runningSetting.Seed)
-            );
-            root.Save(stream);
+            Save(runningSetting);
         }
         catch (Exception ex)
         {

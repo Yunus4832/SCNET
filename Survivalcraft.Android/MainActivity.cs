@@ -59,6 +59,7 @@ public class MainActivity : EngineActivity
         {
             return;
         }
+
         BeginLaunch();
     }
 
@@ -141,25 +142,23 @@ public class MainActivity : EngineActivity
 
     private void BeginLaunch()
     {
+        // 注册重启App事件
+        GameRestarter.OnRestartAppRequested += RestartApp;
+
         var runningSetting = RunningSettingManager.Load([]);
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
-            StartHeadlessServer(runningSetting);
+            StartHeadlessServer();
             return;
         }
 
-        // 注册重启App事件
-        GameRestarter.OnRestartAppRequested += RestartApp;
 
         Run();
     }
 
-    private void StartHeadlessServer(RunningSetting runningSetting)
+    private void StartHeadlessServer()
     {
-        InitializeAndroidId();
-        RunMode.Value = RunModeType.HeadlessServer;
         _isHeadlessServer = true;
-        _ = Task.Run(() => HeadlessEntry.Main(runningSetting));
         StartActivity(new Intent(this, typeof(LogActivity)));
         Finish();
     }

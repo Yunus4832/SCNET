@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using Engine.Input;
 
 using Game.Network;
+using Game.Managers;
 using Game.VersionConverts;
 
 namespace Game.Screens;
@@ -15,6 +16,8 @@ public class MainMenuScreen : Screen
 
     private readonly BevelledButtonWidget _languageSwitchButton;
 
+    private readonly BevelledButtonWidget _serverModeButton;
+
     private readonly ButtonWidget _showBulletinButton;
 
     private static readonly string _versionString = $"Version {VersionsManager.Version}";
@@ -26,10 +29,12 @@ public class MainMenuScreen : Screen
         _showBulletinButton = Children.Find<ButtonWidget>("BulletinButton")!;
         _bulletinStackPanel = Children.Find<StackPanelWidget>("BulletinStackPanel")!;
         _copyrightLabel = Children.Find<LabelWidget>("CopyrightLabel")!;
+        _serverModeButton = Children.Find<BevelledButtonWidget>("ServerModeButton")!;
         _languageSwitchButton = Children.Find<BevelledButtonWidget>("LanguageButton")!;
 
         // 绑定语言切换按钮的点击事件
         _languageSwitchButton.ClickableWidget.OnClick += OnLanguageButtonClick;
+        _serverModeButton.ClickableWidget.OnClick += OnServerModeButtonClick;
 
         // 初始化语言相关 UI 状态
         var languageType = !ModsManager.Configs.TryGetValue("Language", out var config) ? "zh-CN" : config;
@@ -82,6 +87,12 @@ public class MainMenuScreen : Screen
                 }
             )
         );
+    }
+
+    private static void OnServerModeButtonClick()
+    {
+        RunningSettingManager.SetRunMode(RunModeType.HeadlessServer);
+        GameRestarter.RestartGame();
     }
 
     public override void Update()

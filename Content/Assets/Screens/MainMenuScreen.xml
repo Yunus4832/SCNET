@@ -70,13 +70,19 @@
     <StackPanelWidget Name="LeftBottomBar" Direction="Vertical" HorizontalAlignment="Near" VerticalAlignment="Far"
                       Margin="8, 8">
         <BevelledButtonWidget Name="Exit" Size="60, 60" IsAutoCheckingEnabled="false">
-            <RectangleWidget Name="BevelledButton.Image" Size="28, 28" HorizontalAlignment="Center"
-                             VerticalAlignment="Center" Subtexture="{Textures/Gui/Exit}" OutlineColor="0, 0, 0, 0"
+            <RectangleWidget Name="ExitIcon" Size="28, 28" HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Subtexture="{Textures/Gui/Exit}" OutlineColor="0, 0, 0, 0"
                              FillColor="255, 255, 255" IsVisible="true"/>
         </BevelledButtonWidget>
         <CanvasWidget Size="0, 8"/>
+        <BevelledButtonWidget Name="ServerModeButton" Size="60, 60" IsAutoCheckingEnabled="false">
+            <RectangleWidget Name="ServerModeIcon" Size="28, 28" HorizontalAlignment="Center"
+                             VerticalAlignment="Center" Subtexture="{Textures/Gui/Terminal}"
+                             OutlineColor="0, 0, 0, 0" FillColor="255, 255, 255" IsVisible="true"/>
+        </BevelledButtonWidget>
+        <CanvasWidget Size="0, 8"/>
         <BevelledButtonWidget Name="LanguageButton" Size="60, 60" IsAutoCheckingEnabled="false">
-            <RectangleWidget Name="BevelledButton.Image" Size="28, 28" HorizontalAlignment="Center"
+            <RectangleWidget Name="LanguageIcon" Size="28, 28" HorizontalAlignment="Center"
                              VerticalAlignment="Center" Subtexture="{Textures/Gui/Earth}" OutlineColor="0, 0, 0, 0"
                              FillColor="255, 255, 255" IsVisible="true"/>
         </BevelledButtonWidget>

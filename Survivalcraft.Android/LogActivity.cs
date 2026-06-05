@@ -2,6 +2,7 @@ using System.Text;
 
 using Android.Content.PM;
 using Android.Graphics;
+using Android.Provider;
 using Android.Text.Method;
 using Android.Views;
 
@@ -44,13 +45,33 @@ public class LogActivity : Activity
         {
             Orientation = Orientation.Vertical
         };
+        layout.SetPadding(0, 0, 0, GetNavigationBarHeight());
+
+        var buttonsLayout = new LinearLayout(this)
+        {
+            Orientation = Orientation.Horizontal
+        };
 
         var stopButton = new Button(this)
         {
             Text = "停止服务"
         };
         stopButton.Click += (_, _) => RequestStop();
-        layout.AddView(stopButton);
+
+        var guiButton = new Button(this)
+        {
+            Text = "切换到GUI模式"
+        };
+        guiButton.Click += (_, _) => RequestGuiMode();
+
+        buttonsLayout.AddView(
+            stopButton,
+            new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WrapContent, 1f)
+        );
+        buttonsLayout.AddView(
+            guiButton,
+            new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WrapContent, 1f)
+        );
 
         _scrollView = new ScrollView(this);
         _textView = new TextView(this)
@@ -78,9 +99,37 @@ public class LogActivity : Activity
             )
         );
 
+        layout.AddView(
+            buttonsLayout,
+            new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MatchParent,
+                ViewGroup.LayoutParams.WrapContent
+            )
+        );
+
         SetContentView(layout);
         AppendInitialLogs();
         Log.MsgAdded += OnLogMsgAdded;
+
+        InitializeAndroidId();
+        RunMode.Value = RunModeType.HeadlessServer;
+        var runningSetting = RunningSettingManager.Load([]);
+        _ = Task.Run(() => HeadlessEntry.Main(runningSetting));
+    }
+
+    private int GetNavigationBarHeight()
+    {
+        var resourceId = Resources?.GetIdentifier("navigation_bar_height", "dimen", "android") ?? 0;
+        return resourceId > 0 ? Resources!.GetDimensionPixelSize(resourceId) : 0;
+    }
+
+    private void InitializeAndroidId()
+    {
+        GetMachineID.AndroidID = Settings.Secure
+            .GetString(
+                ContentResolver,
+                Settings.Secure.AndroidId
+            ) ?? string.Empty;
     }
 
     protected override void OnDestroy()
@@ -108,7 +157,16 @@ public class LogActivity : Activity
 
         _stopRequested = true;
         HeadlessEntry.RequestStop();
-        Finish();
+        FinishAndRemoveTask();
+        Environment.Exit(0);
+    }
+
+    private void RequestGuiMode()
+    {
+        RunningSettingManager.SetRunMode(RunModeType.Gui);
+        _stopRequested = true;
+        HeadlessEntry.RequestStop();
+        RequestStop();
     }
 
     private void AppendInitialLogs()
