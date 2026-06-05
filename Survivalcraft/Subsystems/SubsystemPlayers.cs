@@ -63,17 +63,21 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
-        if (_playersData.Count == 0 || _playersData.All(p => !p.IsMainPlayer))
+        if (RunMode.Value is RunModeType.Gui &&
+            (_playersData.Count == 0 ||
+             _playersData.All(p => !p.IsMainPlayer)))
         {
             ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
         }
 
-        foreach (var playersDatum in _playersData)
-            //断开连接离线
+        foreach (var playersDatum in _playersData) // 断开连接离线
         {
-            if (CommonLib.WorkType == WorkType.Server && playersDatum.Client == null)
+            if (CommonLib.WorkType == WorkType.Server && playersDatum.Client is null)
             {
-                _toRemove.Add(playersDatum);
+                if (RunMode.Value is RunModeType.Gui)
+                {
+                    _toRemove.Add(playersDatum);
+                }
             }
             else
             {
@@ -158,7 +162,10 @@ public class SubsystemPlayers : Subsystem, IUpdateable
             }
 
 
-            _subsystemGameWidgets.AddMessage(playerData.Name + " 加入游戏");
+            if (client is not null)
+            {
+                _subsystemGameWidgets.AddMessage(playerData.Name + " 加入游戏");
+            }
         }
 
         if (SettingsManager.AutoGarbageCollect)
@@ -300,6 +307,13 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         var num = 0;
         foreach (var playersDatum in _playersData)
         {
+            if (Project.SendToClientMode &&
+                RunMode.Value is RunModeType.HeadlessServer &&
+                playersDatum.Client == null)
+            {
+                continue;
+            }
+
             var valuesDictionary3 = new ValuesDictionary();
             playersDatum.Save(valuesDictionary3);
             onlinePlayersListVd.SetValue(num++.ToString(), valuesDictionary3);
@@ -371,7 +385,8 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         _componentPlayers.Clear();
         foreach (var playersDatum in _playersData)
         {
-            if (playersDatum.ComponentPlayer != null)
+            if (playersDatum.ComponentPlayer != null &&
+                (RunMode.Value is not RunModeType.HeadlessServer || playersDatum.Client != null))
             {
                 _componentPlayers.Add(playersDatum.ComponentPlayer);
             }
@@ -396,6 +411,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         {
             updater.WaitChunkList.Remove(pd.Client);
         }
+
         var componentPlayer = pd.ComponentPlayer;
         if (componentPlayer == null && _offlinePlayerEntities.TryGetValue(playerGuid, out var entityDataPlayer))
         {

@@ -143,11 +143,28 @@ public class EntityPackage : IPackage
             case EventType.RequestSync:
                 foreach (var e in _entityIdList)
                 {
-                    project.FindEntityById(e, el.Add);
+                    project.FindEntityById(e, entity =>
+                    {
+                        if (ShouldSendEntityToClients(entity))
+                        {
+                            el.Add(entity);
+                        }
+                    });
                 }
 
                 netNode.QueuePackage(new EntityPackage(el) { To = From });
                 break;
         }
+    }
+
+    private static bool ShouldSendEntityToClients(Entity entity)
+    {
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            return true;
+        }
+
+        var componentPlayer = entity.FindComponent<ComponentPlayer>();
+        return componentPlayer is null || componentPlayer.PlayerData.Client is not null;
     }
 }

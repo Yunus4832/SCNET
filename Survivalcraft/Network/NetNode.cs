@@ -461,7 +461,10 @@ public class NetNode
     public void StartLocal()
     {
         Clients.Clear();
-        Self = new Client(new Guid(SettingsManager.OnlineAccessToken), GameManager.Project!);
+        var localGuid = RunMode.Value is RunModeType.HeadlessServer
+            ? Guid.NewGuid()
+            : new Guid(SettingsManager.OnlineAccessToken);
+        Self = new Client(localGuid, GameManager.Project!);
         AddClient(Self);
     }
 

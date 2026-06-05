@@ -261,7 +261,13 @@ public static class GameManager
         var entityMaps = BuildServerEntityMap(project);
         project.BeforeEntityAdded += (_, arg) => EnsureEntityId(arg.Entity, entityMaps);
         project.EntityRemoved += (_, arg) => { entityMaps.Remove(arg.Entity.EntityId); };
-        project.EntityAdded += (_, arg) => { net.QueuePackage(new EntityPackage(arg.Entity)); };
+        project.EntityAdded += (_, arg) =>
+        {
+            if (ShouldSendEntityToClients(arg.Entity))
+            {
+                net.QueuePackage(new EntityPackage(arg.Entity));
+            }
+        };
         project.EntityRemoved += (_, arg) => { net.QueuePackage(new EntityPackage(arg.Entity.EntityId)); };
         net.OnClientStateChanged += client => OnServerClientStateChanged(project, net, client);
     }
@@ -315,6 +321,17 @@ public static class GameManager
             entityMaps.Add(i, entity);
             return;
         }
+    }
+
+    private static bool ShouldSendEntityToClients(Entity entity)
+    {
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            return true;
+        }
+
+        var componentPlayer = entity.FindComponent<ComponentPlayer>();
+        return componentPlayer is null || componentPlayer.PlayerData.Client is not null;
     }
 
     private static void OnServerClientStateChanged(Project project, NetNode net, Client client)
@@ -396,7 +413,7 @@ public static class GameManager
 
     private static void HandleServerClientProjectLoaded(Project project, NetNode net, Client client)
     {
-        var sendList = project.EntityKeys.ToList();
+        var sendList = project.EntityKeys.Where(ShouldSendEntityToClients).ToList();
         net.QueuePackage(new EntityPackage(sendList) { To = client });
         if (client.CachePlayerEntity == null)
         {
