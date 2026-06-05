@@ -55,36 +55,101 @@ public enum PackageType : byte
 
 public class PackageManager
 {
-    private static IPackage?[] _basePackages = new IPackage[byte.MaxValue];
+    private sealed class PackageRegistration
+    {
+        public required string Name { get; init; }
+
+        public required Func<IPackage> Create { get; init; }
+    }
+
+    private static PackageRegistration?[] _packageRegistrations = new PackageRegistration[byte.MaxValue + 1];
 
     public static void Initialize()
     {
-        _basePackages = new IPackage[byte.MaxValue];
+        _packageRegistrations = new PackageRegistration?[byte.MaxValue + 1];
 
-        var list = typeof(PackageManager).Assembly.GetTypes();
-        var type = typeof(IPackage);
-        var regList = list
-            .Where(item => type.IsAssignableFrom(item) && item is { IsInterface: false, IsAbstract: false }).ToList();
+        RegisterBuiltInPackages();
+    }
 
-        foreach (var obj in regList.Select(Activator.CreateInstance))
+    private static void RegisterBuiltInPackages()
+    {
+        RegisterPackage(PackageType.ServerInfo, () => new ServerInfoPackage());
+        RegisterPackage(PackageType.ConnectionRequest, () => new ConnectionRequestPackage());
+        RegisterPackage(PackageType.ConnectionReject, () => new ConnectionRejectPackage());
+        RegisterPackage(PackageType.Project, () => new ProjectPackage());
+        RegisterPackage(PackageType.Client, () => new ClientPackage());
+        RegisterPackage(PackageType.Pickable, () => new PickablePackage());
+        RegisterPackage(PackageType.SubsystemBody, () => new SubsystemBodyPackage());
+        RegisterPackage(PackageType.SubsystemTerrain, () => new SubsystemTerrainPackage());
+        RegisterPackage(PackageType.SubsystemTime, () => new SubsystemTimePackage());
+        RegisterPackage(PackageType.SubsystemSky, () => new SubsystemSkyPackage());
+        RegisterPackage(PackageType.SubsystemWeather, () => new SubsystemWeatherPackage());
+        RegisterPackage(PackageType.SubsystemElectricity, () => new SubsystemElectricityPackage());
+        RegisterPackage(PackageType.SubsystemPlayers, () => new SubsystemPlayersPackage());
+        RegisterPackage(PackageType.ComponentPlayer, () => new ComponentPlayerPackage());
+        RegisterPackage(PackageType.ComponentInventory, () => new ComponentInventoryPackage());
+        RegisterPackage(PackageType.ComponentVitalStat, () => new ComponentVitalStatPackage());
+        RegisterPackage(PackageType.ComponentClothing, () => new ComponentClothingPackage());
+        RegisterPackage(PackageType.ComponentBehavior, () => new ComponentBehaviorPackage());
+        RegisterPackage(PackageType.ComponentHealth, () => new ComponentHealthPackage());
+        RegisterPackage(PackageType.ComponentMount, () => new ComponentMountPackage());
+        RegisterPackage(PackageType.ComponentSickness, () => new ComponentSicknessPackage());
+        RegisterPackage(PackageType.ComponentFlu, () => new ComponentFluPackage());
+        RegisterPackage(PackageType.ComponentOnFire, () => new ComponentOnFirePackage());
+        RegisterPackage(PackageType.ComponentSleep, () => new ComponentSleepPackage());
+        RegisterPackage(PackageType.ComponentFurnace, () => new ComponentFurnacePackage());
+        RegisterPackage(PackageType.PlayerData, () => new PlayerDataPackage());
+        RegisterPackage(PackageType.Message, () => new MessagePackage());
+        RegisterPackage(PackageType.Entity, () => new EntityPackage());
+        RegisterPackage(PackageType.Projectile, () => new ProjectilePackage());
+        RegisterPackage(PackageType.Territoriy, () => new TerritoriyPackage());
+        RegisterPackage(PackageType.Furniture, () => new FurniturePackage());
+        RegisterPackage(PackageType.Explosion, () => new ExplosionsPackage());
+        RegisterPackage(PackageType.MovingBlockSet, () => new MovingBlockPackage());
+        RegisterPackage(PackageType.BlockEdit, () => new BlockEditPackage());
+        RegisterPackage(PackageType.SignBlock, () => new SignBlockPackage());
+        RegisterPackage(PackageType.Dispenser, () => new DispenserPackage());
+        RegisterPackage(PackageType.EditableBlock, () => new EditableBlockPackage());
+        RegisterPackage(PackageType.GroupManage, () => new GroupManagePackage());
+        RegisterPackage(PackageType.SubsystemSeason, () => new SubsystemSeasonPackage());
+    }
+
+    public static void RegisterPackage(Func<IPackage> factory)
+    {
+        var package = factory();
+        RegisterPackage(package.ID, package.GetType().Name, factory);
+    }
+
+    public static void RegisterPackage(PackageType packageType, Func<IPackage> factory)
+    {
+        var package = factory();
+        var packageID = (byte)packageType;
+        if (package.ID != packageID)
         {
-            if (obj is not IPackage package)
-            {
-                continue;
-            }
-
-            RegisterPackage(package);
+            throw new InvalidOperationException(
+                $"数据包ID不匹配，注册ID:{packageID}，Package[{package.GetType().Name}] ID:{package.ID}");
         }
+
+        RegisterPackage(packageID, package.GetType().Name, factory);
     }
 
     public static void RegisterPackage(IPackage package)
     {
-        var theID = package.ID;
-        if (_basePackages[theID] == null)
+        var packageType = package.GetType();
+        RegisterPackage(package.ID, packageType.Name, () => (IPackage)Activator.CreateInstance(packageType)!);
+    }
+
+    private static void RegisterPackage(byte packageID, string packageName, Func<IPackage> factory)
+    {
+        if (_packageRegistrations[packageID] == null)
         {
-            _basePackages[theID] = package;
+            _packageRegistrations[packageID] = new PackageRegistration
+            {
+                Name = packageName,
+                Create = factory
+            };
 #if DEBUG
-            Log.Information($"注册Package[{package.GetType().Name}]，ID:{theID}");
+            Log.Information($"注册Package[{packageName}]，ID:{packageID}");
 #endif
         }
         else
@@ -95,10 +160,10 @@ public class PackageManager
 
     public static void UnRegisterPackage(IPackage package)
     {
-        var basePackage = _basePackages[package.ID];
+        var basePackage = _packageRegistrations[package.ID];
         if (basePackage != null)
         {
-            _basePackages[package.ID] = null;
+            _packageRegistrations[package.ID] = null;
         }
     }
 
@@ -172,10 +237,10 @@ public class PackageManager
 
                 var id = preader.ReadByte();
                 packageID = id;
-                if (_basePackages[id] != null)
+                var registration = _packageRegistrations[id];
+                if (registration != null)
                 {
-                    var obj = Activator.CreateInstance(_basePackages[id]!.GetType());
-                    var package = (IPackage)obj!;
+                    var package = registration.Create();
                     last = package;
                     package.From = from!;
                     package.ReadData(preader);
