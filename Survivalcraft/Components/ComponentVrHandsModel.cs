@@ -7,7 +7,7 @@ namespace Game.Components;
 
 public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
 {
-    private static readonly LitShader _shader = new(2, false, false, true, false, false);
+    private static LitShader? _shader;
 
     private static readonly int[] _drawOrders = [1];
 
@@ -40,6 +40,8 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
     public Vector3 ItemRotationOrder { get; set; }
 
     public int[] DrawOrders => _drawOrders;
+
+    private static LitShader Shader => _shader ??= new LitShader(2, false, false, true, false, false);
 
     public void Draw(Camera camera, int drawOrder)
     {
@@ -92,24 +94,24 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
             Display.RasterizerState = RasterizerState.CullCounterClockwiseScissor;
             if (_componentPlayer.ComponentCreatureModel.TextureOverride != null)
             {
-                _shader.Texture = _componentPlayer.ComponentCreatureModel.TextureOverride;
+                Shader.Texture = _componentPlayer.ComponentCreatureModel.TextureOverride;
             }
 
-            _shader.SamplerState = SamplerState.PointClamp;
-            _shader.MaterialColor = Vector4.One;
-            _shader.AmbientLightColor = new Vector3(_handLight * LightingManager.LightAmbient);
-            _shader.DiffuseLightColor1 = new Vector3(_handLight);
-            _shader.DiffuseLightColor2 = new Vector3(_handLight);
-            _shader.LightDirection1 = -Vector3.TransformNormal(LightingManager.DirectionToLight1, camera.ViewMatrix);
-            _shader.LightDirection2 = -Vector3.TransformNormal(LightingManager.DirectionToLight2, camera.ViewMatrix);
-            _shader.Transforms.View = Matrix.Identity;
-            _shader.Transforms.Projection = camera.ProjectionMatrix;
-            _shader.Transforms.World[0] = Matrix.CreateScale(0.01f) * identity * controllerMatrix * m;
+            Shader.SamplerState = SamplerState.PointClamp;
+            Shader.MaterialColor = Vector4.One;
+            Shader.AmbientLightColor = new Vector3(_handLight * LightingManager.LightAmbient);
+            Shader.DiffuseLightColor1 = new Vector3(_handLight);
+            Shader.DiffuseLightColor2 = new Vector3(_handLight);
+            Shader.LightDirection1 = -Vector3.TransformNormal(LightingManager.DirectionToLight1, camera.ViewMatrix);
+            Shader.LightDirection2 = -Vector3.TransformNormal(LightingManager.DirectionToLight2, camera.ViewMatrix);
+            Shader.Transforms.View = Matrix.Identity;
+            Shader.Transforms.Projection = camera.ProjectionMatrix;
+            Shader.Transforms.World[0] = Matrix.CreateScale(0.01f) * identity * controllerMatrix * m;
             foreach (var meshPart in _vrHandModel.Meshes.SelectMany(mesh => mesh.MeshParts))
             {
                 Display.DrawIndexed(
                     PrimitiveType.TriangleList,
-                    _shader,
+                    Shader,
                     meshPart.VertexBuffer,
                     meshPart.IndexBuffer,
                     meshPart.StartIndex,

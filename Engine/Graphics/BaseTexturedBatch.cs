@@ -4,9 +4,9 @@ namespace Engine.Graphics;
 
 public abstract class BaseTexturedBatch : BaseBatch
 {
-    public static readonly UnlitShader Shader = new(true, true, false, false);
+    public static UnlitShader? Shader;
 
-    public static readonly UnlitShader ShaderAlphaTest = new(true, true, false, true);
+    public static UnlitShader? ShaderAlphaTest;
 
     public readonly DynamicArray<int> TriangleIndices = [];
 
@@ -47,6 +47,7 @@ public abstract class BaseTexturedBatch : BaseBatch
     {
         if (useAlphaTest)
         {
+            ShaderAlphaTest ??= new UnlitShader(true, true, false, true);
             ShaderAlphaTest.Texture = texture;
             ShaderAlphaTest.SamplerState = samplerState;
             ShaderAlphaTest.Transforms.World[0] = matrix;
@@ -55,6 +56,7 @@ public abstract class BaseTexturedBatch : BaseBatch
         }
         else
         {
+            Shader ??= new UnlitShader(true, true, false, false);
             Shader.Texture = texture;
             Shader.SamplerState = samplerState;
             Shader.Transforms.World[0] = matrix;
@@ -86,6 +88,7 @@ public abstract class BaseTexturedBatch : BaseBatch
     {
         if (useAlphaTest)
         {
+            ShaderAlphaTest ??= new UnlitShader(true, true, false, true);
             ShaderAlphaTest.Texture = texture;
             ShaderAlphaTest.SamplerState = samplerState;
             ShaderAlphaTest.Transforms.World[0] = matrix;
@@ -95,6 +98,7 @@ public abstract class BaseTexturedBatch : BaseBatch
         }
         else
         {
+            Shader ??= new UnlitShader(true, true, false, false);
             Shader.Texture = texture;
             Shader.SamplerState = samplerState;
             Shader.Transforms.World[0] = matrix;

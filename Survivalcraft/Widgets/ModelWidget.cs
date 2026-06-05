@@ -4,9 +4,9 @@ namespace Game.Widgets;
 
 public class ModelWidget : Widget
 {
-    private static readonly LitShader _shader = new(1, false, false, true, false, false);
+    private static LitShader? _shader;
 
-    private static readonly LitShader _shaderAlpha = new(1, false, false, true, false, true);
+    private static LitShader? _shaderAlpha;
 
     private Matrix[] _absoluteBoneTransforms = [];
 
@@ -82,7 +82,9 @@ public class ModelWidget : Widget
 
     public override void Draw(DrawContext dc)
     {
-        var litShader = UseAlphaThreshold ? _shaderAlpha : _shader;
+        var litShader = UseAlphaThreshold
+            ? (_shaderAlpha ??= new LitShader(1, false, false, true, false, true))
+            : (_shader ??= new LitShader(1, false, false, true, false, false));
         litShader.Texture = TextureOverride;
         litShader.SamplerState = SamplerState.PointClamp;
         litShader.MaterialColor = new Vector4(Color * GlobalColorTransform);

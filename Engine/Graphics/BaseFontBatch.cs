@@ -5,7 +5,7 @@ namespace Engine.Graphics;
 
 public abstract class BaseFontBatch : BaseBatch
 {
-    public static UnlitShader Shader = new(true, true, false, false);
+    public static UnlitShader? Shader;
 
     public readonly DynamicArray<int> TriangleIndices = [];
 
@@ -47,6 +47,7 @@ public abstract class BaseFontBatch : BaseBatch
             throw new ArgumentNullException(nameof(font.Texture));
         }
 
+        Shader ??= new UnlitShader(true, true, false, false);
         Shader.Texture = font.Texture;
         Shader.SamplerState = samplerState;
         Shader.Transforms.World[0] = matrix;
