@@ -281,6 +281,7 @@ public static class SettingsManager
         OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetAndroidID())
             ? ModsManager.GetMd5(GetMachineID.GetAndroidID())
             : Guid.NewGuid().ToString();
+        UIScale = 0.8f;
 #endif
 #if DESKTOP
         OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetMachineGuid())

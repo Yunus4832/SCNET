@@ -13,7 +13,7 @@ public class MainMenuScreen : Screen
 
     private readonly LabelWidget _copyrightLabel;
 
-    private readonly BitmapButtonWidget _languageSwitchButton;
+    private readonly BevelledButtonWidget _languageSwitchButton;
 
     private readonly ButtonWidget _showBulletinButton;
 
@@ -26,10 +26,10 @@ public class MainMenuScreen : Screen
         _showBulletinButton = Children.Find<ButtonWidget>("BulletinButton")!;
         _bulletinStackPanel = Children.Find<StackPanelWidget>("BulletinStackPanel")!;
         _copyrightLabel = Children.Find<LabelWidget>("CopyrightLabel")!;
-        _languageSwitchButton = Children.Find<BitmapButtonWidget>("LanguageButton")!;
+        _languageSwitchButton = Children.Find<BevelledButtonWidget>("LanguageButton")!;
 
         // 绑定语言切换按钮的点击事件
-        _languageSwitchButton.ClickableWidget.ClickAction += OnLanguageButtonClick;
+        _languageSwitchButton.ClickableWidget.OnClick += OnLanguageButtonClick;
 
         // 初始化语言相关 UI 状态
         var languageType = !ModsManager.Configs.TryGetValue("Language", out var config) ? "zh-CN" : config;
@@ -116,44 +116,6 @@ public class MainMenuScreen : Screen
         if (Children.Find<ButtonWidget>("Settings")!.IsClicked)
         {
             ScreensManager.SwitchScreen("Settings");
-        }
-
-        if (Children.Find<ButtonWidget>("LanguageButton")!.IsClicked)
-        {
-            var languageMap = new Dictionary<string, string>
-            {
-                { "简体中文", "zh-CN" },
-                { "English", "en-US" },
-                { "Русский", "ru-RU" },
-                { "Português", "pt-PT" }
-            };
-            var displayItems = languageMap.Keys.ToList();
-
-            // 显示语言选择对话框
-            DialogsManager.ShowDialog(
-                null,
-                new ListSelectionDialog(
-                    string.Empty,
-                    displayItems,
-                    70f,
-                    item => (string)item,
-                    delegate(object item)
-                    {
-                        // 用户选择语言后调用 ChangeLanguage 方法
-                        if (languageMap.TryGetValue((string)item, out var code))
-                        {
-                            SettingsUiScreen.ChangeLanguage(code);
-                        }
-                    }
-                )
-            );
-        }
-
-        if (Children.Find<BevelledButtonWidget>("Manage")!.IsClicked)
-        {
-            ScreensManager.Screens.TryGetValue("Content", out var screen);
-            var contentScreen = screen as ContentScreen;
-            contentScreen?.OpenManageSelectDialog();
         }
 
         if (_showBulletinButton.IsClicked)
