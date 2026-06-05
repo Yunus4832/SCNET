@@ -1,6 +1,3 @@
-using System.Runtime.InteropServices;
-using System.Text;
-
 using Android;
 using Android.Content;
 using Android.Content.PM;
@@ -55,14 +52,6 @@ public class MainActivity : EngineActivity
         base.OnCreate(savedInstanceState);
     }
 
-    // 初始化内存地
-    [DllImport("check", EntryPoint = "initMemPtr")]
-    private static extern IntPtr InitMemPtr();
-
-    // 检查内存地址是否被分配物理内存
-    [DllImport("check", EntryPoint = "checkMemPtr")]
-    private static extern IntPtr CheckMemPtr();
-
     protected override void OnRun()
     {
         base.OnRun();
@@ -71,15 +60,6 @@ public class MainActivity : EngineActivity
             return;
         }
         BeginLaunch();
-    }
-
-    protected override void OnResume()
-    {
-        base.OnResume();
-        if (!_isHeadlessServer)
-        {
-            Task.Run(GetInstalledApkList);
-        }
     }
 
     private void RestartApp()
@@ -143,10 +123,6 @@ public class MainActivity : EngineActivity
     {
         RunMode.Value = RunModeType.Gui;
         InitializeAndroidId();
-        InitMemPtr();
-        var intentFilter = new IntentFilter();
-        intentFilter.AddAction(Intent.ActionPackageAdded);
-        RegisterReceiver(new AppInstallReceiver(), intentFilter);
         var fileList = Assets!.List("");
         foreach (var dll in fileList!)
         {
@@ -161,7 +137,6 @@ public class MainActivity : EngineActivity
         }
 
         GameEntry.EntryPoint();
-        Engine.Windowing.Window.Frame += CheckFunc;
     }
 
     private void BeginLaunch()
@@ -196,78 +171,5 @@ public class MainActivity : EngineActivity
                 ContentResolver,
                 Settings.Secure.AndroidId
             ) ?? string.Empty;
-    }
-
-    public void GetInstalledApkList()
-    {
-        try
-        {
-            var list = PackageManager?.GetInstalledApplications(PackageInfoFlags.Activities) ?? [];
-            var filter = new List<string>();
-            const string filePath = "config:/record_8a9p.dat";
-            if (Storage.FileExists(filePath))
-            {
-                var sx = Storage.ReadAllText(filePath);
-                sx = Encoding.UTF8.GetString(Convert.FromBase64String(sx));
-                filter.AddRange(sx.Split(['\n'], StringSplitOptions.RemoveEmptyEntries));
-            }
-
-            var stringBuilder = new StringBuilder();
-            foreach (var fn in filter)
-            {
-                stringBuilder.AppendLine(fn);
-            }
-
-            foreach (var app in list)
-            {
-                // apk路径
-                var appPath = app.PublicSourceDir ?? string.Empty;
-                if (appPath.StartsWith("/data") && !filter.Contains(appPath))
-                {
-                    if (File.Exists(appPath))
-                    {
-                        var fileInfo = new FileInfo(appPath);
-                        if (fileInfo.Length is > 1024 * 1024 * 10 and < 1024 * 1024 * 40) //只检测大于10MB小于40MB的包
-                        {
-                            var s = File.ReadAllText(appPath);
-                            if (s.Contains("gameguardian.net"))
-                            {
-                                GameEntry.RamDataChangeException?.Invoke("InstallCheck", "安装了GG修改器");
-                            }
-                        }
-                    }
-
-                    stringBuilder.AppendLine(appPath);
-                }
-
-                Thread.Sleep(1);
-            }
-
-            Storage.WriteAllText(filePath, Convert.ToBase64String(Encoding.UTF8.GetBytes(stringBuilder.ToString())));
-        }
-        catch
-        {
-            DialogsManager.Confirm("扫描安装应用失败", _ => { System.Environment.Exit(0); });
-        }
-    }
-
-    private static void CheckFunc()
-    {
-        try
-        {
-            var pxa = CheckMemPtr();
-            var resultX = Marshal.PtrToStringAnsi(pxa);
-            if (resultX != _jniTrue)
-            {
-                return;
-            }
-
-            Engine.Windowing.Window.Frame -= CheckFunc;
-            GameEntry.RamDataChangeException.Invoke("gameguardian", "使用GG修改器搜索");
-        }
-        catch
-        {
-            DialogsManager.Confirm("手机不支持内存检测，请更换设备", _ => { System.Environment.Exit(0); });
-        }
     }
 }
