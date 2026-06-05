@@ -110,9 +110,9 @@ public static class LanguageControl
 
         foreach (var newChild in newObject)
         {
-            if (oldObject.ContainsKey(newChild.Key))
+            if (TryGetProperty(oldObject, newChild.Key, out var oldChild))
             {
-                var oldChild = oldObject[newChild.Key]?.DeepClone();
+                oldChild = oldChild?.DeepClone();
                 if (oldChild is JsonObject oldJsonObject && newChild.Value is JsonObject newJsonObject)
                 {
                     MergeJsonObject(oldJsonObject, newJsonObject);
@@ -131,6 +131,23 @@ public static class LanguageControl
                 oldObject[newChild.Key] = newChild.Value?.DeepClone();
             }
         }
+    }
+
+    private static bool TryGetProperty(JsonObject obj, string key, out JsonNode? value)
+    {
+        foreach (var pair in obj)
+        {
+            if (!string.Equals(pair.Key, key, StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            value = pair.Value;
+            return true;
+        }
+
+        value = null;
+        return false;
     }
 
     private static void MergeJsonArray(JsonArray oldArray, JsonArray newArray)
@@ -213,26 +230,27 @@ public static class LanguageControl
             }
             else
             {
-                if (obj!.ContainsKey(item))
+                if (!TryGetProperty(obj!, item, out var obj2))
                 {
-                    var obj2 = obj[item];
-                    if (obj2 is JsonObject jo)
-                    {
-                        obj = jo;
-                        arr = null;
-                        flag = true;
-                    }
-                    else if (obj2 is JsonArray ja)
-                    {
-                        obj = null;
-                        arr = ja;
-                        flag = true;
-                    }
-                    else
-                    {
-                        r = true;
-                        return obj2?.ToString() ?? string.Empty;
-                    }
+                    return item;
+                }
+
+                if (obj2 is JsonObject jo)
+                {
+                    obj = jo;
+                    arr = null;
+                    flag = true;
+                }
+                else if (obj2 is JsonArray ja)
+                {
+                    obj = null;
+                    arr = ja;
+                    flag = true;
+                }
+                else
+                {
+                    r = true;
+                    return obj2?.ToString() ?? string.Empty;
                 }
             }
 

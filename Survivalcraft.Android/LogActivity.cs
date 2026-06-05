@@ -8,6 +8,7 @@ using Android.Views;
 
 using Game;
 
+using AndroidAlertDialog = Android.App.AlertDialog;
 using Activity = Android.App.Activity;
 
 namespace Survivalcraft.Android;
@@ -56,13 +57,19 @@ public class LogActivity : Activity
         {
             Text = "停止服务"
         };
-        stopButton.Click += (_, _) => RequestStop();
+        stopButton.Click += (_, _) => ConfirmAction(
+            "确定要停止服务吗？",
+            "停止后当前服务器将退出。",
+            RequestStop);
 
         var guiButton = new Button(this)
         {
             Text = "切换到GUI模式"
         };
-        guiButton.Click += (_, _) => RequestGuiMode();
+        guiButton.Click += (_, _) => ConfirmAction(
+            "确定要切换到GUI模式吗？",
+            "切换后将保存运行模式并重启到图形界面。",
+            RequestGuiMode);
 
         buttonsLayout.AddView(
             stopButton,
@@ -167,6 +174,19 @@ public class LogActivity : Activity
         _stopRequested = true;
         HeadlessEntry.RequestStop();
         RequestStop();
+    }
+
+    private void ConfirmAction(string title, string message, Action onConfirmed)
+    {
+        RunOnUiThread(() =>
+        {
+            new AndroidAlertDialog.Builder(this)
+                .SetTitle(title)?
+                .SetMessage(message)?
+                .SetPositiveButton("确定", (_, _) => onConfirmed())?
+                .SetNegativeButton("取消", (_, _) => { })?
+                .Show();
+        });
     }
 
     private void AppendInitialLogs()

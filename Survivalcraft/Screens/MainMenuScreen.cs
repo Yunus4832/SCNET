@@ -91,8 +91,16 @@ public class MainMenuScreen : Screen
 
     private static void OnServerModeButtonClick()
     {
-        RunningSettingManager.SetRunMode(RunModeType.HeadlessServer);
-        GameRestarter.RestartGame();
+        DialogsManager.Confirm(LanguageControl.Get("MainMenuScreen", 13), button =>
+        {
+            if (button != MessageDialogButton.Button1)
+            {
+                return;
+            }
+
+            RunningSettingManager.SetRunMode(RunModeType.HeadlessServer);
+            GameRestarter.RestartGame();
+        });
     }
 
     public override void Update()
@@ -155,7 +163,15 @@ public class MainMenuScreen : Screen
 
         if (Children.Find<ButtonWidget>("Exit")!.IsClicked)
         {
-            Window.Close();
+            DialogsManager.Confirm(LanguageControl.Get("MainMenuScreen", 14), button =>
+            {
+                if (button != MessageDialogButton.Button1)
+                {
+                    return;
+                }
+
+                Window.Close();
+            });
         }
 
         // 处理返回键或 ESC 键

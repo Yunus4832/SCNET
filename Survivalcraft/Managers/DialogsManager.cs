@@ -94,7 +94,7 @@ public static class DialogsManager
     public static void Confirm(string msg, Action<MessageDialogButton> clickEvent, ContainerWidget? parentWidget = null)
     {
         var dialog = new MessageDialog(
-            "提示",
+            LanguageControl.Warning,
             msg,
             LanguageControl.Yes,
             LanguageControl.No,
