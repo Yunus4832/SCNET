@@ -115,7 +115,9 @@
     },
     "MainMenuScreen": {
         "1": "Falha na aquisição de anúncios",
-        "2": "Nenhum anúncio foi emitido por enquanto.\nOu não se conecta à Internet para obter informações de anúncio."
+        "2": "Nenhum anúncio foi emitido por enquanto.\nOu não se conecta à Internet para obter informações de anúncio.",
+        "13": "Tem a certeza de que quer mudar para o modo de servidor?",
+        "14": "Tem a certeza de que quer sair do jogo?"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Nenhuma caixa adequada foi encontrada",
@@ -3444,7 +3446,9 @@
             "9": "kaalus.wordpress.com",
             "10": "Para obter mais informações",
             "11": "Retirada",
-            "12": "Conteúdo"
+            "12": "Conteúdo",
+            "13": "Tem a certeza de que quer mudar para o modo de servidor?",
+            "14": "Tem a certeza de que quer sair do jogo?"
         },
         "ManageContentScreen": {
             "1": "Gestão de conteúdo",
