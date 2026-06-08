@@ -26,10 +26,10 @@ public static class ModFileClient
             var response = await client.GetAsync(address);
             response.EnsureSuccessStatusCode();
             var jsonString = await response.Content.ReadAsStringAsync();
-            var modInfoDatas = JsonConvert.DeserializeObject<List<ModInfoData>>(jsonString);
+            var modInfoDataList = JsonConvert.DeserializeObject<List<ModInfoData>>(jsonString);
             BusyDialog.LargeMessage = "已获取服务器模组数据，正在下载";
             BusyDialog.SmallMessage = string.Empty;
-            if (modInfoDatas != null && Utils.ModInfoListsHaveSameMd5(Utils.GetModInfoData(), modInfoDatas))
+            if (modInfoDataList != null && Utils.ModInfoListsHaveSameMd5(Utils.GetModInfoData(), modInfoDataList))
             {
                 DialogsManager.HideAllDialogs();
                 ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, ep, pwd);
@@ -37,23 +37,23 @@ public static class ModFileClient
             else
             {
                 Utils.CacheAllModFile();
-                if (modInfoDatas != null && modInfoDatas.Count != 0)
+                if (modInfoDataList != null && modInfoDataList.Count != 0)
                 {
-                    for (var i = 0; i < modInfoDatas.Count; i++)
+                    for (var i = 0; i < modInfoDataList.Count; i++)
                     {
-                        if (Utils.CopyCachedMod(modInfoDatas[i]))
+                        if (Utils.CopyCachedMod(modInfoDataList[i]))
                         {
                             continue;
                         }
 
-                        if (modInfoDatas[i].DownloadThread != 0)
+                        if (modInfoDataList[i].DownloadThread != 0)
                         {
-                            await MultithreadDownloadMod(client, modInfoDatas, i, address,
-                                modInfoDatas[i].DownloadThread);
+                            await MultithreadDownloadMod(client, modInfoDataList, i, address,
+                                modInfoDataList[i].DownloadThread);
                             continue;
                         }
 
-                        await DownloadMod(client, modInfoDatas, i, address);
+                        await DownloadMod(client, modInfoDataList, i, address);
                     }
                 }
 
@@ -75,14 +75,14 @@ public static class ModFileClient
 
     public static async Task DownloadMod(
         HttpClient client,
-        List<ModInfoData> modInfoDatas,
+        List<ModInfoData> modInfoDataList,
         int index,
         string serverAddress
     )
     {
-        var modInfoData = modInfoDatas[index];
-        var address = !string.IsNullOrEmpty(modInfoDatas[index].ModUrl)
-            ? modInfoDatas[index].ModUrl
+        var modInfoData = modInfoDataList[index];
+        var address = !string.IsNullOrEmpty(modInfoDataList[index].ModUrl)
+            ? modInfoDataList[index].ModUrl
             : serverAddress + modInfoData.ModMd5 + "/";
 
         await using var responseStream = await client.GetStreamAsync(address);
@@ -95,22 +95,22 @@ public static class ModFileClient
         {
             await fileStream.WriteAsync(buffer, 0, read);
             totalRead += read;
-            UpdateDownloadProcess(modInfoDatas, index, totalRead);
+            UpdateDownloadProcess(modInfoDataList, index, totalRead);
         }
     }
 
 
     public static async Task MultithreadDownloadMod(
         HttpClient client,
-        List<ModInfoData> modInfoDatas,
+        List<ModInfoData> modInfoDataList,
         int index,
         string serverAddress,
         int maxThread
     )
     {
-        var modInfoData = modInfoDatas[index];
-        var address = !string.IsNullOrEmpty(modInfoDatas[index].ModUrl)
-            ? modInfoDatas[index].ModUrl
+        var modInfoData = modInfoDataList[index];
+        var address = !string.IsNullOrEmpty(modInfoDataList[index].ModUrl)
+            ? modInfoDataList[index].ModUrl
             : serverAddress + modInfoData.ModMd5 + "/";
 
         using var httpClient = new HttpClient();
@@ -142,7 +142,7 @@ public static class ModFileClient
                 {
                     await memoryStream.WriteAsync(buffer, 0, read);
                     Interlocked.Add(ref totalRead, read);
-                    UpdateDownloadProcess(modInfoDatas, index, totalRead);
+                    UpdateDownloadProcess(modInfoDataList, index, totalRead);
                 }
 
                 downloadByte[partNumber] = memoryStream.ToArray();
@@ -158,14 +158,18 @@ public static class ModFileClient
         }
     }
 
-    public static void UpdateDownloadProcess(List<ModInfoData> modInfoDatas, int index, long downloadedByteCount)
+    public static void UpdateDownloadProcess(
+        List<ModInfoData> modInfoDataList,
+        int index,
+        long downloadedByteCount
+    )
     {
         var downloadedM = downloadedByteCount / (1024.0 * 1024.0);
-        var fileSizeM = modInfoDatas[index].ModSize / (1024.0 * 1024.0);
+        var fileSizeM = modInfoDataList[index].ModSize / (1024.0 * 1024.0);
 
         BusyDialog.LargeMessage =
-            $"正在下载模组{modInfoDatas[index].ModName}" +
-            $"({index}/{modInfoDatas.Count})";
+            $"正在下载模组{modInfoDataList[index].ModName}" +
+            $"({index}/{modInfoDataList.Count})";
         BusyDialog.SmallMessage =
             $"{downloadedM / fileSizeM * 100:0.00}% - " +
             $"({downloadedM:0.00}MB/{fileSizeM:0.00}MB)";
