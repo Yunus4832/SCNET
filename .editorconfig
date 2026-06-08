@@ -21,19 +21,19 @@ dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = true
 
 # === 命名规范 ===
-# 私有字段：强制使用 _camelCase（小写开头 + 下划线前缀）
+# 私有字段： 推荐使用 _camelCase（小写开头 + 下划线前缀）
 dotnet_naming_symbols.private_fields.applicable_kinds = field
 dotnet_naming_symbols.private_fields.applicable_accessibilities = private
 dotnet_naming_style.private_field_style.capitalization = camel_case
 dotnet_naming_style.private_field_style.required_prefix = _
-dotnet_naming_rule.private_fields_should_be_prefixed_with_underscore.severity = error
+dotnet_naming_rule.private_fields_should_be_prefixed_with_underscore.severity = warning
 dotnet_naming_rule.private_fields_should_be_prefixed_with_underscore.symbols = private_fields
 dotnet_naming_rule.private_fields_should_be_prefixed_with_underscore.style = private_field_style
 
-# ---- 5. protected / internal 字段：强制 camelCase（无下划线）----
+# ---- 5. protected / internal 字段： 推荐使用 camelCase（无下划线）----
 dotnet_naming_symbols.nonprivate_fields_camel.applicable_kinds = field
 dotnet_naming_symbols.nonprivate_fields_camel.applicable_accessibilities = protected, internal, protected_internal
 dotnet_naming_style.camel_case_no_underscore.capitalization = camel_case
-dotnet_naming_rule.nonprivate_fields_should_be_camel_case.severity = error
+dotnet_naming_rule.nonprivate_fields_should_be_camel_case.severity = warning
 dotnet_naming_rule.nonprivate_fields_should_be_camel_case.symbols = nonprivate_fields_camel
 dotnet_naming_rule.nonprivate_fields_should_be_camel_case.style = camel_case_no_underscore
