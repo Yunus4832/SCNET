@@ -74,7 +74,7 @@ public class ServerInfoPackage : IPackage
         var subsystemTimeOfDay = project.FindSubsystem<SubsystemTimeOfDay>(true)!;
         var subsystemSeasons = project.FindSubsystem<SubsystemSeasons>(true)!;
 
-        _version = VersionsManager.ServerVersion;
+        _version = VersionsManager.ProtocolVersion;
         _clientCount = (ushort)CommonLib.Net.ClientCount;
         _maxPlayerCount = subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount;
         _gameMode = subsystemGameInfo.WorldSettings.GameMode;

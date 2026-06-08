@@ -620,9 +620,9 @@ public class NetPlayScreen : Screen
         {
             ModsManager.OnlineConnects.Clear();
             LoadExternalServerList(SchubExternalContentProvider.RedirectUri + "/com/serverlist?version=" +
-                                   VersionsManager.ServerVersion);
+                                   VersionsManager.ProtocolVersion);
             LoadExternalServerList("http://schelper.trk34.top:34340" + "/com/serverlist?version=" +
-                                   VersionsManager.ServerVersion);
+                                   VersionsManager.ProtocolVersion);
         }
     }
 

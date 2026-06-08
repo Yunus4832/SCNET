@@ -86,7 +86,7 @@ public static class CommonLib
         var subsystemGameInfo = GameManager.Project!.FindSubsystem<SubsystemGameInfo>(true)!;
         var subsystemTimeOfDay = GameManager.Project!.FindSubsystem<SubsystemTimeOfDay>(true)!;
 
-        w.Put(VersionsManager.ServerVersion);
+        w.Put(VersionsManager.ProtocolVersion);
         w.Put((ushort)Net.ClientCount);
         w.Put(subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount);
         w.Put((byte)subsystemGameInfo.WorldSettings.GameMode);

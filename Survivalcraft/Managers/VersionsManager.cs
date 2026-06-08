@@ -10,27 +10,57 @@ namespace Game.Managers;
 
 public static class VersionsManager
 {
+    /// <summary>
+    /// 游戏名称
+    /// </summary>
     public const string GameName = "SCNET";
 
+    /// <summary>
+    /// 地形序列化版本号
+    /// </summary>
     public const string SerializationVersion = "2.4";
 
+    /// <summary>
+    /// 版本转换器列表
+    /// </summary>
     private static readonly List<VersionConverter> _versionConverters;
 
 #if ANDROID
+    /// <summary>
+    /// 平台枚举
+    /// </summary>
     public static Platform Platform => Platform.Android;
 #endif
 #if DESKTOP
+    /// <summary>
+    /// 平台枚举
+    /// </summary>
     public static Platform Platform => Platform.Desktop;
 #endif
 
+    /// <summary>
+    /// 构建配置
+    /// </summary>
     public static BuildConfiguration BuildConfiguration => BuildConfiguration.Release;
 
+    /// <summary>
+    /// 标题
+    /// </summary>
     public static string Title { get; }
 
+    /// <summary>
+    /// 版本号
+    /// </summary>
     public static string Version { get; set; }
 
-    public static string ServerVersion { get; set; } = "0.0.0.1";
+    /// <summary>
+    /// 联机协议版本号
+    /// </summary>
+    public static string ProtocolVersion { get; set; } = "0.0.0.1";
 
+    /// <summary>
+    /// 最后启动版本
+    /// </summary>
     public static string LastLaunchedVersion { get; set; } = string.Empty;
 
     static VersionsManager()
@@ -38,8 +68,8 @@ public static class VersionsManager
         _versionConverters = [];
         var assemblyName = new AssemblyName(typeof(VersionsManager).GetTypeInfo().Assembly.FullName!);
         Version =
-            $"{assemblyName.Version?.Major}.{assemblyName.Version?.Minor}.{assemblyName.Version?.Build}.{assemblyName.Version?.Revision}-Server{ServerVersion}";
-        Title =$"{GameName}-{ServerVersion}";
+            $"{assemblyName.Version?.Major}.{assemblyName.Version?.Minor}.{assemblyName.Version?.Build}.{assemblyName.Version?.Revision}";
+        Title =$"{GameName}-{Version}";
         var array = TypeCache.LoadedAssemblies.ToArray();
         foreach (var arrayItem in array)
         foreach (var definedType in arrayItem.DefinedTypes)

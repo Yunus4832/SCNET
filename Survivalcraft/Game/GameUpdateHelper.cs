@@ -9,7 +9,7 @@ public static class GameUpdateHelper
     private const string _typeName = "GameUpdateHelper";
 
     private static readonly string _checkUpdateUrl =
-        $"http://schelper.trk34.top:34340/com/updatehelper?version={VersionsManager.ServerVersion}";
+        $"http://schelper.trk34.top:34340/com/updatehelper?version={VersionsManager.ProtocolVersion}";
 
     public static void CheckGameUpdate()
     {

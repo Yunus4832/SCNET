@@ -548,7 +548,7 @@ public class NetNode
             NetManager.Start();
             TokenId = Guid.NewGuid();
             SendWriterFromPackage(
-                new ConnectionRequestPackage(TokenId, VersionsManager.ServerVersion, SettingsManager.CommunityAccessUser,
+                new ConnectionRequestPackage(TokenId, VersionsManager.ProtocolVersion, SettingsManager.CommunityAccessUser,
                     SettingsManager.OnlineAccessToken, passwd, ModsManager.ModList), ep, false);
             Listener.NetworkReceiveUnconnectedEvent -= HandleConnectionReject;
             Listener.NetworkReceiveEvent += NetworkReceiveEvent;

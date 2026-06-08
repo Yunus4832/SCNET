@@ -305,7 +305,7 @@ public class ConnectionRequestPackage : IPackage
             {
                 connectionError.AppendLine("你的ID与服务器中某个在线玩家的ID相同");
             }
-            else if (_version != VersionsManager.ServerVersion)
+            else if (_version != VersionsManager.ProtocolVersion)
             {
                 connectionError.AppendLine("客户端和服务器版本不一致");
             }

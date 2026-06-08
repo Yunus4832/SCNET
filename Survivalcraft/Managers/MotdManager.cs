@@ -107,7 +107,7 @@ public static class MotdManager
             };
             var dictionary = new Dictionary<string, string>
             {
-                { "version", VersionsManager.ServerVersion }
+                { "version", VersionsManager.ProtocolVersion }
             };
             WebManager.Post(
                 SchubExternalContentProvider.GetPath("/com/api/zh/forceCheckCode"),
