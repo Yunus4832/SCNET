@@ -1,4 +1,4 @@
-namespace Game.TerrainSerializers.NetWork;
+namespace Game.TerrainSerializers;
 
 public class TerrainSerializerNet : TerrainSerializer24
 {
@@ -6,13 +6,13 @@ public class TerrainSerializerNet : TerrainSerializer24
 
     public TerrainSerializerNet()
     {
-        if (Engine.FileStorage.Storage.DirectoryExists(_path))
+        if (Storage.DirectoryExists(_path))
         {
             Delete(_path);
         }
         else
         {
-            Engine.FileStorage.Storage.CreateDirectory(_path);
+            Storage.CreateDirectory(_path);
         }
 
         storage = new RegionFileStorage(this);
@@ -22,7 +22,7 @@ public class TerrainSerializerNet : TerrainSerializer24
     public override void Dispose()
     {
         base.Dispose();
-        if (Engine.FileStorage.Storage.DirectoryExists(_path))
+        if (Storage.DirectoryExists(_path))
         {
             Delete(_path);
         }
@@ -34,16 +34,16 @@ public class TerrainSerializerNet : TerrainSerializer24
     /// <param name="path"></param>
     public void Delete(string path)
     {
-        foreach (var d in Engine.FileStorage.Storage.ListDirectoryNames(path))
+        foreach (var d in Storage.ListDirectoryNames(path))
         {
-            var dd = Engine.FileStorage.Storage.CombinePaths(path, d);
+            var dd = Storage.CombinePaths(path, d);
             Delete(dd);
         }
 
-        foreach (var f in Engine.FileStorage.Storage.ListFileNames(path))
+        foreach (var f in Storage.ListFileNames(path))
         {
-            var ff = Engine.FileStorage.Storage.CombinePaths(path, f);
-            Engine.FileStorage.Storage.DeleteFile(ff);
+            var ff = Storage.CombinePaths(path, f);
+            Storage.DeleteFile(ff);
         }
     }
 }
