@@ -41,6 +41,8 @@ public class NetNode
     /// </summary>
     private readonly List<IPackage> _pendingPackages = [];
 
+    private readonly Dictionary<NetworkChannel, double> _lastPackageFlushTimes = new();
+
     // 只有这些客户端同意以后新客户端才能加入
     public HashSet<byte> AgreeOnPendingPeer = [];
 
@@ -64,6 +66,7 @@ public class NetNode
             MaxConnectAttempts = 6,
             DisconnectTimeout = CommonLib.DisconnectTimeout,
             UnconnectedMessagesEnabled = true,
+            ChannelsCount = 8,
             UseSafeMtu = true,
             UpdateTime = 25,
             ReuseAddress = true
@@ -618,7 +621,11 @@ public class NetNode
         {
             PendingPeer = null;
             AgreeOnPendingPeer.Clear();
-            _pendingPackages.Clear();
+            lock (_pendingPackages)
+            {
+                _pendingPackages.Clear();
+            }
+            _lastPackageFlushTimes.Clear();
             if (_broadcastNetManager.IsRunning)
             {
                 _broadcastNetManager.Stop();
@@ -737,9 +744,15 @@ public class NetNode
         bool useDeliveryEvent = false
     )
     {
+        var packageList = packages as IList<IPackage> ?? packages.ToList();
+        if (packageList.Count == 0)
+        {
+            return;
+        }
+
         var writer = new PackageStreamWriter();
         writer.IsServer = IsServer;
-        foreach (var package in packages)
+        foreach (var package in packageList)
         {
             writer.Write(_verifyByte);
             writer.Write(package.ID);
@@ -749,13 +762,14 @@ public class NetNode
         var w = CommonLib.GetWriter(writer, out _);
         if (netPeer != null)
         {
+            var transport = useDeliveryEvent ? PackageTransportPolicy.Control : PackageTransportPolicy.Get(packageList[0]);
             if (!useDeliveryEvent)
             {
-                netPeer.Send(w, DeliveryMethod.ReliableOrdered);
+                netPeer.Send(w, transport.ChannelNumber, transport.DeliveryMethod);
             }
             else
             {
-                netPeer.SendWithDeliveryEvent(w, 0, DeliveryMethod.ReliableOrdered, netPeer);
+                netPeer.SendWithDeliveryEvent(w, transport.ChannelNumber, transport.DeliveryMethod, netPeer);
             }
         }
         else if (request != null)
@@ -805,8 +819,8 @@ public class NetNode
 
     public void Update()
     {
-        //先处理UI操作，Inventory序号增加后再处理客户端过来的包
-        //发送物品同步数据
+        // 先处理UI操作，Inventory序号增加后再处理客户端过来的包
+        // 发送物品同步数据
         SubsystemInventories.FlushSyncItems();
 
         foreach (var pair in _clientsToRemove)
@@ -815,92 +829,12 @@ public class NetNode
         }
 
         _clientsToRemove.Clear();
-        //批处理发送包队列，0.05s发送一次
-        if (_pendingPackages.Count > 0 && Time.PeriodicEvent(0.05, 0.0))
+        // 批处理发送包队列，按传输通道分流，避免可靠大包阻塞实时状态。
+        lock (_pendingPackages)
         {
-            lock (_pendingPackages)
+            if (_pendingPackages.Count > 0)
             {
-                if (CommonLib.WorkType == WorkType.Client)
-                {
-                    if (Clients.Count > 0)
-                    {
-                        var c = Clients[0];
-                        var writer = new PackageStreamWriter();
-                        writer.IsServer = IsServer;
-                        var hasWrite = false;
-                        foreach (var packet in _pendingPackages)
-                        {
-                            if (packet.To != null && packet.To != c)
-                            {
-                                continue;
-                            }
-
-                            if (packet.Except != null && packet.Except == c)
-                            {
-                                continue;
-                            }
-
-                            writer.Write(_verifyByte);
-                            writer.Write(packet.ID);
-                            packet.WriteData(writer);
-                            hasWrite = true;
-                        }
-
-                        if (hasWrite && c.Peer != null)
-                        {
-                            c.Peer.Send(CommonLib.GetWriter(writer, out var size), DeliveryMethod.ReliableOrdered);
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (var c in Clients.Values)
-                    {
-                        if (c.IsConnected)
-                        {
-                            var writer = new PackageStreamWriter();
-                            writer.IsServer = IsServer;
-                            var hasWrite = false;
-                            foreach (var packet in _pendingPackages)
-                            {
-                                if (packet.To != null && packet.To != c)
-                                {
-                                    continue;
-                                }
-
-                                if (packet.Except != null && packet.Except == c)
-                                {
-                                    continue;
-                                }
-
-                                if (c.State < packet.MinNeedState && CommonLib.WorkType != WorkType.Client)
-                                {
-                                    continue;
-                                }
-
-                                writer.Write(_verifyByte);
-                                writer.Write(packet.ID);
-                                packet.WriteData(writer);
-                                hasWrite = true;
-                            }
-
-                            if (!hasWrite)
-                            {
-                                continue;
-                            }
-
-                            if (c.Peer == null)
-                            {
-                                continue;
-                            }
-
-                            c.Peer.Send(CommonLib.GetWriter(writer, out var size),
-                                DeliveryMethod.ReliableOrdered);
-                        }
-                    }
-                }
-
-                _pendingPackages.Clear();
+                FlushPendingPackages();
             }
         }
 
@@ -916,5 +850,134 @@ public class NetNode
                 _broadcastNetManager.PollEvents();
             }
         }
+    }
+
+    private void FlushPendingPackages()
+    {
+        List<IPackage> packages;
+        var flushedChannels = new HashSet<NetworkChannel>();
+        var now = Time.RealTime;
+        lock (_pendingPackages)
+        {
+            packages = DequeueFlushablePackages(now, flushedChannels);
+        }
+
+        if (packages.Count == 0)
+        {
+            return;
+        }
+
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            if (Clients.Count > 0)
+            {
+                SendPendingPackagesToClient(Clients[0], packages, false);
+            }
+        }
+        else
+        {
+            foreach (var client in Clients.Values.Where(client => client.IsConnected))
+            {
+                SendPendingPackagesToClient(client, packages, true);
+            }
+        }
+
+        foreach (var channel in flushedChannels)
+        {
+            _lastPackageFlushTimes[channel] = now;
+        }
+    }
+
+    private List<IPackage> DequeueFlushablePackages(double now, HashSet<NetworkChannel> flushedChannels)
+    {
+        var packages = new List<IPackage>();
+        for (var i = _pendingPackages.Count - 1; i >= 0; i--)
+        {
+            var package = _pendingPackages[i];
+            var transport = PackageTransportPolicy.Get(package);
+            if (!ShouldFlush(transport, now))
+            {
+                continue;
+            }
+
+            packages.Add(package);
+            flushedChannels.Add(transport.Channel);
+            _pendingPackages.RemoveAt(i);
+        }
+
+        packages.Reverse();
+        return packages;
+    }
+
+    private bool ShouldFlush(PackageTransport transport, double now)
+    {
+        if (!_lastPackageFlushTimes.TryGetValue(transport.Channel, out var lastFlushTime))
+        {
+            return true;
+        }
+
+        return now - lastFlushTime >= transport.FlushInterval;
+    }
+
+    private void SendPendingPackagesToClient(Client client, List<IPackage> packages, bool checkClientState)
+    {
+        if (client.Peer == null)
+        {
+            return;
+        }
+
+        foreach (var channel in Enum.GetValues<NetworkChannel>())
+        {
+            var writer = new PackageStreamWriter
+            {
+                IsServer = IsServer
+            };
+            var hasWrite = false;
+            PackageTransport? transport = null;
+
+            foreach (var package in packages)
+            {
+                var currentTransport = PackageTransportPolicy.Get(package);
+                if (currentTransport.Channel != channel)
+                {
+                    continue;
+                }
+
+                if (!CanSendPackageToClient(package, client, checkClientState))
+                {
+                    continue;
+                }
+
+                writer.Write(_verifyByte);
+                writer.Write(package.ID);
+                package.WriteData(writer);
+                hasWrite = true;
+                transport = currentTransport;
+            }
+
+            if (!hasWrite || transport == null)
+            {
+                continue;
+            }
+
+            var packageTransport = transport.Value;
+            client.Peer.Send(CommonLib.GetWriter(writer, out _), packageTransport.ChannelNumber,
+                packageTransport.DeliveryMethod);
+        }
+    }
+
+    private static bool CanSendPackageToClient(IPackage package, Client client, bool checkClientState)
+    {
+        if (package.To != null && package.To != client)
+        {
+            return false;
+        }
+
+        if (package.Except != null && package.Except == client)
+        {
+            return false;
+        }
+
+        return !checkClientState || client.State >= package.MinNeedState;
     }
 }
