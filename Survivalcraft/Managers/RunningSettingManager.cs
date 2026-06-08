@@ -81,6 +81,12 @@ public static class RunningSettingManager
                 continue;
             }
 
+            if (string.Equals(arg, "--gui", StringComparison.OrdinalIgnoreCase))
+            {
+                runningSetting.RunMode = RunModeType.Gui;
+                continue;
+            }
+
             if (string.Equals(arg, "--world", StringComparison.OrdinalIgnoreCase))
             {
                 if (i + 1 < args.Length)
