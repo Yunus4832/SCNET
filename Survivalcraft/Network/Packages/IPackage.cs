@@ -18,6 +18,4 @@ public interface IPackage
     void WriteData(PackageStreamWriter writer);
 
     void ReadData(PackageStreamReader reader);
-
-    void Handle(NetNode netNode, bool isServer);
 }

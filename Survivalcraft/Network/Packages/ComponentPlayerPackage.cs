@@ -5,10 +5,10 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ComponentPlayerPackage : IPackage
+public partial class ComponentPlayerPackage : IPackage
 {
     [Flags]
-    private enum ChangFlag : byte
+    public enum ChangFlag : byte
     {
         None = 0,
         ParentBodyChange = 1,
@@ -38,9 +38,9 @@ public class ComponentPlayerPackage : IPackage
         PositionSet
     }
 
-    private int _bodyId;
+    public int BodyId;
 
-    private ChangFlag _changFlag;
+    public ChangFlag PackageChangeFlag;
 
     public Vector2 ChildLookAngles;
 
@@ -48,49 +48,49 @@ public class ComponentPlayerPackage : IPackage
 
     public Vector2 LookOrder;
 
-    private int _activeSlot;
+    public int ActiveSlot;
 
-    private AimEvent _aimEvent;
+    public AimEvent AimEvent;
 
-    private int _count;
+    public int Count;
 
-    private DigEvent _digEvent;
+    public DigEvent DigEvent;
 
-    private byte _fromPlayerId;
+    public byte FromPlayerId;
 
-    private Vector3 _hitDirection;
+    public Vector3 HitDirection;
 
-    private Vector3 _hitPosition;
+    public Vector3 HitPosition;
 
-    private InteractEvent _interactEvent;
+    public InteractEvent InteractEvent;
 
-    private int _inventoryID;
+    public int InventoryID;
 
-    private bool _isCreativeFly;
+    public bool IsCreativeFly;
 
-    private int _ladderValue;
+    public int LadderValue;
 
-    private float _level;
+    public float Level;
 
-    private Ray3? _netAimRay;
+    public Ray3? NetAimRay;
 
-    private Ray3? _netDigRay;
+    public Ray3? NetDigRay;
 
-    private TerrainRaycastResult? _netDigRaycast;
+    public TerrainRaycastResult? NetDigRaycast;
 
-    private Ray3 _netInteractRay;
+    public Ray3 NetInteractRay;
 
-    private TerrainRaycastResult? _netInteractRaycast;
+    public TerrainRaycastResult? NetInteractRaycast;
 
-    private PlayerData? _playerData;
+    public PlayerData? PlayerData;
 
-    private bool _playSound;
+    public bool PlaySound;
 
-    private bool _sneaking;
+    public bool Sneaking;
 
-    private ValuesDictionary? _stat;
+    public ValuesDictionary? Stat;
 
-    private PlayerAction _type;
+    public PlayerAction Type;
 
     public bool NeedHandleMainPlayer = true;
 
@@ -116,25 +116,25 @@ public class ComponentPlayerPackage : IPackage
 
     public ComponentPlayerPackage(ComponentPlayer player, PlayerAction type)
     {
-        _type = type;
-        _playerData = player.PlayerData;
+        Type = type;
+        PlayerData = player.PlayerData;
         switch (type)
         {
             case PlayerAction.BodyUpdate:
                 var body = player.ComponentBody.ParentBody;
                 if (body != null)
                 {
-                    _changFlag |= ChangFlag.ParentBodyChange;
+                    PackageChangeFlag |= ChangFlag.ParentBodyChange;
                     if (body.Locomotion is { SendLookAngles: not null })
                     {
-                        _changFlag |= ChangFlag.LookAnglesChange;
+                        PackageChangeFlag |= ChangFlag.LookAnglesChange;
                         LookAngles = body.Locomotion.SendLookAngles.Value;
                         body.Locomotion.SendLookAngles = null;
                     }
 
                     if (player.ComponentLocomotion.SendLookAngles.HasValue)
                     {
-                        _changFlag |= ChangFlag.ChildLookAnglesChange;
+                        PackageChangeFlag |= ChangFlag.ChildLookAnglesChange;
                         ChildLookAngles = player.ComponentLocomotion.SendLookAngles.Value;
                         player.ComponentLocomotion.SendLookAngles = null;
                     }
@@ -144,66 +144,66 @@ public class ComponentPlayerPackage : IPackage
                     body = player.ComponentBody;
                     if (player.ComponentLocomotion.SendLookAngles.HasValue)
                     {
-                        _changFlag |= ChangFlag.LookAnglesChange;
+                        PackageChangeFlag |= ChangFlag.LookAnglesChange;
                         LookAngles = player.ComponentLocomotion.SendLookAngles.Value;
                         player.ComponentLocomotion.SendLookAngles = null;
                     }
 
                     if (player.ComponentLocomotion.LadderValue.HasValue)
                     {
-                        _changFlag |= ChangFlag.LadderChange;
-                        _ladderValue = player.ComponentLocomotion.LadderValue.Value;
+                        PackageChangeFlag |= ChangFlag.LadderChange;
+                        LadderValue = player.ComponentLocomotion.LadderValue.Value;
                     }
 
                     if (body.CrouchFactor.UncloseTo(body.TargetCrouchFactor))
                     {
-                        _changFlag |= ChangFlag.SneakChange;
-                        _sneaking = body.TargetCrouchFactor.CloseTo(1f);
+                        PackageChangeFlag |= ChangFlag.SneakChange;
+                        Sneaking = body.TargetCrouchFactor.CloseTo(1f);
                     }
                 }
 
                 if (body.SendPosition.HasValue)
                 {
                     Position = body.SendPosition.Value;
-                    _changFlag |= ChangFlag.PositionChange;
+                    PackageChangeFlag |= ChangFlag.PositionChange;
                     body.SendPosition = null;
                 }
 
                 if (body.SendRotation.HasValue)
                 {
-                    _changFlag |= ChangFlag.RotationChange;
+                    PackageChangeFlag |= ChangFlag.RotationChange;
                     Rotation = body.SendRotation.Value;
                     body.SendRotation = null;
                 }
 
                 if (body.SendVelocity.HasValue)
                 {
-                    _changFlag |= ChangFlag.VelocityChange;
+                    PackageChangeFlag |= ChangFlag.VelocityChange;
                     Velocity = body.SendVelocity.Value;
                     body.SendVelocity = null;
                 }
 
                 break;
             case PlayerAction.DigEvent:
-                _digEvent = player.CurDigEventItem.DigEvent;
-                _netDigRay = player.CurDigEventItem.NetDigRay;
-                _netDigRaycast = player.CurDigEventItem.NetDigRaycast;
+                DigEvent = player.CurDigEventItem.DigEvent;
+                NetDigRay = player.CurDigEventItem.NetDigRay;
+                NetDigRaycast = player.CurDigEventItem.NetDigRaycast;
                 break;
             case PlayerAction.AimEvent:
-                _aimEvent = player.CurAimEventItem.AimEvent;
-                _netAimRay = player.CurAimEventItem.NetAim;
+                AimEvent = player.CurAimEventItem.AimEvent;
+                NetAimRay = player.CurAimEventItem.NetAim;
                 break;
             case PlayerAction.InteractEvent:
-                _interactEvent = player.CurInteractEventItem.InteractEvent;
-                _netInteractRay = player.CurInteractEventItem.NetInteractRay;
-                _netInteractRaycast = player.CurInteractEventItem.NetPlaceRaycast;
+                InteractEvent = player.CurInteractEventItem.InteractEvent;
+                NetInteractRay = player.CurInteractEventItem.NetInteractRay;
+                NetInteractRaycast = player.CurInteractEventItem.NetPlaceRaycast;
                 break;
             case PlayerAction.CreativeFlyChange:
-                _isCreativeFly = player.ComponentLocomotion.IsCreativeFlyEnabled;
+                IsCreativeFly = player.ComponentLocomotion.IsCreativeFlyEnabled;
                 break;
             case PlayerAction.SyncStat:
-                _stat = new ValuesDictionary();
-                player.PlayerStats.Save(_stat);
+                Stat = new ValuesDictionary();
+                player.PlayerStats.Save(Stat);
                 break;
             case PlayerAction.PositionSet:
                 Position = player.ComponentBody.Position;
@@ -215,134 +215,134 @@ public class ComponentPlayerPackage : IPackage
     //Restart
     public ComponentPlayerPackage(PlayerData playerData, PlayerAction type)
     {
-        _type = type;
-        _playerData = playerData;
+        Type = type;
+        PlayerData = playerData;
     }
 
     public ComponentPlayerPackage(PlayerData playerData, int count, bool playSound, float level)
     {
-        _playerData = playerData;
-        _type = PlayerAction.AddExperience;
-        _count = count;
-        _playSound = playSound;
-        _level = level;
+        PlayerData = playerData;
+        Type = PlayerAction.AddExperience;
+        Count = count;
+        PlaySound = playSound;
+        Level = level;
     }
 
     public ComponentPlayerPackage(PlayerData playerData, int inventoryID, int slotIndex, Vector3 position, int count)
     {
-        _playerData = playerData;
-        _type = PlayerAction.DragDrop;
-        _inventoryID = inventoryID;
-        _activeSlot = slotIndex;
-        _hitPosition = position;
-        _count = count;
+        PlayerData = playerData;
+        Type = PlayerAction.DragDrop;
+        InventoryID = inventoryID;
+        ActiveSlot = slotIndex;
+        HitPosition = position;
+        Count = count;
     }
 
     public ComponentPlayerPackage(ComponentPlayer player, ComponentBody body, Vector3 hitPosition, Vector3 hitDirection)
     {
-        _playerData = player.PlayerData;
-        _bodyId = body.Entity.EntityId;
-        _hitPosition = hitPosition;
-        _hitDirection = hitDirection;
-        _type = PlayerAction.Hit;
+        PlayerData = player.PlayerData;
+        BodyId = body.Entity.EntityId;
+        HitPosition = hitPosition;
+        HitDirection = hitDirection;
+        Type = PlayerAction.Hit;
     }
 
 
     public void WriteData(PackageStreamWriter writer)
     {
-        if (_playerData != null)
+        if (PlayerData != null)
         {
-            writer.Write(_playerData.ClientId);
+            writer.Write(PlayerData.ClientId);
         }
 
-        writer.WriteEnum(_type);
-        switch (_type)
+        writer.WriteEnum(Type);
+        switch (Type)
         {
             case PlayerAction.BodyUpdate:
-                writer.WriteEnum(_changFlag);
-                if (_changFlag.HasFlag(ChangFlag.ParentBodyChange))
+                writer.WriteEnum(PackageChangeFlag);
+                if (PackageChangeFlag.HasFlag(ChangFlag.ParentBodyChange))
                 {
-                    if (_changFlag.HasFlag(ChangFlag.LookAnglesChange))
+                    if (PackageChangeFlag.HasFlag(ChangFlag.LookAnglesChange))
                     {
                         writer.Write(LookAngles);
                     }
 
-                    if (_changFlag.HasFlag(ChangFlag.ChildLookAnglesChange))
+                    if (PackageChangeFlag.HasFlag(ChangFlag.ChildLookAnglesChange))
                     {
                         writer.Write(ChildLookAngles);
                     }
                 }
                 else
                 {
-                    if (_changFlag.HasFlag(ChangFlag.LookAnglesChange))
+                    if (PackageChangeFlag.HasFlag(ChangFlag.LookAnglesChange))
                     {
                         writer.Write(LookAngles);
                     }
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.PositionChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.PositionChange))
                 {
                     writer.Write(Position);
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.RotationChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.RotationChange))
                 {
                     writer.Write(Rotation);
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.VelocityChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.VelocityChange))
                 {
                     writer.Write(Velocity);
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.LadderChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.LadderChange))
                 {
-                    writer.Write(_ladderValue);
+                    writer.Write(LadderValue);
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.SneakChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.SneakChange))
                 {
-                    writer.Write(_sneaking);
+                    writer.Write(Sneaking);
                 }
 
                 break;
             case PlayerAction.InteractEvent:
-                writer.WriteEnum(_interactEvent);
-                writer.Write(_netInteractRay);
-                writer.Write(_netInteractRaycast);
+                writer.WriteEnum(InteractEvent);
+                writer.Write(NetInteractRay);
+                writer.Write(NetInteractRaycast);
                 break;
             case PlayerAction.AimEvent:
-                writer.WriteEnum(_aimEvent);
-                writer.Write(_netAimRay);
+                writer.WriteEnum(AimEvent);
+                writer.Write(NetAimRay);
                 break;
             case PlayerAction.DigEvent:
-                writer.WriteEnum(_digEvent);
-                writer.Write(_netDigRay);
-                writer.Write(_netDigRaycast);
+                writer.WriteEnum(DigEvent);
+                writer.Write(NetDigRay);
+                writer.Write(NetDigRaycast);
                 break;
             case PlayerAction.Hit:
-                writer.Write(_bodyId);
-                writer.Write(_hitPosition);
-                writer.Write(_hitDirection);
+                writer.Write(BodyId);
+                writer.Write(HitPosition);
+                writer.Write(HitDirection);
                 break;
             case PlayerAction.AddExperience:
-                writer.Write(_count);
-                writer.Write(_playSound);
-                writer.Write(_level);
+                writer.Write(Count);
+                writer.Write(PlaySound);
+                writer.Write(Level);
                 break;
             case PlayerAction.DragDrop:
-                writer.Write(_inventoryID);
-                writer.Write(_activeSlot);
-                writer.Write(_hitPosition);
-                writer.Write(_count);
+                writer.Write(InventoryID);
+                writer.Write(ActiveSlot);
+                writer.Write(HitPosition);
+                writer.Write(Count);
                 break;
             case PlayerAction.CreativeFlyChange:
-                writer.Write(_isCreativeFly);
+                writer.Write(IsCreativeFly);
                 break;
             case PlayerAction.SyncStat:
-                if (_stat != null)
+                if (Stat != null)
                 {
-                    writer.WriteBuff(_stat.ToMessagePack());
+                    writer.WriteBuff(Stat.ToMessagePack());
                 }
 
                 break;
@@ -355,95 +355,95 @@ public class ComponentPlayerPackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        _fromPlayerId = reader.ReadByte();
-        _type = reader.ReadEnum<PlayerAction>();
-        switch (_type)
+        FromPlayerId = reader.ReadByte();
+        Type = reader.ReadEnum<PlayerAction>();
+        switch (Type)
         {
             case PlayerAction.BodyUpdate:
-                _changFlag = reader.ReadEnum<ChangFlag>();
-                if (_changFlag.HasFlag(ChangFlag.ParentBodyChange))
+                PackageChangeFlag = reader.ReadEnum<ChangFlag>();
+                if (PackageChangeFlag.HasFlag(ChangFlag.ParentBodyChange))
                 {
-                    if (_changFlag.HasFlag(ChangFlag.LookAnglesChange))
+                    if (PackageChangeFlag.HasFlag(ChangFlag.LookAnglesChange))
                     {
                         LookAngles = reader.ReadVector2();
                     }
 
-                    if (_changFlag.HasFlag(ChangFlag.ChildLookAnglesChange))
+                    if (PackageChangeFlag.HasFlag(ChangFlag.ChildLookAnglesChange))
                     {
                         ChildLookAngles = reader.ReadVector2();
                     }
                 }
                 else
                 {
-                    if (_changFlag.HasFlag(ChangFlag.LookAnglesChange))
+                    if (PackageChangeFlag.HasFlag(ChangFlag.LookAnglesChange))
                     {
                         LookAngles = reader.ReadVector2();
                     }
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.PositionChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.PositionChange))
                 {
                     Position = reader.ReadVector3();
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.RotationChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.RotationChange))
                 {
                     Rotation = reader.ReadQuaternion();
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.VelocityChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.VelocityChange))
                 {
                     Velocity = reader.ReadVector3();
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.LadderChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.LadderChange))
                 {
-                    _ladderValue = reader.ReadInt32();
+                    LadderValue = reader.ReadInt32();
                 }
 
-                if (_changFlag.HasFlag(ChangFlag.SneakChange))
+                if (PackageChangeFlag.HasFlag(ChangFlag.SneakChange))
                 {
-                    _sneaking = reader.ReadBoolean();
+                    Sneaking = reader.ReadBoolean();
                 }
 
                 break;
             case PlayerAction.InteractEvent:
-                _interactEvent = reader.ReadEnum<InteractEvent>();
-                _netInteractRay = reader.ReadRay3();
-                _netInteractRaycast = reader.ReadTerrainRaycastResultNullable();
+                InteractEvent = reader.ReadEnum<InteractEvent>();
+                NetInteractRay = reader.ReadRay3();
+                NetInteractRaycast = reader.ReadTerrainRaycastResultNullable();
                 break;
             case PlayerAction.AimEvent:
-                _aimEvent = reader.ReadEnum<AimEvent>();
-                _netAimRay = reader.ReadRay3Nullable();
+                AimEvent = reader.ReadEnum<AimEvent>();
+                NetAimRay = reader.ReadRay3Nullable();
                 break;
             case PlayerAction.DigEvent:
-                _digEvent = reader.ReadEnum<DigEvent>();
-                _netDigRay = reader.ReadRay3Nullable();
-                _netDigRaycast = reader.ReadTerrainRaycastResultNullable();
+                DigEvent = reader.ReadEnum<DigEvent>();
+                NetDigRay = reader.ReadRay3Nullable();
+                NetDigRaycast = reader.ReadTerrainRaycastResultNullable();
                 break;
             case PlayerAction.Hit:
-                _bodyId = reader.ReadInt32();
-                _hitPosition = reader.ReadVector3();
-                _hitDirection = reader.ReadVector3();
+                BodyId = reader.ReadInt32();
+                HitPosition = reader.ReadVector3();
+                HitDirection = reader.ReadVector3();
                 break;
             case PlayerAction.AddExperience:
-                _count = reader.ReadInt32();
-                _playSound = reader.ReadBoolean();
-                _level = reader.ReadSingle();
+                Count = reader.ReadInt32();
+                PlaySound = reader.ReadBoolean();
+                Level = reader.ReadSingle();
                 break;
             case PlayerAction.DragDrop:
-                _inventoryID = reader.ReadInt32();
-                _activeSlot = reader.ReadInt32();
-                _hitPosition = reader.ReadVector3();
-                _count = reader.ReadInt32();
+                InventoryID = reader.ReadInt32();
+                ActiveSlot = reader.ReadInt32();
+                HitPosition = reader.ReadVector3();
+                Count = reader.ReadInt32();
                 break;
             case PlayerAction.CreativeFlyChange:
-                _isCreativeFly = reader.ReadBoolean();
+                IsCreativeFly = reader.ReadBoolean();
                 break;
             case PlayerAction.SyncStat:
                 var messagePack = reader.ReadBuff();
-                _stat = new ValuesDictionary();
-                _stat.ApplyOverridesUseMessagePack(messagePack);
+                Stat = new ValuesDictionary();
+                Stat.ApplyOverridesUseMessagePack(messagePack);
                 break;
             case PlayerAction.PositionSet:
                 Position = reader.ReadVector3();
@@ -452,212 +452,12 @@ public class ComponentPlayerPackage : IPackage
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-        _playerData = project.FindSubsystem<SubsystemPlayers>(true)!
-            .FindPlayerData(playerData => playerData.ClientId == _fromPlayerId);
-        if (!NeedHandleMainPlayer && _playerData is { IsMainPlayer: true } && _type != PlayerAction.AddExperience)
-        {
-            return;
-        }
-
-        if (From != null && (_playerData == null || _playerData.ClientId != From.ID))
-        {
-            return;
-        }
-
-        switch (_type)
-        {
-            case PlayerAction.BodyUpdate:
-                PlayerEvent(player =>
-                {
-                    ComponentBody body;
-                    if (_changFlag.HasFlag(ChangFlag.ParentBodyChange))
-                    {
-                        if (player.ComponentBody.ParentBody != null)
-                        {
-                            body = player.ComponentBody.ParentBody;
-                            if (_changFlag.HasFlag(ChangFlag.LookAnglesChange))
-                            {
-                                var loco = body.Locomotion;
-                                loco?.NetLookAngles.SetNext(LookAngles);
-                            }
-
-                            if (_changFlag.HasFlag(ChangFlag.ChildLookAnglesChange))
-                            {
-                                player.ComponentBody.Locomotion?.NetLookAngles.SetNext(ChildLookAngles);
-                            }
-                        }
-                        else
-                        {
-                            body = player.ComponentBody;
-                        }
-                    }
-                    else
-                    {
-                        body = player.ComponentBody;
-                        if (_changFlag.HasFlag(ChangFlag.LookAnglesChange))
-                        {
-                            player.ComponentLocomotion.NetLookAngles.SetNext(LookAngles);
-                        }
-                    }
-
-                    if (_changFlag.HasFlag(ChangFlag.VelocityChange))
-                    {
-                        body.NetVelocity.SetNext(Velocity);
-                    }
-
-                    if (body.Locomotion != null)
-                    {
-                        if (_changFlag.HasFlag(ChangFlag.LadderChange))
-                        {
-                            body.Locomotion.LadderValue = _ladderValue;
-                        }
-                        else
-                        {
-                            body.Locomotion.LadderValue = null;
-                        }
-                    }
-
-                    if (_changFlag.HasFlag(ChangFlag.PositionChange))
-                    {
-                        body.NetPosition.SetNext(Position);
-                    }
-
-                    if (_changFlag.HasFlag(ChangFlag.RotationChange))
-                    {
-                        body.NetRotation.SetNext(Rotation);
-                    }
-
-                    if (_changFlag.HasFlag(ChangFlag.SneakChange))
-                    {
-                        body.IsSneaking = _sneaking;
-                    }
-                });
-                break;
-            case PlayerAction.InteractEvent:
-                PlayerEvent(player =>
-                {
-                    player.AddInteractEvent(_interactEvent, _netInteractRay, _netInteractRaycast);
-                    if (isServer)
-                    {
-                        Except = From;
-                        netNode.QueuePackage(this);
-                    }
-                });
-                break;
-            case PlayerAction.AimEvent:
-                PlayerEvent(player =>
-                {
-                    player.AddAimEvent(_aimEvent, _netAimRay);
-                    if (isServer)
-                    {
-                        Except = From;
-                        netNode.QueuePackage(this);
-                    }
-                });
-                break;
-            case PlayerAction.DigEvent:
-                PlayerEvent(player =>
-                {
-                    player.AddDigEvent(_digEvent, _netDigRay, _netDigRaycast);
-                    if (isServer)
-                    {
-                        Except = From;
-                        netNode.QueuePackage(this);
-                    }
-                });
-                break;
-            case PlayerAction.CreativeFlyChange:
-                PlayerEvent(player =>
-                {
-                    player.ComponentLocomotion.IsCreativeFlyEnabled = _isCreativeFly;
-                    if (isServer)
-                    {
-                        Except = From;
-                        netNode.QueuePackage(this);
-                    }
-                });
-                break;
-            case PlayerAction.Hit:
-                PlayerEvent(player =>
-                {
-                    project.FindEntityById(_bodyId, entity =>
-                    {
-                        var body = entity.FindComponent<ComponentBody>();
-                        if (body != null)
-                        {
-                            player.ComponentMiner.Hit(body, _hitPosition, _hitDirection);
-                        }
-
-                        if (!isServer)
-                        {
-                            return;
-                        }
-
-                        Except = From;
-                        netNode.QueuePackage(this);
-                    });
-                });
-                break;
-            case PlayerAction.IntoPlaying:
-                PlayerEvent(player => { player.ComponentHealth.IsInvulnerable = false; });
-                break;
-            case PlayerAction.Restart:
-                PlayerEvent(player => { player.PlayerData.ReadyToRestart = true; });
-                break;
-            case PlayerAction.AddExperience:
-                PlayerEvent(player =>
-                {
-                    player.ComponentLevel.NetAddExperience(_count, _playSound);
-                    player.PlayerData.Level = _level;
-                });
-                break;
-            case PlayerAction.Drop:
-                PlayerEvent(player => { player.DoDrop(); });
-                break;
-            case PlayerAction.DragDrop:
-                // 我去，别这样搞啊，回调地狱可是会很头疼的！！！！！
-                PlayerEvent(player =>
-                {
-                    project.FindSubsystem<SubsystemInventories>(true)!.FindInventoryById(_inventoryID, inventory =>
-                    {
-                        // 丢弃背包内的物品，不是活动栏的
-                        player.ViewWidget.NetDragDrop(_hitPosition,
-                            new InventoryDragData { Inventory = inventory, SlotIndex = _activeSlot }, _count);
-                    });
-                });
-                break;
-            case PlayerAction.SyncStat:
-                PlayerEvent(player =>
-                {
-                    if (_stat != null)
-                    {
-                        player.PlayerStats.Load(_stat);
-                    }
-                });
-                break;
-            case PlayerAction.PositionSet:
-                PlayerEvent(player =>
-                {
-                    player.ComponentBody.Position = Position;
-                    player.ComponentBody.Velocity = Velocity;
-                });
-                break;
-        }
-    }
 
     public void PlayerEvent(Action<ComponentPlayer>? action, Action? fail = null)
     {
-        if (_playerData is { ComponentPlayer: not null })
+        if (PlayerData is { ComponentPlayer: not null })
         {
-            action?.Invoke(_playerData.ComponentPlayer);
+            action?.Invoke(PlayerData.ComponentPlayer);
         }
         else
         {

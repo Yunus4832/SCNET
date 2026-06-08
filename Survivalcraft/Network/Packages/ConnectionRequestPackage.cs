@@ -10,27 +10,27 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ConnectionRequestPackage : IPackage
+public partial class ConnectionRequestPackage : IPackage
 {
-    private const int _verifyMagic = 9421523; //校验码
+    public const int VerifyMagic = 9421523; //校验码
 
-    private string _communityAccountId = string.Empty;
+    public string CommunityAccountId = string.Empty;
 
-    private int _magic;
+    public int Magic;
 
-    private string _password = string.Empty;
+    public string Password = string.Empty;
 
-    private Guid _tmpToken;
+    public Guid TmpToken;
 
-    private string _token = string.Empty;
+    public string Token = string.Empty;
 
-    private string _user = string.Empty;
+    public string User = string.Empty;
 
-    private string _version = string.Empty;
+    public string Version = string.Empty;
 
-    private List<ModEntity> _modInfos = [];
+    public List<ModEntity> ModInfos = [];
 
-    private string _nickname = string.Empty;
+    public string Nickname = string.Empty;
 
     public byte ID => (byte)PackageType.ConnectionRequest;
 
@@ -55,131 +55,26 @@ public class ConnectionRequestPackage : IPackage
         List<ModEntity> modEntities
     )
     {
-        _magic = _verifyMagic;
-        _tmpToken = tmpToken;
-        _user = user;
-        _token = token;
-        _version = serverVersion;
-        _password = passwd;
-        _modInfos.AddRange(modEntities);
+        Magic = VerifyMagic;
+        TmpToken = tmpToken;
+        User = user;
+        Token = token;
+        Version = serverVersion;
+        Password = passwd;
+        ModInfos.AddRange(modEntities);
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        var connectionError = new StringBuilder();
-        if (string.IsNullOrEmpty(_token))
-        {
-            if (From == null)
-            {
-                return;
-            }
-
-            if (From.Request != null)
-            {
-                netNode.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), From.Request, true);
-            }
-
-            return;
-        }
-
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-
-        if (project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.IsNeedCommunityLogin)
-        {
-            var token = string.Empty;
-            var key = ModsManager.GetMd5(_user + "/" + _token);
-            var saveKey = "loginCache" + key;
-            if (ModsManager.Configs.TryGetValue(saveKey, out var v))
-            {
-                const bool useExternalPassword = false;
-                var jsonObj = JsonSerializer.Deserialize<JsonObject>(v)!;
-                var dataInfo = (jsonObj["data"] as JsonObject)!;
-                _nickname = dataInfo["nickname"]?.ToString() ?? string.Empty;
-                _communityAccountId = dataInfo["id"]?.ToString() ?? string.Empty;
-                token = dataInfo["token"]?.ToString() ?? string.Empty;
-                if (string.IsNullOrEmpty(_nickname))
-                {
-                    _nickname = "Anonymous_" + new LcgRandom().Int(10000, 99999);
-                }
-
-                if (From != null)
-                {
-                    Log.Information(
-                        $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{From.IPPoint}]用户[缓存]登录名称[{_nickname}]，社区ID[{_communityAccountId}]");
-                }
-
-                AcceptClient(project, token, netNode, connectionError, useExternalPassword, saveKey);
-            }
-            else
-            {
-                var header = new Dictionary<string, string> { { "Content-Type", "application/x-www-form-urlencoded" } };
-                if (From is not { IPPoint: not null })
-                {
-                    return;
-                }
-
-                var postData = WebManager.UrlParametersToStream(new Dictionary<string, string>
-                {
-                    { "user", _user }, { "token", key }, { "client_ip", From.IPPoint.ToString() },
-                    { "server_ip", CommonLib.GetInnerIp() }
-                });
-                WebManager.Post(
-                    SchubExternalContentProvider.GetPath("/com/checkUser_t"),
-                    new Dictionary<string, string>(),
-                    header,
-                    postData,
-                    new CancellableProgress(),
-                    data =>
-                    {
-                        const bool useExternalPassword = false;
-                        var ret = Encoding.UTF8.GetString(data);
-                        var jsonObj = JsonSerializer.Deserialize<JsonObject>(ret)!;
-                        if (jsonObj["code"]?.ToString() != "200")
-                        {
-                            connectionError.AppendLine("用户校验失败，请重新登录社区");
-                        }
-                        else
-                        {
-                            //缓存信息
-                            ModsManager.Configs[saveKey] = ret;
-                            var dataInfo = (jsonObj["data"] as JsonObject)!;
-                            _nickname = dataInfo["nickname"]?.ToString() ?? string.Empty;
-                            _communityAccountId = dataInfo["id"]?.ToString() ?? string.Empty;
-                            token = dataInfo["token"]?.ToString() ?? string.Empty;
-                            if (string.IsNullOrEmpty(_nickname))
-                            {
-                                _nickname = "Anonymous_" + new LcgRandom().Int(10000, 99999);
-                            }
-
-                            Log.Information(
-                                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{From.IPPoint}]用户登录名称[{_nickname}]，社区ID[{_communityAccountId}]");
-                        }
-
-                        AcceptClient(project, token, netNode, connectionError, useExternalPassword, saveKey);
-                    }, e => { Log.Information($"用户[{_user}]验证失败:{e.Message}"); });
-            }
-        }
-        else
-        {
-            AcceptClient(project, _token, netNode, connectionError);
-        }
-    }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _magic = reader.ReadInt32();
-        _version = reader.ReadString();
-        _password = reader.ReadString();
-        _user = reader.ReadString();
-        _tmpToken = reader.ReadGuid();
-        _token = reader.ReadString();
+        Magic = reader.ReadInt32();
+        Version = reader.ReadString();
+        Password = reader.ReadString();
+        User = reader.ReadString();
+        TmpToken = reader.ReadGuid();
+        Token = reader.ReadString();
         var count = reader.ReadByte();
-        _modInfos = [];
+        ModInfos = [];
         for (var i = 0; i < count; i++)
         {
             var modEntity = new ModEntity
@@ -192,20 +87,20 @@ public class ConnectionRequestPackage : IPackage
                     Version = reader.ReadString()
                 }
             };
-            _modInfos.Add(modEntity);
+            ModInfos.Add(modEntity);
         }
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_magic);
-        writer.Write(_version);
-        writer.Write(_password);
-        writer.Write(_user);
-        writer.Write(_tmpToken);
-        writer.Write(_token);
-        writer.Write((byte)_modInfos.Count);
-        foreach (var m in _modInfos)
+        writer.Write(Magic);
+        writer.Write(Version);
+        writer.Write(Password);
+        writer.Write(User);
+        writer.Write(TmpToken);
+        writer.Write(Token);
+        writer.Write((byte)ModInfos.Count);
+        foreach (var m in ModInfos)
         {
             writer.Write(m.ResourcesMd5);
             writer.Write(m.ModInfo.Name);
@@ -214,7 +109,7 @@ public class ConnectionRequestPackage : IPackage
         }
     }
 
-    private void AcceptClient(
+    public void AcceptClient(
         Project project,
         string token,
         NetNode netNode,
@@ -231,7 +126,7 @@ public class ConnectionRequestPackage : IPackage
 
         var pwd2 = project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.Password;
         var mList = ModsManager.ModList;
-        foreach (var info in _modInfos)
+        foreach (var info in ModInfos)
         {
             var find = mList.Find(x => x.Equals(info));
             if (find == null)
@@ -258,20 +153,20 @@ public class ConnectionRequestPackage : IPackage
 
         foreach (var item in mList)
         {
-            var find = _modInfos.Find(x => x.Equals(item));
+            var find = ModInfos.Find(x => x.Equals(item));
             if (find == null)
             {
                 connectionError.AppendLine($"客户端没有安装服务器Mod[{item.ModInfo.Name}:{item.ModInfo.Version}]");
             }
         }
 
-        if (_magic == _verifyMagic)
+        if (Magic == VerifyMagic)
         {
             if (CommonLib.Net.Self?.GUID == guid)
             {
                 connectionError.AppendLine("客户端和服务器token相同");
             }
-            else if (_modInfos.Count != mList.Count)
+            else if (ModInfos.Count != mList.Count)
             {
                 connectionError.AppendLine("客户端Mod数量和服务器Mod数量不一致");
                 if (mList.Count > 0)
@@ -287,10 +182,10 @@ public class ConnectionRequestPackage : IPackage
                     connectionError.AppendLine("[服务器]无");
                 }
 
-                if (_modInfos.Count > 0)
+                if (ModInfos.Count > 0)
                 {
                     var i = 1;
-                    foreach (var m in _modInfos)
+                    foreach (var m in ModInfos)
                     {
                         connectionError.AppendLine($"[客户端]{i++}.{m.ModInfo.Name}:{m.ModInfo.Version}");
                     }
@@ -300,12 +195,12 @@ public class ConnectionRequestPackage : IPackage
                     connectionError.AppendLine("[客户端]无");
                 }
             }
-            else if (netNode.Peers.FirstOrDefault(c => c != From && (c.GUID == guid || c.TokenId == _tmpToken)) !=
+            else if (netNode.Peers.FirstOrDefault(c => c != From && (c.GUID == guid || c.TokenId == TmpToken)) !=
                      null)
             {
                 connectionError.AppendLine("你的ID与服务器中某个在线玩家的ID相同");
             }
-            else if (_version != VersionsManager.ProtocolVersion)
+            else if (Version != VersionsManager.ProtocolVersion)
             {
                 connectionError.AppendLine("客户端和服务器版本不一致");
             }
@@ -319,7 +214,7 @@ public class ConnectionRequestPackage : IPackage
             }
             else if (!string.IsNullOrEmpty(pwd2))
             {
-                if (!useExternalPassword && _password != pwd2)
+                if (!useExternalPassword && Password != pwd2)
                 {
                     connectionError.AppendLine("房间密码验证错误");
                 }
@@ -352,7 +247,7 @@ public class ConnectionRequestPackage : IPackage
 
                 netNode.PendingPeer = From.Request.Accept();
                 var addClient =
-                    netNode.CreateClient(netNode.PendingPeer, _tmpToken, guid, _communityAccountId, _nickname);
+                    netNode.CreateClient(netNode.PendingPeer, TmpToken, guid, CommunityAccountId, Nickname);
                 var clientPackage = new ClientPackage(addClient.ID, addClient.TokenId, addClient.GUID,
                     addClient.CommunityAccountId, addClient.Nickname);
                 foreach (var c in netNode.Peers)

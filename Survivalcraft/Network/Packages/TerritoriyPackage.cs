@@ -3,15 +3,15 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class TerritoriyPackage : IPackage
+public partial class TerritoriyPackage : IPackage
 {
-    private bool _allowBehavior;
-    private bool _allowDig;
-    private bool _allowPlace;
-    private bool _applyToFriend;
+    public bool AllowBehavior;
+    public bool AllowDig;
+    public bool AllowPlace;
+    public bool ApplyToFriend;
 
-    private Guid _guid;
-    private bool _isVisible;
+    public Guid Guid;
+    public bool IsVisible;
 
     public TerritoriyPackage()
     {
@@ -19,12 +19,12 @@ public class TerritoriyPackage : IPackage
 
     public TerritoriyPackage(Territoriy territoriy)
     {
-        _guid = territoriy.OwnerGuid;
-        _allowBehavior = territoriy.AllowBlockBehavior;
-        _allowDig = territoriy.AllowDig;
-        _allowPlace = territoriy.AllowPlace;
-        _applyToFriend = territoriy.ApplyToFriend;
-        _isVisible = territoriy.IsVisible;
+        Guid = territoriy.OwnerGuid;
+        AllowBehavior = territoriy.AllowBlockBehavior;
+        AllowDig = territoriy.AllowDig;
+        AllowPlace = territoriy.AllowPlace;
+        ApplyToFriend = territoriy.ApplyToFriend;
+        IsVisible = territoriy.IsVisible;
     }
 
     public byte ID => (byte)PackageType.Territoriy;
@@ -35,29 +35,29 @@ public class TerritoriyPackage : IPackage
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_guid);
+        writer.Write(Guid);
         byte flag = 0;
-        if (_allowBehavior)
+        if (AllowBehavior)
         {
             flag |= 1;
         }
 
-        if (_allowDig)
+        if (AllowDig)
         {
             flag |= 2;
         }
 
-        if (_allowPlace)
+        if (AllowPlace)
         {
             flag |= 4;
         }
 
-        if (_applyToFriend)
+        if (ApplyToFriend)
         {
             flag |= 8;
         }
 
-        if (_isVisible)
+        if (IsVisible)
         {
             flag |= 16;
         }
@@ -67,51 +67,33 @@ public class TerritoriyPackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        _guid = reader.ReadGuid();
+        Guid = reader.ReadGuid();
         var flag = reader.ReadByte();
         if ((flag & 1) == 1)
         {
-            _allowBehavior = true;
+            AllowBehavior = true;
         }
 
         if (((flag >> 1) & 1) == 1)
         {
-            _allowDig = true;
+            AllowDig = true;
         }
 
         if (((flag >> 2) & 1) == 1)
         {
-            _allowPlace = true;
+            AllowPlace = true;
         }
 
         if (((flag >> 3) & 1) == 1)
         {
-            _applyToFriend = true;
+            ApplyToFriend = true;
         }
 
         if (((flag >> 4) & 1) == 1)
         {
-            _isVisible = true;
+            IsVisible = true;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (!SubsystemBedrockBlockBehavior.Territories.TryGetValue(_guid, out var territoriy))
-        {
-            return;
-        }
 
-        territoriy.AllowDig = _allowDig;
-        territoriy.AllowPlace = _allowPlace;
-        territoriy.ApplyToFriend = _applyToFriend;
-        territoriy.IsVisible = _isVisible;
-        if (!isServer)
-        {
-            return;
-        }
-
-        Except = From;
-        netNode.QueuePackage(this);
-    }
 }

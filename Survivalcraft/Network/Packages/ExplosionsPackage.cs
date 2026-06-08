@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ExplosionsPackage : IPackage
+public partial class ExplosionsPackage : IPackage
 {
     public enum EventType
     {
@@ -11,15 +11,15 @@ public class ExplosionsPackage : IPackage
         Cell
     }
 
-    private Dictionary<Point2, List<(Point3, float)>> _cells = new();
+    public Dictionary<Point2, List<(Point3, float)>> _cells = new();
 
-    private float _delay;
+    public float Delay;
 
-    private float _level;
+    public float Level;
 
-    private Vector3 _position;
+    public Vector3 Position;
 
-    private EventType _type;
+    public EventType Type;
 
     public byte ID => (byte)PackageType.Explosion;
 
@@ -37,15 +37,15 @@ public class ExplosionsPackage : IPackage
 
     public ExplosionsPackage(Vector3 position, float level, float delay)
     {
-        _type = EventType.Sound;
-        _position = position;
-        _level = level;
-        _delay = delay;
+        Type = EventType.Sound;
+        Position = position;
+        Level = level;
+        Delay = delay;
     }
 
     public ExplosionsPackage(Dictionary<Point2, List<(Point3, float)>> cells)
     {
-        _type = EventType.Cell;
+        Type = EventType.Cell;
         _cells = new Dictionary<Point2, List<(Point3, float)>>();
         foreach (var c in cells)
         {
@@ -55,8 +55,8 @@ public class ExplosionsPackage : IPackage
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_type);
-        switch (_type)
+        writer.WriteEnum(Type);
+        switch (Type)
         {
             case EventType.Cell:
                 writer.Write(_cells.Count);
@@ -73,17 +73,17 @@ public class ExplosionsPackage : IPackage
 
                 break;
             case EventType.Sound:
-                writer.Write(_position);
-                writer.Write(_level);
-                writer.Write(_delay);
+                writer.Write(Position);
+                writer.Write(Level);
+                writer.Write(Delay);
                 break;
         }
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _type = reader.ReadEnum<EventType>();
-        switch (_type)
+        Type = reader.ReadEnum<EventType>();
+        switch (Type)
         {
             case EventType.Cell:
                 _cells = new Dictionary<Point2, List<(Point3, float)>>();
@@ -105,42 +105,12 @@ public class ExplosionsPackage : IPackage
 
                 break;
             case EventType.Sound:
-                _position = reader.ReadVector3();
-                _level = reader.ReadSingle();
-                _delay = reader.ReadSingle();
+                Position = reader.ReadVector3();
+                Level = reader.ReadSingle();
+                Delay = reader.ReadSingle();
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        var sub = project.FindSubsystem<SubsystemExplosions>(true)!;
-        switch (_type)
-        {
-            case EventType.Cell:
-                if (sub.ExplosionParticleSystem == null)
-                {
-                    break;
-                }
-
-                foreach (var i in _cells)
-                {
-                    foreach (var j in i.Value)
-                    {
-                        sub.ExplosionParticleSystem.SetExplosionCell(j.Item1, j.Item2);
-                    }
-                }
-
-                break;
-            case EventType.Sound:
-                sub.PlayExplosionSound(_position, _level, _delay, true);
-                break;
-        }
-    }
 }

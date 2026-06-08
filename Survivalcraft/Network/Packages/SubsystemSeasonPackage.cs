@@ -3,9 +3,9 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class SubsystemSeasonPackage : IPackage
+public partial class SubsystemSeasonPackage : IPackage
 {
-    private int _seasonIndexNet;
+    public int SeasonIndexNet;
 
     public Season SeasonNet { get; set; }
 
@@ -27,33 +27,22 @@ public class SubsystemSeasonPackage : IPackage
 
     public SubsystemSeasonPackage(int seasonIndex, float timeOfSeason)
     {
-        _seasonIndexNet = seasonIndex; //季节编号
+        SeasonIndexNet = seasonIndex; //季节编号
         TimeOfSeasonNet = timeOfSeason;
     }
 
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_seasonIndexNet);
+        writer.Write(SeasonIndexNet);
         writer.Write(BitConverter.ToInt32(BitConverter.GetBytes(TimeOfSeasonNet), 0));
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _seasonIndexNet = reader.ReadInt32();
+        SeasonIndexNet = reader.ReadInt32();
         TimeOfSeasonNet = BitConverter.ToSingle(BitConverter.GetBytes(reader.ReadInt32()), 0);
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        var weather = project.FindSubsystem<SubsystemSeasons>(true)!;
-        weather.Season = (Season)_seasonIndexNet;
-        weather.TimeOfSeason = TimeOfSeasonNet;
-    }
 }

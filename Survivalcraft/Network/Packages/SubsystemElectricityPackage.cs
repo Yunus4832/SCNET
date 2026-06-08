@@ -3,11 +3,11 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class SubsystemElectricityPackage : IPackage
+public partial class SubsystemElectricityPackage : IPackage
 {
-    private SubsystemElectricity? _subsystem;
+    public SubsystemElectricity? Subsystem;
 
-    private readonly List<SubsystemElectricity.NetSimulate> _netSimulates = [];
+    public readonly List<SubsystemElectricity.NetSimulate> NetSimulates = [];
 
     public byte ID => (byte)PackageType.SubsystemElectricity;
 
@@ -25,13 +25,13 @@ public class SubsystemElectricityPackage : IPackage
 
     public SubsystemElectricityPackage(List<SubsystemElectricity.NetSimulate> netSimulates)
     {
-        _netSimulates.AddRange(netSimulates);
+        NetSimulates.AddRange(netSimulates);
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write((byte)_netSimulates.Count);
-        foreach (var netSimulate in _netSimulates)
+        writer.Write((byte)NetSimulates.Count);
+        foreach (var netSimulate in NetSimulates)
         {
             writer.Write(netSimulate.StartStep);
             writer.Write((ushort)netSimulate.SaveData.Count);
@@ -58,19 +58,9 @@ public class SubsystemElectricityPackage : IPackage
                 netSimulate.SaveData.Add(reader.ReadBlockPoint(), reader.ReadSingle());
             }
 
-            _netSimulates.Add(netSimulate);
+            NetSimulates.Add(netSimulate);
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        _subsystem = project.FindSubsystem<SubsystemElectricity>(true)!;
-        _subsystem.List.AddRange(_netSimulates);
-    }
 }

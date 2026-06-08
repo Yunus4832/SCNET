@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class MessagePackage : IPackage
+public partial class MessagePackage : IPackage
 {
     public enum MessageMode : byte
     {
@@ -11,23 +11,23 @@ public class MessagePackage : IPackage
         LargeMessage // 大字消息，也就是开局显示的那几条消息
     }
 
-    private float _delay;
+    public float Delay;
 
-    private float _duration;
+    public float Duration;
 
-    private string _largeText = string.Empty;
+    public string LargeText = string.Empty;
 
-    private string _message = string.Empty;
+    public string Message = string.Empty;
 
-    private MessageMode _messageMode;
+    public MessageMode PackageMessageMode;
 
-    private byte _messageType;
+    public byte MessageType;
 
-    private string _playerName = string.Empty;
+    public string PlayerName = string.Empty;
 
-    private string _smallText = string.Empty;
+    public string SmallText = string.Empty;
 
-    private readonly List<byte> _toClients = [];
+    public readonly List<byte> ToClients = [];
 
     public byte ID => (byte)PackageType.Message;
 
@@ -45,132 +45,85 @@ public class MessagePackage : IPackage
 
     public MessagePackage(string playerName, string message, byte type, List<byte> toClients)
     {
-        _messageMode = MessageMode.BaseMessage;
-        _message = message;
-        _playerName = playerName;
-        _messageType = type;
-        _toClients.AddRange(toClients);
+        PackageMessageMode = MessageMode.BaseMessage;
+        Message = message;
+        PlayerName = playerName;
+        MessageType = type;
+        ToClients.AddRange(toClients);
     }
 
     // 发送大字消息，可以做服务器公告用
     public MessagePackage(string largeText, string smallText, float duration, float delay)
     {
-        _messageMode = MessageMode.LargeMessage;
-        _largeText = largeText;
-        _smallText = smallText;
-        _duration = duration;
-        _delay = delay;
+        PackageMessageMode = MessageMode.LargeMessage;
+        LargeText = largeText;
+        SmallText = smallText;
+        Duration = duration;
+        Delay = delay;
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_messageMode);
-        switch (_messageMode)
+        writer.WriteEnum(PackageMessageMode);
+        switch (PackageMessageMode)
         {
             case MessageMode.BaseMessage:
-                writer.Write(_messageType);
-                writer.Write((byte)_toClients.Count);
-                for (byte i = 0; i < _toClients.Count; i++)
+                writer.Write(MessageType);
+                writer.Write((byte)ToClients.Count);
+                for (byte i = 0; i < ToClients.Count; i++)
                 {
-                    writer.Write(_toClients[i]);
+                    writer.Write(ToClients[i]);
                 }
 
-                writer.Write(_message);
-                if (string.IsNullOrEmpty(_playerName))
+                writer.Write(Message);
+                if (string.IsNullOrEmpty(PlayerName))
                 {
                     writer.Write(false); // 这里不要布尔判断，而是直接写入string.Empty可能会好一点
                 }
                 else
                 {
                     writer.Write(true);
-                    writer.Write(_playerName);
+                    writer.Write(PlayerName);
                 }
 
                 break;
             case MessageMode.LargeMessage:
-                writer.Write(_largeText);
-                writer.Write(_smallText);
-                writer.Write(_duration);
-                writer.Write(_delay);
+                writer.Write(LargeText);
+                writer.Write(SmallText);
+                writer.Write(Duration);
+                writer.Write(Delay);
                 break;
         }
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _messageMode = reader.ReadEnum<MessageMode>();
-        switch (_messageMode)
+        PackageMessageMode = reader.ReadEnum<MessageMode>();
+        switch (PackageMessageMode)
         {
             case MessageMode.BaseMessage:
-                _messageType = reader.ReadByte();
+                MessageType = reader.ReadByte();
                 var count = reader.ReadByte();
                 for (var i = 0; i < count; i++)
                 {
-                    _toClients.Add(reader.ReadByte());
+                    ToClients.Add(reader.ReadByte());
                 }
 
-                _message = reader.ReadString();
+                Message = reader.ReadString();
                 if (reader.ReadBoolean())
                 {
-                    _playerName = reader.ReadString();
+                    PlayerName = reader.ReadString();
                 }
 
                 break;
             case MessageMode.LargeMessage:
-                _largeText = reader.ReadString();
-                _smallText = reader.ReadString();
-                _duration = reader.ReadSingle();
-                _delay = reader.ReadSingle();
+                LargeText = reader.ReadString();
+                SmallText = reader.ReadString();
+                Duration = reader.ReadSingle();
+                Delay = reader.ReadSingle();
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        switch (_messageMode)
-        {
-            case MessageMode.BaseMessage:
-                var gameWidgets = project.FindSubsystem<SubsystemGameWidgets>(true)!;
-                const bool external = false;
-                gameWidgets.AddNetMessage(_message, _playerName, _messageType, _toClients, external);
-                if (!isServer || From == null)
-                {
-                    break;
-                }
-
-                _playerName = From.PlayerData.Name;
-                var flag = project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList
-                    .Contains(From.GUID.ToString());
-                if (!flag)
-                {
-                    Except = From;
-                    netNode.QueuePackage(this);
-                }
-
-                break;
-            case MessageMode.LargeMessage:
-                if (isServer)
-                {
-                    break;
-                }
-
-                foreach (var player in project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData)
-                {
-                    player.ComponentPlayer?.ComponentGui?.DisplayLargeMessage(
-                        _largeText,
-                        _smallText,
-                        _duration,
-                        _delay
-                    );
-                }
-
-                break;
-        }
-    }
 }

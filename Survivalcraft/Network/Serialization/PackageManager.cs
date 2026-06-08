@@ -73,51 +73,51 @@ public class PackageManager
 
     private static void RegisterBuiltInPackages()
     {
-        RegisterPackage(PackageType.ServerInfo, () => new ServerInfoPackage());
-        RegisterPackage(PackageType.ConnectionRequest, () => new ConnectionRequestPackage());
-        RegisterPackage(PackageType.ConnectionReject, () => new ConnectionRejectPackage());
-        RegisterPackage(PackageType.Project, () => new ProjectPackage());
-        RegisterPackage(PackageType.Client, () => new ClientPackage());
-        RegisterPackage(PackageType.Pickable, () => new PickablePackage());
-        RegisterPackage(PackageType.SubsystemBody, () => new SubsystemBodyPackage());
-        RegisterPackage(PackageType.SubsystemTerrain, () => new SubsystemTerrainPackage());
-        RegisterPackage(PackageType.SubsystemTime, () => new SubsystemTimePackage());
-        RegisterPackage(PackageType.SubsystemSky, () => new SubsystemSkyPackage());
-        RegisterPackage(PackageType.SubsystemWeather, () => new SubsystemWeatherPackage());
-        RegisterPackage(PackageType.SubsystemElectricity, () => new SubsystemElectricityPackage());
-        RegisterPackage(PackageType.SubsystemPlayers, () => new SubsystemPlayersPackage());
-        RegisterPackage(PackageType.ComponentPlayer, () => new ComponentPlayerPackage());
-        RegisterPackage(PackageType.ComponentInventory, () => new ComponentInventoryPackage());
-        RegisterPackage(PackageType.ComponentVitalStat, () => new ComponentVitalStatPackage());
-        RegisterPackage(PackageType.ComponentClothing, () => new ComponentClothingPackage());
-        RegisterPackage(PackageType.ComponentBehavior, () => new ComponentBehaviorPackage());
-        RegisterPackage(PackageType.ComponentHealth, () => new ComponentHealthPackage());
-        RegisterPackage(PackageType.ComponentMount, () => new ComponentMountPackage());
-        RegisterPackage(PackageType.ComponentSickness, () => new ComponentSicknessPackage());
-        RegisterPackage(PackageType.ComponentFlu, () => new ComponentFluPackage());
-        RegisterPackage(PackageType.ComponentOnFire, () => new ComponentOnFirePackage());
-        RegisterPackage(PackageType.ComponentSleep, () => new ComponentSleepPackage());
-        RegisterPackage(PackageType.ComponentFurnace, () => new ComponentFurnacePackage());
-        RegisterPackage(PackageType.PlayerData, () => new PlayerDataPackage());
-        RegisterPackage(PackageType.Message, () => new MessagePackage());
-        RegisterPackage(PackageType.Entity, () => new EntityPackage());
-        RegisterPackage(PackageType.Projectile, () => new ProjectilePackage());
-        RegisterPackage(PackageType.Territoriy, () => new TerritoriyPackage());
-        RegisterPackage(PackageType.Furniture, () => new FurniturePackage());
-        RegisterPackage(PackageType.Explosion, () => new ExplosionsPackage());
-        RegisterPackage(PackageType.MovingBlockSet, () => new MovingBlockPackage());
-        RegisterPackage(PackageType.BlockEdit, () => new BlockEditPackage());
-        RegisterPackage(PackageType.SignBlock, () => new SignBlockPackage());
-        RegisterPackage(PackageType.Dispenser, () => new DispenserPackage());
-        RegisterPackage(PackageType.EditableBlock, () => new EditableBlockPackage());
-        RegisterPackage(PackageType.GroupManage, () => new GroupManagePackage());
-        RegisterPackage(PackageType.SubsystemSeason, () => new SubsystemSeasonPackage());
+        RegisterBuiltInPackage<ServerInfoPackage, ServerInfoPackageHandler>(PackageType.ServerInfo);
+        RegisterBuiltInPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>(PackageType.ConnectionRequest);
+        RegisterBuiltInPackage<ConnectionRejectPackage, ConnectionRejectPackageHandler>(PackageType.ConnectionReject);
+        RegisterBuiltInPackage<ProjectPackage, ProjectPackageHandler>(PackageType.Project);
+        RegisterBuiltInPackage<ClientPackage, ClientPackageHandler>(PackageType.Client);
+        RegisterBuiltInPackage<PickablePackage, PickablePackageHandler>(PackageType.Pickable);
+        RegisterBuiltInPackage<SubsystemBodyPackage, SubsystemBodyPackageHandler>(PackageType.SubsystemBody);
+        RegisterBuiltInPackage<SubsystemTerrainPackage, SubsystemTerrainPackageHandler>(PackageType.SubsystemTerrain);
+        RegisterBuiltInPackage<SubsystemTimePackage, SubsystemTimePackageHandler>(PackageType.SubsystemTime);
+        RegisterBuiltInPackage<SubsystemSkyPackage, SubsystemSkyPackageHandler>(PackageType.SubsystemSky);
+        RegisterBuiltInPackage<SubsystemWeatherPackage, SubsystemWeatherPackageHandler>(PackageType.SubsystemWeather);
+        RegisterBuiltInPackage<SubsystemElectricityPackage, SubsystemElectricityPackageHandler>(PackageType.SubsystemElectricity);
+        RegisterBuiltInPackage<SubsystemPlayersPackage, SubsystemPlayersPackageHandler>(PackageType.SubsystemPlayers);
+        RegisterBuiltInPackage<ComponentPlayerPackage, ComponentPlayerPackageHandler>(PackageType.ComponentPlayer);
+        RegisterBuiltInPackage<ComponentInventoryPackage, ComponentInventoryPackageHandler>(PackageType.ComponentInventory);
+        RegisterBuiltInPackage<ComponentVitalStatPackage, ComponentVitalStatPackageHandler>(PackageType.ComponentVitalStat);
+        RegisterBuiltInPackage<ComponentClothingPackage, ComponentClothingPackageHandler>(PackageType.ComponentClothing);
+        RegisterBuiltInPackage<ComponentBehaviorPackage, ComponentBehaviorPackageHandler>(PackageType.ComponentBehavior);
+        RegisterBuiltInPackage<ComponentHealthPackage, ComponentHealthPackageHandler>(PackageType.ComponentHealth);
+        RegisterBuiltInPackage<ComponentMountPackage, ComponentMountPackageHandler>(PackageType.ComponentMount);
+        RegisterBuiltInPackage<ComponentSicknessPackage, ComponentSicknessPackageHandler>(PackageType.ComponentSickness);
+        RegisterBuiltInPackage<ComponentFluPackage, ComponentFluPackageHandler>(PackageType.ComponentFlu);
+        RegisterBuiltInPackage<ComponentOnFirePackage, ComponentOnFirePackageHandler>(PackageType.ComponentOnFire);
+        RegisterBuiltInPackage<ComponentSleepPackage, ComponentSleepPackageHandler>(PackageType.ComponentSleep);
+        RegisterBuiltInPackage<ComponentFurnacePackage, ComponentFurnacePackageHandler>(PackageType.ComponentFurnace);
+        RegisterBuiltInPackage<PlayerDataPackage, PlayerDataPackageHandler>(PackageType.PlayerData);
+        RegisterBuiltInPackage<MessagePackage, MessagePackageHandler>(PackageType.Message);
+        RegisterBuiltInPackage<EntityPackage, EntityPackageHandler>(PackageType.Entity);
+        RegisterBuiltInPackage<ProjectilePackage, ProjectilePackageHandler>(PackageType.Projectile);
+        RegisterBuiltInPackage<TerritoriyPackage, TerritoriyPackageHandler>(PackageType.Territoriy);
+        RegisterBuiltInPackage<FurniturePackage, FurniturePackageHandler>(PackageType.Furniture);
+        RegisterBuiltInPackage<ExplosionsPackage, ExplosionsPackageHandler>(PackageType.Explosion);
+        RegisterBuiltInPackage<MovingBlockPackage, MovingBlockPackageHandler>(PackageType.MovingBlockSet);
+        RegisterBuiltInPackage<BlockEditPackage, BlockEditPackageHandler>(PackageType.BlockEdit);
+        RegisterBuiltInPackage<SignBlockPackage, SignBlockPackageHandler>(PackageType.SignBlock);
+        RegisterBuiltInPackage<DispenserPackage, DispenserPackageHandler>(PackageType.Dispenser);
+        RegisterBuiltInPackage<EditableBlockPackage, EditableBlockPackageHandler>(PackageType.EditableBlock);
+        RegisterBuiltInPackage<GroupManagePackage, GroupManagePackageHandler>(PackageType.GroupManage);
+        RegisterBuiltInPackage<SubsystemSeasonPackage, SubsystemSeasonPackageHandler>(PackageType.SubsystemSeason);
     }
 
     public static void RegisterPackage(Func<IPackage> factory)
     {
         var package = factory();
-        RegisterPackage(package.ID, package.GetType().Name, factory);
+        RegisterPackage(package.ID, package.GetType().Name, package.GetType(), factory);
     }
 
     public static void RegisterPackage(PackageType packageType, Func<IPackage> factory)
@@ -130,16 +130,37 @@ public class PackageManager
                 $"数据包ID不匹配，注册ID:{packageID}，Package[{package.GetType().Name}] ID:{package.ID}");
         }
 
-        RegisterPackage(packageID, package.GetType().Name, factory);
+        RegisterPackage(packageID, package.GetType().Name, package.GetType(), factory);
+    }
+
+    private static void RegisterBuiltInPackage<TPackage, THandler>(PackageType packageType)
+        where TPackage : IPackage, new()
+        where THandler : IPackageHandler<TPackage>, new()
+    {
+        var package = new TPackage();
+        var packageID = (byte)packageType;
+        if (package.ID != packageID)
+        {
+            throw new InvalidOperationException(
+                $"数据包ID不匹配，注册ID:{packageID}，Package[{typeof(TPackage).Name}] ID:{package.ID}");
+        }
+
+        RegisterPackage(packageID, typeof(TPackage).Name, typeof(TPackage), () => new TPackage(), new THandler());
     }
 
     public static void RegisterPackage(IPackage package)
     {
         var packageType = package.GetType();
-        RegisterPackage(package.ID, packageType.Name, () => (IPackage)Activator.CreateInstance(packageType)!);
+        RegisterPackage(package.ID, packageType.Name, packageType, () => (IPackage)Activator.CreateInstance(packageType)!);
     }
 
-    private static void RegisterPackage(byte packageID, string packageName, Func<IPackage> factory)
+    private static void RegisterPackage(
+        byte packageID,
+        string packageName,
+        Type packageType,
+        Func<IPackage> factory,
+        IPackageHandler? handler = null
+    )
     {
         if (_packageRegistrations[packageID] == null)
         {
@@ -148,6 +169,14 @@ public class PackageManager
                 Name = packageName,
                 Create = factory
             };
+            if (handler != null)
+            {
+                PackageDispatcher.Register(handler);
+            }
+            else
+            {
+                PackageDispatcher.RegisterLegacyHandler(packageType);
+            }
 #if DEBUG
             Log.Information($"注册Package[{packageName}]，ID:{packageID}");
 #endif
@@ -161,10 +190,13 @@ public class PackageManager
     public static void UnRegisterPackage(IPackage package)
     {
         var basePackage = _packageRegistrations[package.ID];
-        if (basePackage != null)
+        if (basePackage == null)
         {
-            _packageRegistrations[package.ID] = null;
+            return;
         }
+
+        _packageRegistrations[package.ID] = null;
+        PackageDispatcher.Unregister(package.GetType());
     }
 
     public static T DecodePackage<T>(
@@ -224,18 +256,18 @@ public class PackageManager
 
         try
         {
-            var preader = CommonLib.GetReader(reader);
+            var packageReader = CommonLib.GetReader(reader);
             IPackage? last = null;
-            while (preader.BaseStream.Position < preader.BaseStream.Length)
+            while (packageReader.BaseStream.Position < packageReader.BaseStream.Length)
             {
-                var check = preader.ReadByte();
+                var check = packageReader.ReadByte();
                 if (check != 0x88)
                 {
                     Log.Information("解包验证出错，上个包:" + (last == null ? "无" : last.GetType().Name));
                     break;
                 }
 
-                var id = preader.ReadByte();
+                var id = packageReader.ReadByte();
                 packageID = id;
                 var registration = _packageRegistrations[id];
                 if (registration != null)
@@ -243,7 +275,7 @@ public class PackageManager
                     var package = registration.Create();
                     last = package;
                     package.From = from!;
-                    package.ReadData(preader);
+                    package.ReadData(packageReader);
                     packages.Add(package);
                 }
                 else

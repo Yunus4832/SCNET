@@ -5,7 +5,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class PlayerDataPackage : IPackage
+public partial class PlayerDataPackage : IPackage
 {
     public enum DataType
     {
@@ -22,27 +22,27 @@ public class PlayerDataPackage : IPackage
         Count
     }
 
-    private string _bugleContent = string.Empty; //小喇叭内容
+    public string BugleContent = string.Empty; //小喇叭内容
 
-    private string _bugleTitle = string.Empty; //小喇叭标题
+    public string BugleTitle = string.Empty; //小喇叭标题
 
-    private PlayerClass _playerClass;
+    public PlayerClass PlayerClass;
 
-    private int _playerCount; //玩家人数
+    public int PlayerCount; //玩家人数
 
-    private Guid _playerGuid;
+    public Guid PlayerGuid;
 
-    private string _playerName = string.Empty;
+    public string PlayerName = string.Empty;
 
-    private string _skinName = string.Empty;
+    public string SkinName = string.Empty;
 
-    private DataType _type;
+    public DataType Type;
 
-    private TerrainUpdater.UpdateLocation _updateLocation;
+    public TerrainUpdater.UpdateLocation UpdateLocation;
 
-    private ValuesDictionary? _vd;
+    public ValuesDictionary? Vd;
 
-    private int _visibility;
+    public int Visibility;
 
     public byte ID => (byte)PackageType.PlayerData;
 
@@ -60,278 +60,125 @@ public class PlayerDataPackage : IPackage
 
     public PlayerDataPackage(PlayerData playerData, DataType dataType)
     {
-        _vd = new ValuesDictionary();
-        _type = dataType;
-        _playerName = playerData.Name;
-        _skinName = playerData.CharacterSkinName;
-        _playerGuid = playerData.PlayerGUID;
-        _playerClass = playerData.PlayerClass;
-        playerData.Save(_vd);
+        Vd = new ValuesDictionary();
+        Type = dataType;
+        PlayerName = playerData.Name;
+        SkinName = playerData.CharacterSkinName;
+        PlayerGuid = playerData.PlayerGUID;
+        PlayerClass = playerData.PlayerClass;
+        playerData.Save(Vd);
     }
 
     public PlayerDataPackage(Guid guid, bool add)
     {
-        _type = add ? DataType.AddNoMsg : DataType.RemoveNoMsg;
-        _playerGuid = guid;
+        Type = add ? DataType.AddNoMsg : DataType.RemoveNoMsg;
+        PlayerGuid = guid;
     }
 
     public PlayerDataPackage(int time, string msg)
     {
-        _playerName = msg;
-        _type = DataType.CloseTime;
-        _visibility = time;
+        PlayerName = msg;
+        Type = DataType.CloseTime;
+        Visibility = time;
     }
 
     public PlayerDataPackage(TerrainUpdater.UpdateLocation updateLocation)
     {
-        _updateLocation = updateLocation;
-        _type = DataType.SetUpdateLocation;
+        UpdateLocation = updateLocation;
+        Type = DataType.SetUpdateLocation;
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_type);
-        switch (_type)
+        writer.WriteEnum(Type);
+        switch (Type)
         {
             case DataType.AddPlayer:
             case DataType.Create:
-                if (_vd != null)
+                if (Vd != null)
                 {
-                    var messagePack = _vd.ToMessagePack();
+                    var messagePack = Vd.ToMessagePack();
                     writer.WriteBuff(messagePack);
                 }
 
                 break;
             case DataType.Modify:
-                writer.Write(_playerGuid);
-                writer.Write(_playerName);
-                writer.Write(_skinName);
-                writer.WriteEnum(_playerClass);
+                writer.Write(PlayerGuid);
+                writer.Write(PlayerName);
+                writer.Write(SkinName);
+                writer.WriteEnum(PlayerClass);
                 break;
             case DataType.ClientKnownPlayer:
-                writer.Write(_playerGuid);
+                writer.Write(PlayerGuid);
                 break;
             case DataType.SetUpdateLocation:
-                writer.Write(_updateLocation.Center);
-                writer.Write((ushort)_updateLocation.ContentDistance);
-                writer.Write((ushort)_updateLocation.VisibilityDistance);
-                writer.Write(_updateLocation.LastChunksUpdateCenter);
+                writer.Write(UpdateLocation.Center);
+                writer.Write((ushort)UpdateLocation.ContentDistance);
+                writer.Write((ushort)UpdateLocation.VisibilityDistance);
+                writer.Write(UpdateLocation.LastChunksUpdateCenter);
                 break;
             case DataType.CloseTime:
-                writer.Write(_visibility);
-                writer.Write(_playerName);
+                writer.Write(Visibility);
+                writer.Write(PlayerName);
                 break;
             case DataType.Bugle:
-                writer.Write(_bugleTitle);
-                writer.Write(_bugleContent);
+                writer.Write(BugleTitle);
+                writer.Write(BugleContent);
                 break;
             case DataType.Count:
-                writer.Write(_playerCount);
+                writer.Write(PlayerCount);
                 break;
             case DataType.AddNoMsg:
             case DataType.RemoveNoMsg:
-                writer.Write(_playerGuid);
+                writer.Write(PlayerGuid);
                 break;
         }
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _type = reader.ReadEnum<DataType>();
-        switch (_type)
+        Type = reader.ReadEnum<DataType>();
+        switch (Type)
         {
             case DataType.AddPlayer:
             case DataType.Create:
                 var messagePack = reader.ReadBuff();
-                _vd = new ValuesDictionary();
-                _vd.ApplyOverridesUseMessagePack(messagePack);
+                Vd = new ValuesDictionary();
+                Vd.ApplyOverridesUseMessagePack(messagePack);
                 break;
             case DataType.Modify:
-                _playerGuid = reader.ReadGuid();
-                _playerName = reader.ReadString();
-                _skinName = reader.ReadString();
-                _playerClass = reader.ReadEnum<PlayerClass>();
+                PlayerGuid = reader.ReadGuid();
+                PlayerName = reader.ReadString();
+                SkinName = reader.ReadString();
+                PlayerClass = reader.ReadEnum<PlayerClass>();
                 break;
             case DataType.ClientKnownPlayer:
-                _playerGuid = reader.ReadGuid();
+                PlayerGuid = reader.ReadGuid();
                 break;
             case DataType.SetUpdateLocation:
-                _updateLocation = new TerrainUpdater.UpdateLocation();
-                _updateLocation.Center = reader.ReadVector2();
-                _updateLocation.ContentDistance = reader.ReadUInt16();
-                _updateLocation.VisibilityDistance = reader.ReadUInt16();
-                _updateLocation.LastChunksUpdateCenter = reader.ReadVector2Nullable();
+                UpdateLocation = new TerrainUpdater.UpdateLocation();
+                UpdateLocation.Center = reader.ReadVector2();
+                UpdateLocation.ContentDistance = reader.ReadUInt16();
+                UpdateLocation.VisibilityDistance = reader.ReadUInt16();
+                UpdateLocation.LastChunksUpdateCenter = reader.ReadVector2Nullable();
                 break;
             case DataType.CloseTime:
-                _visibility = reader.ReadInt32();
-                _playerName = reader.ReadString();
+                Visibility = reader.ReadInt32();
+                PlayerName = reader.ReadString();
                 break;
             case DataType.Bugle:
-                _bugleTitle = reader.ReadString();
-                _bugleContent = reader.ReadString();
+                BugleTitle = reader.ReadString();
+                BugleContent = reader.ReadString();
                 break;
             case DataType.Count:
-                _playerCount = reader.ReadInt32();
+                PlayerCount = reader.ReadInt32();
                 break;
             case DataType.AddNoMsg:
             case DataType.RemoveNoMsg:
-                _playerGuid = reader.ReadGuid();
+                PlayerGuid = reader.ReadGuid();
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        PlayerData? playerData;
-        var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
-        switch (_type)
-        {
-            case DataType.Create:
-                playerData = new PlayerData(project);
-                if (_vd != null)
-                {
-                    playerData.Load(_vd);
-                }
-
-                subsystemPlayers.AddPlayerData(playerData);
-                playerData.Name = PlayerData.CreateNewName(playerData.Name);
-                //服务器广播给所有客户端，添加玩家
-                netNode.QueuePackage(new PlayerDataPackage(playerData, DataType.AddPlayer));
-                break;
-            case DataType.Modify:
-                var playerData2 = subsystemPlayers.FindPlayerData(p => p.PlayerGUID == _playerGuid);
-                if (playerData2 != null)
-                {
-                    var client = From;
-                    var name = PlayerData.SanitizeName(_playerName);
-                    if (client != null && !string.IsNullOrEmpty(client.Nickname))
-                    {
-                        playerData2.Name = client.Nickname;
-                    }
-                    else if (!PlayerData.IsDuplicateName(name))
-                    {
-                        playerData2.Name = name;
-                    }
-
-                    playerData2.CharacterSkinName = _skinName;
-                    playerData2.PlayerClass = _playerClass;
-                    if (isServer)
-                    {
-                        netNode.QueuePackage(this);
-                    }
-                }
-
-                break;
-            case DataType.Delete:
-                netNode.RemoveClient(From);
-                break;
-            case DataType.AddPlayer:
-                //客户端接收到添加玩家广播
-                playerData = new PlayerData(project);
-                if (_vd != null)
-                {
-                    playerData.Load(_vd);
-                }
-
-                subsystemPlayers.AddPlayerData(playerData);
-                netNode.QueuePackage(new PlayerDataPackage(playerData, DataType.ClientKnownPlayer));
-                break;
-            case DataType.SetUpdateLocation:
-                var player = subsystemPlayers.PlayersData.Find(x => x.Client == From);
-                if (player != null)
-                {
-                    var updater = project.FindSubsystem<SubsystemTerrain>(true)!.TerrainUpdater;
-                    updater.SetLastChunksUpdateCenter(player.PlayerIndex, _updateLocation.LastChunksUpdateCenter);
-                    updater.SetUpdateLocation(player.PlayerIndex, _updateLocation.Center,
-                        _updateLocation.VisibilityDistance, _updateLocation.ContentDistance);
-                }
-
-                break;
-            case DataType.CloseTime:
-                var p3 = project.FindSubsystem<SubsystemPlayers>(true)!.MainPlayer;
-                if (p3 != null)
-                {
-                    p3.ComponentGui.CloseTime = _visibility;
-                    DialogsManager.ShowDialog(
-                        null,
-                        new MessageDialog(
-                            "服务器关闭提醒", _playerName,
-                            LanguageControl.Yes,
-                            LanguageControl.No,
-                            _ => { DialogsManager.HideAllDialogs(); }
-                        )
-                    );
-                }
-
-                break;
-            case DataType.Bugle:
-                var mainPlayer = project.FindSubsystem<SubsystemPlayers>(true)!.MainPlayer;
-                if (mainPlayer == null)
-                {
-                    break;
-                }
-
-                if (_playerGuid == Guid.Empty ||
-                    (_playerGuid != Guid.Empty &&
-                     mainPlayer.PlayerData.PlayerGUID == _playerGuid))
-                {
-                    DialogsManager.HideAllDialogs();
-                    mainPlayer.ComponentHealth.IsInvulnerable = true;
-                    _bugleContent = _bugleContent.Replace("[n]", "\n").Replace("[e]", " ");
-                    DialogsManager.ShowDialog(
-                        null,
-                        new MessageDialog(
-                            _bugleTitle,
-                            _bugleContent,
-                            LanguageControl.Ok,
-                            string.Empty,
-                            _ =>
-                            {
-                                DialogsManager.HideAllDialogs();
-                                mainPlayer.ComponentHealth.IsInvulnerable = false;
-                            }
-                        )
-                    );
-                }
-
-                break;
-            case DataType.Count:
-                var mainPlayer2 = project.FindSubsystem<SubsystemPlayers>(true)!.MainPlayer;
-                if (mainPlayer2 == null)
-                {
-                    break;
-                }
-
-                var clientPlayerCount = project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData.Count;
-                Log.Information($"隐身测试，服务端人数：{_playerCount}; 客户端人数：{clientPlayerCount}");
-                if (clientPlayerCount != _playerCount)
-                {
-                    ScreensManager.SwitchScreen("NetPlay");
-                    GameManager.DisposeProject();
-                    CommonLib.Net.Stop();
-                    DialogsManager.ShowDialog(
-                        null,
-                        new MessageDialog(
-                            "连接异常",
-                            "检测到玩家人数异常，请重新连接服务器",
-                            LanguageControl.Ok
-                        )
-                    );
-                }
-
-                break;
-            case DataType.AddNoMsg:
-                project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList.Add(_playerGuid.ToString());
-                break;
-            case DataType.RemoveNoMsg:
-                project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList.Remove(_playerGuid.ToString());
-                break;
-        }
-    }
 }

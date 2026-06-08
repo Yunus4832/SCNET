@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ProjectilePackage : IPackage
+public partial class ProjectilePackage : IPackage
 {
     public enum ProjectileTailInfo : byte
     {
@@ -13,19 +13,19 @@ public class ProjectilePackage : IPackage
         IsOffsetZero = 4
     }
 
-    private Vector3 _angularVelocity;
+    public Vector3 AngularVelocity;
 
-    private bool _isFireProjectile;
+    public bool IsFireProjectile;
 
-    private int _ownerId;
+    public int OwnerId;
 
-    private Vector3 _position;
+    public Vector3 Position;
 
-    private Vector3 _trailOffset;
+    public Vector3 TrailOffset;
 
-    private int _value;
+    public int Value;
 
-    private Vector3 _velocity;
+    public Vector3 Velocity;
 
     public byte ID => (byte)PackageType.Projectile;
 
@@ -43,59 +43,37 @@ public class ProjectilePackage : IPackage
 
     public ProjectilePackage(Projectile projectile)
     {
-        _value = projectile.Value;
-        _position = projectile.Position;
-        _velocity = projectile.Velocity;
-        _trailOffset = projectile.TrailOffset;
-        _angularVelocity = projectile.AngularVelocity;
-        _ownerId = projectile.Owner == null ? 0 : projectile.Owner.Entity.EntityId;
-        _isFireProjectile = projectile.IsFireProjectile;
+        Value = projectile.Value;
+        Position = projectile.Position;
+        Velocity = projectile.Velocity;
+        TrailOffset = projectile.TrailOffset;
+        AngularVelocity = projectile.AngularVelocity;
+        OwnerId = projectile.Owner == null ? 0 : projectile.Owner.Entity.EntityId;
+        IsFireProjectile = projectile.IsFireProjectile;
     }
 
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_value);
-        writer.Write(_position);
-        writer.Write(_velocity);
-        writer.Write(_trailOffset);
-        writer.Write(_angularVelocity);
-        writer.Write(_ownerId);
-        writer.Write(_isFireProjectile);
+        writer.Write(Value);
+        writer.Write(Position);
+        writer.Write(Velocity);
+        writer.Write(TrailOffset);
+        writer.Write(AngularVelocity);
+        writer.Write(OwnerId);
+        writer.Write(IsFireProjectile);
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _value = reader.ReadInt32();
-        _position = reader.ReadVector3();
-        _velocity = reader.ReadVector3();
-        _trailOffset = reader.ReadVector3();
-        _angularVelocity = reader.ReadVector3();
-        _ownerId = reader.ReadInt32();
-        _isFireProjectile = reader.ReadBoolean();
+        Value = reader.ReadInt32();
+        Position = reader.ReadVector3();
+        Velocity = reader.ReadVector3();
+        TrailOffset = reader.ReadVector3();
+        AngularVelocity = reader.ReadVector3();
+        OwnerId = reader.ReadInt32();
+        IsFireProjectile = reader.ReadBoolean();
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        var subsystem = project.FindSubsystem<SubsystemProjectiles>(true)!;
-        ComponentCreature? creature = null;
-        if (_ownerId != 0)
-        {
-            project.FindEntityById(_ownerId, entity => { creature = entity.FindComponent<ComponentCreature>(); });
-        }
-
-        _ = _isFireProjectile
-            ? subsystem.FireProjectileNet(_value, _position, _velocity, _angularVelocity, creature)
-            : subsystem.AddProjectileNet(_value, _position, _velocity, _angularVelocity, creature);
-        if (isServer)
-        {
-            netNode.QueuePackage(this);
-        }
-    }
 }

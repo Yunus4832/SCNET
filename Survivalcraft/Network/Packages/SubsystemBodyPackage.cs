@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class SubsystemBodyPackage : IPackage
+public partial class SubsystemBodyPackage : IPackage
 {
     [Flags]
     public enum ChangeFlag : byte
@@ -23,17 +23,17 @@ public class SubsystemBodyPackage : IPackage
         HandleAxisCollision
     }
 
-    private readonly List<BodyItem> _bodyList = [];
+    public readonly List<BodyItem> BodyList = [];
 
-    private int _creatureId;
+    public int CreatureId;
 
     public ComponentModel? CreatureModel;
 
-    private EventType _eventType;
+    public EventType PackageEventType;
 
-    private Vector3 _impulse;
+    public Vector3 Impulse;
 
-    private int _targetCreatureId;
+    public int TargetCreatureId;
 
     public byte ID => (byte)PackageType.SubsystemBody;
 
@@ -51,7 +51,7 @@ public class SubsystemBodyPackage : IPackage
 
     public SubsystemBodyPackage(List<ComponentBody> bodies)
     {
-        _eventType = EventType.BodyUpdate;
+        PackageEventType = EventType.BodyUpdate;
         foreach (var b in bodies)
         {
             AddItem(b);
@@ -60,170 +60,69 @@ public class SubsystemBodyPackage : IPackage
 
     public SubsystemBodyPackage(ComponentBody body, Vector3 vector)
     {
-        _creatureId = body.Entity.EntityId;
-        _eventType = EventType.ApplyImpulse;
-        _impulse = vector;
+        CreatureId = body.Entity.EntityId;
+        PackageEventType = EventType.ApplyImpulse;
+        Impulse = vector;
     }
 
     public SubsystemBodyPackage(ComponentBody from, ComponentBody target, Vector3 velocity)
     {
-        _eventType = EventType.HandleAxisCollision;
-        _creatureId = from.Entity.EntityId;
-        _targetCreatureId = target.Entity.EntityId;
-        _impulse = velocity;
+        PackageEventType = EventType.HandleAxisCollision;
+        CreatureId = from.Entity.EntityId;
+        TargetCreatureId = target.Entity.EntityId;
+        Impulse = velocity;
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _eventType = reader.ReadEnum<EventType>();
-        switch (_eventType)
+        PackageEventType = reader.ReadEnum<EventType>();
+        switch (PackageEventType)
         {
             case EventType.BodyUpdate:
                 var cnt = reader.ReadUInt16();
                 for (ushort i = 0; i < cnt; i++)
                 {
-                    _bodyList.Add(ReadItem(reader));
+                    BodyList.Add(ReadItem(reader));
                 }
 
                 break;
             case EventType.HandleAxisCollision:
-                _creatureId = reader.ReadInt32();
-                _targetCreatureId = reader.ReadInt32();
-                _impulse = reader.ReadVector3();
+                CreatureId = reader.ReadInt32();
+                TargetCreatureId = reader.ReadInt32();
+                Impulse = reader.ReadVector3();
                 break;
             case EventType.ApplyImpulse:
-                _creatureId = reader.ReadInt32();
-                _impulse = reader.ReadVector3();
+                CreatureId = reader.ReadInt32();
+                Impulse = reader.ReadVector3();
                 break;
         }
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_eventType);
-        switch (_eventType)
+        writer.WriteEnum(PackageEventType);
+        switch (PackageEventType)
         {
             case EventType.BodyUpdate:
-                writer.Write((ushort)_bodyList.Count);
-                foreach (var i in _bodyList)
+                writer.Write((ushort)BodyList.Count);
+                foreach (var i in BodyList)
                 {
                     WriteItem(writer, i);
                 }
 
                 break;
             case EventType.HandleAxisCollision:
-                writer.Write(_creatureId);
-                writer.Write(_targetCreatureId);
-                writer.Write(_impulse);
+                writer.Write(CreatureId);
+                writer.Write(TargetCreatureId);
+                writer.Write(Impulse);
                 break;
             case EventType.ApplyImpulse:
-                writer.Write(_creatureId);
-                writer.Write(_impulse);
+                writer.Write(CreatureId);
+                writer.Write(Impulse);
                 break;
         }
     }
 
-
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-        switch (_eventType)
-        {
-            case EventType.BodyUpdate:
-                var bodies = project.FindSubsystem<SubsystemBodies>(true)!;
-                var ml = new List<int>();
-                var rl = new List<ComponentBody>();
-                //服务器的动物列表
-                foreach (var item in _bodyList)
-                {
-                    bodies.FindBodyByCreatureID(
-                        item.CreatureId,
-                        body =>
-                        {
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.PositionChange))
-                            {
-                                body.NetPosition.SetNext(item.Position);
-                            }
-
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.RotationChange))
-                            {
-                                body.NetRotation.SetNext(item.Rotation);
-                            }
-
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.VelocityChange))
-                            {
-                                body.NetVelocity.SetNext(item.Velocity);
-                            }
-
-                            if (body.Locomotion == null)
-                            {
-                                return;
-                            }
-
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.LookAnglesChange))
-                            {
-                                body.Locomotion.NetLookAngles.SetNext(item.LookAngles);
-                            }
-
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.FlyOrderChange))
-                            {
-                                body.Locomotion.LastFlyOrder = item.FlyOrder;
-                            }
-                        },
-                        () =>
-                        {
-                            //本地没有这个动物，向服务器请求
-                            ml.Add(item.CreatureId);
-                        }
-                    );
-                }
-
-                foreach (var item2 in bodies.Bodies)
-                {
-                    BodyItem? m = _bodyList.Find(x => x.CreatureId == item2.Entity.EntityId);
-                    if (!m.HasValue)
-                    {
-                        rl.Add(item2);
-                    }
-                }
-
-                if (ml.Count > 0)
-                {
-                    netNode.QueuePackage(new EntityPackage(ml));
-                }
-
-                if (rl.Count > 0)
-                {
-                    foreach (var b in rl)
-                    {
-                        project.RemoveEntity(b.Entity, true);
-                    }
-                }
-
-                break;
-            case EventType.HandleAxisCollision:
-                project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(_creatureId, from =>
-                {
-                    project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(_targetCreatureId, target =>
-                    {
-                        target.Velocity = _impulse;
-                        target.NetVelocity.SetNext(_impulse);
-                        from.CollidedWithBody?.Invoke(target);
-                        target.CollidedWithBody?.Invoke(from);
-                    });
-                });
-                break;
-            case EventType.ApplyImpulse:
-                project.FindSubsystem<SubsystemBodies>(true)!
-                    .FindBodyByCreatureID(_creatureId, body => { body.ApplyImpulseNet(_impulse); });
-                break;
-        }
-    }
 
     public void AddItem(ComponentBody body)
     {
@@ -264,10 +163,10 @@ public class SubsystemBodyPackage : IPackage
             }
         }
 
-        _bodyList.Add(bodyItem);
+        BodyList.Add(bodyItem);
     }
 
-    private BodyItem ReadItem(PackageStreamReader reader)
+    public BodyItem ReadItem(PackageStreamReader reader)
     {
         var bodyItem = new BodyItem
         {
@@ -303,7 +202,7 @@ public class SubsystemBodyPackage : IPackage
         return bodyItem;
     }
 
-    private void WriteItem(PackageStreamWriter writer, BodyItem bodyItem)
+    public void WriteItem(PackageStreamWriter writer, BodyItem bodyItem)
     {
         writer.WriteEnum(bodyItem.ChangeFlag);
         writer.Write(bodyItem.CreatureId);
@@ -333,7 +232,7 @@ public class SubsystemBodyPackage : IPackage
         }
     }
 
-    private struct BodyItem
+    public struct BodyItem
     {
         public int CreatureId;
 

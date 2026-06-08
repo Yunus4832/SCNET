@@ -3,9 +3,9 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class SubsystemPlayersPackage : IPackage
+public partial class SubsystemPlayersPackage : IPackage
 {
-    private readonly List<ComponentPlayerPackage> _componentPlayerPackageList = [];
+    public readonly List<ComponentPlayerPackage> ComponentPlayerPackageList = [];
 
     public byte ID => (byte)PackageType.SubsystemPlayers;
 
@@ -19,48 +19,38 @@ public class SubsystemPlayersPackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        lock (_componentPlayerPackageList)
+        lock (ComponentPlayerPackageList)
         {
-            _componentPlayerPackageList.Clear();
+            ComponentPlayerPackageList.Clear();
             var count = reader.ReadInt32();
             for (var index = 0; index < count; index++)
             {
                 var componentPlayerPackage = new ComponentPlayerPackage();
                 componentPlayerPackage.ReadData(reader);
                 componentPlayerPackage.NeedHandleMainPlayer = false;
-                _componentPlayerPackageList.Add(componentPlayerPackage);
+                ComponentPlayerPackageList.Add(componentPlayerPackage);
             }
         }
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        lock (_componentPlayerPackageList)
+        lock (ComponentPlayerPackageList)
         {
-            writer.Write(_componentPlayerPackageList.Count);
-            foreach (var package in _componentPlayerPackageList)
+            writer.Write(ComponentPlayerPackageList.Count);
+            foreach (var package in ComponentPlayerPackageList)
             {
                 package.WriteData(writer);
             }
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        lock (_componentPlayerPackageList)
-        {
-            foreach (var package in _componentPlayerPackageList)
-            {
-                package.Handle(netNode, isServer);
-            }
-        }
-    }
 
     public void AddPackage(ComponentPlayerPackage componentPlayerPackage)
     {
-        lock (_componentPlayerPackageList)
+        lock (ComponentPlayerPackageList)
         {
-            _componentPlayerPackageList.Add(componentPlayerPackage);
+            ComponentPlayerPackageList.Add(componentPlayerPackage);
         }
     }
 }

@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ComponentHealthPackage : IPackage
+public partial class ComponentHealthPackage : IPackage
 {
     public enum EventType
     {
@@ -23,29 +23,29 @@ public class ComponentHealthPackage : IPackage
         Fire // 着火
     }
 
-    private float _amount;
+    public float Amount;
 
-    private int _attackerId;
+    public int AttackerId;
 
-    private Color _color;
+    public Color Color;
 
     public string Cause = string.Empty;
 
-    private float _health;
+    public float Health;
 
-    private bool _ignoreInvulnerability;
+    public bool IgnoreInvulnerability;
 
-    private Vector3 _position;
+    public Vector3 Position;
 
-    private RequestInjureType _requestInjureType;
+    public RequestInjureType InjureRequestType;
 
-    private int _targetId;
+    public int TargetId;
 
-    private string _text = string.Empty;
+    public string Text = string.Empty;
 
-    private EventType _type;
+    public EventType Type;
 
-    private Vector3 _velocity;
+    public Vector3 Velocity;
 
     public byte ID => (byte)PackageType.ComponentHealth;
 
@@ -63,16 +63,16 @@ public class ComponentHealthPackage : IPackage
 
     public ComponentHealthPackage(ComponentHealth health)
     {
-        _targetId = health.Entity.EntityId;
-        _health = health.Health;
-        _type = EventType.SyncHealth;
+        TargetId = health.Entity.EntityId;
+        Health = health.Health;
+        Type = EventType.SyncHealth;
     }
 
     public ComponentHealthPackage(ComponentDamage health)
     {
-        _targetId = health.Entity.EntityId;
-        _health = health.HitPoints;
-        _type = EventType.Damage;
+        TargetId = health.Entity.EntityId;
+        Health = health.HitPoints;
+        Type = EventType.Damage;
     }
 
     public ComponentHealthPackage(
@@ -85,183 +85,102 @@ public class ComponentHealthPackage : IPackage
         RequestInjureType requestInjureType = RequestInjureType.Unknown
     )
     {
-        _type = isRequest ? EventType.RequestInjure : EventType.Injure;
-        _amount = amount;
-        _attackerId = attacker == null ? 0 : attacker.Entity.EntityId;
-        _health = target.Health;
-        _targetId = target.Entity.EntityId;
+        Type = isRequest ? EventType.RequestInjure : EventType.Injure;
+        Amount = amount;
+        AttackerId = attacker == null ? 0 : attacker.Entity.EntityId;
+        Health = target.Health;
+        TargetId = target.Entity.EntityId;
         Cause = cause;
-        _ignoreInvulnerability = ignoreInvulnerability;
-        _requestInjureType = requestInjureType;
+        IgnoreInvulnerability = ignoreInvulnerability;
+        InjureRequestType = requestInjureType;
     }
 
     public ComponentHealthPackage(Vector3 position, Vector3 velocity, Color color, string text)
     {
-        _position = position;
-        _velocity = velocity;
-        _color = color;
-        _text = text;
-        _type = EventType.HitResult;
+        Position = position;
+        Velocity = velocity;
+        Color = color;
+        Text = text;
+        Type = EventType.HitResult;
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_type);
-        switch (_type)
+        writer.WriteEnum(Type);
+        switch (Type)
         {
             case EventType.RequestInjure:
-                writer.Write(_targetId);
-                writer.Write(_attackerId);
-                writer.Write(_health);
-                writer.Write(_ignoreInvulnerability);
-                writer.Write(_amount);
+                writer.Write(TargetId);
+                writer.Write(AttackerId);
+                writer.Write(Health);
+                writer.Write(IgnoreInvulnerability);
+                writer.Write(Amount);
                 writer.Write(Cause);
-                writer.WriteEnum(_requestInjureType);
+                writer.WriteEnum(InjureRequestType);
                 break;
             case EventType.Injure:
-                writer.Write(_targetId);
-                writer.Write(_attackerId);
-                writer.Write(_health);
-                writer.Write(_ignoreInvulnerability);
-                writer.Write(_amount);
+                writer.Write(TargetId);
+                writer.Write(AttackerId);
+                writer.Write(Health);
+                writer.Write(IgnoreInvulnerability);
+                writer.Write(Amount);
                 writer.Write(Cause);
                 break;
             case EventType.HitResult:
-                writer.Write(_position);
-                writer.Write(_velocity);
-                writer.Write(_color);
-                writer.Write(_text);
+                writer.Write(Position);
+                writer.Write(Velocity);
+                writer.Write(Color);
+                writer.Write(Text);
                 break;
             case EventType.SyncHealth:
-                writer.Write(_targetId);
-                writer.Write(_health);
+                writer.Write(TargetId);
+                writer.Write(Health);
                 break;
             case EventType.Damage:
-                writer.Write(_targetId);
-                writer.Write(_health);
+                writer.Write(TargetId);
+                writer.Write(Health);
                 break;
         }
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _type = reader.ReadEnum<EventType>();
-        switch (_type)
+        Type = reader.ReadEnum<EventType>();
+        switch (Type)
         {
             case EventType.RequestInjure:
-                _targetId = reader.ReadInt32();
-                _attackerId = reader.ReadInt32();
-                _health = reader.ReadSingle();
-                _ignoreInvulnerability = reader.ReadBoolean();
-                _amount = reader.ReadSingle();
+                TargetId = reader.ReadInt32();
+                AttackerId = reader.ReadInt32();
+                Health = reader.ReadSingle();
+                IgnoreInvulnerability = reader.ReadBoolean();
+                Amount = reader.ReadSingle();
                 Cause = reader.ReadString();
-                _requestInjureType = reader.ReadEnum<RequestInjureType>();
+                InjureRequestType = reader.ReadEnum<RequestInjureType>();
                 break;
             case EventType.Injure:
-                _targetId = reader.ReadInt32();
-                _attackerId = reader.ReadInt32();
-                _health = reader.ReadSingle();
-                _ignoreInvulnerability = reader.ReadBoolean();
-                _amount = reader.ReadSingle();
+                TargetId = reader.ReadInt32();
+                AttackerId = reader.ReadInt32();
+                Health = reader.ReadSingle();
+                IgnoreInvulnerability = reader.ReadBoolean();
+                Amount = reader.ReadSingle();
                 Cause = reader.ReadString();
                 break;
             case EventType.HitResult:
-                _position = reader.ReadVector3();
-                _velocity = reader.ReadVector3();
-                _color = reader.ReadColor();
-                _text = reader.ReadString();
+                Position = reader.ReadVector3();
+                Velocity = reader.ReadVector3();
+                Color = reader.ReadColor();
+                Text = reader.ReadString();
                 break;
             case EventType.SyncHealth:
-                _targetId = reader.ReadInt32();
-                _health = reader.ReadSingle();
+                TargetId = reader.ReadInt32();
+                Health = reader.ReadSingle();
                 break;
             case EventType.Damage:
-                _targetId = reader.ReadInt32();
-                _health = reader.ReadSingle();
+                TargetId = reader.ReadInt32();
+                Health = reader.ReadSingle();
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        switch (_type)
-        {
-            case EventType.RequestInjure:
-                project.FindEntityById(_targetId, entity =>
-                {
-                    var health = entity.FindComponent<ComponentHealth>();
-                    if (health == null)
-                    {
-                        return;
-                    }
-
-                    if (_attackerId == 0)
-                    {
-                        health.Injure(_amount, null, _ignoreInvulnerability, Cause);
-                    }
-                    else
-                    {
-                        project.FindEntityById(_attackerId, entity2 =>
-                        {
-                            var attacker = entity2.FindComponent<ComponentCreature>();
-                            health.Injure(_amount, attacker, _ignoreInvulnerability, Cause);
-                        });
-                    }
-                });
-
-                break;
-            case EventType.Injure:
-                project.FindEntityById(_targetId, entity =>
-                {
-                    var health = entity.FindComponent<ComponentHealth>();
-                    ComponentCreature? attacker;
-                    if (health == null)
-                    {
-                        return;
-                    }
-
-                    if (_attackerId == 0)
-                    {
-                        health.NetInjure(_amount, null, Cause);
-                        health.Health = _health;
-                    }
-                    else
-                    {
-                        project.FindEntityById(_attackerId, entity2 =>
-                        {
-                            attacker = entity2.FindComponent<ComponentCreature>();
-                            health.NetInjure(_amount, attacker, Cause);
-                            health.Health = _health;
-                        });
-                    }
-                });
-                break;
-            case EventType.HitResult:
-                var particleSystem = new HitValueParticleSystem(_position, _velocity, _color, _text);
-                var pitch = new Random().Float(-0.2f, 0.2f);
-                project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
-                project.FindSubsystem<SubsystemAudio>(true)!.PlaySound("Audio/Swoosh", 1f, pitch, _position, 3f, false);
-                break;
-            case EventType.SyncHealth:
-                project.FindEntityById(_targetId, e =>
-                {
-                    var h = e.FindComponent<ComponentHealth>();
-                    h?.Health = _health;
-                });
-                break;
-            case EventType.Damage:
-                project.FindEntityById(_targetId, e =>
-                {
-                    var h = e.FindComponent<ComponentDamage>();
-                    h?.HitPoints = _health;
-                });
-                break;
-        }
-    }
 }

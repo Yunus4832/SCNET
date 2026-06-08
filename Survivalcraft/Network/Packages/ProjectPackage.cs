@@ -6,13 +6,13 @@ namespace Game.Network.Packages;
 /// <summary>
 /// 基础包模板复制
 /// </summary>
-public class ProjectPackage : IPackage
+public partial class ProjectPackage : IPackage
 {
-    private readonly bool _hasTexture;
+    public readonly bool HasTexture;
 
-    private byte[] _projectData = [];
+    public byte[] ProjectData = [];
 
-    private byte[] _textureData = [];
+    public byte[] TextureData = [];
 
     public byte ID => (byte)PackageType.Project;
 
@@ -30,38 +30,32 @@ public class ProjectPackage : IPackage
 
     public ProjectPackage(byte[]? textureData, byte[] projectData)
     {
-        _textureData = textureData ?? [];
-        _hasTexture = _textureData.Length > 0;
-        _projectData = projectData;
+        TextureData = textureData ?? [];
+        HasTexture = TextureData.Length > 0;
+        ProjectData = projectData;
     }
 
-
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        var loadingScreen = ScreensManager.FindScreen<GameLoadingScreen>("GameLoading", true)!;
-        loadingScreen.ReplyCall(_hasTexture, _textureData, _projectData);
-    }
 
     public void ReadData(PackageStreamReader reader)
     {
         if (reader.ReadBoolean())
         {
-            _textureData = reader.ReadBytes(reader.ReadInt32());
+            TextureData = reader.ReadBytes(reader.ReadInt32());
         }
 
-        _projectData = reader.ReadBytes(reader.ReadInt32());
+        ProjectData = reader.ReadBytes(reader.ReadInt32());
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_hasTexture);
-        if (_hasTexture)
+        writer.Write(HasTexture);
+        if (HasTexture)
         {
-            writer.Write(_textureData.Length);
-            writer.Write(_textureData);
+            writer.Write(TextureData.Length);
+            writer.Write(TextureData);
         }
 
-        writer.Write(_projectData.Length);
-        writer.Write(_projectData);
+        writer.Write(ProjectData.Length);
+        writer.Write(ProjectData);
     }
 }

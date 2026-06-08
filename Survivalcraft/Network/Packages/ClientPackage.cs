@@ -6,9 +6,9 @@ namespace Game.Network.Packages;
 /// <summary>
 /// 基础包模板复制
 /// </summary>
-public class ClientPackage : IPackage
+public partial class ClientPackage : IPackage
 {
-    private enum EventType
+    public enum EventType
     {
         Add,
         Remove,
@@ -16,11 +16,11 @@ public class ClientPackage : IPackage
         StateChange
     }
 
-    private EventType _eventType;
+    public EventType PackageEventType;
 
-    private Client? _client;
+    public Client? Client;
 
-    private List<Client> _list = [];
+    public List<Client> List = [];
 
     public byte ID => (byte)PackageType.Client;
 
@@ -38,20 +38,20 @@ public class ClientPackage : IPackage
 
     public ClientPackage(byte id, Guid tokenId, Guid guid, string communityId, string nickname)
     {
-        _eventType = EventType.Add;
-        _client = new Client(null, id, tokenId, guid, null, communityId, nickname);
+        PackageEventType = EventType.Add;
+        Client = new Client(null, id, tokenId, guid, null, communityId, nickname);
     }
 
     public ClientPackage(byte id)
     {
-        _eventType = EventType.Remove;
-        _client = new Client(null, id, Guid.Empty, Guid.Empty, null, string.Empty, string.Empty);
+        PackageEventType = EventType.Remove;
+        Client = new Client(null, id, Guid.Empty, Guid.Empty, null, string.Empty, string.Empty);
     }
 
     public ClientPackage(byte id, ClientState clientState)
     {
-        _eventType = EventType.StateChange;
-        _client = new Client(null, id, Guid.Empty, Guid.Empty, null, string.Empty, string.Empty)
+        PackageEventType = EventType.StateChange;
+        Client = new Client(null, id, Guid.Empty, Guid.Empty, null, string.Empty, string.Empty)
         {
             State = clientState
         };
@@ -59,99 +59,33 @@ public class ClientPackage : IPackage
 
     public ClientPackage(IEnumerable<Client> clients)
     {
-        _list.AddRange(clients);
-        _eventType = EventType.SyncList;
+        List.AddRange(clients);
+        PackageEventType = EventType.SyncList;
     }
 
-
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        switch (_eventType)
-        {
-            case EventType.Add:
-                if (GameManager.Project is null)
-                {
-                    return;
-                }
-
-                var project = GameManager.Project;
-                netNode.AddClient(new Client(From?.Peer, _client!.ID, _client.TokenId, _client.GUID, project,
-                    _client.CommunityAccountId, _client.Nickname));
-                break;
-            case EventType.Remove:
-                if (netNode.Clients.ContainsKey(_client!.ID))
-                {
-                    var client = netNode.Clients[_client.ID];
-                    client.State = ClientState.NotConnected;
-                    netNode.OnClientStateChanged?.Invoke(client);
-                    netNode.Clients.Remove(_client.ID);
-                }
-
-                break;
-            case EventType.SyncList:
-                foreach (var c in _list)
-                {
-                    if (c.ID == 0)
-                    {
-                        c.Peer = From?.Peer;
-                        c.Peer?.Tag = c;
-                        netNode.Server = From;
-                    }
-                    else
-                    {
-                        if (c.TokenId == CommonLib.Net.TokenId)
-                        {
-                            netNode.Self = c;
-                        }
-                    }
-
-                    netNode.AddClient(c);
-                }
-
-                if (netNode.Self == null)
-                {
-                    throw new Exception("Cannot find Self In Client List");
-                }
-
-                netNode.CurrentStage = NetNode.Stage.Connected;
-                break;
-            case EventType.StateChange:
-                if (netNode.Clients.TryGetValue(_client!.ID, out var nodeClient))
-                {
-                    From = nodeClient;
-                    if (From.State != _client.State)
-                    {
-                        From.State = _client.State;
-                        netNode.OnClientStateChanged?.Invoke(From);
-                    }
-                }
-
-                break;
-        }
-    }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _eventType = reader.ReadEnum<EventType>();
-        switch (_eventType)
+        PackageEventType = reader.ReadEnum<EventType>();
+        switch (PackageEventType)
         {
             case EventType.Add:
-                _client = ReadItem(reader);
+                Client = ReadItem(reader);
                 break;
             case EventType.Remove:
-                _client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null, string.Empty, string.Empty);
+                Client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null, string.Empty, string.Empty);
                 break;
             case EventType.SyncList:
-                _list = [];
+                List = [];
                 var count = reader.ReadByte();
                 for (var i = 0; i < count; i++)
                 {
-                    _list.Add(ReadItem(reader));
+                    List.Add(ReadItem(reader));
                 }
 
                 break;
             case EventType.StateChange:
-                _client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null, string.Empty, string.Empty)
+                Client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null, string.Empty, string.Empty)
                 {
                     State = reader.ReadEnum<ClientState>()
                 };
@@ -161,31 +95,31 @@ public class ClientPackage : IPackage
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_eventType);
-        switch (_eventType)
+        writer.WriteEnum(PackageEventType);
+        switch (PackageEventType)
         {
             case EventType.Add:
-                WriteItem(writer, _client!);
+                WriteItem(writer, Client!);
                 break;
             case EventType.Remove:
-                writer.Write(_client!.ID);
+                writer.Write(Client!.ID);
                 break;
             case EventType.SyncList:
-                writer.Write((byte)_list.Count);
-                foreach (var c in _list)
+                writer.Write((byte)List.Count);
+                foreach (var c in List)
                 {
                     WriteItem(writer, c);
                 }
 
                 break;
             case EventType.StateChange:
-                writer.Write(_client!.ID);
-                writer.WriteEnum(_client.State);
+                writer.Write(Client!.ID);
+                writer.WriteEnum(Client.State);
                 break;
         }
     }
 
-    private void WriteItem(PackageStreamWriter writer, Client client)
+    public void WriteItem(PackageStreamWriter writer, Client client)
     {
         writer.Write(client.ID);
         writer.Write(client.TokenId);
@@ -194,7 +128,7 @@ public class ClientPackage : IPackage
         writer.Write(client.Nickname);
     }
 
-    private Client ReadItem(PackageStreamReader reader)
+    public Client ReadItem(PackageStreamReader reader)
     {
         return new Client(null, reader.ReadByte(), reader.ReadGuid(), reader.ReadGuid(), null, reader.ReadString(),
             reader.ReadString());

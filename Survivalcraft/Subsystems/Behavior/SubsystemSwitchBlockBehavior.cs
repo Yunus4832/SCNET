@@ -26,7 +26,7 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
                     CommonLib.Net.QueuePackage(p);
                     if (CommonLib.WorkType != WorkType.Client)
                     {
-                        p.Handle(CommonLib.Net, false);
+                        PackageDispatcher.Handle(p, CommonLib.Net, false);
                     }
                 }
             }));
@@ -55,7 +55,7 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
                     CommonLib.Net.QueuePackage(p);
                     if (CommonLib.WorkType != WorkType.Client)
                     {
-                        p.Handle(CommonLib.Net, false);
+                        PackageDispatcher.Handle(p, CommonLib.Net, false);
                     }
                 }
             )

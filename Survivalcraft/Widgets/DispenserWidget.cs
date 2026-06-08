@@ -99,7 +99,7 @@ public class DispenserWidget : CanvasWidget
             CommonLib.Net.QueuePackage(p);
             if (CommonLib.WorkType != WorkType.Client)
             {
-                p.Handle(CommonLib.Net, false);
+                PackageDispatcher.Handle(p, CommonLib.Net, false);
             }
         }
 

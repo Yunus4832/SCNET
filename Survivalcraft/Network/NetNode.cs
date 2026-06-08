@@ -122,8 +122,9 @@ public class NetNode
         throw new Exception("服务器连接人数已满");
     }
 
-
-    // 创建客户
+    /// <summary>
+    /// 创建客户端
+    /// </summary>
     public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname)
     {
         if (!IsServer)
@@ -336,7 +337,7 @@ public class NetNode
                 packageItem.From?.IsLocalRemote = fromBroadcast;
                 try
                 {
-                    packageItem.Handle(this, IsServer);
+                    PackageDispatcher.Handle(packageItem, this, IsServer);
                 }
                 catch (Exception e)
                 {
@@ -415,7 +416,7 @@ public class NetNode
         try
         {
             var rejectPackage = PackageManager.DecodePackage<ConnectionRejectPackage>(this, reader, null, null, sender);
-            rejectPackage.Handle(this, IsServer);
+            PackageDispatcher.Handle(rejectPackage, this, IsServer);
         }
         catch
         {
@@ -448,7 +449,7 @@ public class NetNode
             {
                 var requestPackage =
                     PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Data, null, request);
-                requestPackage.Handle(this, true);
+                PackageDispatcher.Handle(requestPackage, this, true);
             }
             catch (Exception e)
             {
@@ -684,7 +685,7 @@ public class NetNode
             {
                 try
                 {
-                    c.Handle(node, IsServer);
+                    PackageDispatcher.Handle(c, node, IsServer);
                 }
                 catch (Exception e)
                 {

@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ComponentSicknessPackage : IPackage
+public partial class ComponentSicknessPackage : IPackage
 {
     public enum EventType
     {
@@ -11,9 +11,9 @@ public class ComponentSicknessPackage : IPackage
         NauseaEffect
     }
 
-    private int _entityId;
+    public int EntityId;
 
-    private float _sicknessDuration;
+    public float SicknessDuration;
 
     public byte ID => (byte)PackageType.ComponentSickness;
 
@@ -31,44 +31,22 @@ public class ComponentSicknessPackage : IPackage
 
     public ComponentSicknessPackage(ComponentSickness sickness)
     {
-        _entityId = sickness.Entity.EntityId;
-        _sicknessDuration = sickness.SicknessDuration;
+        EntityId = sickness.Entity.EntityId;
+        SicknessDuration = sickness.SicknessDuration;
     }
 
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_entityId);
-        writer.Write(_sicknessDuration);
+        writer.Write(EntityId);
+        writer.Write(SicknessDuration);
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _entityId = reader.ReadInt32();
-        _sicknessDuration = reader.ReadSingle();
+        EntityId = reader.ReadInt32();
+        SicknessDuration = reader.ReadSingle();
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        project.FindEntityById(_entityId, entity =>
-        {
-            var sickness = entity.FindComponent<ComponentSickness>();
-            if (sickness == null)
-            {
-                return;
-            }
-
-            sickness.SicknessDuration = _sicknessDuration;
-            if (_sicknessDuration > 0f)
-            {
-                sickness.NauseaEffect();
-            }
-        });
-    }
 }

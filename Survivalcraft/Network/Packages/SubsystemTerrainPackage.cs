@@ -11,7 +11,7 @@ public struct CellChange
     public int Value;
 }
 
-public class SubsystemTerrainPackage : IPackage
+public partial class SubsystemTerrainPackage : IPackage
 {
     public enum DataType
     {
@@ -23,25 +23,25 @@ public class SubsystemTerrainPackage : IPackage
         ChangeCellList // 有这个的话，后面创世神，命令方块处理方块就不用一个包一个包的发了
     }
 
-    private readonly List<CellChange> _cellChanges = [];
+    public readonly List<CellChange> CellChanges = [];
 
     public int[] Cells = [];
 
     public List<TerrainChunk> Chunks = [];
 
-    private List<Point3> _modifyCells = [];
+    public List<Point3> ModifyCells = [];
 
-    private List<int> _modifyValues = [];
+    public List<int> ModifyValues = [];
 
-    private DataType _type;
+    public DataType Type;
 
-    private int _value;
+    public int Value;
 
-    private int _x;
+    public int X;
 
-    private int _y;
+    public int Y;
 
-    private int _z;
+    public int Z;
 
     public List<Point2> RelateChunks = [];
 
@@ -63,41 +63,41 @@ public class SubsystemTerrainPackage : IPackage
 
     public SubsystemTerrainPackage(List<Point2> points)
     {
-        _type = DataType.RequestSyncChunks;
+        Type = DataType.RequestSyncChunks;
         RelateChunks.AddRange(points);
     }
 
     public SubsystemTerrainPackage(List<Point2> resultPoints, byte r)
     {
-        _type = DataType.ReplyResult;
+        Type = DataType.ReplyResult;
         RelateChunks.AddRange(resultPoints);
     }
 
     public SubsystemTerrainPackage(List<TerrainChunk> chunks)
     {
-        _type = DataType.SyncTerrainChunkList;
+        Type = DataType.SyncTerrainChunkList;
         Chunks.AddRange(chunks);
     }
 
     public SubsystemTerrainPackage(List<CellChange> changeList)
     {
-        _cellChanges = changeList;
-        _type = DataType.ChangeCellList;
+        CellChanges = changeList;
+        Type = DataType.ChangeCellList;
     }
 
     public SubsystemTerrainPackage(int x, int y, int z, int v, bool request = false)
     {
-        _type = request ? DataType.RequestChangeCell : DataType.ChangeCell;
-        _x = x;
-        _y = y;
-        _z = z;
-        _value = v;
+        Type = request ? DataType.RequestChangeCell : DataType.ChangeCell;
+        X = x;
+        Y = y;
+        Z = z;
+        Value = v;
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write((byte)_type);
-        switch (_type)
+        writer.Write((byte)Type);
+        switch (Type)
         {
             case DataType.RequestSyncChunks:
                 writer.Write(RelateChunks.Count);
@@ -117,10 +117,10 @@ public class SubsystemTerrainPackage : IPackage
                 break;
             case DataType.RequestChangeCell:
             case DataType.ChangeCell:
-                writer.Write(_x);
-                writer.Write(_y);
-                writer.Write(_z);
-                writer.Write(_value);
+                writer.Write(X);
+                writer.Write(Y);
+                writer.Write(Z);
+                writer.Write(Value);
                 break;
             case DataType.ReplyResult:
                 writer.Write((ushort)RelateChunks.Count);
@@ -131,8 +131,8 @@ public class SubsystemTerrainPackage : IPackage
 
                 break;
             case DataType.ChangeCellList:
-                writer.Write(_cellChanges.Count);
-                foreach (var cellChange in _cellChanges)
+                writer.Write(CellChanges.Count);
+                foreach (var cellChange in CellChanges)
                 {
                     writer.Write(cellChange.X);
                     writer.Write(cellChange.Y);
@@ -146,8 +146,8 @@ public class SubsystemTerrainPackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        _type = (DataType)reader.ReadByte();
-        switch (_type)
+        Type = (DataType)reader.ReadByte();
+        switch (Type)
         {
             case DataType.RequestSyncChunks:
                 RelateChunks = new List<Point2>();
@@ -169,10 +169,10 @@ public class SubsystemTerrainPackage : IPackage
                 break;
             case DataType.RequestChangeCell:
             case DataType.ChangeCell:
-                _x = reader.ReadInt32();
-                _y = reader.ReadInt32();
-                _z = reader.ReadInt32();
-                _value = reader.ReadInt32();
+                X = reader.ReadInt32();
+                Y = reader.ReadInt32();
+                Z = reader.ReadInt32();
+                Value = reader.ReadInt32();
                 break;
             case DataType.ReplyResult:
                 RelateChunks = new List<Point2>();
@@ -192,94 +192,13 @@ public class SubsystemTerrainPackage : IPackage
                     cellChange.Y = reader.ReadInt32();
                     cellChange.Z = reader.ReadInt32();
                     cellChange.Value = reader.ReadInt32();
-                    _cellChanges.Add(cellChange);
+                    CellChanges.Add(cellChange);
                 }
 
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-        var subsystemTerrain = project.FindSubsystem<SubsystemTerrain>(true)!;
-        switch (_type)
-        {
-            case DataType.RequestSyncChunks:
-                if(From is null)
-                {
-                    break;
-                }
-
-                if (!subsystemTerrain.TerrainUpdater.WaitChunkList.TryGetValue(From, out var list))
-                {
-                    list = [];
-                    subsystemTerrain.TerrainUpdater.WaitChunkList.Add(From, list);
-                }
-
-                list.AddRange(RelateChunks);
-                break;
-            case DataType.SyncTerrainChunkList:
-                foreach (var c in Chunks)
-                {
-                    ApplyOneChunk(subsystemTerrain, c);
-                }
-
-                break;
-            case DataType.RequestChangeCell:
-            case DataType.ChangeCell:
-            {
-                var chunkX = _x >> 4;
-                var chunkZ = _z >> 4;
-                var chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
-                if (chunk != null)
-                {
-                    if (_type == DataType.RequestChangeCell)
-                    {
-                        subsystemTerrain.ChangeCell(_x, _y, _z, _value);
-                    }
-                    else
-                    {
-                        subsystemTerrain.ChangeCellNet(_x, _y, _z, _value);
-                    }
-                }
-            }
-                break;
-            case DataType.ReplyResult:
-                foreach (var p in RelateChunks)
-                {
-                    var chunk2 = subsystemTerrain.Terrain.GetChunkAtCoords(p.X, p.Y);
-                    if (chunk2 == null)
-                    {
-                        continue;
-                    }
-
-                    chunk2.IsRequested = false;
-                    chunk2.WasUpgraded = true;
-                    chunk2.WasDowngraded = true;
-                }
-
-                break;
-            case DataType.ChangeCellList:
-                foreach (var cellChange in _cellChanges)
-                {
-                    var chunkX = cellChange.X >> 4;
-                    var chunkZ = cellChange.Y >> 4;
-                    var chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
-                    if (chunk != null)
-                    {
-                        subsystemTerrain.ChangeCellNet(cellChange.X, cellChange.Y, cellChange.Z, cellChange.Value);
-                    }
-                }
-
-                break;
-        }
-    }
 
     public void WriteOneChunk(PackageStreamWriter writer, TerrainChunk chunk)
     {

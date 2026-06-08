@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ComponentClothingPackage : IPackage
+public partial class ComponentClothingPackage : IPackage
 {
     public enum DataType
     {
@@ -13,9 +13,9 @@ public class ComponentClothingPackage : IPackage
         WhoHasReply //客户回应请求
     }
 
-    private byte[] _skinData = [];
+    public byte[] SkinData = [];
 
-    private DataType _type;
+    public DataType Type;
 
     public string SkinName = string.Empty;
 
@@ -36,7 +36,7 @@ public class ComponentClothingPackage : IPackage
 
     public ComponentClothingPackage(string skinName, DataType type)
     {
-        _type = type;
+        Type = type;
         SkinName = skinName;
         if (!CharacterSkinsManager.HasSkinRes(SkinName))
         {
@@ -46,13 +46,13 @@ public class ComponentClothingPackage : IPackage
         using var stream =
             Storage.OpenFile(Storage.CombinePaths(ModsManager.CharacterSkinsDirectoryName, skinName),
                 OpenFileMode.Read);
-        _skinData = ModsManager.StreamToBytes(stream);
+        SkinData = ModsManager.StreamToBytes(stream);
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_type);
-        switch (_type)
+        writer.WriteEnum(Type);
+        switch (Type)
         {
             case DataType.WhoHas:
             case DataType.RequestSkin:
@@ -61,16 +61,16 @@ public class ComponentClothingPackage : IPackage
             case DataType.WhoHasReply:
             case DataType.ReplySkin:
                 writer.Write(SkinName);
-                writer.Write(_skinData.Length);
-                writer.Write(_skinData);
+                writer.Write(SkinData.Length);
+                writer.Write(SkinData);
                 break;
         }
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _type = reader.ReadEnum<DataType>();
-        switch (_type)
+        Type = reader.ReadEnum<DataType>();
+        switch (Type)
         {
             case DataType.WhoHas:
             case DataType.RequestSkin:
@@ -80,48 +80,10 @@ public class ComponentClothingPackage : IPackage
             case DataType.ReplySkin:
                 SkinName = reader.ReadString();
                 var len = reader.ReadInt32();
-                _skinData = reader.ReadBytes(len);
+                SkinData = reader.ReadBytes(len);
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        switch (_type)
-        {
-            case DataType.RequestSkin:
-                if (CharacterSkinsManager.HasSkinRes(SkinName))
-                {
-                    netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.ReplySkin));
-                }
-                else
-                {
-                    if (!CharacterSkinsManager.WaitReplyList.Contains(SkinName))
-                    {
-                        netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHas));
-                        CharacterSkinsManager.WaitReplyList.Add(SkinName);
-                    }
-                }
 
-                break;
-            //储存回复的资源
-            case DataType.WhoHasReply:
-            case DataType.ReplySkin:
-                if (CharacterSkinsManager.WaitReplyList.Contains(SkinName))
-                {
-                    CharacterSkinsManager.WaitReplyList.Remove(SkinName);
-                }
-
-                CharacterSkinsManager.SaveSkinToFile(SkinName, _skinData);
-                break;
-            //响应谁有这个资源
-            case DataType.WhoHas:
-                if (CharacterSkinsManager.HasSkinRes(SkinName))
-                {
-                    netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHasReply));
-                }
-
-                break;
-        }
-    }
 }

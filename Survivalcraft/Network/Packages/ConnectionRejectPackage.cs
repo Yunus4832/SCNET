@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ConnectionRejectPackage : IPackage
+public partial class ConnectionRejectPackage : IPackage
 {
     public string Reason = string.Empty;
 
@@ -26,12 +26,6 @@ public class ConnectionRejectPackage : IPackage
         Reason = r;
     }
 
-
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        ModFileService.Utils.HandleModDataValidationMessage(Reason);
-        netNode.Stop($"[连接拒绝]{Reason}");
-    }
 
     public void ReadData(PackageStreamReader reader)
     {

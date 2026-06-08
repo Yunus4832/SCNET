@@ -5,7 +5,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class EntityPackage : IPackage
+public partial class EntityPackage : IPackage
 {
     public enum EventType
     {
@@ -15,13 +15,13 @@ public class EntityPackage : IPackage
         RequestSync
     }
 
-    private List<Entity> _entities = [];
+    public List<Entity> Entities = [];
 
-    private int _entityId;
+    public int EntityId;
 
-    private List<int> _entityIdList = [];
+    public List<int> EntityIdList = [];
 
-    private EventType _type;
+    public EventType Type;
 
     public byte ID => (byte)PackageType.Entity;
 
@@ -40,43 +40,43 @@ public class EntityPackage : IPackage
 
     public EntityPackage(int id)
     {
-        _type = EventType.Remove;
-        _entityId = id;
+        Type = EventType.Remove;
+        EntityId = id;
     }
 
     public EntityPackage(List<int> idList)
     {
-        _type = EventType.RequestSync;
-        _entityIdList.AddRange(idList);
+        Type = EventType.RequestSync;
+        EntityIdList.AddRange(idList);
     }
 
     public EntityPackage(Entity entity)
     {
-        _type = EventType.LoadOne;
-        _entities = [entity];
+        Type = EventType.LoadOne;
+        Entities = [entity];
     }
 
     public EntityPackage(List<Entity> entities)
     {
-        _type = EventType.LoadList;
-        _entities.AddRange(entities);
+        Type = EventType.LoadList;
+        Entities.AddRange(entities);
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_type);
-        switch (_type)
+        writer.WriteEnum(Type);
+        switch (Type)
         {
             case EventType.LoadOne:
             case EventType.LoadList:
-                writer.WriteEntityLoadList(_entities);
+                writer.WriteEntityLoadList(Entities);
                 break;
             case EventType.Remove:
-                writer.Write(_entityId);
+                writer.Write(EntityId);
                 break;
             case EventType.RequestSync:
-                writer.Write((ushort)_entityIdList.Count);
-                foreach (var e in _entityIdList)
+                writer.Write((ushort)EntityIdList.Count);
+                foreach (var e in EntityIdList)
                 {
                     writer.Write(e);
                 }
@@ -87,77 +87,30 @@ public class EntityPackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        _type = reader.ReadEnum<EventType>();
-        switch (_type)
+        Type = reader.ReadEnum<EventType>();
+        switch (Type)
         {
             case EventType.LoadOne:
             case EventType.LoadList:
-                _entities = reader.ReadEntityLoadList();
+                Entities = reader.ReadEntityLoadList();
                 break;
             case EventType.Remove:
-                _entityId = reader.ReadInt32();
+                EntityId = reader.ReadInt32();
                 break;
             case EventType.RequestSync:
                 var m = reader.ReadUInt16();
-                _entityIdList = [];
+                EntityIdList = [];
                 for (var i = 0; i < m; i++)
                 {
-                    _entityIdList.Add(reader.ReadInt32());
+                    EntityIdList.Add(reader.ReadInt32());
                 }
 
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        var el = new List<Entity>();
-        switch (_type)
-        {
-            case EventType.LoadOne:
-            case EventType.LoadList:
-                foreach (var e in _entities)
-                    //如果本地ID没有重复的添加，重复了进行替换
-                {
-                    if (!project.FindEntityById(e.EntityId, e2 =>
-                        {
-                            project.RemoveEntity(e2, true);
-                            project.AddEntity(e);
-                        }))
-                    {
-                        el.Add(e);
-                    }
-                }
-
-                project.AddEntities(el);
-                break;
-            case EventType.Remove:
-                project.FindEntityById(_entityId, entity => { project.RemoveEntity(entity, true); });
-                break;
-            case EventType.RequestSync:
-                foreach (var e in _entityIdList)
-                {
-                    project.FindEntityById(e, entity =>
-                    {
-                        if (ShouldSendEntityToClients(entity))
-                        {
-                            el.Add(entity);
-                        }
-                    });
-                }
-
-                netNode.QueuePackage(new EntityPackage(el) { To = From });
-                break;
-        }
-    }
-
-    private static bool ShouldSendEntityToClients(Entity entity)
+    public static bool ShouldSendEntityToClients(Entity entity)
     {
         if (RunMode.Value is RunModeType.Gui)
         {

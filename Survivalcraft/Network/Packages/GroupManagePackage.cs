@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class GroupManagePackage : IPackage
+public partial class GroupManagePackage : IPackage
 {
     public enum CommandType
     {
@@ -15,17 +15,17 @@ public class GroupManagePackage : IPackage
         RenameGroup
     }
 
-    private CommandType _command;
+    public CommandType Command;
 
-    private Guid _fromPlayer;
+    public Guid FromPlayer;
 
-    private Guid _groupKey;
+    public Guid GroupKey;
 
-    private string _groupName = string.Empty;
+    public string GroupName = string.Empty;
 
-    private bool _result;
+    public bool Result;
 
-    private Guid _toPlayer;
+    public Guid ToPlayer;
 
     public byte ID => (byte)PackageType.GroupManage;
 
@@ -43,10 +43,10 @@ public class GroupManagePackage : IPackage
 
     public GroupManagePackage(Guid from, string name, bool r)
     {
-        _command = CommandType.CreateGroup;
-        _fromPlayer = from;
-        _result = r;
-        _groupName = name;
+        Command = CommandType.CreateGroup;
+        FromPlayer = from;
+        Result = r;
+        GroupName = name;
     }
 
     /// <summary>
@@ -57,9 +57,9 @@ public class GroupManagePackage : IPackage
     /// <param name="joinOrExit">true加入 false退出</param>
     public GroupManagePackage(Guid groupKey, Guid from, bool joinOrExit)
     {
-        _command = joinOrExit ? CommandType.JoinGroup : CommandType.ExitGroup;
-        _fromPlayer = from;
-        this._groupKey = groupKey;
+        Command = joinOrExit ? CommandType.JoinGroup : CommandType.ExitGroup;
+        FromPlayer = from;
+        this.GroupKey = groupKey;
     }
 
     /// <summary>
@@ -71,32 +71,32 @@ public class GroupManagePackage : IPackage
     /// <param name="isInvite">true 邀请 false 申请</param>
     public GroupManagePackage(Guid groupKey, Guid from, Guid to, bool isInvite = true)
     {
-        _command = isInvite ? CommandType.InviteJoinGroup : CommandType.RequestJoinGroup;
-        _fromPlayer = from;
-        _toPlayer = to;
-        this._groupKey = groupKey;
+        Command = isInvite ? CommandType.InviteJoinGroup : CommandType.RequestJoinGroup;
+        FromPlayer = from;
+        ToPlayer = to;
+        this.GroupKey = groupKey;
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_command);
-        switch (_command)
+        writer.WriteEnum(Command);
+        switch (Command)
         {
             case CommandType.CreateGroup:
-                writer.Write(_fromPlayer);
-                writer.Write(_result);
-                writer.Write(_groupName);
+                writer.Write(FromPlayer);
+                writer.Write(Result);
+                writer.Write(GroupName);
                 break;
             case CommandType.RequestJoinGroup:
             case CommandType.InviteJoinGroup:
-                writer.Write(_toPlayer);
-                writer.Write(_fromPlayer);
-                writer.Write(_groupKey);
+                writer.Write(ToPlayer);
+                writer.Write(FromPlayer);
+                writer.Write(GroupKey);
                 break;
             case CommandType.JoinGroup:
             case CommandType.ExitGroup:
-                writer.Write(_fromPlayer);
-                writer.Write(_groupKey);
+                writer.Write(FromPlayer);
+                writer.Write(GroupKey);
                 break;
             case CommandType.RenameGroup:
                 break;
@@ -105,135 +105,30 @@ public class GroupManagePackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        _command = reader.ReadEnum<CommandType>();
-        switch (_command)
+        Command = reader.ReadEnum<CommandType>();
+        switch (Command)
         {
             case CommandType.CreateGroup:
-                _fromPlayer = reader.ReadGuid();
-                _result = reader.ReadBoolean();
-                _groupName = reader.ReadString();
+                FromPlayer = reader.ReadGuid();
+                Result = reader.ReadBoolean();
+                GroupName = reader.ReadString();
                 break;
             case CommandType.RequestJoinGroup:
             case CommandType.InviteJoinGroup:
-                _toPlayer = reader.ReadGuid();
-                _fromPlayer = reader.ReadGuid();
-                _groupKey = reader.ReadGuid();
+                ToPlayer = reader.ReadGuid();
+                FromPlayer = reader.ReadGuid();
+                GroupKey = reader.ReadGuid();
                 break;
             case CommandType.JoinGroup:
             case CommandType.ExitGroup:
-                _fromPlayer = reader.ReadGuid();
-                _groupKey = reader.ReadGuid();
+                FromPlayer = reader.ReadGuid();
+                GroupKey = reader.ReadGuid();
                 break;
             case CommandType.RenameGroup:
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-        var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
-
-        switch (_command)
-        {
-            case CommandType.CreateGroup:
-                CreateGroup(isServer, subsystemPlayers, netNode, _fromPlayer, _groupName);
-                break;
-            case CommandType.RequestJoinGroup:
-                if (subsystemPlayers.ServerGroups.TryGetValue(_groupKey.ToString(), out _))
-                {
-                    var fromPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == _fromPlayer);
-                    var toPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == _toPlayer);
-                    if (fromPlayerData != null && toPlayerData is { IsMainPlayer: true })
-                    {
-                        DialogsManager.Confirm(
-                            $"{fromPlayerData.Name}申请加入你的队伍，是否同意?",
-                            btn =>
-                            {
-                                if (btn != MessageDialogButton.Button1)
-                                {
-                                    return;
-                                }
-
-                                //同意
-                                if (isServer)
-                                {
-                                    JoinGroup(isServer, subsystemPlayers, netNode, fromPlayerData.PlayerGUID,
-                                        _groupKey);
-                                }
-                                else
-                                {
-                                    toPlayerData.GameWidget.NetPanelWidget?.RefreshView();
-                                    netNode.QueuePackage(new GroupManagePackage(_groupKey,
-                                        fromPlayerData.PlayerGUID, true));
-                                }
-                            },
-                            toPlayerData.GameWidget.GuiWidget
-                        );
-                    }
-
-                    if (isServer)
-                    {
-                        Except = From;
-                        netNode.QueuePackage(this);
-                    }
-                }
-
-                break;
-            case CommandType.InviteJoinGroup:
-                if (subsystemPlayers.ServerGroups.TryGetValue(_groupKey.ToString(), out var fromGroup))
-                {
-                    var fromPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == _fromPlayer);
-                    var toPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == _toPlayer);
-                    if (fromPlayerData != null && toPlayerData is { IsMainPlayer: true })
-                    {
-                        DialogsManager.Confirm(
-                            $"{fromPlayerData.Name}想邀请你加入队伍{fromGroup.Name}，是否同意?",
-                            btn =>
-                            {
-                                if (btn != MessageDialogButton.Button1)
-                                {
-                                    return;
-                                }
-
-                                //同意
-                                if (isServer)
-                                {
-                                    JoinGroup(isServer, subsystemPlayers, netNode, _toPlayer, _groupKey);
-                                }
-                                else
-                                {
-                                    toPlayerData.GameWidget.NetPanelWidget?.RefreshView();
-                                    netNode.QueuePackage(new GroupManagePackage(_groupKey, _toPlayer, true));
-                                }
-                            },
-                            toPlayerData.GameWidget.GuiWidget
-                        );
-                    }
-
-                    if (isServer)
-                    {
-                        Except = From;
-                        netNode.QueuePackage(this);
-                    }
-                }
-
-                break;
-            case CommandType.JoinGroup:
-                JoinGroup(isServer, subsystemPlayers, netNode, _fromPlayer, _groupKey);
-                break;
-            case CommandType.ExitGroup:
-                ExitGroup(isServer, subsystemPlayers, netNode, _fromPlayer, _groupKey);
-                break;
-            case CommandType.RenameGroup:
-                break;
-        }
-    }
 
     public static void CreateGroup(bool isServer, SubsystemPlayers subsystemPlayers, NetNode netNode, Guid fromPlayer,
         string groupName)

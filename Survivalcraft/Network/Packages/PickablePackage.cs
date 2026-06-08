@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class PickablePackage : IPackage
+public partial class PickablePackage : IPackage
 {
     public enum PickType
     {
@@ -17,23 +17,23 @@ public class PickablePackage : IPackage
         SyncList
     }
 
-    private byte _count;
+    public byte Count;
 
-    private Vector3? _flyToPosition;
+    public Vector3? FlyToPosition;
 
-    private byte? _getPlayer;
+    public byte? GetPlayer;
 
-    private ushort _id;
+    public ushort Id;
 
-    private readonly List<Pickable> _pickables = [];
+    public readonly List<Pickable> Pickables = [];
 
-    private Vector3 _position;
+    public Vector3 Position;
 
-    private PickType _type;
+    public PickType Type;
 
-    private int _value;
+    public int Value;
 
-    private Vector3 _velocity;
+    public Vector3 Velocity;
 
     public bool PlaySound;
 
@@ -55,28 +55,28 @@ public class PickablePackage : IPackage
 
     public PickablePackage(List<Pickable> pickables, PickType type = PickType.Update)
     {
-        _type = type;
-        _pickables.AddRange(pickables);
+        Type = type;
+        Pickables.AddRange(pickables);
     }
 
     public PickablePackage(Pickable pickable, PickType pickType)
     {
-        _id = pickable.Id;
-        _value = pickable.Value;
-        _count = (byte)pickable.Count;
-        _position = pickable.Position;
-        _velocity = pickable.Velocity;
-        _getPlayer = pickable.GetPickPlayer;
+        Id = pickable.Id;
+        Value = pickable.Value;
+        Count = (byte)pickable.Count;
+        Position = pickable.Position;
+        Velocity = pickable.Velocity;
+        GetPlayer = pickable.GetPickPlayer;
         StuckMatrix = pickable.StuckMatrix;
-        _flyToPosition = pickable.FlyToPosition;
-        _type = pickType;
+        FlyToPosition = pickable.FlyToPosition;
+        Type = pickType;
         PlaySound = pickable.PlaySound;
     }
 
     public PickablePackage(ushort pickId)
     {
-        _id = pickId;
-        _type = PickType.Delete;
+        Id = pickId;
+        Type = PickType.Delete;
     }
 
     public void WriteData(PackageStreamWriter writer)
@@ -87,20 +87,20 @@ public class PickablePackage : IPackage
         }
 
         var subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>(true)!;
-        writer.WriteEnum(_type);
-        switch (_type)
+        writer.WriteEnum(Type);
+        switch (Type)
         {
             case PickType.Create:
-                writer.Write(_id);
-                writer.Write(_count);
-                writer.Write(_value);
-                writer.Write(_position);
-                writer.Write(_velocity);
+                writer.Write(Id);
+                writer.Write(Count);
+                writer.Write(Value);
+                writer.Write(Position);
+                writer.Write(Velocity);
                 writer.Write(StuckMatrix);
                 break;
             case PickType.Update:
-                writer.Write(_pickables.Count);
-                foreach (var t in _pickables)
+                writer.Write(Pickables.Count);
+                foreach (var t in Pickables)
                 {
                     writer.Write(t.Id);
                     writer.Write(t.Position);
@@ -108,20 +108,20 @@ public class PickablePackage : IPackage
 
                 break;
             case PickType.SetFlyToPosition:
-                writer.Write(_id);
-                if (_flyToPosition != null)
+                writer.Write(Id);
+                if (FlyToPosition != null)
                 {
-                    writer.Write(_flyToPosition.Value);
+                    writer.Write(FlyToPosition.Value);
                 }
 
                 break;
             case PickType.Delete:
-                writer.Write(_id);
+                writer.Write(Id);
                 writer.Write(PlaySound);
                 break;
             case PickType.CreateList:
-                writer.Write(_pickables.Count);
-                foreach (var pickable in _pickables)
+                writer.Write(Pickables.Count);
+                foreach (var pickable in Pickables)
                 {
                     writer.Write(pickable.Id);
                     writer.Write(pickable.Count);
@@ -133,15 +133,15 @@ public class PickablePackage : IPackage
 
                 break;
             case PickType.DeleteList:
-                writer.Write(_pickables.Count);
-                foreach (var pickable in _pickables)
+                writer.Write(Pickables.Count);
+                foreach (var pickable in Pickables)
                 {
                     writer.Write(pickable.Id);
                 }
 
                 break;
             case PickType.RequestSync:
-                writer.Write(_id);
+                writer.Write(Id);
                 break;
             case PickType.SyncList:
             {
@@ -163,15 +163,15 @@ public class PickablePackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        _type = reader.ReadEnum<PickType>();
-        switch (_type)
+        Type = reader.ReadEnum<PickType>();
+        switch (Type)
         {
             case PickType.Create:
-                _id = reader.ReadUInt16();
-                _count = reader.ReadByte();
-                _value = reader.ReadInt32();
-                _position = reader.ReadVector3();
-                _velocity = reader.ReadVector3();
+                Id = reader.ReadUInt16();
+                Count = reader.ReadByte();
+                Value = reader.ReadInt32();
+                Position = reader.ReadVector3();
+                Velocity = reader.ReadVector3();
                 StuckMatrix = reader.ReadMatrixNullable();
                 break;
             case PickType.Update:
@@ -184,16 +184,16 @@ public class PickablePackage : IPackage
                         Id = reader.ReadUInt16(),
                         Position = reader.ReadVector3()
                     };
-                    _pickables.Add(pickable);
+                    Pickables.Add(pickable);
                 }
             }
                 break;
             case PickType.SetFlyToPosition:
-                _id = reader.ReadUInt16();
-                _flyToPosition = reader.ReadVector3();
+                Id = reader.ReadUInt16();
+                FlyToPosition = reader.ReadVector3();
                 break;
             case PickType.Delete:
-                _id = reader.ReadUInt16();
+                Id = reader.ReadUInt16();
                 PlaySound = reader.ReadBoolean();
                 break;
             case PickType.CreateList:
@@ -210,7 +210,7 @@ public class PickablePackage : IPackage
                         Velocity = reader.ReadVector3(),
                         StuckMatrix = reader.ReadMatrixNullable()
                     };
-                    _pickables.Add(pickable);
+                    Pickables.Add(pickable);
                 }
             }
                 break;
@@ -223,12 +223,12 @@ public class PickablePackage : IPackage
                     {
                         Id = reader.ReadUInt16()
                     };
-                    _pickables.Add(pickable);
+                    Pickables.Add(pickable);
                 }
             }
                 break;
             case PickType.RequestSync:
-                _id = reader.ReadUInt16();
+                Id = reader.ReadUInt16();
                 break;
             case PickType.SyncList:
             {
@@ -244,110 +244,12 @@ public class PickablePackage : IPackage
                         Velocity = reader.ReadVector3(),
                         StuckMatrix = reader.ReadMatrixNullable()
                     };
-                    _pickables.Add(pickable);
+                    Pickables.Add(pickable);
                 }
             }
                 break;
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        var subsystemPickable = project.FindSubsystem<SubsystemPickables>(true)!;
-        switch (_type)
-        {
-            case PickType.Create:
-                var tmp = subsystemPickable.Pickables.Find(p => p.Id == _id);
-                if (tmp != null)
-                {
-                    tmp.Value = _value;
-                    tmp.Count = _count;
-                    tmp.Velocity = _velocity;
-                    tmp.StuckMatrix = StuckMatrix;
-                }
-                else
-                {
-                    subsystemPickable.CreatePickable(_id, _value, _count, _position, _velocity, StuckMatrix);
-                }
-
-                break;
-            case PickType.Update:
-                foreach (var c in _pickables)
-                {
-                    subsystemPickable.PickableAction(c.Id, pick => { pick.Position = c.Position; });
-                }
-
-                foreach (var c in subsystemPickable.Pickables)
-                {
-                    if (_pickables.Find(x => x.Id == c.Id) == null)
-                    {
-                        subsystemPickable.PickablesToRemove.Add(c);
-                    }
-                }
-
-                break;
-            case PickType.Delete:
-                subsystemPickable.PickableAction(
-                    _id,
-                    pick =>
-                    {
-                        if (PlaySound)
-                        {
-                            subsystemPickable.PlayPickableCollectedSound(pick);
-                        }
-
-                        subsystemPickable.RemovePickable(pick);
-                    },
-                    false
-                );
-                break;
-            case PickType.RequestSync:
-                var flag = subsystemPickable.PickableAction(
-                    _id,
-                    pick => { netNode.QueuePackage(new PickablePackage(pick, PickType.Create) { To = From }); }
-                );
-                if (!flag)
-                {
-                    netNode.QueuePackage(new PickablePackage(_id) { To = From });
-                }
-
-                break;
-            case PickType.SetFlyToPosition:
-                subsystemPickable.PickableAction(_id, pick => { pick.FlyToPosition = _flyToPosition; });
-                break;
-            case PickType.SyncList:
-            case PickType.CreateList:
-                if (isServer)
-                {
-                    break;
-                }
-
-                foreach (var pickable in _pickables)
-                {
-                    subsystemPickable.CreatePickable(pickable.Id, pickable.Value, pickable.Count, pickable.Position,
-                        pickable.Velocity, pickable.StuckMatrix);
-                }
-
-                break;
-            case PickType.DeleteList:
-                if (isServer)
-                {
-                    break;
-                }
-
-                foreach (var pickable in _pickables)
-                {
-                    subsystemPickable.PickableAction(pickable.Id,
-                        pick => { subsystemPickable.RemovePickable(pick); }, false);
-                }
-
-                break;
-        }
-    }
 }

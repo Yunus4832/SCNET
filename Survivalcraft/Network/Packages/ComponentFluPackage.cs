@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ComponentFluPackage : IPackage
+public partial class ComponentFluPackage : IPackage
 {
     public enum EventType
     {
@@ -13,17 +13,17 @@ public class ComponentFluPackage : IPackage
         Sneeze
     }
 
-    private int _entityId;
+    public int EntityId;
 
-    private float _coughDuration;
+    public float CoughDuration;
 
-    private EventType _eventType;
+    public EventType PackageEventType;
 
-    private float _fluDuration;
+    public float FluDuration;
 
-    private float _fluOnset;
+    public float FluOnset;
 
-    private float _sneezeDuration;
+    public float SneezeDuration;
 
     public byte ID => (byte)PackageType.ComponentFlu;
 
@@ -41,108 +41,34 @@ public class ComponentFluPackage : IPackage
 
     public ComponentFluPackage(ComponentFlu flu, EventType eventType)
     {
-        _entityId = flu.Entity.EntityId;
-        _eventType = eventType;
-        _fluOnset = flu.FluOnset;
-        _fluDuration = flu.FluDuration;
-        _coughDuration = flu.CoughDuration;
-        _sneezeDuration = flu.SneezeDuration;
+        EntityId = flu.Entity.EntityId;
+        PackageEventType = eventType;
+        FluOnset = flu.FluOnset;
+        FluDuration = flu.FluDuration;
+        CoughDuration = flu.CoughDuration;
+        SneezeDuration = flu.SneezeDuration;
     }
 
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_entityId);
-        writer.WriteEnum(_eventType);
-        writer.Write(_fluOnset);
-        writer.Write(_fluDuration);
-        writer.Write(_coughDuration);
-        writer.Write(_sneezeDuration);
+        writer.Write(EntityId);
+        writer.WriteEnum(PackageEventType);
+        writer.Write(FluOnset);
+        writer.Write(FluDuration);
+        writer.Write(CoughDuration);
+        writer.Write(SneezeDuration);
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _entityId = reader.ReadInt32();
-        _eventType = reader.ReadEnum<EventType>();
-        _fluOnset = reader.ReadSingle();
-        _fluDuration = reader.ReadSingle();
-        _coughDuration = reader.ReadSingle();
-        _sneezeDuration = reader.ReadSingle();
+        EntityId = reader.ReadInt32();
+        PackageEventType = reader.ReadEnum<EventType>();
+        FluOnset = reader.ReadSingle();
+        FluDuration = reader.ReadSingle();
+        CoughDuration = reader.ReadSingle();
+        SneezeDuration = reader.ReadSingle();
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        switch (_eventType)
-        {
-            case EventType.SyncStat:
-                project.FindEntityById(_entityId, entity =>
-                {
-                    var flu = entity.FindComponent<ComponentFlu>();
-                    if (flu == null)
-                    {
-                        return;
-                    }
-
-                    flu.FluOnset = _fluOnset;
-                    flu.SneezeDuration = _sneezeDuration;
-                    flu.CoughDuration = _coughDuration;
-                    flu.FluDuration = _fluDuration;
-                });
-                break;
-            case EventType.FluEffect:
-                project.FindEntityById(_entityId, entity =>
-                {
-                    var flu = entity.FindComponent<ComponentFlu>();
-                    if (flu == null)
-                    {
-                        return;
-                    }
-
-                    flu.FluOnset = _fluOnset;
-                    flu.SneezeDuration = _sneezeDuration;
-                    flu.CoughDuration = _coughDuration;
-                    flu.FluDuration = _fluDuration;
-                    flu.FluEffect();
-                });
-                break;
-            case EventType.StartFlu:
-                project.FindEntityById(_entityId, entity =>
-                {
-                    var flu = entity.FindComponent<ComponentFlu>();
-                    if (flu == null)
-                    {
-                        return;
-                    }
-
-                    flu.FluOnset = _fluOnset;
-                    flu.SneezeDuration = _sneezeDuration;
-                    flu.CoughDuration = _coughDuration;
-                    flu.FluDuration = _fluDuration;
-                    flu.StartFlu();
-                });
-                break;
-            case EventType.Sneeze:
-                project.FindEntityById(_entityId, entity =>
-                {
-                    var flu = entity.FindComponent<ComponentFlu>();
-                    if (flu == null)
-                    {
-                        return;
-                    }
-
-                    flu.FluOnset = _fluOnset;
-                    flu.SneezeDuration = _sneezeDuration;
-                    flu.CoughDuration = _coughDuration;
-                    flu.FluDuration = _fluDuration;
-                    flu.Sneeze();
-                });
-                break;
-        }
-    }
 }

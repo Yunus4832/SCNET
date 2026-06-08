@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ComponentSleepPackage : IPackage
+public partial class ComponentSleepPackage : IPackage
 {
     public enum EventType
     {
@@ -13,15 +13,15 @@ public class ComponentSleepPackage : IPackage
         WakeUp
     }
 
-    private bool _allowManualWakeup;
+    public bool AllowManualWakeup;
 
-    private int _entityId;
+    public int EntityId;
 
-    private bool _result;
+    public bool Result;
 
-    private EventType _type;
+    public EventType Type;
 
-    private string _reason = string.Empty;
+    public string Reason = string.Empty;
 
     public ComponentSleepPackage()
     {
@@ -30,11 +30,11 @@ public class ComponentSleepPackage : IPackage
     public ComponentSleepPackage(ComponentSleep sleep, EventType eventType, bool allow = false, bool result = false,
         string msg = "")
     {
-        _reason = msg;
-        _entityId = sleep.Entity.EntityId;
-        _type = eventType;
-        _allowManualWakeup = allow;
-        _result = result;
+        Reason = msg;
+        EntityId = sleep.Entity.EntityId;
+        Type = eventType;
+        AllowManualWakeup = allow;
+        Result = result;
     }
 
     public byte ID => (byte)PackageType.ComponentSleep;
@@ -45,72 +45,21 @@ public class ComponentSleepPackage : IPackage
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_entityId);
-        writer.WriteEnum(_type);
-        writer.Write(_allowManualWakeup);
-        writer.Write(_result);
-        writer.Write(_reason);
+        writer.Write(EntityId);
+        writer.WriteEnum(Type);
+        writer.Write(AllowManualWakeup);
+        writer.Write(Result);
+        writer.Write(Reason);
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _entityId = reader.ReadInt32();
-        _type = reader.ReadEnum<EventType>();
-        _allowManualWakeup = reader.ReadBoolean();
-        _result = reader.ReadBoolean();
-        _reason = reader.ReadString();
+        EntityId = reader.ReadInt32();
+        Type = reader.ReadEnum<EventType>();
+        AllowManualWakeup = reader.ReadBoolean();
+        Result = reader.ReadBoolean();
+        Reason = reader.ReadString();
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        project.FindEntityById(_entityId, e =>
-        {
-            var sleep = e.FindComponent<ComponentSleep>();
-            if (sleep == null)
-            {
-                return;
-            }
-
-            switch (_type)
-            {
-                case EventType.SleepRequest:
-                    if (sleep.CanSleep(out var reason2))
-                    {
-                        sleep.Sleep(_allowManualWakeup);
-                    }
-                    else
-                    {
-                        netNode.QueuePackage(
-                            new ComponentSleepPackage(sleep, EventType.Sleep, _allowManualWakeup, false, reason2)
-                                { To = From });
-                    }
-
-                    break;
-                case EventType.Sleep:
-                    if (_result)
-                    {
-                        sleep.NetSleep(_allowManualWakeup);
-                    }
-                    else
-                    {
-                        var player = sleep.Entity.FindComponent<ComponentPlayer>();
-                        player?.ComponentGui.DisplaySmallMessage(_reason, Color.White, false, true);
-                    }
-
-                    break;
-                case EventType.WakeupRequest:
-                    sleep.WakeUp();
-                    break;
-                case EventType.WakeUp:
-                    sleep.NetWakeUp();
-                    break;
-            }
-        });
-    }
 }

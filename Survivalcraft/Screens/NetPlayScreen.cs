@@ -487,7 +487,7 @@ public class NetPlayScreen : Screen
                     PackageManager.DecodePackage<ServerInfoPackage>(null, r, null, null, ep);
                 serverInfoPackage.Ping = (int)s.ElapsedMilliseconds;
                 serverInfoPackage.From?.IsLocalRemote = true;
-                serverInfoPackage.Handle(null, false);
+                PackageDispatcher.Handle(serverInfoPackage, null, false);
                 received = true;
             };
             NetNode.SendWriterFromPackage(net, [new ServerInfoPackage(true)], null);
@@ -535,7 +535,7 @@ public class NetPlayScreen : Screen
                     var serverInfoPackage =
                         PackageManager.DecodePackage<ServerInfoPackage>(null, r, null, null, ep);
                     serverInfoPackage.Ping = (int)s.ElapsedMilliseconds;
-                    serverInfoPackage.Handle(null, false);
+                    PackageDispatcher.Handle(serverInfoPackage, null, false);
                     received = true;
                 };
                 NetNode.SendWriterFromPackage(net, [new ServerInfoPackage(true)], cep);

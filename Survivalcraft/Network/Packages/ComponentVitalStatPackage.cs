@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ComponentVitalStatPackage : IPackage
+public partial class ComponentVitalStatPackage : IPackage
 {
     public enum EventType
     {
@@ -13,9 +13,9 @@ public class ComponentVitalStatPackage : IPackage
 
     public float Food;
 
-    private int _entityId;
+    public int EntityId;
 
-    private EventType _eventType;
+    public EventType PackageEventType;
 
     public float Sleep;
 
@@ -41,8 +41,8 @@ public class ComponentVitalStatPackage : IPackage
 
     public ComponentVitalStatPackage(ComponentVitalStats vitalStats)
     {
-        _eventType = EventType.SyncStat;
-        _entityId = vitalStats.Entity.EntityId;
+        PackageEventType = EventType.SyncStat;
+        EntityId = vitalStats.Entity.EntityId;
         Food = vitalStats.Food;
         Sleep = vitalStats.Sleep;
         Stamina = vitalStats.Stamina;
@@ -52,9 +52,9 @@ public class ComponentVitalStatPackage : IPackage
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_entityId);
-        writer.WriteEnum(_eventType);
-        switch (_eventType)
+        writer.Write(EntityId);
+        writer.WriteEnum(PackageEventType);
+        switch (PackageEventType)
         {
             case EventType.SyncStat:
                 writer.Write(Food);
@@ -68,9 +68,9 @@ public class ComponentVitalStatPackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        _entityId = reader.ReadInt32();
-        _eventType = reader.ReadEnum<EventType>();
-        switch (_eventType)
+        EntityId = reader.ReadInt32();
+        PackageEventType = reader.ReadEnum<EventType>();
+        switch (PackageEventType)
         {
             case EventType.SyncStat:
                 Food = reader.ReadSingle();
@@ -82,40 +82,5 @@ public class ComponentVitalStatPackage : IPackage
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        switch (_eventType)
-        {
-            case EventType.SyncStat:
-                project.FindEntityById(_entityId, entity =>
-                {
-                    var vitalStats = entity.FindComponent<ComponentVitalStats>();
-                    if (vitalStats == null)
-                    {
-                        return;
-                    }
-
-                    if (isServer)
-                    {
-                        //服务器只同步耐力
-                        vitalStats.Stamina = Stamina;
-                    }
-                    else
-                    {
-                        //客户端不同步耐力
-                        vitalStats.Food = Food;
-                        vitalStats.Sleep = Sleep;
-                        vitalStats.Wetness = Wetness;
-                        vitalStats.Temperature = Temperature;
-                    }
-                });
-                break;
-        }
-    }
 }

@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class ComponentInventoryPackage : IPackage
+public partial class ComponentInventoryPackage : IPackage
 {
     public enum EventType
     {
@@ -21,23 +21,23 @@ public class ComponentInventoryPackage : IPackage
         HandleDragDrop // InventorySlotWidget 中的处理函数同名
     }
 
-    private int _activeSlot;
+    public int ActiveSlot;
 
     public DragMode DragMode;
 
-    private EventType _eventType;
+    public EventType PackageEventType;
 
-    private int _inventoryID;
+    public int InventoryID;
 
     public bool ProcessingOnly;
 
     public Dictionary<int, List<Slot>> Slots = new();
 
-    private InventorySlot? _sourceInventorySlot;
+    public InventorySlot? SourceInventorySlot;
 
     public Dictionary<IInventory, List<int>> SyncItems = new();
 
-    private InventorySlot? _targetInventorySlot;
+    public InventorySlot? TargetInventorySlot;
 
     public byte ID => (byte)PackageType.ComponentInventory;
 
@@ -55,29 +55,29 @@ public class ComponentInventoryPackage : IPackage
 
     public ComponentInventoryPackage(IInventory inventory, int activeSlot)
     {
-        _inventoryID = inventory.Id;
-        _activeSlot = activeSlot;
-        _eventType = EventType.ActiveSlotChange;
+        InventoryID = inventory.Id;
+        ActiveSlot = activeSlot;
+        PackageEventType = EventType.ActiveSlotChange;
     }
 
     public ComponentInventoryPackage(int inventoryID, EventType eventType)
     {
-        _inventoryID = inventoryID;
-        _eventType = eventType;
+        InventoryID = inventoryID;
+        PackageEventType = eventType;
     }
 
     public ComponentInventoryPackage(InventorySlot sourceInventorySlot, InventorySlot targetInventorySlot,
         EventType type)
     {
-        _sourceInventorySlot = sourceInventorySlot;
-        _targetInventorySlot = targetInventorySlot;
-        _eventType = type;
+        SourceInventorySlot = sourceInventorySlot;
+        TargetInventorySlot = targetInventorySlot;
+        PackageEventType = type;
     }
 
     public ComponentInventoryPackage(InventorySlot inventorySlot)
     {
-        _sourceInventorySlot = inventorySlot;
-        _eventType = EventType.SetSlotsItem;
+        SourceInventorySlot = inventorySlot;
+        PackageEventType = EventType.SetSlotsItem;
     }
 
     //客户端/服务器发送包后相关的Inventory的Generation就+1
@@ -87,7 +87,7 @@ public class ComponentInventoryPackage : IPackage
     {
         Slots = new Dictionary<int, List<Slot>>();
         SyncItems = new Dictionary<IInventory, List<int>>();
-        _eventType = EventType.InventorySync;
+        PackageEventType = EventType.InventorySync;
 
         foreach (var c in syncItems)
         {
@@ -150,15 +150,15 @@ public class ComponentInventoryPackage : IPackage
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(_eventType);
-        switch (_eventType)
+        writer.WriteEnum(PackageEventType);
+        switch (PackageEventType)
         {
             case EventType.QueryErrorInventoryInfo:
-                writer.Write(_inventoryID);
+                writer.Write(InventoryID);
                 break;
             case EventType.ActiveSlotChange:
-                writer.Write(_inventoryID);
-                writer.Write(_activeSlot);
+                writer.Write(InventoryID);
+                writer.Write(ActiveSlot);
                 break;
             case EventType.InventorySync:
                 writer.Write(Slots.Count);
@@ -193,43 +193,43 @@ public class ComponentInventoryPackage : IPackage
 
                 break;
             case EventType.HandleMoveItem:
-                if (_sourceInventorySlot != null)
+                if (SourceInventorySlot != null)
                 {
-                    writer.Write(_sourceInventorySlot.InventoryId);
-                    writer.Write(_sourceInventorySlot.SlotIndex);
+                    writer.Write(SourceInventorySlot.InventoryId);
+                    writer.Write(SourceInventorySlot.SlotIndex);
                 }
 
-                if (_targetInventorySlot != null)
+                if (TargetInventorySlot != null)
                 {
-                    writer.Write(_targetInventorySlot.InventoryId);
-                    writer.Write(_targetInventorySlot.SlotIndex);
-                    writer.Write(_targetInventorySlot.Count);
+                    writer.Write(TargetInventorySlot.InventoryId);
+                    writer.Write(TargetInventorySlot.SlotIndex);
+                    writer.Write(TargetInventorySlot.Count);
                 }
 
                 break;
             case EventType.HandleDragDrop:
-                if (_sourceInventorySlot != null)
+                if (SourceInventorySlot != null)
                 {
-                    writer.Write(_sourceInventorySlot.InventoryId);
-                    writer.Write(_sourceInventorySlot.SlotIndex);
+                    writer.Write(SourceInventorySlot.InventoryId);
+                    writer.Write(SourceInventorySlot.SlotIndex);
                 }
 
                 writer.WriteEnum(DragMode);
-                if (_targetInventorySlot != null)
+                if (TargetInventorySlot != null)
                 {
-                    writer.Write(_targetInventorySlot.InventoryId);
-                    writer.Write(_targetInventorySlot.SlotIndex);
+                    writer.Write(TargetInventorySlot.InventoryId);
+                    writer.Write(TargetInventorySlot.SlotIndex);
                 }
 
                 writer.Write(ProcessingOnly);
                 break;
             case EventType.SetSlotsItem:
-                if (_sourceInventorySlot != null)
+                if (SourceInventorySlot != null)
                 {
-                    writer.Write(_sourceInventorySlot.InventoryId);
-                    writer.Write(_sourceInventorySlot.SlotIndex);
-                    writer.Write(_sourceInventorySlot.Value);
-                    writer.Write(_sourceInventorySlot.Count);
+                    writer.Write(SourceInventorySlot.InventoryId);
+                    writer.Write(SourceInventorySlot.SlotIndex);
+                    writer.Write(SourceInventorySlot.Value);
+                    writer.Write(SourceInventorySlot.Count);
                 }
 
                 break;
@@ -238,15 +238,15 @@ public class ComponentInventoryPackage : IPackage
 
     public void ReadData(PackageStreamReader reader)
     {
-        _eventType = reader.ReadEnum<EventType>();
-        switch (_eventType)
+        PackageEventType = reader.ReadEnum<EventType>();
+        switch (PackageEventType)
         {
             case EventType.QueryErrorInventoryInfo:
-                _inventoryID = reader.ReadInt32();
+                InventoryID = reader.ReadInt32();
                 break;
             case EventType.ActiveSlotChange:
-                _inventoryID = reader.ReadInt32();
-                _activeSlot = reader.ReadInt32();
+                InventoryID = reader.ReadInt32();
+                ActiveSlot = reader.ReadInt32();
                 break;
             case EventType.InventorySync:
                 Slots = new Dictionary<int, List<Slot>>();
@@ -288,12 +288,12 @@ public class ComponentInventoryPackage : IPackage
 
 
             case EventType.HandleMoveItem:
-                _sourceInventorySlot = new InventorySlot
+                SourceInventorySlot = new InventorySlot
                 {
                     InventoryId = reader.ReadInt32(),
                     SlotIndex = reader.ReadInt32()
                 };
-                _targetInventorySlot = new InventorySlot
+                TargetInventorySlot = new InventorySlot
                 {
                     InventoryId = reader.ReadInt32(),
                     SlotIndex = reader.ReadInt32(),
@@ -301,13 +301,13 @@ public class ComponentInventoryPackage : IPackage
                 };
                 break;
             case EventType.HandleDragDrop:
-                _sourceInventorySlot = new InventorySlot
+                SourceInventorySlot = new InventorySlot
                 {
                     InventoryId = reader.ReadInt32(),
                     SlotIndex = reader.ReadInt32()
                 };
                 DragMode = reader.ReadEnum<DragMode>();
-                _targetInventorySlot = new InventorySlot
+                TargetInventorySlot = new InventorySlot
                 {
                     InventoryId = reader.ReadInt32(),
                     SlotIndex = reader.ReadInt32()
@@ -316,7 +316,7 @@ public class ComponentInventoryPackage : IPackage
                 break;
             case EventType.SetSlotsItem:
             {
-                _sourceInventorySlot = new InventorySlot
+                SourceInventorySlot = new InventorySlot
                 {
                     InventoryId = reader.ReadInt32(),
                     SlotIndex = reader.ReadInt32(),
@@ -328,151 +328,6 @@ public class ComponentInventoryPackage : IPackage
         }
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-        var subsystemInventories = project.FindSubsystem<SubsystemInventories>();
-
-        IInventory? sourceInventoryObject;
-        IInventory? targetInventoryObject;
-
-        switch (_eventType)
-        {
-            case EventType.ActiveSlotChange:
-                subsystemInventories?.FindInventoryById(_inventoryID, inventory =>
-                {
-                    inventory.ActiveSlotIndex = _activeSlot;
-                    if (!isServer)
-                    {
-                        return;
-                    }
-
-                    Except = From;
-                    netNode.QueuePackage(this);
-                });
-                break;
-            case EventType.InventorySync:
-                if (isServer)
-                {
-                }
-                else
-                {
-                    //客户端接受服务器的包
-                    foreach (var item in Slots)
-                    {
-                        subsystemInventories?.FindInventoryById(item.Key, inventory =>
-                        {
-                            foreach (var item2 in item.Value)
-                            {
-                                if (item2.Type == 0)
-                                {
-                                    if (item2.SlotItem != null)
-                                    {
-                                        inventory.SetSlotValue(item2.SlotIndex, item2.SlotItem);
-                                    }
-                                }
-                                else
-                                {
-                                    inventory.SetSlotValue(item2.SlotIndex, item2.ClothingList);
-                                }
-                            }
-                        });
-                    }
-                }
-
-                break;
-            case EventType.QueryErrorInventoryInfo:
-                if (isServer)
-                {
-                    subsystemInventories?.FindInventoryById(_inventoryID, inventory =>
-                    {
-                        var extra = "";
-                        if (inventory is ComponentCraftingTable t)
-                        {
-                            extra = t.Entity.ValuesDictionary.DatabaseObject.Name;
-                        }
-
-                        Log.Information($"请求错误的箱子ID[{_inventoryID}]来自[{inventory.GetType().Name}][{extra}]");
-                    });
-                }
-
-                break;
-
-            case EventType.HandleMoveItem:
-                if (_sourceInventorySlot != null)
-                {
-                    sourceInventoryObject = subsystemInventories?.GetInventoryById(_sourceInventorySlot.InventoryId);
-                    if (_targetInventorySlot != null)
-                    {
-                        targetInventoryObject =
-                            subsystemInventories?.GetInventoryById(_targetInventorySlot.InventoryId);
-                        if (sourceInventoryObject is not null)
-                            // 数据捕捉
-                        {
-                            if (targetInventoryObject != null)
-                            {
-                                InventorySlotWidget.HandleMoveItem(sourceInventoryObject,
-                                    _sourceInventorySlot.SlotIndex,
-                                    targetInventoryObject, _targetInventorySlot.SlotIndex, _targetInventorySlot.Count);
-                            }
-                        }
-                    }
-                }
-
-                // 服务器找不到背包？怀疑是来打服的！！！
-                break;
-            case EventType.HandleDragDrop:
-                if (_sourceInventorySlot != null)
-                {
-                    sourceInventoryObject = subsystemInventories?.GetInventoryById(_sourceInventorySlot.InventoryId);
-                    if (_targetInventorySlot != null)
-                    {
-                        targetInventoryObject =
-                            subsystemInventories?.GetInventoryById(_targetInventorySlot.InventoryId);
-                        if (sourceInventoryObject is not null)
-                            // 数据捕捉
-                        {
-                            if (targetInventoryObject != null)
-                            {
-                                InventorySlotWidget.HandleDragDrop(sourceInventoryObject,
-                                    _sourceInventorySlot.SlotIndex,
-                                    DragMode, targetInventoryObject, _targetInventorySlot.SlotIndex, ProcessingOnly);
-                            }
-                        }
-                    }
-                }
-
-                break;
-            case EventType.SetSlotsItem:
-                if (isServer)
-                {
-                }
-                else
-                {
-                    if (_sourceInventorySlot != null)
-                    {
-                        sourceInventoryObject =
-                            subsystemInventories?.GetInventoryById(_sourceInventorySlot.InventoryId);
-                        if (sourceInventoryObject is ComponentInventoryBase componentInventoryBase)
-                        {
-                            var slot = new ComponentInventoryBase.Slot
-                            {
-                                Value = _sourceInventorySlot.Value,
-                                Count = _sourceInventorySlot.Count
-                            };
-                            componentInventoryBase.SetSlotValue(_sourceInventorySlot.SlotIndex, slot);
-                        }
-                    }
-                }
-
-                break;
-        }
-    }
 
     public class Slot
     {

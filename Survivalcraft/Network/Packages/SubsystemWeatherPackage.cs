@@ -3,27 +3,27 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class SubsystemWeatherPackage : IPackage
+public partial class SubsystemWeatherPackage : IPackage
 {
     public float FogProgress;
 
     public int FogType = 0;
 
-    private double _fogEndTime;
+    public double FogEndTime;
 
-    private float _fogRampTime;
+    public float FogRampTime;
 
-    private double _fogStartTime;
+    public double FogStartTime;
 
-    private float _intensity;
+    public float Intensity;
 
-    private float _lightningIntensity;
+    public float LightningIntensity;
 
-    private double _precipitationEndTime;
+    public double PrecipitationEndTime;
 
-    private double _precipitationStartTime;
+    public double PrecipitationStartTime;
 
-    private int _weatherType;
+    public int WeatherType;
 
     public byte ID => (byte)PackageType.SubsystemWeather;
 
@@ -41,95 +41,58 @@ public class SubsystemWeatherPackage : IPackage
 
     public SubsystemWeatherPackage(int weatherType)
     {
-        _weatherType = weatherType;
+        WeatherType = weatherType;
     }
 
     public SubsystemWeatherPackage(float intensity)
     {
-        _intensity = intensity;
+        Intensity = intensity;
     }
 
     public SubsystemWeatherPackage(double start, double end, float light)
     {
-        _precipitationEndTime = end;
-        _precipitationStartTime = start;
-        _lightningIntensity = light;
+        PrecipitationEndTime = end;
+        PrecipitationStartTime = start;
+        LightningIntensity = light;
     }
 
     public SubsystemWeatherPackage(double fogStart, float ramp, double fogEnd, float progress)
     {
-        _fogStartTime = fogStart;
-        _fogRampTime = ramp;
-        _fogEndTime = fogEnd;
+        FogStartTime = fogStart;
+        FogRampTime = ramp;
+        FogEndTime = fogEnd;
         FogProgress = progress;
     }
 
     public SubsystemWeatherPackage(double fogStart, float ramp, double fogEnd)
     {
-        _fogStartTime = fogStart;
-        _fogRampTime = ramp;
-        _fogEndTime = fogEnd;
+        FogStartTime = fogStart;
+        FogRampTime = ramp;
+        FogEndTime = fogEnd;
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(_precipitationStartTime);
-        writer.Write(_precipitationEndTime);
-        writer.Write(_lightningIntensity);
-        writer.Write(_weatherType);
-        writer.Write(_fogStartTime);
-        writer.Write(_fogRampTime);
-        writer.Write(_fogEndTime);
+        writer.Write(PrecipitationStartTime);
+        writer.Write(PrecipitationEndTime);
+        writer.Write(LightningIntensity);
+        writer.Write(WeatherType);
+        writer.Write(FogStartTime);
+        writer.Write(FogRampTime);
+        writer.Write(FogEndTime);
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        _precipitationStartTime = reader.ReadDouble();
-        _precipitationEndTime = reader.ReadDouble();
-        _lightningIntensity = reader.ReadSingle();
-        _weatherType = reader.ReadInt32();
+        PrecipitationStartTime = reader.ReadDouble();
+        PrecipitationEndTime = reader.ReadDouble();
+        LightningIntensity = reader.ReadSingle();
+        WeatherType = reader.ReadInt32();
 
-        _fogStartTime = reader.ReadDouble();
-        _fogRampTime = reader.ReadSingle();
-        _fogEndTime = reader.ReadDouble();
+        FogStartTime = reader.ReadDouble();
+        FogRampTime = reader.ReadSingle();
+        FogEndTime = reader.ReadDouble();
     }
 
-    public void Handle(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
 
-        var project = GameManager.Project;
-        var weather = project.FindSubsystem<SubsystemWeather>(true)!;
-        if (_weatherType != 0)
-        {
-            switch (_weatherType)
-            {
-                case 1:
-                    weather.ManualPrecipitationEnd();
-                    break;
-                case 2:
-                    weather.ManualPrecipitationStart();
-                    break;
-                case 3:
-                    weather.ManualFogEnd();
-                    break;
-                case 4:
-                    weather.ManualFogStart();
-                    break;
-            }
-
-            return;
-        }
-
-        weather.PrecipitationStartTime = _precipitationStartTime;
-        weather.PrecipitationEndTime = _precipitationEndTime;
-        weather.LightningIntensity = _lightningIntensity;
-
-        weather.FogStartTime = _fogStartTime;
-        weather.FogEndTime = _fogEndTime;
-        weather.FogRampTime = _fogRampTime;
-    }
 }

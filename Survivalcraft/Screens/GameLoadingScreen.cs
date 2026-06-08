@@ -191,7 +191,7 @@ public class GameLoadingScreen : Screen
             {
                 try
                 {
-                    clientPackage.Handle(node, false);
+                    PackageDispatcher.Handle(clientPackage, node, false);
                 }
                 catch (Exception e)
                 {
@@ -202,7 +202,7 @@ public class GameLoadingScreen : Screen
             {
                 try
                 {
-                    projectPackage.Handle(node, false);
+                    PackageDispatcher.Handle(projectPackage, node, false);
                 }
                 catch (Exception e)
                 {
