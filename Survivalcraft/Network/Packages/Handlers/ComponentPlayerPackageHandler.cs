@@ -1,52 +1,55 @@
-using EntitySystem.TemplatesDatabase;
+namespace Game.Network.Packages.Handlers;
 
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class ComponentPlayerPackage
+public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<ComponentPlayerPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ComponentPlayerPackage package, NetNode? netNode, bool isServer)
     {
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(ComponentPlayerPackage)}");
+            return;
+        }
+
         if (GameManager.Project is null)
         {
             return;
         }
 
         var project = GameManager.Project;
-        PlayerData = project.FindSubsystem<SubsystemPlayers>(true)!
-            .FindPlayerData(playerData => playerData.ClientId == FromPlayerId);
-        if (!NeedHandleMainPlayer && PlayerData is { IsMainPlayer: true } && Type != PlayerAction.AddExperience)
+        package.PlayerData = project.FindSubsystem<SubsystemPlayers>(true)!
+            .FindPlayerData(playerData => playerData.ClientId == package.FromPlayerId);
+        if (package is { NeedHandleMainPlayer: false, PlayerData.IsMainPlayer: true } &&
+            package.Type != ComponentPlayerPackage.PlayerAction.AddExperience)
         {
             return;
         }
 
-        if (From != null && (PlayerData == null || PlayerData.ClientId != From.ID))
+        if (package.From is not null && (package.PlayerData == null || package.PlayerData.ClientId != package.From.ID))
         {
             return;
         }
 
-        switch (Type)
+        switch (package.Type)
         {
-            case PlayerAction.BodyUpdate:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.BodyUpdate:
+                package.PlayerEvent(player =>
                 {
                     ComponentBody body;
-                    if (PackageChangeFlag.HasFlag(ChangFlag.ParentBodyChange))
+                    if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.ParentBodyChange))
                     {
                         if (player.ComponentBody.ParentBody != null)
                         {
                             body = player.ComponentBody.ParentBody;
-                            if (PackageChangeFlag.HasFlag(ChangFlag.LookAnglesChange))
+                            if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.LookAnglesChange))
                             {
                                 var loco = body.Locomotion;
-                                loco?.NetLookAngles.SetNext(LookAngles);
+                                loco?.NetLookAngles.SetNext(package.LookAngles);
                             }
 
-                            if (PackageChangeFlag.HasFlag(ChangFlag.ChildLookAnglesChange))
+                            if (package.PackageChangeFlag.HasFlag(
+                                    ComponentPlayerPackage.ChangFlag.ChildLookAnglesChange))
                             {
-                                player.ComponentBody.Locomotion?.NetLookAngles.SetNext(ChildLookAngles);
+                                player.ComponentBody.Locomotion?.NetLookAngles.SetNext(package.ChildLookAngles);
                             }
                         }
                         else
@@ -57,22 +60,22 @@ public partial class ComponentPlayerPackage
                     else
                     {
                         body = player.ComponentBody;
-                        if (PackageChangeFlag.HasFlag(ChangFlag.LookAnglesChange))
+                        if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.LookAnglesChange))
                         {
-                            player.ComponentLocomotion.NetLookAngles.SetNext(LookAngles);
+                            player.ComponentLocomotion.NetLookAngles.SetNext(package.LookAngles);
                         }
                     }
 
-                    if (PackageChangeFlag.HasFlag(ChangFlag.VelocityChange))
+                    if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.VelocityChange))
                     {
-                        body.NetVelocity.SetNext(Velocity);
+                        body.NetVelocity.SetNext(package.Velocity);
                     }
 
                     if (body.Locomotion != null)
                     {
-                        if (PackageChangeFlag.HasFlag(ChangFlag.LadderChange))
+                        if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.LadderChange))
                         {
-                            body.Locomotion.LadderValue = LadderValue;
+                            body.Locomotion.LadderValue = package.LadderValue;
                         }
                         else
                         {
@@ -80,75 +83,83 @@ public partial class ComponentPlayerPackage
                         }
                     }
 
-                    if (PackageChangeFlag.HasFlag(ChangFlag.PositionChange))
+                    if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.PositionChange))
                     {
-                        body.NetPosition.SetNext(Position);
+                        body.NetPosition.SetNext(package.Position);
                     }
 
-                    if (PackageChangeFlag.HasFlag(ChangFlag.RotationChange))
+                    if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.RotationChange))
                     {
-                        body.NetRotation.SetNext(Rotation);
+                        body.NetRotation.SetNext(package.Rotation);
                     }
 
-                    if (PackageChangeFlag.HasFlag(ChangFlag.SneakChange))
+                    if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.SneakChange))
                     {
-                        body.IsSneaking = Sneaking;
+                        body.IsSneaking = package.Sneaking;
                     }
                 });
                 break;
-            case PlayerAction.InteractEvent:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.InteractEvent:
+                package.PlayerEvent(player =>
                 {
-                    player.AddInteractEvent(InteractEvent, NetInteractRay, NetInteractRaycast);
-                    if (isServer)
+                    player.AddInteractEvent(package.InteractEvent, package.NetInteractRay, package.NetInteractRaycast);
+                    if (!isServer)
                     {
-                        Except = From;
-                        netNode.QueuePackage(this);
+                        return;
                     }
+
+                    package.Except = package.From;
+                    netNode.QueuePackage(package);
                 });
                 break;
-            case PlayerAction.AimEvent:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.AimEvent:
+                package.PlayerEvent(player =>
                 {
-                    player.AddAimEvent(AimEvent, NetAimRay);
-                    if (isServer)
+                    player.AddAimEvent(package.AimEvent, package.NetAimRay);
+                    if (!isServer)
                     {
-                        Except = From;
-                        netNode.QueuePackage(this);
+                        return;
                     }
+
+                    package.Except = package.From;
+                    netNode.QueuePackage(package);
                 });
                 break;
-            case PlayerAction.DigEvent:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.DigEvent:
+                package.PlayerEvent(player =>
                 {
-                    player.AddDigEvent(DigEvent, NetDigRay, NetDigRaycast);
-                    if (isServer)
+                    player.AddDigEvent(package.DigEvent, package.NetDigRay, package.NetDigRaycast);
+                    if (!isServer)
                     {
-                        Except = From;
-                        netNode.QueuePackage(this);
+                        return;
                     }
+
+                    package.Except = package.From;
+                    netNode.QueuePackage(package);
                 });
                 break;
-            case PlayerAction.CreativeFlyChange:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.CreativeFlyChange:
+                package.PlayerEvent(player =>
                 {
-                    player.ComponentLocomotion.IsCreativeFlyEnabled = IsCreativeFly;
-                    if (isServer)
+                    player.ComponentLocomotion.IsCreativeFlyEnabled = package.IsCreativeFly;
+                    if (!isServer)
                     {
-                        Except = From;
-                        netNode.QueuePackage(this);
+                        return;
                     }
+
+                    package.Except = package.From;
+                    netNode.QueuePackage(package);
                 });
                 break;
-            case PlayerAction.Hit:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.Hit:
+                package.PlayerEvent(player =>
                 {
-                    project.FindEntityById(BodyId, entity =>
+                    project.FindEntityById(package.BodyId, entity =>
                     {
                         var body = entity.FindComponent<ComponentBody>();
                         if (body != null)
                         {
-                            player.ComponentMiner.Hit(body, HitPosition, HitDirection);
+                            player.ComponentMiner.Hit(body, package.HitPosition, package.HitDirection);
                         }
 
                         if (!isServer)
@@ -156,69 +167,56 @@ public partial class ComponentPlayerPackage
                             return;
                         }
 
-                        Except = From;
-                        netNode.QueuePackage(this);
+                        package.Except = package.From;
+                        netNode.QueuePackage(package);
                     });
                 });
                 break;
-            case PlayerAction.IntoPlaying:
-                PlayerEvent(player => { player.ComponentHealth.IsInvulnerable = false; });
+            case ComponentPlayerPackage.PlayerAction.IntoPlaying:
+                package.PlayerEvent(player => { player.ComponentHealth.IsInvulnerable = false; });
                 break;
-            case PlayerAction.Restart:
-                PlayerEvent(player => { player.PlayerData.ReadyToRestart = true; });
+            case ComponentPlayerPackage.PlayerAction.Restart:
+                package.PlayerEvent(player => { player.PlayerData.ReadyToRestart = true; });
                 break;
-            case PlayerAction.AddExperience:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.AddExperience:
+                package.PlayerEvent(player =>
                 {
-                    player.ComponentLevel.NetAddExperience(Count, PlaySound);
-                    player.PlayerData.Level = Level;
+                    player.ComponentLevel.NetAddExperience(package.Count, package.PlaySound);
+                    player.PlayerData.Level = package.Level;
                 });
                 break;
-            case PlayerAction.Drop:
-                PlayerEvent(player => { player.DoDrop(); });
+            case ComponentPlayerPackage.PlayerAction.Drop:
+                package.PlayerEvent(player => { player.DoDrop(); });
                 break;
-            case PlayerAction.DragDrop:
-                // 我去，别这样搞啊，回调地狱可是会很头疼的！！！！！
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.DragDrop:
+                package.PlayerEvent(player =>
                 {
-                    project.FindSubsystem<SubsystemInventories>(true)!.FindInventoryById(InventoryID, inventory =>
-                    {
-                        // 丢弃背包内的物品，不是活动栏的
-                        player.ViewWidget.NetDragDrop(HitPosition,
-                            new InventoryDragData { Inventory = inventory, SlotIndex = ActiveSlot }, Count);
-                    });
+                    project.FindSubsystem<SubsystemInventories>(true)!.FindInventoryById(package.InventoryID,
+                        inventory =>
+                        {
+                            // 丢弃背包内的物品，不是活动栏的
+                            player.ViewWidget.NetDragDrop(package.HitPosition,
+                                new InventoryDragData { Inventory = inventory, SlotIndex = package.ActiveSlot },
+                                package.Count);
+                        });
                 });
                 break;
-            case PlayerAction.SyncStat:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.SyncStat:
+                package.PlayerEvent(player =>
                 {
-                    if (Stat != null)
+                    if (package.Stat != null)
                     {
-                        player.PlayerStats.Load(Stat);
+                        player.PlayerStats.Load(package.Stat);
                     }
                 });
                 break;
-            case PlayerAction.PositionSet:
-                PlayerEvent(player =>
+            case ComponentPlayerPackage.PlayerAction.PositionSet:
+                package.PlayerEvent(player =>
                 {
-                    player.ComponentBody.Position = Position;
-                    player.ComponentBody.Velocity = Velocity;
+                    player.ComponentBody.Position = package.Position;
+                    player.ComponentBody.Velocity = package.Velocity;
                 });
                 break;
         }
-    }
-}
-
-public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<ComponentPlayerPackage>
-{
-    public override void Handle(ComponentPlayerPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentPlayerPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

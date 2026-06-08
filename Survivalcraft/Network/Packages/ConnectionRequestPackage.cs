@@ -1,16 +1,13 @@
 using System.Text;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 
 using EntitySystem.Core;
 
-using Game.ContentProviders;
 using Game.Network.Enums;
 using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class ConnectionRequestPackage : IPackage
+public class ConnectionRequestPackage : IPackage
 {
     public const int VerifyMagic = 9421523; //校验码
 

@@ -1,30 +1,4 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class TerritoriyPackage
-{
-    internal void HandleCore(NetNode netNode, bool isServer)
-    {
-        if (!SubsystemBedrockBlockBehavior.Territories.TryGetValue(Guid, out var territoriy))
-        {
-            return;
-        }
-
-        territoriy.AllowDig = AllowDig;
-        territoriy.AllowPlace = AllowPlace;
-        territoriy.ApplyToFriend = ApplyToFriend;
-        territoriy.IsVisible = IsVisible;
-        if (!isServer)
-        {
-            return;
-        }
-
-        Except = From;
-        netNode.QueuePackage(this);
-    }
-}
+namespace Game.Network.Packages.Handlers;
 
 public sealed class TerritoriyPackageHandler : PackageHandlerBase<TerritoriyPackage>
 {
@@ -32,10 +6,25 @@ public sealed class TerritoriyPackageHandler : PackageHandlerBase<TerritoriyPack
     {
         if (netNode == null)
         {
-            Log.Information($"Package处理器需要NetNode:{typeof(TerritoriyPackage).Name}");
+            Log.Information($"Package处理器需要NetNode:{nameof(TerritoriyPackage)}");
             return;
         }
 
-        package.HandleCore(netNode, isServer);
+        if (!SubsystemBedrockBlockBehavior.Territories.TryGetValue(package.Guid, out var territoriy))
+        {
+            return;
+        }
+
+        territoriy.AllowDig = package.AllowDig;
+        territoriy.AllowPlace = package.AllowPlace;
+        territoriy.ApplyToFriend = package.ApplyToFriend;
+        territoriy.IsVisible = package.IsVisible;
+        if (!isServer)
+        {
+            return;
+        }
+
+        package.Except = package.From;
+        netNode.QueuePackage(package);
     }
 }

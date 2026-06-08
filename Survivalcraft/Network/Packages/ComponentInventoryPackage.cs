@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class ComponentInventoryPackage : IPackage
+public class ComponentInventoryPackage : IPackage
 {
     public enum EventType
     {

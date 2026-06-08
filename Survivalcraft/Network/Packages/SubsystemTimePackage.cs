@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class SubsystemTimePackage : IPackage
+public class SubsystemTimePackage : IPackage
 {
     public double Time;
 

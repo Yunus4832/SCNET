@@ -1,50 +1,4 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class ComponentClothingPackage
-{
-    internal void HandleCore(NetNode netNode, bool isServer)
-    {
-        switch (Type)
-        {
-            case DataType.RequestSkin:
-                if (CharacterSkinsManager.HasSkinRes(SkinName))
-                {
-                    netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.ReplySkin));
-                }
-                else
-                {
-                    if (!CharacterSkinsManager.WaitReplyList.Contains(SkinName))
-                    {
-                        netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHas));
-                        CharacterSkinsManager.WaitReplyList.Add(SkinName);
-                    }
-                }
-
-                break;
-            //储存回复的资源
-            case DataType.WhoHasReply:
-            case DataType.ReplySkin:
-                if (CharacterSkinsManager.WaitReplyList.Contains(SkinName))
-                {
-                    CharacterSkinsManager.WaitReplyList.Remove(SkinName);
-                }
-
-                CharacterSkinsManager.SaveSkinToFile(SkinName, SkinData);
-                break;
-            //响应谁有这个资源
-            case DataType.WhoHas:
-                if (CharacterSkinsManager.HasSkinRes(SkinName))
-                {
-                    netNode.QueuePackage(new ComponentClothingPackage(SkinName, DataType.WhoHasReply));
-                }
-
-                break;
-        }
-    }
-}
+namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentClothingPackageHandler : PackageHandlerBase<ComponentClothingPackage>
 {
@@ -52,10 +6,48 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
     {
         if (netNode == null)
         {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentClothingPackage).Name}");
+            Log.Information($"Package处理器需要NetNode:{nameof(ComponentClothingPackage)}");
             return;
         }
 
-        package.HandleCore(netNode, isServer);
+        switch (package.Type)
+        {
+            case ComponentClothingPackage.DataType.RequestSkin:
+                if (CharacterSkinsManager.HasSkinRes(package.SkinName))
+                {
+                    netNode.QueuePackage(new ComponentClothingPackage(package.SkinName,
+                        ComponentClothingPackage.DataType.ReplySkin));
+                }
+                else
+                {
+                    if (!CharacterSkinsManager.WaitReplyList.Contains(package.SkinName))
+                    {
+                        netNode.QueuePackage(new ComponentClothingPackage(package.SkinName,
+                            ComponentClothingPackage.DataType.WhoHas));
+                        CharacterSkinsManager.WaitReplyList.Add(package.SkinName);
+                    }
+                }
+
+                break;
+            // 储存回复的资源
+            case ComponentClothingPackage.DataType.WhoHasReply:
+            case ComponentClothingPackage.DataType.ReplySkin:
+                if (CharacterSkinsManager.WaitReplyList.Contains(package.SkinName))
+                {
+                    CharacterSkinsManager.WaitReplyList.Remove(package.SkinName);
+                }
+
+                CharacterSkinsManager.SaveSkinToFile(package.SkinName, package.SkinData);
+                break;
+            //响应谁有这个资源
+            case ComponentClothingPackage.DataType.WhoHas:
+                if (CharacterSkinsManager.HasSkinRes(package.SkinName))
+                {
+                    netNode.QueuePackage(new ComponentClothingPackage(package.SkinName,
+                        ComponentClothingPackage.DataType.WhoHasReply));
+                }
+
+                break;
+        }
     }
 }

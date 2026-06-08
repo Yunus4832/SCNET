@@ -1,11 +1,8 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class ComponentFluPackage
+public sealed class ComponentFluPackageHandler : PackageHandlerBase<ComponentFluPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ComponentFluPackage package, NetNode? netNode, bool isServer)
     {
         if (GameManager.Project is null)
         {
@@ -13,10 +10,10 @@ public partial class ComponentFluPackage
         }
 
         var project = GameManager.Project;
-        switch (PackageEventType)
+        switch (package.PackageEventType)
         {
-            case EventType.SyncStat:
-                project.FindEntityById(EntityId, entity =>
+            case ComponentFluPackage.EventType.SyncStat:
+                project.FindEntityById(package.EntityId, entity =>
                 {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu == null)
@@ -24,14 +21,14 @@ public partial class ComponentFluPackage
                         return;
                     }
 
-                    flu.FluOnset = FluOnset;
-                    flu.SneezeDuration = SneezeDuration;
-                    flu.CoughDuration = CoughDuration;
-                    flu.FluDuration = FluDuration;
+                    flu.FluOnset = package.FluOnset;
+                    flu.SneezeDuration = package.SneezeDuration;
+                    flu.CoughDuration = package.CoughDuration;
+                    flu.FluDuration = package.FluDuration;
                 });
                 break;
-            case EventType.FluEffect:
-                project.FindEntityById(EntityId, entity =>
+            case ComponentFluPackage.EventType.FluEffect:
+                project.FindEntityById(package.EntityId, entity =>
                 {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu == null)
@@ -39,15 +36,15 @@ public partial class ComponentFluPackage
                         return;
                     }
 
-                    flu.FluOnset = FluOnset;
-                    flu.SneezeDuration = SneezeDuration;
-                    flu.CoughDuration = CoughDuration;
-                    flu.FluDuration = FluDuration;
+                    flu.FluOnset = package.FluOnset;
+                    flu.SneezeDuration = package.SneezeDuration;
+                    flu.CoughDuration = package.CoughDuration;
+                    flu.FluDuration = package.FluDuration;
                     flu.FluEffect();
                 });
                 break;
-            case EventType.StartFlu:
-                project.FindEntityById(EntityId, entity =>
+            case ComponentFluPackage.EventType.StartFlu:
+                project.FindEntityById(package.EntityId, entity =>
                 {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu == null)
@@ -55,15 +52,15 @@ public partial class ComponentFluPackage
                         return;
                     }
 
-                    flu.FluOnset = FluOnset;
-                    flu.SneezeDuration = SneezeDuration;
-                    flu.CoughDuration = CoughDuration;
-                    flu.FluDuration = FluDuration;
+                    flu.FluOnset = package.FluOnset;
+                    flu.SneezeDuration = package.SneezeDuration;
+                    flu.CoughDuration = package.CoughDuration;
+                    flu.FluDuration = package.FluDuration;
                     flu.StartFlu();
                 });
                 break;
-            case EventType.Sneeze:
-                project.FindEntityById(EntityId, entity =>
+            case ComponentFluPackage.EventType.Sneeze:
+                project.FindEntityById(package.EntityId, entity =>
                 {
                     var flu = entity.FindComponent<ComponentFlu>();
                     if (flu == null)
@@ -71,27 +68,13 @@ public partial class ComponentFluPackage
                         return;
                     }
 
-                    flu.FluOnset = FluOnset;
-                    flu.SneezeDuration = SneezeDuration;
-                    flu.CoughDuration = CoughDuration;
-                    flu.FluDuration = FluDuration;
+                    flu.FluOnset = package.FluOnset;
+                    flu.SneezeDuration = package.SneezeDuration;
+                    flu.CoughDuration = package.CoughDuration;
+                    flu.FluDuration = package.FluDuration;
                     flu.Sneeze();
                 });
                 break;
         }
-    }
-}
-
-public sealed class ComponentFluPackageHandler : PackageHandlerBase<ComponentFluPackage>
-{
-    public override void Handle(ComponentFluPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentFluPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

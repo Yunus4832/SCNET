@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class GroupManagePackage : IPackage
+public class GroupManagePackage : IPackage
 {
     public enum CommandType
     {

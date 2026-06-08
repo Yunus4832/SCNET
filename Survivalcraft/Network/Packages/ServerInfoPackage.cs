@@ -1,14 +1,12 @@
 using Game.Network.Enums;
 using Game.Network.Serialization;
 
-using static Game.Screens.NetPlayScreen;
-
 namespace Game.Network.Packages;
 
 /// <summary>
 /// 基础包模板复制
 /// </summary>
-public partial class ServerInfoPackage : IPackage
+public class ServerInfoPackage : IPackage
 {
     public ushort ClientCount;
 

@@ -1,42 +1,53 @@
 using Game.Network.Enums;
-using Game.Network.Serialization;
 
-namespace Game.Network.Packages;
+namespace Game.Network.Packages.Handlers;
 
-public partial class ClientPackage
+public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ClientPackage package, NetNode? netNode, bool isServer)
     {
-        switch (PackageEventType)
+        if (netNode == null)
         {
-            case EventType.Add:
+            Log.Information($"Package处理器需要NetNode:{nameof(ClientPackage)}");
+            return;
+        }
+
+        switch (package.PackageEventType)
+        {
+            case ClientPackage.EventType.Add:
                 if (GameManager.Project is null)
                 {
                     return;
                 }
 
                 var project = GameManager.Project;
-                netNode.AddClient(new Client(From?.Peer, Client!.ID, Client.TokenId, Client.GUID, project,
-                    Client.CommunityAccountId, Client.Nickname));
+                netNode.AddClient(new Client(
+                    package.From?.Peer,
+                    package.Client!.ID,
+                    package.Client.TokenId,
+                    package.Client.GUID, project,
+                    package.Client.CommunityAccountId,
+                    package.Client.Nickname)
+                );
                 break;
-            case EventType.Remove:
-                if (netNode.Clients.ContainsKey(Client!.ID))
+            case ClientPackage.EventType.Remove:
+                if (netNode.Clients.ContainsKey(package.Client!.ID))
                 {
-                    var client = netNode.Clients[Client.ID];
+                    var client = netNode.Clients[package.Client.ID];
                     client.State = ClientState.NotConnected;
                     netNode.OnClientStateChanged?.Invoke(client);
-                    netNode.Clients.Remove(Client.ID);
+                    netNode.Clients.Remove(package.Client.ID);
                 }
 
                 break;
-            case EventType.SyncList:
-                foreach (var c in List)
+            case ClientPackage.EventType.SyncList:
+                foreach (var c in package.List)
                 {
                     if (c.ID == 0)
                     {
-                        c.Peer = From?.Peer;
+                        c.Peer = package.From?.Peer;
                         c.Peer?.Tag = c;
-                        netNode.Server = From;
+                        netNode.Server = package.From;
                     }
                     else
                     {
@@ -56,32 +67,18 @@ public partial class ClientPackage
 
                 netNode.CurrentStage = NetNode.Stage.Connected;
                 break;
-            case EventType.StateChange:
-                if (netNode.Clients.TryGetValue(Client!.ID, out var nodeClient))
+            case ClientPackage.EventType.StateChange:
+                if (netNode.Clients.TryGetValue(package.Client!.ID, out var nodeClient))
                 {
-                    From = nodeClient;
-                    if (From.State != Client.State)
+                    package.From = nodeClient;
+                    if (package.From.State != package.Client.State)
                     {
-                        From.State = Client.State;
-                        netNode.OnClientStateChanged?.Invoke(From);
+                        package.From.State = package.Client.State;
+                        netNode.OnClientStateChanged?.Invoke(package.From);
                     }
                 }
 
                 break;
         }
-    }
-}
-
-public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
-{
-    public override void Handle(ClientPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ClientPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

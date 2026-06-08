@@ -1,19 +1,16 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
 using static Game.Screens.NetPlayScreen;
 
-namespace Game.Network.Packages;
+namespace Game.Network.Packages.Handlers;
 
-public partial class ServerInfoPackage
+public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPackage>
 {
-    internal void HandleCore(NetNode? netNode, bool isServer)
+    public override void Handle(ServerInfoPackage package, NetNode? netNode, bool isServer)
     {
-        if (RequestInfo)
+        if (package.RequestInfo)
         {
-            if (From?.IPPoint != null)
+            if (package.From?.IPPoint != null)
             {
-                netNode?.SendWriterFromPackage(new ServerInfoPackage(false), From.IPPoint);
+                netNode?.SendWriterFromPackage(new ServerInfoPackage(false), package.From.IPPoint);
             }
         }
         else
@@ -22,23 +19,23 @@ public partial class ServerInfoPackage
             var c = new Connect
             {
                 State = ConnectState.Avaliable,
-                IP = From?.IPPoint?.ToString() ?? string.Empty
+                IP = package.From?.IPPoint?.ToString() ?? string.Empty
             };
             c.Name = c.IP;
-            c.GameMode = GameMode;
-            c.HasPassword = NeedPasswd;
-            c.IsNeedLoginCommunity = NeedLogin;
-            c.MaxCount = MaxPlayerCount;
-            c.PlayerCount = ClientCount;
-            c.FromBroadcast = From?.IsLocalRemote ?? false;
+            c.GameMode = package.GameMode;
+            c.HasPassword = package.NeedPasswd;
+            c.IsNeedLoginCommunity = package.NeedLogin;
+            c.MaxCount = package.MaxPlayerCount;
+            c.PlayerCount = package.ClientCount;
+            c.FromBroadcast = package.From?.IsLocalRemote ?? false;
             c.FromLocal = false;
             c.FromCommunity = false;
-            c.UsedTime = Ping;
-            c.Version = Version;
-            c.TimeOfDay = TimeOfDay;
-            c.ModServerAddress = ModServerAddress;
-            c.Season = Season;
-            c.TimeOfSeason = TimeOfSeason;
+            c.UsedTime = package.Ping;
+            c.Version = package.Version;
+            c.TimeOfDay = package.TimeOfDay;
+            c.ModServerAddress = package.ModServerAddress;
+            c.Season = package.Season;
+            c.TimeOfSeason = package.TimeOfSeason;
             if (IpToDNS.TryGetValue(c.IP, out var dns))
             {
                 c.IP = dns;
@@ -63,13 +60,13 @@ public partial class ServerInfoPackage
                 found.UsedTime = c.UsedTime;
                 found.Version = c.Version;
                 found.TimeOfDay = c.TimeOfDay;
-                found.ModServerAddress = ModServerAddress;
+                found.ModServerAddress = package.ModServerAddress;
                 found.Season = c.Season;
                 found.TimeOfSeason = c.TimeOfSeason;
             }
             else
             {
-                if (From is not null && From.IsLocalRemote) //局域网
+                if (package.From is not null && package.From.IsLocalRemote) //局域网
                 {
                     if (p.CheckSaveConnectExists(c, out var f))
                     {
@@ -82,13 +79,5 @@ public partial class ServerInfoPackage
 
             p.UpdateList();
         }
-    }
-}
-
-public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPackage>
-{
-    public override void Handle(ServerInfoPackage package, NetNode? netNode, bool isServer)
-    {
-        package.HandleCore(netNode, isServer);
     }
 }

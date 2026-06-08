@@ -1,12 +1,15 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class PickablePackage
+public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(PickablePackage package, NetNode? netNode, bool isServer)
     {
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(PickablePackage)}");
+            return;
+        }
+
         if (GameManager.Project is null)
         {
             return;
@@ -14,44 +17,44 @@ public partial class PickablePackage
 
         var project = GameManager.Project;
         var subsystemPickable = project.FindSubsystem<SubsystemPickables>(true)!;
-        switch (Type)
+        switch (package.Type)
         {
-            case PickType.Create:
-                var tmp = subsystemPickable.Pickables.Find(p => p.Id == Id);
+            case PickablePackage.PickType.Create:
+                var tmp = subsystemPickable.Pickables.Find(p => p.Id == package.Id);
                 if (tmp != null)
                 {
-                    tmp.Value = Value;
-                    tmp.Count = Count;
-                    tmp.Velocity = Velocity;
-                    tmp.StuckMatrix = StuckMatrix;
+                    tmp.Value = package.Value;
+                    tmp.Count = package.Count;
+                    tmp.Velocity = package.Velocity;
+                    tmp.StuckMatrix = package.StuckMatrix;
                 }
                 else
                 {
-                    subsystemPickable.CreatePickable(Id, Value, Count, Position, Velocity, StuckMatrix);
+                    subsystemPickable.CreatePickable(package.Id, package.Value, package.Count, package.Position, package.Velocity, package.StuckMatrix);
                 }
 
                 break;
-            case PickType.Update:
-                foreach (var c in Pickables)
+            case PickablePackage.PickType.Update:
+                foreach (var c in package.Pickables)
                 {
                     subsystemPickable.PickableAction(c.Id, pick => { pick.Position = c.Position; });
                 }
 
                 foreach (var c in subsystemPickable.Pickables)
                 {
-                    if (Pickables.Find(x => x.Id == c.Id) == null)
+                    if (package.Pickables.Find(x => x.Id == c.Id) == null)
                     {
                         subsystemPickable.PickablesToRemove.Add(c);
                     }
                 }
 
                 break;
-            case PickType.Delete:
+            case PickablePackage.PickType.Delete:
                 subsystemPickable.PickableAction(
-                    Id,
+                    package.Id,
                     pick =>
                     {
-                        if (PlaySound)
+                        if (package.PlaySound)
                         {
                             subsystemPickable.PlayPickableCollectedSound(pick);
                         }
@@ -61,41 +64,41 @@ public partial class PickablePackage
                     false
                 );
                 break;
-            case PickType.RequestSync:
+            case PickablePackage.PickType.RequestSync:
                 var flag = subsystemPickable.PickableAction(
-                    Id,
-                    pick => { netNode.QueuePackage(new PickablePackage(pick, PickType.Create) { To = From }); }
+                    package.Id,
+                    pick => { netNode.QueuePackage(new PickablePackage(pick, PickablePackage.PickType.Create) { To = package.From }); }
                 );
                 if (!flag)
                 {
-                    netNode.QueuePackage(new PickablePackage(Id) { To = From });
+                    netNode.QueuePackage(new PickablePackage(package.Id) { To = package.From });
                 }
 
                 break;
-            case PickType.SetFlyToPosition:
-                subsystemPickable.PickableAction(Id, pick => { pick.FlyToPosition = FlyToPosition; });
+            case PickablePackage.PickType.SetFlyToPosition:
+                subsystemPickable.PickableAction(package.Id, pick => { pick.FlyToPosition = package.FlyToPosition; });
                 break;
-            case PickType.SyncList:
-            case PickType.CreateList:
+            case PickablePackage.PickType.SyncList:
+            case PickablePackage.PickType.CreateList:
                 if (isServer)
                 {
                     break;
                 }
 
-                foreach (var pickable in Pickables)
+                foreach (var pickable in package.Pickables)
                 {
                     subsystemPickable.CreatePickable(pickable.Id, pickable.Value, pickable.Count, pickable.Position,
                         pickable.Velocity, pickable.StuckMatrix);
                 }
 
                 break;
-            case PickType.DeleteList:
+            case PickablePackage.PickType.DeleteList:
                 if (isServer)
                 {
                     break;
                 }
 
-                foreach (var pickable in Pickables)
+                foreach (var pickable in package.Pickables)
                 {
                     subsystemPickable.PickableAction(pickable.Id,
                         pick => { subsystemPickable.RemovePickable(pick); }, false);
@@ -103,19 +106,5 @@ public partial class PickablePackage
 
                 break;
         }
-    }
-}
-
-public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
-{
-    public override void Handle(PickablePackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(PickablePackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

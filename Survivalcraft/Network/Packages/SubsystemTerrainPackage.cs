@@ -11,7 +11,7 @@ public struct CellChange
     public int Value;
 }
 
-public partial class SubsystemTerrainPackage : IPackage
+public class SubsystemTerrainPackage : IPackage
 {
     public enum DataType
     {

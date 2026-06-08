@@ -5,7 +5,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class ComponentPlayerPackage : IPackage
+public class ComponentPlayerPackage : IPackage
 {
     [Flags]
     public enum ChangFlag : byte
@@ -212,7 +212,6 @@ public partial class ComponentPlayerPackage : IPackage
         }
     }
 
-    //Restart
     public ComponentPlayerPackage(PlayerData playerData, PlayerAction type)
     {
         Type = type;

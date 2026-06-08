@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class PickablePackage : IPackage
+public class PickablePackage : IPackage
 {
     public enum PickType
     {

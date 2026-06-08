@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class SubsystemBodyPackage : IPackage
+public class SubsystemBodyPackage : IPackage
 {
     [Flags]
     public enum ChangeFlag : byte

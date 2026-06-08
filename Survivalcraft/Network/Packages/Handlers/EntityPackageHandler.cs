@@ -1,60 +1,6 @@
 using EntitySystem.Core;
 
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class EntityPackage
-{
-    internal void HandleCore(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-        var el = new List<Entity>();
-        switch (Type)
-        {
-            case EventType.LoadOne:
-            case EventType.LoadList:
-                foreach (var e in Entities)
-                    //如果本地ID没有重复的添加，重复了进行替换
-                {
-                    if (!project.FindEntityById(e.EntityId, e2 =>
-                        {
-                            project.RemoveEntity(e2, true);
-                            project.AddEntity(e);
-                        }))
-                    {
-                        el.Add(e);
-                    }
-                }
-
-                project.AddEntities(el);
-                break;
-            case EventType.Remove:
-                project.FindEntityById(EntityId, entity => { project.RemoveEntity(entity, true); });
-                break;
-            case EventType.RequestSync:
-                foreach (var e in EntityIdList)
-                {
-                    project.FindEntityById(e, entity =>
-                    {
-                        if (ShouldSendEntityToClients(entity))
-                        {
-                            el.Add(entity);
-                        }
-                    });
-                }
-
-                netNode.QueuePackage(new EntityPackage(el) { To = From });
-                break;
-        }
-    }
-}
+namespace Game.Network.Packages.Handlers;
 
 public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
 {
@@ -62,10 +8,47 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
     {
         if (netNode == null)
         {
-            Log.Information($"Package处理器需要NetNode:{typeof(EntityPackage).Name}");
+            Log.Information($"Package处理器需要NetNode:{nameof(EntityPackage)}");
             return;
         }
 
-        package.HandleCore(netNode, isServer);
+        if (GameManager.Project is null)
+        {
+            return;
+        }
+
+        var project = GameManager.Project;
+        var el = new List<Entity>();
+        switch (package.Type)
+        {
+            case EntityPackage.EventType.LoadOne:
+            case EntityPackage.EventType.LoadList:
+                // 如果本地ID没有重复的添加，重复了进行替换
+                el.AddRange(package.Entities.Where(e => !project.FindEntityById(e.EntityId, e2 =>
+                {
+                    project.RemoveEntity(e2, true);
+                    project.AddEntity(e);
+                })));
+
+                project.AddEntities(el);
+                break;
+            case EntityPackage.EventType.Remove:
+                project.FindEntityById(package.EntityId, entity => { project.RemoveEntity(entity, true); });
+                break;
+            case EntityPackage.EventType.RequestSync:
+                foreach (var e in package.EntityIdList)
+                {
+                    project.FindEntityById(e, entity =>
+                    {
+                        if (EntityPackage.ShouldSendEntityToClients(entity))
+                        {
+                            el.Add(entity);
+                        }
+                    });
+                }
+
+                netNode.QueuePackage(new EntityPackage(el) { To = package.From });
+                break;
+        }
     }
 }

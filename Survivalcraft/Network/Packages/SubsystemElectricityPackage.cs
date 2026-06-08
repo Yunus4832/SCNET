@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class SubsystemElectricityPackage : IPackage
+public class SubsystemElectricityPackage : IPackage
 {
     public SubsystemElectricity? Subsystem;
 

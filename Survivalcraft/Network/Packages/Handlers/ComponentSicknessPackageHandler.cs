@@ -1,11 +1,8 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class ComponentSicknessPackage
+public sealed class ComponentSicknessPackageHandler : PackageHandlerBase<ComponentSicknessPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ComponentSicknessPackage package, NetNode? netNode, bool isServer)
     {
         if (GameManager.Project is null)
         {
@@ -13,7 +10,7 @@ public partial class ComponentSicknessPackage
         }
 
         var project = GameManager.Project;
-        project.FindEntityById(EntityId, entity =>
+        project.FindEntityById(package.EntityId, entity =>
         {
             var sickness = entity.FindComponent<ComponentSickness>();
             if (sickness == null)
@@ -21,25 +18,11 @@ public partial class ComponentSicknessPackage
                 return;
             }
 
-            sickness.SicknessDuration = SicknessDuration;
-            if (SicknessDuration > 0f)
+            sickness.SicknessDuration = package.SicknessDuration;
+            if (package.SicknessDuration > 0f)
             {
                 sickness.NauseaEffect();
             }
         });
-    }
-}
-
-public sealed class ComponentSicknessPackageHandler : PackageHandlerBase<ComponentSicknessPackage>
-{
-    public override void Handle(ComponentSicknessPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentSicknessPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

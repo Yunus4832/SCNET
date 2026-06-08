@@ -1,12 +1,15 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class ComponentInventoryPackage
+public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<ComponentInventoryPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ComponentInventoryPackage package, NetNode? netNode, bool isServer)
     {
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(ComponentInventoryPackage)}");
+            return;
+        }
+
         if (GameManager.Project is null)
         {
             return;
@@ -18,29 +21,29 @@ public partial class ComponentInventoryPackage
         IInventory? sourceInventoryObject;
         IInventory? targetInventoryObject;
 
-        switch (PackageEventType)
+        switch (package.PackageEventType)
         {
-            case EventType.ActiveSlotChange:
-                subsystemInventories?.FindInventoryById(InventoryID, inventory =>
+            case ComponentInventoryPackage.EventType.ActiveSlotChange:
+                subsystemInventories?.FindInventoryById(package.InventoryID, inventory =>
                 {
-                    inventory.ActiveSlotIndex = ActiveSlot;
+                    inventory.ActiveSlotIndex = package.ActiveSlot;
                     if (!isServer)
                     {
                         return;
                     }
 
-                    Except = From;
-                    netNode.QueuePackage(this);
+                    package.Except = package.From;
+                    netNode.QueuePackage(package);
                 });
                 break;
-            case EventType.InventorySync:
+            case ComponentInventoryPackage.EventType.InventorySync:
                 if (isServer)
                 {
                 }
                 else
                 {
                     //客户端接受服务器的包
-                    foreach (var item in Slots)
+                    foreach (var item in package.Slots)
                     {
                         subsystemInventories?.FindInventoryById(item.Key, inventory =>
                         {
@@ -63,10 +66,10 @@ public partial class ComponentInventoryPackage
                 }
 
                 break;
-            case EventType.QueryErrorInventoryInfo:
+            case ComponentInventoryPackage.EventType.QueryErrorInventoryInfo:
                 if (isServer)
                 {
-                    subsystemInventories?.FindInventoryById(InventoryID, inventory =>
+                    subsystemInventories?.FindInventoryById(package.InventoryID, inventory =>
                     {
                         var extra = "";
                         if (inventory is ComponentCraftingTable t)
@@ -74,28 +77,30 @@ public partial class ComponentInventoryPackage
                             extra = t.Entity.ValuesDictionary.DatabaseObject.Name;
                         }
 
-                        Log.Information($"请求错误的箱子ID[{InventoryID}]来自[{inventory.GetType().Name}][{extra}]");
+                        Log.Information($"请求错误的箱子ID[{package.InventoryID}]来自[{inventory.GetType().Name}][{extra}]");
                     });
                 }
 
                 break;
 
-            case EventType.HandleMoveItem:
-                if (SourceInventorySlot != null)
+            case ComponentInventoryPackage.EventType.HandleMoveItem:
+                if (package.SourceInventorySlot != null)
                 {
-                    sourceInventoryObject = subsystemInventories?.GetInventoryById(SourceInventorySlot.InventoryId);
-                    if (TargetInventorySlot != null)
+                    sourceInventoryObject =
+                        subsystemInventories?.GetInventoryById(package.SourceInventorySlot.InventoryId);
+                    if (package.TargetInventorySlot != null)
                     {
                         targetInventoryObject =
-                            subsystemInventories?.GetInventoryById(TargetInventorySlot.InventoryId);
+                            subsystemInventories?.GetInventoryById(package.TargetInventorySlot.InventoryId);
                         if (sourceInventoryObject is not null)
                             // 数据捕捉
                         {
                             if (targetInventoryObject != null)
                             {
                                 InventorySlotWidget.HandleMoveItem(sourceInventoryObject,
-                                    SourceInventorySlot.SlotIndex,
-                                    targetInventoryObject, TargetInventorySlot.SlotIndex, TargetInventorySlot.Count);
+                                    package.SourceInventorySlot.SlotIndex,
+                                    targetInventoryObject, package.TargetInventorySlot.SlotIndex,
+                                    package.TargetInventorySlot.Count);
                             }
                         }
                     }
@@ -103,65 +108,53 @@ public partial class ComponentInventoryPackage
 
                 // 服务器找不到背包？怀疑是来打服的！！！
                 break;
-            case EventType.HandleDragDrop:
-                if (SourceInventorySlot != null)
+            case ComponentInventoryPackage.EventType.HandleDragDrop:
+                if (package.SourceInventorySlot != null)
                 {
-                    sourceInventoryObject = subsystemInventories?.GetInventoryById(SourceInventorySlot.InventoryId);
-                    if (TargetInventorySlot != null)
+                    sourceInventoryObject =
+                        subsystemInventories?.GetInventoryById(package.SourceInventorySlot.InventoryId);
+                    if (package.TargetInventorySlot != null)
                     {
                         targetInventoryObject =
-                            subsystemInventories?.GetInventoryById(TargetInventorySlot.InventoryId);
+                            subsystemInventories?.GetInventoryById(package.TargetInventorySlot.InventoryId);
                         if (sourceInventoryObject is not null)
                             // 数据捕捉
                         {
                             if (targetInventoryObject != null)
                             {
                                 InventorySlotWidget.HandleDragDrop(sourceInventoryObject,
-                                    SourceInventorySlot.SlotIndex,
-                                    DragMode, targetInventoryObject, TargetInventorySlot.SlotIndex, ProcessingOnly);
+                                    package.SourceInventorySlot.SlotIndex,
+                                    package.DragMode, targetInventoryObject, package.TargetInventorySlot.SlotIndex,
+                                    package.ProcessingOnly);
                             }
                         }
                     }
                 }
 
                 break;
-            case EventType.SetSlotsItem:
+            case ComponentInventoryPackage.EventType.SetSlotsItem:
                 if (isServer)
                 {
                 }
                 else
                 {
-                    if (SourceInventorySlot != null)
+                    if (package.SourceInventorySlot != null)
                     {
                         sourceInventoryObject =
-                            subsystemInventories?.GetInventoryById(SourceInventorySlot.InventoryId);
+                            subsystemInventories?.GetInventoryById(package.SourceInventorySlot.InventoryId);
                         if (sourceInventoryObject is ComponentInventoryBase componentInventoryBase)
                         {
                             var slot = new ComponentInventoryBase.Slot
                             {
-                                Value = SourceInventorySlot.Value,
-                                Count = SourceInventorySlot.Count
+                                Value = package.SourceInventorySlot.Value,
+                                Count = package.SourceInventorySlot.Count
                             };
-                            componentInventoryBase.SetSlotValue(SourceInventorySlot.SlotIndex, slot);
+                            componentInventoryBase.SetSlotValue(package.SourceInventorySlot.SlotIndex, slot);
                         }
                     }
                 }
 
                 break;
         }
-    }
-}
-
-public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<ComponentInventoryPackage>
-{
-    public override void Handle(ComponentInventoryPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentInventoryPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

@@ -1,40 +1,44 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class MessagePackage
+public sealed class MessagePackageHandler : PackageHandlerBase<MessagePackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(MessagePackage package, NetNode? netNode, bool isServer)
     {
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(MessagePackage)}");
+            return;
+        }
+
         if (GameManager.Project is null)
         {
             return;
         }
 
         var project = GameManager.Project;
-        switch (PackageMessageMode)
+        switch (package.PackageMessageMode)
         {
-            case MessageMode.BaseMessage:
+            case MessagePackage.MessageMode.BaseMessage:
                 var gameWidgets = project.FindSubsystem<SubsystemGameWidgets>(true)!;
                 const bool external = false;
-                gameWidgets.AddNetMessage(Message, PlayerName, MessageType, ToClients, external);
-                if (!isServer || From == null)
+                gameWidgets.AddNetMessage(package.Message, package.PlayerName, package.MessageType, package.ToClients,
+                    external);
+                if (!isServer || package.From == null)
                 {
                     break;
                 }
 
-                PlayerName = From.PlayerData.Name;
+                package.PlayerName = package.From.PlayerData.Name;
                 var flag = project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList
-                    .Contains(From.GUID.ToString());
+                    .Contains(package.From.GUID.ToString());
                 if (!flag)
                 {
-                    Except = From;
-                    netNode.QueuePackage(this);
+                    package.Except = package.From;
+                    netNode.QueuePackage(package);
                 }
 
                 break;
-            case MessageMode.LargeMessage:
+            case MessagePackage.MessageMode.LargeMessage:
                 if (isServer)
                 {
                     break;
@@ -43,28 +47,14 @@ public partial class MessagePackage
                 foreach (var player in project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData)
                 {
                     player.ComponentPlayer?.ComponentGui?.DisplayLargeMessage(
-                        LargeText,
-                        SmallText,
-                        Duration,
-                        Delay
+                        package.LargeText,
+                        package.SmallText,
+                        package.Duration,
+                        package.Delay
                     );
                 }
 
                 break;
         }
-    }
-}
-
-public sealed class MessagePackageHandler : PackageHandlerBase<MessagePackage>
-{
-    public override void Handle(MessagePackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(MessagePackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

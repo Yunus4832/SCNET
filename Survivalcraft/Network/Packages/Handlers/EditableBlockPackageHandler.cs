@@ -1,12 +1,17 @@
 using Game.Network.Enums;
-using Game.Network.Serialization;
 
-namespace Game.Network.Packages;
+namespace Game.Network.Packages.Handlers;
 
-public partial class EditableBlockPackage
+public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlockPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(EditableBlockPackage package, NetNode? netNode, bool isServer)
     {
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(EditableBlockPackage)}");
+            return;
+        }
+
         if (GameManager.Project is null)
         {
             return;
@@ -14,7 +19,7 @@ public partial class EditableBlockPackage
 
         var project = GameManager.Project;
         var subInventory = project.FindSubsystem<SubsystemInventories>(true)!;
-        switch (ItemType)
+        switch (package.ItemType)
         {
             case EditableItemType.MemoryBank:
                 var behavior = project.FindSubsystem<SubsystemMemoryBankBlockBehavior>();
@@ -24,31 +29,31 @@ public partial class EditableBlockPackage
                 }
 
                 var data = new MemoryBankData();
-                data.Data.AddRange(Data);
-                if (SyncItem)
+                data.Data.AddRange(package.Data);
+                if (package.SyncItem)
                 {
-                    behavior.ItemsData[SlotIndex] = data;
+                    behavior.ItemsData[package.SlotIndex] = data;
                 }
                 else
                 {
-                    if (EditAsItem)
+                    if (package.EditAsItem)
                     {
-                        subInventory.FindInventoryById(InventoryId, inventory =>
+                        subInventory.FindInventoryById(package.InventoryId, inventory =>
                         {
-                            if (!Id.HasValue)
+                            if (!package.Id.HasValue)
                             {
-                                Id = behavior.StoreItemDataAtUniqueId(data);
-                                ReplaceDataAtSlot(inventory, SlotIndex, _ => Id.Value);
+                                package.Id = behavior.StoreItemDataAtUniqueId(data);
+                                package.ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Id.Value);
                             }
                             else
                             {
-                                behavior.ItemsData[Id.Value] = data;
+                                behavior.ItemsData[package.Id.Value] = data;
                             }
                         });
                     }
                     else
                     {
-                        behavior.SetBlockData(CellFace.Point, data);
+                        behavior.SetBlockData(package.CellFace.Point, data);
                     }
                 }
 
@@ -57,125 +62,128 @@ public partial class EditableBlockPackage
                 var truthBehavior = project.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>(true)!;
                 var truthData = new TruthTableData
                 {
-                    Data = Data
+                    Data = package.Data
                 };
-                if (SyncItem)
+                if (package.SyncItem)
                 {
-                    truthBehavior.ItemsData[SlotIndex] = truthData;
+                    truthBehavior.ItemsData[package.SlotIndex] = truthData;
                 }
                 else
                 {
-                    if (EditAsItem)
+                    if (package.EditAsItem)
                     {
-                        subInventory.FindInventoryById(InventoryId, inventory =>
+                        subInventory.FindInventoryById(package.InventoryId, inventory =>
                         {
-                            if (!Id.HasValue)
+                            if (!package.Id.HasValue)
                             {
-                                Id = truthBehavior.StoreItemDataAtUniqueId(truthData);
-                                ReplaceDataAtSlot(inventory, SlotIndex, _ => Id.Value);
+                                package.Id = truthBehavior.StoreItemDataAtUniqueId(truthData);
+                                package.ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Id.Value);
                             }
                             else
                             {
-                                truthBehavior.ItemsData[Id.Value] = truthData;
+                                truthBehavior.ItemsData[package.Id.Value] = truthData;
                             }
                         });
                     }
                     else
                     {
-                        truthBehavior.SetBlockData(CellFace.Point, truthData);
+                        truthBehavior.SetBlockData(package.CellFace.Point, truthData);
                     }
                 }
 
                 break;
             case EditableItemType.AdjustableDelayGate:
-                if (EditAsItem)
+                if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(InventoryId,
+                    subInventory.FindInventoryById(package.InventoryId,
                         inventory =>
                         {
-                            ReplaceDataAtSlot(inventory, SlotIndex,
-                                d => AdjustableDelayGateBlock.SetDelay(d, Delay));
+                            package.ReplaceDataAtSlot(inventory, package.SlotIndex,
+                                d => AdjustableDelayGateBlock.SetDelay(d, package.Delay));
                         });
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
-                    var value = st.Terrain.GetCellValue(CellFace.X, CellFace.Y, CellFace.Z);
+                    var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
                     var newValue = Terrain.ReplaceData(value,
-                        AdjustableDelayGateBlock.SetDelay(Terrain.ExtractData(value), Delay));
-                    st.ChangeCell(CellFace.X, CellFace.Y, CellFace.Z, newValue);
+                        AdjustableDelayGateBlock.SetDelay(Terrain.ExtractData(value), package.Delay));
+                    st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
                 break;
             case EditableItemType.Battery:
-                if (EditAsItem)
+                if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(InventoryId,
+                    subInventory.FindInventoryById(package.InventoryId,
                         inventory =>
                         {
-                            ReplaceDataAtSlot(inventory, SlotIndex, d => BatteryBlock.SetVoltageLevel(d, Delay));
+                            package.ReplaceDataAtSlot(inventory, package.SlotIndex,
+                                d => BatteryBlock.SetVoltageLevel(d, package.Delay));
                         });
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
-                    var value = st.Terrain.GetCellValue(CellFace.X, CellFace.Y, CellFace.Z);
+                    var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
                     var newValue = Terrain.ReplaceData(value,
-                        BatteryBlock.SetVoltageLevel(Terrain.ExtractData(value), Delay));
-                    st.ChangeCell(CellFace.X, CellFace.Y, CellFace.Z, newValue);
+                        BatteryBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay));
+                    st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
                 break;
             case EditableItemType.Switch:
-                if (EditAsItem)
+                if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(InventoryId,
+                    subInventory.FindInventoryById(package.InventoryId,
                         inventory =>
                         {
-                            ReplaceDataAtSlot(inventory, SlotIndex, d => SwitchBlock.SetVoltageLevel(d, Delay));
+                            package.ReplaceDataAtSlot(inventory, package.SlotIndex,
+                                d => SwitchBlock.SetVoltageLevel(d, package.Delay));
                         });
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
-                    var value = st.Terrain.GetCellValue(CellFace.X, CellFace.Y, CellFace.Z);
+                    var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
                     var newValue = Terrain.ReplaceData(value,
-                        SwitchBlock.SetVoltageLevel(Terrain.ExtractData(value), Delay));
-                    st.ChangeCell(CellFace.X, CellFace.Y, CellFace.Z, newValue);
+                        SwitchBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay));
+                    st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
                 break;
             case EditableItemType.Button:
-                if (EditAsItem)
+                if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(InventoryId,
+                    subInventory.FindInventoryById(package.InventoryId,
                         inventory =>
                         {
-                            ReplaceDataAtSlot(inventory, SlotIndex, d => ButtonBlock.SetVoltageLevel(d, Delay));
+                            package.ReplaceDataAtSlot(inventory, package.SlotIndex,
+                                d => ButtonBlock.SetVoltageLevel(d, package.Delay));
                         });
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
-                    var value = st.Terrain.GetCellValue(CellFace.X, CellFace.Y, CellFace.Z);
+                    var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
                     var newValue = Terrain.ReplaceData(value,
-                        ButtonBlock.SetVoltageLevel(Terrain.ExtractData(value), Delay));
-                    st.ChangeCell(CellFace.X, CellFace.Y, CellFace.Z, newValue);
+                        ButtonBlock.SetVoltageLevel(Terrain.ExtractData(value), package.Delay));
+                    st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
                 break;
             case EditableItemType.Piston:
-                if (EditAsItem)
+                if (package.EditAsItem)
                 {
-                    subInventory.FindInventoryById(InventoryId,
-                        inventory => { ReplaceDataAtSlot(inventory, SlotIndex, _ => Delay); });
+                    subInventory.FindInventoryById(package.InventoryId,
+                        inventory => { package.ReplaceDataAtSlot(inventory, package.SlotIndex, _ => package.Delay); });
                 }
                 else
                 {
                     var st = project.FindSubsystem<SubsystemTerrain>(true)!;
-                    var value = st.Terrain.GetCellValue(CellFace.X, CellFace.Y, CellFace.Z);
-                    var newValue = Terrain.ReplaceData(value, Delay);
-                    st.ChangeCell(CellFace.X, CellFace.Y, CellFace.Z, newValue);
+                    var value = st.Terrain.GetCellValue(package.CellFace.X, package.CellFace.Y, package.CellFace.Z);
+                    var newValue = Terrain.ReplaceData(value, package.Delay);
+                    st.ChangeCell(package.CellFace.X, package.CellFace.Y, package.CellFace.Z, newValue);
                 }
 
                 break;
@@ -183,21 +191,7 @@ public partial class EditableBlockPackage
 
         if (isServer)
         {
-            netNode.QueuePackage(this);
+            netNode.QueuePackage(package);
         }
-    }
-}
-
-public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlockPackage>
-{
-    public override void Handle(EditableBlockPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(EditableBlockPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

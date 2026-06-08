@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class SubsystemSkyPackage : IPackage
+public class SubsystemSkyPackage : IPackage
 {
     public bool IsRequest;
 

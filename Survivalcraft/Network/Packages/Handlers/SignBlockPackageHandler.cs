@@ -1,34 +1,4 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class SignBlockPackage
-{
-    internal void HandleCore(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-        if (SignData != null)
-        {
-            project.FindSubsystem<SubsystemSignBlockBehavior>(true)!.SetSignData(
-                Point,
-                SignData.Lines,
-                SignData.Colors,
-                SignData.Url
-            );
-        }
-
-        if (isServer)
-        {
-            netNode.QueuePackage(this);
-        }
-    }
-}
+namespace Game.Network.Packages.Handlers;
 
 public sealed class SignBlockPackageHandler : PackageHandlerBase<SignBlockPackage>
 {
@@ -36,10 +6,29 @@ public sealed class SignBlockPackageHandler : PackageHandlerBase<SignBlockPackag
     {
         if (netNode == null)
         {
-            Log.Information($"Package处理器需要NetNode:{typeof(SignBlockPackage).Name}");
+            Log.Information($"Package处理器需要NetNode:{nameof(SignBlockPackage)}");
             return;
         }
 
-        package.HandleCore(netNode, isServer);
+        if (GameManager.Project is null)
+        {
+            return;
+        }
+
+        var project = GameManager.Project;
+        if (package.SignData != null)
+        {
+            project.FindSubsystem<SubsystemSignBlockBehavior>(true)!.SetSignData(
+                package.Point,
+                package.SignData.Lines,
+                package.SignData.Colors,
+                package.SignData.Url
+            );
+        }
+
+        if (isServer)
+        {
+            netNode.QueuePackage(package);
+        }
     }
 }

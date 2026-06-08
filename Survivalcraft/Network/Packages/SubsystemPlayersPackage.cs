@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class SubsystemPlayersPackage : IPackage
+public class SubsystemPlayersPackage : IPackage
 {
     public readonly List<ComponentPlayerPackage> ComponentPlayerPackageList = [];
 

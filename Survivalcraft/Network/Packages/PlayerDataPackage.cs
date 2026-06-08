@@ -5,7 +5,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class PlayerDataPackage : IPackage
+public class PlayerDataPackage : IPackage
 {
     public enum DataType
     {

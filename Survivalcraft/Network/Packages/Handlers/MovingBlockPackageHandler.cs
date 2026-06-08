@@ -1,13 +1,8 @@
-using EntitySystem.TemplatesDatabase;
+namespace Game.Network.Packages.Handlers;
 
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class MovingBlockPackage
+public sealed class MovingBlockPackageHandler : PackageHandlerBase<MovingBlockPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(MovingBlockPackage package, NetNode? netNode, bool isServer)
     {
         if (GameManager.Project is null)
         {
@@ -16,15 +11,16 @@ public partial class MovingBlockPackage
 
         var project = GameManager.Project;
         var subsystemMovingBlocks = project.FindSubsystem<SubsystemMovingBlocks>(true)!;
-        switch (Type)
+        switch (package.Type)
         {
-            case EventType.Add:
-                if (AddData == null)
+            case MovingBlockPackage.EventType.Add:
+                if (package.AddData == null)
                 {
                     break;
                 }
 
-                var m = subsystemMovingBlocks.LoadAndAddMovingItem(AddData) as SubsystemMovingBlocks.MovingBlockSet;
+                var m =
+                    subsystemMovingBlocks.LoadAndAddMovingItem(package.AddData) as SubsystemMovingBlocks.MovingBlockSet;
                 var subsystemAudio = project.FindSubsystem<SubsystemAudio>(true)!;
                 if (m != null)
                 {
@@ -37,15 +33,16 @@ public partial class MovingBlockPackage
 
                 break;
             default:
-                var mm = Type.HasFlag(EventType.HagTag)
-                    ? subsystemMovingBlocks.FindMovingBlocks(MovingBlockId, Position)
-                    : subsystemMovingBlocks.FindMovingBlocks(MovingBlockId, null);
+                var mm = package.Type.HasFlag(MovingBlockPackage.EventType.HagTag)
+                    ? subsystemMovingBlocks.FindMovingBlocks(package.MovingBlockId, package.Position)
+                    : subsystemMovingBlocks.FindMovingBlocks(package.MovingBlockId, null);
                 if (mm == null)
                 {
                     break;
                 }
 
-                if (Type.HasFlag(EventType.Stopped) && mm is SubsystemMovingBlocks.MovingBlockSet blockSet)
+                if (package.Type.HasFlag(MovingBlockPackage.EventType.Stopped) &&
+                    mm is SubsystemMovingBlocks.MovingBlockSet blockSet)
                 {
                     subsystemMovingBlocks.DoStop(blockSet);
                 }
@@ -56,19 +53,5 @@ public partial class MovingBlockPackage
 
                 break;
         }
-    }
-}
-
-public sealed class MovingBlockPackageHandler : PackageHandlerBase<MovingBlockPackage>
-{
-    public override void Handle(MovingBlockPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(MovingBlockPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

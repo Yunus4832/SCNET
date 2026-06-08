@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class SubsystemSeasonPackage : IPackage
+public class SubsystemSeasonPackage : IPackage
 {
     public int SeasonIndexNet;
 

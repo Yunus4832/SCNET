@@ -1,11 +1,8 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class SubsystemWeatherPackage
+public sealed class SubsystemWeatherPackageHandler : PackageHandlerBase<SubsystemWeatherPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(SubsystemWeatherPackage package, NetNode? netNode, bool isServer)
     {
         if (GameManager.Project is null)
         {
@@ -14,9 +11,9 @@ public partial class SubsystemWeatherPackage
 
         var project = GameManager.Project;
         var weather = project.FindSubsystem<SubsystemWeather>(true)!;
-        if (WeatherType != 0)
+        if (package.WeatherType != 0)
         {
-            switch (WeatherType)
+            switch (package.WeatherType)
             {
                 case 1:
                     weather.ManualPrecipitationEnd();
@@ -35,26 +32,12 @@ public partial class SubsystemWeatherPackage
             return;
         }
 
-        weather.PrecipitationStartTime = PrecipitationStartTime;
-        weather.PrecipitationEndTime = PrecipitationEndTime;
-        weather.LightningIntensity = LightningIntensity;
+        weather.PrecipitationStartTime = package.PrecipitationStartTime;
+        weather.PrecipitationEndTime = package.PrecipitationEndTime;
+        weather.LightningIntensity = package.LightningIntensity;
 
-        weather.FogStartTime = FogStartTime;
-        weather.FogEndTime = FogEndTime;
-        weather.FogRampTime = FogRampTime;
-    }
-}
-
-public sealed class SubsystemWeatherPackageHandler : PackageHandlerBase<SubsystemWeatherPackage>
-{
-    public override void Handle(SubsystemWeatherPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(SubsystemWeatherPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
+        weather.FogStartTime = package.FogStartTime;
+        weather.FogEndTime = package.FogEndTime;
+        weather.FogRampTime = package.FogRampTime;
     }
 }

@@ -5,7 +5,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class MovingBlockPackage : IPackage
+public class MovingBlockPackage : IPackage
 {
     [Flags]
     public enum EventType

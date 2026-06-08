@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class ConnectionRejectPackage : IPackage
+public class ConnectionRejectPackage : IPackage
 {
     public string Reason = string.Empty;
 

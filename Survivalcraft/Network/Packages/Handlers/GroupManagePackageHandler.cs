@@ -1,12 +1,15 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class GroupManagePackage
+public sealed class GroupManagePackageHandler : PackageHandlerBase<GroupManagePackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(GroupManagePackage package, NetNode? netNode, bool isServer)
     {
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(GroupManagePackage)}");
+            return;
+        }
+
         if (GameManager.Project is null)
         {
             return;
@@ -15,16 +18,17 @@ public partial class GroupManagePackage
         var project = GameManager.Project;
         var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
 
-        switch (Command)
+        switch (package.Command)
         {
-            case CommandType.CreateGroup:
-                CreateGroup(isServer, subsystemPlayers, netNode, FromPlayer, GroupName);
+            case GroupManagePackage.CommandType.CreateGroup:
+                GroupManagePackage.CreateGroup(isServer, subsystemPlayers, netNode, package.FromPlayer,
+                    package.GroupName);
                 break;
-            case CommandType.RequestJoinGroup:
-                if (subsystemPlayers.ServerGroups.TryGetValue(GroupKey.ToString(), out _))
+            case GroupManagePackage.CommandType.RequestJoinGroup:
+                if (subsystemPlayers.ServerGroups.TryGetValue(package.GroupKey.ToString(), out _))
                 {
-                    var fromPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == FromPlayer);
-                    var toPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == ToPlayer);
+                    var fromPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == package.FromPlayer);
+                    var toPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == package.ToPlayer);
                     if (fromPlayerData != null && toPlayerData is { IsMainPlayer: true })
                     {
                         DialogsManager.Confirm(
@@ -39,13 +43,14 @@ public partial class GroupManagePackage
                                 //同意
                                 if (isServer)
                                 {
-                                    JoinGroup(isServer, subsystemPlayers, netNode, fromPlayerData.PlayerGUID,
-                                        GroupKey);
+                                    GroupManagePackage.JoinGroup(isServer, subsystemPlayers, netNode,
+                                        fromPlayerData.PlayerGUID,
+                                        package.GroupKey);
                                 }
                                 else
                                 {
                                     toPlayerData.GameWidget.NetPanelWidget?.RefreshView();
-                                    netNode.QueuePackage(new GroupManagePackage(GroupKey,
+                                    netNode.QueuePackage(new GroupManagePackage(package.GroupKey,
                                         fromPlayerData.PlayerGUID, true));
                                 }
                             },
@@ -55,17 +60,17 @@ public partial class GroupManagePackage
 
                     if (isServer)
                     {
-                        Except = From;
-                        netNode.QueuePackage(this);
+                        package.Except = package.From;
+                        netNode.QueuePackage(package);
                     }
                 }
 
                 break;
-            case CommandType.InviteJoinGroup:
-                if (subsystemPlayers.ServerGroups.TryGetValue(GroupKey.ToString(), out var fromGroup))
+            case GroupManagePackage.CommandType.InviteJoinGroup:
+                if (subsystemPlayers.ServerGroups.TryGetValue(package.GroupKey.ToString(), out var fromGroup))
                 {
-                    var fromPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == FromPlayer);
-                    var toPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == ToPlayer);
+                    var fromPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == package.FromPlayer);
+                    var toPlayerData = subsystemPlayers.PlayersData.Find(p => p.PlayerGUID == package.ToPlayer);
                     if (fromPlayerData != null && toPlayerData is { IsMainPlayer: true })
                     {
                         DialogsManager.Confirm(
@@ -77,15 +82,17 @@ public partial class GroupManagePackage
                                     return;
                                 }
 
-                                //同意
+                                // 同意
                                 if (isServer)
                                 {
-                                    JoinGroup(isServer, subsystemPlayers, netNode, ToPlayer, GroupKey);
+                                    GroupManagePackage.JoinGroup(isServer, subsystemPlayers, netNode, package.ToPlayer,
+                                        package.GroupKey);
                                 }
                                 else
                                 {
                                     toPlayerData.GameWidget.NetPanelWidget?.RefreshView();
-                                    netNode.QueuePackage(new GroupManagePackage(GroupKey, ToPlayer, true));
+                                    netNode.QueuePackage(new GroupManagePackage(package.GroupKey, package.ToPlayer,
+                                        true));
                                 }
                             },
                             toPlayerData.GameWidget.GuiWidget
@@ -94,34 +101,20 @@ public partial class GroupManagePackage
 
                     if (isServer)
                     {
-                        Except = From;
-                        netNode.QueuePackage(this);
+                        package.Except = package.From;
+                        netNode.QueuePackage(package);
                     }
                 }
 
                 break;
-            case CommandType.JoinGroup:
-                JoinGroup(isServer, subsystemPlayers, netNode, FromPlayer, GroupKey);
+            case GroupManagePackage.CommandType.JoinGroup:
+                GroupManagePackage.JoinGroup(isServer, subsystemPlayers, netNode, package.FromPlayer, package.GroupKey);
                 break;
-            case CommandType.ExitGroup:
-                ExitGroup(isServer, subsystemPlayers, netNode, FromPlayer, GroupKey);
+            case GroupManagePackage.CommandType.ExitGroup:
+                GroupManagePackage.ExitGroup(isServer, subsystemPlayers, netNode, package.FromPlayer, package.GroupKey);
                 break;
-            case CommandType.RenameGroup:
+            case GroupManagePackage.CommandType.RenameGroup:
                 break;
         }
-    }
-}
-
-public sealed class GroupManagePackageHandler : PackageHandlerBase<GroupManagePackage>
-{
-    public override void Handle(GroupManagePackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(GroupManagePackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

@@ -1,13 +1,10 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class BlockEditPackage
+public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(BlockEditPackage package, NetNode? netNode, bool isServer)
     {
-        if (From == null)
+        if (package.From == null)
         {
             Log.Information("出现空玩家打开背包");
             return;
@@ -21,22 +18,22 @@ public partial class BlockEditPackage
         var project = GameManager.Project;
 
         var subsystemInventories = project.FindSubsystem<SubsystemInventories>(true)!;
-        switch (Type)
+        switch (package.Type)
         {
-            case EventType.OpenInventoryByID:
+            case BlockEditPackage.EventType.OpenInventoryByID:
                 if (isServer)
                 {
-                    var inventory = subsystemInventories.GetInventoryById(InventoryId);
+                    var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
                     if (inventory != null)
                     {
-                        IPackage package = new BlockEditPackage(inventory);
-                        package.To = From;
-                        CommonLib.Net.QueuePackage(package);
+                        IPackage newPackage = new BlockEditPackage(inventory);
+                        newPackage.To = package.From;
+                        CommonLib.Net.QueuePackage(newPackage);
                     }
                 }
                 else
                 {
-                    var inventory = subsystemInventories.GetInventoryById(InventoryId);
+                    var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
                     if (inventory != null)
                     {
                         var player = CommonLib.MainPlayer;
@@ -77,70 +74,56 @@ public partial class BlockEditPackage
                 }
 
                 break;
-            case EventType.OpenInventoryByPoint:
+            case BlockEditPackage.EventType.OpenInventoryByPoint:
                 if (isServer)
                 {
                     var subsystemBlockEntities = project.FindSubsystem<SubsystemBlockEntities>(true)!;
-                    var blockEntity = subsystemBlockEntities.GetBlockEntity(Point3.X, Point3.Y, Point3.Z);
+                    var blockEntity = subsystemBlockEntities.GetBlockEntity(package.Point3.X, package.Point3.Y, package.Point3.Z);
                     var inventory = blockEntity?.Entity.FindComponent<IInventory>(false);
                     if (inventory != null)
                     {
-                        IPackage package = new BlockEditPackage(inventory);
-                        package.To = From;
-                        CommonLib.Net.QueuePackage(package);
+                        IPackage newPackage = new BlockEditPackage(inventory);
+                        newPackage.To = package.From;
+                        CommonLib.Net.QueuePackage(newPackage);
                     }
                 }
 
                 break;
-            case EventType.CrossbowPull:
+            case BlockEditPackage.EventType.CrossbowPull:
                 if (isServer)
                 {
-                    var inventory = subsystemInventories.GetInventoryById(InventoryId);
+                    var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
 
                     if (inventory != null)
                     {
-                        var theItemValue = inventory.GetSlotValue(SlotIndex);
+                        var theItemValue = inventory.GetSlotValue(package.SlotIndex);
                         if (Terrain.ExtractContents(theItemValue) == 200)
                         {
                             var data = Terrain.ExtractData(theItemValue);
                             var value = Terrain.MakeBlockValue(200, 0, CrossbowBlock.SetDraw(data, 15));
-                            inventory.RemoveSlotItems(SlotIndex, 1);
-                            inventory.AddSlotItems(SlotIndex, value, 1);
+                            inventory.RemoveSlotItems(package.SlotIndex, 1);
+                            inventory.AddSlotItems(package.SlotIndex, value, 1);
                         }
                     }
                 }
 
                 break;
-            case EventType.EditSign:
+            case BlockEditPackage.EventType.EditSign:
                 if (isServer)
                 {
-                    To = From;
-                    CommonLib.Net.QueuePackage(this);
+                    package.To = package.From;
+                    CommonLib.Net.QueuePackage(package);
                 }
                 else
                 {
                     if (CommonLib.MainPlayer != null)
                     {
                         DialogsManager.ShowDialog(CommonLib.MainPlayer.GuiWidget,
-                            new EditSignDialog(project.FindSubsystem<SubsystemSignBlockBehavior>(true)!, Point3));
+                            new EditSignDialog(project.FindSubsystem<SubsystemSignBlockBehavior>(true)!, package.Point3));
                     }
                 }
 
                 break;
         }
-    }
-}
-
-public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackage>
-{
-    public override void Handle(BlockEditPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{nameof(BlockEditPackage)}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

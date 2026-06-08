@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class ComponentClothingPackage : IPackage
+public class ComponentClothingPackage : IPackage
 {
     public enum DataType
     {

@@ -1,11 +1,8 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class ComponentMountPackage
+public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentMountPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ComponentMountPackage package, NetNode? netNode, bool isServer)
     {
         if (GameManager.Project is null)
         {
@@ -13,10 +10,10 @@ public partial class ComponentMountPackage
         }
 
         var project = GameManager.Project;
-        switch (Type)
+        switch (package.Type)
         {
-            case EventType.Dismount:
-                project.FindEntityById(FromId, entity =>
+            case ComponentMountPackage.EventType.Dismount:
+                project.FindEntityById(package.FromId, entity =>
                 {
                     var rider = entity.FindComponent<ComponentRider>();
                     if (rider is null)
@@ -24,27 +21,27 @@ public partial class ComponentMountPackage
                         return;
                     }
 
-                    //rider是骑乘者
+                    // rider是骑乘者
                     rider.StartNetDismounting();
                     if (isServer || rider.Mount == null)
                     {
                         return;
                     }
 
-                    //禁用骑乘生物的组件行为
+                    // 禁用骑乘生物的组件行为
                     var select = rider.Mount.Entity.FindComponent<ComponentBehaviorSelector>();
                     select?.IsDisableBehavior = true;
                 });
                 break;
-            case EventType.DismountRequest:
-                project.FindEntityById(FromId, entity =>
+            case ComponentMountPackage.EventType.DismountRequest:
+                project.FindEntityById(package.FromId, entity =>
                 {
                     var rider = entity.FindComponent<ComponentRider>();
                     rider?.StartDismounting();
                 });
                 break;
-            case EventType.Mount:
-                project.FindEntityById(FromId, entity =>
+            case ComponentMountPackage.EventType.Mount:
+                project.FindEntityById(package.FromId, entity =>
                 {
                     var rider = entity.FindComponent<ComponentRider>();
                     if (rider is null)
@@ -52,7 +49,7 @@ public partial class ComponentMountPackage
                         return;
                     }
 
-                    project.FindEntityById(TargetId, entity2 =>
+                    project.FindEntityById(package.TargetId, entity2 =>
                     {
                         var mount = entity2.FindComponent<ComponentMount>();
                         if (mount == null)
@@ -66,17 +63,17 @@ public partial class ComponentMountPackage
                             return;
                         }
 
-                        //启动骑乘生物的组件行为
+                        // 启动骑乘生物的组件行为
                         var select = mount.Entity.FindComponent<ComponentBehaviorSelector>();
                         select?.IsDisableBehavior = false;
                     });
                 });
                 break;
-            case EventType.MountRequest:
-                project.FindEntityById(FromId, entity =>
+            case ComponentMountPackage.EventType.MountRequest:
+                project.FindEntityById(package.FromId, entity =>
                 {
                     var rider = entity.FindComponent<ComponentRider>();
-                    project.FindEntityById(TargetId, entity2 =>
+                    project.FindEntityById(package.TargetId, entity2 =>
                     {
                         var mount = entity2.FindComponent<ComponentMount>();
                         if (mount != null && rider != null)
@@ -87,19 +84,5 @@ public partial class ComponentMountPackage
                 });
                 break;
         }
-    }
-}
-
-public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentMountPackage>
-{
-    public override void Handle(ComponentMountPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentMountPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

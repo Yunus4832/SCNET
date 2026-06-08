@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class ExplosionsPackage : IPackage
+public class ExplosionsPackage : IPackage
 {
     public enum EventType
     {
@@ -11,7 +11,7 @@ public partial class ExplosionsPackage : IPackage
         Cell
     }
 
-    public Dictionary<Point2, List<(Point3, float)>> _cells = new();
+    public Dictionary<Point2, List<(Point3, float)>> Cells = new();
 
     public float Delay;
 
@@ -46,10 +46,10 @@ public partial class ExplosionsPackage : IPackage
     public ExplosionsPackage(Dictionary<Point2, List<(Point3, float)>> cells)
     {
         Type = EventType.Cell;
-        _cells = new Dictionary<Point2, List<(Point3, float)>>();
+        Cells = new Dictionary<Point2, List<(Point3, float)>>();
         foreach (var c in cells)
         {
-            _cells.Add(c.Key, c.Value);
+            Cells.Add(c.Key, c.Value);
         }
     }
 
@@ -59,8 +59,8 @@ public partial class ExplosionsPackage : IPackage
         switch (Type)
         {
             case EventType.Cell:
-                writer.Write(_cells.Count);
-                foreach (var c in _cells)
+                writer.Write(Cells.Count);
+                foreach (var c in Cells)
                 {
                     writer.Write(c.Key);
                     writer.Write(c.Value.Count);
@@ -86,7 +86,7 @@ public partial class ExplosionsPackage : IPackage
         switch (Type)
         {
             case EventType.Cell:
-                _cells = new Dictionary<Point2, List<(Point3, float)>>();
+                Cells = new Dictionary<Point2, List<(Point3, float)>>();
                 var count = reader.ReadInt32();
                 for (var i = 0; i < count; i++)
                 {
@@ -100,7 +100,7 @@ public partial class ExplosionsPackage : IPackage
                         list.Add((point3, v));
                     }
 
-                    _cells.Add(point, list);
+                    Cells.Add(point, list);
                 }
 
                 break;

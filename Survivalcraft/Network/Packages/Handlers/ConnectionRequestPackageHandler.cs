@@ -2,29 +2,31 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using EntitySystem.Core;
-
 using Game.ContentProviders;
-using Game.Network.Enums;
-using Game.Network.Serialization;
 
-namespace Game.Network.Packages;
+namespace Game.Network.Packages.Handlers;
 
-public partial class ConnectionRequestPackage
+public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<ConnectionRequestPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ConnectionRequestPackage package, NetNode? netNode, bool isServer)
     {
-        var connectionError = new StringBuilder();
-        if (string.IsNullOrEmpty(Token))
+        if (netNode == null)
         {
-            if (From == null)
+            Log.Information($"Package处理器需要NetNode:{nameof(ConnectionRequestPackage)}");
+            return;
+        }
+
+        var connectionError = new StringBuilder();
+        if (string.IsNullOrEmpty(package.Token))
+        {
+            if (package.From == null)
             {
                 return;
             }
 
-            if (From.Request != null)
+            if (package.From.Request != null)
             {
-                netNode.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), From.Request, true);
+                netNode.SendWriterFromPackage(new ConnectionRejectPackage("身份信息为空，验证失败"), package.From.Request, true);
             }
 
             return;
@@ -40,40 +42,40 @@ public partial class ConnectionRequestPackage
         if (project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.IsNeedCommunityLogin)
         {
             var token = string.Empty;
-            var key = ModsManager.GetMd5(User + "/" + Token);
+            var key = ModsManager.GetMd5(package.User + "/" + package.Token);
             var saveKey = "loginCache" + key;
             if (ModsManager.Configs.TryGetValue(saveKey, out var v))
             {
                 const bool useExternalPassword = false;
                 var jsonObj = JsonSerializer.Deserialize<JsonObject>(v)!;
                 var dataInfo = (jsonObj["data"] as JsonObject)!;
-                Nickname = dataInfo["nickname"]?.ToString() ?? string.Empty;
-                CommunityAccountId = dataInfo["id"]?.ToString() ?? string.Empty;
+                package.Nickname = dataInfo["nickname"]?.ToString() ?? string.Empty;
+                package.CommunityAccountId = dataInfo["id"]?.ToString() ?? string.Empty;
                 token = dataInfo["token"]?.ToString() ?? string.Empty;
-                if (string.IsNullOrEmpty(Nickname))
+                if (string.IsNullOrEmpty(package.Nickname))
                 {
-                    Nickname = "Anonymous_" + new LcgRandom().Int(10000, 99999);
+                    package.Nickname = "Anonymous_" + new LcgRandom().Int(10000, 99999);
                 }
 
-                if (From != null)
+                if (package.From != null)
                 {
                     Log.Information(
-                        $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{From.IPPoint}]用户[缓存]登录名称[{Nickname}]，社区ID[{CommunityAccountId}]");
+                        $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{package.From.IPPoint}]用户[缓存]登录名称[{package.Nickname}]，社区ID[{package.CommunityAccountId}]");
                 }
 
-                AcceptClient(project, token, netNode, connectionError, useExternalPassword, saveKey);
+                package.AcceptClient(project, token, netNode, connectionError, useExternalPassword, saveKey);
             }
             else
             {
                 var header = new Dictionary<string, string> { { "Content-Type", "application/x-www-form-urlencoded" } };
-                if (From is not { IPPoint: not null })
+                if (package.From is not { IPPoint: not null })
                 {
                     return;
                 }
 
                 var postData = WebManager.UrlParametersToStream(new Dictionary<string, string>
                 {
-                    { "user", User }, { "token", key }, { "client_ip", From.IPPoint.ToString() },
+                    { "user", package.User }, { "token", key }, { "client_ip", package.From.IPPoint.ToString() },
                     { "server_ip", CommonLib.GetInnerIp() }
                 });
                 WebManager.Post(
@@ -96,39 +98,25 @@ public partial class ConnectionRequestPackage
                             //缓存信息
                             ModsManager.Configs[saveKey] = ret;
                             var dataInfo = (jsonObj["data"] as JsonObject)!;
-                            Nickname = dataInfo["nickname"]?.ToString() ?? string.Empty;
-                            CommunityAccountId = dataInfo["id"]?.ToString() ?? string.Empty;
+                            package.Nickname = dataInfo["nickname"]?.ToString() ?? string.Empty;
+                            package.CommunityAccountId = dataInfo["id"]?.ToString() ?? string.Empty;
                             token = dataInfo["token"]?.ToString() ?? string.Empty;
-                            if (string.IsNullOrEmpty(Nickname))
+                            if (string.IsNullOrEmpty(package.Nickname))
                             {
-                                Nickname = "Anonymous_" + new LcgRandom().Int(10000, 99999);
+                                package.Nickname = "Anonymous_" + new LcgRandom().Int(10000, 99999);
                             }
 
                             Log.Information(
-                                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{From.IPPoint}]用户登录名称[{Nickname}]，社区ID[{CommunityAccountId}]");
+                                $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}[{package.From.IPPoint}]用户登录名称[{package.Nickname}]，社区ID[{package.CommunityAccountId}]");
                         }
 
-                        AcceptClient(project, token, netNode, connectionError, useExternalPassword, saveKey);
-                    }, e => { Log.Information($"用户[{User}]验证失败:{e.Message}"); });
+                        package.AcceptClient(project, token, netNode, connectionError, useExternalPassword, saveKey);
+                    }, e => { Log.Information($"用户[{package.User}]验证失败:{e.Message}"); });
             }
         }
         else
         {
-            AcceptClient(project, Token, netNode, connectionError);
+            package.AcceptClient(project, package.Token, netNode, connectionError);
         }
-    }
-}
-
-public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<ConnectionRequestPackage>
-{
-    public override void Handle(ConnectionRequestPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ConnectionRequestPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

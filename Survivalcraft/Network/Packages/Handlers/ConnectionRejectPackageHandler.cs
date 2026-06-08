@@ -1,16 +1,4 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class ConnectionRejectPackage
-{
-    internal void HandleCore(NetNode netNode, bool isServer)
-    {
-        ModFileService.Utils.HandleModDataValidationMessage(Reason);
-        netNode.Stop($"[连接拒绝]{Reason}");
-    }
-}
+namespace Game.Network.Packages.Handlers;
 
 public sealed class ConnectionRejectPackageHandler : PackageHandlerBase<ConnectionRejectPackage>
 {
@@ -18,10 +6,11 @@ public sealed class ConnectionRejectPackageHandler : PackageHandlerBase<Connecti
     {
         if (netNode == null)
         {
-            Log.Information($"Package处理器需要NetNode:{typeof(ConnectionRejectPackage).Name}");
+            Log.Information($"Package处理器需要NetNode:{nameof(ConnectionRejectPackage)}");
             return;
         }
 
-        package.HandleCore(netNode, isServer);
+        ModFileService.Utils.HandleModDataValidationMessage(package.Reason);
+        netNode.Stop($"[连接拒绝]{package.Reason}");
     }
 }

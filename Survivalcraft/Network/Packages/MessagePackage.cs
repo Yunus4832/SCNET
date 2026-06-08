@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class MessagePackage : IPackage
+public class MessagePackage : IPackage
 {
     public enum MessageMode : byte
     {

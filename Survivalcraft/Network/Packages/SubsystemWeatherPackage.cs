@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class SubsystemWeatherPackage : IPackage
+public class SubsystemWeatherPackage : IPackage
 {
     public float FogProgress;
 

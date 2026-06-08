@@ -1,77 +1,80 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class ComponentBehaviorPackage
+public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<ComponentBehaviorPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ComponentBehaviorPackage package, NetNode? netNode, bool isServer)
     {
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(ComponentBehaviorPackage)}");
+            return;
+        }
+
         if (GameManager.Project is null)
         {
             return;
         }
 
         var project = GameManager.Project;
-        project.FindEntityById(EntityId, entity =>
+        project.FindEntityById(package.EntityId, entity =>
         {
-            switch (PackageEventType)
+            switch (package.PackageEventType)
             {
-                case EventType.ChaseBehavior:
+                case ComponentBehaviorPackage.EventType.ChaseBehavior:
                     var chaseBehavior = entity.FindComponent<ComponentChaseBehavior>();
-                    chaseBehavior?.IsAttack = RowLeft;
+                    chaseBehavior?.IsAttack = package.RowLeft;
 
                     break;
-                case EventType.RandomFeed:
+                case ComponentBehaviorPackage.EventType.RandomFeed:
                     var randomFeedBehavior = entity.FindComponent<ComponentRandomFeedBehavior>();
-                    randomFeedBehavior?.IsFeed = RowLeft;
+                    randomFeedBehavior?.IsFeed = package.RowLeft;
 
                     break;
 
-                case EventType.RandomPeck:
+                case ComponentBehaviorPackage.EventType.RandomPeck:
                     var peck = entity.FindComponent<ComponentRandomPeckBehavior>();
-                    peck?.IsFeed = RowLeft;
+                    peck?.IsFeed = package.RowLeft;
 
                     break;
-                case EventType.EatPickable:
+                case ComponentBehaviorPackage.EventType.EatPickable:
                     var eatPickableBehavior = entity.FindComponent<ComponentEatPickableBehavior>();
-                    eatPickableBehavior?.IsFeed = RowLeft;
+                    eatPickableBehavior?.IsFeed = package.RowLeft;
                     break;
-                case EventType.DigInMud:
+                case ComponentBehaviorPackage.EventType.DigInMud:
                     var digInMudBehavior = entity.FindComponent<ComponentDigInMudBehavior>();
-                    digInMudBehavior?.IsDigIn = RowLeft;
+                    digInMudBehavior?.IsDigIn = package.RowLeft;
                     break;
-                case EventType.FishOutOfWater:
+                case ComponentBehaviorPackage.EventType.FishOutOfWater:
                     var fishOutOfWaterBehavior = entity.FindComponent<ComponentFishOutOfWaterBehavior>();
-                    fishOutOfWaterBehavior?.IsBend = RowLeft;
+                    fishOutOfWaterBehavior?.IsBend = package.RowLeft;
                     break;
-                case EventType.HumanRow:
+                case ComponentBehaviorPackage.EventType.HumanRow:
                     var humanModel = entity.FindComponent<ComponentHumanModel>();
                     if (humanModel != null)
                     {
                         humanModel.HasData = true;
-                        humanModel.RowLeft = RowLeft;
-                        humanModel.RowRight = RowRight;
+                        humanModel.RowLeft = package.RowLeft;
+                        humanModel.RowRight = package.RowRight;
                         var random = new Random();
                         project.FindSubsystem<SubsystemAudio>(true)!.PlayRandomSound("Audio/Rowing",
                             random.Float(0.4f, 0.6f), random.Float(-0.3f, 0.2f),
                             humanModel.ComponentCreature.ComponentBody.Position, 3f, true);
                         if (isServer)
                         {
-                            Except = From;
-                            netNode.QueuePackage(this);
+                            package.Except = package.From;
+                            netNode.QueuePackage(package);
                         }
                     }
 
                     break;
-                case EventType.CreatureSound:
+                case ComponentBehaviorPackage.EventType.CreatureSound:
                     var creatureSound = entity.FindComponent<ComponentCreatureSounds>();
                     if (creatureSound != null)
                     {
-                        switch (Type)
+                        switch (package.Type)
                         {
                             case 0:
-                                creatureSound.PlayIdleSoundLogic(RowLeft);
+                                creatureSound.PlayIdleSoundLogic(package.RowLeft);
                                 break;
                             case 1:
                                 creatureSound.PlayPainSoundLogic();
@@ -97,19 +100,5 @@ public partial class ComponentBehaviorPackage
                     break;
             }
         });
-    }
-}
-
-public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<ComponentBehaviorPackage>
-{
-    public override void Handle(ComponentBehaviorPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{nameof(ComponentBehaviorPackage)}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

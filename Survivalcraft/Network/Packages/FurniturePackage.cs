@@ -1,11 +1,9 @@
-using EntitySystem.TemplatesDatabase;
-
 using Game.Network.Enums;
 using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class FurniturePackage : IPackage
+public class FurniturePackage : IPackage
 {
     public enum EventType
     {
@@ -30,7 +28,7 @@ public partial class FurniturePackage : IPackage
 
     public int FurnitureIndex;
 
-    public readonly Dictionary<Point3, int> _pointDict = new();
+    public readonly Dictionary<Point3, int> PointDict = new();
 
     public int StartValue;
 
@@ -109,7 +107,7 @@ public partial class FurniturePackage : IPackage
         AddXml = CommonLib.SerializeVDict(dict);
         foreach (var k in list)
         {
-            _pointDict.Add(k.Key, k.Value);
+            PointDict.Add(k.Key, k.Value);
         }
 
         CellFace = cellFace;
@@ -159,8 +157,8 @@ public partial class FurniturePackage : IPackage
             case EventType.RequestAdd:
                 writer.Write(FurnitureIndex);
                 writer.Write(AddXml);
-                writer.Write(_pointDict.Count);
-                foreach (var k in _pointDict)
+                writer.Write(PointDict.Count);
+                foreach (var k in PointDict)
                 {
                     writer.Write(k.Key);
                     writer.Write(k.Value);
@@ -217,7 +215,7 @@ public partial class FurniturePackage : IPackage
                 var count = reader.ReadInt32();
                 for (var i = 0; i < count; i++)
                 {
-                    _pointDict.Add(reader.ReadPoint3(), reader.ReadInt32());
+                    PointDict.Add(reader.ReadPoint3(), reader.ReadInt32());
                 }
 
                 CellFace = reader.ReadCellFace();

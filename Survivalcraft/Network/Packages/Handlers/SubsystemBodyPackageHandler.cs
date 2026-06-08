@@ -1,42 +1,45 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class SubsystemBodyPackage
+public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBodyPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(SubsystemBodyPackage package, NetNode? netNode, bool isServer)
     {
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(SubsystemBodyPackage)}");
+            return;
+        }
+
         if (GameManager.Project is null)
         {
             return;
         }
 
         var project = GameManager.Project;
-        switch (PackageEventType)
+        switch (package.PackageEventType)
         {
-            case EventType.BodyUpdate:
+            case SubsystemBodyPackage.EventType.BodyUpdate:
                 var bodies = project.FindSubsystem<SubsystemBodies>(true)!;
                 var ml = new List<int>();
                 var rl = new List<ComponentBody>();
-                //服务器的动物列表
-                foreach (var item in BodyList)
+                // 服务器的动物列表
+                foreach (var item in package.BodyList)
                 {
                     bodies.FindBodyByCreatureID(
                         item.CreatureId,
                         body =>
                         {
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.PositionChange))
+                            if (item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.PositionChange))
                             {
                                 body.NetPosition.SetNext(item.Position);
                             }
 
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.RotationChange))
+                            if (item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.RotationChange))
                             {
                                 body.NetRotation.SetNext(item.Rotation);
                             }
 
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.VelocityChange))
+                            if (item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.VelocityChange))
                             {
                                 body.NetVelocity.SetNext(item.Velocity);
                             }
@@ -46,19 +49,19 @@ public partial class SubsystemBodyPackage
                                 return;
                             }
 
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.LookAnglesChange))
+                            if (item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.LookAnglesChange))
                             {
                                 body.Locomotion.NetLookAngles.SetNext(item.LookAngles);
                             }
 
-                            if (item.ChangeFlag.HasFlag(ChangeFlag.FlyOrderChange))
+                            if (item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.FlyOrderChange))
                             {
                                 body.Locomotion.LastFlyOrder = item.FlyOrder;
                             }
                         },
                         () =>
                         {
-                            //本地没有这个动物，向服务器请求
+                            // 本地没有这个动物，向服务器请求
                             ml.Add(item.CreatureId);
                         }
                     );
@@ -66,7 +69,8 @@ public partial class SubsystemBodyPackage
 
                 foreach (var item2 in bodies.Bodies)
                 {
-                    BodyItem? m = BodyList.Find(x => x.CreatureId == item2.Entity.EntityId);
+                    SubsystemBodyPackage.BodyItem?
+                        m = package.BodyList.Find(x => x.CreatureId == item2.Entity.EntityId);
                     if (!m.HasValue)
                     {
                         rl.Add(item2);
@@ -87,36 +91,23 @@ public partial class SubsystemBodyPackage
                 }
 
                 break;
-            case EventType.HandleAxisCollision:
-                project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(CreatureId, from =>
+            case SubsystemBodyPackage.EventType.HandleAxisCollision:
+                project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(package.CreatureId, from =>
                 {
-                    project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(TargetCreatureId, target =>
-                    {
-                        target.Velocity = Impulse;
-                        target.NetVelocity.SetNext(Impulse);
-                        from.CollidedWithBody?.Invoke(target);
-                        target.CollidedWithBody?.Invoke(from);
-                    });
+                    project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(package.TargetCreatureId,
+                        target =>
+                        {
+                            target.Velocity = package.Impulse;
+                            target.NetVelocity.SetNext(package.Impulse);
+                            from.CollidedWithBody?.Invoke(target);
+                            target.CollidedWithBody?.Invoke(from);
+                        });
                 });
                 break;
-            case EventType.ApplyImpulse:
+            case SubsystemBodyPackage.EventType.ApplyImpulse:
                 project.FindSubsystem<SubsystemBodies>(true)!
-                    .FindBodyByCreatureID(CreatureId, body => { body.ApplyImpulseNet(Impulse); });
+                    .FindBodyByCreatureID(package.CreatureId, body => { body.ApplyImpulseNet(package.Impulse); });
                 break;
         }
-    }
-}
-
-public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBodyPackage>
-{
-    public override void Handle(SubsystemBodyPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(SubsystemBodyPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

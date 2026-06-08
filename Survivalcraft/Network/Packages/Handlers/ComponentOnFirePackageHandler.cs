@@ -1,11 +1,8 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class ComponentOnFirePackage
+public sealed class ComponentOnFirePackageHandler : PackageHandlerBase<ComponentOnFirePackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ComponentOnFirePackage package, NetNode? netNode, bool isServer)
     {
         if (GameManager.Project is null)
         {
@@ -13,16 +10,25 @@ public partial class ComponentOnFirePackage
         }
 
         var project = GameManager.Project;
-        switch (Type)
+        switch (package.Type)
         {
-            case EventType.BlockOnFireAdd:
-                project.FindSubsystem<SubsystemFireBlockBehavior>(true)!.AddFireNet(X, Y, Z, Duration);
+            case ComponentOnFirePackage.EventType.BlockOnFireAdd:
+                project.FindSubsystem<SubsystemFireBlockBehavior>(true)!.AddFireNet(
+                    package.X,
+                    package.Y,
+                    package.Z,
+                    package.Duration
+                );
                 break;
-            case EventType.BlockOnFireRemove:
-                project.FindSubsystem<SubsystemFireBlockBehavior>(true)!.RemoveFireNet(X, Y, Z);
+            case ComponentOnFirePackage.EventType.BlockOnFireRemove:
+                project.FindSubsystem<SubsystemFireBlockBehavior>(true)!.RemoveFireNet(
+                    package.X,
+                    package.Y,
+                    package.Z
+                );
                 break;
-            case EventType.ComponentOnFire:
-                project.FindEntityById(EntityId, e =>
+            case ComponentOnFirePackage.EventType.ComponentOnFire:
+                project.FindEntityById(package.EntityId, e =>
                 {
                     var onFire = e.FindComponent<ComponentOnFire>();
                     if (onFire == null)
@@ -30,34 +36,20 @@ public partial class ComponentOnFirePackage
                         return;
                     }
 
-                    if (AttackerEntityId == 0)
+                    if (package.AttackerEntityId == 0)
                     {
-                        onFire.SetOnFireNet(null, Duration);
+                        onFire.SetOnFireNet(null, package.Duration);
                     }
                     else
                     {
-                        project.FindEntityById(AttackerEntityId, e2 =>
+                        project.FindEntityById(package.AttackerEntityId, e2 =>
                         {
                             var creature = e2.FindComponent<ComponentCreature>();
-                            onFire.SetOnFireNet(creature, Duration);
+                            onFire.SetOnFireNet(creature, package.Duration);
                         });
                     }
                 });
                 break;
         }
-    }
-}
-
-public sealed class ComponentOnFirePackageHandler : PackageHandlerBase<ComponentOnFirePackage>
-{
-    public override void Handle(ComponentOnFirePackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentOnFirePackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

@@ -1,11 +1,8 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class ComponentFurnacePackage
+public sealed class ComponentFurnacePackageHandler : PackageHandlerBase<ComponentFurnacePackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(ComponentFurnacePackage package, NetNode? netNode, bool isServer)
     {
         if (GameManager.Project is null)
         {
@@ -13,7 +10,7 @@ public partial class ComponentFurnacePackage
         }
 
         var project = GameManager.Project;
-        foreach (var furnaceData in FurnaceDataList)
+        foreach (var furnaceData in package.FurnaceDataList)
         {
             project.FindEntityById(furnaceData.EntityID, e =>
             {
@@ -28,19 +25,5 @@ public partial class ComponentFurnacePackage
                 furnace.HeatLevel = furnaceData.HeatLevel;
             });
         }
-    }
-}
-
-public sealed class ComponentFurnacePackageHandler : PackageHandlerBase<ComponentFurnacePackage>
-{
-    public override void Handle(ComponentFurnacePackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentFurnacePackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

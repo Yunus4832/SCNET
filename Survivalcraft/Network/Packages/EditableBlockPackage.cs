@@ -6,7 +6,7 @@ namespace Game.Network.Packages;
 /// <summary>
 /// 基础包模板复制
 /// </summary>
-public partial class EditableBlockPackage : IPackage
+public class EditableBlockPackage : IPackage
 {
     public CellFace CellFace;
 

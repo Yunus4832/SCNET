@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class TerritoriyPackage : IPackage
+public class TerritoriyPackage : IPackage
 {
     public bool AllowBehavior;
     public bool AllowDig;

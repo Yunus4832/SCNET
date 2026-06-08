@@ -1,63 +1,4 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class ComponentSleepPackage
-{
-    internal void HandleCore(NetNode netNode, bool isServer)
-    {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var project = GameManager.Project;
-        project.FindEntityById(EntityId, e =>
-        {
-            var sleep = e.FindComponent<ComponentSleep>();
-            if (sleep == null)
-            {
-                return;
-            }
-
-            switch (Type)
-            {
-                case EventType.SleepRequest:
-                    if (sleep.CanSleep(out var reason2))
-                    {
-                        sleep.Sleep(AllowManualWakeup);
-                    }
-                    else
-                    {
-                        netNode.QueuePackage(
-                            new ComponentSleepPackage(sleep, EventType.Sleep, AllowManualWakeup, false, reason2)
-                                { To = From });
-                    }
-
-                    break;
-                case EventType.Sleep:
-                    if (Result)
-                    {
-                        sleep.NetSleep(AllowManualWakeup);
-                    }
-                    else
-                    {
-                        var player = sleep.Entity.FindComponent<ComponentPlayer>();
-                        player?.ComponentGui.DisplaySmallMessage(Reason, Color.White, false, true);
-                    }
-
-                    break;
-                case EventType.WakeupRequest:
-                    sleep.WakeUp();
-                    break;
-                case EventType.WakeUp:
-                    sleep.NetWakeUp();
-                    break;
-            }
-        });
-    }
-}
+namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentSleepPackage>
 {
@@ -65,10 +6,68 @@ public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentS
     {
         if (netNode == null)
         {
-            Log.Information($"Package处理器需要NetNode:{typeof(ComponentSleepPackage).Name}");
+            Log.Information($"Package处理器需要NetNode:{nameof(ComponentSleepPackage)}");
             return;
         }
 
-        package.HandleCore(netNode, isServer);
+        if (GameManager.Project is null)
+        {
+            return;
+        }
+
+        var project = GameManager.Project;
+        project.FindEntityById(package.EntityId, e =>
+            {
+                var sleep = e.FindComponent<ComponentSleep>();
+                if (sleep == null)
+                {
+                    return;
+                }
+
+                switch (package.Type)
+                {
+                    case ComponentSleepPackage.EventType.SleepRequest:
+                        if (sleep.CanSleep(out var reason2))
+                        {
+                            sleep.Sleep(package.AllowManualWakeup);
+                        }
+                        else
+                        {
+                            netNode.QueuePackage(
+                                new ComponentSleepPackage(
+                                    sleep,
+                                    ComponentSleepPackage.EventType.Sleep,
+                                    package.AllowManualWakeup,
+                                    false,
+                                    reason2
+                                )
+                                {
+                                    To = package.From
+                                }
+                            );
+                        }
+
+                        break;
+                    case ComponentSleepPackage.EventType.Sleep:
+                        if (package.Result)
+                        {
+                            sleep.NetSleep(package.AllowManualWakeup);
+                        }
+                        else
+                        {
+                            var player = sleep.Entity.FindComponent<ComponentPlayer>();
+                            player?.ComponentGui.DisplaySmallMessage(package.Reason, Color.White, false, true);
+                        }
+
+                        break;
+                    case ComponentSleepPackage.EventType.WakeupRequest:
+                        sleep.WakeUp();
+                        break;
+                    case ComponentSleepPackage.EventType.WakeUp:
+                        sleep.NetWakeUp();
+                        break;
+                }
+            }
+        );
     }
 }

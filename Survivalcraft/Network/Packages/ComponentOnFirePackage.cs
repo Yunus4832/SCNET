@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class ComponentOnFirePackage : IPackage
+public class ComponentOnFirePackage : IPackage
 {
     public enum EventType
     {

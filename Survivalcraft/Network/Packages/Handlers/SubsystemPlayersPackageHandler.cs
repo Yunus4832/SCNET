@@ -1,21 +1,4 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
-namespace Game.Network.Packages;
-
-public partial class SubsystemPlayersPackage
-{
-    internal void HandleCore(NetNode netNode, bool isServer)
-    {
-        lock (ComponentPlayerPackageList)
-        {
-            foreach (var package in ComponentPlayerPackageList)
-            {
-                PackageDispatcher.Handle(package, netNode, isServer);
-            }
-        }
-    }
-}
+namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemPlayersPackageHandler : PackageHandlerBase<SubsystemPlayersPackage>
 {
@@ -23,10 +6,16 @@ public sealed class SubsystemPlayersPackageHandler : PackageHandlerBase<Subsyste
     {
         if (netNode == null)
         {
-            Log.Information($"Package处理器需要NetNode:{typeof(SubsystemPlayersPackage).Name}");
+            Log.Information($"Package处理器需要NetNode:{nameof(SubsystemPlayersPackage)}");
             return;
         }
 
-        package.HandleCore(netNode, isServer);
+        lock (package.ComponentPlayerPackageList)
+        {
+            foreach (var componentPlayerPackage in package.ComponentPlayerPackageList)
+            {
+                PackageDispatcher.Handle(componentPlayerPackage, netNode, isServer);
+            }
+        }
     }
 }

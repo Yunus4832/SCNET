@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class BlockEditPackage : IPackage
+public class BlockEditPackage : IPackage
 {
     public enum EventType
     {

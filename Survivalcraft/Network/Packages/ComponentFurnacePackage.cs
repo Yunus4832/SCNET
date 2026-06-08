@@ -3,7 +3,7 @@ using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public partial class ComponentFurnacePackage : IPackage
+public class ComponentFurnacePackage : IPackage
 {
     public readonly List<FurnacePackageData> FurnaceDataList = [];
 

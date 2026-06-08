@@ -1,11 +1,8 @@
-using Game.Network.Enums;
-using Game.Network.Serialization;
+namespace Game.Network.Packages.Handlers;
 
-namespace Game.Network.Packages;
-
-public partial class SubsystemTerrainPackage
+public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<SubsystemTerrainPackage>
 {
-    internal void HandleCore(NetNode netNode, bool isServer)
+    public override void Handle(SubsystemTerrainPackage package, NetNode? netNode, bool isServer)
     {
         if (GameManager.Project is null)
         {
@@ -14,50 +11,50 @@ public partial class SubsystemTerrainPackage
 
         var project = GameManager.Project;
         var subsystemTerrain = project.FindSubsystem<SubsystemTerrain>(true)!;
-        switch (Type)
+        switch (package.Type)
         {
-            case DataType.RequestSyncChunks:
-                if(From is null)
+            case SubsystemTerrainPackage.DataType.RequestSyncChunks:
+                if (package.From is null)
                 {
                     break;
                 }
 
-                if (!subsystemTerrain.TerrainUpdater.WaitChunkList.TryGetValue(From, out var list))
+                if (!subsystemTerrain.TerrainUpdater.WaitChunkList.TryGetValue(package.From, out var list))
                 {
                     list = [];
-                    subsystemTerrain.TerrainUpdater.WaitChunkList.Add(From, list);
+                    subsystemTerrain.TerrainUpdater.WaitChunkList.Add(package.From, list);
                 }
 
-                list.AddRange(RelateChunks);
+                list.AddRange(package.RelateChunks);
                 break;
-            case DataType.SyncTerrainChunkList:
-                foreach (var c in Chunks)
+            case SubsystemTerrainPackage.DataType.SyncTerrainChunkList:
+                foreach (var c in package.Chunks)
                 {
-                    ApplyOneChunk(subsystemTerrain, c);
+                    package.ApplyOneChunk(subsystemTerrain, c);
                 }
 
                 break;
-            case DataType.RequestChangeCell:
-            case DataType.ChangeCell:
+            case SubsystemTerrainPackage.DataType.RequestChangeCell:
+            case SubsystemTerrainPackage.DataType.ChangeCell:
             {
-                var chunkX = X >> 4;
-                var chunkZ = Z >> 4;
+                var chunkX = package.X >> 4;
+                var chunkZ = package.Z >> 4;
                 var chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
                 if (chunk != null)
                 {
-                    if (Type == DataType.RequestChangeCell)
+                    if (package.Type == SubsystemTerrainPackage.DataType.RequestChangeCell)
                     {
-                        subsystemTerrain.ChangeCell(X, Y, Z, Value);
+                        subsystemTerrain.ChangeCell(package.X, package.Y, package.Z, package.Value);
                     }
                     else
                     {
-                        subsystemTerrain.ChangeCellNet(X, Y, Z, Value);
+                        subsystemTerrain.ChangeCellNet(package.X, package.Y, package.Z, package.Value);
                     }
                 }
             }
                 break;
-            case DataType.ReplyResult:
-                foreach (var p in RelateChunks)
+            case SubsystemTerrainPackage.DataType.ReplyResult:
+                foreach (var p in package.RelateChunks)
                 {
                     var chunk2 = subsystemTerrain.Terrain.GetChunkAtCoords(p.X, p.Y);
                     if (chunk2 == null)
@@ -71,8 +68,8 @@ public partial class SubsystemTerrainPackage
                 }
 
                 break;
-            case DataType.ChangeCellList:
-                foreach (var cellChange in CellChanges)
+            case SubsystemTerrainPackage.DataType.ChangeCellList:
+                foreach (var cellChange in package.CellChanges)
                 {
                     var chunkX = cellChange.X >> 4;
                     var chunkZ = cellChange.Y >> 4;
@@ -85,19 +82,5 @@ public partial class SubsystemTerrainPackage
 
                 break;
         }
-    }
-}
-
-public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<SubsystemTerrainPackage>
-{
-    public override void Handle(SubsystemTerrainPackage package, NetNode? netNode, bool isServer)
-    {
-        if (netNode == null)
-        {
-            Log.Information($"Package处理器需要NetNode:{typeof(SubsystemTerrainPackage).Name}");
-            return;
-        }
-
-        package.HandleCore(netNode, isServer);
     }
 }

@@ -6,7 +6,7 @@ namespace Game.Network.Packages;
 /// <summary>
 /// 发射器
 /// </summary>
-public partial class DispenserPackage : IPackage
+public class DispenserPackage : IPackage
 {
     public byte Flag;
 
