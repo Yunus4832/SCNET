@@ -133,7 +133,7 @@ public static class MotdManager
                     }
 
                     Log.Warning("当前版本已过期，请等待新版本");
-                    Environment.Exit(0);
+                    Window.Close();
                 },
                 delegate { }
             );

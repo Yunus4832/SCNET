@@ -769,7 +769,7 @@ public class ModsManageContentScreen : Screen
                     {
                         if (result == MessageDialogButton.Button1)
                         {
-                            Environment.Exit(0);
+                            Window.Close();
                         }
 
                         if (result == MessageDialogButton.Button2)

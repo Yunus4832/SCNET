@@ -5,12 +5,13 @@ using Android.OS;
 using Android.Provider;
 using Android.Runtime;
 
-using Game;
+using Activity = Android.App.Activity;
+using AndroidEnvironment = Android.OS.Environment;
+using AndroidProcess = Android.OS.Process;
+using PendingIntentFlags = Android.App.PendingIntentFlags;
+using Permission = Android.Content.PM.Permission;
 
 namespace Survivalcraft.Android;
-
-using Environment = global::Android.OS.Environment;
-using Permission = Permission;
 
 [Activity(
     Label = "生存战争 0.0.0.1 联机版",
@@ -18,6 +19,7 @@ using Permission = Permission;
     Exported = true,
     Icon = "@mipmap/icon",
     Theme = "@style/MainTheme",
+    ScreenOrientation = ScreenOrientation.Portrait,
     ConfigurationChanges = ConfigChanges.ScreenSize |
                            ConfigChanges.Orientation |
                            ConfigChanges.UiMode |
@@ -30,145 +32,163 @@ using Permission = Permission;
     DataScheme = "com.candy.scnet",
     Categories = ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"]
 )]
-public class MainActivity : EngineActivity
+public class MainActivity : Activity
 {
-    private const string _jniTrue = "1";
+    internal const int exitResultCode = 100;
+    internal const int restartResultCode = 101;
 
-    private bool _isHeadlessServer;
+    private const int _permissionRequestCode = 1;
+    private const int _routeRequestCode = 2;
+    private const long _restartDelayMilliseconds = 50;
 
-    protected override bool ExitProcessOnDestroy => !_isHeadlessServer;
-    private ScreenOrientation _defaultScreenOrientation = ScreenOrientation.SensorLandscape;
-
-    protected override ScreenOrientation DefaultScreenOrientation => _defaultScreenOrientation;
+    private bool _routeStarted;
+    private bool _waitingForStoragePermission;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
-        var runningSetting = RunningSettingManager.Load([]);
-        if (runningSetting.RunMode is RunModeType.HeadlessServer)
-        {
-            _defaultScreenOrientation = ScreenOrientation.SensorPortrait;
-        }
-
         base.OnCreate(savedInstanceState);
+        RouteWhenReady();
     }
 
-    protected override void OnRun()
+    protected override void OnResume()
     {
-        base.OnRun();
-        if (!CheckPermission())
+        base.OnResume();
+        if (!_waitingForStoragePermission || !AndroidEnvironment.IsExternalStorageManager)
         {
             return;
         }
 
-        BeginLaunch();
-    }
-
-    private void RestartApp()
-    {
-        var intent = new Intent(this, typeof(RestartActivity));
-        StartActivity(intent);
-        System.Environment.Exit(0);
+        _waitingForStoragePermission = false;
+        Route();
     }
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions,
         [GeneratedEnum] Permission[] grantResults)
     {
-        var flag = grantResults.All(g => g == Permission.Granted);
-        if (flag)
+        base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == _permissionRequestCode && grantResults.All(result => result == Permission.Granted))
         {
-            BeginLaunch();
+            Route();
         }
     }
 
-#pragma warning disable CA1416
-    private bool CheckPermission()
+    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
     {
-        if ((int)Build.VERSION.SdkInt >= (int)BuildVersionCodes.R)
+        base.OnActivityResult(requestCode, resultCode, data);
+        if (requestCode != _routeRequestCode)
         {
-            if (Environment.IsExternalStorageManager)
-            {
-                return true;
-            }
-
-            StartActivity(new Intent(Settings.ActionManageAllFilesAccessPermission));
-            while (!Environment.IsExternalStorageManager)
-            {
-            }
-
-            return true;
-        }
-
-        if ((int)Build.VERSION.SdkInt < (int)BuildVersionCodes.M)
-        {
-            return false;
-        }
-
-        var readPermissionStatus = CheckSelfPermission(Manifest.Permission.ReadExternalStorage);
-        var writePermissionStatus = CheckSelfPermission(Manifest.Permission.WriteExternalStorage);
-
-        if (readPermissionStatus == Permission.Granted && writePermissionStatus == Permission.Granted)
-        {
-            return true;
-        }
-
-        RequestPermissions(
-            permissions: [Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage],
-            requestCode: 1
-        );
-
-        return false;
-    }
-#pragma warning restore CA1416
-
-    private void Run()
-    {
-        RunMode.Value = RunModeType.Gui;
-        InitializeAndroidId();
-        var fileList = Assets!.List("");
-        foreach (var dll in fileList!)
-        {
-            if (!dll.EndsWith(".dll"))
-            {
-                continue;
-            }
-
-            var memoryStream = new MemoryStream();
-            Assets.Open(dll).CopyTo(memoryStream);
-            AppDomain.CurrentDomain.Load(memoryStream.ToArray());
-        }
-
-        GameEntry.EntryPoint();
-    }
-
-    private void BeginLaunch()
-    {
-        // 注册重启App事件
-        GameRestarter.OnRestartAppRequested += RestartApp;
-
-        var runningSetting = RunningSettingManager.Load([]);
-        if (runningSetting.RunMode is RunModeType.HeadlessServer)
-        {
-            StartHeadlessServer();
             return;
         }
 
-
-        Run();
+        _routeStarted = false;
+        switch ((int)resultCode)
+        {
+            case restartResultCode:
+                RestartApplication();
+                break;
+            default:
+                ExitApplication();
+                break;
+        }
     }
 
-    private void StartHeadlessServer()
+    private void ExitApplication()
     {
-        _isHeadlessServer = true;
-        StartActivity(new Intent(this, typeof(LogActivity)));
-        Finish();
+        FinishAndRemoveTask();
+
+        // Android may keep the CLR process alive after removing the task. The game runtime
+        // owns process-wide native registrations and static managers that cannot be safely
+        // initialized a second time, so an explicit application exit must end the process.
+        AndroidProcess.KillProcess(AndroidProcess.MyPid());
     }
 
-    private void InitializeAndroidId()
+    private void RestartApplication()
     {
-        GetMachineID.AndroidID = Settings.Secure
-            .GetString(
-                ContentResolver,
-                Settings.Secure.AndroidId
-            ) ?? string.Empty;
+        var restartIntent = new Intent(this, typeof(MainActivity));
+        restartIntent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
+        var pendingIntent = PendingIntent.GetActivity(
+            this,
+            0,
+            restartIntent,
+            PendingIntentFlags.CancelCurrent | PendingIntentFlags.Immutable)
+                            ?? throw new InvalidOperationException("Cannot create restart PendingIntent.");
+        var alarmManager = (AlarmManager?)GetSystemService(AlarmService)
+                           ?? throw new InvalidOperationException("AlarmManager is unavailable.");
+        var triggerAt = SystemClock.ElapsedRealtime() + _restartDelayMilliseconds;
+
+        if (Build.VERSION.SdkInt < BuildVersionCodes.S || alarmManager.CanScheduleExactAlarms())
+        {
+            alarmManager.SetExact(AlarmType.ElapsedRealtimeWakeup, triggerAt, pendingIntent);
+        }
+        else
+        {
+            alarmManager.Set(AlarmType.ElapsedRealtimeWakeup, triggerAt, pendingIntent);
+        }
+
+        ExitApplication();
     }
+
+    private void RouteWhenReady()
+    {
+        if (HasStoragePermission())
+        {
+            Route();
+            return;
+        }
+
+        RequestStoragePermission();
+    }
+
+    private void Route()
+    {
+        if (_routeStarted)
+        {
+            return;
+        }
+
+        _routeStarted = true;
+        var runningSetting = RunningSettingManager.Load([]);
+        var activityType = runningSetting.RunMode is RunModeType.HeadlessServer
+            ? typeof(ServerActivity)
+            : typeof(GameActivity);
+        var intent = new Intent(this, activityType);
+        if (activityType == typeof(GameActivity) && Intent?.Data is not null)
+        {
+            intent.SetData(Intent.Data);
+        }
+
+        StartActivityForResult(intent, _routeRequestCode);
+    }
+
+#pragma warning disable CA1416
+    private bool HasStoragePermission()
+    {
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+        {
+            return AndroidEnvironment.IsExternalStorageManager;
+        }
+
+        if (Build.VERSION.SdkInt < BuildVersionCodes.M)
+        {
+            return true;
+        }
+
+        return CheckSelfPermission(Manifest.Permission.ReadExternalStorage) == Permission.Granted &&
+               CheckSelfPermission(Manifest.Permission.WriteExternalStorage) == Permission.Granted;
+    }
+
+    private void RequestStoragePermission()
+    {
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
+        {
+            _waitingForStoragePermission = true;
+            StartActivity(new Intent(Settings.ActionManageAllFilesAccessPermission));
+            return;
+        }
+
+        RequestPermissions(
+            [Manifest.Permission.ReadExternalStorage, Manifest.Permission.WriteExternalStorage],
+            _permissionRequestCode);
+    }
+#pragma warning restore CA1416
 }

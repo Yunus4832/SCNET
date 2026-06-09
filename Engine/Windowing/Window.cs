@@ -393,7 +393,11 @@ public static class Window
 
 #if DESKTOP
             IconStream?.Dispose();
+            GameWindow = null!;
 #endif
+            View = null!;
+            _closing = false;
+            _state = State.Uncreated;
         }
     }
 
@@ -547,14 +551,7 @@ public static class Window
         else
         {
 #if ANDROID
-            if (Build.VERSION.SdkInt >= (BuildVersionCodes)21)
-            {
-                ActivityInstance.FinishAndRemoveTask();
-            }
-            else
-            {
-                ActivityInstance.FinishAffinity();
-            }
+            ActivityInstance.Finish();
 #endif
 #if DESKTOP
             View.Close();

@@ -32,7 +32,7 @@ public static class GameEntry
     public static event Action<HandleUriItem>? HandleUri;
 
 #if DESKTOP
-    public static void Main(string[]? args)
+    public static GameExitAction Main(string[]? args)
     {
         if (args != null)
         {
@@ -45,13 +45,14 @@ public static class GameEntry
             }
         }
 
-        EntryPoint();
+        return EntryPoint();
     }
 #endif
 
     [STAThread]
-    public static void EntryPoint()
+    public static GameExitAction EntryPoint()
     {
+        GameExitManager.BeginSession();
         NetDebug.Logger = new LiteNetLog();
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
@@ -86,7 +87,7 @@ public static class GameEntry
                 // ignored
             }
 
-            Environment.Exit(0);
+            Window.Close();
         };
 
         Display.DeviceReset += ContentManager.DisplayDeviceReset;
@@ -100,6 +101,7 @@ public static class GameEntry
             e.IsHandled = true;
         };
         Window.Run(0, 0, WindowMode.Resizable, VersionsManager.Title);
+        return GameExitManager.ExitAction;
     }
 
     public static void HandleUriHandler(Uri uri)

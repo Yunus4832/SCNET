@@ -17,13 +17,14 @@ namespace Survivalcraft.Android;
     Label = "服务器日志",
     Exported = false,
     Theme = "@style/MainTheme",
+    ScreenOrientation = ScreenOrientation.Portrait,
     ConfigurationChanges = ConfigChanges.ScreenSize |
                            ConfigChanges.Orientation |
                            ConfigChanges.UiMode |
                            ConfigChanges.ScreenLayout |
                            ConfigChanges.SmallestScreenSize
 )]
-public class LogActivity : Activity
+public class ServerActivity : Activity
 {
     private const int _maxTextLength = 200_000;
 
@@ -37,10 +38,15 @@ public class LogActivity : Activity
 
     private bool _stopRequested;
 
+    private bool _switchToGuiRequested;
+
+    private bool _destroyed;
+
+    private Task<int>? _serverTask;
+
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
-        RequestedOrientation = ScreenOrientation.SensorPortrait;
 
         var layout = new LinearLayout(this)
         {
@@ -121,7 +127,8 @@ public class LogActivity : Activity
         InitializeAndroidId();
         RunMode.Value = RunModeType.HeadlessServer;
         var runningSetting = RunningSettingManager.Load([]);
-        _ = Task.Run(() => HeadlessEntry.Main(runningSetting));
+        _serverTask = Task.Run(() => HeadlessEntry.Main(runningSetting));
+        _ = CompleteServerRunAsync(_serverTask);
     }
 
     private int GetNavigationBarHeight()
@@ -141,6 +148,7 @@ public class LogActivity : Activity
 
     protected override void OnDestroy()
     {
+        _destroyed = true;
         Log.MsgAdded -= OnLogMsgAdded;
         if (!_stopRequested)
         {
@@ -164,16 +172,36 @@ public class LogActivity : Activity
 
         _stopRequested = true;
         HeadlessEntry.RequestStop();
-        FinishAndRemoveTask();
-        Environment.Exit(0);
     }
 
     private void RequestGuiMode()
     {
         RunningSettingManager.SetRunMode(RunModeType.Gui);
-        _stopRequested = true;
-        HeadlessEntry.RequestStop();
+        _switchToGuiRequested = true;
         RequestStop();
+    }
+
+    private async Task CompleteServerRunAsync(Task<int> serverTask)
+    {
+        await serverTask;
+        if (_destroyed)
+        {
+            return;
+        }
+
+        RunOnUiThread(() =>
+        {
+            if (_switchToGuiRequested)
+            {
+                SetResult((Result)MainActivity.restartResultCode);
+            }
+            else
+            {
+                SetResult((Result)MainActivity.exitResultCode);
+            }
+
+            Finish();
+        });
     }
 
     private void ConfirmAction(string title, string message, Action onConfirmed)

@@ -11,7 +11,6 @@ using Engine.Core;
 using Engine.FileStorage;
 using Engine.Input;
 using Silk.NET.Windowing.Sdl.Android;
-using Environment = System.Environment;
 using AndroidStream = Android.Media.Stream;
 using Stream = System.IO.Stream;
 using Uri = Android.Net.Uri;
@@ -75,8 +74,6 @@ public class EngineActivity : SilkActivity
     public event Action? Destroyed;
 
     public event Action<Intent?>? NewIntent;
-
-    protected virtual bool ExitProcessOnDestroy => true;
 
     protected virtual ScreenOrientation DefaultScreenOrientation => ScreenOrientation.SensorLandscape;
 
@@ -247,19 +244,8 @@ public class EngineActivity : SilkActivity
 
     protected override void OnDestroy()
     {
-        try
-        {
-            base.OnDestroy();
-            Destroyed?.Invoke();
-        }
-        finally
-        {
-            Thread.Sleep(250);
-            if (ExitProcessOnDestroy)
-            {
-                Environment.Exit(0);
-            }
-        }
+        base.OnDestroy();
+        Destroyed?.Invoke();
     }
 
     public override bool DispatchTouchEvent(MotionEvent? e)

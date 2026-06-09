@@ -77,9 +77,6 @@ public static class HeadlessEntry
             {
                 Log.Error(ex);
             }
-#if ANDROID
-            Environment.Exit(0);
-#endif
         }
     }
 

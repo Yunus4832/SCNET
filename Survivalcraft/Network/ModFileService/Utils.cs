@@ -150,6 +150,6 @@ public static class Utils
     public static void RestartGameDueToInvalidModData()
     {
         CacheAllModFile();
-        GameRestarter.RestartGame();
+        GameExitManager.RequestRestart();
     }
 }

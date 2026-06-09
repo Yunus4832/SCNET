@@ -98,7 +98,7 @@ public class MainMenuScreen : Screen
             }
 
             RunningSettingManager.SetRunMode(RunModeType.HeadlessServer);
-            GameRestarter.RestartGame();
+            GameExitManager.RequestRestart();
         });
     }
 

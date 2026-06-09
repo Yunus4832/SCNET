@@ -1,6 +1,7 @@
 using System.Text;
 
 #if ANDROID
+using Android.App;
 using Engine.Windowing;
 using AndroidEnvironment = Android.OS.Environment;
 using Environment = System.Environment;
@@ -64,7 +65,7 @@ public static class Storage
         var path2 = ProcessPath(path, true, false, out var isApp);
         if (isApp)
         {
-            return EngineActivity.activityInstance?.ApplicationContext?.Assets?
+            return Application.Context.Assets?
                 .List(GetDirectoryName(path2))?
                 .Contains(GetFileName(path2)) ?? false;
         }
@@ -96,7 +97,7 @@ public static class Storage
         var path2 = ProcessPath(path, true, false, out var isApp);
         if (isApp)
         {
-            var stream = EngineActivity.activityInstance?.ApplicationContext?.Assets?.Open(path2);
+            var stream = Application.Context.Assets?.Open(path2);
             return stream ?? throw new FileNotFoundException($"File: {path} not found");
         }
 #endif

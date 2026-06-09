@@ -43,7 +43,7 @@ internal class WebTimeUtils
         }
         catch
         {
-            DialogsManager.Confirm("网络检查不通过,请确保网络通畅再打开游戏!", _ => { Environment.Exit(0); });
+            DialogsManager.Confirm("网络检查不通过,请确保网络通畅再打开游戏!", _ => { Window.Close(); });
             return new DateTime(0);
         }
     }

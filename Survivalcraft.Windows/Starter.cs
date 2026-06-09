@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 using Engine.Core;
@@ -22,7 +23,10 @@ public class Starter
 
         RunMode.Value = RunModeType.Gui;
         Window.IconStream = LoadWindowIcon();
-        GameEntry.Main(runningSetting.RemainingArgs);
+        if (GameEntry.Main(runningSetting.RemainingArgs) is GameExitAction.Restart)
+        {
+            Restart(args);
+        }
     }
 
     /// <summary>
@@ -39,6 +43,19 @@ public class Starter
         RunMode.Value = RunModeType.HeadlessServer;
         AllocConsole();
         HeadlessEntry.Main(runningSetting);
+    }
+
+    private static void Restart(string[] args)
+    {
+        var executablePath = Environment.ProcessPath
+                             ?? throw new InvalidOperationException("Cannot determine executable path.");
+        var startInfo = new ProcessStartInfo(executablePath) { UseShellExecute = false };
+        foreach (var arg in args)
+        {
+            startInfo.ArgumentList.Add(arg);
+        }
+
+        Process.Start(startInfo);
     }
 
     [DllImport("kernel32.dll")]

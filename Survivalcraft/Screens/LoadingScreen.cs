@@ -407,7 +407,7 @@ public class LoadingScreen : Screen
                 {
                     if (vt == MessageDialogButton.Button1)
                     {
-                        Environment.Exit(0);
+                        Window.Close();
                     }
                     else
                     {

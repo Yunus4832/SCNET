@@ -39,7 +39,7 @@ public static class GameUpdateHelper
                         "本版本未开放",
                         LanguageControl.Ok,
                         string.Empty,
-                        delegate { Environment.Exit(0); }
+                        delegate { Window.Close(); }
                     )
                 );
                 return;

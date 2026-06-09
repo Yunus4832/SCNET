@@ -57,7 +57,7 @@ public static class ModFileClient
                     }
                 }
 
-                GameRestarter.RestartGame();
+                GameExitManager.RequestRestart();
             }
         }
         catch (Exception ex)
