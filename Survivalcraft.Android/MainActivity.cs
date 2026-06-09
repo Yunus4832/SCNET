@@ -8,7 +8,6 @@ using Android.Runtime;
 using Activity = Android.App.Activity;
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
-using PendingIntentFlags = Android.App.PendingIntentFlags;
 using Permission = Android.Content.PM.Permission;
 
 namespace Survivalcraft.Android;
@@ -39,7 +38,6 @@ public class MainActivity : Activity
 
     private const int _permissionRequestCode = 1;
     private const int _routeRequestCode = 2;
-    private const long _restartDelayMilliseconds = 50;
 
     private bool _routeStarted;
     private bool _waitingForStoragePermission;
@@ -104,28 +102,10 @@ public class MainActivity : Activity
 
     private void RestartApplication()
     {
-        var restartIntent = new Intent(this, typeof(MainActivity));
+        var restartIntent = new Intent(this, typeof(RestartActivity));
+        restartIntent.PutExtra(RestartActivity.mainProcessIdExtra, AndroidProcess.MyPid());
         restartIntent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
-        var pendingIntent = PendingIntent.GetActivity(
-            this,
-            0,
-            restartIntent,
-            PendingIntentFlags.CancelCurrent | PendingIntentFlags.Immutable)
-                            ?? throw new InvalidOperationException("Cannot create restart PendingIntent.");
-        var alarmManager = (AlarmManager?)GetSystemService(AlarmService)
-                           ?? throw new InvalidOperationException("AlarmManager is unavailable.");
-        var triggerAt = SystemClock.ElapsedRealtime() + _restartDelayMilliseconds;
-
-        if (Build.VERSION.SdkInt < BuildVersionCodes.S || alarmManager.CanScheduleExactAlarms())
-        {
-            alarmManager.SetExact(AlarmType.ElapsedRealtimeWakeup, triggerAt, pendingIntent);
-        }
-        else
-        {
-            alarmManager.Set(AlarmType.ElapsedRealtimeWakeup, triggerAt, pendingIntent);
-        }
-
-        ExitApplication();
+        StartActivity(restartIntent);
     }
 
     private void RouteWhenReady()
