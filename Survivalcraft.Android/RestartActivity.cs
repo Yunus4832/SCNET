@@ -1,7 +1,6 @@
 using Android.Content;
 using Android.Content.PM;
 
-using Activity = Android.App.Activity;
 using AndroidProcess = Android.OS.Process;
 
 namespace Survivalcraft.Android;
@@ -12,7 +11,7 @@ namespace Survivalcraft.Android;
     ExcludeFromRecents = true,
     NoHistory = true,
     Icon = "@mipmap/icon",
-    Theme = "@style/MainTheme",
+    Theme = "@style/BlackActivityTheme",
     ScreenOrientation = ScreenOrientation.Behind,
     ConfigurationChanges = ConfigChanges.ScreenSize |
                            ConfigChanges.Orientation |
@@ -20,7 +19,7 @@ namespace Survivalcraft.Android;
                            ConfigChanges.ScreenLayout |
                            ConfigChanges.SmallestScreenSize
 )]
-public class RestartActivity : Activity
+public class RestartActivity : BlackActivity
 {
     internal const string mainProcessIdExtra = "Survivalcraft.Android.MainProcessId";
 

@@ -9,14 +9,14 @@ using Android.Views;
 using Game;
 
 using AndroidAlertDialog = Android.App.AlertDialog;
-using Activity = Android.App.Activity;
+using Color = Android.Graphics.Color;
 
 namespace Survivalcraft.Android;
 
 [Activity(
     Label = "服务器日志",
     Exported = false,
-    Theme = "@style/MainTheme",
+    Theme = "@style/BlackActivityTheme",
     ScreenOrientation = ScreenOrientation.Portrait,
     ConfigurationChanges = ConfigChanges.ScreenSize |
                            ConfigChanges.Orientation |
@@ -24,7 +24,7 @@ namespace Survivalcraft.Android;
                            ConfigChanges.ScreenLayout |
                            ConfigChanges.SmallestScreenSize
 )]
-public class ServerActivity : Activity
+public class ServerActivity : BlackActivity
 {
     private const int _maxTextLength = 200_000;
 
@@ -52,6 +52,7 @@ public class ServerActivity : Activity
         {
             Orientation = Orientation.Vertical
         };
+        layout.SetBackgroundColor(Color.Black);
         layout.SetPadding(0, 0, 0, GetNavigationBarHeight());
 
         var buttonsLayout = new LinearLayout(this)

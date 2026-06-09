@@ -5,7 +5,6 @@ using Android.OS;
 using Android.Provider;
 using Android.Runtime;
 
-using Activity = Android.App.Activity;
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
 using Permission = Android.Content.PM.Permission;
@@ -17,7 +16,7 @@ namespace Survivalcraft.Android;
     MainLauncher = true,
     Exported = true,
     Icon = "@mipmap/icon",
-    Theme = "@style/MainTheme",
+    Theme = "@style/BlackActivityTheme",
     ScreenOrientation = ScreenOrientation.Portrait,
     ConfigurationChanges = ConfigChanges.ScreenSize |
                            ConfigChanges.Orientation |
@@ -31,7 +30,7 @@ namespace Survivalcraft.Android;
     DataScheme = "com.candy.scnet",
     Categories = ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"]
 )]
-public class MainActivity : Activity
+public class MainActivity : BlackActivity
 {
     internal const int exitResultCode = 100;
     internal const int restartResultCode = 101;
