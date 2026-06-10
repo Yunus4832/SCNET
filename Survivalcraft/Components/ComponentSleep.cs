@@ -43,6 +43,7 @@ public class ComponentSleep : Component, IUpdateable
 
     public void Update(float dt)
     {
+        var runGui = RunMode.Value is RunModeType.Gui;
         if (IsSleeping && _componentPlayer.ComponentHealth.Health > 0f)
         {
             //开服后，睡觉恢复速度加快5倍
@@ -77,15 +78,18 @@ public class ComponentSleep : Component, IUpdateable
                 _componentPlayer.ComponentVitalStats.Sleep > 0.2f)
             {
                 WakeUp();
-                _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 1.0,
-                    delegate
-                    {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 6), Color.White,
-                            true, true);
-                    });
+                if (runGui)
+                {
+                    _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 1.0,
+                        delegate
+                        {
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 6),
+                                Color.White, true, true);
+                        });
+                }
             }
 
-            if (_sleepStartTime.HasValue)
+            if (runGui && _sleepStartTime.HasValue)
             {
                 var num = (float)(_subsystemGameInfo.TotalElapsedGameTime - _sleepStartTime.Value);
                 if (_allowManualWakeUp && num > 10f)
@@ -121,14 +125,21 @@ public class ComponentSleep : Component, IUpdateable
             _sleepFactor = MathUtils.Max(_sleepFactor - 1f * Time.FrameDuration, 0f);
         }
 
+        if (!runGui)
+        {
+            return;
+        }
+
         _componentPlayer.ComponentScreenOverlays.BlackoutFactor =
             MathUtils.Max(_componentPlayer.ComponentScreenOverlays.BlackoutFactor, _sleepFactor);
-        if (_sleepFactor > 0.01f)
+        if (_sleepFactor <= 0.01f)
         {
-            _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageControl.Get(_typeName, 10);
-            _componentPlayer.ComponentScreenOverlays.FloatingMessageFactor =
-                MathUtils.Saturate(10f * (_sleepFactor - 0.9f));
+            return;
         }
+
+        _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageControl.Get(_typeName, 10);
+        _componentPlayer.ComponentScreenOverlays.FloatingMessageFactor =
+            MathUtils.Saturate(10f * (_sleepFactor - 0.9f));
     }
 
     public bool CanSleep(out string reason)
@@ -137,13 +148,13 @@ public class ComponentSleep : Component, IUpdateable
             ? BlocksManager.Blocks[Terrain.ExtractContents(_componentPlayer.ComponentBody.StandingOnValue.Value)]
             : null;
 
-        if (block == null || _componentPlayer.ComponentBody.ImmersionDepth > 0f)
+        if (block is null || _componentPlayer.ComponentBody.ImmersionDepth > 0f)
         {
             reason = LanguageControl.Get(_typeName, 1);
             return false;
         }
 
-        if (block != null && block.SleepSuitability == 0f)
+        if (block.SleepSuitability == 0f)
         {
             reason = LanguageControl.Get(_typeName, 2);
             return false;
@@ -166,13 +177,15 @@ public class ComponentSleep : Component, IUpdateable
         {
             var start = _componentPlayer.ComponentBody.Position + new Vector3(i, 1f, j);
             var end = new Vector3(start.X, 255f, start.Z);
-            if (!_subsystemTerrain
-                    .Raycast(start, end, false, true, (value, distance) => Terrain.ExtractContents(value) != 0)
-                    .HasValue)
+            if (_subsystemTerrain
+                .Raycast(start, end, false, true, (value, _) => Terrain.ExtractContents(value) != 0)
+                .HasValue)
             {
-                reason = LanguageControl.Get(_typeName, 5);
-                return false;
+                continue;
             }
+
+            reason = LanguageControl.Get(_typeName, 5);
+            return false;
         }
 
         reason = string.Empty;
