@@ -117,7 +117,8 @@ public class ComponentVitalStats : Component, IUpdateable
             UpdateSleep(runGui);
             UpdateTemperature(runGui);
             UpdateWetness(runGui);
-            if (Time.PeriodicEvent(1.0, 0.5))
+            if (_componentPlayer.ComponentSleep.SubsystemUpdate.IsLastUpdateInFrame &&
+                Time.PeriodicEvent(1.0, 0.5))
             {
                 CommonLib.Net.QueuePackage(new ComponentVitalStatPackage(this));
             }

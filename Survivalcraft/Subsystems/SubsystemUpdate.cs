@@ -15,6 +15,8 @@ public class SubsystemUpdate : Subsystem
 
     public int UpdatableCount => _updatable.Count;
 
+    public bool IsLastUpdateInFrame { get; private set; }
+
     public int UpdatesPerFrame { get; set; }
 
     public void Update()
@@ -22,6 +24,7 @@ public class SubsystemUpdate : Subsystem
         for (var i = 0; i < UpdatesPerFrame; i++)
         {
             _subsystemTime.NextFrame();
+            IsLastUpdateInFrame = i == UpdatesPerFrame - 1;
             var flag = false;
             foreach (var item in _toAddOrRemove)
             {
@@ -88,6 +91,8 @@ public class SubsystemUpdate : Subsystem
                 return false;
             });
         }
+
+        IsLastUpdateInFrame = false;
     }
 
     private void AddUpdateable(IUpdateable updateable)

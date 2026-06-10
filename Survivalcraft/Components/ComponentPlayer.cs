@@ -53,6 +53,8 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
+    private SubsystemUpdate _subsystemUpdate = null!;
+
     public Guid PlayerGuid;
 
     public PlayerData PlayerData { get; set; } = null!;
@@ -195,7 +197,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         var num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
         var block = BlocksManager.Blocks[num];
 
-        if (Time.PeriodicEvent(0.1f, 0.0))
+        if (_subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1f, 0.0))
         {
             if (CommonLib.WorkType != WorkType.Client)
                 //服务器广播玩家数据
@@ -665,6 +667,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
         _subsystemPickables = Project.FindSubsystem<SubsystemPickables>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
+        _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
         ComponentGui = Entity.FindComponent<ComponentGui>(true)!;
         ComponentInput = Entity.FindComponent<ComponentInput>(true)!;
         ComponentScreenOverlays = Entity.FindComponent<ComponentScreenOverlays>(true)!;

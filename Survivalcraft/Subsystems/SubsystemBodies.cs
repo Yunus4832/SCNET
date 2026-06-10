@@ -25,6 +25,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
+    private SubsystemUpdate _subsystemUpdate = null!;
+
     public Dictionary<ComponentBody, Point2>.KeyCollection Bodies => _areaByComponentBody.Keys;
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -33,7 +35,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
     {
         if (CommonLib.WorkType != WorkType.Client)
         {
-            var flag = Time.PeriodicEvent(0.1, 0.0);
+            var flag = _subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1, 0.0);
             _toSendList.Clear();
             foreach (var body in Bodies)
             {
@@ -260,6 +262,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
         base.Load(valuesDictionary);
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
     }
 
     private void AddBody(ComponentBody componentBody)

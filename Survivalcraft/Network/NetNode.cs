@@ -43,6 +43,10 @@ public class NetNode
 
     private readonly Dictionary<NetworkChannel, double> _lastPackageFlushTimes = new();
 
+    private int _deferredSnapshotPackages;
+
+    private double _lastSnapshotDropLogTime;
+
     // 只有这些客户端同意以后新客户端才能加入
     public HashSet<byte> AgreeOnPendingPeer = [];
 
@@ -106,6 +110,12 @@ public class NetNode
     {
         lock (_pendingPackages)
         {
+            var transport = PackageTransportPolicy.Get(package);
+            if (transport.Coalesce && SnapshotPackageCoalescer.TryCoalesce(_pendingPackages, package))
+            {
+                return;
+            }
+
             _pendingPackages.Add(package);
         }
     }
@@ -855,6 +865,7 @@ public class NetNode
     private void FlushPendingPackages()
     {
         List<IPackage> packages;
+        var deferredSnapshots = new HashSet<IPackage>();
         var flushedChannels = new HashSet<NetworkChannel>();
         var now = Time.RealTime;
         lock (_pendingPackages)
@@ -871,15 +882,20 @@ public class NetNode
         {
             if (Clients.Count > 0)
             {
-                SendPendingPackagesToClient(Clients[0], packages, false);
+                SendPendingPackagesToClient(Clients[0], packages, false, deferredSnapshots);
             }
         }
         else
         {
             foreach (var client in Clients.Values.Where(client => client.IsConnected))
             {
-                SendPendingPackagesToClient(client, packages, true);
+                SendPendingPackagesToClient(client, packages, true, deferredSnapshots);
             }
+        }
+
+        foreach (var package in deferredSnapshots)
+        {
+            QueuePackage(package);
         }
 
         foreach (var channel in flushedChannels)
@@ -919,7 +935,11 @@ public class NetNode
         return now - lastFlushTime >= transport.FlushInterval;
     }
 
-    private void SendPendingPackagesToClient(Client client, List<IPackage> packages, bool checkClientState)
+    private void SendPendingPackagesToClient(
+        Client client,
+        List<IPackage> packages,
+        bool checkClientState,
+        HashSet<IPackage> deferredSnapshots)
     {
         if (client.Peer == null)
         {
@@ -928,12 +948,8 @@ public class NetNode
 
         foreach (var channel in Enum.GetValues<NetworkChannel>())
         {
-            var writer = new PackageStreamWriter
-            {
-                IsServer = IsServer
-            };
-            var hasWrite = false;
             PackageTransport? transport = null;
+            var channelPackages = new List<IPackage>();
 
             foreach (var package in packages)
             {
@@ -948,22 +964,155 @@ public class NetNode
                     continue;
                 }
 
-                writer.Write(_verifyByte);
-                writer.Write(package.ID);
-                package.WriteData(writer);
-                hasWrite = true;
                 transport = currentTransport;
+                channelPackages.Add(package);
             }
 
-            if (!hasWrite || transport == null)
+            if (channelPackages.Count == 0 || transport == null)
             {
                 continue;
             }
 
-            var packageTransport = transport.Value;
-            client.Peer.Send(CommonLib.GetWriter(writer, out _), packageTransport.ChannelNumber,
-                packageTransport.DeliveryMethod);
+            foreach (var package in SendPackageBatches(client.Peer, channelPackages, transport.Value))
+            {
+                deferredSnapshots.Add(package);
+            }
         }
+    }
+
+    private List<IPackage> SendPackageBatches(
+        NetPeer peer,
+        List<IPackage> packages,
+        PackageTransport transport)
+    {
+        var writer = CreatePackageWriter(packages, out var packetSize);
+        var maxPacketSize = peer.GetMaxSinglePacketSize(transport.DeliveryMethod);
+        if (packetSize <= maxPacketSize || CanFragment(transport.DeliveryMethod))
+        {
+            peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
+            return [];
+        }
+
+        if (transport.Coalesce)
+        {
+            return SendBudgetedSnapshot(peer, packages, transport, maxPacketSize);
+        }
+
+        var batch = new List<IPackage>();
+
+        foreach (var package in packages)
+        {
+            batch.Add(package);
+            CreatePackageWriter(batch, out packetSize);
+            if (packetSize <= maxPacketSize || batch.Count == 1)
+            {
+                continue;
+            }
+
+            batch.RemoveAt(batch.Count - 1);
+            SendPackageBatch(peer, batch, transport, maxPacketSize);
+            batch.Clear();
+            batch.Add(package);
+        }
+
+        SendPackageBatch(peer, batch, transport, maxPacketSize);
+        return [];
+    }
+
+    private List<IPackage> SendBudgetedSnapshot(
+        NetPeer peer,
+        List<IPackage> packages,
+        PackageTransport transport,
+        int maxPacketSize)
+    {
+        var deferredPackages = new List<IPackage>();
+        var selectedPackages = new List<IPackage>();
+        var startIndex = Time.FrameIndex % packages.Count;
+        for (var offset = 0; offset < packages.Count; offset++)
+        {
+            var package = packages[(startIndex + offset) % packages.Count];
+            selectedPackages.Add(package);
+            CreatePackageWriter(selectedPackages, out var packetSize);
+            if (packetSize <= maxPacketSize)
+            {
+                continue;
+            }
+
+            selectedPackages.RemoveAt(selectedPackages.Count - 1);
+            deferredPackages.Add(package);
+            RecordDeferredSnapshot(package, packetSize, maxPacketSize);
+        }
+
+        if (selectedPackages.Count == 0)
+        {
+            return deferredPackages;
+        }
+
+        var writer = CreatePackageWriter(selectedPackages, out _);
+        peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
+        return deferredPackages;
+    }
+
+    private void SendPackageBatch(
+        NetPeer peer,
+        List<IPackage> packages,
+        PackageTransport transport,
+        int maxPacketSize)
+    {
+        if (packages.Count == 0)
+        {
+            return;
+        }
+
+        var writer = CreatePackageWriter(packages, out var packetSize);
+        if (packetSize > maxPacketSize)
+        {
+            Log.Error(
+                $"Dropping oversized {transport.DeliveryMethod} package batch " +
+                $"({packetSize}/{maxPacketSize} bytes): {string.Join(", ", packages.Select(p => p.GetType().Name))}");
+            return;
+        }
+
+        peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
+    }
+
+    private NetDataWriter CreatePackageWriter(IEnumerable<IPackage> packages, out int packetSize)
+    {
+        var writer = new PackageStreamWriter
+        {
+            IsServer = IsServer
+        };
+        foreach (var package in packages)
+        {
+            writer.Write(_verifyByte);
+            writer.Write(package.ID);
+            package.WriteData(writer);
+        }
+
+        var netWriter = CommonLib.GetWriter(writer, out var compressedSize);
+        packetSize = compressedSize + sizeof(int);
+        return netWriter;
+    }
+
+    private static bool CanFragment(DeliveryMethod deliveryMethod)
+    {
+        return deliveryMethod is DeliveryMethod.ReliableOrdered or DeliveryMethod.ReliableUnordered;
+    }
+
+    private void RecordDeferredSnapshot(IPackage package, int packetSize, int maxPacketSize)
+    {
+        _deferredSnapshotPackages++;
+        var now = Time.RealTime;
+        if (_lastSnapshotDropLogTime > 0.0 && now - _lastSnapshotDropLogTime < 5.0)
+        {
+            return;
+        }
+
+        Log.Warning(
+            $"Deferred {_deferredSnapshotPackages} snapshot package(s) due to MTU budget. " +
+            $"Last: {package.GetType().Name} ({packetSize}/{maxPacketSize} bytes).");
+        _deferredSnapshotPackages = 0;
+        _lastSnapshotDropLogTime = now;
     }
 
     private static bool CanSendPackageToClient(IPackage package, Client client, bool checkClientState)
