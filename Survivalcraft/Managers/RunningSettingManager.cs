@@ -10,7 +10,12 @@ public static class RunningSettingManager
     {
         var runningSetting = LoadFromFile();
         EnsureFileExists(runningSetting);
-        runningSetting.RemainingArgs = MergeCommandLine(runningSetting, args);
+        runningSetting.RemainingArgs = MergeCommandLine(runningSetting, args, out var saveRequested);
+        if (saveRequested)
+        {
+            Save(runningSetting);
+        }
+
         return runningSetting;
     }
 
@@ -28,7 +33,9 @@ public static class RunningSettingManager
                 new XAttribute(nameof(RunningSetting.RunMode), runningSetting.RunMode.ToString()),
                 new XAttribute(nameof(RunningSetting.LogLevel), runningSetting.LogLevel.ToString()),
                 new XAttribute(nameof(RunningSetting.World), runningSetting.World),
-                new XAttribute(nameof(RunningSetting.Seed), runningSetting.Seed)
+                new XAttribute(nameof(RunningSetting.Seed), runningSetting.Seed),
+                new XElement(nameof(RunningSetting.RemainingArgs),
+                    runningSetting.RemainingArgs.Select(arg => new XElement("Arg", arg)))
             );
             root.Save(stream);
         }
@@ -63,6 +70,10 @@ public static class RunningSettingManager
                 runningSetting.LogLevel);
             runningSetting.World = NormalizeWorld(root.Attribute(nameof(RunningSetting.World))?.Value);
             runningSetting.Seed = root.Attribute(nameof(RunningSetting.Seed))?.Value ?? string.Empty;
+            runningSetting.RemainingArgs = root.Element(nameof(RunningSetting.RemainingArgs))?
+                .Elements("Arg")
+                .Select(element => element.Value)
+                .ToArray() ?? [];
         }
         catch (Exception ex)
         {
@@ -72,12 +83,22 @@ public static class RunningSettingManager
         return runningSetting;
     }
 
-    private static string[] MergeCommandLine(RunningSetting runningSetting, string[] args)
+    private static string[] MergeCommandLine(
+        RunningSetting runningSetting,
+        string[] args,
+        out bool saveRequested)
     {
-        var remainingArgs = new List<string>();
+        saveRequested = false;
+        var remainingArgs = new List<string>(runningSetting.RemainingArgs);
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
+            if (string.Equals(arg, "--save", StringComparison.OrdinalIgnoreCase))
+            {
+                saveRequested = true;
+                continue;
+            }
+
             if (string.Equals(arg, "-d", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(arg, "--server", StringComparison.OrdinalIgnoreCase))
             {
@@ -151,22 +172,12 @@ public static class RunningSettingManager
 
     private static RunModeType ParseRunMode(string? value)
     {
-        if (Enum.TryParse(value, true, out RunModeType runMode))
-        {
-            return runMode;
-        }
-
-        return RunModeType.Gui;
+        return Enum.TryParse(value, true, out RunModeType runMode) ? runMode : RunModeType.Gui;
     }
 
     private static LogType ParseLogLevel(string? value, LogType fallback)
     {
-        if (Enum.TryParse(value, true, out LogType logLevel))
-        {
-            return logLevel;
-        }
-
-        return fallback;
+        return Enum.TryParse(value, true, out LogType logLevel) ? logLevel : fallback;
     }
 
     private static string NormalizeWorld(string? value)

@@ -61,6 +61,7 @@ Headless 模式下，除了 `-d` / `--server`，还支持：
 - `--world <名称>`: 指定世界目录名或世界名
 - `--seed <种子>`: 新建世界时使用的种子
 - `--log-level <级别>`: 设置日志级别，可选 `Debug`、`Verbose`、`Information`、`Warning`、`Error`
+- `--save`: 将配置文件与命令行合并后的最终运行配置保存到 `RunningSetting.xml`
 
 示例：
 
@@ -76,11 +77,16 @@ Headless 模式下，除了 `-d` / `--server`，还支持：
 - `LogLevel`
 - `World`
 - `Seed`
+- `RemainingArgs`: 未被启动器识别、需要继续传递给游戏入口的参数列表
 
 示例：
 
 ```xml
-<RunningSetting RunMode="HeadlessServer" LogLevel="Information" World="World" Seed="123456" />
+<RunningSetting RunMode="HeadlessServer" LogLevel="Information" World="World" Seed="123456">
+  <RemainingArgs>
+    <Arg>com.candy.survivalcraft://example</Arg>
+  </RemainingArgs>
+</RunningSetting>
 ```
 
 行为说明：
