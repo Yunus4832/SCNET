@@ -23,7 +23,7 @@ public class Starter
 
         RunMode.Value = RunModeType.Gui;
         Window.IconStream = LoadWindowIcon();
-        if (GameEntry.Main(runningSetting.RemainingArgs) is GameExitAction.Restart)
+        if (GameEntry.Main(runningSetting) is GameExitAction.Restart)
         {
             Restart(args);
         }

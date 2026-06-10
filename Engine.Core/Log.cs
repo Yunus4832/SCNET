@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Engine.Core;
 
 public static class Log
@@ -49,19 +47,16 @@ public static class Log
         }
     }
 
-    [Conditional("DEBUG")]
     public static void Debug(object? message)
     {
         Write(LogType.Debug, message?.ToString());
     }
 
-    [Conditional("DEBUG")]
     public static void Debug(string message)
     {
         Write(LogType.Debug, message);
     }
 
-    [Conditional("DEBUG")]
     public static void Debug(string format, params object[] parameters)
     {
         Write(LogType.Debug, string.Format(format, parameters));

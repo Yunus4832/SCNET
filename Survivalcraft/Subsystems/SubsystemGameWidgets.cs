@@ -154,9 +154,7 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 
         foreach (var playersDatum in _subsystemPlayers.PlayersData)
         {
-#if DEBUG
             Log.Debug($"Widget load: {playersDatum.Name}");
-#endif
             AddGameWidgetForPlayer(playersDatum);
         }
     }

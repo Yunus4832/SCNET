@@ -542,9 +542,7 @@ public class TerrainUpdater
 
                 if (toSendList.Count > 0)
                 {
-#if DEBUG
-                    Log.Information($"本次处理{toSendList.Count}个Chunk");
-#endif
+                    Log.Debug($"本次处理{toSendList.Count}个Chunk");
                     CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(toSendList) { To = item.Key });
                 }
 

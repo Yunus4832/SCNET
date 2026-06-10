@@ -317,7 +317,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             }
         }
 
-        if (componentMiner.ComponentPlayer != null)
+        if (componentMiner.ComponentPlayer is not null)
         {
             var num3 = AddPickable(componentMiner.ComponentPlayer, design);
             for (var i = 0; i < 3; i++)
@@ -326,16 +326,10 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                     delegate { _subsystemSoundMaterials.PlayImpactSound(startValue, new Vector3(start.Point), 1f); });
             }
 
-            if (componentMiner.ComponentCreature.PlayerStats != null)
-            {
-                componentMiner.ComponentCreature.PlayerStats.FurnitureItemsMade += num3;
-            }
+            componentMiner.ComponentCreature.PlayerStats?.FurnitureItemsMade += num3;
         }
 
-#if DEBUG
-        Log.Information("创建家具：Index" + design.Index);
-#endif
-
+        Log.Debug("创建家具：Index" + design.Index);
         return design;
     }
 

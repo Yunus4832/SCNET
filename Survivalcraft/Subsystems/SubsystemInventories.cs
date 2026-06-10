@@ -50,10 +50,12 @@ public class SubsystemInventories : Subsystem
             action?.Invoke(inventory);
             return true;
         }
-#if DEBUG
-        CommonLib.Net.QueuePackage(new ComponentInventoryPackage(id,
-            ComponentInventoryPackage.EventType.QueryErrorInventoryInfo));
-#endif
+        if (CommonLib.WorkType == WorkType.Client && Log.MinimumLogType is LogType.Debug)
+        {
+            CommonLib.Net.QueuePackage(new ComponentInventoryPackage(id,
+                ComponentInventoryPackage.EventType.QueryErrorInventoryInfo));
+        }
+
         return false;
     }
 

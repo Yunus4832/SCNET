@@ -32,36 +32,30 @@ public static class GameEntry
     public static event Action<HandleUriItem>? HandleUri;
 
 #if DESKTOP
-    public static GameExitAction Main(string[]? args)
+    public static GameExitAction Main(RunningSetting runningSetting)
     {
-        if (args != null)
+        foreach (var arg in runningSetting.RemainingArgs)
         {
-            foreach (var c in args)
+            if (arg.StartsWith(Scheme))
             {
-                if (c.StartsWith(Scheme))
-                {
-                    HandleUriHandler(new Uri(c));
-                }
+                HandleUriHandler(new Uri(arg));
             }
         }
 
-        return EntryPoint();
+        return EntryPoint(runningSetting);
     }
 #endif
 
     [STAThread]
-    public static GameExitAction EntryPoint()
+    public static GameExitAction EntryPoint(RunningSetting runningSetting)
     {
         GameExitManager.BeginSession();
         NetDebug.Logger = new LiteNetLog();
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
-#if DEBUG
-        Log.AddLogSink(new ConsoleLogSink { MinimumLogType = LogType.Debug });
-#else
-        Log.AddLogSink(new ConsoleLogSink { MinimumLogType = LogType.Information });
-#endif
+        Log.MinimumLogType = runningSetting.LogLevel;
+        Log.AddLogSink(new ConsoleLogSink { MinimumLogType = runningSetting.LogLevel });
         Log.AddLogSink(new GameLogSink());
 
         Window.HandleUri += HandleUriHandler;

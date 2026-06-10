@@ -178,9 +178,7 @@ public class PackageManager
             {
                 PackageDispatcher.RegisterLegacyHandler(packageType);
             }
-#if DEBUG
-            Log.Information($"注册Package[{packageName}]，ID:{packageID}");
-#endif
+            Log.Debug($"注册Package[{packageName}]，ID:{packageID}");
         }
         else
         {

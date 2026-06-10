@@ -211,9 +211,7 @@ public partial class PlayerData : IDisposable
                 }
                 else
                 {
-#if DEBUG
                     Log.Debug($"准备生成玩家 ID: {PlayerGUID}");
-#endif
                     _stateMachine.TransitionTo("PrepareSpawn");
                 }
             },
@@ -248,9 +246,7 @@ public partial class PlayerData : IDisposable
                         else
                         {
                             SpawnPosition = _subsystemTerrain.TerrainContentsGenerator.FindCoarseSpawnPosition();
-#if DEBUG
-                            Log.Information($"生成出生点{SpawnPosition}");
-#endif
+                            Log.Debug($"生成出生点{SpawnPosition}");
                             _spawnMode = CommonLib.WorkType == WorkType.Server
                                 ? SpawnMode.InitialNoIntro
                                 : SpawnMode.InitialIntro;

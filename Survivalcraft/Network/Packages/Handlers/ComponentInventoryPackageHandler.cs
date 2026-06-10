@@ -69,7 +69,8 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
             case ComponentInventoryPackage.EventType.QueryErrorInventoryInfo:
                 if (isServer)
                 {
-                    subsystemInventories?.FindInventoryById(package.InventoryID, inventory =>
+                    var inventory = subsystemInventories?.GetInventoryById(package.InventoryID);
+                    if (inventory is not null)
                     {
                         var extra = "";
                         if (inventory is ComponentCraftingTable t)
@@ -77,8 +78,12 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                             extra = t.Entity.ValuesDictionary.DatabaseObject.Name;
                         }
 
-                        Log.Information($"请求错误的箱子ID[{package.InventoryID}]来自[{inventory.GetType().Name}][{extra}]");
-                    });
+                        Log.Debug($"请求错误的箱子ID[{package.InventoryID}]来自[{inventory.GetType().Name}][{extra}]");
+                    }
+                    else
+                    {
+                        Log.Debug($"客户端请求的错误箱子ID[{package.InventoryID}]在服务端也不存在");
+                    }
                 }
 
                 break;

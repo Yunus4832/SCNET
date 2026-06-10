@@ -26,6 +26,7 @@ public static class RunningSettingManager
             using var stream = Storage.OpenFile(RunningSettingPath, OpenFileMode.Create);
             var root = new XElement("RunningSetting",
                 new XAttribute(nameof(RunningSetting.RunMode), runningSetting.RunMode.ToString()),
+                new XAttribute(nameof(RunningSetting.LogLevel), runningSetting.LogLevel.ToString()),
                 new XAttribute(nameof(RunningSetting.World), runningSetting.World),
                 new XAttribute(nameof(RunningSetting.Seed), runningSetting.Seed)
             );
@@ -57,6 +58,9 @@ public static class RunningSettingManager
             using var stream = Storage.OpenFile(RunningSettingPath, OpenFileMode.Read);
             var root = XElement.Load(stream);
             runningSetting.RunMode = ParseRunMode(root.Attribute(nameof(RunningSetting.RunMode))?.Value);
+            runningSetting.LogLevel = ParseLogLevel(
+                root.Attribute(nameof(RunningSetting.LogLevel))?.Value,
+                runningSetting.LogLevel);
             runningSetting.World = NormalizeWorld(root.Attribute(nameof(RunningSetting.World))?.Value);
             runningSetting.Seed = root.Attribute(nameof(RunningSetting.Seed))?.Value ?? string.Empty;
         }
@@ -92,6 +96,16 @@ public static class RunningSettingManager
                 if (i + 1 < args.Length)
                 {
                     runningSetting.World = NormalizeWorld(args[++i]);
+                }
+
+                continue;
+            }
+
+            if (string.Equals(arg, "--log-level", StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < args.Length)
+                {
+                    runningSetting.LogLevel = ParseLogLevel(args[++i], runningSetting.LogLevel);
                 }
 
                 continue;
@@ -143,6 +157,16 @@ public static class RunningSettingManager
         }
 
         return RunModeType.Gui;
+    }
+
+    private static LogType ParseLogLevel(string? value, LogType fallback)
+    {
+        if (Enum.TryParse(value, true, out LogType logLevel))
+        {
+            return logLevel;
+        }
+
+        return fallback;
     }
 
     private static string NormalizeWorld(string? value)

@@ -370,9 +370,7 @@ public class NetNode
 
     public void AddPendingHandlePackage(IPackage package)
     {
-#if DEBUG
-        Log.Information("[排队]添加到处理队列：" + package.ID);
-#endif
+        Log.Debug("[排队]添加到处理队列：" + package.ID);
         _pendingHandlePackages.Add(package);
     }
 
@@ -397,9 +395,7 @@ public class NetNode
         {
             if (OnReceive == null)
             {
-#if DEBUG
-                Log.Information("检测到有未处理的包:" + list.Count);
-#endif
+                Log.Debug("检测到有未处理的包:" + list.Count);
                 _pendingHandlePackages.AddRange(list);
             }
             else
@@ -595,9 +591,7 @@ public class NetNode
         if (userData is NetPeer { Tag: Client client })
         {
             AgreeOnPendingPeer.Remove(client.ID);
-#if DEBUG
-            Log.Information($"Client[{client.ID}]已收到Client[{PendingClient?.ID}]加入通知");
-#endif
+            Log.Debug($"Client[{client.ID}]已收到Client[{PendingClient?.ID}]加入通知");
         }
 
         if (AgreeOnPendingPeer.Count != 0 || PendingClient == null)
@@ -612,9 +606,7 @@ public class NetNode
             OnClientStateChanged?.Invoke(PendingClient);
         }
         QueuePackage(new ClientPackage(Clients.Values) { To = PendingClient });
-#if DEBUG
-        Log.Information($"Client[{PendingClient.ID}]已完成加入过程");
-#endif
+        Log.Debug($"Client[{PendingClient.ID}]已完成加入过程");
         PendingPeer = null;
     }
 

@@ -60,11 +60,12 @@ Headless 模式下，除了 `-d` / `--server`，还支持：
 
 - `--world <名称>`: 指定世界目录名或世界名
 - `--seed <种子>`: 新建世界时使用的种子
+- `--log-level <级别>`: 设置日志级别，可选 `Debug`、`Verbose`、`Information`、`Warning`、`Error`
 
 示例：
 
 ```bash
-./SurvivalcraftStarter --server --world World --seed 123456
+./SurvivalcraftStarter --server --world World --seed 123456 --log-level Debug
 ```
 
 ## 配置文件
@@ -72,18 +73,20 @@ Headless 模式下，除了 `-d` / `--server`，还支持：
 `config:RunningSetting.xml` 用于保存启动设置，常见内容包括：
 
 - `RunMode`
+- `LogLevel`
 - `World`
 - `Seed`
 
 示例：
 
 ```xml
-<RunningSetting RunMode="HeadlessServer" World="World" Seed="123456" />
+<RunningSetting RunMode="HeadlessServer" LogLevel="Information" World="World" Seed="123456" />
 ```
 
 行为说明：
 
 - `RunMode=HeadlessServer` 时，启动器会直接进入无头服务端模式
+- `LogLevel` 控制运行时最低日志级别，默认值为 `Information`
 - 如果 `World` 对应的世界不存在，程序会自动创建
 - 如果提供了 `--seed`，新建世界时会优先使用该种子
 - 如果世界已经存在，`--seed` 会被忽略

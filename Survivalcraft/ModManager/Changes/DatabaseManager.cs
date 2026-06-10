@@ -115,9 +115,7 @@ public static class DatabaseManager
                     GameEntry.RamDataChangeException("Database", a.Name);
                 }
             }
-#if DEBUG
-            Log.Information($"本次检测Database数据耗时：{useTime:0.000}s");
-#endif
+            Log.Debug($"本次检测Database数据耗时：{useTime:0.000}s");
         });
     }
 

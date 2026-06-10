@@ -4,6 +4,8 @@ public sealed class RunningSetting
 {
     public RunModeType RunMode { get; set; } = RunModeType.Gui;
 
+    public LogType LogLevel { get; set; } = LogType.Information;
+
     public string World { get; set; } = "World";
 
     public string Seed { get; set; } = string.Empty;

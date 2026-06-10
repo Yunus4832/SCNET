@@ -496,9 +496,7 @@ public class NetPlayScreen : Screen
                 net.PollEvents();
                 Thread.Sleep(1);
             }
-#if DEBUG
-            Log.Information("Exit Discover");
-#endif
+            Log.Debug("Exit Discover");
         }
         catch (Exception e)
         {
@@ -544,9 +542,7 @@ public class NetPlayScreen : Screen
                     net.PollEvents();
                     Thread.Sleep(1);
                 }
-#if DEBUG
-                Log.Information("Exit Check Connect");
-#endif
+                Log.Debug("Exit Check Connect");
             }
 
             if (c.State == ConnectState.Checking)

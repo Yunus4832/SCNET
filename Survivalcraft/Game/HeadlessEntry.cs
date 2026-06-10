@@ -26,11 +26,8 @@ public static class HeadlessEntry
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
             Dispatcher.Initialize();
-#if DEBUG
-            Log.AddLogSink(new ConsoleLogSink { MinimumLogType = LogType.Debug });
-#else
-            Log.AddLogSink(new ConsoleLogSink { MinimumLogType = LogType.Information });
-#endif
+            Log.MinimumLogType = runningSetting.LogLevel;
+            Log.AddLogSink(new ConsoleLogSink { MinimumLogType = runningSetting.LogLevel });
             Log.AddLogSink(new GameLogSink());
 
 #if !ANDROID

@@ -130,18 +130,17 @@ public class BestiaryScreen : Screen
                     ? ComponentLoot.ParseLootList(valuesDictionary9.GetValue<ValuesDictionary>("Loot"))
                     : []
             };
-#if DEBUG
+
             if (bestiaryCreatureInfo.TextureOverride == "")
             {
-                Log.Warning($"{bestiaryCreatureInfo.DisplayName}的模型纹理贴图为空");
+                Log.Debug($"{bestiaryCreatureInfo.DisplayName}的模型纹理贴图为空");
             }
 
             if (bestiaryCreatureInfo.ModelName == "")
             {
-                Log.Warning($"{bestiaryCreatureInfo.DisplayName}的模型为空");
+                Log.Debug($"{bestiaryCreatureInfo.DisplayName}的模型为空");
             }
 
-#endif
             if (value3 != null && entitiesValuesDictionary.DatabaseObject.Name.ToLower().Contains("female"))
             {
                 bestiaryCreatureInfo.AttackPower *= 0.8f;

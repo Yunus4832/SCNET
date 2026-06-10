@@ -29,7 +29,7 @@ public class GameActivity : EngineActivity
         GameExitManager.ExitRequested += OnExitRequested;
         try
         {
-            var exitAction = GameEntry.EntryPoint();
+            var exitAction = GameEntry.EntryPoint(RunningSettingManager.Load([]));
             SetResult(exitAction is GameExitAction.Restart
                 ? (Result)MainActivity.restartResultCode
                 : (Result)MainActivity.exitResultCode);
