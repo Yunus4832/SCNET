@@ -135,21 +135,21 @@ public class SettingsControlsScreen : Screen
         }
 
         _moveControlModeButton.Text =
-            LanguageControl.Get("MoveControlMode", SettingsManager.MoveControlMode.ToString());
+            LanguageManager.Get("MoveControlMode", SettingsManager.MoveControlMode.ToString());
         _lookControlModeButton.Text =
-            LanguageControl.Get("LookControlMode", SettingsManager.LookControlMode.ToString());
+            LanguageManager.Get("LookControlMode", SettingsManager.LookControlMode.ToString());
         _leftHandedLayoutButton.Text = SettingsManager.LeftHandedLayout
-            ? LanguageControl.Get("Usual", "on")
-            : LanguageControl.Get("Usual", "off");
+            ? LanguageManager.Get("Usual", "on")
+            : LanguageManager.Get("Usual", "off");
         _flipVerticalAxisButton.Text = SettingsManager.FlipVerticalAxis
-            ? LanguageControl.Get("Usual", "on")
-            : LanguageControl.Get("Usual", "off");
+            ? LanguageManager.Get("Usual", "on")
+            : LanguageManager.Get("Usual", "off");
         _autoJumpButton.Text = SettingsManager.AutoJump
-            ? LanguageControl.Get("Usual", "on")
-            : LanguageControl.Get("Usual", "off");
+            ? LanguageManager.Get("Usual", "on")
+            : LanguageManager.Get("Usual", "off");
         _horizontalCreativeFlightButton.Text = SettingsManager.HorizontalCreativeFlight
-            ? LanguageControl.Get("Usual", "on")
-            : LanguageControl.Get("Usual", "off");
+            ? LanguageManager.Get("Usual", "on")
+            : LanguageManager.Get("Usual", "off");
         _moveSensitivitySlider.Value = SettingsManager.MoveSensitivity;
         _moveSensitivitySlider.Text = MathUtils.Round(SettingsManager.MoveSensitivity * 10f).ToString(CultureInfo.InvariantCulture);
         _lookSensitivitySlider.Value = SettingsManager.LookSensitivity;
@@ -162,12 +162,12 @@ public class SettingsControlsScreen : Screen
         _creativeDigTimeSlider.Text = $"{MathUtils.Round(1000f * SettingsManager.CreativeDigTime)}ms";
         _creativeReachSlider.Value = SettingsManager.CreativeReach;
         _creativeReachSlider.Text =
-            string.Format(LanguageControl.Get(_typeName, 1), $"{SettingsManager.CreativeReach:0.0} ");
+            string.Format(LanguageManager.Get(_typeName, 1), $"{SettingsManager.CreativeReach:0.0} ");
         _holdDurationSlider.Value = SettingsManager.MinimumHoldDuration;
         _holdDurationSlider.Text = $"{MathUtils.Round(1000f * SettingsManager.MinimumHoldDuration)}ms";
         _dragDistanceSlider.Value = SettingsManager.MinimumDragDistance;
         _dragDistanceSlider.Text =
-            $"{MathUtils.Round(SettingsManager.MinimumDragDistance)} " + LanguageControl.Get(_typeName, 2);
+            $"{MathUtils.Round(SettingsManager.MinimumDragDistance)} " + LanguageManager.Get(_typeName, 2);
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             SettingsManager.SaveSettings();

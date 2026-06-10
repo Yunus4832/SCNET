@@ -158,11 +158,11 @@ public class FireworksBlock : Block
         var shape = GetShape(data);
         var altitude = GetAltitude(data);
         var flickering = GetFlickering(data);
-        return string.Format(LanguageControl.GetFireworks("Other", "1"),
-            LanguageControl.GetFireworks("FireworksColorDisplayNames", color.ToString()),
-            flickering ? LanguageControl.GetFireworks("Other", "2") : null,
-            LanguageControl.GetFireworks("ShapeDisplayNames", ((int)shape).ToString()),
-            altitude == 0 ? LanguageControl.GetFireworks("Other", "3") : LanguageControl.GetFireworks("Other", "4"));
+        return string.Format(LanguageManager.GetFireworks("Other", "1"),
+            LanguageManager.GetFireworks("FireworksColorDisplayNames", color.ToString()),
+            flickering ? LanguageManager.GetFireworks("Other", "2") : null,
+            LanguageManager.GetFireworks("ShapeDisplayNames", ((int)shape).ToString()),
+            altitude == 0 ? LanguageManager.GetFireworks("Other", "3") : LanguageManager.GetFireworks("Other", "4"));
     }
 
     public override IEnumerable<int> GetCreativeValues()

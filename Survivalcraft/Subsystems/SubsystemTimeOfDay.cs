@@ -75,10 +75,10 @@ public class SubsystemTimeOfDay : Subsystem
     {
         return timeOfDay switch
         {
-            >= 0f and < 0.25f => LanguageControl.Get(ComponentGui.TypeName, 18),
-            >= 0.25f and < 0.5f => LanguageControl.Get(ComponentGui.TypeName, 15),
-            >= 0.5f and < 0.75f => LanguageControl.Get(ComponentGui.TypeName, 16),
-            _ => LanguageControl.Get(ComponentGui.TypeName, 17)
+            >= 0f and < 0.25f => LanguageManager.Get(ComponentGui.TypeName, 18),
+            >= 0.25f and < 0.5f => LanguageManager.Get(ComponentGui.TypeName, 15),
+            >= 0.5f and < 0.75f => LanguageManager.Get(ComponentGui.TypeName, 16),
+            _ => LanguageManager.Get(ComponentGui.TypeName, 17)
         };
     }
 

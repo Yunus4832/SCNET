@@ -44,9 +44,9 @@ public class ComponentClothingPackage : IPackage
         }
 
         using var stream =
-            Storage.OpenFile(Storage.CombinePaths(ModsManager.CharacterSkinsDirectoryName, skinName),
+            Storage.OpenFile(Storage.CombinePaths(GamePaths.CharacterSkins, skinName),
                 OpenFileMode.Read);
-        SkinData = ModsManager.StreamToBytes(stream);
+        SkinData = StreamUtils.ReadBytes(stream);
     }
 
     public void WriteData(PackageStreamWriter writer)

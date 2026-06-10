@@ -58,13 +58,13 @@ dotnet run --project Survivalcraft.Linux/Survivalcraft.Linux.csproj -- --server
 
 ```bash
 # 还原依赖
-dotnet restore SCNETWORK.slnx
+dotnet restore SCNET.slnx
 
 # Debug 构建
-dotnet build SCNETWORK.slnx
+dotnet build SCNET.slnx
 
 # Release 构建
-dotnet build SCNETWORK.slnx --configuration Release
+dotnet build SCNET.slnx --configuration Release
 ```
 
 可选构建配置：`Debug`、`Release`、`ANDROID`、`DESKTOP`。详细说明见 [构建与共享配置](Doc/BuildAndConfig.md)。
@@ -84,12 +84,13 @@ dotnet test Survivalcraft.Test/
 - [结构与分层](Doc/Architecture.md) — 设计重心、分层架构与各层职责
 - [Headless 模式](Doc/Headless.md) — 启动方式、参数、配置与运行时行为
 - [构建与共享配置](Doc/BuildAndConfig.md) — 构建流程、共享属性与打包行为
+- [模组开发](Doc/Modding.md) — 模组模板、`.scpak` 构建与 NuGet 包边界
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问
 - [外部依赖](Doc/Dependencies.md) — 工具链、运行时包与测试依赖
 
 ## 版权与法律
 
-请先阅读免责声明：[DISCLAIMER.md](./DISCLAIMER.md)。
+请先阅读免责声明：[免责声明](Doc/Disclaimer.md)。
 
 ## 贡献
 

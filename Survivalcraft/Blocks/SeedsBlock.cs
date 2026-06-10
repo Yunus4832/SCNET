@@ -29,14 +29,14 @@ public class SeedsBlock : FlatBlock
     {
         return Terrain.ExtractData(value) switch
         {
-            0 => LanguageControl.Get(LanguageControl.Get("BaseSeedBlock", 1)),
-            1 => LanguageControl.Get(LanguageControl.Get("BaseSeedBlock", 2)),
-            2 => LanguageControl.Get(LanguageControl.Get("BaseSeedBlock", 3)),
-            3 => LanguageControl.Get(LanguageControl.Get("BaseSeedBlock", 4)),
-            4 => LanguageControl.Get(LanguageControl.Get("BaseSeedBlock", 5)),
-            5 => LanguageControl.Get(LanguageControl.Get("BaseSeedBlock", 6)),
-            6 => LanguageControl.Get(LanguageControl.Get("BaseSeedBlock", 7)),
-            7 => LanguageControl.Get(LanguageControl.Get("BaseSeedBlock", 8)),
+            0 => LanguageManager.Get(LanguageManager.Get("BaseSeedBlock", 1)),
+            1 => LanguageManager.Get(LanguageManager.Get("BaseSeedBlock", 2)),
+            2 => LanguageManager.Get(LanguageManager.Get("BaseSeedBlock", 3)),
+            3 => LanguageManager.Get(LanguageManager.Get("BaseSeedBlock", 4)),
+            4 => LanguageManager.Get(LanguageManager.Get("BaseSeedBlock", 5)),
+            5 => LanguageManager.Get(LanguageManager.Get("BaseSeedBlock", 6)),
+            6 => LanguageManager.Get(LanguageManager.Get("BaseSeedBlock", 7)),
+            7 => LanguageManager.Get(LanguageManager.Get("BaseSeedBlock", 8)),
             _ => string.Empty
         };
     }

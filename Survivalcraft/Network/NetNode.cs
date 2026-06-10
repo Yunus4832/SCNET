@@ -2,6 +2,7 @@ using System.Net;
 
 using EntitySystem.Core;
 
+using Game.Modding;
 using Game.Network.Enums;
 using Game.Network.ModFileService;
 using Game.Network.Packages;
@@ -557,9 +558,11 @@ public class NetNode
             Clients.Clear();
             NetManager.Start();
             TokenId = Guid.NewGuid();
+            var localMods = (CurrentModRuntime.Value?.GetLoadedMods() ?? Array.Empty<LoadedModInfo>())
+                .Select(ModHandshakeInfo.FromLoadedMod);
             SendWriterFromPackage(
                 new ConnectionRequestPackage(TokenId, VersionsManager.ProtocolVersion, SettingsManager.CommunityAccessUser,
-                    SettingsManager.OnlineAccessToken, passwd, ModsManager.ModList), ep, false);
+                    SettingsManager.OnlineAccessToken, passwd, localMods), ep, false);
             Listener.NetworkReceiveUnconnectedEvent -= HandleConnectionReject;
             Listener.NetworkReceiveEvent += NetworkReceiveEvent;
             Listener.ConnectionRequestEvent += ConnectionRequestEvent;

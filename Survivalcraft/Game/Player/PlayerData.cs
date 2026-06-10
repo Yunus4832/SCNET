@@ -121,7 +121,7 @@ public partial class PlayerData : IDisposable
         {
             if (SubsystemPlayers.PlayersData.Contains(this))
             {
-                throw new InvalidOperationException(LanguageControl.Get(TypeName, 1));
+                throw new InvalidOperationException(LanguageManager.Get(TypeName, 1));
             }
 
             _playerClass = value;
@@ -202,7 +202,7 @@ public partial class PlayerData : IDisposable
                 else if (ComponentPlayer != null)
                 {
                     UpdateSpawnDialog(
-                        string.Format(LanguageControl.Get(TypeName, 4), Name, MathUtils.Floor(Level)),
+                        string.Format(LanguageManager.Get(TypeName, 4), Name, MathUtils.Floor(Level)),
                         string.Empty,
                         0f,
                         true
@@ -269,14 +269,14 @@ public partial class PlayerData : IDisposable
                 {
                     UpdateSpawnDialog(
                         CommonLib.WorkType != WorkType.Client
-                            ? string.Format(LanguageControl.Get(TypeName, 2), Name, MathUtils.Floor(Level))
+                            ? string.Format(LanguageManager.Get(TypeName, 2), Name, MathUtils.Floor(Level))
                             : $"连接{Name}的世界中 (等级 {MathUtils.Floor(Level)})",
-                        LanguageControl.Get(TypeName, 3), 0f, true);
+                        LanguageManager.Get(TypeName, 3), 0f, true);
                 }
                 else
                 {
                     UpdateSpawnDialog(
-                        string.Format(LanguageControl.Get(TypeName, 4), Name, MathUtils.Floor(Level)),
+                        string.Format(LanguageManager.Get(TypeName, 4), Name, MathUtils.Floor(Level)),
                         string.Empty,
                         0f,
                         true);
@@ -313,7 +313,7 @@ public partial class PlayerData : IDisposable
                     SpawnMode.InitialIntro => FindIntroSpawnPosition(SpawnPosition.XZ),
                     SpawnMode.InitialNoIntro => FindNoIntroSpawnPosition(SpawnPosition, false),
                     SpawnMode.Respawn => FindNoIntroSpawnPosition(SpawnPosition, true),
-                    _ => throw new InvalidOperationException(LanguageControl.Get(TypeName, 5))
+                    _ => throw new InvalidOperationException(LanguageManager.Get(TypeName, 5))
                 };
 
                 _stateMachine.TransitionTo("WaitForTerrain");
@@ -447,11 +447,7 @@ public partial class PlayerData : IDisposable
             delegate
             {
                 IsSetStatus = false;
-                ModsManager.HookAction("OnPlayerDead", modLoader =>
-                {
-                    modLoader.OnPlayerDead(this);
-                    return false;
-                });
+                HandleDeath();
             },
             delegate
             {
@@ -518,8 +514,8 @@ public partial class PlayerData : IDisposable
                 ComponentPlayer.GuiWidget,
                 new MessageDialog(
                     "提示", "你已在残酷模式死亡，不可复活！",
-                    LanguageControl.Yes,
-                    LanguageControl.No,
+                    LanguageManager.Yes,
+                    LanguageManager.No,
                     delegate { CommonLib.Net.StopImmediate(); }
                 )
             );
@@ -532,8 +528,8 @@ public partial class PlayerData : IDisposable
                 ComponentPlayer.GuiWidget,
                 new MessageDialog(
                     "提示", "服务器禁止了玩家重生！",
-                    LanguageControl.Yes,
-                    LanguageControl.No,
+                    LanguageManager.Yes,
+                    LanguageManager.No,
                     delegate { CommonLib.Net.StopImmediate(); }
                 )
             );
@@ -1052,8 +1048,6 @@ public partial class PlayerData : IDisposable
         }
 
         LastSpawnTime = SubsystemGameInfo.TotalElapsedGameTime;
-        ModsManager.HookAction("OnPlayerSpawned",
-            modLoader => modLoader.OnPlayerSpawned(spawnMode, entity2.FindComponent<ComponentPlayer>(true)!, position));
     }
 
     public string GetEntityTemplateName()
@@ -1100,6 +1094,61 @@ public partial class PlayerData : IDisposable
 
         DialogsManager.HideDialog(_spawnDialog);
         _spawnDialog = null;
+    }
+
+    private void HandleDeath()
+    {
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            GameWidget.ActiveCamera = GameWidget.FindCamera<DeathCamera>()!;
+        }
+
+        if (ComponentPlayer != null)
+        {
+            var causeOfDeath = ComponentPlayer.ComponentHealth.CauseOfDeath;
+            if (string.IsNullOrEmpty(causeOfDeath))
+            {
+                causeOfDeath = LanguageManager.Get(TypeName, 12);
+            }
+
+            if (RunMode.Value is RunModeType.Gui)
+            {
+                var message = string.Format(LanguageManager.Get(TypeName, 13), causeOfDeath);
+                if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel)
+                {
+                    ComponentPlayer.ComponentGui.DisplayLargeMessage(
+                        LanguageManager.Get(TypeName, 6),
+                        string.Format(LanguageManager.Get(TypeName, 7), message,
+                            LanguageManager.Get("GameMode", SubsystemGameInfo.WorldSettings.GameMode.ToString())),
+                        30f,
+                        1.5f);
+                }
+                else if (SubsystemGameInfo.WorldSettings is
+                         { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
+                {
+                    ComponentPlayer.ComponentGui.DisplayLargeMessage(
+                        LanguageManager.Get(TypeName, 6),
+                        string.Format(LanguageManager.Get(TypeName, 8), message),
+                        30f,
+                        1.5f);
+                }
+                else
+                {
+                    ComponentPlayer.ComponentGui.DisplayLargeMessage(
+                        LanguageManager.Get(TypeName, 6),
+                        string.Format(LanguageManager.Get(TypeName, 9), message),
+                        30f,
+                        1.5f);
+                }
+            }
+
+            if (CommonLib.WorkType == WorkType.Server)
+            {
+                SubsystemGameWidgets.AddMessage($"{Name} <c=red>{causeOfDeath}</c>");
+            }
+        }
+
+        Level = MathUtils.Max(MathUtils.Floor(Level / 2f), 1f);
     }
 
     public static string MakeClothingValue(int index, int color)

@@ -10,7 +10,7 @@ public static class UserManager
         string text;
         try
         {
-            var path = ModsManager.UserDataPath;
+            var path = GamePaths.UserData;
             if (!Storage.FileExists(path))
             {
                 text = Guid.NewGuid().ToString();

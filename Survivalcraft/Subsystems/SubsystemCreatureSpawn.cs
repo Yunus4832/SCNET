@@ -1216,11 +1216,6 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                 return SpawnCreatures(creatureType, "Sparrow", point, count3).Count;
             }
         });
-        ModsManager.HookAction("InitializeCreatureTypes", loader =>
-        {
-            loader.InitializeCreatureTypes(this, _creatureTypes);
-            return false;
-        });
     }
 
     private void SpawnRandomCreature()

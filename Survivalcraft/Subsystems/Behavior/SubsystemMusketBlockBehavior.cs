@@ -138,13 +138,13 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                     {
                         case MusketBlock.LoadState.Empty:
                             componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                LanguageControl.Get(_typeName, 0), Color.White, true, false);
+                                LanguageManager.Get(_typeName, 0), Color.White, true, false);
                             break;
                         case MusketBlock.LoadState.Gunpowder:
                         case MusketBlock.LoadState.Wad:
                             flag = true;
                             componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                LanguageControl.Get(_typeName, 1), Color.White, true, false);
+                                LanguageManager.Get(_typeName, 1), Color.White, true, false);
                             break;
                         case MusketBlock.LoadState.Loaded:
                             flag = true;

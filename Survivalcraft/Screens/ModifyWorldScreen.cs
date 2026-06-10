@@ -191,7 +191,7 @@ public class ModifyWorldScreen : Screen
         var flag2 = WorldsManager.ValidateWorldName(WorldSettings.Name);
         _nameTextBox.Text = WorldSettings.Name;
         _seedLabel.Text = WorldSettings.Seed;
-        _gameModeButton.Text = LanguageControl.Get("GameMode", WorldSettings.GameMode.ToString());
+        _gameModeButton.Text = LanguageManager.Get("GameMode", WorldSettings.GameMode.ToString());
         _gameModeButton.IsEnabled = _changingGameModeAllowed;
         _errorLabel.IsVisible = !flag2;
         _descriptionLabel.IsVisible = flag2;
@@ -206,10 +206,10 @@ public class ModifyWorldScreen : Screen
         if (_deleteButton.IsClicked)
         {
             var dialog = new MessageDialog(
-                LanguageControl.Get(_typeName, 1),
-                LanguageControl.Get(_typeName, 2),
-                LanguageControl.Get("Usual", "yes"),
-                LanguageControl.Get("Usual", "no"),
+                LanguageManager.Get(_typeName, 1),
+                LanguageManager.Get(_typeName, 2),
+                LanguageManager.Get("Usual", "yes"),
+                LanguageManager.Get("Usual", "no"),
                 new Vector2(-1f),
                 (button, self) =>
                 {
@@ -247,9 +247,9 @@ public class ModifyWorldScreen : Screen
         {
             if (flag)
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get(_typeName, 3),
-                    LanguageControl.Get(_typeName, 4), LanguageControl.Get("Usual", "yes"),
-                    LanguageControl.Get("Usual", "no"), delegate(MessageDialogButton button)
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(_typeName, 3),
+                    LanguageManager.Get(_typeName, 4), LanguageManager.Get("Usual", "yes"),
+                    LanguageManager.Get("Usual", "no"), delegate(MessageDialogButton button)
                     {
                         if (button == MessageDialogButton.Button1)
                         {

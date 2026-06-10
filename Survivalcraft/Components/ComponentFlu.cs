@@ -106,7 +106,7 @@ public class ComponentFlu : Component, IUpdateable
                 if (_subsystemTime.GameTime - _lastMessageTime > 60.0)
                 {
                     _lastMessageTime = _subsystemTime.GameTime;
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 1), Color.White, true,
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 1), Color.White, true,
                         true);
                 }
             }
@@ -214,7 +214,7 @@ public class ComponentFlu : Component, IUpdateable
             _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 0.75,
                 delegate
                 {
-                    _componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageControl.Get(_typeName, 4));
+                    _componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageManager.Get(_typeName, 4));
                 });
         }
 
@@ -225,8 +225,8 @@ public class ComponentFlu : Component, IUpdateable
             {
                 _componentPlayer.ComponentGui.DisplaySmallMessage(
                     _componentPlayer.ComponentVitalStats.Temperature < 8f
-                        ? LanguageControl.Get(_typeName, 2)
-                        : LanguageControl.Get(_typeName, 3),
+                        ? LanguageManager.Get(_typeName, 2)
+                        : LanguageManager.Get(_typeName, 3),
                     Color.White,
                     true,
                     true

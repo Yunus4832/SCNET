@@ -73,6 +73,7 @@ public class SubsystemUpdate : Subsystem
             }
 
             var dt = MathUtils.Clamp(_subsystemTime.GameTimeDelta, 0f, 0.1f);
+            CurrentModRuntime.Value?.Gameplay.Invoke(new WorldUpdatingContext(Project, dt));
             foreach (var sortedUpdateable in _sortedUpdatable)
             {
                 try
@@ -85,11 +86,6 @@ public class SubsystemUpdate : Subsystem
                 }
             }
 
-            ModsManager.HookAction("SubsystemUpdate", loader =>
-            {
-                loader.SubsystemUpdate(dt);
-                return false;
-            });
         }
 
         IsLastUpdateInFrame = false;
@@ -118,6 +114,7 @@ public class SubsystemUpdate : Subsystem
 
     public override void OnEntityAdded(Entity entity)
     {
+        CurrentModRuntime.Value?.Gameplay.Invoke(new EntityAddedContext(Project, entity));
         foreach (var item in entity.FindComponents<IUpdateable>())
         {
             if (item != null)

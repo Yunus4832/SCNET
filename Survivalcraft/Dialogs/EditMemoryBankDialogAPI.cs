@@ -39,7 +39,7 @@ public class EditMemoryBankDialogApi : Dialog
         var stackPanel = new StackPanelWidget { Direction = LayoutDirection.Vertical };
         var labelWidget = new LabelWidget
         {
-            Text = LanguageControl.GetContentWidgets(GetType().Name, 0), HorizontalAlignment = WidgetAlignment.Center,
+            Text = LanguageManager.GetContentWidgets(GetType().Name, 0), HorizontalAlignment = WidgetAlignment.Center,
             Margin = new Vector2(0, 10)
         };
         var stackPanelWidget = new StackPanelWidget
@@ -318,7 +318,7 @@ public class EditMemoryBankDialogApi : Dialog
                 }
                 else if (cc == 16)
                 {
-                    stackPanelWidget.Children.Add(MakeFuncButton(LanguageControl.GetContentWidgets(GetType().Name, 1),
+                    stackPanelWidget.Children.Add(MakeFuncButton(LanguageManager.GetContentWidgets(GetType().Name, 1),
                         delegate
                         {
                             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
@@ -332,7 +332,7 @@ public class EditMemoryBankDialogApi : Dialog
                 }
                 else if (cc == 17)
                 {
-                    stackPanelWidget.Children.Add(MakeFuncButton(LanguageControl.GetContentWidgets(GetType().Name, 2),
+                    stackPanelWidget.Children.Add(MakeFuncButton(LanguageManager.GetContentWidgets(GetType().Name, 2),
                         delegate
                         {
                             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
@@ -356,7 +356,7 @@ public class EditMemoryBankDialogApi : Dialog
 
         var labelWidget = new LabelWidget
         {
-            FontScale = 0.8f, Text = LanguageControl.GetContentWidgets(GetType().Name, 3),
+            FontScale = 0.8f, Text = LanguageManager.GetContentWidgets(GetType().Name, 3),
             HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(0f, 10f), Color = Color.DarkGray
         };
         stack.Children.Add(labelWidget);
@@ -365,7 +365,7 @@ public class EditMemoryBankDialogApi : Dialog
             LoadString(textBoxWidget.Text);
             _isClick = true;
         }, _memory.SaveString(false)));
-        stack.Children.Add(MakeButton(LanguageControl.GetContentWidgets(GetType().Name, 4), delegate
+        stack.Children.Add(MakeButton(LanguageManager.GetContentWidgets(GetType().Name, 4), delegate
         {
             for (var i = 0; i < _data.Count; i++)
             {
@@ -376,7 +376,7 @@ public class EditMemoryBankDialogApi : Dialog
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
             DialogsManager.HideDialog(this);
         }));
-        stack.Children.Add(MakeButton(LanguageControl.GetContentWidgets(GetType().Name, 5), delegate
+        stack.Children.Add(MakeButton(LanguageManager.GetContentWidgets(GetType().Name, 5), delegate
         {
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
             DialogsManager.HideDialog(this);

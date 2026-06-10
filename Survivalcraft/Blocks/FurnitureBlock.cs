@@ -529,7 +529,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
                     SetDesignIndex(0, furnitureDesign2.Index, furnitureDesign2.ShadowStrengthFactor,
                         furnitureDesign2.IsLightEmitter)),
                 ResultCount = 1,
-                Description = LanguageControl.Get(GetType().Name, 0),
+                Description = LanguageManager.Get(GetType().Name, 0),
                 Ingredients = (string[])ingredients.Clone()
             };
         }
@@ -557,7 +557,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
                     SetDesignIndex(0, furnitureDesign3.Index, furnitureDesign3.ShadowStrengthFactor,
                         furnitureDesign3.IsLightEmitter)),
                 ResultCount = 1,
-                Description = LanguageControl.Get(GetType().Name, 0),
+                Description = LanguageManager.Get(GetType().Name, 0),
                 Ingredients = (string[])ingredients.Clone()
             };
         }
@@ -587,7 +587,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
                     SetDesignIndex(0, furnitureDesign4.Index, furnitureDesign4.ShadowStrengthFactor,
                         furnitureDesign4.IsLightEmitter)),
                 ResultCount = 1,
-                Description = LanguageControl.Get(GetType().Name, 0),
+                Description = LanguageManager.Get(GetType().Name, 0),
                 Ingredients = (string[])ingredients.Clone()
             };
         }
@@ -597,7 +597,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
     public void DisplayError()
     {
-        DialogsManager.Alert(LanguageControl.Get(GetType().Name, 1));
+        DialogsManager.Alert(LanguageManager.Get(GetType().Name, 1));
     }
 
     public static int GetRotation(int data)

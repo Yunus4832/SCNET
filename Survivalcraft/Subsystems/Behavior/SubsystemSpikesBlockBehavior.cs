@@ -93,7 +93,7 @@ public class SubsystemSpikesBlockBehavior : SubsystemBlockBehavior, IUpdateable
         _lastInjuryTimes[componentCreature] = _subsystemTime.GameTime;
         if (CommonLib.WorkType != WorkType.Client)
         {
-            componentCreature.ComponentHealth.Injure(0.1f, null, false, LanguageControl.Get(GetType().Name, 0));
+            componentCreature.ComponentHealth.Injure(0.1f, null, false, LanguageManager.Get(GetType().Name, 0));
         }
     }
 

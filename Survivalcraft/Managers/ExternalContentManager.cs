@@ -82,11 +82,11 @@ public static class ExternalContentManager
     {
         return type switch
         {
-            ExternalContentType.Directory => LanguageControl.Get(_typeName, "Directory"),
-            ExternalContentType.World => LanguageControl.Get(_typeName, "World"),
-            ExternalContentType.BlocksTexture => LanguageControl.Get(_typeName, "Blocks Texture"),
-            ExternalContentType.CharacterSkin => LanguageControl.Get(_typeName, "Character Skin"),
-            ExternalContentType.FurniturePack => LanguageControl.Get(_typeName, "Furniture Pack"),
+            ExternalContentType.Directory => LanguageManager.Get(_typeName, "Directory"),
+            ExternalContentType.World => LanguageManager.Get(_typeName, "World"),
+            ExternalContentType.BlocksTexture => LanguageManager.Get(_typeName, "Blocks Texture"),
+            ExternalContentType.CharacterSkin => LanguageManager.Get(_typeName, "Character Skin"),
+            ExternalContentType.FurniturePack => LanguageManager.Get(_typeName, "Furniture Pack"),
             _ => string.Empty
         };
     }
@@ -119,10 +119,10 @@ public static class ExternalContentManager
         var trimedName = name.Trim();
         if (string.IsNullOrEmpty(trimedName))
         {
-            return new InvalidOperationException(LanguageControl.Get(_typeName, 1));
+            return new InvalidOperationException(LanguageManager.Get(_typeName, 1));
         }
 
-        return trimedName.Length > 50 ? new InvalidOperationException(LanguageControl.Get(_typeName, 2)) : null;
+        return trimedName.Length > 50 ? new InvalidOperationException(LanguageManager.Get(_typeName, 2)) : null;
     }
 
     public static void DeleteExternalContent(ExternalContentType type, string name)
@@ -143,9 +143,8 @@ public static class ExternalContentManager
                 break;
             case ExternalContentType.Unknown:
             case ExternalContentType.Directory:
-            case ExternalContentType.Mod:
             default:
-                throw new InvalidOperationException(LanguageControl.Get(_typeName, 4));
+                throw new InvalidOperationException(LanguageManager.Get(_typeName, 4));
         }
     }
 
@@ -173,7 +172,7 @@ public static class ExternalContentManager
             ExternalContentType.BlocksTexture => BlocksTexturesManager.ImportBlocksTexture(name, stream),
             ExternalContentType.CharacterSkin => CharacterSkinsManager.ImportCharacterSkin(name, stream),
             ExternalContentType.FurniturePack => FurniturePacksManager.ImportFurniturePack(name, stream),
-            _ => throw new InvalidOperationException(LanguageControl.Get(_typeName, 4))
+            _ => throw new InvalidOperationException(LanguageManager.Get(_typeName, 4))
         };
     }
 
@@ -183,7 +182,7 @@ public static class ExternalContentManager
         {
             void LoginAction()
             {
-                var busyDialog = new CancellableBusyDialog(LanguageControl.Get(_typeName, 5), true);
+                var busyDialog = new CancellableBusyDialog(LanguageManager.Get(_typeName, 5), true);
                 DialogsManager.ShowDialog(null, busyDialog);
                 provider.Login(
                     busyDialog.Progress,
@@ -198,9 +197,9 @@ public static class ExternalContentManager
                         DialogsManager.ShowDialog(
                             null,
                             new MessageDialog(
-                                LanguageControl.Get("Usual", "error"),
+                                LanguageManager.Get("Usual", "error"),
                                 error.Message,
-                                LanguageControl.Get("Usual", "ok")
+                                LanguageManager.Get("Usual", "ok")
                             )
                         );
                     });
@@ -211,10 +210,10 @@ public static class ExternalContentManager
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Get(_typeName, 6),
-                        string.Format(LanguageControl.Get(_typeName, 7), provider.DisplayName),
-                        LanguageControl.Get(_typeName, 8),
-                        LanguageControl.Get("Usual", "cancel"),
+                        LanguageManager.Get(_typeName, 6),
+                        string.Format(LanguageManager.Get(_typeName, 7), provider.DisplayName),
+                        LanguageManager.Get(_typeName, 8),
+                        LanguageManager.Get("Usual", "cancel"),
                         delegate(MessageDialogButton b)
                         {
                             if (b == MessageDialogButton.Button1)
@@ -241,7 +240,7 @@ public static class ExternalContentManager
         DialogsManager.ShowDialog(
             null,
             new SelectExternalContentProviderDialog(
-                LanguageControl.Get(_typeName, 9),
+                LanguageManager.Get(_typeName, 9),
                 false,
                 delegate(IExternalContentProvider provider)
                 {
@@ -252,7 +251,7 @@ public static class ExternalContentManager
                             true,
                             delegate
                             {
-                                var busyDialog = new CancellableBusyDialog(LanguageControl.Get(_typeName, 10), false);
+                                var busyDialog = new CancellableBusyDialog(LanguageManager.Get(_typeName, 10), false);
                                 DialogsManager.ShowDialog(null, busyDialog);
                                 Task.Run(delegate
                                 {
@@ -268,7 +267,7 @@ public static class ExternalContentManager
                                             sourcePath = BlocksTexturesManager.GetFileName(name);
                                             if (string.IsNullOrEmpty(sourcePath))
                                             {
-                                                throw new InvalidOperationException(LanguageControl.Get(_typeName, 11));
+                                                throw new InvalidOperationException(LanguageManager.Get(_typeName, 11));
                                             }
 
                                             path = Storage.GetFileName(sourcePath);
@@ -277,7 +276,7 @@ public static class ExternalContentManager
                                         {
                                             if (CharacterSkinsManager.GetFileName(name, out sourcePath))
                                             {
-                                                throw new InvalidOperationException(LanguageControl.Get(_typeName, 11));
+                                                throw new InvalidOperationException(LanguageManager.Get(_typeName, 11));
                                             }
 
                                             path = Storage.GetFileName(sourcePath);
@@ -287,7 +286,7 @@ public static class ExternalContentManager
                                             sourcePath = FurniturePacksManager.GetFileName(name);
                                             if (string.IsNullOrEmpty(sourcePath))
                                             {
-                                                throw new InvalidOperationException(LanguageControl.Get(_typeName, 11));
+                                                throw new InvalidOperationException(LanguageManager.Get(_typeName, 11));
                                             }
 
                                             path = Storage.GetFileName(sourcePath);
@@ -296,16 +295,16 @@ public static class ExternalContentManager
                                         {
                                             if (type != ExternalContentType.World)
                                             {
-                                                throw new InvalidOperationException(LanguageControl.Get(_typeName, 12));
+                                                throw new InvalidOperationException(LanguageManager.Get(_typeName, 12));
                                             }
 
-                                            busyDialog.LargeMessage = LanguageControl.Get(_typeName, 13);
-                                            if (!Storage.DirectoryExists(ModsManager.ExternalPath + "/files"))
+                                            busyDialog.LargeMessage = LanguageManager.Get(_typeName, 13);
+                                            if (!Storage.DirectoryExists(GamePaths.External + "/files"))
                                             {
-                                                Storage.CreateDirectory(ModsManager.ExternalPath + "/files");
+                                                Storage.CreateDirectory(GamePaths.External + "/files");
                                             }
 
-                                            sourcePath = ModsManager.ExternalPath + "/files/WorldUpload.tmp";
+                                            sourcePath = GamePaths.External + "/files/WorldUpload.tmp";
                                             needsDelete = true;
                                             var worldInfo = WorldsManager.GetWorldInfo(name);
                                             if (worldInfo is null)
@@ -319,7 +318,7 @@ public static class ExternalContentManager
                                             WorldsManager.ExportWorld(name, targetStream);
                                         }
 
-                                        busyDialog.LargeMessage = LanguageControl.Get(_typeName, 14);
+                                        busyDialog.LargeMessage = LanguageManager.Get(_typeName, 14);
                                         stream = Storage.OpenFile(sourcePath, OpenFileMode.Read);
                                         provider.Upload(path, stream, busyDialog.Progress, delegate(string link)
                                             {
@@ -331,10 +330,10 @@ public static class ExternalContentManager
                                                     DialogsManager.ShowDialog(
                                                         null,
                                                         new MessageDialog(
-                                                            LanguageControl.Get("Usual", "success"),
-                                                            string.Format(LanguageControl.Get(_typeName, 15),
+                                                            LanguageManager.Get("Usual", "success"),
+                                                            string.Format(LanguageManager.Get(_typeName, 15),
                                                                 DataSizeFormatter.Format(length)),
-                                                            LanguageControl.Get("Usual", "ok")
+                                                            LanguageManager.Get("Usual", "ok")
                                                         )
                                                     );
                                                 }
@@ -351,9 +350,9 @@ public static class ExternalContentManager
                                                 DialogsManager.ShowDialog(
                                                     null,
                                                     new MessageDialog(
-                                                        LanguageControl.Get("Usual", "error"),
+                                                        LanguageManager.Get("Usual", "error"),
                                                         error.Message,
-                                                        LanguageControl.Get("Usual", "ok")
+                                                        LanguageManager.Get("Usual", "ok")
                                                     )
                                                 );
                                             });
@@ -365,9 +364,9 @@ public static class ExternalContentManager
                                         DialogsManager.ShowDialog(
                                             null,
                                             new MessageDialog(
-                                                LanguageControl.Get("Usual", "error"),
+                                                LanguageManager.Get("Usual", "error"),
                                                 ex2.Message,
-                                                LanguageControl.Get("Usual", "ok")
+                                                LanguageManager.Get("Usual", "ok")
                                             )
                                         );
                                     }
@@ -399,9 +398,9 @@ public static class ExternalContentManager
                         DialogsManager.ShowDialog(
                             null,
                             new MessageDialog(
-                                LanguageControl.Get("Usual", "error"),
+                                LanguageManager.Get("Usual", "error"),
                                 ex.Message,
-                                LanguageControl.Get("Usual", "ok")
+                                LanguageManager.Get("Usual", "ok")
                             )
                         );
                     }

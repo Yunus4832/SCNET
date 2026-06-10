@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.ModTemplates</PackageId>
+        <PackageType>Template</PackageType>
+        <Title>SCNET Survivalcraft Mod Templates</Title>
+        <Description>dotnet new templates for creating SCNET Survivalcraft .scpak mods.</Description>
+        <PackageTags>dotnet-new;templates;scnet;survivalcraft;modding</PackageTags>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="README.md"
+              Pack="true"
+              PackagePath="\"/>
+        <Content Include="Survivalcraft.Mod\.template.config\**\*"
+                 Pack="true"
+                 PackagePath="content\.template.config\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Content Include="Survivalcraft.Mod\Assets\**\*"
+                 Pack="true"
+                 PackagePath="content\Assets\%(RecursiveDir)%(Filename)%(Extension)"/>
+        <Content Include="Survivalcraft.Mod\ModEntry.cs"
+                 Pack="true"
+                 PackagePath="content\ModEntry.cs"/>
+        <Content Include="Survivalcraft.Mod\manifest.json"
+                 Pack="true"
+                 PackagePath="content\manifest.json"/>
+        <Content Include="Survivalcraft.Mod\README.md"
+                 Pack="true"
+                 PackagePath="content\README.md"/>
+        <Content Include="Survivalcraft.Mod\Survivalcraft.ModTemplate.csproj"
+                 Pack="true"
+                 PackagePath="content\Survivalcraft.ModTemplate.csproj"/>
+    </ItemGroup>
+</Project>

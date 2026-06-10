@@ -7,6 +7,5 @@ public enum ExternalContentType
     World,
     BlocksTexture,
     CharacterSkin,
-    FurniturePack,
-    Mod
+    FurniturePack
 }

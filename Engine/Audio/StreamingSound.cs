@@ -24,10 +24,13 @@ public sealed class StreamingSound : BaseSound
     {
         /// <summary>播放命令</summary>
         Play,
+
         /// <summary>暂停命令</summary>
         Pause,
+
         /// <summary>停止命令</summary>
         Stop,
+
         /// <summary>退出命令，用于终止播放线程</summary>
         Exit
     }
@@ -96,7 +99,7 @@ public sealed class StreamingSound : BaseSound
             {
                 Log.Error(message);
             }
-            });
+        });
         Mixer.soundsToStopPoll.Add(this);
     }
 
@@ -278,7 +281,7 @@ public sealed class StreamingSound : BaseSound
         var threadSleepInterval =
             MathUtils.Clamp((int)(0.5f * _bufferDuration / bufferCount * 1000f), 1, 100);
         var audioDataBuffer = new byte[2 * ChannelsCount *
-                              (int)(SamplingFrequency * _bufferDuration / bufferCount)];
+                                       (int)(SamplingFrequency * _bufferDuration / bufferCount)];
 
         for (var bufferIndex = 0; bufferIndex < bufferCount; bufferIndex++)
         {

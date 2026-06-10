@@ -283,11 +283,6 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             var flatBatch2D = _primitivesRenderer2D.FlatBatch(-1, DepthStencilState.None,
                 RasterizerState.CullNoneScissor, BlendState.Opaque);
             var count = flatBatch2D.TriangleVertices.Count;
-            ModsManager.HookAction("ViewFogColor", modLoader =>
-            {
-                modLoader.ViewFogColor(ViewUnderWaterDepth, ViewUnderMagmaDepth, ref _viewFogColor);
-                return false;
-            });
             flatBatch2D.QueueQuad(Vector2.Zero, camera.ViewportSize, 0f, _viewFogColor);
             flatBatch2D.TransformTriangles(camera.ViewportMatrix, count);
             _primitivesRenderer2D.Flush();
@@ -308,11 +303,6 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             }
 
             DrawClouds(camera);
-            ModsManager.HookAction("SkyDrawExtra", loader =>
-            {
-                loader.SkyDrawExtra(this, camera);
-                return false;
-            });
             if (Shader != null && ShaderAlphaTest != null)
             {
                 if (_primitiveRender.Shader == null && _primitiveRender.ShaderAlphaTest == null)
@@ -927,11 +917,6 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         var s2 = num * MathUtils.Sqr(MathUtils.Saturate(0f - vector.X));
         var s3 = num2 * MathUtils.Sqr(MathUtils.Saturate(vector.X));
         var color = new Color(Vector3.Lerp(v5 + v6 * s2 + v7 * s3, v4, f2));
-        ModsManager.HookAction("ChangeSkyColor", loader =>
-        {
-            color = loader.ChangeSkyColor(color, direction, timeOfDay, precipitationIntensity, temperature);
-            return true;
-        });
         return color;
     }
 

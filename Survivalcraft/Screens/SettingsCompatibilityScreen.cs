@@ -75,11 +75,11 @@ public class SettingsCompatibilityScreen : Screen
         }
 
         _singleThreadTerrainUpdateButton.Text =
-            SettingsManager.MultithreadedTerrainUpdate ? LanguageControl.Off : LanguageControl.On;
+            SettingsManager.MultithreadedTerrainUpdate ? LanguageManager.Off : LanguageManager.On;
 
-        _useReducedZRangeButton.Text = SettingsManager.UseReducedZRange ? LanguageControl.On : LanguageControl.Off;
+        _useReducedZRangeButton.Text = SettingsManager.UseReducedZRange ? LanguageManager.On : LanguageManager.Off;
 
-        _enableModButton.Text = SettingsManager.EnableMod ? LanguageControl.On : LanguageControl.Off;
+        _enableModButton.Text = SettingsManager.EnableMod ? LanguageManager.On : LanguageManager.Off;
 
         _resetDefaultsButton.IsEnabled =
             !SettingsManager.MultithreadedTerrainUpdate || SettingsManager.UseReducedZRange;

@@ -2,10 +2,27 @@ using System.Text;
 
 using EntitySystem.Core;
 
+using Game.Modding;
 using Game.Network.Enums;
 using Game.Network.Serialization;
-
 namespace Game.Network.Packages;
+
+public sealed record ModHandshakeInfo(string Name, string PackageName, string Version, string ResourcesMd5)
+{
+    public static ModHandshakeInfo FromLoadedMod(LoadedModInfo mod)
+    {
+        return new ModHandshakeInfo(
+            mod.Name,
+            mod.PackageName,
+            mod.Version,
+            mod.ResourcesMd5);
+    }
+
+    public bool HasSameIdentity(ModHandshakeInfo other)
+    {
+        return PackageName == other.PackageName && Version == other.Version;
+    }
+}
 
 public class ConnectionRequestPackage : IPackage
 {
@@ -25,7 +42,7 @@ public class ConnectionRequestPackage : IPackage
 
     public string Version = string.Empty;
 
-    public List<ModEntity> ModInfos = [];
+    public List<ModHandshakeInfo> ModInfos = [];
 
     public string Nickname = string.Empty;
 
@@ -49,7 +66,7 @@ public class ConnectionRequestPackage : IPackage
         string user,
         string token,
         string passwd,
-        List<ModEntity> modEntities
+        IEnumerable<ModHandshakeInfo> modInfos
     )
     {
         Magic = VerifyMagic;
@@ -58,7 +75,7 @@ public class ConnectionRequestPackage : IPackage
         Token = token;
         Version = serverVersion;
         Password = passwd;
-        ModInfos.AddRange(modEntities);
+        ModInfos.AddRange(modInfos);
     }
 
 
@@ -74,17 +91,11 @@ public class ConnectionRequestPackage : IPackage
         ModInfos = [];
         for (var i = 0; i < count; i++)
         {
-            var modEntity = new ModEntity
-            {
-                ResourcesMd5 = reader.ReadString(),
-                ModInfo = new ModInfo
-                {
-                    Name = reader.ReadString(),
-                    PackageName = reader.ReadString(),
-                    Version = reader.ReadString()
-                }
-            };
-            ModInfos.Add(modEntity);
+            var resourcesMd5 = reader.ReadString();
+            var name = reader.ReadString();
+            var packageName = reader.ReadString();
+            var version = reader.ReadString();
+            ModInfos.Add(new ModHandshakeInfo(name, packageName, version, resourcesMd5));
         }
     }
 
@@ -100,9 +111,9 @@ public class ConnectionRequestPackage : IPackage
         foreach (var m in ModInfos)
         {
             writer.Write(m.ResourcesMd5);
-            writer.Write(m.ModInfo.Name);
-            writer.Write(m.ModInfo.PackageName);
-            writer.Write(m.ModInfo.Version);
+            writer.Write(m.Name);
+            writer.Write(m.PackageName);
+            writer.Write(m.Version);
         }
     }
 
@@ -122,13 +133,15 @@ public class ConnectionRequestPackage : IPackage
         }
 
         var pwd2 = project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.Password;
-        var mList = ModsManager.ModList;
+        var localMods = (CurrentModRuntime.Value?.GetLoadedMods() ?? Array.Empty<LoadedModInfo>())
+            .Select(ModHandshakeInfo.FromLoadedMod)
+            .ToList();
         foreach (var info in ModInfos)
         {
-            var find = mList.Find(x => x.Equals(info));
+            var find = localMods.Find(x => x.HasSameIdentity(info));
             if (find == null)
             {
-                connectionError.AppendLine($"服务器没有安装客户端Mod[{info.ModInfo.Name}:{info.ModInfo.Version}]");
+                connectionError.AppendLine($"服务器没有安装客户端Mod[{info.Name}:{info.Version}]");
             }
             else
             {
@@ -137,23 +150,23 @@ public class ConnectionRequestPackage : IPackage
                     continue;
                 }
 
-                if (find.ResourcesMd5 == info.ResourcesMd5 || info.ModInfo.PackageName == "survivalcraft")
+                if (find.ResourcesMd5 == info.ResourcesMd5 || info.PackageName == "survivalcraft")
                 {
                     continue;
                 }
 
-                connectionError.AppendLine($"资源包{info.ModInfo.Name}校验不通过");
+                connectionError.AppendLine($"资源包{info.Name}校验不通过");
                 connectionError.AppendLine($"[服务端]{find.ResourcesMd5}");
                 connectionError.AppendLine($"[客户端]{info.ResourcesMd5}");
             }
         }
 
-        foreach (var item in mList)
+        foreach (var item in localMods)
         {
-            var find = ModInfos.Find(x => x.Equals(item));
+            var find = ModInfos.Find(x => x.HasSameIdentity(item));
             if (find == null)
             {
-                connectionError.AppendLine($"客户端没有安装服务器Mod[{item.ModInfo.Name}:{item.ModInfo.Version}]");
+                connectionError.AppendLine($"客户端没有安装服务器Mod[{item.Name}:{item.Version}]");
             }
         }
 
@@ -163,15 +176,15 @@ public class ConnectionRequestPackage : IPackage
             {
                 connectionError.AppendLine("客户端和服务器token相同");
             }
-            else if (ModInfos.Count != mList.Count)
+            else if (ModInfos.Count != localMods.Count)
             {
                 connectionError.AppendLine("客户端Mod数量和服务器Mod数量不一致");
-                if (mList.Count > 0)
+                if (localMods.Count > 0)
                 {
                     var i = 1;
-                    foreach (var m in mList)
+                    foreach (var m in localMods)
                     {
-                        connectionError.AppendLine($"[服务器]{i++}.{m.ModInfo.Name}:{m.ModInfo.Version}");
+                        connectionError.AppendLine($"[服务器]{i++}.{m.Name}:{m.Version}");
                     }
                 }
                 else
@@ -184,7 +197,7 @@ public class ConnectionRequestPackage : IPackage
                     var i = 1;
                     foreach (var m in ModInfos)
                     {
-                        connectionError.AppendLine($"[客户端]{i++}.{m.ModInfo.Name}:{m.ModInfo.Version}");
+                        connectionError.AppendLine($"[客户端]{i++}.{m.Name}:{m.Version}");
                     }
                 }
                 else
@@ -223,7 +236,7 @@ public class ConnectionRequestPackage : IPackage
 
             if (connectionError.Length > 0)
             {
-                ModsManager.Configs.Remove(saveKey); //如果验证失败应该清理登录信息
+                AppConfigStore.Values.Remove(saveKey); //如果验证失败应该清理登录信息
                 if (From == null || From.Request == null)
                 {
                     return;

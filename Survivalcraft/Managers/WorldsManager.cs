@@ -16,7 +16,7 @@ public static class WorldsManager
 
     private static readonly List<WorldInfo> _worldInfos = [];
 
-    private static readonly string _worldsDirectoryName = ModsManager.WorldsDirectoryName;
+    private static readonly string _worldsDirectoryName = GamePaths.Worlds;
 
     private static bool _loaded;
 
@@ -156,7 +156,7 @@ public static class WorldsManager
 
             var path = subsystemGameInfo.DirectoryName;
             var name = subsystemGameInfo.WorldSettings.Name;
-            var backUpDir = Storage.CombinePaths(ModsManager.ExternalPath, "WorldsBackup", name);
+            var backUpDir = Storage.CombinePaths(GamePaths.External, "WorldsBackup", name);
             if (!Storage.DirectoryExists(backUpDir))
             {
                 Storage.CreateDirectory(backUpDir);

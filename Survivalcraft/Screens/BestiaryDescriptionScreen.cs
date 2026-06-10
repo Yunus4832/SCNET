@@ -93,39 +93,39 @@ public class BestiaryDescriptionScreen : Screen
         _descriptionWidget.Text = bestiaryCreatureInfo.Description;
         _propertyNames1Widget.Text = string.Empty;
         _propertyValues1Widget.Text = string.Empty;
-        _propertyNames1Widget.Text += LanguageControl.Get(_typeName, "resilience");
+        _propertyNames1Widget.Text += LanguageManager.Get(_typeName, "resilience");
         _propertyValues1Widget.Text = _propertyValues1Widget.Text + bestiaryCreatureInfo.AttackResilience + "\n";
-        _propertyNames1Widget.Text += LanguageControl.Get(_typeName, "attack");
+        _propertyNames1Widget.Text += LanguageManager.Get(_typeName, "attack");
         _propertyValues1Widget.Text = _propertyValues1Widget.Text + (bestiaryCreatureInfo.AttackPower > 0f
             ? bestiaryCreatureInfo.AttackPower.ToString("0.0")
-            : LanguageControl.Get("Usual", "none")) + "\n";
-        _propertyNames1Widget.Text += LanguageControl.Get(_typeName, "herding");
+            : LanguageManager.Get("Usual", "none")) + "\n";
+        _propertyNames1Widget.Text += LanguageManager.Get(_typeName, "herding");
         _propertyValues1Widget.Text = _propertyValues1Widget.Text + (bestiaryCreatureInfo.IsHerding
-            ? LanguageControl.Get("Usual", "yes")
-            : LanguageControl.Get("Usual", "no")) + "\n";
-        _propertyNames1Widget.Text += LanguageControl.Get(_typeName, 1);
+            ? LanguageManager.Get("Usual", "yes")
+            : LanguageManager.Get("Usual", "no")) + "\n";
+        _propertyNames1Widget.Text += LanguageManager.Get(_typeName, 1);
         _propertyValues1Widget.Text = _propertyValues1Widget.Text + (bestiaryCreatureInfo.CanBeRidden
-            ? LanguageControl.Get("Usual", "yes")
-            : LanguageControl.Get("Usual", "no")) + "\n";
+            ? LanguageManager.Get("Usual", "yes")
+            : LanguageManager.Get("Usual", "no")) + "\n";
         _propertyNames1Widget.Text = _propertyNames1Widget.Text.TrimEnd();
         _propertyValues1Widget.Text = _propertyValues1Widget.Text.TrimEnd();
         _propertyNames2Widget.Text = string.Empty;
         _propertyValues2Widget.Text = string.Empty;
-        _propertyNames2Widget.Text += LanguageControl.Get(_typeName, "speed");
+        _propertyNames2Widget.Text += LanguageManager.Get(_typeName, "speed");
         _propertyValues2Widget.Text = _propertyValues2Widget.Text +
                                       (bestiaryCreatureInfo.MovementSpeed * 3.6).ToString("0") +
-                                      LanguageControl.Get(_typeName, "speed unit");
-        _propertyNames2Widget.Text += LanguageControl.Get(_typeName, "jump height");
+                                      LanguageManager.Get(_typeName, "speed unit");
+        _propertyNames2Widget.Text += LanguageManager.Get(_typeName, "jump height");
         _propertyValues2Widget.Text = _propertyValues2Widget.Text +
                                       bestiaryCreatureInfo.JumpHeight.ToString("0.0") +
-                                      LanguageControl.Get(_typeName, "length unit");
-        _propertyNames2Widget.Text += LanguageControl.Get(_typeName, "weight");
+                                      LanguageManager.Get(_typeName, "length unit");
+        _propertyNames2Widget.Text += LanguageManager.Get(_typeName, "weight");
         _propertyValues2Widget.Text = _propertyValues2Widget.Text + bestiaryCreatureInfo.Mass +
-                                      LanguageControl.Get(_typeName, "weight unit");
-        _propertyNames2Widget.Text += LanguageControl.Get("BlocksManager", "Spawner Eggs");
+                                      LanguageManager.Get(_typeName, "weight unit");
+        _propertyNames2Widget.Text += LanguageManager.Get("BlocksManager", "Spawner Eggs");
         _propertyValues2Widget.Text = _propertyValues2Widget.Text + (bestiaryCreatureInfo.HasSpawnerEgg
-            ? LanguageControl.Get("Usual", "yes")
-            : LanguageControl.Get("Usual", "no")) + "\n";
+            ? LanguageManager.Get("Usual", "yes")
+            : LanguageManager.Get("Usual", "no")) + "\n";
         _propertyNames2Widget.Text = _propertyNames2Widget.Text.TrimEnd();
         _propertyValues2Widget.Text = _propertyValues2Widget.Text.TrimEnd();
         _dropsPanel.Children.Clear();
@@ -135,10 +135,10 @@ public class BestiaryDescriptionScreen : Screen
             {
                 var text = item.MinCount >= item.MaxCount
                     ? $"{item.MinCount}"
-                    : string.Format(LanguageControl.Get(_typeName, "range"), item.MinCount, item.MaxCount);
+                    : string.Format(LanguageManager.Get(_typeName, "range"), item.MinCount, item.MaxCount);
                 if (item.Probability < 1f)
                 {
-                    text += string.Format(LanguageControl.Get(_typeName, 2), $"{item.Probability * 100f:0}");
+                    text += string.Format(LanguageManager.Get(_typeName, 2), $"{item.Probability * 100f:0}");
                 }
 
                 _dropsPanel.Children.Add(new StackPanelWidget
@@ -172,7 +172,7 @@ public class BestiaryDescriptionScreen : Screen
             {
                 Margin = new Vector2(20f, 0f),
                 Font = ContentManager.Get<BitmapFont>("Fonts/Pericles"),
-                Text = LanguageControl.Get("Usual", "nothing")
+                Text = LanguageManager.Get("Usual", "nothing")
             });
         }
     }

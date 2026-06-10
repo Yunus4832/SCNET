@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <AssemblyName>Survivalcraft.ModTemplate</AssemblyName>
+        <RootNamespace>Survivalcraft.ModTemplate</RootNamespace>
+        <SurvivalcraftModId>example.mod</SurvivalcraftModId>
+        <SurvivalcraftUseLocalReferences Condition="Exists('..\Survivalcraft\Survivalcraft.csproj')">true</SurvivalcraftUseLocalReferences>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(SurvivalcraftUseLocalReferences)' != 'true'">
+        <PackageReference Include="SCNET.Survivalcraft"
+                          Version="0.0.0.1"
+                          ExcludeAssets="runtime"/>
+    </ItemGroup>
+
+    <Import Project="..\Survivalcraft\Modding\Survivalcraft.Mod.targets"
+            Condition="'$(SurvivalcraftUseLocalReferences)' == 'true'"/>
+</Project>

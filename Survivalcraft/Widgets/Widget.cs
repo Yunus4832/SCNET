@@ -244,15 +244,6 @@ public class Widget : IDisposable
             throw new Exception($"Type \"{node.Name.LocalName}\" is not a Widget.");
         }
 
-        ModsManager.HookAction(
-            "OnWidgetConstruct",
-            loader =>
-            {
-                loader.OnWidgetConstruct(ref widget);
-                return false;
-            }
-        );
-
         parentWidget?.Children.Add(widget);
         widget.LoadContents(eventsTarget, node);
         return widget;

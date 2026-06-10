@@ -94,11 +94,6 @@ public class ComponentLevel : Component, IUpdateable
 
         _componentPlayer.PlayerStats.HighestLevel = MathUtils.Max(_componentPlayer.PlayerStats.HighestLevel,
             _componentPlayer.PlayerData.Level);
-        ModsManager.HookAction("OnLevelUpdate", modLoader =>
-        {
-            modLoader.OnLevelUpdate(this);
-            return false;
-        });
     }
 
     public void AddExperience(int count, bool playSound)
@@ -131,7 +126,7 @@ public class ComponentLevel : Component, IUpdateable
                 Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.0,
                     delegate
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(Name, 1), Color.White,
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(Name, 1), Color.White,
                             true, false);
                     });
                 Time.QueueTimeDelayedExecution(Time.FrameStartTime + 0.5 + 0.0,
@@ -199,7 +194,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageControl.Get(Name, 2),
+                Description = string.Format(LanguageManager.Get(Name, 2),
                     MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
             };
             factors.Add(item);
@@ -214,7 +209,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num5,
-                Description = string.Format(LanguageControl.Get(Name, 3), $"{stamina * 100f:0}")
+                Description = string.Format(LanguageManager.Get(Name, 3), $"{stamina * 100f:0}")
             };
             factors.Add(item);
         }
@@ -227,8 +222,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num7,
                 Description = _componentPlayer.ComponentSickness.IsSick
-                    ? LanguageControl.Get(Name, 4)
-                    : LanguageControl.Get(Name, 5)
+                    ? LanguageManager.Get(Name, 4)
+                    : LanguageManager.Get(Name, 5)
             };
             factors.Add(item);
         }
@@ -241,8 +236,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num9,
                 Description = _componentPlayer.ComponentSickness.IsPuking
-                    ? LanguageControl.Get(Name, 6)
-                    : LanguageControl.Get(Name, 7)
+                    ? LanguageManager.Get(Name, 6)
+                    : LanguageManager.Get(Name, 7)
             };
             factors.Add(item);
         }
@@ -255,8 +250,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num11,
                 Description = _componentPlayer.ComponentFlu.HasFlu
-                    ? LanguageControl.Get(Name, 8)
-                    : LanguageControl.Get(Name, 9)
+                    ? LanguageManager.Get(Name, 8)
+                    : LanguageManager.Get(Name, 9)
             };
             factors.Add(item);
         }
@@ -269,8 +264,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num13,
                 Description = _componentPlayer.ComponentFlu.IsCoughing
-                    ? LanguageControl.Get(Name, 10)
-                    : LanguageControl.Get(Name, 11)
+                    ? LanguageManager.Get(Name, 10)
+                    : LanguageManager.Get(Name, 11)
             };
             factors.Add(item);
         }
@@ -282,7 +277,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num15,
-                Description = string.Format(LanguageControl.Get(Name, 12),
+                Description = string.Format(LanguageManager.Get(Name, 12),
                     _subsystemGameInfo.WorldSettings.GameMode.ToString())
             };
             factors.Add(item);
@@ -314,7 +309,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageControl.Get(Name, 2),
+                Description = string.Format(LanguageManager.Get(Name, 2),
                     MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
             };
             factors.Add(item);
@@ -328,8 +323,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num5,
                 Description = _componentPlayer.ComponentSickness.IsSick
-                    ? LanguageControl.Get(Name, 4)
-                    : LanguageControl.Get(Name, 5)
+                    ? LanguageManager.Get(Name, 4)
+                    : LanguageManager.Get(Name, 5)
             };
             factors.Add(item);
         }
@@ -342,8 +337,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num7,
                 Description = _componentPlayer.ComponentFlu.HasFlu
-                    ? LanguageControl.Get(Name, 8)
-                    : LanguageControl.Get(Name, 9)
+                    ? LanguageManager.Get(Name, 8)
+                    : LanguageManager.Get(Name, 9)
             };
             factors.Add(item);
         }
@@ -362,7 +357,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num9,
-                Description = string.Format(LanguageControl.Get(Name, 12),
+                Description = string.Format(LanguageManager.Get(Name, 12),
                     _subsystemGameInfo.WorldSettings.GameMode.ToString())
             };
             factors.Add(item);
@@ -395,7 +390,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageControl.Get(Name, 2),
+                Description = string.Format(LanguageManager.Get(Name, 2),
                     MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
             };
             factors.Add(item);
@@ -432,7 +427,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num4,
-                Description = string.Format(LanguageControl.Get(Name, 3), $"{stamina * 100f:0}")
+                Description = string.Format(LanguageManager.Get(Name, 3), $"{stamina * 100f:0}")
             };
             factors.Add(item);
         }
@@ -445,8 +440,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num5,
                 Description = _componentPlayer.ComponentSickness.IsSick
-                    ? LanguageControl.Get(Name, 4)
-                    : LanguageControl.Get(Name, 5)
+                    ? LanguageManager.Get(Name, 4)
+                    : LanguageManager.Get(Name, 5)
             };
             factors.Add(item);
         }
@@ -459,8 +454,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num6,
                 Description = _componentPlayer.ComponentSickness.IsPuking
-                    ? LanguageControl.Get(Name, 6)
-                    : LanguageControl.Get(Name, 7)
+                    ? LanguageManager.Get(Name, 6)
+                    : LanguageManager.Get(Name, 7)
             };
             factors.Add(item);
         }
@@ -473,8 +468,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num7,
                 Description = _componentPlayer.ComponentFlu.HasFlu
-                    ? LanguageControl.Get(Name, 8)
-                    : LanguageControl.Get(Name, 9)
+                    ? LanguageManager.Get(Name, 8)
+                    : LanguageManager.Get(Name, 9)
             };
             factors.Add(item);
         }
@@ -487,8 +482,8 @@ public class ComponentLevel : Component, IUpdateable
             {
                 Value = num8,
                 Description = _componentPlayer.ComponentFlu.IsCoughing
-                    ? LanguageControl.Get(Name, 10)
-                    : LanguageControl.Get(Name, 11)
+                    ? LanguageManager.Get(Name, 10)
+                    : LanguageManager.Get(Name, 11)
             };
             factors.Add(item);
         }
@@ -519,7 +514,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num3,
-                Description = string.Format(LanguageControl.Get(Name, 2),
+                Description = string.Format(LanguageManager.Get(Name, 2),
                     MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture))
             };
             factors.Add(item);
@@ -538,7 +533,7 @@ public class ComponentLevel : Component, IUpdateable
             item = new Factor
             {
                 Value = num5,
-                Description = string.Format(LanguageControl.Get(Name, 12),
+                Description = string.Format(LanguageManager.Get(Name, 12),
                     _subsystemGameInfo.WorldSettings.GameMode.ToString())
             };
             factors.Add(item);

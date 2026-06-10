@@ -130,8 +130,6 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         var vector = new Vector2(camera.ViewPosition.X, camera.ViewPosition.Z);
         var point = Terrain.ToCell(vector);
         _lastShaftsUpdatePositions.TryGetValue(camera.GameWidget, out var value);
-        ModsManager.HookAction("SetRainAndSnowColor",
-            modloader => modloader.SetRainAndSnowColor(ref RainColor, ref SnowColor));
         if (value.HasValue && !(Vector2.DistanceSquared(value.Value, vector) > 1f))
         {
             return;

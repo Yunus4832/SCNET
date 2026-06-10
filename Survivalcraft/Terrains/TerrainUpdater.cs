@@ -1048,12 +1048,6 @@ public class TerrainUpdater
             }
             case TerrainChunkState.InvalidContents4:
             {
-                ModsManager.HookAction("OnTerrainContentsGenerated", modLoader =>
-                {
-                    modLoader.OnTerrainContentsGenerated(chunk);
-                    return false;
-                });
-
                 _subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass4(chunk);
                 chunk.ThreadState = TerrainChunkState.InvalidLight;
                 chunk.WasUpgraded = true;
@@ -1121,11 +1115,6 @@ public class TerrainUpdater
                 {
                     chunk.NewGeometryData = false;
                     GenerateChunkVertices(chunk, true);
-                    ModsManager.HookAction("GenerateChunkVertices", modLoader =>
-                    {
-                        modLoader.GenerateChunkVertices(chunk, true);
-                        return true;
-                    });
                 }
 
                 chunk.ThreadState = TerrainChunkState.InvalidVertices2;
@@ -1144,11 +1133,6 @@ public class TerrainUpdater
                 lock (chunk.Geometry)
                 {
                     GenerateChunkVertices(chunk, false);
-                    ModsManager.HookAction("GenerateChunkVertices", modLoader =>
-                    {
-                        modLoader.GenerateChunkVertices(chunk, false);
-                        return true;
-                    });
                     chunk.NewGeometryData = true;
                 }
 

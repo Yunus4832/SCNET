@@ -79,8 +79,8 @@ public class BuildFurnitureDialog : Dialog
         num += _design.Geometry.SubsetOpaqueByFace.Sum(b => b != null ? b.Indices.Count / 3 : 0);
         num += _design.Geometry.SubsetAlphaTestByFace.Sum(b => b != null ? b.Indices.Count / 3 : 0);
         _isValid = num <= 65535;
-        _statusLabel.Text = string.Format(LanguageControl.Get(_typeName, 1), num, 65535,
-            _isValid ? LanguageControl.Get(_typeName, 2) : LanguageControl.Get(_typeName, 3));
+        _statusLabel.Text = string.Format(LanguageManager.Get(_typeName, 1), num, 65535,
+            _isValid ? LanguageManager.Get(_typeName, 2) : LanguageManager.Get(_typeName, 3));
         _designWidget2D.Design = _design;
         _designWidget3D.Design = _design;
     }
@@ -92,17 +92,17 @@ public class BuildFurnitureDialog : Dialog
         _designWidget3D.Mode = FurnitureDesignWidget.ViewMode.Perspective;
         if (_designWidget2D.Mode == FurnitureDesignWidget.ViewMode.Side)
         {
-            _axisButton.Text = LanguageControl.Get(_typeName, 4);
+            _axisButton.Text = LanguageManager.Get(_typeName, 4);
         }
 
         if (_designWidget2D.Mode == FurnitureDesignWidget.ViewMode.Top)
         {
-            _axisButton.Text = LanguageControl.Get(_typeName, 5);
+            _axisButton.Text = LanguageManager.Get(_typeName, 5);
         }
 
         if (_designWidget2D.Mode == FurnitureDesignWidget.ViewMode.Front)
         {
-            _axisButton.Text = LanguageControl.Get(_typeName, 6);
+            _axisButton.Text = LanguageManager.Get(_typeName, 6);
         }
 
         _leftButton.IsEnabled = IsShiftPossible(DirectionAxisToDelta(0, _axis));
@@ -118,12 +118,12 @@ public class BuildFurnitureDialog : Dialog
             var list = new List<Tuple<string, Action>>();
             if (_sourceDesign != null)
             {
-                list.Add(new Tuple<string, Action>(LanguageControl.Get(_typeName, 7), delegate
+                list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 7), delegate
                 {
                     Dismiss(false);
                     DialogsManager.ShowDialog(ParentWidget,
                         new TextBoxDialog(
-                            LanguageControl.Get(_typeName, 10),
+                            LanguageManager.Get(_typeName, 10),
                             _sourceDesign.Name,
                             20,
                             delegate(string s)
@@ -140,11 +140,11 @@ public class BuildFurnitureDialog : Dialog
                         )
                     );
                 }));
-                list.Add(new Tuple<string, Action>(LanguageControl.Get(_typeName, 8), delegate
+                list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 8), delegate
                 {
                     DialogsManager.ShowDialog(
                         ParentWidget,
-                        new TextBoxDialog(LanguageControl.Get(_typeName, 11),
+                        new TextBoxDialog(LanguageManager.Get(_typeName, 11),
                             _design.Name,
                             20,
                             delegate(string s)
@@ -164,11 +164,11 @@ public class BuildFurnitureDialog : Dialog
             }
             else
             {
-                list.Add(new Tuple<string, Action>(LanguageControl.Get(_typeName, 9), delegate
+                list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 9), delegate
                 {
                     DialogsManager.ShowDialog(
                         ParentWidget,
-                        new TextBoxDialog(LanguageControl.Get(_typeName, 11),
+                        new TextBoxDialog(LanguageManager.Get(_typeName, 11),
                             _design.Name,
                             20,
                             delegate(string s)
@@ -196,7 +196,7 @@ public class BuildFurnitureDialog : Dialog
                 DialogsManager.ShowDialog(
                     ParentWidget,
                     new ListSelectionDialog(
-                        LanguageControl.Get(_typeName, 11),
+                        LanguageManager.Get(_typeName, 11),
                         list,
                         64f,
                         t => ((Tuple<string, Action>)t).Item1,

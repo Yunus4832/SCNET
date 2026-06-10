@@ -65,12 +65,12 @@ public class CreativeInventoryWidget : CanvasWidget
 
         _categories.Add(new Category
         {
-            Name = LanguageControl.Get(_typeName, 1),
+            Name = LanguageManager.Get(_typeName, 1),
             Panel = FurnitureInventoryPanel
         });
         _categories.Add(new Category
         {
-            Name = LanguageControl.Get(_typeName, 2),
+            Name = LanguageManager.Get(_typeName, 2),
             Panel = _creativeInventoryPanel
         });
         foreach (var category in _categories)
@@ -130,7 +130,7 @@ public class CreativeInventoryWidget : CanvasWidget
                         56f,
                         c => new LabelWidget
                         {
-                            Text = LanguageControl.Get("BlocksManager", ((Category)c).Name),
+                            Text = LanguageManager.Get("BlocksManager", ((Category)c).Name),
                             Color = ((Category)c).Color,
                             HorizontalAlignment = WidgetAlignment.Center,
                             VerticalAlignment = WidgetAlignment.Center
@@ -147,7 +147,7 @@ public class CreativeInventoryWidget : CanvasWidget
         _componentCreativeInventory.CategoryIndex =
             MathUtils.Clamp(_componentCreativeInventory.CategoryIndex, 0, _categories.Count - 1);
         _categoryButton.Text =
-            LanguageControl.Get("BlocksManager", _categories[_componentCreativeInventory.CategoryIndex].Name);
+            LanguageManager.Get("BlocksManager", _categories[_componentCreativeInventory.CategoryIndex].Name);
         _categoryLeftButton.IsEnabled = _componentCreativeInventory.CategoryIndex > 0;
         _categoryRightButton.IsEnabled = _componentCreativeInventory.CategoryIndex < _categories.Count - 1;
         if (_componentCreativeInventory.CategoryIndex == _activeCategoryIndex)

@@ -162,11 +162,6 @@ public class TerrainRenderer : IDisposable
         _opaqueShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
             _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
         var parameter = _opaqueShader.GetParameter("u_hazeStartDensity");
-        ModsManager.HookAction("SetShaderParameter", modLoader =>
-        {
-            modLoader.SetShaderParameter(_opaqueShader, camera);
-            return true;
-        });
         var point = Terrain.ToChunk(camera.ViewPosition.XZ);
         _subsystemTerrain.Terrain.GetChunkAtCoords(point.X, point.Y);
         foreach (var terrainChunk in _chunksToDraw)
@@ -222,11 +217,6 @@ public class TerrainRenderer : IDisposable
             _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
         _alphaTestedShader.GetParameter("u_alphaThreshold").SetValue(0.5f);
         var parameter = _alphaTestedShader.GetParameter("u_hazeStartDensity");
-        ModsManager.HookAction("SetShaderParameter", modLoader =>
-        {
-            modLoader.SetShaderParameter(_alphaTestedShader, camera);
-            return true;
-        });
         foreach (var terrainChunk in _chunksToDraw)
         {
             var num = MathUtils.Min(terrainChunk.HazeEnds[gameWidgetIndex],
@@ -260,11 +250,6 @@ public class TerrainRenderer : IDisposable
         _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
             _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
         var parameter = _transparentShader.GetParameter("u_hazeStartDensity");
-        ModsManager.HookAction("SetShaderParameter", modLoader =>
-        {
-            modLoader.SetShaderParameter(_transparentShader, camera);
-            return true;
-        });
         for (var i = 0; i < _chunksToDraw.Count; i++)
         {
             var terrainChunk = _chunksToDraw[i];

@@ -15,7 +15,7 @@ public static class BlocksTexturesManager
 
     public static void Initialize()
     {
-        Storage.CreateDirectory(ModsManager.BlockTexturesDirectoryName);
+        Storage.CreateDirectory(GamePaths.BlockTextures);
         DefaultBlocksTexture = ContentManager.Get<Texture2D>("Textures/Blocks");
     }
 
@@ -26,7 +26,7 @@ public static class BlocksTexturesManager
 
     public static string GetFileName(string name)
     {
-        return IsBuiltIn(name) ? string.Empty : Storage.CombinePaths(ModsManager.BlockTexturesDirectoryName, name);
+        return IsBuiltIn(name) ? string.Empty : Storage.CombinePaths(GamePaths.BlockTextures, name);
     }
 
     public static string GetDisplayName(string name)
@@ -131,7 +131,7 @@ public static class BlocksTexturesManager
     {
         _blockTextureNames.Clear();
         _blockTextureNames.Add(string.Empty);
-        foreach (var item in Storage.ListFileNames(ModsManager.BlockTexturesDirectoryName))
+        foreach (var item in Storage.ListFileNames(GamePaths.BlockTextures))
         {
             _blockTextureNames.Add(item);
         }

@@ -4,6 +4,7 @@ using EntitySystem.TemplatesDatabase;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Modding;
 
 namespace Game.Components;
 
@@ -147,7 +148,7 @@ public class ComponentHealth : Component, IUpdateable
         if (_componentCreature.ComponentBody is { ImmersionFactor: > 0f, ImmersionFluidBlock: MagmaBlock })
         {
             //岩浆伤害
-            var cause = LanguageControl.Get(Name, 1);
+            var cause = LanguageManager.Get(Name, 1);
             Injure(2f * _componentCreature.ComponentBody.ImmersionFactor * dt, null, false, cause);
             var num2 = 1.1f + 0.1f * (float)MathUtils.Sin(12.0 * _subsystemTime.GameTime);
             RedScreenFactor = MathUtils.Max(RedScreenFactor,
@@ -164,7 +165,7 @@ public class ComponentHealth : Component, IUpdateable
                 num4 /= _componentPlayer.ComponentLevel.ResilienceFactor;
             }
 
-            var cause = LanguageControl.Get(Name, 2);
+            var cause = LanguageManager.Get(Name, 2);
             var flagMainRider = _componentCreature.ComponentBody.ChildBodies.Count > 0 &&
                                 _componentCreature.ComponentBody.ChildBodies[0].Player is
                                     { PlayerData.IsMainPlayer: true };
@@ -199,8 +200,8 @@ public class ComponentHealth : Component, IUpdateable
         if (position.Y < 0f && _subsystemTime.PeriodicGameTimeEvent(2.0, 0.0))
         {
             //掉出世界伤害
-            Injure(0.1f, null, true, LanguageControl.Get(Name, 3));
-            _componentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(Name, 4), Color.White, true,
+            Injure(0.1f, null, true, LanguageManager.Get(Name, 3));
+            _componentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(Name, 4), Color.White, true,
                 false);
         }
 
@@ -214,7 +215,7 @@ public class ComponentHealth : Component, IUpdateable
             }
 
             //窒息伤害
-            Injure(num6, null, false, LanguageControl.Get(Name, 7));
+            Injure(num6, null, false, LanguageManager.Get(Name, 7));
         }
 
         if (num5 && (_componentOnFire.IsOnFire || _componentOnFire.TouchesFire))
@@ -230,7 +231,7 @@ public class ComponentHealth : Component, IUpdateable
                 num7 /= _componentPlayer.ComponentLevel.ResilienceFactor;
             }
 
-            var cause = LanguageControl.Get(Name, 5);
+            var cause = LanguageManager.Get(Name, 5);
             //玩家 TouchesFire 伤害由客户端计算
             if (CommonLib.WorkType == WorkType.Client)
             {
@@ -245,12 +246,12 @@ public class ComponentHealth : Component, IUpdateable
             {
                 if (flagMainPlayer || flagMainRider || flagNoRider)
                 {
-                    Injure(num7, _componentOnFire.Attacker, false, LanguageControl.Get(Name, 5));
+                    Injure(num7, _componentOnFire.Attacker, false, LanguageManager.Get(Name, 5));
                 }
             }
             else
             {
-                Injure(num7, _componentOnFire.Attacker, false, LanguageControl.Get(Name, 5));
+                Injure(num7, _componentOnFire.Attacker, false, LanguageManager.Get(Name, 5));
             }
         }
 
@@ -259,7 +260,7 @@ public class ComponentHealth : Component, IUpdateable
              _componentCreature.ComponentBody.StandingOnBody != null))
             //搁浅伤害
         {
-            Injure(0.05f, null, false, LanguageControl.Get(Name, 6));
+            Injure(0.05f, null, false, LanguageManager.Get(Name, 6));
         }
 
         HealthChange = Health - _lastHealth;
@@ -298,32 +299,22 @@ public class ComponentHealth : Component, IUpdateable
 
         if (Health == 0f && HealthChange < 0f)
         {
-            var pass = false;
-            ModsManager.HookAction("DeadBeforeDrops", loader =>
+            var position2 = _componentCreature.ComponentBody.Position +
+                            new Vector3(0f, _componentCreature.ComponentBody.BoxSize.Y / 2f, 0f);
+            var x = _componentCreature.ComponentBody.StanceBoxSize.X;
+            if (RunMode.Value is RunModeType.Gui)
             {
-                loader.DeadBeforeDrops(this, out var skip);
-                pass |= skip;
-                return false;
-            });
-            if (!pass)
-            {
-                var position2 = _componentCreature.ComponentBody.Position +
-                                new Vector3(0f, _componentCreature.ComponentBody.BoxSize.Y / 2f, 0f);
-                var x = _componentCreature.ComponentBody.StanceBoxSize.X;
-                if (RunMode.Value is RunModeType.Gui)
-                {
-                    _subsystemParticles.AddParticleSystem(new KillParticleSystem(_subsystemTerrain, position2, x));
-                }
-
-                var position3 = (_componentCreature.ComponentBody.BoundingBox.Min +
-                                 _componentCreature.ComponentBody.BoundingBox.Max) / 2f;
-                foreach (var item in Entity.FindComponents<IInventory>())
-                {
-                    item?.DropAllItems(position3);
-                }
-
-                DeathTime = _subsystemGameInfo.TotalElapsedGameTime;
+                _subsystemParticles.AddParticleSystem(new KillParticleSystem(_subsystemTerrain, position2, x));
             }
+
+            var position3 = (_componentCreature.ComponentBody.BoundingBox.Min +
+                             _componentCreature.ComponentBody.BoundingBox.Max) / 2f;
+            foreach (var item in Entity.FindComponents<IInventory>())
+            {
+                item?.DropAllItems(position3);
+            }
+
+            DeathTime = _subsystemGameInfo.TotalElapsedGameTime;
         }
 
         if (Health <= 0f && CorpseDuration > 0f &&
@@ -357,23 +348,23 @@ public class ComponentHealth : Component, IUpdateable
 
     public void Injure(float amount, ComponentCreature? attacker, bool ignoreInvulnerability, string cause)
     {
-        var pass = false;
-        ModsManager.HookAction("OnCreatureInjure", loader =>
-        {
-            loader.OnCreatureInjure(this, amount, attacker, ignoreInvulnerability, cause, out var skip);
-            pass |= skip;
-            return false;
-        });
-        if (pass)
+        if (CommonLib.WorkType == WorkType.Client)
         {
             return;
         }
 
-        if (!(amount > 0f) || (!ignoreInvulnerability && IsInvulnerable) ||
-            CommonLib.WorkType == WorkType.Client)
+        var context = new CreatureInjuringContext(this, amount, attacker, ignoreInvulnerability, cause);
+        CurrentModRuntime.Value?.Gameplay.Invoke(context);
+        if (context.Cancel || !(context.Amount > 0f) ||
+            (!context.IgnoreInvulnerability && IsInvulnerable))
         {
             return;
         }
+
+        amount = context.Amount;
+        attacker = context.Attacker;
+        ignoreInvulnerability = context.IgnoreInvulnerability;
+        cause = context.Cause;
 
         NetInjure(amount, attacker, cause);
         CommonLib.Net.QueuePackage(new ComponentHealthPackage(this, attacker, amount, cause, ignoreInvulnerability));

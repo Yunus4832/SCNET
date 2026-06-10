@@ -396,6 +396,7 @@ public class TerrainSerializer23 : IDisposable
         throw new InvalidOperationException("Count too large.");
     }
 
+    /// <summary>
     /// 存储接口
     /// </summary>
     public interface IStorage : IDisposable

@@ -240,10 +240,10 @@ public abstract class DeciduousLeavesBlock : LeavesBlock
         var season = GetSeason(Terrain.ExtractData(value));
         var seasonPrefix = season switch
         {
-            Season.Summer => LanguageControl.Get("DeciduousLeavesBlock", 0),
-            Season.Autumn => LanguageControl.Get("DeciduousLeavesBlock", 1),
-            Season.Winter => LanguageControl.Get("DeciduousLeavesBlock", 2),
-            _ => LanguageControl.Get("DeciduousLeavesBlock", 3)
+            Season.Summer => LanguageManager.Get("DeciduousLeavesBlock", 0),
+            Season.Autumn => LanguageManager.Get("DeciduousLeavesBlock", 1),
+            Season.Winter => LanguageManager.Get("DeciduousLeavesBlock", 2),
+            _ => LanguageManager.Get("DeciduousLeavesBlock", 3)
         };
 
         return seasonPrefix + displayName;

@@ -23,9 +23,9 @@ public static class RunningSettingManager
     {
         try
         {
-            if (!Storage.DirectoryExists(ModsManager.ConfigPath))
+            if (!Storage.DirectoryExists(GamePaths.Config))
             {
-                Storage.CreateDirectory(ModsManager.ConfigPath);
+                Storage.CreateDirectory(GamePaths.Config);
             }
 
             using var stream = Storage.OpenFile(RunningSettingPath, OpenFileMode.Create);
@@ -157,9 +157,9 @@ public static class RunningSettingManager
                 return;
             }
 
-            if (!Storage.DirectoryExists(ModsManager.ConfigPath))
+            if (!Storage.DirectoryExists(GamePaths.Config))
             {
-                Storage.CreateDirectory(ModsManager.ConfigPath);
+                Storage.CreateDirectory(GamePaths.Config);
             }
 
             Save(runningSetting);

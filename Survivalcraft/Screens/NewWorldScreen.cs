@@ -173,9 +173,9 @@ public class NewWorldScreen : Screen
         var flag = WorldsManager.ValidateWorldName(_worldSettings.Name);
         _nameTextBox.Text = _worldSettings.Name;
         _seedTextBox.Text = _worldSettings.Seed;
-        _gameModeButton.Text = LanguageControl.Get("GameMode", _worldSettings.GameMode.ToString());
+        _gameModeButton.Text = LanguageManager.Get("GameMode", _worldSettings.GameMode.ToString());
         _startingPositionButton.Text =
-            LanguageControl.Get("StartingPositionMode", _worldSettings.StartingPositionMode.ToString());
+            LanguageManager.Get("StartingPositionMode", _worldSettings.StartingPositionMode.ToString());
         _playButton.IsVisible = flag;
         _errorLabel.IsVisible = !flag;
         _blankSeedLabel.IsVisible = _worldSettings.Seed.Length == 0 && !_seedTextBox.HasFocus;

@@ -53,7 +53,7 @@ public class FourLedBlock : MountedElectricElementBlock
                 RemainsCount = 1,
                 RemainsValue = Terrain.MakeBlockValue(90),
                 RequiredHeatLevel = 0f,
-                Description = LanguageControl.Get(GetType().Name, 1),
+                Description = LanguageManager.Get(GetType().Name, 1),
                 Ingredients =
                 {
                     [0] = "glass",
@@ -86,8 +86,8 @@ public class FourLedBlock : MountedElectricElementBlock
     {
         var data = Terrain.ExtractData(value);
         var color = GetColor(data);
-        return LanguageControl.Get("LedBlock", color) +
-               LanguageControl.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName");
+        return LanguageManager.Get("LedBlock", color) +
+               LanguageManager.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName");
     }
 
     public override IEnumerable<int> GetCreativeValues()

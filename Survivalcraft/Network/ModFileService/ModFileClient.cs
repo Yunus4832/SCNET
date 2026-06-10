@@ -66,8 +66,8 @@ public static class ModFileClient
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageControl.Error,
-                    ex.Message, LanguageControl.Ok
+                    LanguageManager.Error,
+                    ex.Message, LanguageManager.Ok
                 )
             );
         }

@@ -59,14 +59,14 @@ public class PlayersScreen : Screen
                 {
                     DialogsManager.ShowDialog(
                         null,
-                        new MessageDialog(LanguageControl.Unavailable, "不可在参考模式添加玩家", LanguageControl.Ok)
+                        new MessageDialog(LanguageManager.Unavailable, "不可在参考模式添加玩家", LanguageManager.Ok)
                     );
                 }
                 else if (subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure)
                 {
                     DialogsManager.ShowDialog(
                         null,
-                        new MessageDialog(LanguageControl.Unavailable, "不可在冒险模式添加玩家", LanguageControl.Ok)
+                        new MessageDialog(LanguageManager.Unavailable, "不可在冒险模式添加玩家", LanguageManager.Ok)
                     );
                 }
                 else if (_subsystemPlayers.PlayersData.Count >=
@@ -75,9 +75,9 @@ public class PlayersScreen : Screen
                     DialogsManager.ShowDialog(
                         null,
                         new MessageDialog(
-                            LanguageControl.Unavailable,
+                            LanguageManager.Unavailable,
                             $"超出最大玩家数量{GameManager.Project!.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount}",
-                            LanguageControl.Ok
+                            LanguageManager.Ok
                         )
                     );
                 }

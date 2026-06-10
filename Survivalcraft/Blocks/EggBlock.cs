@@ -39,7 +39,7 @@ public class EggBlock : Block
             if (value.StartsWith('[') && value.EndsWith(']'))
             {
                 var lp = value.Substring(1, value.Length - 2).Split([":"], StringSplitOptions.RemoveEmptyEntries);
-                value = LanguageControl.GetDatabase("DisplayName", lp[1]);
+                value = LanguageManager.GetDatabase("DisplayName", lp[1]);
             }
 
             if (nestedValue >= EggTypes.Count)
@@ -100,7 +100,7 @@ public class EggBlock : Block
         var isLaid = GetIsLaid(data);
         if (isCooked)
         {
-            return LanguageControl.Get(TypeName, 1) + eggType.DisplayName;
+            return LanguageManager.Get(TypeName, 1) + eggType.DisplayName;
         }
 
         if (!isLaid)
@@ -108,7 +108,7 @@ public class EggBlock : Block
             return eggType.DisplayName;
         }
 
-        return LanguageControl.Get(TypeName, 2) + eggType.DisplayName;
+        return LanguageManager.Get(TypeName, 2) + eggType.DisplayName;
     }
 
     public override string GetCategory(int value)
@@ -120,7 +120,7 @@ public class EggBlock : Block
     {
         var eggType = GetEggType(Terrain.ExtractData(value));
         var displayName = EggTypes[eggType.EggTypeIndex].DisplayName;
-        return LanguageControl.Get(TypeName, 3) + displayName[..^1];
+        return LanguageManager.Get(TypeName, 3) + displayName[..^1];
     }
 
     public override float GetNutritionalValue(int value)
@@ -198,7 +198,7 @@ public class EggBlock : Block
                     RemainsCount = 1,
                     RemainsValue = Terrain.MakeBlockValue(91),
                     RequiredHeatLevel = 1f,
-                    Description = LanguageControl.Get(TypeName, 4)
+                    Description = LanguageManager.Get(TypeName, 4)
                 };
                 var data = SetEggType(SetIsLaid(0, true), eggType.EggTypeIndex);
                 var value = SetDamage(Terrain.MakeBlockValue(118, 0, data), rot);

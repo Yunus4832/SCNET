@@ -65,13 +65,13 @@ Android 的几个变体项目会复用这份配置，只在自己的 `.csproj` �
 
 ```bash
 # 还原依赖
-dotnet restore SCNETWORK.slnx
+dotnet restore SCNET.slnx
 
 # Debug 构建
-dotnet build SCNETWORK.slnx
+dotnet build SCNET.slnx
 
 # Release 构建
-dotnet build SCNETWORK.slnx --configuration Release
+dotnet build SCNET.slnx --configuration Release
 ```
 
 ### 可选构建配置

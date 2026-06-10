@@ -407,7 +407,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
                             _aimHintIssued = true;
                             ComponentGui.DisplaySmallMessage(
-                                LanguageControl.Get(_typeName, 1),
+                                LanguageManager.Get(_typeName, 1),
                                 Color.White,
                                 true,
                                 true

@@ -554,7 +554,7 @@ public class ComponentLocomotion : Component, IUpdateable
                     if (!flag && vector2.LengthSquared() / velocity.LengthSquared() > 0.99f &&
                         WalkOrder.Value.LengthSquared() > 0.99f)
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(GetType().Name, 0),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(GetType().Name, 0),
                             Color.White, true, true);
                         _shoesWarningTime = Time.FrameStartTime;
                     }

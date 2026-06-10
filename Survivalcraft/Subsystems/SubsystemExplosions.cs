@@ -205,11 +205,6 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         var num3 = 0;
         if (Terrain.ExtractContents(explosionPointValue) != 0)
         {
-            ModsManager.HookAction("OnBlockExploded", loader =>
-            {
-                loader.OnBlockExploded(_subsystemTerrain, x, y, z, explosionPointValue);
-                return false;
-            });
         }
 
         while (list.Count > 0 || list2.Count > 0)
@@ -287,7 +282,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             if (playerData == null ||
                 !SubsystemBedrockBlockBehavior.AllowPlayerAction(playerData.ComponentPlayer, territoriy!))
             {
-                playerData?.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(GetType().Name, 1),
+                playerData?.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(GetType().Name, 1),
                     Color.Yellow, false, true);
                 return;
             }
@@ -341,11 +336,6 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     var flag2 = false;
                     var list = new List<BlockDropValue>();
                     block.GetDropValues(_subsystemTerrain, cellValue, newValue, 0, list, out _);
-                    ModsManager.HookAction("OnBlockExploded", loader =>
-                    {
-                        loader.OnBlockExploded(_subsystemTerrain, x, y, z, cellValue);
-                        return false;
-                    });
                     if (list.Count == 0)
                     {
                         list.Add(new BlockDropValue
@@ -511,7 +501,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             body.ApplyImpulse(impulse);
             //生物燃烧
             body.Entity.FindComponent<ComponentHealth>()
-                ?.Injure(damage, null, false, LanguageControl.Get(GetType().Name, 0));
+                ?.Injure(damage, null, false, LanguageManager.Get(GetType().Name, 0));
             body.Entity.FindComponent<ComponentDamage>()?.Damage(damage);
             var componentOnFire = body.Entity.FindComponent<ComponentOnFire>();
             if (componentOnFire != null && SharedRandom.Float(0f, 1f) < MathUtils.Min(damage - 0.1f, 0.5f))

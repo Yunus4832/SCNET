@@ -36,14 +36,14 @@ public class PlayScreen : Screen
                     : worldInfo.WorldSettings.Name;
                 labelWidget2.Text =
                     $"{DataSizeFormatter.Format(worldInfo.Size)} | {worldInfo.LastSaveTime.ToLocalTime():dd MMM yyyy HH:mm} | {(worldInfo.PlayerInfos.Count > 1
-                        ? string.Format(LanguageControl.GetContentWidgets(_typeName, 9), worldInfo.PlayerInfos.Count)
-                        : string.Format(LanguageControl.GetContentWidgets(_typeName, 10), 1))} | {LanguageControl.Get("GameMode", worldInfo.WorldSettings.GameMode.ToString())} | {LanguageControl.Get("EnvironmentBehaviorMode",
+                        ? string.Format(LanguageManager.GetContentWidgets(_typeName, 9), worldInfo.PlayerInfos.Count)
+                        : string.Format(LanguageManager.GetContentWidgets(_typeName, 10), 1))} | {LanguageManager.Get("GameMode", worldInfo.WorldSettings.GameMode.ToString())} | {LanguageManager.Get("EnvironmentBehaviorMode",
                         worldInfo.WorldSettings.EnvironmentBehaviorMode.ToString())}";
                 if (worldInfo.SerializationVersion != VersionsManager.SerializationVersion)
                 {
                     labelWidget2.Text = labelWidget2.Text + " | " +
                                         (string.IsNullOrEmpty(worldInfo.SerializationVersion)
-                                            ? LanguageControl.GetContentWidgets("Usual", "Unknown")
+                                            ? LanguageManager.GetContentWidgets("Usual", "Unknown")
                                             : "(" + worldInfo.SerializationVersion + ")");
                 }
 
@@ -63,7 +63,7 @@ public class PlayScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        var dialog = new BusyDialog(LanguageControl.GetContentWidgets(_typeName, 5), string.Empty);
+        var dialog = new BusyDialog(LanguageManager.GetContentWidgets(_typeName, 5), string.Empty);
         DialogsManager.ShowDialog(null, dialog);
         Task.Run(delegate
         {
@@ -98,7 +98,7 @@ public class PlayScreen : Screen
             _worldsListWidget.SelectedItem = null;
         }
 
-        Children.Find<LabelWidget>("TopBar.Label")!.Text = string.Format(LanguageControl.GetContentWidgets(_typeName, 6),
+        Children.Find<LabelWidget>("TopBar.Label")!.Text = string.Format(LanguageManager.GetContentWidgets(_typeName, 6),
             _worldsListWidget.Items.Count);
         Children.Find("Play")!.IsEnabled = _worldsListWidget.SelectedItem != null;
         Children.Find("Properties")!.IsEnabled = _worldsListWidget.SelectedItem != null;
@@ -127,9 +127,9 @@ public class PlayScreen : Screen
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.GetContentWidgets(_typeName, 7),
-                        string.Format(LanguageControl.GetContentWidgets(_typeName, 8), _maxWorlds),
-                        LanguageControl.GetContentWidgets("Usual", "ok")
+                        LanguageManager.GetContentWidgets(_typeName, 7),
+                        string.Format(LanguageManager.GetContentWidgets(_typeName, 8), _maxWorlds),
+                        LanguageManager.GetContentWidgets("Usual", "ok")
                     )
                 );
             }
@@ -159,11 +159,6 @@ public class PlayScreen : Screen
     {
         DialogsManager.HideAllDialogs();
         var worldInfo = (WorldInfo)item;
-        ModsManager.HookAction("BeforeGameLoading", loader =>
-        {
-            item = loader.BeforeGameLoading(this, item);
-            return true;
-        });
         if (worldInfo.WorldSettings.RunServer)
         {
             if (CommonLib.StartServer())

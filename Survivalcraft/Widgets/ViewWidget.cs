@@ -189,10 +189,5 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         }
 
         ApplyScalingRenderTarget(dc);
-        ModsManager.HookAction("DrawToScreen", loader =>
-        {
-            loader.DrawToScreen(this, dc);
-            return false;
-        });
     }
 }

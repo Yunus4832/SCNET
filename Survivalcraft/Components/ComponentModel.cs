@@ -7,8 +7,6 @@ namespace Game.Components;
 
 public class ComponentModel : Component
 {
-    private bool _isSet;
-
     private Matrix?[] _boneTransforms = [];
 
     private float _boundingSphereRadius;
@@ -123,17 +121,6 @@ public class ComponentModel : Component
 
     public virtual void SetModel(Model model)
     {
-        _isSet = false;
-        ModsManager.HookAction("OnSetModel", modLoader =>
-        {
-            modLoader.OnSetModel(this, model, out _isSet);
-            return _isSet;
-        });
-        if (_isSet)
-        {
-            return;
-        }
-
         _model = model;
         _boneTransforms = new Matrix?[_model.Bones.Count];
         AbsoluteBoneTransformsForCamera = new Matrix[_model.Bones.Count];

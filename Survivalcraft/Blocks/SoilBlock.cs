@@ -56,14 +56,14 @@ public class SoilBlock : CubeBlock
         switch (nitrogen)
         {
             case > 0 when hydration:
-                _ = LanguageControl.Get(TypeName, 2);
-                return LanguageControl.Get(TypeName, 1);
+                _ = LanguageManager.Get(TypeName, 2);
+                return LanguageManager.Get(TypeName, 1);
             case > 0:
-                _ = LanguageControl.Get(TypeName, 2);
-                return LanguageControl.Get(TypeName, 2);
+                _ = LanguageManager.Get(TypeName, 2);
+                return LanguageManager.Get(TypeName, 2);
         }
 
-        return LanguageControl.Get(TypeName, hydration ? 3 : 4);
+        return LanguageManager.Get(TypeName, hydration ? 3 : 4);
     }
 
     public override void GenerateTerrainVertices(

@@ -344,3 +344,5 @@ Publish/*
 
 # 避免被 NuGet 规则忽略
 !Survivalcraft/Network/Packages/*
+# Added by code-review-graph
+.code-review-graph/

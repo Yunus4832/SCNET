@@ -49,7 +49,7 @@ public class ComponentCreature : Component
         {
             var lp = DisplayName.Substring(1, DisplayName.Length - 2)
                 .Split([":"], StringSplitOptions.RemoveEmptyEntries);
-            DisplayName = LanguageControl.GetDatabase("DisplayName", lp[1]);
+            DisplayName = LanguageManager.GetDatabase("DisplayName", lp[1]);
         }
 
         _killVerbs = HumanReadableConverter.ValuesListFromString<string>(',', valuesDictionary.GetValue<string>("KillVerbs"));

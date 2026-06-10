@@ -50,8 +50,8 @@ public class BowWidget : CanvasWidget
         var slotCount = _inventory.GetSlotCount(_slotIndex);
         var num = Terrain.ExtractContents(slotValue);
         _instructionsLabel.Text = !BowBlock.GetArrowType(Terrain.ExtractData(slotValue)).HasValue
-            ? LanguageControl.Get(_typeName, 0)
-            : LanguageControl.Get(_typeName, 1);
+            ? LanguageManager.Get(_typeName, 0)
+            : LanguageManager.Get(_typeName, 1);
         if (num != 191 || slotCount == 0)
         {
             ParentWidget?.Children.Remove(this);

@@ -156,7 +156,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             furnitureDesign = GetDesign(designIndex);
             if (furnitureDesign == null)
             {
-                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 0),
+                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 0),
                     Color.White, true, false);
                 return;
             }
@@ -181,7 +181,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 var cellValue = SubsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z);
                 if (IsValueDisallowed(cellValue))
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 1),
+                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 1),
                         Color.White, true, false);
                     return;
                 }
@@ -224,7 +224,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 if (MathUtils.Abs(point.X - point2.X) >= 16 || MathUtils.Abs(point.Y - point2.Y) >= 16 ||
                     MathUtils.Abs(point.Z - point2.Z) >= 16)
                 {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 2),
+                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 2),
                         Color.White, true, false);
                     return;
                 }
@@ -240,7 +240,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
             if (valuesDictionary.Count == 0)
             {
-                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 0),
+                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 0),
                     Color.White, true, false);
                 return;
             }

@@ -14,12 +14,12 @@ public static class FurniturePacksManager
 
     public static void Initialize()
     {
-        Storage.CreateDirectory(ModsManager.FurniturePacksDirectoryName);
+        Storage.CreateDirectory(GamePaths.FurniturePacks);
     }
 
     public static string GetFileName(string name)
     {
-        return Storage.CombinePaths(ModsManager.FurniturePacksDirectoryName, name);
+        return Storage.CombinePaths(GamePaths.FurniturePacks, name);
     }
 
     public static string GetDisplayName(string name)
@@ -105,7 +105,7 @@ public static class FurniturePacksManager
     public static void UpdateFurniturePacksList()
     {
         _furniturePackNames.Clear();
-        foreach (var item in Storage.ListFileNames(ModsManager.FurniturePacksDirectoryName))
+        foreach (var item in Storage.ListFileNames(GamePaths.FurniturePacks))
         {
             if (Storage.GetExtension(item).ToLower() == ".scfpack")
             {

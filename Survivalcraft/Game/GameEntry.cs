@@ -5,6 +5,7 @@ using System.Text;
 using Engine.Graphics;
 using Engine.Input;
 
+using Game.Modding;
 using Game.Network;
 
 using LiteNetLib;
@@ -22,6 +23,8 @@ public static class GameEntry
     private static TimeSpan _processCpuTimeEnd;
 
     private static readonly List<HandleUriItem> _urisToHandle = [];
+
+    public static GameModRuntime? ModRuntime => CurrentModRuntime.Value;
 
     public static Action<string, string> RamDataChangeException = delegate { }; //内存数值被修改事件
 
@@ -64,7 +67,7 @@ public static class GameEntry
         Window.Closed += Closed;
         RamDataChangeException += (_, _) =>
         {
-            var modPath = Storage.GetSystemPath(ModsManager.ModsPath);
+            var modPath = Storage.GetSystemPath(GamePaths.Mods);
             if (Directory.Exists(modPath) && Directory.GetFiles(modPath).Length > 0)
             {
                 return;
@@ -127,7 +130,15 @@ public static class GameEntry
 
     public static void Closed()
     {
+        ModRuntime?.Dispose();
+        CurrentModRuntime.Set(null);
         SettingsManager.SaveSettings();
+    }
+
+    public static void SetModRuntime(GameModRuntime? runtime)
+    {
+        ModRuntime?.Dispose();
+        CurrentModRuntime.Set(runtime);
     }
 
     public static void Initialize()

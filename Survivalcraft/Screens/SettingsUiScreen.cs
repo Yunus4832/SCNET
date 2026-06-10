@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Modding;
+
 namespace Game.Screens;
 
 public class SettingsUiScreen : Screen
@@ -120,18 +122,18 @@ public class SettingsUiScreen : Screen
         }
 
         // 更新按钮文本
-        _windowModeButton.Text = LanguageControl.Get("WindowMode", SettingsManager.WindowMode.ToString());
-        _languageButton.Text = LanguageControl.Get("Language", "Name");
-        _displayLogButton.Text = SettingsManager.DisplayLog ? LanguageControl.Yes : LanguageControl.No;
-        _upsideDownButton.Text = SettingsManager.UpsideDownLayout ? LanguageControl.Yes : LanguageControl.No;
-        _hideMoveLookPadsButton.Text = SettingsManager.HideMoveLookPads ? LanguageControl.Yes : LanguageControl.No;
+        _windowModeButton.Text = LanguageManager.Get("WindowMode", SettingsManager.WindowMode.ToString());
+        _languageButton.Text = LanguageManager.Get("Language", "Name");
+        _displayLogButton.Text = SettingsManager.DisplayLog ? LanguageManager.Yes : LanguageManager.No;
+        _upsideDownButton.Text = SettingsManager.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
+        _hideMoveLookPadsButton.Text = SettingsManager.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;
         _showGuiInScreenshotsButton.Text =
-            SettingsManager.ShowGuiInScreenshots ? LanguageControl.Yes : LanguageControl.No;
+            SettingsManager.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
         _showLogoInScreenshotsButton.Text =
-            SettingsManager.ShowLogoInScreenshots ? LanguageControl.Yes : LanguageControl.No;
-        _screenshotSizeButton.Text = LanguageControl.Get("ScreenshotSize", SettingsManager.ScreenshotSize.ToString());
+            SettingsManager.ShowLogoInScreenshots ? LanguageManager.Yes : LanguageManager.No;
+        _screenshotSizeButton.Text = LanguageManager.Get("ScreenshotSize", SettingsManager.ScreenshotSize.ToString());
         _communityContentModeButton.Text =
-            LanguageControl.Get("CommunityContentMode", SettingsManager.CommunityContentMode.ToString());
+            LanguageManager.Get("CommunityContentMode", SettingsManager.CommunityContentMode.ToString());
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
@@ -146,7 +148,7 @@ public class SettingsUiScreen : Screen
             null,
             new ListSelectionDialog(
                 string.Empty,
-                LanguageControl.LanguageTypes,
+                LanguageManager.LanguageTypes,
                 70f,
                 item => (string)item,
                 delegate(object item) { ChangeLanguage((string)item); }
@@ -163,16 +165,10 @@ public class SettingsUiScreen : Screen
             return;
         }
 
-        // 初始化语言
-        LanguageControl.Initialize(languageType);
-
-        // 加载所有插件的语言
-        foreach (var mod in ModsManager.ModList)
+        if (CurrentModRuntime.Value is { } runtime)
         {
-            mod.LoadLanguage();
+            runtime.InitializeLanguage(languageType);
         }
-
-        LanguageControl.RefreshCommonWords();
 
         // 重新实例化屏幕对象
         var objs = new Dictionary<string, object>();
@@ -205,7 +201,14 @@ public class SettingsUiScreen : Screen
         }
 
         // 初始化配方管理器
-        CraftingRecipesManager.Initialize();
+        if (CurrentModRuntime.Value is { } currentRuntime)
+        {
+            currentRuntime.InitializeCraftingRecipes();
+        }
+        else
+        {
+            CraftingRecipesManager.Initialize();
+        }
 
         // 切换到主菜单
         ScreensManager.SwitchScreen("MainMenu");

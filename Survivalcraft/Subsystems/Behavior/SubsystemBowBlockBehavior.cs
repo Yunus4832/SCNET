@@ -172,7 +172,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                 else
                 {
                     componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                        LanguageControl.Get(_typeName, 0), Color.White, true, false);
+                        LanguageManager.Get(_typeName, 0), Color.White, true, false);
                 }
 
                 if (CommonLib.WorkType != WorkType.Client)

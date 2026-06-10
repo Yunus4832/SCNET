@@ -28,6 +28,14 @@
     <PropertyGroup>
         <Platforms>AnyCPU</Platforms>
         <Configurations>Debug;Release</Configurations>
+        <IsPackable>false</IsPackable>
+        <PackageVersion>$(ScNetworkVersion)</PackageVersion>
+        <Authors>SCNET</Authors>
+        <Company>SCNET</Company>
+        <RepositoryType>git</RepositoryType>
+        <RepositoryUrl>https://gitee.com/Yunus0712/scnet</RepositoryUrl>
+        <PackageOutputPath>$(MSBuildThisFileDirectory)Publish/NuGet</PackageOutputPath>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">

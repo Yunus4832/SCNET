@@ -397,7 +397,7 @@ public static class GameManager
             using var s = Storage.OpenFile(
                 BlocksTexturesManager.GetFileName(subsystemGameInfo.WorldSettings.BlocksTextureName),
                 OpenFileMode.Read);
-            textureData = ModsManager.StreamToBytes(s);
+            textureData = StreamUtils.ReadBytes(s);
         }
 
         var data = CommonLib.GetNowProject(project);

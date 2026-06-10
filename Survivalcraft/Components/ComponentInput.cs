@@ -260,11 +260,6 @@ public class ComponentInput : Component, IUpdateable
             }
         }
 
-        ModsManager.HookAction("UpdateInput", loader =>
-        {
-            loader.UpdateInput(this, input);
-            return false;
-        });
     }
 
     public void UpdateInputFromGamepad(WidgetInput input)

@@ -50,7 +50,7 @@ public class BestiaryScreen : Screen
             {
                 var lp = value.Substring(1, value.Length - 2)
                     .Split([":"], StringSplitOptions.RemoveEmptyEntries);
-                value = LanguageControl.GetDatabase("DisplayName", lp[1]);
+                value = LanguageManager.GetDatabase("DisplayName", lp[1]);
             }
 
             if (string.IsNullOrEmpty(value))
@@ -106,7 +106,7 @@ public class BestiaryScreen : Screen
             {
                 var lp = dy.Substring(1, dy.Length - 2)
                     .Split([":"], StringSplitOptions.RemoveEmptyEntries);
-                dy = LanguageControl.GetDatabase("Description", lp[1]);
+                dy = LanguageManager.GetDatabase("Description", lp[1]);
             }
 
             var bestiaryCreatureInfo = new BestiaryCreatureInfo

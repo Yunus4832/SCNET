@@ -44,7 +44,7 @@ public class GameLogSink : ILogSink
                 throw new InvalidOperationException("GameLogSink already created.");
             }
 
-            Storage.CreateDirectory(ModsManager.LogPath);
+            Storage.CreateDirectory(GamePaths.Logs);
             CleanupOldLogFiles();
             var path = GetLogFilePath(out var shouldTruncate);
             _stream = Storage.OpenFile(path, shouldTruncate ? OpenFileMode.Create : OpenFileMode.CreateOrOpen);
@@ -69,7 +69,7 @@ public class GameLogSink : ILogSink
     private static string GetLogFilePath(out bool shouldTruncate)
     {
         var today = DateTime.Now.ToString("yyyy-MM-dd");
-        var path = Storage.CombinePaths(ModsManager.LogPath, $"Game{today}.log");
+        var path = Storage.CombinePaths(GamePaths.Logs, $"Game{today}.log");
 
         shouldTruncate = false;
         if (!Storage.FileExists(path))
@@ -94,7 +94,7 @@ public class GameLogSink : ILogSink
     {
         try
         {
-            var files = Storage.ListFileNames(ModsManager.LogPath);
+            var files = Storage.ListFileNames(GamePaths.Logs);
             var logFiles = new List<(string Path, DateTime Date)>();
             foreach (var file in files)
             {
@@ -123,7 +123,7 @@ public class GameLogSink : ILogSink
             {
                 try
                 {
-                    Storage.DeleteFile(Storage.CombinePaths(ModsManager.LogPath, logFiles[i].Path));
+                    Storage.DeleteFile(Storage.CombinePaths(GamePaths.Logs, logFiles[i].Path));
                 }
                 catch
                 {

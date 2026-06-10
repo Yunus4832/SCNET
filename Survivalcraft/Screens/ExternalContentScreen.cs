@@ -51,7 +51,7 @@ public class ExternalContentScreen : Screen
             var containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
             var fileName = Storage.GetFileName(externalContentEntry2.Path);
             var text = _downloadedFiles.ContainsKey(externalContentEntry2.Path)
-                ? LanguageControl.Get(_typeName, 11)
+                ? LanguageManager.Get(_typeName, 11)
                 : string.Empty;
             var text2 = externalContentEntry2.Type != ExternalContentType.Directory
                 ? $"{ExternalContentManager.GetEntryTypeDescription(externalContentEntry2.Type)} | {DataSizeFormatter.Format(externalContentEntry2.Size)} | {externalContentEntry2.Time:dd-MMM-yyyy HH:mm}{text}"
@@ -104,13 +104,13 @@ public class ExternalContentScreen : Screen
             _actionButton.IsVisible = true;
             if (externalContentEntry.Type == ExternalContentType.Directory)
             {
-                _actionButton.Text = LanguageControl.Get(_typeName, 1);
+                _actionButton.Text = LanguageManager.Get(_typeName, 1);
                 _actionButton.IsEnabled = true;
                 _copyLinkButton.IsEnabled = false;
             }
             else
             {
-                _actionButton.Text = LanguageControl.Get(_typeName, 2);
+                _actionButton.Text = LanguageManager.Get(_typeName, 2);
                 if (ExternalContentManager.IsEntryTypeDownloadSupported(
                         ExternalContentManager.ExtensionToType(
                             Storage.GetExtension(externalContentEntry.Path).ToLower())))
@@ -132,13 +132,13 @@ public class ExternalContentScreen : Screen
         }
 
         _directoryLabel.Text = _externalContentProvider.IsLoggedIn
-            ? string.Format(LanguageControl.Get(_typeName, 3), _path)
-            : LanguageControl.Get(_typeName, 4);
+            ? string.Format(LanguageManager.Get(_typeName, 3), _path)
+            : LanguageManager.Get(_typeName, 4);
         _providerNameLabel.Text = _externalContentProvider.DisplayName;
         _upDirectoryButton.IsEnabled = _externalContentProvider.IsLoggedIn && _path != "/";
         _loginLogoutButton.Text = _externalContentProvider.IsLoggedIn
-            ? LanguageControl.Get(_typeName, 5)
-            : LanguageControl.Get(_typeName, 6);
+            ? LanguageManager.Get(_typeName, 5)
+            : LanguageManager.Get(_typeName, 6);
         _loginLogoutButton.IsVisible = _externalContentProvider.RequiresLogin;
         _copyLinkButton.IsVisible = _externalContentProvider.SupportsLinks;
         _copyLinkButton.IsEnabled = externalContentEntry != null &&
@@ -148,7 +148,7 @@ public class ExternalContentScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new SelectExternalContentProviderDialog(
-                    LanguageControl.Get(_typeName, 7),
+                    LanguageManager.Get(_typeName, 7),
                     true,
                     delegate(IExternalContentProvider provider)
                     {
@@ -181,7 +181,7 @@ public class ExternalContentScreen : Screen
         if (_copyLinkButton.IsClicked && externalContentEntry != null &&
             ExternalContentManager.IsEntryTypeDownloadSupported(externalContentEntry.Type))
         {
-            var busyDialog = new CancellableBusyDialog(LanguageControl.Get(_typeName, 8), false);
+            var busyDialog = new CancellableBusyDialog(LanguageManager.Get(_typeName, 8), false);
             DialogsManager.ShowDialog(null, busyDialog);
             _externalContentProvider.Link(externalContentEntry.Path, busyDialog.Progress, delegate(string link)
             {
@@ -193,9 +193,9 @@ public class ExternalContentScreen : Screen
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Get("Usual", "error"),
+                        LanguageManager.Get("Usual", "error"),
                         error.Message,
-                        LanguageControl.Get("Usual", "ok")
+                        LanguageManager.Get("Usual", "ok")
                     )
                 );
             });
@@ -255,7 +255,7 @@ public class ExternalContentScreen : Screen
             return;
         }
 
-        var busyDialog = new CancellableBusyDialog(LanguageControl.Get(_typeName, 9), false);
+        var busyDialog = new CancellableBusyDialog(LanguageManager.Get(_typeName, 9), false);
         DialogsManager.ShowDialog(null, busyDialog);
         _externalContentProvider.List(_path, busyDialog.Progress, delegate(ExternalContentEntry entry)
         {
@@ -282,9 +282,9 @@ public class ExternalContentScreen : Screen
             DialogsManager.HideDialog(busyDialog);
             DialogsManager.ShowDialog(null,
                 new MessageDialog(
-                    LanguageControl.Get("Usual", "error"),
+                    LanguageManager.Get("Usual", "error"),
                     error.Message,
-                    LanguageControl.Get("Usual", "ok")
+                    LanguageManager.Get("Usual", "ok")
                 )
             );
         });
@@ -292,11 +292,11 @@ public class ExternalContentScreen : Screen
 
     private void DownloadEntry(ExternalContentEntry entry)
     {
-        var busyDialog = new CancellableBusyDialog(LanguageControl.Get(_typeName, 10), false);
+        var busyDialog = new CancellableBusyDialog(LanguageManager.Get(_typeName, 10), false);
         DialogsManager.ShowDialog(null, busyDialog);
         _externalContentProvider.Download(entry.Path, busyDialog.Progress, delegate(Stream stream)
             {
-                busyDialog.LargeMessage = LanguageControl.Get(_typeName, 12);
+                busyDialog.LargeMessage = LanguageManager.Get(_typeName, 12);
                 ExternalContentManager.ImportExternalContent(
                     stream,
                     entry.Type,
@@ -311,8 +311,8 @@ public class ExternalContentScreen : Screen
                         stream.Dispose();
                         DialogsManager.HideDialog(busyDialog);
                         DialogsManager.ShowDialog(null,
-                            new MessageDialog(LanguageControl.Get("Usual", "error"), error.Message,
-                                LanguageControl.Get("Usual", "ok")
+                            new MessageDialog(LanguageManager.Get("Usual", "error"), error.Message,
+                                LanguageManager.Get("Usual", "ok")
                             )
                         );
                     }
@@ -324,9 +324,9 @@ public class ExternalContentScreen : Screen
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Get("Usual", "error"),
+                        LanguageManager.Get("Usual", "error"),
                         error.Message,
-                        LanguageControl.Get("Usual", "ok")
+                        LanguageManager.Get("Usual", "ok")
                     )
                 );
             });

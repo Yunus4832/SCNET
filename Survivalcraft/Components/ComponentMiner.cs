@@ -6,6 +6,7 @@ using EntitySystem.TemplatesDatabase;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Modding;
 
 namespace Game.Components;
 
@@ -192,7 +193,14 @@ public class ComponentMiner : Component, IUpdateable
             DigFaceChange = true;
         }
 
-        var num3 = CalculateDigTime(cellValue, num2);
+        var diggingContext = new MinerDiggingContext(this, raycastResult, cellValue, activeBlockValue);
+        CurrentModRuntime.Value?.Gameplay.Invoke(diggingContext);
+        if (diggingContext.Cancel)
+        {
+            return false;
+        }
+
+        var num3 = CalculateDigTime(cellValue, num2) * MathUtils.Max(diggingContext.DigTimeMultiplier, 0f);
         _digProgress = num3 > 0f ? MathUtils.Saturate((float)(_subsystemTime.GameTime - _digStartTime) / num3) : 1f;
         if (!CanUseTool(activeBlockValue))
         {
@@ -200,7 +208,7 @@ public class ComponentMiner : Component, IUpdateable
             if (_subsystemTime.PeriodicGameTimeEvent(5.0, _digStartTime + 1.0))
             {
                 ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                    string.Format(LanguageControl.Get(Name, 1), block2.PlayerLevelRequired,
+                    string.Format(LanguageManager.Get(Name, 1), block2.PlayerLevelRequired,
                         block2.GetDisplayName(_subsystemTerrain, activeBlockValue)), Color.White, true, true);
             }
         }
@@ -208,12 +216,6 @@ public class ComponentMiner : Component, IUpdateable
         var flag = ComponentPlayer is { ComponentInput.IsControlledByTouch: false } &&
                    _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative;
         var flag2 = flag || (_lastPokingPhase <= 0.5f && PokingPhase > 0.5f);
-        ModsManager.HookAction("OnMinerDig", modLoader =>
-        {
-            modLoader.OnMinerDig(this, raycastResult, ref _digProgress, out var flag3);
-            flag2 |= flag3;
-            return false;
-        });
         if (ComponentPlayer is { PlayerData.IsMainPlayer: false })
         {
             flag2 = isEnd;
@@ -230,7 +232,7 @@ public class ComponentMiner : Component, IUpdateable
             {
                 if (num2 != 23 && flag3)
                 {
-                    ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageControl.Get(Name, "11"), Color.White,
+                    ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(Name, "11"), Color.White,
                         true, true);
                     _lastToolHintTime = Time.FrameStartTime;
                 }
@@ -331,6 +333,14 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Place(TerrainRaycastResult raycastResult, int value)
     {
+        var placingContext = new BlockPlacingContext(this, raycastResult, value);
+        CurrentModRuntime.Value?.Gameplay.Invoke(placingContext);
+        if (placingContext.Cancel)
+        {
+            return false;
+        }
+
+        value = placingContext.Value;
         var num = Terrain.ExtractContents(value);
         if (_subsystemGameInfo.WorldSettings.IsBlockDiable(value))
         {
@@ -354,18 +364,6 @@ public class ComponentMiner : Component, IUpdateable
         var num2 = placementData.CellFace.X + point.X;
         var num3 = placementData.CellFace.Y + point.Y;
         var num4 = placementData.CellFace.Z + point.Z;
-        var place = false;
-        ModsManager.HookAction("OnMinerPlace", modLoader =>
-        {
-            modLoader.OnMinerPlace(this, raycastResult, num2, num3, num4, value, out var newPlace);
-            place |= newPlace;
-            return false;
-        });
-        if (place)
-        {
-            return true;
-        }
-
         var oldBlockId = _subsystemTerrain.Terrain.GetCellContents(num2, num3, num4);
         if (oldBlockId == 1)
         {
@@ -454,7 +452,7 @@ public class ComponentMiner : Component, IUpdateable
         if (!CanUseTool(ActiveBlockValue))
         {
             ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                string.Format(LanguageControl.Get(Name, 1), block.PlayerLevelRequired,
+                string.Format(LanguageManager.Get(Name, 1), block.PlayerLevelRequired,
                     block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)), Color.White, true, true);
             Poke(false);
             return false;
@@ -514,7 +512,7 @@ public class ComponentMiner : Component, IUpdateable
         if (!CanUseTool(ActiveBlockValue))
         {
             ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                string.Format(LanguageControl.Get(Name, 1), block.PlayerLevelRequired,
+                string.Format(LanguageManager.Get(Name, 1), block.PlayerLevelRequired,
                     block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)), Color.White, true, true);
             Poke(false);
             return;
@@ -533,14 +531,6 @@ public class ComponentMiner : Component, IUpdateable
             damage = AttackPower * _random.Float(0.8f, 1.2f);
             playerHitRate = 0.66f;
         }
-
-        ModsManager.HookAction("OnMinerHit", modLoader =>
-        {
-            modLoader.OnMinerHit(this, componentBody, hitPoint, hitDirection, ref damage, ref playerHitRate,
-                ref creatureHitRate,
-                out var hit);
-            return hit;
-        });
         _subsystemAudio.PlaySound("Audio/Swoosh", 1f, _random.Float(-0.2f, 0.2f), componentBody.Position, 3f,
             false);
         var flag = _random.Bool(ComponentPlayer != null ? playerHitRate : creatureHitRate);
@@ -558,16 +548,11 @@ public class ComponentMiner : Component, IUpdateable
         {
             var position = hitPoint + 0.75f * hitDirection;
             var velocity = 1f * hitDirection + ComponentCreature.ComponentBody.Velocity;
-            var text = LanguageControl.Get(Name, 2);
+            var text = LanguageManager.Get(Name, 2);
             if (CommonLib.WorkType != WorkType.Client)
             {
                 CommonLib.Net.QueuePackage(new ComponentHealthPackage(position, velocity, Color.White, text));
                 var particleSystem = new HitValueParticleSystem(position, velocity, Color.White, text);
-                ModsManager.HookAction("SetHitValueParticleSystem", modLoader =>
-                {
-                    modLoader.SetHitValueParticleSystem(particleSystem, false);
-                    return false;
-                });
                 Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
             }
         }
@@ -596,7 +581,7 @@ public class ComponentMiner : Component, IUpdateable
         if (!CanUseTool(ActiveBlockValue))
         {
             ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                string.Format(LanguageControl.Get(Name, 1), block.PlayerLevelRequired,
+                string.Format(LanguageManager.Get(Name, 1), block.PlayerLevelRequired,
                     block.GetDisplayName(_subsystemTerrain, ActiveBlockValue)), Color.White, true, true);
             Poke(false);
             return true;
@@ -744,15 +729,10 @@ public class ComponentMiner : Component, IUpdateable
             if (!target.Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.IsFriendlyFireEnabled)
             {
                 attacker.Entity.FindComponent<ComponentGui>(true)!
-                    .DisplaySmallMessage(LanguageControl.Get(Name, 3), Color.White, true, true);
+                    .DisplaySmallMessage(LanguageManager.Get(Name, 3), Color.White, true, true);
                 return;
             }
         }
-
-        ModsManager.HookAction(
-            "AttackBody",
-            modLoader => modLoader.AttackBody(target, attacker, hitPoint, hitDirection, ref attackPower, isMeleeAttack)
-        );
 
         if (attackPower > 0f)
         {
@@ -777,18 +757,18 @@ public class ComponentMiner : Component, IUpdateable
                 {
                     var str = attacker.KillVerbs[_random2.Int(0, attacker.KillVerbs.Count - 1)];
                     var attackerName = attacker.DisplayName;
-                    cause = string.Format(LanguageControl.Get(Name, 4), attackerName, LanguageControl.Get(Name, str));
+                    cause = string.Format(LanguageManager.Get(Name, 4), attackerName, LanguageManager.Get(Name, str));
                 }
                 else
                 {
                     cause = _random2.Int(0, 5) switch
                     {
-                        0 => LanguageControl.Get(Name, 5),
-                        1 => LanguageControl.Get(Name, 6),
-                        2 => LanguageControl.Get(Name, 7),
-                        3 => LanguageControl.Get(Name, 8),
-                        4 => LanguageControl.Get(Name, 9),
-                        _ => LanguageControl.Get(Name, 10)
+                        0 => LanguageManager.Get(Name, 5),
+                        1 => LanguageManager.Get(Name, 6),
+                        2 => LanguageManager.Get(Name, 7),
+                        3 => LanguageManager.Get(Name, 8),
+                        4 => LanguageManager.Get(Name, 9),
+                        _ => LanguageManager.Get(Name, 10)
                     };
                 }
 
@@ -815,11 +795,6 @@ public class ComponentMiner : Component, IUpdateable
                             CommonLib.Net.QueuePackage(new ComponentHealthPackage(position, velocity, Color.White,
                                 text2));
                             var particleSystem = new HitValueParticleSystem(position, velocity, Color.White, text2);
-                            ModsManager.HookAction("SetHitValueParticleSystem", modLoader =>
-                            {
-                                modLoader.SetHitValueParticleSystem(particleSystem, true);
-                                return false;
-                            });
                             target.Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
                         }
                     }
@@ -856,15 +831,6 @@ public class ComponentMiner : Component, IUpdateable
             x = 0.2f;
         }
 
-        ModsManager.HookAction(
-            "AttackPowerParameter",
-            modLoader =>
-            {
-                modLoader.AttackPowerParameter(target, attacker, hitPoint, hitDirection, ref num4, ref x,
-                    ref recalculate);
-                return false;
-            }
-        );
         if (!(num4 > 0f))
         {
             return;

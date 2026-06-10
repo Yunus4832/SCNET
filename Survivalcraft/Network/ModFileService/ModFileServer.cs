@@ -9,12 +9,14 @@ public static class ModFileServer
 {
     public static HttpListener Listener = new();
 
-    public static List<ModInfoData> ServerModInfoList = Utils.GetModInfoData();
+    public static List<ModInfoData> ServerModInfoList = [];
 
-    public static string ServerModInfoData = JsonConvert.SerializeObject(ServerModInfoList);
+    public static string ServerModInfoData = "[]";
 
     public static void StartServer(string address)
     {
+        ServerModInfoList = Utils.GetModInfoData();
+        ServerModInfoData = JsonConvert.SerializeObject(ServerModInfoList);
         Listener.Start();
         Listener.Prefixes.Add(address);
         foreach (var modInfo in ServerModInfoList)

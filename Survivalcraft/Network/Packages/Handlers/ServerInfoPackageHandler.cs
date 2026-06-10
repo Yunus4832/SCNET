@@ -70,10 +70,10 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
                 {
                     if (p.CheckSaveConnectExists(c, out var f))
                     {
-                        ModsManager.SaveConnects.Remove(f!);
+                        ConnectionDirectory.Saved.Remove(f!);
                     }
 
-                    ModsManager.SaveConnects.Add(c);
+                    ConnectionDirectory.Saved.Add(c);
                 }
             }
 

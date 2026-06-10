@@ -98,7 +98,7 @@ public static class SerializationManager
 
     public static void PutStreamWithLength(this NetDataWriter w, Stream s)
     {
-        w.PutBytesWithLength(ModsManager.StreamToBytes(s));
+        w.PutBytesWithLength(StreamUtils.ReadBytes(s));
     }
 
     public static void PutValuesDictionary(this NetDataWriter w, ValuesDictionary values)

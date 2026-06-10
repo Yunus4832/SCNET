@@ -37,7 +37,7 @@ public class HelpScreen : Screen
                 ShowTopic(helpTopic2);
             }
         };
-        if (LanguageControl.KeyWords["Help"] is not JsonObject kvs)
+        if (LanguageManager.KeyWords["Help"] is not JsonObject kvs)
         {
             return;
         }

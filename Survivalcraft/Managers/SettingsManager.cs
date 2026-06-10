@@ -6,6 +6,8 @@ using Engine.Serialization;
 using EntitySystem.XmlUtilities;
 
 using Game.ContentProviders;
+using Game.Modding;
+using Game.Network;
 
 namespace Game.Managers;
 
@@ -279,13 +281,13 @@ public static class SettingsManager
 
 #if ANDROID
         OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetAndroidID())
-            ? ModsManager.GetMd5(GetMachineID.GetAndroidID())
+            ? HashUtils.ComputeMd5(GetMachineID.GetAndroidID())
             : Guid.NewGuid().ToString();
         UIScale = 0.8f;
 #endif
 #if DESKTOP
         OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetMachineGuid())
-            ? ModsManager.GetMd5(GetMachineID.GetMachineGuid())
+            ? HashUtils.ComputeMd5(GetMachineID.GetMachineGuid())
             : Guid.NewGuid().ToString();
 #endif
         var screenWidth = RunMode.Value is RunModeType.HeadlessServer ? 1280 : Window.ScreenSize.X;
@@ -294,14 +296,13 @@ public static class SettingsManager
         ScreenLayout2 = isWideScreen ? ScreenLayout.DoubleVertical : ScreenLayout.DoubleHorizontal;
         ScreenLayout3 = isWideScreen ? ScreenLayout.TripleVertical : ScreenLayout.TripleHorizontal;
 
-        if (!Storage.DirectoryExists(ModsManager.ConfigPath))
+        if (!Storage.DirectoryExists(GamePaths.Config))
         {
-            Storage.CreateDirectory(ModsManager.ConfigPath);
+            Storage.CreateDirectory(GamePaths.Config);
         }
 
         LoadSettings();
         VersionsManager.CompareVersions(LastLaunchedVersion, "1.29");
-        _ = 0;
         if (VersionsManager.CompareVersions(LastLaunchedVersion, "2.1") < 0)
         {
             MinimumDragDistance = 10f;
@@ -331,12 +332,15 @@ public static class SettingsManager
     {
         try
         {
-            if (Storage.FileExists(ModsManager.SettingPath))
+            ModSelectionSettings.ReplaceDisabledPackages([]);
+            if (Storage.FileExists(GamePaths.SettingsFile))
             {
-                using (var stream = Storage.OpenFile(ModsManager.SettingPath, OpenFileMode.Read))
+                using (var stream = Storage.OpenFile(GamePaths.SettingsFile, OpenFileMode.Read))
                 {
                     var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
-                    ModsManager.LoadSettings(xElement);
+                    var disabledPackageIds = new List<string>();
+                    AppConfigStore.ReadFromXml(xElement);
+                    ConnectionDirectory.ReadFromXml(xElement);
 
                     // 加载 LastAccessTokenChangeTime
                     var lastChangeTimeElement = xElement.Element(_lastAccessTokenChangeTimeKey);
@@ -375,12 +379,11 @@ public static class SettingsManager
                             {
                                 foreach (var xElement1 in item.Elements())
                                 {
-                                    var modInfo = new ModInfo
+                                    var packageId = xElement1.Attribute("PackageName")?.Value;
+                                    if (!string.IsNullOrWhiteSpace(packageId))
                                     {
-                                        PackageName = xElement1.Attribute("PackageName")?.Value ?? string.Empty,
-                                        Version = xElement1.Attribute("Version")?.Value ?? string.Empty,
-                                    };
-                                    ModsManager.DisabledMods.Add(modInfo);
+                                        disabledPackageIds.Add(packageId);
+                                    }
                                 }
                             }
                         }
@@ -393,6 +396,8 @@ public static class SettingsManager
                             }));
                         }
                     }
+
+                    ModSelectionSettings.ReplaceDisabledPackages(disabledPackageIds);
                 }
 
                 Log.Information("Loaded settings.");
@@ -449,30 +454,21 @@ public static class SettingsManager
             }
 
             var xElement1 = new XElement("DisableMods");
-            var xElement2 = new XElement("ModSettings");
-            foreach (var modEntity in ModsManager.ModListAll)
+            foreach (var packageName in ModSelectionSettings.DisabledPackages.OrderBy(name => name,
+                         StringComparer.OrdinalIgnoreCase))
             {
-                if (ModsManager.DisabledMods.Contains(modEntity.ModInfo))
-                {
-                    var element = new XElement("Mod");
-                    element.SetAttributeValue("PackageName", modEntity.ModInfo.PackageName);
-                    element.SetAttributeValue("Version", modEntity.ModInfo.Version);
-                    xElement1.Add(element);
-                }
+                var element = new XElement("Mod");
+                element.SetAttributeValue("PackageName", packageName);
+                xElement1.Add(element);
             }
 
             xElement.Add(xElement1);
-            ModsManager.SaveSettings(xElement);
-            ModsManager.SaveModSettings(xElement2);
+            AppConfigStore.WriteToXml(xElement);
+            ConnectionDirectory.WriteToXml(xElement);
 
-            using (var stream = Storage.OpenFile(ModsManager.SettingPath, OpenFileMode.Create))
+            using (var stream = Storage.OpenFile(GamePaths.SettingsFile, OpenFileMode.Create))
             {
                 XmlUtils.SaveXmlToStream(xElement, stream, null, true);
-            }
-
-            using (var stream = Storage.OpenFile(ModsManager.ModsSettingPath, OpenFileMode.Create))
-            {
-                XmlUtils.SaveXmlToStream(xElement2, stream, null, true);
             }
 
             Log.Information("Saved settings");
@@ -482,4 +478,5 @@ public static class SettingsManager
             ExceptionManager.ReportExceptionToUser("Saving settings failed.", e);
         }
     }
+
 }

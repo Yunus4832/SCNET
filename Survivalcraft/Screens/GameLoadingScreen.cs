@@ -275,9 +275,9 @@ public class GameLoadingScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageControl.Get(_typeName, 1),
+                    LanguageManager.Get(_typeName, 1),
                     ExceptionManager.MakeFullErrorMessage(e),
-                    LanguageControl.Get("Usual", "ok")
+                    LanguageManager.Get("Usual", "ok")
                 )
             );
         }

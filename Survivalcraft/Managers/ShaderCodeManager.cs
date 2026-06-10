@@ -10,7 +10,7 @@ public class ShaderCodeManager
         var parameters = fileName.Split('.');
         if (parameters.Length > 1)
         {
-            shaderText = ModsManager.GetInPakOrStorageFile<string>(parameters[0], "." + parameters[1]);
+            shaderText = ContentManager.Get<string>(parameters[0], "." + parameters[1]);
         }
 
         return shaderText;

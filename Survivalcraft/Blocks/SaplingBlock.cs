@@ -8,12 +8,12 @@ public class SaplingBlock : CrossBlock
     {
         return Terrain.ExtractData(value) switch
         {
-            0 => LanguageControl.Get(LanguageControl.Get("BaseSaplingBlock", 1)),
-            1 => LanguageControl.Get(LanguageControl.Get("BaseSaplingBlock", 2)),
-            2 => LanguageControl.Get(LanguageControl.Get("BaseSaplingBlock", 3)),
-            3 => LanguageControl.Get(LanguageControl.Get("BaseSaplingBlock", 4)),
-            4 => LanguageControl.Get(LanguageControl.Get("BaseSaplingBlock", 5)),
-            _ => LanguageControl.Get(LanguageControl.Get("BaseSaplingBlock", 6))
+            0 => LanguageManager.Get(LanguageManager.Get("BaseSaplingBlock", 1)),
+            1 => LanguageManager.Get(LanguageManager.Get("BaseSaplingBlock", 2)),
+            2 => LanguageManager.Get(LanguageManager.Get("BaseSaplingBlock", 3)),
+            3 => LanguageManager.Get(LanguageManager.Get("BaseSaplingBlock", 4)),
+            4 => LanguageManager.Get(LanguageManager.Get("BaseSaplingBlock", 5)),
+            _ => LanguageManager.Get(LanguageManager.Get("BaseSaplingBlock", 6))
         };
     }
 

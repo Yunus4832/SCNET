@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using EntitySystem.XmlUtilities;
 
 using Game.ContentProviders;
+using Game.Modding;
 
 namespace Game.Managers;
 
@@ -57,8 +58,8 @@ public static class MotdManager
             SettingsManager.MotdUpdateCheckUrl,
             VersionsManager.SerializationVersion,
             VersionsManager.Platform,
-            ModsManager.ApiVersion,
-            LanguageControl.LName()
+            ModPlatformInfo.ApiVersion,
+            LanguageManager.LName()
         );
         WebManager.Get(
             url,
@@ -257,7 +258,7 @@ public static class MotdManager
         }
 
         var xElement = XmlUtils.LoadXmlFromString(dataString.Substring(num, num2 - num), true);
-        var languageType = !ModsManager.Configs.TryGetValue("Language", out var config) ? "zh-CN" : config;
+        var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
         foreach (var item in xElement.Elements())
         {
             if (item.Name.LocalName == "Bulletin")
@@ -395,7 +396,7 @@ public static class MotdManager
                                             }
 
                                             var languageType =
-                                                !ModsManager.Configs.TryGetValue("Language", out var config)
+                                                !AppConfigStore.Values.TryGetValue("Language", out var config)
                                                     ? "zh-CN"
                                                     : config;
                                             BulletinDefault.Time = languageType + "$" + DateTime.Now;
@@ -417,7 +418,7 @@ public static class MotdManager
                     var xElement =
                         XmlUtils.LoadXmlFromString(SettingsManager.MotdLastDownloadedData.Substring(num, num2 - num),
                             true);
-                    _ = !ModsManager.Configs.TryGetValue("Language", out var config)
+                    _ = !AppConfigStore.Values.TryGetValue("Language", out var config)
                         ? "zh-CN"
                         : config;
                     foreach (var item in xElement.Elements())
@@ -468,7 +469,7 @@ public static class MotdManager
                                 new MessageDialog(
                                     "操作成功",
                                     msg,
-                                    LanguageControl.Ok
+                                    LanguageManager.Ok
                                 )
                             );
                         },
@@ -496,13 +497,13 @@ public static class MotdManager
 
     private static bool IsCnLanguageType()
     {
-        var languageType = !ModsManager.Configs.TryGetValue("Language", out var config) ? "zh-CN" : config;
+        var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
         return languageType == "zh-CN";
     }
 
     private static string GetMotdUrl()
     {
-        var languageType = !ModsManager.Configs.TryGetValue("Language", out var config) ? "zh-CN" : config;
+        var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
         return string.Format(SettingsManager.MotdUpdateUrl, VersionsManager.SerializationVersion, languageType);
     }
 

@@ -168,11 +168,6 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         }
 
         var block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
-        ModsManager.HookAction("ClothingProcessSlotItems",
-            modLoader =>
-            {
-                return modLoader.ClothingProcessSlotItems(_componentPlayer, block, slotIndex, value, count);
-            });
         if (block.GetNutritionalValue(value) > 0f)
         {
             if (block is BucketBlock)
@@ -286,7 +281,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     if (clothingData.PlayerLevelRequired > _componentPlayer.PlayerData.Level)
                     {
                         _componentGui.DisplaySmallMessage(
-                            string.Format(LanguageControl.Get(_typeName, 1), clothingData.PlayerLevelRequired,
+                            string.Format(LanguageManager.Get(_typeName, 1), clothingData.PlayerLevelRequired,
                                 clothingData.DisplayName), Color.White, true, true);
                         _subsystemPickables.AddPickable(value, 1, _componentBody.Position, null, null);
                         _clothesList.RemoveAt(num);
@@ -348,7 +343,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                             _clothesList.RemoveAt(num4);
                             _subsystemParticles.AddParticleSystem(new BlockDebrisParticleSystem(_subsystemTerrain,
                                 _componentBody.Position + _componentBody.StanceBoxSize / 2f, 1f, 1f, Color.White, 0));
-                            _componentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 2), Color.White, true,
+                            _componentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 2), Color.White, true,
                                 true);
                         }
                         else
@@ -512,18 +507,6 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
     public virtual float ApplyArmorProtection(float attackPower)
     {
-        var applied = false;
-        ModsManager.HookAction("ApplyArmorProtection", modLoader =>
-        {
-            attackPower = modLoader.ApplyArmorProtection(this, attackPower, out var flag2);
-            applied |= flag2;
-            return false;
-        });
-        if (applied)
-        {
-            return MathUtils.Max(attackPower, 0f);
-        }
-
         var num = _random.Float(0f, 1f);
         var slot = num < 0.1f ? ClothingSlot.Feet :
             num < 0.3f ? ClothingSlot.Legs :

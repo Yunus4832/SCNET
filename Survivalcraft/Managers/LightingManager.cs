@@ -85,11 +85,6 @@ public static class LightingManager
     private static void CalculateLightingTables()
     {
         var brightness = SettingsManager.Brightness;
-        ModsManager.HookAction("CalculateLighting", modLoader =>
-        {
-            modLoader.CalculateLighting(ref brightness);
-            return false;
-        });
         var x = MathUtils.Lerp(0f, 0.1f, brightness);
         for (var i = 0; i < 16; i++)
         {

@@ -68,7 +68,7 @@ public class SubsystemSeasons : Subsystem, IUpdateable
             >= 0.75f => 2,
             _ => 1
         };
-        return LanguageControl.Get(_typeName, (int)season * 3 + num);
+        return LanguageManager.Get(_typeName, (int)season * 3 + num);
     }
 
 

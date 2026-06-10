@@ -84,11 +84,6 @@ public class SkyPrimitiveRender
                     ShaderAlphaTest.SamplerState = baseTexturedBatch.SamplerState;
                     ShaderAlphaTest.Transforms.World[0] = matrix;
                     ShaderAlphaTest.AlphaThreshold = 0f;
-                    ModsManager.HookAction("SetShaderParameter", modLoader =>
-                    {
-                        modLoader.SetShaderParameter(ShaderAlphaTest, Camera);
-                        return true;
-                    });
                     baseTexturedBatch.FlushWithDeviceState(ShaderAlphaTest, clearAfterFlush); //new
                 }
                 else
@@ -96,11 +91,6 @@ public class SkyPrimitiveRender
                     Shader.Texture = baseTexturedBatch.Texture;
                     Shader.SamplerState = baseTexturedBatch.SamplerState;
                     Shader.Transforms.World[0] = matrix;
-                    ModsManager.HookAction("SetShaderParameter", modLoader =>
-                    {
-                        modLoader.SetShaderParameter(Shader, Camera);
-                        return true;
-                    });
                     baseTexturedBatch.FlushWithDeviceState(Shader, clearAfterFlush); //new
                 }
             }

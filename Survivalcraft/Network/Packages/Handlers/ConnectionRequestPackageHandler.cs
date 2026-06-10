@@ -42,9 +42,9 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
         if (project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.IsNeedCommunityLogin)
         {
             var token = string.Empty;
-            var key = ModsManager.GetMd5(package.User + "/" + package.Token);
+            var key = HashUtils.ComputeMd5(package.User + "/" + package.Token);
             var saveKey = "loginCache" + key;
-            if (ModsManager.Configs.TryGetValue(saveKey, out var v))
+            if (AppConfigStore.Values.TryGetValue(saveKey, out var v))
             {
                 const bool useExternalPassword = false;
                 var jsonObj = JsonSerializer.Deserialize<JsonObject>(v)!;
@@ -96,7 +96,7 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
                         else
                         {
                             //缓存信息
-                            ModsManager.Configs[saveKey] = ret;
+                            AppConfigStore.Values[saveKey] = ret;
                             var dataInfo = (jsonObj["data"] as JsonObject)!;
                             package.Nickname = dataInfo["nickname"]?.ToString() ?? string.Empty;
                             package.CommunityAccountId = dataInfo["id"]?.ToString() ?? string.Empty;

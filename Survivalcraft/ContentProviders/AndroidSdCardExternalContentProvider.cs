@@ -8,7 +8,7 @@ public class AndroidSdCardExternalContentProvider : IExternalContentProvider
 
     private string _rootDirectory = string.Empty;
 
-    public string DisplayName => LanguageControl.Get(_typeName, 1);
+    public string DisplayName => LanguageManager.Get(_typeName, 1);
 
     public string Description
     {

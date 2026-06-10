@@ -179,19 +179,6 @@ public class ComponentFourLeggedModel : ComponentCreatureModel
 
     public override void Animate()
     {
-        var flag = false;
-        ModsManager.HookAction("OnModelAnimate", loader =>
-        {
-            loader.OnModelAnimate(this, out var skip);
-            flag |= skip;
-            return false;
-        });
-        if (flag)
-        {
-            base.Animate();
-            return;
-        }
-
         var position = ComponentCreature.ComponentBody.Position;
         var vector = ComponentCreature.ComponentBody.Rotation.ToYawPitchRoll();
         if (ComponentCreature.ComponentHealth.Health > 0f)

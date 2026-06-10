@@ -15,18 +15,30 @@ public class ModInfoData
 
 public static class Utils
 {
-    public static string ModFileDirectory = Storage.GetSystemPath(ModsManager.ModsPath);
+    public static string ModFileDirectory = Storage.GetSystemPath(GamePaths.Mods);
 
-    public static string CacheModDirectory = Storage.GetSystemPath(ModsManager.ModCachePath);
+    public static string CacheModDirectory = Storage.GetSystemPath(GamePaths.ModCache);
 
     public static List<ModInfoData> GetModInfoData()
     {
-        var modList = ModsManager.ModList;
-        var fastDebugModEntity = (FastDebugModEntity)modList.Find(px => px.ModInfo.PackageName == "com.fastdebug")!;
-        return fastDebugModEntity.FModFiles.Select(modFileInfo => new ModInfoData
+        if (!Directory.Exists(ModFileDirectory))
         {
-            ModName = modFileInfo.Value.Name, ModMd5 = GetModMd5(modFileInfo.Value), ModSize = modFileInfo.Value.Length
-        }).ToList();
+            Directory.CreateDirectory(ModFileDirectory);
+        }
+
+        return Directory.EnumerateFiles(ModFileDirectory, ModPackage.SearchPattern, SearchOption.AllDirectories)
+            .OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
+            .Select(path =>
+            {
+                var fileInfo = new FileInfo(path);
+                return new ModInfoData
+                {
+                    ModName = fileInfo.Name,
+                    ModMd5 = GetModMd5(fileInfo),
+                    ModSize = fileInfo.Length
+                };
+            })
+            .ToList();
     }
 
     public static bool ModInfoListsHaveSameMd5(List<ModInfoData> list1, List<ModInfoData> list2)
@@ -46,7 +58,7 @@ public static class Utils
         using var fileStream = fileInfo.Open(FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         var data = new byte[fileStream.Length];
         fileStream.ReadExactly(data, 0, data.Length);
-        return ModsManager.GetMd5(data);
+        return HashUtils.ComputeMd5(data);
     }
 
     public static void RemoveAllModFile()
@@ -71,7 +83,7 @@ public static class Utils
             Directory.CreateDirectory(ModFileDirectory);
         }
 
-        var files = Directory.GetFiles(ModFileDirectory);
+        var files = Directory.GetFiles(ModFileDirectory, ModPackage.SearchPattern, SearchOption.TopDirectoryOnly);
         foreach (var file in files)
         {
             var fileName = Path.GetFileName(file);
@@ -84,7 +96,7 @@ public static class Utils
 
     public static bool CopyCachedMod(ModInfoData modInfoData)
     {
-        foreach (var file in Directory.GetFiles(CacheModDirectory, "*.*", SearchOption.AllDirectories))
+        foreach (var file in Directory.GetFiles(CacheModDirectory, ModPackage.SearchPattern, SearchOption.AllDirectories))
         {
             if (Path.GetFileName(file) != modInfoData.ModName)
             {

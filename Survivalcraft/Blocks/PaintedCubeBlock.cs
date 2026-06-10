@@ -116,7 +116,7 @@ public abstract class PaintedCubeBlock(int coloredTextureSlot) : CubeBlock, IPai
         var data = Terrain.ExtractData(value);
         return SubsystemPalette.GetName(
             GetColor(data),
-            LanguageControl.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName")
+            LanguageManager.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName")
         );
     }
 

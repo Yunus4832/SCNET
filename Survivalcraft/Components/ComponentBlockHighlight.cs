@@ -101,8 +101,8 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
         _shader = new Shader(
-            ModsManager.GetInPakOrStorageFile<string>("Shaders/Highlight", ".vsh"),
-            ModsManager.GetInPakOrStorageFile<string>("Shaders/Highlight", ".psh"),
+            ContentManager.Get<string>("Shaders/Highlight", ".vsh"),
+            ContentManager.Get<string>("Shaders/Highlight", ".psh"),
             new ShaderMacro("ShadowShader")
         );
     }

@@ -355,18 +355,6 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         ComponentMiner? miner = null
     )
     {
-        var pass = false;
-        ModsManager.HookAction("TerrainChangeCell", loader =>
-        {
-            loader.TerrainChangeCell(this, x, y, z, value, out var skip);
-            pass |= skip;
-            return false;
-        });
-        if (pass)
-        {
-            return;
-        }
-
         if (CommonLib.WorkType == WorkType.Client)
         {
             return;
@@ -402,6 +390,21 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             }
         }
 
+        var changingContext = new TerrainCellChangingContext(
+            this,
+            x,
+            y,
+            z,
+            Terrain.GetCellValue(x, y, z),
+            value,
+            miner);
+        CurrentModRuntime.Value?.Gameplay.Invoke(changingContext);
+        if (changingContext.Cancel)
+        {
+            return;
+        }
+
+        value = changingContext.NewValue;
         ChangeCellNet(x, y, z, value, updateModificationCounter, miner);
         CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(x, y, z, value));
     }

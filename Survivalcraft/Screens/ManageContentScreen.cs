@@ -46,7 +46,7 @@ public class ManageContentScreen : Screen
                 BlocksTexturesManager.GetCreationDate(listItem.Name);
                 rectangleWidget.Subtexture = new Subtexture(texture, Vector2.Zero, Vector2.One);
                 labelWidget.Text = listItem.DisplayName;
-                labelWidget2.Text = string.Format(LanguageControl.Get(_typeName, 1), texture.Width, texture.Height);
+                labelWidget2.Text = string.Format(LanguageManager.Get(_typeName, 1), texture.Width, texture.Height);
                 if (listItem.IsBuiltIn)
                 {
                     return containerWidget;
@@ -55,7 +55,7 @@ public class ManageContentScreen : Screen
                 labelWidget2.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
                 if (listItem.UseCount > 0)
                 {
-                    labelWidget2.Text += string.Format(LanguageControl.Get(_typeName, 2), listItem.UseCount);
+                    labelWidget2.Text += string.Format(LanguageManager.Get(_typeName, 2), listItem.UseCount);
                 }
             }
             else
@@ -64,7 +64,7 @@ public class ManageContentScreen : Screen
                 {
                     if (listItem.Type != ExternalContentType.FurniturePack)
                     {
-                        throw new InvalidOperationException(LanguageControl.Get(_typeName, 10));
+                        throw new InvalidOperationException(LanguageManager.Get(_typeName, 10));
                     }
 
                     var node3 = ContentManager.Get<XElement>("Widgets/FurniturePackItem");
@@ -75,7 +75,7 @@ public class ManageContentScreen : Screen
                     try
                     {
                         var designs = FurniturePacksManager.LoadFurniturePack(null, listItem.Name);
-                        labelWidget4.Text = string.Format(LanguageControl.Get(_typeName, 3),
+                        labelWidget4.Text = string.Format(LanguageManager.Get(_typeName, 3),
                             FurnitureDesign.ListChains(designs).Count);
                         if (string.IsNullOrEmpty(listItem.Name))
                         {
@@ -87,7 +87,7 @@ public class ManageContentScreen : Screen
                     }
                     catch (Exception ex)
                     {
-                        labelWidget4.Text = labelWidget4.Text + LanguageControl.Get("Usual", "error") + ex.Message;
+                        labelWidget4.Text = labelWidget4.Text + LanguageManager.Get("Usual", "error") + ex.Message;
                         return containerWidget;
                     }
                 }
@@ -101,7 +101,7 @@ public class ManageContentScreen : Screen
                 playerModelWidget.PlayerClass = PlayerClass.Male;
                 playerModelWidget.CharacterSkinTexture = texture2;
                 labelWidget5.Text = listItem.DisplayName;
-                labelWidget6.Text = string.Format(LanguageControl.Get(_typeName, 4), texture2.Width, texture2.Height);
+                labelWidget6.Text = string.Format(LanguageManager.Get(_typeName, 4), texture2.Width, texture2.Height);
                 if (listItem.IsBuiltIn)
                 {
                     return containerWidget;
@@ -110,7 +110,7 @@ public class ManageContentScreen : Screen
                 labelWidget6.Text += $" | {listItem.CreationTime.ToLocalTime():dd MMM yyyy HH:mm}";
                 if (listItem.UseCount > 0)
                 {
-                    labelWidget6.Text += string.Format(LanguageControl.Get(_typeName, 2), listItem.UseCount);
+                    labelWidget6.Text += string.Format(LanguageManager.Get(_typeName, 2), listItem.UseCount);
                 }
             }
 
@@ -143,14 +143,14 @@ public class ManageContentScreen : Screen
         if (_deleteButton.IsClicked)
         {
             var smallMessage = selectedItem.UseCount <= 0
-                ? string.Format(LanguageControl.Get(_typeName, 5), selectedItem.DisplayName)
-                : string.Format(LanguageControl.Get(_typeName, 6), selectedItem.DisplayName, selectedItem.UseCount);
+                ? string.Format(LanguageManager.Get(_typeName, 5), selectedItem.DisplayName)
+                : string.Format(LanguageManager.Get(_typeName, 6), selectedItem.DisplayName, selectedItem.UseCount);
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageControl.Get(_typeName, 9),
+                    LanguageManager.Get(_typeName, 9),
                     smallMessage,
-                    LanguageControl.Get("Usual", "yes"), LanguageControl.Get("Usual", "no"),
+                    LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
                     delegate(MessageDialogButton button)
                     {
                         if (button != MessageDialogButton.Button1)
@@ -182,7 +182,7 @@ public class ManageContentScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
-                    LanguageControl.Get(_typeName, 7),
+                    LanguageManager.Get(_typeName, 7),
                     list, 60f,
                     item => GetFilterDisplayName((ExternalContentType)item), delegate(object item)
                     {
@@ -280,7 +280,7 @@ public class ManageContentScreen : Screen
     private static string GetFilterDisplayName(ExternalContentType filter)
     {
         return filter == ExternalContentType.Unknown
-            ? LanguageControl.Get(_typeName, 8)
+            ? LanguageManager.Get(_typeName, 8)
             : ExternalContentManager.GetEntryTypeDescription(filter);
     }
 

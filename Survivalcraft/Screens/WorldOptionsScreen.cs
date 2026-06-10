@@ -161,7 +161,7 @@ public class WorldOptionsScreen : Screen
             return (value >= 0f ? "+" : "") + value;
         }
 
-        return LanguageControl.Get(_typeName, 6);
+        return LanguageManager.Get(_typeName, 6);
     }
 
     public override void Enter(object[] parameters)
@@ -183,7 +183,7 @@ public class WorldOptionsScreen : Screen
         if (_terrainGenerationButton.IsClicked && !_isExistingWorld)
         {
             var enumValues = EnumUtils.GetEnumValues(typeof(TerrainGenerationMode));
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get(_typeName, 1), enumValues, 56f,
+            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, 1), enumValues, 56f,
                 e => StringsManager.GetString("TerrainGenerationMode." + (TerrainGenerationMode)e + ".Name"),
                 delegate(object e)
                 {
@@ -194,9 +194,9 @@ public class WorldOptionsScreen : Screen
                         DialogsManager.ShowDialog(
                             null,
                             new MessageDialog(
-                                LanguageControl.Get(_typeName, 4),
-                                LanguageControl.Get(_typeName, 5),
-                                LanguageControl.Get("Usual", "ok")
+                                LanguageManager.Get(_typeName, 4),
+                                LanguageManager.Get(_typeName, 5),
+                                LanguageManager.Get("Usual", "ok")
                             )
                         );
                     }
@@ -249,7 +249,7 @@ public class WorldOptionsScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
-                    LanguageControl.Get(_typeName, 2),
+                    LanguageManager.Get(_typeName, 2),
                     items,
                     72f,
                     delegate(object index)
@@ -300,7 +300,7 @@ public class WorldOptionsScreen : Screen
         if (_blocksTextureButton.IsClicked)
         {
             BlocksTexturesManager.UpdateBlocksTexturesList();
-            var dialog = new ListSelectionDialog(LanguageControl.Get(_typeName, 3),
+            var dialog = new ListSelectionDialog(LanguageManager.Get(_typeName, 3),
                 BlocksTexturesManager.ReadOnlyBlockTexturesNames, 64f, delegate(object item)
                 {
                     var node = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
@@ -349,9 +349,9 @@ public class WorldOptionsScreen : Screen
 
         if (_timeOfDayButton.IsClicked)
         {
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get(_typeName, "7"),
+            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, "7"),
                 EnumUtils.GetEnumValues(typeof(TimeOfDayMode)), 56f,
-                e => LanguageControl.Get("TimeOfDayMode", ((TimeOfDayMode)e).ToString()), delegate(object e)
+                e => LanguageManager.Get("TimeOfDayMode", ((TimeOfDayMode)e).ToString()), delegate(object e)
                 {
                     _worldSettings.TimeOfDayMode = (TimeOfDayMode)e;
                     _descriptionLabel.Text =
@@ -439,9 +439,9 @@ public class WorldOptionsScreen : Screen
         _humidityOffsetSlider.Text = FormatOffset(_worldSettings.HumidityOffset);
         _biomeSizeSlider.Value = FindNearestIndex(_biomeSizes, _worldSettings.BiomeSize);
         _biomeSizeSlider.Text = _worldSettings.BiomeSize + "x";
-        _environmentBehaviorButton.Text = LanguageControl.Get("EnvironmentBehaviorMode",
+        _environmentBehaviorButton.Text = LanguageManager.Get("EnvironmentBehaviorMode",
             _worldSettings.EnvironmentBehaviorMode.ToString());
-        _timeOfDayButton.Text = LanguageControl.Get("TimeOfDayMode", _worldSettings.TimeOfDayMode.ToString());
+        _timeOfDayButton.Text = LanguageManager.Get("TimeOfDayMode", _worldSettings.TimeOfDayMode.ToString());
         _areSeasonsChangingCheckBox.IsChecked = _worldSettings.AreSeasonsChanging;
         _yearDaysSlider.Value = FindNearestIndex(_yearDays, _worldSettings.YearDays);
         _yearDaysSlider.Text = $"{_worldSettings.YearDays} days";
@@ -449,20 +449,20 @@ public class WorldOptionsScreen : Screen
         _timeOfYearSlider.Text = $"{SubsystemSeasons.GetTimeOfYearName(_worldSettings.TimeOfYear)}";
         _timeOfYearSlider.TextColor = SubsystemSeasons.GetTimeOfYearColor(_worldSettings.TimeOfYear);
         _weatherEffectsButton.Text = _worldSettings.AreWeatherEffectsEnabled
-            ? LanguageControl.Get("Usual", "enable")
-            : LanguageControl.Get("Usual", "disable");
+            ? LanguageManager.Get("Usual", "enable")
+            : LanguageManager.Get("Usual", "disable");
         _adventureRespawnButton.Text = _worldSettings.IsAdventureRespawnAllowed
-            ? LanguageControl.Get("Usual", "allowed")
-            : LanguageControl.Get("Usual", "not allowed");
+            ? LanguageManager.Get("Usual", "allowed")
+            : LanguageManager.Get("Usual", "not allowed");
         _adventureSurvivalMechanicsButton.Text = _worldSettings.AreAdventureSurvivalMechanicsEnabled
-            ? LanguageControl.Get("Usual", "enable")
-            : LanguageControl.Get("Usual", "disable");
+            ? LanguageManager.Get("Usual", "enable")
+            : LanguageManager.Get("Usual", "disable");
         _supernaturalCreaturesButton.Text = _worldSettings.AreSupernaturalCreaturesEnabled
-            ? LanguageControl.Get("Usual", "enable")
-            : LanguageControl.Get("Usual", "disable");
+            ? LanguageManager.Get("Usual", "enable")
+            : LanguageManager.Get("Usual", "disable");
         _friendlyFireButton.Text = _worldSettings.IsFriendlyFireEnabled
-            ? LanguageControl.Get("Usual", "allowed")
-            : LanguageControl.Get("Usual", "not allowed");
+            ? LanguageManager.Get("Usual", "allowed")
+            : LanguageManager.Get("Usual", "not allowed");
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);

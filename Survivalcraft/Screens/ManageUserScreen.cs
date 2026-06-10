@@ -148,7 +148,7 @@ public class ManageUserScreen : Screen
             msg += "\n上次锁定时间: " + GetMsg(listItem.LockTime) + "\n锁定原因: " + GetMsg(listItem.LockReason);
             msg += "\n锁定时长: " + (int)(listItem.LockDuration / 8.64f) / 10000f + "天\n解锁时间: " +
                    GetMsg(listItem.UnlockTime);
-            var messageDialog = new MessageDialog("详细信息:" + listItem.Name, msg, LanguageControl.Ok);
+            var messageDialog = new MessageDialog("详细信息:" + listItem.Name, msg, LanguageManager.Ok);
             DialogsManager.ShowDialog(null, messageDialog);
         };
     }
@@ -267,7 +267,7 @@ public class ManageUserScreen : Screen
                                             new MessageDialog(
                                                 "操作成功",
                                                 msg,
-                                                LanguageControl.Ok
+                                                LanguageManager.Ok
                                             )
                                         );
                                     },
@@ -277,9 +277,9 @@ public class ManageUserScreen : Screen
                                         DialogsManager.ShowDialog(
                                             null,
                                             new MessageDialog(
-                                                LanguageControl.Error,
+                                                LanguageManager.Error,
                                                 e.Message,
-                                                LanguageControl.Ok
+                                                LanguageManager.Ok
                                             )
                                         );
                                     });
@@ -288,8 +288,8 @@ public class ManageUserScreen : Screen
             }
             else
             {
-                DialogsManager.ShowDialog(null, new MessageDialog("确认解锁？", userInfo.Name, LanguageControl.Ok,
-                    LanguageControl.Cancel, delegate(MessageDialogButton button)
+                DialogsManager.ShowDialog(null, new MessageDialog("确认解锁？", userInfo.Name, LanguageManager.Ok,
+                    LanguageManager.Cancel, delegate(MessageDialogButton button)
                     {
                         if (button != MessageDialogButton.Button1)
                         {
@@ -321,7 +321,7 @@ public class ManageUserScreen : Screen
                                     new MessageDialog(
                                         "操作成功",
                                         msg,
-                                        LanguageControl.Ok
+                                        LanguageManager.Ok
                                     )
                                 );
                             },
@@ -331,9 +331,9 @@ public class ManageUserScreen : Screen
                                 DialogsManager.ShowDialog(
                                     null,
                                     new MessageDialog(
-                                        LanguageControl.Error,
+                                        LanguageManager.Error,
                                         e.Message,
-                                        LanguageControl.Ok
+                                        LanguageManager.Ok
                                     )
                                 );
                             });
@@ -343,8 +343,8 @@ public class ManageUserScreen : Screen
 
         if (_resetButton.IsClicked && _contentList.SelectedItem is ComUserInfo selectedItem)
         {
-            DialogsManager.ShowDialog(null, new MessageDialog("确认重置密码？", selectedItem.Name, LanguageControl.Ok,
-                LanguageControl.Cancel, delegate(MessageDialogButton button)
+            DialogsManager.ShowDialog(null, new MessageDialog("确认重置密码？", selectedItem.Name, LanguageManager.Ok,
+                LanguageManager.Cancel, delegate(MessageDialogButton button)
                 {
                     if (button != MessageDialogButton.Button1)
                     {
@@ -369,7 +369,7 @@ public class ManageUserScreen : Screen
                             new MessageDialog(
                                 "操作成功",
                                 msg,
-                                LanguageControl.Ok
+                                LanguageManager.Ok
                             )
                         );
                     }, delegate(Exception e)
@@ -378,9 +378,9 @@ public class ManageUserScreen : Screen
                         DialogsManager.ShowDialog(
                             null,
                             new MessageDialog(
-                                LanguageControl.Error,
+                                LanguageManager.Error,
                                 e.Message,
-                                LanguageControl.Ok
+                                LanguageManager.Ok
                             )
                         );
                     });
@@ -418,7 +418,7 @@ public class ManageUserScreen : Screen
         }
 
         var busyDialog =
-            new CancellableBusyDialog(LanguageControl.Get("CommunityContentScreen", 2), false);
+            new CancellableBusyDialog(LanguageManager.Get("CommunityContentScreen", 2), false);
         DialogsManager.ShowDialog(null, busyDialog);
         var order = _order ? 1 : 0;
         CommunityContentManager.UserList(
@@ -453,9 +453,9 @@ public class ManageUserScreen : Screen
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Error,
+                        LanguageManager.Error,
                         error.Message,
-                        LanguageControl.Ok
+                        LanguageManager.Ok
                     )
                 );
             }

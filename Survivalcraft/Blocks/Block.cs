@@ -219,7 +219,7 @@ public abstract class Block
     {
         if (Durability is < -1 or > 65535)
         {
-            throw new InvalidOperationException(string.Format(LanguageControl.Get(_typeName, 1), DisplayName));
+            throw new InvalidOperationException(string.Format(LanguageManager.Get(_typeName, 1), DisplayName));
         }
     }
 
@@ -317,7 +317,7 @@ public abstract class Block
     {
         var data = Terrain.ExtractData(value);
         var bn = $"{GetType().Name}:{data}";
-        return LanguageControl.TryGetBlock(bn, "DisplayName", out var result) ? result! : DisplayName;
+        return LanguageManager.TryGetBlock(bn, "DisplayName", out var result) ? result! : DisplayName;
     }
 
     public virtual int GetTextureSlotCount(int value)
@@ -413,7 +413,7 @@ public abstract class Block
     {
         var data = Terrain.ExtractData(value);
         var bn = $"{GetType().Name}:{data}";
-        return LanguageControl.TryGetBlock(bn, "Description", out var r) ? r! : Description;
+        return LanguageManager.TryGetBlock(bn, "Description", out var r) ? r! : Description;
     }
 
     public virtual FoodType GetFoodType(int value) => FoodType;

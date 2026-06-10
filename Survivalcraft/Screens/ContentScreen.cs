@@ -38,16 +38,17 @@ public class ContentScreen : Screen
 
     public void OpenManageSelectDialog()
     {
+        if (!_isAdmin)
+        {
+            ScreensManager.SwitchScreen("ManageContent");
+            return;
+        }
+
         var list = new List<string>
         {
-            LanguageControl.Get(_typeName, 1),
-            LanguageControl.Get(_typeName, 2)
+            LanguageManager.Get(_typeName, 2),
+            "用户管理"
         };
-
-        if (_isAdmin)
-        {
-            list.Add("用户管理");
-        }
 
         DialogsManager.ShowDialog(null,
             new ListSelectionDialog(
@@ -58,11 +59,7 @@ public class ContentScreen : Screen
                 delegate(object item)
                 {
                     var selectionResult = (string)item;
-                    if (selectionResult == LanguageControl.Get(_typeName, 1))
-                    {
-                        ScreensManager.SwitchScreen("ModsManageContent");
-                    }
-                    else if (selectionResult == LanguageControl.Get(_typeName, 2))
+                    if (selectionResult == LanguageManager.Get(_typeName, 2))
                     {
                         ScreensManager.SwitchScreen("ManageContent");
                     }
