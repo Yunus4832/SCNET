@@ -1179,8 +1179,4 @@ internal static class GLWrapper
         };
     }
 
-    [Conditional("DEBUG")]
-    public static void CheckGlError()
-    {
-    }
 }
