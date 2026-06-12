@@ -31,6 +31,8 @@ public sealed class GameModRuntime : IDisposable
 
     public GameplayHooks Gameplay => Host.Gameplay;
 
+    public BlockBehaviorHooks BlockBehaviors => Host.BlockBehaviors;
+
     public IReadOnlyList<LoadedModInfo> GetLoadedMods()
     {
         var blockRegistry = Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);

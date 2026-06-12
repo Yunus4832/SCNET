@@ -1,8 +1,6 @@
 using System.Globalization;
 using System.Security.Cryptography;
-using System.Xml.Linq;
 
-using Game.Modding;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Serialization;

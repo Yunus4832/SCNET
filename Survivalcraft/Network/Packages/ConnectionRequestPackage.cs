@@ -2,7 +2,6 @@ using System.Text;
 
 using EntitySystem.Core;
 
-using Game.Modding;
 using Game.Network.Enums;
 using Game.Network.Serialization;
 namespace Game.Network.Packages;

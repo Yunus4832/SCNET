@@ -727,6 +727,10 @@ public class TerrainUpdater
                 blockBehavior.OnChunkDiscarding(terrainChunk);
             }
 
+            CurrentModRuntime.Value?.Gameplay.Invoke(new TerrainChunkDiscardingContext(
+                _subsystemTerrain,
+                terrainChunk));
+
             _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
             _terrain.FreeChunk(terrainChunk);
             if (RunMode.Value is RunModeType.Gui)
@@ -1049,6 +1053,9 @@ public class TerrainUpdater
             case TerrainChunkState.InvalidContents4:
             {
                 _subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass4(chunk);
+                CurrentModRuntime.Value?.Gameplay.Invoke(new TerrainChunkGeneratedContext(
+                    _subsystemTerrain,
+                    chunk));
                 chunk.ThreadState = TerrainChunkState.InvalidLight;
                 chunk.WasUpgraded = true;
                 break;
@@ -1729,6 +1736,10 @@ public class TerrainUpdater
                 num++;
             }
         }
+
+        CurrentModRuntime.Value?.Gameplay.Invoke(new TerrainChunkInitializedContext(
+            _subsystemTerrain,
+            chunk));
     }
 
     /// <summary>

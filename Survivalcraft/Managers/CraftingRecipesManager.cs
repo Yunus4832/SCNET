@@ -3,8 +3,6 @@ using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
 
-using Game.Modding;
-
 namespace Game.Managers;
 
 public static class CraftingRecipesManager

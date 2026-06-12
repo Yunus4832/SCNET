@@ -9,6 +9,8 @@ public sealed class ModHost
 
     public GameplayHooks Gameplay { get; } = new();
 
+    public BlockBehaviorHooks BlockBehaviors { get; } = new();
+
     public IReadOnlyList<ModRuntime> Runtimes => _runtimes;
 
     public void LoadAndStart(IEnumerable<ModDescriptor> descriptors)
@@ -23,7 +25,7 @@ public sealed class ModHost
         {
             foreach (var descriptor in loadPlan)
             {
-                var context = new ModContext(descriptor.Manifest, Extensions, Gameplay);
+                var context = new ModContext(descriptor.Manifest, Extensions, Gameplay, BlockBehaviors);
                 var runtime = new ModRuntime(descriptor, descriptor.Factory(), context);
                 _runtimes.Add(runtime);
                 runtime.State = ModState.Configuring;
@@ -33,6 +35,7 @@ public sealed class ModHost
 
             Extensions.Freeze();
             Gameplay.Freeze();
+            BlockBehaviors.Freeze();
             foreach (var runtime in _runtimes)
             {
                 runtime.State = ModState.Starting;
@@ -77,6 +80,7 @@ public sealed class ModHost
 
             Extensions.RemoveOwner(runtime.Descriptor.Manifest.ModId);
             Gameplay.RemoveOwner(runtime.Descriptor.Manifest.ModId);
+            BlockBehaviors.RemoveOwner(runtime.Descriptor.Manifest.ModId);
         }
 
         DisposeLifetimes(_runtimes.Select(runtime => runtime.Descriptor));
@@ -96,13 +100,16 @@ public sealed class ModHost
     private sealed class ModContext(
         ModManifest manifest,
         ExtensionRegistry extensions,
-        GameplayHooks gameplay) : IModContext
+        GameplayHooks gameplay,
+        BlockBehaviorHooks blockBehaviors) : IModContext
     {
         public ModManifest Manifest { get; } = manifest;
 
         public IModExtensions Extensions { get; } = new OwnedExtensions(manifest.ModId, extensions);
 
         public IModGameplayHooks Gameplay { get; } = gameplay.ForOwner(manifest.ModId);
+
+        public IModBlockBehaviorHooks BlockBehaviors { get; } = blockBehaviors.ForOwner(manifest.ModId);
     }
 
     private sealed class OwnedExtensions(ModId owner, ExtensionRegistry extensions) : IModExtensions

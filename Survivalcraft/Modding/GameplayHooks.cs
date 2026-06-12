@@ -15,6 +15,12 @@ public interface IModGameplayHooks
     IDisposable OnEntityAdded(Action<EntityAddedContext> handler, int priority = 0);
 
     IDisposable OnWorldUpdating(Action<WorldUpdatingContext> handler, int priority = 0);
+
+    IDisposable OnTerrainChunkGenerated(Action<TerrainChunkGeneratedContext> handler, int priority = 0);
+
+    IDisposable OnTerrainChunkInitialized(Action<TerrainChunkInitializedContext> handler, int priority = 0);
+
+    IDisposable OnTerrainChunkDiscarding(Action<TerrainChunkDiscardingContext> handler, int priority = 0);
 }
 
 public sealed class GameplayHooks
@@ -25,6 +31,9 @@ public sealed class GameplayHooks
     private readonly ModHook<TerrainCellChangingContext> _terrainCellChanging = new();
     private readonly ModHook<EntityAddedContext> _entityAdded = new();
     private readonly ModHook<WorldUpdatingContext> _worldUpdating = new();
+    private readonly ModHook<TerrainChunkGeneratedContext> _terrainChunkGenerated = new();
+    private readonly ModHook<TerrainChunkInitializedContext> _terrainChunkInitialized = new();
+    private readonly ModHook<TerrainChunkDiscardingContext> _terrainChunkDiscarding = new();
 
     public void Invoke(CreatureInjuringContext context) => _creatureInjuring.Invoke(context);
 
@@ -38,6 +47,12 @@ public sealed class GameplayHooks
 
     public void Invoke(WorldUpdatingContext context) => _worldUpdating.Invoke(context);
 
+    public void Invoke(TerrainChunkGeneratedContext context) => _terrainChunkGenerated.Invoke(context);
+
+    public void Invoke(TerrainChunkInitializedContext context) => _terrainChunkInitialized.Invoke(context);
+
+    public void Invoke(TerrainChunkDiscardingContext context) => _terrainChunkDiscarding.Invoke(context);
+
     internal IModGameplayHooks ForOwner(ModId owner) => new OwnedGameplayHooks(owner, this);
 
     internal void Freeze()
@@ -48,6 +63,9 @@ public sealed class GameplayHooks
         _terrainCellChanging.Freeze();
         _entityAdded.Freeze();
         _worldUpdating.Freeze();
+        _terrainChunkGenerated.Freeze();
+        _terrainChunkInitialized.Freeze();
+        _terrainChunkDiscarding.Freeze();
     }
 
     internal void RemoveOwner(ModId owner)
@@ -58,6 +76,9 @@ public sealed class GameplayHooks
         _terrainCellChanging.RemoveOwner(owner);
         _entityAdded.RemoveOwner(owner);
         _worldUpdating.RemoveOwner(owner);
+        _terrainChunkGenerated.RemoveOwner(owner);
+        _terrainChunkInitialized.RemoveOwner(owner);
+        _terrainChunkDiscarding.RemoveOwner(owner);
     }
 
     private sealed class OwnedGameplayHooks(ModId owner, GameplayHooks hooks) : IModGameplayHooks
@@ -79,6 +100,15 @@ public sealed class GameplayHooks
 
         public IDisposable OnWorldUpdating(Action<WorldUpdatingContext> handler, int priority = 0) =>
             hooks._worldUpdating.Register(owner, handler, priority);
+
+        public IDisposable OnTerrainChunkGenerated(Action<TerrainChunkGeneratedContext> handler, int priority = 0) =>
+            hooks._terrainChunkGenerated.Register(owner, handler, priority);
+
+        public IDisposable OnTerrainChunkInitialized(Action<TerrainChunkInitializedContext> handler, int priority = 0) =>
+            hooks._terrainChunkInitialized.Register(owner, handler, priority);
+
+        public IDisposable OnTerrainChunkDiscarding(Action<TerrainChunkDiscardingContext> handler, int priority = 0) =>
+            hooks._terrainChunkDiscarding.Register(owner, handler, priority);
     }
 }
 
@@ -227,4 +257,25 @@ public sealed class WorldUpdatingContext(Project project, float deltaTime)
 {
     public Project Project { get; } = project;
     public float DeltaTime { get; } = deltaTime;
+}
+
+public sealed class TerrainChunkGeneratedContext(SubsystemTerrain terrain, TerrainChunk chunk)
+{
+    public SubsystemTerrain Terrain { get; } = terrain;
+
+    public TerrainChunk Chunk { get; } = chunk;
+}
+
+public sealed class TerrainChunkInitializedContext(SubsystemTerrain terrain, TerrainChunk chunk)
+{
+    public SubsystemTerrain Terrain { get; } = terrain;
+
+    public TerrainChunk Chunk { get; } = chunk;
+}
+
+public sealed class TerrainChunkDiscardingContext(SubsystemTerrain terrain, TerrainChunk chunk)
+{
+    public SubsystemTerrain Terrain { get; } = terrain;
+
+    public TerrainChunk Chunk { get; } = chunk;
 }

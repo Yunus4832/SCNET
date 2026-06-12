@@ -4,7 +4,6 @@ using EntitySystem.TemplatesDatabase;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
-using Game.Modding;
 
 namespace Game.Components;
 

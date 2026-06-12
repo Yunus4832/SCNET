@@ -6,7 +6,6 @@ using Engine.Serialization;
 using EntitySystem.XmlUtilities;
 
 using Game.ContentProviders;
-using Game.Modding;
 using Game.Network;
 
 namespace Game.Managers;

@@ -85,6 +85,21 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             var point = _modifiedList.Array[i];
             foreach (var point2 in _neighborOffsets)
             {
+                var neighborChangedContext = new NeighborBlockChangedContext(
+                    this,
+                    point.X + point2.X,
+                    point.Y + point2.Y,
+                    point.Z + point2.Z,
+                    point.X,
+                    point.Y,
+                    point.Z,
+                    null);
+                CurrentModRuntime.Value?.BlockBehaviors.Invoke(neighborChangedContext);
+                if (neighborChangedContext.Cancel)
+                {
+                    continue;
+                }
+
                 var cellContents = Terrain.GetCellContents(point.X + point2.X, point.Y + point2.Y, point.Z + point2.Z);
                 var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(cellContents);
                 foreach (var behavior in blockBehaviors)
@@ -318,28 +333,45 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         var num2 = Terrain.ExtractContents(value);
         if (num2 != num)
         {
-            var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
-            foreach (var behavior in blockBehaviors)
+            var removedContext = new BlockRemovedContext(this, x, y, z, cellValueFast, value, miner);
+            CurrentModRuntime.Value?.BlockBehaviors.Invoke(removedContext);
+            if (!removedContext.Cancel)
             {
-                behavior.OnBlockRemoved(cellValueFast, value, x, y, z);
+                var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+                foreach (var behavior in blockBehaviors)
+                {
+                    behavior.OnBlockRemoved(cellValueFast, value, x, y, z);
+                }
             }
 
-            var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(num2);
-            foreach (var behavior in blockBehaviors2)
+            var addedContext = new BlockAddedContext(this, x, y, z, value, cellValueFast, miner);
+            CurrentModRuntime.Value?.BlockBehaviors.Invoke(addedContext);
+            if (addedContext.Cancel)
             {
-                if (miner == null)
+                return;
+            }
+
+            {
+                var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(num2);
+                foreach (var behavior in blockBehaviors2)
                 {
                     behavior.OnBlockAdded(value, cellValueFast, x, y, z);
-                }
-                else
-                {
-                    behavior.OnBlockAdded(value, cellValueFast, x, y, z);
-                    behavior.OnBlockAdded(value, cellValueFast, x, y, z, miner);
+                    if (miner != null)
+                    {
+                        behavior.OnBlockAdded(value, cellValueFast, x, y, z, miner);
+                    }
                 }
             }
         }
         else
         {
+            var modifiedContext = new BlockModifiedContext(this, x, y, z, value, cellValueFast, miner);
+            CurrentModRuntime.Value?.BlockBehaviors.Invoke(modifiedContext);
+            if (modifiedContext.Cancel)
+            {
+                return;
+            }
+
             var blockBehaviors3 = _subsystemBlockBehaviors.GetBlockBehaviors(num2);
             foreach (var behavior in blockBehaviors3)
             {
@@ -473,17 +505,27 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 block.GetDropValues(this, cellValue, newValue, toolLevel, _dropValues, out showDebris);
                 foreach (var item in _dropValues)
                 {
-                    var dropValue = item;
-                    if (dropValue.Count <= 0)
-                    {
-                        continue;
-                    }
+                var dropValue = item;
+                if (dropValue.Count <= 0)
+                {
+                    continue;
+                }
 
-                    var blockBehaviors =
-                        _subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(dropValue.Value));
-                    foreach (var behavior in blockBehaviors)
-                    {
-                        behavior.OnItemHarvested(x, y, z, cellValue, ref dropValue, ref newValue);
+                var harvestedContext = new ItemHarvestedContext(this, x, y, z, cellValue, dropValue, newValue);
+                CurrentModRuntime.Value?.BlockBehaviors.Invoke(harvestedContext);
+                if (harvestedContext.Cancel)
+                {
+                    continue;
+                }
+
+                dropValue = harvestedContext.DropValue;
+                newValue = harvestedContext.NewBlockValue;
+
+                var blockBehaviors =
+                    _subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(dropValue.Value));
+                foreach (var behavior in blockBehaviors)
+                {
+                    behavior.OnItemHarvested(x, y, z, cellValue, ref dropValue, ref newValue);
                     }
 
                     if (dropValue.Count <= 0 || Terrain.ExtractContents(dropValue.Value) == 0)

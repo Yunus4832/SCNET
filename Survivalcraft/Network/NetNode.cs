@@ -2,7 +2,6 @@ using System.Net;
 
 using EntitySystem.Core;
 
-using Game.Modding;
 using Game.Network.Enums;
 using Game.Network.ModFileService;
 using Game.Network.Packages;

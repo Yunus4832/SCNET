@@ -1,7 +1,5 @@
 using System.Xml.Linq;
 
-using Game.Modding;
-
 namespace Game.Screens;
 
 public class SettingsUiScreen : Screen

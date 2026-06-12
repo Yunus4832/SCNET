@@ -88,6 +88,48 @@ public class ModHostTest
         Assert.Empty(calls);
     }
 
+    [Fact]
+    public void TerrainChunkHooksRunByPriorityAndAreRemovedWithOwner()
+    {
+        var calls = new List<string>();
+        var host = new ModHost();
+        var descriptor = new ModDescriptor(
+            new ModManifest("example.terrain", "Terrain", "1.0"),
+            () => new TerrainHookMod(calls));
+
+        host.LoadAndStart([descriptor]);
+        var context = new TerrainChunkGeneratedContext(null!, new Game.Terrains.TerrainChunk(null!, 0, 0));
+
+        host.Gameplay.Invoke(context);
+
+        Assert.Equal(["high", "normal"], calls);
+        host.StopAll();
+        calls.Clear();
+        host.Gameplay.Invoke(new TerrainChunkGeneratedContext(null!, new Game.Terrains.TerrainChunk(null!, 0, 0)));
+        Assert.Empty(calls);
+    }
+
+    [Fact]
+    public void BlockBehaviorHooksRunByPriorityAndAreRemovedWithOwner()
+    {
+        var calls = new List<string>();
+        var host = new ModHost();
+        var descriptor = new ModDescriptor(
+            new ModManifest("example.blocks", "Blocks", "1.0"),
+            () => new BlockBehaviorHookMod(calls));
+
+        host.LoadAndStart([descriptor]);
+        var context = new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentPlayer());
+
+        host.BlockBehaviors.Invoke(context);
+
+        Assert.Equal(["high", "normal"], calls);
+        host.StopAll();
+        calls.Clear();
+        host.BlockBehaviors.Invoke(new BlockEditContext(1, 2, 3, 4, new Game.Components.ComponentPlayer()));
+        Assert.Empty(calls);
+    }
+
     private static ModDescriptor Descriptor(
         string id,
         List<string> calls,
@@ -145,6 +187,52 @@ public class ModHostTest
             {
                 calls.Add("high");
                 injury.Amount *= 0.5f;
+            }, 100);
+        }
+
+        public void Start(IModContext context)
+        {
+        }
+
+        public void Stop()
+        {
+        }
+    }
+
+    private sealed class TerrainHookMod(List<string> calls) : IMod
+    {
+        public void Configure(IModContext context)
+        {
+            context.Gameplay.OnTerrainChunkGenerated(generated =>
+            {
+                calls.Add("normal");
+            });
+            context.Gameplay.OnTerrainChunkGenerated(generated =>
+            {
+                calls.Add("high");
+            }, 100);
+        }
+
+        public void Start(IModContext context)
+        {
+        }
+
+        public void Stop()
+        {
+        }
+    }
+
+    private sealed class BlockBehaviorHookMod(List<string> calls) : IMod
+    {
+        public void Configure(IModContext context)
+        {
+            context.BlockBehaviors.OnEditBlock(edit =>
+            {
+                calls.Add("normal");
+            });
+            context.BlockBehaviors.OnEditBlock(edit =>
+            {
+                calls.Add("high");
             }, 100);
         }
 

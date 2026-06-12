@@ -6,7 +6,6 @@ using EntitySystem.TemplatesDatabase;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
-using Game.Modding;
 
 namespace Game.Components;
 
@@ -409,6 +408,16 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
+        var blockPlacedContext = new BlockPlacedContext(this, num2, num3, num4, placementData, value);
+        CurrentModRuntime.Value?.BlockBehaviors.Invoke(blockPlacedContext);
+        if (blockPlacedContext.Cancel)
+        {
+            return false;
+        }
+
+        placementData = blockPlacedContext.PlacementData;
+        value = blockPlacedContext.Value;
+
         var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(
             Terrain.ExtractContents(placementData.Value), this, new Point3(num2, num3, num4));
         foreach (var behavior in blockBehaviors)
@@ -449,6 +458,13 @@ public class ComponentMiner : Component, IUpdateable
         var num = Terrain.ExtractContents(ActiveBlockValue);
         var block = BlocksManager.Blocks[num];
 
+        var useContext = new BlockUseContext(ray, this, ActiveBlockValue);
+        CurrentModRuntime.Value?.BlockBehaviors.Invoke(useContext);
+        if (useContext.Cancel)
+        {
+            return useContext.Handled;
+        }
+
         if (!CanUseTool(ActiveBlockValue))
         {
             ComponentPlayer?.ComponentGui.DisplaySmallMessage(
@@ -459,7 +475,7 @@ public class ComponentMiner : Component, IUpdateable
         }
 
         var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num, this, Terrain.ToCell(ray.Position));
-        if (!blockBehaviors.Any(behavior => behavior.OnUse(ray, this)))
+        if (!blockBehaviors.Any(behavior => behavior.OnUse(ray, this)) && !useContext.Handled)
         {
             return false;
         }
@@ -482,11 +498,19 @@ public class ComponentMiner : Component, IUpdateable
             }
         }
 
-        var cellContents = _subsystemTerrain.Terrain.GetCellContents(raycastResult.CellFace.X,
+        var cellValue = _subsystemTerrain.Terrain.GetCellValue(raycastResult.CellFace.X,
             raycastResult.CellFace.Y, raycastResult.CellFace.Z);
+        var interactContext = new BlockInteractContext(raycastResult, this, cellValue);
+        CurrentModRuntime.Value?.BlockBehaviors.Invoke(interactContext);
+        if (interactContext.Cancel)
+        {
+            return interactContext.Handled;
+        }
+
+        var cellContents = Terrain.ExtractContents(cellValue);
         var blockBehaviors =
             _subsystemBlockBehaviors.GetBlockBehaviors(cellContents, this, raycastResult.CellFace.Point);
-        if (!blockBehaviors.Any(behavior => behavior.OnInteract(raycastResult, this)))
+        if (!blockBehaviors.Any(behavior => behavior.OnInteract(raycastResult, this)) && !interactContext.Handled)
         {
             return false;
         }

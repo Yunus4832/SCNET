@@ -688,14 +688,14 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
             if (componentRider.Mount != null != flag)
             {
-                if (componentRider.Mount != null)
-                {
-                    DisplaySmallMessage(LanguageManager.Get(TypeName, 5), Color.White, false, false);
-                }
-                else
-                {
-                    DisplaySmallMessage(LanguageManager.Get(TypeName, 6), Color.White, false, false);
-                }
+                DisplaySmallMessage(
+                    componentRider.Mount != null
+                        ? LanguageManager.Get(TypeName, 5)
+                        : LanguageManager.Get(TypeName, 6),
+                    Color.White,
+                    false,
+                    false
+                );
             }
         }
 
@@ -705,13 +705,18 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             var value = ComponentPlayer.ComponentBlockHighlight.NearbyEditableCell.Value;
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(value.X, value.Y, value.Z);
             var contents = Terrain.ExtractContents(cellValue);
-            var blockBehaviors =
-                _subsystemBlockBehaviors.GetBlockBehaviors(contents, ComponentPlayer.ComponentMiner, value);
-            for (var i = 0;
-                 i < blockBehaviors.Length && !blockBehaviors[i]
-                     .OnEditBlock(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
-                 i++)
+            var editBlockContext = new BlockEditContext(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
+            CurrentModRuntime.Value?.BlockBehaviors.Invoke(editBlockContext);
+            if (editBlockContext is { Cancel: false, Handled: false })
             {
+                var blockBehaviors =
+                    _subsystemBlockBehaviors.GetBlockBehaviors(contents, ComponentPlayer.ComponentMiner, value);
+                for (var i = 0;
+                     i < blockBehaviors.Length && !blockBehaviors[i]
+                         .OnEditBlock(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
+                     i++)
+                {
+                }
             }
         }
         else if ((_editItemButton.IsClicked || playerInput.EditItem) && IsActiveSlotEditable())
@@ -721,12 +726,18 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             var num = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
             if (BlocksManager.Blocks[num].Editable)
             {
-                var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
-                for (var i = 0;
-                     i < blockBehaviors.Length && !blockBehaviors[i]
-                         .OnEditInventoryItem(inventory, activeSlotIndex, ComponentPlayer);
-                     i++)
+                var editInventoryContext =
+                    new BlockEditInventoryItemContext(inventory, activeSlotIndex, ComponentPlayer);
+                CurrentModRuntime.Value?.BlockBehaviors.Invoke(editInventoryContext);
+                if (!editInventoryContext.Cancel && !editInventoryContext.Handled)
                 {
+                    var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+                    for (var i = 0;
+                         i < blockBehaviors.Length && !blockBehaviors[i]
+                             .OnEditInventoryItem(inventory, activeSlotIndex, ComponentPlayer);
+                         i++)
+                    {
+                    }
                 }
             }
         }
