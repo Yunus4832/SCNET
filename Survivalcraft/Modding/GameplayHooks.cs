@@ -1,4 +1,5 @@
 using EntitySystem.Core;
+using Game.Components;
 
 namespace Game.Modding;
 
@@ -21,6 +22,14 @@ public interface IModGameplayHooks
     IDisposable OnTerrainChunkInitialized(Action<TerrainChunkInitializedContext> handler, int priority = 0);
 
     IDisposable OnTerrainChunkDiscarding(Action<TerrainChunkDiscardingContext> handler, int priority = 0);
+
+    IDisposable OnPlayerDying(Action<PlayerDyingContext> handler, int priority = 0);
+
+    IDisposable OnPlayerSpawned(Action<PlayerSpawnedContext> handler, int priority = 0);
+
+    IDisposable OnPlayerRespawnRequested(Action<PlayerRespawnRequestedContext> handler, int priority = 0);
+
+    IDisposable OnCreatureTargetScoring(Action<CreatureTargetScoringContext> handler, int priority = 0);
 }
 
 public sealed class GameplayHooks
@@ -34,6 +43,10 @@ public sealed class GameplayHooks
     private readonly ModHook<TerrainChunkGeneratedContext> _terrainChunkGenerated = new();
     private readonly ModHook<TerrainChunkInitializedContext> _terrainChunkInitialized = new();
     private readonly ModHook<TerrainChunkDiscardingContext> _terrainChunkDiscarding = new();
+    private readonly ModHook<PlayerDyingContext> _playerDying = new();
+    private readonly ModHook<PlayerSpawnedContext> _playerSpawned = new();
+    private readonly ModHook<PlayerRespawnRequestedContext> _playerRespawnRequested = new();
+    private readonly ModHook<CreatureTargetScoringContext> _creatureTargetScoring = new();
 
     public void Invoke(CreatureInjuringContext context) => _creatureInjuring.Invoke(context);
 
@@ -53,6 +66,14 @@ public sealed class GameplayHooks
 
     public void Invoke(TerrainChunkDiscardingContext context) => _terrainChunkDiscarding.Invoke(context);
 
+    public void Invoke(PlayerDyingContext context) => _playerDying.Invoke(context);
+
+    public void Invoke(PlayerSpawnedContext context) => _playerSpawned.Invoke(context);
+
+    public void Invoke(PlayerRespawnRequestedContext context) => _playerRespawnRequested.Invoke(context);
+
+    public void Invoke(CreatureTargetScoringContext context) => _creatureTargetScoring.Invoke(context);
+
     internal IModGameplayHooks ForOwner(ModId owner) => new OwnedGameplayHooks(owner, this);
 
     internal void Freeze()
@@ -66,6 +87,10 @@ public sealed class GameplayHooks
         _terrainChunkGenerated.Freeze();
         _terrainChunkInitialized.Freeze();
         _terrainChunkDiscarding.Freeze();
+        _playerDying.Freeze();
+        _playerSpawned.Freeze();
+        _playerRespawnRequested.Freeze();
+        _creatureTargetScoring.Freeze();
     }
 
     internal void RemoveOwner(ModId owner)
@@ -79,6 +104,10 @@ public sealed class GameplayHooks
         _terrainChunkGenerated.RemoveOwner(owner);
         _terrainChunkInitialized.RemoveOwner(owner);
         _terrainChunkDiscarding.RemoveOwner(owner);
+        _playerDying.RemoveOwner(owner);
+        _playerSpawned.RemoveOwner(owner);
+        _playerRespawnRequested.RemoveOwner(owner);
+        _creatureTargetScoring.RemoveOwner(owner);
     }
 
     private sealed class OwnedGameplayHooks(ModId owner, GameplayHooks hooks) : IModGameplayHooks
@@ -109,6 +138,18 @@ public sealed class GameplayHooks
 
         public IDisposable OnTerrainChunkDiscarding(Action<TerrainChunkDiscardingContext> handler, int priority = 0) =>
             hooks._terrainChunkDiscarding.Register(owner, handler, priority);
+
+        public IDisposable OnPlayerDying(Action<PlayerDyingContext> handler, int priority = 0) =>
+            hooks._playerDying.Register(owner, handler, priority);
+
+        public IDisposable OnPlayerSpawned(Action<PlayerSpawnedContext> handler, int priority = 0) =>
+            hooks._playerSpawned.Register(owner, handler, priority);
+
+        public IDisposable OnPlayerRespawnRequested(Action<PlayerRespawnRequestedContext> handler, int priority = 0) =>
+            hooks._playerRespawnRequested.Register(owner, handler, priority);
+
+        public IDisposable OnCreatureTargetScoring(Action<CreatureTargetScoringContext> handler, int priority = 0) =>
+            hooks._creatureTargetScoring.Register(owner, handler, priority);
     }
 }
 
@@ -257,6 +298,80 @@ public sealed class WorldUpdatingContext(Project project, float deltaTime)
 {
     public Project Project { get; } = project;
     public float DeltaTime { get; } = deltaTime;
+}
+
+public sealed class PlayerDyingContext(PlayerData player, ComponentPlayer componentPlayer)
+{
+    public PlayerData Player { get; } = player;
+
+    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+
+    public float Health { get; set; } = componentPlayer.ComponentHealth.Health;
+
+    public string CauseOfDeath { get; set; } = componentPlayer.ComponentHealth.CauseOfDeath;
+
+    public bool Cancel { get; set; }
+}
+
+public sealed class PlayerSpawnedContext(
+    PlayerData player,
+    ComponentPlayer componentPlayer,
+    PlayerData.SpawnMode spawnMode)
+{
+    public PlayerData Player { get; } = player;
+
+    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+
+    public PlayerData.SpawnMode SpawnMode { get; } = spawnMode;
+}
+
+public enum PlayerRespawnRequestKind
+{
+    StandardRespawn,
+    CruelGameOver,
+    RespawnForbidden,
+    AdventureRestart
+}
+
+public sealed class PlayerRespawnRequestedContext(
+    PlayerData player,
+    ComponentPlayer componentPlayer,
+    PlayerRespawnRequestKind requestKind)
+{
+    public PlayerData Player { get; } = player;
+
+    public ComponentPlayer ComponentPlayer { get; } = componentPlayer;
+
+    public PlayerRespawnRequestKind RequestKind { get; } = requestKind;
+
+    public bool Cancel { get; set; }
+}
+
+public enum CreatureTargetingKind
+{
+    FindPlayer,
+    AvoidPlayer,
+    Chase,
+    Stare
+}
+
+public sealed class CreatureTargetScoringContext(
+    ComponentCreature seeker,
+    ComponentCreature target,
+    CreatureTargetingKind targetingKind,
+    float score)
+{
+    public ComponentCreature Seeker { get; } = seeker;
+
+    public ComponentCreature Target { get; } = target;
+
+    public CreatureTargetingKind TargetingKind { get; } = targetingKind;
+
+    public ComponentPlayer? TargetPlayer => Target.Entity.FindComponent<ComponentPlayer>();
+
+    public float Score { get; set; } = score;
+
+    public bool Cancel { get; set; }
 }
 
 public sealed class TerrainChunkGeneratedContext(SubsystemTerrain terrain, TerrainChunk chunk)

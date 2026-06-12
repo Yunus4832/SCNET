@@ -11,6 +11,10 @@ public sealed class ModHost
 
     public BlockBehaviorHooks BlockBehaviors { get; } = new();
 
+    public PlayerContextActionHooks ContextActions { get; } = new();
+
+    public ModNetworkHooks Network { get; } = new();
+
     public IReadOnlyList<ModRuntime> Runtimes => _runtimes;
 
     public void LoadAndStart(IEnumerable<ModDescriptor> descriptors)
@@ -25,7 +29,13 @@ public sealed class ModHost
         {
             foreach (var descriptor in loadPlan)
             {
-                var context = new ModContext(descriptor.Manifest, Extensions, Gameplay, BlockBehaviors);
+                var context = new ModContext(
+                    descriptor.Manifest,
+                    Extensions,
+                    Gameplay,
+                    BlockBehaviors,
+                    ContextActions,
+                    Network);
                 var runtime = new ModRuntime(descriptor, descriptor.Factory(), context);
                 _runtimes.Add(runtime);
                 runtime.State = ModState.Configuring;
@@ -36,6 +46,8 @@ public sealed class ModHost
             Extensions.Freeze();
             Gameplay.Freeze();
             BlockBehaviors.Freeze();
+            ContextActions.Freeze();
+            Network.Freeze();
             foreach (var runtime in _runtimes)
             {
                 runtime.State = ModState.Starting;
@@ -81,6 +93,8 @@ public sealed class ModHost
             Extensions.RemoveOwner(runtime.Descriptor.Manifest.ModId);
             Gameplay.RemoveOwner(runtime.Descriptor.Manifest.ModId);
             BlockBehaviors.RemoveOwner(runtime.Descriptor.Manifest.ModId);
+            ContextActions.RemoveOwner(runtime.Descriptor.Manifest.ModId);
+            Network.RemoveOwner(runtime.Descriptor.Manifest.ModId);
         }
 
         DisposeLifetimes(_runtimes.Select(runtime => runtime.Descriptor));
@@ -101,7 +115,9 @@ public sealed class ModHost
         ModManifest manifest,
         ExtensionRegistry extensions,
         GameplayHooks gameplay,
-        BlockBehaviorHooks blockBehaviors) : IModContext
+        BlockBehaviorHooks blockBehaviors,
+        PlayerContextActionHooks contextActions,
+        ModNetworkHooks network) : IModContext
     {
         public ModManifest Manifest { get; } = manifest;
 
@@ -110,6 +126,10 @@ public sealed class ModHost
         public IModGameplayHooks Gameplay { get; } = gameplay.ForOwner(manifest.ModId);
 
         public IModBlockBehaviorHooks BlockBehaviors { get; } = blockBehaviors.ForOwner(manifest.ModId);
+
+        public IModPlayerContextActionHooks ContextActions { get; } = contextActions.ForOwner(manifest.ModId);
+
+        public IModNetwork Network { get; } = network.ForOwner(manifest.ModId);
     }
 
     private sealed class OwnedExtensions(ModId owner, ExtensionRegistry extensions) : IModExtensions

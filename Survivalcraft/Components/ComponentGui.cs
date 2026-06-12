@@ -51,6 +51,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     private double _lastMountableCreatureSearchTime;
 
+    private PlayerContextAction? _lastResolvedContextAction;
+
     private ContainerWidget _leftControlsContainerWidget = null!;
 
     private ButtonWidget _lightningButtonWidget = null!;
@@ -76,6 +78,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     private Widget _moreContentsWidget = null!;
 
     private ButtonWidget _mountButtonWidget = null!;
+
+    private string _mountButtonDefaultText = string.Empty;
 
     private ContainerWidget _moveButtonsContainerWidget = null!;
 
@@ -264,6 +268,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _creativeFlyButtonWidget = guiWidget.Children.Find<ButtonWidget>("CreativeFlyButton")!;
         _crouchButtonWidget = guiWidget.Children.Find<ButtonWidget>("CrouchButton")!;
         _mountButtonWidget = guiWidget.Children.Find<ButtonWidget>("MountButton")!;
+        _mountButtonDefaultText = _mountButtonWidget.Text;
         _editItemButton = guiWidget.Children.Find<ButtonWidget>("EditItemButton")!;
         MoveWidget = guiWidget.Children.Find<TouchInputWidget>("Move")!;
         MoveRoseWidget = guiWidget.Children.Find<MoveRoseWidget>("MoveRose")!;
@@ -497,6 +502,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _crouchButtonWidget.IsVisible = false;
             _mountButtonWidget.IsVisible = false;
             _editItemButton.IsVisible = true;
+            _mountButtonWidget.Text = _mountButtonDefaultText;
+            _lastResolvedContextAction = null;
         }
         else if (componentRider is { Mount: not null })
         {
@@ -504,6 +511,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _mountButtonWidget.IsChecked = true;
             _mountButtonWidget.IsVisible = true;
             _editItemButton.IsVisible = false;
+            _mountButtonWidget.Text = _mountButtonDefaultText;
+            _lastResolvedContextAction = null;
         }
         else
         {
@@ -511,16 +520,28 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             if (Time.FrameStartTime - _lastMountableCreatureSearchTime > 0.5)
             {
                 _lastMountableCreatureSearchTime = Time.FrameStartTime;
-                if (componentRider.FindNearestMount() != null)
+                _lastResolvedContextAction = CurrentModRuntime.Value?.ContextActions.Resolve(
+                    new PlayerContextActionQueryContext(ComponentPlayer, this));
+                if (_lastResolvedContextAction != null)
                 {
                     _crouchButtonWidget.IsVisible = false;
                     _mountButtonWidget.IsVisible = true;
+                    _mountButtonWidget.IsChecked = _lastResolvedContextAction.IsChecked;
+                    _mountButtonWidget.Text = _lastResolvedContextAction.Label;
+                    _editItemButton.IsVisible = false;
+                }
+                else if (componentRider.FindNearestMount() != null)
+                {
+                    _crouchButtonWidget.IsVisible = false;
+                    _mountButtonWidget.IsVisible = true;
+                    _mountButtonWidget.Text = _mountButtonDefaultText;
                     _editItemButton.IsVisible = false;
                 }
                 else
                 {
                     _crouchButtonWidget.IsVisible = true;
                     _mountButtonWidget.IsVisible = false;
+                    _mountButtonWidget.Text = _mountButtonDefaultText;
                     _editItemButton.IsVisible = false;
                 }
             }
@@ -673,7 +694,19 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         if ((_mountButtonWidget.IsClicked || playerInput.ToggleMount))
         {
             var flag = componentRider.Mount != null;
-            if (flag)
+            if (!flag && _lastResolvedContextAction != null)
+            {
+                try
+                {
+                    _lastResolvedContextAction.Execute(
+                        new PlayerContextActionExecutionContext(ComponentPlayer, this));
+                }
+                catch (Exception exception)
+                {
+                    Log.Error($"Mod context action failed: {exception}");
+                }
+            }
+            else if (flag)
             {
                 componentRider.StartDismounting();
             }

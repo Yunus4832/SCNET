@@ -413,7 +413,20 @@ public partial class PlayerData : IDisposable
                 }
                 else if (ComponentPlayer.ComponentHealth.Health <= 0f)
                 {
-                    _playerDeathTime = Time.RealTime;
+                    var dyingContext = new PlayerDyingContext(this, ComponentPlayer);
+                    CurrentModRuntime.Value?.Gameplay.Invoke(dyingContext);
+                    if (dyingContext.Cancel)
+                    {
+                        ComponentPlayer.ComponentHealth.Health = MathUtils.Clamp(dyingContext.Health, 0f, 1f);
+                        if (!string.IsNullOrEmpty(dyingContext.CauseOfDeath))
+                        {
+                            ComponentPlayer.ComponentHealth.CauseOfDeath = dyingContext.CauseOfDeath;
+                        }
+                    }
+                    else
+                    {
+                        _playerDeathTime = Time.RealTime;
+                    }
                 }
 
                 //服务器更新客户端玩家的区域
@@ -506,7 +519,15 @@ public partial class PlayerData : IDisposable
             return;
         }
 
-        if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel)
+        var requestKind = ResolveRespawnRequestKind();
+        var respawnContext = new PlayerRespawnRequestedContext(this, ComponentPlayer, requestKind);
+        CurrentModRuntime.Value?.Gameplay.Invoke(respawnContext);
+        if (respawnContext.Cancel)
+        {
+            return;
+        }
+
+        if (requestKind == PlayerRespawnRequestKind.CruelGameOver)
         {
             //禁用更新，防止一直出现dialog
             _stateMachine.TransitionTo(string.Empty);
@@ -520,7 +541,7 @@ public partial class PlayerData : IDisposable
                 )
             );
         }
-        else if (!SubsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed)
+        else if (requestKind == PlayerRespawnRequestKind.RespawnForbidden)
         {
             //禁用更新，防止一直出现dialog
             _stateMachine.TransitionTo(string.Empty);
@@ -534,7 +555,7 @@ public partial class PlayerData : IDisposable
                 )
             );
         }
-        else if (SubsystemGameInfo.WorldSettings is { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
+        else if (requestKind == PlayerRespawnRequestKind.AdventureRestart)
         {
             if (GameManager.WorldInfo != null)
             {
@@ -551,6 +572,38 @@ public partial class PlayerData : IDisposable
     {
         ComponentPlayer = null!;
         _stateMachine.TransitionTo("FirstUpdate");
+    }
+
+    public void ActivateDeathCamera()
+    {
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            GameWidget.ActiveCamera = GameWidget.FindCamera<DeathCamera>()!;
+        }
+    }
+
+    public void ActivateFirstPersonCamera()
+    {
+        if (RunMode.Value is RunModeType.Gui && ComponentPlayer != null)
+        {
+            GameWidget.ActiveCamera = GameWidget.FindCamera<FppCamera>()!;
+            GameWidget.Target = ComponentPlayer;
+        }
+    }
+
+    public void ResumePlaying(float health)
+    {
+        if (ComponentPlayer == null)
+        {
+            throw new InvalidOperationException("Player entity is not available.");
+        }
+
+        ComponentPlayer.ComponentHealth.Health = MathUtils.Clamp(health, 0f, 1f);
+        _playerDeathTime = null;
+        IsDead = false;
+        ReadyToRestart = false;
+        ActivateFirstPersonCamera();
+        _stateMachine.TransitionTo("Playing");
     }
 
     public void SetMain()
@@ -681,11 +734,13 @@ public partial class PlayerData : IDisposable
         if (CommonLib.WorkType != WorkType.Client || !IsMainPlayer ||
             _stateMachine.CurrentState != "PrepareSpawn")
         {
+            CurrentModRuntime.Value?.Gameplay.Invoke(new PlayerSpawnedContext(this, componentPlayer, _spawnMode));
             return;
         }
 
         // 如果客户端接收到实体，则立即进入WaitForTerrain，防止卡住
         ClientCachePosition = ComponentPlayer.ComponentBody.Position;
+        CurrentModRuntime.Value?.Gameplay.Invoke(new PlayerSpawnedContext(this, componentPlayer, _spawnMode));
         _stateMachine.TransitionTo("WaitForTerrain");
     }
 
@@ -1098,10 +1153,7 @@ public partial class PlayerData : IDisposable
 
     private void HandleDeath()
     {
-        if (RunMode.Value is RunModeType.Gui)
-        {
-            GameWidget.ActiveCamera = GameWidget.FindCamera<DeathCamera>()!;
-        }
+        ActivateDeathCamera();
 
         if (ComponentPlayer != null)
         {
@@ -1149,6 +1201,27 @@ public partial class PlayerData : IDisposable
         }
 
         Level = MathUtils.Max(MathUtils.Floor(Level / 2f), 1f);
+    }
+
+    private PlayerRespawnRequestKind ResolveRespawnRequestKind()
+    {
+        if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Cruel)
+        {
+            return PlayerRespawnRequestKind.CruelGameOver;
+        }
+
+        if (!SubsystemGameInfo.WorldSettings.IsAdventureRespawnAllowed)
+        {
+            return PlayerRespawnRequestKind.RespawnForbidden;
+        }
+
+        if (SubsystemGameInfo.WorldSettings is
+            { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
+        {
+            return PlayerRespawnRequestKind.AdventureRestart;
+        }
+
+        return PlayerRespawnRequestKind.StandardRespawn;
     }
 
     public static string MakeClothingValue(int index, int color)

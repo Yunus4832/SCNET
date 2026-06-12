@@ -33,6 +33,10 @@ public sealed class GameModRuntime : IDisposable
 
     public BlockBehaviorHooks BlockBehaviors => Host.BlockBehaviors;
 
+    public PlayerContextActionHooks ContextActions => Host.ContextActions;
+
+    public ModNetworkHooks Network => Host.Network;
+
     public IReadOnlyList<LoadedModInfo> GetLoadedMods()
     {
         var blockRegistry = Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
@@ -52,7 +56,8 @@ public sealed class GameModRuntime : IDisposable
                     databaseRegistry,
                     recipeRegistry,
                     clothingRegistry,
-                    contentRegistry)))
+                    contentRegistry,
+                    Host.Network)))
             .ToArray();
     }
 
@@ -256,7 +261,8 @@ public sealed class GameModRuntime : IDisposable
         NamespacedRegistry<XmlDataRegistration> database,
         NamespacedRegistry<XmlDataRegistration> recipes,
         NamespacedRegistry<XmlDataRegistration> clothing,
-        NamespacedRegistry<ContentRegistration> content)
+        NamespacedRegistry<ContentRegistration> content,
+        ModNetworkHooks network)
     {
         var owner = descriptor.Manifest.ModId;
         var lines = new List<string> { $"owner:{owner}" };
@@ -289,6 +295,10 @@ public sealed class GameModRuntime : IDisposable
             .Where(entry => entry.Key.Namespace == owner)
             .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
             .Select(entry => $"content:{entry.Key}:{entry.Value.RelativePath}"));
+        lines.AddRange(network.Registrations
+            .Where(entry => entry.Owner == owner)
+            .OrderBy(entry => entry.MessageType, StringComparer.Ordinal)
+            .Select(entry => $"network:{entry.Owner}:{entry.MessageType}"));
         return HashUtils.ComputeMd5(string.Join('\n', lines));
     }
 }

@@ -18,6 +18,10 @@ public interface IModContext
     IModGameplayHooks Gameplay { get; }
 
     IModBlockBehaviorHooks BlockBehaviors { get; }
+
+    IModPlayerContextActionHooks ContextActions { get; }
+
+    IModNetwork Network { get; }
 }
 
 public interface IModExtensions

@@ -146,6 +146,20 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
 
     public void Attack(ComponentCreature? componentCreature, float maxRange, float maxChaseTime, bool isPersistent)
     {
+        if (componentCreature != null)
+        {
+            var context = new Game.Modding.CreatureTargetScoringContext(
+                _componentCreature,
+                componentCreature,
+                Game.Modding.CreatureTargetingKind.Chase,
+                1f);
+            CurrentModRuntime.Value?.Gameplay.Invoke(context);
+            if (context.Cancel || context.Score <= 0f)
+            {
+                return;
+            }
+        }
+
         _target = componentCreature;
         _nextUpdateTime = 0.0;
         _range = maxRange;
@@ -417,7 +431,19 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 componentCreature.ComponentBody.Position);
             if (num < _range)
             {
-                return _range - num;
+                var score = _range - num;
+                if (score <= 0f)
+                {
+                    return score;
+                }
+
+                var context = new Game.Modding.CreatureTargetScoringContext(
+                    _componentCreature,
+                    componentCreature,
+                    Game.Modding.CreatureTargetingKind.Chase,
+                    score);
+                CurrentModRuntime.Value?.Gameplay.Invoke(context);
+                return context.Cancel ? 0f : context.Score;
             }
         }
 

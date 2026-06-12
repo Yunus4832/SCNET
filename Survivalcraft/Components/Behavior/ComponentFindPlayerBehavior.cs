@@ -181,6 +181,18 @@ public class ComponentFindPlayerBehavior : ComponentBehavior, IUpdateable
             return 0f;
         }
 
-        return num * num - num2;
+        var score = num * num - num2;
+        if (score <= 0f)
+        {
+            return score;
+        }
+
+        var context = new Game.Modding.CreatureTargetScoringContext(
+            _componentCreature,
+            target,
+            Game.Modding.CreatureTargetingKind.FindPlayer,
+            score);
+        CurrentModRuntime.Value?.Gameplay.Invoke(context);
+        return context.Cancel ? 0f : context.Score;
     }
 }

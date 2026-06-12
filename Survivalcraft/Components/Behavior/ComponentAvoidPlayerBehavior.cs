@@ -171,6 +171,18 @@ public class ComponentAvoidPlayerBehavior : ComponentBehavior, IUpdateable
         }
 
         var num2 = Vector3.Distance(target.ComponentBody.Position, _componentCreature.ComponentBody.Position);
-        return MathUtils.Saturate(1f - num2 / num);
+        var score = MathUtils.Saturate(1f - num2 / num);
+        if (score <= 0f)
+        {
+            return score;
+        }
+
+        var context = new Game.Modding.CreatureTargetScoringContext(
+            _componentCreature,
+            target,
+            Game.Modding.CreatureTargetingKind.AvoidPlayer,
+            score);
+        CurrentModRuntime.Value?.Gameplay.Invoke(context);
+        return context.Cancel ? 0f : context.Score;
     }
 }

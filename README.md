@@ -85,6 +85,7 @@ dotnet test Survivalcraft.Test/
 - [Headless 模式](Doc/Headless.md) — 启动方式、参数、配置与运行时行为
 - [构建与共享配置](Doc/BuildAndConfig.md) — 构建流程、共享属性与打包行为
 - [模组开发](Doc/Modding.md) — 模组模板、`.scpak` 构建与 NuGet 包边界
+- [模组平台计划](Doc/ModPlatformPlan.md) — 模组仓库、缓存、配置驱动装载与联机会话重启方案
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问
 - [外部依赖](Doc/Dependencies.md) — 工具链、运行时包与测试依赖
 

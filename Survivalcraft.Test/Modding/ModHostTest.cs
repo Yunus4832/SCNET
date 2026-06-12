@@ -1,4 +1,5 @@
 using Game.Modding;
+using Game.Network.Packages;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -130,6 +131,113 @@ public class ModHostTest
         Assert.Empty(calls);
     }
 
+    [Fact]
+    public void PlayerLifecycleHooksRunByPriorityAndAreRemovedWithOwner()
+    {
+        var calls = new List<string>();
+        var host = new ModHost();
+        var descriptor = new ModDescriptor(
+            new ModManifest("example.players", "Players", "1.0"),
+            () => new PlayerLifecycleHookMod(calls));
+
+        host.LoadAndStart([descriptor]);
+        var context = new PlayerRespawnRequestedContext(
+            null!,
+            new Game.Components.ComponentPlayer(),
+            PlayerRespawnRequestKind.StandardRespawn);
+
+        host.Gameplay.Invoke(context);
+
+        Assert.Equal(["high", "normal"], calls);
+        Assert.True(context.Cancel);
+
+        host.StopAll();
+        calls.Clear();
+        host.Gameplay.Invoke(new PlayerRespawnRequestedContext(
+            null!,
+            new Game.Components.ComponentPlayer(),
+            PlayerRespawnRequestKind.StandardRespawn));
+        Assert.Empty(calls);
+    }
+
+    [Fact]
+    public void ContextActionHooksResolveByPriorityAndAreRemovedWithOwner()
+    {
+        var calls = new List<string>();
+        var host = new ModHost();
+        var descriptor = new ModDescriptor(
+            new ModManifest("example.actions", "Actions", "1.0"),
+            () => new ContextActionHookMod(calls));
+
+        host.LoadAndStart([descriptor]);
+        var action = host.ContextActions.Resolve(new PlayerContextActionQueryContext(
+            new Game.Components.ComponentPlayer(),
+            null!));
+
+        Assert.NotNull(action);
+        Assert.Equal("救援", action!.Label);
+        action.Execute(new PlayerContextActionExecutionContext(
+            new Game.Components.ComponentPlayer(),
+            null!));
+        Assert.Equal(["query:high", "execute:high"], calls);
+
+        host.StopAll();
+        Assert.Null(host.ContextActions.Resolve(new PlayerContextActionQueryContext(
+            new Game.Components.ComponentPlayer(),
+            null!)));
+    }
+
+    [Fact]
+    public void CreatureTargetScoringHooksRunByPriorityAndAreRemovedWithOwner()
+    {
+        var calls = new List<string>();
+        var host = new ModHost();
+        var descriptor = new ModDescriptor(
+            new ModManifest("example.ai", "Ai", "1.0"),
+            () => new CreatureTargetHookMod(calls));
+
+        host.LoadAndStart([descriptor]);
+        var context = new CreatureTargetScoringContext(
+            new Game.Components.ComponentCreature(),
+            new Game.Components.ComponentCreature(),
+            CreatureTargetingKind.Chase,
+            10f);
+
+        host.Gameplay.Invoke(context);
+
+        Assert.Equal(["high", "normal"], calls);
+        Assert.Equal(0f, context.Score);
+
+        host.StopAll();
+        calls.Clear();
+        host.Gameplay.Invoke(new CreatureTargetScoringContext(
+            new Game.Components.ComponentCreature(),
+            new Game.Components.ComponentCreature(),
+            CreatureTargetingKind.Chase,
+            10f));
+        Assert.Empty(calls);
+    }
+
+    [Fact]
+    public void ModNetworkHandlersDispatchByPriorityAndAreRemovedWithOwner()
+    {
+        var calls = new List<string>();
+        var host = new ModHost();
+        var descriptor = new ModDescriptor(
+            new ModManifest("example.net", "Net", "1.0"),
+            () => new ModNetworkHookMod(calls));
+
+        host.LoadAndStart([descriptor]);
+        host.Network.Dispatch(new ModEnvelopePackage("example.net", "downed.sync", []), null, true);
+
+        Assert.Equal(["high", "normal"], calls);
+
+        host.StopAll();
+        calls.Clear();
+        host.Network.Dispatch(new ModEnvelopePackage("example.net", "downed.sync", []), null, true);
+        Assert.Empty(calls);
+    }
+
     private static ModDescriptor Descriptor(
         string id,
         List<string> calls,
@@ -231,6 +339,103 @@ public class ModHostTest
                 calls.Add("normal");
             });
             context.BlockBehaviors.OnEditBlock(edit =>
+            {
+                calls.Add("high");
+            }, 100);
+        }
+
+        public void Start(IModContext context)
+        {
+        }
+
+        public void Stop()
+        {
+        }
+    }
+
+    private sealed class PlayerLifecycleHookMod(List<string> calls) : IMod
+    {
+        public void Configure(IModContext context)
+        {
+            context.Gameplay.OnPlayerRespawnRequested(respawn =>
+            {
+                calls.Add("normal");
+                respawn.Cancel = true;
+            });
+            context.Gameplay.OnPlayerRespawnRequested(respawn =>
+            {
+                calls.Add("high");
+            }, 100);
+        }
+
+        public void Start(IModContext context)
+        {
+        }
+
+        public void Stop()
+        {
+        }
+    }
+
+    private sealed class ContextActionHookMod(List<string> calls) : IMod
+    {
+        public void Configure(IModContext context)
+        {
+            context.ContextActions.ProvideNearbyAction(query =>
+            {
+                calls.Add("query:normal");
+                return new PlayerContextAction("较低优先级", _ => calls.Add("execute:normal"));
+            });
+            context.ContextActions.ProvideNearbyAction(query =>
+            {
+                calls.Add("query:high");
+                return new PlayerContextAction("救援", _ => calls.Add("execute:high"));
+            }, 100);
+        }
+
+        public void Start(IModContext context)
+        {
+        }
+
+        public void Stop()
+        {
+        }
+    }
+
+    private sealed class CreatureTargetHookMod(List<string> calls) : IMod
+    {
+        public void Configure(IModContext context)
+        {
+            context.Gameplay.OnCreatureTargetScoring(target =>
+            {
+                calls.Add("normal");
+                target.Score = 0f;
+            });
+            context.Gameplay.OnCreatureTargetScoring(target =>
+            {
+                calls.Add("high");
+                target.Score *= 0.5f;
+            }, 100);
+        }
+
+        public void Start(IModContext context)
+        {
+        }
+
+        public void Stop()
+        {
+        }
+    }
+
+    private sealed class ModNetworkHookMod(List<string> calls) : IMod
+    {
+        public void Configure(IModContext context)
+        {
+            context.Network.OnMessage("downed.sync", message =>
+            {
+                calls.Add("normal");
+            });
+            context.Network.OnMessage("downed.sync", message =>
             {
                 calls.Add("high");
             }, 100);
