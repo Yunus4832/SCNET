@@ -57,7 +57,7 @@ public static class ModFileClient
                     }
                 }
 
-                GameExitManager.RequestRestart();
+                GameExitManager.RequestRestart(SessionInfoManager.CreateRemoteClientSession(ep, pwd));
             }
         }
         catch (Exception ex)

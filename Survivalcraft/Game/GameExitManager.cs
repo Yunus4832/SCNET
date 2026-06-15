@@ -12,8 +12,14 @@ public static class GameExitManager
 
     public static event Action<GameExitAction>? ExitRequested;
 
-    public static void RequestRestart()
+    public static void RequestRestart(SessionInfo? sessionInfo = null)
     {
+        var effectiveSession = SessionInfoManager.PrepareRestartSession(sessionInfo);
+        RunningSettingManager.SaveCurrent(runningSetting =>
+        {
+            runningSetting.SessionId = effectiveSession.SessionId;
+            runningSetting.Restore = true;
+        });
         ExitAction = GameExitAction.Restart;
         ExitRequested?.Invoke(ExitAction);
         Window.Close();

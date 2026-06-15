@@ -57,6 +57,11 @@ public static class ScreensManager
         Screens.Add(name, screen);
     }
 
+    public static string GetCurrentScreenName()
+    {
+        return CurrentScreen != null ? GetScreenName(CurrentScreen) : string.Empty;
+    }
+
     public static void SwitchScreen(string? name, params object[] parameters)
     {
         SwitchScreen(string.IsNullOrEmpty(name) ? null : FindScreen<Screen>(name), parameters);

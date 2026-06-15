@@ -129,6 +129,12 @@ public static class GameEntry
 
     public static void Closed()
     {
+        if (GameExitManager.ExitAction is not GameExitAction.Restart)
+        {
+            SessionInfoManager.Save(SessionInfoManager.CaptureCurrentSession());
+            RunningSettingManager.SetRestore(false);
+        }
+
         ModRuntime?.Dispose();
         CurrentModRuntime.Set(null);
         SettingsManager.SaveSettings();

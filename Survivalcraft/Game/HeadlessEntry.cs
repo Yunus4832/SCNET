@@ -40,7 +40,7 @@ public static class HeadlessEntry
 #endif
 
             InitializeHeadless();
-            var world = ResolveWorld(runningSetting);
+            var world = SessionInfoManager.ResolveHeadlessWorld(runningSetting.SessionId);
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information(
                 $"Server ports: game={SettingsManager.ServerPort}, broadcast={SettingsManager.BroadcastPort}");
@@ -66,6 +66,14 @@ public static class HeadlessEntry
         {
             try
             {
+                SessionInfoManager.Save(new SessionInfo
+                {
+                    SessionId = RunningSettingManager.Current.SessionId,
+                    Kind = SessionKind.HeadlessServer,
+                    Action = SessionRestoreAction.StartHeadlessServer,
+                    World = GameManager.WorldInfo?.WorldSettings.Name ?? "World",
+                    Seed = GameManager.WorldInfo?.WorldSettings.Seed ?? string.Empty
+                });
                 CommonLib.Net.StopImmediate();
                 GameManager.SaveProject(waitForCompletion: true, showErrorDialog: false);
                 GameManager.DisposeProject();
@@ -116,61 +124,6 @@ public static class HeadlessEntry
                     break;
             }
         }
-    }
-
-    private static WorldInfo ResolveWorld(RunningSetting runningSetting)
-    {
-        var worldArg = string.IsNullOrWhiteSpace(runningSetting.World) ? "World" : runningSetting.World;
-        var seedArg = runningSetting.Seed;
-
-        WorldsManager.UpdateWorldsList();
-        var worlds = WorldsManager.WorldInfos.ToList();
-        Log.Information($"Worlds directory: {GamePaths.Worlds}");
-        Log.Information($"Detected worlds: {string.Join(", ", worlds.Select(w => w.WorldSettings.Name))}");
-
-        var worldName = worlds.FirstOrDefault(w =>
-            string.Equals(w.DirectoryName, worldArg, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(w.WorldSettings.Name, worldArg, StringComparison.OrdinalIgnoreCase));
-        if (worldName == null)
-        {
-            var worldPath = Storage.CombinePaths(GamePaths.Worlds, worldArg);
-            if (Storage.DirectoryExists(worldPath))
-            {
-                worldName = WorldsManager.GetWorldInfo(worldPath);
-            }
-        }
-
-        if (worldName == null)
-        {
-            var worldSettings = new WorldSettings
-            {
-                Name = worldArg,
-                Seed = string.IsNullOrWhiteSpace(seedArg) ? GenerateRandomSeed() : seedArg,
-                OriginalSerializationVersion = VersionsManager.SerializationVersion,
-                RunServer = true,
-                IsNeedCommunityLogin = false
-            };
-            var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldArg);
-            Log.Information($"Creating new world with seed: {worldSettings.Seed}");
-            worldName = WorldsManager.CreateWorld(worldSettings, customWorldDirectoryName);
-        }
-        else
-        {
-            if (!string.IsNullOrWhiteSpace(seedArg))
-            {
-                Log.Warning($"World already exists; ignoring provided seed \"{seedArg}\".");
-            }
-
-            Log.Information($"Using existing world seed: {worldName.WorldSettings.Seed}");
-        }
-
-        return worldName;
-    }
-
-    private static string GenerateRandomSeed()
-    {
-        var seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
-        return seed.ToString(CultureInfo.InvariantCulture);
     }
 
     private static void InitializeHeadless()

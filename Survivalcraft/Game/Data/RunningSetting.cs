@@ -6,9 +6,9 @@ public sealed class RunningSetting
 
     public LogType LogLevel { get; set; } = LogType.Information;
 
-    public string World { get; set; } = "World";
+    public string SessionId { get; set; } = "default";
 
-    public string Seed { get; set; } = string.Empty;
+    public bool Restore { get; set; }
 
     public string[] RemainingArgs { get; set; } = [];
 }

@@ -199,7 +199,11 @@ public class LoadingScreen : Screen
         });
         AddLoadAction(delegate
         {
-            ScreensManager.SwitchScreen("MainMenu");
+            if (!SessionInfoManager.TryRestoreGuiSession())
+            {
+                ScreensManager.SwitchScreen("MainMenu");
+            }
+
             //如果音频库加载失败，则禁止声音播放
             if (!Mixer.IsAudioInitialized)
             {

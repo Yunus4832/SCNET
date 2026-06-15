@@ -43,6 +43,12 @@ public class GameLoadingScreen : Screen
 
     private Stopwatch _timer = null!;
 
+    public WorldInfo? CurrentWorldInfo => _serverEndPoint == null ? _worldInfo : null;
+
+    public IPEndPoint? CurrentServerEndPoint => _serverEndPoint;
+
+    public string CurrentPassword => _password;
+
     public GameLoadingScreen()
     {
         var node = ContentManager.Get<XElement>("Screens/GameLoadingScreen");
