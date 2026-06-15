@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Security.Cryptography;
-
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Serialization;
@@ -40,7 +38,7 @@ public static class HeadlessEntry
 #endif
 
             InitializeHeadless();
-            var world = SessionInfoManager.ResolveHeadlessWorld(runningSetting.SessionId);
+            var world = SessionInfoManager.ResolveHeadlessWorld(runningSetting);
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information(
                 $"Server ports: game={SettingsManager.ServerPort}, broadcast={SettingsManager.BroadcastPort}");
@@ -66,14 +64,17 @@ public static class HeadlessEntry
         {
             try
             {
-                SessionInfoManager.Save(new SessionInfo
+                if (!RunningSettingManager.Current.SessionIsTransient)
                 {
-                    SessionId = RunningSettingManager.Current.SessionId,
-                    Kind = SessionKind.HeadlessServer,
-                    Action = SessionRestoreAction.StartHeadlessServer,
-                    World = GameManager.WorldInfo?.WorldSettings.Name ?? "World",
-                    Seed = GameManager.WorldInfo?.WorldSettings.Seed ?? string.Empty
-                });
+                    SessionInfoManager.Save(new SessionInfo
+                    {
+                        SessionId = RunningSettingManager.Current.ActiveSessionId,
+                        Kind = SessionKind.HeadlessServer,
+                        Action = SessionRestoreAction.StartHeadlessServer,
+                        World = GameManager.WorldInfo?.WorldSettings.Name ?? "World",
+                        Seed = GameManager.WorldInfo?.WorldSettings.Seed ?? string.Empty
+                    });
+                }
                 CommonLib.Net.StopImmediate();
                 GameManager.SaveProject(waitForCompletion: true, showErrorDialog: false);
                 GameManager.DisposeProject();
@@ -132,9 +133,17 @@ public static class HeadlessEntry
         ContentManager.Initialize();
         PackageManager.Initialize();
 
-        _modRuntime = GameModRuntime.StartFromStorageDirectory(GamePaths.Mods, ModSide.Server);
+        var profile = ModProfileManager.LoadEffectiveProfile(RunningSettingManager.Current.ActiveSessionId);
+        var sources = ModProfileResolver.ResolveRequiredPackages(
+            profile,
+            Storage.GetSystemPath(GamePaths.Mods),
+            Log.Information
+        );
+        _modRuntime = GameModRuntime.StartFromPackageSources(sources, ModSide.Server);
         CurrentModRuntime.Set(_modRuntime);
-        _modRuntime.InitializeLanguage(AppConfigStore.Values.TryGetValue("Language", out var language) ? language : "zh-CN");
+        _modRuntime.InitializeLanguage(AppConfigStore.Values.TryGetValue("Language", out var language)
+            ? language
+            : "zh-CN");
         _modRuntime.InitializeContentData();
 
         LightingManager.Initialize();

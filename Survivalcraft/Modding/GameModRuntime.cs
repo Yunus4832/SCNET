@@ -112,6 +112,39 @@ public sealed class GameModRuntime : IDisposable
         }
     }
 
+    public static GameModRuntime StartFromPackageSources(
+        IEnumerable<ModPackageSource> sources,
+        ModSide hostSide,
+        bool fallbackToBuiltInOnFailure = false)
+    {
+        var materializedSources = sources.ToArray();
+        var externalMods = ModPackageCatalog.CreateLoadPlan(materializedSources, hostSide);
+        if (!fallbackToBuiltInOnFailure)
+        {
+            return Start(externalMods);
+        }
+
+        try
+        {
+            var runtime = Start(externalMods);
+            Log.Information(
+                "Loaded mods for {0}: {1}",
+                hostSide,
+                string.Join(", ", runtime.Host.Runtimes.Select(item => item.Descriptor.Manifest.Id)));
+            return runtime;
+        }
+        catch
+        {
+            foreach (var descriptor in externalMods)
+            {
+                descriptor.Lifetime?.Dispose();
+            }
+
+            Log.Error("Failed to load external mods from package sources; continuing with built-in content only.");
+            return Start();
+        }
+    }
+
     public static GameModRuntime StartFromStorageDirectory(string directoryPath, ModSide hostSide)
     {
         if (!Storage.DirectoryExists(directoryPath))

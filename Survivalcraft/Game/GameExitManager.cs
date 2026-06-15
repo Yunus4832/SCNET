@@ -17,8 +17,7 @@ public static class GameExitManager
         var effectiveSession = SessionInfoManager.PrepareRestartSession(sessionInfo);
         RunningSettingManager.SaveCurrent(runningSetting =>
         {
-            runningSetting.SessionId = effectiveSession.SessionId;
-            runningSetting.Restore = true;
+            runningSetting.PendingSessionId = effectiveSession.SessionId;
         });
         ExitAction = GameExitAction.Restart;
         ExitRequested?.Invoke(ExitAction);

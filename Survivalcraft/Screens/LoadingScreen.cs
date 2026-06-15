@@ -154,7 +154,9 @@ public class LoadingScreen : Screen
         {
             Info("初始化模组运行时");
             ContentManager.Initialize();
-            GameEntry.SetModRuntime(GameModRuntime.StartFromStorageDirectory(GamePaths.Mods, ModSide.Client));
+            var profile = ModProfileManager.LoadEffectiveProfile(RunningSettingManager.Current.ActiveSessionId);
+            var sources = ModProfileResolver.ResolveRequiredPackages(profile, Storage.GetSystemPath(GamePaths.Mods), Info);
+            GameEntry.SetModRuntime(GameModRuntime.StartFromPackageSources(sources, ModSide.Client));
             CurrentModRuntime.Value!.InitializeAssets();
             LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
         });
@@ -320,11 +322,15 @@ public class LoadingScreen : Screen
             }
             catch (Exception e)
             {
-                Error(e.Message);
+                ExceptionManager.ReportExceptionToUser("Startup failed.", e);
+                _loadingActions.Clear();
             }
             finally
             {
-                _loadingActions.RemoveAt(0);
+                if (_loadingActions.Count > 0)
+                {
+                    _loadingActions.RemoveAt(0);
+                }
             }
             return;
         }

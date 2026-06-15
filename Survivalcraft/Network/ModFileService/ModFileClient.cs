@@ -57,6 +57,9 @@ public static class ModFileClient
                     }
                 }
 
+                var sessionId = RunningSettingManager.Current.ActiveSessionId;
+                var profile = ModProfileResolver.BuildProfileFromDirectory(sessionId, Utils.ModFileDirectory);
+                ModProfileManager.SaveSessionProfile(sessionId, profile);
                 GameExitManager.RequestRestart(SessionInfoManager.CreateRemoteClientSession(ep, pwd));
             }
         }

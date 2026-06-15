@@ -86,26 +86,10 @@ public static class SessionInfoManager
         }
     }
 
-    public static void UpdateWorldSelection(string? sessionId, string? world, string? seed)
-    {
-        var sessionInfo = Load(sessionId);
-        if (!string.IsNullOrWhiteSpace(world))
-        {
-            sessionInfo.World = NormalizeWorld(world);
-        }
-
-        if (seed != null)
-        {
-            sessionInfo.Seed = seed;
-        }
-
-        Save(sessionInfo);
-    }
-
     public static SessionInfo CaptureCurrentSession()
     {
-        var sessionInfo = Load(RunningSettingManager.Current.SessionId);
-        sessionInfo.SessionId = NormalizeSessionId(RunningSettingManager.Current.SessionId);
+        var sessionInfo = Load(RunningSettingManager.Current.ActiveSessionId);
+        sessionInfo.SessionId = NormalizeSessionId(RunningSettingManager.Current.ActiveSessionId);
         PopulateFromCurrentState(sessionInfo);
         Normalize(sessionInfo);
         return sessionInfo;
@@ -114,7 +98,7 @@ public static class SessionInfoManager
     public static SessionInfo PrepareRestartSession(SessionInfo? sessionInfo = null)
     {
         var effective = sessionInfo ?? CaptureCurrentSession();
-        effective.SessionId = EnsureSessionId();
+        effective.SessionId = CreateRestartSessionId();
         Normalize(effective);
         Save(effective);
         return effective;
@@ -122,8 +106,8 @@ public static class SessionInfoManager
 
     public static SessionInfo CreateRemoteClientSession(IPEndPoint endPoint, string password)
     {
-        var sessionInfo = Load(RunningSettingManager.Current.SessionId);
-        sessionInfo.SessionId = NormalizeSessionId(RunningSettingManager.Current.SessionId);
+        var sessionInfo = Load(RunningSettingManager.Current.ActiveSessionId);
+        sessionInfo.SessionId = NormalizeSessionId(RunningSettingManager.Current.ActiveSessionId);
         sessionInfo.Kind = SessionKind.RemoteClient;
         sessionInfo.Action = SessionRestoreAction.ConnectRemoteServer;
         sessionInfo.ServerHost = endPoint.Address.ToString();
@@ -135,32 +119,72 @@ public static class SessionInfoManager
     public static bool TryRestoreGuiSession()
     {
         var runningSetting = RunningSettingManager.Current;
-        if (!runningSetting.Restore)
+        if (!runningSetting.ShouldEnterSession)
         {
             return false;
         }
 
-        RunningSettingManager.SetRestore(false);
-        if (!TryLoadExisting(runningSetting.SessionId, out var sessionInfo))
+        if (!runningSetting.HasExplicitSessionRequest &&
+            !string.IsNullOrWhiteSpace(runningSetting.PendingSessionId))
         {
-            return false;
+            RunningSettingManager.ClearPendingSession();
         }
+
+        var sessionInfo = ResolveStartupSession(runningSetting);
 
         return sessionInfo.Action switch
         {
             SessionRestoreAction.OpenMainMenu => SwitchTo("MainMenu"),
             SessionRestoreAction.OpenWorldList => SwitchTo("Play"),
             SessionRestoreAction.OpenServerBrowser => SwitchTo("NetPlay"),
-            SessionRestoreAction.LoadSingleplayerWorld => RestoreWorldSession(sessionInfo, startServer: false),
-            SessionRestoreAction.LoadLocalServerWorld => RestoreWorldSession(sessionInfo, startServer: true),
+            SessionRestoreAction.LoadSingleplayerWorld => RestoreWorldSession(
+                sessionInfo,
+                startServer: false,
+                createIfMissing: runningSetting.HasExplicitSessionRequest),
+            SessionRestoreAction.LoadLocalServerWorld => RestoreWorldSession(
+                sessionInfo,
+                startServer: true,
+                createIfMissing: runningSetting.HasExplicitSessionRequest),
             SessionRestoreAction.ConnectRemoteServer => RestoreRemoteClientSession(sessionInfo),
             _ => false
         };
     }
 
-    public static WorldInfo ResolveHeadlessWorld(string? sessionId)
+    public static SessionInfo ResolveStartupSession()
     {
-        var sessionInfo = Load(sessionId);
+        return ResolveStartupSession(RunningSettingManager.Current);
+    }
+
+    public static SessionInfo ResolveStartupSession(RunningSetting runningSetting)
+    {
+        var sessionId = NormalizeSessionId(runningSetting.ActiveSessionId);
+        if (!runningSetting.HasExplicitSessionRequest &&
+            string.IsNullOrWhiteSpace(runningSetting.PendingSessionId) &&
+            runningSetting.DefaultGuiStartupBehavior is not GuiStartupBehavior.EnterDefaultSession &&
+            runningSetting.RunMode is not RunModeType.HeadlessServer)
+        {
+            return Load(sessionId);
+        }
+
+        if (!TryLoadExisting(sessionId, out var sessionInfo))
+        {
+            sessionInfo = CreateSessionForStartup(runningSetting, sessionId);
+        }
+
+        ApplySessionOverrides(sessionInfo, runningSetting);
+        Normalize(sessionInfo);
+        return sessionInfo;
+    }
+
+    public static WorldInfo ResolveHeadlessWorld(RunningSetting runningSetting)
+    {
+        var sessionInfo = ResolveStartupSession(runningSetting);
+        if (!runningSetting.HasExplicitSessionRequest &&
+            !string.IsNullOrWhiteSpace(runningSetting.PendingSessionId))
+        {
+            RunningSettingManager.ClearPendingSession();
+        }
+
         var worldArg = sessionInfo.World;
         var seedArg = sessionInfo.Seed;
 
@@ -330,12 +354,17 @@ public static class SessionInfoManager
         return true;
     }
 
-    private static bool RestoreWorldSession(SessionInfo sessionInfo, bool startServer)
+    private static bool RestoreWorldSession(SessionInfo sessionInfo, bool startServer, bool createIfMissing)
     {
         if (!TryResolveExistingWorld(sessionInfo.World, out var worldInfo))
         {
-            Log.Warning($"Cannot restore session \"{sessionInfo.SessionId}\": world \"{sessionInfo.World}\" not found.");
-            return false;
+            if (!createIfMissing)
+            {
+                Log.Warning($"Cannot restore session \"{sessionInfo.SessionId}\": world \"{sessionInfo.World}\" not found.");
+                return false;
+            }
+
+            worldInfo = CreateWorld(sessionInfo.World, sessionInfo.Seed, runServer: startServer);
         }
 
         if (startServer)
@@ -454,17 +483,9 @@ public static class SessionInfoManager
         }
     }
 
-    private static string EnsureSessionId()
+    private static string CreateRestartSessionId()
     {
-        var sessionId = NormalizeSessionId(RunningSettingManager.Current.SessionId);
-        if (!string.Equals(sessionId, "default", StringComparison.Ordinal))
-        {
-            return sessionId;
-        }
-
-        sessionId = Guid.NewGuid().ToString("N");
-        RunningSettingManager.SaveCurrent(runningSetting => runningSetting.SessionId = sessionId);
-        return sessionId;
+        return $"restart-{Guid.NewGuid():N}";
     }
 
     private static SessionInfo CreateDefault(string sessionId)
@@ -474,11 +495,55 @@ public static class SessionInfoManager
             SessionId = sessionId,
             Kind = SessionKind.Gui,
             Action = SessionRestoreAction.OpenMainMenu,
-            World = "World",
+            World = DefaultWorldForSession(sessionId),
             Seed = string.Empty,
             ServerHost = string.Empty,
             Password = string.Empty
         };
+    }
+
+    private static SessionInfo CreateSessionForStartup(RunningSetting runningSetting, string sessionId)
+    {
+        return new SessionInfo
+        {
+            SessionId = sessionId,
+            Kind = runningSetting.RunMode is RunModeType.HeadlessServer
+                ? SessionKind.HeadlessServer
+                : SessionKind.Singleplayer,
+            Action = runningSetting.RunMode is RunModeType.HeadlessServer
+                ? SessionRestoreAction.StartHeadlessServer
+                : SessionRestoreAction.LoadSingleplayerWorld,
+            World = DefaultWorldForSession(sessionId),
+            Seed = string.Empty
+        };
+    }
+
+    private static void ApplySessionOverrides(SessionInfo sessionInfo, RunningSetting runningSetting)
+    {
+        if (!string.IsNullOrWhiteSpace(runningSetting.SessionWorldOverride))
+        {
+            sessionInfo.World = NormalizeWorld(runningSetting.SessionWorldOverride);
+        }
+
+        if (runningSetting.SessionSeedOverride != null)
+        {
+            sessionInfo.Seed = runningSetting.SessionSeedOverride;
+        }
+    }
+
+    private static WorldInfo CreateWorld(string worldName, string? seed, bool runServer)
+    {
+        var worldSettings = new WorldSettings
+        {
+            Name = NormalizeWorld(worldName),
+            Seed = string.IsNullOrWhiteSpace(seed) ? GenerateRandomSeed() : seed,
+            OriginalSerializationVersion = VersionsManager.SerializationVersion,
+            RunServer = runServer,
+            IsNeedCommunityLogin = false
+        };
+        var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldSettings.Name);
+        Log.Information($"Creating new world with seed: {worldSettings.Seed}");
+        return WorldsManager.CreateWorld(worldSettings, customWorldDirectoryName);
     }
 
     private static void Normalize(SessionInfo sessionInfo)
@@ -525,6 +590,11 @@ public static class SessionInfoManager
     private static string NormalizeWorld(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? "World" : value;
+    }
+
+    private static string DefaultWorldForSession(string sessionId)
+    {
+        return string.Equals(sessionId, "default", StringComparison.Ordinal) ? "World" : sessionId;
     }
 
     private static string GenerateRandomSeed()
