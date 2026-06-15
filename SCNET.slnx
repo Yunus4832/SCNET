@@ -95,6 +95,11 @@
             <Build Solution="ANDROID|*" Project="false"/>
             <Build Solution="DESKTOP|*" Project="false"/>
         </Project>
+        <Project Path="ModServer\ModServer.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+        </Project>
         <Project Path="VerificationBlockMod/VerificationBlockMod.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
