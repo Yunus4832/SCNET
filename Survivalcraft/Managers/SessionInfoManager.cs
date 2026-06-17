@@ -9,7 +9,7 @@ namespace Game.Managers;
 
 public static class SessionInfoManager
 {
-    public const string SessionInfoPath = "config:SessionInfo.xml";
+    public static string SessionInfoPath => GamePaths.SessionInfoFile;
 
     private static readonly HashSet<string> _worldListScreens =
     [
@@ -709,6 +709,7 @@ public static class SessionInfoManager
         if (string.Equals(sessionInfo.SessionId, pendingSessionId, StringComparison.Ordinal) &&
             string.IsNullOrWhiteSpace(sessionInfo.Name))
         {
+            ModProfileManager.DeleteSessionProfile(pendingSessionId);
             Delete(pendingSessionId);
         }
     }

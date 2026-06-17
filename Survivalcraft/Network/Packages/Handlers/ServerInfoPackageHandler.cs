@@ -18,7 +18,7 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
             var p = ScreensManager.FindScreen<NetPlayScreen>("NetPlay", true)!;
             var c = new Connect
             {
-                State = ConnectState.Avaliable,
+                State = ConnectState.Available,
                 IP = package.From?.IPPoint?.ToString() ?? string.Empty
             };
             c.Name = c.IP;

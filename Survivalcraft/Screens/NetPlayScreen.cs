@@ -3,7 +3,6 @@ using System.Xml.Linq;
 
 using Game.ContentProviders;
 using Game.Network;
-using Game.Network.ModFileService;
 using Game.Network.Packages;
 using Game.Network.Serialization;
 
@@ -17,9 +16,9 @@ public class NetPlayScreen : Screen
 {
     public enum ConnectState
     {
-        Unavaliable,
+        Unavailable,
         Checking,
-        Avaliable
+        Available
     }
 
     private enum FilterType
@@ -50,7 +49,7 @@ public class NetPlayScreen : Screen
 
     private readonly ButtonWidget _filter3Button;
 
-    private FilterType _filterType; //0收藏，1本地，2社区服，3其他服
+    private FilterType _filterType; // 0收藏，1本地，2社区服，3其他服
 
     private bool _isLoadingList;
 
@@ -145,7 +144,7 @@ public class NetPlayScreen : Screen
 
             switch (connect.State)
             {
-                case ConnectState.Avaliable:
+                case ConnectState.Available:
                 {
                     labelWidget.Text = $"{connect} ({connect.UsedTime / 2:0} ms)";
                     labelWidget.Color = Color.LightGreen;
@@ -159,7 +158,7 @@ public class NetPlayScreen : Screen
                     labelWidget.Color = Color.White;
                     break;
                 }
-                case ConnectState.Unavaliable:
+                case ConnectState.Unavailable:
                 {
                     labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 15)}";
                     labelWidget.Color = Color.LightRed;
@@ -351,15 +350,13 @@ public class NetPlayScreen : Screen
 
         if (CommonLib.Resolve(found.IP, out var ep))
         {
-            if (!string.IsNullOrEmpty(connect.ModServerAddress))
+            if (!string.IsNullOrWhiteSpace(connect.ModServerAddress))
             {
-                ModFileClient.DownloadModAndJoinServer(connect.ModServerAddress, ep!, passwd);
+                Log.Information($"远程模组仓库已声明为: {connect.ModServerAddress}");
             }
-            else
-            {
-                DialogsManager.HideAllDialogs();
-                ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, ep!, passwd);
-            }
+
+            DialogsManager.HideAllDialogs();
+            ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, ep!, passwd);
         }
         else
         {
@@ -446,16 +443,16 @@ public class NetPlayScreen : Screen
         }
 
         ConnectionDirectory.Discovered.Sort((c1, c2) => (int)c2.State - (int)c1.State);
-        foreach (var connnection in ConnectionDirectory.Discovered)
+        foreach (var connection in ConnectionDirectory.Discovered)
         {
-            if (_filterType == FilterType.Community && connnection.FromCommunity)
+            if (_filterType == FilterType.Community && connection.FromCommunity)
             {
-                AddConnectToListWidget(connnection);
+                AddConnectToListWidget(connection);
             }
 
-            if (_filterType == FilterType.CommunityOther && connnection.FromCommunityOther)
+            if (_filterType == FilterType.CommunityOther && connection.FromCommunityOther)
             {
-                AddConnectToListWidget(connnection);
+                AddConnectToListWidget(connection);
             }
         }
 
@@ -547,13 +544,13 @@ public class NetPlayScreen : Screen
 
             if (c.State == ConnectState.Checking)
             {
-                c.State = ConnectState.Unavaliable;
+                c.State = ConnectState.Unavailable;
             }
         }
         catch (Exception e)
         {
             Log.Error(e);
-            c.State = ConnectState.Unavaliable;
+            c.State = ConnectState.Unavailable;
         }
         finally
         {

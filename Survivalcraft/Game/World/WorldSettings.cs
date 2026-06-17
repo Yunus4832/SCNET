@@ -40,6 +40,8 @@ public class WorldSettings
 
     public ushort MaxOnlinePlayerCount = 20;
 
+    public ModProfileResolutionStrategy ModProfileResolutionStrategy = ModProfileResolutionStrategy.GlobalPlusWorld;
+
     public string Name = string.Empty;
 
     public string OriginalSerializationVersion = string.Empty;
@@ -165,6 +167,10 @@ public class WorldSettings
         RunServer = valuesDictionary.GetValue("RunServer", false);
         IsNeedCommunityLogin = valuesDictionary.GetValue("IsNeedCommunityLogin", true);
         MaxOnlinePlayerCount = valuesDictionary.GetValue("MaxOnlinePlayerCount", MaxOnlinePlayerCount);
+        ModProfileResolutionStrategy = valuesDictionary.GetValue(
+            nameof(ModProfileResolutionStrategy),
+            ModProfileResolutionStrategy.GlobalPlusWorld
+        );
         BlocksTextureName = valuesDictionary.GetValue("BlockTextureName", string.Empty);
         DisableBlocks = valuesDictionary.GetValue("DisableBlocks", DisableBlocks);
         Palette = new WorldPalette(valuesDictionary.GetValue("Palette", new ValuesDictionary()));
@@ -217,6 +223,7 @@ public class WorldSettings
         valuesDictionary.SetValue("RunServer", RunServer);
         valuesDictionary.SetValue("KeywordBlocking", XmlConvert.EncodeName(KeywordBlocking));
         valuesDictionary.SetValue("IsNeedCommunityLogin", IsNeedCommunityLogin);
+        valuesDictionary.SetValue(nameof(ModProfileResolutionStrategy), ModProfileResolutionStrategy);
         if (!liveModifiableParametersOnly)
         {
             valuesDictionary.SetValue("WorldSeedString", Seed);

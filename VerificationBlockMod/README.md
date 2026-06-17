@@ -18,6 +18,6 @@ dotnet build Survivalcraft/Survivalcraft.csproj -c Debug -f net10.0
 dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
 ```
 
-Copy `bin/Debug/net10.0/packages/verification.block.scpak` into the game's `NetMods` directory and restart the game. For the repository Linux build, that directory is `Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/NetMods`.
+Copy `bin/Debug/net10.0/packages/verification.block.scpak` into the game's `Mods` directory and restart the game. For the repository Linux build, that directory is `Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/Mods`.
 
 The block appears near the beginning of the `Construction` creative category as `Verification Block` and uses existing texture slot `182`. While the mod is active, player damage is halved and the verification block can be mined ten times faster.

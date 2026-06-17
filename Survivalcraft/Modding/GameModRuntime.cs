@@ -145,6 +145,17 @@ public sealed class GameModRuntime : IDisposable
         }
     }
 
+    public static GameModRuntime StartFromProfile(
+        ModProfile profile,
+        string localRepositoryPath,
+        ModSide hostSide,
+        Action<string>? log = null,
+        bool fallbackToBuiltInOnFailure = false)
+    {
+        var sources = ModProfileResolver.ResolveRequiredPackages(profile, localRepositoryPath, log);
+        return StartFromPackageSources(sources, hostSide, fallbackToBuiltInOnFailure);
+    }
+
     public static GameModRuntime StartFromStorageDirectory(string directoryPath, ModSide hostSide)
     {
         if (!Storage.DirectoryExists(directoryPath))

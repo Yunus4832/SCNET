@@ -4,7 +4,7 @@ namespace Game.Managers;
 
 public static class RunningSettingManager
 {
-    public const string RunningSettingPath = "config:RunningSetting.xml";
+    public static string RunningSettingPath => GamePaths.RunningSettingFile;
 
     public static RunningSetting Current { get; private set; } = new();
 

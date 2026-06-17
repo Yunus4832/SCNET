@@ -106,7 +106,7 @@ public static class CommonLib
         c.HasPassword = r.GetBool();
         c.IsNeedLoginCommunity = r.GetBool();
         c.TimeOfDay = r.GetFloat();
-        c.State = NetPlayScreen.ConnectState.Avaliable;
+        c.State = NetPlayScreen.ConnectState.Available;
         c.UsedTime = s.ElapsedMilliseconds;
         if (!isLocal)
         {

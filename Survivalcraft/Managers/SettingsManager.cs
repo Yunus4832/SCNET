@@ -243,8 +243,6 @@ public static class SettingsManager
     /// </summary>
     public static string LiteNetLibLogLevel { get; set; } = "Error";
 
-    public static bool StartModServer { get; set; } = true;
-
     public static string ModServerAddress { get; set; } = string.Empty;
 
     public static int RejectedUpdateCount { get; set; } = 0;

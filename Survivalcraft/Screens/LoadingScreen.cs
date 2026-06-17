@@ -152,11 +152,34 @@ public class LoadingScreen : Screen
     {
         AddLoadAction(delegate
         {
+            LocalModsImportManager.ImportInstalledMods(
+                Storage.GetSystemPath(GamePaths.Mods),
+                Storage.GetSystemPath(GamePaths.ModCache),
+                Info
+            );
+            var startupSession = SessionInfoManager.ResolveStartupSession();
+            if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
+                    RunningSettingManager.Current.ActiveSessionId,
+                    startupSession,
+                    Storage.GetSystemPath(GamePaths.ModCache),
+                    Info))
+            {
+                return;
+            }
+
             Info("初始化模组运行时");
             ContentManager.Initialize();
-            var profile = ModProfileManager.LoadEffectiveProfile(RunningSettingManager.Current.ActiveSessionId);
-            var sources = ModProfileResolver.ResolveRequiredPackages(profile, Storage.GetSystemPath(GamePaths.Mods), Info);
-            GameEntry.SetModRuntime(GameModRuntime.StartFromPackageSources(sources, ModSide.Client));
+            var profile = ModProfileManager.LoadEffectiveProfile(
+                RunningSettingManager.Current.ActiveSessionId,
+                startupSession
+            );
+            GameEntry.SetModRuntime(GameModRuntime.StartFromProfile(
+                    profile,
+                    Storage.GetSystemPath(GamePaths.ModCache),
+                    ModSide.Client,
+                    Info
+                )
+            );
             CurrentModRuntime.Value!.InitializeAssets();
             LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
         });
@@ -170,7 +193,7 @@ public class LoadingScreen : Screen
         AddLoadAction(PackageManager.Initialize);
         AddLoadAction(delegate
         {
-            //初始化TextureAtlas
+            // 初始化TextureAtlas
             Info("初始化纹理地图");
             TextureAtlasManager.Initialize();
         });
@@ -206,7 +229,7 @@ public class LoadingScreen : Screen
                 ScreensManager.SwitchScreen("MainMenu");
             }
 
-            //如果音频库加载失败，则禁止声音播放
+            // 如果音频库加载失败，则禁止声音播放
             if (!Mixer.IsAudioInitialized)
             {
                 DialogsManager.Alert("音频系统加载失败，设备播放声音可能出现问题");
@@ -314,28 +337,27 @@ public class LoadingScreen : Screen
             return;
         }
 
-        if (_loadingActions.Count > 0)
+        if (_loadingActions.Count <= 0)
         {
-            try
-            {
-                _loadingActions[0].Invoke();
-            }
-            catch (Exception e)
-            {
-                ExceptionManager.ReportExceptionToUser("Startup failed.", e);
-                _loadingActions.Clear();
-            }
-            finally
-            {
-                if (_loadingActions.Count > 0)
-                {
-                    _loadingActions.RemoveAt(0);
-                }
-            }
             return;
         }
 
-        return;
+        try
+        {
+            _loadingActions[0].Invoke();
+        }
+        catch (Exception e)
+        {
+            ExceptionManager.ReportExceptionToUser("Startup failed.", e);
+            _loadingActions.Clear();
+        }
+        finally
+        {
+            if (_loadingActions.Count > 0)
+            {
+                _loadingActions.RemoveAt(0);
+            }
+        }
     }
 
     private class LogItem(LogType type, string log)

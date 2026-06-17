@@ -3,7 +3,6 @@ using System.Net;
 using EntitySystem.Core;
 
 using Game.Network.Enums;
-using Game.Network.ModFileService;
 using Game.Network.Packages;
 using Game.Network.Serialization;
 
@@ -505,12 +504,6 @@ public class NetNode
 
             if (flag)
             {
-                if (SettingsManager.StartModServer && !string.IsNullOrEmpty(SettingsManager.ModServerAddress))
-                {
-                    ModFileServer.StartServer(SettingsManager.ModServerAddress);
-                    Log.Information("模组服务器已开启");
-                }
-
                 if (!string.IsNullOrEmpty(SettingsManager.ModServerAddress))
                 {
                     Log.Information($"模组服务器已被指定为: {SettingsManager.ModServerAddress}");

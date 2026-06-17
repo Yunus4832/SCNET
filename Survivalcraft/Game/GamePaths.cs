@@ -10,7 +10,7 @@ public static class GamePaths
 
     public static string ScreenCaptures => $"{External}/ScreenCapture";
 
-    public static string Mods => $"{External}/NetMods";
+    public static string Mods => $"{External}/Mods";
 
     public static string Worlds => $"{_gameDataPath}/Worlds";
 
@@ -28,5 +28,17 @@ public static class GamePaths
 
     public static string Logs => $"{External}/Logs";
 
+    public static string RunningSettingFile => "config:RunningSetting.xml";
+
+    public static string SessionInfoFile => "config:SessionInfo.xml";
+
     public static string SettingsFile => "config:Settings.xml";
+
+    public static string GlobalModProfileFile => "config:ModProfile.xml";
+
+    public static string SessionProfilesDirectory => Storage.CombinePaths(Config, "SessionProfiles");
+
+    public static string LocalModsImportStateFile => "config:LocalModsImportState.xml";
+
+    public static string NetChunksTempFile => "config:NetChunks.tmp";
 }

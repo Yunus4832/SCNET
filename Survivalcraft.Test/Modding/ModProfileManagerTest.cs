@@ -2,7 +2,10 @@ using System.Xml.Linq;
 
 using Engine.FileStorage;
 
+using EntitySystem.TemplatesDatabase;
+
 using Game;
+using Game.Managers;
 using Game.Modding;
 
 namespace Survivalcraft.Test.Modding;
@@ -13,6 +16,8 @@ public sealed class ModProfileManagerTest : IDisposable
     private readonly FileBackup _globalProfileBackup = FileBackup.Create(ModProfileManager.GlobalProfilePath);
     private readonly DirectoryBackup _sessionProfilesBackup =
         DirectoryBackup.Create(Storage.CombinePaths(GamePaths.Config, "SessionProfiles"));
+    private readonly DirectoryBackup _worldsBackup =
+        DirectoryBackup.Create(GamePaths.Worlds);
 
     [Fact]
     public void LoadEffectiveProfilePrefersSessionProfile()
@@ -24,7 +29,7 @@ public sealed class ModProfileManagerTest : IDisposable
               </Packages>
             </ModProfile>
             """);
-        ModProfileManager.SaveSessionProfile("session-a", new ModProfile
+        ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "session-a",
             RepositoryUrl = "https://session.example/",
@@ -50,6 +55,32 @@ public sealed class ModProfileManagerTest : IDisposable
     }
 
     [Fact]
+    public void LoadSessionProfileReturnsModProfile()
+    {
+        ModProfileManager.SaveSessionProfile(new ModProfile
+        {
+            Id = "session-b",
+            RepositoryUrl = "https://session.example/",
+            Packages =
+            [
+                new ModPackageRequirement
+                {
+                    ModId = "session.mod",
+                    Version = "2.0.0",
+                    PackageHash = "abc"
+                }
+            ]
+        });
+
+        var profile = ModProfileManager.LoadSessionProfile("session-b");
+
+        Assert.NotNull(profile);
+        Assert.Equal("session-b", profile!.Id);
+        Assert.Equal("https://session.example", profile.RepositoryUrl);
+        Assert.Equal("session.mod", Assert.Single(profile.Packages).ModId);
+    }
+
+    [Fact]
     public void LoadEffectiveProfileFallsBackToDefaultWhenNoProfileExists()
     {
         DeleteIfExists(ModProfileManager.GlobalProfilePath);
@@ -62,10 +93,169 @@ public sealed class ModProfileManagerTest : IDisposable
         Assert.Empty(profile.Packages);
     }
 
+    [Fact]
+    public void SaveWorldProfileUsesWorldDirectorySidecar()
+    {
+        var worldDirectoryName = CreateWorldDirectory("WorldSidecar", ModProfileResolutionStrategy.WorldOnly);
+        ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
+        {
+            Id = "ignored",
+            Packages =
+            [
+                new ModPackageRequirement
+                {
+                    ModId = "world.mod",
+                    Version = "1.0.0"
+                }
+            ]
+        });
+
+        var path = ModProfileManager.GetWorldProfilePath(worldDirectoryName);
+        using var stream = Storage.OpenFile(path, OpenFileMode.Read);
+        var root = XElement.Load(stream);
+
+        Assert.Equal("ModProfile", root.Name.LocalName);
+        Assert.Equal(Path.GetFileName(worldDirectoryName), root.Attribute(nameof(ModProfile.Id))?.Value);
+    }
+
+    [Fact]
+    public void LoadEffectiveProfileUsesWorldOnlyStrategyWhenNoSessionProfileExists()
+    {
+        DeleteIfExists(ModProfileManager.GlobalProfilePath);
+        var worldDirectoryName = CreateWorldDirectory("WorldOnly", ModProfileResolutionStrategy.WorldOnly);
+        ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
+        {
+            Packages =
+            [
+                new ModPackageRequirement
+                {
+                    ModId = "world.mod",
+                    Version = "2.0.0"
+                }
+            ]
+        });
+
+        var profile = ModProfileManager.LoadEffectiveProfile("missing-session", new SessionInfo
+        {
+            Target = SessionTarget.World,
+            World = "WorldOnly"
+        });
+
+        var package = Assert.Single(profile.Packages);
+        Assert.Equal("world.mod", package.ModId);
+        Assert.Equal("2.0.0", package.Version);
+    }
+
+    [Fact]
+    public void NewWorldDefaultsToGlobalPlusWorldStrategy()
+    {
+        var worldSettings = new WorldSettings();
+
+        Assert.Equal(ModProfileResolutionStrategy.GlobalPlusWorld, worldSettings.ModProfileResolutionStrategy);
+    }
+
+    [Fact]
+    public void LoadEffectiveProfileResolvesWorldProfileByWorldNameNotOnlyDirectoryName()
+    {
+        DeleteIfExists(ModProfileManager.GlobalProfilePath);
+        var worldDirectoryName = CreateWorldDirectory(
+            "VisibleWorldName",
+            ModProfileResolutionStrategy.WorldOnly,
+            directoryName: "HiddenDirectoryName");
+        ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
+        {
+            Packages =
+            [
+                new ModPackageRequirement
+                {
+                    ModId = "world.mod",
+                    Version = "5.0.0"
+                }
+            ]
+        });
+
+        var profile = ModProfileManager.LoadEffectiveProfile("missing-session", new SessionInfo
+        {
+            Target = SessionTarget.World,
+            World = "VisibleWorldName"
+        });
+
+        var package = Assert.Single(profile.Packages);
+        Assert.Equal("world.mod", package.ModId);
+        Assert.Equal("5.0.0", package.Version);
+    }
+
+    [Fact]
+    public void LoadEffectiveProfileMergesGlobalAndWorldProfileAccordingToStrategy()
+    {
+        SaveGlobalProfile("""
+            <ModProfile Id="global" RepositoryUrl="https://global.example">
+              <Packages>
+                <Package ModId="shared.mod" Version="1.0.0" />
+                <Package ModId="global.mod" Version="1.0.0" />
+              </Packages>
+            </ModProfile>
+            """);
+        var worldDirectoryName = CreateWorldDirectory("WorldMerge", ModProfileResolutionStrategy.GlobalPlusWorld);
+        ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
+        {
+            RepositoryUrl = "https://world.example/",
+            Packages =
+            [
+                new ModPackageRequirement
+                {
+                    ModId = "shared.mod",
+                    Version = "2.0.0"
+                },
+                new ModPackageRequirement
+                {
+                    ModId = "world.mod",
+                    Version = "1.0.0"
+                }
+            ]
+        });
+
+        var profile = ModProfileManager.LoadEffectiveProfile("missing-session", new SessionInfo
+        {
+            Target = SessionTarget.World,
+            World = "WorldMerge"
+        });
+
+        Assert.Equal("https://world.example", profile.RepositoryUrl);
+        Assert.Equal(
+            ["global.mod:1.0.0", "shared.mod:2.0.0", "world.mod:1.0.0"],
+            profile.Packages.Select(package => $"{package.ModId}:{package.Version}").OrderBy(x => x));
+    }
+
+    [Fact]
+    public void SaveSessionProfileUsesDedicatedSessionRoot()
+    {
+        ModProfileManager.SaveSessionProfile(new ModProfile
+        {
+            Id = "session-c",
+            Packages =
+            [
+                new ModPackageRequirement
+                {
+                    ModId = "session.mod",
+                    Version = "3.0.0"
+                }
+            ]
+        });
+
+        var path = Storage.CombinePaths(GamePaths.Config, "SessionProfiles", "session-c.xml");
+        using var stream = Storage.OpenFile(path, OpenFileMode.Read);
+        var root = XElement.Load(stream);
+
+        Assert.Equal("ModProfile", root.Name.LocalName);
+        Assert.Equal("session-c", root.Attribute(nameof(ModProfile.Id))?.Value);
+    }
+
     public void Dispose()
     {
         _globalProfileBackup.Dispose();
         _sessionProfilesBackup.Dispose();
+        _worldsBackup.Dispose();
     }
 
     private static void SaveGlobalProfile(string xml)
@@ -98,6 +288,45 @@ public sealed class ModProfileManagerTest : IDisposable
         {
             DeleteDirectoryRecursive(path);
         }
+    }
+
+    private static string CreateWorldDirectory(
+        string worldName,
+        ModProfileResolutionStrategy strategy,
+        string? directoryName = null)
+    {
+        if (!Storage.DirectoryExists(GamePaths.Worlds))
+        {
+            Storage.CreateDirectory(GamePaths.Worlds);
+        }
+
+        var worldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, directoryName ?? worldName);
+        if (!Storage.DirectoryExists(worldDirectoryName))
+        {
+            Storage.CreateDirectory(worldDirectoryName);
+        }
+
+        var worldSettings = new WorldSettings
+        {
+            Name = worldName,
+            Seed = "seed",
+            ModProfileResolutionStrategy = strategy
+        };
+        var rootNode = new ValuesDictionary();
+        var subsystems = new ValuesDictionary();
+        var gameInfo = new ValuesDictionary();
+        rootNode.SetValue("Version", VersionsManager.SerializationVersion);
+        rootNode.SetValue("Subsystems", subsystems);
+        subsystems.SetValue("GameInfo", gameInfo);
+        worldSettings.Save(gameInfo, false);
+        gameInfo.SetValue("WorldDirectoryName", worldDirectoryName);
+        gameInfo.SetValue("WorldSeed", 1);
+
+        using var stream = Storage.OpenFile(Storage.CombinePaths(worldDirectoryName, "Project.json"), OpenFileMode.Create);
+        using var writer = new StreamWriter(stream);
+        writer.Write(rootNode.ToJsonText());
+
+        return worldDirectoryName;
     }
 
     private sealed class FileBackup : IDisposable

@@ -2,29 +2,29 @@ namespace Game.TerrainSerializers;
 
 public class TerrainSerializerNet : TerrainSerializer24
 {
-    private const string _path = "config:NetChunks.tmp";
+    private static string Path => GamePaths.NetChunksTempFile;
 
     public TerrainSerializerNet()
     {
-        if (Storage.DirectoryExists(_path))
+        if (Storage.DirectoryExists(Path))
         {
-            Delete(_path);
+            Delete(Path);
         }
         else
         {
-            Storage.CreateDirectory(_path);
+            Storage.CreateDirectory(Path);
         }
 
         storage = new RegionFileStorage(this);
-        storage.Open(_path);
+        storage.Open(Path);
     }
 
     public override void Dispose()
     {
         base.Dispose();
-        if (Storage.DirectoryExists(_path))
+        if (Storage.DirectoryExists(Path))
         {
-            Delete(_path);
+            Delete(Path);
         }
     }
 

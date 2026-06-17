@@ -1,4 +1,5 @@
 using System.Globalization;
+
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Serialization;
@@ -121,18 +122,35 @@ public static class HeadlessEntry
         SettingsManager.Initialize();
         ContentManager.Initialize();
         PackageManager.Initialize();
-
-        var profile = ModProfileManager.LoadEffectiveProfile(RunningSettingManager.Current.ActiveSessionId);
-        var sources = ModProfileResolver.ResolveRequiredPackages(
-            profile,
+        LocalModsImportManager.ImportInstalledMods(
             Storage.GetSystemPath(GamePaths.Mods),
+            Storage.GetSystemPath(GamePaths.ModCache),
             Log.Information
         );
-        _modRuntime = GameModRuntime.StartFromPackageSources(sources, ModSide.Server);
+
+        var runningSetting = RunningSettingManager.Current;
+        var startupSession = SessionInfoManager.ResolveStartupSession(runningSetting);
+        if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
+                runningSetting.ActiveSessionId,
+                startupSession,
+                Storage.GetSystemPath(GamePaths.ModCache),
+                Log.Information))
+        {
+            return;
+        }
+
+        var profile = ModProfileManager.LoadEffectiveProfile(runningSetting.ActiveSessionId, startupSession);
+        _modRuntime = GameModRuntime.StartFromProfile(
+            profile,
+            Storage.GetSystemPath(GamePaths.ModCache),
+            ModSide.Server,
+            Log.Information
+        );
         CurrentModRuntime.Set(_modRuntime);
         _modRuntime.InitializeLanguage(AppConfigStore.Values.TryGetValue("Language", out var language)
             ? language
-            : "zh-CN");
+            : "zh-CN"
+        );
         _modRuntime.InitializeContentData();
 
         LightingManager.Initialize();
