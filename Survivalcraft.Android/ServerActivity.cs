@@ -177,7 +177,12 @@ public class ServerActivity : BlackActivity
 
     private void RequestGuiMode()
     {
-        RunningSettingManager.SetRunMode(RunModeType.Gui);
+        RunningSettingManager.SaveCurrent(runningSetting =>
+            {
+                runningSetting.RunMode = RunModeType.Gui;
+                runningSetting.PendingSessionId = string.Empty;
+            }
+        );
         _switchToGuiRequested = true;
         RequestStop();
     }
@@ -228,10 +233,7 @@ public class ServerActivity : BlackActivity
 
     private void OnLogMsgAdded(string message)
     {
-        RunOnUiThread(() =>
-        {
-            AppendLogLine(message);
-        });
+        RunOnUiThread(() => { AppendLogLine(message); });
     }
 
     private void AppendLogLine(string line)

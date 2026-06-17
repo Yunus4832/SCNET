@@ -14,16 +14,18 @@ public static class RunningSettingManager
         Normalize(runningSetting);
         EnsureFileExists(runningSetting);
         runningSetting.RemainingArgs = MergeCommandLine(runningSetting, args, out var saveRequested);
-        FinalizeStartupState(runningSetting, saveRequested);
+        FinalizeStartupState(runningSetting);
 
         Current = Clone(runningSetting);
-        if (saveRequested)
+        if (!saveRequested)
         {
-            Save(runningSetting);
-            if (runningSetting.HasExplicitSessionRequest)
-            {
-                SessionInfoManager.Save(SessionInfoManager.ResolveStartupSession(runningSetting));
-            }
+            return runningSetting;
+        }
+
+        Save(runningSetting);
+        if (!string.IsNullOrWhiteSpace(runningSetting.ActiveSessionId))
+        {
+            SessionInfoManager.Save(SessionInfoManager.ResolveStartupSession(runningSetting));
         }
 
         return runningSetting;
@@ -42,9 +44,8 @@ public static class RunningSettingManager
             var root = new XElement("RunningSetting",
                 new XAttribute(nameof(RunningSetting.RunMode), runningSetting.RunMode.ToString()),
                 new XAttribute(nameof(RunningSetting.LogLevel), runningSetting.LogLevel.ToString()),
-                new XAttribute(nameof(RunningSetting.DefaultSessionId), NormalizeSessionId(runningSetting.DefaultSessionId)),
+                new XAttribute(nameof(RunningSetting.DefaultSessionId), NormalizeDefaultSessionId(runningSetting.DefaultSessionId)),
                 new XAttribute(nameof(RunningSetting.PendingSessionId), NormalizePendingSessionId(runningSetting.PendingSessionId)),
-                new XAttribute(nameof(RunningSetting.DefaultGuiStartupBehavior), runningSetting.DefaultGuiStartupBehavior),
                 new XElement(nameof(RunningSetting.RemainingArgs),
                     runningSetting.RemainingArgs.Select(arg => new XElement("Arg", arg)))
             );
@@ -99,23 +100,10 @@ public static class RunningSettingManager
             runningSetting.LogLevel = ParseLogLevel(
                 root.Attribute(nameof(RunningSetting.LogLevel))?.Value,
                 runningSetting.LogLevel);
-            runningSetting.DefaultSessionId = NormalizeSessionId(
-                root.Attribute(nameof(RunningSetting.DefaultSessionId))?.Value ??
-                root.Attribute("PersistedSessionId")?.Value ??
-                root.Attribute("SessionId")?.Value);
+            runningSetting.DefaultSessionId = NormalizeDefaultSessionId(
+                root.Attribute(nameof(RunningSetting.DefaultSessionId))?.Value);
             runningSetting.PendingSessionId = NormalizePendingSessionId(
                 root.Attribute(nameof(RunningSetting.PendingSessionId))?.Value);
-            runningSetting.DefaultGuiStartupBehavior = ParseGuiStartupBehavior(
-                root.Attribute(nameof(RunningSetting.DefaultGuiStartupBehavior))?.Value ??
-                root.Attribute("StartupBehavior")?.Value,
-                runningSetting.DefaultGuiStartupBehavior);
-
-            if (string.IsNullOrWhiteSpace(runningSetting.PendingSessionId) &&
-                bool.TryParse(root.Attribute("Restore")?.Value, out var restore) &&
-                restore)
-            {
-                runningSetting.PendingSessionId = NormalizeSessionId(root.Attribute("SessionId")?.Value);
-            }
 
             runningSetting.RemainingArgs = root.Element(nameof(RunningSetting.RemainingArgs))?
                 .Elements("Arg")
@@ -161,23 +149,24 @@ public static class RunningSettingManager
                 continue;
             }
 
-            if (string.Equals(arg, "--restore", StringComparison.OrdinalIgnoreCase))
-            {
-                if (!string.IsNullOrWhiteSpace(runningSetting.PendingSessionId))
-                {
-                    runningSetting.ShouldEnterSession = true;
-                }
-
-                continue;
-            }
-
             if (string.Equals(arg, "--session", StringComparison.OrdinalIgnoreCase))
             {
                 if (i + 1 < args.Length)
                 {
-                    runningSetting.ActiveSessionId = NormalizeSessionId(args[++i]);
-                    runningSetting.HasExplicitSessionRequest = true;
-                    runningSetting.ShouldEnterSession = true;
+                    var sessionName = NormalizeSessionName(args[++i]);
+                    if (!string.IsNullOrWhiteSpace(sessionName))
+                    {
+                        runningSetting.RequestedSessionName = sessionName;
+                        runningSetting.HasExplicitSessionRequest = true;
+                    }
+                    else
+                    {
+                        Log.Warning("Ignoring --session because the session name is missing.");
+                    }
+                }
+                else
+                {
+                    Log.Warning("Ignoring --session because the session name is missing.");
                 }
 
                 continue;
@@ -232,34 +221,28 @@ public static class RunningSettingManager
         return remainingArgs.ToArray();
     }
 
-    private static void FinalizeStartupState(RunningSetting runningSetting, bool saveRequested)
+    private static void FinalizeStartupState(RunningSetting runningSetting)
     {
         if (runningSetting.HasExplicitSessionRequest)
         {
-            runningSetting.ActiveSessionId = NormalizeSessionId(runningSetting.ActiveSessionId);
-            runningSetting.ShouldEnterSession = true;
-            runningSetting.SessionIsTransient = !saveRequested;
-            if (saveRequested)
-            {
-                runningSetting.DefaultSessionId = runningSetting.ActiveSessionId;
-            }
-
+            runningSetting.RequestedSessionName = NormalizeSessionName(runningSetting.RequestedSessionName);
+            runningSetting.ActiveSessionId = SessionInfoManager.ResolveSessionIdForName(runningSetting.RequestedSessionName);
             return;
         }
 
         if (!string.IsNullOrWhiteSpace(runningSetting.PendingSessionId))
         {
             runningSetting.ActiveSessionId = NormalizeSessionId(runningSetting.PendingSessionId);
-            runningSetting.ShouldEnterSession = true;
-            runningSetting.SessionIsTransient = true;
             return;
         }
 
-        runningSetting.ActiveSessionId = NormalizeSessionId(runningSetting.DefaultSessionId);
-        runningSetting.SessionIsTransient = false;
-        runningSetting.ShouldEnterSession =
-            runningSetting.RunMode is RunModeType.HeadlessServer ||
-            runningSetting.DefaultGuiStartupBehavior is GuiStartupBehavior.EnterDefaultSession;
+        if (!string.IsNullOrWhiteSpace(runningSetting.DefaultSessionId))
+        {
+            runningSetting.ActiveSessionId = NormalizeSessionId(runningSetting.DefaultSessionId);
+            return;
+        }
+
+        runningSetting.ActiveSessionId = Guid.NewGuid().ToString("N");
     }
 
     private static RunningSetting LoadCurrent()
@@ -301,20 +284,14 @@ public static class RunningSettingManager
         return Enum.TryParse(value, true, out LogType logLevel) ? logLevel : fallback;
     }
 
-    private static GuiStartupBehavior ParseGuiStartupBehavior(string? value, GuiStartupBehavior fallback)
-    {
-        return Enum.TryParse(value, true, out GuiStartupBehavior behavior) ? behavior : fallback;
-    }
-
     private static void Normalize(RunningSetting runningSetting)
     {
-        runningSetting.DefaultSessionId = NormalizeSessionId(runningSetting.DefaultSessionId);
+        runningSetting.DefaultSessionId = NormalizeDefaultSessionId(runningSetting.DefaultSessionId);
         runningSetting.PendingSessionId = NormalizePendingSessionId(runningSetting.PendingSessionId);
-        runningSetting.ActiveSessionId = NormalizeSessionId(
-            string.IsNullOrWhiteSpace(runningSetting.ActiveSessionId)
-                ? runningSetting.DefaultSessionId
-                : runningSetting.ActiveSessionId);
-        runningSetting.RemainingArgs ??= [];
+        runningSetting.ActiveSessionId = NormalizeActiveSessionId(runningSetting.ActiveSessionId);
+        runningSetting.DefaultSessionId = NormalizePersistedSessionReference(runningSetting.DefaultSessionId);
+        runningSetting.PendingSessionId = NormalizePersistedSessionReference(runningSetting.PendingSessionId);
+        runningSetting.ActiveSessionId = NormalizeActiveSessionReference(runningSetting.ActiveSessionId);
     }
 
     private static RunningSetting Clone(RunningSetting runningSetting)
@@ -325,12 +302,10 @@ public static class RunningSettingManager
             LogLevel = runningSetting.LogLevel,
             DefaultSessionId = runningSetting.DefaultSessionId,
             PendingSessionId = runningSetting.PendingSessionId,
-            DefaultGuiStartupBehavior = runningSetting.DefaultGuiStartupBehavior,
             RemainingArgs = runningSetting.RemainingArgs.ToArray(),
             ActiveSessionId = runningSetting.ActiveSessionId,
             HasExplicitSessionRequest = runningSetting.HasExplicitSessionRequest,
-            SessionIsTransient = runningSetting.SessionIsTransient,
-            ShouldEnterSession = runningSetting.ShouldEnterSession,
+            RequestedSessionName = runningSetting.RequestedSessionName,
             SessionWorldOverride = runningSetting.SessionWorldOverride,
             SessionSeedOverride = runningSetting.SessionSeedOverride
         };
@@ -338,12 +313,49 @@ public static class RunningSettingManager
 
     private static string NormalizeSessionId(string? value)
     {
-        return string.IsNullOrWhiteSpace(value) ? "default" : value;
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
     }
 
     private static string NormalizePendingSessionId(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? string.Empty : NormalizeSessionId(value);
+    }
+
+    private static string NormalizeDefaultSessionId(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static string NormalizeActiveSessionId(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : NormalizeSessionId(value);
+    }
+
+    private static string NormalizePersistedSessionReference(string? value)
+    {
+        var sessionId = string.IsNullOrWhiteSpace(value) ? string.Empty : NormalizeSessionId(value);
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return string.Empty;
+        }
+
+        return SessionInfoManager.SessionExists(sessionId) ? sessionId : string.Empty;
+    }
+
+    private static string NormalizeActiveSessionReference(string? value)
+    {
+        var sessionId = string.IsNullOrWhiteSpace(value) ? string.Empty : NormalizeSessionId(value);
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return string.Empty;
+        }
+
+        return SessionInfoManager.IsValidSessionId(sessionId) ? sessionId : string.Empty;
+    }
+
+    private static string NormalizeSessionName(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
     }
 
     private static string NormalizeWorld(string? value)

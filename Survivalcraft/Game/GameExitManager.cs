@@ -14,10 +14,11 @@ public static class GameExitManager
 
     public static void RequestRestart(SessionInfo? sessionInfo = null)
     {
-        var effectiveSession = SessionInfoManager.PrepareRestartSession(sessionInfo);
         RunningSettingManager.SaveCurrent(runningSetting =>
         {
-            runningSetting.PendingSessionId = effectiveSession.SessionId;
+            runningSetting.PendingSessionId = sessionInfo is null
+                ? string.Empty
+                : SessionInfoManager.PrepareRestartSession(sessionInfo).SessionId;
         });
         ExitAction = GameExitAction.Restart;
         ExitRequested?.Invoke(ExitAction);

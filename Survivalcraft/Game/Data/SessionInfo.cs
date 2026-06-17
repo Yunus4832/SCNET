@@ -1,32 +1,21 @@
 namespace Game;
 
-public enum SessionKind
+public enum SessionTarget
 {
-    Gui,
-    Singleplayer,
-    LocalServer,
-    RemoteClient,
-    HeadlessServer
-}
-
-public enum SessionRestoreAction
-{
-    OpenMainMenu,
-    OpenWorldList,
-    LoadSingleplayerWorld,
-    LoadLocalServerWorld,
-    OpenServerBrowser,
-    ConnectRemoteServer,
-    StartHeadlessServer
+    MainMenu,
+    WorldList,
+    World,
+    ServerBrowser,
+    RemoteServer
 }
 
 public sealed class SessionInfo
 {
-    public string SessionId { get; set; } = "default";
+    public string SessionId { get; set; } = string.Empty;
 
-    public SessionKind Kind { get; set; } = SessionKind.Gui;
+    public string Name { get; set; } = string.Empty;
 
-    public SessionRestoreAction Action { get; set; } = SessionRestoreAction.OpenMainMenu;
+    public SessionTarget Target { get; set; } = SessionTarget.MainMenu;
 
     public string World { get; set; } = "World";
 

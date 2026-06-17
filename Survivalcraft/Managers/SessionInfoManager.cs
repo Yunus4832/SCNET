@@ -4,7 +4,6 @@ using System.Xml.Linq;
 
 using Game.Network;
 using Game.Network.Enums;
-using Game.Screens;
 
 namespace Game.Managers;
 
@@ -12,7 +11,7 @@ public static class SessionInfoManager
 {
     public const string SessionInfoPath = "config:SessionInfo.xml";
 
-    private static readonly HashSet<string> WorldListScreens =
+    private static readonly HashSet<string> _worldListScreens =
     [
         "Play",
         "NewWorld",
@@ -23,6 +22,11 @@ public static class SessionInfoManager
     public static SessionInfo Load(string? sessionId)
     {
         var normalizedSessionId = NormalizeSessionId(sessionId);
+        if (string.IsNullOrWhiteSpace(normalizedSessionId))
+        {
+            return CreateDefault(string.Empty);
+        }
+
         var sessionInfo = CreateDefault(normalizedSessionId);
         try
         {
@@ -33,20 +37,13 @@ public static class SessionInfoManager
 
             using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Read);
             var root = XElement.Load(stream);
-            var storedSessionId = NormalizeSessionId(root.Attribute(nameof(SessionInfo.SessionId))?.Value);
-            if (!string.Equals(storedSessionId, normalizedSessionId, StringComparison.Ordinal))
+            var sessionElement = FindSessionElement(root, normalizedSessionId);
+            if (sessionElement == null)
             {
                 return sessionInfo;
             }
 
-            sessionInfo.SessionId = storedSessionId;
-            sessionInfo.Kind = ParseKind(root.Attribute(nameof(SessionInfo.Kind))?.Value);
-            sessionInfo.Action = ParseAction(root.Attribute(nameof(SessionInfo.Action))?.Value);
-            sessionInfo.World = NormalizeWorld(root.Attribute(nameof(SessionInfo.World))?.Value);
-            sessionInfo.Seed = root.Attribute(nameof(SessionInfo.Seed))?.Value ?? string.Empty;
-            sessionInfo.ServerHost = root.Attribute(nameof(SessionInfo.ServerHost))?.Value ?? string.Empty;
-            sessionInfo.ServerPort = ParseServerPort(root.Attribute(nameof(SessionInfo.ServerPort))?.Value);
-            sessionInfo.Password = root.Attribute(nameof(SessionInfo.Password))?.Value ?? string.Empty;
+            PopulateFromElement(sessionInfo, sessionElement);
         }
         catch (Exception ex)
         {
@@ -54,6 +51,62 @@ public static class SessionInfoManager
         }
 
         return sessionInfo;
+    }
+
+    public static SessionInfo? LoadByName(string? sessionName)
+    {
+        var normalizedSessionName = NormalizeSessionName(sessionName);
+        if (string.IsNullOrWhiteSpace(normalizedSessionName))
+        {
+            return null;
+        }
+
+        try
+        {
+            if (!Storage.FileExists(SessionInfoPath))
+            {
+                return null;
+            }
+
+            using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Read);
+            var root = XElement.Load(stream);
+            var sessionElement = FindSessionElementByName(root, normalizedSessionName);
+            if (sessionElement == null)
+            {
+                return null;
+            }
+
+            var sessionInfo = CreateDefault(NormalizeSessionId(sessionElement.Attribute(nameof(SessionInfo.SessionId))?.Value));
+            PopulateFromElement(sessionInfo, sessionElement);
+            return sessionInfo;
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to load {SessionInfoPath}: {ex.Message}");
+            return null;
+        }
+    }
+
+    public static string ResolveSessionIdForName(string? sessionName)
+    {
+        var normalizedSessionName = NormalizeSessionName(sessionName);
+        if (string.IsNullOrWhiteSpace(normalizedSessionName))
+        {
+            return Guid.NewGuid().ToString("N");
+        }
+
+        return LoadByName(normalizedSessionName)?.SessionId ?? Guid.NewGuid().ToString("N");
+    }
+
+    public static bool IsValidSessionId(string? sessionId)
+    {
+        return !string.IsNullOrWhiteSpace(sessionId) && Guid.TryParse(sessionId, out _);
+    }
+
+    public static bool SessionExists(string? sessionId)
+    {
+        var normalizedSessionId = NormalizeSessionId(sessionId);
+        return IsValidSessionId(normalizedSessionId) && TryLoadExisting(normalizedSessionId, out _);
     }
 
     public static void Save(SessionInfo sessionInfo)
@@ -67,17 +120,12 @@ public static class SessionInfoManager
 
             Normalize(sessionInfo);
 
+            var root = LoadSessionRoot();
+            var existing = FindSessionElement(root, sessionInfo.SessionId);
+            existing?.Remove();
+            root.Add(CreateSessionElement(sessionInfo));
+
             using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Create);
-            var root = new XElement("SessionInfo",
-                new XAttribute(nameof(SessionInfo.SessionId), sessionInfo.SessionId),
-                new XAttribute(nameof(SessionInfo.Kind), sessionInfo.Kind),
-                new XAttribute(nameof(SessionInfo.Action), sessionInfo.Action),
-                new XAttribute(nameof(SessionInfo.World), sessionInfo.World),
-                new XAttribute(nameof(SessionInfo.Seed), sessionInfo.Seed),
-                new XAttribute(nameof(SessionInfo.ServerHost), sessionInfo.ServerHost),
-                new XAttribute(nameof(SessionInfo.ServerPort), sessionInfo.ServerPort),
-                new XAttribute(nameof(SessionInfo.Password), sessionInfo.Password)
-            );
             root.Save(stream);
         }
         catch (Exception ex)
@@ -99,6 +147,7 @@ public static class SessionInfoManager
     {
         var effective = sessionInfo ?? CaptureCurrentSession();
         effective.SessionId = CreateRestartSessionId();
+        effective.Name = string.Empty;
         Normalize(effective);
         Save(effective);
         return effective;
@@ -108,44 +157,28 @@ public static class SessionInfoManager
     {
         var sessionInfo = Load(RunningSettingManager.Current.ActiveSessionId);
         sessionInfo.SessionId = NormalizeSessionId(RunningSettingManager.Current.ActiveSessionId);
-        sessionInfo.Kind = SessionKind.RemoteClient;
-        sessionInfo.Action = SessionRestoreAction.ConnectRemoteServer;
+        sessionInfo.Target = SessionTarget.RemoteServer;
         sessionInfo.ServerHost = endPoint.Address.ToString();
         sessionInfo.ServerPort = endPoint.Port;
-        sessionInfo.Password = password ?? string.Empty;
+        sessionInfo.Password = password;
         return sessionInfo;
     }
 
     public static bool TryRestoreGuiSession()
     {
         var runningSetting = RunningSettingManager.Current;
-        if (!runningSetting.ShouldEnterSession)
-        {
-            return false;
-        }
-
-        if (!runningSetting.HasExplicitSessionRequest &&
-            !string.IsNullOrWhiteSpace(runningSetting.PendingSessionId))
-        {
-            RunningSettingManager.ClearPendingSession();
-        }
-
         var sessionInfo = ResolveStartupSession(runningSetting);
+        ConsumePendingSessionIfNeeded(runningSetting, sessionInfo);
 
-        return sessionInfo.Action switch
+        return sessionInfo.Target switch
         {
-            SessionRestoreAction.OpenMainMenu => SwitchTo("MainMenu"),
-            SessionRestoreAction.OpenWorldList => SwitchTo("Play"),
-            SessionRestoreAction.OpenServerBrowser => SwitchTo("NetPlay"),
-            SessionRestoreAction.LoadSingleplayerWorld => RestoreWorldSession(
+            SessionTarget.MainMenu => SwitchTo("MainMenu"),
+            SessionTarget.WorldList => SwitchTo("Play"),
+            SessionTarget.ServerBrowser => SwitchTo("NetPlay"),
+            SessionTarget.World => RestoreWorldSession(
                 sessionInfo,
-                startServer: false,
                 createIfMissing: runningSetting.HasExplicitSessionRequest),
-            SessionRestoreAction.LoadLocalServerWorld => RestoreWorldSession(
-                sessionInfo,
-                startServer: true,
-                createIfMissing: runningSetting.HasExplicitSessionRequest),
-            SessionRestoreAction.ConnectRemoteServer => RestoreRemoteClientSession(sessionInfo),
+            SessionTarget.RemoteServer => RestoreRemoteClientSession(sessionInfo),
             _ => false
         };
     }
@@ -158,14 +191,6 @@ public static class SessionInfoManager
     public static SessionInfo ResolveStartupSession(RunningSetting runningSetting)
     {
         var sessionId = NormalizeSessionId(runningSetting.ActiveSessionId);
-        if (!runningSetting.HasExplicitSessionRequest &&
-            string.IsNullOrWhiteSpace(runningSetting.PendingSessionId) &&
-            runningSetting.DefaultGuiStartupBehavior is not GuiStartupBehavior.EnterDefaultSession &&
-            runningSetting.RunMode is not RunModeType.HeadlessServer)
-        {
-            return Load(sessionId);
-        }
-
         if (!TryLoadExisting(sessionId, out var sessionInfo))
         {
             sessionInfo = CreateSessionForStartup(runningSetting, sessionId);
@@ -179,11 +204,7 @@ public static class SessionInfoManager
     public static WorldInfo ResolveHeadlessWorld(RunningSetting runningSetting)
     {
         var sessionInfo = ResolveStartupSession(runningSetting);
-        if (!runningSetting.HasExplicitSessionRequest &&
-            !string.IsNullOrWhiteSpace(runningSetting.PendingSessionId))
-        {
-            RunningSettingManager.ClearPendingSession();
-        }
+        ConsumePendingSessionIfNeeded(runningSetting, sessionInfo);
 
         var worldArg = sessionInfo.World;
         var seedArg = sessionInfo.Seed;
@@ -236,9 +257,7 @@ public static class SessionInfoManager
     {
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
-            sessionInfo.Kind = SessionKind.HeadlessServer;
-            sessionInfo.Action = SessionRestoreAction.StartHeadlessServer;
-            PopulateWorldContext(sessionInfo, forceServer: true);
+            PopulateWorldContext(sessionInfo);
             return;
         }
 
@@ -249,61 +268,51 @@ public static class SessionInfoManager
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            sessionInfo.Kind = SessionKind.RemoteClient;
             if (TryGetCurrentRemoteConnectionContext(out var host, out var port))
             {
-                sessionInfo.Action = SessionRestoreAction.ConnectRemoteServer;
+                sessionInfo.Target = SessionTarget.RemoteServer;
                 sessionInfo.ServerHost = host;
                 sessionInfo.ServerPort = port;
             }
             else
             {
-                sessionInfo.Action = SessionRestoreAction.OpenServerBrowser;
+                sessionInfo.Target = SessionTarget.ServerBrowser;
             }
 
             return;
         }
 
-        if (PopulateWorldContext(sessionInfo, forceServer: false))
+        if (PopulateWorldContext(sessionInfo))
         {
             return;
         }
 
         var screenName = ScreensManager.GetCurrentScreenName();
-        if (WorldListScreens.Contains(screenName))
+        if (_worldListScreens.Contains(screenName))
         {
-            sessionInfo.Kind = SessionKind.Singleplayer;
-            sessionInfo.Action = SessionRestoreAction.OpenWorldList;
+            sessionInfo.Target = SessionTarget.WorldList;
             return;
         }
 
         if (string.Equals(screenName, "NetPlay", StringComparison.Ordinal))
         {
-            sessionInfo.Kind = SessionKind.RemoteClient;
-            sessionInfo.Action = SessionRestoreAction.OpenServerBrowser;
+            sessionInfo.Target = SessionTarget.ServerBrowser;
             return;
         }
 
-        sessionInfo.Kind = SessionKind.Gui;
-        sessionInfo.Action = SessionRestoreAction.OpenMainMenu;
+        sessionInfo.Target = SessionTarget.MainMenu;
     }
 
-    private static bool PopulateWorldContext(SessionInfo sessionInfo, bool forceServer)
+    private static bool PopulateWorldContext(SessionInfo sessionInfo)
     {
         if (GameManager.WorldInfo == null)
         {
             return false;
         }
 
-        var startServer = forceServer ||
-                          CommonLib.WorkType == WorkType.Server ||
-                          GameManager.WorldInfo.WorldSettings.RunServer;
-        sessionInfo.Kind = startServer ? SessionKind.LocalServer : SessionKind.Singleplayer;
-        sessionInfo.Action = startServer
-            ? SessionRestoreAction.LoadLocalServerWorld
-            : SessionRestoreAction.LoadSingleplayerWorld;
+        sessionInfo.Target = SessionTarget.World;
         sessionInfo.World = NormalizeWorld(GameManager.WorldInfo.WorldSettings.Name);
-        sessionInfo.Seed = GameManager.WorldInfo.WorldSettings.Seed ?? string.Empty;
+        sessionInfo.Seed = GameManager.WorldInfo.WorldSettings.Seed;
         return true;
     }
 
@@ -316,8 +325,7 @@ public static class SessionInfoManager
 
         if (loadingScreen.CurrentServerEndPoint != null)
         {
-            sessionInfo.Kind = SessionKind.RemoteClient;
-            sessionInfo.Action = SessionRestoreAction.ConnectRemoteServer;
+            sessionInfo.Target = SessionTarget.RemoteServer;
             sessionInfo.ServerHost = loadingScreen.CurrentServerEndPoint.Address.ToString();
             sessionInfo.ServerPort = loadingScreen.CurrentServerEndPoint.Port;
             sessionInfo.Password = loadingScreen.CurrentPassword;
@@ -329,13 +337,10 @@ public static class SessionInfoManager
             return false;
         }
 
-        var startServer = loadingScreen.CurrentWorldInfo.WorldSettings.RunServer || CommonLib.WorkType == WorkType.Server;
-        sessionInfo.Kind = startServer ? SessionKind.LocalServer : SessionKind.Singleplayer;
-        sessionInfo.Action = startServer
-            ? SessionRestoreAction.LoadLocalServerWorld
-            : SessionRestoreAction.LoadSingleplayerWorld;
+        sessionInfo.Target = SessionTarget.World;
         sessionInfo.World = NormalizeWorld(loadingScreen.CurrentWorldInfo.WorldSettings.Name);
-        sessionInfo.Seed = loadingScreen.CurrentWorldInfo.WorldSettings.Seed ?? string.Empty;
+        sessionInfo.Seed = loadingScreen.CurrentWorldInfo.WorldSettings.Seed;
+
         return true;
     }
 
@@ -354,7 +359,7 @@ public static class SessionInfoManager
         return true;
     }
 
-    private static bool RestoreWorldSession(SessionInfo sessionInfo, bool startServer, bool createIfMissing)
+    private static bool RestoreWorldSession(SessionInfo sessionInfo, bool createIfMissing)
     {
         if (!TryResolveExistingWorld(sessionInfo.World, out var worldInfo))
         {
@@ -364,9 +369,10 @@ public static class SessionInfoManager
                 return false;
             }
 
-            worldInfo = CreateWorld(sessionInfo.World, sessionInfo.Seed, runServer: startServer);
+            worldInfo = CreateWorld(sessionInfo.World, sessionInfo.Seed, runServer: false);
         }
 
+        var startServer = CommonLib.WorkType == WorkType.Server || worldInfo!.WorldSettings.RunServer;
         if (startServer)
         {
             if (!CommonLib.StartServer())
@@ -378,7 +384,7 @@ public static class SessionInfoManager
             }
         }
 
-        ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
+        ScreensManager.SwitchScreen("GameLoading", worldInfo!, string.Empty);
         return true;
     }
 
@@ -419,15 +425,15 @@ public static class SessionInfoManager
         return true;
     }
 
-    private static bool TryResolveExistingWorld(string? worldName, out WorldInfo worldInfo)
+    private static bool TryResolveExistingWorld(string? worldName, out WorldInfo? worldInfo)
     {
         WorldsManager.UpdateWorldsList();
         var normalizedWorld = NormalizeWorld(worldName);
         worldInfo = WorldsManager.WorldInfos.FirstOrDefault(w =>
                         string.Equals(w.DirectoryName, normalizedWorld, StringComparison.OrdinalIgnoreCase) ||
                         string.Equals(w.WorldSettings.Name, normalizedWorld, StringComparison.OrdinalIgnoreCase))
-                    ?? null!;
-        if (worldInfo != null)
+                    ?? null;
+        if (worldInfo is not null)
         {
             return true;
         }
@@ -450,7 +456,13 @@ public static class SessionInfoManager
 
     private static bool TryLoadExisting(string? sessionId, out SessionInfo sessionInfo)
     {
-        sessionInfo = CreateDefault(NormalizeSessionId(sessionId));
+        var normalizedSessionId = NormalizeSessionId(sessionId);
+        sessionInfo = CreateDefault(normalizedSessionId);
+        if (string.IsNullOrWhiteSpace(normalizedSessionId))
+        {
+            return false;
+        }
+
         try
         {
             if (!Storage.FileExists(SessionInfoPath))
@@ -460,20 +472,13 @@ public static class SessionInfoManager
 
             using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Read);
             var root = XElement.Load(stream);
-            var storedSessionId = NormalizeSessionId(root.Attribute(nameof(SessionInfo.SessionId))?.Value);
-            if (!string.Equals(storedSessionId, NormalizeSessionId(sessionId), StringComparison.Ordinal))
+            var sessionElement = FindSessionElement(root, normalizedSessionId);
+            if (sessionElement == null)
             {
                 return false;
             }
 
-            sessionInfo.SessionId = storedSessionId;
-            sessionInfo.Kind = ParseKind(root.Attribute(nameof(SessionInfo.Kind))?.Value);
-            sessionInfo.Action = ParseAction(root.Attribute(nameof(SessionInfo.Action))?.Value);
-            sessionInfo.World = NormalizeWorld(root.Attribute(nameof(SessionInfo.World))?.Value);
-            sessionInfo.Seed = root.Attribute(nameof(SessionInfo.Seed))?.Value ?? string.Empty;
-            sessionInfo.ServerHost = root.Attribute(nameof(SessionInfo.ServerHost))?.Value ?? string.Empty;
-            sessionInfo.ServerPort = ParseServerPort(root.Attribute(nameof(SessionInfo.ServerPort))?.Value);
-            sessionInfo.Password = root.Attribute(nameof(SessionInfo.Password))?.Value ?? string.Empty;
+            PopulateFromElement(sessionInfo, sessionElement);
             return true;
         }
         catch (Exception ex)
@@ -485,7 +490,92 @@ public static class SessionInfoManager
 
     private static string CreateRestartSessionId()
     {
-        return $"restart-{Guid.NewGuid():N}";
+        return Guid.NewGuid().ToString("N");
+    }
+
+    private static XElement LoadSessionRoot()
+    {
+        if (!Storage.FileExists(SessionInfoPath))
+        {
+            return new XElement("Sessions");
+        }
+
+        using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Read);
+        var root = XElement.Load(stream);
+        if (!string.Equals(root.Name.LocalName, "SessionInfo", StringComparison.Ordinal))
+        {
+            return root;
+        }
+
+        var sessions = new XElement("Sessions");
+        sessions.Add(new XElement(root));
+        return sessions;
+
+    }
+
+    private static XElement? FindSessionElement(XElement root, string sessionId)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return null;
+        }
+
+        if (string.Equals(root.Name.LocalName, "SessionInfo", StringComparison.Ordinal))
+        {
+            var storedSessionId = NormalizeSessionId(root.Attribute(nameof(SessionInfo.SessionId))?.Value);
+            return string.Equals(storedSessionId, sessionId, StringComparison.Ordinal) ? root : null;
+        }
+
+        return root.Elements("SessionInfo").FirstOrDefault(element =>
+            string.Equals(
+                NormalizeSessionId(element.Attribute(nameof(SessionInfo.SessionId))?.Value),
+                sessionId,
+                StringComparison.Ordinal));
+    }
+
+    private static XElement? FindSessionElementByName(XElement root, string sessionName)
+    {
+        if (string.IsNullOrWhiteSpace(sessionName))
+        {
+            return null;
+        }
+
+        if (string.Equals(root.Name.LocalName, "SessionInfo", StringComparison.Ordinal))
+        {
+            var storedSessionName = NormalizeSessionName(root.Attribute(nameof(SessionInfo.Name))?.Value);
+            return string.Equals(storedSessionName, sessionName, StringComparison.Ordinal) ? root : null;
+        }
+
+        return root.Elements("SessionInfo").FirstOrDefault(element =>
+            string.Equals(
+                NormalizeSessionName(element.Attribute(nameof(SessionInfo.Name))?.Value),
+                sessionName,
+                StringComparison.Ordinal));
+    }
+
+    private static XElement CreateSessionElement(SessionInfo sessionInfo)
+    {
+        return new XElement("SessionInfo",
+            new XAttribute(nameof(SessionInfo.SessionId), sessionInfo.SessionId),
+            new XAttribute(nameof(SessionInfo.Name), sessionInfo.Name),
+            new XAttribute(nameof(SessionInfo.Target), sessionInfo.Target),
+            new XAttribute(nameof(SessionInfo.World), sessionInfo.World),
+            new XAttribute(nameof(SessionInfo.Seed), sessionInfo.Seed),
+            new XAttribute(nameof(SessionInfo.ServerHost), sessionInfo.ServerHost),
+            new XAttribute(nameof(SessionInfo.ServerPort), sessionInfo.ServerPort),
+            new XAttribute(nameof(SessionInfo.Password), sessionInfo.Password));
+    }
+
+    private static void PopulateFromElement(SessionInfo sessionInfo, XElement element)
+    {
+        sessionInfo.SessionId = NormalizeSessionId(element.Attribute(nameof(SessionInfo.SessionId))?.Value);
+        sessionInfo.Name = NormalizeSessionName(element.Attribute(nameof(SessionInfo.Name))?.Value);
+        sessionInfo.Target = ParseTarget(element.Attribute(nameof(SessionInfo.Target))?.Value);
+        sessionInfo.World = NormalizeWorld(element.Attribute(nameof(SessionInfo.World))?.Value);
+        sessionInfo.Seed = element.Attribute(nameof(SessionInfo.Seed))?.Value ?? string.Empty;
+        sessionInfo.ServerHost = element.Attribute(nameof(SessionInfo.ServerHost))?.Value ?? string.Empty;
+        sessionInfo.ServerPort = ParseServerPort(element.Attribute(nameof(SessionInfo.ServerPort))?.Value);
+        sessionInfo.Password = element.Attribute(nameof(SessionInfo.Password))?.Value ?? string.Empty;
     }
 
     private static SessionInfo CreateDefault(string sessionId)
@@ -493,9 +583,9 @@ public static class SessionInfoManager
         return new SessionInfo
         {
             SessionId = sessionId,
-            Kind = SessionKind.Gui,
-            Action = SessionRestoreAction.OpenMainMenu,
-            World = DefaultWorldForSession(sessionId),
+            Name = string.Empty,
+            Target = SessionTarget.MainMenu,
+            World = "World",
             Seed = string.Empty,
             ServerHost = string.Empty,
             Password = string.Empty
@@ -504,22 +594,36 @@ public static class SessionInfoManager
 
     private static SessionInfo CreateSessionForStartup(RunningSetting runningSetting, string sessionId)
     {
+        var explicitNamedSession = runningSetting.HasExplicitSessionRequest &&
+                                   !string.IsNullOrWhiteSpace(runningSetting.RequestedSessionName);
+        var createWorldSession =
+            runningSetting.RunMode is RunModeType.HeadlessServer ||
+            explicitNamedSession;
+        var startupWorldName = !string.IsNullOrWhiteSpace(runningSetting.SessionWorldOverride)
+            ? NormalizeWorld(runningSetting.SessionWorldOverride)
+            : explicitNamedSession
+                ? NormalizeWorld(runningSetting.RequestedSessionName)
+                : "World";
+
         return new SessionInfo
         {
             SessionId = sessionId,
-            Kind = runningSetting.RunMode is RunModeType.HeadlessServer
-                ? SessionKind.HeadlessServer
-                : SessionKind.Singleplayer,
-            Action = runningSetting.RunMode is RunModeType.HeadlessServer
-                ? SessionRestoreAction.StartHeadlessServer
-                : SessionRestoreAction.LoadSingleplayerWorld,
-            World = DefaultWorldForSession(sessionId),
+            Name = runningSetting.HasExplicitSessionRequest
+                ? NormalizeSessionName(runningSetting.RequestedSessionName)
+                : string.Empty,
+            Target = createWorldSession ? SessionTarget.World : SessionTarget.MainMenu,
+            World = startupWorldName,
             Seed = string.Empty
         };
     }
 
     private static void ApplySessionOverrides(SessionInfo sessionInfo, RunningSetting runningSetting)
     {
+        if (runningSetting.HasExplicitSessionRequest)
+        {
+            sessionInfo.Target = SessionTarget.World;
+        }
+
         if (!string.IsNullOrWhiteSpace(runningSetting.SessionWorldOverride))
         {
             sessionInfo.World = NormalizeWorld(runningSetting.SessionWorldOverride);
@@ -548,11 +652,11 @@ public static class SessionInfoManager
 
     private static void Normalize(SessionInfo sessionInfo)
     {
-        sessionInfo.SessionId = NormalizeSessionId(sessionInfo.SessionId);
+        sessionInfo.SessionId = !IsValidSessionId(sessionInfo.SessionId)
+            ? Guid.NewGuid().ToString("N")
+            : NormalizeSessionId(sessionInfo.SessionId);
+        sessionInfo.Name = NormalizeSessionName(sessionInfo.Name);
         sessionInfo.World = NormalizeWorld(sessionInfo.World);
-        sessionInfo.Seed ??= string.Empty;
-        sessionInfo.ServerHost ??= string.Empty;
-        sessionInfo.Password ??= string.Empty;
         if (sessionInfo.ServerPort < 0)
         {
             sessionInfo.ServerPort = 0;
@@ -565,16 +669,11 @@ public static class SessionInfoManager
         return true;
     }
 
-    private static SessionKind ParseKind(string? value)
+    private static SessionTarget ParseTarget(string? value)
     {
-        return Enum.TryParse(value, true, out SessionKind kind) ? kind : SessionKind.Gui;
-    }
-
-    private static SessionRestoreAction ParseAction(string? value)
-    {
-        return Enum.TryParse(value, true, out SessionRestoreAction action)
-            ? action
-            : SessionRestoreAction.OpenMainMenu;
+        return Enum.TryParse(value, true, out SessionTarget target)
+            ? target
+            : SessionTarget.MainMenu;
     }
 
     private static int ParseServerPort(string? value)
@@ -584,7 +683,7 @@ public static class SessionInfoManager
 
     private static string NormalizeSessionId(string? value)
     {
-        return string.IsNullOrWhiteSpace(value) ? "default" : value;
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
     }
 
     private static string NormalizeWorld(string? value)
@@ -592,9 +691,58 @@ public static class SessionInfoManager
         return string.IsNullOrWhiteSpace(value) ? "World" : value;
     }
 
-    private static string DefaultWorldForSession(string sessionId)
+    private static string NormalizeSessionName(string? value)
     {
-        return string.Equals(sessionId, "default", StringComparison.Ordinal) ? "World" : sessionId;
+        return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static void ConsumePendingSessionIfNeeded(RunningSetting runningSetting, SessionInfo sessionInfo)
+    {
+        if (runningSetting.HasExplicitSessionRequest ||
+            string.IsNullOrWhiteSpace(runningSetting.PendingSessionId))
+        {
+            return;
+        }
+
+        var pendingSessionId = NormalizeSessionId(runningSetting.PendingSessionId);
+        RunningSettingManager.ClearPendingSession();
+        if (string.Equals(sessionInfo.SessionId, pendingSessionId, StringComparison.Ordinal) &&
+            string.IsNullOrWhiteSpace(sessionInfo.Name))
+        {
+            Delete(pendingSessionId);
+        }
+    }
+
+    public static void Delete(string? sessionId)
+    {
+        var normalizedSessionId = NormalizeSessionId(sessionId);
+        if (string.IsNullOrWhiteSpace(normalizedSessionId))
+        {
+            return;
+        }
+
+        try
+        {
+            if (!Storage.FileExists(SessionInfoPath))
+            {
+                return;
+            }
+
+            var root = LoadSessionRoot();
+            var existing = FindSessionElement(root, normalizedSessionId);
+            if (existing == null)
+            {
+                return;
+            }
+
+            existing.Remove();
+            using var stream = Storage.OpenFile(SessionInfoPath, OpenFileMode.Create);
+            root.Save(stream);
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to delete session \"{normalizedSessionId}\": {ex.Message}");
+        }
     }
 
     private static string GenerateRandomSeed()

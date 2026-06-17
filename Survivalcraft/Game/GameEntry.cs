@@ -129,14 +129,6 @@ public static class GameEntry
 
     public static void Closed()
     {
-        if (GameExitManager.ExitAction is not GameExitAction.Restart)
-        {
-            if (!RunningSettingManager.Current.SessionIsTransient)
-            {
-                SessionInfoManager.Save(SessionInfoManager.CaptureCurrentSession());
-            }
-        }
-
         ModRuntime?.Dispose();
         CurrentModRuntime.Set(null);
         SettingsManager.SaveSettings();

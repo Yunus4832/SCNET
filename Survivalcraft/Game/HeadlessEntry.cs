@@ -64,17 +64,6 @@ public static class HeadlessEntry
         {
             try
             {
-                if (!RunningSettingManager.Current.SessionIsTransient)
-                {
-                    SessionInfoManager.Save(new SessionInfo
-                    {
-                        SessionId = RunningSettingManager.Current.ActiveSessionId,
-                        Kind = SessionKind.HeadlessServer,
-                        Action = SessionRestoreAction.StartHeadlessServer,
-                        World = GameManager.WorldInfo?.WorldSettings.Name ?? "World",
-                        Seed = GameManager.WorldInfo?.WorldSettings.Seed ?? string.Empty
-                    });
-                }
                 CommonLib.Net.StopImmediate();
                 GameManager.SaveProject(waitForCompletion: true, showErrorDialog: false);
                 GameManager.DisposeProject();
