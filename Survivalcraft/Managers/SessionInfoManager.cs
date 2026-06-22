@@ -247,6 +247,15 @@ public static class SessionInfoManager
                 Log.Warning($"World already exists; ignoring provided seed \"{seedArg}\".");
             }
 
+            if (!worldInfo.WorldSettings.RunServer)
+            {
+                Log.Warning(
+                    $"World \"{worldInfo.WorldSettings.Name}\" is not marked as a server world. " +
+                    "HeadlessServer will enable RunServer automatically.");
+                worldInfo.WorldSettings.RunServer = true;
+                WorldsManager.ChangeWorld(worldInfo.DirectoryName, worldInfo.WorldSettings);
+            }
+
             Log.Information($"Using existing world seed: {worldInfo.WorldSettings.Seed}");
         }
 
