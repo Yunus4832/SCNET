@@ -47,6 +47,13 @@ public static class GameExitManager
         });
         ExitAction = GameExitAction.Restart;
         ExitRequested?.Invoke(ExitAction);
-        Window.Close();
+        if (RunMode.Value is RunModeType.Gui)
+        {
+            Window.Close();
+        }
+        else
+        {
+            HeadlessEntry.RequestStop();
+        }
     }
 }

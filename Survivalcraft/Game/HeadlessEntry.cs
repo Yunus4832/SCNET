@@ -21,6 +21,7 @@ public static class HeadlessEntry
     {
         try
         {
+            GameExitManager.BeginSession();
             RunMode.Value = RunModeType.HeadlessServer;
             _running = true;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
@@ -38,7 +39,12 @@ public static class HeadlessEntry
             };
 #endif
 
-            InitializeHeadless();
+            if (!InitializeHeadless())
+            {
+                Log.Information("Headless initialization requested restart. Exiting current process.");
+                return 0;
+            }
+
             var world = SessionInfoManager.ResolveHeadlessWorld(runningSetting);
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information(
@@ -72,6 +78,8 @@ public static class HeadlessEntry
                 _modRuntime = null;
                 CurrentModRuntime.Set(null);
                 SettingsManager.SaveSettings();
+                Log.RemoveAllLogSinks();
+                GameLogSink.Shutdown();
             }
             catch (Exception ex)
             {
@@ -117,7 +125,7 @@ public static class HeadlessEntry
         }
     }
 
-    private static void InitializeHeadless()
+    private static bool InitializeHeadless()
     {
         SettingsManager.Initialize();
         ContentManager.Initialize();
@@ -136,7 +144,7 @@ public static class HeadlessEntry
                 Storage.GetSystemPath(GamePaths.ModCache),
                 Log.Information))
         {
-            return;
+            return false;
         }
 
         var profile = ModProfileManager.LoadEffectiveProfile(runningSetting.ActiveSessionId, startupSession);
@@ -157,5 +165,6 @@ public static class HeadlessEntry
         CharacterSkinsManager.Initialize();
         VersionsManager.Initialize();
         WorldsManager.Initialize();
+        return true;
     }
 }

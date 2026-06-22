@@ -176,6 +176,38 @@ public class GameLogSink : ILogSink
         }
     }
 
+    public static void Shutdown()
+    {
+        if (_stream == null)
+        {
+            return;
+        }
+
+        lock (_stream)
+        {
+            try
+            {
+                _writer.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
+
+            try
+            {
+                _stream.Dispose();
+            }
+            catch
+            {
+                // ignored
+            }
+
+            _stream = null;
+            _writer = null!;
+        }
+    }
+
     /// <summary>
     /// 获取最近指定字节数的日志内容
     /// </summary>

@@ -212,6 +212,12 @@ public static class WorldsManager
     public static void UpdateWorldsList()
     {
         _worldInfos.Clear();
+        if (!Storage.DirectoryExists(_worldsDirectoryName))
+        {
+            Storage.CreateDirectory(_worldsDirectoryName);
+            return;
+        }
+
         foreach (var item in Storage.ListDirectoryNames(_worldsDirectoryName))
         {
             var worldInfo = GetWorldInfo(Storage.CombinePaths(_worldsDirectoryName, item));

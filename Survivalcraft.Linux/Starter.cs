@@ -18,11 +18,11 @@ public class Starter
     {
         var runningSetting = RunningSettingManager.Load(args);
         InstallDesktopEntries();
-
-        var exitAction = GameExitAction.Exit;
+        GameExitAction exitAction;
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
             RunHeadlessServer(runningSetting);
+            exitAction = GameExitManager.ExitAction;
         }
         else
         {

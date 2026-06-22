@@ -18,6 +18,11 @@ public class Starter
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
             RunHeadlessServer(runningSetting);
+            if (GameExitManager.ExitAction is GameExitAction.Restart)
+            {
+                Restart([]);
+            }
+
             return;
         }
 

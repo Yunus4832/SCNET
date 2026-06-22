@@ -1,0 +1,17 @@
+name: scnet-mod-server
+
+services:
+  mod_server:
+    container_name: scnet-mod-server
+    build:
+      context: ../..
+      dockerfile: ModServer/deploy/Dockerfile
+    environment:
+      ASPNETCORE_URLS: http://0.0.0.0:8080
+      ModServer__DataDirectory: /data
+      ModServer__UploadApiKeys__0: local-dev-upload-key
+    ports:
+      - "9527:8080"
+    volumes:
+      - /home/yunus/Desktop/temp/ModServer/data:/data
+    restart: unless-stopped
