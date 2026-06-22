@@ -196,8 +196,15 @@ public static class SettingsManager
 
     public static bool FullScreenMode
     {
-        get => Window.WindowMode == WindowMode.Fullscreen;
-        set => Window.WindowMode = value ? WindowMode.Fullscreen : WindowMode.Resizable;
+        get => Window.IsCreated ? Window.WindowMode == WindowMode.Fullscreen : field;
+        set
+        {
+            field = value;
+            if (Window.IsCreated)
+            {
+                Window.WindowMode = value ? WindowMode.Fullscreen : WindowMode.Resizable;
+            }
+        }
     }
 
     public static bool DisplayLog { get; set; }
