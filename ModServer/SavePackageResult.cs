@@ -4,6 +4,7 @@ public enum SavePackageStatus
 {
     Created,
     Unchanged,
+    Replaced,
     Conflict
 }
 

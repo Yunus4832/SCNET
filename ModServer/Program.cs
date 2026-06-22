@@ -1,4 +1,3 @@
-using System.Security.Cryptography;
 using System.Text.Json;
 
 using Microsoft.Extensions.Options;
@@ -33,6 +32,7 @@ app.MapGet("/api/v1/mods",
                 .OrderBy(record => record.ModId, StringComparer.OrdinalIgnoreCase)
                 .ThenByDescending(record => record.UploadedAtUtc)
                 .Select(record => ToResponse(httpContext, record))
+                .ToArray()
         });
     });
 
@@ -54,6 +54,7 @@ app.MapGet("/api/v1/mods/{modId}", async Task<IResult> (
         items = records
             .OrderByDescending(record => record.UploadedAtUtc)
             .Select(record => ToResponse(httpContext, record))
+            .ToArray()
     });
 });
 
@@ -113,48 +114,70 @@ app.MapPost("/api/v1/mods/upload", async Task<IResult> (
         return Results.BadRequest(new { message = "Form file 'package' is required." });
     }
 
-    var modId = NormalizeRequired(form["modId"].ToString());
-    var version = NormalizeRequired(form["version"].ToString());
-    if (string.IsNullOrWhiteSpace(modId) || string.IsNullOrWhiteSpace(version))
-    {
-        return Results.BadRequest(new { message = "Fields 'modId' and 'version' are required." });
-    }
-
-    var side = ParseSide(form["side"].ToString());
     var description = NormalizeOptional(form["description"].ToString());
+    var replace = ParseBoolean(httpContext.Request.Query["replace"].ToString()) ||
+                  ParseBoolean(form["replace"].ToString());
 
     await using var stream = file.OpenReadStream();
     using var buffer = new MemoryStream();
     await stream.CopyToAsync(buffer, cancellationToken);
     var content = buffer.ToArray();
-    var packageHash = Convert.ToHexStringLower(SHA256.HashData(content));
+    UploadedModPackage package;
+    try
+    {
+        package = UploadedModPackage.Read(
+            string.IsNullOrWhiteSpace(file.FileName) ? "package.scpak" : file.FileName,
+            content);
+    }
+    catch (Exception exception)
+    {
+        return Results.BadRequest(new { message = exception.Message });
+    }
 
     var record = new ModPackageRecord(
-        ModId: modId,
-        Version: version,
-        PackageHash: packageHash,
-        FileName: string.IsNullOrWhiteSpace(file.FileName)
-            ? $"{modId}.{version}.scpak"
-            : Path.GetFileName(file.FileName),
-        PackageSize: content.LongLength,
-        Side: side,
+        ModId: package.ModId,
+        Version: package.Version,
+        PackageHash: package.PackageHash,
+        FileName: package.FileName,
+        PackageSize: package.PackageSize,
+        Side: package.Side,
         Description: description,
         UploadedAtUtc: DateTimeOffset.UtcNow);
 
-    var result = await store.SavePackageAsync(record, content, cancellationToken);
+    var result = await store.SavePackageAsync(record, content, replace, cancellationToken);
     if (result.Status == SavePackageStatus.Conflict)
     {
         return Results.Conflict(new
         {
-            message = $"Mod '{modId}' version '{version}' already exists with a different package hash.",
+            message =
+                $"Mod '{package.ModId}' version '{package.Version}' already exists with a different package hash. Re-upload with replace=true to overwrite it.",
             existing = ToResponse(httpContext, result.Record!)
         });
     }
 
     var response = ToResponse(httpContext, result.Record!);
     return result.Status == SavePackageStatus.Created
-        ? Results.Created($"/api/v1/mods/{modId}/versions/{version}", response)
+        ? Results.Created($"/api/v1/mods/{package.ModId}/versions/{package.Version}", response)
         : Results.Ok(response);
+});
+
+app.MapDelete("/api/v1/mods/{modId}/versions/{version}", async Task<IResult> (
+    HttpContext httpContext,
+    string modId,
+    string version,
+    IOptions<ModServerOptions> options,
+    ModRepositoryStore store,
+    CancellationToken cancellationToken) =>
+{
+    if (!IsAuthorized(httpContext.Request, options.Value))
+    {
+        return Results.Unauthorized();
+    }
+
+    var deleted = await store.DeletePackageAsync(modId, version, cancellationToken);
+    return deleted == null
+        ? Results.NotFound(new { message = $"Mod '{modId}' version '{version}' was not found." })
+        : Results.NoContent();
 });
 
 app.Run();
@@ -194,23 +217,20 @@ static object ToResponse(HttpContext httpContext, ModPackageRecord record)
     };
 }
 
-static string NormalizeRequired(string value)
-{
-    return value.Trim();
-}
-
 static string? NormalizeOptional(string value)
 {
     var normalized = value.Trim();
     return normalized.Length == 0 ? null : normalized;
 }
 
-static string ParseSide(string value)
+static bool ParseBoolean(string value)
 {
     return value.Trim().ToLowerInvariant() switch
     {
-        "client" => "client",
-        "server" => "server",
-        _ => "common"
+        "1" => true,
+        "true" => true,
+        "yes" => true,
+        "on" => true,
+        _ => false
     };
 }

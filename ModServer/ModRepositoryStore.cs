@@ -77,6 +77,7 @@ public sealed class ModRepositoryStore
     public async Task<SavePackageResult> SavePackageAsync(
         ModPackageRecord record,
         byte[] content,
+        bool replace,
         CancellationToken cancellationToken)
     {
         await _mutex.WaitAsync(cancellationToken);
@@ -91,21 +92,55 @@ public sealed class ModRepositoryStore
             {
                 if (!string.Equals(existing.PackageHash, record.PackageHash, StringComparison.OrdinalIgnoreCase))
                 {
-                    return new SavePackageResult(SavePackageStatus.Conflict, existing);
+                    if (!replace)
+                    {
+                        return new SavePackageResult(SavePackageStatus.Conflict, existing);
+                    }
+
+                    await WritePackageIfMissingAsync(record.PackageHash, content, cancellationToken);
+                    index.Packages.Remove(existing);
+                    index.Packages.Add(record);
+                    await SaveIndexAsync(index, cancellationToken);
+                    DeletePackageIfUnreferenced(existing.PackageHash, index);
+                    return new SavePackageResult(SavePackageStatus.Replaced, record);
                 }
 
                 return new SavePackageResult(SavePackageStatus.Unchanged, existing);
             }
 
-            var packagePath = GetPackagePath(record.PackageHash);
-            if (!File.Exists(packagePath))
-            {
-                await File.WriteAllBytesAsync(packagePath, content, cancellationToken);
-            }
-
+            await WritePackageIfMissingAsync(record.PackageHash, content, cancellationToken);
             index.Packages.Add(record);
             await SaveIndexAsync(index, cancellationToken);
             return new SavePackageResult(SavePackageStatus.Created, record);
+        }
+        finally
+        {
+            _mutex.Release();
+        }
+    }
+
+    public async Task<ModPackageRecord?> DeletePackageAsync(
+        string modId,
+        string version,
+        CancellationToken cancellationToken)
+    {
+        await _mutex.WaitAsync(cancellationToken);
+        try
+        {
+            var index = await LoadIndexAsync(cancellationToken);
+            var existing = index.Packages.FirstOrDefault(item =>
+                string.Equals(item.ModId, modId, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(item.Version, version, StringComparison.OrdinalIgnoreCase));
+
+            if (existing == null)
+            {
+                return null;
+            }
+
+            index.Packages.Remove(existing);
+            await SaveIndexAsync(index, cancellationToken);
+            DeletePackageIfUnreferenced(existing.PackageHash, index);
+            return existing;
         }
         finally
         {
@@ -132,6 +167,32 @@ public sealed class ModRepositoryStore
         await using var stream = new FileStream(_indexPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920,
             FileOptions.Asynchronous);
         await JsonSerializer.SerializeAsync(stream, index, _jsonOptions, cancellationToken);
+    }
+
+    private async Task WritePackageIfMissingAsync(
+        string packageHash,
+        byte[] content,
+        CancellationToken cancellationToken)
+    {
+        var packagePath = GetPackagePath(packageHash);
+        if (!File.Exists(packagePath))
+        {
+            await File.WriteAllBytesAsync(packagePath, content, cancellationToken);
+        }
+    }
+
+    private void DeletePackageIfUnreferenced(string packageHash, ModRepositoryIndex index)
+    {
+        if (index.Packages.Any(item => string.Equals(item.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase)))
+        {
+            return;
+        }
+
+        var packagePath = GetPackagePath(packageHash);
+        if (File.Exists(packagePath))
+        {
+            File.Delete(packagePath);
+        }
     }
 
     private string GetPackagePath(string packageHash)

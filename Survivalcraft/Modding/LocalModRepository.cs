@@ -40,8 +40,9 @@ public sealed class LocalModRepository(string directoryPath)
         return Path.Combine(directoryPath, $"{packageHash.ToLowerInvariant()}.scpak");
     }
 
-    public LocalModPackageEntry AddOrUpdatePackage(string packageHash, byte[] content, string? fileName = null)
+    public LocalModPackageEntry AddOrUpdatePackage(byte[] content, string? fileName = null)
     {
+        var packageHash = ComputePackageHash(content, fileName ?? "download.scpak");
         Directory.CreateDirectory(directoryPath);
         var targetPath = !string.IsNullOrWhiteSpace(fileName)
             ? GetTargetPath(fileName)
@@ -52,10 +53,10 @@ public sealed class LocalModRepository(string directoryPath)
             $"Package '{packageHash}' could not be indexed after download.");
     }
 
-    public LocalModPackageEntry ImportPackage(string sourcePath, string? packageHash = null)
+    public LocalModPackageEntry ImportPackage(string sourcePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
-        packageHash ??= ComputeHash(sourcePath);
+        var packageHash = ComputePackageHash(sourcePath);
         Directory.CreateDirectory(directoryPath);
         var targetPath = GetCachePath(packageHash);
         if (!File.Exists(targetPath))
@@ -91,14 +92,25 @@ public sealed class LocalModRepository(string directoryPath)
                 source.Name,
                 package.Manifest.Id,
                 package.Manifest.Version,
-                ComputeHash(Path.Combine(directoryPath, source.Name))))
+                package.PackageHash))
             .ToList();
     }
 
-    public static string ComputeHash(string path)
+    public static string ComputePackageHash(string path)
     {
         using var stream = File.OpenRead(path);
-        return Convert.ToHexStringLower(SHA256.HashData(stream));
+        return ComputePackageHash(stream, path);
+    }
+
+    public static string ComputePackageHash(byte[] content, string source = "package.scpak")
+    {
+        using var stream = new MemoryStream(content, writable: false);
+        return ComputePackageHash(stream, source);
+    }
+
+    public static string ComputePackageHash(Stream stream, string source)
+    {
+        return ModPackage.Read(source, stream).PackageHash;
     }
 }
 

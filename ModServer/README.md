@@ -53,11 +53,31 @@ Then upload:
 ```bash
 curl -X POST http://127.0.0.1:9527/api/v1/mods/upload \
   -H "X-Api-Key: local-dev-upload-key" \
-  -F modId=verification.block \
-  -F version=1.0.0 \
-  -F side=common \
   -F description="Verification Block example mod" \
   -F package=@VerificationBlockMod/bin/Debug/net10.0/packages/verification.block.scpak
+```
+
+`modId`, `version`, and `side` are read from `manifest.json` inside the
+package. The server computes a semantic package hash from the package contents,
+so rebuilding the same package layout no longer conflicts just because the zip
+bytes changed.
+
+If a mod with the same `modId@version` already exists and the content changed,
+the server returns `409 Conflict`. During early development you can overwrite it
+explicitly:
+
+```bash
+curl -X POST "http://127.0.0.1:9527/api/v1/mods/upload?replace=true" \
+  -H "X-Api-Key: local-dev-upload-key" \
+  -F description="Replace the existing development build" \
+  -F package=@VerificationBlockMod/bin/Debug/net10.0/packages/verification.block.scpak
+```
+
+To delete an uploaded version:
+
+```bash
+curl -X DELETE http://127.0.0.1:9527/api/v1/mods/verification.block/versions/1.0.0 \
+  -H "X-Api-Key: local-dev-upload-key"
 ```
 
 ## Repository Data

@@ -241,6 +241,30 @@ public class ModPackageTest
         Assert.NotEqual(first.PackageHash, second.PackageHash);
     }
 
+    [Fact]
+    public void PackageHashIgnoresZipEntryOrder()
+    {
+        using var firstStream = CreatePackage(
+            Manifest("example.order"),
+            new Dictionary<string, string>
+            {
+                ["data/blocks/a.csv"] = "A",
+                ["data/blocks/b.csv"] = "B"
+            });
+        using var secondStream = CreatePackage(
+            Manifest("example.order"),
+            new Dictionary<string, string>
+            {
+                ["data/blocks/b.csv"] = "B",
+                ["data/blocks/a.csv"] = "A"
+            });
+
+        var first = ModPackage.Read("first.scpak", firstStream);
+        var second = ModPackage.Read("second.scpak", secondStream);
+
+        Assert.Equal(first.PackageHash, second.PackageHash);
+    }
+
     private static MemoryStream CreatePackage(
         string manifest,
         IReadOnlyDictionary<string, string>? dataFiles = null,

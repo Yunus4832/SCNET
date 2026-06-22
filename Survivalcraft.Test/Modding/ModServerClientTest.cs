@@ -1,7 +1,6 @@
 using System.IO.Compression;
 using System.Net;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -18,7 +17,7 @@ public sealed class ModServerClientTest : IDisposable
     {
         Directory.CreateDirectory(_root);
         var packageBytes = CreatePackageBytes("example.test", "1.0.0");
-        var packageHash = Convert.ToHexStringLower(SHA256.HashData(packageBytes));
+        var packageHash = LocalModRepository.ComputePackageHash(packageBytes, "example.test.1.0.0.scpak");
         using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
         {
             if (request.RequestUri!.AbsoluteUri == "https://mods.example/api/v1/mods/example.test/versions/1.0.0")
@@ -70,6 +69,7 @@ public sealed class ModServerClientTest : IDisposable
         var entry = Assert.Single(entries);
         Assert.Equal("example.alpha", entry.ModId);
         Assert.Equal("1.0.0", entry.Version);
+        Assert.Equal(LocalModRepository.ComputePackageHash(Path.Combine(_root, "alpha.scpak")), entry.PackageHash);
     }
 
     public void Dispose()

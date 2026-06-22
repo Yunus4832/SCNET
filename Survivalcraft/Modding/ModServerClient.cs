@@ -71,7 +71,7 @@ public sealed class ModServerClient : IDisposable
         using var response = await _httpClient.GetAsync(package.DownloadUrl, cancellationToken);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsByteArrayAsync(cancellationToken);
-        return repository.AddOrUpdatePackage(package.PackageHash, content, $"{package.PackageHash}.scpak");
+        return repository.AddOrUpdatePackage(content, $"{package.PackageHash}.scpak");
     }
 
     public void Dispose()

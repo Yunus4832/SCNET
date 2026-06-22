@@ -32,16 +32,12 @@ public static class LocalModsImportManager
                 continue;
             }
 
-            var packageHash = previousEntry?.PackageHash;
-            if (string.IsNullOrWhiteSpace(packageHash))
-            {
-                packageHash = LocalModRepository.ComputeHash(path);
-            }
+            var packageHash = LocalModRepository.ComputePackageHash(path);
 
             if (repository.FindByHash(packageHash) == null)
             {
                 log?.Invoke($"导入本地模组 {fileInfo.Name}");
-                repository.ImportPackage(path, packageHash);
+                repository.ImportPackage(path);
             }
 
             importedEntries.Add(new ImportedModEntry(

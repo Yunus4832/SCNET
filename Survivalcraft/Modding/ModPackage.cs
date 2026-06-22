@@ -200,7 +200,7 @@ public sealed class ModPackage
         IReadOnlyDictionary<string, byte[]> dataFiles,
         IReadOnlyDictionary<string, byte[]> assetFiles)
     {
-        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.MD5);
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         Append("manifest.json", Encoding.UTF8.GetBytes(manifestJson));
         foreach (var (name, bytes) in assemblies.OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase))
         {
