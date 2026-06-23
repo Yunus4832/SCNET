@@ -14,4 +14,9 @@ public static class HashUtils
     {
         return Convert.ToHexString(MD5.HashData(input)).ToLowerInvariant();
     }
+
+    public static string ComputeSha256(string input)
+    {
+        return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(input))).ToLowerInvariant();
+    }
 }

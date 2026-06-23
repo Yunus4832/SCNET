@@ -355,6 +355,15 @@ public class NetPlayScreen : Screen
                 Log.Information($"远程模组仓库已声明为: {connect.ModServerAddress}");
             }
 
+            if (ModRestartHelper.PrepareRemoteSessionIfNeeded(
+                    SessionInfoManager.CreateRemoteClientSession(ep!, passwd),
+                    connect.RequiredModProfile,
+                    Log.Information)
+               )
+            {
+                return;
+            }
+
             DialogsManager.HideAllDialogs();
             ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, ep!, passwd);
         }
@@ -493,6 +502,7 @@ public class NetPlayScreen : Screen
                 net.PollEvents();
                 Thread.Sleep(1);
             }
+
             Log.Debug("Exit Discover");
         }
         catch (Exception e)
@@ -539,6 +549,7 @@ public class NetPlayScreen : Screen
                     net.PollEvents();
                     Thread.Sleep(1);
                 }
+
                 Log.Debug("Exit Check Connect");
             }
 
@@ -912,6 +923,8 @@ public class NetPlayScreen : Screen
         public string Name = string.Empty;
 
         public ushort PlayerCount;
+
+        public ModProfile? RequiredModProfile;
 
         public string SavedPassword = string.Empty;
 

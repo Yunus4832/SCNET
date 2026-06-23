@@ -55,6 +55,46 @@ public sealed class ModProfileManagerTest : IDisposable
     }
 
     [Fact]
+    public void RemoteServerSessionProfileDoesNotMergeGlobalProfile()
+    {
+        SaveGlobalProfile("""
+            <ModProfile Id="global" RepositoryUrl="https://global.example">
+              <Packages>
+                <Package ModId="global.mod" Version="1.0.0" />
+              </Packages>
+            </ModProfile>
+            """);
+        ModProfileManager.SaveSessionProfile(new ModProfile
+        {
+            Id = "remote-session",
+            RepositoryUrl = "https://server.example",
+            Packages =
+            [
+                new ModPackageRequirement
+                {
+                    ModId = "server.mod",
+                    Version = "2.0.0",
+                    PackageHash = "server-hash"
+                }
+            ]
+        });
+
+        var profile = ModProfileManager.LoadEffectiveProfile("remote-session", new SessionInfo
+        {
+            Target = SessionTarget.RemoteServer,
+            ServerHost = "127.0.0.1",
+            ServerPort = 28887
+        });
+
+        Assert.Equal("remote-session", profile.Id);
+        Assert.Equal("https://server.example", profile.RepositoryUrl);
+        var package = Assert.Single(profile.Packages);
+        Assert.Equal("server.mod", package.ModId);
+        Assert.Equal("2.0.0", package.Version);
+        Assert.Equal("server-hash", package.PackageHash);
+    }
+
+    [Fact]
     public void LoadSessionProfileReturnsModProfile()
     {
         ModProfileManager.SaveSessionProfile(new ModProfile

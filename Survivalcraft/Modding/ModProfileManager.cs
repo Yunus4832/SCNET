@@ -6,6 +6,16 @@ public static class ModProfileManager
 {
     public static string GlobalProfilePath => GamePaths.GlobalModProfileFile;
 
+    public static string EmptyDataHash { get; } = ComputeDataHash(null);
+
+    public static string ComputeDataHash(ModProfile? profile)
+    {
+        var lines = (profile?.Packages ?? [])
+            .Select(CreateDataHashLine)
+            .OrderBy(line => line, StringComparer.OrdinalIgnoreCase);
+        return HashUtils.ComputeSha256(string.Join('\n', lines));
+    }
+
     public static ModProfile LoadEffectiveProfile(string? sessionId)
     {
         return LoadEffectiveProfile(sessionId, null);
@@ -373,6 +383,11 @@ public static class ModProfileManager
             Version = package.Version,
             PackageHash = package.PackageHash
         };
+    }
+
+    private static string CreateDataHashLine(ModPackageRequirement package)
+    {
+        return $"{package.ModId.Trim()}|{package.Version.Trim()}|{package.PackageHash?.Trim() ?? string.Empty}";
     }
 
     private static string GetWorldProfileId(string worldDirectoryName)

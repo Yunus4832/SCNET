@@ -550,11 +550,18 @@ public class NetNode
             Clients.Clear();
             NetManager.Start();
             TokenId = Guid.NewGuid();
-            var localMods = (CurrentModRuntime.Value?.GetLoadedMods() ?? Array.Empty<LoadedModInfo>())
-                .Select(ModHandshakeInfo.FromLoadedMod);
             SendWriterFromPackage(
-                new ConnectionRequestPackage(TokenId, VersionsManager.ProtocolVersion, SettingsManager.CommunityAccessUser,
-                    SettingsManager.OnlineAccessToken, passwd, localMods), ep, false);
+                new ConnectionRequestPackage(
+                    TokenId,
+                    VersionsManager.ProtocolVersion,
+                    SettingsManager.CommunityAccessUser,
+                    SettingsManager.OnlineAccessToken,
+                    passwd,
+                    CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash
+                ),
+                ep,
+                false
+            );
             Listener.NetworkReceiveUnconnectedEvent -= HandleConnectionReject;
             Listener.NetworkReceiveEvent += NetworkReceiveEvent;
             Listener.ConnectionRequestEvent += ConnectionRequestEvent;
@@ -600,6 +607,7 @@ public class NetNode
             PendingClient.State = ClientState.Connected;
             OnClientStateChanged?.Invoke(PendingClient);
         }
+
         QueuePackage(new ClientPackage(Clients.Values) { To = PendingClient });
         Log.Debug($"Client[{PendingClient.ID}]已完成加入过程");
         PendingPeer = null;
@@ -622,6 +630,7 @@ public class NetNode
             {
                 _pendingPackages.Clear();
             }
+
             _lastPackageFlushTimes.Clear();
             if (_broadcastNetManager.IsRunning)
             {
@@ -759,7 +768,9 @@ public class NetNode
         var w = CommonLib.GetWriter(writer, out _);
         if (netPeer != null)
         {
-            var transport = useDeliveryEvent ? PackageTransportPolicy.Control : PackageTransportPolicy.Get(packageList[0]);
+            var transport = useDeliveryEvent
+                ? PackageTransportPolicy.Control
+                : PackageTransportPolicy.Get(packageList[0]);
             if (!useDeliveryEvent)
             {
                 netPeer.Send(w, transport.ChannelNumber, transport.DeliveryMethod);

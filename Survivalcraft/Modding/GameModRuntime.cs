@@ -13,12 +13,17 @@ public sealed class GameModRuntime : IDisposable
         ModHost host,
         BlockRuntimeCatalog blocks,
         GameDataCatalog data,
-        ContentCatalog content)
+        ContentCatalog content,
+        ModProfile effectiveProfile,
+        IReadOnlyList<LoadedModInfo> loadedMods)
     {
         Host = host;
         Blocks = blocks;
         Data = data;
         Content = content;
+        EffectiveProfile = effectiveProfile;
+        LoadedMods = loadedMods;
+        ModDataHash = ModProfileManager.ComputeDataHash(effectiveProfile);
     }
 
     public ModHost Host { get; }
@@ -29,6 +34,12 @@ public sealed class GameModRuntime : IDisposable
 
     public ContentCatalog Content { get; }
 
+    public ModProfile EffectiveProfile { get; }
+
+    public string ModDataHash { get; }
+
+    public IReadOnlyList<LoadedModInfo> LoadedMods { get; }
+
     public GameplayHooks Gameplay => Host.Gameplay;
 
     public BlockBehaviorHooks BlockBehaviors => Host.BlockBehaviors;
@@ -37,96 +48,65 @@ public sealed class GameModRuntime : IDisposable
 
     public ModNetworkHooks Network => Host.Network;
 
-    public IReadOnlyList<LoadedModInfo> GetLoadedMods()
+    public ModProfile? CreateServerRequiredProfile()
     {
-        var blockRegistry = Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
-        var blockDataRegistry = Host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName);
-        var databaseRegistry = Host.Extensions.GetRegistry<XmlDataRegistration>(XmlDataExtensions.DatabaseRegistryName);
-        var recipeRegistry = Host.Extensions.GetRegistry<XmlDataRegistration>(XmlDataExtensions.RecipeRegistryName);
-        var clothingRegistry = Host.Extensions.GetRegistry<XmlDataRegistration>(XmlDataExtensions.ClothingRegistryName);
-        var contentRegistry = Host.Extensions.GetRegistry<ContentRegistration>(ContentExtensions.RegistryName);
+        var packages = EffectiveProfile.Packages
+            .Select(package => new ModPackageRequirement
+            {
+                ModId = package.ModId,
+                Version = package.Version,
+                PackageHash = package.PackageHash
+            })
+            .ToList();
+        var repositoryUrl = string.IsNullOrWhiteSpace(EffectiveProfile.RepositoryUrl)
+            ? SettingsManager.ModServerAddress
+            : EffectiveProfile.RepositoryUrl;
 
-        return Host.Runtimes
-            .Select(runtime => CreateLoadedModInfo(
-                runtime.Descriptor.Manifest,
-                BuildFingerprint(
-                    runtime.Descriptor,
-                    blockRegistry,
-                    blockDataRegistry,
-                    databaseRegistry,
-                    recipeRegistry,
-                    clothingRegistry,
-                    contentRegistry,
-                    Host.Network)))
-            .ToArray();
+        if (packages.Count == 0 || string.IsNullOrWhiteSpace(repositoryUrl))
+        {
+            return null;
+        }
+
+        return new ModProfile
+        {
+            Id = "server",
+            RepositoryUrl = repositoryUrl,
+            Packages = packages
+        };
     }
 
     public static GameModRuntime Start(IEnumerable<ModDescriptor>? externalMods = null)
     {
-        var descriptors = new List<ModDescriptor> { BuiltInContentMod.CreateDescriptor() };
-        if (externalMods is not null)
-        {
-            descriptors.AddRange(externalMods);
-        }
-
-        var host = new ModHost();
-        try
-        {
-            host.Extensions.GetRegistry<ContentRegistration>(ContentExtensions.RegistryName);
-            host.LoadAndStart(descriptors);
-            var blockRegistry = host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
-            var dataRegistry = host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName);
-            var blocks = BlockRuntimeCatalog.Compile(blockRegistry, dataRegistry);
-            var data = GameDataCatalog.Compile(host.Extensions);
-            var content = ContentCatalog.Compile(host.Extensions);
-            return new GameModRuntime(host, blocks, data, content);
-        }
-        catch
-        {
-            host.StopAll();
-            throw;
-        }
+        return StartFromDescriptors(externalMods ?? [], null);
     }
 
-    public static GameModRuntime StartFromDirectory(string directoryPath, ModSide hostSide)
+    public static GameModRuntime StartFromProfile(
+        ModProfile profile,
+        string localRepositoryPath,
+        ModSide hostSide,
+        Action<string>? log = null,
+        bool fallbackToBuiltInOnFailure = false)
     {
-        var externalMods = ModPackageCatalog.CreateLoadPlan(
-            directoryPath,
-            hostSide,
-            ModSelectionSettings.DisabledPackages);
-        try
-        {
-            return Start(externalMods);
-        }
-        catch
-        {
-            foreach (var descriptor in externalMods)
-            {
-                descriptor.Lifetime?.Dispose();
-            }
-
-            Log.Error(
-                "Failed to load external mods from {0}; continuing with built-in content only.",
-                directoryPath);
-            return Start();
-        }
+        var sources = ModProfileResolver.ResolveRequiredPackages(profile, localRepositoryPath, log);
+        return StartFromPackageSources(sources, hostSide, fallbackToBuiltInOnFailure, profile);
     }
 
-    public static GameModRuntime StartFromPackageSources(
+    private static GameModRuntime StartFromPackageSources(
         IEnumerable<ModPackageSource> sources,
         ModSide hostSide,
-        bool fallbackToBuiltInOnFailure = false)
+        bool fallbackToBuiltInOnFailure,
+        ModProfile effectiveProfile)
     {
         var materializedSources = sources.ToArray();
         var externalMods = ModPackageCatalog.CreateLoadPlan(materializedSources, hostSide);
         if (!fallbackToBuiltInOnFailure)
         {
-            return Start(externalMods);
+            return StartFromDescriptors(externalMods, effectiveProfile);
         }
 
         try
         {
-            var runtime = Start(externalMods);
+            var runtime = StartFromDescriptors(externalMods, effectiveProfile);
             Log.Information(
                 "Loaded mods for {0}: {1}",
                 hostSide,
@@ -141,73 +121,6 @@ public sealed class GameModRuntime : IDisposable
             }
 
             Log.Error("Failed to load external mods from package sources; continuing with built-in content only.");
-            return Start();
-        }
-    }
-
-    public static GameModRuntime StartFromProfile(
-        ModProfile profile,
-        string localRepositoryPath,
-        ModSide hostSide,
-        Action<string>? log = null,
-        bool fallbackToBuiltInOnFailure = false)
-    {
-        var sources = ModProfileResolver.ResolveRequiredPackages(profile, localRepositoryPath, log);
-        return StartFromPackageSources(sources, hostSide, fallbackToBuiltInOnFailure);
-    }
-
-    public static GameModRuntime StartFromStorageDirectory(string directoryPath, ModSide hostSide)
-    {
-        if (!Storage.DirectoryExists(directoryPath))
-        {
-            Storage.CreateDirectory(directoryPath);
-        }
-
-        var packageNames = Storage.ListFileNames(directoryPath)
-            .Where(name =>
-                Storage.GetExtension(name).Equals(ModPackage.FileExtension, StringComparison.OrdinalIgnoreCase))
-            .OrderBy(name => name, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        Log.Information(
-            "Scanning mod directory {0} for {1}: found {2} package(s).",
-            Storage.GetSystemPath(directoryPath),
-            hostSide,
-            packageNames.Length);
-        foreach (var packageName in packageNames)
-        {
-            Log.Information("Discovered mod package: {0}", packageName);
-        }
-
-        var sources = packageNames
-            .Select(name =>
-            {
-                var path = Storage.CombinePaths(directoryPath, name);
-                return new ModPackageSource(path, () => Storage.OpenFile(path, OpenFileMode.Read));
-            })
-            .ToArray();
-        var externalMods = ModPackageCatalog.CreateLoadPlan(
-            sources,
-            hostSide,
-            ModSelectionSettings.DisabledPackages);
-        try
-        {
-            var runtime = Start(externalMods);
-            Log.Information(
-                "Loaded mods for {0}: {1}",
-                hostSide,
-                string.Join(", ", runtime.Host.Runtimes.Select(item => item.Descriptor.Manifest.Id)));
-            return runtime;
-        }
-        catch
-        {
-            foreach (var descriptor in externalMods)
-            {
-                descriptor.Lifetime?.Dispose();
-            }
-
-            Log.Error(
-                "Failed to load external mods from {0}; continuing with built-in content only.",
-                Storage.GetSystemPath(directoryPath));
             return Start();
         }
     }
@@ -289,13 +202,105 @@ public sealed class GameModRuntime : IDisposable
         Host.StopAll();
     }
 
-    private static LoadedModInfo CreateLoadedModInfo(ModManifest manifest, string fingerprint)
+    private static LoadedModInfo CreateLoadedModInfo(ModDescriptor descriptor, string fingerprint)
     {
         return new LoadedModInfo(
-            manifest.Name,
-            manifest.Id,
-            manifest.Version,
-            fingerprint);
+            descriptor.Manifest.Name,
+            descriptor.Manifest.Id,
+            descriptor.Manifest.Version,
+            fingerprint,
+            descriptor.PackageHash);
+    }
+
+    private static GameModRuntime StartFromDescriptors(IEnumerable<ModDescriptor> descriptors,
+        ModProfile? effectiveProfile)
+    {
+        var allDescriptors = new List<ModDescriptor> { BuiltInContentMod.CreateDescriptor() };
+        allDescriptors.AddRange(descriptors);
+
+        var host = new ModHost();
+        try
+        {
+            host.Extensions.GetRegistry<ContentRegistration>(ContentExtensions.RegistryName);
+            host.LoadAndStart(allDescriptors);
+            var blockRegistry = host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
+            var dataRegistry = host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName);
+            var blocks = BlockRuntimeCatalog.Compile(blockRegistry, dataRegistry);
+            var data = GameDataCatalog.Compile(host.Extensions);
+            var content = ContentCatalog.Compile(host.Extensions);
+            var loadedMods = CreateLoadedModInfos(host);
+            return new GameModRuntime(
+                host,
+                blocks,
+                data,
+                content,
+                CreateEffectiveProfile(loadedMods, effectiveProfile),
+                loadedMods);
+        }
+        catch
+        {
+            host.StopAll();
+            throw;
+        }
+    }
+
+    private static IReadOnlyList<LoadedModInfo> CreateLoadedModInfos(ModHost host)
+    {
+        var blockRegistry = host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
+        var blockDataRegistry = host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName);
+        var databaseRegistry = host.Extensions.GetRegistry<XmlDataRegistration>(XmlDataExtensions.DatabaseRegistryName);
+        var recipeRegistry = host.Extensions.GetRegistry<XmlDataRegistration>(XmlDataExtensions.RecipeRegistryName);
+        var clothingRegistry = host.Extensions.GetRegistry<XmlDataRegistration>(XmlDataExtensions.ClothingRegistryName);
+        var contentRegistry = host.Extensions.GetRegistry<ContentRegistration>(ContentExtensions.RegistryName);
+
+        return host.Runtimes
+            .Select(runtime => CreateLoadedModInfo(
+                runtime.Descriptor,
+                BuildFingerprint(
+                    runtime.Descriptor,
+                    blockRegistry,
+                    blockDataRegistry,
+                    databaseRegistry,
+                    recipeRegistry,
+                    clothingRegistry,
+                    contentRegistry,
+                    host.Network)))
+            .ToArray();
+    }
+
+    private static ModProfile CreateEffectiveProfile(IReadOnlyList<LoadedModInfo> loadedMods, ModProfile? profile)
+    {
+        if (profile is not null)
+        {
+            return new ModProfile
+            {
+                Id = profile.Id,
+                RepositoryUrl = profile.RepositoryUrl,
+                Packages = profile.Packages
+                    .Select(package => new ModPackageRequirement
+                    {
+                        ModId = package.ModId,
+                        Version = package.Version,
+                        PackageHash = package.PackageHash
+                    })
+                    .ToList()
+            };
+        }
+
+        return new ModProfile
+        {
+            Id = "runtime",
+            RepositoryUrl = SettingsManager.ModServerAddress,
+            Packages = loadedMods
+                .Where(mod => !string.IsNullOrWhiteSpace(mod.PackageHash))
+                .Select(mod => new ModPackageRequirement
+                {
+                    ModId = mod.PackageName,
+                    Version = mod.Version,
+                    PackageHash = mod.PackageHash
+                })
+                .ToList()
+        };
     }
 
     private static string BuildFingerprint(
@@ -351,4 +356,6 @@ public sealed record LoadedModInfo(
     string Name,
     string PackageName,
     string Version,
-    string ResourcesMd5);
+    string ResourcesMd5,
+    string? PackageHash
+);

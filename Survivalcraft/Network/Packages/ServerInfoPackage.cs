@@ -16,6 +16,8 @@ public class ServerInfoPackage : IPackage
 
     public string ModServerAddress = string.Empty;
 
+    public ModProfile? RequiredModProfile;
+
     public bool NeedLogin;
 
     public bool NeedPasswd;
@@ -80,6 +82,7 @@ public class ServerInfoPackage : IPackage
         NeedPasswd = !string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.Password);
         TimeOfDay = subsystemTimeOfDay.CalculateTimeOfDay();
         ModServerAddress = SettingsManager.ModServerAddress;
+        RequiredModProfile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
         Season = subsystemSeasons.Season;
         TimeOfSeason = subsystemSeasons.TimeOfSeason;
     }
@@ -104,10 +107,12 @@ public class ServerInfoPackage : IPackage
         try
         {
             ModServerAddress = reader.ReadString();
+            RequiredModProfile = ReadProfile(reader);
         }
         catch
         {
             ModServerAddress = string.Empty;
+            RequiredModProfile = null;
         }
 
         Season = (Season)reader.ReadInt32();
@@ -130,7 +135,54 @@ public class ServerInfoPackage : IPackage
         writer.Write(NeedPasswd);
         writer.Write(TimeOfDay);
         writer.Write(ModServerAddress);
+        WriteProfile(writer, RequiredModProfile);
         writer.Write((int)Season);
         writer.Write(TimeOfSeason);
+    }
+
+    private static ModProfile? ReadProfile(PackageStreamReader reader)
+    {
+        if (reader.BaseStream.Position >= reader.BaseStream.Length || !reader.ReadBoolean())
+        {
+            return null;
+        }
+
+        var profile = new ModProfile
+        {
+            Id = reader.ReadString(),
+            RepositoryUrl = reader.ReadString(),
+            Packages = []
+        };
+        var count = reader.ReadUInt16();
+        for (var i = 0; i < count; i++)
+        {
+            profile.Packages.Add(new ModPackageRequirement
+            {
+                ModId = reader.ReadString(),
+                Version = reader.ReadString(),
+                PackageHash = reader.ReadString()
+            });
+        }
+
+        return profile;
+    }
+
+    private static void WriteProfile(PackageStreamWriter writer, ModProfile? profile)
+    {
+        writer.Write(profile != null);
+        if (profile == null)
+        {
+            return;
+        }
+
+        writer.Write(profile.Id);
+        writer.Write(profile.RepositoryUrl ?? string.Empty);
+        writer.Write((ushort)profile.Packages.Count);
+        foreach (var package in profile.Packages)
+        {
+            writer.Write(package.ModId);
+            writer.Write(package.Version);
+            writer.Write(package.PackageHash ?? string.Empty);
+        }
     }
 }

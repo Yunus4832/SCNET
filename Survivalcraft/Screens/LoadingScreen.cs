@@ -21,7 +21,8 @@ public class LoadingScreen : Screen
 
     private readonly RectangleWidget _background = new()
     {
-        FillColor = SettingsManager.DisplayLog ? Color.Black : Color.White, OutlineThickness = 0f,
+        FillColor = SettingsManager.DisplayLog ? Color.Black : Color.White,
+        OutlineThickness = 0f,
         DepthWriteEnabled = true
     };
 

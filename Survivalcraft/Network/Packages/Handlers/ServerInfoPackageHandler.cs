@@ -34,6 +34,7 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
             c.Version = package.Version;
             c.TimeOfDay = package.TimeOfDay;
             c.ModServerAddress = package.ModServerAddress;
+            c.RequiredModProfile = package.RequiredModProfile;
             c.Season = package.Season;
             c.TimeOfSeason = package.TimeOfSeason;
             if (IpToDNS.TryGetValue(c.IP, out var dns))
@@ -61,6 +62,7 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
                 found.Version = c.Version;
                 found.TimeOfDay = c.TimeOfDay;
                 found.ModServerAddress = package.ModServerAddress;
+                found.RequiredModProfile = package.RequiredModProfile;
                 found.Season = c.Season;
                 found.TimeOfSeason = c.TimeOfSeason;
             }

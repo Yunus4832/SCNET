@@ -31,7 +31,7 @@ public class GameModRuntimeTest
         Assert.True(runtime.Blocks.TryGet(new ResourceId(new ModId("game"), "air"), out var air));
         Assert.Equal(AirBlock.Index, air!.RuntimeIndex);
         Assert.Single(runtime.Blocks.DataEntries);
-        Assert.Equal(["game", "example.addon"], runtime.GetLoadedMods().Select(item => item.PackageName));
+        Assert.Equal(["game", "example.addon"], runtime.LoadedMods.Select(item => item.PackageName));
     }
 
     [Fact]
@@ -158,7 +158,7 @@ public class GameModRuntimeTest
         GameEntry.SetModRuntime(runtime);
         try
         {
-            var loadedMods = runtime.GetLoadedMods();
+            var loadedMods = runtime.LoadedMods;
             Assert.NotEmpty(loadedMods);
             Assert.Contains(loadedMods, item => item.PackageName == "game");
         }
@@ -169,7 +169,7 @@ public class GameModRuntimeTest
     }
 
     [Fact]
-    public void DirectoryRuntimeSkipsDisabledPackages()
+    public void RuntimeCachesEffectiveProfileAndModDataHash()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"scnet-runtime-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
@@ -181,16 +181,22 @@ public class GameModRuntimeTest
                   "name": "Addon",
                   "version": "1.0.0"
                 }
-                """);
-            ModSelectionSettings.ReplaceDisabledPackages(["example.addon"]);
+                """, new Dictionary<string, string>
+                {
+                    ["data/blocks/items.csv"] = "Type;DisplayName\nAirBlock;Profile Runtime"
+                });
 
-            using var runtime = GameModRuntime.StartFromDirectory(directory, ModSide.Server);
+            var descriptors = ModPackageCatalog.CreateLoadPlan(directory, ModSide.Server);
+            using var runtime = GameModRuntime.Start(descriptors);
 
-            Assert.Equal(["game"], runtime.Host.Runtimes.Select(item => item.Descriptor.Manifest.Id));
+            var requirement = Assert.Single(runtime.EffectiveProfile.Packages);
+            Assert.Equal("example.addon", requirement.ModId);
+            Assert.Equal("1.0.0", requirement.Version);
+            Assert.False(string.IsNullOrWhiteSpace(requirement.PackageHash));
+            Assert.Equal(ModProfileManager.ComputeDataHash(runtime.EffectiveProfile), runtime.ModDataHash);
         }
         finally
         {
-            ModSelectionSettings.ReplaceDisabledPackages([]);
             Directory.Delete(directory, true);
         }
     }
@@ -232,12 +238,29 @@ public class GameModRuntimeTest
         }
     }
 
-    private static void WritePackage(string path, string manifest)
+    private static void WritePackage(
+        string path,
+        string manifest,
+        IReadOnlyDictionary<string, string>? dataFiles = null)
     {
         using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: false);
         var manifestEntry = archive.CreateEntry("manifest.json");
-        using var writer = new StreamWriter(manifestEntry.Open(), Encoding.UTF8, leaveOpen: false);
-        writer.Write(manifest);
+        using (var writer = new StreamWriter(manifestEntry.Open(), Encoding.UTF8, leaveOpen: false))
+        {
+            writer.Write(manifest);
+        }
+
+        if (dataFiles is null)
+        {
+            return;
+        }
+
+        foreach (var (entryPath, content) in dataFiles)
+        {
+            var entry = archive.CreateEntry(entryPath);
+            using var dataWriter = new StreamWriter(entry.Open(), Encoding.UTF8, leaveOpen: false);
+            dataWriter.Write(content);
+        }
     }
 }

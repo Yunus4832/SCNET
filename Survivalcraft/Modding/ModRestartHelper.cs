@@ -10,6 +10,45 @@ public static class ModRestartHelper
         }
     }
 
+    public static bool PrepareRemoteSessionIfNeeded(
+        SessionInfo remoteSession,
+        ModProfile? requiredProfile,
+        Action<string>? log = null)
+    {
+        if (requiredProfile is not { Packages.Count: > 0 })
+        {
+            return false;
+        }
+
+        var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, requiredProfile);
+        var existingProfile = ModProfileManager.LoadSessionProfile(RunningSettingManager.Current.ActiveSessionId);
+        var downloadedAny = ModProfileResolver.EnsurePackagesAvailable(
+            sessionProfile,
+            Storage.GetSystemPath(GamePaths.ModCache),
+            log);
+        if (AreEquivalent(existingProfile, sessionProfile) && !downloadedAny)
+        {
+            return false;
+        }
+
+        GameExitManager.RequestRestart(remoteSession, sessionProfile);
+        return true;
+    }
+
+    private static bool AreEquivalent(ModProfile? left, ModProfile right)
+    {
+        var leftPackages = (left?.Packages ?? [])
+            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}#{package.PackageHash?.Trim() ?? string.Empty}")
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        var rightPackages = (right.Packages ?? [])
+            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}#{package.PackageHash?.Trim() ?? string.Empty}")
+            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+        return string.Equals(left?.RepositoryUrl, right.RepositoryUrl, StringComparison.OrdinalIgnoreCase) &&
+               leftPackages.SequenceEqual(rightPackages, StringComparer.OrdinalIgnoreCase);
+    }
+
     private static bool RequiresClientRestart(string message)
     {
         if (string.IsNullOrWhiteSpace(message))
