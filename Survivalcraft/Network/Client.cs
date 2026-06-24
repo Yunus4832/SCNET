@@ -10,7 +10,7 @@ namespace Game.Network;
 
 public class Client
 {
-    //服务器本身构造
+    // 服务器本身构造
     public Client(Guid guid, Project project)
     {
         GUID = guid;

@@ -154,6 +154,8 @@ public sealed class StreamingSound : BaseSound
     /// <exception cref="InvalidOperationException">声道数不是1或2，或采样率不在 8000-48000 Hz 范围内</exception>
     private void VerifyStreamingSource(StreamingSource streamingSource)
     {
+        ArgumentNullException.ThrowIfNull(streamingSource);
+
         if (streamingSource.ChannelsCount is < 1 or > 2)
         {
             throw new InvalidOperationException("Unsupported channels count.");

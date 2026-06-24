@@ -1,7 +1,6 @@
 using System.Text;
 
 #if ANDROID
-using Android.App;
 using Engine.Windowing;
 using AndroidEnvironment = Android.OS.Environment;
 using Environment = System.Environment;

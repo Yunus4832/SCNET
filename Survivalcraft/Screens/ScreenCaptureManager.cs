@@ -5,7 +5,7 @@ namespace Game.Screens;
 
 public static class ScreenCaptureManager
 {
-    private static readonly string _screenshotDir = "app:/ScreenCapture";
+    private static readonly string _screenshotDir = GamePaths.ScreenCaptures;
 
     private static bool _captureRequested;
 
@@ -137,6 +137,6 @@ public static class ScreenCaptureManager
 
         using var stream = Storage.OpenFile(Storage.CombinePaths(_screenshotDir, filename),
             OpenFileMode.CreateOrOpen);
-        Image.Save(image, stream, ImageFileFormat.Jpg, false);
+        Image.Save(image, stream, ImageFileFormat.Jpg, false, sync: true);
     }
 }

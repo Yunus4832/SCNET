@@ -193,6 +193,7 @@ public class Image
 
     public static void Save(Image image, Stream stream, ImageFileFormat format, bool saveAlpha, bool sync = false)
     {
+        image.FlushPixelsCache();
         switch (format)
         {
             case ImageFileFormat.Bmp:
@@ -340,7 +341,28 @@ public class Image
     public static void Save(Image image, string fileName, ImageFileFormat format, bool saveAlpha)
     {
         using var stream = Storage.OpenFile(fileName, OpenFileMode.Create);
-        Save(image, stream, format, saveAlpha);
+        Save(image, stream, format, saveAlpha, sync: true);
+    }
+
+    private void FlushPixelsCache()
+    {
+        if (_pixels.Length != Width * Height || ShouldUpdatePixelsCache)
+        {
+            return;
+        }
+
+        ProcessPixelRows(
+            accessor =>
+            {
+                var pixelsSpan = _pixels.AsSpan();
+                for (var y = 0; y < accessor.Height; y++)
+                {
+                    MemoryMarshal.Cast<Color, Rgba32>(pixelsSpan.Slice(y * Width, Width))
+                        .CopyTo(accessor.GetRowSpan(y));
+                }
+            },
+            false
+        );
     }
 
     public void ProcessPixelRows(PixelAccessorAction<Rgba32> accessorAction, bool shouldUpdatePixelsCache = true)
