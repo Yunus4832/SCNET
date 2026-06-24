@@ -242,23 +242,74 @@ public static class GameEntry
     {
         public void WriteNet(NetLogLevel level, string str, params object[] args)
         {
-            var s = level.ToString();
-            if (!SettingsManager.LiteNetLibLogLevel.Split([','], StringSplitOptions.None).Contains(s))
-            {
-                return;
-            }
-
+            var logType = MapLogType(level);
             var builder = new StringBuilder();
             builder.Append("[LiteNetLib]");
-            builder.Append(s);
-            builder.Append(str);
-            foreach (var obj in args)
+            builder.Append(level);
+            builder.Append(' ');
+            builder.Append(FormatMessage(str, args));
+            Write(logType, builder.ToString());
+        }
+
+        private static string FormatMessage(string message, object[] args)
+        {
+            if (args.Length == 0)
             {
-                builder.Append(obj);
-                builder.Append(' ');
+                return message;
             }
 
-            Log.Information(builder.ToString());
+            try
+            {
+                return string.Format(message, args);
+            }
+            catch
+            {
+                var builder = new StringBuilder(message);
+                foreach (var arg in args)
+                {
+                    builder.Append(' ');
+                    builder.Append(arg);
+                }
+
+                return builder.ToString();
+            }
+        }
+
+        private static LogType MapLogType(NetLogLevel level)
+        {
+            return level switch
+            {
+                NetLogLevel.Trace => LogType.Debug,
+                NetLogLevel.Info => LogType.Information,
+                NetLogLevel.Warning => LogType.Warning,
+                NetLogLevel.Error => LogType.Error,
+                _ => LogType.Information
+            };
+        }
+
+        private static void Write(LogType logType, string message)
+        {
+            switch (logType)
+            {
+                case LogType.Debug:
+                    Log.Debug(message);
+                    break;
+                case LogType.Verbose:
+                    Log.Verbose(message);
+                    break;
+                case LogType.Information:
+                    Log.Information(message);
+                    break;
+                case LogType.Warning:
+                    Log.Warning(message);
+                    break;
+                case LogType.Error:
+                    Log.Error(message);
+                    break;
+                default:
+                    Log.Information(message);
+                    break;
+            }
         }
     }
 }

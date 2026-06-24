@@ -138,7 +138,7 @@ public static class BlocksManager
             }
             catch (Exception e)
             {
-                LoadingScreen.Warning($"加载方块{block.GetType().FullName}错误:{e.Message}");
+                Log.Warning($"加载方块{block.GetType().FullName}错误:{e.Message}");
             }
 
             foreach (var value in block.GetCreativeValues())

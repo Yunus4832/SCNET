@@ -18,16 +18,9 @@ public static class SettingsManager
     // 添加字段记录上次修改时间
     private static DateTime _lastAccessTokenChangeTime = DateTime.MinValue;
 
-    public static bool UsePrimaryMemoryBank { get; set; }
-
-    public static bool AllowInitialIntro { get; set; } = true;
-
     public static int ServerPort { get; set; } = 28887;
 
     public static int BroadcastPort { get; set; } = 28888;
-
-
-    public static bool DeleteWorldNeedToText { get; set; }
 
     public static float SoundsVolume
     {
@@ -109,11 +102,7 @@ public static class SettingsManager
         }
     }
 
-    public static GuiSize GuiSize { get; set; }
-
     public static bool HideMoveLookPads { get; set; }
-
-    public static string BlocksTextureFileName { get; set; } = string.Empty;
 
     public static MoveControlMode MoveControlMode { get; set; } = MoveControlMode.Pad;
 
@@ -155,8 +144,6 @@ public static class SettingsManager
     public static string OnlineAccessToken { get; set; } = string.Empty;
 
     public static string CommunityAccessToken { get; set; } = string.Empty;
-
-    public static bool MotdUseBackupUrl { get; set; }
 
     public static double MotdUpdatePeriodHours { get; set; } = 12.0;
 
@@ -207,8 +194,6 @@ public static class SettingsManager
         }
     }
 
-    public static bool DisplayLog { get; set; }
-
     public static string BulletinTime { get; set; } = string.Empty;
 
     public static string ScpboxUserInfo { get; set; } = string.Empty;
@@ -239,16 +224,6 @@ public static class SettingsManager
     public static int ServerChunkCountSendPer { get; set; } = 100;
 
     public static bool AutoGarbageCollect { get; set; } = true;
-
-    /// <summary>
-    /// 告示牌通电是否广播所有玩家
-    /// </summary>
-    public static bool GlobalSignBlockAlert { get; set; } = true;
-
-    /// <summary>
-    /// Warning,Error,Trace,Info
-    /// </summary>
-    public static string LiteNetLibLogLevel { get; set; } = "Error";
 
     public static string ModServerAddress { get; set; } = string.Empty;
 

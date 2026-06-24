@@ -84,11 +84,7 @@ public class ObjModelReader : IContentReader
                         }
                         case "usemtl":
                         {
-                            if (texturePaths.TryGetValue(spl[1], out currentKey))
-                            {
-                                // LoadingScreen.Info("Parse Obj mtl:" + currentKey);
-                            }
-
+                            texturePaths.TryGetValue(spl[1], out currentKey);
                             break;
                         }
                         case "f":

@@ -8,8 +8,6 @@ public class SettingsUiScreen : Screen
 
     private readonly ButtonWidget _communityContentModeButton;
 
-    private readonly ButtonWidget _displayLogButton;
-
     private readonly ButtonWidget _hideMoveLookPadsButton;
 
     private readonly ButtonWidget _languageButton;
@@ -35,7 +33,6 @@ public class SettingsUiScreen : Screen
         LoadContents(this, node);
         _windowModeContainer = Children.Find<ContainerWidget>("WindowModeContainer")!;
         _languageButton = Children.Find<BevelledButtonWidget>("LanguageButton")!;
-        _displayLogButton = Children.Find<ButtonWidget>("DisplayLogButton")!;
         _windowModeButton = Children.Find<ButtonWidget>("WindowModeButton")!;
         _uiScaleSlider = Children.Find<SliderWidget>("UIScaleSlider")!;
         _upsideDownButton = Children.Find<ButtonWidget>("UpsideDownButton")!;
@@ -72,11 +69,6 @@ public class SettingsUiScreen : Screen
         if (_languageButton.IsClicked)
         {
             OnLanguageButtonClick(); // 调用新的语言选择功能
-        }
-
-        if (_displayLogButton.IsClicked)
-        {
-            SettingsManager.DisplayLog = !SettingsManager.DisplayLog;
         }
 
         if (!_uiScaleSlider.IsSliding)
@@ -122,7 +114,6 @@ public class SettingsUiScreen : Screen
         // 更新按钮文本
         _windowModeButton.Text = LanguageManager.Get("WindowMode", SettingsManager.WindowMode.ToString());
         _languageButton.Text = LanguageManager.Get("Language", "Name");
-        _displayLogButton.Text = SettingsManager.DisplayLog ? LanguageManager.Yes : LanguageManager.No;
         _upsideDownButton.Text = SettingsManager.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
         _hideMoveLookPadsButton.Text = SettingsManager.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;
         _showGuiInScreenshotsButton.Text =

@@ -1,5 +1,4 @@
 using Engine.Audio;
-using Engine.Graphics;
 using Engine.Media;
 
 using Game.Network.Serialization;
@@ -8,20 +7,9 @@ namespace Game.Screens;
 
 public class LoadingScreen : Screen
 {
-    public enum LogType
-    {
-        Info,
-        Warning,
-        Error,
-        Advice
-    }
-
-    private static readonly ListPanelWidget _logList = new()
-        { Direction = LayoutDirection.Vertical, PlayClickSound = false };
-
     private readonly RectangleWidget _background = new()
     {
-        FillColor = SettingsManager.DisplayLog ? Color.Black : Color.White,
+        FillColor = Color.White,
         OutlineThickness = 0f,
         DepthWriteEnabled = true
     };
@@ -30,60 +18,16 @@ public class LoadingScreen : Screen
 
     private readonly List<Action> _loadingActions = [];
 
-    static LoadingScreen()
-    {
-        _logList.ItemWidgetFactory = obj =>
-        {
-            if (obj is not LogItem logItem)
-            {
-                throw new ArgumentNullException(nameof(logItem));
-            }
-
-            var canvasWidget = new CanvasWidget
-            {
-                Size = new Vector2(Display.Viewport.Width, 40), Margin = new Vector2(0, 2),
-                HorizontalAlignment = WidgetAlignment.Near
-            };
-            var fontTextWidget = new FontTextWidget
-            {
-                FontScale = 0.6f, Text = logItem.Message, Color = GetColor(logItem.LogType),
-                VerticalAlignment = WidgetAlignment.Center, HorizontalAlignment = WidgetAlignment.Near
-            };
-            canvasWidget.Children.Add(fontTextWidget);
-            canvasWidget.IsVisible = SettingsManager.DisplayLog;
-            _logList.IsEnabled = SettingsManager.DisplayLog;
-            return canvasWidget;
-        };
-        _logList.ItemSize = 30;
-    }
-
     public LoadingScreen()
     {
         _canvas.Size = new Vector2(float.PositiveInfinity);
         _canvas.AddChildren(_background);
-        _canvas.AddChildren(_logList);
         AddChildren(_canvas);
-        Info("Initializing Mods Manager. Api Version: " + ModPlatformInfo.ApiVersion);
-    }
-
-    public static Color GetColor(LogType type)
-    {
-        return type switch
-        {
-            LogType.Advice => Color.Cyan,
-            LogType.Error => Color.Red,
-            LogType.Warning => Color.Yellow,
-            _ => Color.White
-        };
+        Log.Information("Initializing Mods Manager. Api Version: " + ModPlatformInfo.ApiVersion);
     }
 
     public void ContentLoaded()
     {
-        if (SettingsManager.DisplayLog)
-        {
-            return;
-        }
-
         ClearChildren();
         var rectangle1 = new RectangleWidget
         {
@@ -107,46 +51,7 @@ public class LoadingScreen : Screen
         _canvas.AddChildren(rectangle1);
         _canvas.AddChildren(rectangle2);
         _canvas.AddChildren(busyBar);
-        _canvas.AddChildren(_logList);
         AddChildren(_canvas);
-    }
-
-    public static void Error(string msg)
-    {
-        Add(LogType.Error, "[Error]" + msg);
-    }
-
-    public static void Info(string msg)
-    {
-        Add(LogType.Info, "[Info]" + msg);
-    }
-
-    public static void Warning(string msg)
-    {
-        Add(LogType.Warning, "[Warning]" + msg);
-    }
-
-    public static void Advice(string msg)
-    {
-        Add(LogType.Advice, "[Advice]" + msg);
-    }
-
-    public static void Add(LogType type, string msg)
-    {
-        Dispatcher.Dispatch(delegate
-        {
-            var item = new LogItem(type, msg);
-            _logList.AddItem(item);
-            switch (type)
-            {
-                case LogType.Info:
-                case LogType.Advice: Log.Information(msg); break;
-                case LogType.Error: Log.Error(msg); break;
-                case LogType.Warning: Log.Warning(msg); break;
-            }
-
-            _logList.ScrollToItem(item);
-        });
     }
 
     private void InitActions()
@@ -156,19 +61,19 @@ public class LoadingScreen : Screen
             LocalModsImportManager.ImportInstalledMods(
                 Storage.GetSystemPath(GamePaths.Mods),
                 Storage.GetSystemPath(GamePaths.ModCache),
-                Info
+                Log.Information
             );
             var startupSession = SessionInfoManager.ResolveStartupSession();
             if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
                     RunningSettingManager.Current.ActiveSessionId,
                     startupSession,
                     Storage.GetSystemPath(GamePaths.ModCache),
-                    Info))
+                    Log.Information))
             {
                 return;
             }
 
-            Info("初始化模组运行时");
+            Log.Information("初始化模组运行时");
             ContentManager.Initialize();
             var profile = ModProfileManager.LoadEffectiveProfile(
                 RunningSettingManager.Current.ActiveSessionId,
@@ -178,7 +83,7 @@ public class LoadingScreen : Screen
                     profile,
                     Storage.GetSystemPath(GamePaths.ModCache),
                     ModSide.Client,
-                    Info
+                    Log.Information
                 )
             );
             CurrentModRuntime.Value!.InitializeAssets();
@@ -187,7 +92,7 @@ public class LoadingScreen : Screen
         AddLoadAction(ContentLoaded);
         AddLoadAction(delegate
         {
-            Info("初始化语言资源");
+            Log.Information("初始化语言资源");
             CurrentModRuntime.Value!.InitializeLanguage(
                 AppConfigStore.Values.TryGetValue("Language", out var language) ? language : "zh-CN");
         });
@@ -195,19 +100,19 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate
         {
             // 初始化TextureAtlas
-            Info("初始化纹理地图");
+            Log.Information("初始化纹理地图");
             TextureAtlasManager.Initialize();
         });
         AddLoadAction(delegate
         {
-            Info("初始化内置内容数据");
+            Log.Information("初始化内置内容数据");
             try
             {
                 CurrentModRuntime.Value!.InitializeContentData();
             }
             catch (Exception e)
             {
-                Warning(e.Message);
+                Log.Warning(e.Message);
             }
         });
         InitScreens();
@@ -286,7 +191,6 @@ public class LoadingScreen : Screen
 
     public override void Leave()
     {
-        _logList.ClearItems();
         Window.VSync = SettingsManager.VSync;
         ContentManager.Dispose("Textures/Gui/CandyRufusLogo");
         ContentManager.Dispose("Textures/Gui/EngineLogo");
@@ -333,11 +237,6 @@ public class LoadingScreen : Screen
                 }));
         }
 
-        if (!StartupDiagnostics.AllowContinue)
-        {
-            return;
-        }
-
         if (_loadingActions.Count <= 0)
         {
             return;
@@ -361,10 +260,4 @@ public class LoadingScreen : Screen
         }
     }
 
-    private class LogItem(LogType type, string log)
-    {
-        public readonly LogType LogType = type;
-
-        public readonly string Message = log;
-    }
 }
