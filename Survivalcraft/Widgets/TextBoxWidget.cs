@@ -81,8 +81,8 @@ public class TextBoxWidget : Widget
             if (value)
             {
 #if DESKTOP
+                // 清空之前的输入
                 if (_hasFocus && Text == string.Empty)
-                    //清空之前的输入
                 {
                     KeyboardInput.GetInput();
                 }
@@ -220,8 +220,9 @@ public class TextBoxWidget : Widget
                     Input.Clear();
                 }
             }
-#else
-            //处理文字删除
+#endif
+#if DESKTOP
+            // 处理文字删除
             if (KeyboardInput.DeletePressed)
             {
                 if (CaretPosition != 0)
@@ -241,7 +242,7 @@ public class TextBoxWidget : Widget
                 }
             }
 
-            //处理文字输入
+            // 处理文字输入
             var inputString = KeyboardInput.GetInput();
             if (JustOpened)
             {
@@ -267,7 +268,7 @@ public class TextBoxWidget : Widget
             return;
         }
 
-        //处理复制粘贴事件
+        // 处理复制粘贴事件
         if (Input.IsKeyDown(Key.Control))
         {
             if (Input.IsKeyDownOnce(Key.V))

@@ -4,6 +4,7 @@ using Android.Content.PM;
 
 using Game;
 
+using AndroidClipboardManager = Android.Content.ClipboardManager;
 using AndroidProviderSettings = Android.Provider.Settings;
 
 namespace Survivalcraft.Android;
@@ -28,6 +29,7 @@ public class GameActivity : EngineActivity
         RunMode.Value = RunModeType.Gui;
         WebBrowserManager.RegisterLauncher(OpenLink);
         WebManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
+        Game.Managers.ClipboardManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         InitializeAndroidId();
         LoadAssetAssemblies();
 
@@ -79,6 +81,21 @@ public class GameActivity : EngineActivity
         return Build.VERSION.SdkInt >= (BuildVersionCodes)21
             ? (ConnectivityManager?)GetSystemService(ConnectivityService)
             : null;
+    }
+
+    private string ReadClipboardText()
+    {
+        return GetSystemService(ClipboardService) is AndroidClipboardManager clipboardManager
+            ? clipboardManager.Text ?? string.Empty
+            : string.Empty;
+    }
+
+    private void WriteClipboardText(string text)
+    {
+        if (GetSystemService(ClipboardService) is AndroidClipboardManager clipboardManager)
+        {
+            clipboardManager.Text = text;
+        }
     }
 
     private void LoadAssetAssemblies()
