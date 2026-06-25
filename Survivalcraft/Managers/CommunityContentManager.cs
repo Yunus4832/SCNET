@@ -79,7 +79,7 @@ public static class CommunityContentManager
             { "Type", typeFilter },
             { "Moderation", moderationFilter },
             { "SortOrder", sortOrder },
-            { "Platform", VersionsManager.Platform.ToString() },
+            { "Platform", PlatformManager.Platform.ToString() },
             { "Version", VersionsManager.Version },
             { "Apiv", ModPlatformInfo.ApiV.ToString() },
             { "key", keySearch }
@@ -267,7 +267,7 @@ public static class CommunityContentManager
                                 },
                                 {
                                     "Platform",
-                                    VersionsManager.Platform.ToString()
+                                    PlatformManager.Platform.ToString()
                                 },
                                 {
                                     "Version",
@@ -303,7 +303,7 @@ public static class CommunityContentManager
             { "Action", "delete" },
             { "UserId", userId },
             { "Url", address },
-            { "Platform", VersionsManager.Platform.ToString() },
+            { "Platform", PlatformManager.Platform.ToString() },
             { "Version", VersionsManager.Version }
         };
         WebManager.Post(
@@ -461,7 +461,7 @@ public static class CommunityContentManager
             dictionary.Add("Size", size.ToString(CultureInfo.InvariantCulture));
         }
 
-        dictionary.Add("Platform", VersionsManager.Platform.ToString());
+        dictionary.Add("Platform", PlatformManager.Platform.ToString());
         dictionary.Add("Version", VersionsManager.Version);
         WebManager.Post(
             _scResDirAddress,
@@ -594,7 +594,7 @@ public static class CommunityContentManager
             { "Type", typeFilter },
             { "Moderation", moderationFilter },
             { "SortOrder", sortOrder },
-            { "Platform", VersionsManager.Platform.ToString() },
+            { "Platform", PlatformManager.Platform.ToString() },
             { "Version", VersionsManager.Version },
             { "Apiv", ModPlatformInfo.ApiV.ToString() },
             { "key", keySearch },

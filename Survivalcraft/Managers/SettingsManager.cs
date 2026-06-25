@@ -36,17 +36,19 @@ public static class SettingsManager
             Current.CommunityAccessToken = Guid.NewGuid().ToString();
         }
 
-#if ANDROID
-        Current.OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetAndroidID())
-            ? HashUtils.ComputeMd5(GetMachineID.GetAndroidID())
+        var machineId = PlatformManager.Platform is Platform.Android
+            ? GetMachineID.GetAndroidID()
+            : GetMachineID.GetMachineGuid();
+
+        Current.OnlineAccessToken = !string.IsNullOrEmpty(machineId)
+            ? HashUtils.ComputeMd5(machineId)
             : Guid.NewGuid().ToString();
-        Current.UIScale = 0.8f;
-#endif
-#if DESKTOP
-        Current.OnlineAccessToken = !string.IsNullOrEmpty(GetMachineID.GetMachineGuid())
-            ? HashUtils.ComputeMd5(GetMachineID.GetMachineGuid())
-            : Guid.NewGuid().ToString();
-#endif
+
+        if (PlatformManager.Platform is Platform.Android)
+        {
+            Current.UIScale = 0.8f;
+        }
+
         var screenWidth = RunMode.Value is RunModeType.HeadlessServer ? 1280 : Window.ScreenSize.X;
         var screenHeight = RunMode.Value is RunModeType.HeadlessServer ? 720 : Window.ScreenSize.Y;
         var isWideScreen = screenWidth / (float)screenHeight > 1.33333337f;
@@ -136,11 +138,13 @@ public static class SettingsManager
                         }
                         catch (Exception ex)
                         {
-                            Log.Warning(string.Format("Setting \"{0}\" could not be loaded. Reason: {1}", new object[2]
-                            {
-                                name,
-                                ex.Message
-                            }));
+                            Log.Warning(string.Format("Setting \"{0}\" could not be loaded. Reason: {1}",
+                                new object[]
+                                {
+                                    name,
+                                    ex.Message
+                                })
+                            );
                         }
                     }
 
@@ -221,5 +225,4 @@ public static class SettingsManager
             ExceptionManager.ReportExceptionToUser("Saving settings failed.", e);
         }
     }
-
 }

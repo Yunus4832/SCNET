@@ -308,6 +308,15 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         Action<string> handler
     )
     {
+        if (PlatformManager.Platform is Platform.Desktop)
+        {
+            DialogsManager.ShowDialog(
+                parentWidget,
+                new TextBoxDialog(title, text, maxLength, handler)
+            );
+            return;
+        }
+
         Keyboard.ShowKeyboard(
             title,
             string.Empty,

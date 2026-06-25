@@ -1,5 +1,3 @@
-#if ANDROID
-
 namespace Game.ContentProviders;
 
 public class AndroidSdCardExternalContentProvider : IExternalContentProvider
@@ -212,5 +210,3 @@ public class AndroidSdCardExternalContentProvider : IExternalContentProvider
         }
     }
 }
-
-#endif

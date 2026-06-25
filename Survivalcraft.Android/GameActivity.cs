@@ -3,9 +3,11 @@ using Android.OS;
 using Android.Content.PM;
 
 using Game;
+using Game.ContentProviders;
 
 using AndroidClipboardManager = Android.Content.ClipboardManager;
 using AndroidProviderSettings = Android.Provider.Settings;
+using GamePlatformManager = Game.Managers.PlatformManager;
 
 namespace Survivalcraft.Android;
 
@@ -26,10 +28,12 @@ public class GameActivity : EngineActivity
     protected override void OnRun()
     {
         base.OnRun();
+        GamePlatformManager.RegisterPlatform(Platform.Android);
         RunMode.Value = RunModeType.Gui;
-        WebBrowserManager.RegisterLauncher(OpenLink);
-        WebManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
-        Game.Managers.ClipboardManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
+        GamePlatformManager.RegisterWebBrowserLauncher(OpenLink);
+        GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
+        GamePlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
+        GamePlatformManager.RegisterExternalContentProviderFactory(() => new AndroidSdCardExternalContentProvider());
         InitializeAndroidId();
         LoadAssetAssemblies();
 

@@ -84,7 +84,7 @@ Headless 模式下，除了 `-d` / `--server`，还支持：
 ```xml
 <RunningSetting RunMode="HeadlessServer" LogLevel="Information" World="World" Seed="123456">
   <RemainingArgs>
-    <Arg>com.candy.survivalcraft://example</Arg>
+    <Arg>com.candy.scnet://example</Arg>
   </RemainingArgs>
 </RunningSetting>
 ```

@@ -229,12 +229,9 @@ public class ExternalContentScreen : Screen
     {
         if (string.IsNullOrEmpty(path))
         {
-#if ANDROID
-            path = Storage.GetSystemPath(Storage.CombinePaths(RunPath.ExternalPath, "files"));
-#endif
-#if DESKTOP
-            path = "files";
-#endif
+            path = PlatformManager.Platform is Platform.Android
+                ? Storage.GetSystemPath(Storage.CombinePaths(RunPath.ExternalPath, "files"))
+                : "files";
         }
 
         path = path.Replace("\\", "/");
@@ -260,7 +257,7 @@ public class ExternalContentScreen : Screen
         _externalContentProvider.List(_path, busyDialog.Progress, delegate(ExternalContentEntry entry)
         {
             DialogsManager.HideDialog(busyDialog);
-            var list = new List<ExternalContentEntry>(entry.ChildEntries.Where(e => EntryFilter(e)).Take(1000));
+            var list = new List<ExternalContentEntry>(entry.ChildEntries.Where(EntryFilter).Take(1000));
             _directoryList.ClearItems();
             list.Sort(delegate(ExternalContentEntry e1, ExternalContentEntry e2)
             {

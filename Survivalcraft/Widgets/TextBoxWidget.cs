@@ -137,6 +137,12 @@ public class TextBoxWidget : Widget
     {
         ClearPendingTextInput();
         CaretPosition = _text.Length;
+
+        if (UsesInlineKeyboardInput())
+        {
+            return;
+        }
+
         Keyboard.ShowKeyboard(
             Title,
             Description,
@@ -154,9 +160,10 @@ public class TextBoxWidget : Widget
 
     private static void ClearPendingTextInput()
     {
-#if DESKTOP
-        KeyboardInput.GetInput();
-#endif
+        if (UsesInlineKeyboardInput())
+        {
+            KeyboardInput.GetInput();
+        }
     }
 
     public override void Update()
@@ -255,42 +262,43 @@ public class TextBoxWidget : Widget
 
     private string ReadTextInput()
     {
-#if ANDROID
-        if (!Input.LastChar.HasValue || Input.IsKeyDown(Key.Control) || char.IsControl(Input.LastChar.Value))
+        if (UsesInlineKeyboardInput())
+        {
+            var inputString = KeyboardInput.GetInput();
+            if (!JustOpened)
+            {
+                return inputString;
+            }
+
+            JustOpened = false;
+            return string.Empty;
+        }
+
+        if (!Input.LastChar.HasValue || Input.IsKeyDown(Key.Control) ||
+            char.IsControl(Input.LastChar.Value))
         {
             return string.Empty;
         }
 
         Input.Clear();
         return new string(Input.LastChar.Value, 1);
-#endif
-#if DESKTOP
-        var inputString = KeyboardInput.GetInput();
-        if (!JustOpened)
-        {
-            return inputString;
-        }
-
-        JustOpened = false;
-        return string.Empty;
-#endif
     }
 
     private void HandleBackspace()
     {
-#if ANDROID
-        if (!Input.IsKeyDownOnce(Key.BackSpace))
+        if (!IsBackspacePressed())
         {
             return;
         }
-#endif
-#if DESKTOP
-        if (!KeyboardInput.DeletePressed)
-        {
-            return;
-        }
-#endif
+
         DeleteCharacterBeforeCaret();
+    }
+
+    private bool IsBackspacePressed()
+    {
+        return UsesInlineKeyboardInput()
+            ? KeyboardInput.DeletePressed
+            : Input.IsKeyDownOnce(Key.BackSpace);
     }
 
     private void DeleteCharacterBeforeCaret()
@@ -324,18 +332,27 @@ public class TextBoxWidget : Widget
 
     private void SubmitText()
     {
-#if ANDROID
-        HasFocus = false;
-#endif
+        LoseFocusAfterKeyboardAction();
         Enter?.Invoke(this);
     }
 
     private void CancelText()
     {
-#if ANDROID
-        HasFocus = false;
-#endif
+        LoseFocusAfterKeyboardAction();
         Escape?.Invoke(this);
+    }
+
+    private void LoseFocusAfterKeyboardAction()
+    {
+        if (!UsesInlineKeyboardInput())
+        {
+            HasFocus = false;
+        }
+    }
+
+    private static bool UsesInlineKeyboardInput()
+    {
+        return PlatformManager.Platform is Platform.Desktop;
     }
 
     public void MoveNext(WidgetsList widgets)

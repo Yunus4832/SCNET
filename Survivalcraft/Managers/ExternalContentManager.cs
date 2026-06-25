@@ -4,6 +4,8 @@ namespace Game.Managers;
 
 public static class ExternalContentManager
 {
+    private static readonly List<Func<IExternalContentProvider>> _providerFactories = [];
+
     private static List<IExternalContentProvider> _providers = [];
 
     private const string _typeName = "ExternalContentManager";
@@ -14,21 +16,20 @@ public static class ExternalContentManager
 
     public static ReadOnlyList<IExternalContentProvider> Providers => new(_providers);
 
+    public static void RegisterProviderFactory(Func<IExternalContentProvider> factory)
+    {
+        _providerFactories.Add(factory ?? throw new ArgumentNullException(nameof(factory)));
+    }
+
     public static void Initialize()
     {
-        _providers = new List<IExternalContentProvider>
-        {
-            new SchubExternalContentProvider(),
-#if DESKTOP
-            new DiskExternalContentProvider(),
-#endif
-#if ANDROID
-            new AndroidSdCardExternalContentProvider(),
-#endif
-
-            new DropboxExternalContentProvider(),
-            new TransferShExternalContentProvider()
-        };
+        _providers =
+        [
+            new SchubExternalContentProvider()
+        ];
+        _providers.AddRange(_providerFactories.Select(factory => factory()));
+        _providers.Add(new DropboxExternalContentProvider());
+        _providers.Add(new TransferShExternalContentProvider());
     }
 
     public static ExternalContentType ExtensionToType(string extension)

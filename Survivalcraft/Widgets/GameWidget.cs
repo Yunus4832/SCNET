@@ -15,6 +15,8 @@ public class GameWidget : CanvasWidget
 
     private readonly CanvasWidget _controlsWidget;
 
+    private readonly CanvasWidget _messageInputModalBlocker = new();
+
     private Camera _activeCamera;
 
     private readonly List<Camera> _cameras = [];
@@ -23,7 +25,7 @@ public class GameWidget : CanvasWidget
 
     public readonly NetPanelWidget? NetPanelWidget;
 
-    public readonly BitmapButtonWidget NetPlayerlistButton;
+    public readonly BitmapButtonWidget NetPlayerListButton;
 
     public SubsystemTime? SubsystemTime;
 
@@ -76,7 +78,7 @@ public class GameWidget : CanvasWidget
         SubsystemTime = SubsystemGameWidgets.Project.FindSubsystem<SubsystemTime>();
         LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
         _bitmapButtonWidget = Children.Find<BitmapButtonWidget>("MsgButton")!;
-        NetPlayerlistButton = Children.Find<BitmapButtonWidget>("PlayerlistButton")!;
+        NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerlistButton")!;
         _bitmapButtonWidget.Text = "";
         ViewWidget = Children.Find<ViewWidget>("View")!;
         GuiWidget = Children.Find<ContainerWidget>("Gui")!;
@@ -84,7 +86,7 @@ public class GameWidget : CanvasWidget
         if (CommonLib.Net.IsConnected && playerData.IsMainPlayer)
         {
             NetPanelWidget = new NetPanelWidget(this);
-            NetPlayerlistButton.IsChecked = true;
+            NetPlayerListButton.IsChecked = true;
             NetPanelWidget.Margin = new Vector2(68, 5);
             MessageWidget = new NetMessageWidget(playerData, NetPanelWidget) { IsVisible = false };
             _controlsWidget.Children.Insert(0, NetPanelWidget);
@@ -175,7 +177,7 @@ public class GameWidget : CanvasWidget
             }
         }
 
-        if (NetPlayerlistButton.IsClicked)
+        if (NetPlayerListButton.IsClicked)
         {
             if (NetPanelWidget == null)
             {
@@ -183,7 +185,7 @@ public class GameWidget : CanvasWidget
             }
 
             NetPanelWidget.IsVisible = !NetPanelWidget.IsVisible;
-            NetPlayerlistButton.IsChecked = NetPanelWidget.IsVisible;
+            NetPlayerListButton.IsChecked = NetPanelWidget.IsVisible;
         }
 
         if (_bitmapButtonWidget.IsClicked)
@@ -193,14 +195,7 @@ public class GameWidget : CanvasWidget
                 return;
             }
 
-            MessageWidget.IsVisible = !MessageWidget.IsVisible;
-            if (PlayerData is { ComponentPlayer.ComponentGui: not null })
-            {
-#if DESKTOP
-                PlayerData.ComponentPlayer.ComponentGui.ModalPanelWidget =
-                    MessageWidget.IsVisible ? new CanvasWidget() : null;
-#endif
-            }
+            SetMessageWidgetVisible(!MessageWidget.IsVisible, false);
         }
 
         if (Input.IsKeyDownOnce(Key.Tab))
@@ -212,14 +207,7 @@ public class GameWidget : CanvasWidget
 
             if (PlayerData is { ComponentPlayer.ComponentGui: not null })
             {
-                MessageWidget.IsVisible = !MessageWidget.IsVisible;
-                MessageWidget.EditText.HasFocus = MessageWidget.IsVisible;
-                Input.IsMouseCursorVisible = MessageWidget.IsVisible;
-                PlayerData.ComponentPlayer.ComponentInput.AllowHandleInput = !MessageWidget.EditText.HasFocus;
-#if DESKTOP
-                PlayerData.ComponentPlayer.ComponentGui.ModalPanelWidget =
-                    MessageWidget.IsVisible ? new CanvasWidget() : null;
-#endif
+                SetMessageWidgetVisible(!MessageWidget.IsVisible, true);
             }
         }
 
@@ -232,14 +220,7 @@ public class GameWidget : CanvasWidget
 
             if (MessageWidget.EditText.Text.Length == 0)
             {
-                MessageWidget.IsVisible = !MessageWidget.IsVisible;
-                MessageWidget.EditText.HasFocus = MessageWidget.IsVisible;
-                Input.IsMouseCursorVisible = MessageWidget.IsVisible;
-                PlayerData.ComponentPlayer?.ComponentInput.AllowHandleInput = !MessageWidget.EditText.HasFocus;
-#if DESKTOP
-                PlayerData.ComponentPlayer?.ComponentGui?.ModalPanelWidget =
-                    MessageWidget.IsVisible ? new CanvasWidget() : null;
-#endif
+                SetMessageWidgetVisible(!MessageWidget.IsVisible, true);
             }
         }
 
@@ -292,6 +273,44 @@ public class GameWidget : CanvasWidget
         return (PlayerData.InputDevice & ~widgetInputDevice2) | WidgetInputDevice.Touch;
     }
 
+    private void SetMessageWidgetVisible(bool visible, bool focusInput)
+    {
+        if (MessageWidget is null)
+        {
+            return;
+        }
+
+        MessageWidget.IsVisible = visible;
+        if (!visible)
+        {
+            MessageWidget.EditText.HasFocus = false;
+            Input.IsMouseCursorVisible = false;
+        }
+        else if (focusInput)
+        {
+            MessageWidget.EditText.HasFocus = visible;
+            Input.IsMouseCursorVisible = visible;
+        }
+
+        if (PlayerData.ComponentPlayer is null)
+        {
+            return;
+        }
+
+        PlayerData.ComponentPlayer.ComponentInput.AllowHandleInput = !MessageWidget.EditText.HasFocus;
+        SetMessageInputModalBlocker(visible);
+    }
+
+    private void SetMessageInputModalBlocker(bool visible)
+    {
+        if (PlatformManager.Platform is not Platform.Desktop)
+        {
+            return;
+        }
+
+        PlayerData.ComponentPlayer?.ComponentGui?.ModalPanelWidget = visible ? _messageInputModalBlocker : null;
+    }
+
     private bool IsCameraAllowed(Camera camera)
     {
         if (!(PlayerData.ComponentPlayer?.ComponentInput.IsControlledByVr ?? false))
@@ -299,7 +318,7 @@ public class GameWidget : CanvasWidget
             return true;
         }
 
-        if (camera is not FppCamera && !(camera is LoadingCamera))
+        if (camera is not FppCamera && camera is not LoadingCamera)
         {
             return camera is DeathCamera;
         }

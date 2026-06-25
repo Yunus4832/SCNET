@@ -34,12 +34,7 @@ public class SettingsCompatibilityScreen : Screen
     public override void Enter(object[] parameters)
     {
         _descriptionLabel.Text = string.Empty;
-#if ANDROID
-        _useReducedZRangeContainer.IsVisible = true;
-#endif
-#if DESKTOP
-        _useReducedZRangeContainer.IsVisible = false;
-#endif
+        _useReducedZRangeContainer.IsVisible = PlatformManager.Platform is Platform.Android;
     }
 
     public override void Update()

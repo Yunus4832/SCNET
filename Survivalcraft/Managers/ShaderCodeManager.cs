@@ -38,7 +38,8 @@ public class ShaderCodeManager
             string shaderTextTemp;
             if (external)
             {
-                var stream = Storage.OpenFile(Storage.CombinePaths(RunPath.ExternalPath, includedFileName), OpenFileMode.Read);
+                var stream = Storage.OpenFile(Storage.CombinePaths(RunPath.ExternalPath, includedFileName),
+                    OpenFileMode.Read);
                 var streamReader = new StreamReader(stream);
                 shaderTextTemp = streamReader.ReadToEnd();
             }
@@ -89,13 +90,16 @@ public class ShaderCodeManager
                 }
                 else
                 {
-#if ANDROID
-                    includeText += lines[l] + "\n";
-#endif
-#if DESKTOP
-                    includeText += lines[l].Replace("highp", "").Replace("lowp", "").Replace("mediump", "") + "\n";
-                    includeText += lines[l] + "\n";
-#endif
+                    if (PlatformManager.Platform is Platform.Android)
+                    {
+                        includeText += lines[l] + "\n";
+                    }
+
+                    if (PlatformManager.Platform is Platform.Desktop)
+                    {
+                        includeText += lines[l].Replace("highp", "").Replace("lowp", "").Replace("mediump", "") + "\n";
+                        includeText += lines[l] + "\n";
+                    }
                 }
             }
 

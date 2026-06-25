@@ -6,6 +6,7 @@ using Engine.Core;
 using Engine.Windowing;
 
 using Game;
+using Game.ContentProviders;
 using Game.Managers;
 
 namespace Survivalcraft.Linux;
@@ -17,9 +18,11 @@ public class Starter
 
     public static void Main(string[] args)
     {
-        WebBrowserManager.RegisterLauncher(OpenUrl);
-        WebManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
-        ClipboardManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
+        PlatformManager.RegisterPlatform(Platform.Desktop);
+        PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
+        PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
+        PlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
+        PlatformManager.RegisterExternalContentProviderFactory(() => new DiskExternalContentProvider());
         var runningSetting = RunningSettingManager.Load(args);
         InstallDesktopEntries();
         GameExitAction exitAction;
@@ -33,7 +36,8 @@ public class Starter
             RunMode.Value = RunModeType.Gui;
             // Wayland is supported; window icon settings may not take effect there.
             Window.IconStream = LoadWindowIcon();
-            exitAction = GameEntry.Main(runningSetting);
+            PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
+            exitAction = GameEntry.EntryPoint(runningSetting);
         }
 
         var nextRunningSetting = RunningSettingManager.Load([]);

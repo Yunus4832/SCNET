@@ -13,8 +13,6 @@ namespace Game;
 
 public static class GameEntry
 {
-    public const string Scheme = "com.candy.survivalcraft";
-
     private static double _frameBeginTime;
 
     private static TimeSpan _processCpuTimeBegin;
@@ -32,21 +30,6 @@ public static class GameEntry
     public static float LastCpuFrameTime { get; set; }
 
     public static event Action<HandleUriItem>? HandleUri;
-
-#if DESKTOP
-    public static GameExitAction Main(RunningSetting runningSetting)
-    {
-        foreach (var arg in runningSetting.RemainingArgs)
-        {
-            if (arg.StartsWith(Scheme))
-            {
-                HandleUriHandler(new Uri(arg));
-            }
-        }
-
-        return EntryPoint(runningSetting);
-    }
-#endif
 
     [STAThread]
     public static GameExitAction EntryPoint(RunningSetting runningSetting)
@@ -143,7 +126,7 @@ public static class GameEntry
     public static void Initialize()
     {
         Log.Information(
-            $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, BuildConfiguration={VersionsManager.BuildConfiguration}, Platform={VersionsManager.Platform}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, RAM={Utilities.GetTotalAvailableMemory() / 1024 / 1024}MB, 64bit={Marshal.SizeOf<IntPtr>() == 8}");
+            $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, BuildConfiguration={VersionsManager.BuildConfiguration}, Platform={PlatformManager.Platform}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, RAM={Utilities.GetTotalAvailableMemory() / 1024 / 1024}MB, 64bit={Marshal.SizeOf<IntPtr>() == 8}");
         SettingsManager.Initialize();
         VersionsManager.Initialize();
         ExternalContentManager.Initialize();

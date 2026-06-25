@@ -526,7 +526,7 @@ public class Widget : IDisposable
         var attributeValue2 = XmlUtils.GetAttributeValue<string>(node, "_ExcludePlatforms", false);
         if (attributeValue != null && attributeValue2 == null)
         {
-            if (attributeValue.Split(' ').Contains(VersionsManager.Platform.ToString()))
+            if (attributeValue.Split(' ').Contains(PlatformManager.Platform.ToString()))
             {
                 return true;
             }
@@ -538,7 +538,7 @@ public class Widget : IDisposable
                 return true;
             }
 
-            if (!attributeValue2.Split(' ').Contains(VersionsManager.Platform.ToString()))
+            if (!attributeValue2.Split(' ').Contains(PlatformManager.Platform.ToString()))
             {
                 return true;
             }

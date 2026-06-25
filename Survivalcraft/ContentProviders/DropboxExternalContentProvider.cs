@@ -10,7 +10,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
 
     private const string _appSecret = "3i5u3j3141php7u";
 
-    private const string _redirectUri = "com.candyrufusgames.survivalcraft2://redirect";
+    private const string _redirectUri = PlatformManager.DropboxRedirectScheme + "://redirect";
 
     private LoginProcessData? _loginProcessData;
 
@@ -254,7 +254,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
             {
                 { "response_type", "token" },
                 { "client_id", "1unnzwkb8igx70k" },
-                { "redirect_uri", "com.candyrufusgames.survivalcraft2://redirect" }
+                { "redirect_uri", _redirectUri }
             };
             WebBrowserManager.LaunchBrowser("https://www.dropbox.com/oauth2/authorize?" +
                                             WebManager.UrlParametersToString(dictionary));

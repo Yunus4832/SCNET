@@ -8,6 +8,7 @@ using Engine.Core;
 using Engine.Windowing;
 
 using Game;
+using Game.ContentProviders;
 using Game.Managers;
 
 namespace Survivalcraft.Windows;
@@ -16,9 +17,11 @@ public class Starter
 {
     public static void Main(string[] args)
     {
-        WebBrowserManager.RegisterLauncher(OpenUrl);
-        WebManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
-        ClipboardManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
+        PlatformManager.RegisterPlatform(Platform.Desktop);
+        PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
+        PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
+        PlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
+        PlatformManager.RegisterExternalContentProviderFactory(() => new DiskExternalContentProvider());
         var runningSetting = RunningSettingManager.Load(args);
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
@@ -33,7 +36,8 @@ public class Starter
 
         RunMode.Value = RunModeType.Gui;
         Window.IconStream = LoadWindowIcon();
-        if (GameEntry.Main(runningSetting) is GameExitAction.Restart)
+        PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
+        if (GameEntry.EntryPoint(runningSetting) is GameExitAction.Restart)
         {
             Restart(args);
         }
@@ -82,7 +86,7 @@ public class Starter
 
         try
         {
-            var handle = GetClipboardData(CF_UNICODETEXT);
+            var handle = GetClipboardData(_cfUnicodeText);
             if (handle == IntPtr.Zero)
             {
                 return string.Empty;
@@ -121,7 +125,7 @@ public class Starter
         {
             EmptyClipboard();
             var bytes = Encoding.Unicode.GetBytes(text + '\0');
-            handle = GlobalAlloc(GMEM_MOVEABLE, (UIntPtr)bytes.Length);
+            handle = GlobalAlloc(_gMemMoveable, (UIntPtr)bytes.Length);
             if (handle == IntPtr.Zero)
             {
                 throw new InvalidOperationException("Could not allocate clipboard memory.");
@@ -142,7 +146,7 @@ public class Starter
                 GlobalUnlock(handle);
             }
 
-            if (SetClipboardData(CF_UNICODETEXT, handle) == IntPtr.Zero)
+            if (SetClipboardData(_cfUnicodeText, handle) == IntPtr.Zero)
             {
                 throw new InvalidOperationException("Could not set clipboard data.");
             }
@@ -163,8 +167,9 @@ public class Starter
     [DllImport("kernel32.dll")]
     private static extern bool AllocConsole();
 
-    private const uint CF_UNICODETEXT = 13;
-    private const uint GMEM_MOVEABLE = 0x0002;
+    private const uint _cfUnicodeText = 13;
+
+    private const uint _gMemMoveable = 0x0002;
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern bool OpenClipboard(IntPtr hWndNewOwner);

@@ -31,13 +31,14 @@ public static class HeadlessEntry
             Log.AddLogSink(new ConsoleLogSink { MinimumLogType = runningSetting.LogLevel });
             Log.AddLogSink(new GameLogSink());
 
-#if !ANDROID
-            Console.CancelKeyPress += (_, e) =>
+            if (PlatformManager.Platform is Platform.Desktop)
             {
-                e.Cancel = true;
-                _running = false;
-            };
-#endif
+                Console.CancelKeyPress += (_, e) =>
+                {
+                    e.Cancel = true;
+                    _running = false;
+                };
+            }
 
             if (!InitializeHeadless())
             {

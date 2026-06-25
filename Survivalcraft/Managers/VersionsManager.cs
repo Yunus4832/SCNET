@@ -25,19 +25,6 @@ public static class VersionsManager
     /// </summary>
     private static readonly List<VersionConverter> _versionConverters;
 
-#if ANDROID
-    /// <summary>
-    /// 平台枚举
-    /// </summary>
-    public static Platform Platform => Platform.Android;
-#endif
-#if DESKTOP
-    /// <summary>
-    /// 平台枚举
-    /// </summary>
-    public static Platform Platform => Platform.Desktop;
-#endif
-
     /// <summary>
     /// 构建配置
     /// </summary>

@@ -62,7 +62,7 @@ public static class MotdManager
         var url = string.Format(
             GetMotdUpdateCheckUrl(),
             VersionsManager.SerializationVersion,
-            VersionsManager.Platform,
+            PlatformManager.Platform,
             ModPlatformInfo.ApiVersion,
             LanguageManager.LName()
         );

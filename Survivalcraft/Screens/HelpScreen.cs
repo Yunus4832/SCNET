@@ -53,7 +53,7 @@ public class HelpScreen : Screen
             {
                 var disabledPlatforms = disabledPlatformsNode?.ToString() ?? string.Empty;
                 if (disabledPlatforms.Split([","], StringSplitOptions.None)
-                        .FirstOrDefault(s => string.Equals(s.Trim(), VersionsManager.Platform.ToString(),
+                        .FirstOrDefault(s => string.Equals(s.Trim(), PlatformManager.Platform.ToString(),
                             StringComparison.CurrentCultureIgnoreCase)) == null)
                 {
                     continue;

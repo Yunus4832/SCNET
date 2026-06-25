@@ -169,9 +169,10 @@ public class FurnitureInventoryPanel : CanvasWidget
             new(LanguageManager.Get(_typeName, 9), RenameFurnitureSet),
             new(LanguageManager.Get(_typeName, 28), delegate
             {
-                if (Enumerable.Count(
-                        SubsystemFurnitureBlockBehavior.GetFurnitureSetDesigns(ComponentFurnitureInventory
-                            .FurnitureSet)) > 0)
+                if (SubsystemFurnitureBlockBehavior
+                    .GetFurnitureSetDesigns(ComponentFurnitureInventory.FurnitureSet)
+                    .Any()
+                   )
                 {
                     DialogsManager.ShowDialog(
                         _componentPlayer.GuiWidget,
@@ -291,7 +292,7 @@ public class FurnitureInventoryPanel : CanvasWidget
         _assignedPage = ComponentFurnitureInventory.PageIndex;
     }
 
-    public void NewFurnitueSetLogic(string s, string from = "")
+    public void NewFurnitureSetLogic(string s, string from = "")
     {
         var furnitureSet = SubsystemFurnitureBlockBehavior.NewFurnitureSet(s, from);
         ComponentFurnitureInventory.FurnitureSet = furnitureSet;
@@ -301,33 +302,17 @@ public class FurnitureInventoryPanel : CanvasWidget
 
     public void NewFurnitureSet()
     {
-        var componentPlayer = ComponentFurnitureInventory.Entity.FindComponent<ComponentPlayer>(true)!;
-#if DESKTOP
-        DialogsManager.ShowDialog(
-            componentPlayer.GameWidget,
-            new TextBoxDialog(
-                LanguageManager.Get(_typeName, 15),
-                LanguageManager.Get(_typeName, 16),
-                20,
-                delegate(string s)
-                {
-                    NewFurnitueSetLogic(s);
-                    CommonLib.Net.QueuePackage(new FurniturePackage(s));
-                }
-            )
-        );
-#endif
-#if ANDROID
-        Input.EnterText(
-            componentPlayer.GuiWidget,
+        _componentPlayer.GuiWidget.Input.EnterText(
+            _componentPlayer.GuiWidget,
             LanguageManager.Get(_typeName, 15),
-            LanguageManager.Get(_typeName, 16), 20,
+            LanguageManager.Get(_typeName, 16),
+            20,
             delegate(string s)
             {
-                NewFurnitueSetLogic(s);
+                NewFurnitureSetLogic(s);
                 CommonLib.Net.QueuePackage(new FurniturePackage(s));
-            });
-#endif
+            }
+        );
     }
 
     public void DeleteFurnitureSetLogic(FurnitureSet furnitureSet)
@@ -376,9 +361,8 @@ public class FurnitureInventoryPanel : CanvasWidget
             return;
         }
 
-        var componentPlayer = ComponentFurnitureInventory.Entity.FindComponent<ComponentPlayer>(true)!;
-        Input.EnterText(
-            componentPlayer.GuiWidget,
+        _componentPlayer.GuiWidget.Input.EnterText(
+            _componentPlayer.GuiWidget,
             LanguageManager.Get(_typeName, 17),
             furnitureSet.Name,
             20,

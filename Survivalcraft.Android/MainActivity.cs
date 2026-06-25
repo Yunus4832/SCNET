@@ -7,6 +7,7 @@ using Android.Runtime;
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
 using AndroidProviderSettings = Android.Provider.Settings;
+using GamePlatformManager = Game.Managers.PlatformManager;
 using Permission = Android.Content.PM.Permission;
 
 namespace Survivalcraft.Android;
@@ -27,7 +28,7 @@ namespace Survivalcraft.Android;
 [Register("com.candy.scnet.MainActivity")]
 [IntentFilter(
     ["android.intent.action.VIEW"],
-    DataScheme = "com.candy.scnet",
+    DataScheme = GamePlatformManager.Scheme,
     Categories = ["android.intent.category.DEFAULT", "android.intent.category.BROWSABLE"]
 )]
 public class MainActivity : BlackActivity
