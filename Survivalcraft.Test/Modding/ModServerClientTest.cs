@@ -13,7 +13,7 @@ public sealed class ModServerClientTest : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"scnet-modrepo-{Guid.NewGuid():N}");
 
     [Fact]
-    public async Task ClientParsesVersionResponseAndDownloadsIntoLocalRepository()
+    public void ClientParsesVersionResponseAndDownloadsIntoLocalRepository()
     {
         Directory.CreateDirectory(_root);
         var packageBytes = CreatePackageBytes("example.test", "1.0.0");
@@ -45,8 +45,8 @@ public sealed class ModServerClientTest : IDisposable
         using var client = new ModServerClient("https://mods.example/", httpClient);
         var repository = new LocalModRepository(_root);
 
-        var package = await client.FindPackageAsync("example.test", "1.0.0");
-        var localEntry = await client.DownloadPackageAsync(package!, repository);
+        var package = client.FindPackage("example.test", "1.0.0");
+        var localEntry = client.DownloadPackage(package!, repository);
 
         Assert.Equal("example.test", package!.ModId);
         Assert.Equal("1.0.0", package.Version);

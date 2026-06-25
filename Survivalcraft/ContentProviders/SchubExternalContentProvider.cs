@@ -288,9 +288,10 @@ public class SchubExternalContentProvider : IExternalContentProvider
                         loginProcessData.Progress,
                         delegate(byte[] result)
                         {
+                            var jsonObject = (JsonObject?)WebManager.JsonFromBytes(result);
                             SettingsManager.Current.CommunityAccessToken =
-                                ((IDictionary<string, object>?)WebManager.JsonFromBytes(result))?["access_token"]
-                                .ToString() ?? throw new InvalidOperationException("access_token is null");
+                                jsonObject?["access_token"]?.ToString()
+                                ?? throw new InvalidOperationException("access_token is null");
                             loginProcessData.Succeed(this);
                         },
                         delegate(Exception error) { loginProcessData.Fail(this, error); });

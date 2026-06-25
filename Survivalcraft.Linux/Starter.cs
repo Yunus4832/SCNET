@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Reflection;
 
 using Engine.Core;
@@ -17,6 +18,7 @@ public class Starter
     public static void Main(string[] args)
     {
         WebBrowserManager.RegisterLauncher(OpenUrl);
+        WebManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
         var runningSetting = RunningSettingManager.Load(args);
         InstallDesktopEntries();
         GameExitAction exitAction;

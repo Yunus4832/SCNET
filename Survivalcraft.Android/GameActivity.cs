@@ -1,3 +1,5 @@
+using Android.Net;
+using Android.OS;
 using Android.Content.PM;
 
 using Game;
@@ -25,6 +27,7 @@ public class GameActivity : EngineActivity
         base.OnRun();
         RunMode.Value = RunModeType.Gui;
         WebBrowserManager.RegisterLauncher(OpenLink);
+        WebManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
         InitializeAndroidId();
         LoadAssetAssemblies();
 
@@ -53,6 +56,29 @@ public class GameActivity : EngineActivity
     {
         GetMachineID.AndroidID = AndroidProviderSettings.Secure
             .GetString(ContentResolver, AndroidProviderSettings.Secure.AndroidId) ?? string.Empty;
+    }
+
+    private bool IsInternetConnectionAvailable()
+    {
+        var connectivityManager = GetConnectivityManager();
+        switch (Build.VERSION.SdkInt)
+        {
+            case >= (BuildVersionCodes)29:
+                return connectivityManager?.GetNetworkCapabilities(connectivityManager.ActiveNetwork)
+                           ?.HasCapability(NetCapability.Validated)
+                       ?? false;
+            case >= (BuildVersionCodes)21:
+                return connectivityManager?.ActiveNetworkInfo?.IsConnected ?? false;
+            default:
+                return true;
+        }
+    }
+
+    private ConnectivityManager? GetConnectivityManager()
+    {
+        return Build.VERSION.SdkInt >= (BuildVersionCodes)21
+            ? (ConnectivityManager?)GetSystemService(ConnectivityService)
+            : null;
     }
 
     private void LoadAssetAssemblies()

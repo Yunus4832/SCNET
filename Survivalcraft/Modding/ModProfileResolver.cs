@@ -76,7 +76,7 @@ public static class ModProfileResolver
         ModRepositoryPackage? metadata;
         try
         {
-            metadata = client.FindPackageAsync(requirement.ModId, requirement.Version).GetAwaiter().GetResult();
+            metadata = client.FindPackage(requirement.ModId, requirement.Version);
         }
         catch (Exception ex)
         {
@@ -92,7 +92,7 @@ public static class ModProfileResolver
 
         try
         {
-            var localEntry = client.DownloadPackageAsync(metadata, repository).GetAwaiter().GetResult();
+            var localEntry = client.DownloadPackage(metadata, repository);
             log?.Invoke($"已下载模组 {requirement.ModId}@{requirement.Version}");
             return localEntry;
         }

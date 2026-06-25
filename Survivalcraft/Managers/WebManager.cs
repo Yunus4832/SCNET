@@ -1,43 +1,33 @@
-﻿#if ANDROID
-using Android.OS;
-using Android.Net;
-#endif
-#if DESKTOP
-using System.Net.NetworkInformation;
-#endif
-using System.Net;
+﻿using System.Net;
 using System.Text;
-using System.Text.Json;
+using System.Text.Json.Nodes;
 
-using OperationCanceledException = System.OperationCanceledException;
 using Uri = System.Uri;
 
 namespace Game.Managers;
 
 public static class WebManager
 {
-#if ANDROID
-    private static ConnectivityManager? ConnectivityManager { get; } = GetConnectivityManager();
-#endif
+    private static readonly HttpClient _httpClient = CreateHttpClient();
+
+    private static Func<bool>? _internetConnectionChecker;
+
+    public static void RegisterInternetConnectionChecker(Func<bool> checker)
+    {
+        _internetConnectionChecker = checker ?? throw new ArgumentNullException(nameof(checker));
+    }
 
     public static bool IsInternetConnectionAvailable()
     {
         try
         {
-#if ANDROID
-            switch (Build.VERSION.SdkInt)
+            if (_internetConnectionChecker is not null)
             {
-                case >= (BuildVersionCodes)29:
-                    return GetConnectivityManager()?.GetNetworkCapabilities(ConnectivityManager?.ActiveNetwork)
-                               ?.HasCapability(NetCapability.Validated)
-                           ?? false;
-                case >= (BuildVersionCodes)21: return ConnectivityManager?.ActiveNetworkInfo?.IsConnected ?? false;
-                default: return true;
+                return _internetConnectionChecker();
             }
-#endif
-#if DESKTOP
-            return NetworkInterface.GetIsNetworkAvailable();
-#endif
+
+            Log.Warning("No internet connection checker registered.");
+            return true;
         }
         catch (Exception e)
         {
@@ -46,15 +36,6 @@ public static class WebManager
 
         return true;
     }
-
-#if ANDROID
-    static ConnectivityManager? GetConnectivityManager()
-    {
-        return Build.VERSION.SdkInt >= (BuildVersionCodes)21
-            ? (ConnectivityManager?)Window.ActivityInstance.GetSystemService("connectivity")
-            : null;
-    }
-#endif
 
     public static void Get(
         string address,
@@ -65,72 +46,7 @@ public static class WebManager
         Action<Exception> failure
     )
     {
-        MemoryStream? targetStream;
-        Task.Run(async delegate
-        {
-            try
-            {
-                progress ??= new CancellableProgress();
-                if (!IsInternetConnectionAvailable())
-                {
-                    throw new InvalidOperationException("Internet connection is unavailable.");
-                }
-
-                var handler = new HttpClientHandler();
-                handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-                handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-                using var client = new HttpClient(handler);
-                var requestUri =
-                    parameters is { Count: > 0 }
-                        ? new Uri(string.Format("{0}?{1}", new object[]
-                        {
-                            address,
-                            UrlParametersToString(parameters)
-                        }))
-                        : new Uri(address);
-                client.DefaultRequestHeaders.Referrer = new Uri(address);
-                foreach (var header in headers)
-                {
-                    client.DefaultRequestHeaders.Add(header.Key, header.Value);
-                }
-
-                var responseMessage = await client.GetAsync(requestUri, HttpCompletionOption.ResponseHeadersRead,
-                    progress.CancellationToken);
-                await VerifyResponse(responseMessage);
-                var contentLength = responseMessage.Content.Headers.ContentLength;
-                progress.Total = contentLength ?? 0;
-                await using var responseStream = await responseMessage.Content.ReadAsStreamAsync();
-                targetStream = new MemoryStream();
-                try
-                {
-                    var written = 0L;
-                    var buffer = new byte[1024];
-                    int num;
-                    do
-                    {
-                        num = await responseStream.ReadAsync(buffer, progress.CancellationToken);
-                        if (num <= 0)
-                        {
-                            continue;
-                        }
-
-                        targetStream.Write(buffer, 0, num);
-                        written += num;
-                        progress.Completed = written;
-                    } while (num > 0);
-
-                    Dispatcher.Dispatch(delegate { success(targetStream.ToArray()); });
-                }
-                finally
-                {
-                    ((IDisposable)targetStream)?.Dispose();
-                }
-            }
-            catch (Exception)
-            {
-                // Ignore
-            }
-        });
+        SendWithCallbacks(HttpMethod.Get, address, parameters, headers, null, progress, success, failure);
     }
 
     public static void Put(
@@ -143,7 +59,7 @@ public static class WebManager
         Action<Exception> failure
     )
     {
-        PutOrPost(false, address, parameters, headers, data, progress, success, failure);
+        SendWithCallbacks(HttpMethod.Put, address, parameters, headers, data, progress, success, failure);
     }
 
     public static void Post(
@@ -156,26 +72,35 @@ public static class WebManager
         Action<Exception> failure
     )
     {
-        PutOrPost(true, address, parameters, headers, data, progress, success, failure);
+        SendWithCallbacks(HttpMethod.Post, address, parameters, headers, data, progress, success, failure);
+    }
+
+    private static void SendWithCallbacks(
+        HttpMethod method,
+        string address,
+        Dictionary<string, string> parameters,
+        Dictionary<string, string> headers,
+        Stream? data,
+        CancellableProgress? progress,
+        Action<byte[]> success,
+        Action<Exception> failure
+    )
+    {
+        RunWithCallbacks(
+            SendAsync(method, address, parameters, headers, data, progress),
+            success,
+            failure
+        );
     }
 
     public static string UrlParametersToString(Dictionary<string, string> values)
     {
-        var stringBuilder = new StringBuilder();
-        var value = string.Empty;
-        foreach (var value2 in values)
-        {
-            stringBuilder.Append(value);
-            value = "&";
-            stringBuilder.Append(Uri.EscapeDataString(value2.Key));
-            stringBuilder.Append('=');
-            if (!string.IsNullOrEmpty(value2.Value))
-            {
-                stringBuilder.Append(Uri.EscapeDataString(value2.Value));
-            }
-        }
-
-        return stringBuilder.ToString();
+        return string.Join(
+            "&",
+            values.Select(pair =>
+                string.IsNullOrEmpty(pair.Value)
+                    ? Uri.EscapeDataString(pair.Key) + "="
+                    : Uri.EscapeDataString(pair.Key) + "=" + Uri.EscapeDataString(pair.Value)));
     }
 
     public static byte[] UrlParametersToBytes(Dictionary<string, string> values)
@@ -185,178 +110,189 @@ public static class WebManager
 
     public static MemoryStream UrlParametersToStream(Dictionary<string, string> values)
     {
-        return new MemoryStream(Encoding.UTF8.GetBytes(UrlParametersToString(values)));
+        return new MemoryStream(UrlParametersToBytes(values));
     }
 
     public static Dictionary<string, string> UrlParametersFromString(string s)
     {
         var dictionary = new Dictionary<string, string>();
-        var array = s.Split(['&'], StringSplitOptions.RemoveEmptyEntries);
-        for (var i = 0; i < array.Length; i++)
+        foreach (var item in s.Split(['&'], StringSplitOptions.RemoveEmptyEntries))
         {
-            var array2 = Uri.UnescapeDataString(array[i]).Split('=');
-            if (array2.Length == 2)
+            var parts = item.Split('=', 2);
+            if (parts.Length == 2)
             {
-                dictionary[array2[0]] = array2[1];
+                dictionary[Uri.UnescapeDataString(parts[0])] = Uri.UnescapeDataString(parts[1]);
             }
         }
 
         return dictionary;
     }
 
-    public static Dictionary<string, string> UrlParametersFromBytes(byte[] bytes)
-    {
-        return UrlParametersFromString(Encoding.UTF8.GetString(bytes, 0, bytes.Length));
-    }
-
-    private static object? JsonFromString(string s)
-    {
-        return JsonSerializer.Deserialize<object>(s);
-    }
-
     public static object? JsonFromBytes(byte[] bytes)
     {
-        return JsonFromString(Encoding.UTF8.GetString(bytes, 0, bytes.Length));
+        return JsonNode.Parse(bytes);
     }
 
-    public static void PutOrPost(
-        bool isPost,
+    private static async Task<byte[]> SendAsync(
+        HttpMethod method,
         string address,
-        Dictionary<string, string> parameters,
-        Dictionary<string, string> headers,
-        Stream data,
-        CancellableProgress? progress,
-        Action<byte[]> success,
-        Action<Exception> failure
+        Dictionary<string, string>? parameters,
+        Dictionary<string, string>? headers,
+        Stream? data,
+        CancellableProgress? progress
     )
     {
-        byte[]? responseData = null;
-        Task.Run(async delegate
+        progress ??= new CancellableProgress();
+        if (!IsInternetConnectionAvailable())
         {
-            try
+            throw new InvalidOperationException("Internet connection is unavailable.");
+        }
+
+        using var request = new HttpRequestMessage(method, BuildUri(address, parameters));
+        request.Headers.Referrer = new Uri(address);
+
+        if (data != null)
+        {
+            request.Content = new ProgressHttpContent(data, progress);
+        }
+
+        foreach (var header in headers ?? [])
+        {
+            if (request.Headers.TryAddWithoutValidation(header.Key, header.Value))
             {
-                if (!IsInternetConnectionAvailable())
-                {
-                    throw new InvalidOperationException("Internet connection is unavailable.");
-                }
-
-                var handler = new HttpClientHandler();
-                handler.ClientCertificateOptions = ClientCertificateOption.Manual;
-                handler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-
-                using var client = new HttpClient(handler);
-
-                var dictionary = headers
-                    .Where(header => !client.DefaultRequestHeaders.TryAddWithoutValidation(header.Key, header.Value))
-                    .ToDictionary(header => header.Key, header => header.Value);
-
-                var uri = parameters.Count > 0
-                    ? new Uri(string.Format("{0}?{1}", new object[]
-                    {
-                        address,
-                        UrlParametersToString(parameters)
-                    }))
-                    : new Uri(address);
-#if ANDROID
-                HttpContent content = progress is not null
-                    ? new ProgressHttpContent(data, progress)
-                    : new StreamContent(data);
-#endif
-#if DESKTOP
-                var content = new ProgressHttpContent(data, progress);
-#endif
-
-                foreach (var item in dictionary)
-                {
-                    content.Headers.Add(item.Key, item.Value);
-                }
-
-#if ANDROID
-                var responseMessage = !isPost
-                    ? progress is null
-                        ? await client.PostAsync(uri, content)
-                        : await client.PutAsync(uri, content, progress.CancellationToken)
-                    : progress is null
-                        ? await client.PostAsync(uri, content)
-                        : await client.PostAsync(uri, content, progress.CancellationToken);
-#endif
-#if DESKTOP
-                var responseMessage = !isPost
-                    ? await client.PutAsync(uri, content, progress?.CancellationToken ?? CancellationToken.None)
-                    : await client.PostAsync(uri, content, progress?.CancellationToken ?? CancellationToken.None);
-#endif
-                await VerifyResponse(responseMessage);
-                _ = responseData;
-                responseData = await responseMessage.Content.ReadAsByteArrayAsync();
-                Dispatcher.Dispatch(delegate { success(responseData); });
+                continue;
             }
-            catch (Exception ex)
+
+            request.Content ??= new ByteArrayContent([]);
+            request.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
+        }
+
+        using var response = await _httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            progress.CancellationToken
+        );
+
+        await VerifyResponse(response);
+
+        await using var responseStream = await response.Content.ReadAsStreamAsync(progress.CancellationToken);
+        await using var targetStream = new MemoryStream();
+        await CopyToAsync(responseStream, targetStream, response.Content.Headers.ContentLength, progress);
+        return targetStream.ToArray();
+    }
+
+    private static Uri BuildUri(string address, Dictionary<string, string>? parameters)
+    {
+        return parameters is { Count: > 0 }
+            ? new Uri(address + (address.Contains('?') ? "&" : "?") + UrlParametersToString(parameters))
+            : new Uri(address);
+    }
+
+    private static async Task CopyToAsync(
+        Stream source,
+        Stream target,
+        long? total,
+        CancellableProgress progress)
+    {
+        var buffer = new byte[81920];
+        var completed = 0L;
+        progress.Total = total ?? 0;
+        progress.Completed = 0;
+
+        while (true)
+        {
+            var read = await source.ReadAsync(buffer, progress.CancellationToken);
+            if (read <= 0)
             {
-                Dispatcher.Dispatch(delegate { failure(ex); });
+                return;
             }
-        });
+
+            await target.WriteAsync(buffer.AsMemory(0, read), progress.CancellationToken);
+            completed += read;
+            progress.Completed = completed;
+        }
+    }
+
+    private static async void RunWithCallbacks(
+        Task<byte[]> task,
+        Action<byte[]> success,
+        Action<Exception> failure)
+    {
+        try
+        {
+            var result = await task;
+            Dispatcher.Dispatch(() => success(result));
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.Dispatch(() => failure(ex));
+        }
     }
 
     public static async Task VerifyResponse(HttpResponseMessage message)
     {
-        if (!message.IsSuccessStatusCode)
+        if (message.IsSuccessStatusCode)
         {
-            var responseText = string.Empty;
-            try
-            {
-                responseText = await message.Content.ReadAsStringAsync();
-            }
-            catch
-            {
-                // ignored
-            }
-
-            throw new InvalidOperationException(string.Format("{0} ({1})\n{2}", new object[]
-            {
-                message.StatusCode.ToString(),
-                (int)message.StatusCode,
-                responseText
-            }));
+            return;
         }
+
+        var responseText = string.Empty;
+        try
+        {
+            responseText = await message.Content.ReadAsStringAsync();
+        }
+        catch
+        {
+            // ignored
+        }
+
+        throw new InvalidOperationException($"{message.StatusCode} ({(int)message.StatusCode})\n{responseText}");
     }
 
-    private class ProgressHttpContent(Stream sourceStream, CancellableProgress? progress) : HttpContent
+    private static HttpClient CreateHttpClient()
     {
-        private readonly CancellableProgress _progress = progress ?? new CancellableProgress();
+        var handler = new HttpClientHandler
+        {
+            ClientCertificateOptions = ClientCertificateOption.Manual,
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+        };
+        return new HttpClient(handler);
+    }
 
+    private sealed class ProgressHttpContent(Stream sourceStream, CancellableProgress progress) : HttpContent
+    {
         protected override bool TryComputeLength(out long length)
         {
-            length = sourceStream.Length;
+            if (!sourceStream.CanSeek)
+            {
+                length = -1;
+                return false;
+            }
+
+            length = sourceStream.Length - sourceStream.Position;
             return true;
         }
 
         protected override async Task SerializeToStreamAsync(Stream targetStream, TransportContext? context)
         {
-            var buffer = new byte[1024];
+            var buffer = new byte[81920];
             var written = 0L;
+            progress.Total = sourceStream.CanSeek ? sourceStream.Length - sourceStream.Position : 0;
+            progress.Completed = 0;
+
             while (true)
             {
-                _progress.Total = sourceStream.Length;
-                _progress.Completed = written;
-                if (_progress.CancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-
-                var read = await sourceStream.ReadAsync(buffer);
-                if (read > 0)
-                {
-                    await targetStream.WriteAsync(buffer, _progress.CancellationToken);
-                    written += read;
-                }
-
+                progress.CancellationToken.ThrowIfCancellationRequested();
+                var read = await sourceStream.ReadAsync(buffer, progress.CancellationToken);
                 if (read <= 0)
                 {
                     return;
                 }
-            }
 
-            throw new OperationCanceledException("Operation cancelled.");
+                await targetStream.WriteAsync(buffer.AsMemory(0, read), progress.CancellationToken);
+                written += read;
+                progress.Completed = written;
+            }
         }
     }
 }

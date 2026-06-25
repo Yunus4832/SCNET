@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -15,6 +16,7 @@ public class Starter
     public static void Main(string[] args)
     {
         WebBrowserManager.RegisterLauncher(OpenUrl);
+        WebManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
         var runningSetting = RunningSettingManager.Load(args);
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {

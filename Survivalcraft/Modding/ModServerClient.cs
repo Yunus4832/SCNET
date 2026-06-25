@@ -17,47 +17,78 @@ public sealed class ModServerClient : IDisposable
 
     public string RepositoryUrl { get; }
 
-    public async Task<IReadOnlyList<ModRepositoryPackage>> ListPackagesAsync(CancellationToken cancellationToken = default)
+    public IReadOnlyList<ModRepositoryPackage> ListPackages()
     {
-        var response = await _httpClient.GetFromJsonAsync<ModRepositoryListResponse>("api/v1/mods", cancellationToken);
+        return RunSync(ListPackagesAsync);
+    }
+
+    public IReadOnlyList<ModRepositoryPackage> ListPackagesByModId(string modId)
+    {
+        return RunSync(cancellationToken => ListPackagesByModIdAsync(modId, cancellationToken));
+    }
+
+    public ModRepositoryPackage? FindPackage(string modId, string version)
+    {
+        return RunSync(cancellationToken => FindPackageAsync(modId, version, cancellationToken));
+    }
+
+    public LocalModPackageEntry DownloadPackage(
+        ModRepositoryPackage package,
+        LocalModRepository repository
+    )
+    {
+        return RunSync(cancellationToken => DownloadPackageAsync(package, repository, cancellationToken));
+    }
+
+    private async Task<IReadOnlyList<ModRepositoryPackage>> ListPackagesAsync(CancellationToken cancellationToken)
+    {
+        var response = await _httpClient
+            .GetFromJsonAsync<ModRepositoryListResponse>("api/v1/mods", cancellationToken)
+            .ConfigureAwait(false);
         return response?.Items ?? [];
     }
 
-    public async Task<IReadOnlyList<ModRepositoryPackage>> ListPackagesByModIdAsync(
+    private async Task<IReadOnlyList<ModRepositoryPackage>> ListPackagesByModIdAsync(
         string modId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modId);
-        var response = await _httpClient.GetFromJsonAsync<ModRepositoryModResponse>(
-            $"api/v1/mods/{Uri.EscapeDataString(modId)}",
-            cancellationToken);
+        var response = await _httpClient
+            .GetFromJsonAsync<ModRepositoryModResponse>(
+                $"api/v1/mods/{Uri.EscapeDataString(modId)}",
+                cancellationToken)
+            .ConfigureAwait(false);
         return response?.Items ?? [];
     }
 
-    public async Task<ModRepositoryPackage?> FindPackageAsync(
+    private async Task<ModRepositoryPackage?> FindPackageAsync(
         string modId,
         string version,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modId);
         ArgumentException.ThrowIfNullOrWhiteSpace(version);
 
-        using var response = await _httpClient.GetAsync(
-            $"api/v1/mods/{Uri.EscapeDataString(modId)}/versions/{Uri.EscapeDataString(version)}",
-            cancellationToken);
+        using var response = await _httpClient
+            .GetAsync(
+                $"api/v1/mods/{Uri.EscapeDataString(modId)}/versions/{Uri.EscapeDataString(version)}",
+                cancellationToken)
+            .ConfigureAwait(false);
         if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
         {
             return null;
         }
 
         response.EnsureSuccessStatusCode();
-        return await response.Content.ReadFromJsonAsync<ModRepositoryPackage>(cancellationToken: cancellationToken);
+        return await response.Content
+            .ReadFromJsonAsync<ModRepositoryPackage>(cancellationToken: cancellationToken)
+            .ConfigureAwait(false);
     }
 
-    public async Task<LocalModPackageEntry> DownloadPackageAsync(
+    private async Task<LocalModPackageEntry> DownloadPackageAsync(
         ModRepositoryPackage package,
         LocalModRepository repository,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(package);
         ArgumentNullException.ThrowIfNull(repository);
@@ -68,9 +99,11 @@ public sealed class ModServerClient : IDisposable
             return existing;
         }
 
-        using var response = await _httpClient.GetAsync(package.DownloadUrl, cancellationToken);
+        using var response = await _httpClient
+            .GetAsync(package.DownloadUrl, cancellationToken)
+            .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsByteArrayAsync(cancellationToken);
+        var content = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
         return repository.AddOrUpdatePackage(content, $"{package.PackageHash}.scpak");
     }
 
@@ -88,15 +121,20 @@ public sealed class ModServerClient : IDisposable
         return repositoryUrl.Trim().TrimEnd('/');
     }
 
+    private static T RunSync<T>(Func<CancellationToken, Task<T>> action)
+    {
+        return action(CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+    }
+
     private sealed class ModRepositoryListResponse
     {
-        public List<ModRepositoryPackage> Items { get; set; } = [];
+        public List<ModRepositoryPackage> Items { get; init; } = [];
     }
 
     private sealed class ModRepositoryModResponse
     {
-        public string ModId { get; set; } = string.Empty;
+        public string ModId { get; init; } = string.Empty;
 
-        public List<ModRepositoryPackage> Items { get; set; } = [];
+        public List<ModRepositoryPackage> Items { get; init; } = [];
     }
 }
