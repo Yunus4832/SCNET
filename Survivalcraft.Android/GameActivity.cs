@@ -24,6 +24,7 @@ public class GameActivity : EngineActivity
     {
         base.OnRun();
         RunMode.Value = RunModeType.Gui;
+        WebBrowserManager.RegisterLauncher(OpenLink);
         InitializeAndroidId();
         LoadAssetAssemblies();
 

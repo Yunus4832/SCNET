@@ -14,6 +14,7 @@ public class Starter
 {
     public static void Main(string[] args)
     {
+        WebBrowserManager.RegisterLauncher(OpenUrl);
         var runningSetting = RunningSettingManager.Load(args);
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
@@ -61,6 +62,11 @@ public class Starter
         }
 
         Process.Start(startInfo);
+    }
+
+    private static void OpenUrl(string url)
+    {
+        Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
     }
 
     [DllImport("kernel32.dll")]

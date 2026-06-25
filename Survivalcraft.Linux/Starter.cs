@@ -16,6 +16,7 @@ public class Starter
 
     public static void Main(string[] args)
     {
+        WebBrowserManager.RegisterLauncher(OpenUrl);
         var runningSetting = RunningSettingManager.Load(args);
         InstallDesktopEntries();
         GameExitAction exitAction;
@@ -225,6 +226,21 @@ public class Starter
         {
             return false;
         }
+    }
+
+    private static void OpenUrl(string url)
+    {
+        if (TryRunDesktopCommand("xdg-open", [url]))
+        {
+            return;
+        }
+
+        if (TryRunDesktopCommand("gio", ["open", url]))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException("No supported desktop URL opener was found.");
     }
 
     private static void NotifyManualRestartRequired()
