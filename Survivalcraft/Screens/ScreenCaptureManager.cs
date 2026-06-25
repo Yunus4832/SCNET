@@ -24,7 +24,7 @@ public static class ScreenCaptureManager
         {
             int num;
             int height;
-            switch (SettingsManager.ScreenshotSize)
+            switch (SettingsManager.Current.ScreenshotSize)
             {
                 case ScreenshotSize.ScreenSize:
                 {
@@ -90,7 +90,7 @@ public static class ScreenCaptureManager
         var resolutionMode = ResolutionMode.High;
         try
         {
-            if (!SettingsManager.ShowGuiInScreenshots)
+            if (!SettingsManager.Current.ShowGuiInScreenshots)
             {
                 foreach (var componentPlayer in GameManager.Project.FindSubsystem<SubsystemPlayers>(true)!
                              .ComponentPlayers)
@@ -101,11 +101,11 @@ public static class ScreenCaptureManager
                 }
             }
 
-            resolutionMode = SettingsManager.ResolutionMode;
-            SettingsManager.ResolutionMode = ResolutionMode.High;
+            resolutionMode = SettingsManager.Current.ResolutionMode;
+            SettingsManager.Current.ResolutionMode = ResolutionMode.High;
             Display.RenderTarget = renderTarget2D;
             ScreensManager.Draw();
-            if (SettingsManager.ShowLogoInScreenshots)
+            if (SettingsManager.Current.ShowLogoInScreenshots)
             {
                 var primitivesRenderer2D = new PrimitivesRenderer2D();
                 var texture2D = ContentManager.Get<Texture2D>("Textures/Gui/ScreenCaptureOverlay");
@@ -124,7 +124,7 @@ public static class ScreenCaptureManager
                 item.Key.ControlsContainerWidget.IsVisible = item.Value;
             }
 
-            SettingsManager.ResolutionMode = resolutionMode;
+            SettingsManager.Current.ResolutionMode = resolutionMode;
         }
 
         var image = new Image(renderTarget2D.Width, renderTarget2D.Height);

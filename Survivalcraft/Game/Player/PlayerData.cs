@@ -285,7 +285,7 @@ public partial class PlayerData : IDisposable
                 //说明，客户端非主玩家不执行updateLocation
                 if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer))
                 {
-                    var initialVisibility = MathUtils.Max(32f, MathUtils.Min(SettingsManager.VisibilityRange, 64f));
+                    var initialVisibility = MathUtils.Max(32f, MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
                     _subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, initialVisibility,
                         64f);
                 }
@@ -299,7 +299,7 @@ public partial class PlayerData : IDisposable
                     return;
                 }
 
-                var initialVisibility = MathUtils.Max(32f, MathUtils.Min(SettingsManager.VisibilityRange, 64f));
+                var initialVisibility = MathUtils.Max(32f, MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
                 var updateProgress2 =
                     _subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, initialVisibility, 64f);
                 UpdateSpawnDialog(string.Empty, string.Empty, 0.5f * updateProgress2, false);
@@ -336,7 +336,7 @@ public partial class PlayerData : IDisposable
                 if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer))
                 {
                     _subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center,
-                        MathUtils.Min(SettingsManager.VisibilityRange, 32f), 0f);
+                        MathUtils.Min(SettingsManager.Current.VisibilityRange, 32f), 0f);
                 }
             },
             delegate
@@ -347,7 +347,7 @@ public partial class PlayerData : IDisposable
                 }
 
                 var updateProgress = _subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex,
-                    MathUtils.Min(SettingsManager.VisibilityRange, 64f), 0f);
+                    MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f), 0f);
                 UpdateSpawnDialog(string.Empty, string.Empty, 0.5f + 0.5f * updateProgress, false);
                 if ((!(updateProgress >= 1f) || !(Time.FrameStartTime - _terrainWaitStartTime > 2.0)) &&
                     !(Time.FrameStartTime - _terrainWaitStartTime >= 15.0))

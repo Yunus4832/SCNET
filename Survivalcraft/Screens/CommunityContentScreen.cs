@@ -261,9 +261,9 @@ public class CommunityContentScreen : Screen
                 list.Add(item);
             }
 
-            if (!string.IsNullOrEmpty(SettingsManager.CommunityAccessToken))
+            if (!string.IsNullOrEmpty(SettingsManager.Current.CommunityAccessToken))
             {
-                list.Add(SettingsManager.CommunityAccessToken);
+                list.Add(SettingsManager.Current.CommunityAccessToken);
             }
 
             DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(GetType().Name, "Filter"), list,
@@ -524,9 +524,9 @@ public class CommunityContentScreen : Screen
         {
             if (_provider is { IsLoggedIn: true })
             {
-                var info = string.IsNullOrEmpty(SettingsManager.ScpboxUserInfo)
+                var info = string.IsNullOrEmpty(SettingsManager.Current.ScpboxUserInfo)
                     ? "暂无用户信息"
-                    : SettingsManager.ScpboxUserInfo;
+                    : SettingsManager.Current.ScpboxUserInfo;
                 DialogsManager.ShowDialog(null, new MessageDialog("账号已登录,是否登出?", info, LanguageManager.Yes,
                     LanguageManager.No, delegate(MessageDialogButton button)
                     {
@@ -566,7 +566,7 @@ public class CommunityContentScreen : Screen
 
     public void PopulateList(string cursor, bool force = false)
     {
-        var text = SettingsManager.CommunityContentMode switch
+        var text = SettingsManager.Current.CommunityContentMode switch
         {
             CommunityContentMode.Strict => "1",
             CommunityContentMode.Normal => "0",

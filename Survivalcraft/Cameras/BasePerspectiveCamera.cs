@@ -269,7 +269,7 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
             return VrManager.GetProjectionMatrix(Eye.Value, 0.1f, 2048f);
         }
 
-        var num = 80f * SettingsManager.ViewAngle;
+        var num = 80f * SettingsManager.Current.ViewAngle;
         var viewWidget = GameWidget.ViewWidget;
         var num2 = viewWidget.ActualSize.X / viewWidget.ActualSize.Y;
         var num3 = MathUtils.Min(num * num2, num);

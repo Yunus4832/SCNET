@@ -491,7 +491,7 @@ public class ComponentVitalStats : Component, IUpdateable
                 }
 
                 var num5 = _componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.2f : 0f;
-                _pantingSound.Volume = 1f * SettingsManager.SoundsVolume * MathUtils.Saturate(1f * num4) *
+                _pantingSound.Volume = 1f * SettingsManager.Current.SoundsVolume * MathUtils.Saturate(1f * num4) *
                                        MathUtils.Lerp(0.8f, 1f,
                                            SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * Time.RealTime + 100.0,
                                                1000.0)));

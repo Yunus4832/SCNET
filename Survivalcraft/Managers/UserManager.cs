@@ -31,8 +31,8 @@ public static class UserManager
 
     public static UserInfo? ActiveUser
     {
-        get => GetUser(SettingsManager.UserId);
-        set => SettingsManager.UserId = value != null ? value.UniqueId : string.Empty;
+        get => GetUser(SettingsManager.Current.UserId);
+        set => SettingsManager.Current.UserId = value != null ? value.UniqueId : string.Empty;
     }
 
     public static IEnumerable<UserInfo> GetUsers()

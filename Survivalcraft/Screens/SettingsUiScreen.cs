@@ -57,13 +57,13 @@ public class SettingsUiScreen : Screen
 
         if (_windowModeButton.IsClicked)
         {
-            SettingsManager.WindowMode = (WindowMode)((int)(SettingsManager.WindowMode + 1) %
+            SettingsManager.Current.WindowMode = (WindowMode)((int)(SettingsManager.Current.WindowMode + 1) %
                                                       EnumUtils.GetEnumValues(typeof(WindowMode)).Count);
         }
 
         if (_uiScaleSlider.SlidingCompleted)
         {
-            SettingsManager.UIScale = _uiScaleSlider.Value;
+            SettingsManager.Current.UIScale = _uiScaleSlider.Value;
         }
 
         if (_languageButton.IsClicked)
@@ -73,56 +73,56 @@ public class SettingsUiScreen : Screen
 
         if (!_uiScaleSlider.IsSliding)
         {
-            _uiScaleSlider.Value = SettingsManager.UIScale;
+            _uiScaleSlider.Value = SettingsManager.Current.UIScale;
         }
 
         _uiScaleSlider.Text = $"{_uiScaleSlider.Value * 100f:0}%";
 
         if (_upsideDownButton.IsClicked)
         {
-            SettingsManager.UpsideDownLayout = !SettingsManager.UpsideDownLayout;
+            SettingsManager.Current.UpsideDownLayout = !SettingsManager.Current.UpsideDownLayout;
         }
 
         if (_hideMoveLookPadsButton.IsClicked)
         {
-            SettingsManager.HideMoveLookPads = !SettingsManager.HideMoveLookPads;
+            SettingsManager.Current.HideMoveLookPads = !SettingsManager.Current.HideMoveLookPads;
         }
 
         if (_showGuiInScreenshotsButton.IsClicked)
         {
-            SettingsManager.ShowGuiInScreenshots = !SettingsManager.ShowGuiInScreenshots;
+            SettingsManager.Current.ShowGuiInScreenshots = !SettingsManager.Current.ShowGuiInScreenshots;
         }
 
         if (_showLogoInScreenshotsButton.IsClicked)
         {
-            SettingsManager.ShowLogoInScreenshots = !SettingsManager.ShowLogoInScreenshots;
+            SettingsManager.Current.ShowLogoInScreenshots = !SettingsManager.Current.ShowLogoInScreenshots;
         }
 
         if (_screenshotSizeButton.IsClicked)
         {
-            SettingsManager.ScreenshotSize = (ScreenshotSize)((int)(SettingsManager.ScreenshotSize + 1) %
+            SettingsManager.Current.ScreenshotSize = (ScreenshotSize)((int)(SettingsManager.Current.ScreenshotSize + 1) %
                                                               EnumUtils.GetEnumValues(typeof(ScreenshotSize)).Count);
         }
 
         if (_communityContentModeButton.IsClicked)
         {
-            SettingsManager.CommunityContentMode =
-                (CommunityContentMode)((int)(SettingsManager.CommunityContentMode + 1) %
+            SettingsManager.Current.CommunityContentMode =
+                (CommunityContentMode)((int)(SettingsManager.Current.CommunityContentMode + 1) %
                                        EnumUtils.GetEnumValues(typeof(CommunityContentMode)).Count);
         }
 
         // 更新按钮文本
-        _windowModeButton.Text = LanguageManager.Get("WindowMode", SettingsManager.WindowMode.ToString());
+        _windowModeButton.Text = LanguageManager.Get("WindowMode", SettingsManager.Current.WindowMode.ToString());
         _languageButton.Text = LanguageManager.Get("Language", "Name");
-        _upsideDownButton.Text = SettingsManager.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
-        _hideMoveLookPadsButton.Text = SettingsManager.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;
+        _upsideDownButton.Text = SettingsManager.Current.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
+        _hideMoveLookPadsButton.Text = SettingsManager.Current.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;
         _showGuiInScreenshotsButton.Text =
-            SettingsManager.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
+            SettingsManager.Current.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
         _showLogoInScreenshotsButton.Text =
-            SettingsManager.ShowLogoInScreenshots ? LanguageManager.Yes : LanguageManager.No;
-        _screenshotSizeButton.Text = LanguageManager.Get("ScreenshotSize", SettingsManager.ScreenshotSize.ToString());
+            SettingsManager.Current.ShowLogoInScreenshots ? LanguageManager.Yes : LanguageManager.No;
+        _screenshotSizeButton.Text = LanguageManager.Get("ScreenshotSize", SettingsManager.Current.ScreenshotSize.ToString());
         _communityContentModeButton.Text =
-            LanguageManager.Get("CommunityContentMode", SettingsManager.CommunityContentMode.ToString());
+            LanguageManager.Get("CommunityContentMode", SettingsManager.Current.CommunityContentMode.ToString());
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {

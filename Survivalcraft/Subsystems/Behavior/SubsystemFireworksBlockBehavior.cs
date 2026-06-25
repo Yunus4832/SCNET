@@ -42,10 +42,10 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
             _subsystemSky.SkyLightIntensity == 0f && !componentPlayer.ComponentSleep.IsSleeping)
         {
             var now = DateTime.Now;
-            if (now.Year > SettingsManager.NewYearCelebrationLastYear && now.Month == 1 && now.Day == 1 &&
+            if (now.Year > SettingsManager.Current.NewYearCelebrationLastYear && now.Month == 1 && now.Day == 1 &&
                 now.Hour == 0 && now.Minute < 59)
             {
-                SettingsManager.NewYearCelebrationLastYear = now.Year;
+                SettingsManager.Current.NewYearCelebrationLastYear = now.Year;
                 _newYearCelebrationTimeRemaining = 180f;
                 componentPlayer.ComponentGui.DisplayLargeMessage("Happy New Year!", "--- Enjoy the fireworks ---", 15f,
                     3f);

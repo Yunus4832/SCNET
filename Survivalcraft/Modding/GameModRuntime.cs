@@ -59,7 +59,7 @@ public sealed class GameModRuntime : IDisposable
             })
             .ToList();
         var repositoryUrl = string.IsNullOrWhiteSpace(EffectiveProfile.RepositoryUrl)
-            ? SettingsManager.ModServerAddress
+            ? SettingsManager.Current.ModServerAddress
             : EffectiveProfile.RepositoryUrl;
 
         if (packages.Count == 0 || string.IsNullOrWhiteSpace(repositoryUrl))
@@ -290,7 +290,7 @@ public sealed class GameModRuntime : IDisposable
         return new ModProfile
         {
             Id = "runtime",
-            RepositoryUrl = SettingsManager.ModServerAddress,
+            RepositoryUrl = SettingsManager.Current.ModServerAddress,
             Packages = loadedMods
                 .Where(mod => !string.IsNullOrWhiteSpace(mod.PackageHash))
                 .Select(mod => new ModPackageRequirement

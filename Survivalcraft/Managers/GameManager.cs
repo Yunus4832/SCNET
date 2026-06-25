@@ -100,8 +100,8 @@ public static class GameManager
         Log.Information(
             "Loaded world, GameMode={0}, StartingPosition={1}, WorldName={2}, VisibilityRange={3}, Resolution={4}",
             worldInfo.WorldSettings.GameMode, worldInfo.WorldSettings.StartingPositionMode,
-            worldInfo.WorldSettings.Name, SettingsManager.VisibilityRange.ToString(),
-            SettingsManager.ResolutionMode.ToString());
+            worldInfo.WorldSettings.Name, SettingsManager.Current.VisibilityRange.ToString(),
+            SettingsManager.Current.ResolutionMode.ToString());
         GC.Collect();
     }
 

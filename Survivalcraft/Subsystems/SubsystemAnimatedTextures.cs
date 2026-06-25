@@ -77,11 +77,11 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
         var blocksTexture = _subsystemBlocksTexture.BlocksTexture;
         if (_animatedBlocksTexture == null || _animatedBlocksTexture.Width != blocksTexture.Width ||
             _animatedBlocksTexture.Height != blocksTexture.Height || _animatedBlocksTexture.MipLevelsCount > 1 !=
-            SettingsManager.TerrainMipmapsEnabled)
+            SettingsManager.Current.TerrainMipmapsEnabled)
         {
             Utilities.Dispose(ref _animatedBlocksTexture);
             _animatedBlocksTexture = new RenderTarget2D(blocksTexture.Width, blocksTexture.Height,
-                !SettingsManager.TerrainMipmapsEnabled ? 1 : 4, ColorFormat.Rgba8888, DepthFormat.None);
+                !SettingsManager.Current.TerrainMipmapsEnabled ? 1 : 4, ColorFormat.Rgba8888, DepthFormat.None);
             AnimatedBlocksTexture.Tag = blocksTexture.Tag;
         }
 
@@ -108,7 +108,7 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
             Display.ScissorRectangle = scissorRectangle;
         }
 
-        if (SettingsManager.TerrainMipmapsEnabled && Time.FrameIndex % 2 == 0)
+        if (SettingsManager.Current.TerrainMipmapsEnabled && Time.FrameIndex % 2 == 0)
         {
             _animatedBlocksTexture.GenerateMipMaps();
         }

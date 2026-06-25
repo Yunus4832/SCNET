@@ -201,7 +201,7 @@ public class TerrainUpdater
         _updateParameters.Locations = new Dictionary<int, UpdateLocation>();
         _threadUpdateParameters.Chunks = [];
         _threadUpdateParameters.Locations = new Dictionary<int, UpdateLocation>();
-        SettingsManager.SettingChanged += SettingsManagerSettingChanged;
+        SettingsManager.BrightnessChanged += SettingsManagerBrightnessChanged;
         SetUpdateLocation(-1, Vector2.Zero, 4, 4);
     }
 
@@ -210,7 +210,7 @@ public class TerrainUpdater
     /// </summary>
     public void Dispose()
     {
-        SettingsManager.SettingChanged -= SettingsManagerSettingChanged;
+        SettingsManager.BrightnessChanged -= SettingsManagerBrightnessChanged;
         _quitUpdateThread = true;
         UnpauseUpdateThread();
         UpdateEvent.Set();
@@ -393,7 +393,7 @@ public class TerrainUpdater
         }
 
         // 是否开启了多线程更新地形，如果不是，停止并销毁地形更新线程，在主线程上更新地形
-        if (!SettingsManager.MultithreadedTerrainUpdate)
+        if (!SettingsManager.Current.MultithreadedTerrainUpdate)
         {
             // 销毁地形更新线程
             if (_task != null)
@@ -514,7 +514,7 @@ public class TerrainUpdater
             if (Time.PeriodicEvent(1, 0.6))
             {
                 var toSendList = new List<TerrainChunk>();
-                var sc = Math.Min(item.Value.Count, SettingsManager.ServerChunkCountSendPer);
+                var sc = Math.Min(item.Value.Count, SettingsManager.Current.ServerChunkCountSendPer);
                 for (var i = 0; i < sc; i++)
                 {
                     var coord = item.Value[i];
@@ -581,7 +581,7 @@ public class TerrainUpdater
     public void PrepareForDrawing(Camera camera)
     {
         SetUpdateLocation(camera.GameWidget.PlayerData.PlayerIndex, camera.ViewPosition.XZ,
-            SettingsManager.VisibilityRange, 64f);
+            SettingsManager.Current.VisibilityRange, 64f);
         if (_synchronousUpdateFrame != Time.FrameIndex)
         {
             return;
@@ -1754,16 +1754,9 @@ public class TerrainUpdater
         }
     }
 
-    /// <summary>
-    /// 设置变更事件处理
-    /// </summary>
-    /// <param name="name">变更的设置项名称</param>
-    private void SettingsManagerSettingChanged(string name)
+    private void SettingsManagerBrightnessChanged()
     {
-        if (name == "Brightness")
-        {
-            DowngradeAllChunksState(TerrainChunkState.InvalidVertices1, true);
-        }
+        DowngradeAllChunksState(TerrainChunkState.InvalidVertices1, true);
     }
 
     public struct UpdateLocation

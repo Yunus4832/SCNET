@@ -96,7 +96,7 @@ public class ComponentMiner : Component, IUpdateable
     public void Update(float dt)
     {
         var num = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
-            ? 0.5f / SettingsManager.CreativeDigTime
+            ? 0.5f / SettingsManager.Current.CreativeDigTime
             : 4f;
         _lastPokingPhase = PokingPhase;
         if (DigCellFace.HasValue || PokingPhase > 0f)
@@ -624,7 +624,7 @@ public class ComponentMiner : Component, IUpdateable
     )
     {
         var reach = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
-            ? SettingsManager.CreativeReach
+            ? SettingsManager.Current.CreativeReach
             : 5f;
         var creaturePosition = ComponentCreature.ComponentCreatureModel.EyePosition;
         var start = ray.Position;

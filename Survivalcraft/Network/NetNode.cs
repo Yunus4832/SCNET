@@ -472,7 +472,7 @@ public class NetNode
         Clients.Clear();
         var localGuid = RunMode.Value is RunModeType.HeadlessServer
             ? Guid.NewGuid()
-            : new Guid(SettingsManager.OnlineAccessToken);
+            : new Guid(SettingsManager.Current.OnlineAccessToken);
         Self = new Client(localGuid, GameManager.Project!);
         AddClient(Self);
     }
@@ -504,9 +504,9 @@ public class NetNode
 
             if (flag)
             {
-                if (!string.IsNullOrEmpty(SettingsManager.ModServerAddress))
+                if (!string.IsNullOrEmpty(SettingsManager.Current.ModServerAddress))
                 {
-                    Log.Information($"模组服务器已被指定为: {SettingsManager.ModServerAddress}");
+                    Log.Information($"模组服务器已被指定为: {SettingsManager.Current.ModServerAddress}");
                 }
 
                 Log.Information($"开启服务器成功，端口 {NetManager.LocalPort}");
@@ -554,8 +554,8 @@ public class NetNode
                 new ConnectionRequestPackage(
                     TokenId,
                     VersionsManager.ProtocolVersion,
-                    SettingsManager.CommunityAccessUser,
-                    SettingsManager.OnlineAccessToken,
+                    SettingsManager.Current.CommunityAccessUser,
+                    SettingsManager.Current.OnlineAccessToken,
                     passwd,
                     CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash
                 ),
@@ -819,7 +819,7 @@ public class NetNode
         }
         else
         {
-            netManager.SendBroadcast(w, SettingsManager.BroadcastPort);
+            netManager.SendBroadcast(w, SettingsManager.Current.BroadcastPort);
         }
 
         return size;

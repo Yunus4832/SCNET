@@ -23,7 +23,7 @@ public class ComponentAutoJump : Component, IUpdateable
 
     public void Update(float dt)
     {
-        if ((SettingsManager.AutoJump || _alwaysEnabled) && _subsystemTime.GameTime - _lastAutoJumpTime > 0.25)
+        if ((SettingsManager.Current.AutoJump || _alwaysEnabled) && _subsystemTime.GameTime - _lastAutoJumpTime > 0.25)
         {
             var lastWalkOrder = _componentCreature.ComponentLocomotion.LastWalkOrder;
             if (lastWalkOrder.HasValue)

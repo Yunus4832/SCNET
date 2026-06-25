@@ -11,7 +11,7 @@ public static class GameUpdateHelper
 
     public static void CheckGameUpdate()
     {
-        if (SettingsManager.RejectedUpdateCount >= 3)
+        if (SettingsManager.Current.RejectedUpdateCount >= 3)
         {
             return;
         }
@@ -63,7 +63,7 @@ public static class GameUpdateHelper
                         else
                         {
                             DialogsManager.HideDialog(self);
-                            SettingsManager.RejectedUpdateCount++;
+                            SettingsManager.Current.RejectedUpdateCount++;
                         }
                     }
                 )

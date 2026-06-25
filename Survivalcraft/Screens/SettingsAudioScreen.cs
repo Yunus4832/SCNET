@@ -20,18 +20,18 @@ public class SettingsAudioScreen : Screen
         GameManager.UpdateProject();
         if (_soundsVolumeSlider.IsSliding)
         {
-            SettingsManager.SoundsVolume = _soundsVolumeSlider.Value;
+            SettingsManager.Current.SoundsVolume = _soundsVolumeSlider.Value;
         }
 
         if (_musicVolumeSlider.IsSliding)
         {
-            SettingsManager.MusicVolume = _musicVolumeSlider.Value;
+            SettingsManager.Current.MusicVolume = _musicVolumeSlider.Value;
         }
 
-        _soundsVolumeSlider.Value = SettingsManager.SoundsVolume;
-        _soundsVolumeSlider.Text = MathUtils.Round(SettingsManager.SoundsVolume * 10f).ToString();
-        _musicVolumeSlider.Value = SettingsManager.MusicVolume;
-        _musicVolumeSlider.Text = MathUtils.Round(SettingsManager.MusicVolume * 10f).ToString();
+        _soundsVolumeSlider.Value = SettingsManager.Current.SoundsVolume;
+        _soundsVolumeSlider.Text = MathUtils.Round(SettingsManager.Current.SoundsVolume * 10f).ToString();
+        _musicVolumeSlider.Value = SettingsManager.Current.MusicVolume;
+        _musicVolumeSlider.Text = MathUtils.Round(SettingsManager.Current.MusicVolume * 10f).ToString();
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             SettingsManager.SaveSettings();

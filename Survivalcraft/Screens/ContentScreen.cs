@@ -74,7 +74,7 @@ public class ContentScreen : Screen
 
     public override void Update()
     {
-        _communityContentButton.IsEnabled = SettingsManager.CommunityContentMode != CommunityContentMode.Disabled;
+        _communityContentButton.IsEnabled = SettingsManager.Current.CommunityContentMode != CommunityContentMode.Disabled;
         if (_externalContentButton.IsClicked)
         {
             ScreensManager.SwitchScreen("ExternalContent");

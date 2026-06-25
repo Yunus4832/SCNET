@@ -48,7 +48,7 @@ public static class HeadlessEntry
             var world = SessionInfoManager.ResolveHeadlessWorld(runningSetting);
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information(
-                $"Server ports: game={SettingsManager.ServerPort}, broadcast={SettingsManager.BroadcastPort}");
+                $"Server ports: game={SettingsManager.Current.ServerPort}, broadcast={SettingsManager.Current.BroadcastPort}");
             CommonLib.WorkType = WorkType.Server;
             var gamesWidget = new GamesWidget();
             GameManager.LoadProject(world, gamesWidget);

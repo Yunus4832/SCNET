@@ -173,7 +173,7 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         else
         {
             if (!_componentPlayer.ComponentAimingSights.IsSightsVisible &&
-                (SettingsManager.LookControlMode == LookControlMode.SplitTouch ||
+                (SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch ||
                  !_componentPlayer.ComponentInput.IsControlledByTouch) &&
                 _highlightRaycastResult is TerrainRaycastResult result)
             {

@@ -162,12 +162,12 @@ public static class GameEntry
         _processCpuTimeBegin = currentCpuTime;
         if (Keyboard.IsKeyDownOnce(Key.F11))
         {
-            SettingsManager.WindowMode = SettingsManager.WindowMode == WindowMode.Fullscreen
+            SettingsManager.Current.WindowMode = SettingsManager.Current.WindowMode == WindowMode.Fullscreen
                 ? WindowMode.Resizable
                 : WindowMode.Fullscreen;
         }
 
-        Window.VSync = SettingsManager.VSync;
+        Window.VSync = SettingsManager.Current.VSync;
         try
         {
             if (ExceptionManager.Error == null)

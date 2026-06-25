@@ -119,14 +119,14 @@ public class LoginDialog : Dialog
             return;
         }
 
-        SettingsManager.CommunityAccessUser = _accountInput.Text;
-        SettingsManager.CommunityAccessToken = accessTokenNode.ToString();
-        SettingsManager.OnlineAccessToken = HashUtils.ComputeMd5($"{_accountInput.Text}{_passwordInput.Text}");
-        SettingsManager.CommunityNickName = dataObj["nickName"]?.ToString() ?? string.Empty;
-        SettingsManager.ScpboxUserInfo = string.Empty;
-        SettingsManager.ScpboxUserInfo += "昵称：" + dataObj["nickName"];
-        SettingsManager.ScpboxUserInfo += "\n账号：" + dataObj["user"];
-        SettingsManager.ScpboxUserInfo += "\n登录时间：" + dataObj["loginTime"];
+        SettingsManager.Current.CommunityAccessUser = _accountInput.Text;
+        SettingsManager.Current.CommunityAccessToken = accessTokenNode.ToString();
+        SettingsManager.Current.OnlineAccessToken = HashUtils.ComputeMd5($"{_accountInput.Text}{_passwordInput.Text}");
+        SettingsManager.Current.CommunityNickName = dataObj["nickName"]?.ToString() ?? string.Empty;
+        SettingsManager.Current.ScpboxUserInfo = string.Empty;
+        SettingsManager.Current.ScpboxUserInfo += "昵称：" + dataObj["nickName"];
+        SettingsManager.Current.ScpboxUserInfo += "\n账号：" + dataObj["user"];
+        SettingsManager.Current.ScpboxUserInfo += "\n登录时间：" + dataObj["loginTime"];
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(

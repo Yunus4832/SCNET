@@ -12,6 +12,12 @@ namespace Game.Managers;
 
 public static class MotdManager
 {
+    private static readonly string _defaultMotdUpdateUrl =
+        SchubExternalContentProvider.GetPath("/com/motd?v={0}&l={1}");
+
+    private static readonly string _defaultMotdUpdateCheckUrl =
+        SchubExternalContentProvider.GetPath("/com/motd?v={0}&cmd=version_check&platform={1}&apiv={2}&l={3}");
+
     public static Bulletin BulletinDefault = Bulletin.Default;
 
     public static bool CanShowBulletin { get; set; }
@@ -40,7 +46,7 @@ public static class MotdManager
 
     public static void ForceRedownload()
     {
-        SettingsManager.MotdLastUpdateTime = DateTime.MinValue;
+        SettingsManager.Current.MotdLastUpdateTime = DateTime.MinValue;
     }
 
     public static void Initialize()
@@ -54,7 +60,7 @@ public static class MotdManager
     public static void UpdateVersion()
     {
         var url = string.Format(
-            SettingsManager.MotdUpdateCheckUrl,
+            GetMotdUpdateCheckUrl(),
             VersionsManager.SerializationVersion,
             VersionsManager.Platform,
             ModPlatformInfo.ApiVersion,
@@ -84,7 +90,7 @@ public static class MotdManager
                 {
                     var motdLastDownloadedData = UnpackMotd(result);
                     MessageOfTheDay = Message.Default;
-                    SettingsManager.MotdLastDownloadedData = motdLastDownloadedData;
+                    SettingsManager.Current.MotdLastDownloadedData = motdLastDownloadedData;
                     Log.Information("Downloaded MOTD");
                 }
                 catch (Exception ex)
@@ -165,19 +171,19 @@ public static class MotdManager
             _canDownloadMotd = false;
         }
 
-        if (string.IsNullOrEmpty(SettingsManager.MotdLastDownloadedData))
+        if (string.IsNullOrEmpty(SettingsManager.Current.MotdLastDownloadedData))
         {
             return;
         }
 
-        MessageOfTheDay = ParseMotd(SettingsManager.MotdLastDownloadedData);
+        MessageOfTheDay = ParseMotd(SettingsManager.Current.MotdLastDownloadedData);
         if (MessageOfTheDay.Lines.Count == 0)
         {
-            SettingsManager.MotdLastDownloadedData = string.Empty;
+            SettingsManager.Current.MotdLastDownloadedData = string.Empty;
         }
 
         if (!string.IsNullOrEmpty(BulletinDefault.Content) ||
-            SettingsManager.BulletinTime == BulletinDefault.Time)
+            SettingsManager.Current.BulletinTime == BulletinDefault.Time)
         {
             return;
         }
@@ -212,9 +218,9 @@ public static class MotdManager
             }
 
             var xElement = XmlUtils.LoadXmlFromString(dataString.Substring(num, num2 - num), true);
-            SettingsManager.MotdUpdatePeriodHours = XmlUtils.GetAttributeValue(xElement, "UpdatePeriodHours", 24);
-            SettingsManager.MotdUpdateUrl =
-                XmlUtils.GetAttributeValue(xElement, "UpdateUrl", SettingsManager.MotdUpdateUrl);
+            SettingsManager.Current.MotdUpdatePeriodHours = XmlUtils.GetAttributeValue(xElement, "UpdatePeriodHours", 24);
+            SettingsManager.Current.MotdUpdateUrl =
+                XmlUtils.GetAttributeValue(xElement, "UpdateUrl", GetMotdUpdateUrl());
             var message = new Message();
             foreach (var item2 in xElement.Elements())
             {
@@ -294,7 +300,7 @@ public static class MotdManager
         };
         var dictionary = new Dictionary<string, string>
         {
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "Content", dataString }
         };
         WebManager.Post(
@@ -356,7 +362,7 @@ public static class MotdManager
             var title = IsCnLanguageType() ? BulletinDefault.Title : BulletinDefault.EnTitle;
             var content = IsCnLanguageType() ? BulletinDefault.Content : BulletinDefault.EnContent;
             var bulletinDialog = new BulletinDialog(title, content, time,
-                delegate { SettingsManager.BulletinTime = BulletinDefault.Time; },
+                delegate { SettingsManager.Current.BulletinTime = BulletinDefault.Time; },
                 delegate(LabelWidget titleLabel, LabelWidget contentLabel)
                 {
                     DialogsManager.ShowDialog(
@@ -412,10 +418,10 @@ public static class MotdManager
                 },
                 delegate(LabelWidget titleLabel, LabelWidget contentLabel)
                 {
-                    var num = SettingsManager.MotdLastDownloadedData.IndexOf("<Motd2", StringComparison.Ordinal);
-                    var num2 = SettingsManager.MotdLastDownloadedData.IndexOf("</Motd2>", StringComparison.Ordinal) + 8;
+                    var num = SettingsManager.Current.MotdLastDownloadedData.IndexOf("<Motd2", StringComparison.Ordinal);
+                    var num2 = SettingsManager.Current.MotdLastDownloadedData.IndexOf("</Motd2>", StringComparison.Ordinal) + 8;
                     var xElement =
-                        XmlUtils.LoadXmlFromString(SettingsManager.MotdLastDownloadedData.Substring(num, num2 - num),
+                        XmlUtils.LoadXmlFromString(SettingsManager.Current.MotdLastDownloadedData.Substring(num, num2 - num),
                             true);
                     _ = !AppConfigStore.Values.TryGetValue("Language", out var config)
                         ? "zh-CN"
@@ -440,9 +446,9 @@ public static class MotdManager
                         }
                     }
 
-                    var newDownloadedData = SettingsManager.MotdLastDownloadedData.Substring(0, num);
+                    var newDownloadedData = SettingsManager.Current.MotdLastDownloadedData.Substring(0, num);
                     newDownloadedData += xElement.ToString();
-                    newDownloadedData += SettingsManager.MotdLastDownloadedData.Substring(num2);
+                    newDownloadedData += SettingsManager.Current.MotdLastDownloadedData.Substring(num2);
                     var busyDialog = new CancellableBusyDialog("操作等待中", false);
                     DialogsManager.ShowDialog(null, busyDialog);
                     SaveBulletin(
@@ -460,7 +466,7 @@ public static class MotdManager
                             msg ??= string.Empty;
                             if (result[0]?.ToString() == "200")
                             {
-                                SettingsManager.MotdLastDownloadedData = newDownloadedData;
+                                SettingsManager.Current.MotdLastDownloadedData = newDownloadedData;
                             }
 
                             DialogsManager.ShowDialog(
@@ -503,8 +509,18 @@ public static class MotdManager
     private static string GetMotdUrl()
     {
         var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
-        return string.Format(SettingsManager.MotdUpdateUrl, VersionsManager.SerializationVersion, languageType);
+        return string.Format(GetMotdUpdateUrl(), VersionsManager.SerializationVersion, languageType);
     }
+
+    private static string GetMotdUpdateUrl() =>
+        string.IsNullOrWhiteSpace(SettingsManager.Current.MotdUpdateUrl)
+            ? _defaultMotdUpdateUrl
+            : SettingsManager.Current.MotdUpdateUrl;
+
+    private static string GetMotdUpdateCheckUrl() =>
+        string.IsNullOrWhiteSpace(SettingsManager.Current.MotdUpdateCheckUrl)
+            ? _defaultMotdUpdateCheckUrl
+            : SettingsManager.Current.MotdUpdateCheckUrl;
 
     public class Message
     {

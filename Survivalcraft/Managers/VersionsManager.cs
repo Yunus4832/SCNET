@@ -85,8 +85,8 @@ public static class VersionsManager
 
     public static void Initialize()
     {
-        LastLaunchedVersion = SettingsManager.LastLaunchedVersion;
-        SettingsManager.LastLaunchedVersion = Version;
+        LastLaunchedVersion = SettingsManager.Current.LastLaunchedVersion;
+        SettingsManager.Current.LastLaunchedVersion = Version;
     }
 
     public static void UpgradeProjectXml(XElement projectNode)

@@ -176,22 +176,22 @@ public class PlayersScreen : Screen
                         {
                             if (_subsystemPlayers.PlayersData.Count == 1)
                             {
-                                SettingsManager.ScreenLayout1 = (ScreenLayout)o;
+                                SettingsManager.Current.ScreenLayout1 = (ScreenLayout)o;
                             }
 
                             if (_subsystemPlayers.PlayersData.Count == 2)
                             {
-                                SettingsManager.ScreenLayout2 = (ScreenLayout)o;
+                                SettingsManager.Current.ScreenLayout2 = (ScreenLayout)o;
                             }
 
                             if (_subsystemPlayers.PlayersData.Count == 3)
                             {
-                                SettingsManager.ScreenLayout3 = (ScreenLayout)o;
+                                SettingsManager.Current.ScreenLayout3 = (ScreenLayout)o;
                             }
 
                             if (_subsystemPlayers.PlayersData.Count == 4)
                             {
-                                SettingsManager.ScreenLayout4 = (ScreenLayout)o;
+                                SettingsManager.Current.ScreenLayout4 = (ScreenLayout)o;
                             }
                         }
                     )

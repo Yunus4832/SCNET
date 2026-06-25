@@ -191,7 +191,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         }
 
         ComponentLocomotion.LookOrder += playerInput.Look *
-                                         (SettingsManager.FlipVerticalAxis
+                                         (SettingsManager.Current.FlipVerticalAxis
                                              ? new Vector2(0f, -1f)
                                              : new Vector2(0f, 1f));
         var num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);

@@ -381,7 +381,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
     public void ShadowDraw(SubsystemShadows subsystemShadows, Camera camera, Vector3 shadowPosition,
         float shadowDiameter, float alpha)
     {
-        if (!SettingsManager.ObjectsShadowsEnabled)
+        if (!SettingsManager.Current.ObjectsShadowsEnabled)
         {
             return;
         }

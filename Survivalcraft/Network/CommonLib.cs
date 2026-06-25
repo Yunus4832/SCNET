@@ -60,7 +60,7 @@ public static class CommonLib
 
     public static bool StartServer()
     {
-        return Net.StartServer(SettingsManager.ServerPort, SettingsManager.BroadcastPort);
+        return Net.StartServer(SettingsManager.Current.ServerPort, SettingsManager.Current.BroadcastPort);
     }
 
     public static NetDataWriter GetWriter(PackageStreamWriter writer, out int size)
@@ -136,7 +136,7 @@ public static class CommonLib
     {
         if (Uri.TryCreate("http://" + ip, UriKind.Absolute, out var uri))
         {
-            var port = uri.IsDefaultPort ? SettingsManager.ServerPort : uri.Port;
+            var port = uri.IsDefaultPort ? SettingsManager.Current.ServerPort : uri.Port;
             if (IPAddress.TryParse(uri.Host, out var addr))
             {
                 ep = new IPEndPoint(addr, port);

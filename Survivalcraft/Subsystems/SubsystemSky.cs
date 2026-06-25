@@ -275,7 +275,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             }
 
             if (DrawSkyEnabled && _viewIsSkyVisible &&
-                SettingsManager.SkyRenderingMode != SkyRenderingMode.Disabled)
+                SettingsManager.Current.SkyRenderingMode != SkyRenderingMode.Disabled)
             {
                 return;
             }
@@ -290,7 +290,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         else if (drawOrder == _drawOrders[1])
         {
             if (!DrawSkyEnabled || !_viewIsSkyVisible ||
-                SettingsManager.SkyRenderingMode == SkyRenderingMode.Disabled)
+                SettingsManager.Current.SkyRenderingMode == SkyRenderingMode.Disabled)
             {
                 return;
             }
@@ -722,7 +722,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
     public void DrawClouds(Camera camera)
     {
-        if (SettingsManager.SkyRenderingMode == SkyRenderingMode.NoClouds)
+        if (SettingsManager.Current.SkyRenderingMode == SkyRenderingMode.NoClouds)
         {
             return;
         }
@@ -844,7 +844,7 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
 
     public void UpdateLightAndViewParameters()
     {
-        VisibilityRange = SettingsManager.VisibilityRange;
+        VisibilityRange = SettingsManager.Current.VisibilityRange;
         SkyLightIntensity = CalculateLightIntensity(SubsystemTimeOfDay.TimeOfDay);
         if (MoonPhase == 4)
         {

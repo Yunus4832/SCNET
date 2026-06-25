@@ -182,9 +182,9 @@ public class PlayerScreen : Screen
         var gameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
         if (gameInfo is { WorldSettings.IsNeedCommunityLogin: true })
         {
-            if (!string.IsNullOrEmpty(SettingsManager.CommunityNickName))
+            if (!string.IsNullOrEmpty(SettingsManager.Current.CommunityNickName))
             {
-                _nameTextBox.Text = SettingsManager.CommunityNickName;
+                _nameTextBox.Text = SettingsManager.Current.CommunityNickName;
                 _nameTextBox.IsEnabled = false;
             }
         }

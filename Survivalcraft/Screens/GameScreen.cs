@@ -59,7 +59,7 @@ public class GameScreen : Screen
 
     public override void Draw(DrawContext dc)
     {
-        if (!ScreensManager.IsAnimating && SettingsManager.ResolutionMode == ResolutionMode.High)
+        if (!ScreensManager.IsAnimating && SettingsManager.Current.ResolutionMode == ResolutionMode.High)
         {
             Display.Clear(Color.Black, 1f, 0);
         }

@@ -450,7 +450,7 @@ public class ComponentLocomotion : Component, IUpdateable
                 }
 
                 var v2 =
-                    !SettingsManager.HorizontalCreativeFlight || _componentPlayer == null ||
+                    !SettingsManager.Current.HorizontalCreativeFlight || _componentPlayer == null ||
                     _componentPlayer.ComponentInput.IsControlledByTouch
                         ? Vector3.Normalize(vector + 0.1f * Vector3.UnitY)
                         : Vector3.Normalize(vector * new Vector3(1f, 0f, 1f));

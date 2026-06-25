@@ -45,9 +45,9 @@ public class MainMenuScreen : Screen
     {
         Children.Find<MotdWidget>(false)?.Restart();
         // 检查是否需要迁移数据
-        if (SettingsManager.IsolatedStorageMigrationCounter < 3)
+        if (SettingsManager.Current.IsolatedStorageMigrationCounter < 3)
         {
-            SettingsManager.IsolatedStorageMigrationCounter++;
+            SettingsManager.Current.IsolatedStorageMigrationCounter++;
             VersionConverter126To127.MigrateDataFromIsolatedStorageWithDialog();
         }
 

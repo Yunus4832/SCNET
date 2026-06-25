@@ -14,13 +14,7 @@ public static class LightingManager
 
     public static void Initialize()
     {
-        SettingsManager.SettingChanged += delegate(string name)
-        {
-            if (name == "Brightness")
-            {
-                CalculateLightingTables();
-            }
-        };
+        SettingsManager.BrightnessChanged += CalculateLightingTables;
         CalculateLightingTables();
     }
 
@@ -84,7 +78,7 @@ public static class LightingManager
 
     private static void CalculateLightingTables()
     {
-        var brightness = SettingsManager.Brightness;
+        var brightness = SettingsManager.Current.Brightness;
         var x = MathUtils.Lerp(0f, 0.1f, brightness);
         for (var i = 0; i < 16; i++)
         {

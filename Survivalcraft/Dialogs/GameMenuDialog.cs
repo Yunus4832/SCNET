@@ -36,8 +36,8 @@ public class GameMenuDialog : Dialog
         }
 
         if (!_increaseDetailDialogShown && PerformanceManager.LongTermAverageFrameTime.HasValue &&
-            PerformanceManager.LongTermAverageFrameTime.Value * 1000f < 25f && (SettingsManager.VisibilityRange <= 64 ||
-                                                                                SettingsManager.ResolutionMode == ResolutionMode.Low))
+            PerformanceManager.LongTermAverageFrameTime.Value * 1000f < 25f && (SettingsManager.Current.VisibilityRange <= 64 ||
+                                                                                SettingsManager.Current.ResolutionMode == ResolutionMode.Low))
         {
             _increaseDetailDialogShown = true;
             DialogsManager.ShowDialog(ParentWidget,
@@ -50,8 +50,8 @@ public class GameMenuDialog : Dialog
         }
 
         if (!_decreaseDetailDialogShown && PerformanceManager.LongTermAverageFrameTime.HasValue &&
-            PerformanceManager.LongTermAverageFrameTime.Value * 1000f > 50f && (SettingsManager.VisibilityRange >= 64 ||
-                SettingsManager.ResolutionMode == ResolutionMode.High))
+            PerformanceManager.LongTermAverageFrameTime.Value * 1000f > 50f && (SettingsManager.Current.VisibilityRange >= 64 ||
+                SettingsManager.Current.ResolutionMode == ResolutionMode.High))
         {
             _decreaseDetailDialogShown = true;
             DialogsManager.ShowDialog(ParentWidget,

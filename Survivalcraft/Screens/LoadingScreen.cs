@@ -191,7 +191,7 @@ public class LoadingScreen : Screen
 
     public override void Leave()
     {
-        Window.VSync = SettingsManager.VSync;
+        Window.VSync = SettingsManager.Current.VSync;
         ContentManager.Dispose("Textures/Gui/CandyRufusLogo");
         ContentManager.Dispose("Textures/Gui/EngineLogo");
     }

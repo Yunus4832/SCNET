@@ -156,7 +156,7 @@ public class TerrainRenderer : IDisposable
         _opaqueShader.GetParameter("u_viewProjectionMatrix", true).SetValue(value);
         _opaqueShader.GetParameter("u_viewPosition", true).SetValue(viewPosition);
         _opaqueShader.GetParameter("u_samplerState", true)
-            .SetValue(SettingsManager.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
+            .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _opaqueShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _opaqueShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
         _opaqueShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
@@ -210,7 +210,7 @@ public class TerrainRenderer : IDisposable
         _alphaTestedShader.GetParameter("u_viewProjectionMatrix", true).SetValue(value);
         _alphaTestedShader.GetParameter("u_viewPosition", true).SetValue(viewPosition);
         _alphaTestedShader.GetParameter("u_samplerState", true)
-            .SetValue(SettingsManager.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
+            .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _alphaTestedShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _alphaTestedShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
         _alphaTestedShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
@@ -244,7 +244,7 @@ public class TerrainRenderer : IDisposable
         _transparentShader.GetParameter("u_viewProjectionMatrix", true).SetValue(value);
         _transparentShader.GetParameter("u_viewPosition", true).SetValue(viewPosition);
         _transparentShader.GetParameter("u_samplerState", true)
-            .SetValue(SettingsManager.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
+            .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _transparentShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _transparentShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
         _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,

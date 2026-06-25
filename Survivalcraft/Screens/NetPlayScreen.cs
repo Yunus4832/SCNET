@@ -281,7 +281,7 @@ public class NetPlayScreen : Screen
         }
 
         var connect = (Connect)item;
-        if (connect.IsNeedLoginCommunity && string.IsNullOrEmpty(SettingsManager.CommunityAccessUser))
+        if (connect.IsNeedLoginCommunity && string.IsNullOrEmpty(SettingsManager.Current.CommunityAccessUser))
         {
             DialogsManager.Confirm("请登录社区后再进行操作", btn =>
             {

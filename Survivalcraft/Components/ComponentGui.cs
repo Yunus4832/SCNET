@@ -457,12 +457,12 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                                             ComponentPlayer.GameWidget.ActiveCamera.IsEntityControlEnabled &&
                                             componentSleep.SleepFactor <= 0f;
         _moveRectangleContainerWidget.IsVisible =
-            !SettingsManager.HideMoveLookPads && componentInput.IsControlledByTouch;
-        _lookRectangleContainerWidget.IsVisible = !SettingsManager.HideMoveLookPads &&
+            !SettingsManager.Current.HideMoveLookPads && componentInput.IsControlledByTouch;
+        _lookRectangleContainerWidget.IsVisible = !SettingsManager.Current.HideMoveLookPads &&
                                                   componentInput.IsControlledByTouch &&
-                                                  (SettingsManager.LookControlMode != LookControlMode.EntireScreen ||
-                                                   SettingsManager.MoveControlMode != MoveControlMode.Buttons);
-        _lookPadContainerWidget.IsVisible = SettingsManager.LookControlMode != LookControlMode.SplitTouch;
+                                                  (SettingsManager.Current.LookControlMode != LookControlMode.EntireScreen ||
+                                                   SettingsManager.Current.MoveControlMode != MoveControlMode.Buttons);
+        _lookPadContainerWidget.IsVisible = SettingsManager.Current.LookControlMode != LookControlMode.SplitTouch;
         MoveRoseWidget.IsVisible = componentInput.IsControlledByTouch;
         _moreContentsWidget.IsVisible = _moreButtonWidget.IsChecked;
         HealthBarWidget.IsVisible = gameMode != GameMode.Creative;
@@ -474,9 +474,9 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _lightningButtonWidget.IsVisible = gameMode == GameMode.Creative;
         _precipitationButtonWidget.IsVisible = gameMode == GameMode.Creative && worldSettings.AreWeatherEffectsEnabled;
         _fogButtonWidget.IsVisible = gameMode == GameMode.Creative && worldSettings.AreWeatherEffectsEnabled;
-        _moveButtonsContainerWidget.IsVisible = SettingsManager.MoveControlMode == MoveControlMode.Buttons;
-        _movePadContainerWidget.IsVisible = SettingsManager.MoveControlMode == MoveControlMode.Pad;
-        if (SettingsManager.LeftHandedLayout)
+        _moveButtonsContainerWidget.IsVisible = SettingsManager.Current.MoveControlMode == MoveControlMode.Buttons;
+        _movePadContainerWidget.IsVisible = SettingsManager.Current.MoveControlMode == MoveControlMode.Pad;
+        if (SettingsManager.Current.LeftHandedLayout)
         {
             _moveContainerWidget.HorizontalAlignment = WidgetAlignment.Far;
             _lookContainerWidget.HorizontalAlignment = WidgetAlignment.Near;

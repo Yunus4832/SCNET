@@ -2,11 +2,11 @@ using Android;
 using Android.Content;
 using Android.Content.PM;
 using Android.OS;
-using Android.Provider;
 using Android.Runtime;
 
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
+using AndroidProviderSettings = Android.Provider.Settings;
 using Permission = Android.Content.PM.Permission;
 
 namespace Survivalcraft.Android;
@@ -161,7 +161,7 @@ public class MainActivity : BlackActivity
         if (Build.VERSION.SdkInt >= BuildVersionCodes.R)
         {
             _waitingForStoragePermission = true;
-            StartActivity(new Intent(Settings.ActionManageAllFilesAccessPermission));
+            StartActivity(new Intent(AndroidProviderSettings.ActionManageAllFilesAccessPermission));
             return;
         }
 

@@ -676,7 +676,7 @@ public static class CommunityContentManager
         {
             { "Cursor", cursor },
             { "Action", "GetUserList" },
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "SearchKey", searchKey },
             { "SearchType", searchType },
             { "Filter", filter },
@@ -770,7 +770,7 @@ public static class CommunityContentManager
         {
             { "Action", "UpdateLockState" },
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "LockState", lockState.ToString() },
             { "Duration", duration.ToString() },
             { "Reason", reason }
@@ -807,7 +807,7 @@ public static class CommunityContentManager
         {
             { "Action", "ResetPassword" },
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken }
+            { "Operater", SettingsManager.Current.CommunityAccessToken }
         };
         WebManager.Post(
             SchubExternalContentProvider.GetPath("/com/api/zh/userList"),
@@ -843,7 +843,7 @@ public static class CommunityContentManager
         {
             { "Type", type },
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "Boutique", boutique.ToString() }
         };
         WebManager.Post(
@@ -878,7 +878,7 @@ public static class CommunityContentManager
         var dictionary = new Dictionary<string, string>
         {
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "IsShow", isShow.ToString() }
         };
         WebManager.Post(
@@ -912,7 +912,7 @@ public static class CommunityContentManager
         var dictionary = new Dictionary<string, string>
         {
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken }
+            { "Operater", SettingsManager.Current.CommunityAccessToken }
         };
         WebManager.Post(
             SchubExternalContentProvider.GetPath("/com/api/zh/deleteFile"),
@@ -944,7 +944,7 @@ public static class CommunityContentManager
         };
         var dictionary = new Dictionary<string, string>
         {
-            { "Operater", SettingsManager.CommunityAccessToken }
+            { "Operater", SettingsManager.Current.CommunityAccessToken }
         };
         WebManager.Post(
             SchubExternalContentProvider.GetPath("/com/api/zh/userList"),

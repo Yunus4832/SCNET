@@ -1,7 +1,8 @@
 using Android.Content.PM;
-using Android.Provider;
 
 using Game;
+
+using AndroidProviderSettings = Android.Provider.Settings;
 
 namespace Survivalcraft.Android;
 
@@ -49,8 +50,8 @@ public class GameActivity : EngineActivity
 
     private void InitializeAndroidId()
     {
-        GetMachineID.AndroidID = Settings.Secure
-            .GetString(ContentResolver, Settings.Secure.AndroidId) ?? string.Empty;
+        GetMachineID.AndroidID = AndroidProviderSettings.Secure
+            .GetString(ContentResolver, AndroidProviderSettings.Secure.AndroidId) ?? string.Empty;
     }
 
     private void LoadAssetAssemblies()

@@ -81,7 +81,7 @@ public class ServerInfoPackage : IPackage
         NeedLogin = subsystemGameInfo.WorldSettings.IsNeedCommunityLogin;
         NeedPasswd = !string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.Password);
         TimeOfDay = subsystemTimeOfDay.CalculateTimeOfDay();
-        ModServerAddress = SettingsManager.ModServerAddress;
+        ModServerAddress = SettingsManager.Current.ModServerAddress;
         RequiredModProfile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
         Season = subsystemSeasons.Season;
         TimeOfSeason = subsystemSeasons.TimeOfSeason;
