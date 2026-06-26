@@ -26,7 +26,8 @@ public static class ModRestartHelper
             sessionProfile,
             Storage.GetSystemPath(GamePaths.ModCache),
             log);
-        if (AreEquivalent(existingProfile, sessionProfile) && !downloadedAny)
+        if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile) ||
+            (AreEquivalent(existingProfile, sessionProfile) && !downloadedAny))
         {
             return false;
         }
@@ -38,11 +39,11 @@ public static class ModRestartHelper
     private static bool AreEquivalent(ModProfile? left, ModProfile right)
     {
         var leftPackages = (left?.Packages ?? [])
-            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}#{package.PackageHash?.Trim() ?? string.Empty}")
+            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}")
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var rightPackages = (right.Packages ?? [])
-            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}#{package.PackageHash?.Trim() ?? string.Empty}")
+            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}")
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         return string.Equals(left?.RepositoryUrl, right.RepositoryUrl, StringComparison.OrdinalIgnoreCase) &&

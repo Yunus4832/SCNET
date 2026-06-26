@@ -51,7 +51,7 @@ public sealed class ModProfileManagerTest : IDisposable
         var package = Assert.Single(profile.Packages);
         Assert.Equal("session.mod", package.ModId);
         Assert.Equal("2.0.0", package.Version);
-        Assert.Equal("abc", package.PackageHash);
+        Assert.Null(package.PackageHash);
     }
 
     [Fact]
@@ -91,7 +91,7 @@ public sealed class ModProfileManagerTest : IDisposable
         var package = Assert.Single(profile.Packages);
         Assert.Equal("server.mod", package.ModId);
         Assert.Equal("2.0.0", package.Version);
-        Assert.Equal("server-hash", package.PackageHash);
+        Assert.Null(package.PackageHash);
     }
 
     [Fact]
@@ -289,6 +289,49 @@ public sealed class ModProfileManagerTest : IDisposable
 
         Assert.Equal("ModProfile", root.Name.LocalName);
         Assert.Equal("session-c", root.Attribute(nameof(ModProfile.Id))?.Value);
+    }
+
+    [Fact]
+    public void SaveSessionProfileDoesNotWritePackageHash()
+    {
+        ModProfileManager.SaveSessionProfile(new ModProfile
+        {
+            Id = "session-with-hash",
+            Packages =
+            [
+                new ModPackageRequirement
+                {
+                    ModId = "session.mod",
+                    Version = "3.0.0",
+                    PackageHash = "abc"
+                }
+            ]
+        });
+
+        var path = Storage.CombinePaths(GamePaths.Config, "SessionProfiles", "session-with-hash.xml");
+        using var stream = Storage.OpenFile(path, OpenFileMode.Read);
+        var root = XElement.Load(stream);
+
+        var package = Assert.Single(root.Element(nameof(ModProfile.Packages))!.Elements("Package"));
+        Assert.Equal("session.mod", package.Attribute(nameof(ModPackageRequirement.ModId))?.Value);
+        Assert.Equal("3.0.0", package.Attribute(nameof(ModPackageRequirement.Version))?.Value);
+        Assert.Null(package.Attribute(nameof(ModPackageRequirement.PackageHash)));
+    }
+
+    [Fact]
+    public void LoadGlobalProfileIgnoresPackageHashAttribute()
+    {
+        SaveGlobalProfile("""
+            <ModProfile Id="global" RepositoryUrl="https://global.example">
+              <Packages>
+                <Package ModId="legacy.mod" Version="1.0.0" PackageHash="legacy-hash" />
+              </Packages>
+            </ModProfile>
+            """);
+
+        var profile = ModProfileManager.LoadGlobalProfile();
+
+        Assert.Null(Assert.Single(profile.Packages).PackageHash);
     }
 
     public void Dispose()

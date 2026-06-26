@@ -5,6 +5,7 @@
         <SurvivalcraftModPackageName Condition="'$(SurvivalcraftModPackageName)' == ''">$(SurvivalcraftModId)</SurvivalcraftModPackageName>
         <SurvivalcraftModPackageExtension>.scpak</SurvivalcraftModPackageExtension>
         <BuildSurvivalcraftModPackage Condition="'$(BuildSurvivalcraftModPackage)' == ''">true</BuildSurvivalcraftModPackage>
+        <IncludeSourceRevisionInInformationalVersion Condition="'$(IncludeSourceRevisionInInformationalVersion)' == ''">false</IncludeSourceRevisionInInformationalVersion>
         <SurvivalcraftAssembly Condition="'$(SurvivalcraftAssembly)' == ''">$(MSBuildThisFileDirectory)../bin/$(Configuration)/$(TargetFramework)/Survivalcraft.dll</SurvivalcraftAssembly>
     </PropertyGroup>
 

@@ -219,8 +219,7 @@ public static class ModProfileManager
                 .Select(element => new ModPackageRequirement
                 {
                     ModId = element.Attribute(nameof(ModPackageRequirement.ModId))?.Value ?? string.Empty,
-                    Version = element.Attribute(nameof(ModPackageRequirement.Version))?.Value ?? string.Empty,
-                    PackageHash = element.Attribute(nameof(ModPackageRequirement.PackageHash))?.Value
+                    Version = element.Attribute(nameof(ModPackageRequirement.Version))?.Value ?? string.Empty
                 })
                 .ToList() ?? []
         };
@@ -235,8 +234,7 @@ public static class ModProfileManager
             new XElement(nameof(ModProfile.Packages),
                 profile.Packages.Select(package => new XElement("Package",
                     new XAttribute(nameof(ModPackageRequirement.ModId), package.ModId),
-                    new XAttribute(nameof(ModPackageRequirement.Version), package.Version),
-                    CreateOptionalAttribute(nameof(ModPackageRequirement.PackageHash), package.PackageHash)))));
+                    new XAttribute(nameof(ModPackageRequirement.Version), package.Version)))));
     }
 
     private static ModProfile Normalize(ModProfile profile)

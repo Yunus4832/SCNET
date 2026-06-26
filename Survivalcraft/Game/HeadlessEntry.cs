@@ -139,16 +139,12 @@ public static class HeadlessEntry
 
         var runningSetting = RunningSettingManager.Current;
         var startupSession = SessionInfoManager.ResolveStartupSession(runningSetting);
-        if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
-                runningSetting.ActiveSessionId,
-                startupSession,
-                Storage.GetSystemPath(GamePaths.ModCache),
-                Log.Information))
-        {
-            return false;
-        }
-
         var profile = ModProfileManager.LoadEffectiveProfile(runningSetting.ActiveSessionId, startupSession);
+        ModProfileResolver.EnsurePackagesAvailable(
+            profile,
+            Storage.GetSystemPath(GamePaths.ModCache),
+            Log.Information
+        );
         _modRuntime = GameModRuntime.StartFromProfile(
             profile,
             Storage.GetSystemPath(GamePaths.ModCache),

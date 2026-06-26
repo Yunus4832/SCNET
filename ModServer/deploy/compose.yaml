@@ -3,9 +3,7 @@ name: scnet-mod-server
 services:
   mod_server:
     container_name: scnet-mod-server
-    build:
-      context: ../..
-      dockerfile: ModServer/deploy/Dockerfile
+    image: ${MOD_SERVER_IMAGE:-registry.cn-hangzhou.aliyuncs.com/yunus4832/mod_server}:${MOD_SERVER_TAG:-0.0.0.1}
     environment:
       ASPNETCORE_URLS: http://0.0.0.0:8080
       ModServer__DataDirectory: /data
@@ -13,5 +11,8 @@ services:
     ports:
       - "9527:8080"
     volumes:
-      - /home/yunus/Desktop/temp/ModServer/data:/data
+      - mod_server_data:/data
     restart: unless-stopped
+
+volumes:
+  mod_server_data:

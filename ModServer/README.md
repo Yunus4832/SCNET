@@ -9,12 +9,14 @@ The container deployment files live in [deploy/](./deploy):
 
 - [deploy/Dockerfile](./deploy/Dockerfile)
 - [deploy/compose.yaml](./deploy/compose.yaml)
+- [deploy/image.sh](./deploy/image.sh)
+- [deploy/compose.sh](./deploy/compose.sh)
 
 The compose setup uses:
 
 - host port `9527`
 - container port `8080`
-- data volume `/home/yunus/Desktop/temp/ModServer/data:/data`
+- data volume `mod_server_data:/data`
 - upload API key `local-dev-upload-key`
 
 The image intentionally uses `mcr.microsoft.com/dotnet/sdk:10.0` for both build
@@ -22,16 +24,41 @@ and runtime stages so it can run on a machine that already has only the `sdk`
 and `runtime` base images prepared, without introducing an extra ASP.NET base
 image dependency.
 
+The compose file does not build the image. Build/push and local compose runtime
+are intentionally separate steps. By default the image is:
+
+```text
+registry.cn-hangzhou.aliyuncs.com/yunus4832/mod_server:0.0.0.1
+```
+
+## Build Image
+
+```bash
+ModServer/deploy/image.sh build
+```
+
+## Push Image
+
+```bash
+ModServer/deploy/image.sh push
+```
+
+To build and push in one command:
+
+```bash
+ModServer/deploy/image.sh build-push
+```
+
 ## Start
 
 ```bash
-PATH="$HOME/.local/bin:$PATH" podman compose -f ModServer/deploy/compose.yaml up -d
+PATH="$HOME/.local/bin:$PATH" ModServer/deploy/compose.sh up -d
 ```
 
 ## Stop
 
 ```bash
-PATH="$HOME/.local/bin:$PATH" podman compose -f ModServer/deploy/compose.yaml down
+PATH="$HOME/.local/bin:$PATH" ModServer/deploy/compose.sh down
 ```
 
 ## Health Check
@@ -90,5 +117,5 @@ After upload, the mounted host directory contains:
 Location:
 
 ```text
-/home/yunus/Desktop/temp/ModServer/data
+compose volume `scnet-mod-server_mod_server_data`
 ```
