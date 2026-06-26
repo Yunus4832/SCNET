@@ -23,6 +23,9 @@
 | 项目 | 说明 |
 |------|------|
 | `Survivalcraft/` | 核心游戏逻辑，联机规则、世界、网络、模组都在这里 |
+| `ModServer/` | 私有 `.scpak` 模组仓库服务 |
+| `VerificationBlockMod/` | 当前模组运行时的端到端示例模组 |
+| `Survivalcraft.ModTemplates/` | `dotnet new` 模组模板 |
 | `Engine/` | 平台能力层，负责窗口、渲染、音频和输入 |
 | `Engine.Core/` | 基础类型和运行模式，给各项目共用 |
 | `Engine.Serialization/` | 序列化与数据支持 |
@@ -54,6 +57,18 @@ dotnet run --project Survivalcraft.Linux/Survivalcraft.Linux.csproj -- --server
 
 详细配置与参数说明见 [Headless 模式](Doc/Headless.md)。
 
+### 模组
+
+当前模组系统使用 `.scpak` 包和 `ModProfile` 控制加载范围。包可以来自本地 `Mods` 目录，也可以从私有 `ModServer` 仓库按 `ModId + Version` 下载。
+
+示例模组构建：
+
+```bash
+dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
+```
+
+使用和配置说明见 [模组使用说明](Doc/Mods.md)，开发说明见 [模组开发](Doc/Modding.md)。
+
 ### 构建
 
 ```bash
@@ -83,8 +98,10 @@ dotnet test Survivalcraft.Test/
 
 - [结构与分层](Doc/Architecture.md) — 设计重心、分层架构与各层职责
 - [Headless 模式](Doc/Headless.md) — 启动方式、参数、配置与运行时行为
+- [启动会话](Doc/StartupSessions.md) — `RunningSetting`、`SessionInfo`、pending session 和模组 profile 的职责
 - [构建与共享配置](Doc/BuildAndConfig.md) — 构建流程、共享属性与打包行为
-- [模组开发](Doc/Modding.md) — 模组模板、`.scpak` 构建与 NuGet 包边界
+- [模组使用说明](Doc/Mods.md) — `.scpak`、本地缓存、profile、仓库和联机 required mods
+- [模组开发](Doc/Modding.md) — 模组模板、`.scpak` 构建、示例模组与 NuGet 包边界
 - [模组服务器](Doc/ModServer.md) — 私有 `.scpak` 仓库的上传、索引与匿名分发
 - [模组平台计划](Doc/ModPlatformPlan.md) — 模组仓库、缓存、配置驱动装载与联机会话重启方案
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问

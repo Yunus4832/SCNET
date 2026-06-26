@@ -9,7 +9,8 @@
 - 数据存储在本地文件系统
 - 元数据存储在 `index.json`
 - API 版本固定为 `v1`
-- 不支持删除、覆盖、签名校验、依赖解析
+- 支持按 `modId + version` 覆盖和删除
+- 不支持签名校验、依赖解析和复杂权限模型
 
 这不是 NuGet 或 Maven 的完整替代品，只是一个简单、可部署、可维护的私有模组源。
 
@@ -84,18 +85,25 @@ Data/
 字段：
 
 - `package`: `.scpak` 文件，必填
-- `modId`: 模组 ID，必填
-- `version`: 版本号，必填
-- `side`: `common` / `client` / `server`，可选，默认 `common`
 - `description`: 描述，可选
+- `replace`: 是否覆盖同 `modId + version` 的不同包，可放在表单或 query string 中
+
+`modId`、`version` 和 `side` 从包内 `manifest.json` 读取。`side` 可为 `common`、`client` 或 `server`，为空时按 `common` 处理。
 
 ## 上传行为
 
 - 同一个 `modId + version`
   - 如果包哈希相同：视为幂等上传
   - 如果包哈希不同：返回 `409 Conflict`
+- 使用 `replace=true` 时，同版本不同内容会覆盖旧记录
 
 这样可以避免仓库被无意覆盖。
+
+### 删除包版本
+
+`DELETE /api/v1/mods/{modId}/versions/{version}`
+
+需要上传认证。删除后，如果旧包文件不再被其他版本引用，会同步删除包文件。
 
 ## 运行
 
@@ -105,7 +113,7 @@ dotnet run --project ModServer/ModServer.csproj
 
 ## 后续可扩展点
 
-- 增加删除或废弃标记
+- 增加废弃标记
 - 增加依赖字段
 - 增加签名校验
 - 增加只读镜像同步

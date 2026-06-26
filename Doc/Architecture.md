@@ -31,10 +31,13 @@
 
 ### 1. 启动层
 
-桌面端和 Android 端都有自己的启动器工程，但最终都是读取配置文件 `RunningSetting` 来决定运行在 Gui 模式还是 HeadlessServer 模式。这样做的原因是：服务器真正关心的不是启动来源，而是运行模式、世界和种子。
+桌面端和 Android 端都有自己的启动器工程，但最终都会落到启动会话模型上。`RunningSetting` 只决定进程入口状态，例如 GUI 或 HeadlessServer；具体要恢复到哪个世界、服务器浏览器或远程服务器，由 `SessionInfo` 描述。
 
 - Windows / Linux：通过命令行参数切换 GUI 或 Headless
 - Android：通过 `config:RunningSetting.xml` 决定运行模式
+- 启动目标、世界、种子和远程服务器信息：通过 `config:SessionInfo.xml` 管理
+
+详见 [StartupSessions.md](./StartupSessions.md)。
 
 ### 2. 运行模式层
 

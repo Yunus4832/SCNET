@@ -1,8 +1,10 @@
-# Mod Development
+# 模组开发
 
-Projects in this solution folder target the new Survivalcraft mod runtime and produce `.scpak` packages.
+本文档面向模组开发者，说明如何创建项目并打包 `.scpak`。
 
-## Create a project
+如果只是配置、下载或启用模组，见 [Mods.md](./Mods.md)。
+
+## 创建项目
 
 Install the published template package:
 
@@ -10,20 +12,20 @@ Install the published template package:
 dotnet new install SCNET.ModTemplates
 ```
 
-Create and build a mod:
+创建并构建模组：
 
 ```bash
 dotnet new scpakmod -n ExampleMod --modId example.mod
 dotnet build ExampleMod/ExampleMod.csproj
 ```
 
-The package is emitted under:
+包输出位置：
 
 ```text
 bin/<Configuration>/<TargetFramework>/packages/<mod-id>.scpak
 ```
 
-## Package layout
+## 包结构
 
 ```text
 manifest.json
@@ -32,14 +34,24 @@ data/**
 assets/<mod-id>/**
 ```
 
-Generated projects reference `SCNET.Survivalcraft`; its transitive build target
-adds the matching compile-time API and creates the `.scpak`. Host runtime assemblies
-are not copied into the package.
+模板项目引用 `SCNET.Survivalcraft`。它的构建目标会加入匹配的编译期 API，并在构建后创建 `.scpak`。宿主运行时程序集不会复制进包。
 
-Inside this repository, the template and verification mod use
-`Survivalcraft/Modding/Survivalcraft.Mod.targets` directly so core and mod changes can
-be developed together without publishing an intermediate NuGet package.
+在本仓库内部，模板和验证模组直接使用 `Survivalcraft/Modding/Survivalcraft.Mod.targets`，这样核心代码和模组代码可以一起开发，不需要先发布中间 NuGet 包。
 
-Template assets live under `Survivalcraft.ModTemplates/Survivalcraft.Mod/`. The only template-related
-project in the solution is `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`,
-which packs those assets into the published `dotnet new` package.
+模板资源位于 `Survivalcraft.ModTemplates/Survivalcraft.Mod/`。解决方案里唯一与模板打包直接相关的项目是 `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`，它会把这些资源打包成可发布的 `dotnet new` 模板包。
+
+## 示例模组
+
+`VerificationBlockMod/` 是当前端到端验证模组，展示了：
+
+- 代码、数据和 assets 打进同一个 `.scpak`
+- 注册自定义方块
+- 生命周期日志
+- 玩家伤害拦截
+- 方块挖掘、放置和世界更新回调
+
+构建：
+
+```bash
+dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
+```

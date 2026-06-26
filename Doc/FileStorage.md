@@ -29,8 +29,11 @@
 仓库中常见的路径有：
 
 - `config:RunningSetting.xml`
+- `config:SessionInfo.xml`
 - `config:Settings.xml`
 - `config:ModSettings.xml`
+- `config:ModProfile.xml`
+- `config:SessionProfiles/<sessionId>.xml`
 - `app:Content.zip`
 - `data:` 下的世界、缓存和玩家数据
 

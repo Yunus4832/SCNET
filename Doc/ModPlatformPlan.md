@@ -1,5 +1,11 @@
 # Mod Platform Plan
 
+> Historical design note. This file records the original mod platform plan and
+> should not be treated as the current implementation contract. Current startup
+> session behavior is documented in [StartupSessions.md](./StartupSessions.md),
+> current headless behavior in [Headless.md](./Headless.md), and current
+> repository behavior in [ModServer.md](./ModServer.md).
+
 This document defines the target architecture and implementation plan for SCNET's
 next-generation mod platform.
 
