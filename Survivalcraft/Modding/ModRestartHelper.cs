@@ -10,14 +10,16 @@ public static class ModRestartHelper
         }
     }
 
-    public static bool PrepareRemoteSessionIfNeeded(
+    public static RemoteModSessionPreparation PrepareRemoteSession(
         SessionInfo remoteSession,
         ModProfile? requiredProfile,
         Action<string>? log = null)
     {
+        ArgumentNullException.ThrowIfNull(remoteSession);
+
         if (requiredProfile is not { Packages.Count: > 0 })
         {
-            return false;
+            return RemoteModSessionPreparation.Ready();
         }
 
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, requiredProfile);
@@ -29,11 +31,13 @@ public static class ModRestartHelper
         if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile) ||
             (AreEquivalent(existingProfile, sessionProfile) && !downloadedAny))
         {
-            return false;
+            return RemoteModSessionPreparation.Ready();
         }
 
-        GameExitManager.RequestRestart(remoteSession, sessionProfile);
-        return true;
+        return RemoteModSessionPreparation.RestartRequired(
+            remoteSession,
+            sessionProfile,
+            CreateRestartReason(sessionProfile, downloadedAny));
     }
 
     private static bool AreEquivalent(ModProfile? left, ModProfile right)
@@ -48,6 +52,18 @@ public static class ModRestartHelper
             .ToArray();
         return string.Equals(left?.RepositoryUrl, right.RepositoryUrl, StringComparison.OrdinalIgnoreCase) &&
                leftPackages.SequenceEqual(rightPackages, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string CreateRestartReason(ModProfile profile, bool downloadedAny)
+    {
+        var packages = profile.Packages
+            .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
+            .Select(package => $"{package.ModId}@{package.Version}");
+        var prefix = downloadedAny
+            ? "已下载服务器需要的模组，需要重启后启用："
+            : "服务器需要切换到指定模组列表，需要重启后启用：";
+        return $"{prefix}\n{string.Join('\n', packages)}";
     }
 
     private static bool RequiresClientRestart(string message)
@@ -88,5 +104,41 @@ public static class ModRestartHelper
         clientStartIndex += clientMarker.Length;
         return clientStartIndex <= message.Length &&
                !string.IsNullOrWhiteSpace(message[clientStartIndex..]);
+    }
+}
+
+public sealed class RemoteModSessionPreparation
+{
+    private RemoteModSessionPreparation(
+        bool requiresRestart,
+        SessionInfo? remoteSession,
+        ModProfile? sessionProfile,
+        string restartReason)
+    {
+        RequiresRestart = requiresRestart;
+        RemoteSession = remoteSession;
+        SessionProfile = sessionProfile;
+        RestartReason = restartReason;
+    }
+
+    public bool RequiresRestart { get; }
+
+    public SessionInfo? RemoteSession { get; }
+
+    public ModProfile? SessionProfile { get; }
+
+    public string RestartReason { get; }
+
+    public static RemoteModSessionPreparation Ready()
+    {
+        return new RemoteModSessionPreparation(false, null, null, string.Empty);
+    }
+
+    public static RemoteModSessionPreparation RestartRequired(
+        SessionInfo remoteSession,
+        ModProfile sessionProfile,
+        string restartReason)
+    {
+        return new RemoteModSessionPreparation(true, remoteSession, sessionProfile, restartReason);
     }
 }

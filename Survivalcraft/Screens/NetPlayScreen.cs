@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Xml.Linq;
 
@@ -355,22 +356,84 @@ public class NetPlayScreen : Screen
                 Log.Information($"远程模组仓库已声明为: {connect.ModRepositoryUrl}");
             }
 
-            if (ModRestartHelper.PrepareRemoteSessionIfNeeded(
-                    SessionInfoManager.CreateRemoteClientSession(ep!, passwd),
-                    connect.RequiredModProfile,
-                    Log.Information)
-               )
-            {
-                return;
-            }
-
-            DialogsManager.HideAllDialogs();
-            ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, ep!, passwd);
+            PrepareRemoteSessionAndConnect(ep!, passwd, connect.RequiredModProfile);
         }
         else
         {
             DialogsManager.Alert("连接服务器失败");
         }
+    }
+
+    private void PrepareRemoteSessionAndConnect(
+        IPEndPoint endPoint,
+        string password,
+        ModProfile? requiredProfile)
+    {
+        if (requiredProfile is not { Packages.Count: > 0 })
+        {
+            ConnectPreparedRemoteSession(endPoint, password);
+            return;
+        }
+
+        var busyDialog = new BusyDialog("准备服务器模组", "正在检查所需模组...");
+        DialogsManager.ShowDialog(null, busyDialog);
+        Task.Run(() =>
+        {
+            try
+            {
+                var result = ModRestartHelper.PrepareRemoteSession(
+                    SessionInfoManager.CreateRemoteClientSession(endPoint, password),
+                    requiredProfile,
+                    message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    if (!result.RequiresRestart)
+                    {
+                        ConnectPreparedRemoteSession(endPoint, password);
+                        return;
+                    }
+
+                    ConfirmRemoteModRestart(result);
+                });
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    DialogsManager.Alert(
+                        "模组下载失败",
+                        $"无法准备服务器需要的模组。\n{ex.Message}");
+                });
+            }
+        });
+    }
+
+    private static void ConnectPreparedRemoteSession(IPEndPoint endPoint, string password)
+    {
+        DialogsManager.HideAllDialogs();
+        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, endPoint, password);
+    }
+
+    private static void ConfirmRemoteModRestart(RemoteModSessionPreparation result)
+    {
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                "需要重启游戏",
+                $"{result.RestartReason}\n\n是否现在重启？",
+                "重启",
+                "取消",
+                button =>
+                {
+                    if (button != MessageDialogButton.Button1)
+                    {
+                        return;
+                    }
+
+                    GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
+                }));
     }
 
     public void UpdateList()
