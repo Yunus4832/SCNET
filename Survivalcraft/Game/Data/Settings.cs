@@ -207,7 +207,7 @@ public class Settings
 
     public bool AutoGarbageCollect { get; set; } = true;
 
-    public string ModServerAddress { get; set; } = string.Empty;
+    public string DefaultModRepositoryUrl { get; set; } = string.Empty;
 
     public int RejectedUpdateCount { get; set; } = 0;
 }

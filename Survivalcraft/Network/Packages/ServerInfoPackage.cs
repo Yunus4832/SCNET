@@ -14,7 +14,7 @@ public class ServerInfoPackage : IPackage
 
     public ushort MaxPlayerCount;
 
-    public string ModServerAddress = string.Empty;
+    public string ModRepositoryUrl = string.Empty;
 
     public ModProfile? RequiredModProfile;
 
@@ -81,8 +81,8 @@ public class ServerInfoPackage : IPackage
         NeedLogin = subsystemGameInfo.WorldSettings.IsNeedCommunityLogin;
         NeedPasswd = !string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.Password);
         TimeOfDay = subsystemTimeOfDay.CalculateTimeOfDay();
-        ModServerAddress = SettingsManager.Current.ModServerAddress;
         RequiredModProfile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
+        ModRepositoryUrl = RequiredModProfile?.RepositoryUrl ?? SettingsManager.Current.DefaultModRepositoryUrl;
         Season = subsystemSeasons.Season;
         TimeOfSeason = subsystemSeasons.TimeOfSeason;
     }
@@ -106,12 +106,12 @@ public class ServerInfoPackage : IPackage
         // 如果不考虑兼容03.04版本可以删掉try-catch语句
         try
         {
-            ModServerAddress = reader.ReadString();
+            ModRepositoryUrl = reader.ReadString();
             RequiredModProfile = ReadProfile(reader);
         }
         catch
         {
-            ModServerAddress = string.Empty;
+            ModRepositoryUrl = string.Empty;
             RequiredModProfile = null;
         }
 
@@ -134,7 +134,7 @@ public class ServerInfoPackage : IPackage
         writer.Write(NeedLogin);
         writer.Write(NeedPasswd);
         writer.Write(TimeOfDay);
-        writer.Write(ModServerAddress);
+        writer.Write(ModRepositoryUrl);
         WriteProfile(writer, RequiredModProfile);
         writer.Write((int)Season);
         writer.Write(TimeOfSeason);

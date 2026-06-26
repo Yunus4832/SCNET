@@ -201,6 +201,52 @@ public class GameModRuntimeTest
         }
     }
 
+    [Fact]
+    public void RuntimeUsesDefaultModRepositoryUrlWhenProfileDoesNotSpecifyRepository()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), $"scnet-runtime-test-{Guid.NewGuid():N}");
+        var previousRepositoryUrl = SettingsManager.Current.DefaultModRepositoryUrl;
+        Directory.CreateDirectory(directory);
+        try
+        {
+            SettingsManager.Current.DefaultModRepositoryUrl = "https://mods.example/";
+            WritePackage(Path.Combine(directory, "example.addon.scpak"), """
+                {
+                  "id": "example.addon",
+                  "name": "Addon",
+                  "version": "1.0.0"
+                }
+                """, new Dictionary<string, string>
+                {
+                    ["data/blocks/items.csv"] = "Type;DisplayName\nAirBlock;Profile Runtime"
+                });
+
+            using var runtime = GameModRuntime.StartFromProfile(
+                new ModProfile
+                {
+                    Id = "local",
+                    Packages =
+                    [
+                        new ModPackageRequirement
+                        {
+                            ModId = "example.addon",
+                            Version = "1.0.0"
+                        }
+                    ]
+                },
+                directory,
+                ModSide.Server);
+
+            Assert.Equal("https://mods.example", runtime.EffectiveProfile.RepositoryUrl);
+            Assert.Equal("https://mods.example", runtime.CreateServerRequiredProfile()?.RepositoryUrl);
+        }
+        finally
+        {
+            SettingsManager.Current.DefaultModRepositoryUrl = previousRepositoryUrl;
+            Directory.Delete(directory, true);
+        }
+    }
+
     private sealed class EmptyMod : IMod
     {
         public void Configure(IModContext context)

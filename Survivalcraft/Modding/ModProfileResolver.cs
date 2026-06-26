@@ -11,7 +11,7 @@ public static class ModProfileResolver
         Directory.CreateDirectory(localRepositoryPath);
         var repository = new LocalModRepository(localRepositoryPath);
         var resolvedSources = new List<ModPackageSource>();
-        using var client = CreateClient(profile.RepositoryUrl);
+        using var client = CreateClient(GetRepositoryUrl(profile));
 
         foreach (var requirement in profile.Packages)
         {
@@ -43,7 +43,7 @@ public static class ModProfileResolver
         profile = profile ?? throw new ArgumentNullException(nameof(profile));
         Directory.CreateDirectory(localRepositoryPath);
         var repository = new LocalModRepository(localRepositoryPath);
-        using var client = CreateClient(profile.RepositoryUrl);
+        using var client = CreateClient(GetRepositoryUrl(profile));
         var downloadedAny = false;
 
         foreach (var requirement in profile.Packages)
@@ -107,5 +107,12 @@ public static class ModProfileResolver
     private static ModServerClient? CreateClient(string? repositoryUrl)
     {
         return string.IsNullOrWhiteSpace(repositoryUrl) ? null : new ModServerClient(repositoryUrl);
+    }
+
+    private static string? GetRepositoryUrl(ModProfile profile)
+    {
+        return string.IsNullOrWhiteSpace(profile.RepositoryUrl)
+            ? SettingsManager.Current.DefaultModRepositoryUrl
+            : profile.RepositoryUrl;
     }
 }

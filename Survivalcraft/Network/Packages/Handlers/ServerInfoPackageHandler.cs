@@ -33,7 +33,7 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
             c.UsedTime = package.Ping;
             c.Version = package.Version;
             c.TimeOfDay = package.TimeOfDay;
-            c.ModServerAddress = package.ModServerAddress;
+            c.ModRepositoryUrl = package.ModRepositoryUrl;
             c.RequiredModProfile = package.RequiredModProfile;
             c.Season = package.Season;
             c.TimeOfSeason = package.TimeOfSeason;
@@ -61,7 +61,7 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
                 found.UsedTime = c.UsedTime;
                 found.Version = c.Version;
                 found.TimeOfDay = c.TimeOfDay;
-                found.ModServerAddress = package.ModServerAddress;
+                found.ModRepositoryUrl = package.ModRepositoryUrl;
                 found.RequiredModProfile = package.RequiredModProfile;
                 found.Season = c.Season;
                 found.TimeOfSeason = c.TimeOfSeason;

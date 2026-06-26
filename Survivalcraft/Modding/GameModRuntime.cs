@@ -58,9 +58,7 @@ public sealed class GameModRuntime : IDisposable
                 PackageHash = package.PackageHash
             })
             .ToList();
-        var repositoryUrl = string.IsNullOrWhiteSpace(EffectiveProfile.RepositoryUrl)
-            ? SettingsManager.Current.ModServerAddress
-            : EffectiveProfile.RepositoryUrl;
+        var repositoryUrl = ResolveRepositoryUrl(EffectiveProfile.RepositoryUrl);
 
         if (packages.Count == 0 || string.IsNullOrWhiteSpace(repositoryUrl))
         {
@@ -275,7 +273,7 @@ public sealed class GameModRuntime : IDisposable
             return new ModProfile
             {
                 Id = profile.Id,
-                RepositoryUrl = profile.RepositoryUrl,
+                RepositoryUrl = ResolveRepositoryUrl(profile.RepositoryUrl),
                 Packages = profile.Packages
                     .Select(package => new ModPackageRequirement
                     {
@@ -290,7 +288,7 @@ public sealed class GameModRuntime : IDisposable
         return new ModProfile
         {
             Id = "runtime",
-            RepositoryUrl = SettingsManager.Current.ModServerAddress,
+            RepositoryUrl = ResolveRepositoryUrl(null),
             Packages = loadedMods
                 .Where(mod => !string.IsNullOrWhiteSpace(mod.PackageHash))
                 .Select(mod => new ModPackageRequirement
@@ -301,6 +299,18 @@ public sealed class GameModRuntime : IDisposable
                 })
                 .ToList()
         };
+    }
+
+    private static string? ResolveRepositoryUrl(string? repositoryUrl)
+    {
+        return string.IsNullOrWhiteSpace(repositoryUrl)
+            ? NormalizeRepositoryUrlOrNull(SettingsManager.Current.DefaultModRepositoryUrl)
+            : NormalizeRepositoryUrlOrNull(repositoryUrl);
+    }
+
+    private static string? NormalizeRepositoryUrlOrNull(string? repositoryUrl)
+    {
+        return string.IsNullOrWhiteSpace(repositoryUrl) ? null : repositoryUrl.Trim().TrimEnd('/');
     }
 
     private static string BuildFingerprint(

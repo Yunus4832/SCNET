@@ -504,9 +504,9 @@ public class NetNode
 
             if (flag)
             {
-                if (!string.IsNullOrEmpty(SettingsManager.Current.ModServerAddress))
+                if (!string.IsNullOrEmpty(SettingsManager.Current.DefaultModRepositoryUrl))
                 {
-                    Log.Information($"模组服务器已被指定为: {SettingsManager.Current.ModServerAddress}");
+                    Log.Information($"默认模组仓库已被指定为: {SettingsManager.Current.DefaultModRepositoryUrl}");
                 }
 
                 Log.Information($"开启服务器成功，端口 {NetManager.LocalPort}");

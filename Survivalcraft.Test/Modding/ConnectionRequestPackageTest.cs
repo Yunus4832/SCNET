@@ -81,7 +81,7 @@ public class ConnectionRequestPackageTest
         {
             RequestInfo = false,
             Version = "1.0.0",
-            ModServerAddress = "http://127.0.0.1:9527",
+            ModRepositoryUrl = "http://127.0.0.1:9527",
             RequiredModProfile = new ModProfile
             {
                 Id = "server",
@@ -104,7 +104,7 @@ public class ConnectionRequestPackageTest
         var clone = new ServerInfoPackage();
         clone.ReadData(reader);
 
-        Assert.Equal(package.ModServerAddress, clone.ModServerAddress);
+        Assert.Equal(package.ModRepositoryUrl, clone.ModRepositoryUrl);
         Assert.NotNull(clone.RequiredModProfile);
         Assert.Equal("http://127.0.0.1:9527", clone.RequiredModProfile.RepositoryUrl);
         var requirement = Assert.Single(clone.RequiredModProfile.Packages);
