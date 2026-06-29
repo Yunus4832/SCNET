@@ -1,0 +1,59 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+
+    <PanoramaWidget/>
+
+    <StackPanelWidget Direction="Horizontal">
+
+        <CanvasWidget Style="{Widgets/TopBarContents}">
+            <LabelWidget Name="TopBar.Label" Text="模组管理"/>
+        </CanvasWidget>
+
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+
+            <CanvasWidget Size="Infinity, 4"/>
+
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4">
+                <CanvasWidget Size="120, 50">
+                    <LabelWidget Text="服务器地址" Color="255, 255, 255"
+                                 HorizontalAlignment="Far" VerticalAlignment="Center"
+                                 TextAnchor="VerticalCenter, HorizontalCenter"/>
+                </CanvasWidget>
+                <CanvasWidget Size="400, 50" VerticalAlignment="Center" Margin="14, 0">
+                    <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 160"/>
+                    <TextBoxWidget Name="RepositoryTextBox" Size="380, 40" HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" MaximumLength="512"/>
+                </CanvasWidget>
+                <CanvasWidget Size="Infinity, 0"/>
+                <BevelledButtonWidget Name="RefreshButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="刷新" VerticalAlignment="Center" Margin="6, 0"/>
+                <BevelledButtonWidget Name="SaveDefaultRepositoryButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="保存默认" VerticalAlignment="Center" Margin="6, 0"/>
+            </StackPanelWidget>
+
+            <CanvasWidget Size="0, 4"/>
+
+            <CanvasWidget Margin="10, 0">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <ListPanelWidget Name="RepositoryModsList" Direction="Vertical" Margin="3, 3" ItemSize="56"
+                                 SelectionColor="10, 70, 0, 90"/>
+            </CanvasWidget>
+
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 6">
+                <BevelledButtonWidget Name="GlobalModButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="加入全局" Margin="0, 0"/>
+                <BevelledButtonWidget Name="AddWorldModButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="加入世界" Margin="8, 0"/>
+                <BevelledButtonWidget Name="RemoveWorldModButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="移出世界" Margin="8, 0"/>
+                <CanvasWidget Size="Infinity, 0"/>
+                <BevelledButtonWidget Name="PreviousPageButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="上一页" Margin="8, 0"/>
+                <BevelledButtonWidget Name="NextPageButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="下一页" Margin="8, 0"/>
+            </StackPanelWidget>
+
+        </StackPanelWidget>
+
+    </StackPanelWidget>
+
+</Screen>

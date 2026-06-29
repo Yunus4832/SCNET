@@ -172,6 +172,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("ExternalContent", new ExternalContentScreen()); });
         AddLoadAction(delegate { AddScreen("CommunityContent", new CommunityContentScreen()); });
         AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
+        AddLoadAction(delegate { AddScreen("ModManagement", new ModManagementScreen()); });
         AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
         AddLoadAction(delegate { AddScreen("ManageUser", new ManageUserScreen()); });
         AddLoadAction(delegate { AddScreen("Players", new PlayersScreen()); });

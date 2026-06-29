@@ -131,45 +131,13 @@ public class ManageContentScreen : Screen
 
     public override void Update()
     {
-        var selectedItem = (ListItem?)_contentList.SelectedItem;
-        if (selectedItem == null)
+        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
+            ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
             return;
         }
 
-        _deleteButton.IsEnabled = selectedItem is { IsBuiltIn: false };
-        _uploadButton.IsEnabled = selectedItem is { IsBuiltIn: false };
         _filterLabel.Text = GetFilterDisplayName(_filter);
-        if (_deleteButton.IsClicked)
-        {
-            var smallMessage = selectedItem.UseCount <= 0
-                ? string.Format(LanguageManager.Get(_typeName, 5), selectedItem.DisplayName)
-                : string.Format(LanguageManager.Get(_typeName, 6), selectedItem.DisplayName, selectedItem.UseCount);
-            DialogsManager.ShowDialog(
-                null,
-                new MessageDialog(
-                    LanguageManager.Get(_typeName, 9),
-                    smallMessage,
-                    LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
-                    delegate(MessageDialogButton button)
-                    {
-                        if (button != MessageDialogButton.Button1)
-                        {
-                            return;
-                        }
-
-                        ExternalContentManager.DeleteExternalContent(selectedItem.Type, selectedItem.Name);
-                        UpdateList();
-                    }
-                )
-            );
-        }
-
-        if (_uploadButton.IsClicked)
-        {
-            ExternalContentManager.ShowUploadUi(selectedItem.Type, selectedItem.Name);
-        }
-
         if (_changeFilterButton.IsClicked)
         {
             var list = new List<ExternalContentType>
@@ -198,9 +166,44 @@ public class ManageContentScreen : Screen
             );
         }
 
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
+        var selectedItem = (ListItem?)_contentList.SelectedItem;
+        if (selectedItem == null)
         {
-            ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+            _deleteButton.IsEnabled = false;
+            _uploadButton.IsEnabled = false;
+            return;
+        }
+
+        _deleteButton.IsEnabled = selectedItem is { IsBuiltIn: false };
+        _uploadButton.IsEnabled = selectedItem is { IsBuiltIn: false };
+        if (_deleteButton.IsClicked)
+        {
+            var smallMessage = selectedItem.UseCount <= 0
+                ? string.Format(LanguageManager.Get(_typeName, 5), selectedItem.DisplayName)
+                : string.Format(LanguageManager.Get(_typeName, 6), selectedItem.DisplayName, selectedItem.UseCount);
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageManager.Get(_typeName, 9),
+                    smallMessage,
+                    LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
+                    delegate(MessageDialogButton button)
+                    {
+                        if (button != MessageDialogButton.Button1)
+                        {
+                            return;
+                        }
+
+                        ExternalContentManager.DeleteExternalContent(selectedItem.Type, selectedItem.Name);
+                        UpdateList();
+                    }
+                )
+            );
+        }
+
+        if (_uploadButton.IsClicked)
+        {
+            ExternalContentManager.ShowUploadUi(selectedItem.Type, selectedItem.Name);
         }
     }
 

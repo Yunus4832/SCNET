@@ -45,6 +45,17 @@
                                       VerticalAlignment="Center"/>
             </StackPanelWidget>
 
+            <StackPanelWidget Direction="Horizontal">
+                <CanvasWidget Size="350, 90">
+                    <LabelWidget Text="全局模组和存档模组管理" Color="128, 128, 128" WordWrap="true"
+                                 HorizontalAlignment="Far" VerticalAlignment="Center"
+                                 TextAnchor="VerticalCenter, HorizontalCenter"/>
+                </CanvasWidget>
+                <CanvasWidget Size="10, 0"/>
+                <BevelledButtonWidget Name="Mods" Text="模组" Style="{Styles/ButtonStyle_310x60}"
+                                      VerticalAlignment="Center"/>
+            </StackPanelWidget>
+
             <CanvasWidget Size="0, 30"/>
 
             <StackPanelWidget Direction="Horizontal">

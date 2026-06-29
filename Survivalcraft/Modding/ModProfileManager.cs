@@ -36,6 +36,14 @@ public static class ModProfileManager
         return TryLoadGlobalProfile(out var profile) ? profile : CreateDefault("default");
     }
 
+    public static void SaveGlobalProfile(ModProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        var normalized = Normalize(profile);
+        normalized.Id = "default";
+        SaveProfile(GlobalProfilePath, normalized);
+    }
+
     public static ModProfile ResolveProfileForSessionTarget(SessionInfo? sessionInfo)
     {
         var globalProfile = LoadGlobalProfile();

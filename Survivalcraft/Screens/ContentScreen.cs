@@ -16,6 +16,8 @@ public class ContentScreen : Screen
 
     private readonly ButtonWidget _manageButton;
 
+    private readonly ButtonWidget _modsButton;
+
     public ContentScreen()
     {
         var node = ContentManager.Get<XElement>("Screens/ContentScreen");
@@ -23,6 +25,7 @@ public class ContentScreen : Screen
         _externalContentButton = Children.Find<ButtonWidget>("External")!;
         _communityContentButton = Children.Find<ButtonWidget>("Community")!;
         _linkButton = Children.Find<ButtonWidget>("Link")!;
+        _modsButton = Children.Find<ButtonWidget>("Mods")!;
         _manageButton = Children.Find<BevelledButtonWidget>("Manage")!;
     }
 
@@ -88,6 +91,11 @@ public class ContentScreen : Screen
         if (_linkButton.IsClicked)
         {
             DialogsManager.ShowDialog(null, new DownloadContentFromLinkDialog());
+        }
+
+        if (_modsButton.IsClicked)
+        {
+            ScreensManager.SwitchScreen("ModManagement");
         }
 
         if (_manageButton.IsClicked)
