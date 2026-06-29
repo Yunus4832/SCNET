@@ -41,7 +41,7 @@ public class ModManagementScreen : Screen
         _globalProfile = ModProfileManager.LoadGlobalProfile();
         _repositoryTextBox.Text = GetRepositoryUrl();
         RefreshState();
-        if (_items.Count == 0)
+        if (_items.Count == 0 && !string.IsNullOrWhiteSpace(_repositoryTextBox.Text))
         {
             RefreshRepositoryPackages();
         }

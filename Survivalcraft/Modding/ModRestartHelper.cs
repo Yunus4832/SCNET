@@ -50,8 +50,7 @@ public static class ModRestartHelper
             .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}")
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToArray();
-        return string.Equals(left?.RepositoryUrl, right.RepositoryUrl, StringComparison.OrdinalIgnoreCase) &&
-               leftPackages.SequenceEqual(rightPackages, StringComparer.OrdinalIgnoreCase);
+        return leftPackages.SequenceEqual(rightPackages, StringComparer.OrdinalIgnoreCase);
     }
 
     private static string CreateRestartReason(ModProfile profile, bool downloadedAny)
