@@ -12,7 +12,6 @@ public class ModManagementScreen : Screen
     private readonly ButtonWidget _nextPageButton;
     private readonly ButtonWidget _previousPageButton;
     private readonly ButtonWidget _refreshButton;
-    private readonly ButtonWidget _removeWorldModButton;
     private readonly TextBoxWidget _repositoryTextBox;
     private readonly ButtonWidget _saveDefaultRepositoryButton;
 
@@ -31,7 +30,6 @@ public class ModManagementScreen : Screen
         _nextPageButton = Children.Find<ButtonWidget>("NextPageButton")!;
         _previousPageButton = Children.Find<ButtonWidget>("PreviousPageButton")!;
         _refreshButton = Children.Find<ButtonWidget>("RefreshButton")!;
-        _removeWorldModButton = Children.Find<ButtonWidget>("RemoveWorldModButton")!;
         _repositoryTextBox = Children.Find<TextBoxWidget>("RepositoryTextBox")!;
         _saveDefaultRepositoryButton = Children.Find<ButtonWidget>("SaveDefaultRepositoryButton")!;
         _modsList.ItemWidgetFactory = CreateModItemWidget;
@@ -59,7 +57,6 @@ public class ModManagementScreen : Screen
         _cacheButton.IsEnabled = selectedItem is { LocalEntry: not null } or { RemotePackage: not null };
         _cacheButton.Text = selectedItem?.LocalEntry != null ? "删缓存" : "下载";
         _exportButton.IsEnabled = selectedItem?.LocalEntry != null;
-        _removeWorldModButton.IsEnabled = selectedItem != null && selectedItem.IsAnyWorld;
         _previousPageButton.IsEnabled = false;
         _nextPageButton.IsEnabled = false;
 
@@ -106,12 +103,7 @@ public class ModManagementScreen : Screen
 
         if (_addWorldModButton.IsClicked && selectedItem != null)
         {
-            SelectWorldForPackage(selectedItem, add: true);
-        }
-
-        if (_removeWorldModButton.IsClicked && selectedItem != null)
-        {
-            SelectWorldForPackage(selectedItem, add: false);
+            SelectWorldsForPackage(selectedItem);
         }
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
@@ -293,26 +285,40 @@ public class ModManagementScreen : Screen
         }
     }
 
-    private void SelectWorldForPackage(RepositoryModItem mod, bool add)
+    private void SelectWorldsForPackage(RepositoryModItem mod)
     {
         WorldsManager.UpdateWorldsList();
-        DialogsManager.ShowDialog(null, new ListSelectionDialog(add ? "加入到世界" : "从世界移除",
-            WorldsManager.WorldInfos, 70f,
-            item => ((WorldInfo)item).WorldSettings.Name,
-            item =>
+        if (WorldsManager.WorldInfos.Count == 0)
+        {
+            DialogsManager.Alert("没有世界", "请先创建一个世界。");
+            return;
+        }
+
+        DialogsManager.ShowDialog(null, new ModWorldSelectionDialog(
+            $"{mod.ModId}@{mod.Version}",
+            WorldsManager.WorldInfos,
+            world =>
             {
-                var world = (WorldInfo)item;
-                var profile = ModProfileManager.LoadWorldProfile(world.DirectoryName) ?? new ModProfile();
-                if (add)
+                var profile = ModProfileManager.LoadWorldProfile(world.DirectoryName);
+                return profile != null && ContainsMod(profile, mod.ModId);
+            },
+            selections =>
+            {
+                foreach (var selection in selections)
                 {
-                    AddPackage(profile, mod);
-                }
-                else
-                {
-                    RemovePackage(profile, mod.ModId);
+                    var profile = ModProfileManager.LoadWorldProfile(selection.World.DirectoryName) ?? new ModProfile();
+                    if (selection.IsChecked)
+                    {
+                        AddPackage(profile, mod);
+                    }
+                    else
+                    {
+                        RemovePackage(profile, mod.ModId);
+                    }
+
+                    ModProfileManager.SaveWorldProfile(selection.World.DirectoryName, profile);
                 }
 
-                ModProfileManager.SaveWorldProfile(world.DirectoryName, profile);
                 RefreshState();
             }));
     }

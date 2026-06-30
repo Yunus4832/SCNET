@@ -12,22 +12,27 @@
 
             <CanvasWidget Size="Infinity, 4"/>
 
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4">
-                <CanvasWidget Size="120, 50">
-                    <LabelWidget Text="服务器地址" Color="255, 255, 255"
-                                 HorizontalAlignment="Far" VerticalAlignment="Center"
-                                 TextAnchor="VerticalCenter, HorizontalCenter"/>
-                </CanvasWidget>
-                <CanvasWidget Size="400, 50" VerticalAlignment="Center" Margin="14, 0">
-                    <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 160"/>
-                    <TextBoxWidget Name="RepositoryTextBox" Size="380, 40" HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" MaximumLength="512"/>
-                </CanvasWidget>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4"
+                              VerticalAlignment="Center">
+                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Near" VerticalAlignment="Center">
+                    <CanvasWidget Size="112, 60">
+                        <LabelWidget Text="服务器地址" Color="255, 255, 255"
+                                     HorizontalAlignment="Far" VerticalAlignment="Center"
+                                     TextAnchor="VerticalCenter, HorizontalCenter"/>
+                    </CanvasWidget>
+                    <CanvasWidget Size="300, 50" VerticalAlignment="Center" Margin="14, 0">
+                        <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 160"/>
+                        <TextBoxWidget Name="RepositoryTextBox" Size="284, 40" HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" MaximumLength="512"/>
+                    </CanvasWidget>
+                </StackPanelWidget>
                 <CanvasWidget Size="Infinity, 0"/>
-                <BevelledButtonWidget Name="RefreshButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="刷新" VerticalAlignment="Center" Margin="6, 0"/>
-                <BevelledButtonWidget Name="SaveDefaultRepositoryButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="保存默认" VerticalAlignment="Center" Margin="6, 0"/>
+                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Far" VerticalAlignment="Center">
+                    <BevelledButtonWidget Name="RefreshButton" Size="120, 60"
+                                          Text="刷新" VerticalAlignment="Center" Margin="4, 0"/>
+                    <BevelledButtonWidget Name="SaveDefaultRepositoryButton" Size="120, 60"
+                                          Text="保存默认" VerticalAlignment="Center" Margin="4, 0"/>
+                </StackPanelWidget>
             </StackPanelWidget>
 
             <CanvasWidget Size="0, 4"/>
@@ -39,21 +44,23 @@
             </CanvasWidget>
 
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4">
-                <BevelledButtonWidget Name="CacheButton" Size="108, 60"
-                                      Text="下载" Margin="0, 0"/>
-                <BevelledButtonWidget Name="ExportButton" Size="108, 60"
-                                      Text="导出" Margin="6, 0"/>
-                <BevelledButtonWidget Name="GlobalModButton" Size="108, 60"
-                                      Text="加入全局" Margin="0, 0"/>
-                <BevelledButtonWidget Name="AddWorldModButton" Size="108, 60"
-                                      Text="加入世界" Margin="6, 0"/>
-                <BevelledButtonWidget Name="RemoveWorldModButton" Size="108, 60"
-                                      Text="移出世界" Margin="6, 0"/>
+                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Near">
+                    <BevelledButtonWidget Name="CacheButton" Size="112, 60"
+                                          Text="下载" Margin="0, 0"/>
+                    <BevelledButtonWidget Name="ExportButton" Size="112, 60"
+                                          Text="导出" Margin="6, 0"/>
+                    <BevelledButtonWidget Name="GlobalModButton" Size="112, 60"
+                                          Text="加入全局" Margin="6, 0"/>
+                    <BevelledButtonWidget Name="AddWorldModButton" Size="112, 60"
+                                          Text="世界" Margin="6, 0"/>
+                </StackPanelWidget>
                 <CanvasWidget Size="Infinity, 0"/>
-                <BevelledButtonWidget Name="PreviousPageButton" Size="108, 60"
-                                      Text="上页" Margin="6, 0"/>
-                <BevelledButtonWidget Name="NextPageButton" Size="108, 60"
-                                      Text="下页" Margin="6, 0"/>
+                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Far">
+                    <BevelledButtonWidget Name="PreviousPageButton" Size="112, 60"
+                                          Text="上页" Margin="6, 0"/>
+                    <BevelledButtonWidget Name="NextPageButton" Size="112, 60"
+                                          Text="下页" Margin="6, 0"/>
+                </StackPanelWidget>
             </StackPanelWidget>
 
         </StackPanelWidget>
