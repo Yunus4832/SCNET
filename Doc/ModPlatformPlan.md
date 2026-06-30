@@ -28,7 +28,7 @@ through transitional compatibility layers.
 
 - Strong authentication or signed package verification in the first phase.
 - Public package moderation workflows.
-- Backward compatibility with the current `DisabledPackages`-driven loading model.
+- Backward compatibility with the old `DisabledPackages`-driven loading model.
 - Full UI and operations tooling in the first phase.
 - Rich package search and ranking in the first phase.
 
@@ -37,7 +37,7 @@ through transitional compatibility layers.
 The current implementation has working pieces, but the model is wrong:
 
 - Runtime loading is directory-driven.
-- `ModSelectionSettings.DisabledPackages` is subtractive, not declarative.
+- The old `DisabledPackages` model was subtractive rather than declarative.
 - Multiplayer mod download currently assumes server-provided HTTP access.
 - Downloaded mods are mixed into the normal local mod directory.
 - Restart exists, but restart context and resume flow are not formalized.
@@ -491,8 +491,7 @@ Recommended transition:
 2. Introduce restart/session context and connect it to `RunningSetting`.
 3. Move GUI and headless startup to profile-driven loading.
 4. Leave directory scan only as a package discovery utility.
-5. Remove `DisabledPackages` from runtime activation logic.
-6. Keep a temporary import path for old local package layouts if needed.
+5. Keep a temporary import path for old local package layouts if needed.
 
 ## Implementation Phases
 

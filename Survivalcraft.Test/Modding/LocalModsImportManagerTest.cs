@@ -59,6 +59,34 @@ public sealed class LocalModsImportManagerTest : IDisposable
         Assert.True(File.Exists(restored.Path));
     }
 
+    [Fact]
+    public void ExportPackageCopiesPackageAndRecordsImportState()
+    {
+        Directory.CreateDirectory(_sourceDirectory);
+        Directory.CreateDirectory(_repositoryDirectory);
+        var repository = new LocalModRepository(_repositoryDirectory);
+        var sourcePath = Path.Combine(_sourceDirectory, "example.alpha.scpak");
+        File.WriteAllBytes(sourcePath, CreatePackageBytes("example.alpha", "1.0.0"));
+        var entry = repository.ImportPackage(sourcePath);
+        var exportDirectory = Path.Combine(Path.GetTempPath(), $"scnet-exported-mods-{Guid.NewGuid():N}");
+        try
+        {
+            var exportedPath = LocalModsImportManager.ExportPackage(entry, exportDirectory);
+
+            Assert.True(File.Exists(exportedPath));
+            var imported = Assert.Single(LocalModsImportManager.ListImportedMods());
+            Assert.Equal(exportedPath, imported.Path);
+            Assert.Equal(entry.PackageHash, imported.PackageHash);
+        }
+        finally
+        {
+            if (Directory.Exists(exportDirectory))
+            {
+                Directory.Delete(exportDirectory, true);
+            }
+        }
+    }
+
     public void Dispose()
     {
         _stateBackup.Dispose();

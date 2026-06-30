@@ -91,13 +91,11 @@ public static class SettingsManager
     {
         try
         {
-            ModSelectionSettings.ReplaceDisabledPackages([]);
             if (Storage.FileExists(GamePaths.SettingsFile))
             {
                 using (var stream = Storage.OpenFile(GamePaths.SettingsFile, OpenFileMode.Read))
                 {
                     var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
-                    var disabledPackageIds = new List<string>();
                     AppConfigStore.ReadFromXml(xElement);
                     ConnectionDirectory.ReadFromXml(xElement);
 
@@ -124,17 +122,6 @@ public static class SettingsManager
                                     propertyInfo.SetValue(Current, value, null);
                                 }
                             }
-                            else if (item.Name.LocalName == "DisableMods")
-                            {
-                                foreach (var xElement1 in item.Elements())
-                                {
-                                    var packageId = xElement1.Attribute("PackageName")?.Value;
-                                    if (!string.IsNullOrWhiteSpace(packageId))
-                                    {
-                                        disabledPackageIds.Add(packageId);
-                                    }
-                                }
-                            }
                         }
                         catch (Exception ex)
                         {
@@ -148,7 +135,6 @@ public static class SettingsManager
                         }
                     }
 
-                    ModSelectionSettings.ReplaceDisabledPackages(disabledPackageIds);
                 }
 
                 Log.Information("Loaded settings.");
@@ -200,16 +186,6 @@ public static class SettingsManager
                 }
             }
 
-            var xElement1 = new XElement("DisableMods");
-            foreach (var packageName in ModSelectionSettings.DisabledPackages.OrderBy(name => name,
-                         StringComparer.OrdinalIgnoreCase))
-            {
-                var element = new XElement("Mod");
-                element.SetAttributeValue("PackageName", packageName);
-                xElement1.Add(element);
-            }
-
-            xElement.Add(xElement1);
             AppConfigStore.WriteToXml(xElement);
             ConnectionDirectory.WriteToXml(xElement);
 

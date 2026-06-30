@@ -351,42 +351,21 @@ public static class ModPackageCatalog
 
     public static IReadOnlyList<ModDescriptor> CreateLoadPlan(string directoryPath, ModSide hostSide)
     {
-        return CreateLoadPlan(Discover(directoryPath), hostSide, null);
-    }
-
-    public static IReadOnlyList<ModDescriptor> CreateLoadPlan(
-        string directoryPath,
-        ModSide hostSide,
-        IEnumerable<string>? disabledPackageIds)
-    {
-        return CreateLoadPlan(Discover(directoryPath), hostSide, disabledPackageIds);
+        return CreateLoadPlan(Discover(directoryPath), hostSide);
     }
 
     public static IReadOnlyList<ModDescriptor> CreateLoadPlan(
         IEnumerable<ModPackageSource> sources,
         ModSide hostSide)
     {
-        return CreateLoadPlan(Discover(sources), hostSide, null);
-    }
-
-    public static IReadOnlyList<ModDescriptor> CreateLoadPlan(
-        IEnumerable<ModPackageSource> sources,
-        ModSide hostSide,
-        IEnumerable<string>? disabledPackageIds)
-    {
-        return CreateLoadPlan(Discover(sources), hostSide, disabledPackageIds);
+        return CreateLoadPlan(Discover(sources), hostSide);
     }
 
     private static IReadOnlyList<ModDescriptor> CreateLoadPlan(
         IEnumerable<ModPackage> packages,
-        ModSide hostSide,
-        IEnumerable<string>? disabledPackageIds)
+        ModSide hostSide)
     {
-        var disabled = disabledPackageIds?
-            .Where(packageId => !string.IsNullOrWhiteSpace(packageId))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
         var descriptors = packages
-            .Where(package => disabled is null || !disabled.Contains(package.Manifest.Id))
             .Select(package => package.CreateDescriptor(hostSide))
             .ToArray();
         try

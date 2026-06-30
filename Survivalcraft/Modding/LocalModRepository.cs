@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-
 namespace Game.Modding;
 
 public sealed class LocalModRepository(string directoryPath)
@@ -67,6 +65,17 @@ public sealed class LocalModRepository(string directoryPath)
         Invalidate();
         return FindByHash(packageHash) ?? throw new InvalidOperationException(
             $"Package '{packageHash}' could not be indexed after import.");
+    }
+
+    public void DeletePackage(LocalModPackageEntry entry)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        if (File.Exists(entry.Path))
+        {
+            File.Delete(entry.Path);
+        }
+
+        Invalidate();
     }
 
     public void Invalidate()

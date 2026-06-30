@@ -38,18 +38,22 @@
                                  SelectionColor="10, 70, 0, 90"/>
             </CanvasWidget>
 
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 6">
-                <BevelledButtonWidget Name="GlobalModButton" Style="{Styles/ButtonStyle_160x60}"
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4">
+                <BevelledButtonWidget Name="CacheButton" Size="108, 60"
+                                      Text="下载" Margin="0, 0"/>
+                <BevelledButtonWidget Name="ExportButton" Size="108, 60"
+                                      Text="导出" Margin="6, 0"/>
+                <BevelledButtonWidget Name="GlobalModButton" Size="108, 60"
                                       Text="加入全局" Margin="0, 0"/>
-                <BevelledButtonWidget Name="AddWorldModButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="加入世界" Margin="8, 0"/>
-                <BevelledButtonWidget Name="RemoveWorldModButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="移出世界" Margin="8, 0"/>
+                <BevelledButtonWidget Name="AddWorldModButton" Size="108, 60"
+                                      Text="加入世界" Margin="6, 0"/>
+                <BevelledButtonWidget Name="RemoveWorldModButton" Size="108, 60"
+                                      Text="移出世界" Margin="6, 0"/>
                 <CanvasWidget Size="Infinity, 0"/>
-                <BevelledButtonWidget Name="PreviousPageButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="上一页" Margin="8, 0"/>
-                <BevelledButtonWidget Name="NextPageButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="下一页" Margin="8, 0"/>
+                <BevelledButtonWidget Name="PreviousPageButton" Size="108, 60"
+                                      Text="上页" Margin="6, 0"/>
+                <BevelledButtonWidget Name="NextPageButton" Size="108, 60"
+                                      Text="下页" Margin="6, 0"/>
             </StackPanelWidget>
 
         </StackPanelWidget>

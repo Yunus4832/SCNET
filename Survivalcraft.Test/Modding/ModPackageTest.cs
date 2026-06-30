@@ -122,26 +122,6 @@ public class ModPackageTest
     }
 
     [Fact]
-    public void CatalogSkipsDisabledPackagesInLoadPlan()
-    {
-        var core = CreateDataPackage(Manifest("example.core")).ToArray();
-        var addon = CreateDataPackage(Manifest("example.addon", "example.core")).ToArray();
-        var sources = new[]
-        {
-            new ModPackageSource("addon.scpak", () => new MemoryStream(addon, writable: false)),
-            new ModPackageSource("core.scpak", () => new MemoryStream(core, writable: false))
-        };
-
-        var plan = ModPackageCatalog.CreateLoadPlan(sources, ModSide.Server, ["example.addon"]);
-
-        Assert.Equal(["example.core"], plan.Select(item => item.Manifest.Id));
-        foreach (var descriptor in plan)
-        {
-            descriptor.Lifetime?.Dispose();
-        }
-    }
-
-    [Fact]
     public void DataOnlyPackageRegistersStandardDataDirectories()
     {
         using var packageStream = CreatePackage(

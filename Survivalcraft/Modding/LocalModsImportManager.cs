@@ -6,6 +6,13 @@ public static class LocalModsImportManager
 {
     public static string ImportStatePath => GamePaths.LocalModsImportStateFile;
 
+    public static IReadOnlyList<ImportedModEntry> ListImportedMods()
+    {
+        return LoadState().Values
+            .OrderBy(entry => entry.Path, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
     public static void ImportInstalledMods(
         string sourceDirectoryPath,
         string repositoryDirectoryPath,
@@ -48,6 +55,47 @@ public static class LocalModsImportManager
         }
 
         SaveState(importedEntries);
+    }
+
+    public static string ExportPackage(LocalModPackageEntry entry, string targetDirectoryPath)
+    {
+        ArgumentNullException.ThrowIfNull(entry);
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetDirectoryPath);
+        Directory.CreateDirectory(targetDirectoryPath);
+
+        var targetPath = Path.Combine(targetDirectoryPath, CreateExportFileName(entry));
+        File.Copy(entry.Path, targetPath, true);
+        RecordInstalledMod(targetPath, entry.PackageHash);
+        return targetPath;
+    }
+
+    public static void RecordInstalledMod(string sourcePath, string packageHash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourcePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(packageHash);
+
+        var fileInfo = new FileInfo(sourcePath);
+        var state = LoadState();
+        state[sourcePath] = new ImportedModEntry(
+            sourcePath,
+            fileInfo.Length,
+            fileInfo.LastWriteTimeUtc.Ticks,
+            packageHash);
+        SaveState(state.Values);
+    }
+
+    public static void RemoveInstalledMod(string sourcePath)
+    {
+        if (string.IsNullOrWhiteSpace(sourcePath))
+        {
+            return;
+        }
+
+        var state = LoadState();
+        if (state.Remove(sourcePath))
+        {
+            SaveState(state.Values);
+        }
     }
 
     private static bool CanReuse(ImportedModEntry? entry, FileInfo fileInfo, LocalModRepository repository)
@@ -128,7 +176,18 @@ public static class LocalModsImportManager
         return long.TryParse(value, out var parsed) ? parsed : 0L;
     }
 
-    private sealed record ImportedModEntry(
+    private static string CreateExportFileName(LocalModPackageEntry entry)
+    {
+        var fileName = $"{entry.ModId}-{entry.Version}{ModPackage.FileExtension}";
+        foreach (var invalidChar in Path.GetInvalidFileNameChars())
+        {
+            fileName = fileName.Replace(invalidChar, '_');
+        }
+
+        return fileName;
+    }
+
+    public sealed record ImportedModEntry(
         string Path,
         long FileSize,
         long LastWriteTimeUtcTicks,
