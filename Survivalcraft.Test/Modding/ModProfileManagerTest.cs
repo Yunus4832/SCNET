@@ -2,7 +2,9 @@ using System.Xml.Linq;
 
 using Engine.FileStorage;
 
+using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
+using EntitySystem.XmlUtilities;
 
 using Game;
 using Game.Managers;
@@ -395,19 +397,21 @@ public sealed class ModProfileManagerTest : IDisposable
             Seed = "seed",
             ModProfileResolutionStrategy = strategy
         };
-        var rootNode = new ValuesDictionary();
-        var subsystems = new ValuesDictionary();
+        var databaseObject = DatabaseManager.GameDatabase.Database
+            .FindDatabaseObject("GameProject", DatabaseManager.GameDatabase.ProjectTemplateType, true)!;
+        var overrides = new ValuesDictionary();
         var gameInfo = new ValuesDictionary();
-        rootNode.SetValue("Version", VersionsManager.SerializationVersion);
-        rootNode.SetValue("Subsystems", subsystems);
-        subsystems.SetValue("GameInfo", gameInfo);
+        overrides.SetValue("GameInfo", gameInfo);
         worldSettings.Save(gameInfo, false);
         gameInfo.SetValue("WorldDirectoryName", worldDirectoryName);
         gameInfo.SetValue("WorldSeed", 1);
+        var projectData = new ProjectData(DatabaseManager.GameDatabase, databaseObject, overrides);
+        var projectNode = new XElement("Project");
+        XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.SerializationVersion);
+        projectData.Save(projectNode);
 
-        using var stream = Storage.OpenFile(Storage.CombinePaths(worldDirectoryName, "Project.json"), OpenFileMode.Create);
-        using var writer = new StreamWriter(stream);
-        writer.Write(rootNode.ToJsonText());
+        using var stream = Storage.OpenFile(Storage.CombinePaths(worldDirectoryName, "Project.xml"), OpenFileMode.Create);
+        XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
 
         return worldDirectoryName;
     }

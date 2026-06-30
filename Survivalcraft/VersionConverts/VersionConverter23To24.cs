@@ -1,5 +1,3 @@
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
@@ -31,51 +29,19 @@ public class VersionConverter23To24 : VersionConverter
         }
     }
 
-    public static string ConvertProjectJson(string json)
-    {
-        // 将字符串解析为 JsonObject
-        var jsonObject = JsonSerializer.Deserialize<JsonObject>(json);
-
-        // 修改 Version 到 "2.4"
-        if (jsonObject is null || !jsonObject.TryGetPropertyValue("Version", out var versionNode))
-        {
-            throw new InvalidOperationException("Version info not found");
-        }
-
-        if (versionNode is JsonArray versionArray)
-        {
-            versionArray[0] = "2.4";
-        }
-
-        if (jsonObject.TryGetPropertyValue("Subsystem", out var subsystemNode) ||
-            subsystemNode is not JsonObject subsystemObject ||
-            !subsystemObject.TryGetPropertyValue("GameInfo", out var gameInfoNode))
-        {
-            throw new InvalidOperationException("GameInfo not found");
-        }
-
-        // 在 GameInfo 中加入 TimeOfYear
-        if (gameInfoNode is JsonObject gameInfoObject)
-        {
-            gameInfoObject["TimeOfYear"] = new JsonArray
-            {
-                "float",
-                IntervalUtils.Midpoint(SubsystemSeasons.SummerStart, SubsystemSeasons.AutumnStart)
-            };
-
-            // 在 GameInfo 中加入 AreSeasonsChanging
-            gameInfoObject["AreSeasonsChanging"] = new JsonArray { "bool", true };
-        }
-
-        // 将修改后的 JObject 转换回字符串
-        return jsonObject.ToString();
-    }
-
     public override void ConvertWorld(string directoryName)
     {
-        var path = Storage.GetSystemPath(Storage.CombinePaths(directoryName, "Project.json"));
-        var json = File.ReadAllText(path);
-        var convertedJson = ConvertProjectJson(json);
-        File.WriteAllText(path, convertedJson);
+        var path = Storage.CombinePaths(directoryName, "Project.xml");
+        XElement projectNode;
+        using (var stream = Storage.OpenFile(path, OpenFileMode.Read))
+        {
+            projectNode = XmlUtils.LoadXmlFromStream(stream, null, true);
+        }
+
+        ConvertProjectXml(projectNode);
+        using (var stream = Storage.OpenFile(path, OpenFileMode.Create))
+        {
+            XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
+        }
     }
 }

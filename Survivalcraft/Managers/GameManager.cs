@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
@@ -23,61 +25,16 @@ public static class GameManager
     public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, bool useNetProj = true)
     {
         DisposeProject();
-        WorldsManager.RepairWorldIfNeeded(worldInfo.DirectoryName);
         VersionsManager.UpgradeWorld(worldInfo.DirectoryName);
         var xmlFile = Storage.CombinePaths(worldInfo.DirectoryName, "Project.xml");
-        var mpkFile = Storage.CombinePaths(worldInfo.DirectoryName, "Project.mpk");
-        var jsonFile = Storage.CombinePaths(worldInfo.DirectoryName, "Project.json");
 
-        if (Storage.FileExists(xmlFile))
+        if (!Storage.FileExists(xmlFile))
         {
-            using (var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read))
-            {
-                var valuesDictionary = new ValuesDictionary();
-                var valuesDictionary2 = new ValuesDictionary();
-                valuesDictionary.SetValue("GameInfo", valuesDictionary2);
-                valuesDictionary2.SetValue("WorldDirectoryName", worldInfo.DirectoryName);
-                var valuesDictionary3 = new ValuesDictionary();
-                valuesDictionary.SetValue("Views", valuesDictionary3);
-                valuesDictionary3.SetValue("GamesWidget", gamesWidget);
-                var projectNode = XmlUtils.LoadXmlFromStream(stream, null, true);
-                var projectData = new ProjectData(DatabaseManager.GameDatabase, projectNode, valuesDictionary, true);
-                Project = new Project(DatabaseManager.GameDatabase, projectData);
-                _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
-            }
-
-            Storage.DeleteFile(xmlFile);
+            throw new FileNotFoundException("Project file not found.", xmlFile);
         }
-        else if (Storage.FileExists(mpkFile))
-        {
-            using (var stream = Storage.OpenFile(mpkFile, OpenFileMode.Read))
-            {
-                var data = new byte[stream.Length];
-                stream.ReadExactly(data, 0, data.Length);
-                var rootNode = new ValuesDictionary();
-                rootNode.ApplyOverridesUseMessagePack(data);
-                var valuesDictionary = new ValuesDictionary();
-                var valuesDictionary2 = new ValuesDictionary();
-                valuesDictionary.SetValue("GameInfo", valuesDictionary2);
-                valuesDictionary2.SetValue("WorldDirectoryName", worldInfo.DirectoryName);
-                var valuesDictionary3 = new ValuesDictionary();
-                valuesDictionary.SetValue("Views", valuesDictionary3);
-                valuesDictionary3.SetValue("GamesWidget", gamesWidget);
-                var projectData = new ProjectData(DatabaseManager.GameDatabase, data, valuesDictionary, true);
-                Project = new Project(DatabaseManager.GameDatabase, projectData);
-                _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
-            }
 
-            Storage.DeleteFile(mpkFile);
-        }
-        else if (Storage.FileExists(jsonFile))
+        using (var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read))
         {
-            using var stream = Storage.OpenFile(jsonFile, OpenFileMode.Read);
-            var reader = new StreamReader(stream);
-            var jsonText = reader.ReadToEnd();
-            reader.Dispose();
-            var rootNode = new ValuesDictionary();
-            rootNode.ApplyOverridesUseJson(jsonText, out var data);
             var valuesDictionary = new ValuesDictionary();
             var valuesDictionary2 = new ValuesDictionary();
             valuesDictionary.SetValue("GameInfo", valuesDictionary2);
@@ -85,7 +42,8 @@ public static class GameManager
             var valuesDictionary3 = new ValuesDictionary();
             valuesDictionary.SetValue("Views", valuesDictionary3);
             valuesDictionary3.SetValue("GamesWidget", gamesWidget);
-            var projectData = new ProjectData(DatabaseManager.GameDatabase, data, valuesDictionary, true);
+            var projectNode = XmlUtils.LoadXmlFromStream(stream, null, true);
+            var projectData = new ProjectData(DatabaseManager.GameDatabase, projectNode, valuesDictionary, true);
             Project = new Project(DatabaseManager.GameDatabase, projectData);
             _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
         }
@@ -157,31 +115,23 @@ public static class GameManager
                     return;
                 }
 
-                var rootNode = new ValuesDictionary();
-                rootNode.SetValue("Version", VersionsManager.SerializationVersion);
-                projectData.Save(rootNode);
+                var projectNode = new XElement("Project");
+                XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.SerializationVersion);
+                projectData.Save(projectNode);
                 Storage.CreateDirectory(subsystemGameInfo.DirectoryName);
-                var path1 = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.json");
-                // 上次保存
-                var path2 = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.temp");
-                // 备份文件
-                var path3 = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.bak");
-                if (Storage.FileExists(path1))
+                var projectPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml");
+                var temporaryPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml.tmp");
+                using (var stream = Storage.OpenFile(temporaryPath, OpenFileMode.Create))
                 {
-                    Storage.CopyFile(path1, path2);
+                    XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
                 }
 
-                using (var stream = Storage.OpenFile(path1, OpenFileMode.Create))
+                if (!WorldsManager.TestProjectFile(temporaryPath))
                 {
-                    var streamWriter = new StreamWriter(stream);
-                    streamWriter.Write(rootNode.ToJsonText());
-                    streamWriter.Dispose();
+                    throw new InvalidOperationException("Generated project file is invalid.");
                 }
 
-                if (Storage.FileExists(path1))
-                {
-                    Storage.CopyFile(path1, path3);
-                }
+                Storage.MoveFile(temporaryPath, projectPath);
             }
             catch (Exception ex)
             {
@@ -197,7 +147,7 @@ public static class GameManager
                                 null,
                                 new MessageDialog(
                                     "保存存档失败",
-                                    "请及时做存档还原操作，存档备份文件为\nProject.bak和Project.temp\n" + e.Message,
+                                    "Project.xml 未被新的存档文件替换。\n" + e.Message,
                                     "OK"
                                 )
                             );

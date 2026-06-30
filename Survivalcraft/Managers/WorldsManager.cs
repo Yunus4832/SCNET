@@ -1,12 +1,10 @@
-using System.Globalization;
 using System.Xml.Linq;
 
 using Engine.Serialization;
 
+using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
-
-using Game.TerrainSerializers;
 
 namespace Game.Managers;
 
@@ -44,17 +42,6 @@ public static class WorldsManager
         var unusedWorldDirectoryName = GetUnusedWorldDirectoryName();
         Storage.CreateDirectory(unusedWorldDirectoryName);
         UnpackWorld(unusedWorldDirectoryName, sourceStream, true);
-        //if (!TestXmlFile(Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"), "Project"))
-        //{
-        //    try
-        //    {
-        //        DeleteWorld(unusedWorldDirectoryName);
-        //    }
-        //    catch
-        //    {
-        //    }
-        //    throw new InvalidOperationException("Cannot import world because it does not contain valid world data.");
-        //}
         return unusedWorldDirectoryName;
     }
 
@@ -72,107 +59,6 @@ public static class WorldsManager
         }
 
         WorldDeleted?.Invoke(directoryName);
-    }
-
-    public static void RepairWorldIfNeeded(string directoryName)
-    {
-        try
-        {
-            var xmlFile = Storage.CombinePaths(directoryName, "Project.xml");
-            if (Storage.FileExists(xmlFile) && !TestXmlFile(xmlFile, "Project"))
-            {
-                Log.Warning(
-                    $"Project file at \"{xmlFile}\" is corrupt or nonexistent. Will try copying data from the backup file. If that fails, will try making a recovery project file.");
-                var text2 = Storage.CombinePaths(directoryName, "Project.bak");
-                if (TestXmlFile(text2, "Project"))
-                {
-                    Storage.CopyFile(text2, xmlFile);
-                }
-                else
-                {
-                    var path = Storage.CombinePaths(directoryName, "Chunks.dat");
-                    if (!Storage.FileExists(path))
-                    {
-                        throw new InvalidOperationException(
-                            "Recovery project file could not be generated because chunks file does not exist.");
-                    }
-
-                    var xElement = ContentManager.Get<XElement>("RecoveryProject");
-                    using (var stream = Storage.OpenFile(path, OpenFileMode.Read))
-                    {
-                        TerrainSerializer14.ReadTocEntry(stream, out var cx, out var cz, out _);
-                        var vector = new Vector3(16 * cx, 255f, 16 * cz);
-                        xElement.Element("Subsystems")?.Element("Values")?.Element("Value")?
-                            .Attribute("Value")?
-                            .SetValue(HumanReadableConverter.ConvertToString(vector));
-                    }
-
-                    using (var stream2 = Storage.OpenFile(xmlFile, OpenFileMode.Create))
-                    {
-                        XmlUtils.SaveXmlToStream(xElement, stream2, null, true);
-                    }
-                }
-            }
-        }
-        catch (Exception)
-        {
-            throw new InvalidOperationException("The world files are corrupt and could not be repaired.");
-        }
-    }
-
-    public static void MakeQuickWorldBackup(string directoryName)
-    {
-        var mpkFile = Storage.CombinePaths(directoryName, "Project.json");
-        var backUpDir = Storage.CombinePaths(directoryName, "backup");
-        if (!Storage.DirectoryExists(backUpDir))
-        {
-            Storage.CreateDirectory(backUpDir);
-        }
-
-        if (!Storage.FileExists(mpkFile))
-        {
-            return;
-        }
-
-        var destinationPath = Storage.CombinePaths(backUpDir,
-            $"[{DateTime.Now.ToString("yyyyMMdd HH:mm:ss").Replace(":", "-").Replace(" ", "-")}]Project.json");
-        Storage.CopyFile(mpkFile, destinationPath);
-    }
-
-    public static void MakeQuickWorldBackup()
-    {
-        Task.Run(delegate
-        {
-            if (GameManager.Project is null)
-            {
-                return;
-            }
-
-            var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
-            if (subsystemGameInfo == null)
-            {
-                return;
-            }
-
-            var path = subsystemGameInfo.DirectoryName;
-            var name = subsystemGameInfo.WorldSettings.Name;
-            var backUpDir = Storage.CombinePaths(GamePaths.External, "WorldsBackup", name);
-            if (!Storage.DirectoryExists(backUpDir))
-            {
-                Storage.CreateDirectory(backUpDir);
-            }
-
-            var backupFile = Storage.CombinePaths(
-                backUpDir,
-                DateTime.Now
-                    .ToString(CultureInfo.InvariantCulture)
-                    .Replace("/", "-")
-                    .Replace(":", "-")
-                    .Replace(" ", "-") + ".zip"
-            );
-            using var targetStream = Storage.OpenFile(backupFile, OpenFileMode.Create);
-            ExportWorld(path, targetStream);
-        });
     }
 
     public static bool SnapshotExists(string directoryName, string snapshotName)
@@ -266,23 +152,30 @@ public static class WorldsManager
         }
 
         var xmlFile = Storage.CombinePaths(directoryName, "Project.xml");
-        var mpkFile = Storage.CombinePaths(directoryName, "Project.mpk");
-        var jsonFile = Storage.CombinePaths(directoryName, "Project.json");
         try
         {
-            if (Storage.FileExists(xmlFile))
+            if (!Storage.FileExists(xmlFile))
             {
-                using var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read);
-                var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
-                worldInfo.SerializationVersion = XmlUtils.GetAttributeValue(xElement, "Version", "1.0");
-                VersionsManager.UpgradeProjectXml(xElement);
-                var gameInfoNode = GetGameInfoNode(xElement);
-                var valuesDictionary = new ValuesDictionary();
-                valuesDictionary.ApplyOverrides(gameInfoNode);
-                worldInfo.WorldSettings.Load(valuesDictionary);
-                foreach (var item2 in (from e in GetPlayersNode(xElement).Elements()
-                             where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
-                             select e).First().Elements())
+                return worldInfo;
+            }
+
+            using var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read);
+            var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
+            worldInfo.SerializationVersion = XmlUtils.GetAttributeValue(xElement, "Version", "1.0");
+            VersionsManager.UpgradeProjectXml(xElement);
+            var gameInfoNode = GetGameInfoNode(xElement);
+            var valuesDictionary = new ValuesDictionary();
+            valuesDictionary.ApplyOverrides(gameInfoNode);
+            worldInfo.WorldSettings.Load(valuesDictionary);
+            var playersNode = GetPlayersNode(xElement);
+            var playersValues = playersNode == null
+                ? null
+                : (from e in playersNode.Elements()
+                    where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
+                    select e).FirstOrDefault();
+            if (playersValues != null)
+            {
+                foreach (var item2 in playersValues.Elements())
                 {
                     var playerInfo = new PlayerInfo();
                     worldInfo.PlayerInfos.Add(playerInfo);
@@ -295,45 +188,14 @@ public static class WorldsManager
                             XmlUtils.GetAttributeValue(xElement2, "Value", string.Empty);
                     }
                 }
-
-                return worldInfo;
             }
 
-            if (Storage.FileExists(mpkFile))
-            {
-                using var stream = Storage.OpenFile(mpkFile, OpenFileMode.Read);
-                var data = new byte[stream.Length];
-                stream.ReadExactly(data, 0, data.Length);
-                var rootNode = new ValuesDictionary();
-                rootNode.ApplyOverridesUseMessagePack(data);
-                worldInfo.SerializationVersion = rootNode.GetValue("Version", "1.0");
-                var gameInfoNode = GetGameInfoNode(rootNode);
-                worldInfo.WorldSettings.Load(gameInfoNode);
-                return worldInfo;
-            }
-
-            if (!Storage.FileExists(jsonFile))
-            {
-                return worldInfo;
-            }
-
-            {
-                using var stream = Storage.OpenFile(jsonFile, OpenFileMode.Read);
-                var reader = new StreamReader(stream);
-                var jsonText = reader.ReadToEnd();
-                reader.Dispose();
-                var rootNode = new ValuesDictionary();
-                rootNode.ApplyOverridesUseJson(jsonText, out _);
-                worldInfo.SerializationVersion = rootNode.GetValue("Version", "1.0");
-                var gameInfoNode = GetGameInfoNode(rootNode);
-                worldInfo.WorldSettings.Load(gameInfoNode);
-                return worldInfo;
-            }
+            return worldInfo;
         }
         catch (Exception e3)
         {
             Log.Error(ExceptionManager.MakeFullErrorMessage(
-                $"Error getting data from project file \"{xmlFile}\" or \"{jsonFile}\".", e3));
+                $"Error getting data from project file \"{xmlFile}\".", e3));
             return worldInfo;
         }
     }
@@ -389,27 +251,22 @@ public static class WorldsManager
             }
         }
 
-        var valuesDictionary2 = new ValuesDictionary();
-        valuesDictionary2.SetValue("Players", new ValuesDictionary());
         var databaseObject = DatabaseManager.GameDatabase.Database
             .FindDatabaseObject("GameProject", DatabaseManager.GameDatabase.ProjectTemplateType, true)!;
-        var rootNode = new ValuesDictionary();
-        var subsystems = new ValuesDictionary();
+        var overrides = new ValuesDictionary();
         var gameInfoValues = new ValuesDictionary();
-        rootNode.SetValue("Guid", databaseObject.Guid);
-        rootNode.SetValue("Name", "GameProject");
-        rootNode.SetValue("Version", VersionsManager.SerializationVersion);
-        rootNode.SetValue("Subsystems", subsystems);
-        subsystems.SetValue("GameInfo", gameInfoValues);
+        overrides.SetValue("GameInfo", gameInfoValues);
         worldSettings.Save(gameInfoValues, false);
         gameInfoValues.SetValue("WorldDirectoryName", unusedWorldDirectoryName);
         gameInfoValues.SetValue("WorldSeed", num);
-        using (var stream = Storage.OpenFile(Storage.CombinePaths(unusedWorldDirectoryName, "Project.json"),
+        var projectData = new ProjectData(DatabaseManager.GameDatabase, databaseObject, overrides);
+        var projectNode = new XElement("Project");
+        XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.SerializationVersion);
+        projectData.Save(projectNode);
+        using (var stream = Storage.OpenFile(Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"),
                    OpenFileMode.Create))
         {
-            var streamWriter = new StreamWriter(stream);
-            streamWriter.Write(rootNode.ToJsonText());
-            streamWriter.Dispose();
+            XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
         }
 
         return GetWorldInfo(unusedWorldDirectoryName)
@@ -418,30 +275,29 @@ public static class WorldsManager
 
     public static void ChangeWorld(string directoryName, WorldSettings worldSettings)
     {
-        var jsonFile = Storage.CombinePaths(directoryName, "Project.json");
-        if (!Storage.FileExists(jsonFile))
+        var xmlFile = Storage.CombinePaths(directoryName, "Project.xml");
+        if (!Storage.FileExists(xmlFile))
         {
             return;
         }
 
-        var rootNode = new ValuesDictionary();
+        XElement projectNode;
         GameMode value;
-        using (var stream = Storage.OpenFile(jsonFile, OpenFileMode.Read))
+        using (var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read))
         {
-            var reader = new StreamReader(stream);
-            var jsonText = reader.ReadToEnd();
-            reader.Dispose();
-            rootNode.ApplyOverridesUseJson(jsonText, out _);
-            var gameInfoNode = GetGameInfoNode(rootNode);
-            value = gameInfoNode.GetValue<GameMode>("GameMode");
-            worldSettings.Save(gameInfoNode, true);
+            projectNode = XmlUtils.LoadXmlFromStream(stream, null, true);
+            var gameInfoNode = GetGameInfoNode(projectNode);
+            var valuesDictionary = new ValuesDictionary();
+            valuesDictionary.ApplyOverrides(gameInfoNode);
+            value = valuesDictionary.GetValue<GameMode>("GameMode");
+            worldSettings.Save(valuesDictionary, true);
+            gameInfoNode.RemoveNodes();
+            valuesDictionary.Save(gameInfoNode);
         }
 
-        using (var stream = Storage.OpenFile(jsonFile, OpenFileMode.Create))
+        using (var stream = Storage.OpenFile(xmlFile, OpenFileMode.Create))
         {
-            var streamWriter = new StreamWriter(stream);
-            streamWriter.Write(rootNode.ToJsonText());
-            streamWriter.Dispose();
+            XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
         }
 
         if (worldSettings.GameMode == value)
@@ -515,25 +371,12 @@ public static class WorldsManager
         return xElement ?? throw new InvalidOperationException("GameInfo node not found in project.");
     }
 
-    private static ValuesDictionary GetGameInfoNode(ValuesDictionary projectNode)
-    {
-        foreach (var item in projectNode.GetValue<ValuesDictionary>("Subsystems"))
-        {
-            if (item.Key == "GameInfo")
-            {
-                return (ValuesDictionary)item.Value;
-            }
-        }
-
-        throw new InvalidOperationException("GameInfo node not found in project.");
-    }
-
-    private static XElement GetPlayersNode(XElement projectNode)
+    private static XElement? GetPlayersNode(XElement projectNode)
     {
         var xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
             where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Players"
             select n).FirstOrDefault();
-        return xElement ?? throw new InvalidOperationException("Players node not found in project.");
+        return xElement;
     }
 
     private static void PackWorld(
@@ -704,7 +547,7 @@ public static class WorldsManager
         return Storage.CombinePaths(directoryName, $"{snapshotName}.snapshot");
     }
 
-    private static bool TestXmlFile(string fileName, string rootNodeName)
+    public static bool TestProjectFile(string fileName)
     {
         try
         {
@@ -715,7 +558,7 @@ public static class WorldsManager
 
             using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
             var xElement = XmlUtils.LoadXmlFromStream(stream, null, false);
-            return xElement.Name == rootNodeName;
+            return xElement.Name == "Project";
         }
         catch (Exception)
         {
