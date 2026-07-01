@@ -71,7 +71,7 @@ assets/<mod-id>/**
 - `GlobalPlusWorld`
 - `WorldPlusGlobal`
 
-会话 profile 优先级最高，通常由远程联机重启流程生成。
+会话 profile 优先级最高，通常由进入 world 或远程联机前的重启流程生成。启动完成后，当前已生效的模组组合保存在 `CurrentModRuntime.Value.EffectiveProfile` 中。
 
 ## 仓库地址
 
@@ -84,9 +84,9 @@ assets/<mod-id>/**
 
 远程服务器下发的 `RequiredModProfile.RepositoryUrl` 优先级最高。客户端连接远程服务器时，不会用本地默认仓库覆盖服务器声明的仓库。
 
-## 单机加载流程
+## 本地世界加载流程
 
-GUI 或 Headless 启动时：
+GUI 启动时：
 
 1. 扫描 `GamePaths.Mods`
 2. 导入 `.scpak` 到 `GamePaths.ModCache`
@@ -94,7 +94,17 @@ GUI 或 Headless 启动时：
 4. 如果 profile 中的包本地缺失，尝试从仓库下载
 5. 使用解析到的包启动模组 runtime
 
-如果 profile 为空或缺失，则只加载内置内容。
+之后玩家进入本地 world 时：
+
+1. 按目标 world 解析有效 `ModProfile`
+2. 下载缺失的 required mods
+3. 比较目标 profile 和 `CurrentModRuntime.Value.EffectiveProfile`
+4. 如果相同，直接进入 world
+5. 如果不同，创建临时 session profile 并请求重启
+
+如果 profile 为空或缺失，则只加载内置内容。空 profile 也会参与比较；例如当前 runtime 已加载模组，而目标 world 不启用模组时，也需要重启来卸载模组。
+
+Headless 启动时没有 GUI 中途切换流程。它会直接解析启动 session 对应的有效 profile，下载缺失包，并以服务端侧 runtime 启动。
 
 ## 联机加载流程
 
@@ -105,14 +115,14 @@ GUI 或 Headless 启动时：
 1. 读取服务器下发的 required profile
 2. 检查本地缓存是否已有 required mods
 3. 缺失时从服务器声明的仓库下载
-4. 如果当前 runtime 已经是同一组 `ModId + Version`，直接继续连接
+4. 如果 `CurrentModRuntime.Value.EffectiveProfile` 已经是同一组 `ModId + Version`，直接继续连接
 5. 否则创建临时 session profile 并请求重启
 
 联机校验使用运行时计算的 mod data hash。客户端和服务端有效模组不同会被拒绝。
 
 ## 默认模组仓库
 
-`Settings.DefaultModRepositoryUrl` 是本地默认仓库地址，主要给未来的模组管理 UI 和没有显式仓库地址的 profile 使用。
+`Settings.DefaultModRepositoryUrl` 是本地默认仓库地址，供模组管理界面和没有显式仓库地址的 profile 使用。
 
 它不是“当前联机服务器地址”。服务器对客户端声明的仓库地址来自当前有效 profile，profile 为空时才 fallback 到默认仓库。
 

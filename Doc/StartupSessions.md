@@ -28,6 +28,8 @@
 - `PendingSessionId`
 - `RemainingArgs`
 
+`ActiveSessionId` 是进程启动时根据命令行、`PendingSessionId` 和 `DefaultSessionId` 计算出来的运行期字段，不直接写入 `RunningSetting.xml`。
+
 命令行参数：
 
 - `-d` / `--server`: 设置 `RunMode=HeadlessServer`
@@ -67,13 +69,14 @@ Headless 使用 `World` session。远程联机重启使用 `RemoteServer` sessio
 
 ## Pending Session
 
-当 GUI 客户端为了下载服务器 required mods 需要重启时，会创建一个临时 session，并把它的 id 写入 `RunningSetting.PendingSessionId`。
+当 GUI 客户端为了切换到某个 world 或远程服务器所需的模组组合，需要重启进程时，会创建一个临时 session，并把它的 id 写入 `RunningSetting.PendingSessionId`。
 
 下一次启动时：
 
 1. `PendingSessionId` 成为 active session
-2. 启动流程恢复到对应目标
-3. session 被消费后清理 pending 状态
+2. 启动流程读取对应 session 和 session profile
+3. session profile 被解析成运行时有效 profile，并用于初始化 `GameModRuntime`
+4. session 被消费后清理 pending 状态
 
 Headless 不使用这个机制准备模组。它在启动阶段直接解析 profile、下载缺失包并启动 runtime。
 
@@ -93,6 +96,8 @@ Headless 不使用这个机制准备模组。它在启动阶段直接解析 prof
 - `Version`
 
 `PackageHash` 不进入用户可编辑的 profile 文件。实际加载和联机校验仍会在运行时使用包 hash。
+
+启动完成后，代码应当以 `CurrentModRuntime.Value.EffectiveProfile` 作为当前有效 profile。`SessionProfiles/<sessionId>.xml` 只是启动前的恢复输入，不能在运行期当作“当前已生效模组”的判断依据。
 
 仓库地址解析：
 

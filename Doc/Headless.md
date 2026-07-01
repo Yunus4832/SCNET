@@ -2,7 +2,7 @@
 
 Headless 模式在不打开游戏窗口的情况下运行服务端逻辑，适合部署独立联机服务器。
 
-它复用同一套世界、网络和模组运行时，但跳过图形界面流程。启动目标、世界和重启恢复都通过启动会话系统解析，详见 [StartupSessions.md](./StartupSessions.md)。
+它复用同一套世界、网络和模组运行时，但跳过图形界面流程。启动目标和世界都通过启动会话系统解析，详见 [StartupSessions.md](./StartupSessions.md)。
 
 ## 启动方式
 
@@ -111,7 +111,7 @@ Headless 使用的会话通常是：
 - 世界 profile：`<world>/WorldModProfile.xml`
 - 会话 profile：`config:SessionProfiles/<sessionId>.xml`
 
-Headless 启动时会解析当前会话对应的有效模组 profile，并确保缺失的包已下载到本地缓存。Headless 不再通过“请求重启”来准备模组。
+Headless 启动时会解析当前会话对应的有效模组 profile，并确保缺失的包已下载到本地缓存。解析结果会直接成为本进程的 `CurrentModRuntime.Value.EffectiveProfile`。Headless 不通过“请求重启”来准备模组。
 
 ## 世界解析
 
@@ -143,5 +143,7 @@ Headless 启动后会：
 - 启动游戏端口和广播端口
 - 运行 20 TPS 左右的主循环
 - 退出时保存世界和设置
+
+Headless 进程运行期间不会像 GUI 一样在进入 world 前弹窗请求重启；如果要切换模组组合，需要用新的 session/profile 重新启动进程。
 
 可以通过 `Ctrl+C` 终止进程。

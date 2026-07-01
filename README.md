@@ -103,7 +103,6 @@ dotnet test Survivalcraft.Test/
 - [模组使用说明](Doc/Mods.md) — `.scpak`、本地缓存、profile、仓库和联机 required mods
 - [模组开发](Doc/Modding.md) — 模组模板、`.scpak` 构建、示例模组与 NuGet 包边界
 - [模组服务器](Doc/ModServer.md) — 私有 `.scpak` 仓库的上传、索引与匿名分发
-- [模组平台计划](Doc/ModPlatformPlan.md) — 模组仓库、缓存、配置驱动装载与联机会话重启方案
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问
 - [外部依赖](Doc/Dependencies.md) — 工具链、运行时包与测试依赖
 
