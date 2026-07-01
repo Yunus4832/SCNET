@@ -2,14 +2,6 @@ namespace Game.Modding;
 
 public static class ModRestartHelper
 {
-    public static void HandleModDataValidationMessage(string message)
-    {
-        if (RequiresClientRestart(message))
-        {
-            GameExitManager.RequestRestart();
-        }
-    }
-
     public static RemoteModSessionPreparation PrepareRemoteSession(
         SessionInfo remoteSession,
         ModProfile? requiredProfile,
@@ -23,13 +15,11 @@ public static class ModRestartHelper
         }
 
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, requiredProfile);
-        var existingProfile = ModProfileManager.LoadSessionProfile(RunningSettingManager.Current.ActiveSessionId);
         var downloadedAny = ModProfileResolver.EnsurePackagesAvailable(
             sessionProfile,
             Storage.GetSystemPath(GamePaths.ModCache),
             log);
-        if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile) ||
-            (AreEquivalent(existingProfile, sessionProfile) && !downloadedAny))
+        if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
         {
             return RemoteModSessionPreparation.Ready();
         }
@@ -38,6 +28,35 @@ public static class ModRestartHelper
             remoteSession,
             sessionProfile,
             CreateRestartReason(sessionProfile, downloadedAny));
+    }
+
+    public static RemoteModSessionPreparation PrepareWorldSession(
+        WorldInfo worldInfo,
+        Action<string>? log = null)
+    {
+        ArgumentNullException.ThrowIfNull(worldInfo);
+
+        var worldSession = new SessionInfo
+        {
+            Target = SessionTarget.World,
+            World = worldInfo.DirectoryName
+        };
+        var desiredProfile = ModProfileManager.ResolveProfileForSessionTarget(worldSession);
+        var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, desiredProfile);
+        var downloadedAny = desiredProfile.Packages.Count > 0 &&
+                            ModProfileResolver.EnsurePackagesAvailable(
+                                desiredProfile,
+                                Storage.GetSystemPath(GamePaths.ModCache),
+                                log);
+        if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, desiredProfile))
+        {
+            return RemoteModSessionPreparation.Ready();
+        }
+
+        return RemoteModSessionPreparation.RestartRequired(
+            worldSession,
+            sessionProfile,
+            CreateWorldRestartReason(desiredProfile, downloadedAny));
     }
 
     private static bool AreEquivalent(ModProfile? left, ModProfile right)
@@ -65,45 +84,23 @@ public static class ModRestartHelper
         return $"{prefix}\n{string.Join('\n', packages)}";
     }
 
-    private static bool RequiresClientRestart(string message)
+    private static string CreateWorldRestartReason(ModProfile profile, bool downloadedAny)
     {
-        if (string.IsNullOrWhiteSpace(message))
+        if (profile.Packages.Count == 0)
         {
-            return false;
+            return "该世界不启用模组，需要重启后卸载当前模组。";
         }
 
-        if (message.Contains("资源包") && message.Contains("校验不通过"))
-        {
-            return HasClientPayload(message, "[服务端]", "[客户端]");
-        }
-
-        if (message.Contains("The resource package") && message.Contains("verification failed"))
-        {
-            return HasClientPayload(message, "[Server]", "[Client]");
-        }
-
-        return message.Contains("Mod验证不通过。请去掉多余的mod或添加服务器所需要的mod");
+        var packages = profile.Packages
+            .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
+            .Select(package => $"{package.ModId}@{package.Version}");
+        var prefix = downloadedAny
+            ? "已下载该世界需要的模组，需要重启后启用："
+            : "该世界需要切换到指定模组列表，需要重启后启用：";
+        return $"{prefix}\n{string.Join('\n', packages)}";
     }
 
-    private static bool HasClientPayload(string message, string serverMarker, string clientMarker)
-    {
-        var serverStartIndex = message.IndexOf(serverMarker, StringComparison.Ordinal);
-        var clientStartIndex = message.IndexOf(clientMarker, StringComparison.Ordinal);
-        if (serverStartIndex < 0 || clientStartIndex < 0 || clientStartIndex <= serverStartIndex)
-        {
-            return false;
-        }
-
-        serverStartIndex += serverMarker.Length;
-        if (!string.IsNullOrWhiteSpace(message.Substring(serverStartIndex, clientStartIndex - serverStartIndex)))
-        {
-            return false;
-        }
-
-        clientStartIndex += clientMarker.Length;
-        return clientStartIndex <= message.Length &&
-               !string.IsNullOrWhiteSpace(message[clientStartIndex..]);
-    }
 }
 
 public sealed class RemoteModSessionPreparation

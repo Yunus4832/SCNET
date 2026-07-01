@@ -6,8 +6,6 @@ namespace Game.Screens;
 
 public class PlayScreen : Screen
 {
-    public const int ModChunkVer = 1;
-
     private const int _maxWorlds = 300;
 
     private const string _typeName = "PlayScreen";
@@ -159,11 +157,73 @@ public class PlayScreen : Screen
     {
         DialogsManager.HideAllDialogs();
         var worldInfo = (WorldInfo)item;
+        PrepareWorldModsAndPlay(worldInfo);
+        _worldsListWidget.SelectedItem = null;
+    }
+
+    private void PrepareWorldModsAndPlay(WorldInfo worldInfo)
+    {
+        var busyDialog = new BusyDialog("准备世界模组", "正在检查所需模组...");
+        DialogsManager.ShowDialog(null, busyDialog);
+        Task.Run(() =>
+        {
+            try
+            {
+                var result = ModRestartHelper.PrepareWorldSession(
+                    worldInfo,
+                    message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    if (!result.RequiresRestart)
+                    {
+                        PlayPreparedWorld(worldInfo);
+                        return;
+                    }
+
+                    ConfirmWorldModRestart(result);
+                });
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    DialogsManager.Alert(
+                        "模组准备失败",
+                        $"无法准备该世界需要的模组。\n{ex.Message}");
+                });
+            }
+        });
+    }
+
+    private static void ConfirmWorldModRestart(RemoteModSessionPreparation result)
+    {
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                "需要重启游戏",
+                $"{result.RestartReason}\n\n是否现在重启？",
+                "重启",
+                "取消",
+                button =>
+                {
+                    if (button != MessageDialogButton.Button1)
+                    {
+                        return;
+                    }
+
+                    GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
+                }));
+    }
+
+    private void PlayPreparedWorld(WorldInfo worldInfo)
+    {
         if (worldInfo.WorldSettings.RunServer)
         {
             if (CommonLib.StartServer())
             {
-                ScreensManager.SwitchScreen("GameLoading", item, string.Empty);
+                ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
             }
             else
             {
@@ -185,9 +245,7 @@ public class PlayScreen : Screen
         }
         else
         {
-            ScreensManager.SwitchScreen("GameLoading", item, string.Empty);
+            ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
         }
-
-        _worldsListWidget.SelectedItem = null;
     }
 }

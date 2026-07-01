@@ -60,7 +60,7 @@ public class NewWorldScreen : Screen
 
     private readonly UniformSpacingPanelWidget _recoverySpeedConfig;
 
-    private readonly UniformSpacingPanelWidget _randomSpawnPostionPanel;
+    private readonly UniformSpacingPanelWidget _randomSpawnPositionPanel;
 
     private readonly UniformSpacingPanelWidget _keywordBlockingConfigPanel;
 
@@ -83,7 +83,7 @@ public class NewWorldScreen : Screen
         _daySpeedConfig = Children.Find<UniformSpacingPanelWidget>("DaySpeedConfig")!;
         _recoverySpeedConfig = Children.Find<UniformSpacingPanelWidget>("RecoverySpeedConfig")!;
         _disableBlocksPanel = Children.Find<UniformSpacingPanelWidget>("DisableBlocksPanel")!;
-        _randomSpawnPostionPanel = Children.Find<UniformSpacingPanelWidget>("RandomSpawnPositionPanel")!;
+        _randomSpawnPositionPanel = Children.Find<UniformSpacingPanelWidget>("RandomSpawnPositionPanel")!;
         _keywordBlockingConfigPanel = Children.Find<UniformSpacingPanelWidget>("KeywordBlockingConfig")!;
         _runServer = Children.Find<CheckboxWidget>("RunServer")!;
         _needLogin = Children.Find<CheckboxWidget>("NeedLogin")!;
@@ -130,7 +130,7 @@ public class NewWorldScreen : Screen
         _daySpeedConfig.IsVisible = _worldSettings.RunServer;
         _recoverySpeedConfig.IsVisible = _worldSettings.RunServer;
         _disableBlocksPanel.IsVisible = _worldSettings.RunServer;
-        _randomSpawnPostionPanel.IsVisible = _worldSettings.RunServer;
+        _randomSpawnPositionPanel.IsVisible = _worldSettings.RunServer;
         _keywordBlockingConfigPanel.IsVisible = _worldSettings.RunServer;
         _keywordBlocking.IsVisible = _worldSettings.RunServer;
 
@@ -195,34 +195,102 @@ public class NewWorldScreen : Screen
 
             if (_runServer.IsChecked)
             {
-                if (CommonLib.StartServer())
-                {
-                    ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
-                }
-                else
-                {
-                    DialogsManager.ShowDialog(
-                        this,
-                        new MessageDialog(
-                            "提示",
-                            "创建服务器失败，端口已被占用",
-                            "确定", string.Empty,
-                            _ =>
-                            {
-                                CommonLib.Net.StopImmediate();
-                                DialogsManager.HideAllDialogs();
-                            }));
-                }
+                PrepareWorldModsAndPlay(worldInfo, runServer: true);
             }
             else
             {
-                ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
+                PrepareWorldModsAndPlay(worldInfo, runServer: false);
             }
         }
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen("Play");
+        }
+    }
+
+    private void PrepareWorldModsAndPlay(WorldInfo worldInfo, bool runServer)
+    {
+        var busyDialog = new BusyDialog("准备世界模组", "正在检查所需模组...");
+        DialogsManager.ShowDialog(null, busyDialog);
+        Task.Run(() =>
+        {
+            try
+            {
+                var result = ModRestartHelper.PrepareWorldSession(
+                    worldInfo,
+                    message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    if (!result.RequiresRestart)
+                    {
+                        PlayPreparedWorld(worldInfo, runServer);
+                        return;
+                    }
+
+                    ConfirmWorldModRestart(result);
+                });
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    DialogsManager.Alert(
+                        "模组准备失败",
+                        $"无法准备该世界需要的模组。\n{ex.Message}");
+                });
+            }
+        });
+    }
+
+    private static void ConfirmWorldModRestart(RemoteModSessionPreparation result)
+    {
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                "需要重启游戏",
+                $"{result.RestartReason}\n\n是否现在重启？",
+                "重启",
+                "取消",
+                button =>
+                {
+                    if (button != MessageDialogButton.Button1)
+                    {
+                        return;
+                    }
+
+                    GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
+                }));
+    }
+
+    private void PlayPreparedWorld(WorldInfo worldInfo, bool runServer)
+    {
+        if (runServer)
+        {
+            if (CommonLib.StartServer())
+            {
+                ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
+            }
+            else
+            {
+                DialogsManager.ShowDialog(
+                    this,
+                    new MessageDialog(
+                        "提示",
+                        "创建服务器失败，端口已被占用",
+                        "确定", string.Empty,
+                        _ =>
+                        {
+                            CommonLib.Net.StopImmediate();
+                            DialogsManager.HideAllDialogs();
+                        }));
+            }
+        }
+        else
+        {
+            ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
         }
     }
 }
