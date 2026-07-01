@@ -78,7 +78,7 @@ public class GameWidget : CanvasWidget
         SubsystemTime = SubsystemGameWidgets.Project.FindSubsystem<SubsystemTime>();
         LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
         _bitmapButtonWidget = Children.Find<BitmapButtonWidget>("MsgButton")!;
-        NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerlistButton")!;
+        NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerListButton")!;
         _bitmapButtonWidget.Text = "";
         ViewWidget = Children.Find<ViewWidget>("View")!;
         GuiWidget = Children.Find<ContainerWidget>("Gui")!;

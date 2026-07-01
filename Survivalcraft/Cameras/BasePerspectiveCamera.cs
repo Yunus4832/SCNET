@@ -14,8 +14,6 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
 
     private Vector3 _viewDirection;
 
-    private BoundingFrustum? _viewFrustum;
-
     private bool _viewFrustumValid;
 
     private Matrix? _viewMatrix;
@@ -222,21 +220,21 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
         {
             if (_viewFrustumValid)
             {
-                return _viewFrustum!;
+                return field!;
             }
 
-            if (_viewFrustum is null)
+            if (field is null)
             {
-                _viewFrustum = new BoundingFrustum(ViewProjectionMatrix);
+                field = new BoundingFrustum(ViewProjectionMatrix);
             }
             else
             {
-                _viewFrustum.Matrix = ViewProjectionMatrix;
+                field.Matrix = ViewProjectionMatrix;
             }
 
             _viewFrustumValid = true;
 
-            return _viewFrustum!;
+            return field!;
         }
     }
 

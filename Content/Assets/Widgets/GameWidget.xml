@@ -118,7 +118,7 @@
                         <BitmapButtonWidget Name="TimeOfDayButton" Text="[GameWidget:10]" Size="68, 64"
                                             NormalSubtexture="{Textures/Atlas/TimeOfDayButton}"
                                             ClickedSubtexture="{Textures/Atlas/TimeOfDayButton_Pressed}" Margin="4, 0"/>
-                        <BitmapButtonWidget Name="PlayerlistButton" Text="[GameWidget:5]" Size="64, 64"
+                        <BitmapButtonWidget Name="PlayerListButton" Text="[GameWidget:5]" Size="64, 64"
                                             NormalSubtexture="{Textures/Gui/Playerlist}"
                                             ClickedSubtexture="{Textures/Gui/Playerlist_Pressed}" Margin="0, 3"
                                             IsAutoCheckingEnabled="true"/>
