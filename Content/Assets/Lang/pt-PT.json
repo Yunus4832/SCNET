@@ -22,7 +22,10 @@
         "1": "Armazenamento interno"
     },
     "ContentScreen": {
-        "2": "Gestão de Recursos"
+        "2": "Gestão de Recursos",
+        "12": "Gerir mods globais e dos mundos",
+        "13": "Mods",
+        "14": "Gestão de utilizadores"
     },
     "ManageContentScreen": {
         "1": "Materiais quadrados| {0} x {1} {2} {3} {4} {5} {6} {7} {8} {9} {10}",
@@ -42,6 +45,39 @@
         "2": "Nenhum anúncio foi emitido por enquanto.\nOu não se conecta à Internet para obter informações de anúncio.",
         "13": "Tem a certeza de que quer mudar para o modo de servidor?",
         "14": "Tem a certeza de que quer sair do jogo?"
+    },
+    "ModManagementScreen": {
+        "Title": "Gestão de Mods",
+        "RepositoryAddress": "Servidor",
+        "Refresh": "Atualizar",
+        "SaveDefault": "Padrão",
+        "Download": "Baixar",
+        "DeleteCacheShort": "Apagar",
+        "Export": "Exportar",
+        "AddGlobal": "Global",
+        "RemoveGlobal": "Remover",
+        "World": "Mundo",
+        "PreviousPage": "Anterior",
+        "NextPage": "Próxima",
+        "RepositoryEmptyTitle": "Endereço do servidor de mods vazio",
+        "RepositoryEmptyMessage": "Introduza primeiro um endereço de servidor de mods.",
+        "ReadingRepository": "Lendo servidor de mods",
+        "ReadRepositoryFailed": "Falha ao ler servidor de mods",
+        "DownloadingMod": "Baixando mod",
+        "DownloadModFailed": "Falha ao baixar mod",
+        "DeleteCacheTitle": "Apagar cache",
+        "DeleteCacheQuestion": "Apagar cache local {0}@{1}?",
+        "DeleteCacheImportedQuestion": "Apagar cache local {0}@{1}?\nEste mod ainda existe na pasta externa Mods e será importado novamente no próximo arranque.",
+        "ExportComplete": "Exportação concluída",
+        "ExportModFailed": "Falha ao exportar mod",
+        "NoWorldTitle": "Sem mundos",
+        "NoWorldMessage": "Crie primeiro um mundo.",
+        "StatusCached": "Em cache",
+        "StatusRemote": "Remoto",
+        "StatusHashMismatch": "Hash diferente",
+        "StatusGlobal": "Global",
+        "StatusWorld": "Mundo",
+        "SideLocal": "local"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Nenhuma caixa adequada foi encontrada",
@@ -3335,7 +3371,9 @@
             "8": "Gestão de conteúdo existente",
             "9": "Administração",
             "10": "Obtenha conteúdo da comunidade original",
-            "11": "Comunidade original"
+            "11": "Comunidade original",
+            "12": "Gerir mods globais e dos mundos",
+            "13": "Mods"
         },
         "ExternalContentScreen": {
             "1": "",
@@ -3372,6 +3410,18 @@
             "12": "Conteúdo",
             "13": "Tem a certeza de que quer mudar para o modo de servidor?",
             "14": "Tem a certeza de que quer sair do jogo?"
+        },
+        "ModManagementScreen": {
+            "Title": "Gestão de Mods",
+            "RepositoryAddress": "Servidor",
+            "Refresh": "Atualizar",
+            "SaveDefault": "Padrão",
+            "Download": "Baixar",
+            "Export": "Exportar",
+            "AddGlobal": "Global",
+            "World": "Mundo",
+            "PreviousPage": "Anterior",
+            "NextPage": "Próxima"
         },
         "ManageContentScreen": {
             "1": "Gestão de conteúdo",

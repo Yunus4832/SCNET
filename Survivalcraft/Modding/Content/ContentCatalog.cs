@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 namespace Game.Modding.Content;
 
 public sealed class ContentCatalog
@@ -64,6 +66,18 @@ public sealed class ContentCatalog
         LanguageManager.Initialize(resolvedLanguage);
         LanguageManager.LanguageTypes.Clear();
         LanguageManager.LanguageTypes.AddRange(LanguageTypes);
+        LanguageManager.ClearLanguageDisplayNames();
+        foreach (var entry in _entries)
+        {
+            var entryLanguageType = GetLanguageType(entry.Registration.RelativePath);
+            if (entryLanguageType == null)
+            {
+                continue;
+            }
+
+            using var stream = entry.Registration.OpenRead();
+            LanguageManager.RegisterLanguageDisplayName(entryLanguageType, ReadLanguageDisplayName(stream));
+        }
 
         var languagePath = $"lang/{resolvedLanguage}.json";
         foreach (var entry in _entries.Where(entry =>
@@ -74,6 +88,20 @@ public sealed class ContentCatalog
         }
 
         LanguageManager.RefreshCommonWords();
+    }
+
+    private static string? ReadLanguageDisplayName(Stream stream)
+    {
+        try
+        {
+            var root = JsonNode.Parse(stream) as JsonObject;
+            return root?["Language"]?["Name"]?.ToString();
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to read language display name: {ex.Message}");
+            return null;
+        }
     }
 
     public void Uninstall()

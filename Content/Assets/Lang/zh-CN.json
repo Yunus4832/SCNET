@@ -22,7 +22,10 @@
         "1": "内部存储"
     },
     "ContentScreen": {
-        "2": "资源管理"
+        "2": "资源管理",
+        "12": "全局模组和存档模组管理",
+        "13": "模组",
+        "14": "用户管理"
     },
     "ManageContentScreen": {
         "1": "方块材质 | {0}x{1}",
@@ -42,6 +45,39 @@
         "2": "当前暂无发布公告，\n或者没有联网获取公告信息",
         "13": "确定要切换到服务器模式吗？",
         "14": "确定要退出游戏吗？"
+    },
+    "ModManagementScreen": {
+        "Title": "模组管理",
+        "RepositoryAddress": "服务器地址",
+        "Refresh": "刷新",
+        "SaveDefault": "保存默认",
+        "Download": "下载",
+        "DeleteCacheShort": "删缓存",
+        "Export": "导出",
+        "AddGlobal": "加入全局",
+        "RemoveGlobal": "移出全局",
+        "World": "世界",
+        "PreviousPage": "上页",
+        "NextPage": "下页",
+        "RepositoryEmptyTitle": "模组服务器地址为空",
+        "RepositoryEmptyMessage": "请先输入模组服务器地址。",
+        "ReadingRepository": "正在读取模组服务器",
+        "ReadRepositoryFailed": "读取模组服务器失败",
+        "DownloadingMod": "正在下载模组",
+        "DownloadModFailed": "下载模组失败",
+        "DeleteCacheTitle": "删除缓存",
+        "DeleteCacheQuestion": "删除本地缓存 {0}@{1}？",
+        "DeleteCacheImportedQuestion": "删除本地缓存 {0}@{1}？\n该模组仍存在于外部 Mods 目录，下次启动会重新导入。",
+        "ExportComplete": "导出完成",
+        "ExportModFailed": "导出模组失败",
+        "NoWorldTitle": "没有世界",
+        "NoWorldMessage": "请先创建一个世界。",
+        "StatusCached": "已缓存",
+        "StatusRemote": "远程",
+        "StatusHashMismatch": "Hash不一致",
+        "StatusGlobal": "全局",
+        "StatusWorld": "世界",
+        "SideLocal": "本地"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "没有找到合适的方块",
@@ -3335,7 +3371,9 @@
             "8": "管理现有内容",
             "9": "管理",
             "10": "从原版社区获取内容",
-            "11": "原版社区"
+            "11": "原版社区",
+            "12": "全局模组和存档模组管理",
+            "13": "模组"
         },
         "ExternalContentScreen": {
             "1": "",
@@ -3372,6 +3410,18 @@
             "12": "内容",
             "13": "确定要切换到服务器模式吗？",
             "14": "确定要退出游戏吗？"
+        },
+        "ModManagementScreen": {
+            "Title": "模组管理",
+            "RepositoryAddress": "服务器地址",
+            "Refresh": "刷新",
+            "SaveDefault": "保存默认",
+            "Download": "下载",
+            "Export": "导出",
+            "AddGlobal": "加入全局",
+            "World": "世界",
+            "PreviousPage": "上页",
+            "NextPage": "下页"
         },
         "ManageContentScreen": {
             "1": "管理内容",

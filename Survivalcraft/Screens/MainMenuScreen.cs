@@ -78,7 +78,7 @@ public class MainMenuScreen : Screen
                 string.Empty,
                 LanguageManager.LanguageTypes,
                 70f,
-                item => (string)item,
+                item => LanguageManager.GetLanguageDisplayName((string)item),
                 delegate(object item)
                 {
                     // 用户选择语言后调用 ChangeLanguage 方法

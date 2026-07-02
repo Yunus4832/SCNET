@@ -22,7 +22,10 @@
         "1": "SD Card"
     },
     "ContentScreen": {
-        "2": "Content Management"
+        "2": "Content Management",
+        "12": "Manage global and world mods",
+        "13": "Mods",
+        "14": "User Management"
     },
     "ManageContentScreen": {
         "1": "Blocks Texture | {0}x{1}",
@@ -42,6 +45,39 @@
         "2": "There are currently no published announcements,\nor you are not connected to the network to fetch announcement information",
         "13": "Are you sure you want to switch to server mode?",
         "14": "Are you sure you want to exit the game?"
+    },
+    "ModManagementScreen": {
+        "Title": "Mod Management",
+        "RepositoryAddress": "Server",
+        "Refresh": "Refresh",
+        "SaveDefault": "Default",
+        "Download": "Download",
+        "DeleteCacheShort": "Delete",
+        "Export": "Export",
+        "AddGlobal": "Global",
+        "RemoveGlobal": "Remove",
+        "World": "World",
+        "PreviousPage": "Prev",
+        "NextPage": "Next",
+        "RepositoryEmptyTitle": "Mod server address is empty",
+        "RepositoryEmptyMessage": "Enter a mod server address first.",
+        "ReadingRepository": "Reading mod server",
+        "ReadRepositoryFailed": "Failed to read mod server",
+        "DownloadingMod": "Downloading mod",
+        "DownloadModFailed": "Failed to download mod",
+        "DeleteCacheTitle": "Delete Cache",
+        "DeleteCacheQuestion": "Delete local cache {0}@{1}?",
+        "DeleteCacheImportedQuestion": "Delete local cache {0}@{1}?\nThis mod still exists in the external Mods directory and will be imported again on next startup.",
+        "ExportComplete": "Export Complete",
+        "ExportModFailed": "Failed to export mod",
+        "NoWorldTitle": "No Worlds",
+        "NoWorldMessage": "Create a world first.",
+        "StatusCached": "Cached",
+        "StatusRemote": "Remote",
+        "StatusHashMismatch": "Hash mismatch",
+        "StatusGlobal": "Global",
+        "StatusWorld": "World",
+        "SideLocal": "local"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Unsuitable block found",
@@ -2638,12 +2674,12 @@
         },
         "17": {
             "value": "\\n You can ride certain animals, such as horses or camels.\\n Riding an animal lets you move more quickly and view the world from a higher vantage point.\\n \\n\\n\\n To mount an animal, get close to it and wait for it to stop.\\n The sneak button will turn into mount button.\\n Press it to mount/dismount.\\n You can also mount boats in the same way as animals.\\n \\n\\n\\n To successfully ride an animal, you need a saddle, which can be crafted from leather and wooden sticks.\\n When the animal is saddled, its behavior changes and it becomes more friendly towards you.\\n Do not mount an unsaddled animal, it will not like it, and may even hurt you.\\n \\n\\n\\n A whistle will summon any saddled animals that are nearby.\\n It is a good idea to carry a whistle with you when you are riding.\\n ",
-            "Name": "FoodRot",
+            "Name": "Riding",
             "Title": "Riding Animals"
         },
         "18": {
             "value": "\\n In Survivalcraft, the entire world is destructible.\\n \\n\\n\\n To dig a block, press it and hold your finger.\\n Digging cracks will appear as the block is being dug.\\n \\n\\n\\n Some blocks take a very long time to dig without proper tools.\\n Digging some blocks, such as glass, will destroy them.\\n ",
-            "Name": "Levels",
+            "Name": "Digging",
             "Title": "Digging Blocks"
         },
         "19": {
@@ -3335,7 +3371,9 @@
             "8": "Manage downloaded content",
             "9": "Manage",
             "10": "Access content created by other Original community members and registered for public access",
-            "11": "Original Community"
+            "11": "Original Community",
+            "12": "Manage global and world mods",
+            "13": "Mods"
         },
         "ExternalContentScreen": {
             "1": "",
@@ -3372,6 +3410,18 @@
             "12": "Content",
             "13": "Are you sure you want to switch to server mode?",
             "14": "Are you sure you want to exit the game?"
+        },
+        "ModManagementScreen": {
+            "Title": "Mod Management",
+            "RepositoryAddress": "Server",
+            "Refresh": "Refresh",
+            "SaveDefault": "Default",
+            "Download": "Download",
+            "Export": "Export",
+            "AddGlobal": "Global",
+            "World": "World",
+            "PreviousPage": "Prev",
+            "NextPage": "Next"
         },
         "ManageContentScreen": {
             "1": "Manage Content",

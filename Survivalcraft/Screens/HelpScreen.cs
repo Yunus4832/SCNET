@@ -77,6 +77,12 @@ public class HelpScreen : Screen
             };
             if (!string.IsNullOrEmpty(helpTopic.Name))
             {
+                if (_topics.ContainsKey(helpTopic.Name))
+                {
+                    Log.Error($"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Title}\" was skipped.");
+                    continue;
+                }
+
                 _topics.Add(helpTopic.Name, helpTopic);
             }
 

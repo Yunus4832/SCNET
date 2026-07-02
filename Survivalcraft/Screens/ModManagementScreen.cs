@@ -4,6 +4,8 @@ namespace Game.Screens;
 
 public class ModManagementScreen : Screen
 {
+    private const string _typeName = nameof(ModManagementScreen);
+
     private readonly ButtonWidget _addWorldModButton;
     private readonly ButtonWidget _cacheButton;
     private readonly ButtonWidget _exportButton;
@@ -52,10 +54,14 @@ public class ModManagementScreen : Screen
     {
         var selectedItem = _modsList.SelectedItem as RepositoryModItem;
         _globalModButton.IsEnabled = selectedItem != null;
-        _globalModButton.Text = selectedItem is { IsGlobal: true } ? "移出全局" : "加入全局";
+        _globalModButton.Text = selectedItem is { IsGlobal: true }
+            ? LanguageManager.Get(_typeName, "RemoveGlobal")
+            : LanguageManager.Get(_typeName, "AddGlobal");
         _addWorldModButton.IsEnabled = selectedItem != null;
         _cacheButton.IsEnabled = selectedItem is { LocalEntry: not null } or { RemotePackage: not null };
-        _cacheButton.Text = selectedItem?.LocalEntry != null ? "删缓存" : "下载";
+        _cacheButton.Text = selectedItem?.LocalEntry != null
+            ? LanguageManager.Get(_typeName, "DeleteCacheShort")
+            : LanguageManager.Get(_typeName, "Download");
         _exportButton.IsEnabled = selectedItem?.LocalEntry != null;
         _previousPageButton.IsEnabled = false;
         _nextPageButton.IsEnabled = false;
@@ -117,11 +123,13 @@ public class ModManagementScreen : Screen
         var repositoryUrl = NormalizeRepositoryUrl(_repositoryTextBox.Text);
         if (string.IsNullOrWhiteSpace(repositoryUrl))
         {
-            DialogsManager.Alert("模组服务器地址为空", "请先输入模组服务器地址。");
+            DialogsManager.Alert(
+                LanguageManager.Get(_typeName, "RepositoryEmptyTitle"),
+                LanguageManager.Get(_typeName, "RepositoryEmptyMessage"));
             return;
         }
 
-        var busyDialog = new BusyDialog("正在读取模组服务器", repositoryUrl);
+        var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "ReadingRepository"), repositoryUrl);
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
         {
@@ -151,7 +159,7 @@ public class ModManagementScreen : Screen
                 Dispatcher.Dispatch(() =>
                 {
                     DialogsManager.HideDialog(busyDialog);
-                    DialogsManager.Alert("读取模组服务器失败", ex.Message);
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ReadRepositoryFailed"), ex.Message);
                 });
             }
         });
@@ -200,7 +208,7 @@ public class ModManagementScreen : Screen
             return;
         }
 
-        var busyDialog = new BusyDialog("正在下载模组", $"{mod.ModId}@{mod.Version}");
+        var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "DownloadingMod"), $"{mod.ModId}@{mod.Version}");
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
         {
@@ -221,7 +229,7 @@ public class ModManagementScreen : Screen
                 Dispatcher.Dispatch(() =>
                 {
                     DialogsManager.HideDialog(busyDialog);
-                    DialogsManager.Alert("下载模组失败", ex.Message);
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "DownloadModFailed"), ex.Message);
                 });
             }
         });
@@ -231,10 +239,10 @@ public class ModManagementScreen : Screen
     {
         var importedSources = FindImportedSources(mod);
         var message = importedSources.Count == 0
-            ? $"删除本地缓存 {mod.ModId}@{mod.Version}？"
-            : $"删除本地缓存 {mod.ModId}@{mod.Version}？\n该模组仍存在于外部 Mods 目录，下次启动会重新导入。";
+            ? string.Format(LanguageManager.Get(_typeName, "DeleteCacheQuestion"), mod.ModId, mod.Version)
+            : string.Format(LanguageManager.Get(_typeName, "DeleteCacheImportedQuestion"), mod.ModId, mod.Version);
         DialogsManager.ShowDialog(null, new MessageDialog(
-            "删除缓存",
+            LanguageManager.Get(_typeName, "DeleteCacheTitle"),
             message,
             LanguageManager.Yes,
             LanguageManager.No,
@@ -277,11 +285,11 @@ public class ModManagementScreen : Screen
             var targetPath = LocalModsImportManager.ExportPackage(
                 mod.LocalEntry,
                 Storage.GetSystemPath(GamePaths.Mods));
-            DialogsManager.Alert("导出完成", targetPath);
+            DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), targetPath);
         }
         catch (Exception ex)
         {
-            DialogsManager.Alert("导出模组失败", ex.Message);
+            DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), ex.Message);
         }
     }
 
@@ -290,7 +298,9 @@ public class ModManagementScreen : Screen
         WorldsManager.UpdateWorldsList();
         if (WorldsManager.WorldInfos.Count == 0)
         {
-            DialogsManager.Alert("没有世界", "请先创建一个世界。");
+            DialogsManager.Alert(
+                LanguageManager.Get(_typeName, "NoWorldTitle"),
+                LanguageManager.Get(_typeName, "NoWorldMessage"));
             return;
         }
 
@@ -425,30 +435,30 @@ public class ModManagementScreen : Screen
         var status = new List<string>();
         if (mod.LocalEntry != null)
         {
-            status.Add("已缓存");
+            status.Add(LanguageManager.Get(_typeName, "StatusCached"));
         }
 
         if (mod.RemotePackage != null)
         {
-            status.Add("远程");
+            status.Add(LanguageManager.Get(_typeName, "StatusRemote"));
         }
 
         if (mod.HasHashMismatch)
         {
-            status.Add("Hash不一致");
+            status.Add(LanguageManager.Get(_typeName, "StatusHashMismatch"));
         }
 
         if (mod.IsGlobal)
         {
-            status.Add("全局");
+            status.Add(LanguageManager.Get(_typeName, "StatusGlobal"));
         }
 
         if (mod.IsAnyWorld)
         {
-            status.Add("世界");
+            status.Add(LanguageManager.Get(_typeName, "StatusWorld"));
         }
 
-        var side = mod.RemotePackage?.Side ?? "local";
+        var side = mod.RemotePackage?.Side ?? LanguageManager.Get(_typeName, "SideLocal");
         var details = $"{mod.Version} | {side}";
         if (status.Count > 0)
         {

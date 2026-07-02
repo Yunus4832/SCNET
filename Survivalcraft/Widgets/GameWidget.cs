@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+using Engine.Graphics;
 using Engine.Input;
 
 using EntitySystem.Core;
@@ -26,6 +27,18 @@ public class GameWidget : CanvasWidget
     public readonly NetPanelWidget? NetPanelWidget;
 
     public readonly BitmapButtonWidget NetPlayerListButton;
+
+    private readonly Subtexture _netPlayersButtonSubtexture;
+
+    private readonly Subtexture _netGroupButtonSubtexture;
+
+    private readonly Subtexture _netBlackButtonSubtexture;
+
+    private readonly Subtexture _netHideButtonSubtexture;
+
+    private NetPanelWidget.ShowType? _netPlayerListButtonShowType;
+
+    private bool _netPlayerListButtonTextureInitialized;
 
     public SubsystemTime? SubsystemTime;
 
@@ -79,14 +92,20 @@ public class GameWidget : CanvasWidget
         LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
         _bitmapButtonWidget = Children.Find<BitmapButtonWidget>("MsgButton")!;
         NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerListButton")!;
+        _netPlayersButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Server_Players_Btn");
+        _netGroupButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Server_Group_Btn");
+        _netBlackButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Server_Black_Btn");
+        _netHideButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Server_Hide_Btn");
         _bitmapButtonWidget.Text = "";
+        NetPlayerListButton.IsVisible = false;
         ViewWidget = Children.Find<ViewWidget>("View")!;
         GuiWidget = Children.Find<ContainerWidget>("Gui")!;
         _controlsWidget = GuiWidget.Children.Find<CanvasWidget>("ControlsContainer")!;
         if (CommonLib.Net.IsConnected && playerData.IsMainPlayer)
         {
             NetPanelWidget = new NetPanelWidget(this);
-            NetPlayerListButton.IsChecked = true;
+            NetPlayerListButton.IsVisible = true;
+            UpdateNetPlayerListButtonTexture();
             NetPanelWidget.Margin = new Vector2(68, 5);
             MessageWidget = new NetMessageWidget(playerData, NetPanelWidget) { IsVisible = false };
             _controlsWidget.Children.Insert(0, NetPanelWidget);
@@ -179,14 +198,10 @@ public class GameWidget : CanvasWidget
 
         if (NetPlayerListButton.IsClicked)
         {
-            if (NetPanelWidget == null)
-            {
-                return;
-            }
-
-            NetPanelWidget.IsVisible = !NetPanelWidget.IsVisible;
-            NetPlayerListButton.IsChecked = NetPanelWidget.IsVisible;
+            NetPanelWidget?.CycleSwitch();
         }
+
+        UpdateNetPlayerListButtonTexture();
 
         if (_bitmapButtonWidget.IsClicked)
         {
@@ -240,6 +255,33 @@ public class GameWidget : CanvasWidget
         {
             UpdateWidgetsHierarchy(GuiWidget);
         }
+    }
+
+    private static Subtexture LoadGuiSubtexture(string name)
+    {
+        return new Subtexture(ContentManager.Get<Texture2D>(name), Vector2.Zero, Vector2.One);
+    }
+
+    private void UpdateNetPlayerListButtonTexture()
+    {
+        var showType = NetPanelWidget?.CurrentShowType;
+        if (_netPlayerListButtonTextureInitialized && _netPlayerListButtonShowType == showType)
+        {
+            return;
+        }
+
+        _netPlayerListButtonTextureInitialized = true;
+        _netPlayerListButtonShowType = showType;
+
+        var subtexture = showType switch
+        {
+            NetPanelWidget.ShowType.OnlinePlayers => _netPlayersButtonSubtexture,
+            NetPanelWidget.ShowType.Team => _netGroupButtonSubtexture,
+            NetPanelWidget.ShowType.BlackList => _netBlackButtonSubtexture,
+            _ => _netHideButtonSubtexture
+        };
+        NetPlayerListButton.NormalSubtexture = subtexture;
+        NetPlayerListButton.ClickedSubtexture = subtexture;
     }
 
     private WidgetInputDevice DetermineInputDevices()

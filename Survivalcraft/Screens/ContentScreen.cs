@@ -50,7 +50,7 @@ public class ContentScreen : Screen
         var list = new List<string>
         {
             LanguageManager.Get(_typeName, 2),
-            "用户管理"
+            LanguageManager.Get(_typeName, 14)
         };
 
         DialogsManager.ShowDialog(null,

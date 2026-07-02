@@ -89,6 +89,9 @@
                                     NormalSubtexture="{Textures/Atlas/InventoryButton}"
                                     ClickedSubtexture="{Textures/Atlas/InventoryButton_Pressed}" Margin="0, 3"
                                     IsAutoCheckingEnabled="true"/>
+                <BitmapButtonWidget Name="PlayerListButton" Text="[GameWidget:5]" Size="64, 64"
+                                    NormalSubtexture="{Textures/Gui/Server_Players_Btn}"
+                                    ClickedSubtexture="{Textures/Gui/Server_Players_Btn}" Margin="0, 3"/>
             </StackPanelWidget>
 
             <StackPanelWidget Name="RightControlsContainer" Direction="Vertical" HorizontalAlignment="Far"
@@ -118,10 +121,6 @@
                         <BitmapButtonWidget Name="TimeOfDayButton" Text="[GameWidget:10]" Size="68, 64"
                                             NormalSubtexture="{Textures/Atlas/TimeOfDayButton}"
                                             ClickedSubtexture="{Textures/Atlas/TimeOfDayButton_Pressed}" Margin="4, 0"/>
-                        <BitmapButtonWidget Name="PlayerListButton" Text="[GameWidget:5]" Size="64, 64"
-                                            NormalSubtexture="{Textures/Gui/Playerlist}"
-                                            ClickedSubtexture="{Textures/Gui/Playerlist_Pressed}" Margin="0, 3"
-                                            IsAutoCheckingEnabled="true"/>
                     </StackPanelWidget>
                     <BitmapButtonWidget Name="MoreButton" HorizontalAlignment="Far" Text="[GameWidget:11]" Size="64, 64"
                                         NormalSubtexture="{Textures/Atlas/MoreButton}"

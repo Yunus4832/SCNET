@@ -49,10 +49,36 @@ public static class LanguageManager
 
     public static readonly List<string> LanguageTypes = [];
 
+    private static readonly Dictionary<string, string> LanguageDisplayNames = new(StringComparer.OrdinalIgnoreCase);
+
     public static void Initialize(string languageType)
     {
         KeyWords.Clear();
         AppConfigStore.Set("Language", languageType);
+    }
+
+    public static void ClearLanguageDisplayNames()
+    {
+        LanguageDisplayNames.Clear();
+    }
+
+    public static void RegisterLanguageDisplayName(string languageType, string? displayName)
+    {
+        if (string.IsNullOrWhiteSpace(languageType))
+        {
+            return;
+        }
+
+        LanguageDisplayNames[languageType.Trim()] = string.IsNullOrWhiteSpace(displayName)
+            ? languageType.Trim()
+            : displayName.Trim();
+    }
+
+    public static string GetLanguageDisplayName(string languageType)
+    {
+        return LanguageDisplayNames.TryGetValue(languageType, out var displayName)
+            ? displayName
+            : languageType;
     }
 
     /// <summary>

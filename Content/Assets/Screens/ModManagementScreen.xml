@@ -5,7 +5,7 @@
     <StackPanelWidget Direction="Horizontal">
 
         <CanvasWidget Style="{Widgets/TopBarContents}">
-            <LabelWidget Name="TopBar.Label" Text="模组管理"/>
+            <LabelWidget Name="TopBar.Label" Text="[ModManagementScreen:Title]"/>
         </CanvasWidget>
 
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
@@ -16,7 +16,7 @@
                               VerticalAlignment="Center">
                 <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Near" VerticalAlignment="Center">
                     <CanvasWidget Size="112, 60">
-                        <LabelWidget Text="服务器地址" Color="255, 255, 255"
+                        <LabelWidget Text="[ModManagementScreen:RepositoryAddress]" FontScale="0.9" Color="255, 255, 255"
                                      HorizontalAlignment="Far" VerticalAlignment="Center"
                                      TextAnchor="VerticalCenter, HorizontalCenter"/>
                     </CanvasWidget>
@@ -28,10 +28,10 @@
                 </StackPanelWidget>
                 <CanvasWidget Size="Infinity, 0"/>
                 <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Far" VerticalAlignment="Center">
-                    <BevelledButtonWidget Name="RefreshButton" Size="120, 60"
-                                          Text="刷新" VerticalAlignment="Center" Margin="4, 0"/>
-                    <BevelledButtonWidget Name="SaveDefaultRepositoryButton" Size="120, 60"
-                                          Text="保存默认" VerticalAlignment="Center" Margin="4, 0"/>
+                    <BevelledButtonWidget Name="RefreshButton" Size="120, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:Refresh]" VerticalAlignment="Center" Margin="4, 0"/>
+                    <BevelledButtonWidget Name="SaveDefaultRepositoryButton" Size="120, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:SaveDefault]" VerticalAlignment="Center" Margin="4, 0"/>
                 </StackPanelWidget>
             </StackPanelWidget>
 
@@ -45,21 +45,21 @@
 
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4">
                 <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Near">
-                    <BevelledButtonWidget Name="CacheButton" Size="112, 60"
-                                          Text="下载" Margin="0, 0"/>
-                    <BevelledButtonWidget Name="ExportButton" Size="112, 60"
-                                          Text="导出" Margin="6, 0"/>
-                    <BevelledButtonWidget Name="GlobalModButton" Size="112, 60"
-                                          Text="加入全局" Margin="6, 0"/>
-                    <BevelledButtonWidget Name="AddWorldModButton" Size="112, 60"
-                                          Text="世界" Margin="6, 0"/>
+                    <BevelledButtonWidget Name="CacheButton" Size="112, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:Download]" Margin="0, 0"/>
+                    <BevelledButtonWidget Name="ExportButton" Size="112, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:Export]" Margin="6, 0"/>
+                    <BevelledButtonWidget Name="GlobalModButton" Size="112, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:AddGlobal]" Margin="6, 0"/>
+                    <BevelledButtonWidget Name="AddWorldModButton" Size="112, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:World]" Margin="6, 0"/>
                 </StackPanelWidget>
                 <CanvasWidget Size="Infinity, 0"/>
                 <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Far">
-                    <BevelledButtonWidget Name="PreviousPageButton" Size="112, 60"
-                                          Text="上页" Margin="6, 0"/>
-                    <BevelledButtonWidget Name="NextPageButton" Size="112, 60"
-                                          Text="下页" Margin="6, 0"/>
+                    <BevelledButtonWidget Name="PreviousPageButton" Size="112, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:PreviousPage]" Margin="6, 0"/>
+                    <BevelledButtonWidget Name="NextPageButton" Size="112, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:NextPage]" Margin="6, 0"/>
                 </StackPanelWidget>
             </StackPanelWidget>
 
