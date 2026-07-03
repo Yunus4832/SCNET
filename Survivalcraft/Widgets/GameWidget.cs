@@ -92,10 +92,10 @@ public class GameWidget : CanvasWidget
         LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
         _bitmapButtonWidget = Children.Find<BitmapButtonWidget>("MsgButton")!;
         NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerListButton")!;
-        _netPlayersButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Server_Players_Btn");
-        _netGroupButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Server_Group_Btn");
-        _netBlackButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Server_Black_Btn");
-        _netHideButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Server_Hide_Btn");
+        _netPlayersButtonSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList_Pressed");
+        _netGroupButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Group_Pressed");
+        _netBlackButtonSubtexture = LoadGuiSubtexture("Textures/Gui/BlackList_Pressed");
+        _netHideButtonSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList");
         _bitmapButtonWidget.Text = "";
         NetPlayerListButton.IsVisible = false;
         ViewWidget = Children.Find<ViewWidget>("View")!;
@@ -245,6 +245,8 @@ public class GameWidget : CanvasWidget
             MessageWidget.EditText.HasFocus = false;
         }
 
+        _bitmapButtonWidget.IsChecked = MessageWidget is { IsVisible: true };
+
         var widgetInputDevice = DetermineInputDevices();
         if (WidgetsHierarchyInput == null || WidgetsHierarchyInput.Devices != widgetInputDevice)
         {
@@ -323,6 +325,7 @@ public class GameWidget : CanvasWidget
         }
 
         MessageWidget.IsVisible = visible;
+        _bitmapButtonWidget.IsChecked = visible;
         if (!visible)
         {
             MessageWidget.EditText.HasFocus = false;

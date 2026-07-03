@@ -1,5 +1,3 @@
-using Engine.Graphics;
-
 namespace Game.Widgets;
 
 /// <summary>
@@ -7,7 +5,7 @@ namespace Game.Widgets;
 /// </summary>
 public class NetPanelWidget : CanvasWidget
 {
-    private const int HiddenList = -1;
+    private const int _hiddenList = -1;
 
     /// <summary>
     /// 展示模式
@@ -108,7 +106,9 @@ public class NetPanelWidget : CanvasWidget
         RightControl.AddChildren(PlayerListWidget);
         RightControl.AddChildren(GroupPlayerListWidget);
         RightControl.AddChildren(BlackPlayerListWidget);
-        _currentShowList = 0;
+        _currentShowList = _hiddenList;
+        _newShowList = _hiddenList;
+        IsVisible = false;
         SetupOnlinePlayerList();
     }
 
@@ -117,7 +117,7 @@ public class NetPanelWidget : CanvasWidget
     /// </summary>
     public void CycleSwitch()
     {
-        if (!IsVisible || _currentShowList == HiddenList)
+        if (!IsVisible || _currentShowList == _hiddenList)
         {
             IsVisible = true;
             _newShowList = (int)ShowType.OnlinePlayers;
@@ -128,8 +128,8 @@ public class NetPanelWidget : CanvasWidget
         var availableLists = PlayerData.ServerManager ? 3 : 2;
         if (_currentShowList + 1 >= availableLists)
         {
-            _currentShowList = HiddenList;
-            _newShowList = HiddenList;
+            _currentShowList = _hiddenList;
+            _newShowList = _hiddenList;
             IsVisible = false;
             return;
         }
@@ -138,7 +138,7 @@ public class NetPanelWidget : CanvasWidget
         RefreshView();
     }
 
-    public ShowType? CurrentShowType => _currentShowList == HiddenList
+    public ShowType? CurrentShowType => _currentShowList == _hiddenList
         ? null
         : (ShowType)_currentShowList;
 

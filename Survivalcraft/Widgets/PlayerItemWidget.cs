@@ -22,7 +22,7 @@ public class PlayerItemWidget : CanvasWidget
     /// <summary>
     /// 退出组队纹理
     /// </summary>
-    private static readonly Subtexture _exitGroup = TextureAtlasManager.GetSubtexture("Textures/Gui/exit_group");
+    private static readonly Subtexture _exitGroup = TextureAtlasManager.GetSubtexture("Textures/Gui/ExitGroup");
 
     /// <summary>
     /// 睡觉图标
@@ -32,7 +32,7 @@ public class PlayerItemWidget : CanvasWidget
     /// <summary>
     /// 用户管理图标
     /// </summary>
-    private static readonly Subtexture _manageUser = TextureAtlasManager.GetSubtexture("Textures/Gui/manageUser");
+    private static readonly Subtexture _manageUser = TextureAtlasManager.GetSubtexture("Textures/Gui/ManageUser");
 
     /// <summary>
     /// 箭头图标
