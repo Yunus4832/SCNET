@@ -63,7 +63,7 @@ public class TextBoxDialog : Dialog
         _textBoxWidget.Text = text;
         _textBoxWidget.HasFocus = true;
         _textBoxWidget.Enter += delegate { Dismiss(_textBoxWidget.Text); };
-        _textBoxWidget.TextChanged += delegate(TextBoxWidget textBox) { handler3.Invoke(textBox); };
+        _textBoxWidget.TextChanged += handler3.Invoke;
         AutoHide = true;
     }
 
