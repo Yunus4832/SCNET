@@ -840,7 +840,7 @@ public class BlockGeometryGenerator
             for (var k = 0; k < blockMesh.Indices.Count / 3; k++)
             {
                 var num2 = blockMesh.Sides == null ? -1 : blockMesh.Sides.Array[k];
-                if (num2 < 0 || _visibleSides[facesMap != null ? facesMap[num2] : num2])
+                if (num2 < 0 || _visibleSides[facesMap.Length != 0 ? facesMap[num2] : num2])
                 {
                     indices.Add(blockMesh.Indices.Array[3 * k] + count);
                     indices.Add(blockMesh.Indices.Array[3 * k + 1] + count);
