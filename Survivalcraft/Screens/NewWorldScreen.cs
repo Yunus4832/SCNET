@@ -46,7 +46,7 @@ public class NewWorldScreen : Screen
 
     private readonly CheckboxWidget _needLogin;
 
-    private readonly CheckboxWidget _randomSpawPostion;
+    private readonly CheckboxWidget _randomSpawnPosition;
 
     private readonly UniformSpacingPanelWidget _serverConfigPanelWidget;
 
@@ -87,7 +87,7 @@ public class NewWorldScreen : Screen
         _keywordBlockingConfigPanel = Children.Find<UniformSpacingPanelWidget>("KeywordBlockingConfig")!;
         _runServer = Children.Find<CheckboxWidget>("RunServer")!;
         _needLogin = Children.Find<CheckboxWidget>("NeedLogin")!;
-        _randomSpawPostion = Children.Find<CheckboxWidget>("RandomSpawnPosition")!;
+        _randomSpawnPosition = Children.Find<CheckboxWidget>("RandomSpawnPosition")!;
         _password = Children.Find<TextBoxWidget>("Password")!;
         _maxPlayer = Children.Find<TextBoxWidget>("MaxPlayers")!;
         _disableBlocks = Children.Find<TextBoxWidget>("DisableBlocks")!;
@@ -112,13 +112,13 @@ public class NewWorldScreen : Screen
             _worldSettings = new WorldSettings
             {
                 Name = WorldsManager.NewWorldNames[_random.Int(0, WorldsManager.NewWorldNames.Count - 1)],
-                OriginalSerializationVersion = VersionsManager.SerializationVersion
+                OriginalSerializationVersion = VersionsManager.WorldSerializationVersion
             };
         }
 
         _runServer.IsChecked = _worldSettings.RunServer;
         _needLogin.IsChecked = _worldSettings.IsNeedCommunityLogin;
-        _randomSpawPostion.IsChecked = _worldSettings.RandomSpawnPosition;
+        _randomSpawnPosition.IsChecked = _worldSettings.RandomSpawnPosition;
     }
 
     public override void Update()
@@ -154,7 +154,7 @@ public class NewWorldScreen : Screen
 
         _worldSettings.DaySpeed = daySpeed;
         _worldSettings.RecoverFactor = recoverSpeed;
-        _worldSettings.RandomSpawnPosition = _randomSpawPostion.IsChecked;
+        _worldSettings.RandomSpawnPosition = _randomSpawnPosition.IsChecked;
         if (_gameModeButton.IsClicked)
         {
             DialogsManager.ShowDialog(null,

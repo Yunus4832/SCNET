@@ -37,7 +37,7 @@ public class PlayScreen : Screen
                         ? string.Format(LanguageManager.GetContentWidgets(_typeName, 9), worldInfo.PlayerInfos.Count)
                         : string.Format(LanguageManager.GetContentWidgets(_typeName, 10), 1))} | {LanguageManager.Get("GameMode", worldInfo.WorldSettings.GameMode.ToString())} | {LanguageManager.Get("EnvironmentBehaviorMode",
                         worldInfo.WorldSettings.EnvironmentBehaviorMode.ToString())}";
-                if (worldInfo.SerializationVersion != VersionsManager.SerializationVersion)
+                if (worldInfo.SerializationVersion != VersionsManager.WorldSerializationVersion)
                 {
                     labelWidget2.Text = labelWidget2.Text + " | " +
                                         (string.IsNullOrEmpty(worldInfo.SerializationVersion)

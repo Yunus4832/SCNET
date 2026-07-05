@@ -49,19 +49,11 @@ public static class MotdManager
         SettingsManager.Current.MotdLastUpdateTime = DateTime.MinValue;
     }
 
-    public static void Initialize()
-    {
-        if (VersionsManager.Version != VersionsManager.LastLaunchedVersion)
-        {
-            ForceRedownload();
-        }
-    }
-
     public static void UpdateVersion()
     {
         var url = string.Format(
             GetMotdUpdateCheckUrl(),
-            VersionsManager.SerializationVersion,
+            VersionsManager.Version,
             PlatformManager.Platform,
             ModPlatformInfo.ApiVersion,
             LanguageManager.LName()
@@ -509,7 +501,7 @@ public static class MotdManager
     private static string GetMotdUrl()
     {
         var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
-        return string.Format(GetMotdUpdateUrl(), VersionsManager.SerializationVersion, languageType);
+        return string.Format(GetMotdUpdateUrl(), VersionsManager.Version, languageType);
     }
 
     private static string GetMotdUpdateUrl() =>

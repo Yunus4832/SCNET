@@ -61,29 +61,6 @@ public static class SettingsManager
         }
 
         LoadSettings();
-        VersionsManager.CompareVersions(Current.LastLaunchedVersion, "1.29");
-        if (VersionsManager.CompareVersions(Current.LastLaunchedVersion, "2.1") < 0)
-        {
-            Current.MinimumDragDistance = 10f;
-        }
-
-        if (VersionsManager.CompareVersions(Current.LastLaunchedVersion, "2.2") < 0)
-        {
-            if (Utilities.GetTotalAvailableMemory() < 524288000)
-            {
-                Current.VisibilityRange = MathUtils.Min(64, Current.VisibilityRange);
-            }
-            else if (Utilities.GetTotalAvailableMemory() < 1048576000)
-            {
-                Current.VisibilityRange = MathUtils.Min(112, Current.VisibilityRange);
-            }
-        }
-
-        if (VersionsManager.CompareVersions(Current.LastLaunchedVersion, "2.4") < 0)
-        {
-            Current.TerrainMipmapsEnabled = true;
-        }
-
         Window.Deactivated += SaveSettings;
     }
 

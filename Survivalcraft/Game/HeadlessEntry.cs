@@ -160,7 +160,6 @@ public static class HeadlessEntry
 
         LightingManager.Initialize();
         CharacterSkinsManager.Initialize();
-        VersionsManager.Initialize();
         WorldsManager.Initialize();
         return true;
     }

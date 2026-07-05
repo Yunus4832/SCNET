@@ -135,8 +135,6 @@ public class Settings
 
     public string UserId { get; set; } = string.Empty;
 
-    public string LastLaunchedVersion { get; set; } = string.Empty;
-
     public CommunityContentMode CommunityContentMode { get; set; } = CommunityContentMode.Normal;
 
     public bool MultithreadedTerrainUpdate { get; set; } = true;

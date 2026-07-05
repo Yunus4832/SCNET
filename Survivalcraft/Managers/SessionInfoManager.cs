@@ -232,7 +232,7 @@ public static class SessionInfoManager
             {
                 Name = worldArg,
                 Seed = string.IsNullOrWhiteSpace(seedArg) ? GenerateRandomSeed() : seedArg,
-                OriginalSerializationVersion = VersionsManager.SerializationVersion,
+                OriginalSerializationVersion = VersionsManager.WorldSerializationVersion,
                 RunServer = true,
                 IsNeedCommunityLogin = false
             };
@@ -650,7 +650,7 @@ public static class SessionInfoManager
         {
             Name = NormalizeWorld(worldName),
             Seed = string.IsNullOrWhiteSpace(seed) ? GenerateRandomSeed() : seed,
-            OriginalSerializationVersion = VersionsManager.SerializationVersion,
+            OriginalSerializationVersion = VersionsManager.WorldSerializationVersion,
             RunServer = runServer,
             IsNeedCommunityLogin = false
         };

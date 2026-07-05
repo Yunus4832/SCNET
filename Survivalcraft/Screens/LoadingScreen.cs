@@ -124,8 +124,6 @@ public class LoadingScreen : Screen
             ExternalContentManager.Initialize();
             FurniturePacksManager.Initialize();
             LightingManager.Initialize();
-            MotdManager.Initialize();
-            VersionsManager.Initialize();
             WorldsManager.Initialize();
         });
         AddLoadAction(delegate

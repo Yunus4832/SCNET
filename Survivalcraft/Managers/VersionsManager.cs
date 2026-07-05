@@ -18,7 +18,7 @@ public static class VersionsManager
     /// <summary>
     /// 地形序列化版本号
     /// </summary>
-    public const string SerializationVersion = "2.4";
+    public const string WorldSerializationVersion = "2.4";
 
     /// <summary>
     /// 版本转换器列表
@@ -45,11 +45,6 @@ public static class VersionsManager
     /// </summary>
     public static string ProtocolVersion { get; set; } = "0.0.0.1";
 
-    /// <summary>
-    /// 最后启动版本
-    /// </summary>
-    public static string LastLaunchedVersion { get; set; } = string.Empty;
-
     static VersionsManager()
     {
         _versionConverters = [];
@@ -70,33 +65,27 @@ public static class VersionsManager
         }
     }
 
-    public static void Initialize()
-    {
-        LastLaunchedVersion = SettingsManager.Current.LastLaunchedVersion;
-        SettingsManager.Current.LastLaunchedVersion = Version;
-    }
-
     public static void UpgradeProjectXml(XElement projectNode)
     {
         var attributeValue = XmlUtils.GetAttributeValue(projectNode, "Version", "1.0");
-        if (attributeValue == SerializationVersion)
+        if (attributeValue == WorldSerializationVersion)
         {
             return;
         }
 
-        foreach (var item in FindTransform(attributeValue, SerializationVersion, _versionConverters, 0) ??
+        foreach (var item in FindTransform(attributeValue, WorldSerializationVersion, _versionConverters, 0) ??
                              throw new InvalidOperationException(
-                                 $"Cannot find conversion path from version \"{attributeValue}\" to version \"{SerializationVersion}\""))
+                                 $"Cannot find conversion path from version \"{attributeValue}\" to version \"{WorldSerializationVersion}\""))
         {
             Log.Information($"Upgrading world version \"{item.SourceVersion}\" to \"{item.TargetVersion}\".");
             item.ConvertProjectXml(projectNode);
         }
 
         var attributeValue2 = XmlUtils.GetAttributeValue(projectNode, "Version", "1.0");
-        if (attributeValue2 != SerializationVersion)
+        if (attributeValue2 != WorldSerializationVersion)
         {
             throw new InvalidOperationException(
-                $"Upgrade produced invalid project version. Expected \"{SerializationVersion}\", found \"{attributeValue2}\".");
+                $"Upgrade produced invalid project version. Expected \"{WorldSerializationVersion}\", found \"{attributeValue2}\".");
         }
     }
 
@@ -108,26 +97,26 @@ public static class VersionsManager
             return;
         }
 
-        if (worldInfo.SerializationVersion == SerializationVersion)
+        if (worldInfo.SerializationVersion == WorldSerializationVersion)
         {
             return;
         }
 
-        ProgressManager.UpdateProgress($"Upgrading World To {SerializationVersion}", 0f);
+        ProgressManager.UpdateProgress($"Upgrading World To {WorldSerializationVersion}", 0f);
         foreach (var item in
-                 FindTransform(worldInfo.SerializationVersion, SerializationVersion, _versionConverters, 0) ??
+                 FindTransform(worldInfo.SerializationVersion, WorldSerializationVersion, _versionConverters, 0) ??
                  throw new InvalidOperationException(
-                     $"Cannot find conversion path from version \"{worldInfo.SerializationVersion}\" to version \"{SerializationVersion}\""))
+                     $"Cannot find conversion path from version \"{worldInfo.SerializationVersion}\" to version \"{WorldSerializationVersion}\""))
         {
             Log.Information($"Upgrading world version \"{item.SourceVersion}\" to \"{item.TargetVersion}\".");
             item.ConvertWorld(directoryName);
         }
 
         var worldInfo2 = WorldsManager.GetWorldInfo(directoryName);
-        if (worldInfo2 != null && worldInfo2.SerializationVersion != SerializationVersion)
+        if (worldInfo2 != null && worldInfo2.SerializationVersion != WorldSerializationVersion)
         {
             throw new InvalidOperationException(
-                $"Upgrade produced invalid project version. Expected \"{SerializationVersion}\", found \"{worldInfo2.SerializationVersion}\".");
+                $"Upgrade produced invalid project version. Expected \"{WorldSerializationVersion}\", found \"{worldInfo2.SerializationVersion}\".");
         }
     }
 

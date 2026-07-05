@@ -116,7 +116,7 @@ public static class GameManager
                 }
 
                 var projectNode = new XElement("Project");
-                XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.SerializationVersion);
+                XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.WorldSerializationVersion);
                 projectData.Save(projectNode);
                 Storage.CreateDirectory(subsystemGameInfo.DirectoryName);
                 var projectPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml");

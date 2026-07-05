@@ -1,7 +1,5 @@
 using System.Xml.Linq;
 
-using Engine.Serialization;
-
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
@@ -261,7 +259,7 @@ public static class WorldsManager
         gameInfoValues.SetValue("WorldSeed", num);
         var projectData = new ProjectData(DatabaseManager.GameDatabase, databaseObject, overrides);
         var projectNode = new XElement("Project");
-        XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.SerializationVersion);
+        XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.WorldSerializationVersion);
         projectData.Save(projectNode);
         using (var stream = Storage.OpenFile(Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"),
                    OpenFileMode.Create))

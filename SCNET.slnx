@@ -107,7 +107,15 @@
         </Project>
     </Folder>
 
-    <Folder Name="/07 SolutionItem/">
+    <Folder Name="/07 Tools/">
+        <Project Path="WorldUpgradeTool\WorldUpgradeTool.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+        </Project>
+    </Folder>
+
+    <Folder Name="/08 SolutionItem/">
         <File Path="SCNET.slnx"/>
         <File Path="README.md"/>
         <File Path=".editorconfig"/>

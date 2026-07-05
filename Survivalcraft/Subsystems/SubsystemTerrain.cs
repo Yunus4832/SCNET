@@ -505,27 +505,27 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 block.GetDropValues(this, cellValue, newValue, toolLevel, _dropValues, out showDebris);
                 foreach (var item in _dropValues)
                 {
-                var dropValue = item;
-                if (dropValue.Count <= 0)
-                {
-                    continue;
-                }
+                    var dropValue = item;
+                    if (dropValue.Count <= 0)
+                    {
+                        continue;
+                    }
 
-                var harvestedContext = new ItemHarvestedContext(this, x, y, z, cellValue, dropValue, newValue);
-                CurrentModRuntime.Value?.BlockBehaviors.Invoke(harvestedContext);
-                if (harvestedContext.Cancel)
-                {
-                    continue;
-                }
+                    var harvestedContext = new ItemHarvestedContext(this, x, y, z, cellValue, dropValue, newValue);
+                    CurrentModRuntime.Value?.BlockBehaviors.Invoke(harvestedContext);
+                    if (harvestedContext.Cancel)
+                    {
+                        continue;
+                    }
 
-                dropValue = harvestedContext.DropValue;
-                newValue = harvestedContext.NewBlockValue;
+                    dropValue = harvestedContext.DropValue;
+                    newValue = harvestedContext.NewBlockValue;
 
-                var blockBehaviors =
-                    _subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(dropValue.Value));
-                foreach (var behavior in blockBehaviors)
-                {
-                    behavior.OnItemHarvested(x, y, z, cellValue, ref dropValue, ref newValue);
+                    var blockBehaviors =
+                        _subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(dropValue.Value));
+                    foreach (var behavior in blockBehaviors)
+                    {
+                        behavior.OnItemHarvested(x, y, z, cellValue, ref dropValue, ref newValue);
                     }
 
                     if (dropValue.Count <= 0 || Terrain.ExtractContents(dropValue.Value) == 0)
