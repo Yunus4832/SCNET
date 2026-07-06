@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Xml.Linq;
 
 using EntitySystem.Core;
@@ -159,8 +160,7 @@ public static class WorldsManager
 
             using var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read);
             var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
-            worldInfo.SerializationVersion = XmlUtils.GetAttributeValue(xElement, "Version", "1.0");
-            VersionsManager.UpgradeProjectXml(xElement);
+            worldInfo.ProjectFormatVersion = XmlUtils.GetAttributeValue(xElement, "Version", string.Empty);
             var gameInfoNode = GetGameInfoNode(xElement);
             var valuesDictionary = new ValuesDictionary();
             valuesDictionary.ApplyOverrides(gameInfoNode);
@@ -259,7 +259,7 @@ public static class WorldsManager
         gameInfoValues.SetValue("WorldSeed", num);
         var projectData = new ProjectData(DatabaseManager.GameDatabase, databaseObject, overrides);
         var projectNode = new XElement("Project");
-        XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.WorldSerializationVersion);
+        XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
         projectData.Save(projectNode);
         using (var stream = Storage.OpenFile(Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"),
                    OpenFileMode.Create))
@@ -392,10 +392,10 @@ public static class WorldsManager
 
         var list = new List<string>();
         RecursiveEnumerateDirectory(directoryName, list, [], filter);
-        using var zipArchive = ZipArchive.ZipArchive.Create(targetStream);
+        using var zipArchive = new ZipArchive(targetStream, ZipArchiveMode.Create, false);
         foreach (var item in list)
         {
-            using var source = Storage.OpenFile(item, OpenFileMode.ReadWrite);
+            using var source = Storage.OpenFile(item, OpenFileMode.Read);
             var fileName = Storage.GetFileName(item);
             var fileDir = Storage.GetDirectoryName(item);
             if (fileDir.EndsWith("backup"))
@@ -412,7 +412,7 @@ public static class WorldsManager
                 fileName = Storage.CombinePaths("PlayerEntities", fileName);
             }
 
-            zipArchive.AddStream(fileName, source);
+            AddZipEntry(zipArchive, fileName, source);
         }
 
         if (!embedExternalContent)
@@ -431,7 +431,7 @@ public static class WorldsManager
                 var filenameInZip = Storage.CombinePaths("EmbeddedContent",
                     Storage.GetFileNameWithoutExtension(worldInfo.WorldSettings.BlocksTextureName) +
                     ".scbtex");
-                zipArchive.AddStream(filenameInZip, source2);
+                AddZipEntry(zipArchive, filenameInZip, source2);
             }
             catch (Exception ex)
             {
@@ -442,21 +442,23 @@ public static class WorldsManager
 
         foreach (var playerInfo in worldInfo.PlayerInfos)
         {
-            if (!CharacterSkinsManager.IsBuiltIn(playerInfo.CharacterSkinName))
+            if (CharacterSkinsManager.IsBuiltIn(playerInfo.CharacterSkinName))
             {
-                try
-                {
-                    CharacterSkinsManager.GetFileName(playerInfo.CharacterSkinName, out var n);
-                    using var source3 = Storage.OpenFile(n, OpenFileMode.Read);
-                    var filenameInZip2 = Storage.CombinePaths("EmbeddedContent",
-                        Storage.GetFileNameWithoutExtension(playerInfo.CharacterSkinName) + ".scskin");
-                    zipArchive.AddStream(filenameInZip2, source3);
-                }
-                catch (Exception ex2)
-                {
-                    Log.Warning(
-                        $"Failed to embed character skin \"{playerInfo.CharacterSkinName}\". Reason: {ex2.Message}");
-                }
+                continue;
+            }
+
+            try
+            {
+                CharacterSkinsManager.GetFileName(playerInfo.CharacterSkinName, out var n);
+                using var source3 = Storage.OpenFile(n, OpenFileMode.Read);
+                var filenameInZip2 = Storage.CombinePaths("EmbeddedContent",
+                    Storage.GetFileNameWithoutExtension(playerInfo.CharacterSkinName) + ".scskin");
+                AddZipEntry(zipArchive, filenameInZip2, source3);
+            }
+            catch (Exception ex2)
+            {
+                Log.Warning(
+                    $"Failed to embed character skin \"{playerInfo.CharacterSkinName}\". Reason: {ex2.Message}");
             }
         }
     }
@@ -469,10 +471,15 @@ public static class WorldsManager
                 $"Cannot import world into \"{directoryName}\" because this directory does not exist.");
         }
 
-        using var zipArchive = ZipArchive.ZipArchive.Open(sourceStream, true);
-        foreach (var item in zipArchive.ReadCentralDir())
+        using var zipArchive = new ZipArchive(sourceStream, ZipArchiveMode.Read, true);
+        foreach (var item in zipArchive.Entries)
         {
-            var text = item.FilenameInZip.Replace('\\', '/');
+            if (string.IsNullOrEmpty(item.Name))
+            {
+                continue;
+            }
+
+            var text = item.FullName.Replace('\\', '/');
             var extension = Storage.GetExtension(text);
             if (text.StartsWith("EmbeddedContent"))
             {
@@ -481,7 +488,11 @@ public static class WorldsManager
                     if (importEmbeddedExternalContent)
                     {
                         var memoryStream = new MemoryStream();
-                        zipArchive.ExtractFile(item, memoryStream);
+                        using (var entryStream = item.Open())
+                        {
+                            entryStream.CopyTo(memoryStream);
+                        }
+
                         memoryStream.Position = 0L;
                         var type = ExternalContentManager.ExtensionToType(extension);
                         ExternalContentManager.ImportExternalContentSync(memoryStream, type,
@@ -519,9 +530,18 @@ public static class WorldsManager
 
                 using var stream = Storage.OpenFile(Storage.CombinePaths(directoryName, fileName),
                     OpenFileMode.Create);
-                zipArchive.ExtractFile(item, stream);
+                using var entryStream = item.Open();
+                entryStream.CopyTo(stream);
             }
         }
+    }
+
+    private static void AddZipEntry(ZipArchive zipArchive, string filenameInZip, Stream source)
+    {
+        var normalizedName = filenameInZip.Replace('\\', '/').Trim('/');
+        var entry = zipArchive.CreateEntry(normalizedName, CompressionLevel.Optimal);
+        using var entryStream = entry.Open();
+        source.CopyTo(entryStream);
     }
 
     private static void DeleteWorldContents(string directoryName, Func<string, bool>? filter)

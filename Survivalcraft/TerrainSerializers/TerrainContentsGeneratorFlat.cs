@@ -23,10 +23,10 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
         _subsystemTerrain = subsystemTerrain;
         var subsystemGameInfo = subsystemTerrain.Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _worldSettings = subsystemGameInfo.WorldSettings;
-        _oceanCorner = string.CompareOrdinal(subsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.1") < 0
+        _oceanCorner = TerrainGenerationModes.IsPre21(_worldSettings.TerrainGenerationMode)
             ? _oceanCorner = new Vector2(2001f, 2001f)
             : _oceanCorner = new Vector2(-199f, -199f);
-        _islandSize = _worldSettings.TerrainGenerationMode == TerrainGenerationMode.FlatIsland
+        _islandSize = TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode)
             ? new Vector2?(_worldSettings.IslandSize)
             : null;
         _shoreRoughnessAmplitude.X = MathUtils.Pow(_worldSettings.ShoreRoughness, 2f) *

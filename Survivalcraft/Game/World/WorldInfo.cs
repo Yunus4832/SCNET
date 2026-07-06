@@ -10,7 +10,7 @@ public class WorldInfo
 
     public readonly List<PlayerInfo> PlayerInfos = [];
 
-    public string SerializationVersion = string.Empty;
+    public string ProjectFormatVersion = string.Empty;
 
     public long Size;
 

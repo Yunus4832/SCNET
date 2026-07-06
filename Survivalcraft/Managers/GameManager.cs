@@ -25,7 +25,12 @@ public static class GameManager
     public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, bool useNetProj = true)
     {
         DisposeProject();
-        VersionsManager.UpgradeWorld(worldInfo.DirectoryName);
+        if (worldInfo.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
+        {
+            throw new InvalidOperationException(
+                $"Unsupported project format version \"{worldInfo.ProjectFormatVersion}\". Expected \"{WorldVersions.ProjectFormatVersion}\".");
+        }
+
         var xmlFile = Storage.CombinePaths(worldInfo.DirectoryName, "Project.xml");
 
         if (!Storage.FileExists(xmlFile))
@@ -116,7 +121,7 @@ public static class GameManager
                 }
 
                 var projectNode = new XElement("Project");
-                XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.WorldSerializationVersion);
+                XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
                 projectData.Save(projectNode);
                 Storage.CreateDirectory(subsystemGameInfo.DirectoryName);
                 var projectPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml");

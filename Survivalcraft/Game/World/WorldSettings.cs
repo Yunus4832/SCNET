@@ -44,8 +44,6 @@ public class WorldSettings
 
     public string Name = string.Empty;
 
-    public string OriginalSerializationVersion = string.Empty;
-
     public WorldPalette Palette = new();
 
     public string Password = string.Empty;
@@ -82,14 +80,9 @@ public class WorldSettings
 
     public void ResetOptionsForNonCreativeMode()
     {
-        if (TerrainGenerationMode == TerrainGenerationMode.FlatContinent)
+        if (TerrainGenerationModes.IsFlat(TerrainGenerationMode))
         {
-            TerrainGenerationMode = TerrainGenerationMode.Continent;
-        }
-
-        if (TerrainGenerationMode == TerrainGenerationMode.FlatIsland)
-        {
-            TerrainGenerationMode = TerrainGenerationMode.Island;
+            TerrainGenerationMode = TerrainGenerationModes.ToNonFlatMode(TerrainGenerationMode);
         }
 
         EnvironmentBehaviorMode = EnvironmentBehaviorMode.Living;
@@ -104,14 +97,9 @@ public class WorldSettings
 
     public void ResetOptionsForNonCreativeMode(WorldSettings? originalWorldSettings)
     {
-        if (TerrainGenerationMode == TerrainGenerationMode.FlatContinent)
+        if (TerrainGenerationModes.IsFlat(TerrainGenerationMode))
         {
-            TerrainGenerationMode = TerrainGenerationMode.Continent;
-        }
-
-        if (TerrainGenerationMode == TerrainGenerationMode.FlatIsland)
-        {
-            TerrainGenerationMode = TerrainGenerationMode.Island;
+            TerrainGenerationMode = TerrainGenerationModes.ToNonFlatMode(TerrainGenerationMode);
         }
 
         EnvironmentBehaviorMode = EnvironmentBehaviorMode.Living;
@@ -135,7 +123,6 @@ public class WorldSettings
     public void Load(ValuesDictionary valuesDictionary)
     {
         Name = valuesDictionary.GetValue<string>("WorldName");
-        OriginalSerializationVersion = valuesDictionary.GetValue("OriginalSerializationVersion", string.Empty);
         Seed = valuesDictionary.GetValue("WorldSeedString", string.Empty);
         GameMode = valuesDictionary.GetValue("GameMode", GameMode.Challenging);
         EnvironmentBehaviorMode = valuesDictionary.GetValue("EnvironmentBehaviorMode", EnvironmentBehaviorMode.Living);
@@ -205,7 +192,6 @@ public class WorldSettings
     public void Save(ValuesDictionary valuesDictionary, bool liveModifiableParametersOnly)
     {
         valuesDictionary.SetValue("WorldName", Name);
-        valuesDictionary.SetValue("OriginalSerializationVersion", OriginalSerializationVersion);
         valuesDictionary.SetValue("GameMode", GameMode);
         valuesDictionary.SetValue("EnvironmentBehaviorMode", EnvironmentBehaviorMode);
         valuesDictionary.SetValue("TimeOfDayMode", TimeOfDayMode);

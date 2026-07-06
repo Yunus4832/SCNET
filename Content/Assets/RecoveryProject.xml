@@ -1,4 +1,4 @@
-<Project Guid="9e9a67f8-79df-4d05-8cfa-61bd8095661e" Name="GameProject" Version="1.19">
+<Project Guid="9e9a67f8-79df-4d05-8cfa-61bd8095661e" Name="GameProject" Version="SCNET-1">
     <Subsystems>
         <Values Name="Player">
             <Value Name="SpawnPosition" Type="Microsoft.Xna.Framework.Vector3" Value="3347.5,65,7640.5"/>
@@ -39,7 +39,7 @@
             <Value Name="TotalElapsedGameTime" Type="System.Double" Value="0"/>
             <Value Name="GameMode" Type="Game.GameMode" Value="Creative"/>
             <Value Name="EnvironmentBehaviorMode" Type="Game.EnvironmentBehaviorMode" Value="Living"/>
-            <Value Name="TerrainGenerationMode" Type="Game.TerrainGenerationMode" Value="Normal"/>
+            <Value Name="TerrainGenerationMode" Type="Game.TerrainGenerationMode" Value="Continent"/>
         </Values>
         <Values Name="Intro">
             <Value Name="PlayIntro" Type="System.Boolean" Value="False"/>

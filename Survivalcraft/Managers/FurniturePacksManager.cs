@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Xml.Linq;
 
 using EntitySystem.TemplatesDatabase;
@@ -73,16 +74,15 @@ public static class FurniturePacksManager
     public static string CreateFurniturePack(string name, ICollection<FurnitureDesign?> designs)
     {
         var memoryStream = new MemoryStream();
-        using (var zipArchive = ZipArchive.ZipArchive.Create(memoryStream, true))
+        using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
         {
             var valuesDictionary = new ValuesDictionary();
             SubsystemFurnitureBlockBehavior.SaveFurnitureDesigns(valuesDictionary, designs);
             var xElement = new XElement("FurnitureDesigns");
             valuesDictionary.Save(xElement);
-            var memoryStream2 = new MemoryStream();
-            xElement.Save(memoryStream2);
-            memoryStream2.Position = 0L;
-            zipArchive.AddStream("FurnitureDesigns.xml", memoryStream2);
+            var entry = zipArchive.CreateEntry("FurnitureDesigns.xml", CompressionLevel.Optimal);
+            using var entryStream = entry.Open();
+            xElement.Save(entryStream);
         }
 
         memoryStream.Position = 0L;
@@ -127,15 +127,19 @@ public static class FurniturePacksManager
 
     private static List<FurnitureDesign> LoadFurniturePack(SubsystemTerrain? subsystemTerrain, Stream stream)
     {
-        using var zipArchive = ZipArchive.ZipArchive.Open(stream, true);
-        var list = zipArchive.ReadCentralDir();
-        if (list.Count != 1 || list[0].FilenameInZip != "FurnitureDesigns.xml")
+        using var zipArchive = new ZipArchive(stream, ZipArchiveMode.Read, true);
+        var entries = zipArchive.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name)).ToList();
+        if (entries.Count != 1 || entries[0].FullName.Replace('\\', '/') != "FurnitureDesigns.xml")
         {
             throw new InvalidOperationException("Invalid furniture pack.");
         }
 
         var memoryStream = new MemoryStream();
-        zipArchive.ExtractFile(list[0], memoryStream);
+        using (var entryStream = entries[0].Open())
+        {
+            entryStream.CopyTo(memoryStream);
+        }
+
         memoryStream.Position = 0L;
         var overridesNode = XElement.Load(memoryStream);
         var valuesDictionary = new ValuesDictionary();

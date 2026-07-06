@@ -111,8 +111,7 @@ public class NewWorldScreen : Screen
         {
             _worldSettings = new WorldSettings
             {
-                Name = WorldsManager.NewWorldNames[_random.Int(0, WorldsManager.NewWorldNames.Count - 1)],
-                OriginalSerializationVersion = VersionsManager.WorldSerializationVersion
+                Name = WorldsManager.NewWorldNames[_random.Int(0, WorldsManager.NewWorldNames.Count - 1)]
             };
         }
 

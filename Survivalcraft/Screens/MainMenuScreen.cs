@@ -3,7 +3,6 @@ using System.Xml.Linq;
 using Engine.Input;
 
 using Game.Network;
-using Game.VersionConverts;
 
 namespace Game.Screens;
 
@@ -44,12 +43,6 @@ public class MainMenuScreen : Screen
     public override void Enter(object[] parameters)
     {
         Children.Find<MotdWidget>(false)?.Restart();
-        // 检查是否需要迁移数据
-        if (SettingsManager.Current.IsolatedStorageMigrationCounter < 3)
-        {
-            SettingsManager.Current.IsolatedStorageMigrationCounter++;
-            VersionConverter126To127.MigrateDataFromIsolatedStorageWithDialog();
-        }
 
         // 如果当前已连接网络，则停止连接
         if (CommonLib.Net.CurrentStage == NetNode.Stage.Connected)

@@ -388,12 +388,12 @@ public class ComponentMiner : Component, IUpdateable
             boundingBox.Max -= new Vector3(0.2f);
             var customCollisionBoxes =
                 block.GetCustomCollisionBoxes(_subsystemTerrain, placementData.Value);
-            for (var i = 0; i < customCollisionBoxes.Length; i++)
+            foreach (var box in customCollisionBoxes)
             {
-                var box = customCollisionBoxes[i];
-                box.Min += new Vector3(num2, num3, num4);
-                box.Max += new Vector3(num2, num3, num4);
-                if (!boundingBox.Intersection(box))
+                var boxLocal = box;
+                boxLocal.Min += new Vector3(num2, num3, num4);
+                boxLocal.Max += new Vector3(num2, num3, num4);
+                if (!boundingBox.Intersection(boxLocal))
                 {
                     continue;
                 }
@@ -910,7 +910,7 @@ public class ComponentMiner : Component, IUpdateable
 
         AttackPower = valuesDictionary.GetValue<float>("AttackPower");
         AutoInteractRate = valuesDictionary.GetValue<float>("AutoInteractRate");
-        if (string.CompareOrdinal(_subsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.4") < 0 ||
+        if (TerrainGenerationModes.IsLegacy(_subsystemGameInfo.WorldSettings.TerrainGenerationMode) ||
             _subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless ||
             _subsystemGameInfo.WorldSettings.GameMode == GameMode.Survival)
         {

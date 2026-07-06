@@ -21,13 +21,11 @@ public class GameMenuDialog : Dialog
 
     private readonly ComponentPlayer _componentPlayer;
 
-    private readonly StackPanelWidget _statsPanel;
-
     public GameMenuDialog(ComponentPlayer componentPlayer)
     {
         var node = ContentManager.Get<XElement>("Dialogs/GameMenuDialog");
         LoadContents(this, node);
-        _statsPanel = Children.Find<StackPanelWidget>("StatsPanel")!;
+        var statsPanel = Children.Find<StackPanelWidget>("StatsPanel")!;
         _componentPlayer = componentPlayer;
         if (CommonLib.WorkType != WorkType.Client && GameManager.WorldInfo != null)
         {
@@ -63,7 +61,7 @@ public class GameMenuDialog : Dialog
             );
         }
 
-        _statsPanel.Children.Clear();
+        statsPanel.Children.Clear();
         var project = componentPlayer.Project;
         var playerData = componentPlayer.PlayerData;
         var playerStats = componentPlayer.PlayerStats;
@@ -77,7 +75,7 @@ public class GameMenuDialog : Dialog
             Direction = LayoutDirection.Vertical,
             HorizontalAlignment = WidgetAlignment.Center
         };
-        _statsPanel.Children.Add(stackPanelWidget);
+        statsPanel.Children.Add(stackPanelWidget);
         stackPanelWidget.Children.Add(new LabelWidget
         {
             Text = LanguageManager.Get(_typeName, 5),
@@ -91,8 +89,9 @@ public class GameMenuDialog : Dialog
             LanguageManager.Get("EnvironmentBehaviorMode",
                 subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode.ToString()));
         AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 7),
-            StringsManager.GetString("TerrainGenerationMode." + subsystemGameInfo.WorldSettings.TerrainGenerationMode +
-                                     ".Name"));
+            StringsManager.GetString("TerrainGenerationMode." +
+                                     TerrainGenerationModes.ToDisplayMode(subsystemGameInfo.WorldSettings
+                                         .TerrainGenerationMode) + ".Name"));
         var seed = subsystemGameInfo.WorldSettings.Seed;
         AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 8),
             !string.IsNullOrEmpty(seed) ? seed : LanguageManager.Get(_typeName, 9));
@@ -124,10 +123,6 @@ public class GameMenuDialog : Dialog
         }
 
         AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 14), $"{num}/{FurnitureDesign.MaxDesign}");
-        AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 15),
-            string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.OriginalSerializationVersion)
-                ? LanguageManager.Get(_typeName, 16)
-                : subsystemGameInfo.WorldSettings.OriginalSerializationVersion);
         stackPanelWidget.Children.Add(new LabelWidget
         {
             Text = LanguageManager.Get(_typeName, 17),
@@ -168,7 +163,7 @@ public class GameMenuDialog : Dialog
                     LanguageManager.Get("GameMode", subsystemGameInfo.WorldSettings.GameMode.ToString())));
         }
 
-        if (string.CompareOrdinal(subsystemGameInfo.WorldSettings.OriginalSerializationVersion, "1.29") > 0)
+        if (!TerrainGenerationModes.IsPre21(subsystemGameInfo.WorldSettings.TerrainGenerationMode))
         {
             stackPanelWidget.Children.Add(new LabelWidget
             {

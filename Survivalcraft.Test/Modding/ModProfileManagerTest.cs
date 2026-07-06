@@ -407,7 +407,7 @@ public sealed class ModProfileManagerTest : IDisposable
         gameInfo.SetValue("WorldSeed", 1);
         var projectData = new ProjectData(DatabaseManager.GameDatabase, databaseObject, overrides);
         var projectNode = new XElement("Project");
-        XmlUtils.SetAttributeValue(projectNode, "Version", VersionsManager.WorldSerializationVersion);
+        XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
         projectData.Save(projectNode);
 
         using var stream = Storage.OpenFile(Storage.CombinePaths(worldDirectoryName, "Project.xml"), OpenFileMode.Create);

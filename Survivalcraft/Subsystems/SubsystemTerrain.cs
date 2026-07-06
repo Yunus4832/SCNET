@@ -604,42 +604,22 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             Project.FindSubsystem<SubsystemElectricity>(true)!, SubsystemFurnitureBlockBehavior,
             Project.FindSubsystem<SubsystemMetersBlockBehavior>(true)!, SubsystemPalette);
         var terrainGenerationMode = SubsystemGameInfo.WorldSettings.TerrainGenerationMode;
-        if (string.CompareOrdinal(SubsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.1") <= 0)
-        {
-            if (terrainGenerationMode is TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland)
-            {
-                TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
-            }
-            else
-            {
-                TerrainContentsGenerator = new TerrainContentsGenerator21(this);
-            }
-        }
-        else if (string.CompareOrdinal(SubsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.2") == 0)
-        {
-            if (terrainGenerationMode is TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland)
-            {
-                TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
-            }
-            else
-            {
-                TerrainContentsGenerator = new TerrainContentsGenerator22(this);
-            }
-        }
-        else if (string.CompareOrdinal(SubsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.3") == 0)
-        {
-            if (terrainGenerationMode is TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland)
-            {
-                TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
-            }
-            else
-            {
-                TerrainContentsGenerator = new TerrainContentsGenerator23(this);
-            }
-        }
-        else if (terrainGenerationMode is TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland)
+        if (TerrainGenerationModes.IsFlat(terrainGenerationMode))
         {
             TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
+        }
+        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent22 or TerrainGenerationMode.LegacyIsland22)
+        {
+            TerrainContentsGenerator = new TerrainContentsGenerator22(this);
+        }
+        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent23 or TerrainGenerationMode.LegacyIsland23)
+        {
+            TerrainContentsGenerator = new TerrainContentsGenerator23(this);
+        }
+        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinentPre21 or TerrainGenerationMode.LegacyIslandPre21
+                 or TerrainGenerationMode.LegacyContinent21 or TerrainGenerationMode.LegacyIsland21)
+        {
+            TerrainContentsGenerator = new TerrainContentsGenerator21(this);
         }
         else
         {

@@ -182,14 +182,14 @@ public class WorldOptionsScreen : Screen
     {
         if (_terrainGenerationButton.IsClicked && !_isExistingWorld)
         {
-            var enumValues = EnumUtils.GetEnumValues(typeof(TerrainGenerationMode));
+            var enumValues = EnumUtils.GetEnumValues(typeof(TerrainGenerationMode))
+                .Where(e => !TerrainGenerationModes.IsLegacy((TerrainGenerationMode)e))
+                .ToArray();
             DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, 1), enumValues, 56f,
                 e => StringsManager.GetString("TerrainGenerationMode." + (TerrainGenerationMode)e + ".Name"),
                 delegate(object e)
                 {
-                    if (_worldSettings.GameMode != 0 &&
-                        ((TerrainGenerationMode)e == TerrainGenerationMode.FlatContinent ||
-                         (TerrainGenerationMode)e == TerrainGenerationMode.FlatIsland))
+                    if (_worldSettings.GameMode != 0 && TerrainGenerationModes.IsFlat((TerrainGenerationMode)e))
                     {
                         DialogsManager.ShowDialog(
                             null,
@@ -404,16 +404,13 @@ public class WorldOptionsScreen : Screen
         _creativeModePanel.IsVisible = _worldSettings.GameMode == GameMode.Creative;
         _newWorldOnlyPanel.IsVisible = !_isExistingWorld;
         _seasonsPanel.IsVisible = _worldSettings.GameMode == GameMode.Creative || !_isExistingWorld;
-        _continentTerrainPanel.IsVisible = _worldSettings.TerrainGenerationMode == TerrainGenerationMode.Continent ||
-                                           _worldSettings.TerrainGenerationMode ==
-                                           TerrainGenerationMode.FlatContinent;
-        _islandTerrainPanel.IsVisible = _worldSettings.TerrainGenerationMode == TerrainGenerationMode.Island ||
-                                        _worldSettings.TerrainGenerationMode == TerrainGenerationMode.FlatIsland;
-        _flatTerrainPanel.IsVisible = _worldSettings.TerrainGenerationMode == TerrainGenerationMode.FlatContinent ||
-                                      _worldSettings.TerrainGenerationMode == TerrainGenerationMode.FlatIsland;
+        _continentTerrainPanel.IsVisible = !TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode);
+        _islandTerrainPanel.IsVisible = TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode);
+        _flatTerrainPanel.IsVisible = TerrainGenerationModes.IsFlat(_worldSettings.TerrainGenerationMode);
         _yearDaysPanel.IsVisible = _worldSettings.AreSeasonsChanging;
+        var displayTerrainGenerationMode = TerrainGenerationModes.ToDisplayMode(_worldSettings.TerrainGenerationMode);
         _terrainGenerationButton.Text =
-            StringsManager.GetString("TerrainGenerationMode." + _worldSettings.TerrainGenerationMode + ".Name");
+            StringsManager.GetString("TerrainGenerationMode." + displayTerrainGenerationMode + ".Name");
         _islandSizeEw.Value = FindNearestIndex(_islandSizes, _worldSettings.IslandSize.X);
         _islandSizeEw.Text = _worldSettings.IslandSize.X.ToString(CultureInfo.InvariantCulture);
         _islandSizeNs.Value = FindNearestIndex(_islandSizes, _worldSettings.IslandSize.Y);

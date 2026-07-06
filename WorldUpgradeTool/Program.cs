@@ -20,17 +20,18 @@ internal static class Program
         try
         {
             var name = WorldUpgradeManager.ReadWorldName(worldDirectory);
-            var beforeVersion = WorldUpgradeManager.ReadWorldVersion(worldDirectory);
+            var beforeVersion = WorldUpgradeManager.ReadProjectVersion(worldDirectory);
 
             Console.WriteLine($"World: {name}");
-            Console.WriteLine($"Current version: {beforeVersion}");
-            Console.WriteLine($"Target version: {WorldUpgradeManager.TargetWorldSerializationVersion}");
+            Console.WriteLine($"Current project version: {beforeVersion}");
+            Console.WriteLine($"Target project version: {WorldUpgradeManager.TargetProjectFormatVersion}");
+            Console.WriteLine($"Target terrain storage version: {WorldUpgradeManager.TargetTerrainStorageVersion}");
 
             WorldUpgradeManager.UpgradeWorld(worldDirectory);
 
-            var afterVersion = WorldUpgradeManager.ReadWorldVersion(worldDirectory);
-            Console.WriteLine($"Upgraded version: {afterVersion}");
-            return afterVersion == WorldUpgradeManager.TargetWorldSerializationVersion ? 0 : 1;
+            var afterVersion = WorldUpgradeManager.ReadProjectVersion(worldDirectory);
+            Console.WriteLine($"Upgraded project version: {afterVersion}");
+            return afterVersion == WorldUpgradeManager.TargetProjectFormatVersion ? 0 : 1;
         }
         catch (Exception ex)
         {
