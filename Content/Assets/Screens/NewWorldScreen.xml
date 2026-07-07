@@ -7,9 +7,9 @@
         <CanvasWidget Style="{Widgets/TopBarContents}">
             <LabelWidget Name="TopBar.Label" Text="[NewWorldScreen:0]"/>
         </CanvasWidget>
-        <ScrollPanelWidget Direction="Vertical">
-            <CanvasWidget HorizontalAlignment="Near" Size="Infinity,1000">
-                <StackPanelWidget Direction="Vertical">
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+            <CanvasWidget Size="Infinity, Infinity">
+                <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
                     <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center">
                         <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[NewWorldScreen:1]"
                                      Margin="10, 0"/>
@@ -32,91 +32,6 @@
                         </CanvasWidget>
                     </UniformSpacingPanelWidget>
                     <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center">
-                        <LabelWidget HorizontalAlignment="Far" Title="创建服务器" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:10]" Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <CheckboxWidget Name="RunServer" Size="50, 50" VerticalAlignment="Center" Color="255, 0, 0"
-                                            Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Name="LoginConfig">
-                        <LabelWidget Title="需要登录社区" HorizontalAlignment="Far" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:13]" Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <CheckboxWidget Name="NeedLogin" Size="50, 50" VerticalAlignment="Center" Color="255, 0, 0"
-                                            Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Name="ServerConfig"
-                                               IsVisible="False">
-                        <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[NewWorldScreen:11]"
-                                     Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
-                            <TextBoxWidget Name="Password" Title="[NewWorldScreen:19]" Size="380, 50"
-                                           VerticalAlignment="Center" MaximumLength="16" Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center"
-                                               Name="KeywordBlockingConfig" IsVisible="False">
-                        <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[NewWorldScreen:17]"
-                                     Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
-                            <TextBoxWidget Name="KeywordBlocking" Title="[NewWorldScreen:18]" Size="380, 50"
-                                           VerticalAlignment="Center" MaximumLength="16" Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Name="MaxPlayerConfig"
-                                               IsVisible="False">
-                        <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[NewWorldScreen:12]"
-                                     Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
-                            <TextBoxWidget Name="MaxPlayers" Title="[NewWorldScreen:20]" Size="380, 50" Text="20"
-                                           VerticalAlignment="Center" MaximumLength="16" Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Name="DaySpeedConfig"
-                                               IsVisible="False">
-                        <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="一天时间长度系数"
-                                     Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
-                            <TextBoxWidget Name="DaySpeed" Title="一天时间长度系数" Size="380, 50"
-                                           VerticalAlignment="Center" MaximumLength="16" Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center"
-                                               Name="RecoverySpeedConfig" IsVisible="False">
-                        <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="睡觉属性恢复系数"
-                                     Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
-                            <TextBoxWidget Name="RecoverySpeed" Title="睡觉属性恢复系数" Size="380, 50"
-                                           VerticalAlignment="Center" MaximumLength="16" Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center"
-                                               Name="DisableBlocksPanel" IsVisible="False">
-                        <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[NewWorldScreen:15]"
-                                     Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
-                            <TextBoxWidget Name="DisableBlocks" Title="[NewWorldScreen:21]" Size="380, 50"
-                                           VerticalAlignment="Center" MaximumLength="16" Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center"
-                                               Name="RandomSpawnPositionPanel">
-                        <LabelWidget HorizontalAlignment="Far" Title="随机出生点" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:16]" Margin="10, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <CheckboxWidget Name="RandomSpawnPosition" Size="50, 50" VerticalAlignment="Center"
-                                            Color="255, 0, 0" Margin="10, 0"/>
-                        </CanvasWidget>
-                    </UniformSpacingPanelWidget>
-                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center">
                         <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[NewWorldScreen:4]"
                                      Margin="10, 0"/>
                         <BevelledButtonWidget Name="GameMode" Style="{Styles/ButtonStyle_310x60}"
@@ -134,23 +49,26 @@
                         <BevelledButtonWidget Name="WorldOptions" Style="{Styles/ButtonStyle_310x60}"
                                               Text="[NewWorldScreen:7]" VerticalAlignment="Center" Margin="5, 0"/>
                     </UniformSpacingPanelWidget>
-                    <CanvasWidget Margin="0, 4">
-                        <LabelWidget Name="Description" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                     TextAnchor="HorizontalCenter, VerticalCenter" Color="128, 128, 128" WordWrap="true"
+                    <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center">
+                        <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[NewWorldScreen:22]"
                                      Margin="10, 0"/>
-                    </CanvasWidget>
-                    <CanvasWidget HorizontalAlignment="Center" Margin="0, 2">
-                        <LabelWidget Name="Error" Text="[NewWorldScreen:8]" Color="255, 0, 0" VerticalAlignment="Far"
-                                     HorizontalAlignment="Center"/>
-                        <BevelledButtonWidget Name="Play" Style="{Styles/ButtonStyle_310x60}" Text="[NewWorldScreen:9]"
-                                              VerticalAlignment="Far" HorizontalAlignment="Center">
-                            <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="50, 150, 35"
-                                                     BevelColor="50, 150, 35"/>
-                        </BevelledButtonWidget>
-                    </CanvasWidget>
+                        <BevelledButtonWidget Name="ServerSettings" Style="{Styles/ButtonStyle_310x60}"
+                                              Text="[NewWorldScreen:22]" VerticalAlignment="Center" Margin="5, 0"/>
+                    </UniformSpacingPanelWidget>
                 </StackPanelWidget>
             </CanvasWidget>
-        </ScrollPanelWidget>
+            <CanvasWidget Size="Infinity, 48" Margin="0, 4">
+                <LabelWidget Name="Error" Text="[NewWorldScreen:8]" Color="255, 0, 0" VerticalAlignment="Center"
+                             HorizontalAlignment="Center"/>
+            </CanvasWidget>
+            <CanvasWidget HorizontalAlignment="Center" Size="Infinity, 76" Margin="0, 0">
+                <BevelledButtonWidget Name="Play" Style="{Styles/ButtonStyle_310x60}" Text="[NewWorldScreen:9]"
+                                      VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="50, 150, 35"
+                                             BevelColor="50, 150, 35"/>
+                </BevelledButtonWidget>
+            </CanvasWidget>
+        </StackPanelWidget>
 
     </StackPanelWidget>
 

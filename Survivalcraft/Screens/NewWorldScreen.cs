@@ -10,8 +10,6 @@ public class NewWorldScreen : Screen
 
     private readonly LabelWidget _blankSeedLabel;
 
-    private readonly LabelWidget _descriptionLabel;
-
     private readonly LabelWidget _errorLabel;
 
     private readonly ButtonWidget _gameModeButton;
@@ -24,45 +22,13 @@ public class NewWorldScreen : Screen
 
     private readonly TextBoxWidget _seedTextBox;
 
+    private readonly ButtonWidget _serverSettingsButton;
+
     private readonly ButtonWidget _startingPositionButton;
 
     private readonly ButtonWidget _worldOptionsButton;
 
     private WorldSettings _worldSettings = null!;
-
-    private readonly TextBoxWidget _password;
-
-    private readonly TextBoxWidget _maxPlayer;
-
-    private readonly TextBoxWidget _daySpeedTextBox;
-
-    private readonly TextBoxWidget _disableBlocks;
-
-    private readonly TextBoxWidget _recoverySpeed;
-
-    private readonly TextBoxWidget _keywordBlocking;
-
-    private readonly CheckboxWidget _runServer;
-
-    private readonly CheckboxWidget _needLogin;
-
-    private readonly CheckboxWidget _randomSpawnPosition;
-
-    private readonly UniformSpacingPanelWidget _serverConfigPanelWidget;
-
-    private readonly UniformSpacingPanelWidget _maxPlayerConfigPanelWidget;
-
-    private readonly UniformSpacingPanelWidget _loginConfigPanelWidget;
-
-    private readonly UniformSpacingPanelWidget _daySpeedConfig;
-
-    private readonly UniformSpacingPanelWidget _disableBlocksPanel;
-
-    private readonly UniformSpacingPanelWidget _recoverySpeedConfig;
-
-    private readonly UniformSpacingPanelWidget _randomSpawnPositionPanel;
-
-    private readonly UniformSpacingPanelWidget _keywordBlockingConfigPanel;
 
     public NewWorldScreen()
     {
@@ -74,32 +40,9 @@ public class NewWorldScreen : Screen
         _startingPositionButton = Children.Find<ButtonWidget>("StartingPosition")!;
         _worldOptionsButton = Children.Find<ButtonWidget>("WorldOptions")!;
         _blankSeedLabel = Children.Find<LabelWidget>("BlankSeed")!;
-        _descriptionLabel = Children.Find<LabelWidget>("Description")!;
         _errorLabel = Children.Find<LabelWidget>("Error")!;
         _playButton = Children.Find<ButtonWidget>("Play")!;
-        _serverConfigPanelWidget = Children.Find<UniformSpacingPanelWidget>("ServerConfig")!;
-        _maxPlayerConfigPanelWidget = Children.Find<UniformSpacingPanelWidget>("MaxPlayerConfig")!;
-        _loginConfigPanelWidget = Children.Find<UniformSpacingPanelWidget>("LoginConfig")!;
-        _daySpeedConfig = Children.Find<UniformSpacingPanelWidget>("DaySpeedConfig")!;
-        _recoverySpeedConfig = Children.Find<UniformSpacingPanelWidget>("RecoverySpeedConfig")!;
-        _disableBlocksPanel = Children.Find<UniformSpacingPanelWidget>("DisableBlocksPanel")!;
-        _randomSpawnPositionPanel = Children.Find<UniformSpacingPanelWidget>("RandomSpawnPositionPanel")!;
-        _keywordBlockingConfigPanel = Children.Find<UniformSpacingPanelWidget>("KeywordBlockingConfig")!;
-        _runServer = Children.Find<CheckboxWidget>("RunServer")!;
-        _needLogin = Children.Find<CheckboxWidget>("NeedLogin")!;
-        _randomSpawnPosition = Children.Find<CheckboxWidget>("RandomSpawnPosition")!;
-        _password = Children.Find<TextBoxWidget>("Password")!;
-        _maxPlayer = Children.Find<TextBoxWidget>("MaxPlayers")!;
-        _disableBlocks = Children.Find<TextBoxWidget>("DisableBlocks")!;
-        _daySpeedTextBox = Children.Find<TextBoxWidget>("DaySpeed")!;
-        _recoverySpeed = Children.Find<TextBoxWidget>("RecoverySpeed")!;
-        _keywordBlocking = Children.Find<TextBoxWidget>("KeywordBlocking")!;
-
-        _daySpeedTextBox.Text = "1.0";
-
-        _recoverySpeed.Text = "1.0";
-
-        _disableBlocks.MaximumLength = int.MaxValue;
+        _serverSettingsButton = Children.Find<ButtonWidget>("ServerSettings")!;
 
         _nameTextBox.TextChanged += delegate { _worldSettings.Name = _nameTextBox.Text; };
         _seedTextBox.TextChanged += delegate { _worldSettings.Seed = _seedTextBox.Text; };
@@ -107,7 +50,11 @@ public class NewWorldScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        if (ScreensManager.PreviousScreen?.GetType() != typeof(WorldOptionsScreen))
+        if (parameters.Length > 0 && parameters[0] is WorldSettings worldSettings)
+        {
+            _worldSettings = worldSettings;
+        }
+        else if (ScreensManager.PreviousScreen?.GetType() != typeof(WorldOptionsScreen))
         {
             _worldSettings = new WorldSettings
             {
@@ -115,45 +62,10 @@ public class NewWorldScreen : Screen
             };
         }
 
-        _runServer.IsChecked = _worldSettings.RunServer;
-        _needLogin.IsChecked = _worldSettings.IsNeedCommunityLogin;
-        _randomSpawnPosition.IsChecked = _worldSettings.RandomSpawnPosition;
     }
 
     public override void Update()
     {
-        _worldSettings.RunServer = _runServer.IsChecked;
-        _serverConfigPanelWidget.IsVisible = _worldSettings.RunServer;
-        _maxPlayerConfigPanelWidget.IsVisible = _worldSettings.RunServer;
-        _loginConfigPanelWidget.IsVisible = _worldSettings.RunServer;
-        _daySpeedConfig.IsVisible = _worldSettings.RunServer;
-        _recoverySpeedConfig.IsVisible = _worldSettings.RunServer;
-        _disableBlocksPanel.IsVisible = _worldSettings.RunServer;
-        _randomSpawnPositionPanel.IsVisible = _worldSettings.RunServer;
-        _keywordBlockingConfigPanel.IsVisible = _worldSettings.RunServer;
-        _keywordBlocking.IsVisible = _worldSettings.RunServer;
-
-        int.TryParse(_maxPlayer.Text, out var result);
-        _worldSettings.MaxOnlinePlayerCount = (ushort)MathUtils.Max(result, 1);
-        _worldSettings.DisableBlocks = _disableBlocks.Text;
-        _worldSettings.IsNeedCommunityLogin = _needLogin.IsChecked;
-        _worldSettings.Password = _password.Text;
-        _worldSettings.KeywordBlocking = _keywordBlocking.Text;
-        float.TryParse(_daySpeedTextBox.Text, out var daySpeed);
-        float.TryParse(_recoverySpeed.Text, out var recoverSpeed);
-        if (daySpeed <= 0f || daySpeed > 1f)
-        {
-            daySpeed = 1f;
-        }
-
-        if (recoverSpeed <= 0f)
-        {
-            recoverSpeed = 1f;
-        }
-
-        _worldSettings.DaySpeed = daySpeed;
-        _worldSettings.RecoverFactor = recoverSpeed;
-        _worldSettings.RandomSpawnPosition = _randomSpawnPosition.IsChecked;
         if (_gameModeButton.IsClicked)
         {
             DialogsManager.ShowDialog(null,
@@ -178,10 +90,14 @@ public class NewWorldScreen : Screen
         _playButton.IsVisible = flag;
         _errorLabel.IsVisible = !flag;
         _blankSeedLabel.IsVisible = _worldSettings.Seed.Length == 0 && !_seedTextBox.HasFocus;
-        _descriptionLabel.Text = StringsManager.GetString("GameMode." + _worldSettings.GameMode + ".Description");
         if (_worldOptionsButton.IsClicked)
         {
             ScreensManager.SwitchScreen("WorldOptions", _worldSettings, false);
+        }
+
+        if (_serverSettingsButton.IsClicked)
+        {
+            ScreensManager.SwitchScreen("WorldServerSettings", _worldSettings, "NewWorld", _worldSettings);
         }
 
         if (_playButton.IsClicked && WorldsManager.ValidateWorldName(_nameTextBox.Text))
@@ -192,7 +108,7 @@ public class NewWorldScreen : Screen
                 _worldSettings.ResetOptionsForNonCreativeMode();
             }
 
-            if (_runServer.IsChecked)
+            if (_worldSettings.RunServer)
             {
                 PrepareWorldModsAndPlay(worldInfo, runServer: true);
             }

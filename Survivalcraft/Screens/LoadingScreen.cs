@@ -163,6 +163,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("SettingsControls", new SettingsControlsScreen()); });
         AddLoadAction(delegate { AddScreen("Play", new PlayScreen()); });
         AddLoadAction(delegate { AddScreen("NewWorld", new NewWorldScreen()); });
+        AddLoadAction(delegate { AddScreen("WorldServerSettings", new WorldServerSettingsScreen()); });
         AddLoadAction(delegate { AddScreen("ModifyWorld", new ModifyWorldScreen()); });
         AddLoadAction(delegate { AddScreen("WorldOptions", new WorldOptionsScreen()); });
         AddLoadAction(delegate { AddScreen("GameLoading", new GameLoadingScreen()); });
