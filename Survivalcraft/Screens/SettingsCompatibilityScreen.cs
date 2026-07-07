@@ -34,12 +34,7 @@ public class SettingsCompatibilityScreen : Screen
     public override void Enter(object[] parameters)
     {
         _descriptionLabel.Text = string.Empty;
-#if ANDROID
-        _useReducedZRangeContainer.IsVisible = true;
-#endif
-#if DESKTOP
-        _useReducedZRangeContainer.IsVisible = false;
-#endif
+        _useReducedZRangeContainer.IsVisible = PlatformManager.Platform is Platform.Android;
     }
 
     public override void Update()
@@ -47,20 +42,20 @@ public class SettingsCompatibilityScreen : Screen
         GameManager.UpdateProject();
         if (_singleThreadTerrainUpdateButton.IsClicked)
         {
-            SettingsManager.MultithreadedTerrainUpdate = !SettingsManager.MultithreadedTerrainUpdate;
+            SettingsManager.Current.MultithreadedTerrainUpdate = !SettingsManager.Current.MultithreadedTerrainUpdate;
             _descriptionLabel.Text =
-                StringsManager.GetString("Settings.Compatibility.SingleThreadTerrainUpdate.Description");
+                StringsManager.GetString("Settings", "Compatibility", "SinglethreadedTerrainUpdate", "Description");
         }
 
         if (_useReducedZRangeButton.IsClicked)
         {
-            SettingsManager.UseReducedZRange = !SettingsManager.UseReducedZRange;
-            _descriptionLabel.Text = StringsManager.GetString("Settings.Compatibility.UseReducedZRange.Description");
+            SettingsManager.Current.UseReducedZRange = !SettingsManager.Current.UseReducedZRange;
+            _descriptionLabel.Text = StringsManager.GetString("Settings", "Compatibility", "UseReducedZRange", "Description");
         }
 
         if (_enableModButton.IsClicked)
         {
-            SettingsManager.EnableMod = !SettingsManager.EnableMod;
+            SettingsManager.Current.EnableMod = !SettingsManager.Current.EnableMod;
         }
 
         if (_viewGameLogButton.IsClicked)
@@ -70,19 +65,19 @@ public class SettingsCompatibilityScreen : Screen
 
         if (_resetDefaultsButton.IsClicked)
         {
-            SettingsManager.MultithreadedTerrainUpdate = true;
-            SettingsManager.UseReducedZRange = false;
+            SettingsManager.Current.MultithreadedTerrainUpdate = true;
+            SettingsManager.Current.UseReducedZRange = false;
         }
 
         _singleThreadTerrainUpdateButton.Text =
-            SettingsManager.MultithreadedTerrainUpdate ? LanguageControl.Off : LanguageControl.On;
+            SettingsManager.Current.MultithreadedTerrainUpdate ? LanguageManager.Off : LanguageManager.On;
 
-        _useReducedZRangeButton.Text = SettingsManager.UseReducedZRange ? LanguageControl.On : LanguageControl.Off;
+        _useReducedZRangeButton.Text = SettingsManager.Current.UseReducedZRange ? LanguageManager.On : LanguageManager.Off;
 
-        _enableModButton.Text = SettingsManager.EnableMod ? LanguageControl.On : LanguageControl.Off;
+        _enableModButton.Text = SettingsManager.Current.EnableMod ? LanguageManager.On : LanguageManager.Off;
 
         _resetDefaultsButton.IsEnabled =
-            !SettingsManager.MultithreadedTerrainUpdate || SettingsManager.UseReducedZRange;
+            !SettingsManager.Current.MultithreadedTerrainUpdate || SettingsManager.Current.UseReducedZRange;
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {

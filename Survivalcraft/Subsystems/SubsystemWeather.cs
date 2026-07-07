@@ -120,7 +120,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
             return;
         }
 
-        var num = SettingsManager.VisibilityRange > 128 ? 9 : SettingsManager.VisibilityRange <= 64 ? 7 : 8;
+        var num = SettingsManager.Current.VisibilityRange > 128 ? 9 : SettingsManager.Current.VisibilityRange <= 64 ? 7 : 8;
         var num2 = num * num;
         var activeShafts = GetActiveShafts(camera.GameWidget);
         var b = (byte)(255f * MathUtils.Lerp(0.15f, 1f, SubsystemSky.SkyLightIntensity));
@@ -130,8 +130,6 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         var vector = new Vector2(camera.ViewPosition.X, camera.ViewPosition.Z);
         var point = Terrain.ToCell(vector);
         _lastShaftsUpdatePositions.TryGetValue(camera.GameWidget, out var value);
-        ModsManager.HookAction("SetRainAndSnowColor",
-            modloader => modloader.SetRainAndSnowColor(ref RainColor, ref SnowColor));
         if (value.HasValue && !(Vector2.DistanceSquared(value.Value, vector) > 1f))
         {
             return;
@@ -299,7 +297,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         }
 
         _rainSound.Volume = MathUtils.Saturate(MathUtils.Lerp(_rainSound.Volume,
-            SettingsManager.SoundsVolume * _targetRainSoundVolume, 5f * dt));
+            SettingsManager.Current.SoundsVolume * _targetRainSoundVolume, 5f * dt));
         if (_rainSound.Volume > AudioManager.MinAudibleVolume)
         {
             _rainSound.Play();

@@ -191,7 +191,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         }
 
         ComponentLocomotion.LookOrder += playerInput.Look *
-                                         (SettingsManager.FlipVerticalAxis
+                                         (SettingsManager.Current.FlipVerticalAxis
                                              ? new Vector2(0f, -1f)
                                              : new Vector2(0f, 1f));
         var num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
@@ -407,7 +407,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
                             _aimHintIssued = true;
                             ComponentGui.DisplaySmallMessage(
-                                LanguageControl.Get(_typeName, 1),
+                                LanguageManager.Get(_typeName, 1),
                                 Color.White,
                                 true,
                                 true

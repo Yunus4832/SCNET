@@ -2,13 +2,13 @@ using System.Text;
 
 using Android.Content.PM;
 using Android.Graphics;
-using Android.Provider;
 using Android.Text.Method;
 using Android.Views;
 
 using Game;
 
 using AndroidAlertDialog = Android.App.AlertDialog;
+using AndroidProviderSettings = Android.Provider.Settings;
 using Color = Android.Graphics.Color;
 
 namespace Survivalcraft.Android;
@@ -140,10 +140,10 @@ public class ServerActivity : BlackActivity
 
     private void InitializeAndroidId()
     {
-        GetMachineID.AndroidID = Settings.Secure
+        GetMachineID.AndroidID = AndroidProviderSettings.Secure
             .GetString(
                 ContentResolver,
-                Settings.Secure.AndroidId
+                AndroidProviderSettings.Secure.AndroidId
             ) ?? string.Empty;
     }
 
@@ -177,7 +177,12 @@ public class ServerActivity : BlackActivity
 
     private void RequestGuiMode()
     {
-        RunningSettingManager.SetRunMode(RunModeType.Gui);
+        RunningSettingManager.SaveCurrent(runningSetting =>
+            {
+                runningSetting.RunMode = RunModeType.Gui;
+                runningSetting.PendingSessionId = string.Empty;
+            }
+        );
         _switchToGuiRequested = true;
         RequestStop();
     }
@@ -228,10 +233,7 @@ public class ServerActivity : BlackActivity
 
     private void OnLogMsgAdded(string message)
     {
-        RunOnUiThread(() =>
-        {
-            AppendLogLine(message);
-        });
+        RunOnUiThread(() => { AppendLogLine(message); });
     }
 
     private void AppendLogLine(string line)

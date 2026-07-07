@@ -105,7 +105,7 @@ public class EditPaletteDialog : Dialog
             _labels[j].Text = _tmpPalette.Names[j];
             _rectangles[j].CenterColor = _tmpPalette.Colors[j];
             _resetButtons[j].IsEnabled = _tmpPalette.Colors[j] != WorldPalette.DefaultColors[j] ||
-                                         _tmpPalette.Names[j] != LanguageControl.Get("WorldPalette", j);
+                                         _tmpPalette.Names[j] != LanguageManager.Get("WorldPalette", j);
         }
 
         for (var k = 0; k < 16; k++)
@@ -160,7 +160,7 @@ public class EditPaletteDialog : Dialog
             }
 
             _tmpPalette.Colors[k] = WorldPalette.DefaultColors[k];
-            _tmpPalette.Names[k] = LanguageControl.Get("WorldPalette", k);
+            _tmpPalette.Names[k] = LanguageManager.Get("WorldPalette", k);
         }
 
         if (_okButton.IsClicked)

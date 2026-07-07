@@ -113,6 +113,7 @@ public class PackageManager
         RegisterBuiltInPackage<EditableBlockPackage, EditableBlockPackageHandler>(PackageType.EditableBlock);
         RegisterBuiltInPackage<GroupManagePackage, GroupManagePackageHandler>(PackageType.GroupManage);
         RegisterBuiltInPackage<SubsystemSeasonPackage, SubsystemSeasonPackageHandler>(PackageType.SubsystemSeason);
+        RegisterBuiltInPackage<ModEnvelopePackage, ModEnvelopePackageHandler>(PackageType.ModPackage);
     }
 
     public static void RegisterPackage(Func<IPackage> factory)

@@ -8,31 +8,30 @@ public class TextBoxDialog : Dialog
 
     private readonly Action<string> _handler;
 
-    private readonly Action<TextBoxWidget> _handler2;
+    private readonly bool _invokeHandlerOnCancel;
 
     private readonly ButtonWidget _okButtonWidget;
 
     private readonly TextBoxWidget _textBoxWidget;
 
-    private readonly LabelWidget _titleWidget;
-
     public TextBoxDialog(
         string title,
         string text,
         int maximumLength,
-        Action<string> handler
+        Action<string> handler,
+        bool invokeHandlerOnCancel = true
     )
     {
         _handler = handler;
-        _handler2 = delegate { };
+        _invokeHandlerOnCancel = invokeHandlerOnCancel;
         var node = ContentManager.Get<XElement>("Dialogs/TextBoxDialog");
         LoadContents(this, node);
-        _titleWidget = Children.Find<LabelWidget>("TextBoxDialog.Title")!;
+        var titleWidget = Children.Find<LabelWidget>("TextBoxDialog.Title")!;
         _textBoxWidget = Children.Find<TextBoxWidget>("TextBoxDialog.TextBox")!;
         _okButtonWidget = Children.Find<ButtonWidget>("TextBoxDialog.OkButton")!;
         _cancelButtonWidget = Children.Find<ButtonWidget>("TextBoxDialog.CancelButton")!;
-        _titleWidget.IsVisible = !string.IsNullOrEmpty(title);
-        _titleWidget.Text = title;
+        titleWidget.IsVisible = !string.IsNullOrEmpty(title);
+        titleWidget.Text = title;
         _textBoxWidget.MaximumLength = maximumLength;
         _textBoxWidget.Text = text;
         _textBoxWidget.HasFocus = true;
@@ -45,24 +44,26 @@ public class TextBoxDialog : Dialog
         string text,
         int maximumLength,
         Action<string> handler,
-        Action<TextBoxWidget> handler2
+        Action<TextBoxWidget> handler2,
+        bool invokeHandlerOnCancel = true
     )
     {
         _handler = handler;
-        _handler2 = handler2;
+        var handler3 = handler2;
+        _invokeHandlerOnCancel = invokeHandlerOnCancel;
         var node = ContentManager.Get<XElement>("Dialogs/TextBoxDialog");
         LoadContents(this, node);
-        _titleWidget = Children.Find<LabelWidget>("TextBoxDialog.Title")!;
+        var titleWidget = Children.Find<LabelWidget>("TextBoxDialog.Title")!;
         _textBoxWidget = Children.Find<TextBoxWidget>("TextBoxDialog.TextBox")!;
         _okButtonWidget = Children.Find<ButtonWidget>("TextBoxDialog.OkButton")!;
         _cancelButtonWidget = Children.Find<ButtonWidget>("TextBoxDialog.CancelButton")!;
-        _titleWidget.IsVisible = !string.IsNullOrEmpty(title);
-        _titleWidget.Text = title;
+        titleWidget.IsVisible = !string.IsNullOrEmpty(title);
+        titleWidget.Text = title;
         _textBoxWidget.MaximumLength = maximumLength;
         _textBoxWidget.Text = text;
         _textBoxWidget.HasFocus = true;
         _textBoxWidget.Enter += delegate { Dismiss(_textBoxWidget.Text); };
-        _textBoxWidget.TextChanged += delegate(TextBoxWidget textBox) { _handler2.Invoke(textBox); };
+        _textBoxWidget.TextChanged += handler3.Invoke;
         AutoHide = true;
     }
 
@@ -72,7 +73,7 @@ public class TextBoxDialog : Dialog
     {
         if (Input.Cancel)
         {
-            Dismiss(string.Empty);
+            Dismiss(string.Empty, _invokeHandlerOnCancel);
         }
         else if (Input.Ok || _okButtonWidget.IsClicked)
         {
@@ -80,17 +81,20 @@ public class TextBoxDialog : Dialog
         }
         else if (_cancelButtonWidget.IsClicked)
         {
-            Dismiss(string.Empty);
+            Dismiss(string.Empty, _invokeHandlerOnCancel);
         }
     }
 
-    public void Dismiss(string result)
+    public void Dismiss(string result, bool invokeHandler = true)
     {
         if (AutoHide)
         {
             DialogsManager.HideDialog(this);
         }
 
-        _handler.Invoke(result);
+        if (invokeHandler)
+        {
+            _handler.Invoke(result);
+        }
     }
 }

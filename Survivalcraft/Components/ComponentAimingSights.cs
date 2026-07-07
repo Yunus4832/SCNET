@@ -52,7 +52,7 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
             }
 
             if (!camera.Eye.HasValue && !camera.UsesMovementControls && !IsSightsVisible &&
-                (SettingsManager.LookControlMode == LookControlMode.SplitTouch ||
+                (SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch ||
                  !_componentPlayer.ComponentInput.IsControlledByTouch))
             {
                 var subtexture = ContentManager.Get<Subtexture>("Textures/Atlas/Crosshair");

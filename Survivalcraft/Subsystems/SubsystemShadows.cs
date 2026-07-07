@@ -34,7 +34,7 @@ public class SubsystemShadows : Subsystem, IDrawable
             return;
         }
 
-        if (!SettingsManager.ObjectsShadowsEnabled)
+        if (!SettingsManager.Current.ObjectsShadowsEnabled)
         {
             return;
         }

@@ -93,7 +93,7 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
     {
         var color = GetColor(Terrain.ExtractData(value));
-        return SubsystemPalette.GetName(color, LanguageControl.Get(TypeName, 1));
+        return SubsystemPalette.GetName(color, LanguageManager.Get(TypeName, 1));
     }
 
     public override string GetCategory(int value)

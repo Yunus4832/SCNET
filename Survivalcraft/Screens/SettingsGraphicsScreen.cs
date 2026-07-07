@@ -29,35 +29,35 @@ public class SettingsGraphicsScreen : Screen
         GameManager.UpdateProject();
         if (_viewAngleSlider.IsSliding)
         {
-            SettingsManager.ViewAngle = _viewAngleSlider.Value;
+            SettingsManager.Current.ViewAngle = _viewAngleSlider.Value;
         }
 
         if (_virtualRealityButton.IsClicked)
         {
-            if (SettingsManager.UseVr)
+            if (SettingsManager.Current.UseVr)
             {
-                SettingsManager.UseVr = false;
+                SettingsManager.Current.UseVr = false;
                 VrManager.StopVr();
             }
             else
             {
-                SettingsManager.UseVr = true;
+                SettingsManager.Current.UseVr = true;
                 VrManager.StartVr();
             }
         }
 
         if (_brightnessSlider.IsSliding)
         {
-            SettingsManager.Brightness = _brightnessSlider.Value;
+            SettingsManager.Current.Brightness = _brightnessSlider.Value;
         }
 
         _virtualRealityButton.IsEnabled = VrManager.IsVrAvailable;
-        _virtualRealityButton.Text = SettingsManager.UseVr ? "Enabled" : "Disabled";
-        _brightnessSlider.Value = SettingsManager.Brightness;
+        _virtualRealityButton.Text = SettingsManager.Current.UseVr ? "Enabled" : "Disabled";
+        _brightnessSlider.Value = SettingsManager.Current.Brightness;
         _brightnessSlider.Text =
-            MathUtils.Round(SettingsManager.Brightness * 10f).ToString(CultureInfo.InvariantCulture);
-        _viewAngleSlider.Value = SettingsManager.ViewAngle;
-        _viewAngleSlider.Text = $"{MathUtils.Round(SettingsManager.ViewAngle * 100f)}%";
+            MathUtils.Round(SettingsManager.Current.Brightness * 10f).ToString(CultureInfo.InvariantCulture);
+        _viewAngleSlider.Value = SettingsManager.Current.ViewAngle;
+        _viewAngleSlider.Text = $"{MathUtils.Round(SettingsManager.Current.ViewAngle * 100f)}%";
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             SettingsManager.SaveSettings();

@@ -18,9 +18,9 @@ public class SelectGameModeDialog : ListSelectionDialog
             var node = ContentManager.Get<XElement>("Widgets/SelectGameModeItem");
             var obj = (ContainerWidget)LoadWidget(null, node, null);
             obj.Children.Find<LabelWidget>("SelectGameModeItem.Name")!.Text =
-                LanguageControl.Get("GameMode", gameMode.ToString());
+                LanguageManager.Get("GameMode", gameMode.ToString());
             obj.Children.Find<LabelWidget>("SelectGameModeItem.Description")!.Text =
-                StringsManager.GetString("GameMode." + gameMode + ".Description");
+                StringsManager.GetString("GameMode", gameMode, "Description");
             return obj;
         },
         delegate(object item) { selectionHandler((GameMode)item); }

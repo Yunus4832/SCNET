@@ -21,7 +21,7 @@ public static class CharacterSkinsManager
 
     public static void Initialize()
     {
-        Storage.CreateDirectory(ModsManager.CharacterSkinsDirectoryName);
+        Storage.CreateDirectory(GamePaths.CharacterSkins);
     }
 
     /// <summary>
@@ -51,7 +51,7 @@ public static class CharacterSkinsManager
     /// <param name="skinData"></param>
     public static void SaveSkinToFile(string name, byte[] skinData)
     {
-        var path = Path.Combine(ModsManager.CharacterSkinsDirectoryName, name);
+        var path = Path.Combine(GamePaths.CharacterSkins, name);
         using var s = Storage.OpenFile(path, OpenFileMode.CreateOrOpen);
         s.Write(skinData, 0, skinData.Length);
     }
@@ -91,7 +91,7 @@ public static class CharacterSkinsManager
             return false;
         }
 
-        filename = Storage.CombinePaths(ModsManager.CharacterSkinsDirectoryName, name);
+        filename = Storage.CombinePaths(GamePaths.CharacterSkins, name);
         return Storage.FileExists(filename);
     }
 
@@ -244,7 +244,7 @@ public static class CharacterSkinsManager
         _characterSkinNames.Add("$Female2");
         _characterSkinNames.Add("$Female3");
         _characterSkinNames.Add("$Female4");
-        foreach (var item in Storage.ListFileNames(ModsManager.CharacterSkinsDirectoryName))
+        foreach (var item in Storage.ListFileNames(GamePaths.CharacterSkins))
         {
             if (Storage.GetExtension(item).ToLower() == ".scskin")
             {

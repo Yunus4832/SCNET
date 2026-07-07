@@ -2,6 +2,10 @@
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Engine.Core</PackageId>
+        <Description>Core utilities and foundational types used by the SCNET engine.</Description>
+        <PackageTags>scnet;engine;core</PackageTags>
     </PropertyGroup>
 
     <ItemGroup>

@@ -58,7 +58,7 @@ public class ComponentDiggingCracks : Component, IDrawable
             if (_players.MainPlayer != null)
             {
                 if (Vector3.DistanceSquared(_players.MainPlayer.GameWidget.ActiveCamera.ViewPosition,
-                        new Vector3(point)) > MathUtils.Sqr(SettingsManager.VisibilityRange))
+                        new Vector3(point)) > MathUtils.Sqr(SettingsManager.Current.VisibilityRange))
                 {
                     return;
                 }

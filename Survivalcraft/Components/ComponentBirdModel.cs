@@ -96,19 +96,6 @@ public class ComponentBirdModel : ComponentCreatureModel
 
     public override void Animate()
     {
-        var flag = false;
-        ModsManager.HookAction("OnModelAnimate", loader =>
-        {
-            loader.OnModelAnimate(this, out var skip);
-            flag |= skip;
-            return false;
-        });
-        if (flag)
-        {
-            base.Animate();
-            return;
-        }
-
         var num = 0f;
         if (_hasWings)
         {

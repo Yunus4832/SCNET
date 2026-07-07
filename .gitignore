@@ -33,6 +33,9 @@ bld/
 # Visual Studio 2017 auto generated files
 Generated\ Files/
 
+# Local Codex workspace settings
+.codex/
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
@@ -344,3 +347,5 @@ Publish/*
 
 # 避免被 NuGet 规则忽略
 !Survivalcraft/Network/Packages/*
+# Added by code-review-graph
+.code-review-graph/

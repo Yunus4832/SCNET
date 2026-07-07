@@ -52,10 +52,10 @@ public class MusketWidget : CanvasWidget
         {
             _instructionsLabel.Text = MusketBlock.GetLoadState(Terrain.ExtractData(slotValue)) switch
             {
-                MusketBlock.LoadState.Empty => LanguageControl.Get(_typeName, 0),
-                MusketBlock.LoadState.Gunpowder => LanguageControl.Get(_typeName, 1),
-                MusketBlock.LoadState.Wad => LanguageControl.Get(_typeName, 2),
-                MusketBlock.LoadState.Loaded => LanguageControl.Get(_typeName, 3),
+                MusketBlock.LoadState.Empty => LanguageManager.Get(_typeName, 0),
+                MusketBlock.LoadState.Gunpowder => LanguageManager.Get(_typeName, 1),
+                MusketBlock.LoadState.Wad => LanguageManager.Get(_typeName, 2),
+                MusketBlock.LoadState.Loaded => LanguageManager.Get(_typeName, 3),
                 _ => string.Empty
             };
         }

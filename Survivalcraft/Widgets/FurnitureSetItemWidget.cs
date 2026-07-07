@@ -25,7 +25,7 @@ public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget
         var labelWidget2 = Children.Find<LabelWidget>("FurnitureSetItem.DesignsCount")!;
         labelWidget.Text = furnitureSet.Name;
         var count = CountFurnitureDesigns();
-        labelWidget2.Text = string.Format(LanguageControl.AutoGet(this, 1), count);
+        labelWidget2.Text = string.Format(LanguageManager.AutoGet(this, 1), count);
     }
 
     public void DragDrop(Widget dragWidget, object data)

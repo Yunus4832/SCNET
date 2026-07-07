@@ -154,19 +154,12 @@ public class CommunityContentScreen : Screen
             break;
         }
 
-        if (parameters.Length > 0 && parameters[0].ToString() == "Mod")
-        {
-            _filter = ExternalContentType.Mod;
-        }
-        else
-        {
-            _filter = string.Empty;
-        }
+        _filter = string.Empty;
 
         _order = Order.ByRank;
         _inputKey.Text = string.Empty;
         _isOwn = false;
-        var languageType = !ModsManager.Configs.TryGetValue("Language", out var config) ? "zh-CN" : config;
+        var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
         _isCnLanguageType = languageType == "zh-CN";
         CommunityContentManager.IsAdmin(new CancellableProgress(), delegate(bool isAdmin) { _isAdmin = isAdmin; },
             delegate(Exception e)
@@ -174,9 +167,9 @@ public class CommunityContentScreen : Screen
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        LanguageControl.Error,
+                        LanguageManager.Error,
                         e.Message,
-                        LanguageControl.Ok)
+                        LanguageManager.Ok)
                 );
             });
         PopulateList(string.Empty);
@@ -201,22 +194,22 @@ public class CommunityContentScreen : Screen
             _actionButton.IsEnabled = _isAdmin || _isOwn;
             if (_order == Order.ByHide || _isOwn)
             {
-                _actionButton.Text = LanguageControl.Get(GetType().Name, 23);
+                _actionButton.Text = LanguageManager.Get(GetType().Name, 23);
             }
             else
             {
                 _actionButton.Text = communityContentEntry.Boutique == 0
-                    ? LanguageControl.Get(GetType().Name, 15)
-                    : LanguageControl.Get(GetType().Name, 16);
+                    ? LanguageManager.Get(GetType().Name, 15)
+                    : LanguageManager.Get(GetType().Name, 16);
             }
 
-            _action2Button.IsEnabled = _filter?.ToString() != "Mod" && (_isAdmin || _isOwn);
+            _action2Button.IsEnabled = _isAdmin || _isOwn;
         }
         else
         {
             _actionButton.IsEnabled = false;
             _action2Button.IsEnabled = false;
-            _actionButton.Text = LanguageControl.Get(GetType().Name, 17);
+            _actionButton.Text = LanguageManager.Get(GetType().Name, 17);
         }
 
         if (_isOwn)
@@ -230,8 +223,8 @@ public class CommunityContentScreen : Screen
         }
 
         _action2Button.Text = communityContentEntry is { IsShow: 0 }
-            ? LanguageControl.Get(GetType().Name, 24)
-            : LanguageControl.Get(GetType().Name, 25);
+            ? LanguageManager.Get(GetType().Name, 24)
+            : LanguageManager.Get(GetType().Name, 25);
         _orderLabel.Text = GetOrderDisplayName(_order);
         _filterLabel.Text = GetFilterDisplayName(_filter);
         _searchTypeButton.Text = GetSearchTypeDisplayName(_searchType);
@@ -243,7 +236,7 @@ public class CommunityContentScreen : Screen
                 items.Remove(Order.ByHide);
             }
 
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get(GetType().Name, "Order Type"),
+            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(GetType().Name, "Order Type"),
                 items, 60f, item => GetOrderDisplayName((Order)item), delegate(object item)
                 {
                     _order = (Order)item;
@@ -268,12 +261,12 @@ public class CommunityContentScreen : Screen
                 list.Add(item);
             }
 
-            if (!string.IsNullOrEmpty(SettingsManager.CommunityAccessToken))
+            if (!string.IsNullOrEmpty(SettingsManager.Current.CommunityAccessToken))
             {
-                list.Add(SettingsManager.CommunityAccessToken);
+                list.Add(SettingsManager.Current.CommunityAccessToken);
             }
 
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get(GetType().Name, "Filter"), list,
+            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(GetType().Name, "Filter"), list,
                 60f, item => GetFilterDisplayName(item), delegate(object item)
                 {
                     _filter = item;
@@ -291,8 +284,8 @@ public class CommunityContentScreen : Screen
         {
             if (_order == Order.ByHide || _isOwn)
             {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get(GetType().Name, 26),
-                    communityContentEntry.Name, LanguageControl.Ok, LanguageControl.Cancel,
+                DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(GetType().Name, 26),
+                    communityContentEntry.Name, LanguageManager.Ok, LanguageManager.Cancel,
                     delegate(MessageDialogButton button)
                     {
                         if (button != MessageDialogButton.Button1)
@@ -300,7 +293,7 @@ public class CommunityContentScreen : Screen
                             return;
                         }
 
-                        var busyDialog = new CancellableBusyDialog(LanguageControl.Get(GetType().Name, 2), false);
+                        var busyDialog = new CancellableBusyDialog(LanguageManager.Get(GetType().Name, 2), false);
                         DialogsManager.ShowDialog(null, busyDialog);
                         CommunityContentManager.DeleteFile(communityContentEntry.Index, busyDialog.Progress,
                             delegate(byte[] data)
@@ -313,14 +306,14 @@ public class CommunityContentScreen : Screen
                                 }
 
                                 var msg = result[0]?.ToString() == "200"
-                                    ? LanguageControl.Get(GetType().Name, 27) + communityContentEntry.Name
+                                    ? LanguageManager.Get(GetType().Name, 27) + communityContentEntry.Name
                                     : result[1]?.ToString() ?? string.Empty;
                                 DialogsManager.ShowDialog(
                                     null,
                                     new MessageDialog(
-                                        LanguageControl.Get(GetType().Name, 20),
+                                        LanguageManager.Get(GetType().Name, 20),
                                         msg,
-                                        LanguageControl.Ok
+                                        LanguageManager.Ok
                                     )
                                 );
                             },
@@ -328,7 +321,7 @@ public class CommunityContentScreen : Screen
                             {
                                 DialogsManager.HideDialog(busyDialog);
                                 DialogsManager.ShowDialog(null,
-                                    new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok));
+                                    new MessageDialog(LanguageManager.Error, e.Message, LanguageManager.Ok));
                             });
                     }));
             }
@@ -339,7 +332,7 @@ public class CommunityContentScreen : Screen
                     DialogsManager.ShowDialog(
                         null,
                         new TextBoxDialog(
-                            LanguageControl.Get(GetType().Name, 18),
+                            LanguageManager.Get(GetType().Name, 18),
                             "5",
                             4,
                             delegate(string s)
@@ -360,7 +353,7 @@ public class CommunityContentScreen : Screen
                                 }
 
                                 var busyDialog =
-                                    new CancellableBusyDialog(LanguageControl.Get(GetType().Name, 2), false);
+                                    new CancellableBusyDialog(LanguageManager.Get(GetType().Name, 2), false);
                                 DialogsManager.ShowDialog(null, busyDialog);
                                 CommunityContentManager.UpdateBoutique(communityContentEntry.Type.ToString(),
                                     communityContentEntry.Index, boutique, busyDialog.Progress, delegate(byte[] data)
@@ -374,14 +367,14 @@ public class CommunityContentScreen : Screen
                                         }
 
                                         var msg = result[0]?.ToString() == "200"
-                                            ? LanguageControl.Get(GetType().Name, 19) + communityContentEntry.Name
+                                            ? LanguageManager.Get(GetType().Name, 19) + communityContentEntry.Name
                                             : result[1]?.ToString() ?? string.Empty;
                                         DialogsManager.ShowDialog(
                                             null,
                                             new MessageDialog(
-                                                LanguageControl.Get(GetType().Name, 20),
+                                                LanguageManager.Get(GetType().Name, 20),
                                                 msg,
-                                                LanguageControl.Ok
+                                                LanguageManager.Ok
                                             )
                                         );
                                     },
@@ -389,7 +382,7 @@ public class CommunityContentScreen : Screen
                                     {
                                         DialogsManager.HideDialog(busyDialog);
                                         DialogsManager.ShowDialog(null,
-                                            new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok));
+                                            new MessageDialog(LanguageManager.Error, e.Message, LanguageManager.Ok));
                                     }
                                 );
                             }
@@ -400,10 +393,10 @@ public class CommunityContentScreen : Screen
                 {
                     DialogsManager.ShowDialog(
                         null,
-                        new MessageDialog(LanguageControl.Get(GetType().Name, 21),
+                        new MessageDialog(LanguageManager.Get(GetType().Name, 21),
                             communityContentEntry.Name,
-                            LanguageControl.Ok,
-                            LanguageControl.Cancel,
+                            LanguageManager.Ok,
+                            LanguageManager.Cancel,
                             delegate(MessageDialogButton button)
                             {
                                 if (button != MessageDialogButton.Button1)
@@ -412,7 +405,7 @@ public class CommunityContentScreen : Screen
                                 }
 
                                 var busyDialog =
-                                    new CancellableBusyDialog(LanguageControl.Get(GetType().Name, 2), false);
+                                    new CancellableBusyDialog(LanguageManager.Get(GetType().Name, 2), false);
                                 DialogsManager.ShowDialog(null, busyDialog);
                                 CommunityContentManager.UpdateBoutique(
                                     communityContentEntry.Type.ToString(),
@@ -429,20 +422,20 @@ public class CommunityContentScreen : Screen
                                         }
 
                                         var msg = result[0]?.ToString() == "200"
-                                            ? LanguageControl.Get(GetType().Name, 22) + communityContentEntry.Name
+                                            ? LanguageManager.Get(GetType().Name, 22) + communityContentEntry.Name
                                             : result[1]?.ToString() ?? string.Empty;
                                         DialogsManager.ShowDialog(null,
                                             new MessageDialog(
-                                                LanguageControl.Get(GetType().Name, 20),
+                                                LanguageManager.Get(GetType().Name, 20),
                                                 msg,
-                                                LanguageControl.Ok)
+                                                LanguageManager.Ok)
                                         );
                                     },
                                     delegate(Exception e)
                                     {
                                         DialogsManager.HideDialog(busyDialog);
                                         DialogsManager.ShowDialog(null,
-                                            new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok));
+                                            new MessageDialog(LanguageManager.Error, e.Message, LanguageManager.Ok));
                                     });
                             }));
                 }
@@ -451,12 +444,12 @@ public class CommunityContentScreen : Screen
 
         if (_action2Button.IsClicked && communityContentEntry != null)
         {
-            var busyDialog = new CancellableBusyDialog(LanguageControl.Get(GetType().Name, 2), false);
+            var busyDialog = new CancellableBusyDialog(LanguageManager.Get(GetType().Name, 2), false);
             DialogsManager.ShowDialog(null, busyDialog);
             var isShow = (communityContentEntry.IsShow + 1) % 2;
             var sucessMsg = isShow == 1
-                ? LanguageControl.Get(GetType().Name, 28)
-                : LanguageControl.Get(GetType().Name, 29);
+                ? LanguageManager.Get(GetType().Name, 28)
+                : LanguageManager.Get(GetType().Name, 29);
             CommunityContentManager.UpdateHidePara(
                 communityContentEntry.Index,
                 isShow,
@@ -483,16 +476,16 @@ public class CommunityContentScreen : Screen
                         : result[1]?.ToString() ?? string.Empty;
                     DialogsManager.ShowDialog(
                         null,
-                        new MessageDialog(LanguageControl.Get(GetType().Name, 20),
+                        new MessageDialog(LanguageManager.Get(GetType().Name, 20),
                             msg,
-                            LanguageControl.Ok
+                            LanguageManager.Ok
                         )
                     );
                 }, delegate(Exception e)
                 {
                     DialogsManager.HideDialog(busyDialog);
                     DialogsManager.ShowDialog(null,
-                        new MessageDialog(LanguageControl.Error, e.Message, LanguageControl.Ok));
+                        new MessageDialog(LanguageManager.Error, e.Message, LanguageManager.Ok));
                 });
         }
 
@@ -501,7 +494,7 @@ public class CommunityContentScreen : Screen
         {
             const string msg =
                 "如果你觉得你的作品足够优秀，\n可以申请加入精品区，让更多人看到。\n加精作品将会是社区认证的作品，是有机会上游戏公告推广的。\n\n具体申精方式\n请加[SC中文社区存档交流群(745540296)]了解。\n同时，如果你对某个作品有异议，\n也可加群举报，本群会受理作品归属问题，守护玩家的劳动成果！\n";
-            DialogsManager.ShowDialog(null, new MessageDialog("作品如何申精？", msg, LanguageControl.Ok));
+            DialogsManager.ShowDialog(null, new MessageDialog("作品如何申精？", msg, LanguageManager.Ok));
         }
 
         if (_searchTypeButton.IsClicked)
@@ -531,11 +524,11 @@ public class CommunityContentScreen : Screen
         {
             if (_provider is { IsLoggedIn: true })
             {
-                var info = string.IsNullOrEmpty(SettingsManager.ScpboxUserInfo)
+                var info = string.IsNullOrEmpty(SettingsManager.Current.ScpboxUserInfo)
                     ? "暂无用户信息"
-                    : SettingsManager.ScpboxUserInfo;
-                DialogsManager.ShowDialog(null, new MessageDialog("账号已登录,是否登出?", info, LanguageControl.Yes,
-                    LanguageControl.No, delegate(MessageDialogButton button)
+                    : SettingsManager.Current.ScpboxUserInfo;
+                DialogsManager.ShowDialog(null, new MessageDialog("账号已登录,是否登出?", info, LanguageManager.Yes,
+                    LanguageManager.No, delegate(MessageDialogButton button)
                     {
                         if (button == MessageDialogButton.Button1)
                         {
@@ -573,7 +566,7 @@ public class CommunityContentScreen : Screen
 
     public void PopulateList(string cursor, bool force = false)
     {
-        var text = SettingsManager.CommunityContentMode switch
+        var text = SettingsManager.Current.CommunityContentMode switch
         {
             CommunityContentMode.Strict => "1",
             CommunityContentMode.Normal => "0",
@@ -581,7 +574,7 @@ public class CommunityContentScreen : Screen
         };
         var text2 = _filter as string ?? string.Empty;
         var text3 = _filter is ExternalContentType
-            ? LanguageControl.Get(GetType().Name, _filter.ToString() ?? string.Empty)
+            ? LanguageManager.Get(GetType().Name, _filter.ToString() ?? string.Empty)
             : string.Empty;
         var text4 = _order.ToString();
         var cacheKey = text2 + "\n" + text3 + "\n" + text4 + "\n" + text + "\n" + _inputKey.Text;
@@ -607,7 +600,7 @@ public class CommunityContentScreen : Screen
             _listPanel.ClearItems();
         }
 
-        var busyDialog = new CancellableBusyDialog(LanguageControl.Get(GetType().Name, 2), false);
+        var busyDialog = new CancellableBusyDialog(LanguageManager.Get(GetType().Name, 2), false);
         DialogsManager.ShowDialog(null, busyDialog);
         CommunityContentManager.List(cursor, text2, text3, text, text4, _inputKey.Text, _searchType.ToString(),
             busyDialog.Progress, delegate(List<CommunityContentEntry> list, string nextCursor)
@@ -676,7 +669,7 @@ public class CommunityContentScreen : Screen
             {
                 DialogsManager.HideDialog(busyDialog);
                 DialogsManager.ShowDialog(null,
-                    new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok));
+                    new MessageDialog(LanguageManager.Error, error.Message, LanguageManager.Ok));
             });
     }
 
@@ -684,7 +677,7 @@ public class CommunityContentScreen : Screen
     {
         var userId = UserManager.ActiveUser != null ? UserManager.ActiveUser.UniqueId : string.Empty;
         var busyDialog =
-            new CancellableBusyDialog(string.Format(LanguageControl.Get(GetType().Name, 1), entry.Name), false);
+            new CancellableBusyDialog(string.Format(LanguageManager.Get(GetType().Name, 1), entry.Name), false);
         DialogsManager.ShowDialog(null, busyDialog);
         CommunityContentManager.Download(entry.Address, entry.Name, entry.Type, userId, busyDialog.Progress,
             delegate { DialogsManager.HideDialog(busyDialog); },
@@ -692,7 +685,7 @@ public class CommunityContentScreen : Screen
             {
                 DialogsManager.HideDialog(busyDialog);
                 DialogsManager.ShowDialog(null,
-                    new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok));
+                    new MessageDialog(LanguageManager.Error, error.Message, LanguageManager.Ok));
             });
     }
 
@@ -700,8 +693,8 @@ public class CommunityContentScreen : Screen
     {
         if (UserManager.ActiveUser != null)
         {
-            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Get(GetType().Name, 4),
-                LanguageControl.Get(GetType().Name, 5), LanguageControl.Yes, LanguageControl.No,
+            DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(GetType().Name, 4),
+                LanguageManager.Get(GetType().Name, 5), LanguageManager.Yes, LanguageManager.No,
                 delegate(MessageDialogButton button)
                 {
                     if (button != MessageDialogButton.Button1)
@@ -710,7 +703,7 @@ public class CommunityContentScreen : Screen
                     }
 
                     var busyDialog =
-                        new CancellableBusyDialog(string.Format(LanguageControl.Get(GetType().Name, 3), entry.Name),
+                        new CancellableBusyDialog(string.Format(LanguageManager.Get(GetType().Name, 3), entry.Name),
                             false);
                     DialogsManager.ShowDialog(null, busyDialog);
                     CommunityContentManager.Delete(
@@ -721,14 +714,14 @@ public class CommunityContentScreen : Screen
                         {
                             DialogsManager.HideDialog(busyDialog);
                             DialogsManager.ShowDialog(null,
-                                new MessageDialog(LanguageControl.Get(GetType().Name, 6),
-                                    LanguageControl.Get(GetType().Name, 7), LanguageControl.Ok));
+                                new MessageDialog(LanguageManager.Get(GetType().Name, 6),
+                                    LanguageManager.Get(GetType().Name, 7), LanguageManager.Ok));
                         },
                         delegate(Exception error)
                         {
                             DialogsManager.HideDialog(busyDialog);
                             DialogsManager.ShowDialog(null,
-                                new MessageDialog(LanguageControl.Error, error.Message, LanguageControl.Ok));
+                                new MessageDialog(LanguageManager.Error, error.Message, LanguageManager.Ok));
                         });
                 }));
         }
@@ -738,9 +731,9 @@ public class CommunityContentScreen : Screen
     {
         return filter switch
         {
-            string s => LanguageControl.Get(nameof(CommunityContentScreen), !string.IsNullOrEmpty(s) ? 8 : 9),
+            string s => LanguageManager.Get(nameof(CommunityContentScreen), !string.IsNullOrEmpty(s) ? 8 : 9),
             ExternalContentType type => ExternalContentManager.GetEntryTypeDescription(type),
-            _ => throw new InvalidOperationException(LanguageControl.Get(nameof(CommunityContentScreen), 10))
+            _ => throw new InvalidOperationException(LanguageManager.Get(nameof(CommunityContentScreen), 10))
         };
     }
 
@@ -752,7 +745,7 @@ public class CommunityContentScreen : Screen
             Order.ByTime => _isCnLanguageType ? "最新发布" : "ByTime",
             Order.ByBoutique => _isCnLanguageType ? "精品推荐" : "ByBoutique",
             Order.ByHide => _isCnLanguageType ? "尚未发布" : "ByHide",
-            _ => throw new InvalidOperationException(LanguageControl.Get(nameof(CommunityContentScreen), 13))
+            _ => throw new InvalidOperationException(LanguageManager.Get(nameof(CommunityContentScreen), 13))
         };
     }
 

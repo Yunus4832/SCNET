@@ -1,0 +1,69 @@
+<Project>
+    <PropertyGroup>
+        <SurvivalcraftModManifest Condition="'$(SurvivalcraftModManifest)' == ''">$(MSBuildProjectDirectory)/manifest.json</SurvivalcraftModManifest>
+        <SurvivalcraftModId Condition="'$(SurvivalcraftModId)' == ''">$(AssemblyName)</SurvivalcraftModId>
+        <SurvivalcraftModPackageName Condition="'$(SurvivalcraftModPackageName)' == ''">$(SurvivalcraftModId)</SurvivalcraftModPackageName>
+        <SurvivalcraftModPackageExtension>.scpak</SurvivalcraftModPackageExtension>
+        <BuildSurvivalcraftModPackage Condition="'$(BuildSurvivalcraftModPackage)' == ''">true</BuildSurvivalcraftModPackage>
+        <IncludeSourceRevisionInInformationalVersion Condition="'$(IncludeSourceRevisionInInformationalVersion)' == ''">false</IncludeSourceRevisionInInformationalVersion>
+        <SurvivalcraftAssembly Condition="'$(SurvivalcraftAssembly)' == ''">$(MSBuildThisFileDirectory)../bin/$(Configuration)/$(TargetFramework)/Survivalcraft.dll</SurvivalcraftAssembly>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(SurvivalcraftUseLocalReferences)' == 'true'">
+        <Reference Include="Survivalcraft">
+            <HintPath>$(SurvivalcraftAssembly)</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Engine">
+            <HintPath>$(MSBuildThisFileDirectory)../../Engine/bin/$(Configuration)/$(TargetFramework)/Engine.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Engine.Core">
+            <HintPath>$(MSBuildThisFileDirectory)../../Engine.Core/bin/$(Configuration)/$(TargetFramework)/Engine.Core.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="Engine.Serialization">
+            <HintPath>$(MSBuildThisFileDirectory)../../Engine.Serialization/bin/$(Configuration)/$(TargetFramework)/Engine.Serialization.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+        <Reference Include="EngineSystem">
+            <HintPath>$(MSBuildThisFileDirectory)../../EntitySystem/bin/$(Configuration)/$(TargetFramework)/EngineSystem.dll</HintPath>
+            <Private>false</Private>
+        </Reference>
+    </ItemGroup>
+
+    <Target Name="PackSurvivalcraftMod" AfterTargets="Build" Condition="'$(BuildSurvivalcraftModPackage)' == 'true'">
+        <PropertyGroup>
+            <_SurvivalcraftModPackageDirectory Condition="'$(SurvivalcraftModPackageDirectory)' == ''">$(TargetDir)packages</_SurvivalcraftModPackageDirectory>
+            <_SurvivalcraftModPackageDirectory Condition="'$(SurvivalcraftModPackageDirectory)' != ''">$(SurvivalcraftModPackageDirectory)</_SurvivalcraftModPackageDirectory>
+            <_SurvivalcraftModPackagePath>$(_SurvivalcraftModPackageDirectory)/$(SurvivalcraftModPackageName)$(SurvivalcraftModPackageExtension)</_SurvivalcraftModPackagePath>
+            <_SurvivalcraftModStage>$(IntermediateOutputPath)scpak</_SurvivalcraftModStage>
+        </PropertyGroup>
+        <Error Condition="!Exists('$(SurvivalcraftModManifest)')" Text="Survivalcraft mod manifest was not found: $(SurvivalcraftModManifest)"/>
+        <ItemGroup>
+            <_SurvivalcraftModData Include="$(MSBuildProjectDirectory)/Data/**/*"/>
+            <_SurvivalcraftModAssets Include="$(MSBuildProjectDirectory)/Assets/**/*"/>
+            <_SurvivalcraftModDependencies Include="@(ReferenceCopyLocalPaths)"
+                                               Condition="'%(Extension)' == '.dll'
+                                                          and '%(Filename)' != 'Survivalcraft'
+                                                          and '%(Filename)' != 'Engine'
+                                                          and '%(Filename)' != 'Engine.Core'
+                                                          and '%(Filename)' != 'Engine.Serialization'
+                                                          and '%(Filename)' != 'EngineSystem'"/>
+        </ItemGroup>
+        <RemoveDir Directories="$(_SurvivalcraftModStage)"/>
+        <MakeDir Directories="$(_SurvivalcraftModStage)/assemblies;$(_SurvivalcraftModStage)/data;$(_SurvivalcraftModStage)/assets/$(SurvivalcraftModId);$(_SurvivalcraftModPackageDirectory)"/>
+        <Copy SourceFiles="$(SurvivalcraftModManifest)" DestinationFiles="$(_SurvivalcraftModStage)/manifest.json"/>
+        <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(_SurvivalcraftModStage)/assemblies/$(TargetFileName)"/>
+        <Copy SourceFiles="@(_SurvivalcraftModDependencies)" DestinationFolder="$(_SurvivalcraftModStage)/assemblies" SkipUnchangedFiles="true"/>
+        <Copy SourceFiles="@(_SurvivalcraftModData)"
+              DestinationFiles="@(_SurvivalcraftModData->'$(_SurvivalcraftModStage)/data/%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true" Condition="'@(_SurvivalcraftModData)' != ''"/>
+        <Copy SourceFiles="@(_SurvivalcraftModAssets)"
+              DestinationFiles="@(_SurvivalcraftModAssets->'$(_SurvivalcraftModStage)/assets/$(SurvivalcraftModId)/%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true" Condition="'@(_SurvivalcraftModAssets)' != ''"/>
+        <Delete Files="$(_SurvivalcraftModPackagePath)"/>
+        <ZipDirectory SourceDirectory="$(_SurvivalcraftModStage)" DestinationFile="$(_SurvivalcraftModPackagePath)" Overwrite="true"/>
+        <Message Text="Created Survivalcraft package: $(_SurvivalcraftModPackagePath)" Importance="high"/>
+    </Target>
+</Project>

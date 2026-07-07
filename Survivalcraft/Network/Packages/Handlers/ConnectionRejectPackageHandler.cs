@@ -10,7 +10,6 @@ public sealed class ConnectionRejectPackageHandler : PackageHandlerBase<Connecti
             return;
         }
 
-        ModFileService.Utils.HandleModDataValidationMessage(package.Reason);
         netNode.Stop($"[连接拒绝]{package.Reason}");
     }
 }

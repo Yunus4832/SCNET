@@ -1,5 +1,3 @@
-using Engine.Graphics;
-
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -13,9 +11,9 @@ public class NetGroupPanelWidget : CanvasWidget
     /// </summary>
     private const int _addFriendPeriod = 30;
 
-    private readonly BitmapButtonWidget _create;
+    private readonly ClickableTextRowWidget _create;
 
-    private readonly BitmapButtonWidget _join;
+    private readonly ClickableTextRowWidget _join;
 
     private readonly PlayerData _playerData;
 
@@ -34,14 +32,8 @@ public class NetGroupPanelWidget : CanvasWidget
     public NetGroupPanelWidget(PlayerData playerData)
     {
         _playerData = playerData;
-        var st2 = new Subtexture(ContentManager.Get<Texture2D>("Textures/Gui/Server_Group_Btn"), Vector2.Zero,
-            Vector2.One);
-        _create = new BitmapButtonWidget
-            { Text = "创建队伍", ClickedSubtexture = st2, NormalSubtexture = st2, Margin = new Vector2(10, 0) };
-        _join = new BitmapButtonWidget
-            { Text = "加入队伍", ClickedSubtexture = st2, NormalSubtexture = st2, Margin = new Vector2(10, 0) };
-        _create.RectangleWidget.VerticalAlignment = WidgetAlignment.Center;
-        _join.RectangleWidget.VerticalAlignment = WidgetAlignment.Center;
+        _create = new ClickableTextRowWidget("创建队伍");
+        _join = new ClickableTextRowWidget("加入队伍");
         InitPanel();
         Size = new Vector2(220, 120);
     }
@@ -57,11 +49,6 @@ public class NetGroupPanelWidget : CanvasWidget
             FillColor = Color.White
         });
         verticalPanel.AddChildren(_join);
-
-        _create.SetImageSize(new Vector2(16));
-        _join.SetImageSize(new Vector2(16));
-        _create.SetFontScale(0.7f);
-        _join.SetFontScale(0.7f);
     }
 
     /// <summary>
@@ -84,37 +71,42 @@ public class NetGroupPanelWidget : CanvasWidget
     {
         if (_create.IsClicked || _createTeam)
         {
-            DialogsManager.Prompt(
-                "输入队伍名称",
-                string.Empty,
-                text =>
-                {
-                    if (string.IsNullOrEmpty(text))
+            DialogsManager.ShowDialog(
+                _playerData.GameWidget.GuiWidget,
+                new TextBoxDialog(
+                    "输入队伍名称",
+                    string.Empty,
+                    64,
+                    text =>
                     {
-                        DialogsManager.Alert("队伍名称不能为空", _playerData.GameWidget.GuiWidget);
-                    }
-                    else
-                    {
-                        if (!string.IsNullOrEmpty(_playerData.GroupKey))
+                        if (string.IsNullOrEmpty(text))
                         {
-                            DialogsManager.Alert("你已在队伍中", _playerData.GameWidget.GuiWidget);
+                            DialogsManager.Alert("队伍名称不能为空", _playerData.GameWidget.GuiWidget);
                         }
                         else
                         {
-                            DialogsManager.Loading("创建中...");
-                            if (CommonLib.WorkType == WorkType.Client)
+                            if (!string.IsNullOrEmpty(_playerData.GroupKey))
                             {
-                                CommonLib.Net.QueuePackage(new GroupManagePackage(_playerData.PlayerGUID, text, false));
+                                DialogsManager.Alert("你已在队伍中", _playerData.GameWidget.GuiWidget);
                             }
                             else
                             {
-                                GroupManagePackage.CreateGroup(true, _playerData.SubsystemPlayers, CommonLib.Net,
-                                    _playerData.PlayerGUID, text);
+                                DialogsManager.Loading("创建中...");
+                                if (CommonLib.WorkType == WorkType.Client)
+                                {
+                                    CommonLib.Net.QueuePackage(new GroupManagePackage(_playerData.PlayerGUID, text,
+                                        false));
+                                }
+                                else
+                                {
+                                    GroupManagePackage.CreateGroup(true, _playerData.SubsystemPlayers, CommonLib.Net,
+                                        _playerData.PlayerGUID, text);
+                                }
                             }
                         }
-                    }
-                },
-                parentWidget: _playerData.GameWidget.GuiWidget
+                    },
+                    invokeHandlerOnCancel: false
+                )
             );
         }
 

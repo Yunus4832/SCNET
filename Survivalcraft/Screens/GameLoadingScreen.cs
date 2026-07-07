@@ -43,6 +43,12 @@ public class GameLoadingScreen : Screen
 
     private Stopwatch _timer = null!;
 
+    public WorldInfo? CurrentWorldInfo => _serverEndPoint == null ? _worldInfo : null;
+
+    public IPEndPoint? CurrentServerEndPoint => _serverEndPoint;
+
+    public string CurrentPassword => _password;
+
     public GameLoadingScreen()
     {
         var node = ContentManager.Get<XElement>("Screens/GameLoadingScreen");
@@ -275,9 +281,9 @@ public class GameLoadingScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
-                    LanguageControl.Get(_typeName, 1),
+                    LanguageManager.Get(_typeName, 1),
                     ExceptionManager.MakeFullErrorMessage(e),
-                    LanguageControl.Get("Usual", "ok")
+                    LanguageManager.Get("Usual", "ok")
                 )
             );
         }

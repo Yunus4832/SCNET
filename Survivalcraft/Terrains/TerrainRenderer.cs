@@ -156,17 +156,12 @@ public class TerrainRenderer : IDisposable
         _opaqueShader.GetParameter("u_viewProjectionMatrix", true).SetValue(value);
         _opaqueShader.GetParameter("u_viewPosition", true).SetValue(viewPosition);
         _opaqueShader.GetParameter("u_samplerState", true)
-            .SetValue(SettingsManager.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
+            .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _opaqueShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _opaqueShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
         _opaqueShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
             _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
         var parameter = _opaqueShader.GetParameter("u_hazeStartDensity");
-        ModsManager.HookAction("SetShaderParameter", modLoader =>
-        {
-            modLoader.SetShaderParameter(_opaqueShader, camera);
-            return true;
-        });
         var point = Terrain.ToChunk(camera.ViewPosition.XZ);
         _subsystemTerrain.Terrain.GetChunkAtCoords(point.X, point.Y);
         foreach (var terrainChunk in _chunksToDraw)
@@ -215,18 +210,13 @@ public class TerrainRenderer : IDisposable
         _alphaTestedShader.GetParameter("u_viewProjectionMatrix", true).SetValue(value);
         _alphaTestedShader.GetParameter("u_viewPosition", true).SetValue(viewPosition);
         _alphaTestedShader.GetParameter("u_samplerState", true)
-            .SetValue(SettingsManager.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
+            .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _alphaTestedShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _alphaTestedShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
         _alphaTestedShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
             _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
         _alphaTestedShader.GetParameter("u_alphaThreshold").SetValue(0.5f);
         var parameter = _alphaTestedShader.GetParameter("u_hazeStartDensity");
-        ModsManager.HookAction("SetShaderParameter", modLoader =>
-        {
-            modLoader.SetShaderParameter(_alphaTestedShader, camera);
-            return true;
-        });
         foreach (var terrainChunk in _chunksToDraw)
         {
             var num = MathUtils.Min(terrainChunk.HazeEnds[gameWidgetIndex],
@@ -254,17 +244,12 @@ public class TerrainRenderer : IDisposable
         _transparentShader.GetParameter("u_viewProjectionMatrix", true).SetValue(value);
         _transparentShader.GetParameter("u_viewPosition", true).SetValue(viewPosition);
         _transparentShader.GetParameter("u_samplerState", true)
-            .SetValue(SettingsManager.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
+            .SetValue(SettingsManager.Current.TerrainMipmapsEnabled ? _samplerStateMips : _samplerState);
         _transparentShader.GetParameter("u_fogYMultiplier", true).SetValue(_subsystemSky.VisibilityRangeYMultiplier);
         _transparentShader.GetParameter("u_fogColor", true).SetValue(new Vector3(_subsystemSky.ViewFogColor));
         _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
             _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
         var parameter = _transparentShader.GetParameter("u_hazeStartDensity");
-        ModsManager.HookAction("SetShaderParameter", modLoader =>
-        {
-            modLoader.SetShaderParameter(_transparentShader, camera);
-            return true;
-        });
         for (var i = 0; i < _chunksToDraw.Count; i++)
         {
             var terrainChunk = _chunksToDraw[i];

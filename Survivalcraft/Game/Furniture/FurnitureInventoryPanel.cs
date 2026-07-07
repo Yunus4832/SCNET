@@ -127,7 +127,7 @@ public class FurnitureInventoryPanel : CanvasWidget
         {
             var list = new List<Tuple<string, Action>>
             {
-                new(LanguageControl.Get(_typeName, 6), delegate
+                new(LanguageManager.Get(_typeName, 6), delegate
                 {
                     if (SubsystemFurnitureBlockBehavior.FurnitureSets.Count < 32)
                     {
@@ -138,19 +138,19 @@ public class FurnitureInventoryPanel : CanvasWidget
                         DialogsManager.ShowDialog(
                             _componentPlayer.GuiWidget,
                             new MessageDialog(
-                                LanguageControl.Get(_typeName, 24),
-                                LanguageControl.Get(_typeName, 25),
-                                LanguageControl.Get("Usual", "ok")
+                                LanguageManager.Get(_typeName, 24),
+                                LanguageManager.Get(_typeName, 25),
+                                LanguageManager.Get("Usual", "ok")
                             )
                         );
                     }
                 }),
-                new(LanguageControl.Get(_typeName, 7), delegate { ImportFurnitureSet(SubsystemTerrain); })
+                new(LanguageManager.Get(_typeName, 7), delegate { ImportFurnitureSet(SubsystemTerrain); })
             };
             DialogsManager.ShowDialog(
                 _componentPlayer.GuiWidget,
                 new ListSelectionDialog(
-                    LanguageControl.Get(_typeName, 8),
+                    LanguageManager.Get(_typeName, 8),
                     list,
                     64f,
                     t => ((Tuple<string, Action>)t).Item1,
@@ -166,20 +166,21 @@ public class FurnitureInventoryPanel : CanvasWidget
 
         var list2 = new List<Tuple<string, Action>>
         {
-            new(LanguageControl.Get(_typeName, 9), RenameFurnitureSet),
-            new(LanguageControl.Get(_typeName, 28), delegate
+            new(LanguageManager.Get(_typeName, 9), RenameFurnitureSet),
+            new(LanguageManager.Get(_typeName, 28), delegate
             {
-                if (Enumerable.Count(
-                        SubsystemFurnitureBlockBehavior.GetFurnitureSetDesigns(ComponentFurnitureInventory
-                            .FurnitureSet)) > 0)
+                if (SubsystemFurnitureBlockBehavior
+                    .GetFurnitureSetDesigns(ComponentFurnitureInventory.FurnitureSet)
+                    .Any()
+                   )
                 {
                     DialogsManager.ShowDialog(
                         _componentPlayer.GuiWidget,
                         new MessageDialog(
-                            LanguageControl.Get("Usual", "warning"),
-                            LanguageControl.Get(_typeName, 26),
-                            LanguageControl.Get(_typeName, 27),
-                            LanguageControl.Get(_typeName, 28),
+                            LanguageManager.Get("Usual", "warning"),
+                            LanguageManager.Get(_typeName, 26),
+                            LanguageManager.Get(_typeName, 27),
+                            LanguageManager.Get(_typeName, 28),
                             delegate(MessageDialogButton b)
                             {
                                 if (b == MessageDialogButton.Button1)
@@ -195,14 +196,14 @@ public class FurnitureInventoryPanel : CanvasWidget
                     DeleteFurnitureSet();
                 }
             }),
-            new(LanguageControl.Get(_typeName, 11), delegate { MoveFurnitureSet(-1); }),
-            new(LanguageControl.Get(_typeName, 12), delegate { MoveFurnitureSet(1); }),
-            new(LanguageControl.Get(_typeName, 13), ExportFurnitureSet)
+            new(LanguageManager.Get(_typeName, 11), delegate { MoveFurnitureSet(-1); }),
+            new(LanguageManager.Get(_typeName, 12), delegate { MoveFurnitureSet(1); }),
+            new(LanguageManager.Get(_typeName, 13), ExportFurnitureSet)
         };
         DialogsManager.ShowDialog(
             _componentPlayer.GuiWidget,
             new ListSelectionDialog(
-                LanguageControl.Get(_typeName, 14),
+                LanguageManager.Get(_typeName, 14),
                 list2, 64f,
                 t => ((Tuple<string, Action>)t).Item1,
                 delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
@@ -291,7 +292,7 @@ public class FurnitureInventoryPanel : CanvasWidget
         _assignedPage = ComponentFurnitureInventory.PageIndex;
     }
 
-    public void NewFurnitueSetLogic(string s, string from = "")
+    public void NewFurnitureSetLogic(string s, string from = "")
     {
         var furnitureSet = SubsystemFurnitureBlockBehavior.NewFurnitureSet(s, from);
         ComponentFurnitureInventory.FurnitureSet = furnitureSet;
@@ -301,33 +302,17 @@ public class FurnitureInventoryPanel : CanvasWidget
 
     public void NewFurnitureSet()
     {
-        var componentPlayer = ComponentFurnitureInventory.Entity.FindComponent<ComponentPlayer>(true)!;
-#if DESKTOP
-        DialogsManager.ShowDialog(
-            componentPlayer.GameWidget,
-            new TextBoxDialog(
-                LanguageControl.Get(_typeName, 15),
-                LanguageControl.Get(_typeName, 16),
-                20,
-                delegate(string s)
-                {
-                    NewFurnitueSetLogic(s);
-                    CommonLib.Net.QueuePackage(new FurniturePackage(s));
-                }
-            )
-        );
-#endif
-#if ANDROID
-        Input.EnterText(
-            componentPlayer.GuiWidget,
-            LanguageControl.Get(_typeName, 15),
-            LanguageControl.Get(_typeName, 16), 20,
+        _componentPlayer.GuiWidget.Input.EnterText(
+            _componentPlayer.GuiWidget,
+            LanguageManager.Get(_typeName, 15),
+            LanguageManager.Get(_typeName, 16),
+            20,
             delegate(string s)
             {
-                NewFurnitueSetLogic(s);
+                NewFurnitureSetLogic(s);
                 CommonLib.Net.QueuePackage(new FurniturePackage(s));
-            });
-#endif
+            }
+        );
     }
 
     public void DeleteFurnitureSetLogic(FurnitureSet furnitureSet)
@@ -376,10 +361,9 @@ public class FurnitureInventoryPanel : CanvasWidget
             return;
         }
 
-        var componentPlayer = ComponentFurnitureInventory.Entity.FindComponent<ComponentPlayer>(true)!;
-        Input.EnterText(
-            componentPlayer.GuiWidget,
-            LanguageControl.Get(_typeName, 17),
+        _componentPlayer.GuiWidget.Input.EnterText(
+            _componentPlayer.GuiWidget,
+            LanguageManager.Get(_typeName, 17),
             furnitureSet.Name,
             20,
             delegate(string s)
@@ -459,23 +443,23 @@ public class FurnitureInventoryPanel : CanvasWidget
         }
 
         Invalidate();
-        var text2 = string.Format(LanguageControl.Get(_typeName, 1), list2.Count);
+        var text2 = string.Format(LanguageManager.Get(_typeName, 1), list2.Count);
         if (num > 0)
         {
-            text2 += string.Format(LanguageControl.Get(_typeName, 2), num);
+            text2 += string.Format(LanguageManager.Get(_typeName, 2), num);
         }
 
         if (num2 > 0)
         {
-            text2 += string.Format(LanguageControl.Get(_typeName, 3), num2, 65535);
+            text2 += string.Format(LanguageManager.Get(_typeName, 3), num2, 65535);
         }
 
         DialogsManager.ShowDialog(
             _componentPlayer.GuiWidget,
             new MessageDialog(
-                LanguageControl.Get(_typeName, 4),
+                LanguageManager.Get(_typeName, 4),
                 text2.Trim(),
-                LanguageControl.Get("Usual", "ok")
+                LanguageManager.Get("Usual", "ok")
             )
         );
     }
@@ -488,16 +472,16 @@ public class FurnitureInventoryPanel : CanvasWidget
             DialogsManager.ShowDialog(
                 _componentPlayer.GuiWidget,
                 new MessageDialog(
-                    LanguageControl.Get(_typeName, 18),
-                    LanguageControl.Get(_typeName, 19),
-                    LanguageControl.Ok
+                    LanguageManager.Get(_typeName, 18),
+                    LanguageManager.Get(_typeName, 19),
+                    LanguageManager.Ok
                 )
             );
         }
         else
         {
             DialogsManager.ShowDialog(_componentPlayer.GuiWidget, new ListSelectionDialog(
-                LanguageControl.Get(_typeName, 20), FurniturePacksManager.ReadOnlyFurniturePackNames, 64f,
+                LanguageManager.Get(_typeName, 20), FurniturePacksManager.ReadOnlyFurniturePackNames, 64f,
                 s => FurniturePacksManager.GetDisplayName((string)s), delegate(object s)
                 {
                     try
@@ -510,9 +494,9 @@ public class FurnitureInventoryPanel : CanvasWidget
                         DialogsManager.ShowDialog(
                             _componentPlayer.GuiWidget,
                             new MessageDialog(
-                                LanguageControl.Get(_typeName, 5),
+                                LanguageManager.Get(_typeName, 5),
                                 ex.Message,
-                                LanguageControl.Ok
+                                LanguageManager.Ok
                             )
                         );
                     }
@@ -532,9 +516,9 @@ public class FurnitureInventoryPanel : CanvasWidget
             DialogsManager.ShowDialog(
                 _componentPlayer.GuiWidget,
                 new MessageDialog(
-                    LanguageControl.Get(_typeName, 21),
-                    string.Format(LanguageControl.Get(_typeName, 22), displayName),
-                    LanguageControl.Get("Usual", "ok")
+                    LanguageManager.Get(_typeName, 21),
+                    string.Format(LanguageManager.Get(_typeName, 22), displayName),
+                    LanguageManager.Get("Usual", "ok")
                 )
             );
         }
@@ -543,9 +527,9 @@ public class FurnitureInventoryPanel : CanvasWidget
             DialogsManager.ShowDialog(
                 _componentPlayer.GuiWidget,
                 new MessageDialog(
-                    LanguageControl.Get(_typeName, 23),
+                    LanguageManager.Get(_typeName, 23),
                     ex.Message,
-                    LanguageControl.Get("Usual", "ok")
+                    LanguageManager.Get("Usual", "ok")
                 )
             );
         }

@@ -248,20 +248,6 @@ public class ComponentHumanModel : ComponentCreatureModel
 
     public override void Animate()
     {
-        var flag = false;
-        var skip = false;
-        ModsManager.HookAction("OnModelAnimate", loader =>
-        {
-            loader.OnModelAnimate(this, out skip);
-            flag = flag | skip;
-            return false;
-        });
-        if (flag)
-        {
-            base.Animate();
-            return;
-        }
-
         var position = ComponentCreature.ComponentBody.Position;
         var vector = ComponentCreature.ComponentBody.Rotation.ToYawPitchRoll();
         if (_lieDownFactorModel == 0f)

@@ -41,7 +41,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
 
     public Vector3 SunLightDirection { get; private set; }
 
-    private int _maxInstancesCount;
+    private int _maxInstancesCount = 7;
 
     public int ModelsDrawn;
 
@@ -139,11 +139,6 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemShadows = Project.FindSubsystem<SubsystemShadows>(true)!;
-        ModsManager.HookAction("GetMaxInstancesCount", modLoader =>
-        {
-            _maxInstancesCount = Math.Max(modLoader.GetMaxInstancesCount(), _maxInstancesCount);
-            return false;
-        });
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
             return;
@@ -241,16 +236,6 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             modelShader.AlphaThreshold = alphaThreshold.Value;
         }
 
-        ModsManager.HookAction("ModelShaderParameter", modLoader =>
-        {
-            modLoader.ModelShaderParameter(modelShader, camera, modelsData, alphaThreshold);
-            return true;
-        });
-        ModsManager.HookAction("SetShaderParameter", modLoader =>
-        {
-            modLoader.SetShaderParameter(modelShader, camera);
-            return true;
-        });
         foreach (var modelsDatum in modelsData)
         {
             var componentModel = modelsDatum.ComponentModel;
@@ -279,12 +264,6 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
             Display.DrawIndexed(PrimitiveType.TriangleList, modelShader, instancedModelData.VertexBuffer,
                 instancedModelData.IndexBuffer, 0, instancedModelData.IndexBuffer.IndicesCount);
             ModelsDrawn++;
-            //画名称
-            ModsManager.HookAction("OnModelRendererDrawExtra", modLoader =>
-            {
-                modLoader.OnModelRendererDrawExtra(this, componentModel, camera, alphaThreshold);
-                return false;
-            });
         }
 
         foreach (var obj in _signDatas)
@@ -402,7 +381,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
     public void ShadowDraw(SubsystemShadows subsystemShadows, Camera camera, Vector3 shadowPosition,
         float shadowDiameter, float alpha)
     {
-        if (!SettingsManager.ObjectsShadowsEnabled)
+        if (!SettingsManager.Current.ObjectsShadowsEnabled)
         {
             return;
         }

@@ -20,8 +20,7 @@
         <Using Include="Game.Components"/>
         <Using Include="Game.Managers"/>
         <Using Include="Game.Dialogs"/>
-        <Using Include="Game.ModManager"/>
-        <Using Include="Game.ModManager.Changes"/>
+        <Using Include="Game.Modding"/>
         <Using Include="Game.Managers.GameManager" Alias="GameManager"/>
         <Using Include="Game.Dialogs.AlertDialog" Alias="AlertDialog"/>
     </ItemGroup>

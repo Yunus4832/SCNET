@@ -3,7 +3,6 @@ using System.Net;
 using EntitySystem.Core;
 
 using Game.Network.Enums;
-using Game.Network.ModFileService;
 using Game.Network.Packages;
 using Game.Network.Serialization;
 
@@ -473,7 +472,7 @@ public class NetNode
         Clients.Clear();
         var localGuid = RunMode.Value is RunModeType.HeadlessServer
             ? Guid.NewGuid()
-            : new Guid(SettingsManager.OnlineAccessToken);
+            : new Guid(SettingsManager.Current.OnlineAccessToken);
         Self = new Client(localGuid, GameManager.Project!);
         AddClient(Self);
     }
@@ -505,15 +504,9 @@ public class NetNode
 
             if (flag)
             {
-                if (SettingsManager.StartModServer && !string.IsNullOrEmpty(SettingsManager.ModServerAddress))
+                if (!string.IsNullOrEmpty(SettingsManager.Current.DefaultModRepositoryUrl))
                 {
-                    ModFileServer.StartServer(SettingsManager.ModServerAddress);
-                    Log.Information("模组服务器已开启");
-                }
-
-                if (!string.IsNullOrEmpty(SettingsManager.ModServerAddress))
-                {
-                    Log.Information($"模组服务器已被指定为: {SettingsManager.ModServerAddress}");
+                    Log.Information($"默认模组仓库已被指定为: {SettingsManager.Current.DefaultModRepositoryUrl}");
                 }
 
                 Log.Information($"开启服务器成功，端口 {NetManager.LocalPort}");
@@ -558,8 +551,17 @@ public class NetNode
             NetManager.Start();
             TokenId = Guid.NewGuid();
             SendWriterFromPackage(
-                new ConnectionRequestPackage(TokenId, VersionsManager.ProtocolVersion, SettingsManager.CommunityAccessUser,
-                    SettingsManager.OnlineAccessToken, passwd, ModsManager.ModList), ep, false);
+                new ConnectionRequestPackage(
+                    TokenId,
+                    VersionsManager.ProtocolVersion,
+                    SettingsManager.Current.CommunityAccessUser,
+                    SettingsManager.Current.OnlineAccessToken,
+                    passwd,
+                    CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash
+                ),
+                ep,
+                false
+            );
             Listener.NetworkReceiveUnconnectedEvent -= HandleConnectionReject;
             Listener.NetworkReceiveEvent += NetworkReceiveEvent;
             Listener.ConnectionRequestEvent += ConnectionRequestEvent;
@@ -605,6 +607,7 @@ public class NetNode
             PendingClient.State = ClientState.Connected;
             OnClientStateChanged?.Invoke(PendingClient);
         }
+
         QueuePackage(new ClientPackage(Clients.Values) { To = PendingClient });
         Log.Debug($"Client[{PendingClient.ID}]已完成加入过程");
         PendingPeer = null;
@@ -627,6 +630,7 @@ public class NetNode
             {
                 _pendingPackages.Clear();
             }
+
             _lastPackageFlushTimes.Clear();
             if (_broadcastNetManager.IsRunning)
             {
@@ -764,7 +768,9 @@ public class NetNode
         var w = CommonLib.GetWriter(writer, out _);
         if (netPeer != null)
         {
-            var transport = useDeliveryEvent ? PackageTransportPolicy.Control : PackageTransportPolicy.Get(packageList[0]);
+            var transport = useDeliveryEvent
+                ? PackageTransportPolicy.Control
+                : PackageTransportPolicy.Get(packageList[0]);
             if (!useDeliveryEvent)
             {
                 netPeer.Send(w, transport.ChannelNumber, transport.DeliveryMethod);
@@ -813,7 +819,7 @@ public class NetNode
         }
         else
         {
-            netManager.SendBroadcast(w, SettingsManager.BroadcastPort);
+            netManager.SendBroadcast(w, SettingsManager.Current.BroadcastPort);
         }
 
         return size;

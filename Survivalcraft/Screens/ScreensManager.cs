@@ -57,6 +57,11 @@ public static class ScreensManager
         Screens.Add(name, screen);
     }
 
+    public static string GetCurrentScreenName()
+    {
+        return CurrentScreen != null ? GetScreenName(CurrentScreen) : string.Empty;
+    }
+
     public static void SwitchScreen(string? name, params object[] parameters)
     {
         SwitchScreen(string.IsNullOrEmpty(name) ? null : FindScreen<Screen>(name), parameters);
@@ -295,7 +300,7 @@ public static class ScreensManager
             Display.Clear(Color.Black, 1f, 0);
         }
 
-        var num = 850f / MathUtils.Clamp(SettingsManager.UIScale, 0.5f, 1.2f) * _debugUiScale;
+        var num = 850f / MathUtils.Clamp(SettingsManager.Current.UIScale, 0.5f, 1.2f) * _debugUiScale;
         var vector = new Vector2(Display.Viewport.Width, Display.Viewport.Height);
         var num2 = vector.X / num;
         var availableSize = new Vector2(num, num / vector.X * vector.Y);
@@ -307,7 +312,7 @@ public static class ScreensManager
         }
 
         RootWidget.LayoutTransform = Matrix.CreateScale(num2, num2, 1f);
-        if (SettingsManager.UpsideDownLayout)
+        if (SettingsManager.Current.UpsideDownLayout)
         {
             RootWidget.LayoutTransform *= new Matrix(-1f, 0f, 0f, 0f, 0f, -1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f);
         }

@@ -29,10 +29,18 @@
 仓库中常见的路径有：
 
 - `config:RunningSetting.xml`
+- `config:SessionInfo.xml`
 - `config:Settings.xml`
-- `config:ModSettings.xml`
+- `config:ModProfile.xml`
+- `config:SessionProfiles/<sessionId>.xml`
+- `<world>/Project.xml`
+- `<world>/WorldModProfile.xml`
+- `GamePaths.Mods`: 用户手动放置 `.scpak` 的入口目录
+- `GamePaths.ModCache`: 按包 hash 保存的本地模组缓存
 - `app:Content.zip`
 - `data:` 下的世界、缓存和玩家数据
+
+世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。
 
 ## 说明
 

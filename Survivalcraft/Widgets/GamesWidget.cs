@@ -37,14 +37,14 @@ public class GamesWidget : ContainerWidget
             if (Children.Count == 1)
             {
                 ArrangeChildWidgetInCell(Vector2.Zero, ActualSize, Children[0]);
-                if (SettingsManager.ScreenLayout1 == ScreenLayout.Single)
+                if (SettingsManager.Current.ScreenLayout1 == ScreenLayout.Single)
                 {
                     Children[0].LayoutTransform = Matrix.Identity;
                 }
             }
             else if (Children.Count == 2)
             {
-                if (SettingsManager.ScreenLayout2 == ScreenLayout.DoubleVertical)
+                if (SettingsManager.Current.ScreenLayout2 == ScreenLayout.DoubleVertical)
                 {
                     _spacing = 12f;
                     _bevel = 3f;
@@ -63,7 +63,7 @@ public class GamesWidget : ContainerWidget
                     Children[1].LayoutTransform = Matrix.CreateScale(num, num, 1f);
                 }
 
-                if (SettingsManager.ScreenLayout2 == ScreenLayout.DoubleHorizontal)
+                if (SettingsManager.Current.ScreenLayout2 == ScreenLayout.DoubleHorizontal)
                 {
                     _spacing = 12f;
                     _bevel = 3f;
@@ -82,7 +82,7 @@ public class GamesWidget : ContainerWidget
                     Children[1].LayoutTransform = Matrix.CreateScale(num2, num2, 1f);
                 }
 
-                if (SettingsManager.ScreenLayout2 == ScreenLayout.DoubleOpposite)
+                if (SettingsManager.Current.ScreenLayout2 == ScreenLayout.DoubleOpposite)
                 {
                     _spacing = 20f;
                     _bevel = 4f;
@@ -107,7 +107,7 @@ public class GamesWidget : ContainerWidget
             {
                 _spacing = 12f;
                 _bevel = 3f;
-                if (SettingsManager.ScreenLayout3 == ScreenLayout.TripleVertical)
+                if (SettingsManager.Current.ScreenLayout3 == ScreenLayout.TripleVertical)
                 {
                     var x10 = 0f;
                     var y10 = 0f;
@@ -130,7 +130,7 @@ public class GamesWidget : ContainerWidget
                     Children[2].LayoutTransform = Matrix.CreateScale(num4, num4, 1f);
                 }
 
-                if (SettingsManager.ScreenLayout3 == ScreenLayout.TripleHorizontal)
+                if (SettingsManager.Current.ScreenLayout3 == ScreenLayout.TripleHorizontal)
                 {
                     var x14 = 0f;
                     var y15 = 0f;
@@ -153,7 +153,7 @@ public class GamesWidget : ContainerWidget
                     Children[2].LayoutTransform = Matrix.CreateScale(num5, num5, 1f);
                 }
 
-                if (SettingsManager.ScreenLayout3 == ScreenLayout.TripleEven)
+                if (SettingsManager.Current.ScreenLayout3 == ScreenLayout.TripleEven)
                 {
                     var x19 = 0f;
                     var y19 = 0f;
@@ -175,7 +175,7 @@ public class GamesWidget : ContainerWidget
                     Children[2].LayoutTransform = Matrix.CreateScale(num6, num6, 1f);
                 }
 
-                if (SettingsManager.ScreenLayout3 == ScreenLayout.TripleOpposite)
+                if (SettingsManager.Current.ScreenLayout3 == ScreenLayout.TripleOpposite)
                 {
                     var x23 = 0f;
                     var y23 = 0f;
@@ -203,7 +203,7 @@ public class GamesWidget : ContainerWidget
             }
             else if (Children.Count == 4)
             {
-                if (SettingsManager.ScreenLayout4 == ScreenLayout.Quadruple)
+                if (SettingsManager.Current.ScreenLayout4 == ScreenLayout.Quadruple)
                 {
                     _spacing = 12f;
                     _bevel = 3f;
@@ -232,7 +232,7 @@ public class GamesWidget : ContainerWidget
                     Children[3].LayoutTransform = Matrix.CreateScale(num8, num8, 1f);
                 }
 
-                if (SettingsManager.ScreenLayout4 == ScreenLayout.QuadrupleOpposite)
+                if (SettingsManager.Current.ScreenLayout4 == ScreenLayout.QuadrupleOpposite)
                 {
                     _spacing = 12f;
                     _bevel = 3f;
@@ -279,8 +279,8 @@ public class GamesWidget : ContainerWidget
         {
             if (Children.Count == 2)
             {
-                if (SettingsManager.ScreenLayout2 == ScreenLayout.DoubleVertical ||
-                    SettingsManager.ScreenLayout2 == ScreenLayout.DoubleOpposite)
+                if (SettingsManager.Current.ScreenLayout2 == ScreenLayout.DoubleVertical ||
+                    SettingsManager.Current.ScreenLayout2 == ScreenLayout.DoubleOpposite)
                 {
                     var c = new Vector2(ActualSize.X / 2f - _spacing / 2f, -100f);
                     var c2 = new Vector2(ActualSize.X / 2f + _spacing / 2f, ActualSize.Y + 100f);
@@ -288,7 +288,7 @@ public class GamesWidget : ContainerWidget
                         Color.Transparent, num, directionalLight, 0f);
                 }
 
-                if (SettingsManager.ScreenLayout2 == ScreenLayout.DoubleHorizontal)
+                if (SettingsManager.Current.ScreenLayout2 == ScreenLayout.DoubleHorizontal)
                 {
                     var c3 = new Vector2(-100f, ActualSize.Y / 2f - _spacing / 2f);
                     var c4 = new Vector2(ActualSize.X + 100f, ActualSize.Y / 2f + _spacing / 2f);
@@ -298,8 +298,8 @@ public class GamesWidget : ContainerWidget
             }
             else if (Children.Count == 3)
             {
-                if (SettingsManager.ScreenLayout3 == ScreenLayout.TripleVertical ||
-                    SettingsManager.ScreenLayout3 == ScreenLayout.TripleOpposite)
+                if (SettingsManager.Current.ScreenLayout3 == ScreenLayout.TripleVertical ||
+                    SettingsManager.Current.ScreenLayout3 == ScreenLayout.TripleOpposite)
                 {
                     var x = -100f;
                     var x2 = ActualSize.X / 2f - _spacing / 2f + _bevel;
@@ -323,7 +323,7 @@ public class GamesWidget : ContainerWidget
                     flatBatch2D.QueueQuad(new Vector2(x3, y2), new Vector2(x4, y3), 0f, color2);
                 }
 
-                if (SettingsManager.ScreenLayout3 == ScreenLayout.TripleHorizontal)
+                if (SettingsManager.Current.ScreenLayout3 == ScreenLayout.TripleHorizontal)
                 {
                     var x5 = -100f;
                     var x6 = ActualSize.X / 2f - _spacing / 2f + _bevel;
@@ -347,7 +347,7 @@ public class GamesWidget : ContainerWidget
                     flatBatch2D.QueueQuad(new Vector2(x6, y7), new Vector2(x7, y8), 0f, color3);
                 }
 
-                if (SettingsManager.ScreenLayout3 == ScreenLayout.TripleEven)
+                if (SettingsManager.Current.ScreenLayout3 == ScreenLayout.TripleEven)
                 {
                     var x9 = -100f;
                     var x10 = ActualSize.X / 2f - _spacing / 2f + _bevel;

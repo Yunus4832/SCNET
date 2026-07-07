@@ -18,7 +18,7 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
             var p = ScreensManager.FindScreen<NetPlayScreen>("NetPlay", true)!;
             var c = new Connect
             {
-                State = ConnectState.Avaliable,
+                State = ConnectState.Available,
                 IP = package.From?.IPPoint?.ToString() ?? string.Empty
             };
             c.Name = c.IP;
@@ -33,7 +33,8 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
             c.UsedTime = package.Ping;
             c.Version = package.Version;
             c.TimeOfDay = package.TimeOfDay;
-            c.ModServerAddress = package.ModServerAddress;
+            c.ModRepositoryUrl = package.ModRepositoryUrl;
+            c.RequiredModProfile = package.RequiredModProfile;
             c.Season = package.Season;
             c.TimeOfSeason = package.TimeOfSeason;
             if (IpToDNS.TryGetValue(c.IP, out var dns))
@@ -60,7 +61,8 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
                 found.UsedTime = c.UsedTime;
                 found.Version = c.Version;
                 found.TimeOfDay = c.TimeOfDay;
-                found.ModServerAddress = package.ModServerAddress;
+                found.ModRepositoryUrl = package.ModRepositoryUrl;
+                found.RequiredModProfile = package.RequiredModProfile;
                 found.Season = c.Season;
                 found.TimeOfSeason = c.TimeOfSeason;
             }
@@ -70,10 +72,10 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
                 {
                     if (p.CheckSaveConnectExists(c, out var f))
                     {
-                        ModsManager.SaveConnects.Remove(f!);
+                        ConnectionDirectory.Saved.Remove(f!);
                     }
 
-                    ModsManager.SaveConnects.Add(c);
+                    ConnectionDirectory.Saved.Add(c);
                 }
             }
 

@@ -51,6 +51,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     private double _lastMountableCreatureSearchTime;
 
+    private PlayerContextAction? _lastResolvedContextAction;
+
     private ContainerWidget _leftControlsContainerWidget = null!;
 
     private ButtonWidget _lightningButtonWidget = null!;
@@ -76,6 +78,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     private Widget _moreContentsWidget = null!;
 
     private ButtonWidget _mountButtonWidget = null!;
+
+    private string _mountButtonDefaultText = string.Empty;
 
     private ContainerWidget _moveButtonsContainerWidget = null!;
 
@@ -157,11 +161,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 UpdateModalPanelAnimation();
                 ComponentPlayer.GameWidget.Input.Clear();
                 ComponentPlayer.ComponentInput.SetSplitSourceInventoryAndSlot(null, -1);
-                ModsManager.HookAction("OnModalPanelWidgetSet", loader =>
-                {
-                    loader.OnModalPanelWidgetSet(this, ModalPanelWidget, value);
-                    return false;
-                });
             }
         }
     }
@@ -170,11 +169,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void Draw(Camera camera, int drawOrder)
     {
-        ModsManager.HookAction("GuiDraw", modloader =>
-        {
-            modloader.GuiDraw(this, camera, drawOrder);
-            return false;
-        });
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -204,11 +198,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
         HandleInput();
         UpdateWidgets();
-        ModsManager.HookAction("GuiUpdate", modLoader =>
-        {
-            modLoader.GuiUpdate(this);
-            return false;
-        });
     }
 
     public void DisplayLargeMessage(string largeText, string smallText, float duration, float delay)
@@ -279,6 +268,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _creativeFlyButtonWidget = guiWidget.Children.Find<ButtonWidget>("CreativeFlyButton")!;
         _crouchButtonWidget = guiWidget.Children.Find<ButtonWidget>("CrouchButton")!;
         _mountButtonWidget = guiWidget.Children.Find<ButtonWidget>("MountButton")!;
+        _mountButtonDefaultText = _mountButtonWidget.Text;
         _editItemButton = guiWidget.Children.Find<ButtonWidget>("EditItemButton")!;
         MoveWidget = guiWidget.Children.Find<TouchInputWidget>("Move")!;
         MoveRoseWidget = guiWidget.Children.Find<MoveRoseWidget>("MoveRose")!;
@@ -467,12 +457,12 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                                             ComponentPlayer.GameWidget.ActiveCamera.IsEntityControlEnabled &&
                                             componentSleep.SleepFactor <= 0f;
         _moveRectangleContainerWidget.IsVisible =
-            !SettingsManager.HideMoveLookPads && componentInput.IsControlledByTouch;
-        _lookRectangleContainerWidget.IsVisible = !SettingsManager.HideMoveLookPads &&
+            !SettingsManager.Current.HideMoveLookPads && componentInput.IsControlledByTouch;
+        _lookRectangleContainerWidget.IsVisible = !SettingsManager.Current.HideMoveLookPads &&
                                                   componentInput.IsControlledByTouch &&
-                                                  (SettingsManager.LookControlMode != LookControlMode.EntireScreen ||
-                                                   SettingsManager.MoveControlMode != MoveControlMode.Buttons);
-        _lookPadContainerWidget.IsVisible = SettingsManager.LookControlMode != LookControlMode.SplitTouch;
+                                                  (SettingsManager.Current.LookControlMode != LookControlMode.EntireScreen ||
+                                                   SettingsManager.Current.MoveControlMode != MoveControlMode.Buttons);
+        _lookPadContainerWidget.IsVisible = SettingsManager.Current.LookControlMode != LookControlMode.SplitTouch;
         MoveRoseWidget.IsVisible = componentInput.IsControlledByTouch;
         _moreContentsWidget.IsVisible = _moreButtonWidget.IsChecked;
         HealthBarWidget.IsVisible = gameMode != GameMode.Creative;
@@ -484,9 +474,9 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _lightningButtonWidget.IsVisible = gameMode == GameMode.Creative;
         _precipitationButtonWidget.IsVisible = gameMode == GameMode.Creative && worldSettings.AreWeatherEffectsEnabled;
         _fogButtonWidget.IsVisible = gameMode == GameMode.Creative && worldSettings.AreWeatherEffectsEnabled;
-        _moveButtonsContainerWidget.IsVisible = SettingsManager.MoveControlMode == MoveControlMode.Buttons;
-        _movePadContainerWidget.IsVisible = SettingsManager.MoveControlMode == MoveControlMode.Pad;
-        if (SettingsManager.LeftHandedLayout)
+        _moveButtonsContainerWidget.IsVisible = SettingsManager.Current.MoveControlMode == MoveControlMode.Buttons;
+        _movePadContainerWidget.IsVisible = SettingsManager.Current.MoveControlMode == MoveControlMode.Pad;
+        if (SettingsManager.Current.LeftHandedLayout)
         {
             _moveContainerWidget.HorizontalAlignment = WidgetAlignment.Far;
             _lookContainerWidget.HorizontalAlignment = WidgetAlignment.Near;
@@ -512,6 +502,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _crouchButtonWidget.IsVisible = false;
             _mountButtonWidget.IsVisible = false;
             _editItemButton.IsVisible = true;
+            _mountButtonWidget.Text = _mountButtonDefaultText;
+            _lastResolvedContextAction = null;
         }
         else if (componentRider is { Mount: not null })
         {
@@ -519,6 +511,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _mountButtonWidget.IsChecked = true;
             _mountButtonWidget.IsVisible = true;
             _editItemButton.IsVisible = false;
+            _mountButtonWidget.Text = _mountButtonDefaultText;
+            _lastResolvedContextAction = null;
         }
         else
         {
@@ -526,16 +520,28 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             if (Time.FrameStartTime - _lastMountableCreatureSearchTime > 0.5)
             {
                 _lastMountableCreatureSearchTime = Time.FrameStartTime;
-                if (componentRider.FindNearestMount() != null)
+                _lastResolvedContextAction = CurrentModRuntime.Value?.ContextActions.Resolve(
+                    new PlayerContextActionQueryContext(ComponentPlayer, this));
+                if (_lastResolvedContextAction != null)
                 {
                     _crouchButtonWidget.IsVisible = false;
                     _mountButtonWidget.IsVisible = true;
+                    _mountButtonWidget.IsChecked = _lastResolvedContextAction.IsChecked;
+                    _mountButtonWidget.Text = _lastResolvedContextAction.Label;
+                    _editItemButton.IsVisible = false;
+                }
+                else if (componentRider.FindNearestMount() != null)
+                {
+                    _crouchButtonWidget.IsVisible = false;
+                    _mountButtonWidget.IsVisible = true;
+                    _mountButtonWidget.Text = _mountButtonDefaultText;
                     _editItemButton.IsVisible = false;
                 }
                 else
                 {
                     _crouchButtonWidget.IsVisible = true;
                     _mountButtonWidget.IsVisible = false;
+                    _mountButtonWidget.Text = _mountButtonDefaultText;
                     _editItemButton.IsVisible = false;
                 }
             }
@@ -572,14 +578,14 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 Time.PeriodicEvent(7.0, 0.0))
             {
                 _keyboardHelpMessageShown = true;
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 1), Color.White, true, true);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 1), Color.White, true, true);
             }
             else if (!_gamepadHelpMessageShown &&
                      (ComponentPlayer.PlayerData.InputDevice & WidgetInputDevice.Gamepads) != 0 &&
                      Time.PeriodicEvent(7.0, 0.0))
             {
                 _gamepadHelpMessageShown = true;
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 2), Color.White, true, true);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 2), Color.White, true, true);
             }
         }
 
@@ -665,11 +671,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         if (playerInput.ToggleClothing || _clothingButtonWidget.IsClicked)
         {
             var clothing = new ClothingWidget(ComponentPlayer);
-            ModsManager.HookAction("", l =>
-            {
-                l.ClothingWidgetOpen(this, clothing);
-                return false;
-            });
             ModalPanelWidget = IsClothingVisible() ? null : clothing;
         }
 
@@ -680,20 +681,32 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 if (ComponentPlayer.ComponentBody.StandingOnValue.HasValue)
                 {
                     ComponentPlayer.ComponentBody.TargetCrouchFactor = 1f;
-                    DisplaySmallMessage(LanguageControl.Get(TypeName, 4), Color.White, false, false);
+                    DisplaySmallMessage(LanguageManager.Get(TypeName, 4), Color.White, false, false);
                 }
             }
             else
             {
                 ComponentPlayer.ComponentBody.TargetCrouchFactor = 0f;
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 3), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 3), Color.White, false, false);
             }
         }
 
         if ((_mountButtonWidget.IsClicked || playerInput.ToggleMount))
         {
             var flag = componentRider.Mount != null;
-            if (flag)
+            if (!flag && _lastResolvedContextAction != null)
+            {
+                try
+                {
+                    _lastResolvedContextAction.Execute(
+                        new PlayerContextActionExecutionContext(ComponentPlayer, this));
+                }
+                catch (Exception exception)
+                {
+                    Log.Error($"Mod context action failed: {exception}");
+                }
+            }
+            else if (flag)
             {
                 componentRider.StartDismounting();
             }
@@ -708,14 +721,14 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
             if (componentRider.Mount != null != flag)
             {
-                if (componentRider.Mount != null)
-                {
-                    DisplaySmallMessage(LanguageControl.Get(TypeName, 5), Color.White, false, false);
-                }
-                else
-                {
-                    DisplaySmallMessage(LanguageControl.Get(TypeName, 6), Color.White, false, false);
-                }
+                DisplaySmallMessage(
+                    componentRider.Mount != null
+                        ? LanguageManager.Get(TypeName, 5)
+                        : LanguageManager.Get(TypeName, 6),
+                    Color.White,
+                    false,
+                    false
+                );
             }
         }
 
@@ -725,13 +738,18 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             var value = ComponentPlayer.ComponentBlockHighlight.NearbyEditableCell.Value;
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(value.X, value.Y, value.Z);
             var contents = Terrain.ExtractContents(cellValue);
-            var blockBehaviors =
-                _subsystemBlockBehaviors.GetBlockBehaviors(contents, ComponentPlayer.ComponentMiner, value);
-            for (var i = 0;
-                 i < blockBehaviors.Length && !blockBehaviors[i]
-                     .OnEditBlock(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
-                 i++)
+            var editBlockContext = new BlockEditContext(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
+            CurrentModRuntime.Value?.BlockBehaviors.Invoke(editBlockContext);
+            if (editBlockContext is { Cancel: false, Handled: false })
             {
+                var blockBehaviors =
+                    _subsystemBlockBehaviors.GetBlockBehaviors(contents, ComponentPlayer.ComponentMiner, value);
+                for (var i = 0;
+                     i < blockBehaviors.Length && !blockBehaviors[i]
+                         .OnEditBlock(value.X, value.Y, value.Z, cellValue, ComponentPlayer);
+                     i++)
+                {
+                }
             }
         }
         else if ((_editItemButton.IsClicked || playerInput.EditItem) && IsActiveSlotEditable())
@@ -741,12 +759,18 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             var num = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
             if (BlocksManager.Blocks[num].Editable)
             {
-                var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
-                for (var i = 0;
-                     i < blockBehaviors.Length && !blockBehaviors[i]
-                         .OnEditInventoryItem(inventory, activeSlotIndex, ComponentPlayer);
-                     i++)
+                var editInventoryContext =
+                    new BlockEditInventoryItemContext(inventory, activeSlotIndex, ComponentPlayer);
+                CurrentModRuntime.Value?.BlockBehaviors.Invoke(editInventoryContext);
+                if (!editInventoryContext.Cancel && !editInventoryContext.Handled)
                 {
+                    var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+                    for (var i = 0;
+                         i < blockBehaviors.Length && !blockBehaviors[i]
+                             .OnEditInventoryItem(inventory, activeSlotIndex, ComponentPlayer);
+                         i++)
+                    {
+                    }
                 }
             }
         }
@@ -761,11 +785,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 if (ComponentPlayer.ComponentLocomotion.IsCreativeFlyEnabled)
                 {
                     ComponentPlayer.ComponentLocomotion.JumpOrder = 1f;
-                    DisplaySmallMessage(LanguageControl.Get(TypeName, 7), Color.White, false, false);
+                    DisplaySmallMessage(LanguageManager.Get(TypeName, 7), Color.White, false, false);
                 }
                 else
                 {
-                    DisplaySmallMessage(LanguageControl.Get(TypeName, 8), Color.White, false, false);
+                    DisplaySmallMessage(LanguageManager.Get(TypeName, 8), Color.White, false, false);
                 }
             }
 
@@ -776,18 +800,14 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         if (!ComponentPlayer.ComponentInput.IsControlledByVr &&
             (_cameraButtonWidget.IsClicked || playerInput.SwitchCameraMode))
         {
-            ModsManager.HookAction("OnCameraChange", modLoader =>
-            {
-                modLoader.OnCameraChange(ComponentPlayer, this);
-                return false;
-            });
+            ChangeCameraMode();
         }
 
         if (_photoButtonWidget.IsClicked || playerInput.TakeScreenshot)
         {
             ScreenCaptureManager.CapturePhoto(
-                delegate { DisplaySmallMessage(LanguageControl.Get(TypeName, 13), Color.White, false, false); },
-                delegate { DisplaySmallMessage(LanguageControl.Get(TypeName, 14), Color.White, false, false); });
+                delegate { DisplaySmallMessage(LanguageManager.Get(TypeName, 13), Color.White, false, false); },
+                delegate { DisplaySmallMessage(LanguageManager.Get(TypeName, 14), Color.White, false, false); });
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
@@ -814,13 +834,13 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             if (_subsystemWeather.IsPrecipitationStarted)
             {
                 _subsystemWeather.ManualPrecipitationEnd();
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 20), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 20), Color.White, false, false);
                 CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(1));
             }
             else
             {
                 _subsystemWeather.ManualPrecipitationStart();
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 21), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 21), Color.White, false, false);
                 CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(2));
             }
         }
@@ -831,13 +851,13 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             if (_subsystemWeather.IsFogStarted)
             {
                 _subsystemWeather.ManualFogEnd();
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 22), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 22), Color.White, false, false);
                 CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(3));
             }
             else
             {
                 _subsystemWeather.ManualFogStart();
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 23), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 23), Color.White, false, false);
                 CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(4));
             }
         }
@@ -854,25 +874,25 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             if (num2.CloseTo(num6))
             {
                 _subsystemTimeOfDay.TimeOfDayOffset += num2;
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 15), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 15), Color.White, false, false);
                 type = 0;
             }
             else if (num3.CloseTo(num6))
             {
                 _subsystemTimeOfDay.TimeOfDayOffset += num3;
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 16), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 16), Color.White, false, false);
                 type = 1;
             }
             else if (num4.CloseTo(num6))
             {
                 _subsystemTimeOfDay.TimeOfDayOffset += num4;
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 17), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 17), Color.White, false, false);
                 type = 2;
             }
             else if (num5.CloseTo(num6))
             {
                 _subsystemTimeOfDay.TimeOfDayOffset += num5;
-                DisplaySmallMessage(LanguageControl.Get(TypeName, 18), Color.White, false, false);
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 18), Color.White, false, false);
                 type = 3;
             }
 
@@ -938,5 +958,40 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         public string SmallText = string.Empty;
 
         public double StartTime;
+    }
+
+    private void ChangeCameraMode()
+    {
+        var gameWidget = ComponentPlayer.GameWidget;
+        if (gameWidget.ActiveCamera is FppCamera)
+        {
+            gameWidget.ActiveCamera = gameWidget.FindCamera<TppCamera>()!;
+            DisplaySmallMessage(LanguageManager.Get(TypeName, 9), Color.White, false, false);
+        }
+        else if (gameWidget.ActiveCamera is TppCamera)
+        {
+            gameWidget.ActiveCamera = gameWidget.FindCamera<OrbitCamera>()!;
+            DisplaySmallMessage(LanguageManager.Get(TypeName, 10), Color.White, false, false);
+        }
+        else if (gameWidget.ActiveCamera is OrbitCamera)
+        {
+            gameWidget.ActiveCamera = gameWidget.FindCamera<FixedCamera>()!;
+            DisplaySmallMessage(LanguageManager.Get(TypeName, 11), Color.White, false, false);
+        }
+        else
+        {
+            var isAdmin = ComponentPlayer.PlayerData is { ServerManager: true } or { ServerMaster: true };
+            if ((SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative || isAdmin) &&
+                gameWidget.ActiveCamera is FixedCamera)
+            {
+                gameWidget.ActiveCamera = gameWidget.FindCamera<DebugCamera>()!;
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 19), Color.White, false, false);
+            }
+            else
+            {
+                gameWidget.ActiveCamera = gameWidget.FindCamera<FppCamera>()!;
+                DisplaySmallMessage(LanguageManager.Get(TypeName, 12), Color.White, false, false);
+            }
+        }
     }
 }

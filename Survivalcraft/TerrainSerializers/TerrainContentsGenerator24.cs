@@ -228,7 +228,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
         var subsystemGameInfo = subsystemTerrain.Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _worldSettings = subsystemGameInfo.WorldSettings;
         _seed = subsystemGameInfo.WorldSeed;
-        _islandSize = _worldSettings.TerrainGenerationMode == TerrainGenerationMode.Island
+        _islandSize = TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode)
             ? new Vector2?(_worldSettings.IslandSize)
             : null;
         var random = new Random(_seed);
@@ -238,7 +238,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
         _humidityOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
         _mountainsOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
         _riversOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
-        _tgBiomeScaling = (_worldSettings.TerrainGenerationMode == TerrainGenerationMode.Island ? 1f : 1.75f) *
+        _tgBiomeScaling = (TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode) ? 1f : 1.75f) *
                           _worldSettings.BiomeSize;
         _tgShoreFluctuations = MathUtils.Clamp(2f * num, 0f, 150f);
         _tgShoreFluctuationsScaling = MathUtils.Clamp(0.04f * num, 0.5f, 3f);

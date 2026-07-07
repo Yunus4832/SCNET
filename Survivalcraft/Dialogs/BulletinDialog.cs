@@ -45,7 +45,7 @@ public class BulletinDialog : Dialog
         _timeLabel = Children.Find<LabelWidget>("Time")!;
         _buttonLabel = Children.Find<LabelWidget>("ButtonLabel")!;
         _scrollPanel = Children.Find<ScrollPanelWidget>("ScrollPanel")!;
-        _buttonLabel.Text = LanguageControl.Ok;
+        _buttonLabel.Text = LanguageManager.Ok;
         _okButton.IsVisible = false;
         _titleLabel.Text = title;
         _contentLabel.Text = content;

@@ -308,6 +308,15 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         Action<string> handler
     )
     {
+        if (PlatformManager.Platform is Platform.Desktop)
+        {
+            DialogsManager.ShowDialog(
+                parentWidget,
+                new TextBoxDialog(title, text, maxLength, handler)
+            );
+            return;
+        }
+
         Keyboard.ShowKeyboard(
             title,
             string.Empty,
@@ -697,13 +706,13 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
                      _mouseDownPoint.HasValue)
             {
                 if (Widget != null && Vector2.Distance(_mouseDownPoint.Value, value) >
-                    SettingsManager.MinimumDragDistance * Widget.GlobalScale)
+                    SettingsManager.Current.MinimumDragDistance * Widget.GlobalScale)
                 {
                     _mouseDragInProgress = true;
                     DragMode = !IsMouseButtonDown(MouseButton.Left) ? DragMode.SingleItem : DragMode.AllItems;
                     Drag = _mouseDownPoint.Value;
                 }
-                else if (Time.FrameStartTime - _mouseDragTime > SettingsManager.MinimumHoldDuration)
+                else if (Time.FrameStartTime - _mouseDragTime > SettingsManager.Current.MinimumHoldDuration)
                 {
                     _mouseHoldInProgress = true;
                 }
@@ -812,13 +821,13 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         else if (IsPadButtonDown(GamePadButton.A) && _padDownPoint.HasValue)
         {
             if (Widget != null && Vector2.Distance(_padDownPoint.Value, PadCursorPosition) >
-                SettingsManager.MinimumDragDistance * Widget.GlobalScale)
+                SettingsManager.Current.MinimumDragDistance * Widget.GlobalScale)
             {
                 _padDragInProgress = true;
                 Drag = _padDownPoint.Value;
                 DragMode = DragMode.AllItems;
             }
-            else if (Time.FrameStartTime - _padDragTime > SettingsManager.MinimumHoldDuration)
+            else if (Time.FrameStartTime - _padDragTime > SettingsManager.Current.MinimumHoldDuration)
             {
                 Hold = _padDownPoint.Value;
                 HoldTime = (float)(Time.FrameStartTime - _padDragTime);
@@ -836,9 +845,9 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         }
 
         var v = Vector2.Transform(PadCursorPosition, Widget.InvertedGlobalTransform);
-        var padStickPosition = GetPadStickPosition(GamePadStick.Left, SettingsManager.GamepadDeadZone);
+        var padStickPosition = GetPadStickPosition(GamePadStick.Left, SettingsManager.Current.GamepadDeadZone);
         var v2 = new Vector2(padStickPosition.X, 0f - padStickPosition.Y);
-        v2 = 1200f * SettingsManager.GamepadCursorSpeed * v2.LengthSquared() * Vector2.Normalize(v2) *
+        v2 = 1200f * SettingsManager.Current.GamepadCursorSpeed * v2.LengthSquared() * Vector2.Normalize(v2) *
              Time.FrameDuration;
         v += v2;
         PadCursorPosition = Vector2.Transform(v, Widget.GlobalTransform);
@@ -881,7 +890,7 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
                     Drag = touchLocation.Position;
                 }
                 else if (Widget != null && Vector2.Distance(touchLocation.Position, _touchStartPoint) >
-                         SettingsManager.MinimumDragDistance * Widget.GlobalScale)
+                         SettingsManager.Current.MinimumDragDistance * Widget.GlobalScale)
                 {
                     _touchDragInProgress = true;
                     Drag = _touchStartPoint;
@@ -897,7 +906,7 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
                     Hold = _touchStartPoint;
                     HoldTime = (float)(Time.FrameStartTime - _touchStartTime);
                 }
-                else if (Time.FrameStartTime - _touchStartTime > SettingsManager.MinimumHoldDuration)
+                else if (Time.FrameStartTime - _touchStartTime > SettingsManager.Current.MinimumHoldDuration)
                 {
                     _touchHoldInProgress = true;
                 }
@@ -1044,13 +1053,13 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         else if (IsVrButtonDown(VrController.Right, VrControllerButton.Trigger) && _vrDownPoint.HasValue)
         {
             if (Widget != null && Vector2.Distance(_vrDownPoint.Value, VrCursorPosition) >
-                SettingsManager.MinimumDragDistance * Widget.GlobalScale)
+                SettingsManager.Current.MinimumDragDistance * Widget.GlobalScale)
             {
                 _vrDragInProgress = true;
                 Drag = _vrDownPoint.Value;
                 DragMode = DragMode.AllItems;
             }
-            else if (Time.FrameStartTime - _vrDragTime > SettingsManager.MinimumHoldDuration)
+            else if (Time.FrameStartTime - _vrDragTime > SettingsManager.Current.MinimumHoldDuration)
             {
                 Hold = _vrDownPoint.Value;
                 HoldTime = (float)(Time.FrameStartTime - _vrDragTime);

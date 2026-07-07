@@ -11,23 +11,23 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
     private static readonly SpawnLocationType[] _spawnLocations =
         EnumUtils.GetEnumValues(typeof(SpawnLocationType)).Cast<SpawnLocationType>().ToArray();
 
-    private static readonly int _areaLimit = SettingsManager.CreatureAreaLimit;
+    private static readonly int _areaLimit = SettingsManager.Current.CreatureAreaLimit;
 
-    private static readonly int _maxPlayerAreaLimit = SettingsManager.CreatureMaxPlayerAreaLimit;
+    private static readonly int _maxPlayerAreaLimit = SettingsManager.Current.CreatureMaxPlayerAreaLimit;
 
-    private static readonly int _maxPointLimit = SettingsManager.CreatureMaxPointLimit;
+    private static readonly int _maxPointLimit = SettingsManager.Current.CreatureMaxPointLimit;
 
-    private static readonly int _areaRadius = SettingsManager.CreatureAreaRadius;
+    private static readonly int _areaRadius = SettingsManager.Current.CreatureAreaRadius;
 
-    private static readonly int _totalLimitConstant = SettingsManager.CreatureTotalLimitConstant;
+    private static readonly int _totalLimitConstant = SettingsManager.Current.CreatureTotalLimitConstant;
 
-    private static readonly int _areaLimitConstant = SettingsManager.CreatureAreaLimitConstant;
+    private static readonly int _areaLimitConstant = SettingsManager.Current.CreatureAreaLimitConstant;
 
-    private static readonly int _areaRadiusConstant = SettingsManager.CreatureAreaRadiusConstant;
+    private static readonly int _areaRadiusConstant = SettingsManager.Current.CreatureAreaRadiusConstant;
 
-    private static readonly float _spawnIntervalTime = SettingsManager.CreatureSpawnIntervalTime;
+    private static readonly float _spawnIntervalTime = SettingsManager.Current.CreatureSpawnIntervalTime;
 
-    private static readonly float _constantSpawnIntervalTime = SettingsManager.CreatureConstantSpawnIntervalTime;
+    private static readonly float _constantSpawnIntervalTime = SettingsManager.Current.CreatureConstantSpawnIntervalTime;
 
     private readonly DynamicArray<ComponentBody> _componentBodies = [];
 
@@ -57,7 +57,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
 
     private SubsystemGameWidgets _subsystemViews = null!;
 
-    private static int TotalLimit => SettingsManager.CreatureTotalLimit;
+    private static int TotalLimit => SettingsManager.Current.CreatureTotalLimit;
 
     public Dictionary<ComponentCreature, bool>.KeyCollection Creatures => _creatures.Keys;
 
@@ -1215,11 +1215,6 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                 var count3 = _random.Int(1, 2);
                 return SpawnCreatures(creatureType, "Sparrow", point, count3).Count;
             }
-        });
-        ModsManager.HookAction("InitializeCreatureTypes", loader =>
-        {
-            loader.InitializeCreatureTypes(this, _creatureTypes);
-            return false;
         });
     }
 

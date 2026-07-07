@@ -265,12 +265,6 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
                             {
                                 _importanceLevel = 0f;
                             }
-
-                            ModsManager.HookAction("OnEatPickable", modLoader =>
-                            {
-                                modLoader.OnEatPickable(this, _pickable, out var dealt);
-                                return dealt;
-                            });
                         }
                     }
                     else

@@ -85,6 +85,21 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             var point = _modifiedList.Array[i];
             foreach (var point2 in _neighborOffsets)
             {
+                var neighborChangedContext = new NeighborBlockChangedContext(
+                    this,
+                    point.X + point2.X,
+                    point.Y + point2.Y,
+                    point.Z + point2.Z,
+                    point.X,
+                    point.Y,
+                    point.Z,
+                    null);
+                CurrentModRuntime.Value?.BlockBehaviors.Invoke(neighborChangedContext);
+                if (neighborChangedContext.Cancel)
+                {
+                    continue;
+                }
+
                 var cellContents = Terrain.GetCellContents(point.X + point2.X, point.Y + point2.Y, point.Z + point2.Z);
                 var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(cellContents);
                 foreach (var behavior in blockBehaviors)
@@ -318,28 +333,45 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         var num2 = Terrain.ExtractContents(value);
         if (num2 != num)
         {
-            var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
-            foreach (var behavior in blockBehaviors)
+            var removedContext = new BlockRemovedContext(this, x, y, z, cellValueFast, value, miner);
+            CurrentModRuntime.Value?.BlockBehaviors.Invoke(removedContext);
+            if (!removedContext.Cancel)
             {
-                behavior.OnBlockRemoved(cellValueFast, value, x, y, z);
+                var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+                foreach (var behavior in blockBehaviors)
+                {
+                    behavior.OnBlockRemoved(cellValueFast, value, x, y, z);
+                }
             }
 
-            var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(num2);
-            foreach (var behavior in blockBehaviors2)
+            var addedContext = new BlockAddedContext(this, x, y, z, value, cellValueFast, miner);
+            CurrentModRuntime.Value?.BlockBehaviors.Invoke(addedContext);
+            if (addedContext.Cancel)
             {
-                if (miner == null)
+                return;
+            }
+
+            {
+                var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(num2);
+                foreach (var behavior in blockBehaviors2)
                 {
                     behavior.OnBlockAdded(value, cellValueFast, x, y, z);
-                }
-                else
-                {
-                    behavior.OnBlockAdded(value, cellValueFast, x, y, z);
-                    behavior.OnBlockAdded(value, cellValueFast, x, y, z, miner);
+                    if (miner != null)
+                    {
+                        behavior.OnBlockAdded(value, cellValueFast, x, y, z, miner);
+                    }
                 }
             }
         }
         else
         {
+            var modifiedContext = new BlockModifiedContext(this, x, y, z, value, cellValueFast, miner);
+            CurrentModRuntime.Value?.BlockBehaviors.Invoke(modifiedContext);
+            if (modifiedContext.Cancel)
+            {
+                return;
+            }
+
             var blockBehaviors3 = _subsystemBlockBehaviors.GetBlockBehaviors(num2);
             foreach (var behavior in blockBehaviors3)
             {
@@ -355,18 +387,6 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         ComponentMiner? miner = null
     )
     {
-        var pass = false;
-        ModsManager.HookAction("TerrainChangeCell", loader =>
-        {
-            loader.TerrainChangeCell(this, x, y, z, value, out var skip);
-            pass |= skip;
-            return false;
-        });
-        if (pass)
-        {
-            return;
-        }
-
         if (CommonLib.WorkType == WorkType.Client)
         {
             return;
@@ -402,6 +422,21 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             }
         }
 
+        var changingContext = new TerrainCellChangingContext(
+            this,
+            x,
+            y,
+            z,
+            Terrain.GetCellValue(x, y, z),
+            value,
+            miner);
+        CurrentModRuntime.Value?.Gameplay.Invoke(changingContext);
+        if (changingContext.Cancel)
+        {
+            return;
+        }
+
+        value = changingContext.NewValue;
         ChangeCellNet(x, y, z, value, updateModificationCounter, miner);
         CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(x, y, z, value));
     }
@@ -475,6 +510,16 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                     {
                         continue;
                     }
+
+                    var harvestedContext = new ItemHarvestedContext(this, x, y, z, cellValue, dropValue, newValue);
+                    CurrentModRuntime.Value?.BlockBehaviors.Invoke(harvestedContext);
+                    if (harvestedContext.Cancel)
+                    {
+                        continue;
+                    }
+
+                    dropValue = harvestedContext.DropValue;
+                    newValue = harvestedContext.NewBlockValue;
 
                     var blockBehaviors =
                         _subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(dropValue.Value));
@@ -559,42 +604,22 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             Project.FindSubsystem<SubsystemElectricity>(true)!, SubsystemFurnitureBlockBehavior,
             Project.FindSubsystem<SubsystemMetersBlockBehavior>(true)!, SubsystemPalette);
         var terrainGenerationMode = SubsystemGameInfo.WorldSettings.TerrainGenerationMode;
-        if (string.CompareOrdinal(SubsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.1") <= 0)
-        {
-            if (terrainGenerationMode is TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland)
-            {
-                TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
-            }
-            else
-            {
-                TerrainContentsGenerator = new TerrainContentsGenerator21(this);
-            }
-        }
-        else if (string.CompareOrdinal(SubsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.2") == 0)
-        {
-            if (terrainGenerationMode is TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland)
-            {
-                TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
-            }
-            else
-            {
-                TerrainContentsGenerator = new TerrainContentsGenerator22(this);
-            }
-        }
-        else if (string.CompareOrdinal(SubsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.3") == 0)
-        {
-            if (terrainGenerationMode is TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland)
-            {
-                TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
-            }
-            else
-            {
-                TerrainContentsGenerator = new TerrainContentsGenerator23(this);
-            }
-        }
-        else if (terrainGenerationMode is TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland)
+        if (TerrainGenerationModes.IsFlat(terrainGenerationMode))
         {
             TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
+        }
+        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent22 or TerrainGenerationMode.LegacyIsland22)
+        {
+            TerrainContentsGenerator = new TerrainContentsGenerator22(this);
+        }
+        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent23 or TerrainGenerationMode.LegacyIsland23)
+        {
+            TerrainContentsGenerator = new TerrainContentsGenerator23(this);
+        }
+        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinentPre21 or TerrainGenerationMode.LegacyIslandPre21
+                 or TerrainGenerationMode.LegacyContinent21 or TerrainGenerationMode.LegacyIsland21)
+        {
+            TerrainContentsGenerator = new TerrainContentsGenerator21(this);
         }
         else
         {

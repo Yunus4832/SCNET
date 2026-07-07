@@ -86,9 +86,9 @@ public class ViewGameLogDialog : Dialog
 
         _filterButton.Text = _filter switch
         {
-            FilterType.All => LanguageControl.Get(_typeName, "All"),
-            FilterType.Warning => LanguageControl.Get(_typeName, "Warning"),
-            FilterType.Error => LanguageControl.Get(_typeName, "Error"),
+            FilterType.All => LanguageManager.Get(_typeName, "All"),
+            FilterType.Warning => LanguageManager.Get(_typeName, "Warning"),
+            FilterType.Error => LanguageManager.Get(_typeName, "Error"),
             _ => _filterButton.Text
         };
     }

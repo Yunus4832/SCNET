@@ -182,9 +182,9 @@ public class PlayerScreen : Screen
         var gameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
         if (gameInfo is { WorldSettings.IsNeedCommunityLogin: true })
         {
-            if (!string.IsNullOrEmpty(SettingsManager.CommunityNickName))
+            if (!string.IsNullOrEmpty(SettingsManager.Current.CommunityNickName))
             {
-                _nameTextBox.Text = SettingsManager.CommunityNickName;
+                _nameTextBox.Text = SettingsManager.Current.CommunityNickName;
                 _nameTextBox.IsEnabled = false;
             }
         }
@@ -202,7 +202,7 @@ public class PlayerScreen : Screen
             if (dy.StartsWith('[') && dy.EndsWith(']'))
             {
                 var lp = dy.Substring(1, dy.Length - 2).Split([":"], StringSplitOptions.RemoveEmptyEntries);
-                dy = LanguageControl.GetDatabase("Description", lp[1]);
+                dy = LanguageManager.GetDatabase("Description", lp[1]);
             }
 
             _descriptionLabel.Text = dy;
@@ -226,7 +226,7 @@ public class PlayerScreen : Screen
                 CharacterSkinsManager.GetPlayerClass(n) == _playerData.PlayerClass ||
                 !CharacterSkinsManager.GetPlayerClass(n).HasValue);
             var dialog = new ListSelectionDialog(
-                LanguageControl.Get(_typeName, 1),
+                LanguageManager.Get(_typeName, 1),
                 items, 64f,
                 delegate(object item)
                 {
@@ -258,7 +258,7 @@ public class PlayerScreen : Screen
         {
             DialogsManager.ShowDialog(
                 null,
-                new ListSelectionDialog(LanguageControl.Get(_typeName, 2), _inputDevices,
+                new ListSelectionDialog(LanguageManager.Get(_typeName, 2), _inputDevices,
                     56f,
                     d => GetDeviceDisplayName((WidgetInputDevice)d),
                     delegate(object d)
@@ -316,7 +316,7 @@ public class PlayerScreen : Screen
             }
             else
             {
-                DialogsManager.Confirm(LanguageControl.Get(_typeName, 3), btn =>
+                DialogsManager.Confirm(LanguageManager.Get(_typeName, 3), btn =>
                 {
                     if (btn != MessageDialogButton.Button1)
                     {
@@ -380,18 +380,18 @@ public class PlayerScreen : Screen
     {
         return device switch
         {
-            WidgetInputDevice.Keyboard | WidgetInputDevice.Mouse => LanguageControl.Get(_typeName, 4),
-            WidgetInputDevice.GamePad1 => LanguageControl.Get(_typeName, 5) +
-                                          (GamePad.IsConnected(0) ? "" : LanguageControl.Get(_typeName, 9)),
-            WidgetInputDevice.GamePad2 => LanguageControl.Get(_typeName, 6) +
-                                          (GamePad.IsConnected(1) ? "" : LanguageControl.Get(_typeName, 9)),
-            WidgetInputDevice.GamePad3 => LanguageControl.Get(_typeName, 7) +
-                                          (GamePad.IsConnected(2) ? "" : LanguageControl.Get(_typeName, 9)),
-            WidgetInputDevice.GamePad4 => LanguageControl.Get(_typeName, 8) +
-                                          (GamePad.IsConnected(3) ? "" : LanguageControl.Get(_typeName, 9)),
-            WidgetInputDevice.VrControllers => LanguageControl.Get(_typeName, 11) +
-                                               (VrManager.IsVrAvailable ? "" : LanguageControl.Get(_typeName, 9)),
-            _ => LanguageControl.Get(_typeName, 10)
+            WidgetInputDevice.Keyboard | WidgetInputDevice.Mouse => LanguageManager.Get(_typeName, 4),
+            WidgetInputDevice.GamePad1 => LanguageManager.Get(_typeName, 5) +
+                                          (GamePad.IsConnected(0) ? "" : LanguageManager.Get(_typeName, 9)),
+            WidgetInputDevice.GamePad2 => LanguageManager.Get(_typeName, 6) +
+                                          (GamePad.IsConnected(1) ? "" : LanguageManager.Get(_typeName, 9)),
+            WidgetInputDevice.GamePad3 => LanguageManager.Get(_typeName, 7) +
+                                          (GamePad.IsConnected(2) ? "" : LanguageManager.Get(_typeName, 9)),
+            WidgetInputDevice.GamePad4 => LanguageManager.Get(_typeName, 8) +
+                                          (GamePad.IsConnected(3) ? "" : LanguageManager.Get(_typeName, 9)),
+            WidgetInputDevice.VrControllers => LanguageManager.Get(_typeName, 11) +
+                                               (VrManager.IsVrAvailable ? "" : LanguageManager.Get(_typeName, 9)),
+            _ => LanguageManager.Get(_typeName, 10)
         };
     }
 
@@ -407,7 +407,7 @@ public class PlayerScreen : Screen
             return true;
         }
 
-        DialogsManager.Alert(LanguageControl.Get(_typeName, 12));
+        DialogsManager.Alert(LanguageManager.Get(_typeName, 12));
         return false;
     }
 }

@@ -59,14 +59,14 @@ public class PlayersScreen : Screen
                 {
                     DialogsManager.ShowDialog(
                         null,
-                        new MessageDialog(LanguageControl.Unavailable, "不可在参考模式添加玩家", LanguageControl.Ok)
+                        new MessageDialog(LanguageManager.Unavailable, "不可在参考模式添加玩家", LanguageManager.Ok)
                     );
                 }
                 else if (subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure)
                 {
                     DialogsManager.ShowDialog(
                         null,
-                        new MessageDialog(LanguageControl.Unavailable, "不可在冒险模式添加玩家", LanguageControl.Ok)
+                        new MessageDialog(LanguageManager.Unavailable, "不可在冒险模式添加玩家", LanguageManager.Ok)
                     );
                 }
                 else if (_subsystemPlayers.PlayersData.Count >=
@@ -75,9 +75,9 @@ public class PlayersScreen : Screen
                     DialogsManager.ShowDialog(
                         null,
                         new MessageDialog(
-                            LanguageControl.Unavailable,
+                            LanguageManager.Unavailable,
                             $"超出最大玩家数量{GameManager.Project!.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount}",
-                            LanguageControl.Ok
+                            LanguageManager.Ok
                         )
                     );
                 }
@@ -158,12 +158,12 @@ public class PlayersScreen : Screen
                                         {
                                             new LabelWidget
                                             {
-                                                Text = StringsManager.GetString("ScreenLayout." + str + ".Name"),
+                                                Text = StringsManager.GetString("ScreenLayout", str, "Name"),
                                                 Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
                                             },
                                             new LabelWidget
                                             {
-                                                Text = StringsManager.GetString("ScreenLayout." + str + ".Description"),
+                                                Text = StringsManager.GetString("ScreenLayout", str, "Description"),
                                                 Font = ContentManager.Get<BitmapFont>("Fonts/Pericles"),
                                                 Color = Color.Gray
                                             }
@@ -176,22 +176,22 @@ public class PlayersScreen : Screen
                         {
                             if (_subsystemPlayers.PlayersData.Count == 1)
                             {
-                                SettingsManager.ScreenLayout1 = (ScreenLayout)o;
+                                SettingsManager.Current.ScreenLayout1 = (ScreenLayout)o;
                             }
 
                             if (_subsystemPlayers.PlayersData.Count == 2)
                             {
-                                SettingsManager.ScreenLayout2 = (ScreenLayout)o;
+                                SettingsManager.Current.ScreenLayout2 = (ScreenLayout)o;
                             }
 
                             if (_subsystemPlayers.PlayersData.Count == 3)
                             {
-                                SettingsManager.ScreenLayout3 = (ScreenLayout)o;
+                                SettingsManager.Current.ScreenLayout3 = (ScreenLayout)o;
                             }
 
                             if (_subsystemPlayers.PlayersData.Count == 4)
                             {
-                                SettingsManager.ScreenLayout4 = (ScreenLayout)o;
+                                SettingsManager.Current.ScreenLayout4 = (ScreenLayout)o;
                             }
                         }
                     )

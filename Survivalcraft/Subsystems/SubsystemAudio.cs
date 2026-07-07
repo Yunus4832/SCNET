@@ -68,7 +68,7 @@ public class SubsystemAudio : Subsystem, IUpdateable
             if (_subsystemTime.GameTime >= soundInfo.Time)
             {
                 if (_subsystemTime.GameTimeFactor.CloseTo(1f) && !_subsystemTime.FixedTimeStep.HasValue &&
-                    soundInfo.Volume * SettingsManager.SoundsVolume > AudioManager.MinAudibleVolume &&
+                    soundInfo.Volume * SettingsManager.Current.SoundsVolume > AudioManager.MinAudibleVolume &&
                     UpdateCongestion(soundInfo.Name, soundInfo.Volume))
                 {
                     AudioManager.PlaySound(soundInfo.Name, soundInfo.Volume, soundInfo.Pitch, soundInfo.Pan);

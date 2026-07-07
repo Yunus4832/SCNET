@@ -76,7 +76,7 @@ public class FurnitureDesign
             var array3 = item.Split(['*'], StringSplitOptions.None);
             if (array3.Length != 2)
             {
-                throw new InvalidOperationException(LanguageControl.Get(_typeName, 2));
+                throw new InvalidOperationException(LanguageManager.Get(_typeName, 2));
             }
 
             var num2 = int.Parse(array3[0], CultureInfo.InvariantCulture);
@@ -181,7 +181,7 @@ public class FurnitureDesign
             {
                 if (value[0] == ' ' || value[^1] == ' ')
                 {
-                    throw new InvalidOperationException(LanguageControl.Get(_typeName, 1));
+                    throw new InvalidOperationException(LanguageManager.Get(_typeName, 1));
                 }
 
                 var text = value;
@@ -189,7 +189,7 @@ public class FurnitureDesign
                 {
                     if (c > '\u007f' || (!char.IsLetterOrDigit(c) && c != ' '))
                     {
-                        throw new InvalidOperationException(LanguageControl.Get(_typeName, 1));
+                        throw new InvalidOperationException(LanguageManager.Get(_typeName, 1));
                     }
                 }
 
@@ -246,12 +246,12 @@ public class FurnitureDesign
     {
         if (resolution is < 2 or > MaxResolution)
         {
-            throw new ArgumentException(LanguageControl.Get(_typeName, 3));
+            throw new ArgumentException(LanguageManager.Get(_typeName, 3));
         }
 
         if (values.Length != resolution * resolution * resolution)
         {
-            throw new ArgumentException(LanguageControl.Get(_typeName, 4));
+            throw new ArgumentException(LanguageManager.Get(_typeName, 4));
         }
 
         Resolution = resolution;
@@ -279,34 +279,34 @@ public class FurnitureDesign
             var count = ListChain().Count;
             if (count > 1)
             {
-                return string.Format(LanguageControl.Get(_typeName, 5), count);
+                return string.Format(LanguageManager.Get(_typeName, 5), count);
             }
         }
         else
         {
             if (InteractionMode == FurnitureInteractionMode.ElectricButton)
             {
-                return LanguageControl.Get(_typeName, 6);
+                return LanguageManager.Get(_typeName, 6);
             }
 
             if (InteractionMode == FurnitureInteractionMode.ElectricSwitch)
             {
-                return LanguageControl.Get(_typeName, 7);
+                return LanguageManager.Get(_typeName, 7);
             }
 
             if (InteractionMode != FurnitureInteractionMode.ConnectedMultistate)
             {
-                return LanguageControl.Get(_typeName, 9);
+                return LanguageManager.Get(_typeName, 9);
             }
 
             var count2 = ListChain().Count;
             if (count2 > 1)
             {
-                return string.Format(LanguageControl.Get(_typeName, 8), count2);
+                return string.Format(LanguageManager.Get(_typeName, 8), count2);
             }
         }
 
-        return LanguageControl.Get(_typeName, 9);
+        return LanguageManager.Get(_typeName, 9);
     }
 
     public BoundingBox[] GetCollisionBoxes(int rotation)
@@ -345,7 +345,7 @@ public class FurnitureDesign
     {
         if (resolution is < 2 or > MaxResolution)
         {
-            throw new ArgumentException(LanguageControl.Get(_typeName, 3));
+            throw new ArgumentException(LanguageManager.Get(_typeName, 3));
         }
 
         if (resolution == Resolution)
@@ -842,11 +842,6 @@ public class FurnitureDesign
                         blockMesh3 = blockMesh2;
                     }
 
-                    ModsManager.HookAction("SetFurnitureDesignColor", loader =>
-                    {
-                        loader.SetFurnitureDesignColor(this, block, value2, ref num14, ref color);
-                        return false;
-                    });
                     var num15 = num14 % 16;
                     var num16 = num14 / 16;
                     var count = blockMesh3.Vertices.Count;

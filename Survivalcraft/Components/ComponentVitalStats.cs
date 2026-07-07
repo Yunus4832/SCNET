@@ -147,14 +147,14 @@ public class ComponentVitalStats : Component, IUpdateable
 
         if (_componentPlayer.ComponentSickness.IsSick && sicknessProbability > 0f)
         {
-            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 1), Color.White, true,
+            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 1), Color.White, true,
                 true);
             return false;
         }
 
         if (Food >= 0.98f)
         {
-            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 2), Color.White, true,
+            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 2), Color.White, true,
                 true);
             return false;
         }
@@ -179,12 +179,12 @@ public class ComponentVitalStats : Component, IUpdateable
             switch (sicknessProbability)
             {
                 case >= 0.5f:
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 3), Color.White,
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 3), Color.White,
                         true,
                         true);
                     break;
                 case > 0f:
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 4), Color.White,
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 4), Color.White,
                         true,
                         true);
                     break;
@@ -193,12 +193,12 @@ public class ComponentVitalStats : Component, IUpdateable
                     switch (value2)
                     {
                         case > 2.5f:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 5),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 5),
                                 Color.White, true,
                                 true);
                             break;
                         case > 2f:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 6),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 6),
                                 Color.White, true,
                                 true);
                             break;
@@ -206,13 +206,13 @@ public class ComponentVitalStats : Component, IUpdateable
                         {
                             if (Food > 0.85f)
                             {
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 7),
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 7),
                                     Color.White, true,
                                     true);
                             }
                             else
                             {
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 8),
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 8),
                                     Color.White, true,
                                     false);
                             }
@@ -354,10 +354,10 @@ public class ComponentVitalStats : Component, IUpdateable
                 {
                     if (_subsystemTime.PeriodicGameTimeEvent(50.0, 0.0))
                     {
-                        _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageControl.Get(_typeName, 9));
+                        _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 9));
                         if (runGui)
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 10),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 10),
                                 Color.White, true, false);
                             _componentPlayer.ComponentGui.FoodBarWidget.Flash(10);
                         }
@@ -368,17 +368,17 @@ public class ComponentVitalStats : Component, IUpdateable
                     switch (runGui)
                     {
                         case true when Food < 0.1f && ((_lastFood >= 0.1f) | flag3):
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 11),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 11),
                                 Color.White,
                                 true, true);
                             break;
                         case true when Food < 0.25f && ((_lastFood >= 0.25f) | flag3):
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 12),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 12),
                                 Color.White,
                                 true, true);
                             break;
                         case true when Food < 0.5f && ((_lastFood >= 0.5f) | flag3):
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 13),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 13),
                                 Color.White,
                                 true, false);
                             break;
@@ -446,13 +446,13 @@ public class ComponentVitalStats : Component, IUpdateable
 
             if (!flag2 && !flag && Stamina < 0.33f && _lastStamina >= 0.33f)
             {
-                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 14), Color.White, true,
+                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 14), Color.White, true,
                     false);
             }
 
             if (flag2 | flag && Stamina < 0.4f && _lastStamina >= 0.4f)
             {
-                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 15), Color.White, true,
+                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 15), Color.White, true,
                     true);
             }
 
@@ -462,8 +462,8 @@ public class ComponentVitalStats : Component, IUpdateable
                 {
                     if (_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0))
                     {
-                        _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageControl.Get(_typeName, 16));
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 17),
+                        _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 16));
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 17),
                             Color.White,
                             true, false);
                     }
@@ -475,7 +475,7 @@ public class ComponentVitalStats : Component, IUpdateable
                 }
                 else if (_subsystemTime.PeriodicGameTimeEvent(5.0, 0.0))
                 {
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 18), Color.White,
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 18), Color.White,
                         true, true);
                 }
             }
@@ -491,7 +491,7 @@ public class ComponentVitalStats : Component, IUpdateable
                 }
 
                 var num5 = _componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.2f : 0f;
-                _pantingSound.Volume = 1f * SettingsManager.SoundsVolume * MathUtils.Saturate(1f * num4) *
+                _pantingSound.Volume = 1f * SettingsManager.Current.SoundsVolume * MathUtils.Saturate(1f * num4) *
                                        MathUtils.Lerp(0.8f, 1f,
                                            SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * Time.RealTime + 100.0,
                                                1000.0)));
@@ -542,24 +542,24 @@ public class ComponentVitalStats : Component, IUpdateable
                 switch (runGui)
                 {
                     case true when Sleep < 0.075f && (_lastSleep >= 0.075f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 19),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 19),
                             Color.White,
                             true, true);
                         _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
                         break;
                     case true when Sleep < 0.2f && (_lastSleep >= 0.2f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 20),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 20),
                             Color.White,
                             true, true);
                         _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
                         break;
                     case true when Sleep < 0.33f && (_lastSleep >= 0.33f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 21),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 21),
                             Color.White,
                             true, false);
                         break;
                     case true when Sleep < 0.5f && (_lastSleep >= 0.5f) | flag2:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 22),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 22),
                             Color.White,
                             true, false);
                         break;
@@ -581,7 +581,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     _componentPlayer.ComponentSleep.Sleep(false);
                     if (runGui)
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 23),
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 23),
                             Color.White, true, true);
                         _componentPlayer.ComponentCreatureSounds.PlayMoanSound();
                     }
@@ -615,7 +615,7 @@ public class ComponentVitalStats : Component, IUpdateable
             return;
         }
 
-        _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageControl.Get(_typeName, 24);
+        _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageManager.Get(_typeName, 24);
         _componentPlayer.ComponentScreenOverlays.FloatingMessageFactor =
             MathUtils.Saturate(10f * (_sleepBlackoutFactor - 0.9f));
     }
@@ -633,10 +633,10 @@ public class ComponentVitalStats : Component, IUpdateable
 
         var arg = _componentPlayer.ComponentClothing.LeastInsulatedSlot switch
         {
-            ClothingSlot.Head => LanguageControl.Get(_typeName, 41),
-            ClothingSlot.Torso => LanguageControl.Get(_typeName, 42),
-            ClothingSlot.Legs => LanguageControl.Get(_typeName, 43),
-            _ => LanguageControl.Get(_typeName, 44)
+            ClothingSlot.Head => LanguageManager.Get(_typeName, 41),
+            ClothingSlot.Torso => LanguageManager.Get(_typeName, 42),
+            ClothingSlot.Legs => LanguageManager.Get(_typeName, 43),
+            _ => LanguageManager.Get(_typeName, 44)
         };
 
         if (_subsystemTime.PeriodicGameTimeEvent(2.0, 2.0 * GetHashCode() % 1000.0 / 1000.0))
@@ -677,26 +677,26 @@ public class ComponentVitalStats : Component, IUpdateable
         switch (Temperature)
         {
             case <= 0f:
-                _componentPlayer.ComponentHealth.Injure(1f, null, false, LanguageControl.Get(_typeName, 25));
+                _componentPlayer.ComponentHealth.Injure(1f, null, false, LanguageManager.Get(_typeName, 25));
                 break;
             case < 3f:
             {
                 if (_subsystemTime.PeriodicGameTimeEvent(10.0, 0.0))
                 {
-                    _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageControl.Get(_typeName, 26));
+                    _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 26));
                     string text;
 
                     if (Wetness > 0f)
                     {
-                        text = string.Format(LanguageControl.Get(_typeName, 27), arg); // 你的{0}冻僵了,弄干你的衣服,
+                        text = string.Format(LanguageManager.Get(_typeName, 27), arg); // 你的{0}冻僵了,弄干你的衣服,
                     }
                     else if (num >= 1f) // 有衣服，但依然受冻的时候
                     {
-                        text = string.Format(LanguageControl.Get(_typeName, 28), arg); // 你的{0}冻僵了,寻找庇护所,
+                        text = string.Format(LanguageManager.Get(_typeName, 28), arg); // 你的{0}冻僵了,寻找庇护所,
                     }
                     else
                     {
-                        text = string.Format(LanguageControl.Get(_typeName, 29), arg); // 你的{0}冻僵了,快穿上衣服,
+                        text = string.Format(LanguageManager.Get(_typeName, 29), arg); // 你的{0}冻僵了,快穿上衣服,
                     }
 
                     if (runGui)
@@ -717,10 +717,10 @@ public class ComponentVitalStats : Component, IUpdateable
                     {
                         var text2 = Wetness switch
                         {
-                            > 0f => string.Format(LanguageControl.Get(_typeName, 30), arg), // 你的{0}有点冷, 弄干你的衣服
+                            > 0f => string.Format(LanguageManager.Get(_typeName, 30), arg), // 你的{0}有点冷, 弄干你的衣服
                             _ => string.Format(num >= 1f
-                                ? LanguageControl.Get(_typeName, 31) // 你的{0}有点冷,寻找庇护所
-                                : LanguageControl.Get(_typeName, 32), arg) // 你的{0}有点冷,快穿上衣服
+                                ? LanguageManager.Get(_typeName, 31) // 你的{0}有点冷,寻找庇护所
+                                : LanguageManager.Get(_typeName, 32), arg) // 你的{0}有点冷,快穿上衣服
                         };
 
                         _componentPlayer.ComponentGui.DisplaySmallMessage(text2, Color.White, true, true);
@@ -730,7 +730,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     // 当体温低于 8 时： 你觉得有点冷
                     case true when Temperature < 8f && (_lastTemperature >= 8f) | flag:
                         _componentPlayer.ComponentGui.DisplaySmallMessage(
-                            LanguageControl.Get(_typeName, 33),
+                            LanguageManager.Get(_typeName, 33),
                             Color.White,
                             true,
                             false
@@ -747,12 +747,12 @@ public class ComponentVitalStats : Component, IUpdateable
         {
             if (_subsystemTime.PeriodicGameTimeEvent(10.0, 0.0))
             {
-                _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageControl.Get(_typeName, 35)); // 被热死了
+                _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 35)); // 被热死了
                 if (runGui)
                 {
                     // 这里非常热，快离开这里
                     _componentPlayer.ComponentGui.DisplaySmallMessage(
-                        LanguageControl.Get(_typeName, 34),
+                        LanguageManager.Get(_typeName, 34),
                         Color.White,
                         true,
                         false
@@ -771,7 +771,7 @@ public class ComponentVitalStats : Component, IUpdateable
         {
             // 你觉得热
             _componentPlayer.ComponentGui.DisplaySmallMessage(
-                LanguageControl.Get(_typeName, 36),
+                LanguageManager.Get(_typeName, 36),
                 Color.White,
                 true,
                 false
@@ -796,7 +796,7 @@ public class ComponentVitalStats : Component, IUpdateable
             _componentPlayer.ComponentScreenOverlays.BlackoutFactor);
         if (_temperatureBlackoutFactor > 0.01)
         {
-            _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageControl.Get(_typeName, 37);
+            _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageManager.Get(_typeName, 37);
             _componentPlayer.ComponentScreenOverlays.FloatingMessageFactor =
                 MathUtils.Saturate(10f * (_temperatureBlackoutFactor - 0.9f));
         }
@@ -858,7 +858,7 @@ public class ComponentVitalStats : Component, IUpdateable
                     {
                         if (Wetness > 0.8f)
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 38),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 38),
                                 Color.White,
                                 true, true);
                         }
@@ -872,7 +872,7 @@ public class ComponentVitalStats : Component, IUpdateable
                         if (Wetness is > 0.2f and <= 0.8f && Wetness > _lastWetness)
                         {
                             _componentPlayer.ComponentGui.DisplaySmallMessage(
-                                LanguageControl.Get(_typeName, 39),
+                                LanguageManager.Get(_typeName, 39),
                                 Color.White,
                                 true,
                                 true
@@ -888,7 +888,7 @@ public class ComponentVitalStats : Component, IUpdateable
                         if (Wetness <= 0f)
                         {
                             _componentPlayer.ComponentGui.DisplaySmallMessage(
-                                LanguageControl.Get(_typeName, 40),
+                                LanguageManager.Get(_typeName, 40),
                                 Color.White,
                                 true,
                                 true

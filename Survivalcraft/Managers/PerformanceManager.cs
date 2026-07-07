@@ -160,7 +160,7 @@ public static class PerformanceManager
     {
         var scale = new Vector2(MathUtils.Round(MathUtils.Clamp(ScreensManager.RootWidget.GlobalScale, 1f, 4f)));
         var viewport = Display.Viewport;
-        if (SettingsManager.DisplayFpsCounter)
+        if (SettingsManager.Current.DisplayFpsCounter)
         {
             if (Time.PeriodicEvent(1.0, 0.0))
             {
@@ -183,7 +183,7 @@ public static class PerformanceManager
                 .QueueText(_statsString, new Vector2(0f, 0f), 0f, Color.White, TextAnchor.Left, scale, Vector2.Zero);
         }
 
-        if (SettingsManager.DisplayFpsRibbon)
+        if (SettingsManager.Current.DisplayFpsRibbon)
         {
             var num = viewport.Width / scale.X > 480f ? scale.X * 2f : scale.X;
             var num2 = viewport.Height / -0.1f;

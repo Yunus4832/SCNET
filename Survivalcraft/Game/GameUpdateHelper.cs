@@ -11,7 +11,7 @@ public static class GameUpdateHelper
 
     public static void CheckGameUpdate()
     {
-        if (SettingsManager.RejectedUpdateCount >= 3)
+        if (SettingsManager.Current.RejectedUpdateCount >= 3)
         {
             return;
         }
@@ -37,7 +37,7 @@ public static class GameUpdateHelper
                     new MessageDialog(
                         "错误",
                         "本版本未开放",
-                        LanguageControl.Ok,
+                        LanguageManager.Ok,
                         string.Empty,
                         delegate { Window.Close(); }
                     )
@@ -48,10 +48,10 @@ public static class GameUpdateHelper
             if (result is { NeedUpdate: true })
             {
                 var dialog = new MessageDialog(
-                    LanguageControl.Get(_typeName, 1),
+                    LanguageManager.Get(_typeName, 1),
                     result.UpdateMessage,
-                    LanguageControl.Get("Usual", "yes"),
-                    LanguageControl.Get("Usual", "no"),
+                    LanguageManager.Get("Usual", "yes"),
+                    LanguageManager.Get("Usual", "no"),
                     new Vector2(-1f),
                     (button, self) =>
                     {
@@ -63,7 +63,7 @@ public static class GameUpdateHelper
                         else
                         {
                             DialogsManager.HideDialog(self);
-                            SettingsManager.RejectedUpdateCount++;
+                            SettingsManager.Current.RejectedUpdateCount++;
                         }
                     }
                 )

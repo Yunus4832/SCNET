@@ -2,6 +2,10 @@
     <PropertyGroup>
         <AssemblyName>Engine</AssemblyName>
         <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Engine</PackageId>
+        <Description>Cross-platform engine runtime used by SCNET Survivalcraft.</Description>
+        <PackageTags>scnet;engine;graphics;audio;windowing</PackageTags>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">

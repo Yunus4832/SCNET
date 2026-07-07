@@ -30,7 +30,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
 
     public bool RequiresLogin => true;
 
-    public bool IsLoggedIn => !string.IsNullOrEmpty(SettingsManager.CommunityAccessToken);
+    public bool IsLoggedIn => !string.IsNullOrEmpty(SettingsManager.Current.CommunityAccessToken);
 
     public void Dispose()
     {
@@ -41,8 +41,8 @@ public class SchubExternalContentProvider : IExternalContentProvider
     public void Logout()
     {
         _loginProcessData = null;
-        SettingsManager.CommunityAccessToken = string.Empty;
-        SettingsManager.ScpboxUserInfo = string.Empty;
+        SettingsManager.Current.CommunityAccessToken = string.Empty;
+        SettingsManager.Current.ScpboxUserInfo = string.Empty;
     }
 
     public void Login(
@@ -79,7 +79,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
             VerifyLoggedIn();
             var dictionary = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + SettingsManager.CommunityAccessToken },
+                { "Authorization", "Bearer " + SettingsManager.Current.CommunityAccessToken },
                 { "Content-Type", "application/json" }
             };
             var jsonObject = new JsonObject
@@ -133,7 +133,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
             };
             var dictionary = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + SettingsManager.CommunityAccessToken },
+                { "Authorization", "Bearer " + SettingsManager.Current.CommunityAccessToken },
                 { "Dropbox-API-Arg", jsonObject.ToString() }
             };
             WebManager.Get(
@@ -171,7 +171,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
             };
             var dictionary = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + SettingsManager.CommunityAccessToken },
+                { "Authorization", "Bearer " + SettingsManager.Current.CommunityAccessToken },
                 { "Content-Type", "application/octet-stream" },
                 { "Dropbox-API-Arg", jsonObject.ToString() }
             };
@@ -203,7 +203,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
             VerifyLoggedIn();
             var dictionary = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + SettingsManager.CommunityAccessToken },
+                { "Authorization", "Bearer " + SettingsManager.Current.CommunityAccessToken },
                 { "Content-Type", "application/json" }
             };
             var jsonObject = new JsonObject
@@ -288,9 +288,10 @@ public class SchubExternalContentProvider : IExternalContentProvider
                         loginProcessData.Progress,
                         delegate(byte[] result)
                         {
-                            SettingsManager.CommunityAccessToken =
-                                ((IDictionary<string, object>?)WebManager.JsonFromBytes(result))?["access_token"]
-                                .ToString() ?? throw new InvalidOperationException("access_token is null");
+                            var jsonObject = (JsonObject?)WebManager.JsonFromBytes(result);
+                            SettingsManager.Current.CommunityAccessToken =
+                                jsonObject?["access_token"]?.ToString()
+                                ?? throw new InvalidOperationException("access_token is null");
                             loginProcessData.Succeed(this);
                         },
                         delegate(Exception error) { loginProcessData.Fail(this, error); });
@@ -334,7 +335,7 @@ public class SchubExternalContentProvider : IExternalContentProvider
                 throw new Exception("不能接收来自SC中文社区的身份验证信息");
             }
 
-            SettingsManager.CommunityAccessToken = accessToken;
+            SettingsManager.Current.CommunityAccessToken = accessToken;
             loginProcessData.Succeed(this);
             uri.IsHandle = true;
         }

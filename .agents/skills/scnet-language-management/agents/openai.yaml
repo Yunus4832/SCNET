@@ -1,0 +1,7 @@
+interface:
+  display_name: "SCNET Language Management"
+  short_description: "Manage SCNET localization safely."
+  default_prompt: "Use $scnet-language-management to manage localization keys with LanguageTool and validate all language files."
+
+policy:
+  allow_implicit_invocation: true

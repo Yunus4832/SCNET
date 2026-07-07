@@ -13,8 +13,6 @@ namespace Game;
 
 public static class GameEntry
 {
-    public const string Scheme = "com.candy.survivalcraft";
-
     private static double _frameBeginTime;
 
     private static TimeSpan _processCpuTimeBegin;
@@ -23,6 +21,8 @@ public static class GameEntry
 
     private static readonly List<HandleUriItem> _urisToHandle = [];
 
+    public static GameModRuntime? ModRuntime => CurrentModRuntime.Value;
+
     public static Action<string, string> RamDataChangeException = delegate { }; //内存数值被修改事件
 
     public static float LastFrameTime { get; set; }
@@ -30,21 +30,6 @@ public static class GameEntry
     public static float LastCpuFrameTime { get; set; }
 
     public static event Action<HandleUriItem>? HandleUri;
-
-#if DESKTOP
-    public static GameExitAction Main(RunningSetting runningSetting)
-    {
-        foreach (var arg in runningSetting.RemainingArgs)
-        {
-            if (arg.StartsWith(Scheme))
-            {
-                HandleUriHandler(new Uri(arg));
-            }
-        }
-
-        return EntryPoint(runningSetting);
-    }
-#endif
 
     [STAThread]
     public static GameExitAction EntryPoint(RunningSetting runningSetting)
@@ -64,7 +49,7 @@ public static class GameEntry
         Window.Closed += Closed;
         RamDataChangeException += (_, _) =>
         {
-            var modPath = Storage.GetSystemPath(ModsManager.ModsPath);
+            var modPath = Storage.GetSystemPath(GamePaths.Mods);
             if (Directory.Exists(modPath) && Directory.GetFiles(modPath).Length > 0)
             {
                 return;
@@ -127,15 +112,22 @@ public static class GameEntry
 
     public static void Closed()
     {
+        ModRuntime?.Dispose();
+        CurrentModRuntime.Set(null);
         SettingsManager.SaveSettings();
+    }
+
+    public static void SetModRuntime(GameModRuntime? runtime)
+    {
+        ModRuntime?.Dispose();
+        CurrentModRuntime.Set(runtime);
     }
 
     public static void Initialize()
     {
         Log.Information(
-            $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, BuildConfiguration={VersionsManager.BuildConfiguration}, Platform={VersionsManager.Platform}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, RAM={Utilities.GetTotalAvailableMemory() / 1024 / 1024}MB, 64bit={Marshal.SizeOf<IntPtr>() == 8}");
+            $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, BuildConfiguration={VersionsManager.BuildConfiguration}, Platform={PlatformManager.Platform}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, RAM={Utilities.GetTotalAvailableMemory() / 1024 / 1024}MB, 64bit={Marshal.SizeOf<IntPtr>() == 8}");
         SettingsManager.Initialize();
-        VersionsManager.Initialize();
         ExternalContentManager.Initialize();
         ContentManager.Initialize();
         ScreensManager.Initialize();
@@ -152,12 +144,12 @@ public static class GameEntry
         _processCpuTimeBegin = currentCpuTime;
         if (Keyboard.IsKeyDownOnce(Key.F11))
         {
-            SettingsManager.WindowMode = SettingsManager.WindowMode == WindowMode.Fullscreen
+            SettingsManager.Current.WindowMode = SettingsManager.Current.WindowMode == WindowMode.Fullscreen
                 ? WindowMode.Resizable
                 : WindowMode.Fullscreen;
         }
 
-        Window.VSync = SettingsManager.VSync;
+        Window.VSync = SettingsManager.Current.VSync;
         try
         {
             if (ExceptionManager.Error == null)
@@ -232,23 +224,74 @@ public static class GameEntry
     {
         public void WriteNet(NetLogLevel level, string str, params object[] args)
         {
-            var s = level.ToString();
-            if (!SettingsManager.LiteNetLibLogLevel.Split([','], StringSplitOptions.None).Contains(s))
-            {
-                return;
-            }
-
+            var logType = MapLogType(level);
             var builder = new StringBuilder();
             builder.Append("[LiteNetLib]");
-            builder.Append(s);
-            builder.Append(str);
-            foreach (var obj in args)
+            builder.Append(level);
+            builder.Append(' ');
+            builder.Append(FormatMessage(str, args));
+            Write(logType, builder.ToString());
+        }
+
+        private static string FormatMessage(string message, object[] args)
+        {
+            if (args.Length == 0)
             {
-                builder.Append(obj);
-                builder.Append(' ');
+                return message;
             }
 
-            Log.Information(builder.ToString());
+            try
+            {
+                return string.Format(message, args);
+            }
+            catch
+            {
+                var builder = new StringBuilder(message);
+                foreach (var arg in args)
+                {
+                    builder.Append(' ');
+                    builder.Append(arg);
+                }
+
+                return builder.ToString();
+            }
+        }
+
+        private static LogType MapLogType(NetLogLevel level)
+        {
+            return level switch
+            {
+                NetLogLevel.Trace => LogType.Debug,
+                NetLogLevel.Info => LogType.Information,
+                NetLogLevel.Warning => LogType.Warning,
+                NetLogLevel.Error => LogType.Error,
+                _ => LogType.Information
+            };
+        }
+
+        private static void Write(LogType logType, string message)
+        {
+            switch (logType)
+            {
+                case LogType.Debug:
+                    Log.Debug(message);
+                    break;
+                case LogType.Verbose:
+                    Log.Verbose(message);
+                    break;
+                case LogType.Information:
+                    Log.Information(message);
+                    break;
+                case LogType.Warning:
+                    Log.Warning(message);
+                    break;
+                case LogType.Error:
+                    Log.Error(message);
+                    break;
+                default:
+                    Log.Information(message);
+                    break;
+            }
         }
     }
 }

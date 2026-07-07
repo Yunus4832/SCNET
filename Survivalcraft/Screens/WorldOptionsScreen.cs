@@ -161,7 +161,7 @@ public class WorldOptionsScreen : Screen
             return (value >= 0f ? "+" : "") + value;
         }
 
-        return LanguageControl.Get(_typeName, 6);
+        return LanguageManager.Get(_typeName, 6);
     }
 
     public override void Enter(object[] parameters)
@@ -169,8 +169,7 @@ public class WorldOptionsScreen : Screen
         _worldSettings = (WorldSettings)parameters[0];
         _isExistingWorld = (bool)parameters[1];
         _descriptionLabel.Text =
-            StringsManager.GetString("EnvironmentBehaviorMode." + _worldSettings.EnvironmentBehaviorMode +
-                                     ".Description");
+            StringsManager.GetString("EnvironmentBehaviorMode", _worldSettings.EnvironmentBehaviorMode, "Description");
     }
 
     public override void Leave()
@@ -182,30 +181,31 @@ public class WorldOptionsScreen : Screen
     {
         if (_terrainGenerationButton.IsClicked && !_isExistingWorld)
         {
-            var enumValues = EnumUtils.GetEnumValues(typeof(TerrainGenerationMode));
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get(_typeName, 1), enumValues, 56f,
-                e => StringsManager.GetString("TerrainGenerationMode." + (TerrainGenerationMode)e + ".Name"),
+            var enumValues = EnumUtils.GetEnumValues(typeof(TerrainGenerationMode))
+                .Where(e => !TerrainGenerationModes.IsLegacy((TerrainGenerationMode)e))
+                .ToArray();
+            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, 1), enumValues, 56f,
+                e => StringsManager.GetString("TerrainGenerationMode", (TerrainGenerationMode)e, "Name"),
                 delegate(object e)
                 {
-                    if (_worldSettings.GameMode != 0 &&
-                        ((TerrainGenerationMode)e == TerrainGenerationMode.FlatContinent ||
-                         (TerrainGenerationMode)e == TerrainGenerationMode.FlatIsland))
+                    if (_worldSettings.GameMode != 0 && TerrainGenerationModes.IsFlat((TerrainGenerationMode)e))
                     {
                         DialogsManager.ShowDialog(
                             null,
                             new MessageDialog(
-                                LanguageControl.Get(_typeName, 4),
-                                LanguageControl.Get(_typeName, 5),
-                                LanguageControl.Get("Usual", "ok")
+                                LanguageManager.Get(_typeName, 4),
+                                LanguageManager.Get(_typeName, 5),
+                                LanguageManager.Get("Usual", "ok")
                             )
                         );
                     }
                     else
                     {
                         _worldSettings.TerrainGenerationMode = (TerrainGenerationMode)e;
-                        _descriptionLabel.Text = StringsManager.GetString("TerrainGenerationMode." +
-                                                                          _worldSettings.TerrainGenerationMode +
-                                                                          ".Description");
+                        _descriptionLabel.Text = StringsManager.GetString(
+                            "TerrainGenerationMode",
+                            _worldSettings.TerrainGenerationMode,
+                            "Description");
                     }
                 }));
         }
@@ -228,13 +228,13 @@ public class WorldOptionsScreen : Screen
                 MathUtils.Clamp(
                     (int)_flatTerrainLevelSlider.Value / (int)_flatTerrainLevelSlider.Granularity *
                     (int)_flatTerrainLevelSlider.Granularity, 2, 252);
-            _descriptionLabel.Text = StringsManager.GetString("FlatTerrainLevel.Description");
+            _descriptionLabel.Text = StringsManager.GetString("FlatTerrainLevel", "Description");
         }
 
         if (_flatTerrainShoreRoughnessSlider.IsSliding && !_isExistingWorld)
         {
             _worldSettings.ShoreRoughness = _flatTerrainShoreRoughnessSlider.Value;
-            _descriptionLabel.Text = StringsManager.GetString("FlatTerrainShoreRoughness.Description");
+            _descriptionLabel.Text = StringsManager.GetString("FlatTerrainShoreRoughness", "Description");
         }
 
         if (_flatTerrainBlockButton.IsClicked && !_isExistingWorld)
@@ -249,7 +249,7 @@ public class WorldOptionsScreen : Screen
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
-                    LanguageControl.Get(_typeName, 2),
+                    LanguageManager.Get(_typeName, 2),
                     items,
                     72f,
                     delegate(object index)
@@ -269,38 +269,38 @@ public class WorldOptionsScreen : Screen
         if (_flatTerrainMagmaOceanCheckbox.IsClicked)
         {
             _worldSettings.TerrainOceanBlockIndex = _worldSettings.TerrainOceanBlockIndex == 18 ? 92 : 18;
-            _descriptionLabel.Text = StringsManager.GetString("FlatTerrainMagmaOcean.Description");
+            _descriptionLabel.Text = StringsManager.GetString("FlatTerrainMagmaOcean", "Description");
         }
 
         if (_seaLevelOffsetSlider.IsSliding && !_isExistingWorld)
         {
             _worldSettings.SeaLevelOffset = (int)_seaLevelOffsetSlider.Value;
-            _descriptionLabel.Text = StringsManager.GetString("SeaLevelOffset.Description");
+            _descriptionLabel.Text = StringsManager.GetString("SeaLevelOffset", "Description");
         }
 
         if (_temperatureOffsetSlider.IsSliding && !_isExistingWorld)
         {
             _worldSettings.TemperatureOffset = _temperatureOffsetSlider.Value;
-            _descriptionLabel.Text = StringsManager.GetString("TemperatureOffset.Description");
+            _descriptionLabel.Text = StringsManager.GetString("TemperatureOffset", "Description");
         }
 
         if (_humidityOffsetSlider.IsSliding && !_isExistingWorld)
         {
             _worldSettings.HumidityOffset = _humidityOffsetSlider.Value;
-            _descriptionLabel.Text = StringsManager.GetString("HumidityOffset.Description");
+            _descriptionLabel.Text = StringsManager.GetString("HumidityOffset", "Description");
         }
 
         if (_biomeSizeSlider.IsSliding && !_isExistingWorld)
         {
             _worldSettings.BiomeSize =
                 _biomeSizes[MathUtils.Clamp((int)_biomeSizeSlider.Value, 0, _biomeSizes.Length - 1)];
-            _descriptionLabel.Text = StringsManager.GetString("BiomeSize.Description");
+            _descriptionLabel.Text = StringsManager.GetString("BiomeSize", "Description");
         }
 
         if (_blocksTextureButton.IsClicked)
         {
             BlocksTexturesManager.UpdateBlocksTexturesList();
-            var dialog = new ListSelectionDialog(LanguageControl.Get(_typeName, 3),
+            var dialog = new ListSelectionDialog(LanguageManager.Get(_typeName, 3),
                 BlocksTexturesManager.ReadOnlyBlockTexturesNames, 64f, delegate(object item)
                 {
                     var node = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
@@ -315,7 +315,7 @@ public class WorldOptionsScreen : Screen
                     return obj;
                 }, delegate(object item) { _worldSettings.BlocksTextureName = (string)item; });
             DialogsManager.ShowDialog(null, dialog);
-            _descriptionLabel.Text = StringsManager.GetString("BlocksTexture.Description");
+            _descriptionLabel.Text = StringsManager.GetString("BlocksTexture", "Description");
         }
 
         if (_paletteButton.IsClicked)
@@ -327,13 +327,13 @@ public class WorldOptionsScreen : Screen
         {
             _worldSettings.AreSupernaturalCreaturesEnabled = !_worldSettings.AreSupernaturalCreaturesEnabled;
             _descriptionLabel.Text =
-                StringsManager.GetString("SupernaturalCreatures." + _worldSettings.AreSupernaturalCreaturesEnabled);
+                StringsManager.GetString("SupernaturalCreatures", _worldSettings.AreSupernaturalCreaturesEnabled);
         }
 
         if (_friendlyFireButton.IsClicked)
         {
             _worldSettings.IsFriendlyFireEnabled = !_worldSettings.IsFriendlyFireEnabled;
-            _descriptionLabel.Text = StringsManager.GetString("FriendlyFire." + _worldSettings.IsFriendlyFireEnabled);
+            _descriptionLabel.Text = StringsManager.GetString("FriendlyFire", _worldSettings.IsFriendlyFireEnabled);
         }
 
         if (_environmentBehaviorButton.IsClicked)
@@ -342,20 +342,21 @@ public class WorldOptionsScreen : Screen
             _worldSettings.EnvironmentBehaviorMode =
                 (EnvironmentBehaviorMode)((enumValues2.IndexOf((int)_worldSettings.EnvironmentBehaviorMode) + 1) %
                                           enumValues2.Count);
-            _descriptionLabel.Text = StringsManager.GetString("EnvironmentBehaviorMode." +
-                                                              _worldSettings.EnvironmentBehaviorMode +
-                                                              ".Description");
+            _descriptionLabel.Text = StringsManager.GetString(
+                "EnvironmentBehaviorMode",
+                _worldSettings.EnvironmentBehaviorMode,
+                "Description");
         }
 
         if (_timeOfDayButton.IsClicked)
         {
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageControl.Get(_typeName, "7"),
+            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, "7"),
                 EnumUtils.GetEnumValues(typeof(TimeOfDayMode)), 56f,
-                e => LanguageControl.Get("TimeOfDayMode", ((TimeOfDayMode)e).ToString()), delegate(object e)
+                e => LanguageManager.Get("TimeOfDayMode", ((TimeOfDayMode)e).ToString()), delegate(object e)
                 {
                     _worldSettings.TimeOfDayMode = (TimeOfDayMode)e;
                     _descriptionLabel.Text =
-                        StringsManager.GetString(string.Concat("TimeOfDayMode.", (TimeOfDayMode)e, ".Description"));
+                        StringsManager.GetString("TimeOfDayMode", (TimeOfDayMode)e, "Description");
                 }));
         }
 
@@ -363,57 +364,55 @@ public class WorldOptionsScreen : Screen
         {
             _worldSettings.AreSeasonsChanging = !_worldSettings.AreSeasonsChanging;
             _descriptionLabel.Text =
-                StringsManager.GetString($"AreSeasonsChanging.{_worldSettings.AreSeasonsChanging}");
+                StringsManager.GetString("AreSeasonsChanging", _worldSettings.AreSeasonsChanging);
         }
 
         if (_yearDaysSlider.IsSliding)
         {
             _worldSettings.YearDays =
                 _yearDays[MathUtils.Clamp((int)_yearDaysSlider.Value, 0, _yearDays.Length - 1)];
-            _descriptionLabel.Text = StringsManager.GetString("YearDays.Description");
+            _descriptionLabel.Text = StringsManager.GetString("YearDays", "Description");
         }
 
         if (_timeOfYearSlider.IsSliding)
         {
             _worldSettings.TimeOfYear = MathUtils.Clamp(_timeOfYearSlider.Value, 0f, 0.999f);
-            _descriptionLabel.Text = StringsManager.GetString("TimeOfYear.Description");
+            _descriptionLabel.Text = StringsManager.GetString("TimeOfYear", "Description");
         }
 
         if (_weatherEffectsButton.IsClicked)
         {
             _worldSettings.AreWeatherEffectsEnabled = !_worldSettings.AreWeatherEffectsEnabled;
             _descriptionLabel.Text =
-                StringsManager.GetString("WeatherMode." + _worldSettings.AreWeatherEffectsEnabled);
+                StringsManager.GetString("WeatherMode", _worldSettings.AreWeatherEffectsEnabled);
         }
 
         if (_adventureRespawnButton.IsClicked)
         {
             _worldSettings.IsAdventureRespawnAllowed = !_worldSettings.IsAdventureRespawnAllowed;
             _descriptionLabel.Text =
-                StringsManager.GetString("AdventureRespawnMode." + _worldSettings.IsAdventureRespawnAllowed);
+                StringsManager.GetString("AdventureRespawnMode", _worldSettings.IsAdventureRespawnAllowed);
         }
 
         if (_adventureSurvivalMechanicsButton.IsClicked)
         {
             _worldSettings.AreAdventureSurvivalMechanicsEnabled =
                 !_worldSettings.AreAdventureSurvivalMechanicsEnabled;
-            _descriptionLabel.Text = StringsManager.GetString("AdventureSurvivalMechanics." +
-                                                              _worldSettings.AreAdventureSurvivalMechanicsEnabled);
+            _descriptionLabel.Text = StringsManager.GetString(
+                "AdventureSurvivalMechanics",
+                _worldSettings.AreAdventureSurvivalMechanicsEnabled);
         }
 
         _creativeModePanel.IsVisible = _worldSettings.GameMode == GameMode.Creative;
         _newWorldOnlyPanel.IsVisible = !_isExistingWorld;
         _seasonsPanel.IsVisible = _worldSettings.GameMode == GameMode.Creative || !_isExistingWorld;
-        _continentTerrainPanel.IsVisible = _worldSettings.TerrainGenerationMode == TerrainGenerationMode.Continent ||
-                                           _worldSettings.TerrainGenerationMode ==
-                                           TerrainGenerationMode.FlatContinent;
-        _islandTerrainPanel.IsVisible = _worldSettings.TerrainGenerationMode == TerrainGenerationMode.Island ||
-                                        _worldSettings.TerrainGenerationMode == TerrainGenerationMode.FlatIsland;
-        _flatTerrainPanel.IsVisible = _worldSettings.TerrainGenerationMode == TerrainGenerationMode.FlatContinent ||
-                                      _worldSettings.TerrainGenerationMode == TerrainGenerationMode.FlatIsland;
+        _continentTerrainPanel.IsVisible = !TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode);
+        _islandTerrainPanel.IsVisible = TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode);
+        _flatTerrainPanel.IsVisible = TerrainGenerationModes.IsFlat(_worldSettings.TerrainGenerationMode);
         _yearDaysPanel.IsVisible = _worldSettings.AreSeasonsChanging;
+        var displayTerrainGenerationMode = TerrainGenerationModes.ToDisplayMode(_worldSettings.TerrainGenerationMode);
         _terrainGenerationButton.Text =
-            StringsManager.GetString("TerrainGenerationMode." + _worldSettings.TerrainGenerationMode + ".Name");
+            StringsManager.GetString("TerrainGenerationMode", displayTerrainGenerationMode, "Name");
         _islandSizeEw.Value = FindNearestIndex(_islandSizes, _worldSettings.IslandSize.X);
         _islandSizeEw.Text = _worldSettings.IslandSize.X.ToString(CultureInfo.InvariantCulture);
         _islandSizeNs.Value = FindNearestIndex(_islandSizes, _worldSettings.IslandSize.Y);
@@ -439,9 +438,9 @@ public class WorldOptionsScreen : Screen
         _humidityOffsetSlider.Text = FormatOffset(_worldSettings.HumidityOffset);
         _biomeSizeSlider.Value = FindNearestIndex(_biomeSizes, _worldSettings.BiomeSize);
         _biomeSizeSlider.Text = _worldSettings.BiomeSize + "x";
-        _environmentBehaviorButton.Text = LanguageControl.Get("EnvironmentBehaviorMode",
+        _environmentBehaviorButton.Text = LanguageManager.Get("EnvironmentBehaviorMode",
             _worldSettings.EnvironmentBehaviorMode.ToString());
-        _timeOfDayButton.Text = LanguageControl.Get("TimeOfDayMode", _worldSettings.TimeOfDayMode.ToString());
+        _timeOfDayButton.Text = LanguageManager.Get("TimeOfDayMode", _worldSettings.TimeOfDayMode.ToString());
         _areSeasonsChangingCheckBox.IsChecked = _worldSettings.AreSeasonsChanging;
         _yearDaysSlider.Value = FindNearestIndex(_yearDays, _worldSettings.YearDays);
         _yearDaysSlider.Text = $"{_worldSettings.YearDays} days";
@@ -449,20 +448,20 @@ public class WorldOptionsScreen : Screen
         _timeOfYearSlider.Text = $"{SubsystemSeasons.GetTimeOfYearName(_worldSettings.TimeOfYear)}";
         _timeOfYearSlider.TextColor = SubsystemSeasons.GetTimeOfYearColor(_worldSettings.TimeOfYear);
         _weatherEffectsButton.Text = _worldSettings.AreWeatherEffectsEnabled
-            ? LanguageControl.Get("Usual", "enable")
-            : LanguageControl.Get("Usual", "disable");
+            ? LanguageManager.Get("Usual", "enable")
+            : LanguageManager.Get("Usual", "disable");
         _adventureRespawnButton.Text = _worldSettings.IsAdventureRespawnAllowed
-            ? LanguageControl.Get("Usual", "allowed")
-            : LanguageControl.Get("Usual", "not allowed");
+            ? LanguageManager.Get("Usual", "allowed")
+            : LanguageManager.Get("Usual", "not allowed");
         _adventureSurvivalMechanicsButton.Text = _worldSettings.AreAdventureSurvivalMechanicsEnabled
-            ? LanguageControl.Get("Usual", "enable")
-            : LanguageControl.Get("Usual", "disable");
+            ? LanguageManager.Get("Usual", "enable")
+            : LanguageManager.Get("Usual", "disable");
         _supernaturalCreaturesButton.Text = _worldSettings.AreSupernaturalCreaturesEnabled
-            ? LanguageControl.Get("Usual", "enable")
-            : LanguageControl.Get("Usual", "disable");
+            ? LanguageManager.Get("Usual", "enable")
+            : LanguageManager.Get("Usual", "disable");
         _friendlyFireButton.Text = _worldSettings.IsFriendlyFireEnabled
-            ? LanguageControl.Get("Usual", "allowed")
-            : LanguageControl.Get("Usual", "not allowed");
+            ? LanguageManager.Get("Usual", "allowed")
+            : LanguageManager.Get("Usual", "not allowed");
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);

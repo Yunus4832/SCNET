@@ -124,7 +124,7 @@ public sealed class FurniturePackageHandler : PackageHandlerBase<FurniturePackag
 
                 break;
             case FurniturePackage.EventType.NewFurnitureSet:
-                furnitureInventoryPanel.NewFurnitueSetLogic(package.AddXml, package.FromName);
+                furnitureInventoryPanel.NewFurnitureSetLogic(package.AddXml, package.FromName);
                 if (isServer)
                 {
                     package.Except = package.From;

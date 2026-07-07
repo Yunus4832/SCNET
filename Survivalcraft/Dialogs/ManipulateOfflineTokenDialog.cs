@@ -26,7 +26,7 @@ public class ManipulateOfflineTokenDialog : Dialog
         _pasteButtonWidget = Children.Find<ButtonWidget>("ManipulateOfflineTokenDialog.Paste")!;
         _saveButtonWidget = Children.Find<ButtonWidget>("ManipulateOfflineTokenDialog.Save")!;
         _cancelButtonWidget = Children.Find<ButtonWidget>("ManipulateOfflineTokenDialog.Cancel")!;
-        _tokenTextBoxWidget.Text = SettingsManager.OnlineAccessToken;
+        _tokenTextBoxWidget.Text = SettingsManager.Current.OnlineAccessToken;
     }
 
     public override void Update()
@@ -53,16 +53,8 @@ public class ManipulateOfflineTokenDialog : Dialog
 
         if (_saveButtonWidget.IsClicked)
         {
-            try
-            {
-                // 调用 SetOnlineAccessToken 方法设置新的 OnlineAccessToken
-                SettingsManager.SetOnlineAccessToken(text);
-                DialogsManager.HideDialog(this);
-            }
-            catch (InvalidOperationException ex)
-            {
-                DialogsManager.Alert("Error", ex.Message); // 显示错误提示
-            }
+            SettingsManager.SetOnlineAccessToken(text);
+            DialogsManager.HideDialog(this);
         }
 
         if (Input.Cancel || _cancelButtonWidget.IsClicked)

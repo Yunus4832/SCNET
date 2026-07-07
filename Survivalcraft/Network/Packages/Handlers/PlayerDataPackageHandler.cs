@@ -90,8 +90,8 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                         null,
                         new MessageDialog(
                             "服务器关闭提醒", package.PlayerName,
-                            LanguageControl.Yes,
-                            LanguageControl.No,
+                            LanguageManager.Yes,
+                            LanguageManager.No,
                             _ => { DialogsManager.HideAllDialogs(); }
                         )
                     );
@@ -117,7 +117,7 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                         new MessageDialog(
                             package.BugleTitle,
                             package.BugleContent,
-                            LanguageControl.Ok,
+                            LanguageManager.Ok,
                             string.Empty,
                             _ =>
                             {
@@ -148,7 +148,7 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                         new MessageDialog(
                             "连接异常",
                             "检测到玩家人数异常，请重新连接服务器",
-                            LanguageControl.Ok
+                            LanguageManager.Ok
                         )
                     );
                 }

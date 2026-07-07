@@ -39,7 +39,7 @@ public class WorldPalette
     public WorldPalette()
     {
         Colors = DefaultColors.ToArray();
-        if (LanguageControl.KeyWords[GetType().Name] is not JsonObject obj ||
+        if (LanguageManager.KeyWords[GetType().Name] is not JsonObject obj ||
             !obj.TryGetPropertyValue("Colors", out var colorsNode) ||
             colorsNode is not JsonArray colorsArray)
         {
@@ -59,7 +59,7 @@ public class WorldPalette
         var array = valuesDictionary.GetValue("Colors", new string(';', 15)).Split(';');
         if (array.Length != 16)
         {
-            throw new InvalidOperationException(LanguageControl.Get(GetType().Name, 0));
+            throw new InvalidOperationException(LanguageManager.Get(GetType().Name, 0));
         }
 
         Colors = array.Select((s, i) =>
@@ -67,10 +67,10 @@ public class WorldPalette
         var array2 = valuesDictionary.GetValue("Names", new string(';', 15)).Split(';');
         if (array2.Length != 16)
         {
-            throw new InvalidOperationException(LanguageControl.Get(GetType().Name, 1));
+            throw new InvalidOperationException(LanguageManager.Get(GetType().Name, 1));
         }
 
-        Names = array2.Select((s, i) => !string.IsNullOrEmpty(s) ? s : LanguageControl.GetWorldPalette(i)).ToArray();
+        Names = array2.Select((s, i) => !string.IsNullOrEmpty(s) ? s : LanguageManager.GetWorldPalette(i)).ToArray();
         var names = Names;
         var num = 0;
         while (true)
@@ -88,7 +88,7 @@ public class WorldPalette
             num++;
         }
 
-        throw new InvalidOperationException(LanguageControl.Get(GetType().Name, 2));
+        throw new InvalidOperationException(LanguageManager.Get(GetType().Name, 2));
     }
 
     public ValuesDictionary Save()
@@ -98,7 +98,7 @@ public class WorldPalette
             Colors.Select((c, i) =>
                 !(c == DefaultColors[i]) ? HumanReadableConverter.ConvertToString(c) : string.Empty));
         var value2 = string.Join(";",
-            Names.Select((n, i) => n != LanguageControl.Get(GetType().Name, i) ? n : string.Empty));
+            Names.Select((n, i) => n != LanguageManager.Get(GetType().Name, i) ? n : string.Empty));
         valuesDictionary.SetValue("Colors", value);
         valuesDictionary.SetValue("Names", value2);
         return valuesDictionary;

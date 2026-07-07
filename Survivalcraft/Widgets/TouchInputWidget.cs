@@ -71,7 +71,7 @@ public class TouchInputWidget : Widget
                 }
 
                 _touchMoved |= Vector2.Distance(touchLocation.Position, _touchOrigin) >
-                               SettingsManager.MinimumDragDistance * GlobalScale;
+                               SettingsManager.Current.MinimumDragDistance * GlobalScale;
                 TouchInput value = default;
                 value.InputType = !_touchMoved ? TouchInputType.Hold : TouchInputType.Move;
                 value.Duration = (float)(frameStartTime - _touchTime);
@@ -98,9 +98,9 @@ public class TouchInputWidget : Widget
             else if (touchLocation.State == TouchLocationState.Released && _touchId.HasValue &&
                      touchLocation.Id == _touchId.Value)
             {
-                if (frameStartTime - _touchTime <= SettingsManager.MinimumHoldDuration &&
+                if (frameStartTime - _touchTime <= SettingsManager.Current.MinimumHoldDuration &&
                     Vector2.Distance(touchLocation.Position, _touchOrigin) <
-                    SettingsManager.MinimumDragDistance * GlobalScale)
+                    SettingsManager.Current.MinimumDragDistance * GlobalScale)
                 {
                     TouchInput value2 = default;
                     value2.InputType = TouchInputType.Tap;

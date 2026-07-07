@@ -1,5 +1,3 @@
-using Engine.Graphics;
-
 namespace Game.Widgets;
 
 /// <summary>
@@ -7,6 +5,8 @@ namespace Game.Widgets;
 /// </summary>
 public class NetPanelWidget : CanvasWidget
 {
+    private const int _hiddenList = -1;
+
     /// <summary>
     /// 展示模式
     /// </summary>
@@ -39,17 +39,6 @@ public class NetPanelWidget : CanvasWidget
     public readonly NetGroupPanelWidget GroupPanelWidget;
 
     /// <summary>
-    /// 位图按钮组件
-    /// </summary>
-    private readonly BitmapButtonWidget _openGroupPlayerPanel;
-
-    private readonly BitmapButtonWidget _openOnlinePlayersPanel;
-
-    private readonly BitmapButtonWidget _openBlackPlayerPanel;
-
-    private readonly BitmapButtonWidget _hideOrOpenPanel;
-
-    /// <summary>
     /// 联机玩家列表组件
     /// </summary>
     public readonly NetPlayerListWidget PlayerListWidget;
@@ -69,19 +58,9 @@ public class NetPanelWidget : CanvasWidget
     private int _newShowList;
 
     /// <summary>
-    /// 图标尺寸
-    /// </summary>
-    public Vector2 IconSize = new(28, 20);
-
-    /// <summary>
     /// 最大尺寸
     /// </summary>
-    public Vector2 MaxSize = new(240, 120);
-
-    /// <summary>
-    /// 最小尺寸
-    /// </summary>
-    public Vector2 MinSize = new(28, 28);
+    public Vector2 MaxSize = new(220, 120);
 
     /// <summary>
     /// ??
@@ -100,15 +79,6 @@ public class NetPanelWidget : CanvasWidget
 
     public NetPanelWidget(GameWidget gameWidget)
     {
-        var st1 = new Subtexture(ContentManager.Get<Texture2D>("Textures/Gui/Server_Players_Btn"), Vector2.Zero,
-            Vector2.One);
-        var st2 = new Subtexture(ContentManager.Get<Texture2D>("Textures/Gui/Server_Group_Btn"), Vector2.Zero,
-            Vector2.One);
-        var st3 = new Subtexture(ContentManager.Get<Texture2D>("Textures/Gui/Server_Black_Btn"), Vector2.Zero,
-            Vector2.One);
-        var st4 = new Subtexture(ContentManager.Get<Texture2D>("Textures/Gui/Server_Hide_Btn"), Vector2.Zero,
-            Vector2.One);
-
         _gameWidget = gameWidget;
         PlayerData = gameWidget.PlayerData;
         PlayerListWidget = new NetPlayerListWidget(PlayerData, ShowType.OnlinePlayers);
@@ -116,54 +86,29 @@ public class NetPanelWidget : CanvasWidget
         BlackPlayerListWidget = new NetPlayerListWidget(PlayerData, ShowType.BlackList);
         GroupPanelWidget = new NetGroupPanelWidget(PlayerData);
 
-        _openOnlinePlayersPanel = new BitmapButtonWidget
-            { Size = IconSize, NormalSubtexture = st1, ClickedSubtexture = st1, Margin = new Vector2(2, 4) };
-        _openGroupPlayerPanel = new BitmapButtonWidget
-            { Size = IconSize, NormalSubtexture = st2, ClickedSubtexture = st2, Margin = new Vector2(2, 4) };
-        _openBlackPlayerPanel = new BitmapButtonWidget
-            { Size = IconSize, NormalSubtexture = st3, ClickedSubtexture = st3, Margin = new Vector2(2, 4) };
-        _hideOrOpenPanel = new BitmapButtonWidget
-            { Size = IconSize, NormalSubtexture = st4, ClickedSubtexture = st4, Margin = new Vector2(2, 4) };
-
         InitWidgets();
     }
 
     public void InitWidgets()
     {
         Size = MaxSize;
-        var verticalBtnPanel = new StackPanelWidget { Direction = LayoutDirection.Vertical };
-        var horizontalPagePanel = new StackPanelWidget();
-
-        #region 垂直功能按钮列表
-
-        verticalBtnPanel.AddChildren(_openOnlinePlayersPanel);
-        verticalBtnPanel.AddChildren(new RectangleWidget
-            { FillColor = Color.White, Size = new Vector2(float.PositiveInfinity, 1) });
-        verticalBtnPanel.AddChildren(_openGroupPlayerPanel);
-        if (PlayerData.ServerManager)
+        AddChildren(new BevelledRectangleWidget
         {
-            verticalBtnPanel.AddChildren(new RectangleWidget
-                { FillColor = Color.White, Size = new Vector2(float.PositiveInfinity, 1) });
-            verticalBtnPanel.AddChildren(_openBlackPlayerPanel);
-        }
-
-        verticalBtnPanel.AddChildren(new RectangleWidget
-            { FillColor = Color.White, Size = new Vector2(float.PositiveInfinity, 1) });
-        verticalBtnPanel.AddChildren(_hideOrOpenPanel);
-
-        #endregion
-
-        AddChildren(new RectangleWidget { FillColor = new Color(0, 0, 0, 75) });
-        AddChildren(horizontalPagePanel);
-        horizontalPagePanel.AddChildren(verticalBtnPanel);
-        horizontalPagePanel.AddChildren(new RectangleWidget
-            { FillColor = Color.White, Size = new Vector2(1, float.PositiveInfinity) });
-        horizontalPagePanel.AddChildren(RightControl);
+            CenterColor = new Color(0, 0, 0, 150),
+            BevelColor = new Color(160, 160, 160, 180),
+            ShadowColor = new Color(0, 0, 0, 96),
+            RoundingRadius = 8f,
+            RoundingCount = 4,
+            BevelSize = 1.5f
+        });
+        AddChildren(RightControl);
         RightControl.AddChildren(GroupPanelWidget);
         RightControl.AddChildren(PlayerListWidget);
         RightControl.AddChildren(GroupPlayerListWidget);
         RightControl.AddChildren(BlackPlayerListWidget);
-        _currentShowList = 0;
+        _currentShowList = _hiddenList;
+        _newShowList = _hiddenList;
+        IsVisible = false;
         SetupOnlinePlayerList();
     }
 
@@ -172,8 +117,30 @@ public class NetPanelWidget : CanvasWidget
     /// </summary>
     public void CycleSwitch()
     {
-        _newShowList = (_currentShowList + 1) % 3;
+        if (!IsVisible || _currentShowList == _hiddenList)
+        {
+            IsVisible = true;
+            _newShowList = (int)ShowType.OnlinePlayers;
+            RefreshView();
+            return;
+        }
+
+        var availableLists = PlayerData.ServerManager ? 3 : 2;
+        if (_currentShowList + 1 >= availableLists)
+        {
+            _currentShowList = _hiddenList;
+            _newShowList = _hiddenList;
+            IsVisible = false;
+            return;
+        }
+
+        _newShowList = _currentShowList + 1;
+        RefreshView();
     }
+
+    public ShowType? CurrentShowType => _currentShowList == _hiddenList
+        ? null
+        : (ShowType)_currentShowList;
 
     /// <summary>
     /// 创建队伍
@@ -261,10 +228,6 @@ public class NetPanelWidget : CanvasWidget
         PlayerListWidget.IsVisible = true;
         GroupPlayerListWidget.IsVisible = false;
         BlackPlayerListWidget.IsVisible = false;
-        _openOnlinePlayersPanel.SetImageColor(Color.White);
-        _openGroupPlayerPanel.SetImageColor(Color.Gray);
-        _openBlackPlayerPanel.SetImageColor(Color.Gray);
-        _hideOrOpenPanel.SetImageColor(Color.Gray);
         PlayerListWidget.RefreshList();
     }
 
@@ -274,10 +237,6 @@ public class NetPanelWidget : CanvasWidget
         PlayerListWidget.IsVisible = false;
         GroupPlayerListWidget.IsVisible = false;
         BlackPlayerListWidget.IsVisible = false;
-        _openOnlinePlayersPanel.SetImageColor(Color.Gray);
-        _openGroupPlayerPanel.SetImageColor(Color.White);
-        _openBlackPlayerPanel.SetImageColor(Color.Gray);
-        _hideOrOpenPanel.SetImageColor(Color.Gray);
     }
 
     public void SetupGroupPlayerList()
@@ -286,10 +245,6 @@ public class NetPanelWidget : CanvasWidget
         PlayerListWidget.IsVisible = false;
         GroupPlayerListWidget.IsVisible = true;
         BlackPlayerListWidget.IsVisible = false;
-        _openOnlinePlayersPanel.SetImageColor(Color.Gray);
-        _openGroupPlayerPanel.SetImageColor(Color.White);
-        _openBlackPlayerPanel.SetImageColor(Color.Gray);
-        _hideOrOpenPanel.SetImageColor(Color.Gray);
         GroupPlayerListWidget.RefreshList();
     }
 
@@ -299,52 +254,11 @@ public class NetPanelWidget : CanvasWidget
         PlayerListWidget.IsVisible = false;
         GroupPlayerListWidget.IsVisible = false;
         BlackPlayerListWidget.IsVisible = true;
-        _openOnlinePlayersPanel.SetImageColor(Color.Gray);
-        _openGroupPlayerPanel.SetImageColor(Color.Gray);
-        _openBlackPlayerPanel.SetImageColor(Color.White);
-        _hideOrOpenPanel.SetImageColor(Color.Gray);
         BlackPlayerListWidget.RefreshList();
     }
 
     public override void Update()
     {
-        if (_openOnlinePlayersPanel.IsClicked)
-        {
-            _newShowList = 0;
-        }
-
-        if (_openGroupPlayerPanel.IsClicked)
-        {
-            _newShowList = 1;
-        }
-
-        if (_openBlackPlayerPanel.IsClicked)
-        {
-            _newShowList = 2;
-        }
-
-        if (_hideOrOpenPanel.IsClicked)
-        {
-            if (RightControl.IsVisible)
-            {
-                _openBlackPlayerPanel.IsVisible = false;
-                _openGroupPlayerPanel.IsVisible = false;
-                _openOnlinePlayersPanel.IsVisible = false;
-                RightControl.IsVisible = false;
-                _hideOrOpenPanel.SetImageColor(Color.White);
-                Size = MinSize;
-            }
-            else
-            {
-                _openBlackPlayerPanel.IsVisible = true;
-                _openGroupPlayerPanel.IsVisible = true;
-                _openOnlinePlayersPanel.IsVisible = true;
-                RightControl.IsVisible = true;
-                _hideOrOpenPanel.SetImageColor(Color.Gray);
-                Size = MaxSize;
-            }
-        }
-
         if (_currentShowList != _newShowList)
         {
             RefreshView();

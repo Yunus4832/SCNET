@@ -244,15 +244,6 @@ public class Widget : IDisposable
             throw new Exception($"Type \"{node.Name.LocalName}\" is not a Widget.");
         }
 
-        ModsManager.HookAction(
-            "OnWidgetConstruct",
-            loader =>
-            {
-                loader.OnWidgetConstruct(ref widget);
-                return false;
-            }
-        );
-
         parentWidget?.Children.Add(widget);
         widget.LoadContents(eventsTarget, node);
         return widget;
@@ -535,7 +526,7 @@ public class Widget : IDisposable
         var attributeValue2 = XmlUtils.GetAttributeValue<string>(node, "_ExcludePlatforms", false);
         if (attributeValue != null && attributeValue2 == null)
         {
-            if (attributeValue.Split(' ').Contains(VersionsManager.Platform.ToString()))
+            if (attributeValue.Split(' ').Contains(PlatformManager.Platform.ToString()))
             {
                 return true;
             }
@@ -547,7 +538,7 @@ public class Widget : IDisposable
                 return true;
             }
 
-            if (!attributeValue2.Split(' ').Contains(VersionsManager.Platform.ToString()))
+            if (!attributeValue2.Split(' ').Contains(PlatformManager.Platform.ToString()))
             {
                 return true;
             }

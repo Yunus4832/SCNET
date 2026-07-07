@@ -128,7 +128,7 @@ public class VitalStatsWidget : CanvasWidget
                 new MessageDialog(
                     topic.Title,
                     topic.Text,
-                    LanguageControl.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
                     _ => { }
@@ -143,7 +143,7 @@ public class VitalStatsWidget : CanvasWidget
                 new MessageDialog(
                     topic2.Title,
                     topic2.Text,
-                    LanguageControl.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
                     _ => { }
@@ -158,7 +158,7 @@ public class VitalStatsWidget : CanvasWidget
                 new MessageDialog(
                     topic3.Title,
                     topic3.Text,
-                    LanguageControl.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
                     _ => { }
@@ -173,7 +173,7 @@ public class VitalStatsWidget : CanvasWidget
                 new MessageDialog(
                     topic4.Title,
                     topic4.Text,
-                    LanguageControl.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f), _ => { }
                 )
@@ -187,7 +187,7 @@ public class VitalStatsWidget : CanvasWidget
                 new MessageDialog(
                     topic5.Title,
                     topic5.Text,
-                    LanguageControl.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
                     _ => { }
@@ -202,7 +202,7 @@ public class VitalStatsWidget : CanvasWidget
                 new MessageDialog(
                     topic6.Title,
                     topic6.Text,
-                    LanguageControl.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
                     _ => { }
@@ -215,8 +215,8 @@ public class VitalStatsWidget : CanvasWidget
             var factors = new List<ComponentLevel.Factor>();
             var total = _componentPlayer.ComponentLevel.CalculateStrengthFactor(factors);
             DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
-                new LevelFactorDialog(LanguageControl.GetContentWidgets(_typeName, "Strength"),
-                    LanguageControl.GetContentWidgets(_typeName, 16), factors, total));
+                new LevelFactorDialog(LanguageManager.GetContentWidgets(_typeName, "Strength"),
+                    LanguageManager.GetContentWidgets(_typeName, 16), factors, total));
         }
 
         if (_resilienceLink.IsClicked)
@@ -224,8 +224,8 @@ public class VitalStatsWidget : CanvasWidget
             var factors2 = new List<ComponentLevel.Factor>();
             var total2 = _componentPlayer.ComponentLevel.CalculateResilienceFactor(factors2);
             DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
-                new LevelFactorDialog(LanguageControl.GetContentWidgets(_typeName, "Resilience"),
-                    LanguageControl.GetContentWidgets(_typeName, 17), factors2, total2));
+                new LevelFactorDialog(LanguageManager.GetContentWidgets(_typeName, "Resilience"),
+                    LanguageManager.GetContentWidgets(_typeName, 17), factors2, total2));
         }
 
         if (_speedLink.IsClicked)
@@ -233,8 +233,8 @@ public class VitalStatsWidget : CanvasWidget
             var factors3 = new List<ComponentLevel.Factor>();
             var total3 = _componentPlayer.ComponentLevel.CalculateSpeedFactor(factors3);
             DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
-                new LevelFactorDialog(LanguageControl.GetContentWidgets(_typeName, "Speed"),
-                    LanguageControl.GetContentWidgets(_typeName, 18), factors3, total3));
+                new LevelFactorDialog(LanguageManager.GetContentWidgets(_typeName, "Speed"),
+                    LanguageManager.GetContentWidgets(_typeName, 18), factors3, total3));
         }
 
         if (_hungerLink.IsClicked)
@@ -242,8 +242,8 @@ public class VitalStatsWidget : CanvasWidget
             var factors4 = new List<ComponentLevel.Factor>();
             var total4 = _componentPlayer.ComponentLevel.CalculateHungerFactor(factors4);
             DialogsManager.ShowDialog(_componentPlayer.GuiWidget,
-                new LevelFactorDialog(LanguageControl.GetContentWidgets(_typeName, "Hunger"),
-                    LanguageControl.GetContentWidgets(_typeName, 19), factors4, total4));
+                new LevelFactorDialog(LanguageManager.GetContentWidgets(_typeName, "Hunger"),
+                    LanguageManager.GetContentWidgets(_typeName, 19), factors4, total4));
         }
 
         if (_experienceLink.IsClicked)
@@ -253,7 +253,7 @@ public class VitalStatsWidget : CanvasWidget
                 new MessageDialog(
                     topic7.Title,
                     topic7.Text,
-                    LanguageControl.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
                     _ => { }
@@ -268,7 +268,7 @@ public class VitalStatsWidget : CanvasWidget
                 new MessageDialog(
                     topic8.Title,
                     topic8.Text,
-                    LanguageControl.Get("Usual", "ok"),
+                    LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
                     _ => { }));
@@ -279,13 +279,13 @@ public class VitalStatsWidget : CanvasWidget
             if (CommonLib.WorkType == WorkType.Client)
             {
                 CommonLib.Net.QueuePackage(new ComponentHealthPackage(_componentPlayer.ComponentHealth, null, 0.1f,
-                    LanguageControl.GetContentWidgets(_typeName, "Choked"), true, true,
+                    LanguageManager.GetContentWidgets(_typeName, "Choked"), true, true,
                     ComponentHealthPackage.RequestInjureType.Choke));
             }
             else
             {
                 _componentPlayer.ComponentHealth.Injure(0.1f, null, true,
-                    LanguageControl.GetContentWidgets(_typeName, "Choked"));
+                    LanguageManager.GetContentWidgets(_typeName, "Choked"));
             }
         }
     }

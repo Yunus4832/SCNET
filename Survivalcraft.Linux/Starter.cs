@@ -1,10 +1,12 @@
 ﻿using System.Diagnostics;
+using System.Net.NetworkInformation;
 using System.Reflection;
 
 using Engine.Core;
 using Engine.Windowing;
 
 using Game;
+using Game.ContentProviders;
 using Game.Managers;
 
 namespace Survivalcraft.Linux;
@@ -16,20 +18,26 @@ public class Starter
 
     public static void Main(string[] args)
     {
+        PlatformManager.RegisterPlatform(Platform.Desktop);
+        PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
+        PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
+        PlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
+        PlatformManager.RegisterExternalContentProviderFactory(() => new DiskExternalContentProvider());
         var runningSetting = RunningSettingManager.Load(args);
         InstallDesktopEntries();
-
-        var exitAction = GameExitAction.Exit;
+        GameExitAction exitAction;
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
             RunHeadlessServer(runningSetting);
+            exitAction = GameExitManager.ExitAction;
         }
         else
         {
             RunMode.Value = RunModeType.Gui;
             // Wayland is supported; window icon settings may not take effect there.
             Window.IconStream = LoadWindowIcon();
-            exitAction = GameEntry.Main(runningSetting);
+            PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
+            exitAction = GameEntry.EntryPoint(runningSetting);
         }
 
         var nextRunningSetting = RunningSettingManager.Load([]);
@@ -96,6 +104,79 @@ public class Starter
     {
         RunMode.Value = RunModeType.HeadlessServer;
         HeadlessEntry.Main(runningSetting);
+    }
+
+    private static string ReadClipboardText()
+    {
+        if (TryReadProcessOutput("wl-paste", ["--no-newline"], out var text) ||
+            TryReadProcessOutput("xclip", ["-selection", "clipboard", "-out"], out text) ||
+            TryReadProcessOutput("xsel", ["--clipboard", "--output"], out text))
+        {
+            return text;
+        }
+
+        Log.Warning("No supported Linux clipboard command found.");
+        return string.Empty;
+    }
+
+    private static void WriteClipboardText(string text)
+    {
+        if (TryWriteProcessInput("wl-copy", [], text) ||
+            TryWriteProcessInput("xclip", ["-selection", "clipboard"], text) ||
+            TryWriteProcessInput("xsel", ["--clipboard", "--input"], text))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException("No supported Linux clipboard command found.");
+    }
+
+    private static bool TryReadProcessOutput(string fileName, string[] arguments, out string output)
+    {
+        output = string.Empty;
+        try
+        {
+            using var process = StartClipboardProcess(fileName, arguments, redirectInput: false);
+            output = process.StandardOutput.ReadToEnd();
+            return process.WaitForExit(1000) && process.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryWriteProcessInput(string fileName, string[] arguments, string text)
+    {
+        try
+        {
+            using var process = StartClipboardProcess(fileName, arguments, redirectInput: true);
+            process.StandardInput.Write(text);
+            process.StandardInput.Close();
+            return process.WaitForExit(1000) && process.ExitCode == 0;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static Process StartClipboardProcess(string fileName, string[] arguments, bool redirectInput)
+    {
+        var startInfo = new ProcessStartInfo(fileName)
+        {
+            RedirectStandardInput = redirectInput,
+            RedirectStandardOutput = !redirectInput,
+            RedirectStandardError = true,
+            UseShellExecute = false
+        };
+
+        foreach (var argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
+
+        return Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start {fileName}.");
     }
 
     private static void WriteDesktopEntry(
@@ -225,6 +306,21 @@ public class Starter
         {
             return false;
         }
+    }
+
+    private static void OpenUrl(string url)
+    {
+        if (TryRunDesktopCommand("xdg-open", [url]))
+        {
+            return;
+        }
+
+        if (TryRunDesktopCommand("gio", ["open", url]))
+        {
+            return;
+        }
+
+        throw new InvalidOperationException("No supported desktop URL opener was found.");
     }
 
     private static void NotifyManualRestartRequired()

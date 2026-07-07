@@ -114,7 +114,7 @@ public class ComponentIntro : Component, IUpdateable
             {
                 _componentPlayer.ComponentGui.DisplayLargeMessage(
                     string.Empty,
-                    LanguageControl.Get(_typeName, 1),
+                    LanguageManager.Get(_typeName, 1),
                     5f,
                     0f
                 );
@@ -127,8 +127,8 @@ public class ComponentIntro : Component, IUpdateable
                 _componentPlayer.ComponentGui.DisplayLargeMessage(
                     string.Empty,
                     isPlayerMounted
-                        ? LanguageControl.Get(_typeName, 2)
-                        : LanguageControl.Get(_typeName, 3),
+                        ? LanguageManager.Get(_typeName, 2)
+                        : LanguageManager.Get(_typeName, 3),
                     5f,
                     0f
                 );
@@ -140,7 +140,7 @@ public class ComponentIntro : Component, IUpdateable
             {
                 _componentPlayer.ComponentGui.DisplayLargeMessage(
                     string.Empty,
-                    LanguageControl.Get(_typeName, 4),
+                    LanguageManager.Get(_typeName, 4),
                     5f,
                     0f
                 );

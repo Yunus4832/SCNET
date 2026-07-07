@@ -83,7 +83,7 @@ public class ComponentSleep : Component, IUpdateable
                     _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 1.0,
                         delegate
                         {
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 6),
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 6),
                                 Color.White, true, true);
                         });
                 }
@@ -102,20 +102,20 @@ public class ComponentSleep : Component, IUpdateable
                         _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 2.0,
                             delegate
                             {
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(_typeName, 7),
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 7),
                                     Color.White, true, false);
                             });
                     }
 
                     _messageFactor = MathUtils.Min(_messageFactor + 0.5f * Time.FrameDuration, 1f);
-                    _componentPlayer.ComponentScreenOverlays.Message = LanguageControl.Get(_typeName, 8);
+                    _componentPlayer.ComponentScreenOverlays.Message = LanguageManager.Get(_typeName, 8);
                     _componentPlayer.ComponentScreenOverlays.MessageFactor = _messageFactor;
                 }
 
                 if (!_allowManualWakeUp && num > 5f)
                 {
                     _messageFactor = MathUtils.Min(_messageFactor + 1f * Time.FrameDuration, 1f);
-                    _componentPlayer.ComponentScreenOverlays.Message = LanguageControl.Get(_typeName, 9);
+                    _componentPlayer.ComponentScreenOverlays.Message = LanguageManager.Get(_typeName, 9);
                     _componentPlayer.ComponentScreenOverlays.MessageFactor = _messageFactor;
                 }
             }
@@ -137,7 +137,7 @@ public class ComponentSleep : Component, IUpdateable
             return;
         }
 
-        _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageControl.Get(_typeName, 10);
+        _componentPlayer.ComponentScreenOverlays.FloatingMessage = LanguageManager.Get(_typeName, 10);
         _componentPlayer.ComponentScreenOverlays.FloatingMessageFactor =
             MathUtils.Saturate(10f * (_sleepFactor - 0.9f));
     }
@@ -150,25 +150,25 @@ public class ComponentSleep : Component, IUpdateable
 
         if (block is null || _componentPlayer.ComponentBody.ImmersionDepth > 0f)
         {
-            reason = LanguageControl.Get(_typeName, 1);
+            reason = LanguageManager.Get(_typeName, 1);
             return false;
         }
 
         if (block.SleepSuitability == 0f)
         {
-            reason = LanguageControl.Get(_typeName, 2);
+            reason = LanguageManager.Get(_typeName, 2);
             return false;
         }
 
         if (_componentPlayer.ComponentVitalStats.Sleep > 0.99f)
         {
-            reason = LanguageControl.Get(_typeName, 3);
+            reason = LanguageManager.Get(_typeName, 3);
             return false;
         }
 
         if (_componentPlayer.ComponentVitalStats.Wetness > 0.95f)
         {
-            reason = LanguageControl.Get(_typeName, 4);
+            reason = LanguageManager.Get(_typeName, 4);
             return false;
         }
 
@@ -184,7 +184,7 @@ public class ComponentSleep : Component, IUpdateable
                 continue;
             }
 
-            reason = LanguageControl.Get(_typeName, 5);
+            reason = LanguageManager.Get(_typeName, 5);
             return false;
         }
 

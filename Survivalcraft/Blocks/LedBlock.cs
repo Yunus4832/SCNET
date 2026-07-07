@@ -81,7 +81,7 @@ public class LedBlock : MountedElectricElementBlock
                 RemainsCount = 1,
                 RemainsValue = Terrain.MakeBlockValue(90),
                 RequiredHeatLevel = 0f,
-                Description = LanguageControl.Get(GetType().Name, 1)
+                Description = LanguageManager.Get(GetType().Name, 1)
             };
             craftingRecipe.Ingredients[1] = "glass";
             craftingRecipe.Ingredients[4] = "paintbucket:" + color.ToString(CultureInfo.InvariantCulture);
@@ -103,8 +103,8 @@ public class LedBlock : MountedElectricElementBlock
     {
         var data = Terrain.ExtractData(value);
         var color = GetColor(data);
-        return LanguageControl.Get("LedBlock", color) +
-               LanguageControl.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName");
+        return LanguageManager.Get("LedBlock", color) +
+               LanguageManager.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName");
     }
 
     public override IEnumerable<int> GetCreativeValues()

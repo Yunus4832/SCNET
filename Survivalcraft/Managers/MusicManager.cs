@@ -55,7 +55,7 @@ public static class MusicManager
         }
     }
 
-    public static float Volume => SettingsManager.MusicVolume * 0.6f;
+    public static float Volume => SettingsManager.Current.MusicVolume * 0.6f;
 
     public static void Update()
     {

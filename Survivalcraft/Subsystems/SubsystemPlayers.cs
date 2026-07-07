@@ -168,7 +168,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
             }
         }
 
-        if (SettingsManager.AutoGarbageCollect)
+        if (SettingsManager.Current.AutoGarbageCollect)
         {
             GC.Collect();
         }
@@ -199,7 +199,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 
         PlayerRemoved?.Invoke(playerData);
         playerData.Dispose();
-        if (SettingsManager.AutoGarbageCollect)
+        if (SettingsManager.Current.AutoGarbageCollect)
         {
             GC.Collect();
         }

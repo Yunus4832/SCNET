@@ -10,7 +10,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
 
     private const string _appSecret = "3i5u3j3141php7u";
 
-    private const string _redirectUri = "com.candyrufusgames.survivalcraft2://redirect";
+    private const string _redirectUri = PlatformManager.DropboxRedirectScheme + "://redirect";
 
     private LoginProcessData? _loginProcessData;
 
@@ -30,7 +30,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
 
     public bool RequiresLogin => true;
 
-    public bool IsLoggedIn => !string.IsNullOrEmpty(SettingsManager.DropboxAccessToken);
+    public bool IsLoggedIn => !string.IsNullOrEmpty(SettingsManager.Current.DropboxAccessToken);
 
     public void Dispose()
     {
@@ -80,7 +80,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
 
     public void Logout()
     {
-        SettingsManager.DropboxAccessToken = string.Empty;
+        SettingsManager.Current.DropboxAccessToken = string.Empty;
     }
 
     public void List(
@@ -95,7 +95,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
             VerifyLoggedIn();
             var dictionary = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + SettingsManager.DropboxAccessToken },
+                { "Authorization", "Bearer " + SettingsManager.Current.DropboxAccessToken },
                 { "Content-Type", "application/json" }
             };
             var jsonObject = new JsonObject
@@ -149,7 +149,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
             };
             var dictionary = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + SettingsManager.DropboxAccessToken },
+                { "Authorization", "Bearer " + SettingsManager.Current.DropboxAccessToken },
                 { "Dropbox-API-Arg", jsonObject.ToString() }
             };
             WebManager.Get(
@@ -182,7 +182,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
             };
             var dictionary = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + SettingsManager.DropboxAccessToken },
+                { "Authorization", "Bearer " + SettingsManager.Current.DropboxAccessToken },
                 { "Content-Type", "application/octet-stream" },
                 { "Dropbox-API-Arg", jsonObject.ToString() }
             };
@@ -209,7 +209,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
             VerifyLoggedIn();
             var dictionary = new Dictionary<string, string>
             {
-                { "Authorization", "Bearer " + SettingsManager.DropboxAccessToken },
+                { "Authorization", "Bearer " + SettingsManager.Current.DropboxAccessToken },
                 { "Content-Type", "application/json" }
             };
             var jsonObject = new JsonObject
@@ -254,7 +254,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
             {
                 { "response_type", "token" },
                 { "client_id", "1unnzwkb8igx70k" },
-                { "redirect_uri", "com.candyrufusgames.survivalcraft2://redirect" }
+                { "redirect_uri", _redirectUri }
             };
             WebBrowserManager.LaunchBrowser("https://www.dropbox.com/oauth2/authorize?" +
                                             WebManager.UrlParametersToString(dictionary));
@@ -308,9 +308,10 @@ public class DropboxExternalContentProvider : IExternalContentProvider
                         loginProcessData.Progress,
                         delegate(byte[] result)
                         {
-                            SettingsManager.DropboxAccessToken =
-                                ((IDictionary<string, object>?)WebManager.JsonFromBytes(result))?["access_token"]
-                                .ToString() ?? throw new InvalidOperationException("access_token is null");
+                            var jsonObject = (JsonObject?)WebManager.JsonFromBytes(result);
+                            SettingsManager.Current.DropboxAccessToken =
+                                jsonObject?["access_token"]?.ToString()
+                                ?? throw new InvalidOperationException("access_token is null");
                             loginProcessData.Succeed(this);
                         },
                         delegate(Exception error) { loginProcessData.Fail(this, error); }
@@ -356,7 +357,7 @@ public class DropboxExternalContentProvider : IExternalContentProvider
                 throw new Exception("Could not retrieve Dropbox access token.");
             }
 
-            SettingsManager.DropboxAccessToken = accessToken;
+            SettingsManager.Current.DropboxAccessToken = accessToken;
             loginProcessData.Succeed(this);
             uri.IsHandle = true;
         }

@@ -16,6 +16,8 @@ public class ContentScreen : Screen
 
     private readonly ButtonWidget _manageButton;
 
+    private readonly ButtonWidget _modsButton;
+
     public ContentScreen()
     {
         var node = ContentManager.Get<XElement>("Screens/ContentScreen");
@@ -23,6 +25,7 @@ public class ContentScreen : Screen
         _externalContentButton = Children.Find<ButtonWidget>("External")!;
         _communityContentButton = Children.Find<ButtonWidget>("Community")!;
         _linkButton = Children.Find<ButtonWidget>("Link")!;
+        _modsButton = Children.Find<ButtonWidget>("Mods")!;
         _manageButton = Children.Find<BevelledButtonWidget>("Manage")!;
     }
 
@@ -38,16 +41,17 @@ public class ContentScreen : Screen
 
     public void OpenManageSelectDialog()
     {
+        if (!_isAdmin)
+        {
+            ScreensManager.SwitchScreen("ManageContent");
+            return;
+        }
+
         var list = new List<string>
         {
-            LanguageControl.Get(_typeName, 1),
-            LanguageControl.Get(_typeName, 2)
+            LanguageManager.Get(_typeName, 2),
+            LanguageManager.Get(_typeName, 14)
         };
-
-        if (_isAdmin)
-        {
-            list.Add("用户管理");
-        }
 
         DialogsManager.ShowDialog(null,
             new ListSelectionDialog(
@@ -58,11 +62,7 @@ public class ContentScreen : Screen
                 delegate(object item)
                 {
                     var selectionResult = (string)item;
-                    if (selectionResult == LanguageControl.Get(_typeName, 1))
-                    {
-                        ScreensManager.SwitchScreen("ModsManageContent");
-                    }
-                    else if (selectionResult == LanguageControl.Get(_typeName, 2))
+                    if (selectionResult == LanguageManager.Get(_typeName, 2))
                     {
                         ScreensManager.SwitchScreen("ManageContent");
                     }
@@ -77,7 +77,7 @@ public class ContentScreen : Screen
 
     public override void Update()
     {
-        _communityContentButton.IsEnabled = SettingsManager.CommunityContentMode != CommunityContentMode.Disabled;
+        _communityContentButton.IsEnabled = SettingsManager.Current.CommunityContentMode != CommunityContentMode.Disabled;
         if (_externalContentButton.IsClicked)
         {
             ScreensManager.SwitchScreen("ExternalContent");
@@ -91,6 +91,11 @@ public class ContentScreen : Screen
         if (_linkButton.IsClicked)
         {
             DialogsManager.ShowDialog(null, new DownloadContentFromLinkDialog());
+        }
+
+        if (_modsButton.IsClicked)
+        {
+            ScreensManager.SwitchScreen("ModManagement");
         }
 
         if (_manageButton.IsClicked)

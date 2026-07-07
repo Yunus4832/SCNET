@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "SCNET",
+  "classifications": ["Survivalcraft", "Mod"],
+  "identity": "SCNET.Survivalcraft.Mod",
+  "name": "Survivalcraft Mod",
+  "shortName": "scpakmod",
+  "sourceName": "Survivalcraft.ModTemplate",
+  "preferNameDirectory": true,
+  "symbols": {
+    "modId": {
+      "type": "parameter",
+      "datatype": "string",
+      "defaultValue": "example.mod",
+      "replaces": "example.mod"
+    }
+  }
+}

@@ -65,12 +65,6 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
                 componentChaseBehavior.Attack(target, maxRange, maxChaseTime, isPersistent);
             }
         }
-
-        ModsManager.HookAction("CallNearbyCreaturesHelp", modLoader =>
-        {
-            modLoader.CallNearbyCreaturesHelp(this, target, maxRange, maxChaseTime, isPersistent);
-            return false;
-        });
     }
 
     public Vector3? FindHerdCenter()

@@ -37,7 +37,7 @@ public class HelpScreen : Screen
                 ShowTopic(helpTopic2);
             }
         };
-        if (LanguageControl.KeyWords["Help"] is not JsonObject kvs)
+        if (LanguageManager.KeyWords["Help"] is not JsonObject kvs)
         {
             return;
         }
@@ -53,7 +53,7 @@ public class HelpScreen : Screen
             {
                 var disabledPlatforms = disabledPlatformsNode?.ToString() ?? string.Empty;
                 if (disabledPlatforms.Split([","], StringSplitOptions.None)
-                        .FirstOrDefault(s => string.Equals(s.Trim(), VersionsManager.Platform.ToString(),
+                        .FirstOrDefault(s => string.Equals(s.Trim(), PlatformManager.Platform.ToString(),
                             StringComparison.CurrentCultureIgnoreCase)) == null)
                 {
                     continue;
@@ -77,6 +77,12 @@ public class HelpScreen : Screen
             };
             if (!string.IsNullOrEmpty(helpTopic.Name))
             {
+                if (_topics.ContainsKey(helpTopic.Name))
+                {
+                    Log.Error($"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Title}\" was skipped.");
+                    continue;
+                }
+
                 _topics.Add(helpTopic.Name, helpTopic);
             }
 

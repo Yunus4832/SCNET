@@ -40,9 +40,9 @@ public class WorldSettings
 
     public ushort MaxOnlinePlayerCount = 20;
 
-    public string Name = string.Empty;
+    public ModProfileResolutionStrategy ModProfileResolutionStrategy = ModProfileResolutionStrategy.GlobalPlusWorld;
 
-    public string OriginalSerializationVersion = string.Empty;
+    public string Name = string.Empty;
 
     public WorldPalette Palette = new();
 
@@ -80,14 +80,9 @@ public class WorldSettings
 
     public void ResetOptionsForNonCreativeMode()
     {
-        if (TerrainGenerationMode == TerrainGenerationMode.FlatContinent)
+        if (TerrainGenerationModes.IsFlat(TerrainGenerationMode))
         {
-            TerrainGenerationMode = TerrainGenerationMode.Continent;
-        }
-
-        if (TerrainGenerationMode == TerrainGenerationMode.FlatIsland)
-        {
-            TerrainGenerationMode = TerrainGenerationMode.Island;
+            TerrainGenerationMode = TerrainGenerationModes.ToNonFlatMode(TerrainGenerationMode);
         }
 
         EnvironmentBehaviorMode = EnvironmentBehaviorMode.Living;
@@ -102,14 +97,9 @@ public class WorldSettings
 
     public void ResetOptionsForNonCreativeMode(WorldSettings? originalWorldSettings)
     {
-        if (TerrainGenerationMode == TerrainGenerationMode.FlatContinent)
+        if (TerrainGenerationModes.IsFlat(TerrainGenerationMode))
         {
-            TerrainGenerationMode = TerrainGenerationMode.Continent;
-        }
-
-        if (TerrainGenerationMode == TerrainGenerationMode.FlatIsland)
-        {
-            TerrainGenerationMode = TerrainGenerationMode.Island;
+            TerrainGenerationMode = TerrainGenerationModes.ToNonFlatMode(TerrainGenerationMode);
         }
 
         EnvironmentBehaviorMode = EnvironmentBehaviorMode.Living;
@@ -133,7 +123,6 @@ public class WorldSettings
     public void Load(ValuesDictionary valuesDictionary)
     {
         Name = valuesDictionary.GetValue<string>("WorldName");
-        OriginalSerializationVersion = valuesDictionary.GetValue("OriginalSerializationVersion", string.Empty);
         Seed = valuesDictionary.GetValue("WorldSeedString", string.Empty);
         GameMode = valuesDictionary.GetValue("GameMode", GameMode.Challenging);
         EnvironmentBehaviorMode = valuesDictionary.GetValue("EnvironmentBehaviorMode", EnvironmentBehaviorMode.Living);
@@ -165,6 +154,10 @@ public class WorldSettings
         RunServer = valuesDictionary.GetValue("RunServer", false);
         IsNeedCommunityLogin = valuesDictionary.GetValue("IsNeedCommunityLogin", true);
         MaxOnlinePlayerCount = valuesDictionary.GetValue("MaxOnlinePlayerCount", MaxOnlinePlayerCount);
+        ModProfileResolutionStrategy = valuesDictionary.GetValue(
+            nameof(ModProfileResolutionStrategy),
+            ModProfileResolutionStrategy.GlobalPlusWorld
+        );
         BlocksTextureName = valuesDictionary.GetValue("BlockTextureName", string.Empty);
         DisableBlocks = valuesDictionary.GetValue("DisableBlocks", DisableBlocks);
         Palette = new WorldPalette(valuesDictionary.GetValue("Palette", new ValuesDictionary()));
@@ -199,7 +192,6 @@ public class WorldSettings
     public void Save(ValuesDictionary valuesDictionary, bool liveModifiableParametersOnly)
     {
         valuesDictionary.SetValue("WorldName", Name);
-        valuesDictionary.SetValue("OriginalSerializationVersion", OriginalSerializationVersion);
         valuesDictionary.SetValue("GameMode", GameMode);
         valuesDictionary.SetValue("EnvironmentBehaviorMode", EnvironmentBehaviorMode);
         valuesDictionary.SetValue("TimeOfDayMode", TimeOfDayMode);
@@ -217,6 +209,7 @@ public class WorldSettings
         valuesDictionary.SetValue("RunServer", RunServer);
         valuesDictionary.SetValue("KeywordBlocking", XmlConvert.EncodeName(KeywordBlocking));
         valuesDictionary.SetValue("IsNeedCommunityLogin", IsNeedCommunityLogin);
+        valuesDictionary.SetValue(nameof(ModProfileResolutionStrategy), ModProfileResolutionStrategy);
         if (!liveModifiableParametersOnly)
         {
             valuesDictionary.SetValue("WorldSeedString", Seed);

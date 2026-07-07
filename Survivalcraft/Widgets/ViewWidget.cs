@@ -132,8 +132,8 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
 
     public void SetupScalingRenderTarget()
     {
-        var num = SettingsManager.ResolutionMode == ResolutionMode.Low ? 0.5f :
-            SettingsManager.ResolutionMode != ResolutionMode.Medium ? 1f : 0.75f;
+        var num = SettingsManager.Current.ResolutionMode == ResolutionMode.Low ? 0.5f :
+            SettingsManager.Current.ResolutionMode != ResolutionMode.Medium ? 1f : 0.75f;
         var num2 = GlobalTransform.Right.Length();
         var num3 = GlobalTransform.Up.Length();
         var vector = new Vector2(ActualSize.X * num2, ActualSize.Y * num3);
@@ -189,10 +189,5 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         }
 
         ApplyScalingRenderTarget(dc);
-        ModsManager.HookAction("DrawToScreen", loader =>
-        {
-            loader.DrawToScreen(this, dc);
-            return false;
-        });
     }
 }

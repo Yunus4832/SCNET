@@ -79,9 +79,9 @@ public static class CommunityContentManager
             { "Type", typeFilter },
             { "Moderation", moderationFilter },
             { "SortOrder", sortOrder },
-            { "Platform", VersionsManager.Platform.ToString() },
+            { "Platform", PlatformManager.Platform.ToString() },
             { "Version", VersionsManager.Version },
-            { "Apiv", ModsManager.ApiV.ToString() },
+            { "Apiv", ModPlatformInfo.ApiV.ToString() },
             { "key", keySearch }
         };
         WebManager.Post(
@@ -267,7 +267,7 @@ public static class CommunityContentManager
                                 },
                                 {
                                     "Platform",
-                                    VersionsManager.Platform.ToString()
+                                    PlatformManager.Platform.ToString()
                                 },
                                 {
                                     "Version",
@@ -303,7 +303,7 @@ public static class CommunityContentManager
             { "Action", "delete" },
             { "UserId", userId },
             { "Url", address },
-            { "Platform", VersionsManager.Platform.ToString() },
+            { "Platform", PlatformManager.Platform.ToString() },
             { "Version", VersionsManager.Version }
         };
         WebManager.Post(
@@ -461,7 +461,7 @@ public static class CommunityContentManager
             dictionary.Add("Size", size.ToString(CultureInfo.InvariantCulture));
         }
 
-        dictionary.Add("Platform", VersionsManager.Platform.ToString());
+        dictionary.Add("Platform", PlatformManager.Platform.ToString());
         dictionary.Add("Version", VersionsManager.Version);
         WebManager.Post(
             _scResDirAddress,
@@ -507,12 +507,12 @@ public static class CommunityContentManager
     {
         try
         {
-            if (!Storage.FileExists(ModsManager.CommunityContentCachePath))
+            if (!Storage.FileExists(GamePaths.CommunityContentCache))
             {
                 return;
             }
 
-            using var stream = Storage.OpenFile(ModsManager.CommunityContentCachePath, OpenFileMode.Read);
+            using var stream = Storage.OpenFile(GamePaths.CommunityContentCache, OpenFileMode.Read);
             var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
             foreach (var item in xElement.Element("Feedback")?.Elements() ?? [])
             {
@@ -557,7 +557,7 @@ public static class CommunityContentManager
                 xElement4.Add(xElement5);
             }
 
-            using var stream = Storage.OpenFile(ModsManager.CommunityContentCachePath, OpenFileMode.Create);
+            using var stream = Storage.OpenFile(GamePaths.CommunityContentCache, OpenFileMode.Create);
             XmlUtils.SaveXmlToStream(xElement, stream, null, true);
         }
         catch (Exception e)
@@ -594,9 +594,9 @@ public static class CommunityContentManager
             { "Type", typeFilter },
             { "Moderation", moderationFilter },
             { "SortOrder", sortOrder },
-            { "Platform", VersionsManager.Platform.ToString() },
+            { "Platform", PlatformManager.Platform.ToString() },
             { "Version", VersionsManager.Version },
-            { "Apiv", ModsManager.ApiV.ToString() },
+            { "Apiv", ModPlatformInfo.ApiV.ToString() },
             { "key", keySearch },
             { "SearchType", searchType }
         };
@@ -676,7 +676,7 @@ public static class CommunityContentManager
         {
             { "Cursor", cursor },
             { "Action", "GetUserList" },
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "SearchKey", searchKey },
             { "SearchType", searchType },
             { "Filter", filter },
@@ -770,7 +770,7 @@ public static class CommunityContentManager
         {
             { "Action", "UpdateLockState" },
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "LockState", lockState.ToString() },
             { "Duration", duration.ToString() },
             { "Reason", reason }
@@ -807,7 +807,7 @@ public static class CommunityContentManager
         {
             { "Action", "ResetPassword" },
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken }
+            { "Operater", SettingsManager.Current.CommunityAccessToken }
         };
         WebManager.Post(
             SchubExternalContentProvider.GetPath("/com/api/zh/userList"),
@@ -843,7 +843,7 @@ public static class CommunityContentManager
         {
             { "Type", type },
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "Boutique", boutique.ToString() }
         };
         WebManager.Post(
@@ -878,7 +878,7 @@ public static class CommunityContentManager
         var dictionary = new Dictionary<string, string>
         {
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken },
+            { "Operater", SettingsManager.Current.CommunityAccessToken },
             { "IsShow", isShow.ToString() }
         };
         WebManager.Post(
@@ -912,7 +912,7 @@ public static class CommunityContentManager
         var dictionary = new Dictionary<string, string>
         {
             { "Id", id.ToString() },
-            { "Operater", SettingsManager.CommunityAccessToken }
+            { "Operater", SettingsManager.Current.CommunityAccessToken }
         };
         WebManager.Post(
             SchubExternalContentProvider.GetPath("/com/api/zh/deleteFile"),
@@ -944,7 +944,7 @@ public static class CommunityContentManager
         };
         var dictionary = new Dictionary<string, string>
         {
-            { "Operater", SettingsManager.CommunityAccessToken }
+            { "Operater", SettingsManager.Current.CommunityAccessToken }
         };
         WebManager.Post(
             SchubExternalContentProvider.GetPath("/com/api/zh/userList"),

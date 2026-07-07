@@ -69,7 +69,7 @@ public class TextBoxWidget : Widget
 
     public bool HasFocus
     {
-        get { return _hasFocus; }
+        get => _hasFocus;
         set
         {
             if (value == _hasFocus)
@@ -80,26 +80,11 @@ public class TextBoxWidget : Widget
             _hasFocus = value;
             if (value)
             {
-#if DESKTOP
-                if (_hasFocus && Text == string.Empty)
-                    //清空之前的输入
-                {
-                    KeyboardInput.GetInput();
-                }
-#endif
-                CaretPosition = _text.Length;
-                Keyboard.ShowKeyboard(
-                    Title,
-                    Description,
-                    Text,
-                    false,
-                    delegate(string text) { Text = text; },
-                    null
-                );
+                BeginTextInput();
             }
             else
             {
-                FocusLost?.Invoke(this);
+                EndTextInput();
             }
         }
     }
@@ -148,116 +133,53 @@ public class TextBoxWidget : Widget
         JustOpened = true;
     }
 
+    private void BeginTextInput()
+    {
+        ClearPendingTextInput();
+        CaretPosition = _text.Length;
+
+        if (UsesInlineKeyboardInput())
+        {
+            return;
+        }
+
+        Keyboard.ShowKeyboard(
+            Title,
+            Description,
+            Text,
+            false,
+            delegate(string text) { Text = text; },
+            null
+        );
+    }
+
+    private void EndTextInput()
+    {
+        FocusLost?.Invoke(this);
+    }
+
+    private static void ClearPendingTextInput()
+    {
+        if (UsesInlineKeyboardInput())
+        {
+            KeyboardInput.GetInput();
+        }
+    }
+
     public override void Update()
     {
         if (HasFocus)
         {
-#if ANDROID
-            if (Input.LastChar.HasValue && !Input.IsKeyDown(Key.Control) && !char.IsControl(Input.LastChar.Value))
-            {
-                EnterText(new string(Input.LastChar.Value, 1));
-                Input.Clear();
-            }
-
-            if (Input.LastKey.HasValue)
-            {
-                var flag = false;
-                var value = Input.LastKey.Value;
-                if (value == Key.V && Input.IsKeyDown(Key.Control))
-                {
-                    EnterText(ClipboardManager.ClipboardString);
-                    flag = true;
-                }
-                else if (value == Key.BackSpace && CaretPosition > 0)
-                {
-                    CaretPosition--;
-                    Text = Text.Remove(CaretPosition, 1);
-                    flag = true;
-                }
-                else
-                {
-                    switch (value)
-                    {
-                        case Key.Delete:
-                            if (CaretPosition < _text.Length)
-                            {
-                                Text = Text.Remove(CaretPosition, 1);
-                                flag = true;
-                            }
-
-                            break;
-                        case Key.LeftArrow:
-                            CaretPosition--;
-                            flag = true;
-                            break;
-                        case Key.RightArrow:
-                            CaretPosition++;
-                            flag = true;
-                            break;
-                        case Key.Home:
-                            CaretPosition = 0;
-                            flag = true;
-                            break;
-                        case Key.End:
-                            CaretPosition = _text.Length;
-                            flag = true;
-                            break;
-                        case Key.Enter:
-                            flag = true;
-                            HasFocus = false;
-                            Enter?.Invoke(this);
-                            break;
-                        case Key.Escape:
-                            flag = true;
-                            HasFocus = false;
-                            Escape?.Invoke(this);
-                            break;
-                    }
-                }
-
-                if (flag)
-                {
-                    Input.Clear();
-                }
-            }
-#else
-            //处理文字删除
-            if (KeyboardInput.DeletePressed)
-            {
-                if (CaretPosition != 0)
-                {
-                    CaretPosition--;
-                    CaretPosition = Math.Max(0, CaretPosition);
-                    if (Text.Length > 0)
-                    {
-                        Text = DeleteOneText != null
-                            ? DeleteOneText(CaretPosition, Text)
-                            : Text.Remove(CaretPosition, 1);
-                    }
-
-                    var num = Font.CalculateCharacterPosition(Text, 0, new Vector2(FontScale), FontSpacing);
-                    _scroll = num - ActualSize.X;
-                    _scroll = MathUtils.Max(0, _scroll);
-                }
-            }
-
-            //处理文字输入
-            var inputString = KeyboardInput.GetInput();
-            if (JustOpened)
-            {
-                inputString = string.Empty;
-                JustOpened = false;
-            }
-
+            HandleBackspace();
+            var inputString = ReadTextInput();
             if (!string.IsNullOrEmpty(inputString))
             {
                 EnterText(inputString);
             }
-#endif
         }
 
+        // 处理电脑键盘输入时会处理成游戏输入
         if (Input.Click.HasValue)
-            //处理电脑键盘输入时会处理成游戏输入
         {
             HasFocus = HitTestGlobal(Input.Click.Value.Start) == this && HitTestGlobal(Input.Click.Value.End) == this;
         }
@@ -267,12 +189,12 @@ public class TextBoxWidget : Widget
             return;
         }
 
-        //处理复制粘贴事件
+        // 处理复制粘贴事件
         if (Input.IsKeyDown(Key.Control))
         {
             if (Input.IsKeyDownOnce(Key.V))
             {
-                Text += ClipboardManager.ClipboardString;
+                EnterText(ClipboardManager.ClipboardString);
             }
             else if (Input.IsKeyDownOnce(Key.C))
             {
@@ -302,6 +224,21 @@ public class TextBoxWidget : Widget
             MoveCursor?.Invoke(CaretPosition, Text);
         }
 
+        if (Input.IsKeyDownOnce(Key.Delete))
+        {
+            DeleteCharacterAtCaret();
+        }
+
+        if (Input.IsKeyDownOnce(Key.Home))
+        {
+            CaretPosition = 0;
+        }
+
+        if (Input.IsKeyDownOnce(Key.End))
+        {
+            CaretPosition = Text.Length;
+        }
+
         if (Input.IsKeyDownRepeat(Key.UpArrow))
         {
             CaretPosition = 0;
@@ -314,13 +251,108 @@ public class TextBoxWidget : Widget
 
         if (Input.IsKeyDownRepeat(Key.Enter))
         {
-            Enter?.Invoke(this);
+            SubmitText();
         }
 
         if (Input.IsKeyDownRepeat(Key.Escape))
         {
-            Escape?.Invoke(this);
+            CancelText();
         }
+    }
+
+    private string ReadTextInput()
+    {
+        if (UsesInlineKeyboardInput())
+        {
+            var inputString = KeyboardInput.GetInput();
+            if (!JustOpened)
+            {
+                return inputString;
+            }
+
+            JustOpened = false;
+            return string.Empty;
+        }
+
+        if (!Input.LastChar.HasValue || Input.IsKeyDown(Key.Control) ||
+            char.IsControl(Input.LastChar.Value))
+        {
+            return string.Empty;
+        }
+
+        Input.Clear();
+        return new string(Input.LastChar.Value, 1);
+    }
+
+    private void HandleBackspace()
+    {
+        if (!IsBackspacePressed())
+        {
+            return;
+        }
+
+        DeleteCharacterBeforeCaret();
+    }
+
+    private bool IsBackspacePressed()
+    {
+        return UsesInlineKeyboardInput()
+            ? KeyboardInput.DeletePressed
+            : Input.IsKeyDownOnce(Key.BackSpace);
+    }
+
+    private void DeleteCharacterBeforeCaret()
+    {
+        if (CaretPosition == 0)
+        {
+            return;
+        }
+
+        CaretPosition--;
+        if (Text.Length > 0)
+        {
+            Text = DeleteOneText != null
+                ? DeleteOneText(CaretPosition, Text)
+                : Text.Remove(CaretPosition, 1);
+        }
+
+        var num = Font.CalculateCharacterPosition(Text, 0, new Vector2(FontScale), FontSpacing);
+        _scroll = MathUtils.Max(0, num - ActualSize.X);
+    }
+
+    private void DeleteCharacterAtCaret()
+    {
+        if (CaretPosition >= Text.Length)
+        {
+            return;
+        }
+
+        Text = Text.Remove(CaretPosition, 1);
+    }
+
+    private void SubmitText()
+    {
+        LoseFocusAfterKeyboardAction();
+        Enter?.Invoke(this);
+    }
+
+    private void CancelText()
+    {
+        LoseFocusAfterKeyboardAction();
+        Escape?.Invoke(this);
+    }
+
+    private void LoseFocusAfterKeyboardAction()
+    {
+        if (!UsesInlineKeyboardInput())
+        {
+            HasFocus = false;
+        }
+    }
+
+    private static bool UsesInlineKeyboardInput()
+    {
+        return PlatformManager.Platform is Platform.Desktop;
     }
 
     public void MoveNext(WidgetsList widgets)

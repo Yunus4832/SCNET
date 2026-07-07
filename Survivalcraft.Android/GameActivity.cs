@@ -1,7 +1,13 @@
+using Android.Net;
+using Android.OS;
 using Android.Content.PM;
-using Android.Provider;
 
 using Game;
+using Game.ContentProviders;
+
+using AndroidClipboardManager = Android.Content.ClipboardManager;
+using AndroidProviderSettings = Android.Provider.Settings;
+using GamePlatformManager = Game.Managers.PlatformManager;
 
 namespace Survivalcraft.Android;
 
@@ -22,7 +28,12 @@ public class GameActivity : EngineActivity
     protected override void OnRun()
     {
         base.OnRun();
+        GamePlatformManager.RegisterPlatform(Platform.Android);
         RunMode.Value = RunModeType.Gui;
+        GamePlatformManager.RegisterWebBrowserLauncher(OpenLink);
+        GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
+        GamePlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
+        GamePlatformManager.RegisterExternalContentProviderFactory(() => new AndroidSdCardExternalContentProvider());
         InitializeAndroidId();
         LoadAssetAssemblies();
 
@@ -49,8 +60,46 @@ public class GameActivity : EngineActivity
 
     private void InitializeAndroidId()
     {
-        GetMachineID.AndroidID = Settings.Secure
-            .GetString(ContentResolver, Settings.Secure.AndroidId) ?? string.Empty;
+        GetMachineID.AndroidID = AndroidProviderSettings.Secure
+            .GetString(ContentResolver, AndroidProviderSettings.Secure.AndroidId) ?? string.Empty;
+    }
+
+    private bool IsInternetConnectionAvailable()
+    {
+        var connectivityManager = GetConnectivityManager();
+        switch (Build.VERSION.SdkInt)
+        {
+            case >= (BuildVersionCodes)29:
+                return connectivityManager?.GetNetworkCapabilities(connectivityManager.ActiveNetwork)
+                           ?.HasCapability(NetCapability.Validated)
+                       ?? false;
+            case >= (BuildVersionCodes)21:
+                return connectivityManager?.ActiveNetworkInfo?.IsConnected ?? false;
+            default:
+                return true;
+        }
+    }
+
+    private ConnectivityManager? GetConnectivityManager()
+    {
+        return Build.VERSION.SdkInt >= (BuildVersionCodes)21
+            ? (ConnectivityManager?)GetSystemService(ConnectivityService)
+            : null;
+    }
+
+    private string ReadClipboardText()
+    {
+        return GetSystemService(ClipboardService) is AndroidClipboardManager clipboardManager
+            ? clipboardManager.Text ?? string.Empty
+            : string.Empty;
+    }
+
+    private void WriteClipboardText(string text)
+    {
+        if (GetSystemService(ClipboardService) is AndroidClipboardManager clipboardManager)
+        {
+            clipboardManager.Text = text;
+        }
     }
 
     private void LoadAssetAssemblies()

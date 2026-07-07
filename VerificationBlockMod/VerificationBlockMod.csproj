@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>VerificationBlockMod</AssemblyName>
+        <RootNamespace>VerificationBlockMod</RootNamespace>
+        <SurvivalcraftModId>verification.block</SurvivalcraftModId>
+        <SurvivalcraftUseLocalReferences>true</SurvivalcraftUseLocalReferences>
+    </PropertyGroup>
+
+    <Import Project="../Survivalcraft/Modding/Survivalcraft.Mod.targets"/>
+</Project>

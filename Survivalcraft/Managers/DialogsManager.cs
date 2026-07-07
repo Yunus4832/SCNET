@@ -83,7 +83,7 @@ public static class DialogsManager
 
     public static void Alert(string title, string msg, ContainerWidget? parentWidget = null)
     {
-        ShowDialog(parentWidget, new MessageDialog(title, msg, LanguageControl.Ok));
+        ShowDialog(parentWidget, new MessageDialog(title, msg, LanguageManager.Ok));
     }
 
     public static void Alert(string msg, ContainerWidget? parentWidget = null)
@@ -94,10 +94,10 @@ public static class DialogsManager
     public static void Confirm(string msg, Action<MessageDialogButton> clickEvent, ContainerWidget? parentWidget = null)
     {
         var dialog = new MessageDialog(
-            LanguageControl.Warning,
+            LanguageManager.Warning,
             msg,
-            LanguageControl.Yes,
-            LanguageControl.No,
+            LanguageManager.Yes,
+            LanguageManager.No,
             new Vector2(-1f),
             (button, self) =>
             {

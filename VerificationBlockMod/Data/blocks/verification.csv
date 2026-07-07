@@ -1,0 +1,2 @@
+Type;DisplayName;Category;DisplayOrder;CraftingId;CreativeData;DropContent;MaxStacking;SoundMaterialName;DigMethod;DigResilience;TextureSlot;Description
+VerificationBlock;Verification Block;Construction;71;verificationblock;0;#;40;Stone;Quarry;4;182;A block registered by the external verification.block mod.

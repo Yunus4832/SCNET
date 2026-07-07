@@ -1,0 +1,9 @@
+{
+  "id": "verification.block",
+  "name": "Verification Block",
+  "version": "1.0.0",
+  "side": "common",
+  "entrypoints": {
+    "common": "VerificationBlockMod.ModEntry, VerificationBlockMod"
+  }
+}

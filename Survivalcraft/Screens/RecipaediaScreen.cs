@@ -75,8 +75,8 @@ public class RecipaediaScreen : Screen
         }
 
         var arg = string.IsNullOrEmpty(_categories[_categoryIndex])
-            ? LanguageControl.Get("BlocksManager", "All Blocks")
-            : LanguageControl.Get("BlocksManager", _categories[_categoryIndex]);
+            ? LanguageManager.Get("BlocksManager", "All Blocks")
+            : LanguageManager.Get("BlocksManager", _categories[_categoryIndex]);
         _categoryLabel.Text = $"{arg} ({_blocksList.Items.Count})";
         _prevCategoryButton.IsEnabled = _categoryIndex > 0;
         _nextCategoryButton.IsEnabled = _categoryIndex < _categories.Count - 1;
@@ -91,12 +91,12 @@ public class RecipaediaScreen : Screen
         if (num > 0)
         {
             _recipesButton.Text =
-                $"{num} {(num == 1 ? LanguageControl.Get(GetType().Name, 1) : LanguageControl.Get(GetType().Name, 2))}";
+                $"{num} {(num == 1 ? LanguageManager.Get(GetType().Name, 1) : LanguageManager.Get(GetType().Name, 2))}";
             _recipesButton.IsEnabled = true;
         }
         else
         {
-            _recipesButton.Text = LanguageControl.Get(GetType().Name, 3);
+            _recipesButton.Text = LanguageManager.Get(GetType().Name, 3);
             _recipesButton.IsEnabled = false;
         }
 
@@ -134,7 +134,7 @@ public class RecipaediaScreen : Screen
         _blocksList.ScrollPosition = 0f;
         _blocksList.ClearItems();
 
-        var orders = (from item in BlocksManager.Blocks
+        var orders = (from item in BlocksManager.RegisteredBlocks
             from creativeValue in item.GetCreativeValues()
             where string.IsNullOrEmpty(text) || item.GetCategory(creativeValue) == text
             select new Order(item, item.GetDisplayOrder(creativeValue), creativeValue)).ToList();

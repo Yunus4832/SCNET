@@ -45,6 +45,17 @@
                                       VerticalAlignment="Center"/>
             </StackPanelWidget>
 
+            <StackPanelWidget Direction="Horizontal">
+                <CanvasWidget Size="350, 90">
+                    <LabelWidget Text="[ContentScreen:12]" Color="128, 128, 128" WordWrap="true"
+                                 HorizontalAlignment="Far" VerticalAlignment="Center"
+                                 TextAnchor="VerticalCenter, HorizontalCenter"/>
+                </CanvasWidget>
+                <CanvasWidget Size="10, 0"/>
+                <BevelledButtonWidget Name="Mods" Text="[ContentScreen:13]" Style="{Styles/ButtonStyle_310x60}"
+                                      VerticalAlignment="Center"/>
+            </StackPanelWidget>
+
             <CanvasWidget Size="0, 30"/>
 
             <StackPanelWidget Direction="Horizontal">

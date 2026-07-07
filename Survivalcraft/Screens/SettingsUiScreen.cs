@@ -8,8 +8,6 @@ public class SettingsUiScreen : Screen
 
     private readonly ButtonWidget _communityContentModeButton;
 
-    private readonly ButtonWidget _displayLogButton;
-
     private readonly ButtonWidget _hideMoveLookPadsButton;
 
     private readonly ButtonWidget _languageButton;
@@ -35,7 +33,6 @@ public class SettingsUiScreen : Screen
         LoadContents(this, node);
         _windowModeContainer = Children.Find<ContainerWidget>("WindowModeContainer")!;
         _languageButton = Children.Find<BevelledButtonWidget>("LanguageButton")!;
-        _displayLogButton = Children.Find<ButtonWidget>("DisplayLogButton")!;
         _windowModeButton = Children.Find<ButtonWidget>("WindowModeButton")!;
         _uiScaleSlider = Children.Find<SliderWidget>("UIScaleSlider")!;
         _upsideDownButton = Children.Find<ButtonWidget>("UpsideDownButton")!;
@@ -60,13 +57,13 @@ public class SettingsUiScreen : Screen
 
         if (_windowModeButton.IsClicked)
         {
-            SettingsManager.WindowMode = (WindowMode)((int)(SettingsManager.WindowMode + 1) %
+            SettingsManager.Current.WindowMode = (WindowMode)((int)(SettingsManager.Current.WindowMode + 1) %
                                                       EnumUtils.GetEnumValues(typeof(WindowMode)).Count);
         }
 
         if (_uiScaleSlider.SlidingCompleted)
         {
-            SettingsManager.UIScale = _uiScaleSlider.Value;
+            SettingsManager.Current.UIScale = _uiScaleSlider.Value;
         }
 
         if (_languageButton.IsClicked)
@@ -74,64 +71,58 @@ public class SettingsUiScreen : Screen
             OnLanguageButtonClick(); // 调用新的语言选择功能
         }
 
-        if (_displayLogButton.IsClicked)
-        {
-            SettingsManager.DisplayLog = !SettingsManager.DisplayLog;
-        }
-
         if (!_uiScaleSlider.IsSliding)
         {
-            _uiScaleSlider.Value = SettingsManager.UIScale;
+            _uiScaleSlider.Value = SettingsManager.Current.UIScale;
         }
 
         _uiScaleSlider.Text = $"{_uiScaleSlider.Value * 100f:0}%";
 
         if (_upsideDownButton.IsClicked)
         {
-            SettingsManager.UpsideDownLayout = !SettingsManager.UpsideDownLayout;
+            SettingsManager.Current.UpsideDownLayout = !SettingsManager.Current.UpsideDownLayout;
         }
 
         if (_hideMoveLookPadsButton.IsClicked)
         {
-            SettingsManager.HideMoveLookPads = !SettingsManager.HideMoveLookPads;
+            SettingsManager.Current.HideMoveLookPads = !SettingsManager.Current.HideMoveLookPads;
         }
 
         if (_showGuiInScreenshotsButton.IsClicked)
         {
-            SettingsManager.ShowGuiInScreenshots = !SettingsManager.ShowGuiInScreenshots;
+            SettingsManager.Current.ShowGuiInScreenshots = !SettingsManager.Current.ShowGuiInScreenshots;
         }
 
         if (_showLogoInScreenshotsButton.IsClicked)
         {
-            SettingsManager.ShowLogoInScreenshots = !SettingsManager.ShowLogoInScreenshots;
+            SettingsManager.Current.ShowLogoInScreenshots = !SettingsManager.Current.ShowLogoInScreenshots;
         }
 
         if (_screenshotSizeButton.IsClicked)
         {
-            SettingsManager.ScreenshotSize = (ScreenshotSize)((int)(SettingsManager.ScreenshotSize + 1) %
+            SettingsManager.Current.ScreenshotSize = (ScreenshotSize)((int)(SettingsManager.Current.ScreenshotSize + 1) %
                                                               EnumUtils.GetEnumValues(typeof(ScreenshotSize)).Count);
         }
 
         if (_communityContentModeButton.IsClicked)
         {
-            SettingsManager.CommunityContentMode =
-                (CommunityContentMode)((int)(SettingsManager.CommunityContentMode + 1) %
+            SettingsManager.Current.CommunityContentMode =
+                (CommunityContentMode)((int)(SettingsManager.Current.CommunityContentMode + 1) %
                                        EnumUtils.GetEnumValues(typeof(CommunityContentMode)).Count);
         }
 
         // 更新按钮文本
-        _windowModeButton.Text = LanguageControl.Get("WindowMode", SettingsManager.WindowMode.ToString());
-        _languageButton.Text = LanguageControl.Get("Language", "Name");
-        _displayLogButton.Text = SettingsManager.DisplayLog ? LanguageControl.Yes : LanguageControl.No;
-        _upsideDownButton.Text = SettingsManager.UpsideDownLayout ? LanguageControl.Yes : LanguageControl.No;
-        _hideMoveLookPadsButton.Text = SettingsManager.HideMoveLookPads ? LanguageControl.Yes : LanguageControl.No;
+        _windowModeButton.Text = LanguageManager.Get("WindowMode", SettingsManager.Current.WindowMode.ToString());
+        _languageButton.Text = LanguageManager.Get("Language", "Name");
+        _upsideDownButton.Text = SettingsManager.Current.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
+        _hideMoveLookPadsButton.Text = SettingsManager.Current.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;
         _showGuiInScreenshotsButton.Text =
-            SettingsManager.ShowGuiInScreenshots ? LanguageControl.Yes : LanguageControl.No;
+            SettingsManager.Current.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
         _showLogoInScreenshotsButton.Text =
-            SettingsManager.ShowLogoInScreenshots ? LanguageControl.Yes : LanguageControl.No;
-        _screenshotSizeButton.Text = LanguageControl.Get("ScreenshotSize", SettingsManager.ScreenshotSize.ToString());
+            SettingsManager.Current.ShowLogoInScreenshots ? LanguageManager.Yes : LanguageManager.No;
+        _screenshotSizeButton.Text = LanguageManager.Get("ScreenshotSize", SettingsManager.Current.ScreenshotSize.ToString());
         _communityContentModeButton.Text =
-            LanguageControl.Get("CommunityContentMode", SettingsManager.CommunityContentMode.ToString());
+            LanguageManager.Get("CommunityContentMode", SettingsManager.Current.CommunityContentMode.ToString());
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
@@ -146,9 +137,9 @@ public class SettingsUiScreen : Screen
             null,
             new ListSelectionDialog(
                 string.Empty,
-                LanguageControl.LanguageTypes,
+                LanguageManager.LanguageTypes,
                 70f,
-                item => (string)item,
+                item => LanguageManager.GetLanguageDisplayName((string)item),
                 delegate(object item) { ChangeLanguage((string)item); }
             )
         );
@@ -163,16 +154,10 @@ public class SettingsUiScreen : Screen
             return;
         }
 
-        // 初始化语言
-        LanguageControl.Initialize(languageType);
-
-        // 加载所有插件的语言
-        foreach (var mod in ModsManager.ModList)
+        if (CurrentModRuntime.Value is { } runtime)
         {
-            mod.LoadLanguage();
+            runtime.InitializeLanguage(languageType);
         }
-
-        LanguageControl.RefreshCommonWords();
 
         // 重新实例化屏幕对象
         var objs = new Dictionary<string, object>();
@@ -205,7 +190,14 @@ public class SettingsUiScreen : Screen
         }
 
         // 初始化配方管理器
-        CraftingRecipesManager.Initialize();
+        if (CurrentModRuntime.Value is { } currentRuntime)
+        {
+            currentRuntime.InitializeCraftingRecipes();
+        }
+        else
+        {
+            CraftingRecipesManager.Initialize();
+        }
 
         // 切换到主菜单
         ScreensManager.SwitchScreen("MainMenu");

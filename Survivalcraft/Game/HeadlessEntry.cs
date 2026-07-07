@@ -1,6 +1,4 @@
 using System.Globalization;
-using System.Security.Cryptography;
-using System.Xml.Linq;
 
 using Game.Network;
 using Game.Network.Enums;
@@ -10,6 +8,8 @@ namespace Game;
 
 public static class HeadlessEntry
 {
+    private static GameModRuntime? _modRuntime;
+
     private static volatile bool _running = true;
 
     public static void RequestStop()
@@ -21,6 +21,7 @@ public static class HeadlessEntry
     {
         try
         {
+            GameExitManager.BeginSession();
             RunMode.Value = RunModeType.HeadlessServer;
             _running = true;
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
@@ -30,19 +31,25 @@ public static class HeadlessEntry
             Log.AddLogSink(new ConsoleLogSink { MinimumLogType = runningSetting.LogLevel });
             Log.AddLogSink(new GameLogSink());
 
-#if !ANDROID
-            Console.CancelKeyPress += (_, e) =>
+            if (PlatformManager.Platform is Platform.Desktop)
             {
-                e.Cancel = true;
-                _running = false;
-            };
-#endif
+                Console.CancelKeyPress += (_, e) =>
+                {
+                    e.Cancel = true;
+                    _running = false;
+                };
+            }
 
-            InitializeHeadless();
-            var world = ResolveWorld(runningSetting);
+            if (!InitializeHeadless())
+            {
+                Log.Information("Headless initialization requested restart. Exiting current process.");
+                return 0;
+            }
+
+            var world = SessionInfoManager.ResolveHeadlessWorld(runningSetting);
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information(
-                $"Server ports: game={SettingsManager.ServerPort}, broadcast={SettingsManager.BroadcastPort}");
+                $"Server ports: game={SettingsManager.Current.ServerPort}, broadcast={SettingsManager.Current.BroadcastPort}");
             CommonLib.WorkType = WorkType.Server;
             var gamesWidget = new GamesWidget();
             GameManager.LoadProject(world, gamesWidget);
@@ -68,7 +75,12 @@ public static class HeadlessEntry
                 CommonLib.Net.StopImmediate();
                 GameManager.SaveProject(waitForCompletion: true, showErrorDialog: false);
                 GameManager.DisposeProject();
+                _modRuntime?.Dispose();
+                _modRuntime = null;
+                CurrentModRuntime.Set(null);
                 SettingsManager.SaveSettings();
+                Log.RemoveAllLogSinks();
+                GameLogSink.Shutdown();
             }
             catch (Exception ex)
             {
@@ -114,131 +126,41 @@ public static class HeadlessEntry
         }
     }
 
-    private static WorldInfo ResolveWorld(RunningSetting runningSetting)
-    {
-        var worldArg = string.IsNullOrWhiteSpace(runningSetting.World) ? "World" : runningSetting.World;
-        var seedArg = runningSetting.Seed;
-
-        WorldsManager.UpdateWorldsList();
-        var worlds = WorldsManager.WorldInfos.ToList();
-        Log.Information($"Worlds directory: {ModsManager.WorldsDirectoryName}");
-        Log.Information($"Detected worlds: {string.Join(", ", worlds.Select(w => w.WorldSettings.Name))}");
-
-        var worldName = worlds.FirstOrDefault(w =>
-            string.Equals(w.DirectoryName, worldArg, StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(w.WorldSettings.Name, worldArg, StringComparison.OrdinalIgnoreCase));
-        if (worldName == null)
-        {
-            var worldPath = Storage.CombinePaths(ModsManager.WorldsDirectoryName, worldArg);
-            if (Storage.DirectoryExists(worldPath))
-            {
-                worldName = WorldsManager.GetWorldInfo(worldPath);
-            }
-        }
-
-        if (worldName == null)
-        {
-            var worldSettings = new WorldSettings
-            {
-                Name = worldArg,
-                Seed = string.IsNullOrWhiteSpace(seedArg) ? GenerateRandomSeed() : seedArg,
-                OriginalSerializationVersion = VersionsManager.SerializationVersion,
-                RunServer = true,
-                IsNeedCommunityLogin = false
-            };
-            var customWorldDirectoryName = Storage.CombinePaths(ModsManager.WorldsDirectoryName, worldArg);
-            Log.Information($"Creating new world with seed: {worldSettings.Seed}");
-            worldName = WorldsManager.CreateWorld(worldSettings, customWorldDirectoryName);
-        }
-        else
-        {
-            if (!string.IsNullOrWhiteSpace(seedArg))
-            {
-                Log.Warning($"World already exists; ignoring provided seed \"{seedArg}\".");
-            }
-
-            Log.Information($"Using existing world seed: {worldName.WorldSettings.Seed}");
-        }
-
-        return worldName;
-    }
-
-    private static string GenerateRandomSeed()
-    {
-        var seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
-        return seed.ToString(CultureInfo.InvariantCulture);
-    }
-
-    private static void InitializeHeadless()
+    private static bool InitializeHeadless()
     {
         SettingsManager.Initialize();
         ContentManager.Initialize();
-        ModsManager.Initialize();
         PackageManager.Initialize();
-        DatabaseManager.Initialize();
+        LocalModsImportManager.ImportInstalledMods(
+            Storage.GetSystemPath(GamePaths.Mods),
+            Storage.GetSystemPath(GamePaths.ModCache),
+            Log.Information
+        );
 
-        ModsManager.ModList.Clear();
-        foreach (var mod in ModsManager.ModListAll)
-        {
-            if (!mod.IsDependencyChecked)
-            {
-                mod.CheckDependencies(ModsManager.ModList);
-            }
-        }
+        var runningSetting = RunningSettingManager.Current;
+        var startupSession = SessionInfoManager.ResolveStartupSession(runningSetting);
+        var profile = ModProfileManager.LoadEffectiveProfile(runningSetting.ActiveSessionId, startupSession);
+        ModProfileResolver.EnsurePackagesAvailable(
+            profile,
+            Storage.GetSystemPath(GamePaths.ModCache),
+            Log.Information
+        );
+        _modRuntime = GameModRuntime.StartFromProfile(
+            profile,
+            Storage.GetSystemPath(GamePaths.ModCache),
+            ModSide.Server,
+            Log.Information
+        );
+        CurrentModRuntime.Set(_modRuntime);
+        _modRuntime.InitializeLanguage(AppConfigStore.Values.TryGetValue("Language", out var language)
+            ? language
+            : "zh-CN"
+        );
+        _modRuntime.InitializeContentData();
 
-        foreach (var mod in ModsManager.ModListAll)
-        {
-            mod.IsDependencyChecked = false;
-        }
-
-        var langList = ContentManager.List("Lang");
-        LanguageControl.LanguageTypes.Clear();
-        foreach (var contentInfo in langList)
-        {
-            var lang = Path.GetFileNameWithoutExtension(contentInfo.Filename);
-            if (!LanguageControl.LanguageTypes.Contains(lang))
-            {
-                LanguageControl.LanguageTypes.Add(lang);
-            }
-        }
-
-        var defaultLang = LanguageControl.LanguageTypes.Contains("zh-CN") ? "zh-CN" : "en-US";
-        LanguageControl.Initialize(defaultLang);
-        ModsManager.ModListAllDo(mod => mod.LoadLanguage());
-        LanguageControl.RefreshCommonWords();
-
-        ModsManager.ModListAllDo(mod => mod.LoadDll());
-        ModsManager.ModListAllDo(mod => mod.LoadXdb(ref DatabaseManager.DatabaseNodeField));
-        if (DatabaseManager.DatabaseNodeField is { } dbNode)
-        {
-            DatabaseManager.LoadDataBaseFromXml(dbNode);
-        }
-        else
-        {
-            throw new InvalidOperationException("Database node is null.");
-        }
-
-        BlocksManager.Initialize();
         LightingManager.Initialize();
-        CraftingRecipesManager.Initialize();
         CharacterSkinsManager.Initialize();
-        VersionsManager.Initialize();
         WorldsManager.Initialize();
-
-        if (Storage.FileExists(ModsManager.ModsSettingPath))
-        {
-            using var stream = Storage.OpenFile(ModsManager.ModsSettingPath, OpenFileMode.Read);
-            var element = XElement.Load(stream);
-            ModsManager.LoadModSettings(element);
-        }
-
-        var modActions = new List<Action>();
-        ModsManager.ModListAllDo(mod => mod.Loader?.OnLoadingStart(modActions));
-        foreach (var action in modActions)
-        {
-            action();
-        }
-
-        ModsManager.ModListAllDo(mod => mod.Loader?.OnLoadingFinished([]));
+        return true;
     }
 }

@@ -14,8 +14,6 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
 
     private Vector3 _viewDirection;
 
-    private BoundingFrustum? _viewFrustum;
-
     private bool _viewFrustumValid;
 
     private Matrix? _viewMatrix;
@@ -222,21 +220,21 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
         {
             if (_viewFrustumValid)
             {
-                return _viewFrustum!;
+                return field!;
             }
 
-            if (_viewFrustum is null)
+            if (field is null)
             {
-                _viewFrustum = new BoundingFrustum(ViewProjectionMatrix);
+                field = new BoundingFrustum(ViewProjectionMatrix);
             }
             else
             {
-                _viewFrustum.Matrix = ViewProjectionMatrix;
+                field.Matrix = ViewProjectionMatrix;
             }
 
             _viewFrustumValid = true;
 
-            return _viewFrustum!;
+            return field!;
         }
     }
 
@@ -269,7 +267,7 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
             return VrManager.GetProjectionMatrix(Eye.Value, 0.1f, 2048f);
         }
 
-        var num = 80f * SettingsManager.ViewAngle;
+        var num = 80f * SettingsManager.Current.ViewAngle;
         var viewWidget = GameWidget.ViewWidget;
         var num2 = viewWidget.ActualSize.X / viewWidget.ActualSize.Y;
         var num3 = MathUtils.Min(num * num2, num);

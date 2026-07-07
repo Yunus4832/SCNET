@@ -242,11 +242,21 @@ public class ComponentCreativeInventory : Component, IInventory
             return;
         }
 
-        foreach (var item in BlocksManager.Blocks.OrderBy(b => b.DisplayOrder))
-        foreach (var creativeValue in item.GetCreativeValues())
+        var creativeValues = BlocksManager.GetCreativeValues().ToArray();
+        foreach (var creativeValue in creativeValues)
         {
             _slots.Add(creativeValue);
         }
+
+        var externalValues = creativeValues
+            .Where(creativeValue =>
+                BlocksManager.TryGetBlockId(Terrain.ExtractContents(creativeValue), out var id) &&
+                id.Namespace != new ModId("game"))
+            .ToArray();
+        Log.Information(
+            "Initialized creative inventory with {0} registered values; external values: {1}.",
+            creativeValues.Length,
+            string.Join(",", externalValues));
 
         var value = valuesDictionary.GetValue<ValuesDictionary>("Slots", false);
         if (value == null)

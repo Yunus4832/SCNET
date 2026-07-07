@@ -260,11 +260,6 @@ public class ComponentInput : Component, IUpdateable
             }
         }
 
-        ModsManager.HookAction("UpdateInput", loader =>
-        {
-            loader.UpdateInput(this, input);
-            return false;
-        });
     }
 
     public void UpdateInputFromGamepad(WidgetInput input)
@@ -285,8 +280,8 @@ public class ComponentInput : Component, IUpdateable
         {
             input.IsPadCursorVisible = false;
             var zero = Vector3.Zero;
-            var padStickPosition = input.GetPadStickPosition(GamePadStick.Left, SettingsManager.GamepadDeadZone);
-            var padStickPosition2 = input.GetPadStickPosition(GamePadStick.Right, SettingsManager.GamepadDeadZone);
+            var padStickPosition = input.GetPadStickPosition(GamePadStick.Left, SettingsManager.Current.GamepadDeadZone);
+            var padStickPosition2 = input.GetPadStickPosition(GamePadStick.Right, SettingsManager.Current.GamepadDeadZone);
             var padTriggerPosition = input.GetPadTriggerPosition(GamePadTrigger.Left);
             var padTriggerPosition2 = input.GetPadTriggerPosition(GamePadTrigger.Right);
             zero += new Vector3(2f * padStickPosition.X, 0f, 2f * padStickPosition.Y);
@@ -340,8 +335,8 @@ public class ComponentInput : Component, IUpdateable
 
     public void UpdateInputFromWidgets(WidgetInput input)
     {
-        var num = MathUtils.Pow(1.25f, 10f * (SettingsManager.MoveSensitivity - 0.5f));
-        var num2 = MathUtils.Pow(1.25f, 10f * (SettingsManager.LookSensitivity - 0.5f));
+        var num = MathUtils.Pow(1.25f, 10f * (SettingsManager.Current.MoveSensitivity - 0.5f));
+        var num2 = MathUtils.Pow(1.25f, 10f * (SettingsManager.Current.LookSensitivity - 0.5f));
         var num3 = MathUtils.Clamp(_subsystemTime.GameTimeDelta, 0f, 0.1f);
         var viewWidget = _componentPlayer.ViewWidget;
         _componentGui.MoveWidget.Radius = 30f / num * _componentGui.MoveWidget.GlobalScale;
@@ -350,7 +345,7 @@ public class ComponentInput : Component, IUpdateable
             return;
         }
 
-        var v = new Vector2(SettingsManager.LeftHandedLayout ? 96 : -96, -96f);
+        var v = new Vector2(SettingsManager.Current.LeftHandedLayout ? 96 : -96, -96f);
         if (input.Widget != null)
         {
             v = Vector2.TransformNormal(v, input.Widget.GlobalTransform);
@@ -371,7 +366,7 @@ public class ComponentInput : Component, IUpdateable
                                   viewPosition);
             if (value.InputType == TouchInputType.Tap)
             {
-                if (SettingsManager.LookControlMode == LookControlMode.SplitTouch)
+                if (SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch)
                 {
                     _playerInput.Interact = new Ray3(viewPosition, viewDirection);
                     _playerInput.Hit = new Ray3(viewPosition, viewDirection);
@@ -384,7 +379,7 @@ public class ComponentInput : Component, IUpdateable
             }
             else if (value is { InputType: TouchInputType.Hold, DurationFrames: > 1, Duration: > 0.2f })
             {
-                _playerInput.Dig = SettingsManager.LookControlMode == LookControlMode.SplitTouch
+                _playerInput.Dig = SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch
                     ? new Ray3(viewPosition, viewDirection)
                     : new Ray3(viewPosition, direction);
                 _playerInput.Aim = new Ray3(viewPosition, direction2);
@@ -393,8 +388,8 @@ public class ComponentInput : Component, IUpdateable
             }
             else if (value.InputType == TouchInputType.Move)
             {
-                if (SettingsManager.LookControlMode == LookControlMode.EntireScreen ||
-                    SettingsManager.LookControlMode == LookControlMode.SplitTouch)
+                if (SettingsManager.Current.LookControlMode == LookControlMode.EntireScreen ||
+                    SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch)
                 {
                     var v2 = Vector2.TransformNormal(value.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
                     var vector = num2 / num3 * new Vector2(0.0006f, -0.0006f) * v2 *
@@ -404,7 +399,7 @@ public class ComponentInput : Component, IUpdateable
 
                 if (_isViewHoldStarted)
                 {
-                    _playerInput.Dig = SettingsManager.LookControlMode == LookControlMode.SplitTouch
+                    _playerInput.Dig = SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch
                         ? new Ray3(viewPosition, viewDirection)
                         : new Ray3(viewPosition, direction);
                     _playerInput.Aim = new Ray3(viewPosition, direction2);

@@ -64,7 +64,7 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
             }
         }
 
-        _fuseSound.Volume = SettingsManager.SoundsVolume * _subsystemAudio.CalculateVolume(num, 2f);
+        _fuseSound.Volume = SettingsManager.Current.SoundsVolume * _subsystemAudio.CalculateVolume(num, 2f);
         if (_fuseSound.Volume > AudioManager.MinAudibleVolume)
         {
             _fuseSound.Play();

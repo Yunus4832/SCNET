@@ -3,7 +3,6 @@ using System.Xml.Linq;
 using Engine.Input;
 
 using Game.Network;
-using Game.VersionConverts;
 
 namespace Game.Screens;
 
@@ -36,7 +35,7 @@ public class MainMenuScreen : Screen
         _serverModeButton.ClickableWidget.OnClick += OnServerModeButtonClick;
 
         // 初始化语言相关 UI 状态
-        var languageType = !ModsManager.Configs.TryGetValue("Language", out var config) ? "zh-CN" : config;
+        var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
         _bulletinStackPanel.IsVisible = languageType == "zh-CN";
         _copyrightLabel.IsVisible = languageType != "zh-CN";
     }
@@ -44,12 +43,6 @@ public class MainMenuScreen : Screen
     public override void Enter(object[] parameters)
     {
         Children.Find<MotdWidget>(false)?.Restart();
-        // 检查是否需要迁移数据
-        if (SettingsManager.IsolatedStorageMigrationCounter < 3)
-        {
-            SettingsManager.IsolatedStorageMigrationCounter++;
-            VersionConverter126To127.MigrateDataFromIsolatedStorageWithDialog();
-        }
 
         // 如果当前已连接网络，则停止连接
         if (CommonLib.Net.CurrentStage == NetNode.Stage.Connected)
@@ -76,9 +69,9 @@ public class MainMenuScreen : Screen
             null,
             new ListSelectionDialog(
                 string.Empty,
-                LanguageControl.LanguageTypes,
+                LanguageManager.LanguageTypes,
                 70f,
-                item => (string)item,
+                item => LanguageManager.GetLanguageDisplayName((string)item),
                 delegate(object item)
                 {
                     // 用户选择语言后调用 ChangeLanguage 方法
@@ -90,7 +83,7 @@ public class MainMenuScreen : Screen
 
     private static void OnServerModeButtonClick()
     {
-        DialogsManager.Confirm(LanguageControl.Get("MainMenuScreen", 13), button =>
+        DialogsManager.Confirm(LanguageManager.Get("MainMenuScreen", 13), button =>
         {
             if (button != MessageDialogButton.Button1)
             {
@@ -145,7 +138,7 @@ public class MainMenuScreen : Screen
                     null,
                     new MessageDialog(
                         "公告获取失败", "当前暂无发布公告，\n或者没有联网获取公告信息",
-                        LanguageControl.Ok
+                        LanguageManager.Ok
                     )
                 );
             }
@@ -162,7 +155,7 @@ public class MainMenuScreen : Screen
 
         if (Children.Find<ButtonWidget>("Exit")!.IsClicked)
         {
-            DialogsManager.Confirm(LanguageControl.Get("MainMenuScreen", 14), button =>
+            DialogsManager.Confirm(LanguageManager.Get("MainMenuScreen", 14), button =>
             {
                 if (button != MessageDialogButton.Button1)
                 {

@@ -157,7 +157,7 @@ public class ComponentSickness : Component, IUpdateable
             _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 0.75,
                 delegate
                 {
-                    _componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageControl.Get(Name, 1));
+                    _componentPlayer.ComponentHealth.Injure(injury, null, false, LanguageManager.Get(Name, 1));
                 });
         }
 
@@ -175,7 +175,7 @@ public class ComponentSickness : Component, IUpdateable
                 _subsystemTime.QueueGameTimeDelayedExecution(_subsystemTime.GameTime + 1.5,
                     delegate
                     {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageControl.Get(Name, 2), Color.White,
+                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(Name, 2), Color.White,
                             true, true);
                     });
             }

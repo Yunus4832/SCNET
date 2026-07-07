@@ -83,8 +83,8 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
     {
         var data = Terrain.ExtractData(value);
         var color = GetColor(data);
-        return LanguageControl.Get("WorldPalette", color) +
-               LanguageControl.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName");
+        return LanguageManager.Get("WorldPalette", color) +
+               LanguageManager.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName");
     }
 
     public override IEnumerable<int> GetCreativeValues()

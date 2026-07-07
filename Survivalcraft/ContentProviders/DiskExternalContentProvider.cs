@@ -2,7 +2,7 @@ namespace Game.ContentProviders;
 
 public class DiskExternalContentProvider : IExternalContentProvider
 {
-    public string DisplayName => LanguageControl.Get(_typeName, "DisplayName");
+    public string DisplayName => LanguageManager.Get(_typeName, "DisplayName");
 
     private const string _typeName = "DiskExternalContentProvider";
 

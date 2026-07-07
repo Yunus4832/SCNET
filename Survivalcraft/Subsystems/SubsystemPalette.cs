@@ -81,7 +81,7 @@ public class SubsystemPalette : Subsystem
             return suffix;
         }
 
-        var text = LanguageControl.GetWorldPalette(index.Value);
+        var text = LanguageManager.GetWorldPalette(index.Value);
         if (!string.IsNullOrEmpty(suffix))
         {
             return text + " " + suffix;

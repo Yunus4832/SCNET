@@ -107,12 +107,12 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
                 if (draw != 15)
                 {
                     componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                        LanguageControl.Get(_typeName, 0), Color.White, true, false);
+                        LanguageManager.Get(_typeName, 0), Color.White, true, false);
                 }
                 else if (!arrowType.HasValue)
                 {
                     componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                        LanguageControl.Get(_typeName, 1), Color.White, true, false);
+                        LanguageManager.Get(_typeName, 1), Color.White, true, false);
                 }
                 else
                 {

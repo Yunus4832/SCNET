@@ -14,7 +14,9 @@ public class ServerInfoPackage : IPackage
 
     public ushort MaxPlayerCount;
 
-    public string ModServerAddress = string.Empty;
+    public string ModRepositoryUrl = string.Empty;
+
+    public ModProfile? RequiredModProfile;
 
     public bool NeedLogin;
 
@@ -79,7 +81,8 @@ public class ServerInfoPackage : IPackage
         NeedLogin = subsystemGameInfo.WorldSettings.IsNeedCommunityLogin;
         NeedPasswd = !string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.Password);
         TimeOfDay = subsystemTimeOfDay.CalculateTimeOfDay();
-        ModServerAddress = SettingsManager.ModServerAddress;
+        RequiredModProfile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
+        ModRepositoryUrl = RequiredModProfile?.RepositoryUrl ?? SettingsManager.Current.DefaultModRepositoryUrl;
         Season = subsystemSeasons.Season;
         TimeOfSeason = subsystemSeasons.TimeOfSeason;
     }
@@ -103,11 +106,13 @@ public class ServerInfoPackage : IPackage
         // 如果不考虑兼容03.04版本可以删掉try-catch语句
         try
         {
-            ModServerAddress = reader.ReadString();
+            ModRepositoryUrl = reader.ReadString();
+            RequiredModProfile = ReadProfile(reader);
         }
         catch
         {
-            ModServerAddress = string.Empty;
+            ModRepositoryUrl = string.Empty;
+            RequiredModProfile = null;
         }
 
         Season = (Season)reader.ReadInt32();
@@ -129,8 +134,55 @@ public class ServerInfoPackage : IPackage
         writer.Write(NeedLogin);
         writer.Write(NeedPasswd);
         writer.Write(TimeOfDay);
-        writer.Write(ModServerAddress);
+        writer.Write(ModRepositoryUrl);
+        WriteProfile(writer, RequiredModProfile);
         writer.Write((int)Season);
         writer.Write(TimeOfSeason);
+    }
+
+    private static ModProfile? ReadProfile(PackageStreamReader reader)
+    {
+        if (reader.BaseStream.Position >= reader.BaseStream.Length || !reader.ReadBoolean())
+        {
+            return null;
+        }
+
+        var profile = new ModProfile
+        {
+            Id = reader.ReadString(),
+            RepositoryUrl = reader.ReadString(),
+            Packages = []
+        };
+        var count = reader.ReadUInt16();
+        for (var i = 0; i < count; i++)
+        {
+            profile.Packages.Add(new ModPackageRequirement
+            {
+                ModId = reader.ReadString(),
+                Version = reader.ReadString(),
+                PackageHash = reader.ReadString()
+            });
+        }
+
+        return profile;
+    }
+
+    private static void WriteProfile(PackageStreamWriter writer, ModProfile? profile)
+    {
+        writer.Write(profile != null);
+        if (profile == null)
+        {
+            return;
+        }
+
+        writer.Write(profile.Id);
+        writer.Write(profile.RepositoryUrl ?? string.Empty);
+        writer.Write((ushort)profile.Packages.Count);
+        foreach (var package in profile.Packages)
+        {
+            writer.Write(package.ModId);
+            writer.Write(package.Version);
+            writer.Write(package.PackageHash ?? string.Empty);
+        }
     }
 }

@@ -1,9 +1,9 @@
+using System.Net;
 using System.Net.Sockets;
 using System.Xml.Linq;
 
 using Game.ContentProviders;
 using Game.Network;
-using Game.Network.ModFileService;
 using Game.Network.Packages;
 using Game.Network.Serialization;
 
@@ -17,9 +17,9 @@ public class NetPlayScreen : Screen
 {
     public enum ConnectState
     {
-        Unavaliable,
+        Unavailable,
         Checking,
-        Avaliable
+        Available
     }
 
     private enum FilterType
@@ -50,7 +50,7 @@ public class NetPlayScreen : Screen
 
     private readonly ButtonWidget _filter3Button;
 
-    private FilterType _filterType; //0收藏，1本地，2社区服，3其他服
+    private FilterType _filterType; // 0收藏，1本地，2社区服，3其他服
 
     private bool _isLoadingList;
 
@@ -73,34 +73,34 @@ public class NetPlayScreen : Screen
         _worldsListWidget = Children.Find<ListPanelWidget>("WorldsList")!;
 
         _filter0Button = Children.Find<ButtonWidget>("TabPage")!;
-        _filter0Button.Text = LanguageControl.Get("NetPlayScreen", 1);
+        _filter0Button.Text = LanguageManager.Get("NetPlayScreen", 1);
         _filter0Button.Size = new Vector2(180, 60);
         _filter1Button = new BevelledButtonWidget
             { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _filter1Button.Text = LanguageControl.Get("NetPlayScreen", 2);
+        _filter1Button.Text = LanguageManager.Get("NetPlayScreen", 2);
         _filter1Button.Size = new Vector2(180, 60);
         _filter0Button.ParentWidget?.AddChildren(_filter1Button);
         _filter2Button = new BevelledButtonWidget
             { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _filter2Button.Text = LanguageControl.Get("NetPlayScreen", 3);
+        _filter2Button.Text = LanguageManager.Get("NetPlayScreen", 3);
         _filter2Button.Size = new Vector2(180, 60);
         _filter0Button.ParentWidget?.AddChildren(_filter2Button);
         _filter3Button = new BevelledButtonWidget
             { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _filter3Button.Text = LanguageControl.Get("NetPlayScreen", 4);
+        _filter3Button.Text = LanguageManager.Get("NetPlayScreen", 4);
         _filter3Button.Size = new Vector2(180, 60);
         _filter0Button.ParentWidget?.AddChildren(_filter3Button);
 
         _addButton = Children.Find<ButtonWidget>("Play")!;
-        _addButton.Text = LanguageControl.Get("NetPlayScreen", 7);
+        _addButton.Text = LanguageManager.Get("NetPlayScreen", 7);
         _addButton.Size = new Vector2(220, 60);
         _removeButton = Children.Find<ButtonWidget>("NewWorld")!;
-        _removeButton.Text = LanguageControl.Get("NetPlayScreen", 8);
+        _removeButton.Text = LanguageManager.Get("NetPlayScreen", 8);
         _removeButton.Size = new Vector2(220, 60);
 
         _collectButton = new BevelledButtonWidget
             { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _collectButton.Text = LanguageControl.Get("NetPlayScreen", 9);
+        _collectButton.Text = LanguageManager.Get("NetPlayScreen", 9);
         _collectButton.Size = new Vector2(160, 60);
         _addButton.ParentWidget?.AddChildren(_collectButton);
 
@@ -109,7 +109,7 @@ public class NetPlayScreen : Screen
             Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60")
         };
 
-        _refreshButton.Text = LanguageControl.Get("NetPlayScreen", 10);
+        _refreshButton.Text = LanguageManager.Get("NetPlayScreen", 10);
         _refreshButton.Size = new Vector2(160, 60);
 
         _addButton.ParentWidget?.RemoveChildren(Children.Find<ButtonWidget>("Properties")!);
@@ -125,27 +125,27 @@ public class NetPlayScreen : Screen
 
 
             var version = connect.Version;
-            var players = $" | {LanguageControl.Get("NetPlayScreen", 13)}: {connect.PlayerCount}/{connect.MaxCount}";
+            var players = $" | {LanguageManager.Get("NetPlayScreen", 13)}: {connect.PlayerCount}/{connect.MaxCount}";
             var gameMode =
-                $" | {LanguageControl.Get("NetPlayScreen", 14)}: " +
-                $"{LanguageControl.Get("GameMode", connect.GameMode.ToString())}";
+                $" | {LanguageManager.Get("NetPlayScreen", 14)}: " +
+                $"{LanguageManager.Get("GameMode", connect.GameMode.ToString())}";
             var timeOfDay =
-                $" | {LanguageControl.Get("NetPlayScreen", 20)}: " +
+                $" | {LanguageManager.Get("NetPlayScreen", 20)}: " +
                 $"{SubsystemTimeOfDay.GetTimeOfDayText(connect.TimeOfDay)}";
             var season =
-                $" | {LanguageControl.Get("NetPlayScreen", 19)}: " +
+                $" | {LanguageManager.Get("NetPlayScreen", 19)}: " +
                 $"{GetSeasonText(connect.Season, connect.TimeOfSeason)}";
             var needLogin = connect.IsNeedLoginCommunity
-                ? $" | {LanguageControl.Get("NetPlayScreen", "16")}"
+                ? $" | {LanguageManager.Get("NetPlayScreen", "16")}"
                 : string.Empty;
             var validTime = !string.IsNullOrEmpty(connect.ValidTime)
-                ? $" | {LanguageControl.Get("NetPlayScreen", 18)}: {connect.ValidTime}"
+                ? $" | {LanguageManager.Get("NetPlayScreen", 18)}: {connect.ValidTime}"
                 : string.Empty;
 
 
             switch (connect.State)
             {
-                case ConnectState.Avaliable:
+                case ConnectState.Available:
                 {
                     labelWidget.Text = $"{connect} ({connect.UsedTime / 2:0} ms)";
                     labelWidget.Color = Color.LightGreen;
@@ -155,13 +155,13 @@ public class NetPlayScreen : Screen
                 }
                 case ConnectState.Checking:
                 {
-                    labelWidget.Text = $"{connect} {LanguageControl.Get("NetPlayScreen", 17)}";
+                    labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 17)}";
                     labelWidget.Color = Color.White;
                     break;
                 }
-                case ConnectState.Unavaliable:
+                case ConnectState.Unavailable:
                 {
-                    labelWidget.Text = $"{connect} {LanguageControl.Get("NetPlayScreen", 15)}";
+                    labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 15)}";
                     labelWidget.Color = Color.LightRed;
                     break;
                 }
@@ -243,10 +243,10 @@ public class NetPlayScreen : Screen
     {
         found = _filterType switch
         {
-            FilterType.Collect => ModsManager.CollectConnects.Find(x => x.Equals(connect)),
-            FilterType.Local => ModsManager.SaveConnects.Find(x => x.Equals(connect)),
+            FilterType.Collect => ConnectionDirectory.Collected.Find(x => x.Equals(connect)),
+            FilterType.Local => ConnectionDirectory.Saved.Find(x => x.Equals(connect)),
             FilterType.Community or FilterType.CommunityOther =>
-                ModsManager.OnlineConnects.Find(x => x.Equals(connect)),
+                ConnectionDirectory.Discovered.Find(x => x.Equals(connect)),
             _ => null
         };
 
@@ -256,21 +256,21 @@ public class NetPlayScreen : Screen
     //本地连接是否存在
     public bool CheckSaveConnectExists(Connect connect, out Connect? found)
     {
-        found = ModsManager.SaveConnects.Find(x => x.Equals(connect));
+        found = ConnectionDirectory.Saved.Find(x => x.Equals(connect));
         return found != null;
     }
 
     //收藏连接是否存在
     public bool CheckCollectConnectExists(Connect connect, out Connect? found)
     {
-        found = ModsManager.CollectConnects.Find(x => x.Equals(connect));
+        found = ConnectionDirectory.Collected.Find(x => x.Equals(connect));
         return found != null;
     }
 
     //更多服连接是否存在
     public bool CheckOnlineConnectExists(Connect connect, out Connect? found)
     {
-        found = ModsManager.OnlineConnects.Find(x => x.Equals(connect));
+        found = ConnectionDirectory.Discovered.Find(x => x.Equals(connect));
         return found != null;
     }
 
@@ -282,7 +282,7 @@ public class NetPlayScreen : Screen
         }
 
         var connect = (Connect)item;
-        if (connect.IsNeedLoginCommunity && string.IsNullOrEmpty(SettingsManager.CommunityAccessUser))
+        if (connect.IsNeedLoginCommunity && string.IsNullOrEmpty(SettingsManager.Current.CommunityAccessUser))
         {
             DialogsManager.Confirm("请登录社区后再进行操作", btn =>
             {
@@ -335,7 +335,7 @@ public class NetPlayScreen : Screen
         //如果本地没有，则保存到本地
         if (!CheckSaveConnectExists(connect, out _))
         {
-            ModsManager.SaveConnects.Add(connect);
+            ConnectionDirectory.Saved.Add(connect);
         }
 
         if (!CheckConnectExists(connect, out var found))
@@ -351,20 +351,89 @@ public class NetPlayScreen : Screen
 
         if (CommonLib.Resolve(found.IP, out var ep))
         {
-            if (!string.IsNullOrEmpty(connect.ModServerAddress))
+            if (!string.IsNullOrWhiteSpace(connect.ModRepositoryUrl))
             {
-                ModFileClient.DownloadModAndJoinServer(connect.ModServerAddress, ep!, passwd);
+                Log.Information($"远程模组仓库已声明为: {connect.ModRepositoryUrl}");
             }
-            else
-            {
-                DialogsManager.HideAllDialogs();
-                ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, ep!, passwd);
-            }
+
+            PrepareRemoteSessionAndConnect(ep!, passwd, connect.RequiredModProfile);
         }
         else
         {
             DialogsManager.Alert("连接服务器失败");
         }
+    }
+
+    private void PrepareRemoteSessionAndConnect(
+        IPEndPoint endPoint,
+        string password,
+        ModProfile? requiredProfile)
+    {
+        if (requiredProfile is not { Packages.Count: > 0 })
+        {
+            ConnectPreparedRemoteSession(endPoint, password);
+            return;
+        }
+
+        var busyDialog = new BusyDialog("准备服务器模组", "正在检查所需模组...");
+        DialogsManager.ShowDialog(null, busyDialog);
+        Task.Run(() =>
+        {
+            try
+            {
+                var result = ModRestartHelper.PrepareRemoteSession(
+                    SessionInfoManager.CreateRemoteClientSession(endPoint, password),
+                    requiredProfile,
+                    message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    if (!result.RequiresRestart)
+                    {
+                        ConnectPreparedRemoteSession(endPoint, password);
+                        return;
+                    }
+
+                    ConfirmRemoteModRestart(result);
+                });
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    DialogsManager.Alert(
+                        "模组下载失败",
+                        $"无法准备服务器需要的模组。\n{ex.Message}");
+                });
+            }
+        });
+    }
+
+    private static void ConnectPreparedRemoteSession(IPEndPoint endPoint, string password)
+    {
+        DialogsManager.HideAllDialogs();
+        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, endPoint, password);
+    }
+
+    private static void ConfirmRemoteModRestart(RemoteModSessionPreparation result)
+    {
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                "需要重启游戏",
+                $"{result.RestartReason}\n\n是否现在重启？",
+                "重启",
+                "取消",
+                button =>
+                {
+                    if (button != MessageDialogButton.Button1)
+                    {
+                        return;
+                    }
+
+                    GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
+                }));
     }
 
     public void UpdateList()
@@ -408,13 +477,13 @@ public class NetPlayScreen : Screen
 
     private void UpdateCollectList()
     {
-        if (!CheckingConnects(ModsManager.CollectConnects))
+        if (!CheckingConnects(ConnectionDirectory.Collected))
         {
             return;
         }
 
-        ModsManager.CollectConnects.Sort((c1, c2) => (int)c2.State - (int)c1.State);
-        foreach (var connection in ModsManager.CollectConnects)
+        ConnectionDirectory.Collected.Sort((c1, c2) => (int)c2.State - (int)c1.State);
+        foreach (var connection in ConnectionDirectory.Collected)
         {
             AddConnectToListWidget(connection);
         }
@@ -424,13 +493,13 @@ public class NetPlayScreen : Screen
 
     private void UpdateLocalList()
     {
-        if (!CheckingConnects(ModsManager.SaveConnects))
+        if (!CheckingConnects(ConnectionDirectory.Saved))
         {
             return;
         }
 
-        ModsManager.SaveConnects.Sort((c1, c2) => (int)c2.State - (int)c1.State);
-        foreach (var connection in ModsManager.SaveConnects)
+        ConnectionDirectory.Saved.Sort((c1, c2) => (int)c2.State - (int)c1.State);
+        foreach (var connection in ConnectionDirectory.Saved)
         {
             AddConnectToListWidget(connection);
         }
@@ -440,22 +509,22 @@ public class NetPlayScreen : Screen
 
     private void UpdateCommunityList()
     {
-        if (!CheckingConnects(ModsManager.OnlineConnects))
+        if (!CheckingConnects(ConnectionDirectory.Discovered))
         {
             return;
         }
 
-        ModsManager.OnlineConnects.Sort((c1, c2) => (int)c2.State - (int)c1.State);
-        foreach (var connnection in ModsManager.OnlineConnects)
+        ConnectionDirectory.Discovered.Sort((c1, c2) => (int)c2.State - (int)c1.State);
+        foreach (var connection in ConnectionDirectory.Discovered)
         {
-            if (_filterType == FilterType.Community && connnection.FromCommunity)
+            if (_filterType == FilterType.Community && connection.FromCommunity)
             {
-                AddConnectToListWidget(connnection);
+                AddConnectToListWidget(connection);
             }
 
-            if (_filterType == FilterType.CommunityOther && connnection.FromCommunityOther)
+            if (_filterType == FilterType.CommunityOther && connection.FromCommunityOther)
             {
-                AddConnectToListWidget(connnection);
+                AddConnectToListWidget(connection);
             }
         }
 
@@ -496,6 +565,7 @@ public class NetPlayScreen : Screen
                 net.PollEvents();
                 Thread.Sleep(1);
             }
+
             Log.Debug("Exit Discover");
         }
         catch (Exception e)
@@ -542,18 +612,19 @@ public class NetPlayScreen : Screen
                     net.PollEvents();
                     Thread.Sleep(1);
                 }
+
                 Log.Debug("Exit Check Connect");
             }
 
             if (c.State == ConnectState.Checking)
             {
-                c.State = ConnectState.Unavaliable;
+                c.State = ConnectState.Unavailable;
             }
         }
         catch (Exception e)
         {
             Log.Error(e);
-            c.State = ConnectState.Unavaliable;
+            c.State = ConnectState.Unavailable;
         }
         finally
         {
@@ -574,12 +645,12 @@ public class NetPlayScreen : Screen
         _worldsListWidget.ClearItems();
         if (_filterType == FilterType.Collect) //收藏
         {
-            var count = ModsManager.CollectConnects.Count;
+            var count = ConnectionDirectory.Collected.Count;
             for (var i = 0; i < count; i++)
             {
-                if (i < ModsManager.CollectConnects.Count)
+                if (i < ConnectionDirectory.Collected.Count)
                 {
-                    var c = ModsManager.CollectConnects[i];
+                    var c = ConnectionDirectory.Collected[i];
                     c.State = ConnectState.Checking;
                     c.FromCollect = true;
                     AddIntoCheckList(c);
@@ -597,12 +668,12 @@ public class NetPlayScreen : Screen
             thread.Start();
             RunningTasks.Add(thread);
 
-            var count = ModsManager.SaveConnects.Count;
+            var count = ConnectionDirectory.Saved.Count;
             for (var i = 0; i < count; i++)
             {
-                if (i < ModsManager.SaveConnects.Count)
+                if (i < ConnectionDirectory.Saved.Count)
                 {
-                    var c = ModsManager.SaveConnects[i];
+                    var c = ConnectionDirectory.Saved[i];
                     c.State = ConnectState.Checking;
                     c.FromLocal = true;
                     AddIntoCheckList(c);
@@ -614,7 +685,7 @@ public class NetPlayScreen : Screen
 
         if (_filterType == FilterType.Community || _filterType == FilterType.CommunityOther) //社区服&其他服
         {
-            ModsManager.OnlineConnects.Clear();
+            ConnectionDirectory.Discovered.Clear();
             LoadExternalServerList(SchubExternalContentProvider.RedirectUri + "/com/serverlist?version=" +
                                    VersionsManager.ProtocolVersion);
             LoadExternalServerList("http://schelper.trk34.top:34340" + "/com/serverlist?version=" +
@@ -632,7 +703,7 @@ public class NetPlayScreen : Screen
             data =>
             {
                 var streamReader = new StreamReader(new MemoryStream(data) { Position = 0L });
-                var connects = ModsManager.DeserializeJson<ServerList>(streamReader.ReadToEnd()) ?? new ServerList();
+                var connects = JsonUtils.Deserialize<ServerList>(streamReader.ReadToEnd()) ?? new ServerList();
                 ProcessConnectList(connects);
             },
             _ => { }
@@ -650,7 +721,7 @@ public class NetPlayScreen : Screen
                 found.FromCommunity = c.Level == 1;
                 found.FromCommunityOther = c.Level == 0;
                 found.State = ConnectState.Checking;
-                ModsManager.OnlineConnects.Add(found);
+                ConnectionDirectory.Discovered.Add(found);
                 AddIntoCheckList(found);
             }
             else
@@ -696,8 +767,8 @@ public class NetPlayScreen : Screen
             _addButton.IsEnabled = _filterType is FilterType.Collect or FilterType.Local;
             _removeButton.IsEnabled = _worldsListWidget.SelectedItem != null &&
                                       _filterType is FilterType.Collect or FilterType.Local;
-            _topBarLabel.Text = LanguageControl.Get("NetPlayScreen", 5) + "(" + _worldsListWidget.Items.Count + ")" +
-                                (LookingForServer ? LanguageControl.Get("NetPlayScreen", 6) : "");
+            _topBarLabel.Text = LanguageManager.Get("NetPlayScreen", 5) + "(" + _worldsListWidget.Items.Count + ")" +
+                                (LookingForServer ? LanguageManager.Get("NetPlayScreen", 6) : "");
             if (Time.PeriodicEvent(0.1f, 0))
             {
                 _refreshTime += 0.1f;
@@ -710,33 +781,33 @@ public class NetPlayScreen : Screen
             _filter2Button.Color = _filterType == FilterType.Collect ? Color.Green : Color.White;
             _filter3Button.Color = _filterType == FilterType.Local ? Color.Green : Color.White;
 
-            var loadingText = LanguageControl.Get("NetPlayScreen", 17);
+            var loadingText = LanguageManager.Get("NetPlayScreen", 17);
             _filter0Button.Text = _filterType == FilterType.Community
                 ? loadingText
-                : LanguageControl.Get("NetPlayScreen", 1);
+                : LanguageManager.Get("NetPlayScreen", 1);
             _filter1Button.Text = _filterType == FilterType.CommunityOther
                 ? loadingText
-                : LanguageControl.Get("NetPlayScreen", 2);
+                : LanguageManager.Get("NetPlayScreen", 2);
             _filter2Button.Text = _filterType == FilterType.Collect
                 ? loadingText
-                : LanguageControl.Get("NetPlayScreen", 3);
+                : LanguageManager.Get("NetPlayScreen", 3);
             _filter3Button.Text = _filterType == FilterType.Local
                 ? loadingText
-                : LanguageControl.Get("NetPlayScreen", 4);
+                : LanguageManager.Get("NetPlayScreen", 4);
 
             if (!_isLoadingList)
             {
                 _filter0Button.Text = _filterType == FilterType.Community
-                    ? LanguageControl.Get("NetPlayScreen", 1)
+                    ? LanguageManager.Get("NetPlayScreen", 1)
                     : _filter0Button.Text;
                 _filter1Button.Text = _filterType == FilterType.CommunityOther
-                    ? LanguageControl.Get("NetPlayScreen", 2)
+                    ? LanguageManager.Get("NetPlayScreen", 2)
                     : _filter1Button.Text;
                 _filter2Button.Text = _filterType == FilterType.Collect
-                    ? LanguageControl.Get("NetPlayScreen", 3)
+                    ? LanguageManager.Get("NetPlayScreen", 3)
                     : _filter2Button.Text;
                 _filter3Button.Text = _filterType == FilterType.Local
-                    ? LanguageControl.Get("NetPlayScreen", 4)
+                    ? LanguageManager.Get("NetPlayScreen", 4)
                     : _filter3Button.Text;
             }
 
@@ -753,19 +824,19 @@ public class NetPlayScreen : Screen
                     {
                         if (CheckCollectConnectExists(connect, out var found))
                         {
-                            ModsManager.CollectConnects.Remove(found!);
+                            ConnectionDirectory.Collected.Remove(found!);
                         }
 
-                        ModsManager.CollectConnects.Add(connect);
+                        ConnectionDirectory.Collected.Add(connect);
                     }
                     else
                     {
                         if (CheckSaveConnectExists(connect, out var found))
                         {
-                            ModsManager.SaveConnects.Remove(found!);
+                            ConnectionDirectory.Saved.Remove(found!);
                         }
 
-                        ModsManager.SaveConnects.Add(connect);
+                        ConnectionDirectory.Saved.Add(connect);
                     }
 
                     AddIntoCheckList(connect);
@@ -780,12 +851,12 @@ public class NetPlayScreen : Screen
                     var c = (Connect)_worldsListWidget.SelectedItem;
                     if (_filterType == FilterType.Collect && CheckCollectConnectExists(c, out var found))
                     {
-                        ModsManager.CollectConnects.Remove(found!);
+                        ConnectionDirectory.Collected.Remove(found!);
                     }
 
                     if (_filterType == FilterType.Local && CheckSaveConnectExists(c, out var found2))
                     {
-                        ModsManager.SaveConnects.Remove(found2!);
+                        ConnectionDirectory.Saved.Remove(found2!);
                     }
 
                     UpdateList();
@@ -799,10 +870,10 @@ public class NetPlayScreen : Screen
                     var c = (Connect)_worldsListWidget.SelectedItem;
                     if (CheckCollectConnectExists(c, out var found))
                     {
-                        ModsManager.CollectConnects.Remove(found!);
+                        ConnectionDirectory.Collected.Remove(found!);
                     }
 
-                    ModsManager.CollectConnects.Add(c);
+                    ConnectionDirectory.Collected.Add(c);
                     DialogsManager.ShowDialog(
                         this,
                         new MessageDialog(
@@ -878,7 +949,7 @@ public class NetPlayScreen : Screen
             _ => 1 // 默认盛夏
         };
 
-        return LanguageControl.Get("SubsystemSeasons", seasonIndex);
+        return LanguageManager.Get("SubsystemSeasons", seasonIndex);
     }
 
     public class ServerList
@@ -910,11 +981,13 @@ public class NetPlayScreen : Screen
 
         public ushort MaxCount;
 
-        public string ModServerAddress = string.Empty;
+        public string ModRepositoryUrl = string.Empty;
 
         public string Name = string.Empty;
 
         public ushort PlayerCount;
+
+        public ModProfile? RequiredModProfile;
 
         public string SavedPassword = string.Empty;
 

@@ -4,6 +4,10 @@
         <Version>$(ScNetworkVersion)</Version>
         <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
         <RootNamespace>Game</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Survivalcraft</PackageId>
+        <Description>Survivalcraft game runtime and mod development contract for SCNET.</Description>
+        <PackageTags>scnet;survivalcraft;modding;game</PackageTags>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
@@ -17,10 +21,6 @@
         <DefineConstants>ANDROID</DefineConstants>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
-        <PackageReference Include="Clipboard.CSharp" Version="1.0.1"/>
-    </ItemGroup>
-
     <ItemGroup>
         <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3"/>
@@ -29,6 +29,12 @@
     <ItemGroup>
         <ProjectReference Include="..\Engine\Engine.csproj"/>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="Modding\Survivalcraft.Mod.targets"
+              Pack="true"
+              PackagePath="buildTransitive\SCNET.Survivalcraft.targets"/>
     </ItemGroup>
 
     <Import Project="..\SharedProperties\GlobalUsing.props"/>

@@ -70,7 +70,7 @@ public class CreativeInventoryPanel : CanvasWidget
         if (_componentCreativeInventory.CategoryIndex != _assignedCategoryIndex)
         {
             if (_creativeInventoryWidget.GetCategoryName(_componentCreativeInventory.CategoryIndex) ==
-                LanguageControl.Get("CreativeInventoryWidget", 2))
+                LanguageManager.Get("CreativeInventoryWidget", 2))
             {
                 _slotIndices = new List<int>(Enumerable.Range(10, _componentCreativeInventory.OpenSlotsCount - 10));
             }

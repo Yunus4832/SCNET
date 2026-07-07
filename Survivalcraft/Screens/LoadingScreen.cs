@@ -1,7 +1,5 @@
-using System.Xml.Linq;
-
 using Engine.Audio;
-using Engine.Graphics;
+using Engine.Media;
 
 using Game.Network.Serialization;
 
@@ -9,20 +7,10 @@ namespace Game.Screens;
 
 public class LoadingScreen : Screen
 {
-    public enum LogType
-    {
-        Info,
-        Warning,
-        Error,
-        Advice
-    }
-
-    private static readonly ListPanelWidget _logList = new()
-        { Direction = LayoutDirection.Vertical, PlayClickSound = false };
-
     private readonly RectangleWidget _background = new()
     {
-        FillColor = SettingsManager.DisplayLog ? Color.Black : Color.White, OutlineThickness = 0f,
+        FillColor = Color.White,
+        OutlineThickness = 0f,
         DepthWriteEnabled = true
     };
 
@@ -30,62 +18,16 @@ public class LoadingScreen : Screen
 
     private readonly List<Action> _loadingActions = [];
 
-    private readonly List<Action> _modLoadingActions = [];
-
-    static LoadingScreen()
-    {
-        _logList.ItemWidgetFactory = obj =>
-        {
-            if (obj is not LogItem logItem)
-            {
-                throw new ArgumentNullException(nameof(logItem));
-            }
-
-            var canvasWidget = new CanvasWidget
-            {
-                Size = new Vector2(Display.Viewport.Width, 40), Margin = new Vector2(0, 2),
-                HorizontalAlignment = WidgetAlignment.Near
-            };
-            var fontTextWidget = new FontTextWidget
-            {
-                FontScale = 0.6f, Text = logItem.Message, Color = GetColor(logItem.LogType),
-                VerticalAlignment = WidgetAlignment.Center, HorizontalAlignment = WidgetAlignment.Near
-            };
-            canvasWidget.Children.Add(fontTextWidget);
-            canvasWidget.IsVisible = SettingsManager.DisplayLog;
-            _logList.IsEnabled = SettingsManager.DisplayLog;
-            return canvasWidget;
-        };
-        _logList.ItemSize = 30;
-    }
-
     public LoadingScreen()
     {
         _canvas.Size = new Vector2(float.PositiveInfinity);
         _canvas.AddChildren(_background);
-        _canvas.AddChildren(_logList);
         AddChildren(_canvas);
-        Info("Initializing Mods Manager. Api Version: " + ModsManager.ApiVersion);
-    }
-
-    public static Color GetColor(LogType type)
-    {
-        return type switch
-        {
-            LogType.Advice => Color.Cyan,
-            LogType.Error => Color.Red,
-            LogType.Warning => Color.Yellow,
-            _ => Color.White
-        };
+        Log.Information("Initializing Mods Manager. Api Version: " + ModPlatformInfo.ApiVersion);
     }
 
     public void ContentLoaded()
     {
-        if (SettingsManager.DisplayLog)
-        {
-            return;
-        }
-
         ClearChildren();
         var rectangle1 = new RectangleWidget
         {
@@ -109,166 +51,70 @@ public class LoadingScreen : Screen
         _canvas.AddChildren(rectangle1);
         _canvas.AddChildren(rectangle2);
         _canvas.AddChildren(busyBar);
-        _canvas.AddChildren(_logList);
         AddChildren(_canvas);
-    }
-
-    public static void Error(string msg)
-    {
-        Add(LogType.Error, "[Error]" + msg);
-    }
-
-    public static void Info(string msg)
-    {
-        Add(LogType.Info, "[Info]" + msg);
-    }
-
-    public static void Warning(string msg)
-    {
-        Add(LogType.Warning, "[Warning]" + msg);
-    }
-
-    public static void Advice(string msg)
-    {
-        Add(LogType.Advice, "[Advice]" + msg);
-    }
-
-    public static void Add(LogType type, string msg)
-    {
-        Dispatcher.Dispatch(delegate
-        {
-            var item = new LogItem(type, msg);
-            _logList.AddItem(item);
-            switch (type)
-            {
-                case LogType.Info:
-                case LogType.Advice: Log.Information(msg); break;
-                case LogType.Error: Log.Error(msg); break;
-                case LogType.Warning: Log.Warning(msg); break;
-            }
-
-            _logList.ScrollToItem(item);
-        });
     }
 
     private void InitActions()
     {
         AddLoadAction(delegate
         {
-            //将所有的有效的 scmod 读取为ModEntity，并自动添加 SurvivalCraftModEntity
+            LocalModsImportManager.ImportInstalledMods(
+                Storage.GetSystemPath(GamePaths.Mods),
+                Storage.GetSystemPath(GamePaths.ModCache),
+                Log.Information
+            );
+            var startupSession = SessionInfoManager.ResolveStartupSession();
+            if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
+                    RunningSettingManager.Current.ActiveSessionId,
+                    startupSession,
+                    Storage.GetSystemPath(GamePaths.ModCache),
+                    Log.Information))
+            {
+                return;
+            }
+
+            Log.Information("初始化模组运行时");
             ContentManager.Initialize();
-            ModsManager.Initialize();
+            var profile = ModProfileManager.LoadEffectiveProfile(
+                RunningSettingManager.Current.ActiveSessionId,
+                startupSession
+            );
+            GameEntry.SetModRuntime(GameModRuntime.StartFromProfile(
+                    profile,
+                    Storage.GetSystemPath(GamePaths.ModCache),
+                    ModSide.Client,
+                    Log.Information
+                )
+            );
+            CurrentModRuntime.Value!.InitializeAssets();
+            LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
         });
         AddLoadAction(ContentLoaded);
-
         AddLoadAction(delegate
         {
-            //检查所有Mod依赖项
-            //根据加载顺序排序后的结果
-            ModsManager.ModList.Clear();
-            foreach (var item in ModsManager.ModListAll)
-            {
-                if (item.IsDependencyChecked)
-                {
-                    continue;
-                }
-
-                item.CheckDependencies(ModsManager.ModList);
-            }
-
-            foreach (var item in ModsManager.ModListAll)
-            {
-                item.IsDependencyChecked = false;
-            }
-        });
-        AddLoadAction(delegate
-        {
-            //初始化所有ModEntity的语言包
-            // 初始化语言列表
-            var axa = ContentManager.List("Lang");
-            LanguageControl.LanguageTypes.Clear();
-            foreach (var contentInfo in axa)
-            {
-                var px = Path.GetFileNameWithoutExtension(contentInfo.Filename);
-                if (!LanguageControl.LanguageTypes.Contains(px))
-                {
-                    LanguageControl.LanguageTypes.Add(px);
-                }
-            }
-
-            if (ModsManager.Configs.ContainsKey("Language") &&
-                LanguageControl.LanguageTypes.Contains(ModsManager.Configs["Language"]))
-            {
-                LanguageControl.Initialize(ModsManager.Configs["Language"]);
-            }
-            else
-                // 如果不支持系統語言，英語是最佳選擇
-            {
-                LanguageControl.Initialize("zh-CN");
-            }
-
-            ModsManager.ModListAllDo(modEntity => { modEntity.LoadLanguage(); });
-            LanguageControl.RefreshCommonWords();
+            Log.Information("初始化语言资源");
+            CurrentModRuntime.Value!.InitializeLanguage(
+                AppConfigStore.Values.TryGetValue("Language", out var language) ? language : "zh-CN");
         });
         AddLoadAction(PackageManager.Initialize);
         AddLoadAction(delegate
         {
-            //读取所有的ModEntity的dll，并分离出ModLoader，保存Blocks
-            ModsManager.ModListAllDo(modEntity => { modEntity.LoadDll(); });
-        });
-        AddLoadAction(delegate
-        {
-            Info("执行初始化任务");
-            var actions = new List<Action>();
-            ModsManager.ModListAllDo(modEntity => { modEntity.Loader?.OnLoadingStart(actions); });
-            foreach (var ac in actions)
-            {
-                _modLoadingActions.Add(ac);
-            }
-        });
-        AddLoadAction(delegate
-        {
-            //初始化TextureAtlas
-            Info("初始化纹理地图");
+            // 初始化TextureAtlas
+            Log.Information("初始化纹理地图");
             TextureAtlasManager.Initialize();
         });
         AddLoadAction(delegate
         {
-            //初始化Database
+            Log.Information("初始化内置内容数据");
             try
             {
-                DatabaseManager.Initialize();
-                ModsManager.ModListAllDo(modEntity => { modEntity.LoadXdb(ref DatabaseManager.DatabaseNodeField); });
+                CurrentModRuntime.Value!.InitializeContentData();
             }
             catch (Exception e)
             {
-                Warning(e.Message);
+                Log.Warning(e.Message);
             }
         });
-        AddLoadAction(delegate
-        {
-            Info("读取数据库");
-            try
-            {
-                if (DatabaseManager.DatabaseNodeField == null)
-                {
-                    return;
-                }
-
-                DatabaseManager.LoadDataBaseFromXml(DatabaseManager.DatabaseNodeField);
-            }
-            catch (Exception e)
-            {
-                Warning(e.Message);
-            }
-        });
-        AddLoadAction(delegate
-        {
-            //初始化方块管理器
-            Info("初始化方块管理器");
-            BlocksManager.Initialize();
-        });
-        AddLoadAction(CraftingRecipesManager.Initialize);
         InitScreens();
         AddLoadAction(delegate
         {
@@ -278,41 +124,16 @@ public class LoadingScreen : Screen
             ExternalContentManager.Initialize();
             FurniturePacksManager.Initialize();
             LightingManager.Initialize();
-            MotdManager.Initialize();
-            VersionsManager.Initialize();
             WorldsManager.Initialize();
         });
         AddLoadAction(delegate
         {
-            Info("初始化Mod设置参数");
-            if (!Storage.FileExists(ModsManager.ModsSettingPath))
+            if (!SessionInfoManager.TryRestoreGuiSession())
             {
-                return;
+                ScreensManager.SwitchScreen("MainMenu");
             }
 
-            using var stream = Storage.OpenFile(ModsManager.ModsSettingPath, OpenFileMode.Read);
-            try
-            {
-                var element = XElement.Load(stream);
-                ModsManager.LoadModSettings(element);
-            }
-            catch (Exception e)
-            {
-                Warning(e.Message);
-            }
-        });
-        AddLoadAction(delegate
-        {
-            ModsManager.ModListAllDo(modEntity =>
-            {
-                Info("等待剩下的任务完成:" + modEntity.ModInfo.PackageName);
-                modEntity.Loader?.OnLoadingFinished(_modLoadingActions);
-            });
-        });
-        AddLoadAction(delegate
-        {
-            ScreensManager.SwitchScreen("MainMenu");
-            //如果音频库加载失败，则禁止声音播放
+            // 如果音频库加载失败，则禁止声音播放
             if (!Mixer.IsAudioInitialized)
             {
                 DialogsManager.Alert("音频系统加载失败，设备播放声音可能出现问题");
@@ -342,6 +163,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("SettingsControls", new SettingsControlsScreen()); });
         AddLoadAction(delegate { AddScreen("Play", new PlayScreen()); });
         AddLoadAction(delegate { AddScreen("NewWorld", new NewWorldScreen()); });
+        AddLoadAction(delegate { AddScreen("WorldServerSettings", new WorldServerSettingsScreen()); });
         AddLoadAction(delegate { AddScreen("ModifyWorld", new ModifyWorldScreen()); });
         AddLoadAction(delegate { AddScreen("WorldOptions", new WorldOptionsScreen()); });
         AddLoadAction(delegate { AddScreen("GameLoading", new GameLoadingScreen()); });
@@ -349,8 +171,8 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("ExternalContent", new ExternalContentScreen()); });
         AddLoadAction(delegate { AddScreen("CommunityContent", new CommunityContentScreen()); });
         AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
+        AddLoadAction(delegate { AddScreen("ModManagement", new ModManagementScreen()); });
         AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
-        AddLoadAction(delegate { AddScreen("ModsManageContent", new ModsManageContentScreen()); });
         AddLoadAction(delegate { AddScreen("ManageUser", new ManageUserScreen()); });
         AddLoadAction(delegate { AddScreen("Players", new PlayersScreen()); });
         AddLoadAction(delegate { AddScreen("Player", new PlayerScreen()); });
@@ -369,8 +191,7 @@ public class LoadingScreen : Screen
 
     public override void Leave()
     {
-        _logList.ClearItems();
-        Window.VSync = SettingsManager.VSync;
+        Window.VSync = SettingsManager.Current.VSync;
         ContentManager.Dispose("Textures/Gui/CandyRufusLogo");
         ContentManager.Dispose("Textures/Gui/EngineLogo");
     }
@@ -402,8 +223,8 @@ public class LoadingScreen : Screen
     {
         if (Input.Back || Input.Cancel)
         {
-            DialogsManager.ShowDialog(null, new MessageDialog(LanguageControl.Warning, "Quit?", LanguageControl.Ok,
-                LanguageControl.No, vt =>
+            DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Warning, "Quit?", LanguageManager.Ok,
+                LanguageManager.No, vt =>
                 {
                     if (vt == MessageDialogButton.Button1)
                     {
@@ -416,52 +237,27 @@ public class LoadingScreen : Screen
                 }));
         }
 
-        if (!ModsManager.GetAllowContinue())
+        if (_loadingActions.Count <= 0)
         {
             return;
         }
 
-        if (_modLoadingActions.Count > 0)
+        try
         {
-            try
-            {
-                _modLoadingActions[0].Invoke();
-            }
-            catch (Exception e)
-            {
-                Error(e.Message);
-            }
-            finally
-            {
-                _modLoadingActions.RemoveAt(0);
-            }
+            _loadingActions[0].Invoke();
         }
-        else
+        catch (Exception e)
         {
-            if (_loadingActions.Count <= 0)
-            {
-                return;
-            }
-
-            try
-            {
-                _loadingActions[0].Invoke();
-            }
-            catch (Exception e)
-            {
-                Error(e.Message);
-            }
-            finally
+            ExceptionManager.ReportExceptionToUser("Startup failed.", e);
+            _loadingActions.Clear();
+        }
+        finally
+        {
+            if (_loadingActions.Count > 0)
             {
                 _loadingActions.RemoveAt(0);
             }
         }
     }
 
-    private class LogItem(LogType type, string log)
-    {
-        public readonly LogType LogType = type;
-
-        public readonly string Message = log;
-    }
 }

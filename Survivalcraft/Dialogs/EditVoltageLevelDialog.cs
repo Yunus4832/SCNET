@@ -52,8 +52,8 @@ public class EditVoltageLevelDialog : Dialog
         {
             1.5f * _voltageLevel / 15f,
             _voltageLevel < 8
-                ? LanguageControl.Get("EditBatteryDialog", 1)
-                : LanguageControl.Get("EditBatteryDialog", 2)
+                ? LanguageManager.Get("EditBatteryDialog", 1)
+                : LanguageManager.Get("EditBatteryDialog", 2)
         });
         _voltageSlider.Value = _voltageLevel;
     }

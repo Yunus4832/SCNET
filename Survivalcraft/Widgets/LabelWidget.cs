@@ -45,11 +45,11 @@ public class LabelWidget : Widget
             if (value.StartsWith('[') && value.EndsWith(']'))
             {
                 var xp = value.Substring(1, value.Length - 2).Split([':']);
-                field = xp.Length > 1 ? LanguageControl.GetContentWidgets(xp[0], xp[1]) : value;
+                field = xp.Length > 1 ? LanguageManager.GetContentWidgets(xp[0], xp[1]) : value;
             }
             else
             {
-                field = LanguageControl.Get("Usual", value);
+                field = LanguageManager.Get("Usual", value);
             }
 
             _linesSize = Vector2.Zero;

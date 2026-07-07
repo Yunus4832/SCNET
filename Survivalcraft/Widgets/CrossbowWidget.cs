@@ -63,12 +63,12 @@ public class CrossbowWidget : CanvasWidget
         {
             if (draw < 15)
             {
-                _instructionsLabel.Text = LanguageControl.Get(_typeName, 0);
+                _instructionsLabel.Text = LanguageManager.Get(_typeName, 0);
             }
             else
             {
                 _instructionsLabel.Text =
-                    !arrowType.HasValue ? LanguageControl.Get(_typeName, 1) : LanguageControl.Get(_typeName, 2);
+                    !arrowType.HasValue ? LanguageManager.Get(_typeName, 1) : LanguageManager.Get(_typeName, 2);
             }
 
             if ((draw < 15 || !arrowType.HasValue) && Input.Tap.HasValue &&

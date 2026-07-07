@@ -59,7 +59,7 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
             ResultCount = 4,
             ResultValue = Terrain.MakeBlockValue(254, 0, 0),
             RequiredHeatLevel = 0f,
-            Description = LanguageControl.Get(GetType().Name, 1),
+            Description = LanguageManager.Get(GetType().Name, 1),
             Ingredients =
             {
                 [1] = "glass",

@@ -119,7 +119,7 @@ public class PaintBucketBlock : BucketBlock
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
     {
         var color = GetColor(Terrain.ExtractData(value));
-        return SubsystemPalette.GetName(color, LanguageControl.Get("BasePaintBucketBlock", 1));
+        return SubsystemPalette.GetName(color, LanguageManager.Get("BasePaintBucketBlock", 1));
     }
 
     public override int GetDamageDestructionValue(int value)

@@ -60,7 +60,7 @@ public static class CommonLib
 
     public static bool StartServer()
     {
-        return Net.StartServer(SettingsManager.ServerPort, SettingsManager.BroadcastPort);
+        return Net.StartServer(SettingsManager.Current.ServerPort, SettingsManager.Current.BroadcastPort);
     }
 
     public static NetDataWriter GetWriter(PackageStreamWriter writer, out int size)
@@ -106,7 +106,7 @@ public static class CommonLib
         c.HasPassword = r.GetBool();
         c.IsNeedLoginCommunity = r.GetBool();
         c.TimeOfDay = r.GetFloat();
-        c.State = NetPlayScreen.ConnectState.Avaliable;
+        c.State = NetPlayScreen.ConnectState.Available;
         c.UsedTime = s.ElapsedMilliseconds;
         if (!isLocal)
         {
@@ -136,7 +136,7 @@ public static class CommonLib
     {
         if (Uri.TryCreate("http://" + ip, UriKind.Absolute, out var uri))
         {
-            var port = uri.IsDefaultPort ? SettingsManager.ServerPort : uri.Port;
+            var port = uri.IsDefaultPort ? SettingsManager.Current.ServerPort : uri.Port;
             if (IPAddress.TryParse(uri.Host, out var addr))
             {
                 ep = new IPEndPoint(addr, port);

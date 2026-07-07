@@ -110,12 +110,12 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
         var subsystemGameInfo = subsystemTerrain.Project.FindSubsystem<SubsystemGameInfo>(true)!;
         WorldSettings = subsystemGameInfo.WorldSettings;
         _seed = subsystemGameInfo.WorldSeed;
-        _islandSize = WorldSettings.TerrainGenerationMode == TerrainGenerationMode.Island
+        _islandSize = TerrainGenerationModes.IsIsland(WorldSettings.TerrainGenerationMode)
             ? new Vector2?(WorldSettings.IslandSize)
             : null;
         var oldRandom = new OldRandom(100 + _seed);
         var random = new Random(_seed);
-        if (string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.OriginalSerializationVersion))
+        if (TerrainGenerationModes.IsPre21(WorldSettings.TerrainGenerationMode))
         {
             _oceanCorner = new Vector2(oldRandom.UniformFloat(2000f, 4000f), oldRandom.UniformFloat(2000f, 4000f));
             _temperatureOffset = new Vector2(1000f, 1000f);
@@ -139,34 +139,6 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
             _tgTurbulenceStrength = 13f;
             _tgTurbulenceTopOffset = 3f;
             _tgTurbulencePower = 0.5f;
-            _tgSurfaceMultiplier = 1f;
-            _tgExtras = true;
-            _tgCavesAndPockets = true;
-        }
-        else if (string.CompareOrdinal(subsystemGameInfo.WorldSettings.OriginalSerializationVersion, "2.1") < 0)
-        {
-            _oceanCorner = new Vector2(oldRandom.UniformFloat(2000f, 4000f), oldRandom.UniformFloat(2000f, 4000f));
-            _temperatureOffset = new Vector2(1000f, 1000f);
-            _humidityOffset = new Vector2(0f, 0f);
-            _mountainsOffset = new Vector2(0f, 0f);
-            _riversOffset = new Vector2(0f, 0f);
-            _tgNewBiomeNoise = false;
-            _tgBiomeScaling = 1f;
-            _tgShoreFluctuations = 100f;
-            _tgShoreFluctuationsScaling = 1f;
-            _tgOceanSlope = 0.015f;
-            _tgOceanSlopeVariation = 0f;
-            _tgIslandsFrequency = 0.017f;
-            _tgDensityBias = 57f;
-            _tgHeightBias = 1f;
-            _tgRiversStrength = 0f;
-            _tgMountainsStrength = 50f;
-            _tgMountainsPeriod = 0.0014f;
-            _tgMountainsPercentage = 0.15f;
-            _tgHillsStrength = 10f;
-            _tgTurbulenceStrength = 24f;
-            _tgTurbulenceTopOffset = 0f;
-            _tgTurbulencePower = 0.3f;
             _tgSurfaceMultiplier = 1f;
             _tgExtras = true;
             _tgCavesAndPockets = true;

@@ -42,7 +42,7 @@ public class SubsystemBoatBlockBehavior : SubsystemBlockBehavior
         else
         {
             componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                LanguageControl.Get(_typeName, 1),
+                LanguageManager.Get(_typeName, 1),
                 Color.White,
                 true,
                 false
