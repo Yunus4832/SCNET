@@ -108,6 +108,11 @@
     </Folder>
 
     <Folder Name="/07 Tools/">
+        <Project Path="LanguageTool\LanguageTool.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+        </Project>
         <Project Path="WorldUpgradeTool\WorldUpgradeTool.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>

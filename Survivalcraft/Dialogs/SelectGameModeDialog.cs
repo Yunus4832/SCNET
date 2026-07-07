@@ -20,7 +20,7 @@ public class SelectGameModeDialog : ListSelectionDialog
             obj.Children.Find<LabelWidget>("SelectGameModeItem.Name")!.Text =
                 LanguageManager.Get("GameMode", gameMode.ToString());
             obj.Children.Find<LabelWidget>("SelectGameModeItem.Description")!.Text =
-                StringsManager.GetString("GameMode." + gameMode + ".Description");
+                StringsManager.GetString("GameMode", gameMode, "Description");
             return obj;
         },
         delegate(object item) { selectionHandler((GameMode)item); }

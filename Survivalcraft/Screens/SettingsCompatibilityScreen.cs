@@ -44,13 +44,13 @@ public class SettingsCompatibilityScreen : Screen
         {
             SettingsManager.Current.MultithreadedTerrainUpdate = !SettingsManager.Current.MultithreadedTerrainUpdate;
             _descriptionLabel.Text =
-                StringsManager.GetString("Settings.Compatibility.SingleThreadTerrainUpdate.Description");
+                StringsManager.GetString("Settings", "Compatibility", "SinglethreadedTerrainUpdate", "Description");
         }
 
         if (_useReducedZRangeButton.IsClicked)
         {
             SettingsManager.Current.UseReducedZRange = !SettingsManager.Current.UseReducedZRange;
-            _descriptionLabel.Text = StringsManager.GetString("Settings.Compatibility.UseReducedZRange.Description");
+            _descriptionLabel.Text = StringsManager.GetString("Settings", "Compatibility", "UseReducedZRange", "Description");
         }
 
         if (_enableModButton.IsClicked)

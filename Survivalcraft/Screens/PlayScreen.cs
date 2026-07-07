@@ -17,7 +17,6 @@ public class PlayScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/PlayScreen");
         LoadContents(this, node);
         _worldsListWidget = Children.Find<ListPanelWidget>("WorldsList")!;
-        Children.Find<BevelledButtonWidget>("Play")!.Text = "创建服务器";
         var worldsListWidget = _worldsListWidget;
         worldsListWidget.ItemWidgetFactory = (Func<object, Widget>)Delegate.Combine(
             worldsListWidget.ItemWidgetFactory,
@@ -30,7 +29,7 @@ public class PlayScreen : Screen
                 var labelWidget2 = containerWidget.Children.Find<LabelWidget>("WorldItem.Details")!;
                 containerWidget.Tag = worldInfo;
                 labelWidget.Text = worldInfo.WorldSettings.RunServer
-                    ? worldInfo.WorldSettings.Name + "[联机档]"
+                    ? worldInfo.WorldSettings.Name + LanguageManager.GetContentWidgets(_typeName, 11)
                     : worldInfo.WorldSettings.Name;
                 labelWidget2.Text =
                     $"{DataSizeFormatter.Format(worldInfo.Size)} | {worldInfo.LastSaveTime.ToLocalTime():dd MMM yyyy HH:mm} | {(worldInfo.PlayerInfos.Count > 1
@@ -102,20 +101,7 @@ public class PlayScreen : Screen
         Children.Find("Properties")!.IsEnabled = _worldsListWidget.SelectedItem != null;
         if (Children.Find<ButtonWidget>("Play")!.IsClicked && _worldsListWidget.SelectedItem != null)
         {
-            var alertDialog = new AlertDialog(
-                "提示",
-                "是否创建服务器",
-                "是",
-                "否",
-                () =>
-                {
-                    var info = (WorldInfo)_worldsListWidget.SelectedItem;
-                    info.WorldSettings.RunServer = true;
-                    Play(_worldsListWidget.SelectedItem);
-                },
-                DialogsManager.HideAllDialogs
-            );
-            DialogsManager.ShowDialog(null, alertDialog);
+            Play(_worldsListWidget.SelectedItem);
         }
 
         if (Children.Find<ButtonWidget>("NewWorld")!.IsClicked)
@@ -163,7 +149,9 @@ public class PlayScreen : Screen
 
     private void PrepareWorldModsAndPlay(WorldInfo worldInfo)
     {
-        var busyDialog = new BusyDialog("准备世界模组", "正在检查所需模组...");
+        var busyDialog = new BusyDialog(
+            LanguageManager.GetContentWidgets(_typeName, 12),
+            LanguageManager.GetContentWidgets(_typeName, 13));
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
         {
@@ -190,8 +178,8 @@ public class PlayScreen : Screen
                 {
                     DialogsManager.HideDialog(busyDialog);
                     DialogsManager.Alert(
-                        "模组准备失败",
-                        $"无法准备该世界需要的模组。\n{ex.Message}");
+                        LanguageManager.GetContentWidgets(_typeName, 14),
+                        string.Format(LanguageManager.GetContentWidgets(_typeName, 15), ex.Message));
                 });
             }
         });
@@ -202,10 +190,10 @@ public class PlayScreen : Screen
         DialogsManager.ShowDialog(
             null,
             new MessageDialog(
-                "需要重启游戏",
-                $"{result.RestartReason}\n\n是否现在重启？",
-                "重启",
-                "取消",
+                LanguageManager.GetContentWidgets(_typeName, 16),
+                string.Format(LanguageManager.GetContentWidgets(_typeName, 17), result.RestartReason),
+                LanguageManager.GetContentWidgets(_typeName, 18),
+                LanguageManager.GetContentWidgets("Usual", "cancel"),
                 button =>
                 {
                     if (button != MessageDialogButton.Button1)
@@ -230,9 +218,9 @@ public class PlayScreen : Screen
                 DialogsManager.ShowDialog(
                     this,
                     new MessageDialog(
-                        "提示",
-                        "创建服务器失败：端口被占用",
-                        "确定",
+                        LanguageManager.GetContentWidgets("Usual", "warning"),
+                        LanguageManager.GetContentWidgets(_typeName, 19),
+                        LanguageManager.GetContentWidgets("Usual", "ok"),
                         string.Empty,
                         _ =>
                         {

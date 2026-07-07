@@ -158,12 +158,12 @@ public class PlayersScreen : Screen
                                         {
                                             new LabelWidget
                                             {
-                                                Text = StringsManager.GetString("ScreenLayout." + str + ".Name"),
+                                                Text = StringsManager.GetString("ScreenLayout", str, "Name"),
                                                 Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
                                             },
                                             new LabelWidget
                                             {
-                                                Text = StringsManager.GetString("ScreenLayout." + str + ".Description"),
+                                                Text = StringsManager.GetString("ScreenLayout", str, "Description"),
                                                 Font = ContentManager.Get<BitmapFont>("Fonts/Pericles"),
                                                 Color = Color.Gray
                                             }

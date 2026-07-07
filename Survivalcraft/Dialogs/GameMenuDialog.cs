@@ -89,9 +89,10 @@ public class GameMenuDialog : Dialog
             LanguageManager.Get("EnvironmentBehaviorMode",
                 subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode.ToString()));
         AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 7),
-            StringsManager.GetString("TerrainGenerationMode." +
-                                     TerrainGenerationModes.ToDisplayMode(subsystemGameInfo.WorldSettings
-                                         .TerrainGenerationMode) + ".Name"));
+            StringsManager.GetString(
+                "TerrainGenerationMode",
+                TerrainGenerationModes.ToDisplayMode(subsystemGameInfo.WorldSettings.TerrainGenerationMode),
+                "Name"));
         var seed = subsystemGameInfo.WorldSettings.Seed;
         AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 8),
             !string.IsNullOrEmpty(seed) ? seed : LanguageManager.Get(_typeName, 9));
