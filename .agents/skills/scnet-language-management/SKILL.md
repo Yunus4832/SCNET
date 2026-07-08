@@ -12,8 +12,11 @@ Run commands from the repository root. Prefer these navigation commands before r
 ```bash
 dotnet run --project LanguageTool -- check
 dotnet run --project LanguageTool -- rules
+dotnet run --project LanguageTool -- overview . --depth 1
+dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 80
 dotnet run --project LanguageTool -- children ContentWidgets
 dotnet run --project LanguageTool -- search Restart --culture en-US --prefix ContentWidgets --limit 20
+dotnet run --project LanguageTool -- table Help --fields Title,Name --limit 12
 ```
 
 ## Workflow
@@ -22,6 +25,9 @@ dotnet run --project LanguageTool -- search Restart --culture en-US --prefix Con
 
 ```bash
 dotnet run --project LanguageTool -- rules
+dotnet run --project LanguageTool -- overview . --depth 1
+dotnet run --project LanguageTool -- overview ContentWidgets --depth 2 --limit 120
+dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 80
 dotnet run --project LanguageTool -- children ContentWidgets.ModManagementScreen
 dotnet run --project LanguageTool -- show ContentWidgets.ModManagementScreen --culture zh-CN --depth 1 --limit 80
 dotnet run --project LanguageTool -- list --culture zh-CN --prefix ContentWidgets.ModManagementScreen
@@ -35,7 +41,27 @@ dotnet run --project LanguageTool -- search server --culture all --prefix Conten
 dotnet run --project LanguageTool -- search WorldServerSettings --culture en-US --in path
 ```
 
-3. Add or update one string key in all supported languages:
+3. Audit structured sections across cultures without opening large JSON files:
+
+```bash
+dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 80
+dotnet run --project LanguageTool -- table Help --fields Title,Name --limit 20
+dotnet run --project LanguageTool -- table ContentWidgets.ModManagementScreen --fields value --cultures zh-CN,en-US
+```
+
+Use `overview` first when you need a level/depth map of a language subtree. It reports node kind, scalar fields, child keys, previews and structural issues. Use `.` or `/` for the root path.
+Use `table` when a section contains numbered child objects or metadata fields and you need to compare mapping/order across languages.
+
+4. Synchronize invariant metadata fields from the canonical language:
+
+```bash
+dotnet run --project LanguageTool -- sync-field Help Name --from zh-CN --remove-extra --dry-run
+dotnet run --project LanguageTool -- sync-field Help Name --from zh-CN --remove-extra
+```
+
+Use `sync-field` for runtime IDs or non-translatable metadata such as `Help.*.Name`. Do not use it for localized display text such as `Title` or `value`.
+
+5. Add or update one string key in all supported languages:
 
 ```bash
 dotnet run --project LanguageTool -- set ContentWidgets.SomeScreen.SomeKey \
@@ -45,19 +71,19 @@ dotnet run --project LanguageTool -- set ContentWidgets.SomeScreen.SomeKey \
   --ru-RU Русский
 ```
 
-4. Rename a key in all language files:
+6. Rename a key in all language files:
 
 ```bash
 dotnet run --project LanguageTool -- rename OldScreen.OldKey NewScreen.NewKey
 ```
 
-5. Remove a key from all language files:
+7. Remove a key from all language files:
 
 ```bash
 dotnet run --project LanguageTool -- remove SomeScreen.ObsoleteKey
 ```
 
-6. Always validate after a localization change:
+8. Always validate after a localization change:
 
 ```bash
 dotnet run --project LanguageTool -- check
@@ -67,6 +93,9 @@ dotnet run --project LanguageTool -- check
 
 - Do not directly edit language JSON for normal localization key changes.
 - Prefer complete four-language updates. `set` requires all four languages unless `--allow-partial` is intentionally used.
+- Use `overview` for level/depth navigation before opening large language files.
+- Use `table` before reading large language files when diagnosing cross-language section mapping.
+- Treat fields like `Help.*.Name` as invariant runtime identifiers; use `sync-field` to keep them identical across cultures.
 - Use JSON path dots only as path separators, for example `ContentWidgets.PlayScreen.12` or `ContentWidgets.WorldServerSettingsScreen.PortDescription`.
 - `LanguageManager.Get("PlayScreen", 12)` usually corresponds to `ContentWidgets.PlayScreen.12` in the JSON files.
 - `LanguageManager.Get(section, key)` corresponds to `{section}.{key}`.

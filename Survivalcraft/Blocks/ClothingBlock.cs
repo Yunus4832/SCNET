@@ -18,7 +18,7 @@ public class ClothingBlock : Block
         Matrix.CreateTranslation(0f, -0.1f, 0f) * Matrix.CreateScale(2.7f)
     ];
 
-    private DynamicArray<ClothingData> _clothingData = [];
+    private DynamicArray<ClothingData?> _clothingData = [];
 
     private static XElement? _initializationData;
 
@@ -35,20 +35,6 @@ public class ClothingBlock : Block
             int.TryParse(item.Attribute("Index")?.Value, out var clothIndex);
             var newDescription = item.Attribute("Description")?.Value;
             var newDisplayName = item.Attribute("DisplayName")?.Value;
-            if (newDescription != null && newDescription.StartsWith('[') && newDescription.EndsWith(']') &&
-                LanguageManager.TryGetBlock($"{GetType().Name}:{clothIndex}", "Description",
-                    out var d))
-            {
-                newDescription = d;
-            }
-
-            if (newDisplayName != null && newDisplayName.StartsWith('[') && newDisplayName.EndsWith(']') &&
-                LanguageManager.TryGetBlock($"{GetType().Name}:{clothIndex}", "DisplayName",
-                    out var n))
-            {
-                newDisplayName = n;
-            }
-
             var clothingData = new ClothingData
             {
                 Index = clothIndex,
@@ -197,9 +183,9 @@ public class ClothingBlock : Block
     public override ClothingData GetClothingData(int data)
     {
         var num = GetClothingIndex(data);
-        if (num >= 0 && num < _clothingData.Count && _clothingData[num] != null)
+        if (num >= 0 && num < _clothingData.Count && _clothingData[num] is not null)
         {
-            return _clothingData[num];
+            return _clothingData[num]!;
         }
 
         for (var i = 0; i < _clothingData.Count; i++)
@@ -210,7 +196,7 @@ public class ClothingBlock : Block
             }
 
             Log.Warning($"Invalid clothing index {num}, fallback to {i}.");
-            return _clothingData[i];
+            return _clothingData[i]!;
         }
 
         throw new InvalidOperationException($"No clothing data available. Requested index={num}.");
@@ -218,7 +204,7 @@ public class ClothingBlock : Block
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        IEnumerable<ClothingData> enumerable = _clothingData.OrderBy(cd => cd.DisplayIndex);
+        IEnumerable<ClothingData?> enumerable = _clothingData.OrderBy(cd => cd?.DisplayIndex);
         foreach (var clothingData in enumerable)
         {
             if (clothingData == null)
@@ -257,15 +243,15 @@ public class ClothingBlock : Block
                 CraftingRecipesManager.DecodeIngredient(item, out var craftingId, out var data);
                 if (craftingId == BlocksManager.Blocks[203].CraftingId)
                 {
-                    num3 = Terrain.MakeBlockValue(203, 0, data.HasValue ? data.Value : 0);
+                    num3 = Terrain.MakeBlockValue(203, 0, data ?? 0);
                 }
                 else if (craftingId == BlocksManager.Blocks[129].CraftingId)
                 {
-                    num = Terrain.MakeBlockValue(129, 0, data.HasValue ? data.Value : 0);
+                    num = Terrain.MakeBlockValue(129, 0, data ?? 0);
                 }
                 else if (craftingId == BlocksManager.Blocks[128].CraftingId)
                 {
-                    num2 = Terrain.MakeBlockValue(128, 0, data.HasValue ? data.Value : 0);
+                    num2 = Terrain.MakeBlockValue(128, 0, data ?? 0);
                 }
             }
 
