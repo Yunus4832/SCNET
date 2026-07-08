@@ -1196,7 +1196,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             return true;
         }
 
-        if (!SubsystemBedrockBlockBehavior.CheckIsInTerritoriyBorder(x, z, out var territoriy))
+        if (!SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(x, z, out var territoriy))
         {
             return true;
         }
@@ -1206,7 +1206,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             return true;
         }
 
-        if (SubsystemBedrockBlockBehavior.AllowPlayerAction(Player, territoriy))
+        if (SubsystemTerritoryBlockBehavior.AllowPlayerAction(Player, territoriy))
         {
             return true;
         }

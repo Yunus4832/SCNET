@@ -2595,6 +2595,11 @@
         "FallenLeavesBlock:0": {
             "DisplayName": "Leaf Falling (em inglês)",
             "Description": "As folhas que caem das árvores no outono"
+        },
+        "TerritoryBlock:0": {
+            "DisplayName": "Pedra de Território",
+            "Description": "Coloca-a para obter permissão de escavação e construção na área envolvente de 1x1 chunk. Cada jogador só pode possuir uma Pedra de Território.",
+            "CRDescription:0": "Cria uma Pedra de Território com lingotes de cobre, diamante, lingotes de ferro e granito"
         }
     },
     "Help": {
@@ -3687,6 +3692,9 @@
             "26": "Mudança sazonal",
             "27": "A duração de um ano",
             "28": "Temporada"
+        },
+        "ModWorldSelectionDialog": {
+            "Title": "Selecionar mundos"
         }
     },
     "FireworksBlock": {
@@ -3906,5 +3914,19 @@
             "47": "Um pequeno pássaro que vive em regiões temperadas.Às vezes, os ovos são pequenos, mas comestíveis. Eu não posso comer."
         }
     },
-    "GameUpdateHelper": "A versão online está atualizada!"
+    "GameUpdateHelper": "A versão online está atualizada!",
+    "TerritoryBlock": {
+        "1": "Precisas do nível {0} ou superior para criar {1}. Nível atual: {2}"
+    },
+    "SubsystemTerritoryBlockBehavior": {
+        "1": "Mostrar alcance",
+        "2": "Permitir colegas de equipa",
+        "3": "Não tens permissão para usar esta Pedra de Território",
+        "4": "Esta Pedra de Território não está ativa",
+        "5": "ID de bloco desativado {0}",
+        "6": "Outro jogador tem território nesta área. A ativação falhou!"
+    },
+    "SubsystemBlockBehaviors": {
+        "1": "Não tens permissão para usar comportamentos de bloco aqui"
+    }
 }

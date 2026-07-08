@@ -493,7 +493,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             }
             else
             {
-                if (!SubsystemBedrockBlockBehavior.CheckIsInTerritoriyBorder(i, j, out var territoriy))
+                if (!SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(i, j, out var territoriy))
                 {
                     continue;
                 }

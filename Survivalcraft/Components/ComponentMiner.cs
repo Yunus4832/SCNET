@@ -145,12 +145,12 @@ public class ComponentMiner : Component, IUpdateable
     public bool Dig(TerrainRaycastResult raycastResult, bool isEnd = false)
     {
         //在领地范围
-        if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(
+        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(
                 raycastResult.CellFace.X,
                 raycastResult.CellFace.Z,
                 out Territoriy? territoriy))
         {
-            if (!SubsystemBedrockBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
+            if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
             {
                 if (Time.PeriodicEvent(1.0, 0.0))
                 {
@@ -165,7 +165,7 @@ public class ComponentMiner : Component, IUpdateable
         _lastDigFrameIndex = Time.FrameIndex;
         var cellFace = raycastResult.CellFace;
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
-        if (cellValue == Terrain.MakeBlockValue(BedrockBlock.Index, 0, 1))
+        if (TerritoryBlock.IsTerritoryValue(cellValue))
             //不是管理员
         {
             if (ComponentPlayer is { PlayerData.ServerManager: false } && territoriy != null)
@@ -293,12 +293,12 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Place(TerrainRaycastResult raycastResult)
     {
-        if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(
+        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(
                 raycastResult.CellFace.X,
                 raycastResult.CellFace.Z,
                 out Territoriy? territoriy))
         {
-            if (!SubsystemBedrockBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
+            if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
             {
                 if (Time.PeriodicEvent(1.0, 0.0))
                 {
@@ -310,8 +310,8 @@ public class ComponentMiner : Component, IUpdateable
         }
 
         if (ComponentPlayer != null &&
-            SubsystemBedrockBlockBehavior.Territories.ContainsKey(ComponentPlayer.PlayerGuid) &&
-            ActiveBlockValue == Terrain.MakeBlockValue(BedrockBlock.Index, 0, 1))
+            SubsystemTerritoryBlockBehavior.Territories.ContainsKey(ComponentPlayer.PlayerGuid) &&
+            TerritoryBlock.IsTerritoryValue(ActiveBlockValue))
         {
             ComponentPlayer.ComponentGui.DisplaySmallMessage("你需要挖掉原来的领地石才能放置新的", Color.Red, false, true);
             return false;
@@ -369,7 +369,7 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        if (oldBlockId is 233 or 232 or 229 or 226 && num == 1)
+        if (oldBlockId is 233 or 232 or 229 or 226 && TerritoryBlock.IsTerritoryValue(value))
         {
             return false; //海底方块吞领地石
         }
@@ -445,9 +445,9 @@ public class ComponentMiner : Component, IUpdateable
         if (obj is TerrainRaycastResult terrainRaycast)
         {
             var cellFace = terrainRaycast.CellFace;
-            if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(cellFace.X, cellFace.Z, out Territoriy? territoriy))
+            if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(cellFace.X, cellFace.Z, out Territoriy? territoriy))
             {
-                if (!SubsystemBedrockBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
+                if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
                 {
                     ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块使用权限", Color.Yellow, false, false);
                     return false;
@@ -486,12 +486,12 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Interact(TerrainRaycastResult raycastResult)
     {
-        if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(
+        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(
                 raycastResult.CellFace.X,
                 raycastResult.CellFace.Z,
                 out Territoriy? territoriy))
         {
-            if (!SubsystemBedrockBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
+            if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
             {
                 ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块交互权限", Color.Yellow, false, false);
                 return false;

@@ -131,7 +131,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var x = saplingData.Point.X;
         var y = saplingData.Point.Y;
         var z = saplingData.Point.Z;
-        if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
+        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
         {
             if (!territoriy!.AllowBlockBehavior)
             {

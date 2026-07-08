@@ -2595,6 +2595,11 @@
         "FallenLeavesBlock:0": {
             "DisplayName": "Fallen Leaves",
             "Description": "Leaves which fell from a tree in the autumn"
+        },
+        "TerritoryBlock:0": {
+            "DisplayName": "Territory Stone",
+            "Description": "Place it to claim digging and building permission in the surrounding 1x1 chunk area. Each player can own only one Territory Stone.",
+            "CRDescription:0": "Craft a Territory Stone from copper ingots, diamond, iron ingots and granite"
         }
     },
     "Help": {
@@ -3687,6 +3692,9 @@
             "26": "Changing Seasons:",
             "27": "Length Of Year:",
             "28": "Season:"
+        },
+        "ModWorldSelectionDialog": {
+            "Title": "Select Worlds"
         }
     },
     "FireworksBlock": {
@@ -3906,5 +3914,19 @@
             "47": "A tiny bird which lives in temperate areas. Sometimes lays very small but edible eggs. Not edible."
         }
     },
-    "GameUpdateHelper": "The multiplayer version has been updated！"
+    "GameUpdateHelper": "The multiplayer version has been updated！",
+    "TerritoryBlock": {
+        "1": "You need level {0} or higher to craft {1}. Current level: {2}"
+    },
+    "SubsystemTerritoryBlockBehavior": {
+        "1": "Show range",
+        "2": "Allow teammates",
+        "3": "You do not have permission to use this Territory Stone",
+        "4": "This Territory Stone is not active",
+        "5": "Disabled block ID {0}",
+        "6": "Another player has territory in this range. Activation failed!"
+    },
+    "SubsystemBlockBehaviors": {
+        "1": "You do not have permission to use block behavior here"
+    }
 }

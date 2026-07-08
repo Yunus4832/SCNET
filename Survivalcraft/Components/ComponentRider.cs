@@ -167,10 +167,10 @@ public class ComponentRider : Component, IUpdateable
             if (componentPlayer != null)
             {
                 var v = componentMount.ComponentBody.Position.XZ;
-                if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy((int)MathUtils.Floor(v.X),
+                if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy((int)MathUtils.Floor(v.X),
                         (int)MathUtils.Floor(v.Y), out Territoriy? territoriy))
                 {
-                    if (!SubsystemBedrockBlockBehavior.AllowPlayerAction(componentPlayer, territoriy!))
+                    if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(componentPlayer, territoriy!))
                     {
                         componentPlayer.ComponentGui.DisplaySmallMessage("领地内的载具不可乘骑", Color.Yellow, false, false);
                         return;
