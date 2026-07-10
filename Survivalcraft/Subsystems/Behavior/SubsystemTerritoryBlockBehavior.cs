@@ -10,9 +10,15 @@ namespace Game.Subsystems;
 
 public class Territoriy
 {
-    private const int _height = 32; //范围高度
+    /// <summary>
+    /// 范围高度
+    /// </summary>
+    private const int _height = 32;
 
-    private const int _rangeFix = 16; //显示范围修正
+    /// <summary>
+    /// 显示范围修正
+    /// </summary>
+    private const int _rangeFix = 16;
 
     public readonly bool AllowBlockBehavior = true;
 
@@ -54,7 +60,9 @@ public class SubsystemTerritoryBlockBehavior : SubsystemBlockBehavior, IDrawable
 
     public const int TerritoriySize = 1;
 
-    //所有的领地
+    /// <summary>
+    /// 所有的领地
+    /// </summary>
     public static readonly Dictionary<Guid, Territoriy> Territories = new();
 
     private DrawText? _drawText;
@@ -275,11 +283,11 @@ public class SubsystemTerritoryBlockBehavior : SubsystemBlockBehavior, IDrawable
             return true;
         }
 
-        //在队伍里面
+        // 在队伍里面
         var isInGroup = componentPlayer.PlayerData.IsInGroup(territoriy.OwnerGuid);
-        //是所有者
+        // 是所有者
         var isSelf = componentPlayer.PlayerData.PlayerGUID == territoriy.OwnerGuid;
-        //是服管理
+        // 是服管理
         var isAdmin = componentPlayer.PlayerData.ServerManager || componentPlayer.PlayerData.ServerMaster;
         return isSelf || isAdmin || (isInGroup && territoriy.ApplyToFriend);
     }

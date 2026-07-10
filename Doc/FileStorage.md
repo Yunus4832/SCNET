@@ -40,7 +40,7 @@
 - `app:Content.zip`
 - `data:` 下的世界、缓存和玩家数据
 
-世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。
+世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。升级工具仍可在缺少 `Project.xml` 时读取旧 `Project.json` 并转换为 `Project.xml` 后继续升级。
 
 ## 说明
 
