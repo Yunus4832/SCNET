@@ -12,7 +12,7 @@ namespace Game.Subsystems;
 
 public class SubsystemSeasons : Subsystem, IUpdateable
 {
-    private const string _typeName = "SubsystemSeasons";
+    private const string _typeName = nameof(SubsystemSeasons);
 
     private static Image? _seasonsGradient;
 

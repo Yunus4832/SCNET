@@ -2,7 +2,7 @@ namespace Game.Dialogs;
 
 public class ModWorldSelectionDialog : Dialog
 {
-    private const string _typeName = "ModWorldSelectionDialog";
+    private const string _typeName = nameof(ModWorldSelectionDialog);
 
     private readonly ButtonWidget _cancelButton;
     private readonly List<WorldSelection> _selections = [];

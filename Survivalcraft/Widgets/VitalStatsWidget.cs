@@ -9,7 +9,7 @@ namespace Game.Widgets;
 
 public class VitalStatsWidget : CanvasWidget
 {
-    private const string _typeName = "VitalStatsWidget";
+    private const string _typeName = nameof(VitalStatsWidget);
 
     private readonly ButtonWidget _chokeButton;
 

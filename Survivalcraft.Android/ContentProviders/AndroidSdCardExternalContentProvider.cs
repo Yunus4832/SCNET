@@ -2,7 +2,7 @@ namespace Game.ContentProviders;
 
 public class AndroidSdCardExternalContentProvider : IExternalContentProvider
 {
-    private const string _typeName = "AndroidSdCardExternalContentProvider";
+    private const string _typeName = nameof(AndroidSdCardExternalContentProvider);
 
     private string _rootDirectory = string.Empty;
 

@@ -4,7 +4,7 @@ namespace Game.Subsystems;
 
 public class SubsystemBoatBlockBehavior : SubsystemBlockBehavior
 {
-    private const string _typeName = "SubsystemBoatBlockBehavior";
+    private const string _typeName = nameof(SubsystemBoatBlockBehavior);
 
     private SubsystemCreatureSpawn _creatureSpawn = null!;
 

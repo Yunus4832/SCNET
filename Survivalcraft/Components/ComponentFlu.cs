@@ -9,7 +9,7 @@ namespace Game.Components;
 
 public class ComponentFlu : Component, IUpdateable
 {
-    private const string _typeName = "ComponentFlu";
+    private const string _typeName = nameof(ComponentFlu);
 
     private float _blackoutDuration;
 

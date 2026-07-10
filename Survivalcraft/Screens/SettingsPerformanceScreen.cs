@@ -16,7 +16,7 @@ public class SettingsPerformanceScreen : Screen
         960, 1024
     ];
 
-    private const string _typeName = "SettingsPerformanceScreen";
+    private const string _typeName = nameof(SettingsPerformanceScreen);
 
     private readonly ButtonWidget _displayFpsCounterButton;
 

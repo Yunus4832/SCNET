@@ -7,7 +7,7 @@ namespace Game.Components;
 
 public class ComponentIntro : Component, IUpdateable
 {
-    private const string _typeName = "ComponentIntro";
+    private const string _typeName = nameof(ComponentIntro);
 
     private ComponentPlayer _componentPlayer = null!;
 

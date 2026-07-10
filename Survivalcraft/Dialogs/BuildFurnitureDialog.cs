@@ -4,7 +4,7 @@ namespace Game.Dialogs;
 
 public class BuildFurnitureDialog : Dialog
 {
-    private const string _typeName = "BuildFurnitureDialog";
+    private const string _typeName = nameof(BuildFurnitureDialog);
 
     private int _axis;
 

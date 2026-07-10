@@ -13,7 +13,7 @@ public static class CraftingRecipesManager
 
     private static Action? _initialized = Actions.Empty;
 
-    private const string _typeName = "CraftingRecipesManager";
+    private const string _typeName = nameof(CraftingRecipesManager);
 
     public static ReadOnlyList<CraftingRecipe> ReadonlyRecipes => new(_recipes);
 

@@ -22,7 +22,7 @@ public class ViewGameLogDialog : Dialog
         Error
     }
 
-    private const string _typeName = "ViewGameLogDialog";
+    private const string _typeName = nameof(ViewGameLogDialog);
 
     private readonly ButtonWidget _closeButton;
 

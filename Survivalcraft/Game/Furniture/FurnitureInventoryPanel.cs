@@ -8,7 +8,7 @@ namespace Game;
 
 public class FurnitureInventoryPanel : CanvasWidget
 {
-    private const string _typeName = "FurnitureInventoryPanel";
+    private const string _typeName = nameof(FurnitureInventoryPanel);
 
     private readonly ButtonWidget _addButton;
 

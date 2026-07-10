@@ -9,7 +9,7 @@ namespace Game.Components;
 
 public class ComponentPlayer : ComponentCreature, IUpdateable
 {
-    private const string _typeName = "ComponentPlayer";
+    private const string _typeName = nameof(ComponentPlayer);
 
     public AimEventItem CurAimEventItem;
 

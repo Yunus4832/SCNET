@@ -8,7 +8,7 @@ public static class ExternalContentManager
 
     private static List<IExternalContentProvider> _providers = [];
 
-    private const string _typeName = "ExternalContentManager";
+    private const string _typeName = nameof(ExternalContentManager);
 
     public static IExternalContentProvider DefaultProvider => Providers.Count <= 0
         ? throw new InvalidOperationException("ContentProvider not found")

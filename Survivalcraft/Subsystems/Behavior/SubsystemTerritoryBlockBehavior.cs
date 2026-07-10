@@ -56,7 +56,7 @@ public class Territoriy
 
 public class SubsystemTerritoryBlockBehavior : SubsystemBlockBehavior, IDrawable
 {
-    private const string _typeName = "SubsystemTerritoryBlockBehavior";
+    private const string _typeName = nameof(SubsystemTerritoryBlockBehavior);
 
     public const int TerritoriySize = 1;
 

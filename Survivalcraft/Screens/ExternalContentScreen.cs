@@ -6,7 +6,7 @@ namespace Game.Screens;
 
 public class ExternalContentScreen : Screen
 {
-    private const string _typeName = "ExternalContentScreen";
+    private const string _typeName = nameof(ExternalContentScreen);
 
     private readonly ButtonWidget _actionButton;
 

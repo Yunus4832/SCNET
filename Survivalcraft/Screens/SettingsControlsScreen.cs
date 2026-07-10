@@ -5,7 +5,7 @@ namespace Game.Screens;
 
 public class SettingsControlsScreen : Screen
 {
-    private const string _typeName = "SettingsControlsScreen";
+    private const string _typeName = nameof(SettingsControlsScreen);
 
     private readonly ButtonWidget _autoJumpButton;
 

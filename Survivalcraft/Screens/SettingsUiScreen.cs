@@ -4,7 +4,7 @@ namespace Game.Screens;
 
 public class SettingsUiScreen : Screen
 {
-    private const string _typeName = "SettingsUiScreen";
+    private const string _typeName = nameof(SettingsUiScreen);
 
     private readonly ButtonWidget _communityContentModeButton;
 

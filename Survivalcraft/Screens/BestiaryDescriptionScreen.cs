@@ -6,7 +6,7 @@ namespace Game.Screens;
 
 public class BestiaryDescriptionScreen : Screen
 {
-    private const string _typeName = "BestiaryDescriptionScreen";
+    private const string _typeName = nameof(BestiaryDescriptionScreen);
 
     private  readonly LabelWidget _descriptionWidget;
 

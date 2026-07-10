@@ -6,7 +6,7 @@ namespace Game.Widgets;
 
 public class CreativeInventoryWidget : CanvasWidget
 {
-    private const string _typeName = "CreativeInventoryWidget";
+    private const string _typeName = nameof(CreativeInventoryWidget);
 
     public readonly FurnitureInventoryPanel FurnitureInventoryPanel;
 

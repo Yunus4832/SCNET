@@ -14,7 +14,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 {
     public const int MaxFurnitureSetNameLength = 64;
 
-    private const string _typeName = "SubsystemFurnitureBlockBehavior";
+    private const string _typeName = nameof(SubsystemFurnitureBlockBehavior);
 
     public readonly FurnitureDesign?[] FurnitureDesigns = new FurnitureDesign[ComponentFurnitureInventory.MaxDesign];
 

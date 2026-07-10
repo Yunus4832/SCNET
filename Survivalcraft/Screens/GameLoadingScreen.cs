@@ -15,7 +15,7 @@ namespace Game.Screens;
 
 public class GameLoadingScreen : Screen
 {
-    private const string _typeName = "GameLoadingScreen";
+    private const string _typeName = nameof(GameLoadingScreen);
 
     private readonly StringBuilder _builder = new();
 

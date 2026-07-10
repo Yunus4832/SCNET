@@ -4,7 +4,7 @@ namespace Game.Screens;
 
 public class ManageContentScreen : Screen
 {
-    private const string _typeName = "ManageContentScreen";
+    private const string _typeName = nameof(ManageContentScreen);
 
     private readonly BlocksTexturesCache _blocksTexturesCache = new();
 

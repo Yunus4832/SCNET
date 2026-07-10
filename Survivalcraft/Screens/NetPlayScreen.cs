@@ -30,7 +30,7 @@ public class NetPlayScreen : Screen
         CommunityOther
     }
 
-    private const string _typeName = "NetPlayScreen";
+    private const string _typeName = nameof(NetPlayScreen);
 
     public static Dictionary<string, string> IpToDNS = new();
 

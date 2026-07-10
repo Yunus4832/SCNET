@@ -6,7 +6,7 @@ namespace Game.Screens;
 
 public class NewWorldScreen : Screen
 {
-    private const string _typeName = "NewWorldScreen";
+    private const string _typeName = nameof(NewWorldScreen);
 
     private readonly LabelWidget _blankSeedLabel;
 

@@ -4,7 +4,7 @@ public class DiskExternalContentProvider : IExternalContentProvider
 {
     public string DisplayName => LanguageManager.Get(_typeName, "DisplayName");
 
-    private const string _typeName = "DiskExternalContentProvider";
+    private const string _typeName = nameof(DiskExternalContentProvider);
 
     public bool SupportsLinks => false;
 

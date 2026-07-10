@@ -5,7 +5,7 @@ namespace Game.Subsystems;
 
 public class SubsystemBlockBehaviors : Subsystem
 {
-    private const string _typeName = "SubsystemBlockBehaviors";
+    private const string _typeName = nameof(SubsystemBlockBehaviors);
 
     private readonly List<SubsystemBlockBehavior> _blockBehaviors = [];
 

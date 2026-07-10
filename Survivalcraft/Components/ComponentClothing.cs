@@ -12,7 +12,7 @@ namespace Game.Components;
 
 public class ComponentClothing : Component, IUpdateable, IInventory
 {
-    private const string _typeName = "ComponentClothing";
+    private const string _typeName = nameof(ComponentClothing);
 
     private static readonly ClothingSlot[] _innerSlotsOrder =
     [

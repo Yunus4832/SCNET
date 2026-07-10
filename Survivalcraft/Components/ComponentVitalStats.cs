@@ -13,7 +13,7 @@ namespace Game.Components;
 
 public class ComponentVitalStats : Component, IUpdateable
 {
-    private const string _typeName = "ComponentVitalStats";
+    private const string _typeName = nameof(ComponentVitalStats);
 
     private readonly SafeFloat _food = new();
 
