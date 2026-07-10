@@ -10,18 +10,21 @@ internal static class WorldUpgradeManager
 
     public static string ReadProjectVersion(string directoryName)
     {
-        ProjectFormatNormalizer.EnsureProjectXml(directoryName);
         return new WorldInspector().Inspect(directoryName).ProjectVersion;
     }
 
     public static string ReadWorldName(string directoryName)
     {
-        ProjectFormatNormalizer.EnsureProjectXml(directoryName);
         return new WorldInspector().Inspect(directoryName).WorldName;
     }
 
-    public static void UpgradeWorld(string directoryName)
+    public static string UpgradeWorld(string directoryName)
     {
-        new WorldMaintenanceRunner().Upgrade(directoryName);
+        return new WorldMaintenanceRunner().Upgrade(directoryName);
+    }
+
+    public static string UpgradeWorld(string sourceDirectoryName, string destinationDirectoryName)
+    {
+        return new WorldMaintenanceRunner().Upgrade(sourceDirectoryName, destinationDirectoryName);
     }
 }

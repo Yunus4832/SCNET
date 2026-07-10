@@ -118,6 +118,11 @@
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
             <Build Solution="ANDROID|*" Project="false"/>
         </Project>
+        <Project Path="WorldUpgradeTool.Test\WorldUpgradeTool.Test.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
     </Folder>
 
     <Folder Name="/08 SolutionItem/">

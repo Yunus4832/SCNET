@@ -10,6 +10,7 @@ internal sealed class WorldMaintenancePlanner
         new TerrainVersionUpgradeStep(),
         new ProjectMetadataRepairStep(),
         new TerritoryStoneMigrationRepairStep(),
+        new ProjectSubsystemSchemaRepairStep(),
         new BlockEntityConsistencyRepairStep(),
         new BasicWorldValidationStep()
     ];

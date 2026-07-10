@@ -6,7 +6,7 @@ internal static class Program
 {
     private static int Main(string[] args)
     {
-        if (args.Length != 2)
+        if (args.Length is < 2 or > 3)
         {
             PrintUsage();
             return 2;
@@ -14,6 +14,7 @@ internal static class Program
 
         var command = args[0];
         var worldDirectory = ToStoragePath(args[1]);
+        var outputDirectory = args.Length == 3 ? ToOptionalStoragePath(args[2]) : null;
         if (!Storage.DirectoryExists(worldDirectory))
         {
             Console.Error.WriteLine($"World directory not found: {args[1]}");
@@ -24,9 +25,9 @@ internal static class Program
         {
             return command.ToLowerInvariant() switch
             {
-                "inspect" => Inspect(worldDirectory),
-                "plan" => Plan(worldDirectory),
-                "upgrade" => Upgrade(worldDirectory),
+                "inspect" when outputDirectory == null => Inspect(worldDirectory),
+                "plan" when outputDirectory == null => Plan(worldDirectory),
+                "upgrade" => Upgrade(worldDirectory, outputDirectory),
                 _ => PrintInvalidCommand(command)
             };
         }
@@ -65,16 +66,19 @@ internal static class Program
         return 0;
     }
 
-    private static int Upgrade(string worldDirectory)
+    private static int Upgrade(string worldDirectory, string? outputDirectory)
     {
         var before = new WorldInspector().Inspect(worldDirectory);
         PrintInspection(before);
         Console.WriteLine($"Target project version: {WorldUpgradeManager.TargetProjectFormatVersion}");
         Console.WriteLine($"Target terrain storage version: {WorldUpgradeManager.TargetTerrainStorageVersion}");
 
-        WorldUpgradeManager.UpgradeWorld(worldDirectory);
+        var upgradedWorldDirectory = outputDirectory != null
+            ? WorldUpgradeManager.UpgradeWorld(worldDirectory, outputDirectory)
+            : WorldUpgradeManager.UpgradeWorld(worldDirectory);
 
-        var after = new WorldInspector().Inspect(worldDirectory);
+        var after = new WorldInspector().Inspect(upgradedWorldDirectory);
+        Console.WriteLine($"Output world directory: {Storage.GetSystemPath(upgradedWorldDirectory)}");
         Console.WriteLine($"Upgraded project version: {after.ProjectVersion}");
         return after.ProjectVersion == WorldUpgradeManager.TargetProjectFormatVersion ? 0 : 1;
     }
@@ -101,11 +105,16 @@ internal static class Program
         return "system:" + fullPath;
     }
 
+    private static string? ToOptionalStoragePath(string path)
+    {
+        return string.IsNullOrWhiteSpace(path) ? string.Empty : ToStoragePath(path);
+    }
+
     private static void PrintUsage()
     {
         Console.WriteLine("Usage:");
         Console.WriteLine("  WorldUpgradeTool inspect <world-directory>");
         Console.WriteLine("  WorldUpgradeTool plan <world-directory>");
-        Console.WriteLine("  WorldUpgradeTool upgrade <world-directory>");
+        Console.WriteLine("  WorldUpgradeTool upgrade <source-world-directory> [output-world-directory]");
     }
 }

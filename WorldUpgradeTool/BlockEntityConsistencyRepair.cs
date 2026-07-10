@@ -10,19 +10,19 @@ namespace WorldUpgradeTool;
 
 internal static class BlockEntityConsistencyRepair
 {
-    private const int CraftingTableBlockIndex = 27;
-    private const int ChestBlockIndex = 45;
-    private const int FurnaceBlockIndex = 64;
-    private const int LitFurnaceBlockIndex = 65;
-    private const int DispenserBlockIndex = 216;
+    private const int _craftingTableBlockIndex = 27;
+    private const int _chestBlockIndex = 45;
+    private const int _furnaceBlockIndex = 64;
+    private const int _litFurnaceBlockIndex = 65;
+    private const int _dispenserBlockIndex = 216;
 
     private static readonly Dictionary<int, BlockEntityTemplate> _templatesByBlockIndex = new()
     {
-        [CraftingTableBlockIndex] = new BlockEntityTemplate("7fa6384c-5fa2-4df6-bb98-5878b645f215", "CraftingTable"),
-        [ChestBlockIndex] = new BlockEntityTemplate("08550017-af17-4955-81fa-aafaf97b92bd", "Chest"),
-        [FurnaceBlockIndex] = new BlockEntityTemplate("f4a43056-d37d-455f-9a43-803260a915a9", "Furnace"),
-        [LitFurnaceBlockIndex] = new BlockEntityTemplate("f4a43056-d37d-455f-9a43-803260a915a9", "Furnace"),
-        [DispenserBlockIndex] = new BlockEntityTemplate("4f1a989d-f12c-4ed5-9334-eacf21815b74", "Dispenser")
+        [_craftingTableBlockIndex] = new BlockEntityTemplate("7fa6384c-5fa2-4df6-bb98-5878b645f215", "CraftingTable"),
+        [_chestBlockIndex] = new BlockEntityTemplate("08550017-af17-4955-81fa-aafaf97b92bd", "Chest"),
+        [_furnaceBlockIndex] = new BlockEntityTemplate("f4a43056-d37d-455f-9a43-803260a915a9", "Furnace"),
+        [_litFurnaceBlockIndex] = new BlockEntityTemplate("f4a43056-d37d-455f-9a43-803260a915a9", "Furnace"),
+        [_dispenserBlockIndex] = new BlockEntityTemplate("4f1a989d-f12c-4ed5-9334-eacf21815b74", "Dispenser")
     };
 
     public static void Repair(string directoryName)

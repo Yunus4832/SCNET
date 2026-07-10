@@ -9,9 +9,10 @@ namespace WorldUpgradeTool;
 
 internal static class TerritoryStoneMigrationRepair
 {
-    private const int BedrockBlockIndex = 1;
-    private const int TerritoryBlockIndex = 264;
-    private const string TerritorySubsystemName = "TerritoryBlockBehavior";
+    private const int _airBlockIndex = 0;
+    private const int _bedrockBlockIndex = 1;
+    private const int _territoryBlockIndex = 264;
+    private const string _territorySubsystemName = "TerritoryBlockBehavior";
 
     private static readonly string[] _legacySubsystemNames =
     [
@@ -33,23 +34,23 @@ internal static class TerritoryStoneMigrationRepair
             projectNode = XmlUtils.LoadXmlFromStream(stream, null, true);
         }
 
-        var projectChanged = MigrateProjectSubsystem(projectNode);
-        var territoryCoordinates = GetTerritoryCoordinates(projectNode);
+        var territoryCoordinates = GetLegacyTerritoryCoordinates(projectNode);
+        var projectChanged = RepairProjectSubsystem(projectNode);
         if (projectChanged)
         {
             using var stream = Storage.OpenFile(projectPath, OpenFileMode.Create);
             XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
-            Console.WriteLine("Migrated legacy territory stone subsystem data.");
+            Console.WriteLine("Removed legacy territory stone subsystem data.");
         }
 
-        var convertedBlockCount = MigrateTerrainBlocks(directoryName, territoryCoordinates);
-        if (convertedBlockCount > 0)
+        var removedBlockCount = RemoveLegacyTerrainBlocks(directoryName, territoryCoordinates);
+        if (removedBlockCount > 0)
         {
-            Console.WriteLine($"Migrated {convertedBlockCount} legacy territory stone block{(convertedBlockCount == 1 ? string.Empty : "s")}.");
+            Console.WriteLine($"Removed {removedBlockCount} legacy territory stone block{(removedBlockCount == 1 ? string.Empty : "s")}.");
         }
     }
 
-    private static bool MigrateProjectSubsystem(XElement projectNode)
+    private static bool RepairProjectSubsystem(XElement projectNode)
     {
         var subsystemsNode = projectNode.Element("Subsystems");
         if (subsystemsNode == null)
@@ -58,118 +59,86 @@ internal static class TerritoryStoneMigrationRepair
         }
 
         var changed = false;
-        var targetNode = FindValuesNode(subsystemsNode, TerritorySubsystemName);
-        XElement? copiedLegacyNode = null;
+        var targetNode = FindValuesNode(subsystemsNode, _territorySubsystemName);
         var legacyNodes = _legacySubsystemNames
             .SelectMany(name => subsystemsNode.Elements("Values")
                 .Where(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name))
             .ToArray();
-        if (legacyNodes.Length == 0)
-        {
-            return false;
-        }
 
-        if (targetNode == null)
-        {
-            targetNode = new XElement(legacyNodes[0]);
-            XmlUtils.SetAttributeValue(targetNode, "Name", TerritorySubsystemName);
-            legacyNodes[0].AddAfterSelf(targetNode);
-            copiedLegacyNode = legacyNodes[0];
-            changed = true;
-        }
-
-        var targetTerritoriesNode = FindValuesNode(targetNode, "Territoriy");
         foreach (var legacyNode in legacyNodes)
         {
-            if (legacyNode != copiedLegacyNode)
-            {
-                var legacyTerritoriesNode = FindValuesNode(legacyNode, "Territoriy");
-                if (legacyTerritoriesNode != null)
-                {
-                    changed |= MergeTerritories(targetNode, ref targetTerritoriesNode, legacyTerritoriesNode);
-                }
-            }
-
             legacyNode.Remove();
             changed = true;
         }
 
+        if (targetNode != null)
+        {
+            changed |= NormalizeTerritoryFields(targetNode);
+        }
+
         return changed;
     }
 
-    private static bool MergeTerritories(
-        XElement targetNode,
-        ref XElement? targetTerritoriesNode,
-        XElement legacyTerritoriesNode)
+    private static bool NormalizeTerritoryFields(XElement territorySubsystemNode)
     {
-        if (targetTerritoriesNode == null)
+        var territoriesNode = FindValuesNode(territorySubsystemNode, "Territoriy");
+        if (territoriesNode == null)
         {
-            targetNode.Add(new XElement(legacyTerritoriesNode));
-            targetTerritoriesNode = FindValuesNode(targetNode, "Territoriy");
-            return true;
+            return false;
         }
 
         var changed = false;
-        var existingGuids = targetTerritoriesNode.Elements("Values")
-            .Select(GetTerritoryGuid)
-            .Where(guid => !string.IsNullOrEmpty(guid))
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-        var nextIndex = GetNextTerritoryIndex(targetTerritoriesNode);
-
-        foreach (var legacyTerritoryNode in legacyTerritoriesNode.Elements("Values"))
+        foreach (var territoryNode in territoriesNode.Elements("Values"))
         {
-            var guid = GetTerritoryGuid(legacyTerritoryNode);
-            if (!string.IsNullOrEmpty(guid) && existingGuids.Contains(guid))
-            {
-                continue;
-            }
-
-            var copiedNode = new XElement(legacyTerritoryNode);
-            XmlUtils.SetAttributeValue(copiedNode, "Name", (nextIndex++).ToString(CultureInfo.InvariantCulture));
-            targetTerritoriesNode.Add(copiedNode);
-            if (!string.IsNullOrEmpty(guid))
-            {
-                existingGuids.Add(guid);
-            }
-
-            changed = true;
+            changed |= EnsureValueNode(
+                territoryNode,
+                "ApplyToFriend",
+                "bool",
+                GetValue(territoryNode, "AllowTeamEnter", "False"));
+            changed |= RemoveValueNode(territoryNode, "AllowTeamEnter");
+            changed |= RemoveValueNode(territoryNode, "OwnerTeamId");
         }
 
         return changed;
     }
 
-    private static HashSet<Point3> GetTerritoryCoordinates(XElement projectNode)
+    private static HashSet<Point3> GetLegacyTerritoryCoordinates(XElement projectNode)
     {
         var result = new HashSet<Point3>();
         var subsystemsNode = projectNode.Element("Subsystems");
-        var territorySubsystemNode = subsystemsNode != null
-            ? FindValuesNode(subsystemsNode, TerritorySubsystemName)
-            : null;
-        var territoriesNode = territorySubsystemNode != null
-            ? FindValuesNode(territorySubsystemNode, "Territoriy")
-            : null;
-        if (territoriesNode == null)
+        if (subsystemsNode == null)
         {
             return result;
         }
 
-        foreach (var territoryNode in territoriesNode.Elements("Values"))
+        foreach (var legacySubsystemNode in _legacySubsystemNames
+                     .SelectMany(name => subsystemsNode.Elements("Values")
+                         .Where(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name)))
         {
-            var coordinateNode = territoryNode.Elements("Value")
-                .FirstOrDefault(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "OwnChunkCoord");
-            var value = coordinateNode != null
-                ? XmlUtils.GetAttributeValue(coordinateNode, "Value", string.Empty)
-                : string.Empty;
-            if (TryParsePoint3(value, out var point) && point.Y is >= 0 and < 256)
+            var territoriesNode = FindValuesNode(legacySubsystemNode, "Territoriy");
+            if (territoriesNode == null)
             {
-                result.Add(point);
+                continue;
+            }
+
+            foreach (var territoryNode in territoriesNode.Elements("Values"))
+            {
+                var coordinateNode = territoryNode.Elements("Value")
+                    .FirstOrDefault(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "OwnChunkCoord");
+                var value = coordinateNode != null
+                    ? XmlUtils.GetAttributeValue(coordinateNode, "Value", string.Empty)
+                    : string.Empty;
+                if (TryParsePoint3(value, out var point) && point.Y is >= 0 and < 256)
+                {
+                    result.Add(point);
+                }
             }
         }
 
         return result;
     }
 
-    private static int MigrateTerrainBlocks(string directoryName, HashSet<Point3> territoryCoordinates)
+    private static int RemoveLegacyTerrainBlocks(string directoryName, HashSet<Point3> territoryCoordinates)
     {
         if (territoryCoordinates.Count == 0)
         {
@@ -192,12 +161,13 @@ internal static class TerritoryStoneMigrationRepair
                 var localX = point.X & 0xF;
                 var localZ = point.Z & 0xF;
                 var value = chunk.GetCellValueFast(localX, point.Y, localZ);
-                if (Terrain.ExtractContents(value) != BedrockBlockIndex)
+                var contents = Terrain.ExtractContents(value);
+                if (contents != _bedrockBlockIndex && contents != _territoryBlockIndex)
                 {
                     continue;
                 }
 
-                chunk.SetCellValueFast(localX, point.Y, localZ, Terrain.ReplaceContents(value, TerritoryBlockIndex));
+                chunk.SetCellValueFast(localX, point.Y, localZ, Terrain.ReplaceContents(value, _airBlockIndex));
                 chunk.ModificationCounter++;
                 convertedCount++;
                 changed = true;
@@ -216,26 +186,41 @@ internal static class TerritoryStoneMigrationRepair
         parent.Elements("Values")
             .FirstOrDefault(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name);
 
-    private static string GetTerritoryGuid(XElement territoryNode)
+    private static string GetValue(XElement parent, string name, string defaultValue)
     {
-        var guidNode = territoryNode.Elements("Value")
-            .FirstOrDefault(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Guid");
-        return guidNode != null ? XmlUtils.GetAttributeValue(guidNode, "Value", string.Empty) : string.Empty;
+        var node = parent.Elements("Value")
+            .FirstOrDefault(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name);
+        return node != null ? XmlUtils.GetAttributeValue(node, "Value", defaultValue) : defaultValue;
     }
 
-    private static int GetNextTerritoryIndex(XElement territoriesNode)
+    private static bool EnsureValueNode(XElement parent, string name, string type, string value)
     {
-        var nextIndex = 0;
-        foreach (var territoryNode in territoriesNode.Elements("Values"))
+        var node = parent.Elements("Value")
+            .FirstOrDefault(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name);
+        if (node != null)
         {
-            var name = XmlUtils.GetAttributeValue(territoryNode, "Name", string.Empty);
-            if (int.TryParse(name, NumberStyles.Integer, CultureInfo.InvariantCulture, out var index))
-            {
-                nextIndex = MathUtils.Max(nextIndex, index + 1);
-            }
+            return false;
         }
 
-        return nextIndex;
+        node = new XElement("Value");
+        XmlUtils.SetAttributeValue(node, "Name", name);
+        XmlUtils.SetAttributeValue(node, "Type", type);
+        XmlUtils.SetAttributeValue(node, "Value", value);
+        parent.Add(node);
+        return true;
+    }
+
+    private static bool RemoveValueNode(XElement parent, string name)
+    {
+        var nodes = parent.Elements("Value")
+            .Where(e => XmlUtils.GetAttributeValue(e, "Name", string.Empty) == name)
+            .ToArray();
+        foreach (var node in nodes)
+        {
+            node.Remove();
+        }
+
+        return nodes.Length > 0;
     }
 
     private static Point2 GetChunkCoordinates(Point3 point) =>

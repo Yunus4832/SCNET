@@ -31,8 +31,12 @@ internal static class ProjectFormatNormalizer
         var rootObject = JsonNode.Parse(jsonText) as JsonObject ??
                          throw new InvalidOperationException("Project.json root must be a JSON object.");
         var projectNode = ConvertProjectJson(rootObject);
-        using var output = Storage.OpenFile(xmlPath, OpenFileMode.Create);
-        XmlUtils.SaveXmlToStream(projectNode, output, null, true);
+        using (var output = Storage.OpenFile(xmlPath, OpenFileMode.Create))
+        {
+            XmlUtils.SaveXmlToStream(projectNode, output, null, true);
+        }
+
+        Storage.DeleteFile(jsonPath);
         Console.WriteLine("Converted legacy Project.json to Project.xml.");
     }
 

@@ -19,21 +19,21 @@ namespace Game.Terrains
 {
     public sealed class Terrain
     {
-        private const int ContentsMask = 0x3FF;
-        private const int LightMask = 0x3C00;
-        private const int LightShift = 10;
-        private const int DataMask = unchecked((int)0xFFFFC000);
-        private const int DataShift = 14;
-        private const long TopHeightMask = 0xFFF;
-        private const int TopHeightShift = 0;
-        private const long TemperatureMask = 0xF000;
-        private const int TemperatureShift = 12;
-        private const long HumidityMask = 0xF0000;
-        private const int HumidityShift = 16;
-        private const long BottomHeightMask = 0xFFF00000;
-        private const int BottomHeightShift = 20;
-        private const long SunlightHeightMask = 0xFFF00000000;
-        private const int SunlightHeightShift = 32;
+        private const int _contentsMask = 0x3FF;
+        private const int _lightMask = 0x3C00;
+        private const int _lightShift = 10;
+        private const int _dataMask = unchecked((int)0xFFFFC000);
+        private const int _dataShift = 14;
+        private const long _topHeightMask = 0xFFF;
+        private const int _topHeightShift = 0;
+        private const long _temperatureMask = 0xF000;
+        private const int _temperatureShift = 12;
+        private const long _humidityMask = 0xF0000;
+        private const int _humidityShift = 16;
+        private const long _bottomHeightMask = 0xFFF00000;
+        private const int _bottomHeightShift = 20;
+        private const long _sunlightHeightMask = 0xFFF00000000;
+        private const int _sunlightHeightShift = 32;
 
         private readonly Dictionary<Point2, TerrainChunk> _chunks = new();
 
@@ -60,98 +60,98 @@ namespace Game.Terrains
 
         public static int ExtractContents(int value)
         {
-            return value & ContentsMask;
+            return value & _contentsMask;
         }
 
         public static int ExtractLight(int value)
         {
-            return (value & LightMask) >> LightShift;
+            return (value & _lightMask) >> _lightShift;
         }
 
         public static int ExtractData(int value)
         {
-            return (value & DataMask) >> DataShift;
+            return (value & _dataMask) >> _dataShift;
         }
 
         public static int ExtractTopHeight(long value)
         {
-            return (int)((value & TopHeightMask) >> TopHeightShift);
+            return (int)((value & _topHeightMask) >> _topHeightShift);
         }
 
         public static int ExtractBottomHeight(long value)
         {
-            return (int)((value & BottomHeightMask) >> BottomHeightShift);
+            return (int)((value & _bottomHeightMask) >> _bottomHeightShift);
         }
 
         public static int ExtractSunlightHeight(long value)
         {
-            return (int)((value & SunlightHeightMask) >> SunlightHeightShift);
+            return (int)((value & _sunlightHeightMask) >> _sunlightHeightShift);
         }
 
         public static int ExtractHumidity(long value)
         {
-            return (int)((value & HumidityMask) >> HumidityShift);
+            return (int)((value & _humidityMask) >> _humidityShift);
         }
 
         public static int ExtractTemperature(long value)
         {
-            return (int)((value & TemperatureMask) >> TemperatureShift);
+            return (int)((value & _temperatureMask) >> _temperatureShift);
         }
 
         public static int ReplaceContents(int value, int contents)
         {
-            return (value & ~ContentsMask) | (contents & ContentsMask);
+            return (value & ~_contentsMask) | (contents & _contentsMask);
         }
 
         public static int ReplaceLight(int value, int light)
         {
-            return (value & ~LightMask) | ((light << LightShift) & LightMask);
+            return (value & ~_lightMask) | ((light << _lightShift) & _lightMask);
         }
 
         public static int ReplaceData(int value, int data)
         {
-            return (value & ~DataMask) | ((data << DataShift) & DataMask);
+            return (value & ~_dataMask) | ((data << _dataShift) & _dataMask);
         }
 
         public static long ReplaceTopHeight(long value, int topHeight)
         {
-            return (value & ~TopHeightMask) | (((long)topHeight << TopHeightShift) & TopHeightMask);
+            return (value & ~_topHeightMask) | (((long)topHeight << _topHeightShift) & _topHeightMask);
         }
 
         public static long ReplaceBottomHeight(long value, int bottomHeight)
         {
-            return (value & ~BottomHeightMask) | (((long)bottomHeight << BottomHeightShift) & BottomHeightMask);
+            return (value & ~_bottomHeightMask) | (((long)bottomHeight << _bottomHeightShift) & _bottomHeightMask);
         }
 
         public static long ReplaceSunlightHeight(long value, int sunlightHeight)
         {
-            return (value & ~SunlightHeightMask) | (((long)sunlightHeight << SunlightHeightShift) & SunlightHeightMask);
+            return (value & ~_sunlightHeightMask) | (((long)sunlightHeight << _sunlightHeightShift) & _sunlightHeightMask);
         }
 
         public static long ReplaceHumidity(long value, int humidity)
         {
-            return (value & ~HumidityMask) | (((long)humidity << HumidityShift) & HumidityMask);
+            return (value & ~_humidityMask) | (((long)humidity << _humidityShift) & _humidityMask);
         }
 
         public static long ReplaceTemperature(long value, int temperature)
         {
-            return (value & ~TemperatureMask) | (((long)temperature << TemperatureShift) & TemperatureMask);
+            return (value & ~_temperatureMask) | (((long)temperature << _temperatureShift) & _temperatureMask);
         }
     }
 
     public sealed class TerrainChunk
     {
-        private const int Size = 16;
-        private const int Height = 256;
+        private const int _size = 16;
+        private const int _height = 256;
 
-        private readonly int[] _cells = new int[Size * Height * Size];
-        private readonly long[] _shafts = new long[Size * Size];
+        private readonly int[] _cells = new int[_size * _height * _size];
+        private readonly long[] _shafts = new long[_size * _size];
 
         public TerrainChunk(Terrain? terrain, int x, int z)
         {
             Terrain = terrain ?? new Terrain();
             Coords = new Point2(x, z);
-            Origin = new Point2(x * Size, z * Size);
+            Origin = new Point2(x * _size, z * _size);
             State = TerrainChunkState.Valid;
             ModificationCounter = 1;
             Terrain.RegisterChunk(this);
@@ -169,7 +169,7 @@ namespace Game.Terrains
 
         public static int CalculateCellIndex(int x, int y, int z)
         {
-            return y + x * Height + z * Height * Size;
+            return y + x * _height + z * _height * _size;
         }
 
         public int GetCellValueFast(int index)
@@ -194,12 +194,12 @@ namespace Game.Terrains
 
         public long GetShaftValueFast(int x, int z)
         {
-            return _shafts[x + z * Size];
+            return _shafts[x + z * _size];
         }
 
         public void SetShaftValueFast(int x, int z, long value)
         {
-            _shafts[x + z * Size] = value;
+            _shafts[x + z * _size] = value;
         }
     }
 }
@@ -208,7 +208,7 @@ namespace Game.Subsystems
 {
     public sealed class SubsystemTerrain
     {
-        public Game.Terrains.Terrain Terrain { get; } = new();
+        public Terrain Terrain { get; } = new();
     }
 
     public static class SubsystemSeasons

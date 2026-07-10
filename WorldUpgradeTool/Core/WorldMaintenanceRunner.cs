@@ -10,7 +10,25 @@ internal sealed class WorldMaintenanceRunner
         return _planner.CreateUpgradePlan(context);
     }
 
-    public void Upgrade(string directoryName)
+    public string Upgrade(string sourceDirectoryName)
+    {
+        var destinationDirectoryName = WorldDirectoryCopier.CreateDefaultDestinationPath(sourceDirectoryName);
+        return Upgrade(sourceDirectoryName, destinationDirectoryName);
+    }
+
+    public string Upgrade(string sourceDirectoryName, string destinationDirectoryName)
+    {
+        if (string.IsNullOrWhiteSpace(destinationDirectoryName))
+        {
+            destinationDirectoryName = WorldDirectoryCopier.CreateDefaultDestinationPath(sourceDirectoryName);
+        }
+
+        WorldDirectoryCopier.CopyWorld(sourceDirectoryName, destinationDirectoryName);
+        UpgradeCopiedWorld(destinationDirectoryName);
+        return destinationDirectoryName;
+    }
+
+    private void UpgradeCopiedWorld(string directoryName)
     {
         var context = new WorldContext(directoryName);
         var executedSteps = new HashSet<string>(StringComparer.Ordinal);
