@@ -12,7 +12,7 @@ namespace Game.Widgets;
 
 public class GameWidget : CanvasWidget
 {
-    private readonly BitmapButtonWidget _bitmapButtonWidget;
+    private readonly BitmapButtonWidget _messageButton;
 
     private readonly CanvasWidget _controlsWidget;
 
@@ -90,13 +90,14 @@ public class GameWidget : CanvasWidget
         SubsystemGameWidgets = playerData.SubsystemGameWidgets;
         SubsystemTime = SubsystemGameWidgets.Project.FindSubsystem<SubsystemTime>();
         LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
-        _bitmapButtonWidget = Children.Find<BitmapButtonWidget>("MsgButton")!;
+        _messageButton = Children.Find<BitmapButtonWidget>("MsgButton")!;
         NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerListButton")!;
         _netPlayersButtonSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList_Pressed");
         _netGroupButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Group_Pressed");
         _netBlackButtonSubtexture = LoadGuiSubtexture("Textures/Gui/BlackList_Pressed");
         _netHideButtonSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList");
-        _bitmapButtonWidget.Text = "";
+        _messageButton.Text = "";
+        _messageButton.IsVisible = false;
         NetPlayerListButton.IsVisible = false;
         ViewWidget = Children.Find<ViewWidget>("View")!;
         GuiWidget = Children.Find<ContainerWidget>("Gui")!;
@@ -105,6 +106,7 @@ public class GameWidget : CanvasWidget
         {
             NetPanelWidget = new NetPanelWidget(this);
             NetPlayerListButton.IsVisible = true;
+            _messageButton.IsVisible = true;
             UpdateNetPlayerListButtonTexture();
             NetPanelWidget.Margin = new Vector2(68, 5);
             MessageWidget = new NetMessageWidget(playerData, NetPanelWidget) { IsVisible = false };
@@ -203,36 +205,21 @@ public class GameWidget : CanvasWidget
 
         UpdateNetPlayerListButtonTexture();
 
-        if (_bitmapButtonWidget.IsClicked)
+        if (_messageButton.IsClicked && MessageWidget != null)
         {
-            if (MessageWidget == null)
-            {
-                return;
-            }
-
             SetMessageWidgetVisible(!MessageWidget.IsVisible, false);
         }
 
-        if (Input.IsKeyDownOnce(Key.Tab))
+        if (Input.IsKeyDownOnce(Key.Tab) && MessageWidget != null)
         {
-            if (MessageWidget == null)
-            {
-                return;
-            }
-
             if (PlayerData is { ComponentPlayer.ComponentGui: not null })
             {
                 SetMessageWidgetVisible(!MessageWidget.IsVisible, true);
             }
         }
 
-        if (Input.IsKeyDownOnce(Key.Enter))
+        if (Input.IsKeyDownOnce(Key.Enter) && MessageWidget != null)
         {
-            if (MessageWidget == null)
-            {
-                return;
-            }
-
             if (MessageWidget.EditText.Text.Length == 0)
             {
                 SetMessageWidgetVisible(!MessageWidget.IsVisible, true);
@@ -245,7 +232,7 @@ public class GameWidget : CanvasWidget
             MessageWidget.EditText.HasFocus = false;
         }
 
-        _bitmapButtonWidget.IsChecked = MessageWidget is { IsVisible: true };
+        _messageButton.IsChecked = MessageWidget is { IsVisible: true };
 
         var widgetInputDevice = DetermineInputDevices();
         if (WidgetsHierarchyInput == null || WidgetsHierarchyInput.Devices != widgetInputDevice)
@@ -325,7 +312,7 @@ public class GameWidget : CanvasWidget
         }
 
         MessageWidget.IsVisible = visible;
-        _bitmapButtonWidget.IsChecked = visible;
+        _messageButton.IsChecked = visible;
         if (!visible)
         {
             MessageWidget.EditText.HasFocus = false;

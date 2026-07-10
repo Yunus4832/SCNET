@@ -6,7 +6,7 @@ namespace Game.Screens;
 
 public class ModifyWorldScreen : Screen
 {
-    private const string _typeName = "ModifyWorldScreen";
+    private const string _typeName = nameof(ModifyWorldScreen);
 
     // 新增一个布尔变量，用于控制是否允许在残酷模式下更改游戏模式
     private const bool _allowGameModeChangeInCruelMode = false;

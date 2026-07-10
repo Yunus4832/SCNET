@@ -7,7 +7,7 @@ namespace Game.Subsystems;
 
 public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
 {
-    private const string _typeName = "SubsystemBowBlockBehavior";
+    private const string _typeName = nameof(SubsystemBowBlockBehavior);
 
     private readonly Dictionary<ComponentMiner, double> _aimStartTimes = new();
 

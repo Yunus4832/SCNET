@@ -5,6 +5,8 @@ namespace Game.Subsystems;
 
 public class SubsystemBlockBehaviors : Subsystem
 {
+    private const string _typeName = nameof(SubsystemBlockBehaviors);
+
     private readonly List<SubsystemBlockBehavior> _blockBehaviors = [];
 
     private SubsystemBlockBehavior[][] _blockBehaviorsByContents = [];
@@ -14,18 +16,18 @@ public class SubsystemBlockBehaviors : Subsystem
     public SubsystemBlockBehavior[] GetBlockBehaviors(int contents, ComponentMiner? miner = null, Point3? point = null)
     {
         if (!point.HasValue ||
-            !SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(
+            !SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(
                 point.Value.X,
                 point.Value.Z,
                 out Territoriy? territoriy) ||
-            miner != null && SubsystemBedrockBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy!) ||
+            miner != null && SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy!) ||
             territoriy!.AllowBlockBehavior)
         {
             return _blockBehaviorsByContents[contents];
         }
 
         miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-            "你在这里没有方块行为权限",
+            LanguageManager.Get(_typeName, 1),
             Color.Yellow,
             false,
             true

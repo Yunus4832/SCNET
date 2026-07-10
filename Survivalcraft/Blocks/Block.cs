@@ -4,7 +4,7 @@ namespace Game.Blocks;
 
 public abstract class Block
 {
-    private const string _typeName = "Block";
+    private const string _typeName = nameof(Block);
 
     public static readonly BoundingBox[] DefaultCollisionBoxes = [new(Vector3.Zero, Vector3.One)];
 

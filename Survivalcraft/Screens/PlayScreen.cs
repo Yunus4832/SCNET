@@ -8,7 +8,7 @@ public class PlayScreen : Screen
 {
     private const int _maxWorlds = 300;
 
-    private const string _typeName = "PlayScreen";
+    private const string _typeName = nameof(PlayScreen);
 
     private readonly ListPanelWidget _worldsListWidget;
 

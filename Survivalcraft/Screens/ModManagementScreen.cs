@@ -304,33 +304,36 @@ public class ModManagementScreen : Screen
             return;
         }
 
-        DialogsManager.ShowDialog(null, new ModWorldSelectionDialog(
-            $"{mod.ModId}@{mod.Version}",
-            WorldsManager.WorldInfos,
-            world =>
-            {
-                var profile = ModProfileManager.LoadWorldProfile(world.DirectoryName);
-                return profile != null && ContainsMod(profile, mod.ModId);
-            },
-            selections =>
-            {
-                foreach (var selection in selections)
+        DialogsManager.ShowDialog(
+            null,
+            new ModWorldSelectionDialog(
+                $"{mod.ModId}@{mod.Version}",
+                WorldsManager.WorldInfos,
+                world =>
                 {
-                    var profile = ModProfileManager.LoadWorldProfile(selection.World.DirectoryName) ?? new ModProfile();
-                    if (selection.IsChecked)
+                    var profile = ModProfileManager.LoadWorldProfile(world.DirectoryName);
+                    return profile != null && ContainsMod(profile, mod.ModId);
+                },
+                selections =>
+                {
+                    foreach (var selection in selections)
                     {
-                        AddPackage(profile, mod);
-                    }
-                    else
-                    {
-                        RemovePackage(profile, mod.ModId);
+                        var profile = ModProfileManager.LoadWorldProfile(selection.World.DirectoryName) ??
+                                      new ModProfile();
+                        if (selection.IsChecked)
+                        {
+                            AddPackage(profile, mod);
+                        }
+                        else
+                        {
+                            RemovePackage(profile, mod.ModId);
+                        }
+
+                        ModProfileManager.SaveWorldProfile(selection.World.DirectoryName, profile);
                     }
 
-                    ModProfileManager.SaveWorldProfile(selection.World.DirectoryName, profile);
-                }
-
-                RefreshState();
-            }));
+                    RefreshState();
+                }));
     }
 
     private static void AddPackage(ModProfile profile, RepositoryModItem mod)
@@ -377,7 +380,6 @@ public class ModManagementScreen : Screen
                 _modsList.SelectedItem = item;
             }
         }
-
     }
 
     private static HashSet<string> LoadAnyWorldModIds()
@@ -414,7 +416,8 @@ public class ModManagementScreen : Screen
         }
 
         return LocalModsImportManager.ListImportedMods()
-            .Where(entry => string.Equals(entry.PackageHash, mod.LocalEntry.PackageHash, StringComparison.OrdinalIgnoreCase))
+            .Where(entry =>
+                string.Equals(entry.PackageHash, mod.LocalEntry.PackageHash, StringComparison.OrdinalIgnoreCase))
             .Select(entry => entry.Path)
             .ToList();
     }

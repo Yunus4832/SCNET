@@ -5,7 +5,7 @@ namespace Game.Screens;
 
 public class WorldOptionsScreen : Screen
 {
-    private const string _typeName = "WorldOptionsScreen";
+    private const string _typeName = nameof(WorldOptionsScreen);
 
     private static readonly float[] _yearDays = [8f, 12f, 16f, 20f, 24f, 32f, 48f, 64f, 96f];
 

@@ -27,7 +27,7 @@ public class ManageUserScreen : Screen
         ByLockReason = 6
     }
 
-    private const string _typeName = "ManageUserScreen";
+    private const string _typeName = nameof(ManageUserScreen);
 
     private readonly ListPanelWidget _contentList;
 

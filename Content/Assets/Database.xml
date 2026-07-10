@@ -5393,10 +5393,10 @@
         </Folder>
         <Folder Name="Subsystems" Guid="75acb50b-fb75-4c85-af38-a0fb51a9eb90">
             <Folder Name="BlockBehaviors" Guid="00c97f0f-731e-481c-9909-eae9cc5ee940">
-                <SubsystemTemplate Name="BedrockBlockBehavior" Guid="4f59fa00-af76-34b6-2bde-8c4dc80b1eb3"
+                <SubsystemTemplate Name="TerritoryBlockBehavior" Guid="4f59fa00-af76-34b6-2bde-8c4dc80b1eb3"
                                    InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
                     <Parameter Name="Class" Guid="0efe79ea-b535-cb24-390d-deda4ca10e44"
-                               Value="Game.Subsystems.SubsystemBedrockBlockBehavior" Type="string"/>
+                               Value="Game.Subsystems.SubsystemTerritoryBlockBehavior" Type="string"/>
                     <ParameterSet Name="Territoriy" Guid="d745c685-4156-15e8-6ec2-2e283cca4114"/>
                 </SubsystemTemplate>
                 <SubsystemTemplate Name="ButtonBlockBehavior" Guid="0302cf98-4263-466a-8d01-985fa3d9b002"
@@ -7138,7 +7138,7 @@
         </Folder>
         <Folder Name="Abstract" Guid="c6ba6a30-5042-4d3d-9bea-199cd4acc3fa">
             <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
-                <MemberSubsystemTemplate Name="BedrockBlockBehavior" Guid="91abc056-6d0d-b84d-d7fb-b0c9ac8a102d"
+                <MemberSubsystemTemplate Name="TerritoryBlockBehavior" Guid="91abc056-6d0d-b84d-d7fb-b0c9ac8a102d"
                                          InheritanceParent="4f59fa00-af76-34b6-2bde-8c4dc80b1eb3"/>
                 <MemberSubsystemTemplate Name="ButtonBlockBehavior" Guid="206c4ebd-d7f4-4da1-8d03-a8c8b9302a29"
                                          InheritanceParent="0302cf98-4263-466a-8d01-985fa3d9b002"/>

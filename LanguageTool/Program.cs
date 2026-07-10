@@ -8,7 +8,7 @@ return app.Run(args);
 
 internal sealed class LanguageToolApp
 {
-    private static readonly string[] DefaultCultures = ["zh-CN", "en-US", "pt-PT", "ru-RU"];
+    private static readonly string[] _defaultCultures = ["zh-CN", "en-US", "pt-PT", "ru-RU"];
 
     private readonly JsonSerializerOptions _readOptions = new()
     {
@@ -34,11 +34,14 @@ internal sealed class LanguageToolApp
                 "check" => Check(root, commandArgs),
                 "list" => List(root, commandArgs),
                 "children" => Children(root, commandArgs),
+                "overview" => Overview(root, commandArgs),
                 "show" => Show(root, commandArgs),
+                "table" => Table(root, commandArgs),
                 "search" => Search(root, commandArgs),
                 "rules" => Rules(commandArgs),
                 "get" => Get(root, commandArgs),
                 "set" => Set(root, commandArgs),
+                "sync-field" => SyncField(root, commandArgs),
                 "remove" or "delete" => Remove(root, commandArgs),
                 "rename" => Rename(root, commandArgs),
                 _ => Fail($"Unknown command '{command}'. Run with --help.")
@@ -59,7 +62,7 @@ internal sealed class LanguageToolApp
         var allPaths = maps.Values.SelectMany(map => map.Keys).Distinct().Order(StringComparer.Ordinal).ToArray();
         var hasDifferences = false;
 
-        foreach (var culture in DefaultCultures)
+        foreach (var culture in _defaultCultures)
         {
             var missing = allPaths.Where(path => !maps[culture].ContainsKey(path)).ToArray();
             if (missing.Length == 0)
@@ -120,11 +123,11 @@ internal sealed class LanguageToolApp
     {
         var options = ParseOptions(args, allowPositionals: false);
         var culture = options.GetValueOrDefault("culture") ?? "zh-CN";
-        var prefix = options.GetValueOrDefault("prefix") ?? string.Empty;
+        var prefix = NormalizePath(options.GetValueOrDefault("prefix") ?? string.Empty);
         var documents = LoadLanguages(root);
         if (!documents.TryGetValue(culture, out var document))
         {
-            return Fail($"Unknown culture '{culture}'. Expected one of: {string.Join(", ", DefaultCultures)}");
+            return Fail($"Unknown culture '{culture}'. Expected one of: {string.Join(", ", _defaultCultures)}");
         }
 
         foreach (var path in CollectPaths(document.Root).Keys.Order(StringComparer.Ordinal))
@@ -140,16 +143,16 @@ internal sealed class LanguageToolApp
 
     private int Children(DirectoryInfo root, string[] args)
     {
-        var path = args.Length > 0 && !args[0].StartsWith("--", StringComparison.Ordinal) ? args[0] : string.Empty;
-        var options = ParseOptions(args.Skip(string.IsNullOrEmpty(path) ? 0 : 1).ToArray(), allowPositionals: false);
+        var (path, remainingArgs) = ParseOptionalPathArgument(args);
+        var options = ParseOptions(remainingArgs, allowPositionals: false);
         var culture = options.GetValueOrDefault("culture") ?? "zh-CN";
         var documents = LoadLanguages(root);
         if (!documents.TryGetValue(culture, out var document))
         {
-            return Fail($"Unknown culture '{culture}'. Expected one of: {string.Join(", ", DefaultCultures)}");
+            return Fail($"Unknown culture '{culture}'. Expected one of: {string.Join(", ", _defaultCultures)}");
         }
 
-        var node = string.IsNullOrEmpty(path) ? document.Root : TryGetNode(document.Root, ParsePath(path));
+        var node = GetNode(document.Root, path);
         if (node is null)
         {
             return Fail($"Path '{path}' does not exist in {culture}.");
@@ -163,25 +166,68 @@ internal sealed class LanguageToolApp
         return 0;
     }
 
-    private int Show(DirectoryInfo root, string[] args)
+    private int Overview(DirectoryInfo root, string[] args)
     {
-        if (args.Length < 1)
+        var (path, remainingArgs) = ParseOptionalPathArgument(args);
+        var options = ParseOptions(remainingArgs, allowPositionals: false);
+        var culture = options.GetValueOrDefault("culture") ?? "zh-CN";
+        var depth = ParseIntOption(options, "depth", 2);
+        var limit = ParseIntOption(options, "limit", 120);
+        var documents = LoadLanguages(root);
+        var cultures = culture == "all"
+            ? _defaultCultures
+            : ParseCultureList(culture);
+        foreach (var item in cultures)
         {
-            return Fail("Usage: show <path> [--culture zh-CN] [--depth 1] [--limit 80]");
+            if (!documents.ContainsKey(item))
+            {
+                return Fail($"Unknown culture '{item}'. Expected all or one of: {string.Join(", ", _defaultCultures)}");
+            }
         }
 
-        var path = args[0];
-        var options = ParseOptions(args.Skip(1).ToArray(), allowPositionals: false);
+        var sourceCulture = cultures[0];
+        if (GetNode(documents[sourceCulture].Root, path) is null)
+        {
+            return Fail($"Path '{DisplayPath(path)}' does not exist in {sourceCulture}.");
+        }
+
+        var overviewPaths = cultures
+            .SelectMany(item => EnumerateOverviewPaths(GetNode(documents[item].Root, path)!, path, depth))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(item => item, PathComparer.Instance)
+            .Take(limit)
+            .ToArray();
+
+        Console.WriteLine("Path\tKind\tFields\tChildren\tPreview\tIssues");
+        foreach (var itemPath in overviewPaths)
+        {
+            var nodes = cultures.ToDictionary(item => item, item => GetNode(documents[item].Root, itemPath), StringComparer.Ordinal);
+            var sourceNode = nodes[sourceCulture];
+            var kind = DescribeKinds(nodes);
+            var fields = sourceNode is JsonObject sourceObject ? DescribeScalarFields(sourceObject) : string.Empty;
+            var children = sourceNode is JsonObject sourceObjectForChildren ? DescribeChildObjects(sourceObjectForChildren) : string.Empty;
+            var preview = sourceNode is null ? string.Empty : PreviewOverviewValue(sourceNode);
+            var issues = DescribeStructureIssues(nodes);
+            Console.WriteLine($"{DisplayPath(itemPath)}\t{kind}\t{fields}\t{children}\t{preview}\t{issues}");
+        }
+
+        return 0;
+    }
+
+    private int Show(DirectoryInfo root, string[] args)
+    {
+        var (path, remainingArgs) = ParseOptionalPathArgument(args);
+        var options = ParseOptions(remainingArgs, allowPositionals: false);
         var culture = options.GetValueOrDefault("culture") ?? "zh-CN";
         var depth = ParseIntOption(options, "depth", 1);
         var limit = ParseIntOption(options, "limit", 80);
         var documents = LoadLanguages(root);
         if (!documents.TryGetValue(culture, out var document))
         {
-            return Fail($"Unknown culture '{culture}'. Expected one of: {string.Join(", ", DefaultCultures)}");
+            return Fail($"Unknown culture '{culture}'. Expected one of: {string.Join(", ", _defaultCultures)}");
         }
 
-        var node = TryGetNode(document.Root, ParsePath(path));
+        var node = GetNode(document.Root, path);
         if (node is null)
         {
             return Fail($"Path '{path}' does not exist in {culture}.");
@@ -213,7 +259,7 @@ internal sealed class LanguageToolApp
             ? documents.Values
             : documents.TryGetValue(culture, out var selectedDocument)
                 ? [selectedDocument]
-                : throw new ArgumentException($"Unknown culture '{culture}'. Expected all or one of: {string.Join(", ", DefaultCultures)}");
+                : throw new ArgumentException($"Unknown culture '{culture}'. Expected all or one of: {string.Join(", ", _defaultCultures)}");
 
         var count = 0;
         foreach (var document in selected)
@@ -246,6 +292,46 @@ internal sealed class LanguageToolApp
         return 0;
     }
 
+    private int Table(DirectoryInfo root, string[] args)
+    {
+        var (path, remainingArgs) = ParseOptionalPathArgument(args);
+        var options = ParseOptions(remainingArgs, allowPositionals: false);
+        var fields = SplitCsvOption(options.GetValueOrDefault("fields") ?? "Title,Name,value");
+        var cultures = ParseCultureList(options.GetValueOrDefault("cultures") ?? "all");
+        var limit = ParseIntOption(options, "limit", 80);
+        var documents = LoadLanguages(root);
+        foreach (var culture in cultures)
+        {
+            if (!documents.ContainsKey(culture))
+            {
+                return Fail($"Unknown culture '{culture}'. Expected all or one of: {string.Join(", ", _defaultCultures)}");
+            }
+        }
+
+        var sourceNode = GetNode(documents[cultures[0]].Root, path);
+        if (sourceNode is not JsonObject sourceObject)
+        {
+            return Fail($"Path '{path}' must be an object in {cultures[0]}.");
+        }
+
+        var childKeys = sourceObject.Select(pair => pair.Key).Take(limit).ToArray();
+        Console.WriteLine(string.Join('\t', new[] { "Path", "Culture" }.Concat(fields)));
+        foreach (var childKey in childKeys)
+        {
+            var childPath = JoinPath(path, childKey);
+            foreach (var culture in cultures)
+            {
+                var childNode = GetNode(documents[culture].Root, childPath);
+                var values = fields.Select(field => childNode is JsonObject obj && obj[field] is JsonNode value
+                    ? PreviewValue(value)
+                    : string.Empty);
+                Console.WriteLine(string.Join('\t', new[] { childPath, culture }.Concat(values)));
+            }
+        }
+
+        return 0;
+    }
+
     private static int Rules(string[] args)
     {
         EnsureNoUnexpectedArgs(args);
@@ -260,6 +346,9 @@ internal sealed class LanguageToolApp
         - Prefer screen/dialog/widget class names as ContentWidgets section names.
         - Avoid dots inside real JSON key names. Use underscores for compound flat keys, for example Strings.GameMode_Creative_Description.
         - Existing dotted key names are still addressable with escaped dots, but new keys should not need this.
+        - Use overview to inspect a language subtree by level/depth before reading large JSON files.
+        - Use table for cross-culture section audits before opening large JSON files.
+        - Use sync-field for invariant metadata fields such as Help.*.Name; these fields are runtime IDs, not translatable text.
         """);
         return 0;
     }
@@ -277,7 +366,7 @@ internal sealed class LanguageToolApp
         var documents = LoadLanguages(root);
         if (!documents.TryGetValue(culture, out var document))
         {
-            return Fail($"Unknown culture '{culture}'. Expected one of: {string.Join(", ", DefaultCultures)}");
+            return Fail($"Unknown culture '{culture}'. Expected one of: {string.Join(", ", _defaultCultures)}");
         }
 
         var node = TryGetNode(document.Root, ParsePath(path));
@@ -303,16 +392,16 @@ internal sealed class LanguageToolApp
         var options = ParseOptions(args.Skip(1).ToArray(), allowPositionals: false, flagNames: ["allow-partial"]);
         var allowPartial = options.ContainsKey("allow-partial");
         var documents = LoadLanguages(root);
-        var suppliedCultures = DefaultCultures.Where(options.ContainsKey).ToArray();
-        if (!allowPartial && suppliedCultures.Length != DefaultCultures.Length)
+        var suppliedCultures = _defaultCultures.Where(options.ContainsKey).ToArray();
+        if (!allowPartial && suppliedCultures.Length != _defaultCultures.Length)
         {
-            var missing = DefaultCultures.Where(culture => !options.ContainsKey(culture));
+            var missing = _defaultCultures.Where(culture => !options.ContainsKey(culture));
             return Fail($"Set requires all cultures. Missing: {string.Join(", ", missing)}. Use --allow-partial only for intentional one-language edits.");
         }
 
         if (suppliedCultures.Length == 0)
         {
-            return Fail($"No language values supplied. Expected one or more of: {string.Join(", ", DefaultCultures.Select(culture => "--" + culture))}");
+            return Fail($"No language values supplied. Expected one or more of: {string.Join(", ", _defaultCultures.Select(culture => "--" + culture))}");
         }
 
         var segments = ParsePath(path);
@@ -324,6 +413,85 @@ internal sealed class LanguageToolApp
         SaveLanguages(documents);
         Console.WriteLine($"Updated '{path}' in {suppliedCultures.Length} language file(s).");
         return Check(root, []);
+    }
+
+    private int SyncField(DirectoryInfo root, string[] args)
+    {
+        if (args.Length < 2)
+        {
+            return Fail("Usage: sync-field <object-path> <field> [--from zh-CN] [--remove-extra] [--dry-run]");
+        }
+
+        var path = args[0];
+        var field = args[1];
+        var options = ParseOptions(args.Skip(2).ToArray(), allowPositionals: false, flagNames: ["remove-extra", "dry-run"]);
+        var sourceCulture = options.GetValueOrDefault("from") ?? "zh-CN";
+        var removeExtra = options.ContainsKey("remove-extra");
+        var dryRun = options.ContainsKey("dry-run");
+        var documents = LoadLanguages(root);
+        if (!documents.TryGetValue(sourceCulture, out var sourceDocument))
+        {
+            return Fail($"Unknown source culture '{sourceCulture}'. Expected one of: {string.Join(", ", _defaultCultures)}");
+        }
+
+        var sourceNode = TryGetNode(sourceDocument.Root, ParsePath(path));
+        if (sourceNode is not JsonObject sourceObject)
+        {
+            return Fail($"Path '{path}' must be an object in {sourceCulture}.");
+        }
+
+        var copied = 0;
+        var removed = 0;
+        foreach (var (childKey, sourceChild) in sourceObject)
+        {
+            if (sourceChild is not JsonObject sourceChildObject)
+            {
+                continue;
+            }
+
+            var sourceField = sourceChildObject[field];
+            foreach (var document in documents.Values.Where(document => document.Culture != sourceCulture))
+            {
+                var targetParent = TryGetNode(document.Root, ParsePath(path));
+                if (targetParent is not JsonObject targetObject ||
+                    targetObject[childKey] is not JsonObject targetChildObject)
+                {
+                    continue;
+                }
+
+                if (sourceField is not null)
+                {
+                    if (JsonNode.DeepEquals(targetChildObject[field], sourceField))
+                    {
+                        continue;
+                    }
+
+                    if (!dryRun)
+                    {
+                        targetChildObject[field] = sourceField.DeepClone();
+                    }
+
+                    copied++;
+                }
+                else if (removeExtra && targetChildObject.ContainsKey(field))
+                {
+                    if (!dryRun)
+                    {
+                        targetChildObject.Remove(field);
+                    }
+
+                    removed++;
+                }
+            }
+        }
+
+        if (!dryRun)
+        {
+            SaveLanguages(documents);
+        }
+
+        Console.WriteLine($"{(dryRun ? "Would synchronize" : "Synchronized")} field '{field}' under '{path}' from {sourceCulture}: copied {copied}, removed {removed}.");
+        return dryRun ? 0 : Check(root, []);
     }
 
     private int Remove(DirectoryInfo root, string[] args)
@@ -389,7 +557,7 @@ internal sealed class LanguageToolApp
     private Dictionary<string, LanguageDocument> LoadLanguages(DirectoryInfo root)
     {
         var documents = new Dictionary<string, LanguageDocument>(StringComparer.Ordinal);
-        foreach (var culture in DefaultCultures)
+        foreach (var culture in _defaultCultures)
         {
             var file = Path.Combine(root.FullName, "Content", "Assets", "Lang", $"{culture}.json");
             if (!File.Exists(file))
@@ -455,6 +623,80 @@ internal sealed class LanguageToolApp
         return paths;
     }
 
+    private static IEnumerable<string> EnumerateOverviewPaths(JsonNode node, string path, int depth)
+    {
+        yield return path;
+        if (depth <= 0)
+        {
+            yield break;
+        }
+
+        foreach (var child in GetChildren(path, node))
+        {
+            var childNode = GetNodeFromChildPath(node, path, child.Path);
+            if (childNode is null)
+            {
+                continue;
+            }
+
+            foreach (var item in EnumerateOverviewPaths(childNode, child.Path, depth - 1))
+            {
+                yield return item;
+            }
+        }
+    }
+
+    private static string DescribeKinds(Dictionary<string, JsonNode?> nodes)
+    {
+        var byKind = nodes
+            .GroupBy(pair => pair.Value is null ? "missing" : GetKind(pair.Value))
+            .ToArray();
+        if (byKind.Length == 1)
+        {
+            return byKind[0].Key;
+        }
+
+        return string.Join(", ", nodes.Select(pair => $"{pair.Key}:{(pair.Value is null ? "missing" : GetKind(pair.Value))}"));
+    }
+
+    private static string DescribeScalarFields(JsonObject obj)
+    {
+        var fields = obj
+            .Where(pair => pair.Value is JsonValue)
+            .Select(pair => pair.Key)
+            .Order(StringComparer.Ordinal)
+            .ToArray();
+        return fields.Length == 0 ? string.Empty : string.Join(",", fields);
+    }
+
+    private static string DescribeChildObjects(JsonObject obj)
+    {
+        var childObjects = obj
+            .Where(pair => pair.Value is JsonObject or JsonArray)
+            .Select(pair => pair.Key)
+            .Order(PathComparer.Instance)
+            .ToArray();
+        if (childObjects.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        var preview = string.Join(",", childObjects.Take(8));
+        return childObjects.Length <= 8 ? preview : $"{preview},... ({childObjects.Length})";
+    }
+
+    private static string DescribeStructureIssues(Dictionary<string, JsonNode?> nodes)
+    {
+        var missing = nodes.Where(pair => pair.Value is null).Select(pair => pair.Key).ToArray();
+        if (missing.Length > 0)
+        {
+            return "missing: " + string.Join(",", missing);
+        }
+
+        var kinds = nodes.Values.Select(node => GetKind(node!)).Distinct(StringComparer.Ordinal).ToArray();
+        return kinds.Length > 1 ? "type mismatch" : string.Empty;
+    }
+
     private static IEnumerable<(string Path, string Kind)> GetChildren(string prefix, JsonNode node)
     {
         if (node is JsonObject jsonObject)
@@ -483,14 +725,14 @@ internal sealed class LanguageToolApp
     {
         if (depth <= 0 || node is JsonValue)
         {
-            yield return $"{path}\t{GetKind(node)}\t{PreviewValue(node)}";
+            yield return $"{DisplayPath(path)}\t{GetKind(node)}\t{PreviewValue(node)}";
             yield break;
         }
 
-        yield return $"{path}\t{GetKind(node)}";
+        yield return $"{DisplayPath(path)}\t{GetKind(node)}";
         foreach (var child in GetChildren(path, node))
         {
-            var childNode = TryGetNodeFromNode(node, RelativeChildSegment(path, child.Path));
+            var childNode = GetNodeFromChildPath(node, path, child.Path);
             if (childNode is null)
             {
                 continue;
@@ -544,8 +786,23 @@ internal sealed class LanguageToolApp
             : node is JsonObject obj ? obj[segment.Key] : null;
     }
 
+    private static JsonNode? GetNode(JsonObject root, string path)
+    {
+        return string.IsNullOrEmpty(path) ? root : TryGetNode(root, ParsePath(path));
+    }
+
+    private static JsonNode? GetNodeFromChildPath(JsonNode node, string parentPath, string childPath)
+    {
+        return TryGetNodeFromNode(node, RelativeChildSegment(parentPath, childPath));
+    }
+
     private static PathSegment RelativeChildSegment(string parentPath, string childPath)
     {
+        if (string.IsNullOrEmpty(parentPath))
+        {
+            return ParsePath(childPath).Single();
+        }
+
         if (childPath.StartsWith(parentPath + ".", StringComparison.Ordinal))
         {
             return ParsePath(childPath[(parentPath.Length + 1)..]).Single();
@@ -580,6 +837,27 @@ internal sealed class LanguageToolApp
     {
         var escapedKey = EscapePathKey(key);
         return string.IsNullOrEmpty(prefix) ? escapedKey : $"{prefix}.{escapedKey}";
+    }
+
+    private static string NormalizePath(string path)
+    {
+        var trimmed = path.Trim();
+        return trimmed is "" or "." or "/" ? string.Empty : trimmed.Trim('/');
+    }
+
+    private static string DisplayPath(string path)
+    {
+        return string.IsNullOrEmpty(path) ? "." : path;
+    }
+
+    private static (string Path, string[] RemainingArgs) ParseOptionalPathArgument(string[] args)
+    {
+        if (args.Length == 0 || args[0].StartsWith("--", StringComparison.Ordinal))
+        {
+            return (string.Empty, args);
+        }
+
+        return (NormalizePath(args[0]), args.Skip(1).ToArray());
     }
 
     private static PathSegment[] ParsePath(string path)
@@ -874,11 +1152,37 @@ internal sealed class LanguageToolApp
         return result;
     }
 
+    private static string[] SplitCsvOption(string value)
+    {
+        var items = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (items.Length == 0)
+        {
+            throw new ArgumentException("CSV option cannot be empty.");
+        }
+
+        return items;
+    }
+
+    private static string[] ParseCultureList(string value)
+    {
+        return value == "all" ? _defaultCultures : SplitCsvOption(value);
+    }
+
     private static string PreviewValue(JsonNode node)
     {
         return node is JsonValue value && value.TryGetValue<string>(out var text)
             ? Truncate(text.ReplaceLineEndings("\\n"), 120)
             : Truncate(node.ToJsonString(new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }), 120);
+    }
+
+    private static string PreviewOverviewValue(JsonNode node)
+    {
+        return node switch
+        {
+            JsonValue => PreviewValue(node),
+            JsonArray array => $"array[{array.Count}]",
+            _ => string.Empty
+        };
     }
 
     private static string Truncate(string value, int maxLength)
@@ -935,8 +1239,14 @@ internal sealed class LanguageToolApp
           children [path] [--culture zh-CN]
               List direct children under a JSON path.
 
-          show <path> [--culture zh-CN] [--depth 1] [--limit 80]
+          overview [path] [--culture zh-CN|all|zh-CN,en-US] [--depth 2] [--limit 120]
+              Show a level/depth-oriented subtree summary with kind, scalar fields, child keys and structural issues.
+
+          show [path] [--culture zh-CN] [--depth 1] [--limit 80]
               Preview a small subtree without opening the full language file.
+
+          table [path] [--fields Title,Name,value] [--cultures all|zh-CN,en-US] [--limit 80]
+              Print direct child objects as a culture comparison table.
 
           search <text> [--culture all|zh-CN] [--in path|value|all] [--prefix ContentWidgets] [--limit 50]
               Search key paths and/or localized values.
@@ -950,6 +1260,9 @@ internal sealed class LanguageToolApp
           set <path> --zh-CN value --allow-partial
               Update only supplied cultures. Use sparingly, then run check.
 
+          sync-field <object-path> <field> [--from zh-CN] [--remove-extra] [--dry-run]
+              Copy one metadata field from a source culture to matching direct child objects in other cultures.
+
           remove <path>
               Remove one key path from all language files.
 
@@ -959,8 +1272,12 @@ internal sealed class LanguageToolApp
         Examples:
           dotnet run --project LanguageTool -- check
           dotnet run --project LanguageTool -- rules
+          dotnet run --project LanguageTool -- overview . --depth 1
+          dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 60
           dotnet run --project LanguageTool -- children ContentWidgets.PlayScreen
           dotnet run --project LanguageTool -- search restart --culture en-US --prefix ContentWidgets --limit 20
+          dotnet run --project LanguageTool -- table Help --fields Title,Name --limit 12
+          dotnet run --project LanguageTool -- sync-field Help Name --from zh-CN --remove-extra --dry-run
           dotnet run --project LanguageTool -- get ContentWidgets.ModManagementScreen.Refresh --culture en-US
           dotnet run --project LanguageTool -- get Strings.CharacterSkin_Description --culture en-US
           dotnet run --project LanguageTool -- set ContentWidgets.ContentScreen.13 --zh-CN 模组 --en-US Mods --pt-PT Mods --ru-RU Моды
@@ -989,6 +1306,53 @@ internal readonly record struct PathSegment
     public string Key { get; }
     public int Index { get; }
     public bool IsIndex { get; }
+}
+
+internal sealed class PathComparer : IComparer<string>
+{
+    public static readonly PathComparer Instance = new();
+
+    public int Compare(string? x, string? y)
+    {
+        if (ReferenceEquals(x, y))
+        {
+            return 0;
+        }
+
+        if (x is null)
+        {
+            return -1;
+        }
+
+        if (y is null)
+        {
+            return 1;
+        }
+
+        var xParts = x.Split('.');
+        var yParts = y.Split('.');
+        var count = Math.Min(xParts.Length, yParts.Length);
+        for (var i = 0; i < count; i++)
+        {
+            var result = ComparePart(xParts[i], yParts[i]);
+            if (result != 0)
+            {
+                return result;
+            }
+        }
+
+        return xParts.Length.CompareTo(yParts.Length);
+    }
+
+    private static int ComparePart(string x, string y)
+    {
+        if (int.TryParse(x, out var xNumber) && int.TryParse(y, out var yNumber))
+        {
+            return xNumber.CompareTo(yNumber);
+        }
+
+        return string.Compare(x, y, StringComparison.Ordinal);
+    }
 }
 
 internal static class JsonFormatter

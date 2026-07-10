@@ -277,10 +277,10 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         PlayerData? playerData = null
     )
     {
-        if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
+        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
         {
             if (playerData == null ||
-                !SubsystemBedrockBlockBehavior.AllowPlayerAction(playerData.ComponentPlayer, territoriy!))
+                !SubsystemTerritoryBlockBehavior.AllowPlayerAction(playerData.ComponentPlayer, territoriy!))
             {
                 playerData?.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(GetType().Name, 1),
                     Color.Yellow, false, true);

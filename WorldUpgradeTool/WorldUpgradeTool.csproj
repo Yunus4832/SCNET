@@ -6,6 +6,12 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>WorldUpgradeTool.Test</_Parameter1>
+        </AssemblyAttribute>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Engine\Engine.csproj" SetTargetFramework="TargetFramework=net10.0"/>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
     </ItemGroup>

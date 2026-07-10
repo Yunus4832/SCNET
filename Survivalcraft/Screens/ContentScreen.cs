@@ -4,7 +4,7 @@ namespace Game.Screens;
 
 public class ContentScreen : Screen
 {
-    private const string _typeName = "ContentScreen";
+    private const string _typeName = nameof(ContentScreen);
 
     private readonly ButtonWidget _communityContentButton;
 

@@ -19,7 +19,7 @@ public class PlayerScreen : Screen
         Edit
     }
 
-    private const string _typeName = "PlayerScreen";
+    private const string _typeName = nameof(PlayerScreen);
 
     private readonly BusyDialog _fetchingPlayerDialog = new("下载玩家...", string.Empty);
 

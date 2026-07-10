@@ -4,7 +4,7 @@ namespace Game.Widgets;
 
 public class MusketWidget : CanvasWidget
 {
-    private const string _typeName = "MusketWidget";
+    private const string _typeName = nameof(MusketWidget);
 
     private readonly LabelWidget _instructionsLabel;
 

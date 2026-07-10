@@ -2,6 +2,8 @@ namespace Game.Dialogs;
 
 public class ModWorldSelectionDialog : Dialog
 {
+    private const string _typeName = nameof(ModWorldSelectionDialog);
+
     private readonly ButtonWidget _cancelButton;
     private readonly List<WorldSelection> _selections = [];
     private readonly ButtonWidget _okButton;
@@ -9,8 +11,8 @@ public class ModWorldSelectionDialog : Dialog
 
     public ModWorldSelectionDialog(
         string modName,
-        IEnumerable<Game.WorldInfo> worlds,
-        Func<Game.WorldInfo, bool> isSelected,
+        IEnumerable<WorldInfo> worlds,
+        Func<WorldInfo, bool> isSelected,
         Action<IReadOnlyList<WorldSelection>> selectionHandler)
     {
         _selectionHandler = selectionHandler;
@@ -41,7 +43,7 @@ public class ModWorldSelectionDialog : Dialog
 
         stack.Children.Add(new LabelWidget
         {
-            Text = "选择世界",
+            Text = LanguageManager.GetContentWidgets(_typeName, "Title"),
             Color = Color.White,
             HorizontalAlignment = WidgetAlignment.Center,
             DropShadow = true
@@ -106,13 +108,13 @@ public class ModWorldSelectionDialog : Dialog
 
         _okButton = new BevelledButtonWidget
         {
-            Text = "确定",
+            Text = LanguageManager.Ok,
             Size = new Vector2(160, 60),
             Margin = new Vector2(20, 0)
         };
         _cancelButton = new BevelledButtonWidget
         {
-            Text = "取消",
+            Text = LanguageManager.Cancel,
             Size = new Vector2(160, 60),
             Margin = new Vector2(20, 0)
         };
@@ -134,9 +136,9 @@ public class ModWorldSelectionDialog : Dialog
         }
     }
 
-    public sealed class WorldSelection(Game.WorldInfo world, CheckboxWidget checkbox)
+    public sealed class WorldSelection(WorldInfo world, CheckboxWidget checkbox)
     {
-        public Game.WorldInfo World { get; } = world;
+        public WorldInfo World { get; } = world;
 
         public bool IsChecked => checkbox.IsChecked;
     }

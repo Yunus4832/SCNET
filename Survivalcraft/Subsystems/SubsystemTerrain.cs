@@ -392,12 +392,12 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             return;
         }
 
-        if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
+        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
         {
             if (!territoriy!.AllowBlockBehavior)
             {
                 if (miner == null ||
-                    !SubsystemBedrockBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
+                    !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
                 {
                     miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow, false, true);
                     return;
@@ -407,10 +407,10 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             {
                 if (territoriy.IsVisible)
                 {
-                    if (SubsystemBedrockBlockBehavior.IsInTerritoriyBorder(territoriy, x, z))
+                    if (SubsystemTerritoryBlockBehavior.IsInTerritoriyBorder(territoriy, x, z))
                     {
                         if (miner == null ||
-                            !SubsystemBedrockBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
+                            !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
                         {
                             miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow,
                                 false,
@@ -456,13 +456,13 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         }
 
         var allowBlockBehavior = true;
-        if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
+        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
         {
             if (!territoriy!.AllowBlockBehavior)
             {
                 allowBlockBehavior = false;
                 if (miner == null ||
-                    !SubsystemBedrockBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
+                    !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
                 {
                     miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow, false, true);
                     return;
@@ -472,10 +472,10 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             {
                 if (territoriy.IsVisible)
                 {
-                    if (SubsystemBedrockBlockBehavior.IsInTerritoriyBorder(territoriy, x, z))
+                    if (SubsystemTerritoryBlockBehavior.IsInTerritoriyBorder(territoriy, x, z))
                     {
                         if (miner == null ||
-                            !SubsystemBedrockBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
+                            !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
                         {
                             miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow,
                                 false,

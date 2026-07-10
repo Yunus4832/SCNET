@@ -17,7 +17,7 @@ public class FurnitureDesign
 
     public const int MaxNameLength = 100;
 
-    private const string _typeName = "FurnitureDesign";
+    private const string _typeName = nameof(FurnitureDesign);
 
     private Box? _box;
 

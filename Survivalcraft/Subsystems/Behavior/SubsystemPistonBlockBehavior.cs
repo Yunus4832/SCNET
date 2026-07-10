@@ -366,7 +366,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var pass = true;
             while (num3 < 8)
             {
-                if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriyBorder(position.X + offset.X,
+                if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(position.X + offset.X,
                         position.Z + offset.Z, out var territoriy))
                 {
                     if (territoriy!.IsVisible)
@@ -439,7 +439,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 var num4 = 0;
                 for (var i = 0; i < pullCount + 1; i++)
                 {
-                    if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriyBorder(position.X + offset.X,
+                    if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(position.X + offset.X,
                             position.Z + offset.Z, out var territoriy))
                     {
                         if (territoriy!.IsVisible)
@@ -627,12 +627,9 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             case DiamondBlock.Index:
                 return false;
             case BedrockBlock.Index:
-                if (data == 1)
-                {
-                    return false;
-                }
-
                 return y > 1;
+            case TerritoryBlock.Index:
+                return false;
             default:
             {
                 var block = BlocksManager.Blocks[num];

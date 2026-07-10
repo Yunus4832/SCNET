@@ -36,10 +36,15 @@ public class EggBlock : Block
             }
 
             var value = item.GetNestedValue<string>("DisplayName");
+            string? displayNameKey = null;
             if (value.StartsWith('[') && value.EndsWith(']'))
             {
                 var lp = value.Substring(1, value.Length - 2).Split([":"], StringSplitOptions.RemoveEmptyEntries);
-                value = LanguageManager.GetDatabase("DisplayName", lp[1]);
+                displayNameKey = lp.Length > 1 ? lp[1] : null;
+                if (displayNameKey is not null)
+                {
+                    value = LanguageManager.GetDatabase("DisplayName", displayNameKey);
+                }
             }
 
             if (nestedValue >= EggTypes.Count)
@@ -52,6 +57,7 @@ public class EggBlock : Block
                 EggTypeIndex = nestedValue,
                 ShowEgg = item.GetNestedValue<bool>("ShowEgg"),
                 DisplayName = value,
+                DisplayNameKey = displayNameKey,
                 TemplateName = item.NestingParent?.Name ?? string.Empty,
                 NutritionalValue = item.GetNestedValue<float>("NutritionalValue"),
                 Color = item.GetNestedValue<Color>("Color"),
@@ -298,7 +304,13 @@ public class EggBlock : Block
 
         public Color Color;
 
-        public string DisplayName = string.Empty;
+        public string? DisplayNameKey;
+
+        public string DisplayName
+        {
+            get => DisplayNameKey is null ? field : LanguageManager.GetDatabase("DisplayName", DisplayNameKey);
+            set;
+        } = string.Empty;
 
         public int EggTypeIndex;
 

@@ -4,7 +4,7 @@ namespace Game.Widgets;
 
 public class BowWidget : CanvasWidget
 {
-    private const string _typeName = "BowWidget";
+    private const string _typeName = nameof(BowWidget);
 
     private readonly LabelWidget _instructionsLabel;
 

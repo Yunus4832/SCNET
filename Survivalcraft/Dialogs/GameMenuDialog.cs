@@ -10,7 +10,7 @@ namespace Game.Dialogs;
 
 public class GameMenuDialog : Dialog
 {
-    private const string _typeName = "GameMenuDialog";
+    private const string _typeName = nameof(GameMenuDialog);
 
     private static bool _increaseDetailDialogShown;
 

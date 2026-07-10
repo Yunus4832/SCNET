@@ -924,12 +924,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public bool IsInventoryVisible()
     {
-        if (ModalPanelWidget != null)
-        {
-            return !IsClothingVisible();
-        }
-
-        return false;
+        return ModalPanelWidget is CreativeInventoryWidget or FullInventoryWidget;
     }
 
     public bool IsActiveSlotEditable()

@@ -4,7 +4,7 @@ namespace Game;
 
 public static class GameUpdateHelper
 {
-    private const string _typeName = "GameUpdateHelper";
+    private const string _typeName = nameof(GameUpdateHelper);
 
     private static readonly string _checkUpdateUrl =
         $"http://schelper.trk34.top:34340/com/updatehelper?version={VersionsManager.ProtocolVersion}";

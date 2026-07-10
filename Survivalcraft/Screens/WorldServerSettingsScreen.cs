@@ -5,7 +5,7 @@ namespace Game.Screens;
 
 public class WorldServerSettingsScreen : Screen
 {
-    private const string _typeName = "WorldServerSettingsScreen";
+    private const string _typeName = nameof(WorldServerSettingsScreen);
 
     private readonly TextBoxWidget _daySpeedTextBox;
 

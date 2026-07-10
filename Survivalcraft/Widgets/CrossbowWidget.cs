@@ -7,7 +7,7 @@ namespace Game.Widgets;
 
 public class CrossbowWidget : CanvasWidget
 {
-    private const string _typeName = "CrossbowWidget";
+    private const string _typeName = nameof(CrossbowWidget);
 
     private float? _dragStartOffset;
 

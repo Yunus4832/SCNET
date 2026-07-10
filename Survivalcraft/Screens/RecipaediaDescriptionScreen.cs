@@ -5,7 +5,7 @@ namespace Game.Screens;
 
 public class RecipaediaDescriptionScreen : Screen
 {
-    private const string _typeName = "RecipaediaDescriptionScreen";
+    private const string _typeName = nameof(RecipaediaDescriptionScreen);
 
     private readonly BlockIconWidget _blockIconWidget;
 

@@ -9,7 +9,7 @@ namespace Game.Components;
 
 public class ComponentSleep : Component, IUpdateable
 {
-    private const string _typeName = "ComponentSleep";
+    private const string _typeName = nameof(ComponentSleep);
 
     private bool _allowManualWakeUp;
 

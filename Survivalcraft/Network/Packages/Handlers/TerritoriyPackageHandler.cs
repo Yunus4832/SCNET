@@ -10,7 +10,7 @@ public sealed class TerritoriyPackageHandler : PackageHandlerBase<TerritoriyPack
             return;
         }
 
-        if (!SubsystemBedrockBlockBehavior.Territories.TryGetValue(package.Guid, out var territoriy))
+        if (!SubsystemTerritoryBlockBehavior.Territories.TryGetValue(package.Guid, out var territoriy))
         {
             return;
         }

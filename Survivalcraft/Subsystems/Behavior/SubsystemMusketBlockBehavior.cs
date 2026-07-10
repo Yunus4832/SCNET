@@ -7,7 +7,7 @@ namespace Game.Subsystems;
 
 public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
 {
-    private const string _typeName = "SubsystemMusketBlockBehavior";
+    private const string _typeName = nameof(SubsystemMusketBlockBehavior);
 
     private readonly Dictionary<ComponentMiner, double> _aimStartTimes = new();
 

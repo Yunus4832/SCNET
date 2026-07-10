@@ -13,7 +13,7 @@ public class FurnitureDesignWidget : Widget
         Perspective
     }
 
-    private const string _typeName = "FurnitureDesignWidget";
+    private const string _typeName = nameof(FurnitureDesignWidget);
 
     public static bool DrawDebugFurniture;
 

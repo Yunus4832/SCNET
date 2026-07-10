@@ -2595,6 +2595,11 @@
         "FallenLeavesBlock:0": {
             "DisplayName": "Leaf Falling (em inglês)",
             "Description": "As folhas que caem das árvores no outono"
+        },
+        "TerritoryBlock:0": {
+            "DisplayName": "Pedra de Território",
+            "Description": "Coloca-a para obter permissão de escavação e construção na área envolvente de 1x1 chunk. Cada jogador só pode possuir uma Pedra de Território.",
+            "CRDescription:0": "Cria uma Pedra de Território com lingotes de cobre, diamante, lingotes de ferro e granito"
         }
     },
     "Help": {
@@ -2616,12 +2621,12 @@
         },
         "5": {
             "value": "",
-            "Name": "GamePad do jogo",
+            "Name": "Gamepad",
             "Title": "Controle de mão"
         },
         "6": {
             "value": "",
-            "Name": "teclado",
+            "Name": "Keyboard",
             "Title": "Controle de teclado"
         },
         "7": {
@@ -2634,7 +2639,7 @@
         },
         "9": {
             "value": "Os pontos de vida são pequenos corações vermelhos que são exibidos na tela do jogo.É o número de vidas restantes do jogador. Quando ele cai para 0, o jogador morre. Ele se reabastece lentamente quando o jogador não está com fome e se reabastece mais rápido quando o jogador está dormindo. Tome cuidado quando você está em má saúde, mesmo uma lesão menor pode matá - lo. Quando um jogador está doente, o coração se torna verde. Não coma alimentos não saudáveis para evitar ficar doente. Quando o jogador tem gripe, o coração se torna azul. Não fique resfriado por muito tempo, ou você pode pegar gripe. n ",
-            "Name": "Saúde",
+            "Name": "Health",
             "Title": "Vida"
         },
         "10": {
@@ -2644,32 +2649,32 @@
         },
         "11": {
             "value": "Quando a sua temperatura corporal é baixa por um longo período de tempo, os jogadores começam a espirrar. Este é um sinal de que você pode ter gripe em breve e você precisa se aquecer rapidamente. A gripe é uma doença perigosa. Sua saúde vai lentamente cair para dois corações, tornando-o muito vulnerável. Suas atividades serão interrompidas por tosse de vez em quando. Você será lento, fraco e facilmente cansado. \" Você também vai ficar sonolento.É melhor dormir em um lugar quente e afastar a gripe, talvez você esteja melhor pela manhã. A gripe é difícil de curar quando você está em um ambiente frio. n ",
-            "Name": "A gripe",
+            "Name": "Flu",
             "Title": "Gripe"
         },
         "12": {
             "value": "O valor de fome é um pequeno peixe que é exibido na tela do jogo. Se você não comer por um longo período de tempo, seu personagem continuará reclamando, e se o valor de fome for zero, continuará perdendo vida até que você morra. Além disso, a saúde não se recupera ativamente quando você está com fome. Para comer, você tem que arrastar um item comestível para o painel do corpo do jogador. Seu personagem irá dizer se você ainda está com fome. Você pode obter comida de muitos lugares no jogo. O mais rápido é caçar animais comestíveis, como vacas, pássaros e javali. Lembre-se de que a caça pode ser perigosa e os animais rapidamente diminuirão nas áreas próximas, forçando-o a procurar mais em outras áreas. Outra opção para obter alimentos é a agricultura. A agricultura fornece uma fonte sustentável de alimento que, embora possa exigir muito trabalho de preparação e manutenção adicional, pode efetivamente sustentar sua sobrevivência. n ",
-            "Name": "Fome",
+            "Name": "Hunger",
             "Title": "fome"
         },
         "13": {
             "value": "\\ nNEndurance é a medida em que o seu corpo está cansado ou não. Quando fizer exercício contínuo durante muito tempo, sentir-se-á cansado e começará a respirar. Quando estás a ofegar, o teu desempenho é pior do que o habitual. O teu movimento e a velocidade das minas vão abrandar, e não podes saltar. Os desportos de esforço físico são: correr, saltar, nadar, cavar, atacar. É muito perigoso sentirem-se cansados quando estão na água, porque não podem descansar enquanto nadam. Observe os primeiros sinais de pieira e saia da água imediatamente. Quando estivermos exaustos na água, a menos que estejamos perto da costa, afogamo-nos ou afogamo-nos. \"N\"NBeware, é fácil cansar-se quando se evitam animais perigosos. \\ n o s",
-            "Name": "Resistência de resistência a",
+            "Name": "Stamina",
             "Title": "Resistência"
         },
         "14": {
             "value": "O sono pode ajudá-lo a recuperar a sua saúde, e pode passar rapidamente as noites aborrecidas quando a noite está muito escura ou demasiado perigosa para trabalhar. Mesmo que não esteja ferido, ainda tem de dormir de vez em quando. Se o ignorar, o seu carácter ficará cada vez mais sonolento até começar a ter um breve desmaio. Se continuar a mover-se desafiando este aviso, desmaiará por mais tempo e, eventualmente, perderá a consciência. É muito perigoso perder a consciência, porque os predadores vão sentir o teu cheiro e alimentar-se do teu corpo desprotegido. Embora não precises de uma cama, só podes dormir num lugar confortável. O solo não deve ser demasiado duro, e o espaço não deve estar demasiado exposto, nem demasiado húmido e quente. O teu ponto de nascimento está definido no último lugar onde dormes. Não dormir, abrir o ecrã corporal e carregar no botão de dormir. \\ n\\ nNote: O sono está desactivado na versão do ensaio. \\ n o s",
-            "Name": "Dormir.",
+            "Name": "Sleep",
             "Title": "Dormir."
         },
         "15": {
             "value": "Quando não estiver a usar roupas adequadas lá fora, com o frio, a temperatura do seu corpo vai cair. O seu campo de visão começará a congelar e começará a perder a saúde. Encontra um lugar quente ou perto do fogo para te aqueceres e manteres-te seco. Se ficares num lugar frio durante muito tempo, vais começar a espirrar e podes apanhar gripe. Não é bom para ti estares muito quente, ficar muito perto do fogo vai fazer-te sobreaquecer. O lugar protegido é mais quente do que lá fora. Fecha todos os buracos e tranca a porta, o que vai aquecer o abrigo. Mesmo um pequeno buraco exposto permite ventilação e faz uma grande mudança de temperatura. Não faça uma fogueira no seu abrigo, aqueça em casa, e permita-lhe tirar a roupa e restaurar a temperatura corporal mais depressa. O 'n' n dampureza irá aumentar consideravelmente a sua sensibilidade ao frio. Encontre um local quente para secar. A melhor maneira de lidar com uma constipação é usar mais camadas de roupas grossas e secas. Precisa de embrulhar todo o seu corpo. Se não usar um conjunto completo de roupas irá reduzir grandemente o calor das outras roupas. A roupa feita de pêlo de animal tem o melhor efeito de afastar o frio. \\ n o s",
-            "Name": "Temperatura",
+            "Name": "Temperature",
             "Title": "Temperatura do corpo do corpo"
         },
         "16": {
             "value": "A tua personagem pode molhar-se pela chuva, ou pode cair na água e ficar encharcada. A humidade reduz seriamente o isolamento térmico das roupas, pelo que é fácil congelar num clima frio. O teu corpo secará mais depressa num lugar quente. \\ n o s",
-            "Name": "Wetness é",
+            "Name": "Wetness",
             "Title": "Umidade"
         },
         "17": {
@@ -2679,7 +2684,7 @@
         },
         "18": {
             "value": "Quanto mais tempo você sobrevive, seu personagem se torna mais experiente. A experiência é representada por bolas douradas que podem ser pegadas. Eles aparecem quando você faz mineração, colhe culturas ou caça animais. Coletá - los para aumentar sua experiência. Se você ganhar experiência suficiente, seu personagem vai para o próximo nível. Sua força, velocidade e capacidade de adaptação aumentam e sua necessidade de comida diminui. Você também pode usar ferramentas mais avançadas, armas e armaduras. Quando você renasce após a morte, seu nível cai para um valor muito baixo. Levará muito tempo para recuperar a experiência perdida. n ",
-            "Name": "níveis",
+            "Name": "Levels",
             "Title": "Nível e experiência"
         },
         "19": {
@@ -2752,7 +2757,7 @@
         },
         "36": {
             "value": "Vestir roupas em climas frios pode fornecer calor, e vestindo roupas em combate pode fornecer proteção contra armaduras. Quando se vive em zonas frias, são sempre necessárias roupas pesadas para manter a temperatura corporal. \\ n\\ nO O nível de isolamento é medido em CLO. \\ n\\ nFor, 0.0 CLO está nu, 1.0 CLO é roupa leve, e 3.0 CLO é uma armadura pesada. Quanto mais alto for o CLO, melhor será o efeito de preservação do calor. \\ n\\ nPode aceder à interface de roupas com o botão da roupa. Há 4 posições no corpo: cabeça, tronco, pernas e pés. Pode haver várias roupas em cada posição, empilhadas umas em cima das outras. Os efeitos de várias roupas são combinados. Nem tudo pode ser usado noutras coisas. Por exemplo, não pode usar outra camisa T em cima de um casaco de peles. Vestir roupas grossas numa posição e expor a outra não proporcionará grande isolamento. Se não tirares proveito da roupa, tens de cobrir o corpo todo. Esta é a peça de roupa mais fina, que determina quantas calorias o personagem perde. \\ n o s",
-            "Name": "Roupas de roupa",
+            "Name": "Clothing",
             "Title": "Roupas de roupa"
         },
         "37": {
@@ -3687,6 +3692,9 @@
             "26": "Mudança sazonal",
             "27": "A duração de um ano",
             "28": "Temporada"
+        },
+        "ModWorldSelectionDialog": {
+            "Title": "Selecionar mundos"
         }
     },
     "FireworksBlock": {
@@ -3906,5 +3914,19 @@
             "47": "Um pequeno pássaro que vive em regiões temperadas.Às vezes, os ovos são pequenos, mas comestíveis. Eu não posso comer."
         }
     },
-    "GameUpdateHelper": "A versão online está atualizada!"
+    "GameUpdateHelper": "A versão online está atualizada!",
+    "TerritoryBlock": {
+        "1": "Precisas do nível {0} ou superior para criar {1}. Nível atual: {2}"
+    },
+    "SubsystemTerritoryBlockBehavior": {
+        "1": "Mostrar alcance",
+        "2": "Permitir colegas de equipa",
+        "3": "Não tens permissão para usar esta Pedra de Território",
+        "4": "Esta Pedra de Território não está ativa",
+        "5": "ID de bloco desativado {0}",
+        "6": "Outro jogador tem território nesta área. A ativação falhou!"
+    },
+    "SubsystemBlockBehaviors": {
+        "1": "Não tens permissão para usar comportamentos de bloco aqui"
+    }
 }

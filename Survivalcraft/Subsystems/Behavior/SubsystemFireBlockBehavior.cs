@@ -254,9 +254,9 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     public bool SetCellOnFire(int x, int y, int z, float fireExpandability, ComponentMiner? miner = null)
     {
         //在领地范围
-        if (SubsystemBedrockBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
+        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
         {
-            if (miner == null || !SubsystemBedrockBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy!))
+            if (miner == null || !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy!))
             {
                 miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("领地范围内不可点火", Color.Yellow, false, true);
                 return false;
