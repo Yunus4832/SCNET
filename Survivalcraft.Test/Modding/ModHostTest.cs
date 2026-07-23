@@ -1,3 +1,4 @@
+using Game.Commands;
 using Game.Modding;
 using Game.Network.Packages;
 
@@ -47,6 +48,25 @@ public class ModHostTest
         host.StopAll();
 
         Assert.False(registry.TryGet(id, out _));
+    }
+
+    [Fact]
+    public void HostOwnsAndRemovesModCommands()
+    {
+        var host = new ModHost();
+        var descriptor = new ModDescriptor(
+            new ModManifest("example.commands", "Commands", "1.0"),
+            () => new CommandMod());
+
+        host.LoadAndStart([descriptor]);
+
+        Assert.True(host.Commands.IsFrozen);
+        Assert.True(host.Commands.TryFind("hello", out var registered));
+        Assert.Equal("example.commands:hello", registered!.Id.ToString());
+
+        host.StopAll();
+
+        Assert.False(host.Commands.TryFind("hello", out _));
     }
 
     [Fact]
@@ -271,6 +291,27 @@ public class ModHostTest
         {
             var id = new ResourceId(context.Manifest.ModId, "machine");
             context.Extensions.Register("blocks", id, new object());
+        }
+
+        public void Start(IModContext context)
+        {
+        }
+
+        public void Stop()
+        {
+        }
+    }
+
+    private sealed class CommandMod : IMod
+    {
+        public void Configure(IModContext context)
+        {
+            context.Commands.Register(
+                new ResourceId(context.Manifest.ModId, "hello"),
+                new GameCommand(
+                    "hello",
+                    "Hello",
+                    [new CommandRoute([], (_, _) => CommandResult.Ok("Hello"))]));
         }
 
         public void Start(IModContext context)

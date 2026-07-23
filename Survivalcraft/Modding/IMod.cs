@@ -1,3 +1,5 @@
+using Game.Commands;
+
 namespace Game.Modding;
 
 public interface IMod
@@ -22,6 +24,8 @@ public interface IModContext
     IModPlayerContextActionHooks ContextActions { get; }
 
     IModNetwork Network { get; }
+
+    IModCommands Commands { get; }
 }
 
 public interface IModExtensions
@@ -29,4 +33,9 @@ public interface IModExtensions
     IDisposable Register<T>(string registryName, ResourceId id, T value) where T : class;
 
     bool TryGet<T>(string registryName, ResourceId id, out T? value) where T : class;
+}
+
+public interface IModCommands
+{
+    IDisposable Register(ResourceId id, GameCommand command);
 }

@@ -50,6 +50,7 @@ public enum PackageType : byte
     EditableBlock,
     GroupManage,
     SubsystemSeason,
+    Command,
 
     ModPackage = 255 // 为后面的mod数据传输做保留
 }
@@ -113,6 +114,7 @@ public class PackageManager
         RegisterBuiltInPackage<EditableBlockPackage, EditableBlockPackageHandler>(PackageType.EditableBlock);
         RegisterBuiltInPackage<GroupManagePackage, GroupManagePackageHandler>(PackageType.GroupManage);
         RegisterBuiltInPackage<SubsystemSeasonPackage, SubsystemSeasonPackageHandler>(PackageType.SubsystemSeason);
+        RegisterBuiltInPackage<CommandPackage, CommandPackageHandler>(PackageType.Command);
         RegisterBuiltInPackage<ModEnvelopePackage, ModEnvelopePackageHandler>(PackageType.ModPackage);
     }
 

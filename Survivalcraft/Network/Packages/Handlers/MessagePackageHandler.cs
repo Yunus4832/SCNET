@@ -21,10 +21,27 @@ public sealed class MessagePackageHandler : PackageHandlerBase<MessagePackage>
             case MessagePackage.MessageMode.BaseMessage:
                 var gameWidgets = project.FindSubsystem<SubsystemGameWidgets>(true)!;
                 const bool external = false;
-                gameWidgets.AddNetMessage(package.Message, package.PlayerName, package.MessageType, package.ToClients,
-                    external);
-                if (!isServer || package.From == null)
+                if (!isServer)
                 {
+                    gameWidgets.AddNetMessage(
+                        package.Message,
+                        package.PlayerName,
+                        package.MessageType,
+                        package.ToClients,
+                        external);
+                    break;
+                }
+
+                if (package.From == null)
+                {
+                    break;
+                }
+
+                if (package.Message.TrimStart().StartsWith('/'))
+                {
+                    Log.Warning(
+                        $"Rejected command-like chat message from {package.From.PlayerData.Name}; " +
+                        "commands must use CommandPackage.");
                     break;
                 }
 
@@ -33,6 +50,12 @@ public sealed class MessagePackageHandler : PackageHandlerBase<MessagePackage>
                     .Contains(package.From.GUID.ToString());
                 if (!flag)
                 {
+                    gameWidgets.AddNetMessage(
+                        package.Message,
+                        package.PlayerName,
+                        package.MessageType,
+                        package.ToClients,
+                        external);
                     package.Except = package.From;
                     netNode.QueuePackage(package);
                 }

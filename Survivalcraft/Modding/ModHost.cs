@@ -1,3 +1,5 @@
+using Game.Commands;
+
 namespace Game.Modding;
 
 public sealed class ModHost
@@ -14,6 +16,8 @@ public sealed class ModHost
     public PlayerContextActionHooks ContextActions { get; } = new();
 
     public ModNetworkHooks Network { get; } = new();
+
+    public CommandRegistry Commands { get; } = new();
 
     public IReadOnlyList<ModRuntime> Runtimes => _runtimes;
 
@@ -35,7 +39,8 @@ public sealed class ModHost
                     Gameplay,
                     BlockBehaviors,
                     ContextActions,
-                    Network);
+                    Network,
+                    Commands);
                 var runtime = new ModRuntime(descriptor, descriptor.Factory(), context);
                 _runtimes.Add(runtime);
                 runtime.State = ModState.Configuring;
@@ -48,6 +53,7 @@ public sealed class ModHost
             BlockBehaviors.Freeze();
             ContextActions.Freeze();
             Network.Freeze();
+            Commands.Freeze();
             foreach (var runtime in _runtimes)
             {
                 runtime.State = ModState.Starting;
@@ -95,6 +101,7 @@ public sealed class ModHost
             BlockBehaviors.RemoveOwner(runtime.Descriptor.Manifest.ModId);
             ContextActions.RemoveOwner(runtime.Descriptor.Manifest.ModId);
             Network.RemoveOwner(runtime.Descriptor.Manifest.ModId);
+            Commands.RemoveOwner(runtime.Descriptor.Manifest.ModId);
         }
 
         DisposeLifetimes(_runtimes.Select(runtime => runtime.Descriptor));
@@ -117,7 +124,8 @@ public sealed class ModHost
         GameplayHooks gameplay,
         BlockBehaviorHooks blockBehaviors,
         PlayerContextActionHooks contextActions,
-        ModNetworkHooks network) : IModContext
+        ModNetworkHooks network,
+        CommandRegistry commands) : IModContext
     {
         public ModManifest Manifest { get; } = manifest;
 
@@ -130,6 +138,8 @@ public sealed class ModHost
         public IModPlayerContextActionHooks ContextActions { get; } = contextActions.ForOwner(manifest.ModId);
 
         public IModNetwork Network { get; } = network.ForOwner(manifest.ModId);
+
+        public IModCommands Commands { get; } = new OwnedCommands(manifest.ModId, commands);
     }
 
     private sealed class OwnedExtensions(ModId owner, ExtensionRegistry extensions) : IModExtensions
@@ -142,6 +152,14 @@ public sealed class ModHost
         public bool TryGet<T>(string registryName, ResourceId id, out T? value) where T : class
         {
             return extensions.GetRegistry<T>(registryName).TryGet(id, out value);
+        }
+    }
+
+    private sealed class OwnedCommands(ModId owner, CommandRegistry commands) : IModCommands
+    {
+        public IDisposable Register(ResourceId id, GameCommand command)
+        {
+            return commands.Register(owner, id, command);
         }
     }
 }

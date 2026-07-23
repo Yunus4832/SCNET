@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET Debugging"
+  short_description: "Run repeatable SCNET diagnostics and smoke tests."
+  default_prompt: "Use $scnet-debugging to start an SCNET test session, inspect failures, and preserve diagnostic evidence."

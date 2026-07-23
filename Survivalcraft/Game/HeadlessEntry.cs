@@ -1,5 +1,7 @@
+using System.Collections.Concurrent;
 using System.Globalization;
 
+using Game.Commands;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Serialization;
@@ -11,6 +13,8 @@ public static class HeadlessEntry
     private static GameModRuntime? _modRuntime;
 
     private static volatile bool _running = true;
+
+    private static readonly ConcurrentQueue<string> _consoleCommands = new();
 
     public static void RequestStop()
     {
@@ -24,6 +28,7 @@ public static class HeadlessEntry
             GameExitManager.BeginSession();
             RunMode.Value = RunModeType.HeadlessServer;
             _running = true;
+            _consoleCommands.Clear();
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
             Dispatcher.Initialize();
@@ -60,6 +65,7 @@ public static class HeadlessEntry
             }
 
             Log.Information("Headless server started. Press Ctrl+C to stop.");
+            StartConsoleReader();
             RunMainLoop();
             return 0;
         }
@@ -103,6 +109,7 @@ public static class HeadlessEntry
                 Dispatcher.BeforeFrame();
                 CommonLib.Net.Update();
                 GameManager.UpdateProject();
+                ExecuteConsoleCommands();
                 AsyncDispatcher.Update();
                 Dispatcher.AfterFrame();
                 Time.AfterFrame();
@@ -123,6 +130,51 @@ public static class HeadlessEntry
                     nextTickMs = sw.ElapsedMilliseconds;
                     break;
             }
+        }
+    }
+
+    private static void StartConsoleReader()
+    {
+        if (PlatformManager.Platform is not Platform.Desktop)
+        {
+            return;
+        }
+
+        _ = Task.Run(() =>
+        {
+            while (_running)
+            {
+                string? line;
+                try
+                {
+                    line = Console.ReadLine();
+                }
+                catch (Exception exception)
+                {
+                    Log.Error($"Failed to read server console input: {exception}");
+                    return;
+                }
+
+                if (line is null)
+                {
+                    return;
+                }
+
+                if (!string.IsNullOrWhiteSpace(line))
+                {
+                    _consoleCommands.Enqueue(line);
+                }
+            }
+        });
+    }
+
+    private static void ExecuteConsoleCommands()
+    {
+        while (_consoleCommands.TryDequeue(out var input))
+        {
+            var result = CommandExecutor.ExecuteServerConsole(input, GameManager.Project);
+            var level = result.Success ? "OK" : "ERROR";
+            Log.Information($"COMMAND {level} [{result.Code}] {result.Message}");
         }
     }
 

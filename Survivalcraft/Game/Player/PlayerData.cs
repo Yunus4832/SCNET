@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Commands;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.NetSimulate;
@@ -62,6 +63,8 @@ public partial class PlayerData : IDisposable
     public bool ReadyToRestart;
 
     public bool ServerManager;
+
+    public CommandPermissionSet CommandPermissions { get; } = new();
 
     public Project Project { get; }
 
@@ -657,6 +660,8 @@ public partial class PlayerData : IDisposable
         InputDevice = valuesDictionary.GetValue("InputDevice", InputDevice);
         GroupKey = valuesDictionary.GetValue("GroupKey", GroupKey);
         ServerManager = valuesDictionary.GetValue("ServerManager", ServerManager);
+        CommandPermissions.Load(
+            valuesDictionary.GetValue("CommandPermissions", new ValuesDictionary()));
         _stateMachine.TransitionTo("FirstUpdate");
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
@@ -692,6 +697,7 @@ public partial class PlayerData : IDisposable
         valuesDictionary.SetValue("CharacterSkinName", CharacterSkinName);
         valuesDictionary.SetValue("InputDevice", InputDevice);
         valuesDictionary.SetValue("ServerManager", ServerManager);
+        valuesDictionary.SetValue("CommandPermissions", CommandPermissions.Save());
         valuesDictionary.SetValue("GroupKey", GroupKey);
     }
 

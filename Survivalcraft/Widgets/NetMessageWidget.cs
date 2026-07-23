@@ -1,6 +1,12 @@
 using Engine.Graphics;
 using Engine.Input;
 
+using Game.Commands;
+using Game.Modding;
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
+
 namespace Game.Widgets;
 
 public class NetMessageWidget : CanvasWidget, IDragTargetWidget
@@ -22,9 +28,9 @@ public class NetMessageWidget : CanvasWidget, IDragTargetWidget
         BevelSize = 2f
     };
 
-    private readonly CanvasWidget _canvasInputerea = new() { VerticalAlignment = WidgetAlignment.Far };
+    private readonly CanvasWidget _canvasInputArea = new() { VerticalAlignment = WidgetAlignment.Far };
 
-    private readonly CanvasWidget _canvasMsglist = new() { HorizontalAlignment = WidgetAlignment.Center };
+    private readonly CanvasWidget _canvasMsgList = new() { HorizontalAlignment = WidgetAlignment.Center };
 
     private readonly LabelWidget _hint = new()
     {
@@ -75,6 +81,17 @@ public class NetMessageWidget : CanvasWidget, IDragTargetWidget
         Text = "发送"
     };
 
+    private readonly BevelledButtonWidget _commandButton = new()
+    {
+        CenterColor = Color.SkyBlue,
+        BevelColor = Color.White,
+        HorizontalAlignment = WidgetAlignment.Center,
+        VerticalAlignment = WidgetAlignment.Far,
+        Text = "/"
+    };
+
+    private readonly CommandSuggestionsWidget _commandSuggestions = new();
+
     private readonly ListPanelWidget _vLine = new() { Direction = LayoutDirection.Vertical };
 
     private readonly AutoCanvasWidget _autoWidget = new()
@@ -107,11 +124,11 @@ public class NetMessageWidget : CanvasWidget, IDragTargetWidget
         _netPanelWidget = netPanelWidget;
         Size = new Vector2(660, 240);
 
-        _canvasMsglist.Size = new Vector2(Size.X, 188);
-        _canvasMsglist.Margin = new Vector2(5, 0);
-        _canvasInputerea.Size = new Vector2(Size.X - 144, 48);
+        _canvasMsgList.Size = new Vector2(Size.X, 188);
+        _canvasMsgList.Margin = new Vector2(5, 0);
+        _canvasInputArea.Size = new Vector2(Size.X - 204, 48);
         _bevelled.Size = new Vector2(Size.X, 48);
-        _moreCanvas.Size = _canvasMsglist.Size;
+        _moreCanvas.Size = _canvasMsgList.Size;
 
         EditText.Size = _bevelled.Size;
         _moreCanvas.Children.Add(_vLine);
@@ -119,27 +136,32 @@ public class NetMessageWidget : CanvasWidget, IDragTargetWidget
 
         _sendMessageButton.Size = new Vector2(60, 60);
         _sendMessageButton.Margin = new Vector2(-6);
+        _commandButton.Size = new Vector2(60, 60);
+        _commandButton.Margin = new Vector2(-6);
         _addEmojiButton.Size = new Vector2(60, 60);
         _addEmojiButton.Margin = new Vector2(-6);
         _messageTypeButton.Size = new Vector2(60, 60);
         _messageTypeButton.Margin = new Vector2(-6);
-        _canvasInputerea.AddChildren(_bevelled);
-        _canvasInputerea.AddChildren(_autoWidget);
-        _canvasInputerea.AddChildren(EditText);
-        _canvasInputerea.AddChildren(_hint);
+        _canvasInputArea.AddChildren(_bevelled);
+        _canvasInputArea.AddChildren(_autoWidget);
+        _canvasInputArea.AddChildren(EditText);
+        _canvasInputArea.AddChildren(_hint);
 
         var stackP = new StackPanelWidget();
         stackP.Margin = Vector2.Zero;
         stackP.VerticalAlignment = WidgetAlignment.Far;
         stackP.Direction = LayoutDirection.Horizontal;
-        stackP.Children.Add(_canvasInputerea);
+        stackP.Children.Add(_commandButton);
+        stackP.Children.Add(_canvasInputArea);
         stackP.Children.Add(_messageTypeButton);
         stackP.Children.Add(_addEmojiButton);
         stackP.Children.Add(_sendMessageButton);
-        Children.Add(_canvasMsglist);
+        Children.Add(_canvasMsgList);
         Children.Add(stackP);
         Children.Add(_moreCanvas);
-        _canvasMsglist.Children.Add(_messageList);
+        _canvasMsgList.Children.Add(_messageList);
+        _commandSuggestions.Size = _canvasMsgList.Size;
+        _canvasMsgList.Children.Add(_commandSuggestions);
         _messageList.ItemWidgetFactory = delegate(object obj)
         {
             var autoCanvasWidget = new AutoCanvasWidget { Size = new Vector2(float.PositiveInfinity) };
@@ -148,7 +170,12 @@ public class NetMessageWidget : CanvasWidget, IDragTargetWidget
         };
         _vLine.ItemWidgetFactory =
             obj => obj as Widget ?? throw new InvalidOperationException("input obj is not Widget");
-        EditText.TextChanged += widget => { _autoWidget.ContentText = widget.Text; };
+        _commandSuggestions.SuggestionSelected += ApplyCommandSuggestion;
+        EditText.TextChanged += widget =>
+        {
+            _autoWidget.ContentText = widget.Text;
+            RefreshCommandSuggestions();
+        };
         EditText.CalculateCharacterPosition = (text, position, scale, spacing) =>
         {
             var characterIndex = MathUtils.Clamp(position, 0, text.Length);
@@ -298,10 +325,30 @@ public class NetMessageWidget : CanvasWidget, IDragTargetWidget
             _moreCanvas.IsVisible = !_moreCanvas.IsVisible;
         }
 
+        if (_commandButton.IsClicked)
+        {
+            if (EditText.Text.StartsWith('/'))
+            {
+                EditText.Text = string.Empty;
+                EditText.HasFocus = false;
+                _commandSuggestions.Hide();
+            }
+            else
+            {
+                EditText.Text = "/";
+                SetCommandTextFocus(false);
+            }
+        }
+
         if (_sendMessageButton.IsClicked)
         {
             EditText.Text = EditText.Text.Replace("<c=red>", "");
-            if (_messageType == 2 && _netPanelWidget.PlayerListWidget.Players.SelectedIndex == null)
+            if (EditText.Text.StartsWith('/'))
+            {
+                ExecuteCommand(EditText.Text);
+                EditText.Text = string.Empty;
+            }
+            else if (_messageType == 2 && _netPanelWidget.PlayerListWidget.Players.SelectedIndex == null)
             {
                 AddNetMsg("<c=red>请先在玩家列表选中要私聊的玩家</c>");
             }
@@ -361,5 +408,68 @@ public class NetMessageWidget : CanvasWidget, IDragTargetWidget
         }
 
         _hint.IsVisible = EditText.Text == string.Empty;
+    }
+
+    private void ExecuteCommand(string input)
+    {
+        if (CommonLib.WorkType is WorkType.Client)
+        {
+            CommonLib.Net.QueuePackage(CommandPackage.CreateRequest(input));
+            return;
+        }
+
+        var result = CommandExecutor.ExecutePlayer(input, PlayerData);
+        var prefix = result.Success ? "<c=green>[指令]</c>" : "<c=red>[指令]</c>";
+        AddNetMsg(prefix + result.Message);
+    }
+
+    private void RefreshCommandSuggestions()
+    {
+        var isCommandInput = EditText.Text.StartsWith('/');
+        _commandButton.IsChecked = isCommandInput;
+        if (!isCommandInput || CurrentModRuntime.Value is not { } runtime)
+        {
+            _commandSuggestions.Hide();
+            return;
+        }
+
+        var principal = CommandPrincipal.FromPlayer(PlayerData);
+        _commandSuggestions.Refresh(EditText.Text, runtime.Commands, principal);
+    }
+
+    private void ApplyCommandSuggestion(CommandSuggestion suggestion)
+    {
+        if (suggestion.Value.StartsWith('<'))
+        {
+            SetCommandTextFocus(true);
+            return;
+        }
+
+        var value = suggestion.IsArgument
+            ? CommandLineTokenizer.FormatToken(suggestion.Value)
+            : suggestion.Value;
+        EditText.Text = CommandLineTokenizer.ReplaceCurrentToken(EditText.Text, value) + " ";
+        EditText.CaretPosition = EditText.Text.Length;
+
+        if (CurrentModRuntime.Value is { } runtime)
+        {
+            var principal = CommandPrincipal.FromPlayer(PlayerData);
+            if (runtime.Commands.CanExecute(EditText.Text, principal) &&
+                !_commandSuggestions.HasSuggestions)
+            {
+                var input = EditText.Text;
+                EditText.Text = string.Empty;
+                EditText.HasFocus = false;
+                ExecuteCommand(input);
+                return;
+            }
+        }
+
+        SetCommandTextFocus(false);
+    }
+
+    private void SetCommandTextFocus(bool requiresTextInput)
+    {
+        EditText.HasFocus = requiresTextInput || PlatformManager.Platform is Platform.Desktop;
     }
 }

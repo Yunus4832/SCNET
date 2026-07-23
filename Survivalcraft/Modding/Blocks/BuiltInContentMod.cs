@@ -1,6 +1,7 @@
 using System.Text;
 using System.Xml.Linq;
 
+using Game.Commands;
 using Game.Modding.Content;
 using Game.Modding.Data;
 
@@ -21,6 +22,19 @@ public sealed class BuiltInContentMod : IMod
 
     public void Configure(IModContext context)
     {
+        context.Commands.Register(
+            new ResourceId(context.Manifest.ModId, "help"),
+            BuiltInCommands.CreateHelp());
+        context.Commands.Register(
+            new ResourceId(context.Manifest.ModId, "time"),
+            BuiltInCommands.CreateTime());
+        context.Commands.Register(
+            new ResourceId(context.Manifest.ModId, "stop"),
+            BuiltInCommands.CreateStop());
+        context.Commands.Register(
+            new ResourceId(context.Manifest.ModId, "permission"),
+            BuiltInCommands.CreatePermission());
+
         foreach (var asset in BuiltInContentAssets.Load())
         {
             context.Extensions.RegisterContent(

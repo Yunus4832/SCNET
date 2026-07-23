@@ -1,3 +1,4 @@
+using Game.Commands;
 using Game.Modding.Blocks;
 using Game.Modding.Content;
 using Game.Modding.Data;
@@ -47,6 +48,8 @@ public sealed class GameModRuntime : IDisposable
     public PlayerContextActionHooks ContextActions => Host.ContextActions;
 
     public ModNetworkHooks Network => Host.Network;
+
+    public CommandRegistry Commands => Host.Commands;
 
     public ModProfile? CreateServerRequiredProfile()
     {
