@@ -60,7 +60,8 @@ public class SettingsPerformanceScreen : Screen
         _enterVisibilityRange = SettingsManager.Current.VisibilityRange;
         if (CommonLib.WorkType == WorkType.Client)
         {
-            _visibilityRangeSlider.MaxValue = 10;
+            _visibilityRangeSlider.MaxValue = _visibilityRanges.FindLastIndex(range =>
+                range <= NetworkTerrainPolicy.DefaultMaxClientVisibilityRange);
         }
     }
 
@@ -71,7 +72,8 @@ public class SettingsPerformanceScreen : Screen
         {
             var enumValues = EnumUtils.GetEnumValues(typeof(ResolutionMode));
             SettingsManager.Current.ResolutionMode =
-                (ResolutionMode)((enumValues.IndexOf((int)SettingsManager.Current.ResolutionMode) + 1) % enumValues.Count);
+                (ResolutionMode)((enumValues.IndexOf((int)SettingsManager.Current.ResolutionMode) + 1) %
+                                 enumValues.Count);
         }
 
         if (_visibilityRangeSlider.IsSliding)
@@ -114,11 +116,13 @@ public class SettingsPerformanceScreen : Screen
             SettingsManager.Current.DisplayFpsRibbon = !SettingsManager.Current.DisplayFpsRibbon;
         }
 
-        _resolutionButton.Text = LanguageManager.Get("ResolutionMode", SettingsManager.Current.ResolutionMode.ToString());
+        _resolutionButton.Text =
+            LanguageManager.Get("ResolutionMode", SettingsManager.Current.ResolutionMode.ToString());
         _visibilityRangeSlider.Value = _visibilityRanges.IndexOf(SettingsManager.Current.VisibilityRange) >= 0
             ? _visibilityRanges.IndexOf(SettingsManager.Current.VisibilityRange)
             : 64;
-        _visibilityRangeSlider.Text = string.Format(LanguageManager.Get(_typeName, 1), SettingsManager.Current.VisibilityRange);
+        _visibilityRangeSlider.Text =
+            string.Format(LanguageManager.Get(_typeName, 1), SettingsManager.Current.VisibilityRange);
         if (SettingsManager.Current.VisibilityRange <= 48)
         {
             _visibilityRangeWarningLabel.IsVisible = true;
@@ -154,44 +158,57 @@ public class SettingsPerformanceScreen : Screen
             _visibilityRangeWarningLabel.Text = LanguageManager.Get(_typeName, 7);
         }
 
-        _terrainMipmapsButton.Text =
-            SettingsManager.Current.TerrainMipmapsEnabled ? LanguageManager.Enable : LanguageManager.Disable;
+        _terrainMipmapsButton.Text = SettingsManager.Current.TerrainMipmapsEnabled
+            ? LanguageManager.Enable
+            : LanguageManager.Disable;
 
-        _skyRenderingModeButton.Text =
-            LanguageManager.Get("SkyRenderingMode", SettingsManager.Current.SkyRenderingMode.ToString());
+        _skyRenderingModeButton.Text = LanguageManager.Get(
+            "SkyRenderingMode",
+            SettingsManager.Current.SkyRenderingMode.ToString()
+        );
 
-        _objectShadowsButton.Text =
-            SettingsManager.Current.ObjectsShadowsEnabled ? LanguageManager.Enable : LanguageManager.Disable;
+        _objectShadowsButton.Text = SettingsManager.Current.ObjectsShadowsEnabled
+            ? LanguageManager.Enable
+            : LanguageManager.Disable;
 
         _framerateLimitButton.Text = SettingsManager.Current.VSync
             ? LanguageManager.Get(_typeName, 11)
             : LanguageManager.Get(_typeName, 8);
 
-        _displayFpsCounterButton.Text = SettingsManager.Current.DisplayFpsCounter ? LanguageManager.Yes : LanguageManager.No;
+        _displayFpsCounterButton.Text = SettingsManager.Current.DisplayFpsCounter
+            ? LanguageManager.Yes
+            : LanguageManager.No;
 
-        _displayFpsRibbonButton.Text = SettingsManager.Current.DisplayFpsRibbon ? LanguageManager.Yes : LanguageManager.No;
+        _displayFpsRibbonButton.Text = SettingsManager.Current.DisplayFpsRibbon
+            ? LanguageManager.Yes
+            : LanguageManager.No;
 
-        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
+        if (Input is { Back: false, Cancel: false } && !Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            var flag = SettingsManager.Current.VisibilityRange > 128;
-            if (SettingsManager.Current.VisibilityRange > _enterVisibilityRange && flag)
-            {
-                DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(_typeName, 9),
-                    LanguageManager.Get(_typeName, 10), LanguageManager.Ok, LanguageManager.Back,
-                    delegate(MessageDialogButton button)
+            return;
+        }
+
+        var flag = SettingsManager.Current.VisibilityRange > 128;
+        if (SettingsManager.Current.VisibilityRange > _enterVisibilityRange && flag)
+        {
+            DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(_typeName, 9),
+                LanguageManager.Get(_typeName, 10), LanguageManager.Ok, LanguageManager.Back,
+                delegate(MessageDialogButton button)
+                {
+                    if (button != MessageDialogButton.Button1)
                     {
-                        if (button == MessageDialogButton.Button1)
-                        {
-                            SettingsManager.SaveSettings();
-                            ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
-                        }
-                    }));
-            }
-            else
-            {
-                SettingsManager.SaveSettings();
-                ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
-            }
+                        return;
+                    }
+
+                    SettingsManager.SaveSettings();
+                    ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+                })
+            );
+        }
+        else
+        {
+            SettingsManager.SaveSettings();
+            ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
         }
     }
 }

@@ -765,12 +765,13 @@ public class NetNode
             package.WriteData(writer);
         }
 
-        var w = CommonLib.GetWriter(writer, out _);
+        var transport = PackageTransportPolicy.Get(packageList[0]);
+        var w = CommonLib.GetWriter(writer, out _, GetCompressionPolicy(packageList, transport));
         if (netPeer != null)
         {
-            var transport = useDeliveryEvent
+            transport = useDeliveryEvent
                 ? PackageTransportPolicy.Control
-                : PackageTransportPolicy.Get(packageList[0]);
+                : transport;
             if (!useDeliveryEvent)
             {
                 netPeer.Send(w, transport.ChannelNumber, transport.DeliveryMethod);
@@ -983,7 +984,18 @@ public class NetNode
         List<IPackage> packages,
         PackageTransport transport)
     {
-        var writer = CreatePackageWriter(packages, out var packetSize);
+        if (packages.Any(IsTerrainChunkPackage))
+        {
+            foreach (var package in packages)
+            {
+                var chunkWriter = CreatePackageWriter([package], transport, out _);
+                peer.Send(chunkWriter, transport.ChannelNumber, transport.DeliveryMethod);
+            }
+
+            return [];
+        }
+
+        var writer = CreatePackageWriter(packages, transport, out var packetSize);
         var maxPacketSize = peer.GetMaxSinglePacketSize(transport.DeliveryMethod);
         if (packetSize <= maxPacketSize || CanFragment(transport.DeliveryMethod))
         {
@@ -1001,7 +1013,7 @@ public class NetNode
         foreach (var package in packages)
         {
             batch.Add(package);
-            CreatePackageWriter(batch, out packetSize);
+            CreatePackageWriter(batch, transport, out packetSize);
             if (packetSize <= maxPacketSize || batch.Count == 1)
             {
                 continue;
@@ -1030,7 +1042,7 @@ public class NetNode
         {
             var package = packages[(startIndex + offset) % packages.Count];
             selectedPackages.Add(package);
-            CreatePackageWriter(selectedPackages, out var packetSize);
+            CreatePackageWriter(selectedPackages, transport, out var packetSize);
             if (packetSize <= maxPacketSize)
             {
                 continue;
@@ -1046,7 +1058,7 @@ public class NetNode
             return deferredPackages;
         }
 
-        var writer = CreatePackageWriter(selectedPackages, out _);
+        var writer = CreatePackageWriter(selectedPackages, transport, out _);
         peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
         return deferredPackages;
     }
@@ -1062,7 +1074,7 @@ public class NetNode
             return;
         }
 
-        var writer = CreatePackageWriter(packages, out var packetSize);
+        var writer = CreatePackageWriter(packages, transport, out var packetSize);
         if (packetSize > maxPacketSize)
         {
             Log.Error(
@@ -1074,23 +1086,51 @@ public class NetNode
         peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
     }
 
-    private NetDataWriter CreatePackageWriter(IEnumerable<IPackage> packages, out int packetSize)
+    private NetDataWriter CreatePackageWriter(
+        IEnumerable<IPackage> packages,
+        PackageTransport transport,
+        out int packetSize)
     {
+        var packageList = packages as IReadOnlyCollection<IPackage> ?? packages.ToArray();
         var writer = new PackageStreamWriter
         {
             IsServer = IsServer
         };
-        foreach (var package in packages)
+        foreach (var package in packageList)
         {
             writer.Write(_verifyByte);
             writer.Write(package.ID);
             package.WriteData(writer);
         }
 
-        var netWriter = CommonLib.GetWriter(writer, out var compressedSize);
+        var netWriter = CommonLib.GetWriter(
+            writer,
+            out var compressedSize,
+            GetCompressionPolicy(packageList, transport));
         packetSize = compressedSize + sizeof(int);
         return netWriter;
     }
+
+    private static CommonLib.CompressionPolicy GetCompressionPolicy(
+        IEnumerable<IPackage> packages,
+        PackageTransport transport)
+    {
+        if (transport.Channel is NetworkChannel.Snapshot or NetworkChannel.Effect)
+        {
+            return CommonLib.CompressionPolicy.None;
+        }
+
+        // Chunk payloads are independently compressed and cached by the terrain codec.
+        return packages.Any(IsTerrainChunkPackage)
+            ? CommonLib.CompressionPolicy.None
+            : CommonLib.CompressionPolicy.Adaptive;
+    }
+
+    private static bool IsTerrainChunkPackage(IPackage package) =>
+        package is SubsystemTerrainPackage
+        {
+            Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkList
+        };
 
     private static bool CanFragment(DeliveryMethod deliveryMethod)
     {

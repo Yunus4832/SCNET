@@ -152,6 +152,8 @@ public class TerrainUpdater
     /// </summary>
     public readonly Dictionary<Client, List<Point2>> WaitChunkList = new();
 
+    private readonly NetworkChunkCache _networkChunkCache = new();
+
     /// <summary>
     /// 需要移除的等待客户端列表
     /// </summary>
@@ -543,7 +545,13 @@ public class TerrainUpdater
                 if (toSendList.Count > 0)
                 {
                     Log.Debug($"本次处理{toSendList.Count}个Chunk");
-                    CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(toSendList) { To = item.Key });
+                    foreach (var chunk in toSendList)
+                    {
+                        CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(_networkChunkCache.GetOrEncode(chunk))
+                        {
+                            To = item.Key
+                        });
+                    }
                 }
 
                 if (result.Count > 0)
@@ -731,6 +739,7 @@ public class TerrainUpdater
                 _subsystemTerrain,
                 terrainChunk));
 
+            _networkChunkCache.Remove(terrainChunk);
             _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
             _terrain.FreeChunk(terrainChunk);
             if (RunMode.Value is RunModeType.Gui)
