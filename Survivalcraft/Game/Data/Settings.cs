@@ -20,6 +20,9 @@ public class Settings
 
     public int VisibilityRange { get; set; } = 128;
 
+    public int MaxClientVisibilityRange { get; set; } =
+        Network.NetworkTerrainPolicy.DefaultMaxClientVisibilityRange;
+
     public bool UseVr { get; set; }
 
     public float UIScale { get; set; } = 1f;

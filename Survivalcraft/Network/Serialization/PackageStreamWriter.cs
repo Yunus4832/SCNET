@@ -13,10 +13,10 @@ public class PackageStreamWriter() : BinaryWriter(new MemoryStream())
 {
     public bool IsServer;
 
-    public byte[] Data()
+    public byte[] Data(CommonLib.CompressionPolicy compressionPolicy = CommonLib.CompressionPolicy.Adaptive)
     {
         BaseStream.Seek(0, SeekOrigin.Begin);
-        return CommonLib.Compress(BaseStream);
+        return CommonLib.EncodeFrame(BaseStream, compressionPolicy);
     }
 
     public void WriteSmallFloat(float f)

@@ -29,6 +29,8 @@ public class SubsystemTerrainPackage : IPackage
 
     public List<TerrainChunk> Chunks = [];
 
+    public List<EncodedTerrainChunk> EncodedChunks = [];
+
     public List<Point3> ModifyCells = [];
 
     public List<int> ModifyValues = [];
@@ -76,7 +78,13 @@ public class SubsystemTerrainPackage : IPackage
     public SubsystemTerrainPackage(List<TerrainChunk> chunks)
     {
         Type = DataType.SyncTerrainChunkList;
-        Chunks.AddRange(chunks);
+        EncodedChunks.AddRange(chunks.Select(NetworkChunkCodec.Encode));
+    }
+
+    public SubsystemTerrainPackage(EncodedTerrainChunk chunk)
+    {
+        Type = DataType.SyncTerrainChunkList;
+        EncodedChunks.Add(chunk);
     }
 
     public SubsystemTerrainPackage(List<CellChange> changeList)
@@ -108,10 +116,12 @@ public class SubsystemTerrainPackage : IPackage
 
                 break;
             case DataType.SyncTerrainChunkList:
-                writer.Write((ushort)Chunks.Count);
-                foreach (var c in Chunks)
+                writer.Write((ushort)EncodedChunks.Count);
+                foreach (var chunk in EncodedChunks)
                 {
-                    WriteOneChunk(writer, c);
+                    writer.Write(chunk.Coords);
+                    writer.Write(chunk.Payload.Length);
+                    writer.Write(chunk.Payload);
                 }
 
                 break;
@@ -150,7 +160,7 @@ public class SubsystemTerrainPackage : IPackage
         switch (Type)
         {
             case DataType.RequestSyncChunks:
-                RelateChunks = new List<Point2>();
+                RelateChunks = [];
                 var count = reader.ReadInt32();
                 while (count-- > 0)
                 {
@@ -163,7 +173,14 @@ public class SubsystemTerrainPackage : IPackage
                 Chunks = new List<TerrainChunk>(cn);
                 while (cn-- > 0)
                 {
-                    ReadChunks(reader);
+                    var coords = reader.ReadPoint2();
+                    var length = reader.ReadInt32();
+                    if (length is < 0 or > 2 * 1024 * 1024)
+                    {
+                        throw new InvalidDataException($"Invalid terrain chunk payload size: {length}.");
+                    }
+
+                    Chunks.Add(NetworkChunkCodec.Decode(coords, reader.ReadBytes(length)));
                 }
 
                 break;
@@ -175,7 +192,7 @@ public class SubsystemTerrainPackage : IPackage
                 Value = reader.ReadInt32();
                 break;
             case DataType.ReplyResult:
-                RelateChunks = new List<Point2>();
+                RelateChunks = [];
                 var mc = reader.ReadUInt16();
                 while (mc-- > 0)
                 {
@@ -187,48 +204,18 @@ public class SubsystemTerrainPackage : IPackage
                 var cellCount = reader.ReadInt32();
                 while (cellCount-- > 0)
                 {
-                    var cellChange = new CellChange();
-                    cellChange.X = reader.ReadInt32();
-                    cellChange.Y = reader.ReadInt32();
-                    cellChange.Z = reader.ReadInt32();
-                    cellChange.Value = reader.ReadInt32();
+                    var cellChange = new CellChange
+                    {
+                        X = reader.ReadInt32(),
+                        Y = reader.ReadInt32(),
+                        Z = reader.ReadInt32(),
+                        Value = reader.ReadInt32()
+                    };
                     CellChanges.Add(cellChange);
                 }
 
                 break;
         }
-    }
-
-
-    public void WriteOneChunk(PackageStreamWriter writer, TerrainChunk chunk)
-    {
-        writer.Write(chunk.Coords);
-        foreach (var cell in chunk.Cells)
-        {
-            writer.Write(cell);
-        }
-
-        foreach (var shaft in chunk.Shafts)
-        {
-            writer.Write(shaft);
-        }
-    }
-
-    public void ReadChunks(PackageStreamReader reader)
-    {
-        var p = reader.ReadPoint2();
-        var chunk = new TerrainChunk(null!, p.X, p.Y);
-        for (var i = 0; i < chunk.Cells.Length; i++)
-        {
-            chunk.Cells[i] = reader.ReadInt32();
-        }
-
-        for (var i = 0; i < chunk.Shafts.Length; i++)
-        {
-            chunk.Shafts[i] = reader.ReadInt64();
-        }
-
-        Chunks.Add(chunk);
     }
 
     public void ApplyOneChunk(SubsystemTerrain subsystemTerrain, TerrainChunk chunk)

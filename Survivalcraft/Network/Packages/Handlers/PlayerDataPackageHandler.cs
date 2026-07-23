@@ -72,12 +72,21 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                 break;
             case PlayerDataPackage.DataType.SetUpdateLocation:
                 var player = subsystemPlayers.PlayersData.Find(x => x.Client == package.From);
-                if (player != null)
+                if (player != null && NetworkTerrainPolicy.TryClampClientUpdateLocation(
+                        package.UpdateLocation,
+                        SettingsManager.Current.MaxClientVisibilityRange,
+                        out var updateLocation
+                    )
+                   )
                 {
                     var updater = project.FindSubsystem<SubsystemTerrain>(true)!.TerrainUpdater;
-                    updater.SetLastChunksUpdateCenter(player.PlayerIndex, package.UpdateLocation.LastChunksUpdateCenter);
-                    updater.SetUpdateLocation(player.PlayerIndex, package.UpdateLocation.Center,
-                        package.UpdateLocation.VisibilityDistance, package.UpdateLocation.ContentDistance);
+                    updater.SetLastChunksUpdateCenter(player.PlayerIndex, updateLocation.LastChunksUpdateCenter);
+                    updater.SetUpdateLocation(
+                        player.PlayerIndex,
+                        updateLocation.Center,
+                        updateLocation.VisibilityDistance,
+                        updateLocation.ContentDistance
+                    );
                 }
 
                 break;
@@ -158,7 +167,8 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                 project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList.Add(package.PlayerGuid.ToString());
                 break;
             case PlayerDataPackage.DataType.RemoveNoMsg:
-                project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList.Remove(package.PlayerGuid.ToString());
+                project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList
+                    .Remove(package.PlayerGuid.ToString());
                 break;
         }
     }

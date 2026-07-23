@@ -13,7 +13,12 @@ public sealed class PackageStreamReader : BinaryReader
 {
     public PackageStreamReader(byte[] compressedData) : base(new MemoryStream())
     {
-        var data = CommonLib.Decompress(compressedData);
+        if (compressedData.Length == 0)
+        {
+            return;
+        }
+
+        var data = CommonLib.DecodeFrame(compressedData);
         BaseStream.Write(data, 0, data.Length);
         BaseStream.Position = 0L;
     }
@@ -194,7 +199,7 @@ public sealed class PackageStreamReader : BinaryReader
     {
         var buffSize = ReadInt32();
         var buff = new byte[buffSize];
-        Read(buff, 0, buffSize);
+        _ = Read(buff, 0, buffSize);
         return buff;
     }
 

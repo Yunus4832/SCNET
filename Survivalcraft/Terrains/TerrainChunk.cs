@@ -54,6 +54,10 @@ public class TerrainChunk : IDisposable
 
     public int ModificationCounter;
 
+    private long _networkContentRevision;
+
+    public long NetworkContentRevision => Volatile.Read(ref _networkContentRevision);
+
     public volatile bool NewGeometryData;
 
     public Point2 Origin;
@@ -175,11 +179,16 @@ public class TerrainChunk : IDisposable
 
     public void SetCellValueFast(int x, int y, int z, int value)
     {
-        Cells[y + x * _height + z * _height * _size] = value;
+        SetCellValueFast(y + x * _height + z * _height * _size, value);
     }
 
     public void SetCellValueFast(int index, int value)
     {
+        if (Terrain.ReplaceLight(Cells[index], 0) != Terrain.ReplaceLight(value, 0))
+        {
+            Interlocked.Increment(ref _networkContentRevision);
+        }
+
         Cells[index] = value;
     }
 
@@ -200,7 +209,15 @@ public class TerrainChunk : IDisposable
 
     public void SetShaftValueFast(int x, int z, long value)
     {
-        Shafts[x + z * _size] = value;
+        var index = x + z * _size;
+        var previous = Shafts[index];
+        if (Terrain.ExtractTemperature(previous) != Terrain.ExtractTemperature(value) ||
+            Terrain.ExtractHumidity(previous) != Terrain.ExtractHumidity(value))
+        {
+            Interlocked.Increment(ref _networkContentRevision);
+        }
+
+        Shafts[index] = value;
     }
 
     public int GetTemperatureFast(int x, int z)
