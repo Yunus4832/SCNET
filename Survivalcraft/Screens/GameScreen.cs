@@ -2,10 +2,18 @@ using System.Xml.Linq;
 
 using Engine.Graphics;
 
+using EntitySystem.Core;
+
+using Game.Commands;
+using Game.Network;
+using Game.Network.Enums;
+
 namespace Game.Screens;
 
 public class GameScreen : Screen
 {
+    private Project? _administrationDialogProject;
+
     private double _lastAutosaveTime;
 
     public GameScreen()
@@ -25,6 +33,8 @@ public class GameScreen : Screen
 
         GameManager.Project.FindSubsystem<SubsystemAudio>(true)!.Unmute();
         MusicManager.CurrentMix = MusicManager.Mix.None;
+        _administrationDialogProject = null;
+        TryShowAdministrationBootstrap();
     }
 
     public override void Leave()
@@ -49,6 +59,7 @@ public class GameScreen : Screen
         }
 
         GameManager.UpdateProject();
+        TryShowAdministrationBootstrap();
 
         ShowHideCursors(
             DialogsManager.HasDialogs(this) ||
@@ -70,5 +81,42 @@ public class GameScreen : Screen
         Input.IsMouseCursorVisible = show;
         Input.IsPadCursorVisible = show;
         Input.IsVrCursorVisible = show;
+    }
+
+    private void TryShowAdministrationBootstrap()
+    {
+        if (RunMode.Value is not RunModeType.Gui ||
+            CommonLib.WorkType is not WorkType.Server ||
+            GameManager.Project is not { } project ||
+            ReferenceEquals(_administrationDialogProject, project) ||
+            ServerAdministrationBootstrap.IsClaimed(project) ||
+            CommonLib.MainPlayer is not { } player ||
+            !ServerAdministrationBootstrap.TryGetClaimCode(project, out var code))
+        {
+            return;
+        }
+
+        _administrationDialogProject = project;
+        var claimCommand = $"/auth claim {code}";
+        DialogsManager.ShowDialog(
+            this,
+            new MessageDialog(
+                "服务器管理员尚未认领",
+                $"认领码：{code}\n\n" +
+                "认领只会授予标准权限的管理和再授权能力，不包含停服等控制台权限。",
+                "以当前玩家认领",
+                "复制并稍后处理",
+                button =>
+                {
+                    if (button is MessageDialogButton.Button2)
+                    {
+                        ClipboardManager.ClipboardString = claimCommand;
+                        DialogsManager.Alert($"已复制：{claimCommand}");
+                        return;
+                    }
+
+                    var result = CommandExecutor.ExecutePlayer(claimCommand, player.PlayerData);
+                    DialogsManager.Alert(result.Message);
+                }));
     }
 }

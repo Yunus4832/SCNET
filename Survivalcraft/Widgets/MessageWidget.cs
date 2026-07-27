@@ -2,7 +2,7 @@ namespace Game.Widgets;
 
 public class MessageWidget : CanvasWidget
 {
-    private readonly AutoCanvasWidget _autoCanvasWidget;
+    private readonly RichTextWidget _richTextWidget;
 
     private bool _blinking;
 
@@ -16,17 +16,17 @@ public class MessageWidget : CanvasWidget
 
     public MessageWidget()
     {
-        _autoCanvasWidget = new AutoCanvasWidget { Size = new Vector2(660, 180) };
+        _richTextWidget = new RichTextWidget { Size = new Vector2(660, 180) };
     }
 
     public void DisplayMessage(string text, Color color, bool blinking)
     {
         _message = text;
         Children.Clear();
-        _autoCanvasWidget.ContentText = text;
-        Children.Add(_autoCanvasWidget);
-        _autoCanvasWidget.HorizontalAlignment = WidgetAlignment.Center;
-        _autoCanvasWidget.VerticalAlignment = WidgetAlignment.Far;
+        _richTextWidget.Text = text;
+        Children.Add(_richTextWidget);
+        _richTextWidget.HorizontalAlignment = WidgetAlignment.Center;
+        _richTextWidget.VerticalAlignment = WidgetAlignment.Far;
         _messageStartTime = Time.RealTime;
         _duration = blinking ? 6f : 4f + MathUtils.Min(1f * _message.Count(c => c == '\n'), 4f);
         _color = color;
@@ -54,8 +54,8 @@ public class MessageWidget : CanvasWidget
                     1f * (float)(_messageStartTime + _duration - realTime)));
             }
 
-            _autoCanvasWidget.ColorTransform = _color * num;
-            _autoCanvasWidget.IsVisible = true;
+            _richTextWidget.ColorTransform = _color * num;
+            _richTextWidget.IsVisible = true;
             if (realTime - _messageStartTime > _duration)
             {
                 _message = string.Empty;
@@ -63,7 +63,7 @@ public class MessageWidget : CanvasWidget
         }
         else
         {
-            _autoCanvasWidget.IsVisible = false;
+            _richTextWidget.IsVisible = false;
         }
     }
 }

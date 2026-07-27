@@ -42,15 +42,28 @@ stop
 ```
 
 Player command permissions are explicit; `ServerMaster` and `ServerManager` do not grant command
-permissions. Bootstrap a connected player from the server console:
+permissions. An unclaimed server prints a process-local claim code. A player must connect and run:
 
 ```text
-permission delegate "Player Name" *
+/auth claim <claim-code>
 ```
 
-Exception: the local owner player of a GUI-hosted server receives hard-coded `*` with delegation
-so that a GUI server has a bootstrap path without stdin. This does not apply to remote players or
-to Headless player identities.
+The claim grants delegable `permissions.manage.standard`, not `*`. It lets the player manage
+standard command permissions without automatically receiving those command permissions. GUI and
+Headless use the same online-player claim path; GUI presents a local claim dialog, while Headless
+prints the code to stdout. Until a player claims it, the server remains unclaimed.
+
+Headless console recovery and inspection commands:
+
+```text
+auth status
+auth code
+auth regenerate
+```
+
+`server.stop` is console-only and non-grantable. Protected permission nodes can only be granted by
+the server console; non-grantable nodes and unsafe covering wildcards are omitted from permission
+discovery and rejected during permission changes.
 
 Use `grant` for a non-delegable grant. A delegated player can grant or revoke only the same
 permission node or a node covered by their wildcard scope:

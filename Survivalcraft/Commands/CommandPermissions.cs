@@ -8,6 +8,8 @@ public sealed class CommandPermissionSet
 {
     public const string GrantPermission = "permissions.grant";
 
+    public const string ManageStandardPermission = "permissions.manage.standard";
+
     private readonly List<CommandPermissionGrant> _grants = [];
 
     public IReadOnlyList<CommandPermissionGrant> Grants => _grants;

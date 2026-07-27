@@ -77,7 +77,10 @@ public sealed class CommandRegistry
         return false;
     }
 
-    public IReadOnlyList<CommandSuggestion> Suggest(string input, CommandPrincipal principal)
+    public IReadOnlyList<CommandSuggestion> Suggest(
+        string input,
+        CommandPrincipal principal,
+        CommandSource source = CommandSource.Player)
     {
         ArgumentNullException.ThrowIfNull(principal);
         var line = input.TrimStart();
@@ -91,7 +94,7 @@ public sealed class CommandRegistry
         {
             var prefix = tokens.Count == 0 ? string.Empty : tokens[0];
             return Entries
-                .Where(entry => IsVisible(entry.Command, principal))
+                .Where(entry => IsVisible(entry.Command, principal, source))
                 .Where(entry => entry.Command.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
                 .Select(entry => new CommandSuggestion(entry.Command.Name, entry.Command.Description, false))
                 .ToArray();
@@ -109,6 +112,7 @@ public sealed class CommandRegistry
         foreach (var route in registered.Command.Routes)
         {
             if (!IsAvailable(registered.Command) ||
+                !route.IsSourceAllowed(source) ||
                 !principal.HasPermission(route.RequiredPermission) ||
                 completed.Length >= route.Segments.Count ||
                 !MatchesCompleted(route, completed))
@@ -158,38 +162,116 @@ public sealed class CommandRegistry
 
     public IReadOnlyList<string> GetPermissionNodes()
     {
-        var nodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "*" };
-        foreach (var permission in Entries
-                     .SelectMany(entry => entry.Command.Routes)
-                     .Select(route => route.RequiredPermission)
-                     .Where(permission =>
-                         !string.IsNullOrWhiteSpace(permission) &&
-                         !string.Equals(
-                             permission,
-                             CommandPermissionSet.GrantPermission,
-                             StringComparison.OrdinalIgnoreCase)))
+        return GetGrantablePermissionNodes()
+            .Select(node => node.Permission)
+            .OrderBy(node => node, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    public bool CanGrantPermission(
+        string permission,
+        CommandPrincipal principal,
+        CommandSource source)
+    {
+        ArgumentNullException.ThrowIfNull(principal);
+        var normalized = CommandPermissionSet.Normalize(permission);
+        var node = GetGrantablePermissionNodes().FirstOrDefault(candidate =>
+            string.Equals(candidate.Permission, normalized, StringComparison.OrdinalIgnoreCase));
+        if (node is null)
         {
-            var normalized = CommandPermissionSet.Normalize(permission);
-            nodes.Add(normalized);
-            if (normalized == "*" || normalized.EndsWith(".*", StringComparison.Ordinal))
+            return false;
+        }
+
+        if (source is CommandSource.ServerConsole)
+        {
+            return true;
+        }
+
+        if (node.Policy is not CommandGrantPolicy.Standard)
+        {
+            return false;
+        }
+
+        if (string.Equals(
+                normalized,
+                CommandPermissionSet.ManageStandardPermission,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return principal.CanDelegate(CommandPermissionSet.ManageStandardPermission);
+        }
+
+        return principal.CanDelegate(normalized) ||
+               principal.HasPermission(CommandPermissionSet.ManageStandardPermission);
+    }
+
+    private IReadOnlyList<GrantablePermissionNode> GetGrantablePermissionNodes()
+    {
+        var routes = Entries
+            .SelectMany(entry => entry.Command.Routes)
+            .Where(route =>
+                !string.IsNullOrWhiteSpace(route.RequiredPermission) &&
+                !string.Equals(
+                    route.RequiredPermission,
+                    CommandPermissionSet.GrantPermission,
+                    StringComparison.OrdinalIgnoreCase))
+            .Select(route => new GrantablePermissionNode(
+                CommandPermissionSet.Normalize(route.RequiredPermission),
+                route.GrantPolicy))
+            .ToArray();
+        var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            CommandPermissionSet.ManageStandardPermission,
+            "*"
+        };
+        foreach (var route in routes.Where(route => route.Policy is not CommandGrantPolicy.NonGrantable))
+        {
+            candidates.Add(route.Permission);
+            if (route.Permission == "*" || route.Permission.EndsWith(".*", StringComparison.Ordinal))
             {
                 continue;
             }
 
-            var segments = normalized.Split('.');
+            var segments = route.Permission.Split('.');
             for (var count = 1; count < segments.Length; count++)
             {
-                nodes.Add(string.Join(".", segments.Take(count)) + ".*");
+                candidates.Add(string.Join(".", segments.Take(count)) + ".*");
             }
         }
 
-        return nodes
-            .OrderBy(node => node == "*" ? 0 : 1)
-            .ThenBy(node => node, StringComparer.OrdinalIgnoreCase)
+        return candidates
+            .Select(candidate =>
+            {
+                if (string.Equals(
+                        candidate,
+                        CommandPermissionSet.ManageStandardPermission,
+                        StringComparison.OrdinalIgnoreCase))
+                {
+                    return new GrantablePermissionNode(candidate, CommandGrantPolicy.Standard);
+                }
+
+                var covered = routes
+                    .Where(route => CommandPermissionSet.Implies(candidate, route.Permission))
+                    .ToArray();
+                if (covered.Length == 0 ||
+                    covered.Any(route => route.Policy is CommandGrantPolicy.NonGrantable))
+                {
+                    return null;
+                }
+
+                var policy = covered.Any(route => route.Policy is CommandGrantPolicy.Protected)
+                    ? CommandGrantPolicy.Protected
+                    : CommandGrantPolicy.Standard;
+                return new GrantablePermissionNode(candidate, policy);
+            })
+            .Where(node => node is not null)
+            .Select(node => node!)
             .ToArray();
     }
 
-    public bool CanExecute(string input, CommandPrincipal principal)
+    public bool CanExecute(
+        string input,
+        CommandPrincipal principal,
+        CommandSource source = CommandSource.Player)
     {
         ArgumentNullException.ThrowIfNull(principal);
         if (string.IsNullOrWhiteSpace(input))
@@ -214,6 +296,7 @@ public sealed class CommandRegistry
         var arguments = tokens.Skip(1).ToArray();
         return IsAvailable(registered.Command) &&
                registered.Command.Routes.Any(route =>
+                   route.IsSourceAllowed(source) &&
                    principal.HasPermission(route.RequiredPermission) &&
                    route.Segments.Count == arguments.Length &&
                    MatchesCompleted(route, arguments));
@@ -240,10 +323,15 @@ public sealed class CommandRegistry
         return command.IsAvailable(RunMode.Value, CommonLib.WorkType);
     }
 
-    private static bool IsVisible(GameCommand command, CommandPrincipal principal)
+    private static bool IsVisible(
+        GameCommand command,
+        CommandPrincipal principal,
+        CommandSource source)
     {
         return IsAvailable(command) &&
-               command.Routes.Any(route => principal.HasPermission(route.RequiredPermission));
+               command.Routes.Any(route =>
+                   route.IsSourceAllowed(source) &&
+                   principal.HasPermission(route.RequiredPermission));
     }
 
     private static bool MatchesCompleted(CommandRoute route, IReadOnlyList<string> tokens)
@@ -301,6 +389,8 @@ public sealed class CommandRegistry
     }
 
     private sealed record Entry(ModId Owner, ResourceId Id, GameCommand Command, IReadOnlyList<string> Names);
+
+    private sealed record GrantablePermissionNode(string Permission, CommandGrantPolicy Policy);
 
     private sealed class Registration(CommandRegistry registry, ModId owner, ResourceId id) : IDisposable
     {

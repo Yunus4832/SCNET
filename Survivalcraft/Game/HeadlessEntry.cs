@@ -65,6 +65,7 @@ public static class HeadlessEntry
             }
 
             Log.Information("Headless server started. Press Ctrl+C to stop.");
+            WriteAdministrationBootstrapInstructions();
             StartConsoleReader();
             RunMainLoop();
             return 0;
@@ -174,8 +175,35 @@ public static class HeadlessEntry
         {
             var result = CommandExecutor.ExecuteServerConsole(input, GameManager.Project);
             var level = result.Success ? "OK" : "ERROR";
-            Log.Information($"COMMAND {level} [{result.Code}] {result.Message}");
+            var output = $"COMMAND {level} [{result.Code}] {result.Message}";
+            if (result.Sensitive)
+            {
+                Console.WriteLine(output);
+            }
+            else
+            {
+                Log.Information(output);
+            }
         }
+    }
+
+    private static void WriteAdministrationBootstrapInstructions()
+    {
+        if (GameManager.Project is null ||
+            !ServerAdministrationBootstrap.TryGetClaimCode(GameManager.Project, out var code))
+        {
+            return;
+        }
+
+        Console.WriteLine();
+        Console.WriteLine("SERVER ADMINISTRATION IS UNCLAIMED");
+        Console.WriteLine("No player has administrative permissions.");
+        Console.WriteLine($"Claim code: {code}");
+        Console.WriteLine("To initialize administration:");
+        Console.WriteLine("1. Connect to this server as a player.");
+        Console.WriteLine($"2. Run: /auth claim {code}");
+        Console.WriteLine("Use 'auth code' or 'auth regenerate' in this console if needed.");
+        Console.WriteLine();
     }
 
     private static bool InitializeHeadless()

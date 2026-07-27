@@ -34,6 +34,9 @@ public sealed class BuiltInContentMod : IMod
         context.Commands.Register(
             new ResourceId(context.Manifest.ModId, "permission"),
             BuiltInCommands.CreatePermission());
+        context.Commands.Register(
+            new ResourceId(context.Manifest.ModId, "auth"),
+            BuiltInCommands.CreateAuth());
 
         foreach (var asset in BuiltInContentAssets.Load())
         {

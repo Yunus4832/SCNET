@@ -205,13 +205,56 @@ public class CommandDispatcherTest
                     new CommandRoute(
                         [],
                         (_, _) => CommandResult.Ok("ok"),
-                        requiredPermission: "server.stop")
+                        requiredPermission: "server.stop",
+                        sourcePolicy: CommandSourcePolicy.ServerConsoleOnly,
+                        grantPolicy: CommandGrantPolicy.NonGrantable)
+                ]));
+        registry.Register(
+            owner,
+            new ResourceId(owner, "kick"),
+            new GameCommand(
+                "kick",
+                "Kick",
+                [
+                    new CommandRoute(
+                        [],
+                        (_, _) => CommandResult.Ok("ok"),
+                        requiredPermission: "server.kick")
                 ]));
         registry.Freeze();
 
         Assert.Equal(
-            ["*", "server.*", "server.stop", "world.*", "world.time.*", "world.time.set"],
+            [
+                CommandPermissionSet.ManageStandardPermission,
+                "server.kick",
+                "world.*",
+                "world.time.*",
+                "world.time.set"
+            ],
             registry.GetPermissionNodes());
+        var manager = new CommandPrincipal(
+            "Manager",
+            permissions: [CommandPermissionSet.ManageStandardPermission]);
+        Assert.True(registry.CanGrantPermission(
+            "world.time.set",
+            manager,
+            CommandSource.Player));
+        Assert.False(registry.CanGrantPermission(
+            "server.stop",
+            CommandPrincipal.ServerConsole,
+            CommandSource.ServerConsole));
+        Assert.False(registry.CanGrantPermission(
+            "server.kick",
+            manager,
+            CommandSource.Player));
+        Assert.True(registry.CanGrantPermission(
+            "server.kick",
+            CommandPrincipal.ServerConsole,
+            CommandSource.ServerConsole));
+        Assert.False(registry.CanGrantPermission(
+            "*",
+            CommandPrincipal.ServerConsole,
+            CommandSource.ServerConsole));
     }
 
     [Fact]
@@ -258,6 +301,65 @@ public class CommandDispatcherTest
         Assert.True(stop.IsAvailable(RunModeType.HeadlessServer, WorkType.Server));
         Assert.False(stop.IsAvailable(RunModeType.Gui, WorkType.Server));
         Assert.False(stop.IsAvailable(RunModeType.Gui, WorkType.Client));
+    }
+
+    [Fact]
+    public void ServerConsoleOnlyRouteCannotBeExecutedOrSuggestedToPlayers()
+    {
+        var registry = RegistryWithCommand(
+            new GameCommand(
+                "stop",
+                "Stop",
+                [
+                    new CommandRoute(
+                        [],
+                        (_, _) => CommandResult.Ok("stopped"),
+                        requiredPermission: "server.stop",
+                        sourcePolicy: CommandSourcePolicy.ServerConsoleOnly,
+                        grantPolicy: CommandGrantPolicy.NonGrantable)
+                ]));
+        var dispatcher = new CommandDispatcher(registry);
+        var wildcardPlayer = new CommandPrincipal("Player", permissions: ["*"]);
+
+        Assert.Equal(
+            "command.forbidden",
+            dispatcher.Execute(
+                "/stop",
+                Context(wildcardPlayer, CommandSource.Player)).Code);
+        Assert.True(dispatcher.Execute(
+            "/stop",
+            Context(CommandPrincipal.ServerConsole, CommandSource.ServerConsole)).Success);
+        Assert.Empty(registry.Suggest("/st", wildcardPlayer));
+        Assert.Equal(
+            ["stop"],
+            registry.Suggest(
+                    "/st",
+                    CommandPrincipal.ServerConsole,
+                    CommandSource.ServerConsole)
+                .Select(item => item.Value));
+    }
+
+    [Fact]
+    public void AuthenticationRoutesAreSeparatedByCommandSource()
+    {
+        var registry = RegistryWithCommand(BuiltInCommands.CreateAuth());
+        var player = new CommandPrincipal("Player");
+
+        Assert.Equal(
+            ["claim"],
+            registry.Suggest("/auth ", player, CommandSource.Player)
+                .Select(item => item.Value));
+        Assert.Equal(
+            ["code", "regenerate", "status"],
+            registry.Suggest(
+                    "/auth ",
+                    CommandPrincipal.ServerConsole,
+                    CommandSource.ServerConsole)
+                .Select(item => item.Value));
+        Assert.False(registry.CanExecute(
+            "/auth claim ABCD-EFGH-JKLM ",
+            CommandPrincipal.ServerConsole,
+            CommandSource.ServerConsole));
     }
 
     [Fact]
@@ -316,10 +418,12 @@ public class CommandDispatcherTest
             aliases);
     }
 
-    private static CommandContext Context(CommandPrincipal? principal = null)
+    private static CommandContext Context(
+        CommandPrincipal? principal = null,
+        CommandSource source = CommandSource.Mod)
     {
         return new CommandContext(
-            CommandSource.Mod,
+            source,
             principal ?? new CommandPrincipal("Player"),
             null,
             "test");

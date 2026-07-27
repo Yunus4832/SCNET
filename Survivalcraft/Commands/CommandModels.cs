@@ -28,6 +28,20 @@ public enum CommandExecutionEnvironment
     HeadlessServer
 }
 
+public enum CommandSourcePolicy
+{
+    Any,
+    PlayerOnly,
+    ServerConsoleOnly
+}
+
+public enum CommandGrantPolicy
+{
+    Standard,
+    Protected,
+    NonGrantable
+}
+
 public sealed class CommandPrincipal
 {
     private readonly HashSet<string> _delegablePermissions;
@@ -67,7 +81,8 @@ public sealed class CommandPrincipal
         var normalized = CommandPermissionSet.Normalize(permission);
         if (normalized == CommandPermissionSet.GrantPermission)
         {
-            return _delegablePermissions.Count > 0;
+            return _delegablePermissions.Count > 0 ||
+                   _permissions.Contains(CommandPermissionSet.ManageStandardPermission);
         }
 
         if (_permissions.Any(granted => CommandPermissionSet.Implies(granted, normalized)))
@@ -88,18 +103,6 @@ public sealed class CommandPrincipal
     public static CommandPrincipal FromPlayer(PlayerData player)
     {
         ArgumentNullException.ThrowIfNull(player);
-        if (HasGuiServerOwnerBootstrapAuthority(
-                RunMode.Value,
-                CommonLib.WorkType,
-                player.ServerMaster))
-        {
-            return new CommandPrincipal(
-                player.Name,
-                player,
-                permissions: ["*"],
-                delegablePermissions: ["*"]);
-        }
-
         return new CommandPrincipal(
             player.Name,
             player,
@@ -107,16 +110,6 @@ public sealed class CommandPrincipal
             player.CommandPermissions.Grants
                 .Where(grant => grant.CanDelegate)
                 .Select(grant => grant.Permission));
-    }
-
-    internal static bool HasGuiServerOwnerBootstrapAuthority(
-        RunModeType runMode,
-        WorkType workType,
-        bool isServerMaster)
-    {
-        return runMode is RunModeType.Gui &&
-               workType is WorkType.Server &&
-               isServerMaster;
     }
 
     public static CommandPrincipal ServerConsole { get; } =
@@ -143,9 +136,12 @@ public sealed class CommandContext(
     public CommandRegistry Registry { get; internal set; } = null!;
 }
 
-public sealed record CommandResult(bool Success, string Code, string Message)
+public sealed record CommandResult(bool Success, string Code, string Message, bool Sensitive = false)
 {
     public static CommandResult Ok(string message, string code = "command.ok") => new(true, code, message);
+
+    public static CommandResult SensitiveOk(string message, string code = "command.ok") =>
+        new(true, code, message, true);
 
     public static CommandResult Fail(string code, string message) => new(false, code, message);
 }
@@ -235,7 +231,9 @@ public sealed class CommandRoute(
     IEnumerable<CommandSegment> segments,
     Func<CommandContext, CommandArguments, CommandResult> execute,
     string description = "",
-    string requiredPermission = ""
+    string requiredPermission = "",
+    CommandSourcePolicy sourcePolicy = CommandSourcePolicy.Any,
+    CommandGrantPolicy? grantPolicy = null
 )
 {
     public IReadOnlyList<CommandSegment> Segments { get; } =
@@ -245,8 +243,32 @@ public sealed class CommandRoute(
 
     public string RequiredPermission { get; } = requiredPermission;
 
+    public CommandSourcePolicy SourcePolicy { get; } = sourcePolicy;
+
+    public CommandGrantPolicy GrantPolicy { get; } =
+        grantPolicy ?? GetDefaultGrantPolicy(requiredPermission);
+
     public Func<CommandContext, CommandArguments, CommandResult> Execute { get; } =
         execute ?? throw new ArgumentNullException(nameof(execute));
+
+    public bool IsSourceAllowed(CommandSource source)
+    {
+        return SourcePolicy switch
+        {
+            CommandSourcePolicy.Any => true,
+            CommandSourcePolicy.PlayerOnly => source is CommandSource.Player,
+            CommandSourcePolicy.ServerConsoleOnly => source is CommandSource.ServerConsole,
+            _ => false
+        };
+    }
+
+    private static CommandGrantPolicy GetDefaultGrantPolicy(string permission)
+    {
+        return permission.StartsWith("server.", StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(permission, "server.*", StringComparison.OrdinalIgnoreCase)
+            ? CommandGrantPolicy.Protected
+            : CommandGrantPolicy.Standard;
+    }
 }
 
 public sealed class GameCommand

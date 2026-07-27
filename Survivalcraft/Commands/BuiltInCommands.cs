@@ -56,9 +56,47 @@ public static class BuiltInCommands
                     [],
                     ExecuteStop,
                     "停止 Headless 服务端",
-                    "server.stop")
+                    "server.stop",
+                    CommandSourcePolicy.ServerConsoleOnly,
+                    CommandGrantPolicy.NonGrantable)
             ],
             executionEnvironment: CommandExecutionEnvironment.HeadlessServer);
+    }
+
+    public static GameCommand CreateAuth()
+    {
+        return new GameCommand(
+            "auth",
+            "认领服务器管理员身份",
+            [
+                new CommandRoute(
+                    [],
+                    ExecuteAuthHelp,
+                    "显示服务器认领帮助"),
+                new CommandRoute(
+                    [
+                        new CommandLiteral("claim"),
+                        new CommandArgument("code")
+                    ],
+                    ExecuteAuthClaim,
+                    "使用认领码初始化在线玩家的管理权限",
+                    sourcePolicy: CommandSourcePolicy.PlayerOnly),
+                new CommandRoute(
+                    [new CommandLiteral("status")],
+                    ExecuteAuthStatus,
+                    "查看服务器认领状态",
+                    sourcePolicy: CommandSourcePolicy.ServerConsoleOnly),
+                new CommandRoute(
+                    [new CommandLiteral("code")],
+                    ExecuteAuthCode,
+                    "显示当前服务器认领码",
+                    sourcePolicy: CommandSourcePolicy.ServerConsoleOnly),
+                new CommandRoute(
+                    [new CommandLiteral("regenerate")],
+                    ExecuteAuthRegenerate,
+                    "重新生成服务器认领码",
+                    sourcePolicy: CommandSourcePolicy.ServerConsoleOnly)
+            ]);
     }
 
     public static GameCommand CreatePermission()
@@ -146,7 +184,9 @@ public static class BuiltInCommands
         var names = context.Registry.Entries
             .Where(entry =>
                 CommandRegistry.IsAvailable(entry.Command) &&
-                entry.Command.Routes.Any(route => context.Principal.HasPermission(route.RequiredPermission)))
+                entry.Command.Routes.Any(route =>
+                    route.IsSourceAllowed(context.Source) &&
+                    context.Principal.HasPermission(route.RequiredPermission)))
             .Select(entry => "/" + entry.Command.Name)
             .ToArray();
         return CommandResult.Ok(
@@ -165,6 +205,7 @@ public static class BuiltInCommands
         var routes = registered.Command.Routes
             .Where(route =>
                 CommandRegistry.IsAvailable(registered.Command) &&
+                route.IsSourceAllowed(context.Source) &&
                 context.Principal.HasPermission(route.RequiredPermission))
             .Select(route =>
             {
@@ -215,13 +256,119 @@ public static class BuiltInCommands
         return FormatPermissionList(context.Principal.Player);
     }
 
+    private static CommandResult ExecuteAuthHelp(
+        CommandContext context,
+        CommandArguments arguments)
+    {
+        if (context.Project is null)
+        {
+            return CommandResult.Fail("command.no_world", "当前没有加载世界。");
+        }
+
+        return ServerAdministrationBootstrap.IsClaimed(context.Project)
+            ? CommandResult.Ok("服务器管理员已经完成首次认领。", "auth.claimed")
+            : CommandResult.Ok(
+                context.Source is CommandSource.ServerConsole
+                    ? "服务器尚未认领。使用 auth code 查看认领码，玩家上线后执行 /auth claim <认领码>。"
+                    : "服务器尚未认领。请输入 /auth claim <认领码> 完成首次管理员授权。",
+                "auth.unclaimed");
+    }
+
+    private static CommandResult ExecuteAuthClaim(
+        CommandContext context,
+        CommandArguments arguments)
+    {
+        if (!EnsureServer(out var failure))
+        {
+            return failure;
+        }
+
+        if (context.Project is null)
+        {
+            return CommandResult.Fail("command.no_world", "当前没有加载世界。");
+        }
+
+        if (context.Principal.Player is not { } player)
+        {
+            return CommandResult.Fail(
+                "auth.player_required",
+                "认领必须由已连接服务器的在线玩家执行。");
+        }
+
+        var result = ServerAdministrationBootstrap.TryClaim(
+            context.Project,
+            player,
+            arguments.Get<string>("code"));
+        if (!result.Success)
+        {
+            return CommandResult.Fail(result.Code, result.Message);
+        }
+
+        SynchronizePermissions(player);
+        GameManager.SaveProject(
+            waitForCompletion: false,
+            showErrorDialog: RunMode.Value is RunModeType.Gui);
+        return CommandResult.Ok(result.Message, result.Code);
+    }
+
+    private static CommandResult ExecuteAuthStatus(
+        CommandContext context,
+        CommandArguments arguments)
+    {
+        if (context.Project is null)
+        {
+            return CommandResult.Fail("command.no_world", "当前没有加载世界。");
+        }
+
+        return ServerAdministrationBootstrap.IsClaimed(context.Project)
+            ? CommandResult.Ok("服务器管理员已经完成首次认领。", "auth.claimed")
+            : CommandResult.Ok(
+                "服务器尚未认领，必须由在线玩家提交认领码。",
+                "auth.unclaimed");
+    }
+
+    private static CommandResult ExecuteAuthCode(
+        CommandContext context,
+        CommandArguments arguments)
+    {
+        if (context.Project is null)
+        {
+            return CommandResult.Fail("command.no_world", "当前没有加载世界。");
+        }
+
+        return ServerAdministrationBootstrap.TryGetClaimCode(context.Project, out var code)
+            ? CommandResult.SensitiveOk(
+                $"认领码：{code}。在线玩家执行 /auth claim {code}",
+                "auth.code")
+            : CommandResult.Fail("auth.already_claimed", "服务器管理员已经完成首次认领。");
+    }
+
+    private static CommandResult ExecuteAuthRegenerate(
+        CommandContext context,
+        CommandArguments arguments)
+    {
+        if (context.Project is null)
+        {
+            return CommandResult.Fail("command.no_world", "当前没有加载世界。");
+        }
+
+        return ServerAdministrationBootstrap.TryRegenerateClaimCode(context.Project, out var code)
+            ? CommandResult.SensitiveOk(
+                $"已重新生成认领码：{code}。在线玩家执行 /auth claim {code}",
+                "auth.regenerated")
+            : CommandResult.Fail("auth.already_claimed", "服务器管理员已经完成首次认领。");
+    }
+
     private static CommandResult ExecutePermissionHelp(
         CommandContext context,
         CommandArguments arguments)
     {
         var players = GetPlayers(context.Project).Select(player => player.Name).ToArray();
         var nodes = context.Registry.GetPermissionNodes()
-            .Where(context.Principal.CanDelegate)
+            .Where(node => context.Registry.CanGrantPermission(
+                node,
+                context.Principal,
+                context.Source))
             .ToArray();
         var playerText = players.Length == 0 ? "无在线玩家" : string.Join("、", players);
         var nodeText = nodes.Length == 0 ? "无可再授权节点" : string.Join("、", nodes);
@@ -252,7 +399,10 @@ public static class BuiltInCommands
         CommandArguments arguments)
     {
         var nodes = context.Registry.GetPermissionNodes()
-            .Where(context.Principal.CanDelegate)
+            .Where(node => context.Registry.CanGrantPermission(
+                node,
+                context.Principal,
+                context.Source))
             .ToArray();
         return CommandResult.Ok(
             nodes.Length == 0
@@ -290,11 +440,14 @@ public static class BuiltInCommands
             return CommandResult.Fail("permission.invalid", "权限节点格式无效。");
         }
 
-        if (!context.Principal.CanDelegate(permission))
+        if (!context.Registry.CanGrantPermission(
+                permission,
+                context.Principal,
+                context.Source))
         {
             return CommandResult.Fail(
                 "permission.cannot_delegate",
-                $"你没有 {permission} 的再授权范围。");
+                $"权限节点 {permission} 不可授权，或你没有对应的管理范围。");
         }
 
         if (!TryFindPlayer(context, arguments.Get<string>("player"), out var player, out failure))
@@ -335,11 +488,14 @@ public static class BuiltInCommands
             return CommandResult.Fail("permission.invalid", "权限节点格式无效。");
         }
 
-        if (!context.Principal.CanDelegate(permission))
+        if (!context.Registry.CanGrantPermission(
+                permission,
+                context.Principal,
+                context.Source))
         {
             return CommandResult.Fail(
                 "permission.cannot_delegate",
-                $"你没有 {permission} 的再授权范围。");
+                $"权限节点 {permission} 不可撤销，或你没有对应的管理范围。");
         }
 
         if (!TryFindPlayer(context, arguments.Get<string>("player"), out var player, out failure))
@@ -393,7 +549,8 @@ public static class BuiltInCommands
 
     private static CommandResult ExecuteStop(CommandContext context, CommandArguments arguments)
     {
-        if (RunMode.Value is not RunModeType.HeadlessServer ||
+        if (context.Source is not CommandSource.ServerConsole ||
+            RunMode.Value is not RunModeType.HeadlessServer ||
             CommonLib.WorkType is not WorkType.Server)
         {
             return CommandResult.Fail("server.not_headless", "当前进程不是 Headless 服务端。");
@@ -472,7 +629,10 @@ public static class BuiltInCommands
         CommandSuggestionContext context)
     {
         return context.Registry.GetPermissionNodes()
-            .Where(context.Principal.CanDelegate)
+            .Where(node => context.Registry.CanGrantPermission(
+                node,
+                context.Principal,
+                CommandSource.Player))
             .Select(node => new CommandArgumentSuggestion(node, "可授权权限节点"));
     }
 
@@ -486,7 +646,10 @@ public static class BuiltInCommands
         }
 
         return player.CommandPermissions.Grants
-            .Where(grant => context.Principal.CanDelegate(grant.Permission))
+            .Where(grant => context.Registry.CanGrantPermission(
+                grant.Permission,
+                context.Principal,
+                CommandSource.Player))
             .Select(grant => new CommandArgumentSuggestion(
                 grant.Permission,
                 grant.CanDelegate ? "当前为可再授权" : "当前为仅使用"));
@@ -509,7 +672,7 @@ public static class BuiltInCommands
             "permission.list");
     }
 
-    private static void SynchronizePermissions(PlayerData player)
+    internal static void SynchronizePermissions(PlayerData player)
     {
         if (player.Client is null)
         {

@@ -1,7 +1,4 @@
-using Engine.Core;
-
 using Game.Commands;
-using Game.Network.Enums;
 
 namespace Survivalcraft.Test.Commands;
 
@@ -43,6 +40,24 @@ public class CommandPermissionSetTest
     }
 
     [Fact]
+    public void StandardPermissionManagerDoesNotImplicitlyReceiveCommandPermissions()
+    {
+        var manager = new CommandPrincipal(
+            "Manager",
+            permissions: [CommandPermissionSet.ManageStandardPermission]);
+        var delegatingManager = new CommandPrincipal(
+            "DelegatingManager",
+            permissions: [CommandPermissionSet.ManageStandardPermission],
+            delegablePermissions: [CommandPermissionSet.ManageStandardPermission]);
+
+        Assert.True(manager.HasPermission(CommandPermissionSet.GrantPermission));
+        Assert.False(manager.HasPermission("world.time.set"));
+        Assert.False(manager.CanDelegate(CommandPermissionSet.ManageStandardPermission));
+        Assert.True(delegatingManager.HasPermission(CommandPermissionSet.GrantPermission));
+        Assert.True(delegatingManager.CanDelegate(CommandPermissionSet.ManageStandardPermission));
+    }
+
+    [Fact]
     public void GrantUpgradesButDoesNotSilentlyDowngradeDelegation()
     {
         var permissions = new CommandPermissionSet();
@@ -79,22 +94,4 @@ public class CommandPermissionSetTest
         Assert.Throws<ArgumentException>(() => CommandPermissionSet.Normalize(permission));
     }
 
-    [Theory]
-    [InlineData(RunModeType.Gui, WorkType.Server, true, true)]
-    [InlineData(RunModeType.Gui, WorkType.Server, false, false)]
-    [InlineData(RunModeType.Gui, WorkType.Client, true, false)]
-    [InlineData(RunModeType.HeadlessServer, WorkType.Server, true, false)]
-    public void OnlyGuiServerOwnerGetsBootstrapAuthority(
-        RunModeType runMode,
-        WorkType workType,
-        bool isServerMaster,
-        bool expected)
-    {
-        Assert.Equal(
-            expected,
-            CommandPrincipal.HasGuiServerOwnerBootstrapAuthority(
-                runMode,
-                workType,
-                isServerMaster));
-    }
 }

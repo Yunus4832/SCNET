@@ -25,6 +25,8 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
 
     public int WorldSeed { get; set; }
 
+    public bool ServerAdministrationClaimed { get; set; }
+
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
     public void Update(float dt)
@@ -149,6 +151,7 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
         DirectoryName = valuesDictionary.GetValue<string>("WorldDirectoryName");
         TotalElapsedGameTime = valuesDictionary.GetValue<double>("TotalElapsedGameTime");
         WorldSeed = valuesDictionary.GetValue<int>("WorldSeed");
+        ServerAdministrationClaimed = valuesDictionary.GetValue("ServerAdministrationClaimed", false);
     }
 
     public override void Save(ValuesDictionary valuesDictionary)
@@ -156,5 +159,6 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
         WorldSettings.Save(valuesDictionary, false);
         valuesDictionary.SetValue("WorldSeed", WorldSeed);
         valuesDictionary.SetValue("TotalElapsedGameTime", TotalElapsedGameTime);
+        valuesDictionary.SetValue("ServerAdministrationClaimed", ServerAdministrationClaimed);
     }
 }

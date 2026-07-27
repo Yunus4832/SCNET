@@ -44,7 +44,8 @@ public sealed class CommandDispatcher(CommandRegistry registry)
                 continue;
             }
 
-            if (!context.Principal.HasPermission(route.RequiredPermission))
+            if (!route.IsSourceAllowed(context.Source) ||
+                !context.Principal.HasPermission(route.RequiredPermission))
             {
                 denied = true;
                 continue;
@@ -70,7 +71,9 @@ public sealed class CommandDispatcher(CommandRegistry registry)
         }
 
         var visibleRoutes = registered.Command.Routes
-            .Where(route => context.Principal.HasPermission(route.RequiredPermission))
+            .Where(route =>
+                route.IsSourceAllowed(context.Source) &&
+                context.Principal.HasPermission(route.RequiredPermission))
             .ToArray();
         if (visibleRoutes.Length == 0)
         {

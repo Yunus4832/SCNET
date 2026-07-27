@@ -110,6 +110,7 @@ public class GameWidget : CanvasWidget
             UpdateNetPlayerListButtonTexture();
             NetPanelWidget.Margin = new Vector2(68, 5);
             MessageWidget = new NetMessageWidget(playerData, NetPanelWidget) { IsVisible = false };
+            MessageWidget.CloseRequested += () => SetMessageWidgetVisible(false, false);
             _controlsWidget.Children.Insert(0, NetPanelWidget);
             _controlsWidget.Children.Add(MessageWidget);
         }
@@ -207,23 +208,25 @@ public class GameWidget : CanvasWidget
 
         if (_messageButton.IsClicked && MessageWidget != null)
         {
-            SetMessageWidgetVisible(!MessageWidget.IsVisible, false);
+            SetMessageWidgetVisible(!MessageWidget.IsVisible, true);
         }
 
-        if (Input.IsKeyDownOnce(Key.Tab) && MessageWidget != null)
+        if (Input.IsKeyDownOnce(Key.Enter) &&
+            MessageWidget is { EditText.HasFocus: false })
         {
             if (PlayerData is { ComponentPlayer.ComponentGui: not null })
             {
-                SetMessageWidgetVisible(!MessageWidget.IsVisible, true);
+                SetMessageWidgetVisible(true, true);
+                Input.Clear();
             }
         }
 
-        if (Input.IsKeyDownOnce(Key.Enter) && MessageWidget != null)
+        if (Input.IsKeyDownOnce(Key.Slash) &&
+            MessageWidget is { EditText.HasFocus: false })
         {
-            if (MessageWidget.EditText.Text.Length == 0)
-            {
-                SetMessageWidgetVisible(!MessageWidget.IsVisible, true);
-            }
+            SetMessageWidgetVisible(true, false);
+            MessageWidget.BeginCommandInput();
+            Input.Clear();
         }
 
 
@@ -320,7 +323,7 @@ public class GameWidget : CanvasWidget
         }
         else if (focusInput)
         {
-            MessageWidget.EditText.HasFocus = visible;
+            MessageWidget.FocusInput();
             Input.IsMouseCursorVisible = visible;
         }
 
@@ -330,7 +333,7 @@ public class GameWidget : CanvasWidget
         }
 
         PlayerData.ComponentPlayer.ComponentInput.AllowHandleInput = !MessageWidget.EditText.HasFocus;
-        SetMessageInputModalBlocker(visible);
+        SetMessageInputModalBlocker(MessageWidget.EditText.HasFocus);
     }
 
     private void SetMessageInputModalBlocker(bool visible)
