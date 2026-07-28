@@ -17,12 +17,7 @@ public sealed class CommandSuggestionsWidget : CanvasWidget
     public CommandSuggestionsWidget()
     {
         IsVisible = false;
-        Children.Add(new BevelledRectangleWidget
-        {
-            CenterColor = new Color(0, 0, 0, 220),
-            BevelColor = Color.White,
-            BevelSize = 1f
-        });
+        Children.Add(MultiplayerUiStyle.CreateInsetArea());
         Children.Add(_suggestions);
         _suggestions.ItemWidgetFactory = item =>
         {

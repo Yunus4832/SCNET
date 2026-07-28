@@ -67,9 +67,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     private Message? _message;
 
-    private MessageWidget _messageWidget = null!;
+    private ToastWidget _messageWidget = null!;
 
     private ModalPanelAnimationData? _modalPanelAnimationData;
+
+    private int _modalPanelOpenedFrame = -1;
 
     private ContainerWidget _modalPanelContainerWidget = null!;
 
@@ -156,6 +158,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 {
                     value.HorizontalAlignment = WidgetAlignment.Center;
                     _modalPanelContainerWidget.Children.Insert(0, value);
+                    _modalPanelOpenedFrame = Time.FrameIndex;
                 }
 
                 UpdateModalPanelAnimation();
@@ -295,7 +298,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _moveButtonsContainerWidget = guiWidget.Children.Find<ContainerWidget>("MoveButtonsContainer")!;
         ShortInventoryWidget = guiWidget.Children.Find<ShortInventoryWidget>("ShortInventory")!;
         _largeMessageWidget = guiWidget.Children.Find<ContainerWidget>("LargeMessage")!;
-        _messageWidget = guiWidget.Children.Find<MessageWidget>("Message")!;
+        _messageWidget = guiWidget.Children.Find<ToastWidget>("Toast")!;
         _keyboardHelpMessageShown = valuesDictionary.GetValue<bool>("KeyboardHelpMessageShown");
         _keyboardHelpMessageShown = valuesDictionary.GetValue<bool>("KeyboardHelpMessageShown");
         _gamepadHelpMessageShown = valuesDictionary.GetValue<bool>("GamepadHelpMessageShown");
@@ -602,32 +605,9 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             }
         }
 
-        // 创建队伍
-        if (playerInput.CreateTeam)
+        if (playerInput.TogglePlayerPanel)
         {
-            var netPanelWidget = ComponentPlayer.GuiWidget.Children.Find<NetPanelWidget>(null, false);
-            netPanelWidget?.CreateTeam();
-        }
-
-        // 加入队伍
-        if (playerInput.JoinTeam)
-        {
-            var netPanelWidget = ComponentPlayer.GuiWidget.Children.Find<NetPanelWidget>(null, false);
-            netPanelWidget?.JoinTeam();
-        }
-
-        // 离开队伍
-        if (playerInput.LeaveTeam)
-        {
-            var netPanelWidget = ComponentPlayer.GuiWidget.Children.Find<NetPanelWidget>(null, false);
-            netPanelWidget?.LeaveTeam();
-        }
-
-        // 切换玩家展示类型
-        if (playerInput.TogglePlayerShowType)
-        {
-            var netPanelWidget = ComponentPlayer.GuiWidget.Children.Find<NetPanelWidget>(null, false);
-            netPanelWidget?.CycleSwitch();
+            ComponentPlayer.GameWidget.TogglePlayerPanel();
         }
 
         if (playerInput.GamepadHelp)
@@ -906,7 +886,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
         if (ModalPanelWidget != null)
         {
-            if (input.Cancel || input.Back || _backButtonWidget.IsClicked)
+            if (Time.FrameIndex != _modalPanelOpenedFrame &&
+                (input.Cancel || input.Back || _backButtonWidget.IsClicked))
             {
                 ModalPanelWidget = null;
             }

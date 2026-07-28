@@ -407,11 +407,6 @@ public static class WorldsManager
             {
                 fileName = Storage.CombinePaths("Regions", fileName);
             }
-            else if (fileDir.EndsWith("PlayerEntities"))
-            {
-                fileName = Storage.CombinePaths("PlayerEntities", fileName);
-            }
-
             AddZipEntry(zipArchive, fileName, source);
         }
 
@@ -516,16 +511,6 @@ public static class WorldsManager
                     }
 
                     fileName = Storage.CombinePaths("Regions", fileName);
-                }
-
-                if (fileDir.EndsWith("PlayerEntities"))
-                {
-                    if (!Storage.DirectoryExists(Storage.CombinePaths(directoryName, "PlayerEntities")))
-                    {
-                        Storage.CreateDirectory(Storage.CombinePaths(directoryName, "PlayerEntities"));
-                    }
-
-                    fileName = Storage.CombinePaths("PlayerEntities", fileName);
                 }
 
                 using var stream = Storage.OpenFile(Storage.CombinePaths(directoryName, fileName),

@@ -85,12 +85,7 @@ public sealed class CommandPrincipal
                    _permissions.Contains(CommandPermissionSet.ManageStandardPermission);
         }
 
-        if (_permissions.Any(granted => CommandPermissionSet.Implies(granted, normalized)))
-        {
-            return true;
-        }
-
-        return false;
+        return _permissions.Any(granted => CommandPermissionSet.Implies(granted, normalized));
     }
 
     public bool CanDelegate(string permission)
@@ -136,14 +131,28 @@ public sealed class CommandContext(
     public CommandRegistry Registry { get; internal set; } = null!;
 }
 
-public sealed record CommandResult(bool Success, string Code, string Message, bool Sensitive = false)
+public sealed record CommandResult(
+    bool Success,
+    string Code,
+    string Message,
+    bool Sensitive = false,
+    CommandResultAudience Audience = CommandResultAudience.Requester)
 {
     public static CommandResult Ok(string message, string code = "command.ok") => new(true, code, message);
+
+    public static CommandResult PublicOk(string message, string code = "command.ok") =>
+        new(true, code, message, Audience: CommandResultAudience.AllPlayers);
 
     public static CommandResult SensitiveOk(string message, string code = "command.ok") =>
         new(true, code, message, true);
 
     public static CommandResult Fail(string code, string message) => new(false, code, message);
+}
+
+public enum CommandResultAudience
+{
+    Requester,
+    AllPlayers
 }
 
 public sealed class CommandArguments

@@ -5,6 +5,7 @@ using Engine.Input;
 
 using EntitySystem.Core;
 
+using Game.Messaging;
 using Game.Network;
 using Game.Network.Enums;
 
@@ -16,29 +17,25 @@ public class GameWidget : CanvasWidget
 
     private readonly CanvasWidget _controlsWidget;
 
-    private readonly CanvasWidget _messageInputModalBlocker = new();
+    private readonly StackPanelWidget? _informationOverlaysContainer;
+
+    private readonly CanvasWidget? _informationOverlaysSpacer;
+
+    private readonly GameMessageService? _messageService;
 
     private Camera _activeCamera;
 
     private readonly List<Camera> _cameras = [];
 
-    public readonly NetMessageWidget? MessageWidget;
+    public readonly MessagePanelWidget? MessagePanel;
 
-    public readonly NetPanelWidget? NetPanelWidget;
+    public readonly PlayerInformationOverlayWidget? PlayerInformationOverlay;
+
+    public readonly PlayerPanelWidget? PlayerPanel;
+
+    public readonly MessageHistoryOverlayWidget? MessageHistoryOverlay;
 
     public readonly BitmapButtonWidget NetPlayerListButton;
-
-    private readonly Subtexture _netPlayersButtonSubtexture;
-
-    private readonly Subtexture _netGroupButtonSubtexture;
-
-    private readonly Subtexture _netBlackButtonSubtexture;
-
-    private readonly Subtexture _netHideButtonSubtexture;
-
-    private NetPanelWidget.ShowType? _netPlayerListButtonShowType;
-
-    private bool _netPlayerListButtonTextureInitialized;
 
     public SubsystemTime? SubsystemTime;
 
@@ -92,10 +89,8 @@ public class GameWidget : CanvasWidget
         LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
         _messageButton = Children.Find<BitmapButtonWidget>("MsgButton")!;
         NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerListButton")!;
-        _netPlayersButtonSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList_Pressed");
-        _netGroupButtonSubtexture = LoadGuiSubtexture("Textures/Gui/Group_Pressed");
-        _netBlackButtonSubtexture = LoadGuiSubtexture("Textures/Gui/BlackList_Pressed");
-        _netHideButtonSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList");
+        NetPlayerListButton.NormalSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList");
+        NetPlayerListButton.ClickedSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList_Pressed");
         _messageButton.Text = "";
         _messageButton.IsVisible = false;
         NetPlayerListButton.IsVisible = false;
@@ -104,15 +99,38 @@ public class GameWidget : CanvasWidget
         _controlsWidget = GuiWidget.Children.Find<CanvasWidget>("ControlsContainer")!;
         if (CommonLib.Net.IsConnected && playerData.IsMainPlayer)
         {
-            NetPanelWidget = new NetPanelWidget(this);
+            _messageService = SubsystemGameWidgets.Messages;
+            _messageService.ToastRequested += DisplayToast;
+            PlayerInformationOverlay = new PlayerInformationOverlayWidget(this);
+            PlayerPanel = new PlayerPanelWidget(playerData, PlayerInformationOverlay);
+            MessageHistoryOverlay = new MessageHistoryOverlayWidget(SubsystemGameWidgets.Messages)
+            {
+                HorizontalAlignment = WidgetAlignment.Near,
+                VerticalAlignment = WidgetAlignment.Near,
+                DisplayEnabled = SettingsManager.Current.ShowMessageHistoryOverlay
+            };
+            _informationOverlaysSpacer = new CanvasWidget
+            {
+                Size = new Vector2(0f, 12f),
+                IsHitTestVisible = false
+            };
+            _informationOverlaysContainer = new StackPanelWidget
+            {
+                Direction = LayoutDirection.Vertical,
+                HorizontalAlignment = WidgetAlignment.Near,
+                VerticalAlignment = WidgetAlignment.Near,
+                Margin = new Vector2(12f, 8f),
+                IsHitTestVisible = false
+            };
+            _informationOverlaysContainer.Children.Add(PlayerInformationOverlay);
+            _informationOverlaysContainer.Children.Add(_informationOverlaysSpacer);
+            _informationOverlaysContainer.Children.Add(MessageHistoryOverlay);
+            MessagePanel = new MessagePanelWidget(
+                playerData,
+                MessageHistoryOverlay);
             NetPlayerListButton.IsVisible = true;
             _messageButton.IsVisible = true;
-            UpdateNetPlayerListButtonTexture();
-            NetPanelWidget.Margin = new Vector2(68, 5);
-            MessageWidget = new NetMessageWidget(playerData, NetPanelWidget) { IsVisible = false };
-            MessageWidget.CloseRequested += () => SetMessageWidgetVisible(false, false);
-            _controlsWidget.Children.Insert(0, NetPanelWidget);
-            _controlsWidget.Children.Add(MessageWidget);
+            _controlsWidget.Children.Insert(0, _informationOverlaysContainer);
         }
 
         _cameras.Add(new FppCamera(this));
@@ -174,68 +192,70 @@ public class GameWidget : CanvasWidget
         var player = PlayerData.ComponentPlayer;
         if (player != null)
         {
-            if (player.ComponentSleep.IsSleeping && NetPanelWidget != null &&
-                _controlsWidget.Children.Contains(NetPanelWidget))
+            if (_informationOverlaysContainer != null)
             {
-                _controlsWidget.Children.Remove(NetPanelWidget);
-                if (MessageWidget != null)
+                var horizontalMargin = player.ComponentInput.IsControlledByTouch ? 76f : 12f;
+                if (_informationOverlaysContainer.Margin.X != horizontalMargin)
                 {
-                    _controlsWidget.Children.Remove(MessageWidget);
-                    GuiWidget.Children.Add(NetPanelWidget);
-                    GuiWidget.Children.Add(MessageWidget);
+                    _informationOverlaysContainer.Margin = new Vector2(horizontalMargin, 8f);
                 }
             }
 
-            if (!player.ComponentSleep.IsSleeping && NetPanelWidget != null &&
-                GuiWidget.Children.Contains(NetPanelWidget))
+            if (_informationOverlaysSpacer != null)
             {
-                GuiWidget.Children.Remove(NetPanelWidget);
-                if (MessageWidget != null)
-                {
-                    GuiWidget.Children.Remove(MessageWidget);
-                    _controlsWidget.Children.Insert(0, NetPanelWidget);
-                    _controlsWidget.Children.Add(MessageWidget);
-                }
+                _informationOverlaysSpacer.IsVisible =
+                    PlayerInformationOverlay?.IsVisible == true &&
+                    MessageHistoryOverlay?.IsVisible == true;
+            }
+
+            if (player.ComponentSleep.IsSleeping && _informationOverlaysContainer != null &&
+                _controlsWidget.Children.Contains(_informationOverlaysContainer))
+            {
+                _controlsWidget.Children.Remove(_informationOverlaysContainer);
+                GuiWidget.Children.Add(_informationOverlaysContainer);
+            }
+
+            if (!player.ComponentSleep.IsSleeping && _informationOverlaysContainer != null &&
+                GuiWidget.Children.Contains(_informationOverlaysContainer))
+            {
+                GuiWidget.Children.Remove(_informationOverlaysContainer);
+                _controlsWidget.Children.Insert(0, _informationOverlaysContainer);
             }
         }
 
         if (NetPlayerListButton.IsClicked)
         {
-            NetPanelWidget?.CycleSwitch();
+            TogglePlayerPanel();
         }
 
-        UpdateNetPlayerListButtonTexture();
-
-        if (_messageButton.IsClicked && MessageWidget != null)
+        if (_messageButton.IsClicked && MessagePanel != null)
         {
-            SetMessageWidgetVisible(!MessageWidget.IsVisible, true);
+            ToggleMessagePanel(false);
         }
 
         if (Input.IsKeyDownOnce(Key.Enter) &&
-            MessageWidget is { EditText.HasFocus: false })
+            MessagePanel is { EditText.HasFocus: false } &&
+            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget is not MessagePanelWidget)
         {
-            if (PlayerData is { ComponentPlayer.ComponentGui: not null })
-            {
-                SetMessageWidgetVisible(true, true);
-                Input.Clear();
-            }
-        }
-
-        if (Input.IsKeyDownOnce(Key.Slash) &&
-            MessageWidget is { EditText.HasFocus: false })
-        {
-            SetMessageWidgetVisible(true, false);
-            MessageWidget.BeginCommandInput();
+            OpenMessagePanel(true, false);
             Input.Clear();
         }
 
-
-        if (MessageWidget is { IsVisible: false })
+        if (Input.IsKeyDownOnce(Key.Slash) &&
+            MessagePanel is { EditText.HasFocus: false })
         {
-            MessageWidget.EditText.HasFocus = false;
+            OpenMessagePanel(false, true);
+            Input.Clear();
         }
 
-        _messageButton.IsChecked = MessageWidget is { IsVisible: true };
+        var modalPanel = PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
+        if (MessagePanel != null && modalPanel != MessagePanel)
+        {
+            MessagePanel.EditText.HasFocus = false;
+        }
+
+        _messageButton.IsChecked = modalPanel == MessagePanel;
+        NetPlayerListButton.IsChecked = modalPanel == PlayerPanel;
 
         var widgetInputDevice = DetermineInputDevices();
         if (WidgetsHierarchyInput == null || WidgetsHierarchyInput.Devices != widgetInputDevice)
@@ -252,28 +272,6 @@ public class GameWidget : CanvasWidget
     private static Subtexture LoadGuiSubtexture(string name)
     {
         return new Subtexture(ContentManager.Get<Texture2D>(name), Vector2.Zero, Vector2.One);
-    }
-
-    private void UpdateNetPlayerListButtonTexture()
-    {
-        var showType = NetPanelWidget?.CurrentShowType;
-        if (_netPlayerListButtonTextureInitialized && _netPlayerListButtonShowType == showType)
-        {
-            return;
-        }
-
-        _netPlayerListButtonTextureInitialized = true;
-        _netPlayerListButtonShowType = showType;
-
-        var subtexture = showType switch
-        {
-            NetPanelWidget.ShowType.OnlinePlayers => _netPlayersButtonSubtexture,
-            NetPanelWidget.ShowType.Team => _netGroupButtonSubtexture,
-            NetPanelWidget.ShowType.BlackList => _netBlackButtonSubtexture,
-            _ => _netHideButtonSubtexture
-        };
-        NetPlayerListButton.NormalSubtexture = subtexture;
-        NetPlayerListButton.ClickedSubtexture = subtexture;
     }
 
     private WidgetInputDevice DetermineInputDevices()
@@ -307,43 +305,115 @@ public class GameWidget : CanvasWidget
         return (PlayerData.InputDevice & ~widgetInputDevice2) | WidgetInputDevice.Touch;
     }
 
-    private void SetMessageWidgetVisible(bool visible, bool focusInput)
+    public void TogglePlayerPanel()
     {
-        if (MessageWidget is null)
+        if (PlayerPanel is null || PlayerData.ComponentPlayer?.ComponentGui is not { } gui)
         {
             return;
         }
 
-        MessageWidget.IsVisible = visible;
-        _messageButton.IsChecked = visible;
-        if (!visible)
+        if (gui.ModalPanelWidget == PlayerPanel)
         {
-            MessageWidget.EditText.HasFocus = false;
-            Input.IsMouseCursorVisible = false;
+            gui.ModalPanelWidget = null;
+            return;
+        }
+
+        PlayerPanel.RefreshView();
+        gui.ModalPanelWidget = PlayerPanel;
+    }
+
+    public void RefreshPlayerViews()
+    {
+        PlayerInformationOverlay?.RefreshView();
+        PlayerPanel?.RefreshView();
+    }
+
+    public void ToggleMessagePanel(bool focusInput)
+    {
+        if (MessagePanel is null || PlayerData.ComponentPlayer?.ComponentGui is not { } gui)
+        {
+            return;
+        }
+
+        if (gui.ModalPanelWidget == MessagePanel)
+        {
+            MessagePanel.EditText.HasFocus = false;
+            gui.ModalPanelWidget = null;
+            return;
+        }
+
+        OpenMessagePanel(focusInput, false);
+    }
+
+    public void OpenMessagePanel(bool focusInput, bool commandInput)
+    {
+        if (MessagePanel is null || PlayerData.ComponentPlayer?.ComponentGui is not { } gui)
+        {
+            return;
+        }
+
+        gui.ModalPanelWidget = MessagePanel;
+        MessagePanel.EditText.HasFocus = false;
+        if (commandInput)
+        {
+            MessagePanel.BeginCommandInput();
         }
         else if (focusInput)
         {
-            MessageWidget.FocusInput();
-            Input.IsMouseCursorVisible = visible;
+            MessagePanel.FocusInput();
         }
-
-        if (PlayerData.ComponentPlayer is null)
-        {
-            return;
-        }
-
-        PlayerData.ComponentPlayer.ComponentInput.AllowHandleInput = !MessageWidget.EditText.HasFocus;
-        SetMessageInputModalBlocker(MessageWidget.EditText.HasFocus);
     }
 
-    private void SetMessageInputModalBlocker(bool visible)
+    public override void Dispose()
     {
-        if (PlatformManager.Platform is not Platform.Desktop)
+        if (_messageService is not null)
+        {
+            _messageService.ToastRequested -= DisplayToast;
+        }
+
+        var messageWidget = MessagePanel;
+        var playerPanelWidget = PlayerPanel;
+        if (PlayerData.ComponentPlayer?.ComponentGui is { } gui &&
+            (gui.ModalPanelWidget == messageWidget ||
+             gui.ModalPanelWidget == playerPanelWidget))
+        {
+            gui.ModalPanelWidget = null;
+            gui.EndModalPanelAnimation();
+        }
+
+        if (messageWidget is { ParentWidget: null })
+        {
+            messageWidget.Dispose();
+        }
+
+        if (playerPanelWidget is { ParentWidget: null })
+        {
+            playerPanelWidget.Dispose();
+        }
+
+        base.Dispose();
+    }
+
+    private void DisplayToast(GameMessage message)
+    {
+        if (PlayerData.ComponentPlayer?.ComponentGui is not { } gui)
         {
             return;
         }
 
-        PlayerData.ComponentPlayer?.ComponentGui?.ModalPanelWidget = visible ? _messageInputModalBlocker : null;
+        var color = message.Tone switch
+        {
+            GameMessageTone.Success => new Color(108, 218, 126),
+            GameMessageTone.Error => new Color(255, 112, 112),
+            GameMessageTone.Warning => new Color(245, 206, 96),
+            _ => Color.White
+        };
+        var blinking = message.Tone is GameMessageTone.Error or GameMessageTone.Warning;
+        gui.DisplaySmallMessage(
+            message.Content.PlainText,
+            color,
+            blinking,
+            playNotificationSound: blinking);
     }
 
     private bool IsCameraAllowed(Camera camera)

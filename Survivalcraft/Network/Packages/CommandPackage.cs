@@ -9,7 +9,6 @@ public sealed class CommandPackage : IPackage
     public enum CommandPackageMode : byte
     {
         Request,
-        Result,
         PermissionSnapshot
     }
 
@@ -30,12 +29,6 @@ public sealed class CommandPackage : IPackage
     public string CorrelationId { get; private set; } = string.Empty;
 
     public string Input { get; private set; } = string.Empty;
-
-    public bool Success { get; private set; }
-
-    public string Code { get; private set; } = string.Empty;
-
-    public string Message { get; private set; } = string.Empty;
 
     public Guid PlayerGuid { get; private set; }
 
@@ -61,16 +54,6 @@ public sealed class CommandPackage : IPackage
         };
     }
 
-    public static CommandPackage CreateResult(string correlationId, bool success, string code, string message)
-    {
-        return new CommandPackage(CommandPackageMode.Result, correlationId)
-        {
-            Success = success,
-            Code = code,
-            Message = message
-        };
-    }
-
     public static CommandPackage CreatePermissionSnapshot(
         Guid playerGuid,
         IEnumerable<CommandPermissionGrant> grants)
@@ -91,11 +74,6 @@ public sealed class CommandPackage : IPackage
         {
             case CommandPackageMode.Request:
                 writer.Write(Input);
-                break;
-            case CommandPackageMode.Result:
-                writer.Write(Success);
-                writer.Write(Code);
-                writer.Write(Message);
                 break;
             case CommandPackageMode.PermissionSnapshot:
                 writer.Write(PlayerGuid);
@@ -118,11 +96,6 @@ public sealed class CommandPackage : IPackage
         {
             case CommandPackageMode.Request:
                 Input = reader.ReadString();
-                break;
-            case CommandPackageMode.Result:
-                Success = reader.ReadBoolean();
-                Code = reader.ReadString();
-                Message = reader.ReadString();
                 break;
             case CommandPackageMode.PermissionSnapshot:
                 PlayerGuid = reader.ReadGuid();

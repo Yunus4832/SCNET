@@ -191,7 +191,9 @@ public class ComponentInput : Component, IUpdateable
                 : _playerInput.PickBlockType;
         }
 
-        if (!DialogsManager.HasDialogs(_componentPlayer.GuiWidget) && AllowHandleInput)
+        if (!IsMessagePanelOpen() &&
+            !DialogsManager.HasDialogs(_componentPlayer.GuiWidget) &&
+            AllowHandleInput)
         {
             _playerInput.ToggleInventory |= input.IsKeyDownOnce(Key.E);
             _playerInput.ToggleClothing |= input.IsKeyDownOnce(Key.C);
@@ -202,10 +204,7 @@ public class ComponentInput : Component, IUpdateable
             _playerInput.Drop |= input.IsKeyDownOnce(Key.Q);
             _playerInput.EditItem |= input.IsKeyDownOnce(Key.G);
             _playerInput.KeyboardHelp |= input.IsKeyDownOnce(Key.H);
-            _playerInput.CreateTeam |= input.IsKeyDownOnce(Key.N);
-            _playerInput.JoinTeam |= input.IsKeyDownOnce(Key.J);
-            _playerInput.LeaveTeam |= input.IsKeyDownOnce(Key.B);
-            _playerInput.TogglePlayerShowType |= input.IsKeyDownOnce(Key.Z);
+            _playerInput.TogglePlayerPanel |= input.IsKeyDownOnce(Key.N);
             _playerInput.Precipitation |= input.IsKeyDownOnce(Key.Y);
             _playerInput.Fog |= input.IsKeyDownOnce(Key.O);
 
@@ -325,7 +324,9 @@ public class ComponentInput : Component, IUpdateable
             _lastRightTrigger = padTriggerPosition2;
         }
 
-        if (!DialogsManager.HasDialogs(_componentPlayer.GuiWidget) && AllowHandleInput)
+        if (!IsMessagePanelOpen() &&
+            !DialogsManager.HasDialogs(_componentPlayer.GuiWidget) &&
+            AllowHandleInput)
         {
             _playerInput.ToggleInventory |= input.IsPadButtonDownOnce(GamePadButton.X);
             _playerInput.ToggleClothing |= input.IsPadButtonDownOnce(GamePadButton.Y);
@@ -468,5 +469,11 @@ public class ComponentInput : Component, IUpdateable
     {
         return MathUtils.Sign(value) *
                MathUtils.Clamp((MathUtils.Abs(value) - deadZone) / (saturationZone - deadZone), 0f, 1f);
+    }
+
+    private bool IsMessagePanelOpen()
+    {
+        var messagePanel = _componentPlayer.GameWidget.MessagePanel;
+        return messagePanel != null && _componentGui.ModalPanelWidget == messagePanel;
     }
 }

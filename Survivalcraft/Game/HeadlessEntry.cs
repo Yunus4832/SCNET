@@ -174,6 +174,11 @@ public static class HeadlessEntry
         while (_consoleCommands.TryDequeue(out var input))
         {
             var result = CommandExecutor.ExecuteServerConsole(input, GameManager.Project);
+            if (GameManager.Project is { } project)
+            {
+                CommandResultPublisher.Publish(project, result, includeServer: false);
+            }
+
             var level = result.Success ? "OK" : "ERROR";
             var output = $"COMMAND {level} [{result.Code}] {result.Message}";
             if (result.Sensitive)

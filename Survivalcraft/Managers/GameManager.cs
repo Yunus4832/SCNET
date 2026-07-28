@@ -299,7 +299,9 @@ public static class GameManager
                 HandleServerClientConnected(project, net, client);
                 break;
             case ClientState.NotConnected:
-                project.FindSubsystem<SubsystemPlayers>(true)!.MakePlayerOffline(client.GUID);
+                var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
+                subsystemPlayers.MakePlayerOffline(client.GUID);
+                net.QueuePackage(new PlayerListPackage(subsystemPlayers));
                 GC.Collect();
                 break;
             case ClientState.ProjectLoaded:
@@ -343,6 +345,7 @@ public static class GameManager
             client.CachePlayerEntity = entity!;
             net.QueuePackage(new PlayerDataPackage(playerData!, PlayerDataPackage.DataType.AddPlayer)
                 { Except = client });
+            net.QueuePackage(new PlayerListPackage(subsystemPlayers));
         }
 
         byte[]? textureData = null;
@@ -368,6 +371,9 @@ public static class GameManager
 
     private static void HandleServerClientProjectLoaded(Project project, NetNode net, Client client)
     {
+        var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
+        net.QueuePackage(new PlayerListPackage(subsystemPlayers) { To = client });
+        net.QueuePackage(new OnlinePlayerStatePackage(subsystemPlayers) { To = client });
         var sendList = project.EntityKeys.Where(ShouldSendEntityToClients).ToList();
         net.QueuePackage(new EntityPackage(sendList) { To = client });
         if (client.CachePlayerEntity == null)

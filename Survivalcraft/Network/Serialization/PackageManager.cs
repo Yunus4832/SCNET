@@ -51,6 +51,8 @@ public enum PackageType : byte
     GroupManage,
     SubsystemSeason,
     Command,
+    PlayerList,
+    OnlinePlayerState,
 
     ModPackage = 255 // 为后面的mod数据传输做保留
 }
@@ -115,6 +117,9 @@ public class PackageManager
         RegisterBuiltInPackage<GroupManagePackage, GroupManagePackageHandler>(PackageType.GroupManage);
         RegisterBuiltInPackage<SubsystemSeasonPackage, SubsystemSeasonPackageHandler>(PackageType.SubsystemSeason);
         RegisterBuiltInPackage<CommandPackage, CommandPackageHandler>(PackageType.Command);
+        RegisterBuiltInPackage<PlayerListPackage, PlayerListPackageHandler>(PackageType.PlayerList);
+        RegisterBuiltInPackage<OnlinePlayerStatePackage, OnlinePlayerStatePackageHandler>(
+            PackageType.OnlinePlayerState);
         RegisterBuiltInPackage<ModEnvelopePackage, ModEnvelopePackageHandler>(PackageType.ModPackage);
     }
 

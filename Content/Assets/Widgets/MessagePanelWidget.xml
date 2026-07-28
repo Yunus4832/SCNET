@@ -1,0 +1,9 @@
+<MessagePanelWidget xmlns="runtime-namespace:Game.Widgets" Size="614, 382" ClampToBounds="true">
+    <BevelledRectangleWidget Size="614, 382" BevelSize="3"/>
+    <CanvasWidget Name="TranscriptHost" CanvasWidget.Position="12, 12" Size="590, 298"
+                  ClampToBounds="true">
+        <BevelledRectangleWidget BevelSize="-2" DirectionalLight="0.15"/>
+    </CanvasWidget>
+    <CanvasWidget Name="InputHost" CanvasWidget.Position="12, 316" Size="590, 54"
+                  ClampToBounds="true"/>
+</MessagePanelWidget>

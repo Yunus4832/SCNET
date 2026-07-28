@@ -3,7 +3,6 @@ using EntitySystem.Core;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
-using Game.Subsystems;
 
 namespace Game.Commands;
 
@@ -544,7 +543,7 @@ public static class BuiltInCommands
             );
         }
 
-        return CommandResult.Ok($"已将世界时间设置为 {value}。", "world.time.changed");
+        return CommandResult.PublicOk($"已将世界时间设置为 {value}。", "world.time.changed");
     }
 
     private static CommandResult ExecuteStop(CommandContext context, CommandArguments arguments)

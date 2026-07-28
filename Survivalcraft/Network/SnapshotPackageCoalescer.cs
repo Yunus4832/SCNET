@@ -48,6 +48,9 @@ public static class SnapshotPackageCoalescer
             case PickablePackage { Type: PickablePackage.PickType.Update }:
                 key = new SnapshotKey(typeof(PickablePackage), 0, package.To, package.Except);
                 return true;
+            case OnlinePlayerStatePackage:
+                key = new SnapshotKey(typeof(OnlinePlayerStatePackage), 0, package.To, package.Except);
+                return true;
             default:
                 key = default;
                 return false;

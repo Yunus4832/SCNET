@@ -1,0 +1,9 @@
+<PlayerPanelWidget xmlns="runtime-namespace:Game.Widgets" Size="614, 382" ClampToBounds="true">
+    <BevelledRectangleWidget Size="614, 382" BevelSize="3"/>
+    <StackPanelWidget Name="Tabs" CanvasWidget.Position="37, 8"
+                      Direction="Horizontal" HorizontalAlignment="Center"/>
+    <CanvasWidget Name="ListHost" CanvasWidget.Position="24, 70" Size="566, 234" ClampToBounds="true">
+        <BevelledRectangleWidget BevelSize="-2" DirectionalLight="0.15"/>
+    </CanvasWidget>
+    <CanvasWidget Name="ActionsHost" CanvasWidget.Position="12, 310" Size="590, 60"/>
+</PlayerPanelWidget>

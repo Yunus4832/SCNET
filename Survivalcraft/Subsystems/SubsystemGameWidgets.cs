@@ -1,18 +1,15 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Messaging;
 using Game.Network;
-using Game.Network.Packages;
-
 namespace Game.Subsystems;
 
 public class SubsystemGameWidgets : Subsystem, IUpdateable
 {
-    public const int MaxMassageCount = 200;
-
-    private readonly Queue<string> _playerMessages = new();
-
     private readonly List<GameWidget> _gameWidgets = [];
+
+    private GameMessageService? _messages;
 
     private SubsystemPlayers _subsystemPlayers = null!;
 
@@ -26,7 +23,7 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 
     public SubsystemTerrain SubsystemTerrain { get; set; } = null!;
 
-    public List<string> PlayerMessages => [.._playerMessages];
+    public GameMessageService Messages => _messages ??= new GameMessageService(Project);
 
     public UpdateOrder UpdateOrder => UpdateOrder.Views;
 
@@ -36,75 +33,6 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
         {
             gameWidget.ActiveCamera.Update(Time.FrameDuration);
         }
-    }
-
-    public event Action<string>? OnMessageRecieved;
-
-    public void AddMessage(string msg, string playerName = "", byte type = 0, List<byte>? toClients = null)
-    {
-        toClients ??= [];
-        var arr = Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.KeywordBlocking
-            .Split([';'], StringSplitOptions.None);
-        foreach (var block in arr)
-        {
-            if (!string.IsNullOrEmpty(block))
-            {
-                msg = msg.Replace(block, "*");
-            }
-        }
-
-        CommonLib.Net.QueuePackage(new MessagePackage(playerName, msg, type, toClients));
-        //本地加入自己的
-        if (toClients.Count != 0 && CommonLib.MainPlayer != null)
-        {
-            toClients.Add(CommonLib.MainPlayer.PlayerData.ClientId);
-        }
-
-        AddNetMessage(msg, playerName, type, toClients);
-    }
-
-    public void AddNetMessage(string msg, string playerName = "", byte type = 0, List<byte>? toClients = null,
-        bool external = false)
-    {
-        toClients ??= [];
-        var typeStr = "";
-        switch (type)
-        {
-            case 1: typeStr = "<c=blue>[队]</c>"; break;
-            case 2: typeStr = "<c=Violet>[私]</c>"; break;
-        }
-
-        var message =
-            $"{typeStr}{(string.IsNullOrEmpty(playerName) ? "<c=red>[系统]</c>" : "[" + playerName + "]")}{msg}";
-        if (toClients.Count > 0 && CommonLib.Net.Self != null && toClients.Contains(CommonLib.Net.Self.ID))
-        {
-            Insert(message, type, external);
-        }
-        else if (type == 0)
-        {
-            Insert(message, 0, external);
-        }
-    }
-
-    private void Insert(string msg, byte type = 0, bool external = false)
-    {
-        //只保留全服消息
-        if (type == 0)
-        {
-            while (_playerMessages.Count >= MaxMassageCount)
-            {
-                _playerMessages.Dequeue();
-            }
-
-            _playerMessages.Enqueue(msg);
-        }
-
-        if (!external)
-        {
-            Log.Information(msg);
-        }
-
-        OnMessageRecieved?.Invoke(msg);
     }
 
     public float CalculateSquaredDistanceFromNearestView(Vector3 p)
@@ -134,7 +62,7 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
         if (RunMode.Value is RunModeType.Gui)
         {
             _subsystemPlayers.PlayerAdded += AddGameWidgetForPlayer;
-            _subsystemPlayers.PlayerRemoved += delegate(PlayerData playerData)
+            _subsystemPlayers.PlayerRemoved += delegate (PlayerData playerData)
             {
                 RemoveGameWidget(playerData.GameWidget);
             };
@@ -157,22 +85,6 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
             Log.Debug($"Widget load: {playersDatum.Name}");
             AddGameWidgetForPlayer(playersDatum);
         }
-    }
-
-    public override void Save(ValuesDictionary valuesDictionary)
-    {
-        /*
-        if (CommonLib.WorkType == WorkType.Server)
-        {
-            var listDict = new ValuesDictionary();
-            var msgs = PlayerMessages;
-            for (int i = 0; i < msgs.Count; i++)
-            {
-                listDict.Add(i.ToString(), msgs[i]);
-            }
-            valuesDictionary.Add("Messages", listDict);
-        }
-        */
     }
 
     public override void Dispose()

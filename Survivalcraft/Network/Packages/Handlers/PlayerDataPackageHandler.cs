@@ -31,6 +31,7 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                 playerData.Name = PlayerData.CreateNewName(playerData.Name);
                 // 服务器广播给所有客户端，添加玩家
                 netNode.QueuePackage(new PlayerDataPackage(playerData, PlayerDataPackage.DataType.AddPlayer));
+                netNode.QueuePackage(new PlayerListPackage(subsystemPlayers));
                 break;
             case PlayerDataPackage.DataType.Modify:
                 var playerData2 = subsystemPlayers.FindPlayerData(p => p.PlayerGUID == package.PlayerGuid);
@@ -52,6 +53,7 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                     if (isServer)
                     {
                         netNode.QueuePackage(package);
+                        netNode.QueuePackage(new PlayerListPackage(subsystemPlayers));
                     }
                 }
 
@@ -162,13 +164,6 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                     );
                 }
 
-                break;
-            case PlayerDataPackage.DataType.AddNoMsg:
-                project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList.Add(package.PlayerGuid.ToString());
-                break;
-            case PlayerDataPackage.DataType.RemoveNoMsg:
-                project.FindSubsystem<SubsystemPlayers>(true)!.NoMsgPlayerGuidList
-                    .Remove(package.PlayerGuid.ToString());
                 break;
         }
     }

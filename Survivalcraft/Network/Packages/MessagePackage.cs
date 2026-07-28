@@ -1,33 +1,12 @@
+using Game.Messaging;
 using Game.Network.Enums;
 using Game.Network.Serialization;
 
 namespace Game.Network.Packages;
 
-public class MessagePackage : IPackage
+public sealed class MessagePackage : IPackage
 {
-    public enum MessageMode : byte
-    {
-        BaseMessage, // 普通消息
-        LargeMessage // 大字消息，也就是开局显示的那几条消息
-    }
-
-    public float Delay;
-
-    public float Duration;
-
-    public string LargeText = string.Empty;
-
-    public string Message = string.Empty;
-
-    public MessageMode PackageMessageMode;
-
-    public byte MessageType;
-
-    public string PlayerName = string.Empty;
-
-    public string SmallText = string.Empty;
-
-    public readonly List<byte> ToClients = [];
+    private const int _maximumSegmentCount = 64;
 
     public byte ID => (byte)PackageType.Message;
 
@@ -39,91 +18,66 @@ public class MessagePackage : IPackage
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
+    public GameMessage GameMessage { get; private set; } = GameMessage.System(string.Empty);
+
     public MessagePackage()
     {
     }
 
-    public MessagePackage(string playerName, string message, byte type, List<byte> toClients)
+    public MessagePackage(GameMessage message)
     {
-        PackageMessageMode = MessageMode.BaseMessage;
-        Message = message;
-        PlayerName = playerName;
-        MessageType = type;
-        ToClients.AddRange(toClients);
-    }
-
-    // 发送大字消息，可以做服务器公告用
-    public MessagePackage(string largeText, string smallText, float duration, float delay)
-    {
-        PackageMessageMode = MessageMode.LargeMessage;
-        LargeText = largeText;
-        SmallText = smallText;
-        Duration = duration;
-        Delay = delay;
+        ArgumentNullException.ThrowIfNull(message);
+        GameMessage = message;
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.WriteEnum(PackageMessageMode);
-        switch (PackageMessageMode)
+        writer.WriteEnum(GameMessage.Kind);
+        writer.WriteEnum(GameMessage.Channel);
+        writer.WriteEnum(GameMessage.Tone);
+        writer.WriteEnum(GameMessage.Presentation);
+        writer.Write(GameMessage.SenderName);
+        if (GameMessage.Content.Segments.Count > _maximumSegmentCount)
         {
-            case MessageMode.BaseMessage:
-                writer.Write(MessageType);
-                writer.Write((byte)ToClients.Count);
-                for (byte i = 0; i < ToClients.Count; i++)
-                {
-                    writer.Write(ToClients[i]);
-                }
+            throw new InvalidDataException(
+                $"Too many message segments: {GameMessage.Content.Segments.Count}.");
+        }
 
-                writer.Write(Message);
-                if (string.IsNullOrEmpty(PlayerName))
-                {
-                    writer.Write(false); // 这里不要布尔判断，而是直接写入string.Empty可能会好一点
-                }
-                else
-                {
-                    writer.Write(true);
-                    writer.Write(PlayerName);
-                }
-
-                break;
-            case MessageMode.LargeMessage:
-                writer.Write(LargeText);
-                writer.Write(SmallText);
-                writer.Write(Duration);
-                writer.Write(Delay);
-                break;
+        writer.Write((byte)GameMessage.Content.Segments.Count);
+        foreach (var segment in GameMessage.Content.Segments)
+        {
+            writer.WriteEnum(segment.Style);
+            writer.Write(segment.Text);
         }
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        PackageMessageMode = reader.ReadEnum<MessageMode>();
-        switch (PackageMessageMode)
+        var kind = reader.ReadEnum<GameMessageKind>();
+        var channel = reader.ReadEnum<GameMessageChannel>();
+        var tone = reader.ReadEnum<GameMessageTone>();
+        var presentation = reader.ReadEnum<GameMessagePresentation>();
+        var senderName = reader.ReadString();
+        var segmentCount = reader.ReadByte();
+        if (segmentCount > _maximumSegmentCount)
         {
-            case MessageMode.BaseMessage:
-                MessageType = reader.ReadByte();
-                var count = reader.ReadByte();
-                for (var i = 0; i < count; i++)
-                {
-                    ToClients.Add(reader.ReadByte());
-                }
-
-                Message = reader.ReadString();
-                if (reader.ReadBoolean())
-                {
-                    PlayerName = reader.ReadString();
-                }
-
-                break;
-            case MessageMode.LargeMessage:
-                LargeText = reader.ReadString();
-                SmallText = reader.ReadString();
-                Duration = reader.ReadSingle();
-                Delay = reader.ReadSingle();
-                break;
+            throw new InvalidDataException($"Too many message segments: {segmentCount}.");
         }
+
+        var segments = new MessageSegment[segmentCount];
+        for (var index = 0; index < segmentCount; index++)
+        {
+            var style = reader.ReadEnum<MessageTextStyle>();
+            var text = reader.ReadString();
+            segments[index] = new MessageSegment(text, style);
+        }
+
+        GameMessage = new GameMessage(
+            kind,
+            channel,
+            senderName,
+            new MessageContent(segments),
+            tone,
+            presentation);
     }
-
-
 }

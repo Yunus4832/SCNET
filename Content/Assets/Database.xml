@@ -5788,8 +5788,6 @@
                                   Guid="dab7078b-7788-46cb-9022-1a95127e0ad7"/>
                     <Parameter Name="Class" Guid="4a38c418-c0da-43e2-bef1-a599caa6bed6" Value="Game.Subsystems.SubsystemPlayers"
                                Type="string"/>
-                    <Parameter Name="NextPlayerIndex" Description="Next player index to use when adding a new player"
-                               Guid="bf962f77-766c-4d0a-b153-9eb1535606d5" Value="1" Type="int"/>
                     <Parameter Name="GlobalSpawnPosition"
                                Description="Global spawn position for all players, or 0,0,0 if not set yet"
                                Guid="f220b69c-8627-41b4-b251-24c8ef83c5f4" Value="0,0,0" Type="Vector3"/>

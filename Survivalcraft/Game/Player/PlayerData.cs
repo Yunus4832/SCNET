@@ -6,6 +6,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Commands;
+using Game.Messaging;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.NetSimulate;
@@ -1202,7 +1203,13 @@ public partial class PlayerData : IDisposable
 
             if (CommonLib.WorkType == WorkType.Server)
             {
-                SubsystemGameWidgets.AddMessage($"{Name} <c=red>{causeOfDeath}</c>");
+                SubsystemGameWidgets.Messages.Publish(GameMessage.System(
+                [
+                    new MessageSegment($"{Name} "),
+                    new MessageSegment(causeOfDeath, MessageTextStyle.Error)
+                ],
+                GameMessageTone.Warning,
+                GameMessagePresentation.Default | GameMessagePresentation.Toast));
             }
         }
 

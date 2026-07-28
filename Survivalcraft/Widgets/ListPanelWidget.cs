@@ -22,6 +22,19 @@ public class ListPanelWidget : ScrollPanelWidget
 
     public bool PlayClickSound = true;
 
+    public bool IsSelectionEnabled
+    {
+        get;
+        set
+        {
+            field = value;
+            if (!value)
+            {
+                SelectedIndex = null;
+            }
+        }
+    } = true;
+
     public Func<object, Widget> ItemWidgetFactory { get; set; }
 
     public override LayoutDirection Direction
@@ -242,6 +255,12 @@ public class ListPanelWidget : ScrollPanelWidget
     {
         var flag = ScrollSpeed != 0f;
         base.Update();
+        if (!IsSelectionEnabled)
+        {
+            _clickAllowed = false;
+            return;
+        }
+
         if (Input.Tap.HasValue && HitTestPanel(Input.Tap.Value))
         {
             _clickAllowed = !flag;
@@ -268,7 +287,8 @@ public class ListPanelWidget : ScrollPanelWidget
 
     public override void Draw(DrawContext dc)
     {
-        if (SelectedIndex.HasValue && SelectedIndex.Value >= _firstVisibleIndex &&
+        if (IsSelectionEnabled &&
+            SelectedIndex.HasValue && SelectedIndex.Value >= _firstVisibleIndex &&
             SelectedIndex.Value <= _lastVisibleIndex)
         {
             var vector = Direction == LayoutDirection.Horizontal

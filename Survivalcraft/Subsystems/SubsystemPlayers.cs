@@ -1,15 +1,22 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Messaging;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
 
 namespace Game.Subsystems;
 
-public class SubsystemPlayers : Subsystem, IUpdateable
+public partial class SubsystemPlayers : Subsystem, IUpdateable
 {
-    private readonly Dictionary<Guid, EntityData> _offlinePlayerEntities = new();
+    private sealed record OfflinePlayerData(ValuesDictionary PlayerData, ValuesDictionary EntityData);
+
+    private readonly Dictionary<Guid, OfflinePlayerData> _offlinePlayers = new();
+
+    private readonly Dictionary<Guid, OnlinePlayerState> _onlinePlayerStates = new();
+
+    private readonly Dictionary<Guid, PlayerListEntry> _playerList = new();
 
     private readonly List<PlayerData> _toRemove = [];
 
@@ -19,11 +26,7 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 
     private readonly List<ComponentPlayer> _componentPlayers = [];
 
-    public int NextPlayerIndex;
-
     private readonly List<PlayerData> _playersData = [];
-
-    private SubsystemGameInfo _subsystemGameInfo = null!;
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
@@ -31,19 +34,15 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
-    public int MaxGroup = 100; //最大队伍数量
-
-    public readonly List<string> NoMsgPlayerGuidList = [];
-
-    public string PlayerEntitiesDir = string.Empty;
-
     public readonly Dictionary<string, Group> ServerGroups = new();
-
-    public bool ShouldEnterCreate;
 
     public ReadOnlyList<PlayerData> PlayersData => new(_playersData);
 
     public ReadOnlyList<ComponentPlayer> ComponentPlayers => new(_componentPlayers);
+
+    public IReadOnlyDictionary<Guid, OnlinePlayerState> OnlinePlayerStates => _onlinePlayerStates;
+
+    public IReadOnlyDictionary<Guid, PlayerListEntry> PlayerList => _playerList;
 
     public Vector3 GlobalSpawnPosition { get; set; }
 
@@ -92,10 +91,16 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         _toRemove.Clear();
+
+        if (CommonLib.WorkType == WorkType.Server && Time.PeriodicEvent(0.25, 0.0))
+        {
+            CommonLib.Net.QueuePackage(new OnlinePlayerStatePackage(this));
+        }
     }
 
     public event Action<PlayerData>? PlayerAdded;
     public event Action<PlayerData>? PlayerRemoved;
+    public event Action? PlayerListChanged;
 
     public bool IsPlayer(Entity entity)
     {
@@ -143,6 +148,10 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         _playersData.Add(playerData);
+        SetPlayerListEntry(new PlayerListEntry(
+            playerData.PlayerGUID,
+            playerData.Name,
+            true));
 
         FindUnusedIndex(playerData);
 
@@ -164,7 +173,11 @@ public class SubsystemPlayers : Subsystem, IUpdateable
 
             if (client is not null)
             {
-                _subsystemGameWidgets.AddMessage(playerData.Name + " 加入游戏");
+                _subsystemGameWidgets.Messages.Publish(
+                    GameMessage.System(
+                        playerData.Name + " 加入游戏",
+                        presentation:
+                        GameMessagePresentation.Default | GameMessagePresentation.Toast));
             }
         }
 
@@ -233,38 +246,16 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         }
     }
 
-    public void CreateGroup(PlayerData main, string name)
-    {
-        var key = main.PlayerGUID.ToString();
-        if (ServerGroups.TryGetValue(key, out var v))
-        {
-            return;
-        }
-
-        v = new Group { Name = name };
-        ServerGroups.Add(key, v);
-        main.GroupKey = key;
-        v.Members.Add(main.PlayerGUID);
-    }
-
     public override void Load(ValuesDictionary valuesDictionary)
     {
-        _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemGameWidgets = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
-        NextPlayerIndex = valuesDictionary.GetValue<int>("NextPlayerIndex");
         GlobalSpawnPosition = valuesDictionary.GetValue<Vector3>("GlobalSpawnPosition");
         var blackPlayers = valuesDictionary.GetValue("BlackPlayerGuidList", new ValuesDictionary());
         foreach (var item in blackPlayers)
         {
             BlackPlayerGuidList[item.Key] = (string)item.Value;
-        }
-
-        var noMsgPlayers = valuesDictionary.GetValue("NoMsgPlayerGuidList", new ValuesDictionary());
-        foreach (string item in noMsgPlayers.Values)
-        {
-            NoMsgPlayerGuidList.Add(item);
         }
 
         foreach (ValuesDictionary item in valuesDictionary.GetValue("Players", new ValuesDictionary()).Values)
@@ -291,14 +282,20 @@ public class SubsystemPlayers : Subsystem, IUpdateable
             ServerGroups.Add(item.Key, group);
         }
 
-        foreach (var item in valuesDictionary.GetValue("OfflinePlayerEntities", new ValuesDictionary()))
+        foreach (var item in valuesDictionary.GetValue("OfflinePlayers", new ValuesDictionary()))
         {
-            if (Guid.TryParseExact(item.Key, "N", out var res))
+            if (item.Value is not ValuesDictionary offlinePlayer)
             {
-                var entityData = new EntityData(Project.GameDatabase, (ValuesDictionary)item.Value);
-                _offlinePlayerEntities.Add(res, entityData);
+                throw new InvalidOperationException($"Invalid offline player record '{item.Key}'.");
             }
+
+            var playerGuid = Guid.ParseExact(item.Key, "N");
+            var playerData = offlinePlayer.GetValue<ValuesDictionary>("Data");
+            var entityData = offlinePlayer.GetValue<ValuesDictionary>("Entity");
+            _offlinePlayers.Add(playerGuid, new OfflinePlayerData(playerData, entityData));
         }
+
+        RefreshPlayerList();
     }
 
     public override void Save(ValuesDictionary valuesDictionary)
@@ -326,17 +323,8 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         valuesDictionary.SetValue("BlackPlayerGuidList", blackPlayers);
-        var noMsgPlayers = new ValuesDictionary();
-        for (var i = 0; i < NoMsgPlayerGuidList.Count; i++)
-        {
-            blackPlayers.SetValue(i.ToString(), NoMsgPlayerGuidList[i]);
-        }
-
-        valuesDictionary.SetValue("NoMsgPlayerGuidList", noMsgPlayers);
         valuesDictionary.SetValue("GlobalSpawnPosition", GlobalSpawnPosition);
         valuesDictionary.SetValue("Players", onlinePlayersListVd);
-        var offline = new ValuesDictionary();
-        valuesDictionary.SetValue("OfflinePlayerEntities", offline);
         var groupValues = new ValuesDictionary();
         valuesDictionary.SetValue("ServerGroups", groupValues);
         foreach (var obj in ServerGroups)
@@ -353,11 +341,22 @@ public class SubsystemPlayers : Subsystem, IUpdateable
             }
         }
 
-        //同步Project情况下不保存_offlinePlayerEntities数据
-        if (Project is { SendToClientMode: true })
+        // Offline players are server persistence state and are not part of client project snapshots.
+        if (Project.SendToClientMode)
         {
             return;
         }
+
+        var offlinePlayers = new ValuesDictionary();
+        foreach (var item in _offlinePlayers)
+        {
+            var record = new ValuesDictionary();
+            record.SetValue("Data", item.Value.PlayerData);
+            record.SetValue("Entity", item.Value.EntityData);
+            offlinePlayers.SetValue(item.Key.ToString("N"), record);
+        }
+
+        valuesDictionary.SetValue("OfflinePlayers", offlinePlayers);
     }
 
     public override void OnEntityAdded(Entity entity)
@@ -413,73 +412,46 @@ public class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         var componentPlayer = pd.ComponentPlayer;
-        if (componentPlayer == null && _offlinePlayerEntities.TryGetValue(playerGuid, out var entityDataPlayer))
-        {
-            var list = new EntityDataList
-            {
-                EntitiesData =
-                [
-                    entityDataPlayer
-                ]
-            };
-            _offlinePlayerEntities.Remove(playerGuid);
-            var entityList = GameManager.Project?.InitializeAndLoadEntities(list) ?? [];
-            GameManager.Project?.AttachEntities(entityList, true);
-            var entity = entityList.Count != 0 ? entityList[0] : null;
-            componentPlayer = entity?.FindComponent<ComponentPlayer>();
-        }
-
         if (componentPlayer != null)
         {
-            Project.RemoveEntity(componentPlayer.Entity, true);
             if (showMsg && CommonLib.WorkType == WorkType.Server)
             {
-                _subsystemGameWidgets.AddMessage(pd.Name + " 退出游戏");
+                _subsystemGameWidgets.Messages.Publish(
+                    GameMessage.System(
+                        pd.Name + " 退出游戏",
+                        presentation:
+                        GameMessagePresentation.Default | GameMessagePresentation.Toast));
             }
 
             if (CommonLib.WorkType == WorkType.Server)
             {
                 var list = Project.SaveEntities([componentPlayer.Entity]);
-                var dict = new ValuesDictionary();
-                var vDict = new ValuesDictionary();
-                var pDict = new ValuesDictionary();
-                list.EntitiesData[0].Save(vDict);
-                pd.Save(pDict);
-                var entityFileDir = Storage.CombinePaths(_subsystemGameInfo.DirectoryName, "PlayerEntities/");
-                if (!Storage.DirectoryExists(entityFileDir))
+                if (list.EntitiesData.Count != 1)
                 {
-                    Storage.CreateDirectory(entityFileDir);
+                    throw new InvalidOperationException(
+                        $"Expected one serialized entity for player {playerGuid}, got {list.EntitiesData.Count}.");
                 }
 
-                dict.SetValue("Entity", vDict);
-                dict.SetValue("Data", pDict);
-                using var stream = Storage.OpenFile(Storage.CombinePaths(entityFileDir, $"{pd.PlayerGUID}.json"),
-                    OpenFileMode.Create);
-                var streamWriter = new StreamWriter(stream);
-                streamWriter.Write(dict.ToJsonText());
-                streamWriter.Flush();
-                streamWriter.Dispose();
+                var playerValues = new ValuesDictionary();
+                var entityValues = new ValuesDictionary();
+                pd.Save(playerValues);
+                list.EntitiesData[0].Save(entityValues);
+                _offlinePlayers[playerGuid] = new OfflinePlayerData(playerValues, entityValues);
             }
+
+            Project.RemoveEntity(componentPlayer.Entity, true);
         }
 
+        SetPlayerListEntry(new PlayerListEntry(
+            pd.PlayerGUID,
+            pd.Name,
+            false));
         _subsystemTerrain.TerrainUpdater.RemoveUpdateLocation(pd.PlayerIndex);
         RemovePlayerData(pd);
     }
 
-    private bool CheckPlayerDataExists(Guid playerGuid, out string entityFilePath)
-    {
-        var entityFileDir = Storage.CombinePaths(_subsystemGameInfo.DirectoryName, "PlayerEntities/");
-        entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.json");
-        if (!Storage.FileExists(entityFilePath))
-        {
-            entityFilePath = Storage.CombinePaths(entityFileDir, $"{playerGuid}.dat");
-        }
-
-        return Storage.FileExists(entityFilePath);
-    }
-
     /// <summary>
-    /// 读取离线数据到实例，此步骤会将PlayerData添加到在线列表中，但状态是等待玩家实体
+    /// 将离线玩家数据恢复为活动玩家实体。
     /// </summary>
     /// <param name="playerGuid">客户端GUID</param>
     /// <param name="playerData">对应的玩家数据</param>
@@ -487,118 +459,197 @@ public class SubsystemPlayers : Subsystem, IUpdateable
     /// <returns></returns>
     public bool MakePlayerOnline(Guid playerGuid, out PlayerData? playerData, out Entity? entity)
     {
-        if (CheckPlayerDataExists(playerGuid, out var entityFilePath) && CommonLib.WorkType == WorkType.Server)
+        if (CommonLib.WorkType != WorkType.Server)
         {
-            var existing = _playersData.Find(p => p.PlayerGUID == playerGuid);
-            var dict = new ValuesDictionary();
-            using (var s = Storage.OpenFile(entityFilePath, OpenFileMode.Read))
+            playerData = null;
+            entity = null;
+            return false;
+        }
+
+        var existing = _playersData.Find(p => p.PlayerGUID == playerGuid);
+        if (existing?.ComponentPlayer?.Entity is { IsAddedToProject: true } existingEntity)
+        {
+            existing.WaitEntityAdded();
+            NormalizePlayerGroup(existing);
+            playerData = existing;
+            entity = existingEntity;
+            return true;
+        }
+
+        if (!_offlinePlayers.TryGetValue(playerGuid, out var offlinePlayer))
+        {
+            playerData = null;
+            entity = null;
+            return false;
+        }
+
+        if (existing != null)
+        {
+            throw new InvalidOperationException(
+                $"Player {playerGuid} has active data but no active entity.");
+        }
+
+        PlayerData? restoredPlayerData = null;
+        List<Entity> entityList = [];
+        var playerDataAdded = false;
+        try
+        {
+            restoredPlayerData = new PlayerData(Project);
+            restoredPlayerData.Load(offlinePlayer.PlayerData);
+            if (restoredPlayerData.PlayerGUID != playerGuid)
             {
-                if (entityFilePath.EndsWith(".json"))
-                {
-                    var reader = new StreamReader(s);
-                    var jsonText = reader.ReadToEnd();
-                    reader.Dispose();
-                    dict.ApplyOverridesUseJson(jsonText, out var data);
-                }
-                else if (entityFilePath.EndsWith(".dat"))
-                {
-                    var d = new byte[s.Length];
-                    s.ReadExactly(d, 0, d.Length);
-                    dict.ApplyOverridesUseMessagePack(d);
-                    Storage.DeleteFile(entityFilePath);
-                }
+                throw new InvalidOperationException(
+                    $"Offline player record key {playerGuid} does not match data guid " +
+                    $"{restoredPlayerData.PlayerGUID}.");
             }
 
-            if (existing != null)
-            {
-                playerData = existing;
-            }
-            else
-            {
-                playerData = new PlayerData(Project);
-                playerData.Load(dict.GetValue<ValuesDictionary>("Data"));
-                AddPlayerData(playerData);
-            }
+            AddPlayerData(restoredPlayerData);
+            playerDataAdded = true;
+            restoredPlayerData.WaitEntityAdded();
+            NormalizePlayerGroup(restoredPlayerData);
 
-            playerData.WaitEntityAdded();
-            //如果队伍不存在了自动退出组队
-            if (!ServerGroups.ContainsKey(playerData.GroupKey))
-            {
-                playerData.GroupKey = string.Empty;
-            }
-
-            var entityData = new EntityData(Project.GameDatabase, dict.GetValue<ValuesDictionary>("Entity"));
             var list = new EntityDataList
             {
                 EntitiesData =
                 [
-                    entityData
+                    new EntityData(Project.GameDatabase, offlinePlayer.EntityData)
                 ]
             };
-            var entityList = GameManager.Project?.InitializeAndLoadEntities(list) ?? [];
-            GameManager.Project?.AttachEntities(entityList, true);
-            if (entityList.Count > 0)
+            entityList = Project.InitializeEntities(list);
+            Project.LoadEntityData(list, entityList);
+            if (entityList.Count != 1)
             {
-                entity = entityList[0];
-                var componentPlayer = entity.FindComponent<ComponentPlayer>();
-                if (componentPlayer != null && componentPlayer.PlayerData.PlayerGUID != playerGuid)
-                {
-                    throw new Exception("缓存PlayerData与实际PlayerData不对应?");
-                }
-            }
-            else
-            {
-                entity = null;
+                throw new InvalidOperationException(
+                    $"Expected one restored entity for player {playerGuid}, got {entityList.Count}.");
             }
 
+            entity = entityList[0];
+            var componentPlayer = entity.FindComponent<ComponentPlayer>();
+            if (componentPlayer == null || componentPlayer.PlayerData.PlayerGUID != playerGuid)
+            {
+                throw new InvalidOperationException(
+                    $"Restored entity does not belong to player {playerGuid}.");
+            }
+
+            Project.AttachEntities(entityList, true);
+            _offlinePlayers.Remove(playerGuid);
+            playerData = restoredPlayerData;
             return true;
         }
+        catch
+        {
+            foreach (var initializedEntity in entityList)
+            {
+                if (initializedEntity.IsAddedToProject)
+                {
+                    Project.RemoveEntity(initializedEntity, true);
+                }
+                else
+                {
+                    initializedEntity.Dispose();
+                }
+            }
 
-        playerData = null;
-        entity = null;
-        return false;
+            if (playerDataAdded && restoredPlayerData != null &&
+                _playersData.Contains(restoredPlayerData))
+            {
+                RemovePlayerData(restoredPlayerData);
+            }
+
+            throw;
+        }
     }
 
-    public void AddNoMsgList(PlayerData playerData)
+    private void NormalizePlayerGroup(PlayerData playerData)
     {
-        var guid = playerData.PlayerGUID.ToString();
-        if (NoMsgPlayerGuidList.Contains(guid))
+        // 如果队伍不存在了自动退出组队
+        if (!ServerGroups.ContainsKey(playerData.GroupKey))
         {
-            return;
+            playerData.GroupKey = string.Empty;
         }
-
-        NoMsgPlayerGuidList.Add(guid);
-        DialogsManager.Alert($"已成功将{playerData.Name}禁言");
-        CommonLib.Net.QueuePackage(
-            new MessagePackage(
-                string.Empty,
-                "你已被管理员禁言",
-                0,
-                [playerData.ClientId]
-            )
-        );
-        CommonLib.Net.QueuePackage(new PlayerDataPackage(playerData.PlayerGUID, true));
     }
 
-    public void RemoveNoMsgList(PlayerData playerData)
+    public void ApplyOnlinePlayerStates(IEnumerable<OnlinePlayerState> states)
     {
-        var guid = playerData.PlayerGUID.ToString();
-        if (!NoMsgPlayerGuidList.Contains(guid))
+        _onlinePlayerStates.Clear();
+        foreach (var state in states)
         {
-            return;
+            _onlinePlayerStates[state.PlayerGuid] = state;
+        }
+    }
+
+    public void ApplyPlayerList(IEnumerable<PlayerListEntry> players)
+    {
+        _playerList.Clear();
+        foreach (var player in players)
+        {
+            _playerList[player.PlayerGuid] = player;
+            var activePlayer = _playersData.Find(data => data.PlayerGUID == player.PlayerGuid);
+            if (activePlayer is null)
+            {
+                continue;
+            }
+
+            activePlayer.Name = player.Name;
         }
 
-        NoMsgPlayerGuidList.Remove(guid);
-        DialogsManager.Alert($"已成功将{playerData.Name}解除禁言");
-        CommonLib.Net.QueuePackage(
-            new MessagePackage(
-                string.Empty,
-                "你已被管理员解除禁言",
-                0,
-                [playerData.ClientId]
-            )
-        );
-        CommonLib.Net.QueuePackage(new PlayerDataPackage(playerData.PlayerGUID, false));
+        foreach (var playerGuid in _onlinePlayerStates.Keys
+                     .Where(playerGuid =>
+                         !_playerList.TryGetValue(playerGuid, out var player) ||
+                         !player.IsOnline)
+                     .ToList())
+        {
+            _onlinePlayerStates.Remove(playerGuid);
+        }
+
+        PlayerListChanged?.Invoke();
+    }
+
+    public void RefreshPlayerList()
+    {
+        var entries = new Dictionary<Guid, PlayerListEntry>();
+        foreach (var offlinePlayer in _offlinePlayers)
+        {
+            entries[offlinePlayer.Key] = new PlayerListEntry(
+                offlinePlayer.Key,
+                offlinePlayer.Value.PlayerData.GetValue("Name", "Player"),
+                false);
+        }
+
+        foreach (var playerData in _playersData)
+        {
+            entries[playerData.PlayerGUID] = new PlayerListEntry(
+                playerData.PlayerGUID,
+                playerData.Name,
+                true);
+        }
+
+        _playerList.Clear();
+        foreach (var entry in entries)
+        {
+            _playerList.Add(entry.Key, entry.Value);
+        }
+
+        PlayerListChanged?.Invoke();
+    }
+
+    public string GetPlayerGroupKey(Guid playerGuid)
+    {
+        foreach (var group in ServerGroups)
+        {
+            if (group.Value.Members.Contains(playerGuid))
+            {
+                return group.Key;
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private void SetPlayerListEntry(PlayerListEntry player)
+    {
+        _playerList[player.PlayerGuid] = player;
+        PlayerListChanged?.Invoke();
     }
 
     public void AddBlackList(PlayerData playerData)

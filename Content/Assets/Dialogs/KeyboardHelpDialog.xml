@@ -28,12 +28,9 @@
                             <LabelWidget Text="[KeyboardHelpDialog:12]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:13]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:14]" HorizontalAlignment="Center"/>
+                            <LabelWidget Text="[KeyboardHelpDialog:54]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:60]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:62]" HorizontalAlignment="Center"/>
-                            <LabelWidget Text="[KeyboardHelpDialog:52]" HorizontalAlignment="Center"/>
-                            <LabelWidget Text="[KeyboardHelpDialog:54]" HorizontalAlignment="Center"/>
-                            <LabelWidget Text="[KeyboardHelpDialog:56]" HorizontalAlignment="Center"/>
-                            <LabelWidget Text="[KeyboardHelpDialog:58]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:15]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:16]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:17]" HorizontalAlignment="Center"/>
@@ -63,12 +60,9 @@
                             <LabelWidget Text="[KeyboardHelpDialog:36]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:37]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:38]" Color="160, 160, 160"/>
+                            <LabelWidget Text="[KeyboardHelpDialog:55]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:61]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:63]" Color="160, 160, 160"/>
-                            <LabelWidget Text="[KeyboardHelpDialog:53]" Color="160, 160, 160"/>
-                            <LabelWidget Text="[KeyboardHelpDialog:55]" Color="160, 160, 160"/>
-                            <LabelWidget Text="[KeyboardHelpDialog:57]" Color="160, 160, 160"/>
-                            <LabelWidget Text="[KeyboardHelpDialog:59]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:39]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:40]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:41]" Color="160, 160, 160"/>

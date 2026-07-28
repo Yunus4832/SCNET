@@ -9,11 +9,24 @@
         <MyContentFiles Include="$(MSBuildProjectDirectory)\..\Content\**\*.*"/>
     </ItemGroup>
 
+    <Target Name="GenerateContentManifest"
+            BeforeTargets="PackResource"
+            Condition="'$(UsePackResourceTarget)' == 'true'">
+        <PropertyGroup>
+            <_ContentManifest>$(IntermediateOutputPath)ContentFiles.manifest</_ContentManifest>
+        </PropertyGroup>
+        <MakeDir Directories="$(IntermediateOutputPath)"/>
+        <WriteLinesToFile File="$(_ContentManifest)"
+                          Lines="@(MyContentFiles->'%(FullPath)')"
+                          Overwrite="true"
+                          WriteOnlyWhenDifferent="true"/>
+    </Target>
+
     <!-- 增量打包资源 -->
     <Target Name="PackResource"
             BeforeTargets="BeforeBuild"
             Condition="'$(UsePackResourceTarget)' == 'true'"
-            Inputs="@(MyContentFiles)"
+            Inputs="@(MyContentFiles);$(_ContentManifest)"
             Outputs="$(MSBuildProjectDirectory)\Content.zip">
         <PropertyGroup>
             <_CurDir>$(MSBuildProjectDirectory)\</_CurDir>

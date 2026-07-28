@@ -20,24 +20,6 @@ public class CommandPackageTest
     }
 
     [Fact]
-    public void ResultRoundTrips()
-    {
-        var package = CommandPackage.CreateResult(
-            "request-2",
-            false,
-            "command.forbidden",
-            "Forbidden");
-
-        var clone = RoundTrip(package);
-
-        Assert.Equal(CommandPackage.CommandPackageMode.Result, clone.Mode);
-        Assert.Equal("request-2", clone.CorrelationId);
-        Assert.False(clone.Success);
-        Assert.Equal("command.forbidden", clone.Code);
-        Assert.Equal("Forbidden", clone.Message);
-    }
-
-    [Fact]
     public void CommandsUseReliableControlTransport()
     {
         var transport = PackageTransportPolicy.Get(CommandPackage.CreateRequest("/help"));

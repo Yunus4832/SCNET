@@ -16,8 +16,6 @@ public class PlayerDataPackage : IPackage
         AddPlayer,
         SetUpdateLocation,
         CloseTime,
-        AddNoMsg,
-        RemoveNoMsg,
         Bugle,
         Count
     }
@@ -67,12 +65,6 @@ public class PlayerDataPackage : IPackage
         PlayerGuid = playerData.PlayerGUID;
         PlayerClass = playerData.PlayerClass;
         playerData.Save(Vd);
-    }
-
-    public PlayerDataPackage(Guid guid, bool add)
-    {
-        Type = add ? DataType.AddNoMsg : DataType.RemoveNoMsg;
-        PlayerGuid = guid;
     }
 
     public PlayerDataPackage(int time, string msg)
@@ -128,10 +120,6 @@ public class PlayerDataPackage : IPackage
             case DataType.Count:
                 writer.Write(PlayerCount);
                 break;
-            case DataType.AddNoMsg:
-            case DataType.RemoveNoMsg:
-                writer.Write(PlayerGuid);
-                break;
         }
     }
 
@@ -172,10 +160,6 @@ public class PlayerDataPackage : IPackage
                 break;
             case DataType.Count:
                 PlayerCount = reader.ReadInt32();
-                break;
-            case DataType.AddNoMsg:
-            case DataType.RemoveNoMsg:
-                PlayerGuid = reader.ReadGuid();
                 break;
         }
     }

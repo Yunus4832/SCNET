@@ -152,6 +152,13 @@ public class Settings
 
     public bool DisplayFpsRibbon { get; set; }
 
+    public bool ShowPlayerInformationOverlay { get; set; } = true;
+
+    public PlayerListFilter PlayerInformationFilter { get; set; } =
+        PlayerListFilter.All;
+
+    public bool ShowMessageHistoryOverlay { get; set; } = true;
+
     public int NewYearCelebrationLastYear { get; set; } = 2015;
 
     public ScreenLayout ScreenLayout1 { get; set; } = ScreenLayout.Single;
@@ -211,4 +218,10 @@ public class Settings
     public string DefaultModRepositoryUrl { get; set; } = string.Empty;
 
     public int RejectedUpdateCount { get; set; } = 0;
+}
+
+public enum PlayerListFilter
+{
+    All,
+    SameTeam
 }

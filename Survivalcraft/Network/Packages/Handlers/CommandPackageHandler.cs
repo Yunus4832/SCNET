@@ -1,4 +1,7 @@
+using EntitySystem.Core;
+
 using Game.Commands;
+using Game.Messaging;
 
 namespace Game.Network.Packages.Handlers;
 
@@ -12,14 +15,14 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
     public override void Handle(CommandPackage package, NetNode? netNode, bool isServer)
     {
-        if (netNode is null || GameManager.Project is null)
+        if (netNode is null || GameManager.Project is not { } project)
         {
             return;
         }
 
         if (isServer)
         {
-            HandleServer(package, netNode);
+            HandleServer(package, project);
             return;
         }
 
@@ -31,23 +34,14 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             if (CommonLib.MainPlayer?.PlayerData.PlayerGUID == package.PlayerGuid)
             {
                 GameManager.Project.FindSubsystem<SubsystemGameWidgets>(true)!
-                    .AddNetMessage("<c=green>[指令]</c>你的指令权限已更新。", external: false);
+                    .Messages.DisplayLocal(GameMessage.Command("你的指令权限已更新。", success: true));
             }
 
             return;
         }
-
-        if (package.Mode is not CommandPackage.CommandPackageMode.Result)
-        {
-            return;
-        }
-
-        var prefix = package.Success ? "<c=green>[指令]</c>" : "<c=red>[指令]</c>";
-        GameManager.Project.FindSubsystem<SubsystemGameWidgets>(true)!
-            .AddNetMessage(prefix + package.Message, external: false);
     }
 
-    private void HandleServer(CommandPackage package, NetNode netNode)
+    private void HandleServer(CommandPackage package, Project project)
     {
         if (package.Mode is not CommandPackage.CommandPackageMode.Request ||
             package.From is null)
@@ -94,12 +88,6 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             }
         }
 
-        var response = CommandPackage.CreateResult(
-            package.CorrelationId,
-            result.Success,
-            result.Code,
-            result.Message);
-        response.To = package.From;
-        netNode.QueuePackage(response);
+        CommandResultPublisher.Publish(project, result, package.From.ID);
     }
 }

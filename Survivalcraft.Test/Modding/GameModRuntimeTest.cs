@@ -2,6 +2,7 @@ using Game.Blocks;
 using Game;
 using Game.Modding;
 using Game.Modding.Blocks;
+using Game.Widgets;
 
 using System.Xml.Linq;
 using System.IO.Compression;
@@ -90,6 +91,26 @@ public class GameModRuntimeTest
 
         Assert.True(ContentManager.ContainsKey("BlocksData.txt"));
         Assert.True(ContentManager.ContainsKey("Fonts/Pericles.lst"));
+        var playerPanelTemplate = ContentManager.Get<XElement>("Widgets/PlayerPanelWidget");
+        var messagePanelTemplate = ContentManager.Get<XElement>("Widgets/MessagePanelWidget");
+        Assert.Equal("PlayerPanelWidget", playerPanelTemplate.Name.LocalName);
+        Assert.Equal("MessagePanelWidget", messagePanelTemplate.Name.LocalName);
+
+        var tabsTemplate = playerPanelTemplate.Elements()
+            .Single(element => element.Attribute("Name")?.Value == "Tabs");
+        new StackPanelWidget().LoadProperties(null, tabsTemplate);
+
+        foreach (var hostTemplate in playerPanelTemplate.Elements()
+                     .Where(element =>
+                         element.Name.LocalName == nameof(CanvasWidget) &&
+                         element.Attribute("Name") is not null))
+        {
+            new CanvasWidget().LoadProperties(null, hostTemplate);
+        }
+
+        var transcriptHostTemplate = messagePanelTemplate.Elements()
+            .Single(element => element.Attribute("Name")?.Value == "TranscriptHost");
+        new CanvasWidget().LoadProperties(null, transcriptHostTemplate);
         Assert.Contains("zh-CN", runtime.Content.LanguageTypes);
         Assert.False(string.IsNullOrWhiteSpace(LanguageManager.Ok));
     }

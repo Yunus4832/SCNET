@@ -46,25 +46,7 @@ public struct PlayerInput
 
     public bool GamepadHelp;
 
-    /// <summary>
-    /// 创建队伍
-    /// </summary>
-    public bool CreateTeam;
-
-    /// <summary>
-    /// 加入队伍
-    /// </summary>
-    public bool JoinTeam;
-
-    /// <summary>
-    /// 离开队伍
-    /// </summary>
-    public bool LeaveTeam;
-
-    /// <summary>
-    /// 切换玩家展示类型
-    /// </summary>
-    public bool TogglePlayerShowType;
+    public bool TogglePlayerPanel;
 
     public Ray3? Dig;
 

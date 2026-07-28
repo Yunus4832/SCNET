@@ -9,6 +9,16 @@ namespace Survivalcraft.Test.Commands;
 public class CommandDispatcherTest
 {
     [Fact]
+    public void PublicResultTargetsAllPlayersWithoutBecomingSensitive()
+    {
+        var result = CommandResult.PublicOk("changed", "world.changed");
+
+        Assert.True(result.Success);
+        Assert.False(result.Sensitive);
+        Assert.Equal(CommandResultAudience.AllPlayers, result.Audience);
+    }
+
+    [Fact]
     public void ExecutesMatchingRouteAndParsesTypedArguments()
     {
         var registry = new CommandRegistry();
@@ -347,7 +357,7 @@ public class CommandDispatcherTest
 
         Assert.Equal(
             ["claim"],
-            registry.Suggest("/auth ", player, CommandSource.Player)
+            registry.Suggest("/auth ", player)
                 .Select(item => item.Value));
         Assert.Equal(
             ["code", "regenerate", "status"],

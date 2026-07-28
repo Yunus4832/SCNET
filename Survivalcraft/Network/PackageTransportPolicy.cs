@@ -28,6 +28,7 @@ public static class PackageTransportPolicy
             ComponentPlayerPackage { Type: ComponentPlayerPackage.PlayerAction.BodyUpdate } => Snapshot,
             SubsystemBodyPackage { PackageEventType: SubsystemBodyPackage.EventType.BodyUpdate } => Snapshot,
             PickablePackage { Type: PickablePackage.PickType.Update } => Snapshot,
+            OnlinePlayerStatePackage => Snapshot,
             ComponentBehaviorPackage { PackageEventType: ComponentBehaviorPackage.EventType.CreatureSound } => Effect,
             ComponentHealthPackage { Type: ComponentHealthPackage.EventType.HitResult } => Effect,
             ExplosionsPackage { Type: ExplosionsPackage.EventType.Sound } => Effect,

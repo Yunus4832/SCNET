@@ -12,9 +12,6 @@
 
                 <CanvasWidget Size="0, Infinity" IsHitTestVisible="false"/>
 
-                <CanvasWidget Name="ModalPanelContainer" HorizontalAlignment="Center" VerticalAlignment="Center"
-                              IsHitTestVisible="false"/>
-
                 <CanvasWidget Size="0, Infinity" IsHitTestVisible="false"/>
 
                 <CanvasWidget Size="Infinity, -1" IsHitTestVisible="false">
@@ -54,9 +51,12 @@
 
             </StackPanelWidget>
 
+            <CanvasWidget Name="ModalPanelContainer" HorizontalAlignment="Center" VerticalAlignment="Near"
+                          Margin="0, 8" IsHitTestVisible="false"/>
+
             <StackPanelWidget Direction="Vertical" VerticalAlignment="Far" HorizontalAlignment="Center"
                               IsHitTestVisible="false">
-                <MessageWidget Name="Message" HorizontalAlignment="Center" Margin="140, 6" IsHitTestVisible="false"/>
+                <ToastWidget Name="Toast" HorizontalAlignment="Center" Margin="16, 6" IsHitTestVisible="false"/>
                 <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 2">
                     <ValueBarWidget Name="HealthBar" LayoutDirection="Horizontal" Margin="8, 0"
                                     VerticalAlignment="Center" BarsCount="10" Spacing="-1" BarBlending="false"

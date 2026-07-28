@@ -462,7 +462,7 @@ public class NetNode
             catch (Exception e)
             {
                 SendWriterFromPackage(new ConnectionRejectPackage($"错误的连接请求数据包:{e.Message}"), request, true);
-                Log.Information("ConnectionRequestEvent Error:" + e.StackTrace);
+                Log.Error($"ConnectionRequestEvent Error: {e}");
             }
         }
     }
