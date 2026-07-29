@@ -5,25 +5,17 @@ namespace Game.Network.Packages;
 
 public class SubsystemWeatherPackage : IPackage
 {
-    public float FogProgress;
-
-    public int FogType = 0;
-
     public double FogEndTime;
 
     public float FogRampTime;
 
     public double FogStartTime;
 
-    public float Intensity;
-
     public float LightningIntensity;
 
     public double PrecipitationEndTime;
 
     public double PrecipitationStartTime;
-
-    public int WeatherType;
 
     public byte ID => (byte)PackageType.SubsystemWeather;
 
@@ -39,36 +31,18 @@ public class SubsystemWeatherPackage : IPackage
     {
     }
 
-    public SubsystemWeatherPackage(int weatherType)
+    public static SubsystemWeatherPackage CreateSnapshot(SubsystemWeather weather)
     {
-        WeatherType = weatherType;
-    }
-
-    public SubsystemWeatherPackage(float intensity)
-    {
-        Intensity = intensity;
-    }
-
-    public SubsystemWeatherPackage(double start, double end, float light)
-    {
-        PrecipitationEndTime = end;
-        PrecipitationStartTime = start;
-        LightningIntensity = light;
-    }
-
-    public SubsystemWeatherPackage(double fogStart, float ramp, double fogEnd, float progress)
-    {
-        FogStartTime = fogStart;
-        FogRampTime = ramp;
-        FogEndTime = fogEnd;
-        FogProgress = progress;
-    }
-
-    public SubsystemWeatherPackage(double fogStart, float ramp, double fogEnd)
-    {
-        FogStartTime = fogStart;
-        FogRampTime = ramp;
-        FogEndTime = fogEnd;
+        ArgumentNullException.ThrowIfNull(weather);
+        return new SubsystemWeatherPackage
+        {
+            PrecipitationStartTime = weather.PrecipitationStartTime,
+            PrecipitationEndTime = weather.PrecipitationEndTime,
+            LightningIntensity = weather.LightningIntensity,
+            FogStartTime = weather.FogStartTime,
+            FogRampTime = weather.FogRampTime,
+            FogEndTime = weather.FogEndTime
+        };
     }
 
     public void WriteData(PackageStreamWriter writer)
@@ -76,7 +50,6 @@ public class SubsystemWeatherPackage : IPackage
         writer.Write(PrecipitationStartTime);
         writer.Write(PrecipitationEndTime);
         writer.Write(LightningIntensity);
-        writer.Write(WeatherType);
         writer.Write(FogStartTime);
         writer.Write(FogRampTime);
         writer.Write(FogEndTime);
@@ -87,8 +60,6 @@ public class SubsystemWeatherPackage : IPackage
         PrecipitationStartTime = reader.ReadDouble();
         PrecipitationEndTime = reader.ReadDouble();
         LightningIntensity = reader.ReadSingle();
-        WeatherType = reader.ReadInt32();
-
         FogStartTime = reader.ReadDouble();
         FogRampTime = reader.ReadSingle();
         FogEndTime = reader.ReadDouble();

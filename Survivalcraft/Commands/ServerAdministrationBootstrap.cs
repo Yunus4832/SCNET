@@ -6,7 +6,6 @@ using EntitySystem.Core;
 
 using Game.Network;
 using Game.Network.Enums;
-using Game.Subsystems;
 
 namespace Game.Commands;
 
@@ -73,16 +72,18 @@ public static class ServerAdministrationBootstrap
         ArgumentNullException.ThrowIfNull(player);
         if (CommonLib.WorkType is not WorkType.Server)
         {
-            return BootstrapClaimResult.Fail(
+            return BootstrapClaimResult.LocalizedFail(
                 "auth.server_only",
+                "AuthServerOnly_Message",
                 "服务器认领只能在服务器上完成。");
         }
 
         if (!ReferenceEquals(player.Project, project) ||
             player.Client is not { State: not ClientState.NotConnected })
         {
-            return BootstrapClaimResult.Fail(
+            return BootstrapClaimResult.LocalizedFail(
                 "auth.player_offline",
+                "AuthPlayerBindingInvalid_Message",
                 "认领必须绑定到当前服务器中的在线玩家。");
         }
 
@@ -91,15 +92,19 @@ public static class ServerAdministrationBootstrap
         {
             if (EnsureClaimedState(project, state))
             {
-                return BootstrapClaimResult.Fail(
+                return BootstrapClaimResult.LocalizedFail(
                     "auth.already_claimed",
+                    "AuthClaimed_Message",
                     "服务器管理员已经完成首次认领。");
             }
 
             state.ClaimCode ??= GenerateClaimCode();
             if (!CodesEqual(state.ClaimCode, claimCode))
             {
-                return BootstrapClaimResult.Fail("auth.invalid_code", "服务器认领码不正确。");
+                return BootstrapClaimResult.LocalizedFail(
+                    "auth.invalid_code",
+                    "AuthInvalidCode_Message",
+                    "服务器认领码不正确。");
             }
 
             player.CommandPermissions.Grant(
@@ -108,8 +113,10 @@ public static class ServerAdministrationBootstrap
             project.FindSubsystem<SubsystemGameInfo>(true)!
                 .ServerAdministrationClaimed = true;
             state.ClaimCode = null;
-            return BootstrapClaimResult.Ok(
-                $"玩家 {player.Name} 已成为首位权限管理员，可管理和再授权标准指令权限。");
+            return BootstrapClaimResult.LocalizedOk(
+                "AuthClaimSuccess_Message",
+                "玩家 {0} 已成为首位权限管理员，可管理和再授权标准指令权限。",
+                player.Name);
         }
     }
 
@@ -182,15 +189,43 @@ public static class ServerAdministrationBootstrap
     }
 }
 
-public sealed record BootstrapClaimResult(bool Success, string Code, string Message)
+public sealed record BootstrapClaimResult(
+    bool Success,
+    string Code,
+    string Message,
+    string MessageKey = "",
+    IReadOnlyList<string>? MessageArguments = null)
 {
-    public static BootstrapClaimResult Ok(string message)
+    public static BootstrapClaimResult LocalizedOk(
+        string messageKey,
+        string fallback,
+        params string[] arguments)
     {
-        return new BootstrapClaimResult(true, "auth.claimed", message);
+        return new BootstrapClaimResult(
+            true,
+            "auth.claimed",
+            string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                fallback,
+                arguments.Cast<object>().ToArray()),
+            messageKey,
+            arguments);
     }
 
-    public static BootstrapClaimResult Fail(string code, string message)
+    public static BootstrapClaimResult LocalizedFail(
+        string code,
+        string messageKey,
+        string fallback,
+        params string[] arguments)
     {
-        return new BootstrapClaimResult(false, code, message);
+        return new BootstrapClaimResult(
+            false,
+            code,
+            string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                fallback,
+                arguments.Cast<object>().ToArray()),
+            messageKey,
+            arguments);
     }
 }

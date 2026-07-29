@@ -22,21 +22,7 @@ public sealed class BuiltInContentMod : IMod
 
     public void Configure(IModContext context)
     {
-        context.Commands.Register(
-            new ResourceId(context.Manifest.ModId, "help"),
-            BuiltInCommands.CreateHelp());
-        context.Commands.Register(
-            new ResourceId(context.Manifest.ModId, "time"),
-            BuiltInCommands.CreateTime());
-        context.Commands.Register(
-            new ResourceId(context.Manifest.ModId, "stop"),
-            BuiltInCommands.CreateStop());
-        context.Commands.Register(
-            new ResourceId(context.Manifest.ModId, "permission"),
-            BuiltInCommands.CreatePermission());
-        context.Commands.Register(
-            new ResourceId(context.Manifest.ModId, "auth"),
-            BuiltInCommands.CreateAuth());
+        BuiltInCommands.Register(context.Commands, context.Manifest.ModId);
 
         foreach (var asset in BuiltInContentAssets.Load())
         {

@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Commands;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -793,95 +794,34 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
             (_lightningButtonWidget.IsClicked || playerInput.Lighting))
         {
-            var matrix = Matrix.CreateFromQuaternion(ComponentPlayer.ComponentCreatureModel.EyeRotation);
-            if (CommonLib.WorkType != WorkType.Client)
-            {
-                Project.FindSubsystem<SubsystemWeather>(true)!
-                    .ManualLightingStrike(ComponentPlayer.ComponentCreatureModel.EyePosition, matrix.Forward);
-                _subsystemWeather.ManualLightingStrike(ComponentPlayer.ComponentCreatureModel.EyePosition,
-                    matrix.Forward);
-            }
-            else
-            {
-                CommonLib.Net.QueuePackage(new SubsystemSkyPackage(ComponentPlayer.ComponentCreatureModel.EyePosition,
-                    matrix.Forward));
-            }
+            CommandGateway.Submit(
+                ComponentPlayer.PlayerData,
+                new TriggerPlayerLightningCommand());
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
             (_precipitationButtonWidget.IsClicked || playerInput.Precipitation))
         {
-            if (_subsystemWeather.IsPrecipitationStarted)
-            {
-                _subsystemWeather.ManualPrecipitationEnd();
-                DisplaySmallMessage(LanguageManager.Get(TypeName, 20), Color.White, false, false);
-                CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(1));
-            }
-            else
-            {
-                _subsystemWeather.ManualPrecipitationStart();
-                DisplaySmallMessage(LanguageManager.Get(TypeName, 21), Color.White, false, false);
-                CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(2));
-            }
+            CommandGateway.Submit(
+                ComponentPlayer.PlayerData,
+                new SetPrecipitationCommand(
+                    !_subsystemWeather.IsPrecipitationStarted));
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
             (_fogButtonWidget.IsClicked || playerInput.Fog))
         {
-            if (_subsystemWeather.IsFogStarted)
-            {
-                _subsystemWeather.ManualFogEnd();
-                DisplaySmallMessage(LanguageManager.Get(TypeName, 22), Color.White, false, false);
-                CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(3));
-            }
-            else
-            {
-                _subsystemWeather.ManualFogStart();
-                DisplaySmallMessage(LanguageManager.Get(TypeName, 23), Color.White, false, false);
-                CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(4));
-            }
+            CommandGateway.Submit(
+                ComponentPlayer.PlayerData,
+                new SetFogCommand(!_subsystemWeather.IsFogStarted));
         }
 
         if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
             (_timeOfDayButtonWidget.IsClicked || playerInput.TimeOfDay))
         {
-            var num2 = IntervalUtils.Interval(_subsystemTimeOfDay.TimeOfDay, _subsystemTimeOfDay.MidDawn);
-            var num3 = IntervalUtils.Interval(_subsystemTimeOfDay.TimeOfDay, _subsystemTimeOfDay.Midday);
-            var num4 = IntervalUtils.Interval(_subsystemTimeOfDay.TimeOfDay, _subsystemTimeOfDay.MidDusk);
-            var num5 = IntervalUtils.Interval(_subsystemTimeOfDay.TimeOfDay, _subsystemTimeOfDay.Midnight);
-            var num6 = MathUtils.Min(num2, num3, num4, num5);
-            byte? type = null;
-            if (num2.CloseTo(num6))
-            {
-                _subsystemTimeOfDay.TimeOfDayOffset += num2;
-                DisplaySmallMessage(LanguageManager.Get(TypeName, 15), Color.White, false, false);
-                type = 0;
-            }
-            else if (num3.CloseTo(num6))
-            {
-                _subsystemTimeOfDay.TimeOfDayOffset += num3;
-                DisplaySmallMessage(LanguageManager.Get(TypeName, 16), Color.White, false, false);
-                type = 1;
-            }
-            else if (num4.CloseTo(num6))
-            {
-                _subsystemTimeOfDay.TimeOfDayOffset += num4;
-                DisplaySmallMessage(LanguageManager.Get(TypeName, 17), Color.White, false, false);
-                type = 2;
-            }
-            else if (num5.CloseTo(num6))
-            {
-                _subsystemTimeOfDay.TimeOfDayOffset += num5;
-                DisplaySmallMessage(LanguageManager.Get(TypeName, 18), Color.White, false, false);
-                type = 3;
-            }
-
-            if (type.HasValue)
-            {
-                CommonLib.Net.QueuePackage(new SubsystemTimePackage(
-                    _subsystemTimeOfDay.SubsystemGameInfo.TotalElapsedGameTime,
-                    _subsystemTimeOfDay.TimeOfDayOffset));
-            }
+            CommandGateway.Submit(
+                ComponentPlayer.PlayerData,
+                new AdvanceWorldTimeCommand());
         }
 
         if (ModalPanelWidget != null)

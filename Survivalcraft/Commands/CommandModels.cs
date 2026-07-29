@@ -1,15 +1,16 @@
 using EntitySystem.Core;
 
-using Game.Network;
-using Game.Network.Enums;
+using Game.Localization;
 
 namespace Game.Commands;
 
 public enum CommandSource
 {
+    Local,
     Player,
     ServerConsole,
     Mod,
+    HttpApi,
     DebugApi
 }
 
@@ -18,7 +19,8 @@ public enum CommandArgumentKind
     String,
     Integer,
     Number,
-    Boolean
+    Boolean,
+    Guid
 }
 
 public enum CommandExecutionEnvironment
@@ -31,8 +33,10 @@ public enum CommandExecutionEnvironment
 public enum CommandSourcePolicy
 {
     Any,
+    LocalOnly,
     PlayerOnly,
-    ServerConsoleOnly
+    ServerConsoleOnly,
+    HttpApiOnly
 }
 
 public enum CommandGrantPolicy
@@ -109,6 +113,12 @@ public sealed class CommandPrincipal
 
     public static CommandPrincipal ServerConsole { get; } =
         new("Server", permissions: ["*"], delegablePermissions: ["*"]);
+
+    public static CommandPrincipal Local { get; } =
+        new("Local");
+
+    public static CommandPrincipal LocalHost { get; } =
+        new("LocalHost", permissions: ["server.run_mode.set"]);
 }
 
 public sealed class CommandContext(
@@ -136,7 +146,11 @@ public sealed record CommandResult(
     string Code,
     string Message,
     bool Sensitive = false,
-    CommandResultAudience Audience = CommandResultAudience.Requester)
+    CommandResultAudience Audience = CommandResultAudience.Requester,
+    CommandResultState State = CommandResultState.Completed,
+    CommandResultPresentation Presentation = CommandResultPresentation.Default,
+    string MessageKey = "",
+    IReadOnlyList<string>? MessageArguments = null)
 {
     public static CommandResult Ok(string message, string code = "command.ok") => new(true, code, message);
 
@@ -146,13 +160,104 @@ public sealed record CommandResult(
     public static CommandResult SensitiveOk(string message, string code = "command.ok") =>
         new(true, code, message, true);
 
+    public static CommandResult Pending(string message, string code = "command.pending") =>
+        new(true, code, message, State: CommandResultState.Pending);
+
+    public static CommandResult SilentOk(string code = "command.ok") =>
+        new(true, code, string.Empty, Presentation: CommandResultPresentation.Silent);
+
     public static CommandResult Fail(string code, string message) => new(false, code, message);
+
+    public static CommandResult LocalizedOk(
+        string code,
+        string messageKey,
+        string fallback,
+        params string[] arguments) =>
+        new(
+            true,
+            code,
+            FormatFallback(fallback, arguments),
+            MessageKey: messageKey,
+            MessageArguments: arguments);
+
+    public static CommandResult LocalizedPublicOk(
+        string code,
+        string messageKey,
+        string fallback,
+        params string[] arguments) =>
+        new(
+            true,
+            code,
+            FormatFallback(fallback, arguments),
+            Audience: CommandResultAudience.AllPlayers,
+            MessageKey: messageKey,
+            MessageArguments: arguments);
+
+    public static CommandResult LocalizedSensitiveOk(
+        string code,
+        string messageKey,
+        string fallback,
+        params string[] arguments) =>
+        new(
+            true,
+            code,
+            FormatFallback(fallback, arguments),
+            Sensitive: true,
+            MessageKey: messageKey,
+            MessageArguments: arguments);
+
+    public static CommandResult LocalizedPending(
+        string code,
+        string messageKey,
+        string fallback,
+        params string[] arguments) =>
+        new(
+            true,
+            code,
+            FormatFallback(fallback, arguments),
+            State: CommandResultState.Pending,
+            MessageKey: messageKey,
+            MessageArguments: arguments);
+
+    public static CommandResult LocalizedFail(
+        string code,
+        string messageKey,
+        string fallback,
+        params string[] arguments) =>
+        new(
+            false,
+            code,
+            FormatFallback(fallback, arguments),
+            MessageKey: messageKey,
+            MessageArguments: arguments);
+
+    private static string FormatFallback(string fallback, string[] arguments)
+    {
+        return arguments.Length == 0
+            ? fallback
+            : string.Format(
+                System.Globalization.CultureInfo.InvariantCulture,
+                fallback,
+                arguments);
+    }
+}
+
+public enum CommandResultState
+{
+    Completed,
+    Pending
 }
 
 public enum CommandResultAudience
 {
     Requester,
     AllPlayers
+}
+
+public enum CommandResultPresentation
+{
+    Default,
+    Silent
 }
 
 public sealed class CommandArguments
@@ -220,94 +325,82 @@ public sealed record CommandArgument(
     }
 }
 
-public sealed record CommandArgumentSuggestion(string Value, string Description = "");
+public sealed record CommandArgumentSuggestion(
+    string Value,
+    LocalizedText? Description = null);
 
 public sealed class CommandSuggestionContext(
     CommandRegistry registry,
     CommandPrincipal principal,
+    CommandSource source,
     IReadOnlyList<string> completedTokens)
 {
     public CommandRegistry Registry { get; } = registry;
 
     public CommandPrincipal Principal { get; } = principal;
 
+    public CommandSource Source { get; } = source;
+
     public IReadOnlyList<string> CompletedTokens { get; } = completedTokens;
 
     public Project? Project => Principal.Player?.Project ?? GameManager.Project;
 }
 
+/// <summary>
+/// Describes one textual route and converts parsed arguments into a typed command.
+/// </summary>
 public sealed class CommandRoute(
     IEnumerable<CommandSegment> segments,
-    Func<CommandContext, CommandArguments, CommandResult> execute,
-    string description = "",
-    string requiredPermission = "",
-    CommandSourcePolicy sourcePolicy = CommandSourcePolicy.Any,
-    CommandGrantPolicy? grantPolicy = null
+    Type commandType,
+    Func<CommandArguments, IGameCommand> createCommand,
+    LocalizedText? description = null
 )
 {
     public IReadOnlyList<CommandSegment> Segments { get; } =
         segments?.ToArray() ?? throw new ArgumentNullException(nameof(segments));
 
-    public string Description { get; } = description;
+    public LocalizedText Description { get; } =
+        description ?? LocalizedText.Empty;
 
-    public string RequiredPermission { get; } = requiredPermission;
+    public Type CommandType { get; } =
+        commandType ?? throw new ArgumentNullException(nameof(commandType));
 
-    public CommandSourcePolicy SourcePolicy { get; } = sourcePolicy;
+    public Func<CommandArguments, IGameCommand> CreateCommand { get; } =
+        createCommand ?? throw new ArgumentNullException(nameof(createCommand));
 
-    public CommandGrantPolicy GrantPolicy { get; } =
-        grantPolicy ?? GetDefaultGrantPolicy(requiredPermission);
-
-    public Func<CommandContext, CommandArguments, CommandResult> Execute { get; } =
-        execute ?? throw new ArgumentNullException(nameof(execute));
-
-    public bool IsSourceAllowed(CommandSource source)
-    {
-        return SourcePolicy switch
-        {
-            CommandSourcePolicy.Any => true,
-            CommandSourcePolicy.PlayerOnly => source is CommandSource.Player,
-            CommandSourcePolicy.ServerConsoleOnly => source is CommandSource.ServerConsole,
-            _ => false
-        };
-    }
-
-    private static CommandGrantPolicy GetDefaultGrantPolicy(string permission)
-    {
-        return permission.StartsWith("server.", StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(permission, "server.*", StringComparison.OrdinalIgnoreCase)
-            ? CommandGrantPolicy.Protected
-            : CommandGrantPolicy.Standard;
-    }
 }
 
-public sealed class GameCommand
+/// <summary>
+/// Declares textual names and routes for the text frontend. This is a binding,
+/// not an executable command definition.
+/// </summary>
+public sealed class TextCommand : ICommandAdapterBinding
 {
     public string Name { get; }
 
-    public string Description { get; }
+    public LocalizedText Description { get; }
 
     public IReadOnlyList<string> Aliases { get; }
 
     public IReadOnlyList<CommandRoute> Routes { get; }
 
-    /// <summary>
-    /// Used to filter discovery UI. Command handlers must still validate their runtime requirements.
-    /// </summary>
-    public CommandExecutionEnvironment ExecutionEnvironment { get; }
+    public IReadOnlySet<CommandSource> Sources { get; }
 
-    public GameCommand(
+    public TextCommand(
         string name,
-        string description,
+        LocalizedText description,
         IEnumerable<CommandRoute> routes,
         IEnumerable<string>? aliases = null,
-        CommandExecutionEnvironment executionEnvironment = CommandExecutionEnvironment.Any)
+        IEnumerable<CommandSource>? sources = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         Name = ValidateName(name, nameof(name));
-        Description = description;
+        Description = description ?? throw new ArgumentNullException(nameof(description));
         Routes = routes?.ToArray() ?? throw new ArgumentNullException(nameof(routes));
         Aliases = aliases?.Select(alias => ValidateName(alias, nameof(aliases))).ToArray() ?? [];
-        ExecutionEnvironment = executionEnvironment;
+        Sources = new HashSet<CommandSource>(
+            sources ?? Enum.GetValues<CommandSource>()
+                .Where(source => source is not CommandSource.Local));
         if (Routes.Count == 0)
         {
             throw new ArgumentException("A command must define at least one route.", nameof(routes));
@@ -337,19 +430,16 @@ public sealed class GameCommand
                 }
             }
         }
+
+        if (Sources.Count == 0)
+        {
+            throw new ArgumentException(
+                "A text command adapter must support at least one command source.",
+                nameof(sources));
+        }
     }
 
-    public bool IsAvailable(RunModeType runMode, WorkType workType)
-    {
-        return ExecutionEnvironment switch
-        {
-            CommandExecutionEnvironment.Any => true,
-            CommandExecutionEnvironment.Server => workType is WorkType.Server,
-            CommandExecutionEnvironment.HeadlessServer =>
-                workType is WorkType.Server && runMode is RunModeType.HeadlessServer,
-            _ => false
-        };
-    }
+    public bool SupportsSource(CommandSource source) => Sources.Contains(source);
 
     private static string ValidateName(string value, string parameterName)
     {
@@ -367,4 +457,4 @@ public sealed class GameCommand
 
 public sealed record CommandSuggestion(string Value, string Description, bool IsArgument);
 
-public sealed record RegisteredCommand(ResourceId Id, GameCommand Command);
+public sealed record RegisteredTextCommand(ResourceId Id, TextCommand Command);

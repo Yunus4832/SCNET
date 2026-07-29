@@ -10,18 +10,11 @@ public sealed class SubsystemTimePackageHandler : PackageHandlerBase<SubsystemTi
         }
 
         var project = GameManager.Project;
-        var info = project.FindSubsystem<SubsystemGameInfo>(true)!;
-        if (info.WorldSettings.GameMode == GameMode.Creative || !isServer)
+        if (!isServer)
         {
+            var info = project.FindSubsystem<SubsystemGameInfo>(true)!;
             info.TotalElapsedGameTime = package.Time;
             info.TimeOfDay.TimeOfDayOffset = package.TimeOfDayOffset;
-        }
-        else
-        {
-            if (package.From != null)
-            {
-                Log.Information($"{package.From.PlayerData.Name} 打算在非创造模式下修改时间");
-            }
         }
     }
 }

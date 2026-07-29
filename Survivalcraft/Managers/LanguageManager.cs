@@ -49,7 +49,11 @@ public static class LanguageManager
 
     public static readonly List<string> LanguageTypes = [];
 
-    private static readonly Dictionary<string, string> LanguageDisplayNames = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Dictionary<string, string> _languageDisplayNames = new(StringComparer.OrdinalIgnoreCase);
+
+    private static string _currentLanguage = "zh-CN";
+
+    public static string CurrentLanguage => Volatile.Read(ref _currentLanguage);
 
     public static void Initialize(string languageType)
     {
@@ -59,7 +63,7 @@ public static class LanguageManager
 
     public static void ClearLanguageDisplayNames()
     {
-        LanguageDisplayNames.Clear();
+        _languageDisplayNames.Clear();
     }
 
     public static void RegisterLanguageDisplayName(string languageType, string? displayName)
@@ -69,14 +73,14 @@ public static class LanguageManager
             return;
         }
 
-        LanguageDisplayNames[languageType.Trim()] = string.IsNullOrWhiteSpace(displayName)
+        _languageDisplayNames[languageType.Trim()] = string.IsNullOrWhiteSpace(displayName)
             ? languageType.Trim()
             : displayName.Trim();
     }
 
     public static string GetLanguageDisplayName(string languageType)
     {
-        return LanguageDisplayNames.TryGetValue(languageType, out var displayName)
+        return _languageDisplayNames.TryGetValue(languageType, out var displayName)
             ? displayName
             : languageType;
     }
@@ -125,6 +129,11 @@ public static class LanguageManager
         Exists = Get("Usual", "exist");
         Success = Get("Usual", "success");
         Delete = Get("Usual", "delete");
+    }
+
+    internal static void CompleteInitialization(string languageType)
+    {
+        Volatile.Write(ref _currentLanguage, languageType);
     }
 
     private static void MergeJsonObject(JsonObject? oldObject, JsonObject? newObject)
@@ -198,7 +207,7 @@ public static class LanguageManager
     // 获取当前语言的标识符
     public static string LName()
     {
-        return AppConfigStore.Values["Language"];
+        return CurrentLanguage;
     }
 
     public static string Get(string className, int key)

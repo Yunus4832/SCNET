@@ -88,6 +88,7 @@ public sealed class ContentCatalog
         }
 
         LanguageManager.RefreshCommonWords();
+        LanguageManager.CompleteInitialization(resolvedLanguage);
     }
 
     private static string? ReadLanguageDisplayName(Stream stream)

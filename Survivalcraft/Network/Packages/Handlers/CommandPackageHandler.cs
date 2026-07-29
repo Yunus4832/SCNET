@@ -2,6 +2,7 @@ using EntitySystem.Core;
 
 using Game.Commands;
 using Game.Messaging;
+using Game.Modding;
 
 namespace Game.Network.Packages.Handlers;
 
@@ -26,6 +27,14 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             return;
         }
 
+        if (package.Mode is CommandPackage.CommandPackageMode.Result &&
+            package.Result is { } result)
+        {
+            DialogsManager.HideLoadingDialogs();
+            CommandResultPublisher.DisplayLocal(project, result);
+            return;
+        }
+
         if (package.Mode is CommandPackage.CommandPackageMode.PermissionSnapshot)
         {
             var players = GameManager.Project.FindSubsystem<SubsystemPlayers>(true)!;
@@ -34,7 +43,11 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             if (CommonLib.MainPlayer?.PlayerData.PlayerGUID == package.PlayerGuid)
             {
                 GameManager.Project.FindSubsystem<SubsystemGameWidgets>(true)!
-                    .Messages.DisplayLocal(GameMessage.Command("你的指令权限已更新。", success: true));
+                    .Messages.DisplayLocal(GameMessage.Command(
+                        CommandText.Get(
+                            "PermissionUpdated_Message",
+                            "你的指令权限已更新。"),
+                        success: true));
             }
 
             return;
@@ -43,7 +56,9 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
     private void HandleServer(CommandPackage package, Project project)
     {
-        if (package.Mode is not CommandPackage.CommandPackageMode.Request ||
+        if (package.Mode is not (
+                CommandPackage.CommandPackageMode.Request or
+                CommandPackage.CommandPackageMode.TypedRequest) ||
             package.From is null)
         {
             return;
@@ -66,14 +81,25 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
         if (_lastCommandTimestamp.TryGetValue(package.From.GUID, out var last) &&
             now - last < _minimumCommandInterval)
         {
-            result = CommandResult.Fail("command.rate_limited", "指令发送过于频繁。");
+            result = CommandResult.LocalizedFail(
+                "command.rate_limited",
+                "CommandRateLimited_Message",
+                "指令发送过于频繁。");
         }
         else
         {
             _lastCommandTimestamp[package.From.GUID] = now;
-            if (package.Input.Length > _maximumCommandLength)
+            if (package.Mode is CommandPackage.CommandPackageMode.Request &&
+                package.Input.Length > _maximumCommandLength)
             {
-                result = CommandResult.Fail("command.too_long", "指令长度超过限制。");
+                result = CommandResult.LocalizedFail(
+                    "command.too_long",
+                    "CommandTooLong_Message",
+                    "指令长度超过限制。");
+            }
+            else if (package.Mode is CommandPackage.CommandPackageMode.TypedRequest)
+            {
+                result = ExecuteTyped(package, package.From.PlayerData);
             }
             else
             {
@@ -88,6 +114,37 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             }
         }
 
-        CommandResultPublisher.Publish(project, result, package.From.ID);
+        CommandResultPublisher.PublishRemote(
+            project,
+            result,
+            package.From,
+            package.CorrelationId);
+    }
+
+    private static CommandResult ExecuteTyped(
+        CommandPackage package,
+        PlayerData player)
+    {
+        if (CurrentModRuntime.Value is not { } runtime)
+        {
+            return CommandResult.LocalizedFail(
+                "command.unavailable",
+                "CommandUnavailable_Message",
+                "命令系统尚未就绪。");
+        }
+
+        if (!runtime.Commands.TryDecode(
+                package.CommandId,
+                package.Payload,
+                out var command,
+                out var error))
+        {
+            return CommandResult.Fail("command.invalid_payload", error);
+        }
+
+        return CommandExecutor.ExecutePlayer(
+            command!,
+            player,
+            package.CorrelationId);
     }
 }

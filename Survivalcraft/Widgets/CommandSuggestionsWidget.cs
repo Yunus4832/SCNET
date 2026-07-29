@@ -34,22 +34,42 @@ public sealed class CommandSuggestionsWidget : CanvasWidget
             Direction = LayoutDirection.Horizontal,
             HorizontalAlignment = WidgetAlignment.Near,
             VerticalAlignment = WidgetAlignment.Center,
-            Margin = new Vector2(8, 0)
+            Margin = new Vector2(8, 0),
+            ClampToBounds = true
         };
         var parts = CreateTextParts(suggestion);
         for (var index = 0; index < parts.Count; index++)
         {
             var part = parts[index];
-            panel.Children.Add(new LabelWidget
-            {
-                Text = part.Text,
-                Color = part.Color,
-                VerticalAlignment = WidgetAlignment.Center,
-                Margin = index == 0 ? Vector2.Zero : new Vector2(12, 0)
-            });
+            var label = index == 0
+                ? new SuggestionValueLabel()
+                : new LabelWidget
+                {
+                    Size = new Vector2(float.PositiveInfinity, -1f),
+                    FontScale = 0.82f
+                };
+            label.Text = part.Text;
+            label.Color = part.Color;
+            label.VerticalAlignment = WidgetAlignment.Center;
+            label.Margin = index == 0
+                ? Vector2.Zero
+                : new Vector2(12, 0);
+            label.Ellipsis = true;
+            label.MaxLines = 1;
+            label.ClampToBounds = true;
+            panel.Children.Add(label);
         }
 
         return panel;
+    }
+
+    private sealed class SuggestionValueLabel : LabelWidget
+    {
+        protected override void MeasureOverride(Vector2 parentAvailableSize)
+        {
+            parentAvailableSize.X *= 0.45f;
+            base.MeasureOverride(parentAvailableSize);
+        }
     }
 
     internal static IReadOnlyList<CommandSuggestionTextPart> CreateTextParts(
@@ -62,13 +82,18 @@ public sealed class CommandSuggestionsWidget : CanvasWidget
         };
         if (!string.IsNullOrWhiteSpace(suggestion.Description))
         {
-            parts.Add(new CommandSuggestionTextPart(suggestion.Description, Color.Gray));
+            parts.Add(new CommandSuggestionTextPart(
+                suggestion.Description,
+                MultiplayerUiStyle.SecondaryTextColor));
         }
 
         return parts;
     }
 
-    public void Refresh(string input, CommandRegistry registry, CommandPrincipal principal)
+    public void Refresh(
+        string input,
+        TextCommandAdapter adapter,
+        CommandPrincipal principal)
     {
         if (!input.StartsWith('/'))
         {
@@ -76,7 +101,7 @@ public sealed class CommandSuggestionsWidget : CanvasWidget
             return;
         }
 
-        SetSuggestions(registry.Suggest(input, principal));
+        SetSuggestions(adapter.Suggest(input, principal));
     }
 
     public void SetSuggestions(IEnumerable<CommandSuggestion> suggestions)

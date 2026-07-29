@@ -17,7 +17,7 @@ public class CommandSuggestionsWidgetTest
         Assert.Equal("time", parts[0].Text);
         Assert.Equal(Color.White, parts[0].Color);
         Assert.Equal("查询或设置世界时间", parts[1].Text);
-        Assert.Equal(Color.Gray, parts[1].Color);
+        Assert.Equal(MultiplayerUiStyle.SecondaryTextColor, parts[1].Color);
         Assert.DoesNotContain(parts, part => part.Text.Contains("<c=", StringComparison.Ordinal));
     }
 

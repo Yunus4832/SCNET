@@ -8,17 +8,81 @@ using Game.Network.Serialization;
 
 namespace Game;
 
+public sealed record HeadlessCommandSuggestions(
+    IReadOnlyList<CommandSuggestion> Items,
+    bool CanExecute);
+
 public static class HeadlessEntry
 {
+    private sealed record ConsoleCommandRequest(
+        string Input,
+        bool WriteResultToLog,
+        TaskCompletionSource<CommandResult>? Completion);
+
+    private sealed record ConsoleSuggestionRequest(
+        string Input,
+        TaskCompletionSource<HeadlessCommandSuggestions> Completion);
+
     private static GameModRuntime? _modRuntime;
 
     private static volatile bool _running = true;
 
-    private static readonly ConcurrentQueue<string> _consoleCommands = new();
+    private static volatile bool _commandConsoleReady;
+
+    private static readonly ConcurrentQueue<ConsoleCommandRequest> _consoleCommands = new();
+
+    private static readonly ConcurrentQueue<ConsoleSuggestionRequest> _consoleSuggestions = new();
+
+    public static bool IsCommandConsoleReady => _commandConsoleReady;
 
     public static void RequestStop()
     {
         _running = false;
+    }
+
+    /// <summary>
+    /// Enqueues a trusted host-console command for execution on the Headless
+    /// server thread. The command uses the ServerConsole principal.
+    /// </summary>
+    public static Task<CommandResult> SubmitConsoleCommandAsync(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return Task.FromResult(CommandResult.LocalizedFail(
+                "command.empty",
+                "CommandEmpty_Message",
+                "请输入指令。"));
+        }
+
+        if (!_commandConsoleReady)
+        {
+            return Task.FromResult(CreateCommandConsoleUnavailableResult());
+        }
+
+        var completion = new TaskCompletionSource<CommandResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        _consoleCommands.Enqueue(new ConsoleCommandRequest(
+            input.Trim(),
+            WriteResultToLog: false,
+            completion));
+        return completion.Task;
+    }
+
+    /// <summary>
+    /// Enqueues a trusted host-console completion request for evaluation on
+    /// the Headless server thread.
+    /// </summary>
+    public static Task<HeadlessCommandSuggestions> SubmitConsoleSuggestionsAsync(string input)
+    {
+        if (!_commandConsoleReady)
+        {
+            return Task.FromResult(EmptyConsoleSuggestions());
+        }
+
+        var completion = new TaskCompletionSource<HeadlessCommandSuggestions>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        _consoleSuggestions.Enqueue(new ConsoleSuggestionRequest(input ?? string.Empty, completion));
+        return completion.Task;
     }
 
     public static int Main(RunningSetting runningSetting)
@@ -28,7 +92,8 @@ public static class HeadlessEntry
             GameExitManager.BeginSession();
             RunMode.Value = RunModeType.HeadlessServer;
             _running = true;
-            _consoleCommands.Clear();
+            SetCommandConsoleReady(false);
+            FailPendingConsoleRequests();
             CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
             CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
             Dispatcher.Initialize();
@@ -64,6 +129,7 @@ public static class HeadlessEntry
                 return 3;
             }
 
+            SetCommandConsoleReady(true);
             Log.Information("Headless server started. Press Ctrl+C to stop.");
             WriteAdministrationBootstrapInstructions();
             StartConsoleReader();
@@ -77,6 +143,8 @@ public static class HeadlessEntry
         }
         finally
         {
+            SetCommandConsoleReady(false);
+            FailPendingConsoleRequests();
             try
             {
                 CommonLib.Net.StopImmediate();
@@ -111,6 +179,7 @@ public static class HeadlessEntry
                 CommonLib.Net.Update();
                 GameManager.UpdateProject();
                 ExecuteConsoleCommands();
+                ExecuteConsoleSuggestions();
                 AsyncDispatcher.Update();
                 Dispatcher.AfterFrame();
                 Time.AfterFrame();
@@ -163,7 +232,10 @@ public static class HeadlessEntry
 
                 if (!string.IsNullOrWhiteSpace(line))
                 {
-                    _consoleCommands.Enqueue(line);
+                    _consoleCommands.Enqueue(new ConsoleCommandRequest(
+                        line,
+                        WriteResultToLog: true,
+                        Completion: null));
                 }
             }
         });
@@ -171,25 +243,119 @@ public static class HeadlessEntry
 
     private static void ExecuteConsoleCommands()
     {
-        while (_consoleCommands.TryDequeue(out var input))
+        while (_consoleCommands.TryDequeue(out var request))
         {
-            var result = CommandExecutor.ExecuteServerConsole(input, GameManager.Project);
+            var result = CurrentModRuntime.Value is { } runtime &&
+                         new TextCommandAdapter(runtime.Commands).SupportsSource(
+                             request.Input,
+                             CommandSource.Local)
+                ? CommandExecutor.ExecuteLocal(request.Input, GameManager.Project)
+                : CommandExecutor.ExecuteServerConsole(request.Input, GameManager.Project);
             if (GameManager.Project is { } project)
             {
                 CommandResultPublisher.Publish(project, result, includeServer: false);
             }
 
-            var level = result.Success ? "OK" : "ERROR";
-            var output = $"COMMAND {level} [{result.Code}] {result.Message}";
-            if (result.Sensitive)
+            if (request.WriteResultToLog)
             {
-                Console.WriteLine(output);
+                WriteConsoleCommandResult(result);
             }
-            else
-            {
-                Log.Information(output);
-            }
+
+            request.Completion?.TrySetResult(result);
         }
+    }
+
+    private static void WriteConsoleCommandResult(CommandResult result)
+    {
+        var level = result.Success ? "OK" : "ERROR";
+        var output = $"COMMAND {level} [{result.Code}] {CommandText.Resolve(result)}";
+        if (result.Sensitive)
+        {
+            Console.WriteLine(output);
+        }
+        else
+        {
+            Log.Information(output);
+        }
+    }
+
+    private static void ExecuteConsoleSuggestions()
+    {
+        while (_consoleSuggestions.TryDequeue(out var request))
+        {
+            HeadlessCommandSuggestions result;
+            try
+            {
+                if (CurrentModRuntime.Value is not { } runtime)
+                {
+                    result = EmptyConsoleSuggestions();
+                }
+                else
+                {
+                    var adapter = new TextCommandAdapter(runtime.Commands);
+                    var items = adapter.Suggest(
+                            request.Input,
+                            CommandPrincipal.ServerConsole,
+                            CommandSource.ServerConsole)
+                        .Concat(adapter.Suggest(
+                            request.Input,
+                            CommandPrincipal.Local,
+                            CommandSource.Local))
+                        .GroupBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+                        .Select(group => group.First())
+                        .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+                        .ToArray();
+                    result = new HeadlessCommandSuggestions(
+                        items,
+                        adapter.CanExecute(
+                            request.Input,
+                            CommandPrincipal.ServerConsole,
+                            CommandSource.ServerConsole) ||
+                        adapter.CanExecute(
+                            request.Input,
+                            CommandPrincipal.Local,
+                            CommandSource.Local));
+                }
+            }
+            catch (Exception exception)
+            {
+                Log.Error($"Failed to generate server console suggestions: {exception}");
+                result = EmptyConsoleSuggestions();
+            }
+
+            request.Completion.TrySetResult(result);
+        }
+    }
+
+    private static void SetCommandConsoleReady(bool ready)
+    {
+        _commandConsoleReady = ready;
+    }
+
+    private static void FailPendingConsoleRequests()
+    {
+        while (_consoleCommands.TryDequeue(out var request))
+        {
+            request.Completion?.TrySetResult(CreateCommandConsoleUnavailableResult());
+        }
+
+        while (_consoleSuggestions.TryDequeue(out var request))
+        {
+            request.Completion.TrySetResult(EmptyConsoleSuggestions());
+        }
+    }
+
+    private static HeadlessCommandSuggestions EmptyConsoleSuggestions()
+    {
+        return new HeadlessCommandSuggestions([], false);
+    }
+
+    private static CommandResult CreateCommandConsoleUnavailableResult()
+    {
+        return CommandResult.LocalizedFail(
+            "command.unavailable",
+            "CommandUnavailable_Message",
+            "指令系统尚未就绪。");
     }
 
     private static void WriteAdministrationBootstrapInstructions()
@@ -201,13 +367,10 @@ public static class HeadlessEntry
         }
 
         Console.WriteLine();
-        Console.WriteLine("SERVER ADMINISTRATION IS UNCLAIMED");
-        Console.WriteLine("No player has administrative permissions.");
-        Console.WriteLine($"Claim code: {code}");
-        Console.WriteLine("To initialize administration:");
-        Console.WriteLine("1. Connect to this server as a player.");
-        Console.WriteLine($"2. Run: /auth claim {code}");
-        Console.WriteLine("Use 'auth code' or 'auth regenerate' in this console if needed.");
+        Console.WriteLine(CommandText.Get(
+            "AuthConsoleBootstrap_Message",
+            "服务器管理尚未初始化\n当前没有玩家拥有管理权限。\n认领码：{0}\n初始化管理权限：\n1. 以玩家身份连接此服务器。\n2. 执行：/auth claim {0}\n如有需要，可在此控制台执行 auth code 或 auth regenerate。",
+            code));
         Console.WriteLine();
     }
 

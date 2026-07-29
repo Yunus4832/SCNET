@@ -9,9 +9,16 @@ public sealed class SubsystemSeasonPackageHandler : PackageHandlerBase<Subsystem
             return;
         }
 
-        var project = GameManager.Project;
-        var weather = project.FindSubsystem<SubsystemSeasons>(true)!;
-        weather.Season = (Season)package.SeasonIndexNet;
-        weather.TimeOfSeason = package.TimeOfSeasonNet;
+        if (isServer ||
+            !Enum.IsDefined(typeof(Season), package.SeasonIndexNet) ||
+            !float.IsFinite(package.TimeOfSeasonNet) ||
+            package.TimeOfSeasonNet is < 0f or > 1f)
+        {
+            return;
+        }
+
+        var seasons = GameManager.Project.FindSubsystem<SubsystemSeasons>(true)!;
+        seasons.Season = (Season)package.SeasonIndexNet;
+        seasons.TimeOfSeason = package.TimeOfSeasonNet;
     }
 }

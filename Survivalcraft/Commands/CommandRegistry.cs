@@ -4,72 +4,54 @@ namespace Game.Commands;
 
 public sealed class CommandRegistry
 {
-    private readonly Dictionary<ResourceId, Entry> _entries = [];
-    private readonly Dictionary<string, Entry> _lookup = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<ResourceId, DefinitionEntry> _definitions = [];
+    private readonly Dictionary<Type, DefinitionEntry> _definitionsByType = [];
 
     public bool IsFrozen { get; private set; }
 
-    public IReadOnlyList<RegisteredCommand> Entries => _entries
-        .Select(pair => new RegisteredCommand(pair.Key, pair.Value.Command))
-        .OrderBy(entry => entry.Command.Name, StringComparer.OrdinalIgnoreCase)
+    public CommandAdapterRegistry Adapters { get; }
+
+    public IReadOnlyList<RegisteredGameCommand> Definitions => _definitions
+        .Select(pair => new RegisteredGameCommand(pair.Key, pair.Value.Definition))
+        .OrderBy(entry => entry.Id.ToString(), StringComparer.Ordinal)
         .ToArray();
 
-    internal IDisposable Register(ModId owner, ResourceId id, GameCommand command)
+    public CommandRegistry()
     {
-        ArgumentNullException.ThrowIfNull(command);
-        if (IsFrozen)
-        {
-            throw new InvalidOperationException("Command registry is frozen.");
-        }
+        Adapters = new CommandAdapterRegistry(this);
+    }
 
-        if (owner != id.Namespace)
-        {
-            throw new InvalidOperationException($"Mod {owner} cannot register command {id} in another namespace.");
-        }
-
-        if (_entries.ContainsKey(id))
+    internal IDisposable Register<TCommand>(
+        ModId owner,
+        ResourceId id,
+        CommandDefinition<TCommand> definition)
+        where TCommand : IGameCommand
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        EnsureCanRegister(owner, id);
+        if (_definitions.ContainsKey(id))
         {
             throw new InvalidOperationException($"Command resource {id} is already registered.");
         }
 
-        var names = new[] { command.Name }.Concat(command.Aliases).ToArray();
-        if (names.Any(string.IsNullOrWhiteSpace))
+        if (_definitionsByType.TryGetValue(typeof(TCommand), out var existing))
         {
-            throw new InvalidOperationException($"Command {id} contains an empty name or alias.");
+            throw new InvalidOperationException(
+                $"Command type {typeof(TCommand).Name} is already registered as {existing.Id}.");
         }
 
-        var duplicate = names
-            .GroupBy(name => name, StringComparer.OrdinalIgnoreCase)
-            .FirstOrDefault(group => group.Count() > 1);
-        if (duplicate is not null)
-        {
-            throw new InvalidOperationException($"Command {id} declares duplicate name \"{duplicate.Key}\".");
-        }
-
-        foreach (var name in names)
-        {
-            if (_lookup.TryGetValue(name, out var existing))
-            {
-                throw new InvalidOperationException(
-                    $"Command name or alias \"{name}\" conflicts with {existing.Id}.");
-            }
-        }
-
-        var entry = new Entry(owner, id, command, names);
-        _entries.Add(id, entry);
-        foreach (var name in names)
-        {
-            _lookup.Add(name, entry);
-        }
-
+        var entry = new DefinitionEntry(owner, id, definition);
+        _definitions.Add(id, entry);
+        _definitionsByType.Add(typeof(TCommand), entry);
         return new Registration(this, owner, id);
     }
 
-    public bool TryFind(string name, out RegisteredCommand? registered)
+    public bool TryGetDefinition(Type commandType, out RegisteredGameCommand? registered)
     {
-        if (_lookup.TryGetValue(name, out var entry))
+        ArgumentNullException.ThrowIfNull(commandType);
+        if (_definitionsByType.TryGetValue(commandType, out var entry))
         {
-            registered = new RegisteredCommand(entry.Id, entry.Command);
+            registered = new RegisteredGameCommand(entry.Id, entry.Definition);
             return true;
         }
 
@@ -77,87 +59,103 @@ public sealed class CommandRegistry
         return false;
     }
 
-    public IReadOnlyList<CommandSuggestion> Suggest(
-        string input,
-        CommandPrincipal principal,
-        CommandSource source = CommandSource.Player)
+    public bool TryGetDefinition(
+        ResourceId commandId,
+        out RegisteredGameCommand? registered)
     {
-        ArgumentNullException.ThrowIfNull(principal);
-        var line = input.TrimStart();
-        if (line.StartsWith('/'))
+        if (_definitions.TryGetValue(commandId, out var entry))
         {
-            line = line[1..];
+            registered = new RegisteredGameCommand(entry.Id, entry.Definition);
+            return true;
         }
 
-        var tokens = CommandLineTokenizer.TokenizePartial(line);
-        if (tokens.Count <= 1)
+        registered = null;
+        return false;
+    }
+
+    public bool TryGetDefinition<TCommand>(out RegisteredGameCommand? registered)
+        where TCommand : IGameCommand
+    {
+        return TryGetDefinition(typeof(TCommand), out registered);
+    }
+
+    public bool TryEncode(
+        IGameCommand command,
+        out ResourceId commandId,
+        out byte[] payload,
+        out string error)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        if (!_definitionsByType.TryGetValue(command.GetType(), out var entry))
         {
-            var prefix = tokens.Count == 0 ? string.Empty : tokens[0];
-            return Entries
-                .Where(entry => IsVisible(entry.Command, principal, source))
-                .Where(entry => entry.Command.Name.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                .Select(entry => new CommandSuggestion(entry.Command.Name, entry.Command.Description, false))
-                .ToArray();
+            commandId = default;
+            payload = [];
+            error = CommandText.Get(
+                "CommandTypeUnregistered_Message",
+                "未注册的命令类型：{0}。",
+                command.GetType().Name);
+            return false;
         }
 
-        if (!TryFind(tokens[0], out var registered) || registered is null)
+        if (!entry.Definition.SupportsRemoteInvocation)
         {
-            return [];
+            commandId = default;
+            payload = [];
+            error = CommandText.Get(
+                "CommandRemoteUnsupported_Message",
+                "命令 {0} 不支持远程调用。",
+                entry.Id.ToString());
+            return false;
         }
 
-        var completed = tokens.Skip(1).Take(tokens.Count - 2).ToArray();
-        var prefixToken = tokens[^1];
-        var suggestions = new Dictionary<string, CommandSuggestion>(StringComparer.OrdinalIgnoreCase);
-        var suggestionContext = new CommandSuggestionContext(this, principal, completed);
-        foreach (var route in registered.Command.Routes)
+        commandId = entry.Id;
+        payload = entry.Definition.Encode(command);
+        error = string.Empty;
+        return true;
+    }
+
+    public bool TryDecode(
+        ResourceId commandId,
+        byte[] payload,
+        out IGameCommand? command,
+        out string error)
+    {
+        if (!_definitions.TryGetValue(commandId, out var entry))
         {
-            if (!IsAvailable(registered.Command) ||
-                !route.IsSourceAllowed(source) ||
-                !principal.HasPermission(route.RequiredPermission) ||
-                completed.Length >= route.Segments.Count ||
-                !MatchesCompleted(route, completed))
-            {
-                continue;
-            }
-
-            var segment = route.Segments[completed.Length];
-            switch (segment)
-            {
-                case CommandLiteral literal when
-                    literal.Value.StartsWith(prefixToken, StringComparison.OrdinalIgnoreCase):
-                    suggestions.TryAdd(
-                        literal.Value,
-                        new CommandSuggestion(literal.Value, route.Description, false));
-                    break;
-                case CommandArgument argument:
-                    var argumentSuggestions = GetArgumentSuggestions(argument, suggestionContext, route.Description);
-                    foreach (var suggestion in argumentSuggestions.Where(item =>
-                                 item.Value.StartsWith(prefixToken, StringComparison.OrdinalIgnoreCase)))
-                    {
-                        suggestions.TryAdd(
-                            suggestion.Value,
-                            new CommandSuggestion(
-                                suggestion.Value,
-                                string.IsNullOrWhiteSpace(suggestion.Description)
-                                    ? route.Description
-                                    : suggestion.Description,
-                                true));
-                    }
-
-                    if (argumentSuggestions.Count > 0)
-                    {
-                        break;
-                    }
-
-                    var placeholder = $"<{argument.Name}>";
-                    suggestions.TryAdd(
-                        placeholder,
-                        new CommandSuggestion(placeholder, route.Description, true));
-                    break;
-            }
+            command = null;
+            error = CommandText.Get(
+                "CommandIdentityUnknown_Message",
+                "未知命令：{0}。",
+                commandId.ToString());
+            return false;
         }
 
-        return suggestions.Values.OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase).ToArray();
+        if (!entry.Definition.SupportsRemoteInvocation)
+        {
+            command = null;
+            error = CommandText.Get(
+                "CommandRemoteUnsupported_Message",
+                "命令 {0} 不支持远程调用。",
+                commandId.ToString());
+            return false;
+        }
+
+        try
+        {
+            command = entry.Definition.Decode(payload);
+            error = string.Empty;
+            return true;
+        }
+        catch (Exception exception)
+        {
+            Log.Error($"Failed to decode command {commandId}: {exception}");
+            command = null;
+            error = CommandText.Get(
+                "CommandDataInvalid_Message",
+                "命令 {0} 的数据无效。",
+                commandId.ToString());
+            return false;
+        }
     }
 
     public IReadOnlyList<string> GetPermissionNodes()
@@ -206,17 +204,17 @@ public sealed class CommandRegistry
 
     private IReadOnlyList<GrantablePermissionNode> GetGrantablePermissionNodes()
     {
-        var routes = Entries
-            .SelectMany(entry => entry.Command.Routes)
-            .Where(route =>
-                !string.IsNullOrWhiteSpace(route.RequiredPermission) &&
+        var routes = Definitions
+            .Select(entry => entry.Definition)
+            .Where(definition =>
+                !string.IsNullOrWhiteSpace(definition.RequiredPermission) &&
                 !string.Equals(
-                    route.RequiredPermission,
+                    definition.RequiredPermission,
                     CommandPermissionSet.GrantPermission,
                     StringComparison.OrdinalIgnoreCase))
-            .Select(route => new GrantablePermissionNode(
-                CommandPermissionSet.Normalize(route.RequiredPermission),
-                route.GrantPolicy))
+            .Select(definition => new GrantablePermissionNode(
+                CommandPermissionSet.Normalize(definition.RequiredPermission),
+                definition.GrantPolicy))
             .ToArray();
         var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -269,136 +267,90 @@ public sealed class CommandRegistry
     }
 
     public bool CanExecute(
-        string input,
+        Type commandType,
         CommandPrincipal principal,
         CommandSource source = CommandSource.Player)
     {
+        ArgumentNullException.ThrowIfNull(commandType);
         ArgumentNullException.ThrowIfNull(principal);
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            return false;
-        }
+        return _definitionsByType.TryGetValue(commandType, out var entry) &&
+               entry.Definition.IsAvailable(RunMode.Value, CommonLib.WorkType) &&
+               entry.Definition.IsPotentiallyAuthorized(
+                   principal,
+                   source,
+                   principal.Player?.Project ?? GameManager.Project);
+    }
 
-        var line = input.Trim();
-        if (line.StartsWith('/'))
-        {
-            line = line[1..];
-        }
-
-        if (!CommandLineTokenizer.TryTokenize(line, out var tokens, out _) ||
-            tokens.Count == 0 ||
-            !TryFind(tokens[0], out var registered) ||
-            registered is null)
-        {
-            return false;
-        }
-
-        var arguments = tokens.Skip(1).ToArray();
-        return IsAvailable(registered.Command) &&
-               registered.Command.Routes.Any(route =>
-                   route.IsSourceAllowed(source) &&
-                   principal.HasPermission(route.RequiredPermission) &&
-                   route.Segments.Count == arguments.Length &&
-                   MatchesCompleted(route, arguments));
+    public bool CanExecute(
+        IGameCommand command,
+        CommandPrincipal principal,
+        CommandSource source = CommandSource.Player)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        return CanExecute(command.GetType(), principal, source);
     }
 
     internal void Freeze()
     {
+        Adapters.Freeze();
         IsFrozen = true;
     }
 
     internal void RemoveOwner(ModId owner)
     {
-        foreach (var id in _entries
+        Adapters.RemoveOwner(owner);
+
+        foreach (var id in _definitions
                      .Where(pair => pair.Value.Owner == owner)
                      .Select(pair => pair.Key)
                      .ToArray())
         {
-            Remove(owner, id);
+            RemoveDefinition(owner, id);
         }
     }
 
-    internal static bool IsAvailable(GameCommand command)
+    private void EnsureCanRegister(ModId owner, ResourceId id)
     {
-        return command.IsAvailable(RunMode.Value, CommonLib.WorkType);
-    }
-
-    private static bool IsVisible(
-        GameCommand command,
-        CommandPrincipal principal,
-        CommandSource source)
-    {
-        return IsAvailable(command) &&
-               command.Routes.Any(route =>
-                   route.IsSourceAllowed(source) &&
-                   principal.HasPermission(route.RequiredPermission));
-    }
-
-    private static bool MatchesCompleted(CommandRoute route, IReadOnlyList<string> tokens)
-    {
-        return !tokens.Where((t, index) => !CommandDispatcher.TryMatchSegment(route.Segments[index], t, out _)).Any();
-    }
-
-    private static IReadOnlyList<CommandArgumentSuggestion> GetArgumentSuggestions(
-        CommandArgument argument,
-        CommandSuggestionContext context,
-        string description)
-    {
-        var suggestions = new Dictionary<string, CommandArgumentSuggestion>(StringComparer.OrdinalIgnoreCase);
-        if (argument.Choices is { Count: > 0 })
+        if (IsFrozen)
         {
-            foreach (var choice in argument.Choices)
-            {
-                suggestions.TryAdd(choice, new CommandArgumentSuggestion(choice, description));
-            }
+            throw new InvalidOperationException("Command registry is frozen.");
         }
 
-        if (argument.SuggestionProvider is not null)
+        if (owner != id.Namespace)
         {
-            try
-            {
-                foreach (var suggestion in argument.SuggestionProvider(context))
-                {
-                    if (!string.IsNullOrWhiteSpace(suggestion.Value))
-                    {
-                        suggestions.TryAdd(suggestion.Value, suggestion);
-                    }
-                }
-            }
-            catch (Exception exception)
-            {
-                Log.Error($"Command suggestion provider failed: {exception}");
-            }
+            throw new InvalidOperationException($"Mod {owner} cannot register command {id} in another namespace.");
         }
-
-        return suggestions.Values.ToArray();
     }
 
-    private void Remove(ModId owner, ResourceId id)
+    private void RemoveDefinition(ModId owner, ResourceId id)
     {
-        if (!_entries.TryGetValue(id, out var entry) || entry.Owner != owner)
+        if (!_definitions.TryGetValue(id, out var entry) || entry.Owner != owner)
         {
             return;
         }
 
-        _entries.Remove(id);
-        foreach (var name in entry.Names)
-        {
-            _lookup.Remove(name);
-        }
+        _definitions.Remove(id);
+        _definitionsByType.Remove(entry.Definition.CommandType);
     }
 
-    private sealed record Entry(ModId Owner, ResourceId Id, GameCommand Command, IReadOnlyList<string> Names);
+    private sealed record DefinitionEntry(
+        ModId Owner,
+        ResourceId Id,
+        ICommandDefinition Definition);
 
     private sealed record GrantablePermissionNode(string Permission, CommandGrantPolicy Policy);
 
-    private sealed class Registration(CommandRegistry registry, ModId owner, ResourceId id) : IDisposable
+    private sealed class Registration(
+        CommandRegistry registry,
+        ModId owner,
+        ResourceId id) : IDisposable
     {
         private CommandRegistry? _registry = registry;
 
         public void Dispose()
         {
-            Interlocked.Exchange(ref _registry, null)?.Remove(owner, id);
+            var registry = Interlocked.Exchange(ref _registry, null);
+            registry?.RemoveDefinition(owner, id);
         }
     }
 }

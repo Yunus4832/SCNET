@@ -9,24 +9,11 @@ public sealed class SubsystemSkyPackageHandler : PackageHandlerBase<SubsystemSky
             return;
         }
 
-        var project = GameManager.Project;
-        if (project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.GameMode == GameMode.Creative || !isServer)
+        if (!isServer)
         {
+            var project = GameManager.Project;
             var subsystemSky = project.FindSubsystem<SubsystemSky>(true)!;
-            if (package.IsRequest)
-            {
-                project.FindSubsystem<SubsystemWeather>(true)!.ManualLightingStrike(package.LightningStrikePosition,
-                    package.Direction);
-                subsystemSky.MakeLightningStrike(package.LightningStrikePosition);
-            }
-            else
-            {
-                subsystemSky.NetMakeLightingStrike(package.LightningStrikePosition);
-            }
-        }
-        else
-        {
-            Log.Information($"{package.From?.PlayerData.Name} 打算在非创造模式下使用闪电");
+            subsystemSky.NetMakeLightingStrike(package.LightningStrikePosition);
         }
     }
 }

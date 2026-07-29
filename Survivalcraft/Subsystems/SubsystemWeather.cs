@@ -205,8 +205,8 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                 }
 
                 PrecipitationEndTime = PrecipitationStartTime + 60f * _random.Float(3f, 6f);
-                CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(PrecipitationStartTime, PrecipitationEndTime,
-                    LightningIntensity));
+                CommonLib.Net.QueuePackage(
+                    SubsystemWeatherPackage.CreateSnapshot(this));
             }
         }
 
@@ -437,7 +437,8 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                 Log.Information(
                     $"雾气信息: 开始时间={FogStartTime}, 结束={FogEndTime},当前时间={_subsystemGameInfo.TotalElapsedGameTime}");
 
-                CommonLib.Net.QueuePackage(new SubsystemWeatherPackage(FogStartTime, FogRampTime, FogEndTime));
+                CommonLib.Net.QueuePackage(
+                    SubsystemWeatherPackage.CreateSnapshot(this));
             }
         }
 

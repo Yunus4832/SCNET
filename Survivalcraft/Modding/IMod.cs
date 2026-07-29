@@ -37,5 +37,24 @@ public interface IModExtensions
 
 public interface IModCommands
 {
-    IDisposable Register(ResourceId id, GameCommand command);
+    IModCommandAdapters Adapters { get; }
+
+    IDisposable Register<TCommand>(
+        ResourceId id,
+        CommandDefinition<TCommand> definition)
+        where TCommand : IGameCommand;
+}
+
+public interface IModCommandAdapters
+{
+    IDisposable Register<TBinding>(
+        ResourceId id,
+        TBinding binding)
+        where TBinding : class, ICommandAdapterBinding;
+
+    IReadOnlyList<RegisteredCommandAdapter<TBinding>> Get<TBinding>()
+        where TBinding : class, ICommandAdapterBinding;
+
+    bool TryGet<TBinding>(ResourceId id, out TBinding? binding)
+        where TBinding : class, ICommandAdapterBinding;
 }

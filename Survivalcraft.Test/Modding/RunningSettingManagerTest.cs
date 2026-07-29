@@ -4,7 +4,10 @@ using Engine.Core;
 using Engine.FileStorage;
 
 using Game;
+using Game.Commands;
 using Game.Managers;
+using Game.Modding;
+using Game.Network.Enums;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -206,6 +209,49 @@ public sealed class RunningSettingManagerTest : IDisposable
 
         Assert.Equal(pendingSessionId, setting.PendingSessionId);
         Assert.Equal(pendingSessionId, setting.ActiveSessionId);
+    }
+
+    [Fact]
+    public void RunModeCommandPersistsModeAndRestartsToMainMenu()
+    {
+        var previousRunMode = RunMode.Value;
+        try
+        {
+            RunningSettingManager.Save(new RunningSetting
+            {
+                RunMode = RunModeType.HeadlessServer
+            });
+            RunMode.Value = RunModeType.HeadlessServer;
+            GameExitManager.BeginSession();
+
+            var registry = new CommandRegistry();
+            var owner = new ModId("game");
+            BuiltInCommands.Register(registry, owner);
+            registry.Freeze();
+            var result = new CommandDispatcher(registry).Execute(
+                new SetRunModeCommand(RunModeType.Gui),
+                new CommandContext(
+                    CommandSource.Local,
+                    CommandPrincipal.LocalHost,
+                    null,
+                    "run-mode-test"));
+
+            Assert.True(result.Success);
+            Assert.Equal("server.run_mode.restarting", result.Code);
+            Assert.Equal(GameExitAction.Restart, GameExitManager.ExitAction);
+
+            var runningSetting = RunningSettingManager.Load([]);
+            Assert.Equal(RunModeType.Gui, runningSetting.RunMode);
+            Assert.False(string.IsNullOrWhiteSpace(runningSetting.PendingSessionId));
+            Assert.Equal(
+                SessionTarget.MainMenu,
+                SessionInfoManager.Load(runningSetting.PendingSessionId).Target);
+        }
+        finally
+        {
+            RunMode.Value = previousRunMode;
+            GameExitManager.BeginSession();
+        }
     }
 
     [Fact]

@@ -1,42 +1,42 @@
 using Game.Network.Packages;
 using Game.Network.Serialization;
+using Game.Subsystems;
 
 namespace Survivalcraft.Test.Network;
 
 public class GroupManagePackageTest
 {
     [Fact]
-    public void ClientJoinRequestDoesNotCarryAnActorIdentity()
+    public void PendingOperationPromptRoundTrips()
     {
-        var groupKey = Guid.NewGuid();
-        var package = GroupManagePackage.CreateJoinRequest(groupKey);
+        var operation = new SubsystemPlayers.PendingGroupOperation(
+            Guid.NewGuid(),
+            SubsystemPlayers.PendingGroupOperationKind.JoinRequest,
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            60);
+        var package = GroupManagePackage.CreatePrompt(operation);
 
         var clone = RoundTrip(package);
 
-        Assert.Equal(GroupManagePackage.CommandType.RequestJoinGroup, clone.Command);
-        Assert.Equal(groupKey, clone.GroupKey);
-        Assert.Equal(Guid.Empty, clone.FromPlayer);
-        Assert.Equal(Guid.Empty, clone.OperationId);
+        Assert.Equal(GroupManagePackage.CommandType.PromptJoinRequest, clone.Command);
+        Assert.Equal(operation.OperationId, clone.OperationId);
+        Assert.Equal(operation.Initiator, clone.FromPlayer);
+        Assert.Equal(operation.Responder, clone.ToPlayer);
+        Assert.Equal(operation.GroupKey, clone.GroupKey);
     }
 
     [Fact]
-    public void PendingOperationResponseRoundTrips()
+    public void ProtocolContainsOnlyServerAuthoredEvents()
     {
-        var operationId = Guid.NewGuid();
-        var package = GroupManagePackage.CreateResponse(operationId, true);
-
-        var clone = RoundTrip(package);
-
-        Assert.Equal(GroupManagePackage.CommandType.RespondRequest, clone.Command);
-        Assert.Equal(operationId, clone.OperationId);
-        Assert.True(clone.Result);
-    }
-
-    [Fact]
-    public void ProtocolDoesNotExposeDirectJoinCommand()
-    {
-        Assert.DoesNotContain(
-            "JoinGroup",
+        Assert.Equal(
+            [
+                nameof(GroupManagePackage.CommandType.PromptJoinRequest),
+                nameof(GroupManagePackage.CommandType.PromptInvitation),
+                nameof(GroupManagePackage.CommandType.SyncGroups)
+            ],
             Enum.GetNames<GroupManagePackage.CommandType>());
     }
 

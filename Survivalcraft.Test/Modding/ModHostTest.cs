@@ -1,4 +1,5 @@
 using Game.Commands;
+using Game.Localization;
 using Game.Modding;
 using Game.Network.Packages;
 
@@ -61,12 +62,26 @@ public class ModHostTest
         host.LoadAndStart([descriptor]);
 
         Assert.True(host.Commands.IsFrozen);
-        Assert.True(host.Commands.TryFind("hello", out var registered));
-        Assert.Equal("example.commands:hello", registered!.Id.ToString());
+        var textAdapter = new TextCommandAdapter(host.Commands);
+        Assert.True(textAdapter.TryFind("hello", out var registered));
+        Assert.Equal("example.commands:text/hello", registered!.Id.ToString());
+        Assert.True(host.Commands.TryGetDefinition<CommandMod.HelloCommand>(out var definition));
+        Assert.Equal("example.commands:hello", definition!.Id.ToString());
+        var customAdapterId = new ResourceId(
+            new ModId("example.commands"),
+            "custom/hello");
+        Assert.True(host.Commands.Adapters.IsFrozen);
+        Assert.True(host.Commands.Adapters.TryGet<CommandMod.CustomBinding>(
+            customAdapterId,
+            out var customBinding));
+        Assert.Equal("custom", customBinding!.Value);
 
         host.StopAll();
 
-        Assert.False(host.Commands.TryFind("hello", out _));
+        Assert.False(textAdapter.TryFind("hello", out _));
+        Assert.False(host.Commands.Adapters.TryGet<CommandMod.CustomBinding>(
+            customAdapterId,
+            out _));
     }
 
     [Fact]
@@ -308,10 +323,22 @@ public class ModHostTest
         {
             context.Commands.Register(
                 new ResourceId(context.Manifest.ModId, "hello"),
-                new GameCommand(
+                new CommandDefinition<HelloCommand>(
+                    (_, _) => CommandResult.Ok("Hello")));
+            context.Commands.Adapters.Register(
+                new ResourceId(context.Manifest.ModId, "text/hello"),
+                new TextCommand(
                     "hello",
-                    "Hello",
-                    [new CommandRoute([], (_, _) => CommandResult.Ok("Hello"))]));
+                    LocalizedText.Literal("Hello"),
+                    [
+                        new CommandRoute(
+                            [],
+                            typeof(HelloCommand),
+                            _ => new HelloCommand())
+                    ]));
+            context.Commands.Adapters.Register(
+                new ResourceId(context.Manifest.ModId, "custom/hello"),
+                new CustomBinding("custom"));
         }
 
         public void Start(IModContext context)
@@ -321,6 +348,10 @@ public class ModHostTest
         public void Stop()
         {
         }
+
+        internal sealed record HelloCommand : IGameCommand;
+
+        internal sealed record CustomBinding(string Value) : ICommandAdapterBinding;
     }
 
     private sealed class HookMod(List<string> calls) : IMod

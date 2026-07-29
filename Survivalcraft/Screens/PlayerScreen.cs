@@ -4,6 +4,7 @@ using Engine.Input;
 
 using EntitySystem.Core;
 
+using Game.Commands;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -369,7 +370,26 @@ public class PlayerScreen : Screen
 
             if (_mode == Mode.Edit)
             {
-                CommonLib.Net.QueuePackage(new PlayerDataPackage(_playerData, PlayerDataPackage.DataType.Modify));
+                if (CommonLib.WorkType is WorkType.Server &&
+                    !_playerData.IsMainPlayer)
+                {
+                    CommandGateway.SubmitServer(
+                        _playerData.Project,
+                        new UpdatePlayerProfileCommand(
+                            _playerData.PlayerGUID,
+                            _playerData.Name,
+                            _playerData.CharacterSkinName,
+                            _playerData.PlayerClass));
+                }
+                else
+                {
+                    CommandGateway.Submit(
+                        _playerData,
+                        new UpdateOwnPlayerProfileCommand(
+                            _playerData.Name,
+                            _playerData.CharacterSkinName,
+                            _playerData.PlayerClass));
+                }
             }
         }
 

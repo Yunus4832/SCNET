@@ -11,24 +11,8 @@ public sealed class SubsystemWeatherPackageHandler : PackageHandlerBase<Subsyste
 
         var project = GameManager.Project;
         var weather = project.FindSubsystem<SubsystemWeather>(true)!;
-        if (package.WeatherType != 0)
+        if (isServer)
         {
-            switch (package.WeatherType)
-            {
-                case 1:
-                    weather.ManualPrecipitationEnd();
-                    break;
-                case 2:
-                    weather.ManualPrecipitationStart();
-                    break;
-                case 3:
-                    weather.ManualFogEnd();
-                    break;
-                case 4:
-                    weather.ManualFogStart();
-                    break;
-            }
-
             return;
         }
 

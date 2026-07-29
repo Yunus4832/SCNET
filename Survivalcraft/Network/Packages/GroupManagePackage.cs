@@ -7,13 +7,9 @@ public sealed class GroupManagePackage : IPackage
 {
     public enum CommandType : byte
     {
-        CreateGroup,
-        RequestJoinGroup,
-        InviteJoinGroup,
-        RespondRequest,
-        ExitGroup,
-        SyncGroups,
-        OperationResult
+        PromptJoinRequest,
+        PromptInvitation,
+        SyncGroups
     }
 
     public sealed class GroupState
@@ -31,15 +27,9 @@ public sealed class GroupManagePackage : IPackage
 
     public Guid GroupKey;
 
-    public string GroupName = string.Empty;
-
-    public string Message = string.Empty;
-
     public Guid OperationId;
 
     public readonly List<GroupState> Groups = [];
-
-    public bool Result;
 
     public Guid ToPlayer;
 
@@ -53,49 +43,18 @@ public sealed class GroupManagePackage : IPackage
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
-    public static GroupManagePackage CreateGroupRequest(string groupName) =>
+    public static GroupManagePackage CreatePrompt(
+        SubsystemPlayers.PendingGroupOperation operation) =>
         new()
         {
-            Command = CommandType.CreateGroup,
-            GroupName = groupName
-        };
-
-    public static GroupManagePackage CreateJoinRequest(Guid groupKey) =>
-        new()
-        {
-            Command = CommandType.RequestJoinGroup,
-            GroupKey = groupKey
-        };
-
-    public static GroupManagePackage CreateInvitation(Guid groupKey, Guid targetPlayer) =>
-        new()
-        {
-            Command = CommandType.InviteJoinGroup,
-            GroupKey = groupKey,
-            ToPlayer = targetPlayer
-        };
-
-    public static GroupManagePackage CreateResponse(Guid operationId, bool accepted) =>
-        new()
-        {
-            Command = CommandType.RespondRequest,
-            OperationId = operationId,
-            Result = accepted
-        };
-
-    public static GroupManagePackage CreateExitRequest() =>
-        new() { Command = CommandType.ExitGroup };
-
-    public static GroupManagePackage CreateResult(
-        bool result,
-        string message,
-        Guid operationId = default) =>
-        new()
-        {
-            Command = CommandType.OperationResult,
-            OperationId = operationId,
-            Result = result,
-            Message = message
+            Command = operation.Kind is
+                SubsystemPlayers.PendingGroupOperationKind.JoinRequest
+                    ? CommandType.PromptJoinRequest
+                    : CommandType.PromptInvitation,
+            OperationId = operation.OperationId,
+            FromPlayer = operation.Initiator,
+            ToPlayer = operation.Responder,
+            GroupKey = operation.GroupKey
         };
 
     public static GroupManagePackage CreateSnapshot(SubsystemPlayers subsystemPlayers)
@@ -125,21 +84,12 @@ public sealed class GroupManagePackage : IPackage
         writer.WriteEnum(Command);
         switch (Command)
         {
-            case CommandType.CreateGroup:
-                writer.Write(GroupName);
-                break;
-            case CommandType.RequestJoinGroup:
-            case CommandType.InviteJoinGroup:
+            case CommandType.PromptJoinRequest:
+            case CommandType.PromptInvitation:
                 writer.Write(OperationId);
                 writer.Write(FromPlayer);
                 writer.Write(ToPlayer);
                 writer.Write(GroupKey);
-                break;
-            case CommandType.RespondRequest:
-                writer.Write(OperationId);
-                writer.Write(Result);
-                break;
-            case CommandType.ExitGroup:
                 break;
             case CommandType.SyncGroups:
                 writer.Write((ushort)Groups.Count);
@@ -153,12 +103,6 @@ public sealed class GroupManagePackage : IPackage
                         writer.Write(member);
                     }
                 }
-
-                break;
-            case CommandType.OperationResult:
-                writer.Write(OperationId);
-                writer.Write(Result);
-                writer.Write(Message);
                 break;
         }
     }
@@ -169,21 +113,12 @@ public sealed class GroupManagePackage : IPackage
         Command = reader.ReadEnum<CommandType>();
         switch (Command)
         {
-            case CommandType.CreateGroup:
-                GroupName = reader.ReadString();
-                break;
-            case CommandType.RequestJoinGroup:
-            case CommandType.InviteJoinGroup:
+            case CommandType.PromptJoinRequest:
+            case CommandType.PromptInvitation:
                 OperationId = reader.ReadGuid();
                 FromPlayer = reader.ReadGuid();
                 ToPlayer = reader.ReadGuid();
                 GroupKey = reader.ReadGuid();
-                break;
-            case CommandType.RespondRequest:
-                OperationId = reader.ReadGuid();
-                Result = reader.ReadBoolean();
-                break;
-            case CommandType.ExitGroup:
                 break;
             case CommandType.SyncGroups:
                 var groupCount = reader.ReadUInt16();
@@ -202,12 +137,6 @@ public sealed class GroupManagePackage : IPackage
 
                     Groups.Add(group);
                 }
-
-                break;
-            case CommandType.OperationResult:
-                OperationId = reader.ReadGuid();
-                Result = reader.ReadBoolean();
-                Message = reader.ReadString();
                 break;
         }
     }

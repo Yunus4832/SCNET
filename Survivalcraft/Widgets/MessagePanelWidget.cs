@@ -5,9 +5,6 @@ using System.Xml.Linq;
 using Game.Commands;
 using Game.Messaging;
 using Game.Modding;
-using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
 
 namespace Game.Widgets;
 
@@ -36,10 +33,14 @@ public sealed class MessagePanelWidget : CanvasWidget
     };
 
     private readonly BevelledButtonWidget _channelButton =
-        MultiplayerUiStyle.CreateButton(MultiplayerUiStyle.Text("Global"), new Vector2(74f, 54f));
+        MultiplayerUiStyle.CreateButton(
+            MultiplayerUiStyle.Text("Global"),
+            new Vector2(88f, 54f));
 
     private readonly BevelledButtonWidget _sendMessageButton =
-        MultiplayerUiStyle.CreateButton(MultiplayerUiStyle.Text("Send"), new Vector2(74f, 54f));
+        MultiplayerUiStyle.CreateButton(
+            MultiplayerUiStyle.Text("Send"),
+            new Vector2(88f, 54f));
 
     private readonly BevelledButtonWidget _commandButton =
         MultiplayerUiStyle.CreateButton("/", new Vector2(54f));
@@ -50,7 +51,7 @@ public sealed class MessagePanelWidget : CanvasWidget
     };
 
     private readonly BevelledButtonWidget _historyOverlayButton =
-        MultiplayerUiStyle.CreateButton(string.Empty, new Vector2(104f, 54f));
+        MultiplayerUiStyle.CreateButton(string.Empty, new Vector2(116f, 54f));
 
     public readonly TextBoxWidget EditText = new()
     {
@@ -97,7 +98,7 @@ public sealed class MessagePanelWidget : CanvasWidget
 
         _commandSuggestions.SuggestionSelected += ApplyCommandSuggestion;
         EditText.TextChanged += _ => RefreshCommandSuggestions();
-        EditText.Enter += _ => SubmitInput();
+        EditText.Enter += _ => SubmitOrClose();
         EditText.CalculateCharacterPosition = (text, position, scale, spacing) =>
         {
             var characterIndex = MathUtils.Clamp(position, 0, text.Length);
@@ -135,11 +136,13 @@ public sealed class MessagePanelWidget : CanvasWidget
         if (_channelButton.IsClicked)
         {
             _messageChannel = (GameMessageChannel)(((int)_messageChannel + 1) % 2);
-            _channelButton.Text = _messageChannel switch
-            {
-                GameMessageChannel.Team => MultiplayerUiStyle.Text("Team"),
-                _ => MultiplayerUiStyle.Text("Global")
-            };
+            MultiplayerUiStyle.SetButtonText(
+                _channelButton,
+                _messageChannel switch
+                {
+                    GameMessageChannel.Team => MultiplayerUiStyle.Text("Team"),
+                    _ => MultiplayerUiStyle.Text("Global")
+                });
         }
 
         if (_commandButton.IsClicked)
@@ -205,14 +208,27 @@ public sealed class MessagePanelWidget : CanvasWidget
             return;
         }
 
-        if (_messageChannel is GameMessageChannel.Team && PlayerData.GroupKey == string.Empty)
+        CommandGateway.Submit(
+            PlayerData,
+            new SendChatMessageCommand(_messageChannel, input));
+        EditText.Text = string.Empty;
+    }
+
+    private void SubmitOrClose()
+    {
+        if (!string.IsNullOrWhiteSpace(EditText.Text))
         {
-            DisplayInputError("你还没有创建或加入队伍");
+            SubmitInput();
             return;
         }
 
-        _messageService.Publish(GameMessage.Chat(_messageChannel, PlayerData.Name, input));
         EditText.Text = string.Empty;
+        EditText.HasFocus = false;
+        _commandSuggestions.Hide();
+        if (PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget == this)
+        {
+            PlayerData.ComponentPlayer.ComponentGui.ModalPanelWidget = null;
+        }
     }
 
     private void AddNetMsg(GameMessage message)
@@ -222,14 +238,7 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     private void ExecuteCommand(string input)
     {
-        if (CommonLib.WorkType is WorkType.Client)
-        {
-            CommonLib.Net.QueuePackage(CommandPackage.CreateRequest(input));
-            return;
-        }
-
-        var result = CommandExecutor.ExecutePlayer(input, PlayerData);
-        CommandResultPublisher.Publish(PlayerData.Project, result);
+        CommandGateway.Submit(PlayerData, input);
     }
 
     private void RefreshCommandSuggestions()
@@ -243,7 +252,16 @@ public sealed class MessagePanelWidget : CanvasWidget
         }
 
         var principal = CommandPrincipal.FromPlayer(PlayerData);
-        _commandSuggestions.Refresh(EditText.Text, runtime.Commands, principal);
+        var textAdapter = new TextCommandAdapter(runtime.Commands);
+        _commandSuggestions.SetSuggestions(
+            textAdapter.Suggest(EditText.Text, principal)
+                .Concat(textAdapter.Suggest(
+                    EditText.Text,
+                    CommandPrincipal.Local,
+                    CommandSource.Local))
+                .GroupBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
+                .Select(group => group.First())
+                .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase));
     }
 
     private void ApplyCommandSuggestion(CommandSuggestion suggestion)
@@ -263,7 +281,12 @@ public sealed class MessagePanelWidget : CanvasWidget
         if (CurrentModRuntime.Value is { } runtime)
         {
             var principal = CommandPrincipal.FromPlayer(PlayerData);
-            if (runtime.Commands.CanExecute(EditText.Text, principal) &&
+            var adapter = new TextCommandAdapter(runtime.Commands);
+            if ((adapter.CanExecute(EditText.Text, principal) ||
+                 adapter.CanExecute(
+                     EditText.Text,
+                     CommandPrincipal.Local,
+                     CommandSource.Local)) &&
                 !_commandSuggestions.HasSuggestions)
             {
                 var input = EditText.Text;
@@ -284,9 +307,11 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     private void UpdateHistoryOverlayButton()
     {
-        _historyOverlayButton.Text = _historyOverlayWidget.DisplayEnabled
-            ? MultiplayerUiStyle.Text("OverlayOn")
-            : MultiplayerUiStyle.Text("OverlayOff");
+        MultiplayerUiStyle.SetButtonText(
+            _historyOverlayButton,
+            _historyOverlayWidget.DisplayEnabled
+                ? MultiplayerUiStyle.Text("OverlayOn")
+                : MultiplayerUiStyle.Text("OverlayOff"));
         _historyOverlayButton.IsChecked = _historyOverlayWidget.DisplayEnabled;
     }
 

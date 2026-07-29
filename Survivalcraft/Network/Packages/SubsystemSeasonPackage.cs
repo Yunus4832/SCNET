@@ -7,8 +7,6 @@ public class SubsystemSeasonPackage : IPackage
 {
     public int SeasonIndexNet;
 
-    public Season SeasonNet { get; set; }
-
     public float TimeOfSeasonNet { get; set; }
 
     public byte ID => (byte)PackageType.SubsystemSeason;

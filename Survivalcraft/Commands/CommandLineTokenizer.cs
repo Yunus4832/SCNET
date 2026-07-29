@@ -2,7 +2,7 @@ using System.Text;
 
 namespace Game.Commands;
 
-internal static class CommandLineTokenizer
+public static class CommandLineTokenizer
 {
     public static bool TryTokenize(string commandLine, out IReadOnlyList<string> tokens, out string error)
     {
@@ -47,7 +47,9 @@ internal static class CommandLineTokenizer
         if (quoted)
         {
             tokens = [];
-            error = "指令中存在未闭合的引号。";
+            error = CommandText.Get(
+                "CommandQuoteUnclosed_Message",
+                "指令中存在未闭合的引号。");
             return false;
         }
 

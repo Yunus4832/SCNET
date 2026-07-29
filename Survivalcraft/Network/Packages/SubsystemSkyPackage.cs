@@ -5,11 +5,7 @@ namespace Game.Network.Packages;
 
 public class SubsystemSkyPackage : IPackage
 {
-    public bool IsRequest;
-
     public Vector3 LightningStrikePosition;
-
-    public Vector3 Direction;
 
     public byte ID => (byte)PackageType.SubsystemSky;
 
@@ -30,25 +26,14 @@ public class SubsystemSkyPackage : IPackage
         LightningStrikePosition = position;
     }
 
-    public SubsystemSkyPackage(Vector3 position, Vector3 direction)
-    {
-        LightningStrikePosition = position;
-        Direction = direction;
-        IsRequest = true;
-    }
-
     public void WriteData(PackageStreamWriter writer)
     {
         writer.Write(LightningStrikePosition);
-        writer.Write(IsRequest);
-        writer.Write(Direction);
     }
 
     public void ReadData(PackageStreamReader reader)
     {
         LightningStrikePosition = reader.ReadVector3();
-        IsRequest = reader.ReadBoolean();
-        Direction = reader.ReadVector3();
     }
 
 

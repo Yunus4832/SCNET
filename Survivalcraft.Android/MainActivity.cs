@@ -4,6 +4,8 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Runtime;
 
+using Game;
+
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
 using AndroidProviderSettings = Android.Provider.Settings;
@@ -45,6 +47,7 @@ public class MainActivity : BlackActivity
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        GamePlatformManager.RegisterPlatform(Platform.Android);
         RouteWhenReady();
     }
 

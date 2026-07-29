@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using Engine.Input;
 
+using Game.Commands;
 using Game.Network;
 
 namespace Game.Screens;
@@ -90,8 +91,18 @@ public class MainMenuScreen : Screen
                 return;
             }
 
-            RunningSettingManager.SetRunMode(RunModeType.HeadlessServer);
-            GameExitManager.RequestRestart();
+            var result = CommandExecutor.ExecuteLocalHost(
+                new SetRunModeCommand(RunModeType.HeadlessServer),
+                GameManager.Project);
+            if (!result.Success)
+            {
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        LanguageManager.Error,
+                        CommandText.Resolve(result),
+                        LanguageManager.Ok));
+            }
         });
     }
 
@@ -153,23 +164,24 @@ public class MainMenuScreen : Screen
             ScreensManager.SwitchScreen("NetPlay");
         }
 
-        if (Children.Find<ButtonWidget>("Exit")!.IsClicked)
+        var exitRequested =
+            Children.Find<ButtonWidget>("Exit")!.IsClicked ||
+            (Input.Back && !Keyboard.BackButtonQuitsApp) ||
+            Input.IsKeyDownOnce(Key.Escape);
+        if (exitRequested)
         {
-            DialogsManager.Confirm(LanguageManager.Get("MainMenuScreen", 14), button =>
+            ConfirmExit();
+        }
+    }
+
+    private static void ConfirmExit()
+    {
+        DialogsManager.Confirm(LanguageManager.Get("MainMenuScreen", 14), button =>
+        {
+            if (button is MessageDialogButton.Button1)
             {
-                if (button != MessageDialogButton.Button1)
-                {
-                    return;
-                }
-
                 Window.Close();
-            });
-        }
-
-        // 处理返回键或 ESC 键
-        if ((Input.Back && !Keyboard.BackButtonQuitsApp) || Input.IsKeyDownOnce(Key.Escape))
-        {
-            Window.Close();
-        }
+            }
+        });
     }
 }

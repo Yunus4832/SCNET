@@ -1,9 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Commands;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
 
 namespace Game.Widgets;
 
@@ -332,8 +330,9 @@ public sealed class PlayerPanelWidget : CanvasWidget
                         return;
                     }
 
-                    DialogsManager.Loading("创建中...");
-                    SubmitGroupRequest(GroupManagePackage.CreateGroupRequest(name.Trim()));
+                    CommandGateway.Submit(
+                        _playerData,
+                        new CreateTeamCommand(name.Trim()));
                 },
                 invokeHandlerOnCancel: false));
     }
@@ -363,15 +362,16 @@ public sealed class PlayerPanelWidget : CanvasWidget
                     return;
                 }
 
-                DialogsManager.Loading("发送中...");
-                SubmitGroupRequest(GroupManagePackage.CreateJoinRequest(groupKey));
+                CommandGateway.Submit(
+                    _playerData,
+                    new RequestJoinTeamCommand(groupKey));
             },
             _playerData.GameWidget.GuiWidget);
     }
 
     private void SendGroupInvitation(PlayerData target)
     {
-        if (!Guid.TryParse(_playerData.GroupKey, out var groupKey))
+        if (!Guid.TryParse(_playerData.GroupKey, out _))
         {
             DialogsManager.Alert("请先创建或加入队伍", _playerData.GameWidget.GuiWidget);
             return;
@@ -386,17 +386,16 @@ public sealed class PlayerPanelWidget : CanvasWidget
                     return;
                 }
 
-                DialogsManager.Loading("发送中...");
-                SubmitGroupRequest(GroupManagePackage.CreateInvitation(
-                    groupKey,
-                    target.PlayerGUID));
+                CommandGateway.Submit(
+                    _playerData,
+                    new InvitePlayerToTeamCommand(target.PlayerGUID));
             },
             _playerData.GameWidget.GuiWidget);
     }
 
     private void RequestLeaveTeam()
     {
-        if (!Guid.TryParse(_playerData.GroupKey, out var groupKey) ||
+        if (!Guid.TryParse(_playerData.GroupKey, out _) ||
             !_playerData.SubsystemPlayers.ServerGroups.TryGetValue(_playerData.GroupKey, out var group))
         {
             DialogsManager.Alert("你当前不在队伍中", _playerData.GameWidget.GuiWidget);
@@ -412,8 +411,7 @@ public sealed class PlayerPanelWidget : CanvasWidget
                     return;
                 }
 
-                DialogsManager.Loading("退出中...");
-                SubmitGroupRequest(GroupManagePackage.CreateExitRequest());
+                CommandGateway.Submit(_playerData, new LeaveTeamCommand());
             },
             _playerData.GameWidget.GuiWidget);
     }
@@ -431,21 +429,6 @@ public sealed class PlayerPanelWidget : CanvasWidget
 
         _lastGroupRequestTime = Time.RealTime;
         return true;
-    }
-
-    private void SubmitGroupRequest(GroupManagePackage package)
-    {
-        if (CommonLib.WorkType is WorkType.Client)
-        {
-            CommonLib.Net.QueuePackage(package);
-        }
-        else
-        {
-            GroupManagePackageHandler.HandleLocalRequest(
-                package,
-                _playerData,
-                CommonLib.Net);
-        }
     }
 
     private void AddSelectedPlayerToBlackList()

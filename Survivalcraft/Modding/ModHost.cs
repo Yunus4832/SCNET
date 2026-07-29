@@ -157,9 +157,40 @@ public sealed class ModHost
 
     private sealed class OwnedCommands(ModId owner, CommandRegistry commands) : IModCommands
     {
-        public IDisposable Register(ResourceId id, GameCommand command)
+        public IModCommandAdapters Adapters { get; } =
+            new OwnedCommandAdapters(owner, commands.Adapters);
+
+        public IDisposable Register<TCommand>(
+            ResourceId id,
+            CommandDefinition<TCommand> definition)
+            where TCommand : IGameCommand
         {
-            return commands.Register(owner, id, command);
+            return commands.Register(owner, id, definition);
+        }
+    }
+
+    private sealed class OwnedCommandAdapters(
+        ModId owner,
+        CommandAdapterRegistry adapters) : IModCommandAdapters
+    {
+        public IDisposable Register<TBinding>(
+            ResourceId id,
+            TBinding binding)
+            where TBinding : class, ICommandAdapterBinding
+        {
+            return adapters.Register(owner, id, binding);
+        }
+
+        public IReadOnlyList<RegisteredCommandAdapter<TBinding>> Get<TBinding>()
+            where TBinding : class, ICommandAdapterBinding
+        {
+            return adapters.Get<TBinding>();
+        }
+
+        public bool TryGet<TBinding>(ResourceId id, out TBinding? binding)
+            where TBinding : class, ICommandAdapterBinding
+        {
+            return adapters.TryGet(id, out binding);
         }
     }
 }

@@ -101,22 +101,33 @@ public class GameScreen : Screen
         DialogsManager.ShowDialog(
             this,
             new MessageDialog(
-                "服务器管理员尚未认领",
-                $"认领码：{code}\n\n" +
-                "认领只会授予标准权限的管理和再授权能力，不包含停服等控制台权限。",
-                "以当前玩家认领",
-                "复制并稍后处理",
+                CommandText.Get(
+                    "AuthDialogTitle",
+                    "服务器管理员尚未认领"),
+                CommandText.Get(
+                    "AuthDialogBody",
+                    "认领码：{0}\n\n认领只会授予标准权限的管理和再授权能力，不包含停服等控制台权限。",
+                    code),
+                CommandText.Get(
+                    "AuthDialogClaim",
+                    "以当前玩家认领"),
+                CommandText.Get(
+                    "AuthDialogCopy",
+                    "复制并稍后处理"),
                 button =>
                 {
                     if (button is MessageDialogButton.Button2)
                     {
                         ClipboardManager.ClipboardString = claimCommand;
-                        DialogsManager.Alert($"已复制：{claimCommand}");
+                        DialogsManager.Alert(CommandText.Get(
+                            "AuthDialogCopied",
+                            "已复制：{0}",
+                            claimCommand));
                         return;
                     }
 
                     var result = CommandExecutor.ExecutePlayer(claimCommand, player.PlayerData);
-                    DialogsManager.Alert(result.Message);
+                    DialogsManager.Alert(CommandText.Resolve(result));
                 }));
     }
 }

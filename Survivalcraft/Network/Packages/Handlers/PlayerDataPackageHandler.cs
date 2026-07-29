@@ -34,27 +34,17 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                 netNode.QueuePackage(new PlayerListPackage(subsystemPlayers));
                 break;
             case PlayerDataPackage.DataType.Modify:
+                if (isServer)
+                {
+                    break;
+                }
+
                 var playerData2 = subsystemPlayers.FindPlayerData(p => p.PlayerGUID == package.PlayerGuid);
                 if (playerData2 != null)
                 {
-                    var client = package.From;
-                    var name = PlayerData.SanitizeName(package.PlayerName);
-                    if (client != null && !string.IsNullOrEmpty(client.Nickname))
-                    {
-                        playerData2.Name = client.Nickname;
-                    }
-                    else if (!PlayerData.IsDuplicateName(name))
-                    {
-                        playerData2.Name = name;
-                    }
-
+                    playerData2.Name = package.PlayerName;
                     playerData2.CharacterSkinName = package.SkinName;
                     playerData2.PlayerClass = package.PlayerClass;
-                    if (isServer)
-                    {
-                        netNode.QueuePackage(package);
-                        netNode.QueuePackage(new PlayerListPackage(subsystemPlayers));
-                    }
                 }
 
                 break;

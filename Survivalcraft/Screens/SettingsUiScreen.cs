@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Commands;
+
 namespace Game.Screens;
 
 public class SettingsUiScreen : Screen
@@ -147,59 +149,23 @@ public class SettingsUiScreen : Screen
 
     public static void ChangeLanguage(string languageType)
     {
-        // 确保语言类型有效
         if (string.IsNullOrEmpty(languageType))
         {
             Log.Warning("无效的语言类型: " + languageType);
             return;
         }
 
-        if (CurrentModRuntime.Value is { } runtime)
+        var result = CommandExecutor.ExecuteLocal(
+            new SetLanguageCommand(languageType),
+            GameManager.Project);
+        if (!result.Success)
         {
-            runtime.InitializeLanguage(languageType);
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageManager.Error,
+                    CommandText.Resolve(result),
+                    LanguageManager.Ok));
         }
-
-        // 重新实例化屏幕对象
-        var objs = new Dictionary<string, object>();
-        foreach (var screen in ScreensManager.Screens)
-        {
-            var type = screen.Value.GetType();
-            try
-            {
-                var obj = Activator.CreateInstance(type);
-                if (obj != null)
-                {
-                    objs.Add(screen.Key, obj);
-                }
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"无法实例化屏幕对象,语言文件错误 {type.FullName}: {ex.Message}");
-            }
-        }
-
-        // 将重新实例化的屏幕对象赋值回 ScreensManager._screens
-        foreach (var obj in objs)
-        {
-            if (obj.Value is not Screen screen)
-            {
-                continue;
-            }
-
-            ScreensManager.Screens[obj.Key] = screen;
-        }
-
-        // 初始化配方管理器
-        if (CurrentModRuntime.Value is { } currentRuntime)
-        {
-            currentRuntime.InitializeCraftingRecipes();
-        }
-        else
-        {
-            CraftingRecipesManager.Initialize();
-        }
-
-        // 切换到主菜单
-        ScreensManager.SwitchScreen("MainMenu");
     }
 }
