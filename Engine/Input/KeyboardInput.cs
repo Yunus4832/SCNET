@@ -4,19 +4,32 @@ public class KeyboardInput
 {
     public static readonly List<char> Chars = [];
 
+    public static bool BackspacePressed
+    {
+        get
+        {
+            var pressed = field;
+            field = false;
+            return pressed;
+        }
+        set;
+    }
+
     public static bool DeletePressed
     {
         get
         {
-            var d = field;
-            if (d)
-            {
-                field = false;
-            }
-
-            return d;
+            var pressed = field;
+            field = false;
+            return pressed;
         }
         set;
+    }
+
+    public static void ClearKeyActions()
+    {
+        BackspacePressed = false;
+        DeletePressed = false;
     }
 
     public static string GetInput()

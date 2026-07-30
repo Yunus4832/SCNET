@@ -10,8 +10,6 @@ public class TextBoxWidget : Widget
 
     public Func<int, string, string>? DeleteOneText;
 
-    public bool JustOpened;
-
     private double _focusStartTime;
 
     private bool _hasFocus;
@@ -130,7 +128,6 @@ public class TextBoxWidget : Widget
         Font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
         FontScale = 1f;
         Description = string.Empty;
-        JustOpened = true;
     }
 
     private void BeginTextInput()
@@ -138,7 +135,7 @@ public class TextBoxWidget : Widget
         ClearPendingTextInput();
         CaretPosition = _text.Length;
 
-        if (UsesInlineKeyboardInput())
+        if (!UsesNativeTextInputDialog())
         {
             return;
         }
@@ -160,10 +157,7 @@ public class TextBoxWidget : Widget
 
     private static void ClearPendingTextInput()
     {
-        if (UsesInlineKeyboardInput())
-        {
-            KeyboardInput.GetInput();
-        }
+        KeyboardInput.GetInput();
     }
 
     public override void Update()
@@ -224,7 +218,7 @@ public class TextBoxWidget : Widget
             MoveCursor?.Invoke(CaretPosition, Text);
         }
 
-        if (Input.IsKeyDownOnce(Key.Delete))
+        if (IsDeletePressed())
         {
             DeleteCharacterAtCaret();
         }
@@ -262,26 +256,8 @@ public class TextBoxWidget : Widget
 
     private string ReadTextInput()
     {
-        if (UsesInlineKeyboardInput())
-        {
-            var inputString = KeyboardInput.GetInput();
-            if (!JustOpened)
-            {
-                return inputString;
-            }
-
-            JustOpened = false;
-            return string.Empty;
-        }
-
-        if (!Input.LastChar.HasValue || Input.IsKeyDown(Key.Control) ||
-            char.IsControl(Input.LastChar.Value))
-        {
-            return string.Empty;
-        }
-
-        Input.Clear();
-        return new string(Input.LastChar.Value, 1);
+        var input = KeyboardInput.GetInput();
+        return Input.IsKeyDown(Key.Control) ? string.Empty : input;
     }
 
     private void HandleBackspace()
@@ -296,9 +272,12 @@ public class TextBoxWidget : Widget
 
     private bool IsBackspacePressed()
     {
-        return UsesInlineKeyboardInput()
-            ? KeyboardInput.DeletePressed
-            : Input.IsKeyDownOnce(Key.BackSpace);
+        return KeyboardInput.BackspacePressed;
+    }
+
+    private bool IsDeletePressed()
+    {
+        return KeyboardInput.DeletePressed;
     }
 
     private void DeleteCharacterBeforeCaret()
@@ -344,15 +323,15 @@ public class TextBoxWidget : Widget
 
     private void LoseFocusAfterKeyboardAction()
     {
-        if (!UsesInlineKeyboardInput())
+        if (UsesNativeTextInputDialog())
         {
             HasFocus = false;
         }
     }
 
-    private static bool UsesInlineKeyboardInput()
+    private static bool UsesNativeTextInputDialog()
     {
-        return PlatformManager.Platform is Platform.Desktop;
+        return PlatformManager.Platform is Platform.Android;
     }
 
     public void MoveNext(WidgetsList widgets)

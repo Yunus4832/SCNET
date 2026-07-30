@@ -169,6 +169,7 @@ public static class Keyboard
             Window.Close();
         }
 
+        KeyboardInput.ClearKeyActions();
         LastKey = null;
         LastChar = null;
         for (var i = 0; i < _keysDownOnceArray.Length; i++)
@@ -209,6 +210,15 @@ public static class Keyboard
             return false;
         }
 
+        if (key is Key.BackSpace)
+        {
+            KeyboardInput.BackspacePressed = true;
+        }
+        else if (key is Key.Delete)
+        {
+            KeyboardInput.DeletePressed = true;
+        }
+
         LastKey = key;
         if (!_keysDownArray[(int)key])
         {
@@ -239,11 +249,12 @@ public static class Keyboard
 
     private static bool ProcessCharacterEntered(char ch)
     {
-        if (!Window.IsActive || IsKeyboardVisible)
+        if (!Window.IsActive || IsKeyboardVisible || char.IsControl(ch))
         {
             return false;
         }
 
+        KeyboardInput.Chars.Add(ch);
         LastChar = ch;
         CharacterEntered?.Invoke(ch);
         return true;
@@ -317,13 +328,6 @@ public static class Keyboard
 #if DESKTOP
     private static void KeyDownHandler(IKeyboard keyboard, Silk.NET.Input.Key key, int scancode)
     {
-        if (scancode == 270
-            || key == Silk.NET.Input.Key.Delete
-            || key == Silk.NET.Input.Key.Backspace)
-        {
-            KeyboardInput.DeletePressed = true;
-        }
-
         var translatedKey = TranslateKey(key);
         if (translatedKey is not null)
         {
@@ -350,7 +354,6 @@ public static class Keyboard
 
     private static void KeyPressHandler(IKeyboard keyboard, char c)
     {
-        KeyboardInput.Chars.Add(c);
         ProcessCharacterEntered(c);
     }
 #endif
@@ -402,7 +405,7 @@ public static class Keyboard
         Keycode.Tab => Key.Tab,
         Keycode.Space => Key.Space,
         Keycode.Enter or Keycode.NumpadEnter => Key.Enter,
-        Keycode.Del => Key.Delete,
+        Keycode.Del => Key.BackSpace,
         Keycode.Minus or Keycode.NumpadSubtract => Key.Minus,
         Keycode.LeftBracket => Key.LeftBracket,
         Keycode.RightBracket => Key.RightBracket,
