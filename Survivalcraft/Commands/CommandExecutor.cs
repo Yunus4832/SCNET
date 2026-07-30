@@ -6,15 +6,15 @@ namespace Game.Commands;
 
 public static class CommandExecutor
 {
-    public static CommandResult ExecuteLocal(
+    public static CommandResult ExecuteApplication(
         string input,
         Project? project,
         string? correlationId = null)
     {
         return Execute(
             input,
-            CommandSource.Local,
-            CommandPrincipal.Local,
+            CommandInvocationChannel.Text,
+            CommandPrincipal.ApplicationUser,
             project,
             correlationId);
     }
@@ -27,21 +27,21 @@ public static class CommandExecutor
         ArgumentNullException.ThrowIfNull(player);
         return Execute(
             input,
-            CommandSource.Player,
+            CommandInvocationChannel.Text,
             CommandPrincipal.FromPlayer(player),
             player.Project,
             correlationId);
     }
 
-    public static CommandResult ExecuteServerConsole(
+    public static CommandResult ExecuteServerOperator(
         string input,
         Project? project,
         string? correlationId = null)
     {
         return Execute(
             input,
-            CommandSource.ServerConsole,
-            CommandPrincipal.ServerConsole,
+            CommandInvocationChannel.ServerControl,
+            CommandPrincipal.ServerOperator,
             project,
             correlationId);
     }
@@ -54,54 +54,41 @@ public static class CommandExecutor
         ArgumentNullException.ThrowIfNull(player);
         return Execute(
             command,
-            CommandSource.Player,
+            CommandInvocationChannel.UserInterface,
             CommandPrincipal.FromPlayer(player),
             player.Project,
             correlationId);
     }
 
-    public static CommandResult ExecuteLocal(
+    public static CommandResult ExecuteApplication(
         IGameCommand command,
         Project? project,
         string? correlationId = null)
     {
         return Execute(
             command,
-            CommandSource.Local,
-            CommandPrincipal.Local,
+            CommandInvocationChannel.UserInterface,
+            CommandPrincipal.ApplicationUser,
             project,
             correlationId);
     }
 
-    public static CommandResult ExecuteLocalHost(
+    public static CommandResult ExecuteServerOperator(
         IGameCommand command,
         Project? project,
         string? correlationId = null)
     {
         return Execute(
             command,
-            CommandSource.Local,
-            CommandPrincipal.LocalHost,
-            project,
-            correlationId);
-    }
-
-    public static CommandResult ExecuteServerConsole(
-        IGameCommand command,
-        Project? project,
-        string? correlationId = null)
-    {
-        return Execute(
-            command,
-            CommandSource.ServerConsole,
-            CommandPrincipal.ServerConsole,
+            CommandInvocationChannel.ServerControl,
+            CommandPrincipal.ServerOperator,
             project,
             correlationId);
     }
 
     private static CommandResult Execute(
         string input,
-        CommandSource source,
+        CommandInvocationChannel channel,
         CommandPrincipal principal,
         Project? project,
         string? correlationId)
@@ -115,7 +102,7 @@ public static class CommandExecutor
         }
 
         var context = new CommandContext(
-            source,
+            channel,
             principal,
             project,
             correlationId);
@@ -124,7 +111,7 @@ public static class CommandExecutor
 
     private static CommandResult Execute(
         IGameCommand command,
-        CommandSource source,
+        CommandInvocationChannel channel,
         CommandPrincipal principal,
         Project? project,
         string? correlationId)
@@ -139,7 +126,7 @@ public static class CommandExecutor
         }
 
         var context = new CommandContext(
-            source,
+            channel,
             principal,
             project,
             correlationId);

@@ -68,11 +68,21 @@ public sealed record EchoCommand(string Text) : IGameCommand;
 public void Configure(IModContext context)
 {
     var identity = new ResourceId(context.Manifest.ModId, "echo");
+    var permission = new ResourceId(
+        context.Manifest.ModId,
+        "world.echo");
+    context.Commands.Permissions.Register(
+        permission,
+        new CommandPermissionDefinition(
+            CommandDomain.World,
+            PermissionGrantPolicy.Standard));
+
     context.Commands.Register(
         identity,
         new CommandDefinition<EchoCommand>(
             (_, command) => CommandResult.Ok(command.Text),
-            sourcePolicy: CommandSourcePolicy.Any));
+            CommandDomain.World,
+            requiredPermission: permission));
 
     context.Commands.Adapters.Register(
         new ResourceId(context.Manifest.ModId, "text/echo"),
@@ -87,8 +97,7 @@ public void Configure(IModContext context)
                     [new CommandArgument("text")],
                     typeof(EchoCommand),
                     arguments => new EchoCommand(arguments.Get<string>("text")))
-            ],
-            sources: [CommandSource.Player, CommandSource.ServerConsole]));
+            ]));
 
     context.Commands.Adapters.Register(
         identity,
@@ -97,15 +106,27 @@ public void Configure(IModContext context)
 }
 ```
 
-命令定义拥有执行逻辑、权限、来源和运行环境约束。绑定只负责把某个前端的参数转换为命令，不能创建身份或绕过 `CommandDispatcher`。模组也可以实现自己的
+命令定义拥有执行逻辑、命令域、权限和必要的宿主环境约束。绑定只负责把某个前端的参数转换为命令，不能创建身份或绕过 `CommandDispatcher`。模组也可以实现自己的
 `ICommandAdapterBinding`，通过 `context.Commands.Adapters` 注册、查询，并由对应前端消费。
 
-文本绑定可以独立选择玩家文本入口和服务器 stdin。没有注册对应绑定的命令仍可由游戏 UI 直接以类型化方式执行，但不会自动暴露到文本或 HTTP。
+没有注册对应绑定的命令仍可由游戏 UI 直接以类型化方式执行，但不会自动暴露到文本或 HTTP。文本绑定本身不限制身份；同一个绑定可以由游戏命令面板或服务器 stdin 使用，最终是否允许执行由命令域、主体和权限注册表统一判断。
 
-仅修改当前进程状态的命令可以声明 `CommandSourcePolicy.LocalOnly`，并将文本绑定的
-`sources` 显式设置为 `CommandSource.Local`。本地命令会在客户端或 Headless 宿主进程
-内执行，不会发送到服务器。为避免旧命令被意外提升为本地命令，省略 `sources` 时不会
-自动包含 `CommandSource.Local`。
+命令域只有三种：
+
+- `CommandDomain.Application`：修改当前应用或设备，例如语言和 UI 设置，始终在本进程执行。
+- `CommandDomain.World`：修改已加载世界；离线和 GUI 服务端直接在权威世界执行，联机客户端自动发送到服务器。
+- `CommandDomain.Server`：管理服务器进程，只能在服务器权威端执行。
+
+权限必须通过 `context.Commands.Permissions` 显式注册，并使用模组自己的 `ResourceId`
+命名空间。命令只能引用已注册且命令域一致的权限。权限授权策略包括：
+
+- `Standard`：拥有再授权能力的玩家可以授予。
+- `OperatorManaged`：只能由服务器操作员授予，玩家获得后只能使用。
+- `OperatorOnly`：不能授予玩家。
+
+命令入口记录为 `CommandInvocationChannel`，只用于日志和展示，不参与授权。
+如果操作在业务上必须绑定玩家实体，可以通过 `allowedPrincipals:
+CommandPrincipalKind.Player` 声明主体要求；这与命令来自消息面板、HTTP 或 stdin 无关。
 
 命令说明使用通用的 `Game.Localization.LocalizedText`，注册时不会读取当前语言。候选菜单和帮助信息在展示时解析资源，因此初始化语言或运行时切换语言都不需要重新注册命令。模组应在自己的语言资源中提供对应 section 和 key；只有 GUID 等运行时数据才应显式使用 `LocalizedText.Literal(...)`。
 
@@ -120,4 +141,4 @@ HTTP 服务尚未实现；已预留的协议契约使用统一的 `POST /command
 }
 ```
 
-只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。未来 HTTP 宿主负责认证并创建可信的 `CommandPrincipal` 和 `CommandSource.HttpApi`，命令仍会执行正常的权限和环境校验。
+只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。未来 HTTP 宿主负责认证并创建可信的 `CommandPrincipal`，同时将调用入口记录为 `CommandInvocationChannel.HttpApi`；命令仍会执行正常的命令域、权限和宿主环境校验。

@@ -324,7 +324,8 @@ public class ModHostTest
             context.Commands.Register(
                 new ResourceId(context.Manifest.ModId, "hello"),
                 new CommandDefinition<HelloCommand>(
-                    (_, _) => CommandResult.Ok("Hello")));
+                    (_, _) => CommandResult.Ok("Hello"),
+                    CommandDomain.World));
             context.Commands.Adapters.Register(
                 new ResourceId(context.Manifest.ModId, "text/hello"),
                 new TextCommand(

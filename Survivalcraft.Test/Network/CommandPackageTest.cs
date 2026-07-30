@@ -32,11 +32,16 @@ public class CommandPackageTest
     public void PermissionSnapshotRoundTrips()
     {
         var playerGuid = Guid.NewGuid();
+        var owner = new ModId("game");
         var package = CommandPackage.CreatePermissionSnapshot(
             playerGuid,
             [
-                new CommandPermissionGrant("server.stop", false),
-                new CommandPermissionGrant("world.*", true)
+                new CommandPermissionGrant(
+                    new ResourceId(owner, "server.stop"),
+                    false),
+                new CommandPermissionGrant(
+                    new ResourceId(owner, "world.time.set"),
+                    true)
             ]);
 
         var clone = RoundTrip(package);
@@ -45,8 +50,12 @@ public class CommandPackageTest
         Assert.Equal(playerGuid, clone.PlayerGuid);
         Assert.Equal(
             [
-                new CommandPermissionGrant("server.stop", false),
-                new CommandPermissionGrant("world.*", true)
+                new CommandPermissionGrant(
+                    new ResourceId(owner, "server.stop"),
+                    false),
+                new CommandPermissionGrant(
+                    new ResourceId(owner, "world.time.set"),
+                    true)
             ],
             clone.PermissionGrants);
     }

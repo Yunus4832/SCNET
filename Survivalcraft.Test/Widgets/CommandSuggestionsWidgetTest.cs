@@ -3,6 +3,8 @@ using Engine.Core;
 using Game.Commands;
 using Game.Widgets;
 
+using System.Runtime.CompilerServices;
+
 namespace Survivalcraft.Test.Widgets;
 
 public class CommandSuggestionsWidgetTest
@@ -29,5 +31,16 @@ public class CommandSuggestionsWidgetTest
         var part = Assert.Single(parts);
 
         Assert.Equal("list", part.Text);
+    }
+
+    [Fact]
+    public void LabelTextDoesNotImplicitlyUseUsualLocalization()
+    {
+        var label = (LabelWidget)
+            RuntimeHelpers.GetUninitializedObject(typeof(LabelWidget));
+
+        label.Text = "enable";
+
+        Assert.Equal("enable", label.Text);
     }
 }

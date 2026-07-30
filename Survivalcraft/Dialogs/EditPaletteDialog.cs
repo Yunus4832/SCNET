@@ -132,7 +132,7 @@ public class EditPaletteDialog : Dialog
                                     new MessageDialog(
                                         "Invalid name",
                                         string.Empty,
-                                        "OK"
+                                        LanguageManager.Ok
                                     )
                                 );
                             }

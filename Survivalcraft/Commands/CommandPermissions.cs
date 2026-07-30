@@ -1,41 +1,39 @@
+using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
+
+using Game.Localization;
+using Game.Modding;
 
 namespace Game.Commands;
 
-public sealed record CommandPermissionGrant(string Permission, bool CanDelegate);
+public sealed record CommandPermissionGrant(
+    ResourceId Permission,
+    bool CanDelegate);
 
 public sealed class CommandPermissionSet
 {
-    public const string GrantPermission = "permissions.grant";
-
-    public const string ManageStandardPermission = "permissions.manage.standard";
-
     private readonly List<CommandPermissionGrant> _grants = [];
 
     public IReadOnlyList<CommandPermissionGrant> Grants => _grants;
 
-    public bool HasPermission(string permission)
+    public bool HasPermission(ResourceId permission)
     {
-        var normalized = Normalize(permission);
-        return _grants.Any(grant => Implies(grant.Permission, normalized));
+        return _grants.Any(grant => grant.Permission == permission);
     }
 
-    public bool CanDelegate(string permission)
+    public bool CanDelegate(ResourceId permission)
     {
-        var normalized = Normalize(permission);
         return _grants.Any(grant =>
-            grant.CanDelegate &&
-            Implies(grant.Permission, normalized));
+            grant.Permission == permission &&
+            grant.CanDelegate);
     }
 
-    public bool Grant(string permission, bool canDelegate)
+    public bool Grant(ResourceId permission, bool canDelegate)
     {
-        var normalized = Normalize(permission);
-        var index = _grants.FindIndex(grant =>
-            string.Equals(grant.Permission, normalized, StringComparison.OrdinalIgnoreCase));
+        var index = _grants.FindIndex(grant => grant.Permission == permission);
         if (index < 0)
         {
-            _grants.Add(new CommandPermissionGrant(normalized, canDelegate));
+            _grants.Add(new CommandPermissionGrant(permission, canDelegate));
             Sort();
             return true;
         }
@@ -45,15 +43,13 @@ public sealed class CommandPermissionSet
             return false;
         }
 
-        _grants[index] = new CommandPermissionGrant(normalized, true);
+        _grants[index] = new CommandPermissionGrant(permission, true);
         return true;
     }
 
-    public bool Revoke(string permission)
+    public bool Revoke(ResourceId permission)
     {
-        var normalized = Normalize(permission);
-        return _grants.RemoveAll(grant =>
-            string.Equals(grant.Permission, normalized, StringComparison.OrdinalIgnoreCase)) > 0;
+        return _grants.RemoveAll(grant => grant.Permission == permission) > 0;
     }
 
     public void Replace(IEnumerable<CommandPermissionGrant> grants)
@@ -74,7 +70,8 @@ public sealed class CommandPermissionSet
             var grant = _grants[index];
             values.SetValue(index.ToString(), new ValuesDictionary
             {
-                { "Permission", grant.Permission },
+                { "Namespace", grant.Permission.Namespace.ToString() },
+                { "Path", grant.Permission.Path },
                 { "CanDelegate", grant.CanDelegate }
             });
         }
@@ -88,55 +85,64 @@ public sealed class CommandPermissionSet
         _grants.Clear();
         foreach (var item in values.Values.OfType<ValuesDictionary>())
         {
-            var permission = item.GetValue("Permission", string.Empty);
-            if (string.IsNullOrWhiteSpace(permission))
+            var permissionNamespace = item.GetValue("Namespace", string.Empty);
+            var path = item.GetValue("Path", string.Empty);
+            if (string.IsNullOrWhiteSpace(permissionNamespace) ||
+                string.IsNullOrWhiteSpace(path))
             {
                 continue;
             }
 
-            Grant(permission, item.GetValue("CanDelegate", false));
+            Grant(
+                new ResourceId(new ModId(permissionNamespace), path),
+                item.GetValue("CanDelegate", false));
         }
-    }
-
-    public static bool Implies(string grantedPermission, string requestedPermission)
-    {
-        var granted = Normalize(grantedPermission);
-        var requested = Normalize(requestedPermission);
-        if (granted == "*" ||
-            string.Equals(granted, requested, StringComparison.OrdinalIgnoreCase))
-        {
-            return true;
-        }
-
-        return granted.EndsWith(".*", StringComparison.Ordinal) &&
-               requested.StartsWith(granted[..^1], StringComparison.OrdinalIgnoreCase);
-    }
-
-    public static string Normalize(string permission)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(permission);
-        var normalized = permission.Trim();
-        var wildcardIndex = normalized.IndexOf('*');
-        var validWildcard = wildcardIndex < 0 ||
-                            normalized == "*" ||
-                            wildcardIndex == normalized.Length - 1 &&
-                            normalized.LastIndexOf('*') == wildcardIndex &&
-                            normalized.EndsWith(".*", StringComparison.Ordinal);
-        if (normalized.Any(char.IsWhiteSpace) ||
-            normalized.StartsWith('.') ||
-            normalized.EndsWith('.') ||
-            normalized.Contains("..", StringComparison.Ordinal) ||
-            !validWildcard)
-        {
-            throw new ArgumentException($"Invalid command permission \"{permission}\".", nameof(permission));
-        }
-
-        return normalized;
     }
 
     private void Sort()
     {
         _grants.Sort((left, right) =>
-            StringComparer.OrdinalIgnoreCase.Compare(left.Permission, right.Permission));
+            StringComparer.Ordinal.Compare(
+                left.Permission.ToString(),
+                right.Permission.ToString()));
     }
+}
+
+public sealed class CommandPermissionDefinition(
+    CommandDomain domain,
+    PermissionGrantPolicy grantPolicy = PermissionGrantPolicy.Standard,
+    LocalizedText? description = null,
+    bool managesStandardPermissions = false,
+    Func<CommandPrincipal, Project?, bool>? implicitGrant = null)
+{
+    private readonly Func<CommandPrincipal, Project?, bool>? _implicitGrant =
+        implicitGrant;
+
+    public CommandDomain Domain { get; } = domain;
+
+    public PermissionGrantPolicy GrantPolicy { get; } = grantPolicy;
+
+    public LocalizedText Description { get; } = description ?? LocalizedText.Empty;
+
+    public bool ManagesStandardPermissions { get; } =
+        managesStandardPermissions;
+
+    internal bool IsImplicitlyGranted(
+        CommandPrincipal principal,
+        Project? project)
+    {
+        return _implicitGrant?.Invoke(principal, project) == true;
+    }
+}
+
+public sealed record RegisteredCommandPermission(
+    ResourceId Id,
+    CommandPermissionDefinition Definition);
+
+public static class BuiltInPermissionIds
+{
+    private static readonly ModId _game = new("game");
+
+    public static ResourceId ManageStandard =>
+        new(_game, "permissions.manage.standard");
 }

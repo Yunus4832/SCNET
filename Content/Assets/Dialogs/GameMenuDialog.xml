@@ -1,9 +1,9 @@
 <Dialog xmlns="runtime-namespace:Game.Widgets">
 
     <CanvasWidget Margin="0, 0" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="12, 10">
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="100, 10">
 
-            <CanvasWidget Size="580, 350" HorizontalAlignment="Center">
+            <CanvasWidget HorizontalAlignment="Center">
                 <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
                 <ScrollPanelWidget Direction="Vertical" Margin="8, 5">
                     <StackPanelWidget Name="StatsPanel" Direction="Vertical" Margin="8, 0"

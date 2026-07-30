@@ -137,14 +137,6 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(context);
-        if (context.Source is not CommandSource.HttpApi)
-        {
-            return CommandResult.LocalizedFail(
-                "command.http_source_required",
-                "HttpSourceRequired_Message",
-                "HTTP 命令必须由 HTTP 前端创建执行上下文。");
-        }
-
         if (!_registry.Adapters.TryGet<HttpCommandBinding>(
                 request.Identity,
                 out var binding) ||

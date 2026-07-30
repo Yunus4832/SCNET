@@ -160,12 +160,27 @@ public sealed class ModHost
         public IModCommandAdapters Adapters { get; } =
             new OwnedCommandAdapters(owner, commands.Adapters);
 
+        public IModCommandPermissions Permissions { get; } =
+            new OwnedCommandPermissions(owner, commands.Permissions);
+
         public IDisposable Register<TCommand>(
             ResourceId id,
             CommandDefinition<TCommand> definition)
             where TCommand : IGameCommand
         {
             return commands.Register(owner, id, definition);
+        }
+    }
+
+    private sealed class OwnedCommandPermissions(
+        ModId owner,
+        CommandPermissionRegistry permissions) : IModCommandPermissions
+    {
+        public IDisposable Register(
+            ResourceId id,
+            CommandPermissionDefinition definition)
+        {
+            return permissions.Register(owner, id, definition);
         }
     }
 

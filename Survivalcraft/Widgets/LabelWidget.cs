@@ -42,20 +42,25 @@ public class LabelWidget : Widget
                 return;
             }
 
-            if (value.StartsWith('[') && value.EndsWith(']'))
-            {
-                var xp = value.Substring(1, value.Length - 2).Split([':']);
-                field = xp.Length > 1 ? LanguageManager.GetContentWidgets(xp[0], xp[1]) : value;
-            }
-            else
-            {
-                field = LanguageManager.Get("Usual", value);
-            }
+            field = ResolveText(value);
 
             _linesSize = Vector2.Zero;
             _linesAvailableWidth = null;
             _linesAvailableHeight = null;
         }
+    }
+
+    private static string ResolveText(string value)
+    {
+        if (value.StartsWith('[') && value.EndsWith(']'))
+        {
+            var parts = value.Substring(1, value.Length - 2).Split([':']);
+            return parts.Length > 1
+                ? LanguageManager.GetContentWidgets(parts[0], parts[1])
+                : value;
+        }
+
+        return value;
     }
 
     public TextAnchor TextAnchor { get; set; }

@@ -1,15 +1,15 @@
 using EntitySystem.Core;
 
+using Game.Localization;
+using Game.Modding;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Serialization;
-using Game.Localization;
 
 namespace Game.Commands;
 
 /// <summary>
-/// A concrete, typed request to perform a game or server operation.
-/// Text, UI, stdin and remote APIs are adapters that create these commands.
+/// A concrete operation. Frontends create commands; domains determine routing.
 /// </summary>
 public interface IGameCommand;
 
@@ -19,23 +19,23 @@ public interface ICommandDefinition
 
     LocalizedText Description { get; }
 
-    string RequiredPermission { get; }
+    CommandDomain Domain { get; }
 
-    CommandSourcePolicy SourcePolicy { get; }
+    ResourceId? RequiredPermission { get; }
 
-    CommandGrantPolicy GrantPolicy { get; }
+    CommandHostRequirement HostRequirement { get; }
 
-    CommandExecutionEnvironment ExecutionEnvironment { get; }
+    CommandPrincipalKind AllowedPrincipals { get; }
 
-    bool IsSourceAllowed(CommandSource source);
+    bool CanInvoke(CommandPrincipal principal, Project? project);
 
-    bool IsAvailable(RunModeType runMode, WorkType workType);
+    bool CanExecuteHere(RunModeType runMode, WorkType workType);
 
     bool IsAuthorized(CommandContext context, IGameCommand command);
 
     bool IsPotentiallyAuthorized(
+        CommandPermissionRegistry permissions,
         CommandPrincipal principal,
-        CommandSource source,
         Project? project);
 
     CommandResult Handle(CommandContext context, IGameCommand command);
@@ -51,7 +51,6 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
     where TCommand : IGameCommand
 {
     private readonly Func<CommandContext, TCommand, CommandResult> _handler;
-    private readonly Func<CommandPrincipal, Project?, bool>? _alternativeAuthorization;
     private readonly Func<PackageStreamReader, TCommand>? _read;
     private readonly Action<PackageStreamWriter, TCommand>? _write;
 
@@ -59,33 +58,32 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
 
     public LocalizedText Description { get; }
 
-    public string RequiredPermission { get; }
+    public CommandDomain Domain { get; }
 
-    public CommandSourcePolicy SourcePolicy { get; }
+    public ResourceId? RequiredPermission { get; }
 
-    public CommandGrantPolicy GrantPolicy { get; }
+    public CommandHostRequirement HostRequirement { get; }
 
-    public CommandExecutionEnvironment ExecutionEnvironment { get; }
+    public CommandPrincipalKind AllowedPrincipals { get; }
 
     public bool SupportsRemoteInvocation => _write is not null && _read is not null;
 
     public CommandDefinition(
         Func<CommandContext, TCommand, CommandResult> handler,
+        CommandDomain domain,
         LocalizedText? description = null,
-        string requiredPermission = "",
-        CommandSourcePolicy sourcePolicy = CommandSourcePolicy.Any,
-        CommandGrantPolicy? grantPolicy = null,
-        CommandExecutionEnvironment executionEnvironment = CommandExecutionEnvironment.Any,
+        ResourceId? requiredPermission = null,
+        CommandHostRequirement hostRequirement = CommandHostRequirement.None,
+        CommandPrincipalKind? allowedPrincipals = null,
         Action<PackageStreamWriter, TCommand>? write = null,
-        Func<PackageStreamReader, TCommand>? read = null,
-        Func<CommandPrincipal, Project?, bool>? alternativeAuthorization = null)
+        Func<PackageStreamReader, TCommand>? read = null)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+        Domain = domain;
         Description = description ?? LocalizedText.Empty;
         RequiredPermission = requiredPermission;
-        SourcePolicy = sourcePolicy;
-        GrantPolicy = grantPolicy ?? GetDefaultGrantPolicy(requiredPermission);
-        ExecutionEnvironment = executionEnvironment;
+        HostRequirement = hostRequirement;
+        AllowedPrincipals = allowedPrincipals ?? GetDefaultPrincipals(domain);
         if ((write is null) != (read is null))
         {
             throw new ArgumentException(
@@ -94,30 +92,55 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
 
         _write = write;
         _read = read;
-        _alternativeAuthorization = alternativeAuthorization;
     }
 
-    public bool IsSourceAllowed(CommandSource source)
+    public bool CanInvoke(CommandPrincipal principal, Project? project)
     {
-        return SourcePolicy switch
+        ArgumentNullException.ThrowIfNull(principal);
+        if ((AllowedPrincipals & principal.Kind) == 0)
         {
-            CommandSourcePolicy.Any => true,
-            CommandSourcePolicy.LocalOnly => source is CommandSource.Local,
-            CommandSourcePolicy.PlayerOnly => source is CommandSource.Player,
-            CommandSourcePolicy.ServerConsoleOnly => source is CommandSource.ServerConsole,
-            CommandSourcePolicy.HttpApiOnly => source is CommandSource.HttpApi,
+            return false;
+        }
+
+        if (HostRequirement is CommandHostRequirement.HeadlessServer &&
+            (CommonLib.WorkType is not WorkType.Server ||
+             RunMode.Value is not RunModeType.HeadlessServer))
+        {
+            return false;
+        }
+
+        return Domain switch
+        {
+            CommandDomain.Application =>
+                principal.Is(CommandPrincipalKind.ApplicationUser) ||
+                principal.Is(CommandPrincipalKind.System),
+            CommandDomain.World =>
+                principal.Is(CommandPrincipalKind.Player) ||
+                principal.Is(CommandPrincipalKind.ServerOperator) ||
+                principal.Is(CommandPrincipalKind.System),
+            CommandDomain.Server =>
+                CommonLib.WorkType is WorkType.Client or WorkType.Server &&
+                (principal.Is(CommandPrincipalKind.Player) ||
+                 principal.Is(CommandPrincipalKind.ServerOperator) ||
+                 principal.Is(CommandPrincipalKind.System)),
             _ => false
         };
     }
 
-    public bool IsAvailable(RunModeType runMode, WorkType workType)
+    public bool CanExecuteHere(RunModeType runMode, WorkType workType)
     {
-        return ExecutionEnvironment switch
+        if (HostRequirement is CommandHostRequirement.HeadlessServer &&
+            (workType is not WorkType.Server ||
+             runMode is not RunModeType.HeadlessServer))
         {
-            CommandExecutionEnvironment.Any => true,
-            CommandExecutionEnvironment.Server => workType is WorkType.Server,
-            CommandExecutionEnvironment.HeadlessServer =>
-                workType is WorkType.Server && runMode is RunModeType.HeadlessServer,
+            return false;
+        }
+
+        return Domain switch
+        {
+            CommandDomain.Application => true,
+            CommandDomain.World => workType is WorkType.Local or WorkType.Server,
+            CommandDomain.Server => workType is WorkType.Server,
             _ => false
         };
     }
@@ -129,20 +152,24 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
 
     public bool IsAuthorized(CommandContext context, IGameCommand command)
     {
-        return context.Principal.HasPermission(RequiredPermission) ||
-               _alternativeAuthorization?.Invoke(
+        return RequiredPermission is not { } permission ||
+               context.Registry.Permissions.HasEffectivePermission(
+                   permission,
                    context.Principal,
-                   context.Project) == true;
+                   context.Project);
     }
 
     public bool IsPotentiallyAuthorized(
+        CommandPermissionRegistry permissions,
         CommandPrincipal principal,
-        CommandSource source,
         Project? project)
     {
-        return IsSourceAllowed(source) &&
-               (principal.HasPermission(RequiredPermission) ||
-                _alternativeAuthorization?.Invoke(principal, project) == true);
+        return CanInvoke(principal, project) &&
+               (RequiredPermission is not { } permission ||
+                permissions.HasEffectivePermission(
+                    permission,
+                    principal,
+                    project));
     }
 
     public byte[] Encode(IGameCommand command)
@@ -177,13 +204,23 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         return command;
     }
 
-    private static CommandGrantPolicy GetDefaultGrantPolicy(string permission)
+    private static CommandPrincipalKind GetDefaultPrincipals(
+        CommandDomain domain)
     {
-        return permission.StartsWith("server.", StringComparison.OrdinalIgnoreCase) ||
-               string.Equals(permission, "server.*", StringComparison.OrdinalIgnoreCase)
-            ? CommandGrantPolicy.Protected
-            : CommandGrantPolicy.Standard;
+        return domain switch
+        {
+            CommandDomain.Application =>
+                CommandPrincipalKind.ApplicationUser |
+                CommandPrincipalKind.System,
+            CommandDomain.World or CommandDomain.Server =>
+                CommandPrincipalKind.Player |
+                CommandPrincipalKind.ServerOperator |
+                CommandPrincipalKind.System,
+            _ => CommandPrincipalKind.None
+        };
     }
 }
 
-public sealed record RegisteredGameCommand(ResourceId Id, ICommandDefinition Definition);
+public sealed record RegisteredGameCommand(
+    ResourceId Id,
+    ICommandDefinition Definition);

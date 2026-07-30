@@ -39,10 +39,19 @@ public interface IModCommands
 {
     IModCommandAdapters Adapters { get; }
 
+    IModCommandPermissions Permissions { get; }
+
     IDisposable Register<TCommand>(
         ResourceId id,
         CommandDefinition<TCommand> definition)
         where TCommand : IGameCommand;
+}
+
+public interface IModCommandPermissions
+{
+    IDisposable Register(
+        ResourceId id,
+        CommandPermissionDefinition definition);
 }
 
 public interface IModCommandAdapters

@@ -17,10 +17,60 @@ public static class BuiltInCommands
 
     public static void Register(IModCommands commands, ModId owner)
     {
+        var permissionGrant = new ResourceId(owner, "permissions.grant");
+        var permissionManageStandard =
+            new ResourceId(owner, "permissions.manage.standard");
+        var worldTimeSet = new ResourceId(owner, "world.time.set");
+        var worldPrecipitationSet =
+            new ResourceId(owner, "world.weather.precipitation.set");
+        var worldFogSet = new ResourceId(owner, "world.weather.fog.set");
+        var worldLightningTrigger =
+            new ResourceId(owner, "world.weather.lightning.trigger");
+        var worldSeasonSet = new ResourceId(owner, "world.season.set");
+        var serverStop = new ResourceId(owner, "server.stop");
+        var serverAuthManage = new ResourceId(owner, "server.auth.manage");
+        var playerProfileManage =
+            new ResourceId(owner, "server.player.profile.manage");
+
+        RegisterPermission(
+            commands,
+            permissionGrant,
+            CommandDomain.Server,
+            PermissionGrantPolicy.OperatorOnly,
+            implicitGrant: (principal, _) =>
+                principal.DelegablePermissions.Count > 0 ||
+                principal.HasPermission(permissionManageStandard));
+        RegisterPermission(
+            commands,
+            permissionManageStandard,
+            CommandDomain.Server,
+            managesStandardPermissions: true);
+        RegisterCreativePermission(commands, worldTimeSet);
+        RegisterCreativePermission(commands, worldPrecipitationSet);
+        RegisterCreativePermission(commands, worldFogSet);
+        RegisterCreativePermission(commands, worldLightningTrigger);
+        RegisterCreativePermission(commands, worldSeasonSet);
+        RegisterPermission(
+            commands,
+            serverStop,
+            CommandDomain.Server,
+            PermissionGrantPolicy.OperatorOnly);
+        RegisterPermission(
+            commands,
+            serverAuthManage,
+            CommandDomain.Server,
+            PermissionGrantPolicy.OperatorOnly);
+        RegisterPermission(
+            commands,
+            playerProfileManage,
+            CommandDomain.Server,
+            PermissionGrantPolicy.OperatorOnly);
+
         commands.Register(
             new ResourceId(owner, "help"),
             new CommandDefinition<ShowCommandHelpCommand>(
                 ExecuteHelp,
+                CommandDomain.World,
                 CommandDescription("Help_Description", "显示可用指令"),
                 write: static (writer, command) =>
                 {
@@ -36,6 +86,7 @@ public static class BuiltInCommands
             new ResourceId(owner, "world/time/get"),
             new CommandDefinition<GetWorldTimeCommand>(
                 ExecuteTimeGet,
+                CommandDomain.World,
                 CommandDescription("TimeGet_Description", "显示当前世界时间"),
                 write: static (_, _) => { },
                 read: static _ => new GetWorldTimeCommand()));
@@ -43,60 +94,57 @@ public static class BuiltInCommands
             new ResourceId(owner, "world/time/set"),
             new CommandDefinition<SetWorldTimeCommand>(
                 ExecuteTimeSet,
+                CommandDomain.World,
                 CommandDescription("TimeSet_Description", "设置世界时间"),
-                "world.time.set",
+                worldTimeSet,
                 write: static (writer, command) => writer.Write(command.Preset),
-                read: static reader => new SetWorldTimeCommand(reader.ReadString()),
-                alternativeAuthorization:
-                    WorldControlCommandHandlers.IsCreativePlayer));
+                read: static reader => new SetWorldTimeCommand(reader.ReadString())));
         commands.Register(
             new ResourceId(owner, "world/time/advance"),
             new CommandDefinition<AdvanceWorldTimeCommand>(
                 ExecuteTimeAdvance,
+                CommandDomain.World,
                 CommandDescription("TimeAdvance_Description", "前进到下一个时间节点"),
-                "world.time.set",
+                worldTimeSet,
                 write: static (_, _) => { },
-                read: static _ => new AdvanceWorldTimeCommand(),
-                alternativeAuthorization:
-                    WorldControlCommandHandlers.IsCreativePlayer));
+                read: static _ => new AdvanceWorldTimeCommand()));
         commands.Register(
             new ResourceId(owner, "world/weather/precipitation/set"),
             new CommandDefinition<SetPrecipitationCommand>(
                 WorldControlCommandHandlers.SetPrecipitation,
+                CommandDomain.World,
                 CommandDescription("WeatherRain_Description", "开启或停止降水"),
-                "world.weather.precipitation.set",
+                worldPrecipitationSet,
                 write: static (writer, command) => writer.Write(command.Enabled),
-                read: static reader => new SetPrecipitationCommand(reader.ReadBoolean()),
-                alternativeAuthorization:
-                    WorldControlCommandHandlers.IsCreativePlayer));
+                read: static reader => new SetPrecipitationCommand(reader.ReadBoolean())));
         commands.Register(
             new ResourceId(owner, "world/weather/fog/set"),
             new CommandDefinition<SetFogCommand>(
                 WorldControlCommandHandlers.SetFog,
+                CommandDomain.World,
                 CommandDescription("WeatherFog_Description", "开启或关闭雾气"),
-                "world.weather.fog.set",
+                worldFogSet,
                 write: static (writer, command) => writer.Write(command.Enabled),
-                read: static reader => new SetFogCommand(reader.ReadBoolean()),
-                alternativeAuthorization:
-                    WorldControlCommandHandlers.IsCreativePlayer));
+                read: static reader => new SetFogCommand(reader.ReadBoolean())));
         commands.Register(
             new ResourceId(owner, "world/weather/lightning/trigger_player"),
             new CommandDefinition<TriggerPlayerLightningCommand>(
                 WorldControlCommandHandlers.TriggerPlayerLightning,
+                CommandDomain.World,
                 CommandDescription(
                     "LightningPlayer_Description",
                     "在玩家注视位置附近触发闪电"),
-                "world.weather.lightning.trigger",
+                worldLightningTrigger,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (_, _) => { },
-                read: static _ => new TriggerPlayerLightningCommand(),
-                alternativeAuthorization:
-                    WorldControlCommandHandlers.IsCreativePlayer));
+                read: static _ => new TriggerPlayerLightningCommand()));
         commands.Register(
             new ResourceId(owner, "world/weather/lightning/trigger"),
             new CommandDefinition<TriggerLightningCommand>(
                 WorldControlCommandHandlers.TriggerLightning,
+                CommandDomain.World,
                 CommandDescription("LightningTarget_Description", "在目标附近触发闪电"),
-                "world.weather.lightning.trigger",
+                worldLightningTrigger,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.Position);
@@ -109,8 +157,9 @@ public static class BuiltInCommands
             new ResourceId(owner, "world/season/set"),
             new CommandDefinition<SetSeasonCommand>(
                 WorldControlCommandHandlers.SetSeason,
+                CommandDomain.World,
                 CommandDescription("SeasonSet_Description", "设置当前季节"),
-                "world.season.set",
+                worldSeasonSet,
                 write: static (writer, command) =>
                 {
                     writer.WriteEnum(command.Season);
@@ -118,124 +167,134 @@ public static class BuiltInCommands
                 },
                 read: static reader => new SetSeasonCommand(
                     reader.ReadEnum<Season>(),
-                    reader.ReadSingle()),
-                alternativeAuthorization:
-                    WorldControlCommandHandlers.IsCreativePlayer));
+                    reader.ReadSingle())));
         commands.Register(
             new ResourceId(owner, "player/list"),
             new CommandDefinition<ListPlayersCommand>(
                 ExecutePlayerList,
+                CommandDomain.World,
                 CommandDescription("Players_Description", "列出已知玩家及其在线状态"),
                 write: static (_, _) => { },
                 read: static _ => new ListPlayersCommand()));
         commands.Register(
-            new ResourceId(owner, "server/run_mode/get"),
+            new ResourceId(owner, "application/run_mode/get"),
             new CommandDefinition<GetRunModeCommand>(
                 ExecuteRunModeGet,
+                CommandDomain.Application,
                 CommandDescription("RunModeGet_Description", "显示当前运行模式")));
         commands.Register(
-            new ResourceId(owner, "server/run_mode/set"),
+            new ResourceId(owner, "application/run_mode/set"),
             new CommandDefinition<SetRunModeCommand>(
                 ExecuteRunModeSet,
+                CommandDomain.Application,
                 CommandDescription(
                     "RunModeSet_Description",
-                    "切换运行模式并重启到主菜单"),
-                "server.run_mode.set",
-                grantPolicy: CommandGrantPolicy.NonGrantable));
+                    "切换运行模式并重启到主菜单")));
         commands.Register(
-            new ResourceId(owner, "local/language/get"),
+            new ResourceId(owner, "application/language/get"),
             new CommandDefinition<GetLanguageCommand>(
                 ExecuteLanguageGet,
-                CommandDescription("LanguageGet_Description", "显示当前语言"),
-                sourcePolicy: CommandSourcePolicy.LocalOnly));
+                CommandDomain.Application,
+                CommandDescription("LanguageGet_Description", "显示当前语言")));
         commands.Register(
-            new ResourceId(owner, "local/language/set"),
+            new ResourceId(owner, "application/language/set"),
             new CommandDefinition<SetLanguageCommand>(
                 ExecuteLanguageSet,
-                CommandDescription("LanguageSet_Description", "切换本地界面语言"),
-                sourcePolicy: CommandSourcePolicy.LocalOnly));
+                CommandDomain.Application,
+                CommandDescription("LanguageSet_Description", "切换本地界面语言")));
         commands.Register(
             new ResourceId(owner, "server/stop"),
             new CommandDefinition<StopServerCommand>(
                 ExecuteStop,
+                CommandDomain.Server,
                 CommandDescription("StopAction_Description", "停止 Headless 服务端"),
-                "server.stop",
-                CommandSourcePolicy.ServerConsoleOnly,
-                CommandGrantPolicy.NonGrantable,
-                CommandExecutionEnvironment.HeadlessServer));
+                serverStop,
+                CommandHostRequirement.HeadlessServer));
         commands.Register(
             new ResourceId(owner, "server/auth/help"),
             new CommandDefinition<ShowServerAuthHelpCommand>(
                 ExecuteAuthHelp,
+                CommandDomain.Server,
                 CommandDescription("AuthHelp_Description", "显示服务器认领帮助")));
         commands.Register(
             new ResourceId(owner, "server/auth/claim"),
             new CommandDefinition<ClaimServerAdministrationCommand>(
                 ExecuteAuthClaim,
+                CommandDomain.Server,
                 CommandDescription(
                     "AuthClaim_Description",
                     "使用认领码初始化在线玩家的管理权限"),
-                sourcePolicy: CommandSourcePolicy.PlayerOnly,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (writer, command) => writer.Write(command.Code),
                 read: static reader => new ClaimServerAdministrationCommand(reader.ReadString())));
         commands.Register(
             new ResourceId(owner, "server/auth/status"),
             new CommandDefinition<GetServerAuthStatusCommand>(
                 ExecuteAuthStatus,
+                CommandDomain.Server,
                 CommandDescription("AuthStatus_Description", "查看服务器认领状态"),
-                sourcePolicy: CommandSourcePolicy.ServerConsoleOnly));
+                serverAuthManage));
         commands.Register(
             new ResourceId(owner, "server/auth/code"),
             new CommandDefinition<GetServerAuthCodeCommand>(
                 ExecuteAuthCode,
+                CommandDomain.Server,
                 CommandDescription("AuthCode_Description", "显示当前服务器认领码"),
-                sourcePolicy: CommandSourcePolicy.ServerConsoleOnly));
+                serverAuthManage));
         commands.Register(
             new ResourceId(owner, "server/auth/regenerate"),
             new CommandDefinition<RegenerateServerAuthCodeCommand>(
                 ExecuteAuthRegenerate,
+                CommandDomain.Server,
                 CommandDescription("AuthRegenerate_Description", "重新生成服务器认领码"),
-                sourcePolicy: CommandSourcePolicy.ServerConsoleOnly));
+                serverAuthManage));
         commands.Register(
             new ResourceId(owner, "permission/help"),
             new CommandDefinition<ShowPermissionHelpCommand>(
                 ExecutePermissionHelp,
+                CommandDomain.Server,
                 CommandDescription("PermissionHelp_Description", "显示授权命令帮助")));
         commands.Register(
             new ResourceId(owner, "permission/players"),
             new CommandDefinition<ListPermissionPlayersCommand>(
                 ExecutePermissionPlayers,
+                CommandDomain.Server,
                 CommandDescription("PermissionPlayers_Description", "列出当前可授权玩家"),
-                CommandPermissionSet.GrantPermission));
+                permissionGrant));
         commands.Register(
             new ResourceId(owner, "permission/nodes"),
             new CommandDefinition<ListPermissionNodesCommand>(
                 ExecutePermissionNodes,
+                CommandDomain.Server,
                 CommandDescription("PermissionNodes_Description", "列出当前可授权权限节点"),
-                CommandPermissionSet.GrantPermission));
+                permissionGrant));
         commands.Register(
             new ResourceId(owner, "permission/list_self"),
             new CommandDefinition<ListOwnPermissionsCommand>(
                 ExecutePermissionListSelf,
+                CommandDomain.Server,
                 CommandDescription("PermissionListSelf_Description", "查看自己的命令权限"),
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (_, _) => { },
                 read: static _ => new ListOwnPermissionsCommand()));
         commands.Register(
             new ResourceId(owner, "permission/list_player"),
             new CommandDefinition<ListPlayerPermissionsCommand>(
                 ExecutePermissionListPlayer,
+                CommandDomain.Server,
                 CommandDescription(
                     "PermissionListPlayer_Description",
                     "查看指定玩家的命令权限"),
-                CommandPermissionSet.GrantPermission,
+                permissionGrant,
                 write: static (writer, command) => writer.Write(command.Player),
                 read: static reader => new ListPlayerPermissionsCommand(reader.ReadString())));
         commands.Register(
             new ResourceId(owner, "permission/grant"),
             new CommandDefinition<GrantPlayerPermissionCommand>(
                 ExecutePermissionGrant,
+                CommandDomain.Server,
                 CommandDescription("PermissionGrant_Description", "授予玩家命令权限"),
-                CommandPermissionSet.GrantPermission,
+                permissionGrant,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.Player);
@@ -250,8 +309,9 @@ public static class BuiltInCommands
             new ResourceId(owner, "permission/revoke"),
             new CommandDefinition<RevokePlayerPermissionCommand>(
                 ExecutePermissionRevoke,
+                CommandDomain.Server,
                 CommandDescription("PermissionRevoke_Description", "撤销玩家命令权限"),
-                CommandPermissionSet.GrantPermission,
+                permissionGrant,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.Player);
@@ -264,10 +324,11 @@ public static class BuiltInCommands
             new ResourceId(owner, "player/profile/update_self"),
             new CommandDefinition<UpdateOwnPlayerProfileCommand>(
                 PlayerAndMessageCommandHandlers.UpdateOwnPlayerProfile,
+                CommandDomain.World,
                 CommandDescription(
                     "PlayerProfileSelf_Description",
                     "更新自己的玩家资料"),
-                sourcePolicy: CommandSourcePolicy.PlayerOnly,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.Name);
@@ -282,19 +343,18 @@ public static class BuiltInCommands
             new ResourceId(owner, "player/profile/update"),
             new CommandDefinition<UpdatePlayerProfileCommand>(
                 PlayerAndMessageCommandHandlers.UpdatePlayerProfile,
+                CommandDomain.Server,
                 CommandDescription(
                     "PlayerProfileServer_Description",
                     "由服务器更新玩家资料"),
-                "player.profile.manage",
-                CommandSourcePolicy.ServerConsoleOnly,
-                CommandGrantPolicy.NonGrantable,
-                CommandExecutionEnvironment.Server));
+                playerProfileManage));
         commands.Register(
             new ResourceId(owner, "chat/send"),
             new CommandDefinition<SendChatMessageCommand>(
                 PlayerAndMessageCommandHandlers.SendChatMessage,
+                CommandDomain.World,
                 CommandDescription("ChatSend_Description", "发送聊天消息"),
-                sourcePolicy: CommandSourcePolicy.PlayerOnly,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (writer, command) =>
                 {
                     writer.WriteEnum(command.Channel);
@@ -307,32 +367,36 @@ public static class BuiltInCommands
             new ResourceId(owner, "team/create"),
             new CommandDefinition<CreateTeamCommand>(
                 GroupCommandHandlers.CreateTeam,
+                CommandDomain.World,
                 CommandDescription("TeamCreate_Description", "创建队伍"),
-                sourcePolicy: CommandSourcePolicy.PlayerOnly,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (writer, command) => writer.Write(command.Name),
                 read: static reader => new CreateTeamCommand(reader.ReadString())));
         commands.Register(
             new ResourceId(owner, "team/request_join"),
             new CommandDefinition<RequestJoinTeamCommand>(
                 GroupCommandHandlers.RequestJoin,
+                CommandDomain.World,
                 CommandDescription("TeamJoin_Description", "申请加入队伍"),
-                sourcePolicy: CommandSourcePolicy.PlayerOnly,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (writer, command) => writer.Write(command.TeamId),
                 read: static reader => new RequestJoinTeamCommand(reader.ReadGuid())));
         commands.Register(
             new ResourceId(owner, "team/invite"),
             new CommandDefinition<InvitePlayerToTeamCommand>(
                 GroupCommandHandlers.InvitePlayer,
+                CommandDomain.World,
                 CommandDescription("TeamInvite_Description", "邀请玩家加入队伍"),
-                sourcePolicy: CommandSourcePolicy.PlayerOnly,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (writer, command) => writer.Write(command.PlayerId),
                 read: static reader => new InvitePlayerToTeamCommand(reader.ReadGuid())));
         commands.Register(
             new ResourceId(owner, "team/respond"),
             new CommandDefinition<RespondTeamRequestCommand>(
                 GroupCommandHandlers.Respond,
+                CommandDomain.World,
                 CommandDescription("TeamRespond_Description", "响应队伍请求"),
-                sourcePolicy: CommandSourcePolicy.PlayerOnly,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.OperationId);
@@ -345,8 +409,9 @@ public static class BuiltInCommands
             new ResourceId(owner, "team/leave"),
             new CommandDefinition<LeaveTeamCommand>(
                 GroupCommandHandlers.LeaveTeam,
+                CommandDomain.World,
                 CommandDescription("TeamLeave_Description", "退出当前队伍"),
-                sourcePolicy: CommandSourcePolicy.PlayerOnly,
+                allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (_, _) => { },
                 read: static _ => new LeaveTeamCommand()));
 
@@ -361,6 +426,34 @@ public static class BuiltInCommands
         commands.Adapters.Register(new ResourceId(owner, "text/auth"), CreateAuthText());
         commands.Adapters.Register(new ResourceId(owner, "text/permission"), CreatePermissionText());
         commands.Adapters.Register(new ResourceId(owner, "text/team"), CreateTeamText());
+    }
+
+    private static void RegisterCreativePermission(
+        IModCommands commands,
+        ResourceId id)
+    {
+        RegisterPermission(
+            commands,
+            id,
+            CommandDomain.World,
+            implicitGrant: WorldControlCommandHandlers.IsCreativePlayer);
+    }
+
+    private static void RegisterPermission(
+        IModCommands commands,
+        ResourceId id,
+        CommandDomain domain,
+        PermissionGrantPolicy grantPolicy = PermissionGrantPolicy.Standard,
+        bool managesStandardPermissions = false,
+        Func<CommandPrincipal, Project?, bool>? implicitGrant = null)
+    {
+        commands.Permissions.Register(
+            id,
+            new CommandPermissionDefinition(
+                domain,
+                grantPolicy,
+                managesStandardPermissions: managesStandardPermissions,
+                implicitGrant: implicitGrant));
     }
 
     internal static TextCommand CreateHelpText()
@@ -422,8 +515,7 @@ public static class BuiltInCommands
                     _ => new ListPlayersCommand(),
                     CommandDescription("PlayersList_Description", "显示玩家列表"))
             ],
-            ["list"],
-            [CommandSource.Player, CommandSource.ServerConsole]);
+            ["list"]);
     }
 
     internal static TextCommand CreateRunModeText()
@@ -452,8 +544,7 @@ public static class BuiltInCommands
                         "RunModeSet_Description",
                         "切换运行模式并重启到主菜单"))
             ],
-            ["mode"],
-            [CommandSource.ServerConsole]);
+            ["mode"]);
     }
 
     internal static TextCommand CreateLanguageText()
@@ -478,8 +569,7 @@ public static class BuiltInCommands
                         arguments.Get<string>("language")),
                     CommandDescription("LanguageSet_Description", "切换本地界面语言"))
             ],
-            ["lang"],
-            [CommandSource.Local]);
+            ["lang"]);
     }
 
     internal static TextCommand CreateStopText()
@@ -554,7 +644,8 @@ public static class BuiltInCommands
                         new CommandArgument(
                             "season",
                             CommandArgumentKind.String,
-                            seasons)
+                            seasons,
+                            _ => SeasonSuggestions())
                     ],
                     typeof(SetSeasonCommand),
                     arguments => new SetSeasonCommand(
@@ -569,11 +660,13 @@ public static class BuiltInCommands
                         new CommandArgument(
                             "season",
                             CommandArgumentKind.String,
-                            seasons),
+                            seasons,
+                            _ => SeasonSuggestions()),
                         new CommandArgument(
                             "progress",
                             CommandArgumentKind.String,
-                            progressStages)
+                            progressStages,
+                            _ => SeasonProgressSuggestions())
                     ],
                     typeof(SetSeasonCommand),
                     arguments => new SetSeasonCommand(
@@ -776,12 +869,10 @@ public static class BuiltInCommands
         var textAdapter = new TextCommandAdapter(context.Registry);
         var names = textAdapter.Entries
             .Where(entry =>
-                entry.Command.SupportsSource(context.Source) &&
                 entry.Command.Routes.Any(route =>
-                    context.Registry.CanExecute(
+                    context.Registry.CanInvoke(
                         route.CommandType,
-                        context.Principal,
-                        context.Source)))
+                        context.Principal)))
             .Select(entry => "/" + entry.Command.Name)
             .ToArray();
         return names.Length == 0
@@ -811,20 +902,11 @@ public static class BuiltInCommands
                 name);
         }
 
-        if (!registered.Command.SupportsSource(context.Source))
-        {
-            return CommandResult.LocalizedFail(
-                "command.frontend_unavailable",
-                "CommandFrontendUnavailable_Message",
-                "该指令未向当前文本入口开放。");
-        }
-
         var routes = registered.Command.Routes
             .Where(route =>
-                context.Registry.CanExecute(
+                context.Registry.CanInvoke(
                     route.CommandType,
-                    context.Principal,
-                    context.Source))
+                    context.Principal))
             .Select(route =>
             {
                 var suffix = string.Join(
@@ -914,7 +996,7 @@ public static class BuiltInCommands
         GetRunModeCommand command)
     {
         return CommandResult.LocalizedOk(
-            "server.run_mode",
+            "application.run_mode",
             "CurrentRunMode_Message",
             "当前运行模式：{0}。",
             FormatRunMode(RunMode.Value));
@@ -927,7 +1009,7 @@ public static class BuiltInCommands
         if (!Enum.IsDefined(command.TargetMode))
         {
             return CommandResult.LocalizedFail(
-                "server.run_mode.invalid",
+                "application.run_mode.invalid",
                 "RunModeInvalid_Message",
                 "不支持的运行模式。");
         }
@@ -935,7 +1017,7 @@ public static class BuiltInCommands
         if (command.TargetMode == RunMode.Value)
         {
             return CommandResult.LocalizedOk(
-                "server.run_mode.unchanged",
+                "application.run_mode.unchanged",
                 "RunModeUnchanged_Message",
                 "当前已经是 {0} 模式，无需重启。",
                 FormatRunMode(command.TargetMode));
@@ -947,7 +1029,7 @@ public static class BuiltInCommands
             Target = SessionTarget.MainMenu
         });
         return CommandResult.LocalizedOk(
-            "server.run_mode.restarting",
+            "application.run_mode.restarting",
             "RunModeRestarting_Message",
             "运行模式已切换为 {0}，正在重启到主菜单。",
             FormatRunMode(command.TargetMode));
@@ -959,7 +1041,7 @@ public static class BuiltInCommands
     {
         var languageType = CurrentLanguageType();
         return CommandResult.LocalizedOk(
-            "local.language",
+            "application.language",
             "CurrentLanguage_Message",
             "当前语言：{0}（{1}）。",
             languageType,
@@ -975,7 +1057,7 @@ public static class BuiltInCommands
         if (languageType is null)
         {
             return CommandResult.LocalizedFail(
-                "local.language.invalid",
+                "application.language.invalid",
                 "LanguageInvalid_Message",
                 "不支持的语言：{0}。可用语言：{1}。",
                 command.LanguageType,
@@ -986,7 +1068,7 @@ public static class BuiltInCommands
         if (languageType.Equals(currentLanguage, StringComparison.OrdinalIgnoreCase))
         {
             return CommandResult.LocalizedOk(
-                "local.language.unchanged",
+                "application.language.unchanged",
                 "LanguageUnchanged_Message",
                 "当前已经使用 {0}，无需切换。",
                 LanguageManager.GetLanguageDisplayName(languageType));
@@ -995,7 +1077,7 @@ public static class BuiltInCommands
         if (CurrentModRuntime.Value is not { } runtime)
         {
             return CommandResult.LocalizedFail(
-                "local.language.unavailable",
+                "application.language.unavailable",
                 "CommandUnavailable_Message",
                 "命令系统尚未就绪。");
         }
@@ -1008,7 +1090,7 @@ public static class BuiltInCommands
 
         SettingsManager.SaveSettings();
         return CommandResult.LocalizedOk(
-            "local.language.changed",
+            "application.language.changed",
             "LanguageChanged_Message",
             "语言已切换为 {0}（{1}）。",
             languageType,
@@ -1080,6 +1162,41 @@ public static class BuiltInCommands
         ];
     }
 
+    private static IEnumerable<CommandArgumentSuggestion> SeasonSuggestions()
+    {
+        return
+        [
+            new CommandArgumentSuggestion(
+                "summer",
+                CommandDescription("SeasonSummer_Description", "夏季")),
+            new CommandArgumentSuggestion(
+                "autumn",
+                CommandDescription("SeasonAutumn_Description", "秋季")),
+            new CommandArgumentSuggestion(
+                "winter",
+                CommandDescription("SeasonWinter_Description", "冬季")),
+            new CommandArgumentSuggestion(
+                "spring",
+                CommandDescription("SeasonSpring_Description", "春季"))
+        ];
+    }
+
+    private static IEnumerable<CommandArgumentSuggestion> SeasonProgressSuggestions()
+    {
+        return
+        [
+            new CommandArgumentSuggestion(
+                "start",
+                CommandDescription("SeasonStart_Description", "季节初期")),
+            new CommandArgumentSuggestion(
+                "middle",
+                CommandDescription("SeasonMiddle_Description", "季节中期")),
+            new CommandArgumentSuggestion(
+                "end",
+                CommandDescription("SeasonEnd_Description", "季节末期"))
+        ];
+    }
+
     private static IEnumerable<CommandArgumentSuggestion> SuggestLanguages(
         CommandSuggestionContext context)
     {
@@ -1126,7 +1243,7 @@ public static class BuiltInCommands
                 "auth.claimed",
                 "AuthClaimed_Message",
                 "服务器管理员已经完成首次认领。")
-            : context.Source is CommandSource.ServerConsole
+            : context.Principal.Is(CommandPrincipalKind.ServerOperator)
                 ? CommandResult.LocalizedOk(
                     "auth.unclaimed",
                     "AuthUnclaimedConsole_Message",
@@ -1252,11 +1369,13 @@ public static class BuiltInCommands
         ShowPermissionHelpCommand command)
     {
         var players = GetPlayers(context.Project).Select(player => player.Name).ToArray();
-        var nodes = context.Registry.GetPermissionNodes()
-            .Where(node => context.Registry.CanGrantPermission(
+        var nodes = context.Registry.Permissions.Definitions
+            .Select(node => node.Id)
+            .Where(node => context.Registry.Permissions.CanGrant(
                 node,
                 context.Principal,
-                context.Source))
+                context.Project))
+            .Select(node => node.ToString())
             .ToArray();
         return CommandResult.LocalizedOk(
             "permission.help",
@@ -1288,11 +1407,13 @@ public static class BuiltInCommands
         CommandContext context,
         ListPermissionNodesCommand command)
     {
-        var nodes = context.Registry.GetPermissionNodes()
-            .Where(node => context.Registry.CanGrantPermission(
+        var nodes = context.Registry.Permissions.Definitions
+            .Select(node => node.Id)
+            .Where(node => context.Registry.Permissions.CanGrant(
                 node,
                 context.Principal,
-                context.Source))
+                context.Project))
+            .Select(node => node.ToString())
             .ToArray();
         return nodes.Length == 0
             ? CommandResult.LocalizedOk(
@@ -1324,12 +1445,7 @@ public static class BuiltInCommands
             return failure;
         }
 
-        string permission;
-        try
-        {
-            permission = CommandPermissionSet.Normalize(command.Permission);
-        }
-        catch (ArgumentException)
+        if (!TryParsePermission(command.Permission, out var permission))
         {
             return CommandResult.LocalizedFail(
                 "permission.invalid",
@@ -1337,16 +1453,17 @@ public static class BuiltInCommands
                 "权限节点格式无效。");
         }
 
-        if (!context.Registry.CanGrantPermission(
+        if (!context.Registry.Permissions.CanGrant(
                 permission,
                 context.Principal,
-                context.Source))
+                context.Project,
+                command.CanDelegate))
         {
             return CommandResult.LocalizedFail(
                 "permission.cannot_delegate",
                 "PermissionCannotGrant_Message",
                 "权限节点 {0} 不可授权，或你没有对应的管理范围。",
-                permission);
+                permission.ToString());
         }
 
         if (!TryFindPlayer(context, command.Player, out var player, out failure))
@@ -1367,7 +1484,7 @@ public static class BuiltInCommands
                 "PermissionUnchanged_Message",
                 "{0} 已拥有相同或更高范围的 {1} 权限。",
                 player.Name,
-                permission);
+                permission.ToString());
         }
 
         return CommandResult.LocalizedOk(
@@ -1379,7 +1496,7 @@ public static class BuiltInCommands
                 ? "已授予 {0} 权限 {1}（允许再授权）。"
                 : "已授予 {0} 权限 {1}（仅允许使用）。",
             player.Name,
-            permission);
+            permission.ToString());
     }
 
     private static CommandResult ExecutePermissionRevoke(
@@ -1391,12 +1508,7 @@ public static class BuiltInCommands
             return failure;
         }
 
-        string permission;
-        try
-        {
-            permission = CommandPermissionSet.Normalize(command.Permission);
-        }
-        catch (ArgumentException)
+        if (!TryParsePermission(command.Permission, out var permission))
         {
             return CommandResult.LocalizedFail(
                 "permission.invalid",
@@ -1404,16 +1516,16 @@ public static class BuiltInCommands
                 "权限节点格式无效。");
         }
 
-        if (!context.Registry.CanGrantPermission(
+        if (!context.Registry.Permissions.CanGrant(
                 permission,
                 context.Principal,
-                context.Source))
+                context.Project))
         {
             return CommandResult.LocalizedFail(
                 "permission.cannot_delegate",
                 "PermissionCannotRevoke_Message",
                 "权限节点 {0} 不可撤销，或你没有对应的管理范围。",
-                permission);
+                permission.ToString());
         }
 
         if (!TryFindPlayer(context, command.Player, out var player, out failure))
@@ -1428,7 +1540,7 @@ public static class BuiltInCommands
                 "PermissionNotHeld_Message",
                 "{0} 没有直接持有权限 {1}。",
                 player.Name,
-                permission);
+                permission.ToString());
         }
 
         SynchronizePermissions(player);
@@ -1437,7 +1549,7 @@ public static class BuiltInCommands
             "PermissionRevoked_Message",
             "已撤销 {0} 的权限 {1}。",
             player.Name,
-            permission);
+            permission.ToString());
     }
 
     private static CommandResult ExecuteTimeSet(
@@ -1519,8 +1631,7 @@ public static class BuiltInCommands
         CommandContext context,
         StopServerCommand command)
     {
-        if (context.Source is not CommandSource.ServerConsole ||
-            RunMode.Value is not RunModeType.HeadlessServer ||
+        if (RunMode.Value is not RunModeType.HeadlessServer ||
             CommonLib.WorkType is not WorkType.Server)
         {
             return CommandResult.LocalizedFail(
@@ -1602,6 +1713,32 @@ public static class BuiltInCommands
                 : string.Equals(candidate.Name, value, StringComparison.OrdinalIgnoreCase));
     }
 
+    private static bool TryParsePermission(
+        string value,
+        out ResourceId permission)
+    {
+        var separator = value.IndexOf(':');
+        if (separator <= 0 || separator == value.Length - 1 ||
+            value.IndexOf(':', separator + 1) >= 0)
+        {
+            permission = default;
+            return false;
+        }
+
+        try
+        {
+            permission = new ResourceId(
+                new ModId(value[..separator]),
+                value[(separator + 1)..]);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            permission = default;
+            return false;
+        }
+    }
+
     private static IEnumerable<PlayerData> GetPlayers(Project? project)
     {
         return project?.FindSubsystem<SubsystemPlayers>(true)?.PlayersData ?? [];
@@ -1622,12 +1759,10 @@ public static class BuiltInCommands
         var textAdapter = new TextCommandAdapter(context.Registry);
         return textAdapter.Entries
             .Where(entry =>
-                entry.Command.SupportsSource(context.Source) &&
                 entry.Command.Routes.Any(route =>
-                    context.Registry.CanExecute(
+                    context.Registry.CanInvoke(
                         route.CommandType,
-                        context.Principal,
-                        context.Source)))
+                        context.Principal)))
             .Select(entry => new CommandArgumentSuggestion(
                 entry.Command.Name,
                 entry.Command.Description));
@@ -1636,13 +1771,15 @@ public static class BuiltInCommands
     private static IEnumerable<CommandArgumentSuggestion> SuggestDelegablePermissionNodes(
         CommandSuggestionContext context)
     {
-        return context.Registry.GetPermissionNodes()
-            .Where(node => context.Registry.CanGrantPermission(
+        return context.Registry.Permissions.Definitions
+            .Select(node => node.Id)
+            .Where(node => context.Registry.Permissions.CanGrant(
                 node,
                 context.Principal,
-                context.Source))
+                context.Project,
+                canDelegate: true))
             .Select(node => new CommandArgumentSuggestion(
-                node,
+                node.ToString(),
                 CommandDescription(
                     "PermissionNodeSuggestion_Description",
                     "可授权权限节点")));
@@ -1658,12 +1795,12 @@ public static class BuiltInCommands
         }
 
         return player.CommandPermissions.Grants
-            .Where(grant => context.Registry.CanGrantPermission(
+            .Where(grant => context.Registry.Permissions.CanGrant(
                 grant.Permission,
                 context.Principal,
-                context.Source))
+                context.Project))
             .Select(grant => new CommandArgumentSuggestion(
-                grant.Permission,
+                grant.Permission.ToString(),
                 grant.CanDelegate
                     ? CommandDescription(
                         "PermissionCurrentDelegate_Description",
@@ -1725,12 +1862,27 @@ public static class BuiltInCommands
         public IModCommandAdapters Adapters { get; } =
             new DirectAdapterRegistration(registry.Adapters, owner);
 
+        public IModCommandPermissions Permissions { get; } =
+            new DirectPermissionRegistration(registry.Permissions, owner);
+
         public IDisposable Register<TCommand>(
             ResourceId id,
             CommandDefinition<TCommand> definition)
             where TCommand : IGameCommand
         {
             return registry.Register(owner, id, definition);
+        }
+    }
+
+    private sealed class DirectPermissionRegistration(
+        CommandPermissionRegistry permissions,
+        ModId owner) : IModCommandPermissions
+    {
+        public IDisposable Register(
+            ResourceId id,
+            CommandPermissionDefinition definition)
+        {
+            return permissions.Register(owner, id, definition);
         }
     }
 

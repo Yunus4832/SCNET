@@ -373,7 +373,7 @@ public class PlayerScreen : Screen
                 if (CommonLib.WorkType is WorkType.Server &&
                     !_playerData.IsMainPlayer)
                 {
-                    CommandGateway.SubmitServer(
+                    CommandGateway.SubmitServerOperator(
                         _playerData.Project,
                         new UpdatePlayerProfileCommand(
                             _playerData.PlayerGUID,

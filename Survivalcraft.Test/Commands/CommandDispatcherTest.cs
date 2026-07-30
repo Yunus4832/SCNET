@@ -8,22 +8,23 @@ using Game.Localization;
 using Game.Managers;
 using Game.Messaging;
 using Game.Modding;
-using Game.Network.Enums;
 
 namespace Survivalcraft.Test.Commands;
 
 public class CommandDispatcherTest
 {
+    private static readonly ModId _owner = new("example.commands");
+
     [Fact]
-    public void TypedDispatcherExecutesRegisteredCommand()
+    public void TypedDispatcherExecutesRegisteredWorldCommand()
     {
         var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
         registry.Register(
-            owner,
-            new ResourceId(owner, "scale"),
+            _owner,
+            Id("scale"),
             new CommandDefinition<ScaleCommand>(
-                (_, command) => CommandResult.Ok(command.Value.ToString("0.0"))));
+                (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
+                CommandDomain.World));
         registry.Freeze();
 
         var result = new CommandDispatcher(registry).Execute(
@@ -38,13 +39,13 @@ public class CommandDispatcherTest
     public void RegistryUsesControlledTypedCommandCodec()
     {
         var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
-        var id = new ResourceId(owner, "scale");
+        var identity = Id("scale");
         registry.Register(
-            owner,
-            id,
+            _owner,
+            identity,
             new CommandDefinition<ScaleCommand>(
                 (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
+                CommandDomain.World,
                 write: static (writer, command) => writer.Write(command.Value),
                 read: static reader => new ScaleCommand(reader.ReadDouble())));
         registry.Freeze();
@@ -55,7 +56,7 @@ public class CommandDispatcherTest
             out var payload,
             out var encodeError));
         Assert.Equal(string.Empty, encodeError);
-        Assert.Equal(id, encodedId);
+        Assert.Equal(identity, encodedId);
         Assert.True(registry.TryDecode(
             encodedId,
             payload,
@@ -66,38 +67,12 @@ public class CommandDispatcherTest
     }
 
     [Fact]
-    public void TextAdapterCreatesAndExecutesTypedCommand()
-    {
-        var registry = RegistryWith(
-            new CommandDefinition<ScaleCommand>(
-                (_, command) => CommandResult.Ok(command.Value.ToString("0.0"))),
-            new TextCommand(
-                "scale",
-                Text("Scale a value"),
-                [
-                    new CommandRoute(
-                        [
-                            new CommandLiteral("set"),
-                            new CommandArgument("value", CommandArgumentKind.Number)
-                        ],
-                        typeof(ScaleCommand),
-                        arguments => new ScaleCommand(arguments.Get<double>("value")))
-                ]));
-
-        var result = new TextCommandAdapter(registry).Execute(
-            "/scale set 2.5",
-            Context());
-
-        Assert.True(result.Success);
-        Assert.Equal("2.5", result.Message);
-    }
-
-    [Fact]
-    public void TextAdapterSupportsQuotedArguments()
+    public void TextAdapterCreatesTypedCommandAndSupportsQuotedArguments()
     {
         var registry = RegistryWith(
             new CommandDefinition<EchoCommand>(
-                (_, command) => CommandResult.Ok(command.Text)),
+                (_, command) => CommandResult.Ok(command.Text),
+                CommandDomain.World),
             new TextCommand(
                 "echo",
                 Text("Echo text"),
@@ -117,49 +92,61 @@ public class CommandDispatcherTest
     }
 
     [Fact]
-    public void AuthorizationBelongsToTypedDefinition()
+    public void PermissionMustBeExplicitlyRegisteredAndMatchCommandDomain()
     {
-        var registry = RegistryWith(
-            new CommandDefinition<SecureCommand>(
-                (_, _) => CommandResult.Ok("done"),
-                requiredPermission: "server.secure"),
-            new TextCommand(
-                "secure",
-                Text("Secure command"),
-                [
-                    new CommandRoute(
-                        [new CommandLiteral("run")],
-                        typeof(SecureCommand),
-                        _ => new SecureCommand())
-                ]));
-        var adapter = new TextCommandAdapter(registry);
+        var permission = Id("world.time.set");
+        var missing = new CommandRegistry();
+        missing.Register(
+            _owner,
+            Id("time/set"),
+            new CommandDefinition<SetTimeCommand>(
+                (_, command) => CommandResult.Ok(command.Value),
+                CommandDomain.World,
+                requiredPermission: permission));
 
-        Assert.Equal("command.unknown", adapter.Execute("/missing", Context()).Code);
-        Assert.Equal("command.forbidden", adapter.Execute("/secure nope", Context()).Code);
-        Assert.Equal("command.forbidden", adapter.Execute("/secure run", Context()).Code);
-        Assert.True(adapter.Execute(
-            "/secure run",
-            Context(new CommandPrincipal("Admin", permissions: ["server.*"]))).Success);
+        Assert.Throws<InvalidOperationException>(missing.Freeze);
+
+        var wrongDomain = new CommandRegistry();
+        wrongDomain.Permissions.Register(
+            _owner,
+            permission,
+            new CommandPermissionDefinition(CommandDomain.Server));
+        wrongDomain.Register(
+            _owner,
+            Id("time/set"),
+            new CommandDefinition<SetTimeCommand>(
+                (_, command) => CommandResult.Ok(command.Value),
+                CommandDomain.World,
+                requiredPermission: permission));
+
+        Assert.Throws<InvalidOperationException>(wrongDomain.Freeze);
     }
 
     [Fact]
-    public void SuggestionsUseTypedCommandAuthorization()
+    public void SuggestionsAndExecutionUseTheSamePermissionEvaluator()
     {
+        var permission = Id("world.time.set");
         var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
+        registry.Permissions.Register(
+            _owner,
+            permission,
+            new CommandPermissionDefinition(CommandDomain.World));
         registry.Register(
-            owner,
-            new ResourceId(owner, "time/get"),
-            new CommandDefinition<GetTimeCommand>((_, _) => CommandResult.Ok("get")));
+            _owner,
+            Id("time/get"),
+            new CommandDefinition<GetTimeCommand>(
+                (_, _) => CommandResult.Ok("get"),
+                CommandDomain.World));
         registry.Register(
-            owner,
-            new ResourceId(owner, "time/set"),
+            _owner,
+            Id("time/set"),
             new CommandDefinition<SetTimeCommand>(
                 (_, command) => CommandResult.Ok(command.Value),
-                requiredPermission: "world.time.set"));
+                CommandDomain.World,
+                requiredPermission: permission));
         registry.Adapters.Register(
-            owner,
-            new ResourceId(owner, "text/time"),
+            _owner,
+            Id("text/time"),
             new TextCommand(
                 "time",
                 Text("World time"),
@@ -173,26 +160,29 @@ public class CommandDispatcherTest
                             new CommandLiteral("set"),
                             new CommandArgument(
                                 "value",
-                                CommandArgumentKind.String,
-                                ["day", "night"])
+                                Choices: ["day", "night"])
                         ],
                         typeof(SetTimeCommand),
-                        arguments => new SetTimeCommand(arguments.Get<string>("value")))
+                        arguments => new SetTimeCommand(
+                            arguments.Get<string>("value")))
                 ]));
         registry.Freeze();
-        var textAdapter = new TextCommandAdapter(registry);
+        var adapter = new TextCommandAdapter(registry);
+        var player = Player("Player");
+        var administrator = Player("Administrator", [permission]);
 
         Assert.Equal(
             ["get"],
-            textAdapter.Suggest("/time g", new CommandPrincipal("Player"))
-                .Select(item => item.Value));
+            adapter.Suggest("/time ", player).Select(item => item.Value));
         Assert.Equal(
-            ["day", "night"],
-            textAdapter.Suggest(
-                    "/time set ",
-                    new CommandPrincipal("Admin", permissions: ["world.*"]))
-                .Select(item => item.Value));
-        Assert.Empty(textAdapter.Suggest("/time s", new CommandPrincipal("Player")));
+            ["get", "set"],
+            adapter.Suggest("/time ", administrator).Select(item => item.Value));
+        Assert.Equal(
+            "command.forbidden",
+            adapter.Execute("/time set day", Context(player)).Code);
+        Assert.True(adapter.Execute(
+            "/time set day",
+            Context(administrator)).Success);
     }
 
     [Fact]
@@ -200,7 +190,8 @@ public class CommandDispatcherTest
     {
         var registry = RegistryWith(
             new CommandDefinition<ChooseCommand>(
-                (_, command) => CommandResult.Ok(command.Player)),
+                (_, command) => CommandResult.Ok(command.Player),
+                CommandDomain.World),
             new TextCommand(
                 "choose",
                 Text("Choose player"),
@@ -220,193 +211,130 @@ public class CommandDispatcherTest
                                 ])
                         ],
                         typeof(ChooseCommand),
-                        arguments => new ChooseCommand(arguments.Get<string>("player")))
+                        arguments => new ChooseCommand(
+                            arguments.Get<string>("player")))
                 ]));
 
         var suggestion = Assert.Single(new TextCommandAdapter(registry)
-            .Suggest("/choose A", new CommandPrincipal("Player")));
+            .Suggest("/choose A", Player("Player")));
 
         Assert.Equal("Alice Smith", suggestion.Value);
         Assert.Equal("First player", suggestion.Description);
-        Assert.Equal("\"Alice Smith\"", CommandLineTokenizer.FormatToken(suggestion.Value));
         Assert.Equal(
-            "/choose \"Alice Smith\"",
-            CommandLineTokenizer.ReplaceCurrentToken(
-                "/choose \"Alice S",
-                CommandLineTokenizer.FormatToken(suggestion.Value)));
+            "\"Alice Smith\"",
+            CommandLineTokenizer.FormatToken(suggestion.Value));
     }
 
     [Fact]
-    public void PermissionNodesAreDerivedFromTypedDefinitions()
+    public void ImplicitPermissionBelongsToPermissionDefinition()
     {
+        var permission = Id("world.creative.action");
         var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
+        registry.Permissions.Register(
+            _owner,
+            permission,
+            new CommandPermissionDefinition(
+                CommandDomain.World,
+                PermissionGrantPolicy.OperatorOnly,
+                implicitGrant: static (principal, _) =>
+                    principal.Name == "CreativePlayer"));
         registry.Register(
-            owner,
-            new ResourceId(owner, "time/set"),
-            new CommandDefinition<SetTimeCommand>(
-                (_, _) => CommandResult.Ok("ok"),
-                requiredPermission: "world.time.set"));
-        registry.Register(
-            owner,
-            new ResourceId(owner, "server/stop"),
-            new CommandDefinition<StopCommand>(
-                (_, _) => CommandResult.Ok("ok"),
-                requiredPermission: "server.stop",
-                sourcePolicy: CommandSourcePolicy.ServerConsoleOnly,
-                grantPolicy: CommandGrantPolicy.NonGrantable));
-        registry.Register(
-            owner,
-            new ResourceId(owner, "server/kick"),
-            new CommandDefinition<KickCommand>(
-                (_, _) => CommandResult.Ok("ok"),
-                requiredPermission: "server.kick"));
+            _owner,
+            Id("creative/action"),
+            new CommandDefinition<CreativeActionCommand>(
+                (_, _) => CommandResult.Ok("done"),
+                CommandDomain.World,
+                requiredPermission: permission));
         registry.Freeze();
 
-        Assert.Equal(
-            [
-                CommandPermissionSet.ManageStandardPermission,
-                "server.kick",
-                "world.*",
-                "world.time.*",
-                "world.time.set"
-            ],
-            registry.GetPermissionNodes());
-        var manager = new CommandPrincipal(
-            "Manager",
-            permissions: [CommandPermissionSet.ManageStandardPermission]);
-        Assert.True(registry.CanGrantPermission(
-            "world.time.set",
-            manager,
-            CommandSource.Player));
-        Assert.False(registry.CanGrantPermission(
-            "server.stop",
-            CommandPrincipal.ServerConsole,
-            CommandSource.ServerConsole));
-        Assert.False(registry.CanGrantPermission(
-            "server.kick",
-            manager,
-            CommandSource.Player));
-        Assert.True(registry.CanGrantPermission(
-            "server.kick",
-            CommandPrincipal.ServerConsole,
-            CommandSource.ServerConsole));
+        Assert.True(registry.CanInvoke(
+            typeof(CreativeActionCommand),
+            Player("CreativePlayer")));
+        Assert.False(registry.CanInvoke(
+            typeof(CreativeActionCommand),
+            Player("SurvivalPlayer")));
+        Assert.True(registry.CanInvoke(
+            typeof(CreativeActionCommand),
+            CommandPrincipal.ServerOperator));
     }
 
     [Fact]
-    public void SuggestionsResolveDescriptionsAfterRegistration()
+    public void CommandDomainsSeparateRoutingFromFrontend()
     {
-        const string section = "CommandDescriptionTest";
-        LanguageManager.KeyWords.TryGetPropertyValue(section, out var existing);
-        var original = existing?.DeepClone();
-        try
-        {
-            LanguageManager.KeyWords[section] = JsonNode.Parse(
-                """{"TestDescription":"Initial"}""");
-            var registry = RegistryWith(
-                new CommandDefinition<EchoCommand>(
-                    (_, command) => CommandResult.Ok(command.Text)),
-                new TextCommand(
-                    "echo",
-                    new LocalizedText(
-                        section,
-                        "TestDescription",
-                        "Fallback"),
-                    [
-                        new CommandRoute(
-                            [new CommandArgument("text")],
-                            typeof(EchoCommand),
-                            arguments => new EchoCommand(
-                                arguments.Get<string>("text")))
-                    ]));
-            var adapter = new TextCommandAdapter(registry);
+        var application = new CommandDefinition<GetLanguageCommand>(
+            (_, _) => CommandResult.Ok("language"),
+            CommandDomain.Application);
+        var world = new CommandDefinition<GetTimeCommand>(
+            (_, _) => CommandResult.Ok("time"),
+            CommandDomain.World);
+        var server = new CommandDefinition<StopCommand>(
+            (_, _) => CommandResult.Ok("stop"),
+            CommandDomain.Server,
+            hostRequirement: CommandHostRequirement.HeadlessServer);
 
-            Assert.Equal(
-                "Initial",
-                Assert.Single(adapter.Suggest(
-                    "/e",
-                    new CommandPrincipal("Player"))).Description);
-
-            LanguageManager.KeyWords[section] = JsonNode.Parse(
-                """{"TestDescription":"Changed"}""");
-
-            Assert.Equal(
-                "Changed",
-                Assert.Single(adapter.Suggest(
-                    "/e",
-                    new CommandPrincipal("Player"))).Description);
-        }
-        finally
-        {
-            if (original is null)
-            {
-                LanguageManager.KeyWords.Remove(section);
-            }
-            else
-            {
-                LanguageManager.KeyWords[section] = original;
-            }
-        }
+        Assert.True(application.CanInvoke(CommandPrincipal.ApplicationUser, null));
+        Assert.False(application.CanInvoke(Player("Player"), null));
+        Assert.True(world.CanInvoke(Player("Player"), null));
+        Assert.False(server.CanInvoke(CommandPrincipal.ApplicationUser, null));
+        Assert.False(server.CanInvoke(CommandPrincipal.ServerOperator, null));
     }
 
     [Fact]
-    public void CanExecuteRequiresCompletePermittedTextRoute()
+    public void TextRoutingResolvesTheMatchedRouteDomain()
     {
-        var registry = RegistryWith(
-            new CommandDefinition<SetTimeCommand>(
-                (_, command) => CommandResult.Ok(command.Value),
-                requiredPermission: "world.time.set"),
+        var registry = new CommandRegistry();
+        registry.Register(
+            _owner,
+            Id("application/action"),
+            new CommandDefinition<ApplicationActionCommand>(
+                (_, _) => CommandResult.Ok("application"),
+                CommandDomain.Application));
+        registry.Register(
+            _owner,
+            Id("world/action"),
+            new CommandDefinition<WorldActionCommand>(
+                (_, _) => CommandResult.Ok("world"),
+                CommandDomain.World));
+        registry.Adapters.Register(
+            _owner,
+            Id("text/action"),
             new TextCommand(
-                "time",
-                Text("World time"),
+                "action",
+                Text("Action"),
                 [
                     new CommandRoute(
-                        [
-                            new CommandLiteral("set"),
-                            new CommandArgument(
-                                "value",
-                                CommandArgumentKind.String,
-                                ["day", "night"])
-                        ],
-                        typeof(SetTimeCommand),
-                        arguments => new SetTimeCommand(arguments.Get<string>("value")))
+                        [new CommandLiteral("application")],
+                        typeof(ApplicationActionCommand),
+                        _ => new ApplicationActionCommand()),
+                    new CommandRoute(
+                        [new CommandLiteral("world")],
+                        typeof(WorldActionCommand),
+                        _ => new WorldActionCommand())
                 ]));
-        var player = new CommandPrincipal("Player");
-        var admin = new CommandPrincipal("Admin", permissions: ["world.*"]);
-        var textAdapter = new TextCommandAdapter(registry);
+        registry.Freeze();
+        var adapter = new TextCommandAdapter(registry);
 
-        Assert.False(textAdapter.CanExecute("/time set ", admin));
-        Assert.False(textAdapter.CanExecute("/time set day", player));
-        Assert.True(textAdapter.CanExecute("/time set day ", admin));
-        Assert.False(textAdapter.CanExecute("/missing", admin));
-    }
-
-    [Fact]
-    public void SourceAndEnvironmentAreDefinedByTypedCommand()
-    {
-        var definition = new CommandDefinition<StopCommand>(
-            (_, _) => CommandResult.Ok("stopped"),
-            requiredPermission: "server.stop",
-            sourcePolicy: CommandSourcePolicy.ServerConsoleOnly,
-            grantPolicy: CommandGrantPolicy.NonGrantable,
-            executionEnvironment: CommandExecutionEnvironment.HeadlessServer);
-
-        Assert.True(definition.IsAvailable(RunModeType.HeadlessServer, WorkType.Server));
-        Assert.False(definition.IsAvailable(RunModeType.Gui, WorkType.Server));
-        Assert.False(definition.IsSourceAllowed(CommandSource.Player));
-        Assert.True(definition.IsSourceAllowed(CommandSource.ServerConsole));
+        Assert.True(adapter.SupportsDomain(
+            "/action application",
+            CommandDomain.Application));
+        Assert.False(adapter.SupportsDomain(
+            "/action world",
+            CommandDomain.Application));
+        Assert.True(adapter.SupportsDomain(
+            "/action world",
+            CommandDomain.World));
     }
 
     [Fact]
     public void HandlerExceptionsBecomeSafeFailures()
     {
         var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
         registry.Register(
-            owner,
-            new ResourceId(owner, "fail"),
+            _owner,
+            Id("fail"),
             new CommandDefinition<FailCommand>(
-                (_, _) => throw new InvalidOperationException("secret detail")));
+                (_, _) => throw new InvalidOperationException("secret detail"),
+                CommandDomain.World));
         registry.Freeze();
 
         var result = new CommandDispatcher(registry).Execute(
@@ -419,143 +347,49 @@ public class CommandDispatcherTest
     }
 
     [Fact]
-    public void BuiltInTextRoutesFollowTypedSourcePolicies()
+    public void BuiltInCommandsDeclareExpectedDomainsAndPermissionPolicies()
     {
-        var registry = new CommandRegistry();
-        var owner = new ModId("game");
-        BuiltInCommands.Register(registry, owner);
-        registry.Freeze();
-        var textAdapter = new TextCommandAdapter(registry);
+        var registry = BuiltInRegistry();
 
+        AssertDomain<GetLanguageCommand>(registry, CommandDomain.Application);
+        AssertDomain<SetRunModeCommand>(registry, CommandDomain.Application);
+        AssertDomain<SetWorldTimeCommand>(registry, CommandDomain.World);
+        AssertDomain<CreateTeamCommand>(registry, CommandDomain.World);
+        AssertDomain<StopServerCommand>(registry, CommandDomain.Server);
+        AssertDomain<GrantPlayerPermissionCommand>(registry, CommandDomain.Server);
+
+        Assert.True(registry.TryGetDefinition<StopServerCommand>(out var stop));
+        var stopPermission = Assert.IsType<ResourceId>(
+            stop!.Definition.RequiredPermission);
+        Assert.True(registry.Permissions.TryGet(stopPermission, out var registered));
         Assert.Equal(
-            ["claim"],
-            textAdapter.Suggest("/auth ", new CommandPrincipal("Player"))
-                .Select(item => item.Value));
-        Assert.Equal(
-            ["code", "regenerate", "status"],
-            textAdapter.Suggest(
-                    "/auth ",
-                    CommandPrincipal.ServerConsole,
-                    CommandSource.ServerConsole)
-                .Select(item => item.Value));
-        Assert.False(textAdapter.CanExecute(
-            "/auth claim ABCD-EFGH-JKLM ",
-            CommandPrincipal.ServerConsole,
-            CommandSource.ServerConsole));
-    }
-
-    [Fact]
-    public void BuiltInPlayerListAndRunModeUseAppropriateFrontends()
-    {
-        var registry = new CommandRegistry();
-        var owner = new ModId("game");
-        BuiltInCommands.Register(registry, owner);
-        registry.Freeze();
-        var textAdapter = new TextCommandAdapter(registry);
-
-        Assert.True(textAdapter.CanExecute(
-            "/players ",
-            new CommandPrincipal("Player")));
-        Assert.Empty(textAdapter.Suggest(
-            "/runmode",
-            new CommandPrincipal("Player")));
-        Assert.Equal(
-            ["gui", "headless"],
-            textAdapter.Suggest(
-                    "/runmode ",
-                    CommandPrincipal.ServerConsole,
-                    CommandSource.ServerConsole)
-                .Select(item => item.Value));
-
-        Assert.True(registry.TryEncode(
-            new ListPlayersCommand(),
-            out var playerListId,
-            out var payload,
-            out var encodeError));
-        Assert.Equal(new ResourceId(owner, "player/list"), playerListId);
-        Assert.Equal(string.Empty, encodeError);
-        Assert.True(registry.TryDecode(
-            playerListId,
-            payload,
-            out var decodedPlayerList,
-            out var decodeError));
-        Assert.IsType<ListPlayersCommand>(decodedPlayerList);
-        Assert.Equal(string.Empty, decodeError);
-
-        Assert.True(registry.TryGetDefinition<SetRunModeCommand>(out var registered));
-        Assert.NotNull(registered);
-        Assert.Equal(
-            CommandGrantPolicy.NonGrantable,
+            PermissionGrantPolicy.OperatorOnly,
             registered!.Definition.GrantPolicy);
-        Assert.DoesNotContain(
-            "server.run_mode.set",
-            registry.GetPermissionNodes());
-
-        var forbidden = new CommandDispatcher(registry).Execute(
-            new SetRunModeCommand(RunMode.Value),
-            new CommandContext(
-                CommandSource.Local,
-                CommandPrincipal.Local,
-                null));
-        Assert.False(forbidden.Success);
-        Assert.Equal("command.forbidden", forbidden.Code);
-        Assert.True(CommandPrincipal.LocalHost.HasPermission(
-            "server.run_mode.set"));
-        Assert.False(CommandPrincipal.LocalHost.HasPermission(
-            "server.stop"));
     }
 
     [Fact]
-    public void BuiltInLanguageCommandUsesLocalOnlyDynamicSuggestions()
+    public void BuiltInApplicationAndWorldSuggestionsAreSeparatedByPrincipal()
     {
         var originalLanguageTypes = LanguageManager.LanguageTypes.ToArray();
         try
         {
             LanguageManager.LanguageTypes.Clear();
             LanguageManager.LanguageTypes.AddRange(["en-US", "zh-CN"]);
-            var registry = new CommandRegistry();
-            var owner = new ModId("game");
-            BuiltInCommands.Register(registry, owner);
-            registry.Freeze();
-            var textAdapter = new TextCommandAdapter(registry);
+            var adapter = new TextCommandAdapter(BuiltInRegistry());
 
-            Assert.Empty(textAdapter.Suggest(
-                "/language",
-                new CommandPrincipal("Player")));
-            Assert.Empty(textAdapter.Suggest(
-                "/language",
-                CommandPrincipal.ServerConsole,
-                CommandSource.ServerConsole));
             Assert.Equal(
                 ["en-US", "zh-CN"],
-                textAdapter.Suggest(
+                adapter.Suggest(
                         "/language ",
-                        CommandPrincipal.Local,
-                        CommandSource.Local)
+                        CommandPrincipal.ApplicationUser)
                     .Select(item => item.Value));
-            Assert.True(textAdapter.CanExecute(
-                "/language zh-CN ",
-                CommandPrincipal.Local,
-                CommandSource.Local));
-            Assert.True(textAdapter.SupportsSource(
-                "/language unsupported",
-                CommandSource.Local));
-            Assert.False(textAdapter.SupportsSource(
-                "/language unsupported",
-                CommandSource.Player));
-            Assert.False(textAdapter.SupportsSource(
-                "/stop",
-                CommandSource.Local));
-
-            Assert.True(registry.TryGetDefinition<SetLanguageCommand>(out var registered));
-            Assert.NotNull(registered);
-            Assert.Equal(
-                CommandSourcePolicy.LocalOnly,
-                registered!.Definition.SourcePolicy);
-            Assert.Equal(
-                CommandGrantPolicy.Standard,
-                registered.Definition.GrantPolicy);
-            Assert.Equal(string.Empty, registered.Definition.RequiredPermission);
+            Assert.Empty(adapter.Suggest("/language", Player("Player")));
+            Assert.Empty(adapter.Suggest(
+                "/time",
+                CommandPrincipal.ApplicationUser));
+            Assert.Contains(
+                adapter.Suggest("/", Player("Player")),
+                item => item.Value == "time");
         }
         finally
         {
@@ -565,140 +399,58 @@ public class CommandDispatcherTest
     }
 
     [Fact]
-    public void BuiltInHelpAndSeasonExposeDynamicConstrainedSuggestions()
+    public void BuiltInSeasonAndWeatherSuggestionsRemainConstrained()
     {
-        var registry = new CommandRegistry();
         var owner = new ModId("game");
-        BuiltInCommands.Register(registry, owner);
-        registry.Freeze();
-        var textAdapter = new TextCommandAdapter(registry);
-        var player = new CommandPrincipal(
+        var player = Player(
             "Player",
-            permissions: ["world.season.set", "world.weather.*"]);
+            [
+                new ResourceId(owner, "world.season.set"),
+                new ResourceId(owner, "world.weather.precipitation.set"),
+                new ResourceId(owner, "world.weather.fog.set")
+            ]);
+        var adapter = new TextCommandAdapter(BuiltInRegistry());
 
-        var playerHelp = textAdapter.Suggest("/help ", player);
-        Assert.Contains(playerHelp, item => item.Value == "help");
-        Assert.Contains(playerHelp, item => item.Value == "players");
-        Assert.DoesNotContain(playerHelp, item => item.Value == "runmode");
-
-        var consoleHelp = textAdapter.Suggest(
-            "/help ",
-            CommandPrincipal.ServerConsole,
-            CommandSource.ServerConsole);
-        Assert.Contains(consoleHelp, item => item.Value == "runmode");
-
+        var seasonSuggestions = adapter.Suggest("/season set ", player);
+        Assert.Equal(
+            ["autumn", "spring", "summer", "winter"],
+            seasonSuggestions.Select(item => item.Value));
+        Assert.Equal(
+            seasonSuggestions.Count,
+            seasonSuggestions.Select(item => item.Description).Distinct().Count());
+        var seasonProgressSuggestions =
+            adapter.Suggest("/season set winter ", player);
         Assert.Equal(
             ["end", "middle", "start"],
-            textAdapter.Suggest("/season set winter ", player)
-                .Select(item => item.Value));
-        Assert.True(textAdapter.CanExecute(
+            seasonProgressSuggestions.Select(item => item.Value));
+        Assert.Equal(
+            seasonProgressSuggestions.Count,
+            seasonProgressSuggestions
+                .Select(item => item.Description)
+                .Distinct()
+                .Count());
+        Assert.True(adapter.CanExecute(
             "/season set winter middle ",
             player));
-        Assert.False(textAdapter.CanExecute(
+        Assert.False(adapter.CanExecute(
             "/season set winter 0.5 ",
             player));
-        var rainSuggestions = textAdapter.Suggest("/weather rain ", player);
+        var weatherSuggestions = adapter.Suggest("/weather rain ", player);
         Assert.Equal(
             ["disable", "enable"],
-            rainSuggestions.Select(item => item.Value));
-        Assert.NotEqual(
-            rainSuggestions.Single(item => item.Value == "enable").Description,
-            rainSuggestions.Single(item => item.Value == "disable").Description);
+            weatherSuggestions.Select(item => item.Value));
         Assert.Equal(
-            ["disable", "enable"],
-            textAdapter.Suggest("/weather fog ", player)
-                .Select(item => item.Value));
-        Assert.True(textAdapter.CanExecute(
-            "/weather rain enable ",
-            player));
-        Assert.False(textAdapter.CanExecute(
+            weatherSuggestions.Count,
+            weatherSuggestions.Select(item => item.Description).Distinct().Count());
+        Assert.False(adapter.CanExecute(
             "/weather rain true ",
             player));
-
-        var helpResult = textAdapter.Execute(
-            "/help",
-            Context(player, CommandSource.Player));
-        Assert.True(helpResult.Success);
-        Assert.StartsWith("可用指令：\n", helpResult.Message);
-        Assert.Contains("\n- /help", helpResult.Message);
-
-        var usageResult = textAdapter.Execute(
-            "/season invalid",
-            Context(player, CommandSource.Player));
-        Assert.Equal("command.usage", usageResult.Code);
-        Assert.Contains("\n用法：\n- /season", usageResult.Message);
     }
 
     [Fact]
-    public void PermissionTextRoutesUseTypedDelegationPolicy()
+    public void BuiltInWorldAndGroupCommandsUseRegisteredBinaryCodecs()
     {
-        var registry = new CommandRegistry();
-        var owner = new ModId("game");
-        BuiltInCommands.Register(registry, owner);
-        registry.Freeze();
-        var textAdapter = new TextCommandAdapter(registry);
-        var player = new CommandPrincipal("Player");
-        var delegator = new CommandPrincipal(
-            "Delegator",
-            permissions: ["world.*"],
-            delegablePermissions: ["world.*"]);
-        var directWildcard = new CommandPrincipal(
-            "DirectWildcard",
-            permissions: ["*"]);
-
-        Assert.Equal(
-            ["list"],
-            textAdapter.Suggest("/permission ", player).Select(item => item.Value));
-        Assert.Equal(
-            ["list"],
-            textAdapter.Suggest("/permission ", directWildcard).Select(item => item.Value));
-        Assert.Equal(
-            ["delegate", "grant", "list", "nodes", "players", "revoke"],
-            textAdapter.Suggest("/permission ", delegator).Select(item => item.Value));
-        Assert.Equal(
-            ["delegate", "grant", "list", "nodes", "players", "revoke"],
-            textAdapter.Suggest(
-                    "/permission ",
-                    CommandPrincipal.ServerConsole,
-                    CommandSource.ServerConsole)
-                .Select(item => item.Value));
-    }
-
-    [Fact]
-    public void AlternativeAuthorizationCanGrantGameplayCapability()
-    {
-        var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
-        registry.Register(
-            owner,
-            new ResourceId(owner, "creative/action"),
-            new CommandDefinition<CreativeActionCommand>(
-                (_, _) => CommandResult.Ok("done"),
-                requiredPermission: "world.creative.action",
-                alternativeAuthorization: static (principal, _) =>
-                    principal.Name == "CreativePlayer"));
-        registry.Freeze();
-
-        Assert.True(registry.CanExecute(
-            typeof(CreativeActionCommand),
-            new CommandPrincipal("CreativePlayer")));
-        Assert.False(registry.CanExecute(
-            typeof(CreativeActionCommand),
-            new CommandPrincipal("SurvivalPlayer")));
-        Assert.True(registry.CanExecute(
-            typeof(CreativeActionCommand),
-            new CommandPrincipal(
-                "Administrator",
-                permissions: ["world.creative.*"])));
-    }
-
-    [Fact]
-    public void BuiltInWorldControlCommandsUseRegisteredBinaryCodecs()
-    {
-        var registry = new CommandRegistry();
-        var owner = new ModId("game");
-        BuiltInCommands.Register(registry, owner);
-        registry.Freeze();
+        var registry = BuiltInRegistry();
         IGameCommand[] commands =
         [
             new AdvanceWorldTimeCommand(),
@@ -708,36 +460,7 @@ public class CommandDispatcherTest
             new TriggerLightningCommand(
                 new Vector3(1f, 2f, 3f),
                 new Vector3(0f, 0f, 1f)),
-            new SetSeasonCommand(Season.Winter, 0.5f)
-        ];
-
-        foreach (var command in commands)
-        {
-            Assert.True(registry.TryEncode(
-                command,
-                out var id,
-                out var payload,
-                out var encodeError));
-            Assert.Equal(string.Empty, encodeError);
-            Assert.True(registry.TryDecode(
-                id,
-                payload,
-                out var decoded,
-                out var decodeError));
-            Assert.Equal(string.Empty, decodeError);
-            Assert.Equal(command, decoded);
-        }
-    }
-
-    [Fact]
-    public void BuiltInGroupCommandsUseRegisteredBinaryCodecs()
-    {
-        var registry = new CommandRegistry();
-        var owner = new ModId("game");
-        BuiltInCommands.Register(registry, owner);
-        registry.Freeze();
-        IGameCommand[] commands =
-        [
+            new SetSeasonCommand(Season.Winter, 0.5f),
             new CreateTeamCommand("Builders"),
             new RequestJoinTeamCommand(Guid.NewGuid()),
             new InvitePlayerToTeamCommand(Guid.NewGuid()),
@@ -766,10 +489,7 @@ public class CommandDispatcherTest
     [Fact]
     public void BuiltInPlayerOperationsUseRegisteredBinaryCodecs()
     {
-        var registry = new CommandRegistry();
-        var owner = new ModId("game");
-        BuiltInCommands.Register(registry, owner);
-        registry.Freeze();
+        var registry = BuiltInRegistry();
         IGameCommand[] commands =
         [
             new UpdateOwnPlayerProfileCommand(
@@ -800,163 +520,141 @@ public class CommandDispatcherTest
     }
 
     [Fact]
-    public void PublicResultTargetsAllPlayersWithoutBecomingSensitive()
+    public void CommandResultPresentationKeepsAudienceAndSilenceDistinct()
     {
-        var result = CommandResult.PublicOk("changed", "world.changed");
+        var publicResult = CommandResult.PublicOk(
+            "changed",
+            "world.changed");
+        var silentResult = CommandResult.SilentOk("chat.sent");
 
-        Assert.True(result.Success);
-        Assert.False(result.Sensitive);
-        Assert.Equal(CommandResultAudience.AllPlayers, result.Audience);
+        Assert.Equal(
+            CommandResultAudience.AllPlayers,
+            publicResult.Audience);
+        Assert.False(publicResult.Sensitive);
+        Assert.Equal(string.Empty, silentResult.Message);
+        Assert.Equal(
+            CommandResultPresentation.Silent,
+            silentResult.Presentation);
     }
 
     [Fact]
-    public void SilentResultDoesNotRequireAUserFacingMessage()
+    public void HttpAdapterDispatchesByIdentityWithoutOwningAuthorization()
     {
-        var result = CommandResult.SilentOk("chat.sent");
-
-        Assert.True(result.Success);
-        Assert.Equal(string.Empty, result.Message);
-        Assert.Equal(CommandResultPresentation.Silent, result.Presentation);
-    }
-
-    [Fact]
-    public void HttpAdapterDispatchesByCommandIdentity()
-    {
+        var permission = Id("world.scale");
+        var identity = Id("scale");
         var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
-        var identity = new ResourceId(owner, "scale");
+        registry.Permissions.Register(
+            _owner,
+            permission,
+            new CommandPermissionDefinition(CommandDomain.World));
         registry.Register(
-            owner,
+            _owner,
             identity,
             new CommandDefinition<ScaleCommand>(
                 (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
-                requiredPermission: "example.scale",
-                sourcePolicy: CommandSourcePolicy.HttpApiOnly));
+                CommandDomain.World,
+                requiredPermission: permission));
         registry.Adapters.Register(
-            owner,
+            _owner,
             identity,
             HttpCommandBinding.Create<ScaleCommand>(
                 arguments => new ScaleCommand(arguments.Get<double>("value"))));
         registry.Freeze();
-        var context = Context(
-            new CommandPrincipal("Http", permissions: ["example.scale"]),
-            CommandSource.HttpApi);
+        var adapter = new HttpCommandAdapter(registry);
+
+        var result = adapter.Execute(
+            new HttpCommandRequest(
+                identity,
+                new JsonObject { ["value"] = 2.5 }),
+            Context(
+                Player("Http", [permission]),
+                CommandInvocationChannel.HttpApi));
+
+        Assert.True(result.Success);
+        Assert.Equal("2.5", result.Message);
+        Assert.Equal("/commands", HttpCommandProtocol.Endpoint);
+        Assert.Equal(
+            "command.forbidden",
+            adapter.Execute(
+                new HttpCommandRequest(
+                    identity,
+                    new JsonObject { ["value"] = 2.5 }),
+                Context(channel: CommandInvocationChannel.HttpApi)).Code);
+    }
+
+    [Fact]
+    public void HttpAdapterRequiresAnExplicitBinding()
+    {
+        var identity = Id("scale");
+        var registry = new CommandRegistry();
+        registry.Register(
+            _owner,
+            identity,
+            new CommandDefinition<ScaleCommand>(
+                (_, command) => CommandResult.Ok(
+                    command.Value.ToString("0.0")),
+                CommandDomain.World));
+        registry.Freeze();
 
         var result = new HttpCommandAdapter(registry).Execute(
             new HttpCommandRequest(
                 identity,
                 new JsonObject { ["value"] = 2.5 }),
-            context);
+            Context(channel: CommandInvocationChannel.HttpApi));
 
-        Assert.True(result.Success);
-        Assert.Equal("2.5", result.Message);
-        Assert.Equal("/commands", HttpCommandProtocol.Endpoint);
-
-        var forbidden = new HttpCommandAdapter(registry).Execute(
-            new HttpCommandRequest(
-                identity,
-                new JsonObject { ["value"] = 2.5 }),
-            Context(source: CommandSource.HttpApi));
-        Assert.False(forbidden.Success);
-        Assert.Equal("command.forbidden", forbidden.Code);
-
-        var wrongFrontend = new HttpCommandAdapter(registry).Execute(
-            new HttpCommandRequest(
-                identity,
-                new JsonObject { ["value"] = 2.5 }),
-            Context(source: CommandSource.Player));
-        Assert.False(wrongFrontend.Success);
-        Assert.Equal("command.http_source_required", wrongFrontend.Code);
-    }
-
-    [Fact]
-    public void HttpAdapterRequiresExplicitIdentityBindingAndPermission()
-    {
-        var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
-        var identity = new ResourceId(owner, "scale");
-        registry.Register(
-            owner,
-            identity,
-            new CommandDefinition<ScaleCommand>(
-                (_, command) => CommandResult.Ok(command.Value.ToString("0.0")),
-                requiredPermission: "example.scale",
-                sourcePolicy: CommandSourcePolicy.HttpApiOnly));
-        registry.Freeze();
-        var adapter = new HttpCommandAdapter(registry);
-
-        var hidden = adapter.Execute(
-            new HttpCommandRequest(identity, new JsonObject { ["value"] = 2.5 }),
-            Context(source: CommandSource.HttpApi));
-
-        Assert.False(hidden.Success);
-        Assert.Equal("command.http_not_exposed", hidden.Code);
+        Assert.Equal("command.http_not_exposed", result.Code);
     }
 
     [Fact]
     public void HttpBindingIdentityMustMatchRegisteredCommand()
     {
         var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
         registry.Adapters.Register(
-            owner,
-            new ResourceId(owner, "missing"),
+            _owner,
+            Id("missing"),
             HttpCommandBinding.Create<ScaleCommand>(
-                arguments => new ScaleCommand(arguments.Get<double>("value"))));
+                arguments => new ScaleCommand(
+                    arguments.Get<double>("value"))));
 
-        var exception = Assert.Throws<InvalidOperationException>(registry.Freeze);
+        var exception = Assert.Throws<InvalidOperationException>(
+            registry.Freeze);
 
         Assert.Contains("same identity", exception.Message);
     }
 
     [Fact]
-    public void TextBindingCanSelectPlayerOrStdinFrontend()
+    public void FrontendBindingDoesNotRestrictCommandAuthority()
     {
-        var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
-        registry.Register(
-            owner,
-            new ResourceId(owner, "echo"),
+        var registry = RegistryWith(
             new CommandDefinition<EchoCommand>(
-                (_, command) => CommandResult.Ok(command.Text)));
-        registry.Adapters.Register(
-            owner,
-            new ResourceId(owner, "text/echo"),
+                (_, command) => CommandResult.Ok(command.Text),
+                CommandDomain.World),
             new TextCommand(
                 "echo",
-                Text("Player-only text adapter"),
+                Text("Echo"),
                 [
                     new CommandRoute(
                         [new CommandArgument("text")],
                         typeof(EchoCommand),
-                        arguments => new EchoCommand(arguments.Get<string>("text")))
-                ],
-                sources: [CommandSource.Player]));
-        registry.Freeze();
+                        arguments => new EchoCommand(
+                            arguments.Get<string>("text")))
+                ]));
         var adapter = new TextCommandAdapter(registry);
 
-        var playerResult = adapter.Execute(
-            "/echo hello",
-            Context(source: CommandSource.Player));
-        var stdinResult = adapter.Execute(
-            "/echo hello",
+        Assert.True(adapter.Execute(
+            "/echo player",
+            Context(Player("Player"), CommandInvocationChannel.Text)).Success);
+        Assert.True(adapter.Execute(
+            "/echo console",
             Context(
-                CommandPrincipal.ServerConsole,
-                CommandSource.ServerConsole));
-
-        Assert.True(playerResult.Success);
-        Assert.False(stdinResult.Success);
-        Assert.Equal("command.frontend_unavailable", stdinResult.Code);
-        Assert.Empty(adapter.Suggest(
-            "/echo",
-            CommandPrincipal.ServerConsole,
-            CommandSource.ServerConsole));
+                CommandPrincipal.ServerOperator,
+                CommandInvocationChannel.ServerControl)).Success);
     }
 
     [Fact]
     public void HttpEnvelopeUsesIdentityInsideOneEndpoint()
     {
-        var identity = new ResourceId(new ModId("example.commands"), "scale");
+        var identity = Id("scale");
         var envelope = HttpCommandProtocol.CreateEnvelope(
             identity,
             new JsonObject { ["value"] = 2.5 });
@@ -970,8 +668,59 @@ public class CommandDispatcherTest
         Assert.Equal(string.Empty, error);
         Assert.Equal(identity, request!.Identity);
         Assert.Equal(2.5, request.Arguments["value"]!.GetValue<double>());
-        Assert.Equal("example.commands:scale", envelope["identity"]!.GetValue<string>());
         Assert.Equal("/commands", HttpCommandProtocol.Endpoint);
+    }
+
+    [Fact]
+    public void DynamicDescriptionsResolveAfterRegistration()
+    {
+        const string section = "CommandDescriptionTest";
+        LanguageManager.KeyWords.TryGetPropertyValue(section, out var existing);
+        var original = existing?.DeepClone();
+        try
+        {
+            LanguageManager.KeyWords[section] =
+                JsonNode.Parse("""{"Description":"Initial"}""");
+            var registry = RegistryWith(
+                new CommandDefinition<EchoCommand>(
+                    (_, command) => CommandResult.Ok(command.Text),
+                    CommandDomain.World),
+                new TextCommand(
+                    "echo",
+                    new LocalizedText(section, "Description", "Fallback"),
+                    [
+                        new CommandRoute(
+                            [new CommandArgument("text")],
+                            typeof(EchoCommand),
+                            arguments => new EchoCommand(
+                                arguments.Get<string>("text")))
+                    ]));
+            var adapter = new TextCommandAdapter(registry);
+
+            Assert.Equal(
+                "Initial",
+                Assert.Single(adapter.Suggest(
+                    "/e",
+                    Player("Player"))).Description);
+            LanguageManager.KeyWords[section] =
+                JsonNode.Parse("""{"Description":"Changed"}""");
+            Assert.Equal(
+                "Changed",
+                Assert.Single(adapter.Suggest(
+                    "/e",
+                    Player("Player"))).Description);
+        }
+        finally
+        {
+            if (original is null)
+            {
+                LanguageManager.KeyWords.Remove(section);
+            }
+            else
+            {
+                LanguageManager.KeyWords[section] = original;
+            }
+        }
     }
 
     private static CommandRegistry RegistryWith<TCommand>(
@@ -980,40 +729,61 @@ public class CommandDispatcherTest
         where TCommand : IGameCommand
     {
         var registry = new CommandRegistry();
-        var owner = new ModId("example.commands");
-        registry.Register(
-            owner,
-            new ResourceId(owner, "typed"),
-            definition);
-        registry.Adapters.Register(
-            owner,
-            new ResourceId(owner, "text"),
-            text);
+        registry.Register(_owner, Id("typed"), definition);
+        registry.Adapters.Register(_owner, Id("text"), text);
         registry.Freeze();
         return registry;
     }
 
+    private static CommandRegistry BuiltInRegistry()
+    {
+        var registry = new CommandRegistry();
+        var owner = new ModId("game");
+        BuiltInCommands.Register(registry, owner);
+        registry.Freeze();
+        return registry;
+    }
+
+    private static void AssertDomain<TCommand>(
+        CommandRegistry registry,
+        CommandDomain expected)
+        where TCommand : IGameCommand
+    {
+        Assert.True(registry.TryGetDefinition<TCommand>(out var registered));
+        Assert.Equal(expected, registered!.Definition.Domain);
+    }
+
     private static CommandContext Context(
         CommandPrincipal? principal = null,
-        CommandSource source = CommandSource.Mod)
+        CommandInvocationChannel channel = CommandInvocationChannel.Mod)
     {
         return new CommandContext(
-            source,
-            principal ?? new CommandPrincipal("Player"),
+            channel,
+            principal ?? Player("Player"),
             null,
             "test");
     }
 
-    private static LocalizedText Text(string value)
+    private static CommandPrincipal Player(
+        string name,
+        IEnumerable<ResourceId>? permissions = null,
+        IEnumerable<ResourceId>? delegablePermissions = null)
     {
-        return LocalizedText.Literal(value);
+        return new CommandPrincipal(
+            name,
+            CommandPrincipalKind.Player,
+            permissions: permissions,
+            delegablePermissions: delegablePermissions);
     }
+
+    private static ResourceId Id(string path) => new(_owner, path);
+
+    private static LocalizedText Text(string value) =>
+        LocalizedText.Literal(value);
 
     private sealed record ScaleCommand(double Value) : IGameCommand;
 
     private sealed record EchoCommand(string Text) : IGameCommand;
-
-    private sealed record SecureCommand : IGameCommand;
 
     private sealed record GetTimeCommand : IGameCommand;
 
@@ -1023,9 +793,11 @@ public class CommandDispatcherTest
 
     private sealed record StopCommand : IGameCommand;
 
-    private sealed record KickCommand : IGameCommand;
-
     private sealed record FailCommand : IGameCommand;
 
     private sealed record CreativeActionCommand : IGameCommand;
+
+    private sealed record ApplicationActionCommand : IGameCommand;
+
+    private sealed record WorldActionCommand : IGameCommand;
 }

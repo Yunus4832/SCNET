@@ -153,7 +153,7 @@ public static class GameManager
                                 new MessageDialog(
                                     "保存存档失败",
                                     "Project.xml 未被新的存档文件替换。\n" + e.Message,
-                                    "OK"
+                                    LanguageManager.Ok
                                 )
                             );
                         }

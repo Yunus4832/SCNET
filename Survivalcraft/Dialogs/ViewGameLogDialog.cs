@@ -51,7 +51,7 @@ public class ViewGameLogDialog : Dialog
                     new MessageDialog(
                         "Log Item",
                         item.ToString() ?? string.Empty,
-                        "OK"
+                        LanguageManager.Ok
                     )
                 );
             }

@@ -30,7 +30,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
         return false;
     }
 
-    public bool SupportsSource(string input, CommandSource source)
+    public bool SupportsDomain(string input, CommandDomain domain)
     {
         if (string.IsNullOrWhiteSpace(input))
         {
@@ -43,16 +43,26 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             line = line[1..];
         }
 
-        var commandName = CommandLineTokenizer.TokenizePartial(line).FirstOrDefault();
-        return !string.IsNullOrWhiteSpace(commandName) &&
-               TryFind(commandName, out var registered) &&
-               registered?.Command.SupportsSource(source) == true;
+        if (!CommandLineTokenizer.TryTokenize(line, out var tokens, out _) ||
+            tokens.Count == 0 ||
+            !TryFind(tokens[0], out var registered) ||
+            registered is null)
+        {
+            return false;
+        }
+
+        var arguments = tokens.Skip(1).ToArray();
+        return registered.Command.Routes.Any(route =>
+            route.Segments.Count == arguments.Length &&
+            MatchesCompleted(route, arguments) &&
+            _registry.TryGetDefinition(route.CommandType, out var command) &&
+            command?.Definition.Domain == domain);
     }
 
     public IReadOnlyList<CommandSuggestion> Suggest(
         string input,
         CommandPrincipal principal,
-        CommandSource source = CommandSource.Player)
+        CommandInvocationChannel channel = CommandInvocationChannel.Text)
     {
         ArgumentNullException.ThrowIfNull(principal);
         var line = input.TrimStart();
@@ -66,7 +76,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
         {
             var prefix = tokens.Count == 0 ? string.Empty : tokens[0];
             return Entries
-                .Where(entry => IsVisible(entry.Command, principal, source))
+                .Where(entry => IsVisible(entry.Command, principal))
                 .Where(entry => entry.Command.Name.StartsWith(
                     prefix,
                     StringComparison.OrdinalIgnoreCase))
@@ -78,8 +88,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
         }
 
         if (!TryFind(tokens[0], out var registered) ||
-            registered is null ||
-            !registered.Command.SupportsSource(source))
+            registered is null)
         {
             return [];
         }
@@ -91,11 +100,11 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
         var suggestionContext = new CommandSuggestionContext(
             _registry,
             principal,
-            source,
+            channel,
             completed);
         foreach (var route in registered.Command.Routes)
         {
-            if (!_registry.CanExecute(route.CommandType, principal, source) ||
+            if (!_registry.CanInvoke(route.CommandType, principal) ||
                 completed.Length >= route.Segments.Count ||
                 !MatchesCompleted(route, completed))
             {
@@ -157,7 +166,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
     public bool CanExecute(
         string input,
         CommandPrincipal principal,
-        CommandSource source = CommandSource.Player)
+        CommandInvocationChannel channel = CommandInvocationChannel.Text)
     {
         ArgumentNullException.ThrowIfNull(principal);
         if (string.IsNullOrWhiteSpace(input))
@@ -174,15 +183,14 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
         if (!CommandLineTokenizer.TryTokenize(line, out var tokens, out _) ||
             tokens.Count == 0 ||
             !TryFind(tokens[0], out var registered) ||
-            registered is null ||
-            !registered.Command.SupportsSource(source))
+            registered is null)
         {
             return false;
         }
 
         var arguments = tokens.Skip(1).ToArray();
         return registered.Command.Routes.Any(route =>
-            _registry.CanExecute(route.CommandType, principal, source) &&
+            _registry.CanInvoke(route.CommandType, principal) &&
             route.Segments.Count == arguments.Length &&
             MatchesCompleted(route, arguments));
     }
@@ -231,14 +239,6 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                 tokens[0]);
         }
 
-        if (!registered.Command.SupportsSource(context.Source))
-        {
-            return CommandResult.LocalizedFail(
-                "command.frontend_unavailable",
-                "CommandFrontendUnavailable_Message",
-                "该指令未向当前文本入口开放。");
-        }
-
         var arguments = tokens.Skip(1).ToArray();
         var denied = false;
         foreach (var route in registered.Command.Routes)
@@ -248,7 +248,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                 continue;
             }
 
-            if (!_registry.CanExecute(route.CommandType, context.Principal, context.Source))
+            if (!_registry.CanInvoke(route.CommandType, context.Principal))
             {
                 denied = true;
                 continue;
@@ -264,7 +264,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             {
                 Log.Error(
                     $"Command {registered.Id} failed, principal={context.Principal.Name}, " +
-                    $"source={context.Source}, correlation={context.CorrelationId}: {exception}");
+                    $"channel={context.Channel}, correlation={context.CorrelationId}: {exception}");
                 return CommandResult.LocalizedFail(
                     "command.failed",
                     "CommandFailed_Message",
@@ -282,7 +282,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
         var visibleRoutes = registered.Command.Routes
             .Where(route =>
-                _registry.CanExecute(route.CommandType, context.Principal, context.Source))
+                _registry.CanInvoke(route.CommandType, context.Principal))
             .ToArray();
         if (visibleRoutes.Length == 0)
         {
@@ -331,12 +331,10 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
     private bool IsVisible(
         TextCommand command,
-        CommandPrincipal principal,
-        CommandSource source)
+        CommandPrincipal principal)
     {
-        return command.SupportsSource(source) &&
-               command.Routes.Any(route =>
-                   _registry.CanExecute(route.CommandType, principal, source));
+        return command.Routes.Any(route =>
+            _registry.CanInvoke(route.CommandType, principal));
     }
 
     private static bool MatchesCompleted(

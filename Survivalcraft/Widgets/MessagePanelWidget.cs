@@ -257,8 +257,8 @@ public sealed class MessagePanelWidget : CanvasWidget
             textAdapter.Suggest(EditText.Text, principal)
                 .Concat(textAdapter.Suggest(
                     EditText.Text,
-                    CommandPrincipal.Local,
-                    CommandSource.Local))
+                    CommandPrincipal.ApplicationUser,
+                    CommandInvocationChannel.Text))
                 .GroupBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
                 .Select(group => group.First())
                 .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase));
@@ -285,8 +285,8 @@ public sealed class MessagePanelWidget : CanvasWidget
             if ((adapter.CanExecute(EditText.Text, principal) ||
                  adapter.CanExecute(
                      EditText.Text,
-                     CommandPrincipal.Local,
-                     CommandSource.Local)) &&
+                     CommandPrincipal.ApplicationUser,
+                     CommandInvocationChannel.Text)) &&
                 !_commandSuggestions.HasSuggestions)
             {
                 var input = EditText.Text;

@@ -13,7 +13,7 @@ namespace Game.Commands;
 /// </summary>
 public static class CommandGateway
 {
-    public static string SubmitServer(
+    public static string SubmitServerOperator(
         Project project,
         IGameCommand command,
         string? correlationId = null)
@@ -23,7 +23,7 @@ public static class CommandGateway
         var requestId = string.IsNullOrWhiteSpace(correlationId)
             ? Guid.NewGuid().ToString("N")
             : correlationId;
-        var result = CommandExecutor.ExecuteServerConsole(
+        var result = CommandExecutor.ExecuteServerOperator(
             command,
             project,
             requestId);
@@ -44,9 +44,9 @@ public static class CommandGateway
         if (CurrentModRuntime.Value is { } runtime)
         {
             var adapter = new TextCommandAdapter(runtime.Commands);
-            if (adapter.SupportsSource(input, CommandSource.Local))
+            if (adapter.SupportsDomain(input, CommandDomain.Application))
             {
-                var result = CommandExecutor.ExecuteLocal(
+                var result = CommandExecutor.ExecuteApplication(
                     input,
                     player.Project,
                     requestId);
@@ -80,6 +80,20 @@ public static class CommandGateway
         var requestId = string.IsNullOrWhiteSpace(correlationId)
             ? Guid.NewGuid().ToString("N")
             : correlationId;
+        if (CurrentModRuntime.Value is { } runtime &&
+            runtime.Commands.TryGetDefinition(
+                command.GetType(),
+                out var registered) &&
+            registered?.Definition.Domain is CommandDomain.Application)
+        {
+            var result = CommandExecutor.ExecuteApplication(
+                command,
+                player.Project,
+                requestId);
+            CommandResultPublisher.DisplayLocal(player.Project, result);
+            return requestId;
+        }
+
         if (CommonLib.WorkType is WorkType.Local or WorkType.Server)
         {
             var result = CommandExecutor.ExecutePlayer(command, player, requestId);
@@ -91,7 +105,7 @@ public static class CommandGateway
             return requestId;
         }
 
-        if (CurrentModRuntime.Value is not { } runtime)
+        if (CurrentModRuntime.Value is not { } remoteRuntime)
         {
             PublishLocalFailure(
                 player,
@@ -102,7 +116,7 @@ public static class CommandGateway
             return requestId;
         }
 
-        if (!runtime.Commands.TryEncode(
+        if (!remoteRuntime.Commands.TryEncode(
                 command,
                 out var commandId,
                 out var payload,

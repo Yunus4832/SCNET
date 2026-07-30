@@ -11,6 +11,8 @@ public sealed class CommandRegistry
 
     public CommandAdapterRegistry Adapters { get; }
 
+    public CommandPermissionRegistry Permissions { get; } = new();
+
     public IReadOnlyList<RegisteredGameCommand> Definitions => _definitions
         .Select(pair => new RegisteredGameCommand(pair.Key, pair.Value.Definition))
         .OrderBy(entry => entry.Id.ToString(), StringComparer.Ordinal)
@@ -158,140 +160,31 @@ public sealed class CommandRegistry
         }
     }
 
-    public IReadOnlyList<string> GetPermissionNodes()
-    {
-        return GetGrantablePermissionNodes()
-            .Select(node => node.Permission)
-            .OrderBy(node => node, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-    }
-
-    public bool CanGrantPermission(
-        string permission,
-        CommandPrincipal principal,
-        CommandSource source)
-    {
-        ArgumentNullException.ThrowIfNull(principal);
-        var normalized = CommandPermissionSet.Normalize(permission);
-        var node = GetGrantablePermissionNodes().FirstOrDefault(candidate =>
-            string.Equals(candidate.Permission, normalized, StringComparison.OrdinalIgnoreCase));
-        if (node is null)
-        {
-            return false;
-        }
-
-        if (source is CommandSource.ServerConsole)
-        {
-            return true;
-        }
-
-        if (node.Policy is not CommandGrantPolicy.Standard)
-        {
-            return false;
-        }
-
-        if (string.Equals(
-                normalized,
-                CommandPermissionSet.ManageStandardPermission,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            return principal.CanDelegate(CommandPermissionSet.ManageStandardPermission);
-        }
-
-        return principal.CanDelegate(normalized) ||
-               principal.HasPermission(CommandPermissionSet.ManageStandardPermission);
-    }
-
-    private IReadOnlyList<GrantablePermissionNode> GetGrantablePermissionNodes()
-    {
-        var routes = Definitions
-            .Select(entry => entry.Definition)
-            .Where(definition =>
-                !string.IsNullOrWhiteSpace(definition.RequiredPermission) &&
-                !string.Equals(
-                    definition.RequiredPermission,
-                    CommandPermissionSet.GrantPermission,
-                    StringComparison.OrdinalIgnoreCase))
-            .Select(definition => new GrantablePermissionNode(
-                CommandPermissionSet.Normalize(definition.RequiredPermission),
-                definition.GrantPolicy))
-            .ToArray();
-        var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            CommandPermissionSet.ManageStandardPermission,
-            "*"
-        };
-        foreach (var route in routes.Where(route => route.Policy is not CommandGrantPolicy.NonGrantable))
-        {
-            candidates.Add(route.Permission);
-            if (route.Permission == "*" || route.Permission.EndsWith(".*", StringComparison.Ordinal))
-            {
-                continue;
-            }
-
-            var segments = route.Permission.Split('.');
-            for (var count = 1; count < segments.Length; count++)
-            {
-                candidates.Add(string.Join(".", segments.Take(count)) + ".*");
-            }
-        }
-
-        return candidates
-            .Select(candidate =>
-            {
-                if (string.Equals(
-                        candidate,
-                        CommandPermissionSet.ManageStandardPermission,
-                        StringComparison.OrdinalIgnoreCase))
-                {
-                    return new GrantablePermissionNode(candidate, CommandGrantPolicy.Standard);
-                }
-
-                var covered = routes
-                    .Where(route => CommandPermissionSet.Implies(candidate, route.Permission))
-                    .ToArray();
-                if (covered.Length == 0 ||
-                    covered.Any(route => route.Policy is CommandGrantPolicy.NonGrantable))
-                {
-                    return null;
-                }
-
-                var policy = covered.Any(route => route.Policy is CommandGrantPolicy.Protected)
-                    ? CommandGrantPolicy.Protected
-                    : CommandGrantPolicy.Standard;
-                return new GrantablePermissionNode(candidate, policy);
-            })
-            .Where(node => node is not null)
-            .Select(node => node!)
-            .ToArray();
-    }
-
-    public bool CanExecute(
+    public bool CanInvoke(
         Type commandType,
-        CommandPrincipal principal,
-        CommandSource source = CommandSource.Player)
+        CommandPrincipal principal)
     {
         ArgumentNullException.ThrowIfNull(commandType);
         ArgumentNullException.ThrowIfNull(principal);
         return _definitionsByType.TryGetValue(commandType, out var entry) &&
-               entry.Definition.IsAvailable(RunMode.Value, CommonLib.WorkType) &&
                entry.Definition.IsPotentiallyAuthorized(
+                   Permissions,
                    principal,
-                   source,
                    principal.Player?.Project ?? GameManager.Project);
     }
 
-    public bool CanExecute(
+    public bool CanInvoke(
         IGameCommand command,
-        CommandPrincipal principal,
-        CommandSource source = CommandSource.Player)
+        CommandPrincipal principal)
     {
         ArgumentNullException.ThrowIfNull(command);
-        return CanExecute(command.GetType(), principal, source);
+        return CanInvoke(command.GetType(), principal);
     }
 
     internal void Freeze()
     {
+        ValidatePermissions();
+        Permissions.Freeze();
         Adapters.Freeze();
         IsFrozen = true;
     }
@@ -299,6 +192,7 @@ public sealed class CommandRegistry
     internal void RemoveOwner(ModId owner)
     {
         Adapters.RemoveOwner(owner);
+        Permissions.RemoveOwner(owner);
 
         foreach (var id in _definitions
                      .Where(pair => pair.Value.Owner == owner)
@@ -306,6 +200,31 @@ public sealed class CommandRegistry
                      .ToArray())
         {
             RemoveDefinition(owner, id);
+        }
+    }
+
+    private void ValidatePermissions()
+    {
+        foreach (var command in Definitions)
+        {
+            if (command.Definition.RequiredPermission is not { } permission)
+            {
+                continue;
+            }
+
+            if (!Permissions.TryGet(permission, out var registered) ||
+                registered is null)
+            {
+                throw new InvalidOperationException(
+                    $"Command {command.Id} references unregistered permission {permission}.");
+            }
+
+            if (registered.Definition.Domain != command.Definition.Domain)
+            {
+                throw new InvalidOperationException(
+                    $"Command {command.Id} belongs to {command.Definition.Domain}, " +
+                    $"but permission {permission} belongs to {registered.Definition.Domain}.");
+            }
         }
     }
 
@@ -337,8 +256,6 @@ public sealed class CommandRegistry
         ModId Owner,
         ResourceId Id,
         ICommandDefinition Definition);
-
-    private sealed record GrantablePermissionNode(string Permission, CommandGrantPolicy Policy);
 
     private sealed class Registration(
         CommandRegistry registry,

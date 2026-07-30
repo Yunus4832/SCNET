@@ -148,7 +148,8 @@ public sealed class CommandPackage : IPackage
                 writer.Write((ushort)PermissionGrants.Count);
                 foreach (var grant in PermissionGrants)
                 {
-                    writer.Write(grant.Permission);
+                    writer.Write(grant.Permission.Namespace.Value);
+                    writer.Write(grant.Permission.Path);
                     writer.Write(grant.CanDelegate);
                 }
 
@@ -228,7 +229,9 @@ public sealed class CommandPackage : IPackage
                 for (var index = 0; index < count; index++)
                 {
                     grants[index] = new CommandPermissionGrant(
-                        reader.ReadString(),
+                        new ResourceId(
+                            new ModId(reader.ReadString()),
+                            reader.ReadString()),
                         reader.ReadBoolean());
                 }
 

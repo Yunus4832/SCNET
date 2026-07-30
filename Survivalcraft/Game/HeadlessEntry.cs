@@ -42,7 +42,7 @@ public static class HeadlessEntry
 
     /// <summary>
     /// Enqueues a trusted host-console command for execution on the Headless
-    /// server thread. The command uses the ServerConsole principal.
+    /// server thread. The command uses the ServerOperator principal.
     /// </summary>
     public static Task<CommandResult> SubmitConsoleCommandAsync(string input)
     {
@@ -245,12 +245,9 @@ public static class HeadlessEntry
     {
         while (_consoleCommands.TryDequeue(out var request))
         {
-            var result = CurrentModRuntime.Value is { } runtime &&
-                         new TextCommandAdapter(runtime.Commands).SupportsSource(
-                             request.Input,
-                             CommandSource.Local)
-                ? CommandExecutor.ExecuteLocal(request.Input, GameManager.Project)
-                : CommandExecutor.ExecuteServerConsole(request.Input, GameManager.Project);
+            var result = CommandExecutor.ExecuteServerOperator(
+                request.Input,
+                GameManager.Project);
             if (GameManager.Project is { } project)
             {
                 CommandResultPublisher.Publish(project, result, includeServer: false);
@@ -295,26 +292,16 @@ public static class HeadlessEntry
                     var adapter = new TextCommandAdapter(runtime.Commands);
                     var items = adapter.Suggest(
                             request.Input,
-                            CommandPrincipal.ServerConsole,
-                            CommandSource.ServerConsole)
-                        .Concat(adapter.Suggest(
-                            request.Input,
-                            CommandPrincipal.Local,
-                            CommandSource.Local))
-                        .GroupBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
-                        .Select(group => group.First())
+                            CommandPrincipal.ServerOperator,
+                            CommandInvocationChannel.ServerControl)
                         .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
                         .ToArray();
                     result = new HeadlessCommandSuggestions(
                         items,
                         adapter.CanExecute(
                             request.Input,
-                            CommandPrincipal.ServerConsole,
-                            CommandSource.ServerConsole) ||
-                        adapter.CanExecute(
-                            request.Input,
-                            CommandPrincipal.Local,
-                            CommandSource.Local));
+                            CommandPrincipal.ServerOperator,
+                            CommandInvocationChannel.ServerControl));
                 }
             }
             catch (Exception exception)

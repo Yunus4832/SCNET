@@ -108,7 +108,7 @@ public static class ServerAdministrationBootstrap
             }
 
             player.CommandPermissions.Grant(
-                CommandPermissionSet.ManageStandardPermission,
+                BuiltInPermissionIds.ManageStandard,
                 canDelegate: true);
             project.FindSubsystem<SubsystemGameInfo>(true)!
                 .ServerAdministrationClaimed = true;
@@ -132,10 +132,7 @@ public static class ServerAdministrationBootstrap
         var hasAdministrator = players.PlayersData.Any(player =>
             player.CommandPermissions.Grants.Any(grant =>
                 grant.CanDelegate &&
-                string.Equals(
-                    grant.Permission,
-                    CommandPermissionSet.ManageStandardPermission,
-                    StringComparison.OrdinalIgnoreCase)));
+                grant.Permission == BuiltInPermissionIds.ManageStandard));
         if (hasAdministrator)
         {
             gameInfo.ServerAdministrationClaimed = true;

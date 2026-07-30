@@ -95,7 +95,7 @@ public class ReportCommunityContentDialog : Dialog
                 new MessageDialog("Are you sure?",
                     "Reporting offensive content is a serious matter. Please make sure you checked the right box. Do not report content which is not offensive.",
                     "Proceed",
-                    "Cancel",
+                    LanguageManager.Cancel,
                     delegate(MessageDialogButton b)
                     {
                         if (b != MessageDialogButton.Button1)

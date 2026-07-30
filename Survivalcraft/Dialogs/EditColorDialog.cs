@@ -217,7 +217,7 @@ public class EditColorDialog : Dialog
         var obj14 = new BevelledButtonWidget
         {
             Size = new Vector2(160f, 60f),
-            Text = "OK"
+            Text = LanguageManager.Ok
         };
         ButtonWidget widget4 = obj14;
         _okButton = obj14;
@@ -230,7 +230,7 @@ public class EditColorDialog : Dialog
         var obj15 = new BevelledButtonWidget
         {
             Size = new Vector2(160f, 60f),
-            Text = "Cancel"
+            Text = LanguageManager.Cancel
         };
         widget4 = obj15;
         _cancelButton = obj15;
@@ -266,7 +266,7 @@ public class EditColorDialog : Dialog
                                 new MessageDialog(
                                     "Invalid Color",
                                     "Use R,G,B or #HEX notation, e.g. 255,92,13 or #FF5C0D",
-                                    "OK"
+                                    LanguageManager.Ok
                                 )
                             );
                         }

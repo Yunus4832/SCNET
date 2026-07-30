@@ -85,7 +85,7 @@ public class PublishCommunityLinkDialog : Dialog
                         new MessageDialog(
                             "Link Published Successfully",
                             "It should start appearing in the listings after it is moderated. Please keep the file accessible through this link, so that other community members can download it.",
-                            "OK",
+                            LanguageManager.Ok,
                             string.Empty,
                             delegate { DialogsManager.HideDialog(this); }
                         )
@@ -97,9 +97,9 @@ public class PublishCommunityLinkDialog : Dialog
                     DialogsManager.ShowDialog(
                         ParentWidget,
                         new MessageDialog(
-                            "Error",
+                            LanguageManager.Error,
                             error.Message,
-                            "OK"
+                            LanguageManager.Ok
                         )
                     );
                 });

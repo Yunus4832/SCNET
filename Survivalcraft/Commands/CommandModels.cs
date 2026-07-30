@@ -1,14 +1,22 @@
 using EntitySystem.Core;
 
 using Game.Localization;
+using Game.Modding;
 
 namespace Game.Commands;
 
-public enum CommandSource
+public enum CommandDomain
 {
-    Local,
-    Player,
-    ServerConsole,
+    Application,
+    World,
+    Server
+}
+
+public enum CommandInvocationChannel
+{
+    Text,
+    UserInterface,
+    ServerControl,
     Mod,
     HttpApi,
     DebugApi
@@ -23,80 +31,70 @@ public enum CommandArgumentKind
     Guid
 }
 
-public enum CommandExecutionEnvironment
+[Flags]
+public enum CommandPrincipalKind
 {
-    Any,
-    Server,
+    None = 0,
+    ApplicationUser = 1,
+    Player = 2,
+    ServerOperator = 4,
+    System = 8
+}
+
+public enum CommandHostRequirement
+{
+    None,
     HeadlessServer
 }
 
-public enum CommandSourcePolicy
-{
-    Any,
-    LocalOnly,
-    PlayerOnly,
-    ServerConsoleOnly,
-    HttpApiOnly
-}
-
-public enum CommandGrantPolicy
+public enum PermissionGrantPolicy
 {
     Standard,
-    Protected,
-    NonGrantable
+    OperatorManaged,
+    OperatorOnly
 }
 
 public sealed class CommandPrincipal
 {
-    private readonly HashSet<string> _delegablePermissions;
+    private readonly HashSet<ResourceId> _delegablePermissions;
 
-    private readonly HashSet<string> _permissions;
+    private readonly HashSet<ResourceId> _permissions;
 
     public string Name { get; }
 
     public PlayerData? Player { get; }
 
-    public IReadOnlySet<string> Permissions => _permissions;
+    public CommandPrincipalKind Kind { get; }
+
+    public IReadOnlySet<ResourceId> Permissions => _permissions;
+
+    public IReadOnlySet<ResourceId> DelegablePermissions => _delegablePermissions;
 
     public CommandPrincipal(
         string name,
+        CommandPrincipalKind kind = CommandPrincipalKind.Player,
         PlayerData? player = null,
-        IEnumerable<string>? permissions = null,
-        IEnumerable<string>? delegablePermissions = null)
+        IEnumerable<ResourceId>? permissions = null,
+        IEnumerable<ResourceId>? delegablePermissions = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         Name = name;
+        Kind = kind;
         Player = player;
-        _permissions = new HashSet<string>(
-            (permissions ?? []).Select(CommandPermissionSet.Normalize),
-            StringComparer.OrdinalIgnoreCase);
-        _delegablePermissions = new HashSet<string>(
-            (delegablePermissions ?? []).Select(CommandPermissionSet.Normalize),
-            StringComparer.OrdinalIgnoreCase);
+        _permissions = new HashSet<ResourceId>(permissions ?? []);
+        _delegablePermissions = new HashSet<ResourceId>(delegablePermissions ?? []);
     }
 
-    public bool HasPermission(string permission)
+    public bool Is(CommandPrincipalKind kind) => (Kind & kind) != 0;
+
+    public bool HasPermission(ResourceId permission)
     {
-        if (string.IsNullOrWhiteSpace(permission))
-        {
-            return true;
-        }
-
-        var normalized = CommandPermissionSet.Normalize(permission);
-        if (normalized == CommandPermissionSet.GrantPermission)
-        {
-            return _delegablePermissions.Count > 0 ||
-                   _permissions.Contains(CommandPermissionSet.ManageStandardPermission);
-        }
-
-        return _permissions.Any(granted => CommandPermissionSet.Implies(granted, normalized));
+        return _permissions.Contains(permission);
     }
 
-    public bool CanDelegate(string permission)
+    public bool CanDelegate(ResourceId permission)
     {
-        var normalized = CommandPermissionSet.Normalize(permission);
-        return _delegablePermissions.Any(granted =>
-            CommandPermissionSet.Implies(granted, normalized));
+        return _delegablePermissions.Contains(permission);
     }
 
     public static CommandPrincipal FromPlayer(PlayerData player)
@@ -104,6 +102,7 @@ public sealed class CommandPrincipal
         ArgumentNullException.ThrowIfNull(player);
         return new CommandPrincipal(
             player.Name,
+            CommandPrincipalKind.Player,
             player,
             player.CommandPermissions.Grants.Select(grant => grant.Permission),
             player.CommandPermissions.Grants
@@ -111,24 +110,26 @@ public sealed class CommandPrincipal
                 .Select(grant => grant.Permission));
     }
 
-    public static CommandPrincipal ServerConsole { get; } =
-        new("Server", permissions: ["*"], delegablePermissions: ["*"]);
+    public static CommandPrincipal ServerOperator { get; } =
+        new(
+            "Server",
+            CommandPrincipalKind.ApplicationUser | CommandPrincipalKind.ServerOperator);
 
-    public static CommandPrincipal Local { get; } =
-        new("Local");
+    public static CommandPrincipal ApplicationUser { get; } =
+        new("Application", CommandPrincipalKind.ApplicationUser);
 
-    public static CommandPrincipal LocalHost { get; } =
-        new("LocalHost", permissions: ["server.run_mode.set"]);
+    public static CommandPrincipal System { get; } =
+        new("System", CommandPrincipalKind.System);
 }
 
 public sealed class CommandContext(
-    CommandSource source,
+    CommandInvocationChannel channel,
     CommandPrincipal principal,
     Project? project,
     string? correlationId = null
 )
 {
-    public CommandSource Source { get; } = source;
+    public CommandInvocationChannel Channel { get; } = channel;
 
     public CommandPrincipal Principal { get; } = principal ?? throw new ArgumentNullException(nameof(principal));
 
@@ -332,14 +333,14 @@ public sealed record CommandArgumentSuggestion(
 public sealed class CommandSuggestionContext(
     CommandRegistry registry,
     CommandPrincipal principal,
-    CommandSource source,
+    CommandInvocationChannel channel,
     IReadOnlyList<string> completedTokens)
 {
     public CommandRegistry Registry { get; } = registry;
 
     public CommandPrincipal Principal { get; } = principal;
 
-    public CommandSource Source { get; } = source;
+    public CommandInvocationChannel Channel { get; } = channel;
 
     public IReadOnlyList<string> CompletedTokens { get; } = completedTokens;
 
@@ -384,23 +385,17 @@ public sealed class TextCommand : ICommandAdapterBinding
 
     public IReadOnlyList<CommandRoute> Routes { get; }
 
-    public IReadOnlySet<CommandSource> Sources { get; }
-
     public TextCommand(
         string name,
         LocalizedText description,
         IEnumerable<CommandRoute> routes,
-        IEnumerable<string>? aliases = null,
-        IEnumerable<CommandSource>? sources = null)
+        IEnumerable<string>? aliases = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         Name = ValidateName(name, nameof(name));
         Description = description ?? throw new ArgumentNullException(nameof(description));
         Routes = routes?.ToArray() ?? throw new ArgumentNullException(nameof(routes));
         Aliases = aliases?.Select(alias => ValidateName(alias, nameof(aliases))).ToArray() ?? [];
-        Sources = new HashSet<CommandSource>(
-            sources ?? Enum.GetValues<CommandSource>()
-                .Where(source => source is not CommandSource.Local));
         if (Routes.Count == 0)
         {
             throw new ArgumentException("A command must define at least one route.", nameof(routes));
@@ -431,15 +426,7 @@ public sealed class TextCommand : ICommandAdapterBinding
             }
         }
 
-        if (Sources.Count == 0)
-        {
-            throw new ArgumentException(
-                "A text command adapter must support at least one command source.",
-                nameof(sources));
-        }
     }
-
-    public bool SupportsSource(CommandSource source) => Sources.Contains(source);
 
     private static string ValidateName(string value, string parameterName)
     {

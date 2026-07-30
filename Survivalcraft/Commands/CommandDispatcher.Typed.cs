@@ -22,7 +22,9 @@ public sealed class CommandDispatcher(CommandRegistry registry)
         }
 
         var definition = registered.Definition;
-        if (!definition.IsAvailable(RunMode.Value, CommonLib.WorkType))
+        context.Registry = _registry;
+        if (!definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) ||
+            !definition.CanInvoke(context.Principal, context.Project))
         {
             return CommandResult.LocalizedFail(
                 "command.unavailable",
@@ -30,8 +32,7 @@ public sealed class CommandDispatcher(CommandRegistry registry)
                 "当前运行环境不支持该命令。");
         }
 
-        if (!definition.IsSourceAllowed(context.Source) ||
-            !definition.IsAuthorized(context, command))
+        if (!definition.IsAuthorized(context, command))
         {
             return CommandResult.LocalizedFail(
                 "command.forbidden",
@@ -41,14 +42,13 @@ public sealed class CommandDispatcher(CommandRegistry registry)
 
         try
         {
-            context.Registry = _registry;
             return definition.Handle(context, command);
         }
         catch (Exception exception)
         {
             Log.Error(
                 $"Command {registered.Id} failed, principal={context.Principal.Name}, " +
-                $"source={context.Source}, correlation={context.CorrelationId}: {exception}");
+                $"channel={context.Channel}, correlation={context.CorrelationId}: {exception}");
             return CommandResult.LocalizedFail(
                 "command.failed",
                 "CommandFailed_Message",

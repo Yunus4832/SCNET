@@ -231,13 +231,13 @@ public sealed class RunningSettingManagerTest : IDisposable
             var result = new CommandDispatcher(registry).Execute(
                 new SetRunModeCommand(RunModeType.Gui),
                 new CommandContext(
-                    CommandSource.Local,
-                    CommandPrincipal.LocalHost,
+                    CommandInvocationChannel.UserInterface,
+                    CommandPrincipal.ApplicationUser,
                     null,
                     "run-mode-test"));
 
             Assert.True(result.Success);
-            Assert.Equal("server.run_mode.restarting", result.Code);
+            Assert.Equal("application.run_mode.restarting", result.Code);
             Assert.Equal(GameExitAction.Restart, GameExitManager.ExitAction);
 
             var runningSetting = RunningSettingManager.Load([]);

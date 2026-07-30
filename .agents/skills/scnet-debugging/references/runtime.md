@@ -48,7 +48,7 @@ permissions. An unclaimed server prints a process-local claim code. A player mus
 /auth claim <claim-code>
 ```
 
-The claim grants delegable `permissions.manage.standard`, not `*`. It lets the player manage
+The claim grants delegable `game:permissions.manage.standard`. It lets the player manage
 standard command permissions without automatically receiving those command permissions. GUI and
 Headless use the same online-player claim path; GUI presents a local claim dialog, while Headless
 prints the code to stdout. Until a player claims it, the server remains unclaimed.
@@ -61,22 +61,26 @@ auth code
 auth regenerate
 ```
 
-`server.stop` is console-only and non-grantable. Protected permission nodes can only be granted by
-the server console; non-grantable nodes and unsafe covering wildcards are omitted from permission
-discovery and rejected during permission changes.
+`game:server.stop` is `OperatorOnly` and cannot be granted to a player. `OperatorManaged`
+permissions can be granted for use only by a server operator. Permissions are explicit namespaced
+resources; wildcard permission nodes are not supported.
 
 Use `grant` for a non-delegable grant. A delegated player can grant or revoke only the same
 permission node or a node covered by their wildcard scope:
 
 ```text
-permission grant "Player Name" world.time.set
-permission delegate "Player Name" world.*
-permission revoke "Player Name" world.time.set
+permission grant "Player Name" game:world.time.set
+permission delegate "Player Name" game:world.time.set
+permission revoke "Player Name" game:world.time.set
 permission list "Player Name"
 ```
 
 Permission mutations are always executed by the server. Client commands are requests; never mutate
 permission state in client-side diagnostic code.
+
+stdin and the Android Headless management UI both execute as `ServerOperator`; they differ only in
+their frontend. Commands that require an online player are filtered by `AllowedPrincipals` and do
+not appear in server-control suggestions.
 
 For stdin discovery, enter `permission` to print usage plus the current player and permission-node
 lists. `permission players` and `permission nodes` print each list separately.

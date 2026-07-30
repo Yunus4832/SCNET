@@ -9,20 +9,28 @@ namespace Game.Screens;
 
 public class MainMenuScreen : Screen
 {
-    private readonly StackPanelWidget _bulletinStackPanel;
+    private StackPanelWidget _bulletinStackPanel = null!;
 
-    private readonly LabelWidget _copyrightLabel;
+    private LabelWidget _copyrightLabel = null!;
 
-    private readonly BevelledButtonWidget _languageSwitchButton;
+    private BevelledButtonWidget _languageSwitchButton = null!;
 
-    private readonly BevelledButtonWidget _serverModeButton;
+    private BevelledButtonWidget _serverModeButton = null!;
 
-    private readonly ButtonWidget _showBulletinButton;
+    private ButtonWidget _showBulletinButton = null!;
 
     private static readonly string _versionString = $"Version {VersionsManager.Version}";
 
+    private string _loadedLanguage = string.Empty;
+
     public MainMenuScreen()
     {
+        ReloadContents();
+    }
+
+    private void ReloadContents()
+    {
+        Children.Clear();
         var node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
         LoadContents(this, node);
         _showBulletinButton = Children.Find<ButtonWidget>("BulletinButton")!;
@@ -35,10 +43,9 @@ public class MainMenuScreen : Screen
         _languageSwitchButton.ClickableWidget.OnClick += OnLanguageButtonClick;
         _serverModeButton.ClickableWidget.OnClick += OnServerModeButtonClick;
 
-        // 初始化语言相关 UI 状态
-        var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
-        _bulletinStackPanel.IsVisible = languageType == "zh-CN";
-        _copyrightLabel.IsVisible = languageType != "zh-CN";
+        _loadedLanguage = LanguageManager.CurrentLanguage;
+        _bulletinStackPanel.IsVisible = _loadedLanguage == "zh-CN";
+        _copyrightLabel.IsVisible = _loadedLanguage != "zh-CN";
     }
 
     public override void Enter(object[] parameters)
@@ -91,7 +98,7 @@ public class MainMenuScreen : Screen
                 return;
             }
 
-            var result = CommandExecutor.ExecuteLocalHost(
+            var result = CommandExecutor.ExecuteApplication(
                 new SetRunModeCommand(RunModeType.HeadlessServer),
                 GameManager.Project);
             if (!result.Success)
@@ -108,6 +115,15 @@ public class MainMenuScreen : Screen
 
     public override void Update()
     {
+        if (!string.Equals(
+                _loadedLanguage,
+                LanguageManager.CurrentLanguage,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            ReloadContents();
+            Children.Find<MotdWidget>(false)?.Restart();
+        }
+
         // 更新版本号显示
         Children.Find<LabelWidget>("Version")!.Text = _versionString;
 
