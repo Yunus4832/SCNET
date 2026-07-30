@@ -97,7 +97,10 @@ public class GameWidget : CanvasWidget
         ViewWidget = Children.Find<ViewWidget>("View")!;
         GuiWidget = Children.Find<ContainerWidget>("Gui")!;
         _controlsWidget = GuiWidget.Children.Find<CanvasWidget>("ControlsContainer")!;
-        if (CommonLib.Net.IsConnected && playerData.IsMainPlayer)
+        var hasMultiplayerMessaging =
+            CommonLib.WorkType is not WorkType.Local &&
+            CommonLib.Net.IsConnected;
+        if (hasMultiplayerMessaging && playerData.IsMainPlayer)
         {
             _messageService = SubsystemGameWidgets.Messages;
             _messageService.ToastRequested += DisplayToast;
@@ -125,12 +128,17 @@ public class GameWidget : CanvasWidget
             _informationOverlaysContainer.Children.Add(PlayerInformationOverlay);
             _informationOverlaysContainer.Children.Add(_informationOverlaysSpacer);
             _informationOverlaysContainer.Children.Add(MessageHistoryOverlay);
-            MessagePanel = new MessagePanelWidget(
-                playerData,
-                MessageHistoryOverlay);
             NetPlayerListButton.IsVisible = true;
             _messageButton.IsVisible = true;
             _controlsWidget.Children.Insert(0, _informationOverlaysContainer);
+        }
+
+        if (playerData.IsMainPlayer)
+        {
+            MessagePanel = new MessagePanelWidget(
+                playerData,
+                MessageHistoryOverlay,
+                hasMultiplayerMessaging);
         }
 
         _cameras.Add(new FppCamera(this));
@@ -234,18 +242,38 @@ public class GameWidget : CanvasWidget
         }
 
         if (Input.IsKeyDownOnce(Key.Enter) &&
-            MessagePanel is { EditText.HasFocus: false } &&
-            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget is not MessagePanelWidget)
+            MessagePanel is { EditText.HasFocus: false } enterMessagePanel)
         {
-            OpenMessagePanel(true, false);
+            if (PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget ==
+                enterMessagePanel)
+            {
+                ToggleMessagePanel(false);
+            }
+            else
+            {
+                OpenMessagePanel(
+                    focusInput: MessageHistoryOverlay != null,
+                    commandInput: MessageHistoryOverlay == null);
+            }
+
             Input.Clear();
         }
 
         if (Input.IsKeyDownOnce(Key.Slash) &&
-            MessagePanel is { EditText.HasFocus: false })
+            MessagePanel is { } messagePanel)
         {
-            OpenMessagePanel(false, true);
-            Input.Clear();
+            var currentModalPanel =
+                PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
+            if (currentModalPanel == messagePanel && messagePanel.IsCommandInput)
+            {
+                ToggleMessagePanel(false);
+                Input.Clear();
+            }
+            else if (!messagePanel.EditText.HasFocus)
+            {
+                OpenMessagePanel(false, true);
+                Input.Clear();
+            }
         }
 
         var modalPanel = PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
@@ -337,7 +365,7 @@ public class GameWidget : CanvasWidget
 
         if (gui.ModalPanelWidget == MessagePanel)
         {
-            MessagePanel.EditText.HasFocus = false;
+            MessagePanel.ResetInput();
             gui.ModalPanelWidget = null;
             return;
         }

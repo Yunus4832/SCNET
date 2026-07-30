@@ -19,9 +19,11 @@ public sealed class MessagePanelWidget : CanvasWidget
         Margin = new Vector2(12f, 0f)
     };
 
-    private readonly MessageHistoryOverlayWidget _historyOverlayWidget;
+    private readonly MessageHistoryOverlayWidget? _historyOverlayWidget;
 
     private readonly GameMessageService _messageService;
+
+    private readonly bool _messagingEnabled;
 
     private readonly ChatTranscriptWidget _transcript = new()
     {
@@ -69,13 +71,17 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     private PlayerData PlayerData { get; }
 
+    public bool IsCommandInput => EditText.Text.StartsWith('/');
+
     public MessagePanelWidget(
         PlayerData playerData,
-        MessageHistoryOverlayWidget historyOverlayWidget)
+        MessageHistoryOverlayWidget? historyOverlayWidget,
+        bool messagingEnabled = true)
     {
         PlayerData = playerData;
         _historyOverlayWidget = historyOverlayWidget;
         _messageService = playerData.SubsystemGameWidgets.Messages;
+        _messagingEnabled = messagingEnabled;
 
         LoadContents(this, ContentManager.Get<XElement>("Widgets/MessagePanelWidget"));
         var transcriptHost = Children.Find<CanvasWidget>("TranscriptHost")!;
@@ -91,8 +97,12 @@ public sealed class MessagePanelWidget : CanvasWidget
         };
         inputRow.Children.Add(_commandButton);
         inputRow.Children.Add(CreateInputArea());
-        inputRow.Children.Add(_channelButton);
-        inputRow.Children.Add(_historyOverlayButton);
+        if (_messagingEnabled)
+        {
+            inputRow.Children.Add(_channelButton);
+            inputRow.Children.Add(_historyOverlayButton);
+        }
+
         inputRow.Children.Add(_sendMessageButton);
         inputHost.Children.Add(inputRow);
 
@@ -112,7 +122,10 @@ public sealed class MessagePanelWidget : CanvasWidget
         }
 
         _messageService.MessageReceived += AddNetMsg;
-        UpdateHistoryOverlayButton();
+        if (_historyOverlayWidget != null)
+        {
+            UpdateHistoryOverlayButton();
+        }
     }
 
     public void FocusInput()
@@ -128,12 +141,30 @@ public sealed class MessagePanelWidget : CanvasWidget
             EditText.Text = "/";
         }
 
+        RefreshCommandSuggestions();
         SetCommandTextFocus(false);
+    }
+
+    public void CancelCommandInput()
+    {
+        ResetInput();
+        if (!_messagingEnabled &&
+            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget == this)
+        {
+            PlayerData.ComponentPlayer.ComponentGui.ModalPanelWidget = null;
+        }
+    }
+
+    public void ResetInput()
+    {
+        EditText.Text = string.Empty;
+        EditText.HasFocus = false;
+        _commandSuggestions.Hide();
     }
 
     public override void Update()
     {
-        if (_channelButton.IsClicked)
+        if (_messagingEnabled && _channelButton.IsClicked)
         {
             _messageChannel = (GameMessageChannel)(((int)_messageChannel + 1) % 2);
             MultiplayerUiStyle.SetButtonText(
@@ -147,11 +178,9 @@ public sealed class MessagePanelWidget : CanvasWidget
 
         if (_commandButton.IsClicked)
         {
-            if (EditText.Text.StartsWith('/'))
+            if (IsCommandInput)
             {
-                EditText.Text = string.Empty;
-                EditText.HasFocus = false;
-                _commandSuggestions.Hide();
+                CancelCommandInput();
             }
             else
             {
@@ -164,7 +193,7 @@ public sealed class MessagePanelWidget : CanvasWidget
             SubmitInput();
         }
 
-        if (_historyOverlayButton.IsClicked)
+        if (_historyOverlayWidget != null && _historyOverlayButton.IsClicked)
         {
             _historyOverlayWidget.DisplayEnabled = !_historyOverlayWidget.DisplayEnabled;
             SettingsManager.Current.ShowMessageHistoryOverlay = _historyOverlayWidget.DisplayEnabled;
@@ -208,6 +237,12 @@ public sealed class MessagePanelWidget : CanvasWidget
             return;
         }
 
+        if (!_messagingEnabled)
+        {
+            BeginCommandInput();
+            return;
+        }
+
         CommandGateway.Submit(
             PlayerData,
             new SendChatMessageCommand(_messageChannel, input));
@@ -216,6 +251,12 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     private void SubmitOrClose()
     {
+        if (EditText.Text.Trim() == "/")
+        {
+            CancelCommandInput();
+            return;
+        }
+
         if (!string.IsNullOrWhiteSpace(EditText.Text))
         {
             SubmitInput();
@@ -307,6 +348,11 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     private void UpdateHistoryOverlayButton()
     {
+        if (_historyOverlayWidget == null)
+        {
+            return;
+        }
+
         MultiplayerUiStyle.SetButtonText(
             _historyOverlayButton,
             _historyOverlayWidget.DisplayEnabled
