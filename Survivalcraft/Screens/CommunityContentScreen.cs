@@ -177,7 +177,7 @@ public class CommunityContentScreen : Screen
 
     public override void Update()
     {
-        _placeHolder.IsVisible = string.IsNullOrEmpty(_inputKey.Text);
+        _placeHolder.IsVisible = !_inputKey.HasDisplayText;
         _actionButton.IsVisible = _isAdmin || _isOwn;
         _action2Button.IsVisible = _isAdmin || _isOwn;
         if (!_isCnLanguageType)

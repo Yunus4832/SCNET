@@ -197,7 +197,7 @@ public sealed class MessagePanelWidget : CanvasWidget
             UpdateHistoryOverlayButton();
         }
 
-        _hint.IsVisible = EditText.Text.Length == 0;
+        _hint.IsVisible = !EditText.HasDisplayText;
     }
 
     public override void Dispose()

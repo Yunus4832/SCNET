@@ -99,6 +99,8 @@ public class TextBoxWidget : Widget
 
     public bool HideText { get; set; }
 
+    public bool HasDisplayText => _text.Length > 0 || _compositionText.Length > 0;
+
     public bool TextureLinearFilter { get; set; }
 
     public int CaretPosition
