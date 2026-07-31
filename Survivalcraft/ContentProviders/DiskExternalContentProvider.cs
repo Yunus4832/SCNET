@@ -14,7 +14,7 @@ public class DiskExternalContentProvider : IExternalContentProvider
 
     public bool IsLoggedIn => true;
 
-    public const string LocalPath = "app:";
+    public const string LocalPath = "external:";
 
     public string Description => "No login required; Save to disk";
 

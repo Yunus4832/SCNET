@@ -106,15 +106,9 @@ public class AndroidSdCardExternalContentProvider : IExternalContentProvider
             {
                 InitializeFilesystemAccess();
                 var uniquePath = GetUniquePath(ToInternalPath(path));
-                var po = uniquePath;
-                if (po.StartsWith("android:"))
-                {
-                    po = Storage.GetSystemPath(po);
-                }
-
-                var pp = Storage.GetDirectoryName(po);
+                var pp = Storage.GetDirectoryName(uniquePath);
                 Directory.CreateDirectory(pp);
-                using (var destination = new FileStream(po, FileMode.Create, FileAccess.Write, FileShare.None))
+                using (var destination = new FileStream(uniquePath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
                     stream.CopyTo(destination);
                 }
@@ -202,11 +196,10 @@ public class AndroidSdCardExternalContentProvider : IExternalContentProvider
 
     private void InitializeFilesystemAccess()
     {
-        Window.ActivityInstance.GetExternalFilesDir(null);
-        _rootDirectory = RunPath.ExternalPath;
-        if (!Storage.DirectoryExists(_rootDirectory))
+        _rootDirectory = Storage.GetSystemPath(RunPath.ExternalPath);
+        if (!Directory.Exists(_rootDirectory))
         {
-            Storage.CreateDirectory(_rootDirectory);
+            Directory.CreateDirectory(_rootDirectory);
         }
     }
 }

@@ -11,14 +11,12 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
-        <DefineConstants>DESKTOP</DefineConstants>
         <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
         <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
         <RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
-        <DefineConstants>ANDROID</DefineConstants>
     </PropertyGroup>
 
     <ItemGroup>

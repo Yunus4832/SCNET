@@ -1,12 +1,19 @@
 using Engine.Core;
-#if DESKTOP
 using Engine.Media;
-#endif
 
 namespace Engine.Graphics;
 
 public class FontBatch2D : BaseFontBatch
 {
+    public FontBatch2D()
+    {
+        Font = BitmapFont.DebugFont;
+        DepthStencilState = DepthStencilState.None;
+        RasterizerState = RasterizerState.CullNoneScissor;
+        BlendState = BlendState.AlphaBlend;
+        SamplerState = SamplerState.LinearClamp;
+    }
+
     public void QueueText(string text, Vector2 position, float depth, Color color,
         TextAnchor anchor = TextAnchor.Default)
     {
@@ -118,16 +125,6 @@ public class FontBatch2D : BaseFontBatch
     {
         Flush(PrimitivesRenderer2D.ViewportMatrix(), clearAfterFlush);
     }
-#if DESKTOP
-    public FontBatch2D()
-    {
-        Font = BitmapFont.DebugFont;
-        DepthStencilState = DepthStencilState.None;
-        RasterizerState = RasterizerState.CullNoneScissor;
-        BlendState = BlendState.AlphaBlend;
-        SamplerState = SamplerState.LinearClamp;
-    }
-
     public void QueueBatch(FontBatch2D batch, Matrix? matrix = null, Color? color = null)
     {
         var count = TriangleVertices.Count;
@@ -147,5 +144,4 @@ public class FontBatch2D : BaseFontBatch
             TransformTrianglesColors(color.Value, count);
         }
     }
-#endif
 }

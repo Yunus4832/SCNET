@@ -6,6 +6,7 @@ internal static class Program
 {
     private static int Main(string[] args)
     {
+        RegisterStorageRoots();
         if (args.Length is < 2 or > 3)
         {
             PrintUsage();
@@ -36,6 +37,14 @@ internal static class Program
             Console.Error.WriteLine(ex);
             return 1;
         }
+    }
+
+    private static void RegisterStorageRoots()
+    {
+        var appPath = AppContext.BaseDirectory;
+        Storage.RegisterFileSystemRoot("app", appPath);
+        Storage.RegisterFileSystemRoot("data", Path.Combine(appPath, "Data"));
+        Storage.RegisterFileSystemRoot("system", Path.GetPathRoot(appPath) ?? appPath, allowEscapingRoot: true);
     }
 
     private static int Inspect(string worldDirectory)

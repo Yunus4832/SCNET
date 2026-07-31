@@ -1,3 +1,4 @@
+using Android.Content;
 using Android.Net;
 using Android.OS;
 using Android.Content.PM;
@@ -6,6 +7,7 @@ using Game;
 using Game.ContentProviders;
 
 using AndroidClipboardManager = Android.Content.ClipboardManager;
+using AndroidUri = Android.Net.Uri;
 using AndroidProviderSettings = Android.Provider.Settings;
 using EngineTextInputManager = Engine.Input.TextInputManager;
 using GamePlatformManager = Game.Managers.PlatformManager;
@@ -64,6 +66,11 @@ public class GameActivity : EngineActivity
     {
         GetMachineID.AndroidID = AndroidProviderSettings.Secure
             .GetString(ContentResolver, AndroidProviderSettings.Secure.AndroidId) ?? string.Empty;
+    }
+
+    private void OpenLink(string link)
+    {
+        StartActivity(new Intent(Intent.ActionView, AndroidUri.Parse(link)));
     }
 
     private bool IsInternetConnectionAvailable()

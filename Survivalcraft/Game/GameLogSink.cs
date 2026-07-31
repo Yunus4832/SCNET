@@ -77,8 +77,7 @@ public class GameLogSink : ILogSink
             return path;
         }
 
-        var fileInfo = Storage.GetFileInfo(path);
-        if (fileInfo is { Length: >= _maxFileSize })
+        if (Storage.GetFileSize(path) >= _maxFileSize)
         {
             shouldTruncate = true;
         }

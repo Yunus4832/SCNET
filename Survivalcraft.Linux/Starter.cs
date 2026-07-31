@@ -3,6 +3,8 @@ using System.Net.NetworkInformation;
 using System.Reflection;
 
 using Engine.Core;
+using Engine.FileStorage;
+using Engine.Input;
 using Engine.Windowing;
 
 using Game;
@@ -18,6 +20,8 @@ public class Starter
 
     public static void Main(string[] args)
     {
+        RegisterStorageRoots();
+        TextInputManager.RegisterBackend(new SdlTextInputBackend());
         PlatformManager.RegisterPlatform(Platform.Desktop);
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
         PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
@@ -45,6 +49,16 @@ public class Starter
         {
             RestartFromDesktop(nextRunningSetting.RunMode);
         }
+    }
+
+    private static void RegisterStorageRoots()
+    {
+        var appPath = AppContext.BaseDirectory;
+        Storage.RegisterFileSystemRoot("app", appPath, readOnly: true);
+        Storage.RegisterFileSystemRoot("external", appPath);
+        Storage.RegisterFileSystemRoot("data", Path.Combine(appPath, "Data"));
+        Storage.RegisterFileSystemRoot("config", Path.Combine(appPath, "Config"));
+        Storage.RegisterFileSystemRoot("system", Path.GetPathRoot(appPath) ?? appPath, allowEscapingRoot: true);
     }
 
     /// <summary>

@@ -155,19 +155,21 @@ public static class Wav
     {
         private Stream _stream;
 
-        private readonly bool _leaveOpen;
+        private readonly bool _disposeStream;
 
-        private readonly int _channelsCount;
-
-        private readonly int _samplingFrequency;
+        private readonly Stream? _sourceStreamToDispose;
 
         private readonly long _bytesCount;
 
+        private readonly long _streamStart;
+
+        private readonly long _dataStart;
+
         private long _position;
 
-        public override int ChannelsCount => _channelsCount;
+        public override int ChannelsCount { get; }
 
-        public override int SamplingFrequency => _samplingFrequency;
+        public override int SamplingFrequency { get; }
 
         public override long BytesCount => _bytesCount;
 
@@ -187,44 +189,61 @@ public static class Wav
                     throw new ArgumentOutOfRangeException(nameof(num));
                 }
 
-                _stream.Position = Utilities.SizeOf<WavHeader>() + num;
+                _stream.Position = _dataStart + num;
                 _position = value;
             }
         }
-#if ANDROID
+
         public WavStreamingSource(Stream stream, bool leaveOpen = false)
         {
-            var memoryStream = new MemoryStream();
-            stream.Position = 0L;
-            stream.CopyTo(memoryStream);
-            memoryStream.Position = 0L;
-            _stream = memoryStream;
-            _leaveOpen = leaveOpen;
+            ArgumentNullException.ThrowIfNull(stream);
+            if (!stream.CanRead)
+            {
+                throw new ArgumentException("Stream must be readable.", nameof(stream));
+            }
+
+            if (stream.CanSeek)
+            {
+                _stream = stream;
+                _streamStart = stream.Position;
+                _disposeStream = !leaveOpen;
+            }
+            else
+            {
+                var memoryStream = new MemoryStream();
+                try
+                {
+                    stream.CopyTo(memoryStream);
+                    memoryStream.Position = 0L;
+                }
+                catch
+                {
+                    memoryStream.Dispose();
+                    throw;
+                }
+
+                _stream = memoryStream;
+                _streamStart = 0L;
+                _disposeStream = true;
+                _sourceStreamToDispose = leaveOpen ? null : stream;
+            }
+
             ReadHeaders(_stream, out var fmtHeader, out var dataHeader, out var dataStart);
-            _channelsCount = fmtHeader.ChannelsCount;
-            _samplingFrequency = fmtHeader.SamplingFrequency;
+            ChannelsCount = fmtHeader.ChannelsCount;
+            SamplingFrequency = fmtHeader.SamplingFrequency;
             _bytesCount = dataHeader.DataSize;
-            _stream.Position = dataStart;
+            _dataStart = dataStart;
+            _stream.Position = _dataStart;
         }
-#else
-        public WavStreamingSource(Stream stream, bool leaveOpen = false)
-        {
-            _stream = stream;
-            _leaveOpen = leaveOpen;
-            ReadHeaders(stream, out var fmtHeader, out var dataHeader, out var dataStart);
-            _channelsCount = fmtHeader.ChannelsCount;
-            _samplingFrequency = fmtHeader.SamplingFrequency;
-            _bytesCount = dataHeader.DataSize;
-            stream.Position = dataStart;
-        }
-#endif
+
         public override void Dispose()
         {
-            if (!_leaveOpen)
+            if (_disposeStream)
             {
                 _stream.Dispose();
             }
 
+            _sourceStreamToDispose?.Dispose();
             _stream = null!;
         }
 
@@ -240,25 +259,29 @@ public static class Wav
             _position += num / 2 / ChannelsCount;
             return num;
         }
-#if ANDROID
-        public override StreamingSource Duplicate()
-        {
-            var memoryStream = new MemoryStream();
-            _stream.Position = 0L;
-            _stream.CopyTo(memoryStream);
-            memoryStream.Position = 0L;
-            return new WavStreamingSource(memoryStream);
-        }
-#else
-        public override StreamingSource Duplicate()
-        {
-            MemoryStream memoryStream = new MemoryStream();
-            _stream.Position = 0L;
-            _stream.CopyTo(memoryStream);
-            return new WavStreamingSource(memoryStream);
-        }
 
-#endif
+        public override StreamingSource Duplicate()
+        {
+            var originalPosition = _stream.Position;
+            var memoryStream = new MemoryStream();
+            try
+            {
+                _stream.Position = _streamStart;
+                _stream.CopyTo(memoryStream);
+                memoryStream.Position = 0L;
+            }
+            catch
+            {
+                memoryStream.Dispose();
+                throw;
+            }
+            finally
+            {
+                _stream.Position = originalPosition;
+            }
+
+            return new WavStreamingSource(memoryStream);
+        }
     }
 
     public struct WavInfo

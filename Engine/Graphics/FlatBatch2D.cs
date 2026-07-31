@@ -4,14 +4,12 @@ namespace Engine.Graphics;
 
 public sealed class FlatBatch2D : BaseFlatBatch
 {
-#if !ANDROID
     public FlatBatch2D()
     {
         DepthStencilState = DepthStencilState.None;
         RasterizerState = RasterizerState.CullNoneScissor;
         BlendState = BlendState.AlphaBlend;
     }
-#endif
 
     public void QueueBatchTriangles(FlatBatch2D batch, Matrix? matrix = null, Color? color = null)
     {

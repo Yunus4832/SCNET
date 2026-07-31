@@ -239,11 +239,7 @@ public static class TextInputManager
 
     private static ITextInputBackend CreateDefaultBackend()
     {
-#if DESKTOP
-        return new SdlTextInputBackend();
-#else
         return new NullTextInputBackend();
-#endif
     }
 
     private static void TryInvokeBackend(Action action)

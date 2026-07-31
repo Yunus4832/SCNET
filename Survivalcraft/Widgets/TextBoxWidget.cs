@@ -305,12 +305,12 @@ public class TextBoxWidget : Widget
 
     private bool IsBackspacePressed()
     {
-        return KeyboardInput.BackspacePressed;
+        return KeyboardInput.BackspacePressed || Input.IsKeyDownRepeat(Key.BackSpace);
     }
 
     private bool IsDeletePressed()
     {
-        return KeyboardInput.DeletePressed;
+        return KeyboardInput.DeletePressed || Input.IsKeyDownRepeat(Key.Delete);
     }
 
     private void DeleteCharacterBeforeCaret()

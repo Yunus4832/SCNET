@@ -16,7 +16,6 @@
     <PropertyGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
         <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
         <RuntimeIdentifiers>android-arm;android-arm64;android-x86;android-x64</RuntimeIdentifiers>
-        <DefineConstants>ANDROID</DefineConstants>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -31,6 +30,7 @@
         <PackageReference Include="Silk.NET.OpenAL" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.SDL" Version="2.23.0"/>
+        <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.23.0"/>
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12"/>
         <PackageReference Include="Silk.NET.Input.Common" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0"/>
@@ -40,11 +40,9 @@
     <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
         <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1"/>
         <PackageReference Include="Silk.NET.Input.Sdl" Version="2.23.0"/>
-        <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.23.0"/>
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
-        <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.23.0"/>
         <PackageReference Include="Xamarin.AndroidX.Core" Version="1.17.0.1"/>
     </ItemGroup>
 

@@ -5,7 +5,6 @@
         <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
         <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
         <OutputType>Exe</OutputType>
-        <DefineConstants>ANDROID</DefineConstants>
     </PropertyGroup>
 
     <!-- 安卓相关配置 -->

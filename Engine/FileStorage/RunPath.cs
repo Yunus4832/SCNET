@@ -2,18 +2,11 @@ namespace Engine.FileStorage;
 
 public abstract class RunPath
 {
-    private const string _androidFilePath = "android:scnet";
+    public const string ExternalPath = "external:";
 
-#if ANDROID
-    public const string ExternalPath = _androidFilePath;
-#endif
-#if DESKTOP
-    public const string ExternalPath = "app:";
-#endif
+    public const string GameDataPath = "data:";
 
-    public static readonly string GameDataPath = Storage.CombinePaths(ExternalPath, "Data");
-
-    public static readonly string ConfigPath = Storage.CombinePaths(ExternalPath, "Config");
+    public const string ConfigPath = "config:";
 
     /// <summary>
     /// 获取实际运行路径

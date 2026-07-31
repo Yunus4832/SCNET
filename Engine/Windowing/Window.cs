@@ -1,23 +1,3 @@
-#if ANDROID
-using Android.Content;
-using Android.OS;
-using Android.Views;
-
-using Org.Libsdl.App;
-#endif
-
-#if DESKTOP
-using Monitor = Silk.NET.Windowing.Monitor;
-
-using Silk.NET.Core;
-
-using System.Runtime.CompilerServices;
-
-using Silk.NET.Input;
-
-using SixLabors.ImageSharp.PixelFormats;
-#endif
-
 using Engine.Audio;
 using Engine.Core;
 using Engine.Graphics;
@@ -31,36 +11,15 @@ using Environment = System.Environment;
 
 namespace Engine.Windowing;
 
-public static class Window
+public static partial class Window
 {
-    public static IView View = null!;
+    public const string WindowingLibrary = "Silk.NET.Windowing.Sdl";
 
-#if DESKTOP
-    public static IWindow GameWindow = null!;
-    public static IInputContext? InputContext;
-#endif
-#if ANDROID
-    public static EngineActivity ActivityInstance = null!;
-    public static SDLSurface Surface = null!;
-#endif
+    public static IView View = null!;
 
     private static bool _closing;
 
     private static State _state;
-
-#if ANDROID
-    public const string WindowingLibrary = "Silk.NET.Windowing.Sdl";
-#endif
-#if DESKTOP
-    public const string WindowingLibrary = "Silk.NET.Windowing.Sdl";
-    public const string InputLibrary = "Silk.NET.Input.Sdl";
-
-    private const int _sdlWindowPositionCentered = 0x2FFF0000;
-#endif
-
-#if DESKTOP
-    public static Stream? IconStream;
-#endif
 
     public static event Action? Created;
 
@@ -80,204 +39,11 @@ public static class Window
     public static event Action<Uri>? HandleUri;
 #pragma warning restore CS0067 // Event is never used
 
-#if ANDROID
-    public static bool HasWideNotch { get; set; }
-
-    /// <summary>
-    /// 刘海/水滴/挖孔在屏幕边缘的宽度。X: 左边，Y: 顶部，Z: 右边，W: 底部
-    /// </summary>
-    public static Vector4 DisplayCutoutInsets { get; set; } = Vector4.Zero;
-
-    public static event Action<Vector4, bool>? DisplayCutoutInsetsChanged;
-#endif
-
     public static bool IsCreated => _state != State.Uncreated;
 
     public static bool IsActive => _state == State.Active;
 
-    public static Point2 ScreenSize
-    {
-#if ANDROID
-        get { return new Point2(View.Size.X, View.Size.Y); }
-#endif
-#if DESKTOP
-        get
-        {
-            var monitor = ((IWindow?)GameWindow)?.Monitor;
-            if (monitor is null)
-            {
-                try
-                {
-                    monitor = Monitor.GetMainMonitor(null);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e);
-                    return Point2.Zero;
-                }
-            }
-
-            var size = monitor.Bounds.Size;
-            return new Point2(size.X, size.Y);
-        }
-#endif
-    }
-
-    public static WindowMode WindowMode
-    {
-#if ANDROID
-        get { return WindowMode.Fullscreen; }
-        set { }
-#endif
-#if DESKTOP
-        get
-        {
-            VerifyWindowOpened();
-            if (GameWindow.WindowState == WindowState.Fullscreen)
-            {
-                return WindowMode.Fullscreen;
-            }
-
-            return GameWindow.WindowBorder switch
-            {
-                WindowBorder.Fixed => WindowMode.Fixed,
-                WindowBorder.Hidden => WindowMode.Borderless,
-                WindowBorder.Resizable => WindowMode.Resizable,
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
-        set
-        {
-            VerifyWindowOpened();
-            switch (value)
-            {
-                case WindowMode.Resizable:
-                    if (GameWindow.WindowBorder != WindowBorder.Resizable)
-                    {
-                        GameWindow.WindowBorder = WindowBorder.Resizable;
-                    }
-
-                    if (GameWindow.WindowState == WindowState.Fullscreen)
-                    {
-                        GameWindow.WindowState = WindowState.Normal;
-                    }
-
-                    break;
-                case WindowMode.Fixed:
-                    if (GameWindow.WindowBorder != WindowBorder.Fixed)
-                    {
-                        GameWindow.WindowBorder = WindowBorder.Fixed;
-                    }
-
-                    if (GameWindow.WindowState == WindowState.Fullscreen)
-                    {
-                        GameWindow.WindowState = WindowState.Normal;
-                    }
-
-                    break;
-                case WindowMode.Borderless:
-                    if (GameWindow.WindowBorder != WindowBorder.Hidden)
-                    {
-                        GameWindow.WindowBorder = WindowBorder.Hidden;
-                    }
-
-                    if (GameWindow.WindowState == WindowState.Fullscreen)
-                    {
-                        GameWindow.WindowState = WindowState.Normal;
-                    }
-
-                    break;
-                case WindowMode.Fullscreen:
-                    GameWindow.WindowBorder = WindowBorder.Resizable;
-                    GameWindow.WindowState = WindowState.Normal;
-                    GameWindow.WindowState = WindowState.Fullscreen;
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(value), value, null);
-            }
-        }
-#endif
-    }
-
-    public static Point2 Position
-    {
-#if ANDROID
-        get { return Point2.Zero; }
-        set { }
-#endif
-#if DESKTOP
-        get
-        {
-            VerifyWindowOpened();
-            if (View.Native?.Wayland is not null)
-            {
-                return Point2.Zero;
-            }
-
-            return new Point2(GameWindow.Position.X, GameWindow.Position.Y);
-        }
-        set
-        {
-            VerifyWindowOpened();
-            if (View.Native?.Wayland is not null)
-            {
-                return;
-            }
-
-            GameWindow.Position = new Vector2D<int>(value.X, value.Y);
-        }
-#endif
-    }
-
-    public static Point2 Size
-    {
-#if ANDROID
-        get
-        {
-            VerifyWindowOpened();
-            return new Point2(View.FramebufferSize.X, View.FramebufferSize.Y);
-        }
-        set { }
-#endif
-#if DESKTOP
-        get
-        {
-            VerifyWindowOpened();
-            return new Point2(View.FramebufferSize.X, View.FramebufferSize.Y);
-        }
-        set
-        {
-            VerifyWindowOpened();
-            GameWindow.Size = new Vector2D<int>(value.X, value.Y);
-        }
-#endif
-    }
-
     public static float Scale { get; set; } = 1.0f;
-
-    public static string Title
-    {
-#if ANDROID
-        get
-        {
-            VerifyWindowOpened();
-            return string.Empty;
-        }
-        set { }
-#endif
-#if DESKTOP
-        get
-        {
-            VerifyWindowOpened();
-            return GameWindow.Title;
-        }
-        set
-        {
-            VerifyWindowOpened();
-            GameWindow.Title = value;
-        }
-#endif
-    }
 
     public static bool VSync
     {
@@ -325,76 +91,18 @@ public static class Window
             Environment.Exit(1);
         };
 
-#if DESKTOP
-        SetDefaultSdlHint("SDL_IME_SHOW_UI", "1");
-        SetDefaultSdlHint("SDL_IME_SUPPORT_EXTENDED_TEXT", "1");
-#endif
+        ConfigurePlatform();
         Silk.NET.Windowing.Window.ShouldLoadFirstPartyPlatforms(false);
         Silk.NET.Windowing.Window.TryAdd(WindowingLibrary);
 
-#if ANDROID
-        Log.Information($"Android.OS.Build.Display: {Build.Display}");
-        Log.Information($"Android.OS.Build.Device: {Build.Device}");
-        Log.Information($"Android.OS.Build.Hardware: {Build.Hardware}");
-        Log.Information($"Android.OS.Build.Manufacturer: {Build.Manufacturer}");
-        Log.Information($"Android.OS.Build.Model: {Build.Model}");
-        Log.Information($"Android.OS.Build.Product: {Build.Product}");
-        Log.Information($"Android.OS.Build.Brand: {Build.Brand}");
-        Log.Information($"Android.OS.Build.VERSION.SdkInt: {(int)Build.VERSION.SdkInt}");
-        if (EngineActivity.activityInstance is null)
-        {
-            Log.Error("EngineActivity initialization failed.");
-            return;
-        }
-
-        ActivityInstance = EngineActivity.activityInstance;
-        ActivityInstance.GetGlEsVersion(out var major, out var minor);
-        var api = new GraphicsAPI(ContextAPI.OpenGLES, new APIVersion(major, minor));
-        var options = ViewOptions.Default with { API = api };
-        View = Silk.NET.Windowing.Window.GetView(options);
-        ActivityInstance.Paused += PausedHandler;
-        ActivityInstance.Resumed += ResumedHandler;
-        ActivityInstance.Destroyed += DestroyedHandler;
-        ActivityInstance.NewIntent += NewIntentHandler;
-        View.ShouldSwapAutomatically = false;
-        View.Load += LoadHandler;
-#endif
-#if DESKTOP
-        var api = new GraphicsAPI(ContextAPI.OpenGLES, new APIVersion(3, 2));
-
-        var screenSize = ScreenSize;
-        if (screenSize is { X: 0, Y: 0 })
+        if (!TryCreatePlatformView(width, height, windowMode, title))
         {
             return;
         }
 
-        width = width == 0 ? screenSize.X * 3 / 4 : width;
-        height = height == 0 ? screenSize.Y * 3 / 4 : height;
-        var option = WindowOptions.Default with
-        {
-            Title = title,
-            PreferredDepthBufferBits = 24,
-            PreferredStencilBufferBits = 8,
-            API = api,
-            IsVisible = false,
-            WindowBorder = windowMode switch
-            {
-                WindowMode.Fixed => WindowBorder.Fixed,
-                WindowMode.Borderless => WindowBorder.Hidden,
-                _ => WindowBorder.Resizable
-            },
-            Size = new Vector2D<int>(width, height),
-            Position = new Vector2D<int>(_sdlWindowPositionCentered)
-        };
-        GameWindow = Silk.NET.Windowing.Window.Create(option);
-        View = GameWindow;
-        WindowMode = windowMode;
-        View.ShouldSwapAutomatically = false;
-        View.Load += LoadHandler;
-#endif
         try
         {
-            View.Run();
+            View!.Run();
         }
         catch (Exception e)
         {
@@ -404,11 +112,7 @@ public static class Window
         {
             GLWrapper.GL?.Dispose();
             View?.Dispose();
-
-#if DESKTOP
-            IconStream?.Dispose();
-            GameWindow = null!;
-#endif
+            DisposePlatformView();
             View = null!;
             _closing = false;
             _state = State.Uncreated;
@@ -424,18 +128,13 @@ public static class Window
     public static void LoadHandler()
     {
         InitializeAll();
-#if DESKTOP
-        GameWindow.IsVisible = true;
-#endif
+        OnPlatformViewLoaded();
         TextInputManager.Initialize();
         SubscribeToEvents();
 
         _state = State.Inactive;
         Created?.Invoke();
-
-#if DESKTOP
-        AdjustForContentScale();
-#endif
+        OnPlatformCreated();
 
         if (_state != State.Inactive)
         {
@@ -446,83 +145,6 @@ public static class Window
         Activated?.Invoke();
         ResizeHandler(default);
     }
-
-#if DESKTOP
-    private static Point2 GetActualMonitorSize()
-    {
-        var monitor = ((IWindow?)GameWindow)?.Monitor;
-        if (monitor is not null)
-        {
-            return new Point2(monitor.Bounds.Size.X, monitor.Bounds.Size.Y);
-        }
-
-        // Wayland 窗口模式下 GameWindow.Monitor 为 null，
-        // 取最小显示器尺寸作为保守上限，确保窗口不论被合成器
-        // 放在哪个显示器上都不会超出边界。
-        var monitors = Monitor.GetMonitors(View);
-        var smallestArea = int.MaxValue;
-        foreach (var m in monitors)
-        {
-            var area = m.Bounds.Size.X * m.Bounds.Size.Y;
-            if (area >= smallestArea)
-            {
-                continue;
-            }
-
-            smallestArea = area;
-            monitor = m;
-        }
-
-        monitor ??= Monitor.GetMainMonitor(null);
-        return new Point2(monitor.Bounds.Size.X, monitor.Bounds.Size.Y);
-    }
-
-    private static void AdjustForContentScale()
-    {
-        var fbSize = View.FramebufferSize;
-        var winSize = View.Size;
-        var scaleH = (double)fbSize.X / Math.Max(winSize.X, 1);
-        var scaleV = (double)fbSize.Y / Math.Max(winSize.Y, 1);
-
-        var monitorSize = GetActualMonitorSize();
-        var desiredWidth = (int)(winSize.X / scaleH);
-        var desiredHeight = (int)(winSize.Y / scaleV);
-
-        // 限制窗口不超出当前显示器（修复 Wayland 下初始尺寸按其他显示器计算的问题）
-        if (desiredWidth > monitorSize.X * 3 / 4)
-        {
-            desiredWidth = monitorSize.X * 3 / 4;
-        }
-
-        if (desiredHeight > monitorSize.Y * 3 / 4)
-        {
-            desiredHeight = monitorSize.Y * 3 / 4;
-        }
-
-        if (desiredWidth == winSize.X && desiredHeight == winSize.Y)
-        {
-            return;
-        }
-
-        GameWindow.Size = new Vector2D<int>(desiredWidth, desiredHeight);
-        if (View.Native?.Wayland is null)
-        {
-            Position = new Point2(
-                Math.Max((monitorSize.X - desiredWidth) / 2, 0),
-                Math.Max((monitorSize.Y - desiredHeight) / 2, 0));
-        }
-    }
-#endif
-
-#if DESKTOP
-    private static void SetDefaultSdlHint(string name, string value)
-    {
-        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(name)))
-        {
-            Environment.SetEnvironmentVariable(name, value);
-        }
-    }
-#endif
 
     private static void FocusedChangedHandler(bool focused)
     {
@@ -552,19 +174,13 @@ public static class Window
 
     private static void ResizeHandler(Vector2D<int> _)
     {
-#if ANDROID
-        if (_state == State.Uncreated)
+        if (!CanResizePlatform())
         {
             return;
         }
 
         Display.Resize();
         Resized?.Invoke();
-#endif
-#if DESKTOP
-        Display.Resize();
-        Resized?.Invoke();
-#endif
         Scale = View.FramebufferSize.X / (float)View.Size.X;
     }
 
@@ -579,97 +195,9 @@ public static class Window
         }
         else
         {
-#if ANDROID
-            ActivityInstance.Finish();
-#endif
-#if DESKTOP
-            View.Close();
-#endif
+            ClosePlatformView();
         }
     }
-
-#if ANDROID
-    public static void PausedHandler()
-    {
-        if (_state != State.Active)
-        {
-            return;
-        }
-
-        _state = State.Inactive;
-        Keyboard.Clear();
-        Deactivated?.Invoke();
-    }
-
-    public static void ResumedHandler()
-    {
-        if (_state != State.Inactive)
-        {
-            return;
-        }
-
-        _state = State.Active;
-        ActivityInstance.EnableImmersiveMode();
-        if (!VSync)
-        {
-            Time.QueueFrameIndexDelayedExecution(10, () => { View.GLContext?.SwapInterval(0); });
-        }
-
-        Activated?.Invoke();
-    }
-
-    public static void DestroyedHandler()
-    {
-        if (_state == State.Active)
-        {
-            _state = State.Inactive;
-            Deactivated?.Invoke();
-        }
-
-        _state = State.Uncreated;
-        Closed?.Invoke();
-        DisposeAll();
-    }
-
-    public static void NewIntentHandler(Intent? intent)
-    {
-        if (HandleUri is null || intent is null)
-        {
-            return;
-        }
-
-        var uriFromIntent = GetUriFromIntent(intent);
-        if (uriFromIntent is null)
-        {
-            return;
-        }
-
-        HandleUri(uriFromIntent);
-    }
-
-    public static Uri? GetUriFromIntent(Intent intent)
-    {
-        Uri? result = null;
-        if (!string.IsNullOrEmpty(intent.DataString))
-        {
-            Uri.TryCreate(intent.DataString, UriKind.RelativeOrAbsolute, out result);
-        }
-
-        return result;
-    }
-
-    public static void DisplayCutoutInsetsChangedHandler(Vector4 insets, bool hasWideNotch)
-    {
-        if (HasWideNotch == hasWideNotch && DisplayCutoutInsets == insets)
-        {
-            return;
-        }
-
-        HasWideNotch = hasWideNotch;
-        DisplayCutoutInsets = insets;
-        DisplayCutoutInsetsChanged?.Invoke(insets, hasWideNotch);
-    }
-#endif
 
     private static void VerifyWindowOpened()
     {
@@ -699,35 +227,7 @@ public static class Window
 
     private static void InitializeAll()
     {
-#if ANDROID
-        if (SDLActivity.ContentView is ViewGroup { ChildCount: >= 1 } viewGroup &&
-            viewGroup.GetChildAt(0) is SDLSurface surface
-           )
-        {
-            Surface = surface;
-        }
-        else
-        {
-            Log.Error("SDLActivity init failed");
-            throw new ArgumentException(nameof(Surface));
-        }
-#endif
-#if DESKTOP
-        if (IconStream != null)
-        {
-            // Silk.NET 2.23's SDL backend creates the icon surface with masks that expect ABGR bytes.
-            using var image =
-                SixLabors.ImageSharp.Image.Load<Abgr32>(Media.Image.DefaultImageSharpDecoderOptions, IconStream);
-            var pixelBytes = new byte[image.Width * image.Height * Unsafe.SizeOf<Abgr32>()];
-            image.CopyPixelDataTo(pixelBytes);
-            GameWindow.SetWindowIcon([new RawImage(image.Width, image.Height, pixelBytes)]);
-        }
-
-        InputWindowExtensions.ShouldLoadFirstPartyPlatforms(false);
-        InputWindowExtensions.TryAdd(InputLibrary);
-        InputContext = View.CreateInput();
-#endif
-
+        InitializePlatform();
         Dispatcher.Initialize();
         Display.Initialize();
         Keyboard.Initialize();
@@ -773,6 +273,26 @@ public static class Window
         GamePad.AfterFrame();
         Mixer.AfterFrame();
     }
+
+    private static partial void ConfigurePlatform();
+
+    private static partial bool TryCreatePlatformView(
+        int width,
+        int height,
+        WindowMode windowMode,
+        string title);
+
+    private static partial void DisposePlatformView();
+
+    private static partial void OnPlatformViewLoaded();
+
+    private static partial void OnPlatformCreated();
+
+    private static partial bool CanResizePlatform();
+
+    private static partial void ClosePlatformView();
+
+    private static partial void InitializePlatform();
 
     private enum State
     {

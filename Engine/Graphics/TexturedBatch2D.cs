@@ -4,7 +4,6 @@ namespace Engine.Graphics;
 
 public sealed class TexturedBatch2D : BaseTexturedBatch
 {
-#if !ANDROID
     public TexturedBatch2D()
     {
         DepthStencilState = DepthStencilState.None;
@@ -12,7 +11,6 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
         BlendState = BlendState.AlphaBlend;
         SamplerState = SamplerState.LinearClamp;
     }
-#endif
 
     public void QueueBatch(TexturedBatch2D batch, Matrix? matrix = null, Color? color = null)
     {

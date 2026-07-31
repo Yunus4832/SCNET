@@ -7,7 +7,7 @@ using Silk.NET.SDL;
 
 namespace Engine.Input;
 
-internal sealed unsafe class SdlTextInputBackend : ITextInputBackend
+public sealed unsafe class SdlTextInputBackend : ITextInputBackend
 {
     private readonly Lock _stateLock = new();
 
@@ -43,7 +43,7 @@ internal sealed unsafe class SdlTextInputBackend : ITextInputBackend
         _eventFilter = new PfnEventFilter(OnSdlEvent);
         sdl.AddEventWatch(_eventFilter, null);
         IsAvailable = true;
-        Log.Information($"SDL desktop text input connected through '{sdl.GetCurrentVideoDriverS()}'.");
+        Log.Information($"SDL text input connected through '{sdl.GetCurrentVideoDriverS()}'.");
     }
 
     public void BeginInput(TextInputOptions options, ITextInputSink sink)

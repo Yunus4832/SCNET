@@ -5,7 +5,6 @@ namespace Engine.Graphics;
 
 public class FontBatch3D : BaseFontBatch
 {
-#if !ANDROID
     public FontBatch3D()
     {
         Font = BitmapFont.DebugFont;
@@ -14,7 +13,6 @@ public class FontBatch3D : BaseFontBatch
         BlendState = BlendState.AlphaBlend;
         SamplerState = SamplerState.LinearClamp;
     }
-#endif
 
     public void QueueText(string text, Vector3 position, Vector3 right, Vector3 down, Color color,
         TextAnchor anchor = TextAnchor.Default)

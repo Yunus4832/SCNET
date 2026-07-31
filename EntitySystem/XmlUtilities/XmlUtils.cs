@@ -147,9 +147,6 @@ public static class XmlUtils
             Encoding = Encoding.UTF8,
             CloseOutput = true
         };
-#if !ANDROID
-        xmlWriterSettings.CheckCharacters = true;
-#endif
         using var xmlWriter = XmlWriter.Create(textWriter, xmlWriterSettings);
         node.Save(xmlWriter);
         xmlWriter.Flush();

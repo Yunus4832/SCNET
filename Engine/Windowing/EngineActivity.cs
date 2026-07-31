@@ -3,17 +3,12 @@ using Android.Content;
 using Android.Content.PM;
 using Android.Media;
 using Android.OS;
-using Android.Provider;
-using Android.Runtime;
 using Android.Views;
 using AndroidX.Core.View;
 using Engine.Core;
-using Engine.FileStorage;
 using Engine.Input;
 using Silk.NET.Windowing.Sdl.Android;
 using AndroidStream = Android.Media.Stream;
-using Stream = System.IO.Stream;
-using Uri = Android.Net.Uri;
 
 namespace Engine.Windowing;
 
@@ -22,10 +17,6 @@ public class EngineActivity : SilkActivity
     internal static EngineActivity? activityInstance;
 
     public event Func<KeyEvent, bool>? OnDispatchKeyEvent;
-
-    private const int _pickFileRequestCode = 1001;
-
-    private TaskCompletionSource<(Stream? Stream, string? FileName)>? _filePickTcs;
 
     private AudioManager? AudioManager
     {
@@ -90,129 +81,6 @@ public class EngineActivity : SilkActivity
         if (Build.VERSION.SdkInt >= (BuildVersionCodes)28 && Window != null)
         {
             ViewCompat.SetOnApplyWindowInsetsListener(Window.DecorView, new ApplyWindowInsetsListener());
-        }
-    }
-
-    public void Vibrate(long ms)
-    {
-        if (Build.VERSION.SdkInt >= (BuildVersionCodes)26)
-        {
-            (GetSystemService("vibrator") as Vibrator)?.Vibrate(
-                VibrationEffect.CreateOneShot(ms, VibrationEffect.DefaultAmplitude));
-        }
-    }
-
-    public void OpenLink(string link)
-    {
-        StartActivity(new Intent(Intent.ActionView, Uri.Parse(link)));
-    }
-
-    public void OpenFile(string path, string? chooserTitle = null, string? mimeType = null)
-    {
-        var processedAndroidFilePath = Storage.ProcessPath(RunPath.ExternalPath, false, false);
-        if (!path.StartsWith(processedAndroidFilePath))
-        {
-            throw new ArgumentException($"Open {path} failed, because it is not in {processedAndroidFilePath}.");
-        }
-
-        var file = new Java.IO.File(path);
-        if (!file.Exists())
-        {
-            throw new FileNotFoundException($"Open {path} failed, because it is not exists.");
-        }
-
-        var uri = Build.VERSION.SdkInt >= BuildVersionCodes.N
-            ? AndroidX.Core.Content.FileProvider.GetUriForFile(this, $"{PackageName}.fileprovider", file)
-            : Uri.FromFile(file);
-        Intent intent = new(Intent.ActionView);
-        mimeType ??= Android.Webkit.MimeTypeMap.Singleton?.GetMimeTypeFromExtension(Storage.GetExtension(path));
-        if (mimeType is null)
-        {
-            intent.SetData(uri);
-        }
-        else
-        {
-            intent.SetDataAndType(uri, mimeType);
-        }
-
-        intent.AddFlags(ActivityFlags.GrantReadUriPermission | ActivityFlags.NewTask);
-        if (Application.Context.PackageManager?.QueryIntentActivities(intent, PackageInfoFlags.MatchDefaultOnly)
-                .Any() ?? false)
-        {
-            StartActivity(Intent.CreateChooser(intent, chooserTitle ?? Storage.GetFileName(path)));
-        }
-        else
-        {
-            throw new InvalidOperationException($"Open {path} failed, because no app can open it.");
-        }
-    }
-
-    public void ShareFile(string path, string? chooserTitle = null, string? mimeType = null)
-    {
-        var processedAndroidFilePath = Storage.ProcessPath(RunPath.ExternalPath, false, false);
-        if (!path.StartsWith(processedAndroidFilePath))
-        {
-            throw new ArgumentException($"Share {path} failed, because it is not in {processedAndroidFilePath}.");
-        }
-
-        var file = new Java.IO.File(path);
-        if (!file.Exists())
-        {
-            throw new FileNotFoundException($"Share {path} failed, because it does not exist.");
-        }
-
-        var uri = Build.VERSION.SdkInt >= BuildVersionCodes.N
-            ? AndroidX.Core.Content.FileProvider.GetUriForFile(this, $"{PackageName}.fileprovider", file)
-            : Uri.FromFile(file);
-        Intent intent = new(Intent.ActionSend);
-        mimeType ??= Android.Webkit.MimeTypeMap.Singleton?.GetMimeTypeFromExtension(Storage.GetExtension(path)) ??
-                     "*/*";
-        intent.SetType(mimeType);
-        intent.PutExtra(Intent.ExtraStream, uri);
-        intent.AddFlags(ActivityFlags.GrantReadUriPermission | ActivityFlags.NewTask);
-        StartActivity(Intent.CreateChooser(intent, chooserTitle ?? Storage.GetFileName(path)));
-    }
-
-    public Task<(Stream? Stream, string? FileName)> ChooseFileAsync(string? chooserTitle = null)
-    {
-        Intent intent = new(Intent.ActionOpenDocument);
-        intent.AddCategory(Intent.CategoryOpenable);
-        intent.SetType("*/*");
-        _filePickTcs = new TaskCompletionSource<(Stream?, string?)>();
-        StartActivityForResult(string.IsNullOrEmpty(chooserTitle) ? intent : Intent.CreateChooser(intent, chooserTitle),
-            _pickFileRequestCode);
-        return _filePickTcs.Task;
-    }
-
-    protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent? data)
-    {
-        base.OnActivityResult(requestCode, resultCode, data);
-        if (requestCode != _pickFileRequestCode)
-        {
-            return;
-        }
-
-        if (resultCode == Result.Ok
-            && data != null)
-        {
-            try
-            {
-                if (data.Data == null)
-                {
-                    return;
-                }
-
-                var stream = GetStreamFromUri(data.Data, out var fileName);
-                _filePickTcs?.TrySetResult((stream, fileName));
-            }
-            catch (Exception ex)
-            {
-                _filePickTcs?.TrySetException(ex);
-            }
-        }
-        else
-        {
-            _filePickTcs?.TrySetResult((null, null));
         }
     }
 
@@ -416,40 +284,6 @@ public class EngineActivity : SilkActivity
                                                  | SystemUiFlags.ImmersiveSticky;
                 break;
         }
-    }
-
-    public Stream? GetStreamFromUri(Uri uri, out string? fileName)
-    {
-        Stream? stream = null;
-        fileName = null;
-        try
-        {
-            using (var cursor = ContentResolver?.Query(uri, null, null, null, null))
-            {
-                if (cursor != null
-                    && cursor.MoveToFirst())
-                {
-                    var nameIndex = cursor.GetColumnIndex(IOpenableColumns.DisplayName);
-                    if (nameIndex >= 0)
-                    {
-                        fileName = cursor.GetString(nameIndex);
-                    }
-                }
-            }
-
-            stream = ContentResolver?.OpenInputStream(uri);
-        }
-        catch
-        {
-            // ignored
-        }
-
-        if (string.IsNullOrEmpty(fileName))
-        {
-            fileName = Path.GetFileName(uri.Path);
-        }
-
-        return stream;
     }
 
     public class ApplyWindowInsetsListener : Java.Lang.Object, IOnApplyWindowInsetsListener

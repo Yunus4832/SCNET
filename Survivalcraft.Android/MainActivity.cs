@@ -47,8 +47,21 @@ public class MainActivity : BlackActivity
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
+        RegisterStorageRoots();
         GamePlatformManager.RegisterPlatform(Platform.Android);
         RouteWhenReady();
+    }
+
+    private static void RegisterStorageRoots()
+    {
+        var externalPath = Path.Combine(AndroidEnvironment.ExternalStorageDirectory?.AbsolutePath ?? string.Empty,
+            "scnet");
+        var assets = Application.Context.Assets
+                     ?? throw new InvalidOperationException("Android asset manager is unavailable.");
+        Storage.RegisterRoot("app", new AndroidAssetsStorageRoot(assets));
+        Storage.RegisterFileSystemRoot("external", externalPath);
+        Storage.RegisterFileSystemRoot("data", Path.Combine(externalPath, "Data"));
+        Storage.RegisterFileSystemRoot("config", Path.Combine(externalPath, "Config"));
     }
 
     protected override void OnResume()

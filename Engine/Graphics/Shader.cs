@@ -206,21 +206,8 @@ public class Shader : GraphicsResource
         else
         {
             var versioncode = shaderCode.Split(_separator)[0];
-            var versionnum = versioncode.Split(_separatorArray)[1];
-
-#if ANDROID
-            if (int.Parse(versionnum) >= 300 || versioncode.EndsWith("es"))
-            {
-                str += $"#version {versionnum} es" + Environment.NewLine;
-            }
-            else
-            {
-                str += $"#version {versionnum}" + Environment.NewLine;
-            }
-#endif
-#if DESKTOP
-            str += $"#version {versionnum}" + Environment.NewLine;
-#endif
+            var versionNumber = versioncode.Split(_separatorArray)[1];
+            str += CreateOpenGlEsVersionDirective(int.Parse(versionNumber)) + Environment.NewLine;
             shaderCode = "//" + shaderCode;
         }
 
@@ -241,6 +228,11 @@ public class Shader : GraphicsResource
 
         str = str + "#line 1" + Environment.NewLine;
         return str + shaderCode;
+    }
+
+    internal static string CreateOpenGlEsVersionDirective(int version)
+    {
+        return version >= 300 ? $"#version {version} es" : $"#version {version}";
     }
 
     public override void HandleDeviceLost()
@@ -438,12 +430,9 @@ public class Shader : GraphicsResource
             return value;
         }
 
-        if (allowNull)
-        {
-            return new ShaderParameter("null", ShaderParameterType.Null);
-        }
-
-        throw new InvalidOperationException($"Parameter \"{name}\" not found.");
+        return allowNull
+            ? new ShaderParameter("null", ShaderParameterType.Null)
+            : throw new InvalidOperationException($"Parameter \"{name}\" not found.");
     }
 
     public override int GetGpuMemoryUsage()
