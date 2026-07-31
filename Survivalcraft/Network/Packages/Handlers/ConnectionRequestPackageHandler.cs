@@ -132,18 +132,18 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
         string saveKey = ""
     )
     {
-        var guid = Guid.Empty;
-        if (!string.IsNullOrEmpty(token))
-        {
-            guid = new Guid(token);
-        }
+        var hasValidToken = Guid.TryParse(token, out var guid);
 
         var pwd2 = project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.Password;
         var serverModDataHash = CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash;
 
         if (package.Magic == ConnectionRequestPackage.VerifyMagic)
         {
-            if (CommonLib.Net.Self?.GUID == guid)
+            if (!hasValidToken)
+            {
+                connectionError.AppendLine("身份信息验证错误");
+            }
+            else if (CommonLib.Net.Self?.GUID == guid)
             {
                 connectionError.AppendLine("客户端和服务器token相同");
             }
@@ -175,11 +175,6 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
                     connectionError.AppendLine("房间密码验证错误");
                 }
             }
-            else if (string.IsNullOrEmpty(token))
-            {
-                connectionError.AppendLine("身份信息验证错误");
-            }
-
             if (connectionError.Length > 0)
             {
                 AppConfigStore.Values.Remove(saveKey); // 如果验证失败应该清理登录信息

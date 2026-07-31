@@ -470,9 +470,16 @@ public class NetNode
     public void StartLocal()
     {
         Clients.Clear();
-        var localGuid = RunMode.Value is RunModeType.HeadlessServer
-            ? Guid.NewGuid()
-            : new Guid(SettingsManager.Current.OnlineAccessToken);
+        Guid localGuid;
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            localGuid = Guid.NewGuid();
+        }
+        else if (!Guid.TryParse(SettingsManager.Current.OnlineAccessToken, out localGuid))
+        {
+            throw new InvalidOperationException("The local online access token is invalid.");
+        }
+
         Self = new Client(localGuid, GameManager.Project!);
         AddClient(Self);
     }
@@ -523,13 +530,14 @@ public class NetNode
             }
             else
             {
-                CurrentStage = Stage.NotConnected;
-                Stop();
+                StopImmediate();
             }
         }
         catch (Exception e)
         {
-            Log.Error(e.Message);
+            StopImmediate();
+            Log.Error($"Failed to start server: {e}");
+            throw;
         }
 
         return CurrentStage == Stage.Connected;

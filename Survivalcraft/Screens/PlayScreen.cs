@@ -40,7 +40,7 @@ public class PlayScreen : Screen
                 {
                     labelWidget2.Text = labelWidget2.Text + " | " +
                                         (string.IsNullOrEmpty(worldInfo.ProjectFormatVersion)
-                                            ? LanguageManager.GetContentWidgets("Usual", "Unknown")
+                                            ? LanguageManager.Get("Usual", "unknown")
                                             : "(" + worldInfo.ProjectFormatVersion + ")");
                 }
 
@@ -113,7 +113,7 @@ public class PlayScreen : Screen
                     new MessageDialog(
                         LanguageManager.GetContentWidgets(_typeName, 7),
                         string.Format(LanguageManager.GetContentWidgets(_typeName, 8), _maxWorlds),
-                        LanguageManager.GetContentWidgets("Usual", "ok")
+                        LanguageManager.Get("Usual", "ok")
                     )
                 );
             }
@@ -193,7 +193,7 @@ public class PlayScreen : Screen
                 LanguageManager.GetContentWidgets(_typeName, 16),
                 string.Format(LanguageManager.GetContentWidgets(_typeName, 17), result.RestartReason),
                 LanguageManager.GetContentWidgets(_typeName, 18),
-                LanguageManager.GetContentWidgets("Usual", "cancel"),
+                LanguageManager.Get("Usual", "cancel"),
                 button =>
                 {
                     if (button != MessageDialogButton.Button1)
@@ -218,9 +218,9 @@ public class PlayScreen : Screen
                 DialogsManager.ShowDialog(
                     this,
                     new MessageDialog(
-                        LanguageManager.GetContentWidgets("Usual", "warning"),
+                        LanguageManager.Get("Usual", "warning"),
                         LanguageManager.GetContentWidgets(_typeName, 19),
-                        LanguageManager.GetContentWidgets("Usual", "ok"),
+                        LanguageManager.Get("Usual", "ok"),
                         string.Empty,
                         _ =>
                         {

@@ -16,6 +16,11 @@ public static class SettingsManager
 
     public static void SetOnlineAccessToken(string newToken)
     {
+        if (!Guid.TryParse(newToken, out _))
+        {
+            throw new ArgumentException("Online access token must be a valid GUID.", nameof(newToken));
+        }
+
         Current.OnlineAccessToken = newToken;
         SaveSettings();
     }
@@ -40,9 +45,10 @@ public static class SettingsManager
             ? GetMachineID.GetAndroidID()
             : GetMachineID.GetMachineGuid();
 
-        Current.OnlineAccessToken = !string.IsNullOrEmpty(machineId)
+        var defaultOnlineAccessToken = !string.IsNullOrEmpty(machineId)
             ? HashUtils.ComputeMd5(machineId)
             : Guid.NewGuid().ToString();
+        Current.OnlineAccessToken = defaultOnlineAccessToken;
 
         if (PlatformManager.Platform is Platform.Android)
         {
@@ -61,7 +67,29 @@ public static class SettingsManager
         }
 
         LoadSettings();
+        if (RepairOnlineAccessToken(Current, defaultOnlineAccessToken))
+        {
+            Log.Warning("Invalid OnlineAccessToken in settings. The local identity token has been restored.");
+            SaveSettings();
+        }
+
         Window.Deactivated += SaveSettings;
+    }
+
+    internal static bool RepairOnlineAccessToken(Settings settings, string fallbackToken)
+    {
+        if (Guid.TryParse(settings.OnlineAccessToken, out _))
+        {
+            return false;
+        }
+
+        if (!Guid.TryParse(fallbackToken, out _))
+        {
+            throw new ArgumentException("Fallback online access token must be a valid GUID.", nameof(fallbackToken));
+        }
+
+        settings.OnlineAccessToken = fallbackToken;
+        return true;
     }
 
     public static void LoadSettings()
