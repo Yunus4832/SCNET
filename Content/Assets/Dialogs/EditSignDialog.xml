@@ -21,8 +21,8 @@
                             </CanvasWidget>
                             <CanvasWidget Size="360, 50" VerticalAlignment="Center">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="EditSignDialog.TextBox1" Title="输入行 1" Size="360, 50"
-                                               Description="" VerticalAlignment="Center" MaximumLength="16"
+                                <TextBoxWidget Name="EditSignDialog.TextBox1" Size="360, 50"
+                                               VerticalAlignment="Center" MaximumLength="16"
                                                Margin="10, 0"/>
                             </CanvasWidget>
                             <BevelledButtonWidget Name="EditSignDialog.ColorButton1"
@@ -37,8 +37,8 @@
                             </CanvasWidget>
                             <CanvasWidget Size="360, 50" VerticalAlignment="Center">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="EditSignDialog.TextBox2" Title="输入行 2" Size="360, 50"
-                                               Description="" VerticalAlignment="Center" MaximumLength="16"
+                                <TextBoxWidget Name="EditSignDialog.TextBox2" Size="360, 50"
+                                               VerticalAlignment="Center" MaximumLength="16"
                                                Margin="10, 0"/>
                             </CanvasWidget>
                             <BevelledButtonWidget Name="EditSignDialog.ColorButton2"
@@ -53,8 +53,8 @@
                             </CanvasWidget>
                             <CanvasWidget Size="360, 50" VerticalAlignment="Center">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="EditSignDialog.TextBox3" Title="输入行 3" Size="360, 50"
-                                               Description="" VerticalAlignment="Center" MaximumLength="16"
+                                <TextBoxWidget Name="EditSignDialog.TextBox3" Size="360, 50"
+                                               VerticalAlignment="Center" MaximumLength="16"
                                                Margin="10, 0"/>
                             </CanvasWidget>
                             <BevelledButtonWidget Name="EditSignDialog.ColorButton3"
@@ -69,8 +69,8 @@
                             </CanvasWidget>
                             <CanvasWidget Size="360, 50" VerticalAlignment="Center">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="EditSignDialog.TextBox4" Title="输入行 4" Size="360, 50"
-                                               Description="" VerticalAlignment="Center" MaximumLength="16"
+                                <TextBoxWidget Name="EditSignDialog.TextBox4" Size="360, 50"
+                                               VerticalAlignment="Center" MaximumLength="16"
                                                Margin="10, 0"/>
                             </CanvasWidget>
                             <BevelledButtonWidget Name="EditSignDialog.ColorButton4"
@@ -100,8 +100,8 @@
                         <StackPanelWidget Margin="0, 10">
                             <CanvasWidget Size="480, 50" VerticalAlignment="Center">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="EditSignDialog.UrlTextBox" Title="输入Url" Size="480, 50"
-                                               Description="" VerticalAlignment="Center" MaximumLength="256"
+                                <TextBoxWidget Name="EditSignDialog.UrlTextBox" Size="480, 50"
+                                               VerticalAlignment="Center" MaximumLength="256"
                                                Margin="10, 0"/>
                             </CanvasWidget>
                         </StackPanelWidget>

@@ -49,12 +49,6 @@ public class WorldServerSettingsScreen : Screen
         _descriptionLabel = Children.Find<LabelWidget>("Description")!;
 
         _disableBlocks.MaximumLength = int.MaxValue;
-        _password.Title = GetText("PasswordTitle");
-        _maxPlayer.Title = GetText("MaxPlayersTitle");
-        _daySpeedTextBox.Title = GetText("DaySpeed");
-        _recoverySpeed.Title = GetText("RecoverySpeed");
-        _disableBlocks.Title = GetText("DisableBlocksTitle");
-        _keywordBlocking.Title = GetText("KeywordBlockingTitle");
     }
 
     public override void Enter(object[] parameters)

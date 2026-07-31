@@ -99,7 +99,7 @@ public static partial class Mouse
 
     private static void ProcessMouseDown(MouseButton mouseButton, Point2 position)
     {
-        if (!Window.IsActive || Keyboard.IsKeyboardVisible)
+        if (!Window.IsActive)
         {
             return;
         }
@@ -121,7 +121,7 @@ public static partial class Mouse
 
     private static void ProcessMouseUp(MouseButton mouseButton, Point2 position)
     {
-        if (!Window.IsActive || Keyboard.IsKeyboardVisible)
+        if (!Window.IsActive)
         {
             return;
         }
@@ -140,7 +140,7 @@ public static partial class Mouse
 
     private static void ProcessMouseMove(Point2 position)
     {
-        if (!Window.IsActive || Keyboard.IsKeyboardVisible || !IsMouseVisible)
+        if (!Window.IsActive || !IsMouseVisible)
         {
             return;
         }
@@ -155,8 +155,7 @@ public static partial class Mouse
 
     public static void ProcessMouseWheel(float value)
     {
-        if (Window.IsActive
-            && !Keyboard.IsKeyboardVisible)
+        if (Window.IsActive)
         {
             MouseWheelMovement += (int)(120 * value);
         }

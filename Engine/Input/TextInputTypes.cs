@@ -1,11 +1,5 @@
 namespace Engine.Input;
 
-public enum TextInputStyle
-{
-    Inline,
-    NativeDialog
-}
-
 [Flags]
 public enum TextInputModifiers
 {
@@ -15,12 +9,6 @@ public enum TextInputModifiers
     Alt = 4,
     CapsLock = 8
 }
-
-public readonly record struct TextInputOptions(
-    string Title,
-    string Description,
-    string InitialText,
-    bool PasswordMode = false);
 
 public readonly record struct TextComposition(
     string Text,

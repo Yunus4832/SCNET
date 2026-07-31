@@ -34,7 +34,7 @@
                         <StackPanelWidget Direction="Horizontal" Margin="0, 7">
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50">
                                 <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
-                                <TextBoxWidget Name="Name" Title="玩家名称" Size="Infinity, 50"
+                                <TextBoxWidget Name="Name" Size="Infinity, 50"
                                                VerticalAlignment="Center" MaximumLength="14" Margin="10, 0"/>
                             </CanvasWidget>
                             <CanvasWidget Size="6, 0"/>

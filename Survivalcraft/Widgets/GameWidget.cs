@@ -209,12 +209,8 @@ public class GameWidget : CanvasWidget
                 }
             }
 
-            if (_informationOverlaysSpacer != null)
-            {
-                _informationOverlaysSpacer.IsVisible =
-                    PlayerInformationOverlay?.IsVisible == true &&
-                    MessageHistoryOverlay?.IsVisible == true;
-            }
+            _informationOverlaysSpacer?.IsVisible = PlayerInformationOverlay?.IsVisible == true &&
+                                                    MessageHistoryOverlay?.IsVisible == true;
 
             if (player.ComponentSleep.IsSleeping && _informationOverlaysContainer != null &&
                 _controlsWidget.Children.Contains(_informationOverlaysContainer))
@@ -259,17 +255,17 @@ public class GameWidget : CanvasWidget
             Input.Clear();
         }
 
-        if (Input.IsKeyDownOnce(Key.Slash) &&
-            MessagePanel is { } messagePanel)
+        if (Input.IsKeyDownOnce(Key.Tilde) &&
+            MessagePanel is not null)
         {
             var currentModalPanel =
                 PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
-            if (currentModalPanel == messagePanel && messagePanel.IsCommandInput)
+            if (currentModalPanel == MessagePanel && MessagePanel.IsCommandInput)
             {
                 ToggleMessagePanel(false);
                 Input.Clear();
             }
-            else if (!messagePanel.EditText.HasFocus)
+            else if (!MessagePanel.EditText.HasFocus)
             {
                 OpenMessagePanel(false, true);
                 Input.Clear();

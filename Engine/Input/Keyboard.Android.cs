@@ -7,54 +7,42 @@ namespace Engine.Input;
 
 public static partial class Keyboard
 {
-    public struct KeyInfo(Key? key, bool press, int? unicodeChar)
-    {
-        public Key? Key = key;
-        public readonly bool Press = press;
-        public int? UnicodeChar = unicodeChar;
-    }
+    private readonly record struct KeyInfo(Key? Key, bool IsPressed, int? UnicodeChar, int ScanCode);
 
-    public static ConcurrentQueue<KeyInfo> CachedKeyEvents = [];
+    private static readonly ConcurrentQueue<KeyInfo> _cachedKeyEvents = [];
 
     static partial void BeforeFramePlatform()
     {
-        while (!CachedKeyEvents.IsEmpty)
+        while (_cachedKeyEvents.TryDequeue(out var keyInfo))
         {
-            if (CachedKeyEvents.TryDequeue(out var keyInfo))
+            if (keyInfo.IsPressed)
             {
-                if (keyInfo.Press)
+                if (keyInfo.Key is not null)
                 {
-                    if (keyInfo.Key is not null)
-                    {
-                        ProcessKeyDown(keyInfo.Key.Value);
-                    }
-
-                    if (keyInfo.UnicodeChar.HasValue)
-                    {
-                        ProcessCharacterEntered((char)keyInfo.UnicodeChar.Value);
-                    }
+                    ProcessPlatformKeyDown(keyInfo.Key.Value, keyInfo.ScanCode);
                 }
-                else if (keyInfo.Key is not null)
+
+                if (keyInfo.UnicodeChar.HasValue)
                 {
-                    ProcessKeyUp(keyInfo.Key.Value);
+                    ProcessPlatformCharacter((char)keyInfo.UnicodeChar.Value);
                 }
             }
-            else
+            else if (keyInfo.Key is not null)
             {
-                Thread.Yield();
+                ProcessPlatformKeyUp(keyInfo.Key.Value, keyInfo.ScanCode);
             }
         }
     }
 
-    public static void EnqueueMouseButtonEvent(Key? key, bool press, int? unicodeChar)
-    {
-        CachedKeyEvents.Enqueue(new KeyInfo(key, press, unicodeChar));
-    }
-
     public static void HandleKeyEvent(KeyEvent keyEvent)
     {
-        EnqueueMouseButtonEvent(TranslateKey(keyEvent.KeyCode), keyEvent.Action == KeyEventActions.Down,
-            keyEvent.UnicodeChar);
+        var unicodeChar = keyEvent.UnicodeChar;
+        _cachedKeyEvents.Enqueue(
+            new KeyInfo(
+                TranslateKey(keyEvent.KeyCode),
+                keyEvent.Action == KeyEventActions.Down,
+                unicodeChar > 0 ? unicodeChar : null,
+                keyEvent.ScanCode));
     }
 
     public static Key? TranslateKey(Keycode keyCode) => keyCode switch
@@ -71,6 +59,7 @@ public static partial class Keyboard
         Keycode.Num7 or Keycode.Numpad7 => Key.Number7,
         Keycode.Num8 or Keycode.Numpad8 => Key.Number8,
         Keycode.Num9 or Keycode.Numpad9 => Key.Number9,
+        Keycode.Grave => Key.Tilde,
         Keycode.A => Key.A,
         Keycode.B => Key.B,
         Keycode.C => Key.C,

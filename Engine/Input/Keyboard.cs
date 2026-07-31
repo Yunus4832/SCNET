@@ -22,8 +22,6 @@ public static partial class Keyboard
 
     public static char? LastChar { get; private set; }
 
-    public static bool IsKeyboardVisible => TextInputManager.IsNativeDialogVisible;
-
     public static bool BackButtonQuitsApp { get; set; }
 
     public static event Action<Key>? KeyDown;
@@ -56,15 +54,6 @@ public static partial class Keyboard
         }
 
         return false;
-    }
-
-    public static void ShowKeyboard(string title, string description, string defaultText, bool passwordMode,
-        Action<string>? enter, Action? cancel)
-    {
-        Clear();
-        Touch.Clear();
-        Mouse.Clear();
-        TextInputManager.ShowKeyboard(title, description, defaultText, passwordMode, enter, cancel);
     }
 
     public static void Clear()
@@ -118,9 +107,10 @@ public static partial class Keyboard
             }
         }
     }
+
     private static bool ProcessKeyDown(Key key)
     {
-        if (!Window.IsActive || IsKeyboardVisible)
+        if (!Window.IsActive)
         {
             return false;
         }
@@ -148,7 +138,7 @@ public static partial class Keyboard
 
     private static bool ProcessKeyUp(Key key)
     {
-        if (!Window.IsActive || IsKeyboardVisible)
+        if (!Window.IsActive)
         {
             return false;
         }
@@ -164,7 +154,7 @@ public static partial class Keyboard
 
     private static bool ProcessCharacterEntered(char ch)
     {
-        if (!Window.IsActive || IsKeyboardVisible || char.IsControl(ch))
+        if (!Window.IsActive || char.IsControl(ch))
         {
             return false;
         }
@@ -173,6 +163,53 @@ public static partial class Keyboard
         LastChar = ch;
         CharacterEntered?.Invoke(ch);
         return true;
+    }
+
+    private static void ProcessPlatformKeyDown(Key key, int scanCode)
+    {
+        var handledByTextInput = TextInputManager.ProcessKey(CreateTextInputKeyEvent(key, scanCode, false));
+        if (!handledByTextInput || key is Key.Tilde)
+        {
+            ProcessKeyDown(key);
+        }
+    }
+
+    private static void ProcessPlatformKeyUp(Key key, int scanCode)
+    {
+        var handledByTextInput = TextInputManager.ProcessKey(CreateTextInputKeyEvent(key, scanCode, true));
+        if (!handledByTextInput || key is Key.Tilde)
+        {
+            ProcessKeyUp(key);
+        }
+    }
+
+    private static void ProcessPlatformCharacter(char character)
+    {
+        if (!TextInputManager.SuppressDirectText)
+        {
+            ProcessCharacterEntered(character);
+        }
+    }
+
+    private static TextInputKeyEvent CreateTextInputKeyEvent(Key key, int scanCode, bool isRelease)
+    {
+        var modifiers = TextInputModifiers.None;
+        if ((IsKeyDown(Key.Shift) || key is Key.Shift) && !(isRelease && key is Key.Shift))
+        {
+            modifiers |= TextInputModifiers.Shift;
+        }
+
+        if ((IsKeyDown(Key.Control) || key is Key.Control) && !(isRelease && key is Key.Control))
+        {
+            modifiers |= TextInputModifiers.Control;
+        }
+
+        if ((IsKeyDown(Key.Alt) || key is Key.Alt) && !(isRelease && key is Key.Alt))
+        {
+            modifiers |= TextInputModifiers.Alt;
+        }
+
+        return new TextInputKeyEvent(key, scanCode, isRelease, modifiers);
     }
 
     internal static void Initialize()

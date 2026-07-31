@@ -1,7 +1,6 @@
 using Engine.Graphics;
 using Engine.Input;
 using Engine.Media;
-using Engine.Windowing;
 
 namespace Game.Widgets;
 
@@ -36,16 +35,12 @@ public class TextBoxWidget : Widget
         set => _size = value;
     }
 
-    public override string Title { get; set; } = string.Empty;
-
-    public string Description { get; set; }
-
     public string Text
     {
         get => _text;
         set
         {
-            var text = value.Length > MaximumLength ? value.Substring(0, MaximumLength) : value;
+            var text = value.Length > MaximumLength ? value[..MaximumLength] : value;
             if (text == _text)
             {
                 return;
@@ -134,7 +129,6 @@ public class TextBoxWidget : Widget
         TextureLinearFilter = true;
         Font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
         FontScale = 1f;
-        Description = string.Empty;
     }
 
     private void BeginTextInput()
@@ -143,7 +137,6 @@ public class TextBoxWidget : Widget
         CaretPosition = _text.Length;
         _textInputSession?.Dispose();
         _textInputSession = TextInputManager.BeginInput(
-            new TextInputOptions(Title, Description, Text),
             commitText: text =>
             {
                 if (HasFocus)
@@ -159,23 +152,6 @@ public class TextBoxWidget : Widget
                     _compositionText = composition.Text;
                     _compositionCaretPosition = composition.CaretPosition;
                     _focusStartTime = Time.RealTime;
-                }
-            },
-            complete: text =>
-            {
-                if (HasFocus)
-                {
-                    Text = text;
-                    ClearComposition();
-                    HasFocus = false;
-                }
-            },
-            cancel: () =>
-            {
-                if (HasFocus)
-                {
-                    ClearComposition();
-                    HasFocus = false;
                 }
             });
     }
@@ -344,22 +320,12 @@ public class TextBoxWidget : Widget
 
     private void SubmitText()
     {
-        LoseFocusAfterKeyboardAction();
         Enter?.Invoke(this);
     }
 
     private void CancelText()
     {
-        LoseFocusAfterKeyboardAction();
         Escape?.Invoke(this);
-    }
-
-    private void LoseFocusAfterKeyboardAction()
-    {
-        if (_textInputSession?.InputStyle is TextInputStyle.NativeDialog)
-        {
-            HasFocus = false;
-        }
     }
 
     public void MoveNext(WidgetsList widgets)

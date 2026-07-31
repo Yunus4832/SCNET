@@ -5,13 +5,11 @@ namespace Engine.Test.Input;
 [Collection(nameof(TextInputManagerCollection))]
 public class TextInputManagerTest : IDisposable
 {
-    private sealed class TestBackend(TextInputStyle inputStyle, bool suppressDirectText) : ITextInputBackend
+    private sealed class TestBackend(bool suppressDirectText) : ITextInputBackend
     {
         public ITextInputSink? Sink { get; private set; }
 
         public int EndInputCount { get; private set; }
-
-        public TextInputStyle InputStyle => inputStyle;
 
         public bool IsAvailable => true;
 
@@ -21,7 +19,7 @@ public class TextInputManagerTest : IDisposable
         {
         }
 
-        public void BeginInput(TextInputOptions options, ITextInputSink sink)
+        public void BeginInput(ITextInputSink sink)
         {
             Sink = sink;
         }
@@ -59,14 +57,13 @@ public class TextInputManagerTest : IDisposable
     [Fact]
     public void BackendCallbacksAreDeliveredOnBeforeFrame()
     {
-        var backend = new TestBackend(TextInputStyle.Inline, true);
+        var backend = new TestBackend(true);
         TextInputManager.RegisterBackend(backend);
         TextInputManager.Initialize();
 
         var committed = string.Empty;
         var composition = TextComposition.Empty;
         using var session = TextInputManager.BeginInput(
-            new TextInputOptions(string.Empty, string.Empty, string.Empty),
             commitText: text => committed = text,
             updateComposition: value => composition = value);
 
@@ -84,39 +81,14 @@ public class TextInputManagerTest : IDisposable
     }
 
     [Fact]
-    public void CompletingNativeDialogEndsSession()
-    {
-        var backend = new TestBackend(TextInputStyle.NativeDialog, true);
-        TextInputManager.RegisterBackend(backend);
-        TextInputManager.Initialize();
-
-        var completed = string.Empty;
-        TextInputManager.BeginInput(
-            new TextInputOptions(string.Empty, string.Empty, "old"),
-            complete: text => completed = text);
-
-        Assert.True(TextInputManager.IsNativeDialogVisible);
-        backend.Sink!.Complete("new");
-
-        TextInputManager.BeforeFrame();
-
-        Assert.Equal("new", completed);
-        Assert.False(TextInputManager.HasActiveSession);
-        Assert.False(TextInputManager.IsNativeDialogVisible);
-        Assert.Equal(1, backend.EndInputCount);
-    }
-
-    [Fact]
     public void StartingNewSessionEndsPreviousSession()
     {
-        var backend = new TestBackend(TextInputStyle.Inline, false);
+        var backend = new TestBackend(false);
         TextInputManager.RegisterBackend(backend);
         TextInputManager.Initialize();
 
-        var first = TextInputManager.BeginInput(
-            new TextInputOptions(string.Empty, string.Empty, string.Empty));
-        using var second = TextInputManager.BeginInput(
-            new TextInputOptions(string.Empty, string.Empty, string.Empty));
+        var first = TextInputManager.BeginInput();
+        using var second = TextInputManager.BeginInput();
 
         Assert.True(first.IsDisposed);
         Assert.False(second.IsDisposed);

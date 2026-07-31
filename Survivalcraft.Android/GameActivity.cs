@@ -9,6 +9,7 @@ using Game.ContentProviders;
 using AndroidClipboardManager = Android.Content.ClipboardManager;
 using AndroidUri = Android.Net.Uri;
 using AndroidProviderSettings = Android.Provider.Settings;
+using EngineSdlTextInputBackend = Engine.Input.SdlTextInputBackend;
 using EngineTextInputManager = Engine.Input.TextInputManager;
 using GamePlatformManager = Game.Managers.PlatformManager;
 
@@ -37,7 +38,7 @@ public class GameActivity : EngineActivity
         GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
         GamePlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         GamePlatformManager.RegisterExternalContentProviderFactory(() => new AndroidSdCardExternalContentProvider());
-        EngineTextInputManager.RegisterBackend(new AndroidTextInputBackend());
+        EngineTextInputManager.RegisterBackend(new EngineSdlTextInputBackend());
         InitializeAndroidId();
         LoadAssetAssemblies();
 

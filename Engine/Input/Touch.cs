@@ -81,8 +81,7 @@ public static partial class Touch
 
     public static void ProcessTouchMoved(int id, Vector2 position)
     {
-        if (!Window.IsActive
-            || Keyboard.IsKeyboardVisible)
+        if (!Window.IsActive)
         {
             return;
         }
@@ -109,7 +108,7 @@ public static partial class Touch
 
     public static void ProcessTouchReleased(int id, Vector2 position)
     {
-        if (!Window.IsActive || Keyboard.IsKeyboardVisible)
+        if (!Window.IsActive)
         {
             return;
         }

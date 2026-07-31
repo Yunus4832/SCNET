@@ -27,16 +27,11 @@ public static partial class Keyboard
         var translatedKey = TranslateKey(key);
         if (translatedKey is not null)
         {
-            if (TextInputManager.ProcessKey(CreateTextInputKeyEvent(translatedKey.Value, scancode, false)))
-            {
-                return;
-            }
-
-            ProcessKeyDown(translatedKey.Value);
+            ProcessPlatformKeyDown(translatedKey.Value, scancode);
         }
         else if (scancode == 270)
         {
-            ProcessKeyDown(Key.Back);
+            ProcessPlatformKeyDown(Key.Back, scancode);
         }
     }
 
@@ -45,46 +40,17 @@ public static partial class Keyboard
         var translatedKey = TranslateKey(key);
         if (translatedKey is not null)
         {
-            if (TextInputManager.ProcessKey(CreateTextInputKeyEvent(translatedKey.Value, scancode, true)))
-            {
-                return;
-            }
-
-            ProcessKeyUp(translatedKey.Value);
+            ProcessPlatformKeyUp(translatedKey.Value, scancode);
         }
         else if (scancode == 270)
         {
-            ProcessKeyUp(Key.Back);
+            ProcessPlatformKeyUp(Key.Back, scancode);
         }
     }
 
     private static void KeyPressHandler(IKeyboard keyboard, char c)
     {
-        if (!TextInputManager.SuppressDirectText)
-        {
-            ProcessCharacterEntered(c);
-        }
-    }
-
-    private static TextInputKeyEvent CreateTextInputKeyEvent(Key key, int scanCode, bool isRelease)
-    {
-        var modifiers = TextInputModifiers.None;
-        if ((IsKeyDown(Key.Shift) || key is Key.Shift) && !(isRelease && key is Key.Shift))
-        {
-            modifiers |= TextInputModifiers.Shift;
-        }
-
-        if ((IsKeyDown(Key.Control) || key is Key.Control) && !(isRelease && key is Key.Control))
-        {
-            modifiers |= TextInputModifiers.Control;
-        }
-
-        if ((IsKeyDown(Key.Alt) || key is Key.Alt) && !(isRelease && key is Key.Alt))
-        {
-            modifiers |= TextInputModifiers.Alt;
-        }
-
-        return new TextInputKeyEvent(key, scanCode, isRelease, modifiers);
+        ProcessPlatformCharacter(c);
     }
 
     private static Key? TranslateKey(Silk.NET.Input.Key key)

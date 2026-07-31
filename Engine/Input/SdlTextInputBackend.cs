@@ -23,8 +23,6 @@ public sealed unsafe class SdlTextInputBackend : ITextInputBackend
 
     private bool _isComposing;
 
-    public TextInputStyle InputStyle => TextInputStyle.Inline;
-
     public bool IsAvailable { get; private set; }
 
     public bool SuppressDirectText => IsAvailable && _active && _windowFocused;
@@ -46,7 +44,7 @@ public sealed unsafe class SdlTextInputBackend : ITextInputBackend
         Log.Information($"SDL text input connected through '{sdl.GetCurrentVideoDriverS()}'.");
     }
 
-    public void BeginInput(TextInputOptions options, ITextInputSink sink)
+    public void BeginInput(ITextInputSink sink)
     {
         lock (_stateLock)
         {
@@ -57,7 +55,7 @@ public sealed unsafe class SdlTextInputBackend : ITextInputBackend
 
         if (IsAvailable && _windowFocused)
         {
-            _sdl!.StartTextInput();
+            StartTextInput();
         }
     }
 
@@ -121,7 +119,7 @@ public sealed unsafe class SdlTextInputBackend : ITextInputBackend
 
         if (focused && _active)
         {
-            _sdl!.StartTextInput();
+            StartTextInput();
         }
         else
         {
@@ -142,6 +140,11 @@ public sealed unsafe class SdlTextInputBackend : ITextInputBackend
         }
 
         IsAvailable = false;
+    }
+
+    private void StartTextInput()
+    {
+        _sdl!.StartTextInput();
     }
 
     private int OnSdlEvent(void* _, Event* sdlEvent)

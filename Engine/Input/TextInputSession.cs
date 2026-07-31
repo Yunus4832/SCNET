@@ -6,27 +6,15 @@ public sealed class TextInputSession : IDisposable
 
     private readonly Action<TextComposition> _updateComposition;
 
-    private readonly Action<string> _complete;
-
-    private readonly Action _cancel;
-
     private bool _isDisposed;
 
     internal TextInputSession(
-        TextInputStyle inputStyle,
         Action<string> commitText,
-        Action<TextComposition> updateComposition,
-        Action<string> complete,
-        Action cancel)
+        Action<TextComposition> updateComposition)
     {
-        InputStyle = inputStyle;
         _commitText = commitText;
         _updateComposition = updateComposition;
-        _complete = complete;
-        _cancel = cancel;
     }
-
-    public TextInputStyle InputStyle { get; }
 
     public bool IsDisposed => _isDisposed;
 
@@ -43,22 +31,6 @@ public sealed class TextInputSession : IDisposable
         if (!_isDisposed)
         {
             _updateComposition(composition);
-        }
-    }
-
-    internal void Complete(string text)
-    {
-        if (!_isDisposed)
-        {
-            _complete(text);
-        }
-    }
-
-    internal void Cancel()
-    {
-        if (!_isDisposed)
-        {
-            _cancel();
         }
     }
 

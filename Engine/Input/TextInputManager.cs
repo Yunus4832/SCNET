@@ -25,23 +25,6 @@ public static class TextInputManager
             _pendingActions.Enqueue(() => session.UpdateComposition(normalized));
         }
 
-        public void Complete(string text)
-        {
-            _pendingActions.Enqueue(() =>
-            {
-                session.Complete(text ?? string.Empty);
-                session.Dispose();
-            });
-        }
-
-        public void Cancel()
-        {
-            _pendingActions.Enqueue(() =>
-            {
-                session.Cancel();
-                session.Dispose();
-            });
-        }
     }
 
     private static readonly ConcurrentQueue<Action> _pendingActions = [];
@@ -53,15 +36,6 @@ public static class TextInputManager
     private static TextInputRectangle? _cursorRectangle;
 
     private static bool _isInitialized;
-
-    public static TextInputStyle InputStyle => _backend.InputStyle;
-
-    public static bool IsAvailable => _backend.IsAvailable;
-
-    public static bool HasActiveSession => _activeSession is not null;
-
-    public static bool IsNativeDialogVisible =>
-        _activeSession is { IsDisposed: false, InputStyle: TextInputStyle.NativeDialog };
 
     public static bool SuppressDirectText =>
         _activeSession is { IsDisposed: false } && _backend.SuppressDirectText;
@@ -79,26 +53,20 @@ public static class TextInputManager
     }
 
     public static TextInputSession BeginInput(
-        TextInputOptions options,
         Action<string>? commitText = null,
-        Action<TextComposition>? updateComposition = null,
-        Action<string>? complete = null,
-        Action? cancel = null)
+        Action<TextComposition>? updateComposition = null)
     {
         _activeSession?.Dispose();
 
         var session = new TextInputSession(
-            _backend.InputStyle,
             commitText ?? delegate { },
-            updateComposition ?? delegate { },
-            complete ?? delegate { },
-            cancel ?? delegate { });
+            updateComposition ?? delegate { });
         _activeSession = session;
         _cursorRectangle = null;
 
         try
         {
-            _backend.BeginInput(options, new SessionSink(session));
+            _backend.BeginInput(new SessionSink(session));
         }
         catch (Exception ex)
         {
@@ -107,35 +75,6 @@ public static class TextInputManager
         }
 
         return session;
-    }
-
-    public static void ShowKeyboard(
-        string title,
-        string description,
-        string defaultText,
-        bool passwordMode,
-        Action<string>? enter,
-        Action? cancel)
-    {
-        TextInputSession? session = null;
-        session = BeginInput(
-            new TextInputOptions(title, description, defaultText, passwordMode),
-            complete: text =>
-            {
-                enter?.Invoke(text);
-                session?.Dispose();
-            },
-            cancel: () =>
-            {
-                cancel?.Invoke();
-                session?.Dispose();
-            });
-
-        if (session.InputStyle is not TextInputStyle.NativeDialog)
-        {
-            session.Dispose();
-            cancel?.Invoke();
-        }
     }
 
     public static void SetCursorRectangle(TextInputRectangle rectangle)

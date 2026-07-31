@@ -2,8 +2,6 @@ namespace Engine.Input;
 
 internal sealed class NullTextInputBackend : ITextInputBackend
 {
-    public TextInputStyle InputStyle => TextInputStyle.Inline;
-
     public bool IsAvailable => false;
 
     public bool SuppressDirectText => false;
@@ -12,7 +10,7 @@ internal sealed class NullTextInputBackend : ITextInputBackend
     {
     }
 
-    public void BeginInput(TextInputOptions options, ITextInputSink sink)
+    public void BeginInput(ITextInputSink sink)
     {
     }
 
