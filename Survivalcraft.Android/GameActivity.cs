@@ -7,6 +7,7 @@ using Game.ContentProviders;
 
 using AndroidClipboardManager = Android.Content.ClipboardManager;
 using AndroidProviderSettings = Android.Provider.Settings;
+using EngineTextInputManager = Engine.Input.TextInputManager;
 using GamePlatformManager = Game.Managers.PlatformManager;
 
 namespace Survivalcraft.Android;
@@ -34,6 +35,7 @@ public class GameActivity : EngineActivity
         GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
         GamePlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         GamePlatformManager.RegisterExternalContentProviderFactory(() => new AndroidSdCardExternalContentProvider());
+        EngineTextInputManager.RegisterBackend(new AndroidTextInputBackend());
         InitializeAndroidId();
         LoadAssetAssemblies();
 

@@ -52,8 +52,10 @@ public static class Window
     public const string WindowingLibrary = "Silk.NET.Windowing.Sdl";
 #endif
 #if DESKTOP
-    public const string WindowingLibrary = "Silk.NET.Windowing.Glfw";
-    public const string InputLibrary = "Silk.NET.Input.Glfw";
+    public const string WindowingLibrary = "Silk.NET.Windowing.Sdl";
+    public const string InputLibrary = "Silk.NET.Input.Sdl";
+
+    private const int _sdlWindowPositionCentered = 0x2FFF0000;
 #endif
 
 #if DESKTOP
@@ -207,11 +209,21 @@ public static class Window
         get
         {
             VerifyWindowOpened();
+            if (View.Native?.Wayland is not null)
+            {
+                return Point2.Zero;
+            }
+
             return new Point2(GameWindow.Position.X, GameWindow.Position.Y);
         }
         set
         {
             VerifyWindowOpened();
+            if (View.Native?.Wayland is not null)
+            {
+                return;
+            }
+
             GameWindow.Position = new Vector2D<int>(value.X, value.Y);
         }
 #endif
@@ -297,7 +309,7 @@ public static class Window
         ArgumentOutOfRangeException.ThrowIfNegative(width);
         ArgumentOutOfRangeException.ThrowIfNegative(height);
 
-        AppDomain.CurrentDomain.UnhandledException += delegate(object _, UnhandledExceptionEventArgs args)
+        AppDomain.CurrentDomain.UnhandledException += delegate (object _, UnhandledExceptionEventArgs args)
         {
             var ex = args.ExceptionObject as Exception ??
                      new Exception($"Unknown exception. Additional information: {args.ExceptionObject}");
@@ -313,6 +325,10 @@ public static class Window
             Environment.Exit(1);
         };
 
+#if DESKTOP
+        SetDefaultSdlHint("SDL_IME_SHOW_UI", "1");
+        SetDefaultSdlHint("SDL_IME_SUPPORT_EXTENDED_TEXT", "1");
+#endif
         Silk.NET.Windowing.Window.ShouldLoadFirstPartyPlatforms(false);
         Silk.NET.Windowing.Window.TryAdd(WindowingLibrary);
 
@@ -368,9 +384,7 @@ public static class Window
                 _ => WindowBorder.Resizable
             },
             Size = new Vector2D<int>(width, height),
-            Position = new Vector2D<int>(
-                Math.Max((screenSize.X - width) / 2, 0),
-                Math.Max((screenSize.Y - height) / 2, 0))
+            Position = new Vector2D<int>(_sdlWindowPositionCentered)
         };
         GameWindow = Silk.NET.Windowing.Window.Create(option);
         View = GameWindow;
@@ -413,6 +427,7 @@ public static class Window
 #if DESKTOP
         GameWindow.IsVisible = true;
 #endif
+        TextInputManager.Initialize();
         SubscribeToEvents();
 
         _state = State.Inactive;
@@ -490,14 +505,28 @@ public static class Window
         }
 
         GameWindow.Size = new Vector2D<int>(desiredWidth, desiredHeight);
-        Position = new Point2(
-            Math.Max((monitorSize.X - desiredWidth) / 2, 0),
-            Math.Max((monitorSize.Y - desiredHeight) / 2, 0));
+        if (View.Native?.Wayland is null)
+        {
+            Position = new Point2(
+                Math.Max((monitorSize.X - desiredWidth) / 2, 0),
+                Math.Max((monitorSize.Y - desiredHeight) / 2, 0));
+        }
+    }
+#endif
+
+#if DESKTOP
+    private static void SetDefaultSdlHint(string name, string value)
+    {
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(name)))
+        {
+            Environment.SetEnvironmentVariable(name, value);
+        }
     }
 #endif
 
     private static void FocusedChangedHandler(bool focused)
     {
+        TextInputManager.OnWindowFocusChanged(focused);
         Keyboard.Clear();
         Mouse.Clear();
         Touch.Clear();
@@ -686,9 +715,10 @@ public static class Window
 #if DESKTOP
         if (IconStream != null)
         {
-            var image =
-                SixLabors.ImageSharp.Image.Load<Rgba32>(Media.Image.DefaultImageSharpDecoderOptions, IconStream);
-            var pixelBytes = new byte[image.Width * image.Height * Unsafe.SizeOf<Rgba32>()];
+            // Silk.NET 2.23's SDL backend creates the icon surface with masks that expect ABGR bytes.
+            using var image =
+                SixLabors.ImageSharp.Image.Load<Abgr32>(Media.Image.DefaultImageSharpDecoderOptions, IconStream);
+            var pixelBytes = new byte[image.Width * image.Height * Unsafe.SizeOf<Abgr32>()];
             image.CopyPixelDataTo(pixelBytes);
             GameWindow.SetWindowIcon([new RawImage(image.Width, image.Height, pixelBytes)]);
         }
@@ -709,6 +739,7 @@ public static class Window
 
     private static void DisposeAll()
     {
+        TextInputManager.Dispose();
         Dispatcher.Dispose();
         Display.Dispose();
         Keyboard.Dispose();
@@ -723,6 +754,7 @@ public static class Window
         Time.BeforeFrame();
         Dispatcher.BeforeFrame();
         Display.BeforeFrame();
+        TextInputManager.BeforeFrame();
         Keyboard.BeforeFrame();
         Mouse.BeforeFrame();
         Touch.BeforeFrame();

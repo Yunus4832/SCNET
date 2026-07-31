@@ -308,7 +308,7 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         Action<string> handler
     )
     {
-        if (PlatformManager.Platform is Platform.Desktop)
+        if (TextInputManager.InputStyle is not TextInputStyle.NativeDialog)
         {
             DialogsManager.ShowDialog(
                 parentWidget,
@@ -322,7 +322,7 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
             string.Empty,
             text,
             false,
-            delegate(string s)
+            delegate (string s)
             {
                 if (s.Length > maxLength)
                 {

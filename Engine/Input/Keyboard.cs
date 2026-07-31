@@ -45,7 +45,7 @@ public static class Keyboard
 
     public static char? LastChar { get; private set; }
 
-    public static bool IsKeyboardVisible { get; private set; }
+    public static bool IsKeyboardVisible => TextInputManager.IsNativeDialogVisible;
 
     public static bool BackButtonQuitsApp { get; set; }
 
@@ -84,38 +84,10 @@ public static class Keyboard
     public static void ShowKeyboard(string title, string description, string defaultText, bool passwordMode,
         Action<string>? enter, Action? cancel)
     {
-        if (IsKeyboardVisible)
-        {
-            return;
-        }
-
         Clear();
         Touch.Clear();
         Mouse.Clear();
-        IsKeyboardVisible = true;
-        try
-        {
-            ShowKeyboardInternal(title, description, defaultText, passwordMode, delegate(string text)
-            {
-                Dispatcher.Dispatch(delegate
-                {
-                    IsKeyboardVisible = false;
-                    enter?.Invoke(text);
-                });
-            }, delegate
-            {
-                Dispatcher.Dispatch(delegate
-                {
-                    IsKeyboardVisible = false;
-                    cancel?.Invoke();
-                });
-            });
-        }
-        catch
-        {
-            IsKeyboardVisible = false;
-            throw;
-        }
+        TextInputManager.ShowKeyboard(title, description, defaultText, passwordMode, enter, cancel);
     }
 
     public static void Clear()
@@ -279,44 +251,6 @@ public static class Keyboard
     {
     }
 
-    public static void ShowKeyboardInternal(
-        string title,
-        string description,
-        string defaultText,
-        bool passwordMode,
-        Action<string> enter,
-        Action cancel
-    )
-    {
-#if ANDROID
-        AlertDialog.Builder builder = new(Window.ActivityInstance);
-        builder.SetTitle(title);
-        builder.SetMessage(description);
-        EditText editText = new(Window.ActivityInstance);
-        editText.Text = defaultText;
-        builder.SetView(editText);
-        builder.SetPositiveButton("Ok", delegate { enter(editText.Text); });
-        builder.SetNegativeButton("Cancel", delegate { cancel(); });
-        Window.ActivityInstance.RunOnUiThread(() =>
-            {
-                var alertDialog = builder.Create();
-                if (alertDialog == null)
-                {
-                    return;
-                }
-
-                alertDialog.DismissEvent += delegate { cancel(); };
-                alertDialog.CancelEvent += delegate { cancel(); };
-                alertDialog.Window?.Attributes?.Gravity = GravityFlags.Center;
-                alertDialog.Show();
-            }
-        );
-#endif
-#if DESKTOP
-        cancel();
-#endif
-    }
-
 #if ANDROID
     public static void HandleKeyEvent(KeyEvent keyEvent)
     {
@@ -331,6 +265,11 @@ public static class Keyboard
         var translatedKey = TranslateKey(key);
         if (translatedKey is not null)
         {
+            if (TextInputManager.ProcessKey(CreateTextInputKeyEvent(translatedKey.Value, scancode, false)))
+            {
+                return;
+            }
+
             ProcessKeyDown(translatedKey.Value);
         }
         else if (scancode == 270)
@@ -344,6 +283,11 @@ public static class Keyboard
         var translatedKey = TranslateKey(key);
         if (translatedKey is not null)
         {
+            if (TextInputManager.ProcessKey(CreateTextInputKeyEvent(translatedKey.Value, scancode, true)))
+            {
+                return;
+            }
+
             ProcessKeyUp(translatedKey.Value);
         }
         else if (scancode == 270)
@@ -354,7 +298,31 @@ public static class Keyboard
 
     private static void KeyPressHandler(IKeyboard keyboard, char c)
     {
-        ProcessCharacterEntered(c);
+        if (!TextInputManager.SuppressDirectText)
+        {
+            ProcessCharacterEntered(c);
+        }
+    }
+
+    private static TextInputKeyEvent CreateTextInputKeyEvent(Key key, int scanCode, bool isRelease)
+    {
+        var modifiers = TextInputModifiers.None;
+        if ((IsKeyDown(Key.Shift) || key is Key.Shift) && !(isRelease && key is Key.Shift))
+        {
+            modifiers |= TextInputModifiers.Shift;
+        }
+
+        if ((IsKeyDown(Key.Control) || key is Key.Control) && !(isRelease && key is Key.Control))
+        {
+            modifiers |= TextInputModifiers.Control;
+        }
+
+        if ((IsKeyDown(Key.Alt) || key is Key.Alt) && !(isRelease && key is Key.Alt))
+        {
+            modifiers |= TextInputModifiers.Alt;
+        }
+
+        return new TextInputKeyEvent(key, scanCode, isRelease, modifiers);
     }
 #endif
 
@@ -512,8 +480,8 @@ public static class Keyboard
             Silk.NET.Input.Key.Number8 => Key.Number8,
             Silk.NET.Input.Key.Number9 => Key.Number9,
             Silk.NET.Input.Key.GraveAccent => Key.Tilde,
-            Silk.NET.Input.Key.KeypadSubtract => Key.Minus,
-            Silk.NET.Input.Key.KeypadAdd => Key.Plus,
+            Silk.NET.Input.Key.Minus or Silk.NET.Input.Key.KeypadSubtract => Key.Minus,
+            Silk.NET.Input.Key.Equal or Silk.NET.Input.Key.KeypadAdd => Key.Plus,
             Silk.NET.Input.Key.LeftBracket => Key.LeftBracket,
             Silk.NET.Input.Key.RightBracket => Key.RightBracket,
             Silk.NET.Input.Key.Semicolon => Key.Semicolon,

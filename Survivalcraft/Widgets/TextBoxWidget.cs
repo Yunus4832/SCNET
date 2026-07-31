@@ -1,6 +1,7 @@
 using Engine.Graphics;
 using Engine.Input;
 using Engine.Media;
+using Engine.Windowing;
 
 namespace Game.Widgets;
 
@@ -19,6 +20,12 @@ public class TextBoxWidget : Widget
     private Vector2? _size;
 
     private string _text = string.Empty;
+
+    private TextInputSession? _textInputSession;
+
+    private string _compositionText = string.Empty;
+
+    private int _compositionCaretPosition;
 
 
     public bool MoveNextFlag;
@@ -134,24 +141,50 @@ public class TextBoxWidget : Widget
     {
         ClearPendingTextInput();
         CaretPosition = _text.Length;
-
-        if (!UsesNativeTextInputDialog())
-        {
-            return;
-        }
-
-        Keyboard.ShowKeyboard(
-            Title,
-            Description,
-            Text,
-            false,
-            delegate(string text) { Text = text; },
-            null
-        );
+        _textInputSession?.Dispose();
+        _textInputSession = TextInputManager.BeginInput(
+            new TextInputOptions(Title, Description, Text),
+            commitText: text =>
+            {
+                if (HasFocus)
+                {
+                    ClearComposition();
+                    EnterText(text);
+                }
+            },
+            updateComposition: composition =>
+            {
+                if (HasFocus)
+                {
+                    _compositionText = composition.Text;
+                    _compositionCaretPosition = composition.CaretPosition;
+                    _focusStartTime = Time.RealTime;
+                }
+            },
+            complete: text =>
+            {
+                if (HasFocus)
+                {
+                    Text = text;
+                    ClearComposition();
+                    HasFocus = false;
+                }
+            },
+            cancel: () =>
+            {
+                if (HasFocus)
+                {
+                    ClearComposition();
+                    HasFocus = false;
+                }
+            });
     }
 
     private void EndTextInput()
     {
+        _textInputSession?.Dispose();
+        _textInputSession = null;
+        ClearComposition();
         FocusLost?.Invoke(this);
     }
 
@@ -323,15 +356,10 @@ public class TextBoxWidget : Widget
 
     private void LoseFocusAfterKeyboardAction()
     {
-        if (UsesNativeTextInputDialog())
+        if (_textInputSession?.InputStyle is TextInputStyle.NativeDialog)
         {
             HasFocus = false;
         }
-    }
-
-    private static bool UsesNativeTextInputDialog()
-    {
-        return PlatformManager.Platform is Platform.Android;
     }
 
     public void MoveNext(WidgetsList widgets)
@@ -368,7 +396,8 @@ public class TextBoxWidget : Widget
             return;
         }
 
-        DesiredSize = Font.MeasureText(Text.Length == 0 ? " " : Text, new Vector2(FontScale), FontSpacing);
+        var displayText = GetDisplayText();
+        DesiredSize = Font.MeasureText(displayText.Length == 0 ? " " : displayText, new Vector2(FontScale), FontSpacing);
 
         DesiredSize += new Vector2(1f * FontScale * Font.Scale, 0f);
     }
@@ -376,39 +405,54 @@ public class TextBoxWidget : Widget
     public override void Draw(DrawContext dc)
     {
         var color = Color * GlobalColorTransform;
-        if (!string.IsNullOrEmpty(_text) && !HideText)
+        var displayText = GetDisplayText();
+        if (!string.IsNullOrEmpty(displayText) && !HideText)
         {
             var position = new Vector2(0f - _scroll, ActualSize.Y / 2f);
             var samplerState = TextureLinearFilter ? SamplerState.LinearClamp : SamplerState.PointClamp;
             var fontBatch2D =
                 dc.PrimitivesRenderer2D.FontBatch(Font, 1, DepthStencilState.None, null, null, samplerState);
             var count = fontBatch2D.TriangleVertices.Count;
-            fontBatch2D.QueueText(Text, position, 0f, color, TextAnchor.VerticalCenter, new Vector2(FontScale),
+            fontBatch2D.QueueText(displayText, position, 0f, color, TextAnchor.VerticalCenter, new Vector2(FontScale),
                 FontSpacing);
             fontBatch2D.TransformTriangles(GlobalTransform, count);
+
+            DrawCompositionUnderline(dc, color, displayText);
         }
 
-        if (!_hasFocus || !(MathUtils.Remainder(Time.RealTime - _focusStartTime, 0.5) < 0.25))
+        if (!_hasFocus)
         {
             return;
         }
 
-        var num = CalculateCharacterPosition?.Invoke(Text, CaretPosition, FontScale, FontSpacing) ??
-                  Font.CalculateCharacterPosition(Text, CaretPosition, new Vector2(FontScale), FontSpacing);
+        var displayCaretPosition = CaretPosition + _compositionCaretPosition;
+        var num = CalculateCharacterPosition?.Invoke(
+                      displayText,
+                      displayCaretPosition,
+                      FontScale,
+                      FontSpacing) ??
+                  Font.CalculateCharacterPosition(
+                      displayText,
+                      displayCaretPosition,
+                      new Vector2(FontScale),
+                      FontSpacing);
 
         var v = new Vector2(0f, ActualSize.Y / 2f) + new Vector2(num - _scroll, 0f);
 
-        if (_hasFocus)
+        if (v.X < 0f)
         {
-            if (v.X < 0f)
-            {
-                _scroll = MathUtils.Max(_scroll + v.X, 0f);
-            }
+            _scroll = MathUtils.Max(_scroll + v.X, 0f);
+        }
 
-            if (v.X > ActualSize.X)
-            {
-                _scroll += v.X - ActualSize.X + 1f;
-            }
+        if (v.X > ActualSize.X)
+        {
+            _scroll += v.X - ActualSize.X + 1f;
+        }
+
+        UpdateTextInputRectangle(num);
+        if (!(MathUtils.Remainder(Time.RealTime - _focusStartTime, 0.5) < 0.25))
+        {
+            return;
         }
 
         var flatBatch2D = dc.PrimitivesRenderer2D.FlatBatch(1, DepthStencilState.None);
@@ -453,5 +497,66 @@ public class TextBoxWidget : Widget
 
             CaretPosition += s.Length;
         }
+    }
+
+    private string GetDisplayText()
+    {
+        return string.IsNullOrEmpty(_compositionText)
+            ? Text
+            : Text.Insert(CaretPosition, _compositionText);
+    }
+
+    private void ClearComposition()
+    {
+        _compositionText = string.Empty;
+        _compositionCaretPosition = 0;
+    }
+
+    private void DrawCompositionUnderline(DrawContext dc, Color color, string displayText)
+    {
+        if (string.IsNullOrEmpty(_compositionText))
+        {
+            return;
+        }
+
+        var start = Font.CalculateCharacterPosition(
+            displayText,
+            CaretPosition,
+            new Vector2(FontScale),
+            FontSpacing);
+        var end = Font.CalculateCharacterPosition(
+            displayText,
+            CaretPosition + _compositionText.Length,
+            new Vector2(FontScale),
+            FontSpacing);
+        var y = ActualSize.Y / 2f + Font.GlyphHeight * FontScale * Font.Scale / 2f;
+        var flatBatch = dc.PrimitivesRenderer2D.FlatBatch(1, DepthStencilState.None);
+        var count = flatBatch.LineVertices.Count;
+        flatBatch.QueueLine(
+            new Vector2(start - _scroll, y),
+            new Vector2(end - _scroll, y),
+            0f,
+            color);
+        flatBatch.TransformLines(GlobalTransform, count);
+    }
+
+    private void UpdateTextInputRectangle(float caretX)
+    {
+        if (!_hasFocus || _textInputSession is null)
+        {
+            return;
+        }
+
+        var localPosition = new Vector2(
+            caretX - _scroll,
+            ActualSize.Y / 2f + Font.GlyphHeight * FontScale * Font.Scale / 2f);
+        var screenPosition = WidgetToScreen(localPosition);
+        var windowScale = MathUtils.Max(Window.Scale, 0.0001f);
+        TextInputManager.SetCursorRectangle(
+            new TextInputRectangle(
+                (int)MathF.Round(screenPosition.X / windowScale),
+                (int)MathF.Round(screenPosition.Y / windowScale),
+                1,
+                Math.Max(1, (int)MathF.Round(Font.GlyphHeight * FontScale * Font.Scale / windowScale))));
     }
 }
