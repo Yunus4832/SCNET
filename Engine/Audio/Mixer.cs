@@ -84,20 +84,7 @@ public static class Mixer
             return;
         }
 
-        var soundsSnapshot = new BaseSound[soundsToStopPoll.Count];
-        soundsToStopPoll.CopyTo(soundsSnapshot);
-        foreach (var sound in soundsSnapshot)
-        {
-            sound.Dispose();
-        }
-
-        foreach (var sound in _soundsToStop)
-        {
-            sound.Dispose();
-        }
-
-        soundsToStopPoll.Clear();
-        _soundsToStop.Clear();
+        DisposeSounds();
 
         unsafe
         {
@@ -118,6 +105,24 @@ public static class Mixer
         IsAudioInitialized = false;
         AL = null;
         audioContext = null;
+    }
+
+    internal static void DisposeSounds()
+    {
+        var soundsSnapshot = new BaseSound[soundsToStopPoll.Count];
+        soundsToStopPoll.CopyTo(soundsSnapshot);
+        foreach (var sound in soundsSnapshot)
+        {
+            sound.Dispose();
+        }
+
+        foreach (var sound in _soundsToStop)
+        {
+            sound.Dispose();
+        }
+
+        soundsToStopPoll.Clear();
+        _soundsToStop.Clear();
     }
 
     internal static void BeforeFrame()

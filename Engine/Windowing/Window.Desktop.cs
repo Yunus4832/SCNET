@@ -1,5 +1,6 @@
 #if DESKTOP
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 using Engine.Core;
 using Engine.Input;
@@ -7,6 +8,7 @@ using Engine.Input;
 using Silk.NET.Core;
 using Silk.NET.Input;
 using Silk.NET.Maths;
+using Silk.NET.SDL;
 using Silk.NET.Windowing;
 
 using SixLabors.ImageSharp.PixelFormats;
@@ -20,6 +22,8 @@ public static partial class Window
     public const string InputLibrary = "Silk.NET.Input.Sdl";
 
     private const int _sdlWindowPositionCentered = 0x2FFF0000;
+
+    private const int _dwmUseImmersiveDarkMode = 20;
 
     public static IWindow GameWindow = null!;
 
@@ -74,45 +78,44 @@ public static partial class Window
             switch (value)
             {
                 case WindowMode.Resizable:
+                    if (GameWindow.WindowState == WindowState.Fullscreen)
+                    {
+                        SetSdlFullscreen(false);
+                    }
+
                     if (GameWindow.WindowBorder != WindowBorder.Resizable)
                     {
                         GameWindow.WindowBorder = WindowBorder.Resizable;
                     }
 
-                    if (GameWindow.WindowState == WindowState.Fullscreen)
-                    {
-                        GameWindow.WindowState = WindowState.Normal;
-                    }
-
                     break;
                 case WindowMode.Fixed:
+                    if (GameWindow.WindowState == WindowState.Fullscreen)
+                    {
+                        SetSdlFullscreen(false);
+                    }
+
                     if (GameWindow.WindowBorder != WindowBorder.Fixed)
                     {
                         GameWindow.WindowBorder = WindowBorder.Fixed;
                     }
 
-                    if (GameWindow.WindowState == WindowState.Fullscreen)
-                    {
-                        GameWindow.WindowState = WindowState.Normal;
-                    }
-
                     break;
                 case WindowMode.Borderless:
+                    if (GameWindow.WindowState == WindowState.Fullscreen)
+                    {
+                        SetSdlFullscreen(false);
+                    }
+
                     if (GameWindow.WindowBorder != WindowBorder.Hidden)
                     {
                         GameWindow.WindowBorder = WindowBorder.Hidden;
                     }
 
-                    if (GameWindow.WindowState == WindowState.Fullscreen)
-                    {
-                        GameWindow.WindowState = WindowState.Normal;
-                    }
-
                     break;
                 case WindowMode.Fullscreen:
                     GameWindow.WindowBorder = WindowBorder.Resizable;
-                    GameWindow.WindowState = WindowState.Normal;
-                    GameWindow.WindowState = WindowState.Fullscreen;
+                    SetSdlFullscreen(true);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(value), value, null);
@@ -184,7 +187,7 @@ public static partial class Window
         WindowMode windowMode,
         string title)
     {
-        var api = new GraphicsAPI(ContextAPI.OpenGLES, new APIVersion(3, 2));
+        var api = new GraphicsAPI(ContextAPI.OpenGLES, new APIVersion(3, 0));
         var screenSize = ScreenSize;
         if (screenSize is { X: 0, Y: 0 })
         {
@@ -225,12 +228,17 @@ public static partial class Window
 
     private static partial void OnPlatformViewLoaded()
     {
-        GameWindow.IsVisible = true;
+        EnableSystemWindowTheme();
     }
 
     private static partial void OnPlatformCreated()
     {
         AdjustForContentScale();
+    }
+
+    private static partial void OnPlatformFirstFramePresented()
+    {
+        GameWindow.IsVisible = true;
     }
 
     private static partial bool CanResizePlatform() => true;
@@ -325,5 +333,37 @@ public static partial class Window
             Environment.SetEnvironmentVariable(name, value);
         }
     }
+
+    private static unsafe void SetSdlFullscreen(bool fullscreen)
+    {
+        if (!GameWindow.IsInitialized)
+        {
+            GameWindow.WindowState = fullscreen ? WindowState.Fullscreen : WindowState.Normal;
+            return;
+        }
+
+        var windowHandle = View.Native?.Sdl
+                           ?? throw new InvalidOperationException("SDL window handle is unavailable.");
+        var sdl = SdlProvider.SDL.Value;
+        var flags = fullscreen ? (uint)WindowFlags.Fullscreen : 0u;
+        if (sdl.SetWindowFullscreen((Silk.NET.SDL.Window*)windowHandle, flags) != 0)
+        {
+            throw new InvalidOperationException($"Failed to change SDL fullscreen state: {sdl.GetErrorS()}");
+        }
+    }
+
+    private static void EnableSystemWindowTheme()
+    {
+        if (!OperatingSystem.IsWindows() || View.Native?.Win32 is not { } win32)
+        {
+            return;
+        }
+
+        var enabled = 1;
+        DwmSetWindowAttribute(win32.Hwnd, _dwmUseImmersiveDarkMode, ref enabled, sizeof(int));
+    }
+
+    [DllImport("dwmapi.dll")]
+    private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int valueSize);
 }
 #endif

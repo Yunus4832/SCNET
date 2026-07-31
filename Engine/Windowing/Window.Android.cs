@@ -3,12 +3,12 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 
+using Engine.Audio;
 using Engine.Core;
 using Engine.Input;
 
 using Org.Libsdl.App;
 
-using Silk.NET.Maths;
 using Silk.NET.Windowing;
 
 namespace Engine.Windowing;
@@ -112,6 +112,10 @@ public static partial class Window
     {
     }
 
+    private static partial void OnPlatformFirstFramePresented()
+    {
+    }
+
     private static partial bool CanResizePlatform() => _state != State.Uncreated;
 
     private static partial void ClosePlatformView()
@@ -171,6 +175,7 @@ public static partial class Window
         }
 
         _state = State.Uncreated;
+        Mixer.DisposeSounds();
         Closed?.Invoke();
         DisposeAll();
     }

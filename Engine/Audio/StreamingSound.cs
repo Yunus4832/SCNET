@@ -365,8 +365,15 @@ public sealed class StreamingSound : BaseSound
         // 清理：停止播放、分离缓冲区、删除缓冲区
         Mixer.AL.SourceStop(Source);
         Mixer.CheckALError();
-        Mixer.AL.SetSourceProperty(Source, SourceInteger.Buffer, 0);
+        Mixer.AL.GetSourceProperty(Source, GetSourceInteger.BuffersQueued, out var queuedBufferCount);
         Mixer.CheckALError();
+        if (queuedBufferCount > 0)
+        {
+            var queuedBuffers = new uint[queuedBufferCount];
+            Mixer.AL.SourceUnqueueBuffers(Source, queuedBuffers);
+            Mixer.CheckALError();
+        }
+
         for (var cleanupIndex = 0; cleanupIndex < bufferCount; cleanupIndex++)
         {
             if (openAlBuffers[cleanupIndex] == 0)

@@ -168,14 +168,6 @@ public static class SettingsManager
             {
                 try
                 {
-                    if (RunMode.Value is RunModeType.HeadlessServer)
-                    {
-                        if (item.Name == nameof(Settings.FullScreenMode))
-                        {
-                            continue;
-                        }
-                    }
-
                     var value = HumanReadableConverter.ConvertToString(item.GetValue(Current, null) ?? string.Empty);
                     var node = XmlUtils.AddElement(xElement, "Setting");
                     XmlUtils.SetAttributeValue(node, "Name", item.Name);

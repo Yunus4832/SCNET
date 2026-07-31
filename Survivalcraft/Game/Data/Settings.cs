@@ -171,19 +171,6 @@ public class Settings
 
     public bool UpsideDownLayout { get; set; }
 
-    public bool FullScreenMode
-    {
-        get => Window.IsCreated ? Window.WindowMode == WindowMode.Fullscreen : field;
-        set
-        {
-            field = value;
-            if (Window.IsCreated)
-            {
-                Window.WindowMode = value ? WindowMode.Fullscreen : WindowMode.Resizable;
-            }
-        }
-    }
-
     public string BulletinTime { get; set; } = string.Empty;
 
     public string ScpboxUserInfo { get; set; } = string.Empty;

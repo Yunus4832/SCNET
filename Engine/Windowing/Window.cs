@@ -19,6 +19,8 @@ public static partial class Window
 
     private static bool _closing;
 
+    private static bool _hasPresentedFrame;
+
     private static State _state;
 
     public static event Action? Created;
@@ -115,6 +117,7 @@ public static partial class Window
             DisposePlatformView();
             View = null!;
             _closing = false;
+            _hasPresentedFrame = false;
             _state = State.Uncreated;
         }
     }
@@ -165,6 +168,7 @@ public static partial class Window
         if (_state == State.Inactive)
         {
             _state = State.Uncreated;
+            Mixer.DisposeSounds();
             Closed?.Invoke();
         }
 
@@ -192,6 +196,11 @@ public static partial class Window
         if (!_closing)
         {
             View.SwapBuffers();
+            if (!_hasPresentedFrame)
+            {
+                _hasPresentedFrame = true;
+                OnPlatformFirstFramePresented();
+            }
         }
         else
         {
@@ -287,6 +296,8 @@ public static partial class Window
     private static partial void OnPlatformViewLoaded();
 
     private static partial void OnPlatformCreated();
+
+    private static partial void OnPlatformFirstFramePresented();
 
     private static partial bool CanResizePlatform();
 
