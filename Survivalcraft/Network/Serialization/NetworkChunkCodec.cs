@@ -26,11 +26,21 @@ public static class NetworkChunkCodec
 
     public static EncodedTerrainChunk Encode(TerrainChunk chunk)
     {
+        return Encode(chunk.Coords, chunk.Cells, chunk.Shafts);
+    }
+
+    internal static EncodedTerrainChunk Encode(NetworkChunkSnapshot snapshot)
+    {
+        return Encode(snapshot.Coords, snapshot.Cells, snapshot.Shafts);
+    }
+
+    private static EncodedTerrainChunk Encode(Point2 coords, int[] cells, long[] shafts)
+    {
         using var rleStream = new MemoryStream(_rawBodySize / 4);
         using (var writer = new BinaryWriter(rleStream, System.Text.Encoding.UTF8, true))
         {
-            WriteClimate(writer, chunk);
-            WriteRleCells(writer, chunk);
+            WriteClimate(writer, shafts);
+            WriteRleCells(writer, cells);
         }
 
         var rle = rleStream.ToArray();
@@ -45,12 +55,12 @@ public static class NetworkChunkCodec
             encoding = CellEncoding.Raw;
             using var rawStream = new MemoryStream(_rawBodySize);
             using var writer = new BinaryWriter(rawStream);
-            WriteClimate(writer, chunk);
+            WriteClimate(writer, shafts);
             for (var y = 0; y < 256; y++)
             for (var z = 0; z < 16; z++)
             for (var x = 0; x < 16; x++)
             {
-                writer.Write(Terrain.ReplaceLight(chunk.GetCellValueFast(x, y, z), 0));
+                writer.Write(Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(x, y, z)], 0));
             }
 
             body = rawStream.ToArray();
@@ -69,7 +79,7 @@ public static class NetworkChunkCodec
         payloadWriter.Write((byte)compression);
         payloadWriter.Write(body.Length);
         payloadWriter.Write(payloadBody);
-        return new EncodedTerrainChunk(chunk.Coords, payloadStream.ToArray());
+        return new EncodedTerrainChunk(coords, payloadStream.ToArray());
     }
 
     public static TerrainChunk Decode(Point2 coords, byte[] payload)
@@ -127,12 +137,12 @@ public static class NetworkChunkCodec
             : chunk;
     }
 
-    private static void WriteClimate(BinaryWriter writer, TerrainChunk chunk)
+    private static void WriteClimate(BinaryWriter writer, long[] shafts)
     {
         for (var z = 0; z < 16; z++)
         for (var x = 0; x < 16; x++)
         {
-            var shaft = chunk.GetShaftValueFast(x, z);
+            var shaft = shafts[x + z * 16];
             writer.Write((byte)((Terrain.ExtractTemperature(shaft) << 4) | Terrain.ExtractHumidity(shaft)));
         }
     }
@@ -149,7 +159,7 @@ public static class NetworkChunkCodec
         }
     }
 
-    private static void WriteRleCells(BinaryWriter writer, TerrainChunk chunk)
+    private static void WriteRleCells(BinaryWriter writer, int[] cells)
     {
         var value = 0;
         var count = 0;
@@ -157,7 +167,7 @@ public static class NetworkChunkCodec
         for (var z = 0; z < 16; z++)
         for (var x = 0; x < 16; x++)
         {
-            var next = Terrain.ReplaceLight(chunk.GetCellValueFast(x, y, z), 0);
+            var next = Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(x, y, z)], 0);
             if (count == 0)
             {
                 value = next;

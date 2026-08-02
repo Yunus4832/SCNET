@@ -63,6 +63,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public TerrainSerializer24 TerrainSerializer { get; set; } = null!;
 
+    internal TerrainSaveCoordinator? TerrainSaveCoordinator { get; private set; }
+
     public ITerrainContentsGenerator TerrainContentsGenerator { get; set; } = null!;
 
     public BlockGeometryGenerator BlockGeometryGenerator { get; set; } = null!;
@@ -600,6 +602,11 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         TerrainSerializer = CommonLib.WorkType != WorkType.Client
             ? new TerrainSerializer24(SubsystemGameInfo.DirectoryName)
             : new TerrainSerializerNet();
+        if (CommonLib.WorkType != WorkType.Client)
+        {
+            TerrainSaveCoordinator = new TerrainSaveCoordinator(TerrainSerializer.SaveSnapshot);
+        }
+
         BlockGeometryGenerator = new BlockGeometryGenerator(Terrain, this,
             Project.FindSubsystem<SubsystemElectricity>(true)!, SubsystemFurnitureBlockBehavior,
             Project.FindSubsystem<SubsystemMetersBlockBehavior>(true)!, SubsystemPalette);
@@ -632,6 +639,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         TerrainUpdater.UpdateEvent.WaitOne();
         try
         {
+            TerrainSaveCoordinator?.Flush();
             var allocatedChunks = Terrain.AllocatedChunks;
             foreach (var chunk in allocatedChunks)
             {
@@ -659,6 +667,21 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
         TerrainUpdater.Dispose();
         TerrainUpdater = null!;
+
+        if (TerrainSaveCoordinator != null)
+        {
+            try
+            {
+                TerrainSaveCoordinator.Dispose();
+            }
+            catch (Exception e)
+            {
+                Log.Error(ExceptionManager.MakeFullErrorMessage(
+                    "Failed to flush background terrain saves while disposing the world.", e));
+            }
+
+            TerrainSaveCoordinator = null;
+        }
 
         TerrainSerializer.Dispose();
         TerrainSerializer = null!;

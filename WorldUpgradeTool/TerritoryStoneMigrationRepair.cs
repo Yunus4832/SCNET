@@ -3,7 +3,7 @@ using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
 
-using Game.TerrainSerializers;
+using WorldUpgradeTool.TerrainSerializers;
 
 namespace WorldUpgradeTool;
 

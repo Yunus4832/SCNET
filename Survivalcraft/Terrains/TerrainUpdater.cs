@@ -1,6 +1,7 @@
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.TerrainSerializers;
 
 namespace Game.Terrains;
 
@@ -154,6 +155,8 @@ public class TerrainUpdater
 
     private readonly NetworkChunkCache _networkChunkCache = new();
 
+    private readonly NetworkChunkEncoder _networkChunkEncoder = new();
+
     /// <summary>
     /// 需要移除的等待客户端列表
     /// </summary>
@@ -217,6 +220,8 @@ public class TerrainUpdater
         UnpauseUpdateThread();
         UpdateEvent.Set();
         _task?.Wait();
+
+        _networkChunkEncoder.Dispose();
 
         _pauseEvent.Dispose();
         UpdateEvent.Dispose();
@@ -373,6 +378,8 @@ public class TerrainUpdater
     /// </remarks>
     public void Update()
     {
+        SendCompletedNetworkChunks();
+
         // 如果光照变化，降级所有的区块到 InvalidLight 状态
         if (_subsystemSky.SkyLightValue != _lastSkylightValue)
         {
@@ -515,7 +522,6 @@ public class TerrainUpdater
             var result = new List<Point2>();
             if (Time.PeriodicEvent(1, 0.6))
             {
-                var toSendList = new List<TerrainChunk>();
                 var sc = Math.Min(item.Value.Count, SettingsManager.Current.ServerChunkCountSendPer);
                 for (var i = 0; i < sc; i++)
                 {
@@ -525,32 +531,31 @@ public class TerrainUpdater
                     {
                         if (chunk.ThreadState > TerrainChunkState.InvalidContents4)
                         {
-                            toSendList.Add(chunk);
+                            if (_networkChunkCache.TryGet(chunk, out var encoded))
+                            {
+                                CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(encoded)
+                                {
+                                    To = item.Key
+                                });
+                                toRemove.Add(coord);
+                            }
+                            else
+                            {
+                                _networkChunkEncoder.TrySchedule(chunk);
+                            }
                         }
                         else
                             // 回复客户端加载失败，让客户端重新请求
                         {
                             result.Add(new Point2(coord.X, coord.Y));
+                            toRemove.Add(coord);
                         }
                     }
                     else
                     {
                         // 回复客户端加载失败，让客户端重新请求
                         result.Add(new Point2(coord.X, coord.Y));
-                    }
-
-                    toRemove.Add(coord);
-                }
-
-                if (toSendList.Count > 0)
-                {
-                    Log.Debug($"本次处理{toSendList.Count}个Chunk");
-                    foreach (var chunk in toSendList)
-                    {
-                        CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(_networkChunkCache.GetOrEncode(chunk))
-                        {
-                            To = item.Key
-                        });
+                        toRemove.Add(coord);
                     }
                 }
 
@@ -574,6 +579,47 @@ public class TerrainUpdater
         foreach (var item in _waitChunkListToRemove)
         {
             WaitChunkList.Remove(item);
+        }
+
+        _waitChunkListToRemove.Clear();
+    }
+
+    private void SendCompletedNetworkChunks()
+    {
+        var completed = _networkChunkEncoder.DrainCompleted(_terrain, _networkChunkCache);
+        if (completed.Count == 0 || WaitChunkList.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var item in WaitChunkList)
+        {
+            foreach (var chunk in completed)
+            {
+                if (!_networkChunkCache.TryGet(chunk, out var encoded))
+                {
+                    continue;
+                }
+
+                var removed = item.Value.RemoveAll(coords => coords == chunk.Coords);
+                if (removed > 0)
+                {
+                    CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(encoded)
+                    {
+                        To = item.Key
+                    });
+                }
+            }
+
+            if (item.Value.Count == 0)
+            {
+                _waitChunkListToRemove.Add(item.Key);
+            }
+        }
+
+        foreach (var client in _waitChunkListToRemove)
+        {
+            WaitChunkList.Remove(client);
         }
 
         _waitChunkListToRemove.Clear();
@@ -720,6 +766,7 @@ public class TerrainUpdater
     private bool AllocateAndFreeChunks(UpdateLocation[] locations)
     {
         var result = false;
+        var hasDeferredChunkDiscards = false;
         var allocatedChunks = _terrain.AllocatedChunks;
         foreach (var terrainChunk in allocatedChunks)
         {
@@ -728,7 +775,14 @@ public class TerrainUpdater
                 continue;
             }
 
-            result = true;
+            var saveCoordinator = _subsystemTerrain.TerrainSaveCoordinator;
+            if (saveCoordinator != null && TerrainSaveCoordinator.RequiresSave(terrainChunk) &&
+                !saveCoordinator.CanAcceptUnloadSnapshot)
+            {
+                hasDeferredChunkDiscards = true;
+                continue;
+            }
+
             OnChunkDiscard?.Invoke(terrainChunk);
             foreach (var blockBehavior in _subsystemBlockBehaviors.BlockBehaviors)
             {
@@ -740,12 +794,30 @@ public class TerrainUpdater
                 terrainChunk));
 
             _networkChunkCache.Remove(terrainChunk);
-            _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
+            if (saveCoordinator != null)
+            {
+                if (!saveCoordinator.TryQueueChunkForUnload(terrainChunk))
+                {
+                    hasDeferredChunkDiscards = true;
+                    continue;
+                }
+            }
+            else
+            {
+                _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
+            }
+
+            result = true;
             _terrain.FreeChunk(terrainChunk);
             if (RunMode.Value is RunModeType.Gui)
             {
                 _subsystemTerrain.TerrainRenderer.DisposeTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
             }
+        }
+
+        if (hasDeferredChunkDiscards)
+        {
+            return result;
         }
 
         for (var j = 0; j < locations.Length; j++)
@@ -1023,7 +1095,9 @@ public class TerrainUpdater
                 }
                 else
                 {
-                    if (_subsystemTerrain.TerrainSerializer.LoadChunk(chunk))
+                    var restoredPendingSave = _subsystemTerrain.TerrainSaveCoordinator?
+                        .TryRestorePendingSnapshot(chunk) == true;
+                    if (restoredPendingSave || _subsystemTerrain.TerrainSerializer.LoadChunk(chunk))
                     {
                         chunk.ThreadState = TerrainChunkState.InvalidLight;
                         chunk.WasUpgraded = true;

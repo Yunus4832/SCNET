@@ -57,9 +57,13 @@ public class TerrainSerializer24 : IDisposable
     /// <returns> 是否加载成功 </returns>
     public void SaveChunk(TerrainChunk chunk)
     {
-        if (chunk.State > TerrainChunkState.InvalidContents4 && chunk.ModificationCounter > 0)
+        if (chunk is not { State: > TerrainChunkState.InvalidContents4, ModificationCounter: > 0 })
         {
-            SaveChunkData(chunk);
+            return;
+        }
+
+        if (SaveChunkData(chunk))
+        {
             chunk.ModificationCounter = 0;
         }
     }
@@ -90,6 +94,7 @@ public class TerrainSerializer24 : IDisposable
             {
                 Log.Error(ExceptionManager.MakeFullErrorMessage(
                     $"Error loading chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).", e));
+                return false;
             }
 
             _ = Time.RealTime;
@@ -101,46 +106,43 @@ public class TerrainSerializer24 : IDisposable
     /// 保存 Chunk 数据块
     /// </summary>
     /// <param name="chunk"> 需要保存的 Chunk 数据块对象 </param>
-    private void SaveChunkData(TerrainChunk chunk)
+    private bool SaveChunkData(TerrainChunk chunk)
     {
-        lock (_lock)
+        _ = Time.RealTime;
+        try
         {
-            _ = Time.RealTime;
-            try
-            {
-                // 先压缩获得 buffer，然后保存
-                var size = CompressChunkData(chunk, _storageBuffer);
-                storage.Save(chunk.Coords, _storageBuffer, size);
-            }
-            catch (Exception e)
-            {
-                Log.Error(ExceptionManager.MakeFullErrorMessage(
-                    string.Format("Error saving chunk ({0},{1},{2},{3}).", chunk.Coords.X, chunk.Coords.Y,
-                        chunk.Origin.X, chunk.Origin.Y), e));
-            }
-
-            _ = Time.RealTime;
+            SaveSnapshot(chunk.Coords, chunk.Cells, chunk.Shafts);
+            return true;
+        }
+        catch (Exception e)
+        {
+            Log.Error(ExceptionManager.MakeFullErrorMessage(
+                string.Format("Error saving chunk ({0},{1},{2},{3}).", chunk.Coords.X, chunk.Coords.Y,
+                    chunk.Origin.X, chunk.Origin.Y), e));
+            return false;
         }
     }
 
-    /// <summary>
-    /// 压缩数据块
-    /// </summary>
-    /// <param name="chunk"> 需要压缩的数据块对象 </param>
-    /// <param name="buffer"> 压缩后的数据块 buffer </param>
-    /// <returns> 返回压缩后的大小 </returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    private int CompressChunkData(TerrainChunk chunk, byte[] buffer)
+    internal void SaveSnapshot(Point2 coords, int[] cells, long[] shafts)
+    {
+        lock (_lock)
+        {
+            var size = CompressChunkData(cells, shafts, _storageBuffer);
+            storage.Save(coords, _storageBuffer, size);
+        }
+    }
+
+    private int CompressChunkData(int[] cells, long[] shafts, byte[] buffer)
     {
         // 当前缓冲区大小
         var bufferSize = 0;
         for (var i = 0; i < 16; i++)
         for (var j = 0; j < 16; j++)
         {
-            var shaftValue = chunk.GetShaftValueFast(i, j);
+            var shaftValue = shafts[i + j * 16];
             // 将温度和湿度写入到 buffer
             _compressBuffer[bufferSize++] = (byte)((Terrain.ExtractTemperature(shaftValue) << 4) |
-                                                    Terrain.ExtractHumidity(shaftValue));
+                                                   Terrain.ExtractHumidity(shaftValue));
         }
 
         // 缓冲区大小不能大于一个 Chunk 数据块的最大大小
@@ -157,7 +159,7 @@ public class TerrainSerializer24 : IDisposable
         for (var m = 0; m < 16; m++)
         {
             // 获取下一个值, 注意: 在存档文件中，光照信息被清除并被用于存储 RLE 算法中 Cell 的重复次数
-            var nextValue = Terrain.ReplaceLight(chunk.GetCellValueFast(m, k, l), 0);
+            var nextValue = Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(m, k, l)], 0);
             if (count == 0)
             {
                 value = nextValue;
@@ -176,11 +178,13 @@ public class TerrainSerializer24 : IDisposable
 
             count++;
             // 重复的最大次数是 271， 到达最大值时，强制创建 ValueCountPair, 写入 buffer 并退出本次循环
-            if (count == 271)
+            if (count != 271)
             {
-                bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
-                count = 0;
+                continue;
             }
+
+            bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
+            count = 0;
         }
 
         // 可能存在最后一个 Cell 和前一个 Cell 不同的情况，此时循环已经结束，该 cell 不会写入到 buffer
@@ -213,13 +217,10 @@ public class TerrainSerializer24 : IDisposable
         // 解压 Chunk 数据块中的数据
         using var deflateStream = new DeflateStream(new MemoryStream(buffer, 0, size), CompressionMode.Decompress);
 
-        // 解压之后的 Chunk 数据块的大小
-        var decompressSize = deflateStream.Read(_compressBuffer, 0, _compressBuffer.Length);
-        // 如果解压后的大小超出数据块的最大容量，抛出 InvalidOperationException
-        if (decompressSize == _compressBuffer.Length)
-        {
-            throw new InvalidOperationException("Deflate buffer overflow.");
-        }
+        // Stream.Read 不保证一次填满目标缓冲区，必须持续读取到流末尾。
+        var decompressSize = ReadToEnd(deflateStream, _compressBuffer);
+
+        ValidateChunkData(_compressBuffer, decompressSize);
 
         var bufferIndex = 0;
         // 从 buffer 中获取 Shaft （温度和湿度）信息并填入 TerrainChunk 对象中
@@ -258,27 +259,73 @@ public class TerrainSerializer24 : IDisposable
         while (bufferIndex < decompressSize)
         {
             // 读取经过 RLE 压缩的 Cell 数据
-            bufferIndex = ReadRleValueFromBuffer(_compressBuffer, bufferIndex, out var cellValue, out var count);
+            bufferIndex = ReadRleValueFromBuffer(_compressBuffer, bufferIndex, decompressSize, out var cellValue,
+                out var count);
             // 将获取到的 ValueCountPair 逐层 (16 x 16 x 256) 的填充到 TerrainChunk 的 Cells 中
             for (var k = 0; k < count; k++)
             {
                 chunk.SetCellValueFast(cellX, cellY, cellZ, cellValue);
                 cellX++;
-                if (cellX >= 16)
+                if (cellX < 16)
                 {
-                    cellX = 0;
-                    cellZ++;
-                    if (cellZ >= 16)
-                    {
-                        cellZ = 0;
-                        cellY++;
-                    }
+                    continue;
                 }
+
+                cellX = 0;
+                cellZ++;
+                if (cellZ < 16)
+                {
+                    continue;
+                }
+
+                cellZ = 0;
+                cellY++;
             }
         }
+    }
 
-        // 层高 cellY 最终应该是区块的最大高度（版本 2.4 256），且 cellZ 此时应当归零，否则该数据块已损坏
-        if (cellX != 0 || cellY != 256 || cellZ != 0)
+    internal static int ReadToEnd(Stream stream, byte[] buffer)
+    {
+        var totalBytesRead = 0;
+        while (totalBytesRead < buffer.Length)
+        {
+            var bytesRead = stream.Read(buffer, totalBytesRead, buffer.Length - totalBytesRead);
+            if (bytesRead == 0)
+            {
+                return totalBytesRead;
+            }
+
+            totalBytesRead += bytesRead;
+        }
+
+        return stream.ReadByte() >= 0
+            ? throw new InvalidOperationException("Deflate buffer overflow.")
+            : totalBytesRead;
+    }
+
+    private static void ValidateChunkData(byte[] buffer, int size)
+    {
+        const int shaftDataSize = 16 * 16;
+        const int cellsCount = 16 * 16 * 256;
+        if (size < shaftDataSize)
+        {
+            throw new InvalidOperationException("Corrupt chunk data: shaft data is truncated.");
+        }
+
+        var bufferIndex = shaftDataSize;
+        var decodedCellsCount = 0;
+        while (bufferIndex < size)
+        {
+            bufferIndex = ReadRleValueFromBuffer(buffer, bufferIndex, size, out _, out var count);
+            if (count > cellsCount - decodedCellsCount)
+            {
+                throw new InvalidOperationException("Corrupt chunk data: cell count exceeds chunk capacity.");
+            }
+
+            decodedCellsCount += count;
+        }
+
+        if (decodedCellsCount != cellsCount)
         {
             throw new InvalidOperationException("Corrupt chunk data.");
         }
@@ -311,12 +358,18 @@ public class TerrainSerializer24 : IDisposable
     /// </remarks>
     /// <param name="buffer"> 数据源 </param>
     /// <param name="i"> 开始读取 buffer 的索引 </param>
+    /// <param name="size"> buffer 中有效数据的长度 </param>
     /// <param name="value"> 读取到的值 </param>
     /// <param name="count"> 该值重复的次数 </param>
     /// <returns> 下一个读取点的索引位置 </returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static int ReadRleValueFromBuffer(byte[] buffer, int i, out int value, out int count)
+    private static int ReadRleValueFromBuffer(byte[] buffer, int i, int size, out int value, out int count)
     {
+        if (i > size - sizeof(int))
+        {
+            throw new InvalidOperationException("Corrupt chunk data: RLE value is truncated.");
+        }
+
         var valueCountPair = ReadIntFromBuffer(buffer, i);
 
         // 注意: 在存档文件中，光照信息被清除并被用于存储 RLE 算法中 Cell 的重复次数
@@ -326,6 +379,11 @@ public class TerrainSerializer24 : IDisposable
         {
             count += 1;
             return i + 4;
+        }
+
+        if (i + 4 >= size)
+        {
+            throw new InvalidOperationException("Corrupt chunk data: RLE count is truncated.");
         }
 
         count = buffer[i + 4] + 16;
@@ -464,23 +522,23 @@ public class TerrainSerializer24 : IDisposable
         /// <param name="suffix"> Region 目录的后缀，默认为空字符串 </param>
         public void Open(string directoryName, string suffix = "")
         {
-            _regionsDirectoryName = Engine.FileStorage.Storage.CombinePaths(directoryName, "Regions" + suffix);
-            Engine.FileStorage.Storage.CreateDirectory(_regionsDirectoryName);
-            _tmpFilePath = Engine.FileStorage.Storage.CombinePaths(_regionsDirectoryName, "tmp");
-            Engine.FileStorage.Storage.DeleteFile(_tmpFilePath);
-            foreach (var item in Engine.FileStorage.Storage.ListFileNames(_regionsDirectoryName))
+            _regionsDirectoryName = Storage.CombinePaths(directoryName, "Regions" + suffix);
+            Storage.CreateDirectory(_regionsDirectoryName);
+            _tmpFilePath = Storage.CombinePaths(_regionsDirectoryName, "tmp");
+            Storage.DeleteFile(_tmpFilePath);
+            foreach (var item in Storage.ListFileNames(_regionsDirectoryName))
             {
-                if (Engine.FileStorage.Storage.GetExtension(item) == ".new")
+                if (Storage.GetExtension(item) == ".new")
                 {
-                    var text = Engine.FileStorage.Storage.CombinePaths(_regionsDirectoryName, item);
-                    var text2 = Engine.FileStorage.Storage.ChangeExtension(text, "");
-                    if (!Engine.FileStorage.Storage.FileExists(text2))
+                    var text = Storage.CombinePaths(_regionsDirectoryName, item);
+                    var text2 = Storage.ChangeExtension(text, "");
+                    if (!Storage.FileExists(text2))
                     {
-                        Engine.FileStorage.Storage.MoveFile(text, text2);
+                        Storage.MoveFile(text, text2);
                     }
                     else
                     {
-                        Engine.FileStorage.Storage.DeleteFile(text);
+                        Storage.DeleteFile(text);
                     }
                 }
             }
@@ -564,7 +622,7 @@ public class TerrainSerializer24 : IDisposable
                         {
                             // 新的 Region 文件名
                             newRegionFileName = GetRegionPath(region);
-                            using var stream = Engine.FileStorage.Storage.OpenFile(_tmpFilePath, OpenFileMode.Create);
+                            using var stream = Storage.OpenFile(_tmpFilePath, OpenFileMode.Create);
                             using var binaryWriter = new BinaryWriter(stream);
 
                             var newEntries = new DirectoryEntry[entries.Length];
@@ -654,13 +712,15 @@ public class TerrainSerializer24 : IDisposable
             }
 
             // 如果新的 Region 文件名称不为空，说明有新的 Region 文件生成，需要提替换旧的 Region 文件
-            if (!string.IsNullOrEmpty(newRegionFileName))
+            if (string.IsNullOrEmpty(newRegionFileName))
             {
-                regionStream.Dispose();
-                var text2 = newRegionFileName + ".new";
-                Engine.FileStorage.Storage.MoveFile(_tmpFilePath, text2);
-                Engine.FileStorage.Storage.MoveFile(text2, newRegionFileName);
+                return;
             }
+
+            regionStream.Dispose();
+            var text2 = newRegionFileName + ".new";
+            Storage.MoveFile(_tmpFilePath, text2);
+            Storage.MoveFile(text2, newRegionFileName);
         }
 
         /// <summary>
@@ -699,42 +759,42 @@ public class TerrainSerializer24 : IDisposable
 
         private Stream? GetRegionStream(Point2 region, bool createNew)
         {
-            if (!_streamsByRegion.TryGetValue(region, out var value) || value == null || !value.CanRead)
+            if (_streamsByRegion.TryGetValue(region, out var value) && value is { CanRead: true })
             {
-                var regionPath = GetRegionPath(region);
-                if (Engine.FileStorage.Storage.FileExists(regionPath))
-                {
-                    value = Engine.FileStorage.Storage.OpenFile(regionPath, OpenFileMode.ReadWrite);
-                    using (var binaryReader = new BinaryReader(value, Encoding.UTF8, true))
-                    {
-                        if (binaryReader.ReadUInt32() != _regionMagic)
-                        {
-                            throw new InvalidOperationException($"Invalid region file {region} magic.");
-                        }
-                    }
+                return value;
+            }
 
-                    _openedStreams.Enqueue(value);
-                }
-                else if (createNew)
+            var regionPath = GetRegionPath(region);
+            if (Storage.FileExists(regionPath))
+            {
+                value = Storage.OpenFile(regionPath, OpenFileMode.ReadWrite);
+                using (var binaryReader = new BinaryReader(value, Encoding.UTF8, true))
                 {
-                    value = Engine.FileStorage.Storage.OpenFile(regionPath, OpenFileMode.Create);
-                    _openedStreams.Enqueue(value);
-                    using (var binaryWriter = new BinaryWriter(value, Encoding.UTF8, true))
+                    if (binaryReader.ReadUInt32() != _regionMagic)
                     {
-                        binaryWriter.Write(_regionMagic);
-                        WriteDirectoryEntries(binaryWriter, new DirectoryEntry[256]);
+                        throw new InvalidOperationException($"Invalid region file {region} magic.");
                     }
                 }
-                else
-                {
-                    value = null;
-                }
 
-                _streamsByRegion[region] = value;
-                while (_openedStreams.Count > _maxOpenedStreams)
-                {
-                    _openedStreams.Dequeue().Dispose();
-                }
+                _openedStreams.Enqueue(value);
+            }
+            else if (createNew)
+            {
+                value = Storage.OpenFile(regionPath, OpenFileMode.Create);
+                _openedStreams.Enqueue(value);
+                using var binaryWriter = new BinaryWriter(value, Encoding.UTF8, true);
+                binaryWriter.Write(_regionMagic);
+                WriteDirectoryEntries(binaryWriter, new DirectoryEntry[256]);
+            }
+            else
+            {
+                value = null;
+            }
+
+            _streamsByRegion[region] = value;
+            while (_openedStreams.Count > _maxOpenedStreams)
+            {
+                _openedStreams.Dequeue().Dispose();
             }
 
             return value;
@@ -742,15 +802,24 @@ public class TerrainSerializer24 : IDisposable
 
         private static void ReadData(BinaryReader reader, int offset, byte[] buffer, int size)
         {
+            if (size > buffer.Length)
+            {
+                throw new InvalidOperationException("Region file chunk exceeds the read buffer capacity.");
+            }
+
             reader.BaseStream.Position = offset;
             if (reader.ReadUInt32() != _regionChunkMagic)
             {
                 throw new InvalidOperationException("Invalid region file chunk magic.");
             }
 
-            if (reader.BaseStream.Read(buffer, 0, size) != size)
+            try
             {
-                throw new InvalidOperationException("Region file is truncated.");
+                reader.BaseStream.ReadExactly(buffer.AsSpan(0, size));
+            }
+            catch (EndOfStreamException e)
+            {
+                throw new InvalidOperationException("Region file is truncated.", e);
             }
         }
 
@@ -833,11 +902,13 @@ public class TerrainSerializer24 : IDisposable
             for (var i = 0; i < entries.Length; i++)
             {
                 var num2 = entries[i].Offset - entries[index].Offset;
-                if (num2 > 0 && num2 < num)
+                if (num2 <= 0 || num2 >= num)
                 {
-                    num = num2;
-                    result = i;
+                    continue;
                 }
+
+                num = num2;
+                result = i;
             }
 
             return result;
