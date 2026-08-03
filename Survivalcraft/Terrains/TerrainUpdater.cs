@@ -1,6 +1,7 @@
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.TerrainSerializers;
 
 namespace Game.Terrains;
 
@@ -103,7 +104,7 @@ public class TerrainUpdater
     /// <summary>
     /// 地形更新后台任务
     /// </summary>
-    private Task? _task;
+    private readonly Task _task;
 
     /// <summary>
     /// 更新线程中使用的更新参数的引用
@@ -153,6 +154,8 @@ public class TerrainUpdater
     public readonly Dictionary<Client, List<Point2>> WaitChunkList = new();
 
     private readonly NetworkChunkCache _networkChunkCache = new();
+
+    private readonly NetworkChunkEncoder _networkChunkEncoder = new();
 
     /// <summary>
     /// 需要移除的等待客户端列表
@@ -205,6 +208,13 @@ public class TerrainUpdater
         _threadUpdateParameters.Locations = new Dictionary<int, UpdateLocation>();
         SettingsManager.BrightnessChanged += SettingsManagerBrightnessChanged;
         SetUpdateLocation(-1, Vector2.Zero, 4, 4);
+        _task = Task.Factory.StartNew(
+            ThreadUpdateFunction,
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
+        UnpauseUpdateThread();
+        UpdateEvent.Set();
     }
 
     /// <summary>
@@ -216,7 +226,9 @@ public class TerrainUpdater
         _quitUpdateThread = true;
         UnpauseUpdateThread();
         UpdateEvent.Set();
-        _task?.Wait();
+        _task.GetAwaiter().GetResult();
+
+        _networkChunkEncoder.Dispose();
 
         _pauseEvent.Dispose();
         UpdateEvent.Dispose();
@@ -373,6 +385,8 @@ public class TerrainUpdater
     /// </remarks>
     public void Update()
     {
+        SendCompletedNetworkChunks();
+
         // 如果光照变化，降级所有的区块到 InvalidLight 状态
         if (_subsystemSky.SkyLightValue != _lastSkylightValue)
         {
@@ -392,35 +406,6 @@ public class TerrainUpdater
                 _terrain.SeasonHumidity = humidity;
                 DowngradeAllChunksState(TerrainChunkState.InvalidVertices1, false);
             }
-        }
-
-        // 是否开启了多线程更新地形，如果不是，停止并销毁地形更新线程，在主线程上更新地形
-        if (!SettingsManager.Current.MultithreadedTerrainUpdate)
-        {
-            // 销毁地形更新线程
-            if (_task != null)
-            {
-                _quitUpdateThread = true;
-                UnpauseUpdateThread();
-                UpdateEvent.Set();
-                _task.Wait();
-                _task = null;
-            }
-
-            var realTime = Time.RealTime;
-
-            // 同步更新线程
-            while (!SynchronousUpdateFunction() && Time.RealTime - realTime < 0.0099999997764825821)
-            {
-            }
-        }
-        // 否则，如果地形更新线程不存在，新建一个线程更新地形
-        else if (_task == null)
-        {
-            _quitUpdateThread = false;
-            _task = Task.Run((Action)ThreadUpdateFunction);
-            UnpauseUpdateThread();
-            UpdateEvent.Set();
         }
 
         // 是否有需要处理的 pendingLocations
@@ -515,7 +500,6 @@ public class TerrainUpdater
             var result = new List<Point2>();
             if (Time.PeriodicEvent(1, 0.6))
             {
-                var toSendList = new List<TerrainChunk>();
                 var sc = Math.Min(item.Value.Count, SettingsManager.Current.ServerChunkCountSendPer);
                 for (var i = 0; i < sc; i++)
                 {
@@ -525,32 +509,31 @@ public class TerrainUpdater
                     {
                         if (chunk.ThreadState > TerrainChunkState.InvalidContents4)
                         {
-                            toSendList.Add(chunk);
+                            if (_networkChunkCache.TryGet(chunk, out var encoded))
+                            {
+                                CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(encoded)
+                                {
+                                    To = item.Key
+                                });
+                                toRemove.Add(coord);
+                            }
+                            else
+                            {
+                                _networkChunkEncoder.TrySchedule(chunk);
+                            }
                         }
                         else
                             // 回复客户端加载失败，让客户端重新请求
                         {
                             result.Add(new Point2(coord.X, coord.Y));
+                            toRemove.Add(coord);
                         }
                     }
                     else
                     {
                         // 回复客户端加载失败，让客户端重新请求
                         result.Add(new Point2(coord.X, coord.Y));
-                    }
-
-                    toRemove.Add(coord);
-                }
-
-                if (toSendList.Count > 0)
-                {
-                    Log.Debug($"本次处理{toSendList.Count}个Chunk");
-                    foreach (var chunk in toSendList)
-                    {
-                        CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(_networkChunkCache.GetOrEncode(chunk))
-                        {
-                            To = item.Key
-                        });
+                        toRemove.Add(coord);
                     }
                 }
 
@@ -574,6 +557,47 @@ public class TerrainUpdater
         foreach (var item in _waitChunkListToRemove)
         {
             WaitChunkList.Remove(item);
+        }
+
+        _waitChunkListToRemove.Clear();
+    }
+
+    private void SendCompletedNetworkChunks()
+    {
+        var completed = _networkChunkEncoder.DrainCompleted(_terrain, _networkChunkCache);
+        if (completed.Count == 0 || WaitChunkList.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var item in WaitChunkList)
+        {
+            foreach (var chunk in completed)
+            {
+                if (!_networkChunkCache.TryGet(chunk, out var encoded))
+                {
+                    continue;
+                }
+
+                var removed = item.Value.RemoveAll(coords => coords == chunk.Coords);
+                if (removed > 0)
+                {
+                    CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(encoded)
+                    {
+                        To = item.Key
+                    });
+                }
+            }
+
+            if (item.Value.Count == 0)
+            {
+                _waitChunkListToRemove.Add(item.Key);
+            }
+        }
+
+        foreach (var client in _waitChunkListToRemove)
+        {
+            WaitChunkList.Remove(client);
         }
 
         _waitChunkListToRemove.Clear();
@@ -720,6 +744,7 @@ public class TerrainUpdater
     private bool AllocateAndFreeChunks(UpdateLocation[] locations)
     {
         var result = false;
+        var hasDeferredChunkDiscards = false;
         var allocatedChunks = _terrain.AllocatedChunks;
         foreach (var terrainChunk in allocatedChunks)
         {
@@ -728,7 +753,14 @@ public class TerrainUpdater
                 continue;
             }
 
-            result = true;
+            var saveCoordinator = _subsystemTerrain.TerrainSaveCoordinator;
+            if (saveCoordinator != null && TerrainSaveCoordinator.RequiresSave(terrainChunk) &&
+                !saveCoordinator.CanAcceptUnloadSnapshot)
+            {
+                hasDeferredChunkDiscards = true;
+                continue;
+            }
+
             OnChunkDiscard?.Invoke(terrainChunk);
             foreach (var blockBehavior in _subsystemBlockBehaviors.BlockBehaviors)
             {
@@ -740,12 +772,30 @@ public class TerrainUpdater
                 terrainChunk));
 
             _networkChunkCache.Remove(terrainChunk);
-            _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
+            if (saveCoordinator != null)
+            {
+                if (!saveCoordinator.TryQueueChunkForUnload(terrainChunk))
+                {
+                    hasDeferredChunkDiscards = true;
+                    continue;
+                }
+            }
+            else
+            {
+                _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
+            }
+
+            result = true;
             _terrain.FreeChunk(terrainChunk);
             if (RunMode.Value is RunModeType.Gui)
             {
                 _subsystemTerrain.TerrainRenderer.DisposeTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
             }
+        }
+
+        if (hasDeferredChunkDiscards)
+        {
+            return result;
         }
 
         for (var j = 0; j < locations.Length; j++)
@@ -840,7 +890,7 @@ public class TerrainUpdater
     /// 更新线程的主循环逻辑
     /// </summary>
     /// <remarks>
-    /// 在线程中循环调用 <see cref="SynchronousUpdateFunction"/> 进行地形更新，
+    /// 在线程中循环调用 <see cref="ProcessNextChunkUpdate"/> 进行地形更新，
     /// 使用 <see cref="_pauseEvent"/> 和 <see cref="UpdateEvent"/> 进行线程同步
     /// </remarks>
     private void ThreadUpdateFunction()
@@ -853,7 +903,7 @@ public class TerrainUpdater
             UpdateEvent.WaitOne();
             try
             {
-                if (SynchronousUpdateFunction())
+                if (ProcessNextChunkUpdate())
                 {
                     lock (_unpauseLock)
                     {
@@ -866,9 +916,9 @@ public class TerrainUpdater
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // ignored
+                Log.Error(ExceptionManager.MakeFullErrorMessage("Terrain update worker failed.", e));
             }
             finally
             {
@@ -879,14 +929,14 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 同步更新地形（单步）
+    /// 处理一个地形更新步骤
     /// </summary>
     /// <remarks>
     /// 查找并更新一个最佳区块的状态，如果所有区块都已更新完毕则返回 true。
-    /// 该方法在主线程或更新线程中调用
+    /// 该方法只由地形更新线程调用
     /// </remarks>
     /// <returns>如果所有区块都已完成更新则返回 true，否则返回 false</returns>
-    private bool SynchronousUpdateFunction()
+    private bool ProcessNextChunkUpdate()
     {
         lock (_updateParametersLock)
         {
@@ -1023,7 +1073,9 @@ public class TerrainUpdater
                 }
                 else
                 {
-                    if (_subsystemTerrain.TerrainSerializer.LoadChunk(chunk))
+                    var restoredPendingSave = _subsystemTerrain.TerrainSaveCoordinator?
+                        .TryRestorePendingSnapshot(chunk) == true;
+                    if (restoredPendingSave || _subsystemTerrain.TerrainSerializer.LoadChunk(chunk))
                     {
                         chunk.ThreadState = TerrainChunkState.InvalidLight;
                         chunk.WasUpgraded = true;

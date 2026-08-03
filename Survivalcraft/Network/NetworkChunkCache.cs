@@ -19,17 +19,12 @@ public sealed class NetworkChunkCache(long capacityBytes = 64L * 1024 * 1024)
 
     public EncodedTerrainChunk GetOrEncode(TerrainChunk chunk)
     {
-        var revision = chunk.NetworkContentRevision;
-        lock (_lock)
+        if (TryGet(chunk, out var cached))
         {
-            if (_entries.TryGetValue(chunk.Coords, out var cached) &&
-                ReferenceEquals(cached.Chunk, chunk) && cached.Revision == revision)
-            {
-                cached.LastAccess = ++_accessCounter;
-                return cached.Encoded;
-            }
+            return cached;
         }
 
+        var revision = chunk.NetworkContentRevision;
         EncodedTerrainChunk encoded = null!;
         var stable = false;
         for (var attempt = 0; attempt < 3; attempt++)
@@ -51,6 +46,14 @@ public sealed class NetworkChunkCache(long capacityBytes = 64L * 1024 * 1024)
             return encoded;
         }
 
+        Store(chunk, revision, encoded);
+        return encoded;
+    }
+
+    public void Store(TerrainChunk chunk, long revision, EncodedTerrainChunk encoded)
+    {
+        ArgumentNullException.ThrowIfNull(chunk);
+        ArgumentNullException.ThrowIfNull(encoded);
         lock (_lock)
         {
             if (_entries.Remove(chunk.Coords, out var previous))
@@ -68,8 +71,23 @@ public sealed class NetworkChunkCache(long capacityBytes = 64L * 1024 * 1024)
             _size += encoded.Payload.Length;
             Trim();
         }
+    }
 
-        return encoded;
+    public bool TryGet(TerrainChunk chunk, out EncodedTerrainChunk encoded)
+    {
+        lock (_lock)
+        {
+            if (_entries.TryGetValue(chunk.Coords, out var cached) &&
+                ReferenceEquals(cached.Chunk, chunk) && cached.Revision == chunk.NetworkContentRevision)
+            {
+                cached.LastAccess = ++_accessCounter;
+                encoded = cached.Encoded;
+                return true;
+            }
+        }
+
+        encoded = null!;
+        return false;
     }
 
     public void Remove(TerrainChunk chunk)

@@ -93,7 +93,22 @@ public class SubsystemUpdate : Subsystem
 
     private void AddUpdateable(IUpdateable updateable)
     {
+        if (!ShouldScheduleUpdateable(updateable))
+        {
+            return;
+        }
+
         _toAddOrRemove[updateable] = true;
+    }
+
+    internal static bool ShouldScheduleUpdateable(IUpdateable updateable)
+    {
+        return updateable switch
+        {
+            ComponentGui componentGui => componentGui.ComponentPlayer is { IsLocallyControlled: true },
+            ComponentInput componentInput => componentInput.ComponentPlayer is { IsLocallyControlled: true },
+            _ => true
+        };
     }
 
     private void RemoveUpdateable(IUpdateable updateable)

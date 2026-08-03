@@ -13,7 +13,18 @@ public class SubsystemDrawing : Subsystem
 
     private void AddDrawable(IDrawable drawable)
     {
+        if (!ShouldScheduleDrawable(drawable))
+        {
+            return;
+        }
+
         _drawables.Add(drawable, true);
+    }
+
+    internal static bool ShouldScheduleDrawable(IDrawable drawable)
+    {
+        return drawable is not ComponentGui componentGui ||
+               componentGui.ComponentPlayer is { IsLocallyControlled: true };
     }
 
     private void RemoveDrawable(IDrawable drawable)

@@ -4,9 +4,9 @@ using Engine.Serialization;
 
 using EntitySystem.XmlUtilities;
 
-using Game.TerrainSerializers;
+using WorldUpgradeTool.TerrainSerializers;
 
-namespace Game.VersionConverts;
+namespace WorldUpgradeTool.VersionConverts;
 
 public class VersionConverter21To22 : VersionConverter
 {

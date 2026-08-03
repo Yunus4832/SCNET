@@ -3,7 +3,9 @@ using System.IO.Compression;
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace Game.TerrainSerializers;
+using Game;
+
+namespace WorldUpgradeTool.TerrainSerializers;
 
 /// <summary>
 /// 版本 2.3 地形序列化工具，版本 2.3 的区块高度是 256
