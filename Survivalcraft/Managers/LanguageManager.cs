@@ -53,7 +53,11 @@ public static class LanguageManager
 
     private static string _currentLanguage = "zh-CN";
 
+    private static int _revision;
+
     public static string CurrentLanguage => Volatile.Read(ref _currentLanguage);
+
+    public static int Revision => Volatile.Read(ref _revision);
 
     public static void Initialize(string languageType)
     {
@@ -134,6 +138,7 @@ public static class LanguageManager
     internal static void CompleteInitialization(string languageType)
     {
         Volatile.Write(ref _currentLanguage, languageType);
+        Interlocked.Increment(ref _revision);
     }
 
     private static void MergeJsonObject(JsonObject? oldObject, JsonObject? newObject)

@@ -3957,7 +3957,8 @@
         "AddBlacklistConfirm": "是否将 {0} 加入黑名单？",
         "RemoveBlacklistConfirm": "是否将 {0} 移出黑名单？",
         "PlayerJoined": "{0} 加入游戏",
-        "PlayerLeft": "{0} 退出游戏"
+        "PlayerLeft": "{0} 退出游戏",
+        "TeamMemberCount": "{0} 人"
     },
     "Commands": {
         "Weather_Description": "控制世界天气",

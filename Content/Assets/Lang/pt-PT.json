@@ -3957,7 +3957,8 @@
         "AddBlacklistConfirm": "Adicionar {0} à lista negra?",
         "RemoveBlacklistConfirm": "Remover {0} da lista negra?",
         "PlayerJoined": "{0} entrou no jogo",
-        "PlayerLeft": "{0} saiu do jogo"
+        "PlayerLeft": "{0} saiu do jogo",
+        "TeamMemberCount": "{0} jogadores"
     },
     "Commands": {
         "Weather_Description": "Controlar o clima do mundo",

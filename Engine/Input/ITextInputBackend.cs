@@ -25,5 +25,7 @@ public interface ITextInputSink
 {
     void CommitText(string text);
 
+    void Backspace();
+
     void UpdateComposition(TextComposition composition);
 }

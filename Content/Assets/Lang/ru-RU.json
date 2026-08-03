@@ -3957,7 +3957,8 @@
         "AddBlacklistConfirm": "Добавить игрока {0} в чёрный список?",
         "RemoveBlacklistConfirm": "Удалить игрока {0} из чёрного списка?",
         "PlayerJoined": "{0} присоединился к игре",
-        "PlayerLeft": "{0} вышел из игры"
+        "PlayerLeft": "{0} вышел из игры",
+        "TeamMemberCount": "{0} игроков"
     },
     "Commands": {
         "Weather_Description": "Управление погодой в мире",

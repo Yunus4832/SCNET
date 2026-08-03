@@ -16,6 +16,11 @@ public static class TextInputManager
             }
         }
 
+        public void Backspace()
+        {
+            _pendingActions.Enqueue(session.Backspace);
+        }
+
         public void UpdateComposition(TextComposition composition)
         {
             var text = composition.Text ?? string.Empty;
@@ -54,12 +59,14 @@ public static class TextInputManager
 
     public static TextInputSession BeginInput(
         Action<string>? commitText = null,
+        Action? backspace = null,
         Action<TextComposition>? updateComposition = null)
     {
         _activeSession?.Dispose();
 
         var session = new TextInputSession(
             commitText ?? delegate { },
+            backspace ?? delegate { },
             updateComposition ?? delegate { });
         _activeSession = session;
         _cursorRectangle = null;

@@ -3957,7 +3957,8 @@
         "AddBlacklistConfirm": "Add {0} to the blacklist?",
         "RemoveBlacklistConfirm": "Remove {0} from the blacklist?",
         "PlayerJoined": "{0} joined the game",
-        "PlayerLeft": "{0} left the game"
+        "PlayerLeft": "{0} left the game",
+        "TeamMemberCount": "{0} players"
     },
     "Commands": {
         "Weather_Description": "Control world weather",

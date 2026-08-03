@@ -92,7 +92,9 @@ public sealed class TeamListWidget : CanvasWidget
             _name.Color = _team.IsCurrent
                 ? new Color(255, 220, 150)
                 : Color.White;
-            _summary.Text = $"{_team.MemberCount}人";
+            _summary.Text = string.Format(
+                MultiplayerUiStyle.Text("TeamMemberCount"),
+                _team.MemberCount);
         }
     }
 }

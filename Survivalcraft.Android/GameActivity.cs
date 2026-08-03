@@ -38,7 +38,7 @@ public class GameActivity : EngineActivity
         GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
         GamePlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         GamePlatformManager.RegisterExternalContentProviderFactory(() => new AndroidSdCardExternalContentProvider());
-        EngineTextInputManager.RegisterBackend(new EngineSdlTextInputBackend());
+        EngineTextInputManager.RegisterBackend(new EngineSdlTextInputBackend(processEditingKeyEvents: true));
         InitializeAndroidId();
         LoadAssetAssemblies();
 

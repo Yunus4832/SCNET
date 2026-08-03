@@ -64,7 +64,7 @@ public class PlayerListWidget : CanvasWidget
         _kind = kind;
         var isReadOnly1 = isReadOnly;
 
-        var itemWidth = Size.X;
+        var itemWidth = MathUtils.Max(Size.X - 32f, 0f);
         Players.HorizontalAlignment = WidgetAlignment.Center;
         Children.Add(Players);
 

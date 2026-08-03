@@ -9,28 +9,20 @@ namespace Game.Screens;
 
 public class MainMenuScreen : Screen
 {
-    private StackPanelWidget _bulletinStackPanel = null!;
+    private readonly StackPanelWidget _bulletinStackPanel;
 
-    private LabelWidget _copyrightLabel = null!;
+    private readonly LabelWidget _copyrightLabel;
 
-    private BevelledButtonWidget _languageSwitchButton = null!;
+    private readonly BevelledButtonWidget _languageSwitchButton;
 
-    private BevelledButtonWidget _serverModeButton = null!;
+    private readonly BevelledButtonWidget _serverModeButton;
 
-    private ButtonWidget _showBulletinButton = null!;
+    private readonly ButtonWidget _showBulletinButton;
 
     private static readonly string _versionString = $"Version {VersionsManager.Version}";
 
-    private string _loadedLanguage = string.Empty;
-
     public MainMenuScreen()
     {
-        ReloadContents();
-    }
-
-    private void ReloadContents()
-    {
-        Children.Clear();
         var node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
         LoadContents(this, node);
         _showBulletinButton = Children.Find<ButtonWidget>("BulletinButton")!;
@@ -43,9 +35,9 @@ public class MainMenuScreen : Screen
         _languageSwitchButton.ClickableWidget.OnClick += OnLanguageButtonClick;
         _serverModeButton.ClickableWidget.OnClick += OnServerModeButtonClick;
 
-        _loadedLanguage = LanguageManager.CurrentLanguage;
-        _bulletinStackPanel.IsVisible = _loadedLanguage == "zh-CN";
-        _copyrightLabel.IsVisible = _loadedLanguage != "zh-CN";
+        var isChinese = LanguageManager.CurrentLanguage == "zh-CN";
+        _bulletinStackPanel.IsVisible = isChinese;
+        _copyrightLabel.IsVisible = !isChinese;
     }
 
     public override void Enter(object[] parameters)
@@ -115,14 +107,9 @@ public class MainMenuScreen : Screen
 
     public override void Update()
     {
-        if (!string.Equals(
-                _loadedLanguage,
-                LanguageManager.CurrentLanguage,
-                StringComparison.OrdinalIgnoreCase))
-        {
-            ReloadContents();
-            Children.Find<MotdWidget>(false)?.Restart();
-        }
+        var isChinese = LanguageManager.CurrentLanguage == "zh-CN";
+        _bulletinStackPanel.IsVisible = isChinese;
+        _copyrightLabel.IsVisible = !isChinese;
 
         // 更新版本号显示
         Children.Find<LabelWidget>("Version")!.Text = _versionString;

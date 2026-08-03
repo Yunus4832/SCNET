@@ -147,6 +147,14 @@ public class TextBoxWidget : Widget
                     EnterText(text);
                 }
             },
+            backspace: () =>
+            {
+                if (HasFocus)
+                {
+                    ClearComposition();
+                    DeleteCharacterBeforeCaret();
+                }
+            },
             updateComposition: composition =>
             {
                 if (HasFocus)

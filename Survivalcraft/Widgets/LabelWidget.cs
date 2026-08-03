@@ -19,6 +19,12 @@ public class LabelWidget : Widget
 
     private Vector2 _linesSize;
 
+    private int _languageRevision = -1;
+
+    private string _resolvedText = string.Empty;
+
+    private string _sourceText = string.Empty;
+
     public override bool IsHitTestVisible { get; set; } = false;
 
     public LabelWidget()
@@ -34,20 +40,45 @@ public class LabelWidget : Widget
 
     public string Text
     {
-        get;
+        get
+        {
+            RefreshText();
+            return _resolvedText;
+        }
         set
         {
-            if (field == value)
+            if (_sourceText == value)
             {
+                RefreshText();
                 return;
             }
 
-            field = ResolveText(value);
-
-            _linesSize = Vector2.Zero;
-            _linesAvailableWidth = null;
-            _linesAvailableHeight = null;
+            _sourceText = value;
+            _languageRevision = -1;
+            RefreshText();
         }
+    }
+
+    private void RefreshText()
+    {
+        var languageRevision = LanguageManager.Revision;
+        if (_languageRevision == languageRevision)
+        {
+            return;
+        }
+
+        _languageRevision = languageRevision;
+        var resolvedText = ResolveText(_sourceText);
+        if (_resolvedText == resolvedText)
+        {
+            return;
+        }
+
+        _resolvedText = resolvedText;
+
+        _linesSize = Vector2.Zero;
+        _linesAvailableWidth = null;
+        _linesAvailableHeight = null;
     }
 
     private static string ResolveText(string value)

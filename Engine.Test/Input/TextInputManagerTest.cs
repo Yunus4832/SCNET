@@ -62,20 +62,25 @@ public class TextInputManagerTest : IDisposable
         TextInputManager.Initialize();
 
         var committed = string.Empty;
+        var backspaceCount = 0;
         var composition = TextComposition.Empty;
         using var session = TextInputManager.BeginInput(
             commitText: text => committed = text,
+            backspace: () => backspaceCount++,
             updateComposition: value => composition = value);
 
         backend.Sink!.CommitText("中文");
+        backend.Sink.Backspace();
         backend.Sink.UpdateComposition(new TextComposition("拼音", 100, 100));
 
         Assert.Equal(string.Empty, committed);
+        Assert.Equal(0, backspaceCount);
         Assert.Equal(TextComposition.Empty, composition);
 
         TextInputManager.BeforeFrame();
 
         Assert.Equal("中文", committed);
+        Assert.Equal(1, backspaceCount);
         Assert.Equal(new TextComposition("拼音", 2, 0), composition);
         Assert.True(TextInputManager.SuppressDirectText);
     }

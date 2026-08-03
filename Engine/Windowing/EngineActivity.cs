@@ -18,6 +18,8 @@ public class EngineActivity : SilkActivity
 
     public event Func<KeyEvent, bool>? OnDispatchKeyEvent;
 
+    private bool _isForwardingTextInputKeyEvent;
+
     private AudioManager? AudioManager
     {
         get
@@ -154,19 +156,54 @@ public class EngineActivity : SilkActivity
 
         if (!handled)
         {
-            _ = e.Action switch
+            var forwardToTextInput = ShouldForwardTextInputKeyEvent(e);
+            if (!forwardToTextInput || e.KeyCode is not Keycode.Del)
             {
-                KeyEventActions.Down => OnKeyDown(e.KeyCode, e),
-                KeyEventActions.Up => OnKeyUp(e.KeyCode, e),
-                _ => false
-            };
+                _ = e.Action switch
+                {
+                    KeyEventActions.Down => OnKeyDown(e.KeyCode, e),
+                    KeyEventActions.Up => OnKeyUp(e.KeyCode, e),
+                    _ => false
+                };
+            }
+
+            if (forwardToTextInput)
+            {
+                ForwardTextInputKeyEvent(e);
+            }
         }
 
         return true;
     }
 
+    private void ForwardTextInputKeyEvent(KeyEvent keyEvent)
+    {
+        _isForwardingTextInputKeyEvent = true;
+        try
+        {
+            base.DispatchKeyEvent(keyEvent);
+        }
+        finally
+        {
+            _isForwardingTextInputKeyEvent = false;
+        }
+    }
+
+    private static bool ShouldForwardTextInputKeyEvent(KeyEvent keyEvent)
+    {
+        var device = keyEvent.Device;
+        return TextInputManager.SuppressDirectText &&
+               device is { IsVirtual: false } &&
+               (keyEvent.Source & InputSourceType.Keyboard) == InputSourceType.Keyboard;
+    }
+
     public override bool OnKeyDown(Keycode keyCode, KeyEvent? e)
     {
+        if (_isForwardingTextInputKeyEvent)
+        {
+            return false;
+        }
+
         switch (keyCode)
         {
             case Keycode.VolumeUp:
@@ -199,6 +236,11 @@ public class EngineActivity : SilkActivity
 
     public override bool OnKeyUp(Keycode keyCode, KeyEvent? e)
     {
+        if (_isForwardingTextInputKeyEvent)
+        {
+            return false;
+        }
+
         if (e == null)
         {
             return true;
