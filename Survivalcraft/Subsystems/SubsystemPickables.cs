@@ -17,6 +17,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
     private readonly List<Pickable> _pickables = [];
 
+    private readonly Dictionary<ushort, Pickable> _pickablesById = new();
+
+    private readonly Queue<ushort> _availablePickableIds = new(ushort.MaxValue - 1);
+
+    private readonly bool[] _usedPickableIds = new bool[ushort.MaxValue];
+
     public readonly List<Pickable> PickablesToRemove = [];
 
     private readonly PrimitivesRenderer3D _primitivesRenderer = new();
@@ -47,11 +53,17 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
     private readonly List<ComponentPlayer> _tmpPlayers = [];
 
-    public List<ushort> UseMaps = [];
-
     public ReadOnlyList<Pickable> Pickables => new(_pickables);
 
     public int[] DrawOrders => _drawOrders;
+
+    public SubsystemPickables()
+    {
+        for (var id = 1; id < ushort.MaxValue; id++)
+        {
+            _availablePickableIds.Enqueue((ushort)id);
+        }
+    }
 
     public void Draw(Camera camera, int drawOrder)
     {
@@ -229,22 +241,23 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                                 for (var k = -3; k <= 3; k++)
                                 for (var l = -3; l <= 3; l++)
                                 {
-                                    if (!BlocksManager
-                                            .Blocks[
-                                                _subsystemTerrain.Terrain.GetCellContents(j + num8, k + num9,
-                                                    l + num10)].Collidable)
+                                    if (BlocksManager.Blocks[
+                                            _subsystemTerrain.Terrain.GetCellContents(j + num8, k + num9, l + num10)]
+                                        .Collidable)
                                     {
-                                        var num15 = j * j + k * k + l * l;
-                                        if (num15 >= num14)
-                                        {
-                                            continue;
-                                        }
-
-                                        num11 = j + num8;
-                                        num12 = k + num9;
-                                        num13 = l + num10;
-                                        num14 = num15;
+                                        continue;
                                     }
+
+                                    var num15 = j * j + k * k + l * l;
+                                    if (num15 >= num14)
+                                    {
+                                        continue;
+                                    }
+
+                                    num11 = j + num8;
+                                    num12 = k + num9;
+                                    num13 = l + num10;
+                                    num14 = num15;
                                 }
 
                                 if (num14.HasValue)
@@ -379,11 +392,11 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
         foreach (var item in PickablesToRemove)
         {
-            _pickables.Remove(item);
-            PickableRemoved?.Invoke(item);
-            UseMaps.Remove(item.Id);
-            //服务器广播pickable
-            CommonLib.Net.QueuePackage(new PickablePackage(item, PickablePackage.PickType.Delete));
+            if (RemovePickable(item))
+            {
+                //服务器广播pickable
+                CommonLib.Net.QueuePackage(new PickablePackage(item, PickablePackage.PickType.Delete));
+            }
         }
 
         PickablesToRemove.Clear();
@@ -401,22 +414,33 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
         //服务器广播pickable
         var pickable = CreatePickable(null, value, count, position, velocity, stuckMatrix);
+        if (pickable == null)
+        {
+            return null;
+        }
+
         pickable.NetToRemove = true;
         CommonLib.Net.QueuePackage(new PickablePackage(pickable, PickablePackage.PickType.Create));
         return pickable;
     }
 
-    public Pickable CreatePickable(ushort? id, int value, int count, Vector3 position, Vector3? velocity,
+    public Pickable? CreatePickable(ushort? id, int value, int count, Vector3 position, Vector3? velocity,
         Matrix? stuckMatrix)
     {
+        var pickableId = id ?? FindAvailableId();
+        if (pickableId == 0 || id.HasValue && !TryReservePickableId(pickableId))
+        {
+            return null;
+        }
+
         var pickable = new Pickable
         {
-            Id = id ?? FindAvailableId(),
+            Id = pickableId,
             Value = value,
             Count = count,
             Position = position,
             StuckMatrix = stuckMatrix,
-            CreationTime = _subsystemGameInfo.TotalElapsedGameTime
+            CreationTime = _subsystemGameInfo?.TotalElapsedGameTime ?? 0.0
         };
 
         if (velocity.HasValue)
@@ -434,23 +458,48 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 _random.Float(-0.5f, 0.5f));
         }
 
-        PickableAdded?.Invoke(pickable);
         _pickables.Add(pickable);
+        _pickablesById.Add(pickable.Id, pickable);
+        PickableAdded?.Invoke(pickable);
         return pickable;
     }
 
-    private ushort FindAvailableId()
+    internal ushort FindAvailableId()
     {
-        for (ushort i = 1; i < ushort.MaxValue; i++)
+        while (_availablePickableIds.TryDequeue(out var id))
         {
-            if (!UseMaps.Contains(i))
+            if (_usedPickableIds[id])
             {
-                UseMaps.Add(i);
-                return i;
+                continue;
             }
+
+            _usedPickableIds[id] = true;
+            return id;
         }
 
         return 0;
+    }
+
+    private bool TryReservePickableId(ushort id)
+    {
+        if (id == 0 || id == ushort.MaxValue || _usedPickableIds[id])
+        {
+            return false;
+        }
+
+        _usedPickableIds[id] = true;
+        return true;
+    }
+
+    private void ReleasePickableId(ushort id)
+    {
+        if (id == 0 || id == ushort.MaxValue || !_usedPickableIds[id])
+        {
+            return;
+        }
+
+        _usedPickableIds[id] = false;
+        _availablePickableIds.Enqueue(id);
     }
 
     private void OnPlayerGetPickable(Pickable pickable, ComponentPlayer tmpPlayer, Vector3 positionFix, float distance)
@@ -497,29 +546,39 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
     public bool PickableAction(ushort id, Action<Pickable> action, bool requestSync = true)
     {
-        var flag = false;
-        foreach (var pickable in _pickables)
+        var found = _pickablesById.TryGetValue(id, out var pickable);
+        if (found)
         {
-            if (pickable.Id == id)
-            {
-                action.Invoke(pickable);
-                flag = true;
-                break;
-            }
+            action.Invoke(pickable!);
         }
 
-        if (!flag && CommonLib.WorkType == WorkType.Client && requestSync)
+        if (!found && CommonLib.WorkType == WorkType.Client && requestSync)
         {
             CommonLib.Net.QueuePackage(new PickablePackage(new Pickable { Id = id },
                 PickablePackage.PickType.RequestSync));
         }
 
-        return flag;
+        return found;
     }
 
-    public void RemovePickable(Pickable pickable)
+    public bool TryGetPickable(ushort id, out Pickable pickable)
     {
-        _pickables.Remove(pickable);
+        return _pickablesById.TryGetValue(id, out pickable!);
+    }
+
+    public bool RemovePickable(Pickable pickable)
+    {
+        if (!_pickablesById.TryGetValue(pickable.Id, out var indexed) ||
+            !ReferenceEquals(indexed, pickable) ||
+            !_pickables.Remove(pickable))
+        {
+            return false;
+        }
+
+        _pickablesById.Remove(pickable.Id);
+        ReleasePickableId(pickable.Id);
+        PickableRemoved?.Invoke(pickable);
+        return true;
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
@@ -545,13 +604,14 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             pickable.Position = item.GetValue("Position", pickable.Position);
             pickable.Velocity = item.GetValue("Velocity", pickable.Velocity);
             pickable.CreationTime = item.GetValue("CreationTime", pickable.CreationTime);
-            if (pickable.Id == 0)
+            if (pickable.Id == 0 || !TryReservePickableId(pickable.Id))
             {
                 pickable.Id = FindAvailableId();
             }
-            else
+
+            if (pickable.Id == 0)
             {
-                UseMaps.Add(pickable.Id);
+                continue;
             }
 
             if (item.ContainsKey("StuckMatrix"))
@@ -560,6 +620,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             }
 
             _pickables.Add(pickable);
+            _pickablesById.Add(pickable.Id, pickable);
         }
     }
 

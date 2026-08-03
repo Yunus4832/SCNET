@@ -3,9 +3,6 @@ using Engine.Input;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-using Game.Network.Enums;
-
 namespace Game.Components;
 
 public class ComponentInput : Component, IUpdateable
@@ -40,10 +37,16 @@ public class ComponentInput : Component, IUpdateable
 
     public UpdateOrder UpdateOrder => UpdateOrder.Input;
 
+    internal ComponentPlayer? ComponentPlayer
+    {
+        get => _componentPlayer;
+        set => _componentPlayer = value!;
+    }
+
     public void Update(float dt)
     {
         _playerInput = default;
-        if (CommonLib.WorkType != WorkType.Local && !_componentPlayer.PlayerData.IsMainPlayer)
+        if (!_componentPlayer.IsLocallyControlled)
         {
             return;
         }
@@ -191,72 +194,74 @@ public class ComponentInput : Component, IUpdateable
                 : _playerInput.PickBlockType;
         }
 
-        if (!IsMessagePanelOpen() &&
-            !DialogsManager.HasDialogs(_componentPlayer.GuiWidget) &&
-            AllowHandleInput)
+        if (IsMessagePanelOpen() ||
+            DialogsManager.HasDialogs(_componentPlayer.GuiWidget) ||
+            !AllowHandleInput)
         {
-            _playerInput.ToggleInventory |= input.IsKeyDownOnce(Key.E);
-            _playerInput.ToggleClothing |= input.IsKeyDownOnce(Key.C);
-            _playerInput.TakeScreenshot |= input.IsKeyDownOnce(Key.P);
-            _playerInput.SwitchCameraMode |= input.IsKeyDownOnce(Key.V);
-            _playerInput.TimeOfDay |= input.IsKeyDownOnce(Key.T);
-            _playerInput.Lighting |= input.IsKeyDownOnce(Key.L);
-            _playerInput.Drop |= input.IsKeyDownOnce(Key.Q);
-            _playerInput.EditItem |= input.IsKeyDownOnce(Key.G);
-            _playerInput.KeyboardHelp |= input.IsKeyDownOnce(Key.H);
-            _playerInput.TogglePlayerPanel |= input.IsKeyDownOnce(Key.N);
-            _playerInput.Precipitation |= input.IsKeyDownOnce(Key.Y);
-            _playerInput.Fog |= input.IsKeyDownOnce(Key.O);
+            return;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number1))
-            {
-                _playerInput.SelectInventorySlot = 0;
-            }
+        _playerInput.ToggleInventory |= input.IsKeyDownOnce(Key.E);
+        _playerInput.ToggleClothing |= input.IsKeyDownOnce(Key.C);
+        _playerInput.TakeScreenshot |= input.IsKeyDownOnce(Key.P);
+        _playerInput.SwitchCameraMode |= input.IsKeyDownOnce(Key.V);
+        _playerInput.TimeOfDay |= input.IsKeyDownOnce(Key.T);
+        _playerInput.Lighting |= input.IsKeyDownOnce(Key.L);
+        _playerInput.Drop |= input.IsKeyDownOnce(Key.Q);
+        _playerInput.EditItem |= input.IsKeyDownOnce(Key.G);
+        _playerInput.KeyboardHelp |= input.IsKeyDownOnce(Key.H);
+        _playerInput.TogglePlayerPanel |= input.IsKeyDownOnce(Key.N);
+        _playerInput.Precipitation |= input.IsKeyDownOnce(Key.Y);
+        _playerInput.Fog |= input.IsKeyDownOnce(Key.O);
 
-            if (input.IsKeyDownOnce(Key.Number2))
-            {
-                _playerInput.SelectInventorySlot = 1;
-            }
+        if (input.IsKeyDownOnce(Key.Number1))
+        {
+            _playerInput.SelectInventorySlot = 0;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number3))
-            {
-                _playerInput.SelectInventorySlot = 2;
-            }
+        if (input.IsKeyDownOnce(Key.Number2))
+        {
+            _playerInput.SelectInventorySlot = 1;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number4))
-            {
-                _playerInput.SelectInventorySlot = 3;
-            }
+        if (input.IsKeyDownOnce(Key.Number3))
+        {
+            _playerInput.SelectInventorySlot = 2;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number5))
-            {
-                _playerInput.SelectInventorySlot = 4;
-            }
+        if (input.IsKeyDownOnce(Key.Number4))
+        {
+            _playerInput.SelectInventorySlot = 3;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number6))
-            {
-                _playerInput.SelectInventorySlot = 5;
-            }
+        if (input.IsKeyDownOnce(Key.Number5))
+        {
+            _playerInput.SelectInventorySlot = 4;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number7))
-            {
-                _playerInput.SelectInventorySlot = 6;
-            }
+        if (input.IsKeyDownOnce(Key.Number6))
+        {
+            _playerInput.SelectInventorySlot = 5;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number8))
-            {
-                _playerInput.SelectInventorySlot = 7;
-            }
+        if (input.IsKeyDownOnce(Key.Number7))
+        {
+            _playerInput.SelectInventorySlot = 6;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number9))
-            {
-                _playerInput.SelectInventorySlot = 8;
-            }
+        if (input.IsKeyDownOnce(Key.Number8))
+        {
+            _playerInput.SelectInventorySlot = 7;
+        }
 
-            if (input.IsKeyDownOnce(Key.Number0))
-            {
-                _playerInput.SelectInventorySlot = 9;
-            }
+        if (input.IsKeyDownOnce(Key.Number9))
+        {
+            _playerInput.SelectInventorySlot = 8;
+        }
+
+        if (input.IsKeyDownOnce(Key.Number0))
+        {
+            _playerInput.SelectInventorySlot = 9;
         }
 
     }
@@ -324,14 +329,16 @@ public class ComponentInput : Component, IUpdateable
             _lastRightTrigger = padTriggerPosition2;
         }
 
-        if (!IsMessagePanelOpen() &&
-            !DialogsManager.HasDialogs(_componentPlayer.GuiWidget) &&
-            AllowHandleInput)
+        if (IsMessagePanelOpen() ||
+            DialogsManager.HasDialogs(_componentPlayer.GuiWidget) ||
+            !AllowHandleInput)
         {
-            _playerInput.ToggleInventory |= input.IsPadButtonDownOnce(GamePadButton.X);
-            _playerInput.ToggleClothing |= input.IsPadButtonDownOnce(GamePadButton.Y);
-            _playerInput.GamepadHelp |= input.IsPadButtonDownOnce(GamePadButton.Start);
+            return;
         }
+
+        _playerInput.ToggleInventory |= input.IsPadButtonDownOnce(GamePadButton.X);
+        _playerInput.ToggleClothing |= input.IsPadButtonDownOnce(GamePadButton.Y);
+        _playerInput.GamepadHelp |= input.IsPadButtonDownOnce(GamePadButton.Start);
     }
 
     public void UpdateInputFromWidgets(WidgetInput input)

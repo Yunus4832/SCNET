@@ -3,9 +3,9 @@ using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
 
-using Game.TerrainSerializers;
+using WorldUpgradeTool.TerrainSerializers;
 
-namespace Game.VersionConverts;
+namespace WorldUpgradeTool.VersionConverts;
 
 public class VersionConverter10To14 : VersionConverter
 {

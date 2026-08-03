@@ -143,29 +143,31 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         get => _modalPanelContainerWidget.Children.Count <= 0 ? null : _modalPanelContainerWidget.Children[0];
         set
         {
-            if (value != ModalPanelWidget)
+            if (value == ModalPanelWidget)
             {
-                if (_modalPanelAnimationData != null)
-                {
-                    EndModalPanelAnimation();
-                }
-
-                _modalPanelAnimationData = new ModalPanelAnimationData
-                {
-                    OldWidget = ModalPanelWidget,
-                    NewWidget = value
-                };
-                if (value != null)
-                {
-                    value.HorizontalAlignment = WidgetAlignment.Center;
-                    _modalPanelContainerWidget.Children.Insert(0, value);
-                    _modalPanelOpenedFrame = Time.FrameIndex;
-                }
-
-                UpdateModalPanelAnimation();
-                ComponentPlayer.GameWidget.Input.Clear();
-                ComponentPlayer.ComponentInput.SetSplitSourceInventoryAndSlot(null, -1);
+                return;
             }
+
+            if (_modalPanelAnimationData != null)
+            {
+                EndModalPanelAnimation();
+            }
+
+            _modalPanelAnimationData = new ModalPanelAnimationData
+            {
+                OldWidget = ModalPanelWidget,
+                NewWidget = value
+            };
+            if (value != null)
+            {
+                value.HorizontalAlignment = WidgetAlignment.Center;
+                _modalPanelContainerWidget.Children.Insert(0, value);
+                _modalPanelOpenedFrame = Time.FrameIndex;
+            }
+
+            UpdateModalPanelAnimation();
+            ComponentPlayer.GameWidget.Input.Clear();
+            ComponentPlayer.ComponentInput.SetSplitSourceInventoryAndSlot(null, -1);
         }
     }
 
@@ -179,7 +181,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void Update(float dt)
     {
-        if (RunMode.Value is RunModeType.HeadlessServer)
+        if (ComponentPlayer is not { IsLocallyControlled: true })
         {
             return;
         }

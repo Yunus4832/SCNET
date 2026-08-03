@@ -1,6 +1,6 @@
 using System.Xml.Linq;
 
-namespace Game.VersionConverts;
+namespace WorldUpgradeTool.VersionConverts;
 
 public abstract class VersionConverter
 {

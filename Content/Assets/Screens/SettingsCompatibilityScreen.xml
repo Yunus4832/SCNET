@@ -30,14 +30,6 @@
                                                   VerticalAlignment="Center" Margin="20, 0"/>
                         </UniformSpacingPanelWidget>
 
-                        <UniformSpacingPanelWidget Direction="Horizontal">
-                            <LabelWidget Text="[SettingsCompatibilityScreen:3]" HorizontalAlignment="Far"
-                                         VerticalAlignment="Center" Margin="20, 0"/>
-                            <BevelledButtonWidget Name="SingleThreadTerrainUpdateButton"
-                                                  Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"
-                                                  Margin="20, 0"/>
-                        </UniformSpacingPanelWidget>
-
                         <UniformSpacingPanelWidget Name="UseReducedZRangeContainer" Direction="Horizontal">
                             <LabelWidget Text="[SettingsCompatibilityScreen:4]" HorizontalAlignment="Far"
                                          VerticalAlignment="Center" Margin="20, 0"/>

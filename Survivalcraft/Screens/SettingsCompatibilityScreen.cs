@@ -10,8 +10,6 @@ public class SettingsCompatibilityScreen : Screen
 
     private readonly ButtonWidget _resetDefaultsButton;
 
-    private readonly ButtonWidget _singleThreadTerrainUpdateButton;
-
     private readonly ButtonWidget _useReducedZRangeButton;
 
     private readonly ContainerWidget _useReducedZRangeContainer;
@@ -22,7 +20,6 @@ public class SettingsCompatibilityScreen : Screen
     {
         var node = ContentManager.Get<XElement>("Screens/SettingsCompatibilityScreen");
         LoadContents(this, node);
-        _singleThreadTerrainUpdateButton = Children.Find<ButtonWidget>("SingleThreadTerrainUpdateButton")!;
         _useReducedZRangeButton = Children.Find<ButtonWidget>("UseReducedZRangeButton")!;
         _enableModButton = Children.Find<ButtonWidget>("EnableMod")!;
         _useReducedZRangeContainer = Children.Find<ContainerWidget>("UseReducedZRangeContainer")!;
@@ -40,13 +37,6 @@ public class SettingsCompatibilityScreen : Screen
     public override void Update()
     {
         GameManager.UpdateProject();
-        if (_singleThreadTerrainUpdateButton.IsClicked)
-        {
-            SettingsManager.Current.MultithreadedTerrainUpdate = !SettingsManager.Current.MultithreadedTerrainUpdate;
-            _descriptionLabel.Text =
-                StringsManager.GetString("Settings", "Compatibility", "SinglethreadedTerrainUpdate", "Description");
-        }
-
         if (_useReducedZRangeButton.IsClicked)
         {
             SettingsManager.Current.UseReducedZRange = !SettingsManager.Current.UseReducedZRange;
@@ -65,19 +55,14 @@ public class SettingsCompatibilityScreen : Screen
 
         if (_resetDefaultsButton.IsClicked)
         {
-            SettingsManager.Current.MultithreadedTerrainUpdate = true;
             SettingsManager.Current.UseReducedZRange = false;
         }
-
-        _singleThreadTerrainUpdateButton.Text =
-            SettingsManager.Current.MultithreadedTerrainUpdate ? LanguageManager.Off : LanguageManager.On;
 
         _useReducedZRangeButton.Text = SettingsManager.Current.UseReducedZRange ? LanguageManager.On : LanguageManager.Off;
 
         _enableModButton.Text = SettingsManager.Current.EnableMod ? LanguageManager.On : LanguageManager.Off;
 
-        _resetDefaultsButton.IsEnabled =
-            !SettingsManager.Current.MultithreadedTerrainUpdate || SettingsManager.Current.UseReducedZRange;
+        _resetDefaultsButton.IsEnabled = SettingsManager.Current.UseReducedZRange;
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {

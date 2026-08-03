@@ -2,7 +2,7 @@ using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
 
-namespace Game.VersionConverts;
+namespace WorldUpgradeTool.VersionConverts;
 
 public class VersionConverter113To114 : VersionConverter
 {

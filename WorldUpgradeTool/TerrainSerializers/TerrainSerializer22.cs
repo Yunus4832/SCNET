@@ -1,4 +1,6 @@
-namespace Game.TerrainSerializers;
+using Game;
+
+namespace WorldUpgradeTool.TerrainSerializers;
 
 public class TerrainSerializer22 : IDisposable
 {

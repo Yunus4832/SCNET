@@ -104,7 +104,7 @@ public class TerrainUpdater
     /// <summary>
     /// 地形更新后台任务
     /// </summary>
-    private Task? _task;
+    private readonly Task _task;
 
     /// <summary>
     /// 更新线程中使用的更新参数的引用
@@ -208,6 +208,13 @@ public class TerrainUpdater
         _threadUpdateParameters.Locations = new Dictionary<int, UpdateLocation>();
         SettingsManager.BrightnessChanged += SettingsManagerBrightnessChanged;
         SetUpdateLocation(-1, Vector2.Zero, 4, 4);
+        _task = Task.Factory.StartNew(
+            ThreadUpdateFunction,
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default);
+        UnpauseUpdateThread();
+        UpdateEvent.Set();
     }
 
     /// <summary>
@@ -219,7 +226,7 @@ public class TerrainUpdater
         _quitUpdateThread = true;
         UnpauseUpdateThread();
         UpdateEvent.Set();
-        _task?.Wait();
+        _task.GetAwaiter().GetResult();
 
         _networkChunkEncoder.Dispose();
 
@@ -399,35 +406,6 @@ public class TerrainUpdater
                 _terrain.SeasonHumidity = humidity;
                 DowngradeAllChunksState(TerrainChunkState.InvalidVertices1, false);
             }
-        }
-
-        // 是否开启了多线程更新地形，如果不是，停止并销毁地形更新线程，在主线程上更新地形
-        if (!SettingsManager.Current.MultithreadedTerrainUpdate)
-        {
-            // 销毁地形更新线程
-            if (_task != null)
-            {
-                _quitUpdateThread = true;
-                UnpauseUpdateThread();
-                UpdateEvent.Set();
-                _task.Wait();
-                _task = null;
-            }
-
-            var realTime = Time.RealTime;
-
-            // 同步更新线程
-            while (!SynchronousUpdateFunction() && Time.RealTime - realTime < 0.0099999997764825821)
-            {
-            }
-        }
-        // 否则，如果地形更新线程不存在，新建一个线程更新地形
-        else if (_task == null)
-        {
-            _quitUpdateThread = false;
-            _task = Task.Run((Action)ThreadUpdateFunction);
-            UnpauseUpdateThread();
-            UpdateEvent.Set();
         }
 
         // 是否有需要处理的 pendingLocations
@@ -912,7 +890,7 @@ public class TerrainUpdater
     /// 更新线程的主循环逻辑
     /// </summary>
     /// <remarks>
-    /// 在线程中循环调用 <see cref="SynchronousUpdateFunction"/> 进行地形更新，
+    /// 在线程中循环调用 <see cref="ProcessNextChunkUpdate"/> 进行地形更新，
     /// 使用 <see cref="_pauseEvent"/> 和 <see cref="UpdateEvent"/> 进行线程同步
     /// </remarks>
     private void ThreadUpdateFunction()
@@ -925,7 +903,7 @@ public class TerrainUpdater
             UpdateEvent.WaitOne();
             try
             {
-                if (SynchronousUpdateFunction())
+                if (ProcessNextChunkUpdate())
                 {
                     lock (_unpauseLock)
                     {
@@ -938,9 +916,9 @@ public class TerrainUpdater
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                // ignored
+                Log.Error(ExceptionManager.MakeFullErrorMessage("Terrain update worker failed.", e));
             }
             finally
             {
@@ -951,14 +929,14 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 同步更新地形（单步）
+    /// 处理一个地形更新步骤
     /// </summary>
     /// <remarks>
     /// 查找并更新一个最佳区块的状态，如果所有区块都已更新完毕则返回 true。
-    /// 该方法在主线程或更新线程中调用
+    /// 该方法只由地形更新线程调用
     /// </remarks>
     /// <returns>如果所有区块都已完成更新则返回 true，否则返回 false</returns>
-    private bool SynchronousUpdateFunction()
+    private bool ProcessNextChunkUpdate()
     {
         lock (_updateParametersLock)
         {

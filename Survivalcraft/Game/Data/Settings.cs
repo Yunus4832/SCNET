@@ -140,8 +140,6 @@ public class Settings
 
     public CommunityContentMode CommunityContentMode { get; set; } = CommunityContentMode.Normal;
 
-    public bool MultithreadedTerrainUpdate { get; set; } = true;
-
     public bool UseReducedZRange { get; set; }
 
     public bool EnableMod { get; set; } = true;

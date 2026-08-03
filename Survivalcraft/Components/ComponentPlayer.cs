@@ -65,6 +65,10 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
     public ViewWidget ViewWidget => PlayerData.GameWidget.ViewWidget;
 
+    public bool IsLocallyControlled =>
+        CommonLib.WorkType == WorkType.Local ||
+        CommonLib.WorkType == WorkType.Client && PlayerData?.IsMainPlayer == true;
+
     public ComponentGui ComponentGui { get; set; } = null!;
 
     public ComponentInput ComponentInput { get; set; } = null!;

@@ -1,27 +1,54 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Network;
+using Game.Network.Enums;
+
 namespace Game.Subsystems;
 
 public class SubsystemPathfinding : Subsystem
 {
-    private readonly AStar<Vector3> _astar = new()
-    {
-        OpenStorage = new Storage(),
-        ClosedStorage = new Storage()
-    };
+    internal const int maxPendingRequests = 10;
 
+    internal const int maxServerWorkers = 4;
 
-    private readonly Queue<Request?> _requests = new();
+    internal const int maxClientWorkers = 2;
+
+    private readonly Queue<Request> _requests = new();
+
+    private readonly List<Task> _workers = [];
 
     private SubsystemTerrain _subsystemTerrain = null!;
+
+    private bool _stopRequested;
+
+    internal int PendingRequestCount
+    {
+        get
+        {
+            lock (_requests)
+            {
+                return _requests.Count;
+            }
+        }
+    }
+
+    internal int WorkerCount => _workers.Count;
+
+    internal static int CalculateWorkerCount(int processorCount, bool isServer)
+    {
+        var maximum = isServer ? maxServerWorkers : maxClientWorkers;
+        return Math.Clamp((Math.Max(processorCount, 1) + 3) / 4, 1, maximum);
+    }
 
     public void QueuePathSearch(Vector3 start, Vector3 end, float minDistance, Vector3 boxSize, bool ignoreDoors,
         int maxPositionsToCheck, PathfindingResult result)
     {
+        ArgumentNullException.ThrowIfNull(result);
+
         lock (_requests)
         {
-            if (_requests.Count < 10)
+            if (!_stopRequested && _requests.Count < maxPendingRequests)
             {
                 result.IsCompleted = false;
                 result.IsInProgress = true;
@@ -51,64 +78,105 @@ public class SubsystemPathfinding : Subsystem
     public override void Load(ValuesDictionary valuesDictionary)
     {
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
-        var world = new World
+        _stopRequested = false;
+        var isServer = CommonLib.WorkType == WorkType.Server;
+        var workerCount = CalculateWorkerCount(Environment.ProcessorCount, isServer);
+        for (var i = 0; i < workerCount; i++)
         {
-            SubsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!
-        };
-        _astar.OpenStorage = new Storage();
-        _astar.ClosedStorage = new Storage();
-        _astar.World = world;
-        Task.Run((Action)ThreadFunction);
+            var workerIndex = i;
+            var context = new WorkerContext(_subsystemTerrain);
+            _workers.Add(Task.Factory.StartNew(
+                () => ThreadFunction(context, workerIndex),
+                CancellationToken.None,
+                TaskCreationOptions.LongRunning,
+                TaskScheduler.Default));
+        }
     }
 
     public override void Dispose()
     {
+        List<Request> abandoned;
         lock (_requests)
         {
+            _stopRequested = true;
+            abandoned = new List<Request>(_requests);
             _requests.Clear();
-            _requests.Enqueue(null);
-            Monitor.Pulse(_requests);
+            Monitor.PulseAll(_requests);
         }
+
+        foreach (var request in abandoned)
+        {
+            CompleteFailedRequest(request.PathfindingResult);
+        }
+
+        if (_workers.Count <= 0)
+        {
+            return;
+        }
+
+        Task.WaitAll(_workers.ToArray());
+        _workers.Clear();
     }
 
-    private void ThreadFunction()
+    private void ThreadFunction(WorkerContext context, int workerIndex)
     {
         while (true)
         {
-            Request? request;
+            Request request;
             lock (_requests)
             {
-                while (_requests.Count == 0)
+                while (_requests.Count == 0 && !_stopRequested)
                 {
                     Monitor.Wait(_requests);
+                }
+
+                if (_stopRequested && _requests.Count == 0)
+                {
+                    return;
                 }
 
                 request = _requests.Dequeue();
             }
 
-            if (request == null)
+            try
             {
-                break;
+                ProcessRequest(request, context);
             }
-
-            ProcessRequest(request);
-            Task.Delay(250).Wait();
+            catch (Exception e)
+            {
+                CompleteFailedRequest(request.PathfindingResult);
+                Log.Error(ExceptionManager.MakeFullErrorMessage(
+                    $"Pathfinding worker {workerIndex} failed.", e));
+            }
         }
     }
 
     public void ProcessRequest(Request request)
     {
-        ((World?)_astar.World)?.Request = request;
-        _astar.Path = request.PathfindingResult.Path;
-        _ = Time.RealTime;
-        _astar.FindPath(request.Start, request.End, request.MinDistance, request.MaxPositionsToCheck);
-        _ = Time.RealTime;
-        SmoothPath(_astar.Path, request.BoxSize);
-        _ = Time.RealTime;
-        request.PathfindingResult.PathCost = _astar.PathCost;
-        request.PathfindingResult.PositionsChecked = ((Storage)_astar.ClosedStorage).Dictionary.Count;
+        ArgumentNullException.ThrowIfNull(request);
+        ProcessRequest(request, new WorkerContext(_subsystemTerrain));
+    }
+
+    private void ProcessRequest(Request request, WorkerContext context)
+    {
+        var world = (World)context.AStar.World!;
+        world.Request = request;
+        context.AStar.Path = request.PathfindingResult.Path;
+        context.AStar.FindPath(request.Start, request.End, request.MinDistance, request.MaxPositionsToCheck);
+        SmoothPath(context.AStar.Path, request.BoxSize);
+        request.PathfindingResult.PathCost = context.AStar.PathCost;
+        request.PathfindingResult.PositionsChecked = ((Storage)context.AStar.ClosedStorage).Dictionary.Count;
         request.PathfindingResult.IsInProgress = false;
         request.PathfindingResult.IsCompleted = true;
+    }
+
+    private static void CompleteFailedRequest(PathfindingResult result)
+    {
+        result.Path.Clear();
+        result.PathCost = 0f;
+        result.PositionsChecked = 0;
+        result.IsInProgress = false;
+        result.IsCompleted = true;
     }
 
     public void SmoothPath(DynamicArray<Vector3> path, Vector3 boxSize)
@@ -205,6 +273,19 @@ public class SubsystemPathfinding : Subsystem
         public required float MinDistance;
 
         public required PathfindingResult PathfindingResult;
+    }
+
+    private sealed class WorkerContext(SubsystemTerrain subsystemTerrain)
+    {
+        public AStar<Vector3> AStar { get; } = new()
+        {
+            OpenStorage = new Storage(),
+            ClosedStorage = new Storage(),
+            World = new World
+            {
+                SubsystemTerrain = subsystemTerrain
+            }
+        };
     }
 
     private class Storage : IAStarStorage<Vector3>
@@ -308,12 +389,14 @@ public class SubsystemPathfinding : Subsystem
                         return;
                     }
 
-                    if (block2.Collidable)
+                    if (!block2.Collidable)
                     {
-                        y = num3 + num6 + 1;
-                        flag = true;
-                        break;
+                        continue;
                     }
+
+                    y = num3 + num6 + 1;
+                    flag = true;
+                    break;
                 }
 
                 if (!flag)
@@ -344,16 +427,15 @@ public class SubsystemPathfinding : Subsystem
 
         public float GetBlockWalkingHeight(Block block, int value)
         {
-            if (block is DoorBlock || block is FenceGateBlock)
+            if (block is DoorBlock or FenceGateBlock)
             {
                 return 0f;
             }
 
             var num = 0f;
             var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, value);
-            for (var i = 0; i < customCollisionBoxes.Length; i++)
+            foreach (var boundingBox in customCollisionBoxes)
             {
-                var boundingBox = customCollisionBoxes[i];
                 num = MathUtils.Max(num, boundingBox.Max.Y);
             }
 
@@ -392,13 +474,12 @@ public class SubsystemPathfinding : Subsystem
                         }
 
                         if (block.Collidable &&
-                            (!Request.IgnoreDoors || (!(block is DoorBlock) && !(block is TrapdoorBlock))))
+                            (!Request.IgnoreDoors || (block is not DoorBlock && block is not TrapdoorBlock)))
                         {
                             var v = new Vector3(i, num8, j);
                             var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
-                            for (var k = 0; k < customCollisionBoxes.Length; k++)
+                            foreach (var boundingBox in customCollisionBoxes)
                             {
-                                var boundingBox = customCollisionBoxes[k];
                                 if (box.Intersection(new BoundingBox(v + boundingBox.Min, v + boundingBox.Max)))
                                 {
                                     return true;

@@ -20,8 +20,7 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
         switch (package.Type)
         {
             case PickablePackage.PickType.Create:
-                var tmp = subsystemPickable.Pickables.Find(p => p.Id == package.Id);
-                if (tmp != null)
+                if (subsystemPickable.TryGetPickable(package.Id, out var tmp))
                 {
                     tmp.Value = package.Value;
                     tmp.Count = package.Count;
@@ -35,14 +34,16 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
 
                 break;
             case PickablePackage.PickType.Update:
+                var receivedIds = new HashSet<ushort>();
                 foreach (var c in package.Pickables)
                 {
+                    receivedIds.Add(c.Id);
                     subsystemPickable.PickableAction(c.Id, pick => { pick.Position = c.Position; });
                 }
 
                 foreach (var c in subsystemPickable.Pickables)
                 {
-                    if (package.Pickables.Find(x => x.Id == c.Id) == null)
+                    if (!receivedIds.Contains(c.Id))
                     {
                         subsystemPickable.PickablesToRemove.Add(c);
                     }
