@@ -185,7 +185,11 @@
         "10": "A chave principal do jogador {0} já existe",
         "11": "Não há visão de jogador correspondente",
         "12": "Desconhecido",
-        "13": "Causa da morte: {0}"
+        "13": "Causa da morte: {0}",
+        "14": "A ligar ao mundo de {0} (Nível {1})",
+        "15": "A aguardar que o servidor forneça a entidade do jogador",
+        "16": "Morreste no modo Cruel e não podes renascer.",
+        "17": "O servidor não permite que os jogadores renasçam."
     },
     "GameLoadingScreen": {
         "1": "Erro no carregamento do mundo"
@@ -3939,7 +3943,21 @@
         "Member": "Membro",
         "SystemPrefix": "[Sistema]",
         "CommandPrefix": "[Comando]",
-        "TeamPrefix": "[Equipa]"
+        "TeamPrefix": "[Equipa]",
+        "AlreadyInTeam": "Já estás numa equipa.",
+        "EnterTeamName": "Introduza o nome da equipa",
+        "TeamNameRequired": "O nome da equipa não pode estar vazio.",
+        "SelectTeam": "Selecione primeiro uma equipa.",
+        "JoinTeamConfirm": "Pedir para aderir à equipa «{0}»?",
+        "CreateOrJoinTeamFirst": "Crie ou adira primeiro a uma equipa.",
+        "InvitePlayerConfirm": "Convidar {0} para a sua equipa?",
+        "NotInTeam": "Não estás atualmente numa equipa.",
+        "LeaveTeamConfirm": "Sair da equipa «{0}»?",
+        "RetryAfterSeconds": "Demasiadas operações. Tente novamente dentro de {0} segundos.",
+        "AddBlacklistConfirm": "Adicionar {0} à lista negra?",
+        "RemoveBlacklistConfirm": "Remover {0} da lista negra?",
+        "PlayerJoined": "{0} entrou no jogo",
+        "PlayerLeft": "{0} saiu do jogo"
     },
     "Commands": {
         "Weather_Description": "Controlar o clima do mundo",

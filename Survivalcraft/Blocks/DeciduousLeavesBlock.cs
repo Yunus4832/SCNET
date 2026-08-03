@@ -2,7 +2,7 @@ namespace Game.Blocks;
 
 public abstract class DeciduousLeavesBlock : LeavesBlock
 {
-    public const string TypeName = "DeciduousLeavesBlock";
+    public const string TypeName = nameof(DeciduousLeavesBlock);
 
     public readonly Color AutumnColor1;
 

@@ -23,7 +23,7 @@ public partial class PlayerData : IDisposable
         Respawn
     }
 
-    public const string TypeName = "PlayerData";
+    public const string TypeName = nameof(PlayerData);
 
     private static readonly Regex _validNameRegex = GenValidNameRegex();
 
@@ -205,11 +205,9 @@ public partial class PlayerData : IDisposable
                 }
                 else if (ComponentPlayer != null)
                 {
-                    UpdateSpawnDialog(
+                    ShowSpawnDialog(
                         string.Format(LanguageManager.Get(TypeName, 4), Name, MathUtils.Floor(Level)),
-                        string.Empty,
-                        0f,
-                        true
+                        string.Empty
                     );
                     _stateMachine.TransitionTo("WaitForTerrain");
                 }
@@ -271,19 +269,17 @@ public partial class PlayerData : IDisposable
 
                 if (_spawnMode == SpawnMode.Respawn)
                 {
-                    UpdateSpawnDialog(
+                    ShowSpawnDialog(
                         CommonLib.WorkType != WorkType.Client
                             ? string.Format(LanguageManager.Get(TypeName, 2), Name, MathUtils.Floor(Level))
-                            : $"连接{Name}的世界中 (等级 {MathUtils.Floor(Level)})",
-                        LanguageManager.Get(TypeName, 3), 0f, true);
+                            : string.Format(LanguageManager.Get(TypeName, 14), Name, MathUtils.Floor(Level)),
+                        LanguageManager.Get(TypeName, 3));
                 }
                 else
                 {
-                    UpdateSpawnDialog(
+                    ShowSpawnDialog(
                         string.Format(LanguageManager.Get(TypeName, 4), Name, MathUtils.Floor(Level)),
-                        string.Empty,
-                        0f,
-                        true);
+                        string.Empty);
                 }
 
                 //说明，客户端非主玩家不执行updateLocation
@@ -306,7 +302,7 @@ public partial class PlayerData : IDisposable
                 var initialVisibility = MathUtils.Max(32f, MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
                 var updateProgress2 =
                     _subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex, initialVisibility, 64f);
-                UpdateSpawnDialog(string.Empty, string.Empty, 0.5f * updateProgress2, false);
+                UpdateSpawnProgress(0.5f * updateProgress2);
                 if (updateProgress2 < 1f && Time.FrameStartTime - _terrainWaitStartTime < 15.0)
                 {
                     return;
@@ -352,7 +348,7 @@ public partial class PlayerData : IDisposable
 
                 var updateProgress = _subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex,
                     MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f), 0f);
-                UpdateSpawnDialog(string.Empty, string.Empty, 0.5f + 0.5f * updateProgress, false);
+                UpdateSpawnProgress(0.5f + 0.5f * updateProgress);
                 if ((!(updateProgress >= 1f) || !(Time.FrameStartTime - _terrainWaitStartTime > 2.0)) &&
                     !(Time.FrameStartTime - _terrainWaitStartTime >= 15.0))
                 {
@@ -379,10 +375,9 @@ public partial class PlayerData : IDisposable
         //等待服务器返回玩家数据
         _stateMachine.AddState(
             "WaitForPlayerEntity",
-            Actions.Empty,
+            delegate { SetSpawnDialogMessage(LanguageManager.Get(TypeName, 15), string.Empty); },
             delegate
             {
-                UpdateSpawnDialog("等待服务器响应玩家实体", string.Empty, 0f, false);
                 if (!Time.PeriodicEvent(0.1, 0.0))
                 {
                     return;
@@ -538,7 +533,8 @@ public partial class PlayerData : IDisposable
             DialogsManager.ShowDialog(
                 ComponentPlayer.GuiWidget,
                 new MessageDialog(
-                    "提示", "你已在残酷模式死亡，不可复活！",
+                    LanguageManager.Warning,
+                    LanguageManager.Get(TypeName, 16),
                     LanguageManager.Yes,
                     LanguageManager.No,
                     delegate { CommonLib.Net.StopImmediate(); }
@@ -552,7 +548,8 @@ public partial class PlayerData : IDisposable
             DialogsManager.ShowDialog(
                 ComponentPlayer.GuiWidget,
                 new MessageDialog(
-                    "提示", "服务器禁止了玩家重生！",
+                    LanguageManager.Warning,
+                    LanguageManager.Get(TypeName, 17),
                     LanguageManager.Yes,
                     LanguageManager.No,
                     delegate { CommonLib.Net.StopImmediate(); }
@@ -1117,19 +1114,46 @@ public partial class PlayerData : IDisposable
         return PlayerClass == PlayerClass.Female ? "FemalePlayer" : "MalePlayer";
     }
 
-    public void UpdateSpawnDialog(string largeMessage, string smallMessage, float progress, bool resetProgress)
+    private void ShowSpawnDialog(string largeMessage, string smallMessage)
     {
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
             return;
         }
 
-        if (resetProgress)
+        _progress = 0f;
+        EnsureSpawnDialog();
+        _spawnDialog!.LargeMessage = largeMessage;
+        _spawnDialog.SmallMessage = smallMessage;
+        _spawnDialog.Progress = _progress;
+    }
+
+    private void SetSpawnDialogMessage(string largeMessage, string smallMessage)
+    {
+        if (RunMode.Value is RunModeType.HeadlessServer)
         {
-            _progress = 0f;
+            return;
+        }
+
+        EnsureSpawnDialog();
+        _spawnDialog!.LargeMessage = largeMessage;
+        _spawnDialog.SmallMessage = smallMessage;
+    }
+
+    private void UpdateSpawnProgress(float progress)
+    {
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
         }
 
         _progress = MathUtils.Max(progress, _progress);
+        EnsureSpawnDialog();
+        _spawnDialog!.Progress = _progress;
+    }
+
+    private void EnsureSpawnDialog()
+    {
         if (_spawnDialog == null)
         {
             _spawnDialog = new SpawnDialog();
@@ -1137,9 +1161,6 @@ public partial class PlayerData : IDisposable
         }
 
         _spawnDialog.TimeOfYear = SubsystemGameInfo.WorldSettings.TimeOfYear;
-        _spawnDialog.LargeMessage = largeMessage;
-        _spawnDialog.SmallMessage = smallMessage;
-        _spawnDialog.Progress = _progress;
     }
 
     public void HideSpawnDialog()

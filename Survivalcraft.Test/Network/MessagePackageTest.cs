@@ -22,7 +22,12 @@ public class MessagePackageTest
                         MessageTextStyle.Accent)
                 ]),
                 GameMessageTone.Warning,
-                GameMessagePresentation.Default | GameMessagePresentation.Toast));
+                GameMessagePresentation.Default | GameMessagePresentation.Toast)
+            {
+                LocalizationSection = "MultiplayerUI",
+                LocalizationKey = "PlayerJoined",
+                LocalizationArguments = ["Lily"]
+            });
 
         var clone = RoundTrip(package);
 
@@ -33,6 +38,9 @@ public class MessagePackageTest
             GameMessagePresentation.Default | GameMessagePresentation.Toast,
             clone.GameMessage.Presentation);
         Assert.Equal("位置：出生点", clone.GameMessage.Content.PlainText);
+        Assert.Equal("MultiplayerUI", clone.GameMessage.LocalizationSection);
+        Assert.Equal("PlayerJoined", clone.GameMessage.LocalizationKey);
+        Assert.Equal(["Lily"], clone.GameMessage.LocalizationArguments);
     }
 
     private static MessagePackage RoundTrip(MessagePackage package)

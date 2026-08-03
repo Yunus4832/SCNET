@@ -8,7 +8,7 @@ public class EggBlock : Block
 {
     public const int Index = 118;
 
-    public const string TypeName = "EggBlock";
+    public const string TypeName = nameof(EggBlock);
 
     public readonly DynamicArray<EggType> EggTypes = [];
 

@@ -6,6 +6,8 @@ namespace Game.Network.Packages;
 
 public sealed class MessagePackage : IPackage
 {
+    private const int _maximumLocalizationArgumentCount = 16;
+
     private const int _maximumSegmentCount = 64;
 
     public byte ID => (byte)PackageType.Message;
@@ -49,6 +51,20 @@ public sealed class MessagePackage : IPackage
             writer.WriteEnum(segment.Style);
             writer.Write(segment.Text);
         }
+
+        writer.Write(GameMessage.LocalizationSection);
+        writer.Write(GameMessage.LocalizationKey);
+        if (GameMessage.LocalizationArguments.Count > _maximumLocalizationArgumentCount)
+        {
+            throw new InvalidDataException(
+                "Too many message localization arguments.");
+        }
+
+        writer.Write((byte)GameMessage.LocalizationArguments.Count);
+        foreach (var argument in GameMessage.LocalizationArguments)
+        {
+            writer.Write(argument);
+        }
     }
 
     public void ReadData(PackageStreamReader reader)
@@ -72,12 +88,32 @@ public sealed class MessagePackage : IPackage
             segments[index] = new MessageSegment(text, style);
         }
 
+        var localizationSection = reader.ReadString();
+        var localizationKey = reader.ReadString();
+        var localizationArgumentCount = reader.ReadByte();
+        if (localizationArgumentCount > _maximumLocalizationArgumentCount)
+        {
+            throw new InvalidDataException(
+                "Too many message localization arguments.");
+        }
+
+        var localizationArguments = new string[localizationArgumentCount];
+        for (var index = 0; index < localizationArgumentCount; index++)
+        {
+            localizationArguments[index] = reader.ReadString();
+        }
+
         GameMessage = new GameMessage(
             kind,
             channel,
             senderName,
             new MessageContent(segments),
             tone,
-            presentation);
+            presentation)
+        {
+            LocalizationSection = localizationSection,
+            LocalizationKey = localizationKey,
+            LocalizationArguments = localizationArguments
+        };
     }
 }

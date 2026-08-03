@@ -185,7 +185,11 @@
         "10": "已存在玩家主键{0}",
         "11": "没有对应的玩家视图",
         "12": "未知",
-        "13": "死亡原因: {0}"
+        "13": "死亡原因: {0}",
+        "14": "连接{0}的世界中 (等级 {1})",
+        "15": "等待服务器响应玩家实体",
+        "16": "你已在残酷模式死亡，不可复活！",
+        "17": "服务器禁止了玩家重生！"
     },
     "GameLoadingScreen": {
         "1": "加载世界出错"
@@ -3939,7 +3943,21 @@
         "Member": "成员",
         "SystemPrefix": "[系统]",
         "CommandPrefix": "[指令]",
-        "TeamPrefix": "[队]"
+        "TeamPrefix": "[队]",
+        "AlreadyInTeam": "你已在队伍中",
+        "EnterTeamName": "输入队伍名称",
+        "TeamNameRequired": "队伍名称不能为空",
+        "SelectTeam": "请先选择一个队伍",
+        "JoinTeamConfirm": "请求加入队伍“{0}”？",
+        "CreateOrJoinTeamFirst": "请先创建或加入队伍",
+        "InvitePlayerConfirm": "邀请 {0} 加入队伍？",
+        "NotInTeam": "你当前不在队伍中",
+        "LeaveTeamConfirm": "退出队伍“{0}”？",
+        "RetryAfterSeconds": "操作过于频繁，请在 {0} 秒后重试",
+        "AddBlacklistConfirm": "是否将 {0} 加入黑名单？",
+        "RemoveBlacklistConfirm": "是否将 {0} 移出黑名单？",
+        "PlayerJoined": "{0} 加入游戏",
+        "PlayerLeft": "{0} 退出游戏"
     },
     "Commands": {
         "Weather_Description": "控制世界天气",

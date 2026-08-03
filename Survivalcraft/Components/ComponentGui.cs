@@ -10,7 +10,7 @@ namespace Game.Components;
 
 public class ComponentGui : Component, IUpdateable, IDrawable
 {
-    public const string TypeName = "ComponentGui";
+    public const string TypeName = nameof(ComponentGui);
 
     public int CloseTime;
 

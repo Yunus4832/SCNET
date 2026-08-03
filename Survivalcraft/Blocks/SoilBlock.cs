@@ -6,7 +6,7 @@ public class SoilBlock : CubeBlock
 {
     public const int Index = 168;
 
-    public const string TypeName = "SoilBlock";
+    public const string TypeName = nameof(SoilBlock);
 
     public static readonly BoundingBox[] CollisionBoxes = [new(new Vector3(0f, 0f, 0f), new Vector3(1f, 0.9375f, 1f))];
 

@@ -312,21 +312,21 @@ public sealed class PlayerPanelWidget : CanvasWidget
     {
         if (_playerData.GroupKey.Length > 0)
         {
-            DialogsManager.Alert("你已在队伍中", _playerData.GameWidget.GuiWidget);
+            ShowAlert("AlreadyInTeam");
             return;
         }
 
         DialogsManager.ShowDialog(
             _playerData.GameWidget.GuiWidget,
             new TextBoxDialog(
-                "输入队伍名称",
+                MultiplayerUiStyle.Text("EnterTeamName"),
                 string.Empty,
                 64,
                 name =>
                 {
                     if (string.IsNullOrWhiteSpace(name))
                     {
-                        DialogsManager.Alert("队伍名称不能为空", _playerData.GameWidget.GuiWidget);
+                        ShowAlert("TeamNameRequired");
                         return;
                     }
 
@@ -341,7 +341,7 @@ public sealed class PlayerPanelWidget : CanvasWidget
     {
         if (_playerData.GroupKey.Length > 0)
         {
-            DialogsManager.Alert("你已在队伍中", _playerData.GameWidget.GuiWidget);
+            ShowAlert("AlreadyInTeam");
             return;
         }
 
@@ -349,12 +349,12 @@ public sealed class PlayerPanelWidget : CanvasWidget
             !Guid.TryParse(selectedTeam.GroupKey, out var groupKey) ||
             !_playerData.SubsystemPlayers.ServerGroups.ContainsKey(selectedTeam.GroupKey))
         {
-            DialogsManager.Alert("请先选择一个队伍", _playerData.GameWidget.GuiWidget);
+            ShowAlert("SelectTeam");
             return;
         }
 
         DialogsManager.Confirm(
-            $"请求加入{selectedTeam.Name}的队伍?",
+            FormatText("JoinTeamConfirm", selectedTeam.Name),
             button =>
             {
                 if (button != MessageDialogButton.Button1 || !TryStartGroupRequest())
@@ -373,12 +373,12 @@ public sealed class PlayerPanelWidget : CanvasWidget
     {
         if (!Guid.TryParse(_playerData.GroupKey, out _))
         {
-            DialogsManager.Alert("请先创建或加入队伍", _playerData.GameWidget.GuiWidget);
+            ShowAlert("CreateOrJoinTeamFirst");
             return;
         }
 
         DialogsManager.Confirm(
-            $"邀请{target.Name}加入队伍?",
+            FormatText("InvitePlayerConfirm", target.Name),
             button =>
             {
                 if (button != MessageDialogButton.Button1 || !TryStartGroupRequest())
@@ -398,12 +398,12 @@ public sealed class PlayerPanelWidget : CanvasWidget
         if (!Guid.TryParse(_playerData.GroupKey, out _) ||
             !_playerData.SubsystemPlayers.ServerGroups.TryGetValue(_playerData.GroupKey, out var group))
         {
-            DialogsManager.Alert("你当前不在队伍中", _playerData.GameWidget.GuiWidget);
+            ShowAlert("NotInTeam");
             return;
         }
 
         DialogsManager.Confirm(
-            $"退出{group.Name}的队伍?",
+            FormatText("LeaveTeamConfirm", group.Name),
             button =>
             {
                 if (button != MessageDialogButton.Button1 || !TryStartGroupRequest())
@@ -421,9 +421,9 @@ public sealed class PlayerPanelWidget : CanvasWidget
         var elapsed = Time.RealTime - _lastGroupRequestTime;
         if (elapsed < _groupRequestPeriod)
         {
-            DialogsManager.Alert(
-                $"操作过于频繁，请在{MathUtils.Ceiling(_groupRequestPeriod - (float)elapsed)}秒后重试",
-                _playerData.GameWidget.GuiWidget);
+            ShowAlert(
+                "RetryAfterSeconds",
+                MathUtils.Ceiling(_groupRequestPeriod - (float)elapsed));
             return false;
         }
 
@@ -440,7 +440,7 @@ public sealed class PlayerPanelWidget : CanvasWidget
         }
 
         DialogsManager.Confirm(
-            $"是否将{selectedPlayer.Name}加入黑名单?",
+            FormatText("AddBlacklistConfirm", selectedPlayer.Name),
             button =>
             {
                 if (button != MessageDialogButton.Button1)
@@ -462,7 +462,7 @@ public sealed class PlayerPanelWidget : CanvasWidget
         }
 
         DialogsManager.Confirm(
-            $"是否将{selectedPlayer.Name}移出黑名单?",
+            FormatText("RemoveBlacklistConfirm", selectedPlayer.Name),
             button =>
             {
                 if (button != MessageDialogButton.Button1)
@@ -476,6 +476,20 @@ public sealed class PlayerPanelWidget : CanvasWidget
                 UpdateActionButtons();
             },
             _playerData.GameWidget.GuiWidget);
+    }
+
+    private void ShowAlert(string key, params object[] args)
+    {
+        DialogsManager.Alert(
+            LanguageManager.Warning,
+            FormatText(key, args),
+            _playerData.GameWidget.GuiWidget);
+    }
+
+    private static string FormatText(string key, params object[] args)
+    {
+        var text = MultiplayerUiStyle.Text(key);
+        return args.Length > 0 ? string.Format(text, args) : text;
     }
 
     private static StackPanelWidget CreateActionPanel(params Widget[] buttons)

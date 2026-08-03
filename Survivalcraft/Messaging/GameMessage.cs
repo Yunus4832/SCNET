@@ -94,6 +94,12 @@ public sealed record GameMessage(
     GameMessageTone Tone = GameMessageTone.Normal,
     GameMessagePresentation Presentation = GameMessagePresentation.Default)
 {
+    public string LocalizationSection { get; init; } = string.Empty;
+
+    public string LocalizationKey { get; init; } = string.Empty;
+
+    public IReadOnlyList<string> LocalizationArguments { get; init; } = [];
+
     public static GameMessage Chat(
         GameMessageChannel channel,
         string senderName,
@@ -123,6 +129,71 @@ public sealed record GameMessage(
             new MessageContent(segments),
             tone,
             presentation);
+
+    public static GameMessage LocalizedSystem(
+        string section,
+        string key,
+        IReadOnlyList<string>? arguments = null,
+        GameMessageTone tone = GameMessageTone.Normal,
+        GameMessagePresentation presentation = GameMessagePresentation.Default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(section);
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
+        var normalizedArguments = arguments?.ToArray() ?? [];
+        var template = LanguageManager.Get(section, key);
+        return System(
+                FormatLocalizedText(template, normalizedArguments),
+                tone,
+                presentation) with
+            {
+                LocalizationSection = section,
+                LocalizationKey = key,
+                LocalizationArguments = normalizedArguments
+            };
+    }
+
+    public GameMessage ResolveLocalization()
+    {
+        if (string.IsNullOrWhiteSpace(LocalizationSection) ||
+            string.IsNullOrWhiteSpace(LocalizationKey))
+        {
+            return this;
+        }
+
+        var template = LanguageManager.Get(LocalizationSection, LocalizationKey);
+        if (template == LocalizationSection || template == LocalizationKey)
+        {
+            return this;
+        }
+
+        try
+        {
+            return this with
+            {
+                Content = MessageContent.Plain(
+                    FormatLocalizedText(template, LocalizationArguments))
+            };
+        }
+        catch (FormatException exception)
+        {
+            Log.Error(
+                $"Invalid message localization format " +
+                $"{LocalizationSection}.{LocalizationKey}: {exception}");
+            return this;
+        }
+    }
+
+    private static string FormatLocalizedText(
+        string template,
+        IReadOnlyList<string> arguments)
+    {
+        return arguments.Count == 0
+            ? template
+            : string.Format(
+                global::System.Globalization.CultureInfo.CurrentCulture,
+                template,
+                arguments.Cast<object>().ToArray());
+    }
 
     public static GameMessage Command(string text, bool success) =>
         new(

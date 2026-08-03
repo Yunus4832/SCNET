@@ -75,6 +75,7 @@ public sealed class GameMessageService(Project project)
 
     private void Insert(GameMessage message, bool external = false)
     {
+        message = message.ResolveLocalization();
         if ((message.Presentation & GameMessagePresentation.History) != 0)
         {
             while (_history.Count >= MaximumHistoryCount)

@@ -86,7 +86,6 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
         foreach (var playerData in _toRemove)
         {
-            // Startup/recovery cleanup for stale disconnected players should not emit "退出游戏" broadcast.
             MakePlayerOffline(playerData.PlayerGUID, false);
         }
 
@@ -174,8 +173,10 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             if (client is not null)
             {
                 _subsystemGameWidgets.Messages.Publish(
-                    GameMessage.System(
-                        playerData.Name + " 加入游戏",
+                    GameMessage.LocalizedSystem(
+                        "MultiplayerUI",
+                        "PlayerJoined",
+                        [playerData.Name],
                         presentation:
                         GameMessagePresentation.Default | GameMessagePresentation.Toast));
             }
@@ -417,8 +418,10 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             if (showMsg && CommonLib.WorkType == WorkType.Server)
             {
                 _subsystemGameWidgets.Messages.Publish(
-                    GameMessage.System(
-                        pd.Name + " 退出游戏",
+                    GameMessage.LocalizedSystem(
+                        "MultiplayerUI",
+                        "PlayerLeft",
+                        [pd.Name],
                         presentation:
                         GameMessagePresentation.Default | GameMessagePresentation.Toast));
             }

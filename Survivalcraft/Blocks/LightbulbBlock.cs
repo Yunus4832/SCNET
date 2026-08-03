@@ -6,7 +6,7 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
 {
     public const int Index = 139;
 
-    public const string TypeName = "LightbulbBlock";
+    public const string TypeName = nameof(LightbulbBlock);
 
     public readonly BlockMesh[] BulbBlockMeshes = new BlockMesh[6];
 

@@ -185,7 +185,11 @@
         "10": "More than 1 player with PlayerIndex {0} added to world.",
         "11": "No GameWidget found for player.",
         "12": "Unknown",
-        "13": "Cause of death: {0}"
+        "13": "Cause of death: {0}",
+        "14": "Connecting to {0}'s world (Level {1})",
+        "15": "Waiting for the server to provide the player entity",
+        "16": "You died in Cruel mode and cannot respawn.",
+        "17": "The server does not allow players to respawn."
     },
     "GameLoadingScreen": {
         "1": "Error loading world"
@@ -3939,7 +3943,21 @@
         "Member": "Member",
         "SystemPrefix": "[System]",
         "CommandPrefix": "[Command]",
-        "TeamPrefix": "[Team]"
+        "TeamPrefix": "[Team]",
+        "AlreadyInTeam": "You are already in a team.",
+        "EnterTeamName": "Enter team name",
+        "TeamNameRequired": "Team name cannot be empty.",
+        "SelectTeam": "Please select a team first.",
+        "JoinTeamConfirm": "Request to join team “{0}”?",
+        "CreateOrJoinTeamFirst": "Please create or join a team first.",
+        "InvitePlayerConfirm": "Invite {0} to join your team?",
+        "NotInTeam": "You are not currently in a team.",
+        "LeaveTeamConfirm": "Leave team “{0}”?",
+        "RetryAfterSeconds": "Too many operations. Try again in {0} seconds.",
+        "AddBlacklistConfirm": "Add {0} to the blacklist?",
+        "RemoveBlacklistConfirm": "Remove {0} from the blacklist?",
+        "PlayerJoined": "{0} joined the game",
+        "PlayerLeft": "{0} left the game"
     },
     "Commands": {
         "Weather_Description": "Control world weather",
