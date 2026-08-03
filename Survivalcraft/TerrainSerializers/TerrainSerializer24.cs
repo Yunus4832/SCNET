@@ -16,11 +16,17 @@ public class TerrainSerializer24 : IDisposable
     /// </summary>
     private const int _worstCaseChunkDataSize = 524_800;
 
-    private readonly byte[] _compressBuffer = new byte[_worstCaseChunkDataSize];
+    private readonly byte[] _loadCompressBuffer = new byte[_worstCaseChunkDataSize];
 
-    private readonly Lock _lock = new();
+    private readonly Lock _loadLock = new();
 
-    private readonly byte[] _storageBuffer = new byte[_worstCaseChunkDataSize];
+    private readonly byte[] _loadStorageBuffer = new byte[_worstCaseChunkDataSize];
+
+    private readonly byte[] _saveCompressBuffer = new byte[_worstCaseChunkDataSize];
+
+    private readonly Lock _saveLock = new();
+
+    private readonly byte[] _saveStorageBuffer = new byte[_worstCaseChunkDataSize];
 
     protected IStorage storage;
 
@@ -75,12 +81,12 @@ public class TerrainSerializer24 : IDisposable
     /// <returns> 是否加载成功 </returns>
     private bool LoadChunkData(TerrainChunk chunk)
     {
-        lock (_lock)
+        lock (_loadLock)
         {
             _ = Time.RealTime;
             try
             {
-                var readDataByteCount = storage.Load(chunk.Coords, _storageBuffer);
+                var readDataByteCount = storage.Load(chunk.Coords, _loadStorageBuffer);
                 // 读取字节数小于 0，说明加载数据块失败，返回 false
                 if (readDataByteCount < 0)
                 {
@@ -88,7 +94,7 @@ public class TerrainSerializer24 : IDisposable
                 }
 
                 // 解压数据块
-                DecompressChunkData(chunk, _storageBuffer, readDataByteCount);
+                DecompressChunkData(chunk, _loadStorageBuffer, readDataByteCount);
             }
             catch (Exception e)
             {
@@ -125,10 +131,10 @@ public class TerrainSerializer24 : IDisposable
 
     internal void SaveSnapshot(Point2 coords, int[] cells, long[] shafts)
     {
-        lock (_lock)
+        lock (_saveLock)
         {
-            var size = CompressChunkData(cells, shafts, _storageBuffer);
-            storage.Save(coords, _storageBuffer, size);
+            var size = CompressChunkData(cells, shafts, _saveStorageBuffer);
+            storage.Save(coords, _saveStorageBuffer, size);
         }
     }
 
@@ -141,12 +147,12 @@ public class TerrainSerializer24 : IDisposable
         {
             var shaftValue = shafts[i + j * 16];
             // 将温度和湿度写入到 buffer
-            _compressBuffer[bufferSize++] = (byte)((Terrain.ExtractTemperature(shaftValue) << 4) |
-                                                   Terrain.ExtractHumidity(shaftValue));
+            _saveCompressBuffer[bufferSize++] = (byte)((Terrain.ExtractTemperature(shaftValue) << 4) |
+                                                       Terrain.ExtractHumidity(shaftValue));
         }
 
         // 缓冲区大小不能大于一个 Chunk 数据块的最大大小
-        if (bufferSize >= _compressBuffer.Length)
+        if (bufferSize >= _saveCompressBuffer.Length)
         {
             throw new InvalidOperationException("Compression buffer overflow.");
         }
@@ -170,7 +176,7 @@ public class TerrainSerializer24 : IDisposable
             // 如果下一个值和当前值不等，说明不再重复，即找到了一个 ValueCountPair，则写入 buffer 并退出本次循环
             if (nextValue != value)
             {
-                bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
+                bufferSize = WriteRleValueToBuffer(_saveCompressBuffer, bufferSize, value, count);
                 value = nextValue;
                 count = 1;
                 continue;
@@ -183,7 +189,7 @@ public class TerrainSerializer24 : IDisposable
                 continue;
             }
 
-            bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
+            bufferSize = WriteRleValueToBuffer(_saveCompressBuffer, bufferSize, value, count);
             count = 0;
         }
 
@@ -191,14 +197,14 @@ public class TerrainSerializer24 : IDisposable
         // 并且此时 count = 1, 即 > 0 这里将其也写入到 buffer 中
         if (count > 0)
         {
-            bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
+            bufferSize = WriteRleValueToBuffer(_saveCompressBuffer, bufferSize, value, count);
         }
 
         // 压缩数据
         using var memoryStream = new MemoryStream(buffer);
         using (var deflateStream = new DeflateStream(memoryStream, CompressionLevel.Fastest, true))
         {
-            deflateStream.Write(_compressBuffer, 0, bufferSize);
+            deflateStream.Write(_saveCompressBuffer, 0, bufferSize);
         }
 
         // 返回压缩之后的大小
@@ -218,16 +224,16 @@ public class TerrainSerializer24 : IDisposable
         using var deflateStream = new DeflateStream(new MemoryStream(buffer, 0, size), CompressionMode.Decompress);
 
         // Stream.Read 不保证一次填满目标缓冲区，必须持续读取到流末尾。
-        var decompressSize = ReadToEnd(deflateStream, _compressBuffer);
+        var decompressSize = ReadToEnd(deflateStream, _loadCompressBuffer);
 
-        ValidateChunkData(_compressBuffer, decompressSize);
+        ValidateChunkData(_loadCompressBuffer, decompressSize);
 
         var bufferIndex = 0;
         // 从 buffer 中获取 Shaft （温度和湿度）信息并填入 TerrainChunk 对象中
         for (var i = 0; i < 16; i++)
         for (var j = 0; j < 16; j++)
         {
-            var shaftValueByte = _compressBuffer[bufferIndex++];
+            var shaftValueByte = _loadCompressBuffer[bufferIndex++];
             var shaftValue = Terrain.ReplaceTemperature(Terrain.ReplaceHumidity(0, shaftValueByte & 0xF),
                 shaftValueByte >> 4);
             chunk.SetShaftValueFast(i, j, shaftValue);
@@ -259,7 +265,7 @@ public class TerrainSerializer24 : IDisposable
         while (bufferIndex < decompressSize)
         {
             // 读取经过 RLE 压缩的 Cell 数据
-            bufferIndex = ReadRleValueFromBuffer(_compressBuffer, bufferIndex, decompressSize, out var cellValue,
+            bufferIndex = ReadRleValueFromBuffer(_loadCompressBuffer, bufferIndex, decompressSize, out var cellValue,
                 out var count);
             // 将获取到的 ValueCountPair 逐层 (16 x 16 x 256) 的填充到 TerrainChunk 的 Cells 中
             for (var k = 0; k < count; k++)
@@ -580,6 +586,14 @@ public class TerrainSerializer24 : IDisposable
         /// <param name="buffer"> Chunk 数据块缓冲区 </param>
         /// <param name="size"> 缓冲区大小 </param>
         public void Save(Point2 coords, byte[] buffer, int size)
+        {
+            lock (_lock)
+            {
+                SaveCore(coords, buffer, size);
+            }
+        }
+
+        private void SaveCore(Point2 coords, byte[] buffer, int size)
         {
             var region = new Point2(coords.X >> 4, coords.Y >> 4);
             var chunkPosition = new Point2(coords.X & 0xF, coords.Y & 0xF);

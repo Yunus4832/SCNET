@@ -81,8 +81,8 @@ public class TerrainGeometry
             return geometries[_slice];
         }
 
-        geometries = new TerrainGeometry[32];
-        for (var i = 0; i < 32; i++)
+        geometries = new TerrainGeometry[TerrainChunk.SlicesCount];
+        for (var i = 0; i < TerrainChunk.SlicesCount; i++)
         {
             var t = new TerrainGeometry(_draws, i);
             geometries[i] = t;

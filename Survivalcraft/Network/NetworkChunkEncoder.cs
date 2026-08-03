@@ -7,8 +7,6 @@ namespace Game.Network;
 
 internal sealed class NetworkChunkEncoder : IDisposable
 {
-    private const int _defaultQueueCapacity = 4;
-
     private readonly ConcurrentQueue<EncodingCompletion> _completions = new();
 
     private readonly Func<NetworkChunkSnapshot, EncodedTerrainChunk> _encode;
@@ -17,7 +15,7 @@ internal sealed class NetworkChunkEncoder : IDisposable
 
     private readonly HashSet<TerrainChunk> _pending = new(ReferenceEqualityComparer.Instance);
 
-    private readonly Channel<NetworkChunkSnapshot> _queue;
+    private readonly Channel<TerrainChunk> _queue;
 
     private readonly int _maximumOutstanding;
 
@@ -25,17 +23,18 @@ internal sealed class NetworkChunkEncoder : IDisposable
 
     private bool _disposed;
 
-    public NetworkChunkEncoder(int queueCapacity = _defaultQueueCapacity,
+    public NetworkChunkEncoder(
+        int maximumOutstanding = NetworkTerrainPolicy.DefaultServerChunkCountSendPer,
         Func<NetworkChunkSnapshot, EncodedTerrainChunk>? encode = null)
     {
-        if (queueCapacity <= 0)
+        if (maximumOutstanding <= 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(queueCapacity));
+            throw new ArgumentOutOfRangeException(nameof(maximumOutstanding));
         }
 
-        _maximumOutstanding = queueCapacity + 1;
+        _maximumOutstanding = maximumOutstanding;
         _encode = encode ?? NetworkChunkCodec.Encode;
-        _queue = Channel.CreateBounded<NetworkChunkSnapshot>(new BoundedChannelOptions(queueCapacity)
+        _queue = Channel.CreateBounded<TerrainChunk>(new BoundedChannelOptions(maximumOutstanding)
         {
             AllowSynchronousContinuations = false,
             FullMode = BoundedChannelFullMode.Wait,
@@ -111,21 +110,17 @@ internal sealed class NetworkChunkEncoder : IDisposable
             _pending.Add(chunk);
         }
 
-        NetworkChunkSnapshot? snapshot = null;
         var scheduled = false;
         try
         {
-            snapshot = NetworkChunkSnapshot.TryCapture(chunk);
-            scheduled = snapshot != null && _queue.Writer.TryWrite(snapshot);
+            scheduled = _queue.Writer.TryWrite(chunk);
             if (scheduled)
             {
-                snapshot = null;
                 return true;
             }
         }
         finally
         {
-            snapshot?.Dispose();
             if (!scheduled)
             {
                 lock (_lock)
@@ -164,27 +159,29 @@ internal sealed class NetworkChunkEncoder : IDisposable
 
     private async Task WorkerLoop()
     {
-        await foreach (var snapshot in _queue.Reader.ReadAllAsync().ConfigureAwait(false))
+        await foreach (var chunk in _queue.Reader.ReadAllAsync().ConfigureAwait(false))
         {
+            NetworkChunkSnapshot? snapshot = null;
             try
             {
+                snapshot = NetworkChunkSnapshot.TryCapture(chunk);
                 _completions.Enqueue(new EncodingCompletion(
-                    snapshot.Source,
-                    snapshot.Revision,
-                    _encode(snapshot),
+                    chunk,
+                    snapshot?.Revision ?? chunk.NetworkContentRevision,
+                    snapshot == null ? null : _encode(snapshot),
                     null));
             }
             catch (Exception exception)
             {
                 _completions.Enqueue(new EncodingCompletion(
-                    snapshot.Source,
-                    snapshot.Revision,
+                    chunk,
+                    snapshot?.Revision ?? chunk.NetworkContentRevision,
                     null,
                     exception));
             }
             finally
             {
-                snapshot.Dispose();
+                snapshot?.Dispose();
             }
         }
     }

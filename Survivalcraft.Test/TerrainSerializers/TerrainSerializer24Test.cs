@@ -129,6 +129,45 @@ public sealed class TerrainSerializer24Test
         Assert.Equal(9, restored.GetHumidityFast(5, 7));
     }
 
+    [Fact]
+    public async Task BackgroundSaveDoesNotBlockChunkDecompression()
+    {
+        var storage = new MemoryStorage();
+        using var serializer = new TestTerrainSerializer24(storage);
+        using var terrain = new Terrain();
+        using var source = new TerrainChunk(terrain, 1, 2)
+        {
+            State = TerrainChunkState.Valid,
+            ModificationCounter = 1
+        };
+        source.SetCellValueFast(3, 40, 5, Terrain.MakeBlockValue(17));
+        serializer.SaveChunk(source);
+
+        using var saveStarted = new ManualResetEventSlim();
+        using var allowSave = new ManualResetEventSlim();
+        storage.SaveStarted = saveStarted;
+        storage.AllowSave = allowSave;
+        var saveTask = Task.Run(() => serializer.SaveSnapshot(
+            new Point2(9, 9), source.Cells, source.Shafts));
+
+        try
+        {
+            Assert.True(saveStarted.Wait(TimeSpan.FromSeconds(5)));
+            using var target = new TerrainChunk(terrain, 1, 2);
+            var loadTask = Task.Run(() => serializer.LoadChunk(target));
+            var completedTask = await Task.WhenAny(loadTask, Task.Delay(TimeSpan.FromSeconds(2)));
+
+            Assert.Same(loadTask, completedTask);
+            Assert.True(await loadTask);
+            Assert.Equal(source.GetCellValueFast(3, 40, 5), target.GetCellValueFast(3, 40, 5));
+        }
+        finally
+        {
+            allowSave.Set();
+            await saveTask;
+        }
+    }
+
     private sealed class TestTerrainSerializer24 : TerrainSerializer24
     {
         public TestTerrainSerializer24(IStorage replacementStorage)
@@ -142,7 +181,11 @@ public sealed class TerrainSerializer24Test
     {
         private byte[]? _data = initialData;
 
+        public ManualResetEventSlim? AllowSave { get; set; }
+
         public bool FailSaves { get; init; }
+
+        public ManualResetEventSlim? SaveStarted { get; set; }
 
         public void Dispose()
         {
@@ -168,6 +211,12 @@ public sealed class TerrainSerializer24Test
             if (FailSaves)
             {
                 throw new IOException("Simulated storage failure.");
+            }
+
+            SaveStarted?.Set();
+            if (AllowSave != null && !AllowSave.Wait(TimeSpan.FromSeconds(5)))
+            {
+                throw new TimeoutException("Timed out waiting to complete the test save.");
             }
 
             _data = buffer.AsSpan(0, size).ToArray();

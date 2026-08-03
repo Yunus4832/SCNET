@@ -328,6 +328,7 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
 
     public void GenerateChunkContentsPass4(TerrainChunk chunk)
     {
+        RegisterCleanTreeBrush(chunk);
         GenerateGrassAndPlants(chunk);
         GenerateLogs(chunk);
         GenerateTrees(chunk);
@@ -1310,14 +1311,39 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
 
+        var sourceCoords = new Point2[9];
+        var sourceIndex = 0;
         for (var i = x - 1; i < x + 2; i++)
         for (var j = y - 1; j < y + 2; j++)
         {
-            foreach (var brushPaint in GetCleanTreeBrush(new Point2(i, j)))
+            sourceCoords[sourceIndex++] = new Point2(i, j);
+        }
+
+        WarmCleanTreeBrushCache(sourceCoords);
+
+        foreach (var coords in sourceCoords)
+        {
+            foreach (var brushPaint in GetCleanTreeBrush(coords))
             {
                 brushPaint.Brush.PaintFast(chunk, brushPaint.Position.X, brushPaint.Position.Y, brushPaint.Position.Z);
             }
         }
+    }
+
+    private void WarmCleanTreeBrushCache(Point2[] sourceCoords)
+    {
+        var missingCoords = sourceCoords
+            .Where(coords => !_cleanTreeBrushCache.ContainsKey((_seed, coords)))
+            .ToArray();
+        if (missingCoords.Length == 0)
+        {
+            return;
+        }
+
+        Parallel.ForEach(missingCoords, new ParallelOptions
+        {
+            MaxDegreeOfParallelism = SeedTerrainGenerationPolicy.GetParallelism(Environment.ProcessorCount)
+        }, coords => _ = GetCleanTreeBrush(coords));
     }
 
     private BrushPaint[] GetCleanTreeBrush(Point2 coords)
@@ -1329,15 +1355,26 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         return entry.BrushPaints;
     }
 
-    private BrushPaint[] GenerateCleanTreeBrush(Point2 coords)
-    {
-        using var sourceChunk = CreateTreeBrushSourceChunk(coords);
-        return GenerateCleanTreeBrush(sourceChunk);
-    }
-
     private CleanTreeBrushCacheEntry CreateCleanTreeBrushEntry(Point2 coords)
     {
-        return new CleanTreeBrushCacheEntry(GenerateCleanTreeBrush(coords), Environment.TickCount64);
+        var sourceChunk = CreateTreeBrushSourceChunk(coords);
+        var brushPaints = GenerateCleanTreeBrush(sourceChunk);
+        var basis = new SeedGeneratedChunkBasis(sourceChunk.Cells, sourceChunk.Shafts);
+        sourceChunk.Dispose();
+        return new CleanTreeBrushCacheEntry(brushPaints, Environment.TickCount64, basis);
+    }
+
+    private void RegisterCleanTreeBrush(TerrainChunk chunk)
+    {
+        _cleanTreeBrushCache.GetOrAdd((_seed, chunk.Coords), static (_, state) =>
+            new CleanTreeBrushCacheEntry(state.Generator.GenerateCleanTreeBrush(state.Chunk),
+                Environment.TickCount64, null), (Generator: this, Chunk: chunk));
+    }
+
+    public bool TryTakeSeedGeneratedChunkBasis(TerrainChunk chunk)
+    {
+        return _cleanTreeBrushCache.TryGetValue((_seed, chunk.Coords), out var entry) &&
+               entry.Basis?.TryMoveTo(chunk) == true;
     }
 
     private TerrainChunk CreateTreeBrushSourceChunk(Point2 coords)
@@ -1461,9 +1498,12 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         }
     }
 
-    private sealed class CleanTreeBrushCacheEntry(BrushPaint[] brushPaints, long lastAccessTicks)
+    private sealed class CleanTreeBrushCacheEntry(BrushPaint[] brushPaints, long lastAccessTicks,
+        SeedGeneratedChunkBasis? basis)
     {
         public readonly BrushPaint[] BrushPaints = brushPaints;
+
+        public readonly SeedGeneratedChunkBasis? Basis = basis;
 
         public long LastAccessTicks = lastAccessTicks;
     }

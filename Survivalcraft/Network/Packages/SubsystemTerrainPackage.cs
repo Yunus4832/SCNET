@@ -222,12 +222,13 @@ public class SubsystemTerrainPackage : IPackage
     {
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
-        var chunk2 = subsystemTerrain.Terrain.GetChunkAtCoords(x, y) ?? subsystemTerrain.Terrain.AllocateChunk(x, y);
-        chunk2.Cells = chunk.Cells;
-        chunk2.Shafts = chunk.Shafts;
-        chunk2.ThreadState = TerrainChunkState.InvalidLight;
-        chunk2.IsRequested = false;
-        chunk2.IsLoaded = true;
-        chunk2.WasUpgraded = true;
+        var target = subsystemTerrain.Terrain.GetChunkAtCoords(x, y) ??
+                     subsystemTerrain.Terrain.AllocateChunk(x, y);
+        target.Cells = chunk.Cells;
+        target.Shafts = chunk.Shafts;
+        target.ThreadState = TerrainChunkState.InvalidLight;
+        target.IsRequested = false;
+        target.IsLoaded = true;
+        target.WasUpgraded = true;
     }
 }

@@ -31,7 +31,7 @@
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Name="UseReducedZRangeContainer" Direction="Horizontal">
-                            <LabelWidget Text="[SettingsCompatibilityScreen:4]" HorizontalAlignment="Far"
+                            <LabelWidget Text="[SettingsCompatibilityScreen:3]" HorizontalAlignment="Far"
                                          VerticalAlignment="Center" Margin="20, 0"/>
                             <BevelledButtonWidget Name="UseReducedZRangeButton" Style="{Styles/ButtonStyle_310x60}"
                                                   VerticalAlignment="Center" Margin="20, 0"/>
@@ -40,19 +40,19 @@
                         <CanvasWidget Size="0, 20"/>
 
                         <UniformSpacingPanelWidget Direction="Horizontal">
-                            <LabelWidget Text="[SettingsCompatibilityScreen:5]" HorizontalAlignment="Far"
+                            <LabelWidget Text="[SettingsCompatibilityScreen:4]" HorizontalAlignment="Far"
                                          VerticalAlignment="Center" Margin="20, 0"/>
                             <BevelledButtonWidget Name="ViewGameLogButton" Style="{Styles/ButtonStyle_310x60}"
                                                   VerticalAlignment="Center" Margin="20, 0"
-                                                  Text="[SettingsCompatibilityScreen:6]"/>
+                                                  Text="[SettingsCompatibilityScreen:5]"/>
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal">
-                            <LabelWidget Text="[SettingsCompatibilityScreen:7]" HorizontalAlignment="Far"
+                            <LabelWidget Text="[SettingsCompatibilityScreen:6]" HorizontalAlignment="Far"
                                          VerticalAlignment="Center" Margin="20, 0"/>
                             <BevelledButtonWidget Name="ResetDefaultsButton" Style="{Styles/ButtonStyle_310x60}"
                                                   VerticalAlignment="Center" Margin="20, 0"
-                                                  Text="[SettingsCompatibilityScreen:8]"/>
+                                                  Text="[SettingsCompatibilityScreen:7]"/>
                         </UniformSpacingPanelWidget>
 
                     </StackPanelWidget>

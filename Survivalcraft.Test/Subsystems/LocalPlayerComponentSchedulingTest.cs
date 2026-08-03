@@ -1,5 +1,7 @@
 using System.Runtime.CompilerServices;
 
+using Engine.Core;
+
 using Game;
 using Game.Components;
 using Game.Network;
@@ -19,14 +21,18 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
 {
     private readonly WorkType _previousWorkType = CommonLib.WorkType;
 
+    private readonly RunModeType _previousRunMode = RunMode.Value;
+
     public void Dispose()
     {
         CommonLib.WorkType = _previousWorkType;
+        RunMode.Value = _previousRunMode;
     }
 
     [Fact]
     public void RemoteClientGuiAndInputAreExcludedFromScheduling()
     {
+        RunMode.Value = RunModeType.Gui;
         CommonLib.WorkType = WorkType.Client;
         var player = CreatePlayer(false);
         var gui = CreateGui(player);
@@ -41,6 +47,7 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
     [Fact]
     public void MainClientAndLocalPlayersKeepLocalScheduling()
     {
+        RunMode.Value = RunModeType.Gui;
         CommonLib.WorkType = WorkType.Client;
         var mainPlayer = CreatePlayer(true);
         var mainGui = CreateGui(mainPlayer);
@@ -57,10 +64,30 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
     }
 
     [Fact]
-    public void HeadlessPlayersDoNotScheduleGuiOrInput()
+    public void GuiServerSchedulesOnlyMainPlayerGuiAndInput()
     {
+        RunMode.Value = RunModeType.Gui;
         CommonLib.WorkType = WorkType.Server;
-        var player = CreatePlayer(false);
+        var mainPlayer = CreatePlayer(true);
+        var remotePlayer = CreatePlayer(false);
+
+        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(mainPlayer)));
+        Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(
+            new ComponentInput { ComponentPlayer = mainPlayer }));
+        Assert.True(SubsystemDrawing.ShouldScheduleDrawable(CreateGui(mainPlayer)));
+
+        Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(CreateGui(remotePlayer)));
+        Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(
+            new ComponentInput { ComponentPlayer = remotePlayer }));
+        Assert.False(SubsystemDrawing.ShouldScheduleDrawable(CreateGui(remotePlayer)));
+    }
+
+    [Fact]
+    public void HeadlessPlayersDoNotScheduleGuiOrInputEvenWhenMarkedMain()
+    {
+        RunMode.Value = RunModeType.HeadlessServer;
+        CommonLib.WorkType = WorkType.Server;
+        var player = CreatePlayer(true);
         var gui = CreateGui(player);
         var input = new ComponentInput { ComponentPlayer = player };
 

@@ -155,7 +155,7 @@ public class TerrainUpdater
 
     private readonly NetworkChunkCache _networkChunkCache = new();
 
-    private readonly NetworkChunkEncoder _networkChunkEncoder = new();
+    private readonly NetworkChunkEncoder _networkChunkEncoder;
 
     /// <summary>
     /// 需要移除的等待客户端列表
@@ -206,6 +206,8 @@ public class TerrainUpdater
         _updateParameters.Locations = new Dictionary<int, UpdateLocation>();
         _threadUpdateParameters.Chunks = [];
         _threadUpdateParameters.Locations = new Dictionary<int, UpdateLocation>();
+        _networkChunkEncoder = new NetworkChunkEncoder(
+            Math.Max(1, SettingsManager.Current.ServerChunkCountSendPer));
         SettingsManager.BrightnessChanged += SettingsManagerBrightnessChanged;
         SetUpdateLocation(-1, Vector2.Zero, 4, 4);
         _task = Task.Factory.StartNew(
@@ -413,8 +415,8 @@ public class TerrainUpdater
         {
             // 暂停地形更新线程
             _pauseEvent.Reset();
-            // 获取 AutoResetEvent 令牌，因为工作线程也期望该令牌
-            if (UpdateEvent.WaitOne())
+            // 不阻塞主线程；后台步骤完成后在后续帧继续处理位置变更。
+            if (UpdateEvent.WaitOne(0))
             {
                 // 恢复更新线程，但是因为 AutoResetEvent 令牌被消耗，更新线程阻塞
                 _pauseEvent.Set();
@@ -433,13 +435,17 @@ public class TerrainUpdater
                     }
 
                     // 加载或卸载区块
-                    if (AllocateAndFreeChunks(_updateParameters.Locations.Values.ToArray()))
+                    var allocationResult = AllocateAndFreeChunks(_updateParameters.Locations.Values.ToArray());
+                    if (allocationResult.Changed)
                     {
                         _updateParameters.Chunks = _terrain.AllocatedChunks;
                     }
 
-                    // 清除 pendingLocations 列表
-                    _pendingLocations.Clear();
+                    // 存档队列满时保留位置变更，后续帧继续卸载旧区块并分配新区块。
+                    if (CanCompleteLocationUpdate(allocationResult.RetryRequired))
+                    {
+                        _pendingLocations.Clear();
+                    }
                 }
                 finally
                 {
@@ -448,16 +454,19 @@ public class TerrainUpdater
                 }
             }
         }
-        // 否则，处理需要更新的区块
-        else
+        // 位置更新不能阻止主、后台区块状态交换，否则已经生成的几何会长期保持不可见。
+        if (_updateParametersLock.TryEnter())
         {
-            lock (_updateParametersLock)
+            try
             {
-                // 处理需要更新的区块的升降级，如果有降级的区块，更新线程恢复执行
                 if (SendReceiveChunkStates())
                 {
                     UnpauseUpdateThread();
                 }
+            }
+            finally
+            {
+                _updateParametersLock.Exit();
             }
         }
 
@@ -496,7 +505,6 @@ public class TerrainUpdater
         foreach (var item in WaitChunkList)
         {
             var toRemove = new List<Point2>();
-            var toDeal = new List<Point2>();
             var result = new List<Point2>();
             if (Time.PeriodicEvent(1, 0.6))
             {
@@ -632,22 +640,14 @@ public class TerrainUpdater
             SendReceiveChunkStatesThread();
             foreach (var item in list)
             {
-                if (CommonLib.WorkType != WorkType.Client)
+                if (!CanSynchronouslyUpdateChunk(CommonLib.WorkType, item))
                 {
-                    while (item.ThreadState < TerrainChunkState.Valid)
-                    {
-                        UpdateChunkSingleStep(item, _subsystemSky.SkyLightValue);
-                    }
+                    continue;
                 }
-                else
+
+                while (item.ThreadState < TerrainChunkState.Valid)
                 {
-                    Task.Run(delegate
-                    {
-                        while (item.ThreadState < TerrainChunkState.Valid)
-                        {
-                            UpdateChunkSingleStep(item, _subsystemSky.SkyLightValue);
-                        }
-                    });
+                    UpdateChunkSingleStep(item, _subsystemSky.SkyLightValue);
                 }
             }
 
@@ -658,6 +658,11 @@ public class TerrainUpdater
         {
             UpdateEvent.Set();
         }
+    }
+
+    internal static bool CanSynchronouslyUpdateChunk(WorkType workType, TerrainChunk chunk)
+    {
+        return workType != WorkType.Client || chunk.IsLoaded;
     }
 
     /// <summary>
@@ -740,8 +745,8 @@ public class TerrainUpdater
     /// 根据更新位置分配和释放区块
     /// </summary>
     /// <param name="locations">更新位置数组</param>
-    /// <returns>如果有区块被分配或释放则返回 true</returns>
-    private bool AllocateAndFreeChunks(UpdateLocation[] locations)
+    /// <returns>区块是否发生变化，以及是否需要在后续帧重试</returns>
+    private ChunkAllocationResult AllocateAndFreeChunks(UpdateLocation[] locations)
     {
         var result = false;
         var hasDeferredChunkDiscards = false;
@@ -795,7 +800,7 @@ public class TerrainUpdater
 
         if (hasDeferredChunkDiscards)
         {
-            return result;
+            return new ChunkAllocationResult(result, true);
         }
 
         for (var j = 0; j < locations.Length; j++)
@@ -826,7 +831,14 @@ public class TerrainUpdater
             }
         }
 
-        return result;
+        return new ChunkAllocationResult(result, false);
+    }
+
+    private readonly record struct ChunkAllocationResult(bool Changed, bool RetryRequired);
+
+    internal static bool CanCompleteLocationUpdate(bool retryRequired)
+    {
+        return !retryRequired;
     }
 
     /// <summary>
@@ -839,8 +851,12 @@ public class TerrainUpdater
     /// <returns>如果有区块被降级则返回 true</returns>
     private bool SendReceiveChunkStates()
     {
+        return ReceiveMainThreadChunkStates(_updateParameters.Chunks);
+    }
+
+    internal static bool ReceiveMainThreadChunkStates(TerrainChunk[] chunks)
+    {
         var hasDowngradedChunk = false;
-        var chunks = _updateParameters.Chunks;
         foreach (var terrainChunk in chunks)
         {
             if (terrainChunk.WasDowngraded)
@@ -972,7 +988,7 @@ public class TerrainUpdater
     private TerrainChunk? FindBestChunkToUpdate(out TerrainChunkState desiredState)
     {
         var chunks = _threadUpdateParameters.Chunks;
-        var locationArray = _threadUpdateParameters.Locations.Values.ToArray();
+        var locations = _threadUpdateParameters.Locations.Values;
 
         // 初始的距离（平方，下面都用距离替代）的最大限制
         var maxDistanceSquared = 3.40282347E+38f;
@@ -989,10 +1005,10 @@ public class TerrainUpdater
                 continue;
             }
 
-            for (var j = 0; j < locationArray.Length; j++)
+            foreach (var location in locations)
             {
                 // 位置与区块中心的距离
-                var distanceSquared = Vector2.DistanceSquared(locationArray[j].Center, terrainChunk.Center);
+                var distanceSquared = Vector2.DistanceSquared(location.Center, terrainChunk.Center);
                 // 距离大于最大限制的区块，跳过
                 if (!(distanceSquared < maxDistanceSquared))
                 {
@@ -1000,7 +1016,7 @@ public class TerrainUpdater
                 }
 
                 // 距离小于位置 location 的可视范围，区块的预期状态设置为 Valid 将最大限制设置为区块与位置距离
-                if (distanceSquared <= MathUtils.Sqr(locationArray[j].VisibilityDistance))
+                if (distanceSquared <= MathUtils.Sqr(location.VisibilityDistance))
                 {
                     desiredState = TerrainChunkState.Valid;
                     maxDistanceSquared = distanceSquared;
@@ -1009,7 +1025,7 @@ public class TerrainUpdater
                 // 否则，如果区块的线程状态小于 InvalidVertices1, 并且距离小于位置的 ContentDistance 的距离，
                 // 则预期的区块状态为 InvalidVertices1, 更新最大限制为当前距离
                 else if (terrainChunk.ThreadState < TerrainChunkState.InvalidVertices1 &&
-                         distanceSquared <= MathUtils.Sqr(locationArray[j].ContentDistance))
+                         distanceSquared <= MathUtils.Sqr(location.ContentDistance))
                 {
                     desiredState = TerrainChunkState.InvalidVertices1;
                     maxDistanceSquared = distanceSquared;
@@ -1092,6 +1108,13 @@ public class TerrainUpdater
             }
             case TerrainChunkState.InvalidContents1:
             {
+                if (_subsystemTerrain.TerrainContentsGenerator.TryTakeSeedGeneratedChunkBasis(chunk))
+                {
+                    chunk.ThreadState = TerrainChunkState.InvalidContents4;
+                    chunk.WasUpgraded = true;
+                    break;
+                }
+
                 _subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass1(chunk);
                 chunk.ThreadState = TerrainChunkState.InvalidContents2;
                 chunk.WasUpgraded = true;
@@ -1474,8 +1497,8 @@ public class TerrainUpdater
         _subsystemTerrain.BlockGeometryGenerator.ResetCache();
         if (!chunk.Draws.TryGetValue(_subsystemAnimatedTextures.AnimatedBlocksTexture, out var terrainGeometry))
         {
-            terrainGeometry = new TerrainGeometry[32];
-            for (var i = 0; i < 32; i++)
+            terrainGeometry = new TerrainGeometry[TerrainChunk.SlicesCount];
+            for (var i = 0; i < TerrainChunk.SlicesCount; i++)
             {
                 var t = new TerrainGeometry(chunk.Draws, i);
                 terrainGeometry[i] = t;
@@ -1516,7 +1539,7 @@ public class TerrainUpdater
             num4--;
         }
 
-        for (var i = 0; i < 32; i++)
+        for (var i = 0; i < TerrainChunk.SlicesCount; i++)
         {
             if (i >= 17)
             {
@@ -1630,7 +1653,7 @@ public class TerrainUpdater
     /// 计算区块切片的哈希值
     /// </summary>
     /// <param name="chunk">目标区块</param>
-    /// <param name="sliceIndex">切片索引（0-31）</param>
+    /// <param name="sliceIndex">切片索引</param>
     /// <returns>计算得到的哈希值</returns>
     private int CalculateChunkSliceContentsHash(TerrainChunk chunk, int sliceIndex)
     {
@@ -1691,7 +1714,7 @@ public class TerrainUpdater
         num *= 31;
         num += _terrain.SeasonHumidity;
         num *= 31;
-        for (var i = 0; i < 32; i++)
+        for (var i = 0; i < TerrainChunk.SlicesCount; i++)
         {
             chunk.SliceContentsHashes[i] = num;
         }
@@ -1731,7 +1754,7 @@ public class TerrainUpdater
             num14 = MathUtils.Max(num14, 0);
             num15 = MathUtils.Min(num15, 256);
             var num16 = MathUtils.Max((num14 - 1) / 16, 0);
-            var num17 = MathUtils.Min((num15 + 1) / 16, 31);
+            var num17 = MathUtils.Min((num15 + 1) / 16, TerrainChunk.SlicesCount - 1);
             var num18 = 1;
             num18 += Terrain.ExtractTemperature(shaftValueFast);
             num18 *= 31;

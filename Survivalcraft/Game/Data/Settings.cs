@@ -196,7 +196,8 @@ public class Settings
 
     public float CreatureConstantSpawnIntervalTime { get; set; } = 1f;
 
-    public int ServerChunkCountSendPer { get; set; } = 100;
+    public int ServerChunkCountSendPer { get; set; } =
+        Network.NetworkTerrainPolicy.DefaultServerChunkCountSendPer;
 
     public bool AutoGarbageCollect { get; set; } = true;
 

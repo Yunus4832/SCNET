@@ -4,6 +4,8 @@ public static class NetworkTerrainPolicy
 {
     public const int DefaultMaxClientVisibilityRange = 512;
 
+    public const int DefaultServerChunkCountSendPer = 100;
+
     public static bool TryClampClientUpdateLocation(
         TerrainUpdater.UpdateLocation requested,
         int configuredMaximum,

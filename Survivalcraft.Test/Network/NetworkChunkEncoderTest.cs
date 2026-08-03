@@ -56,7 +56,7 @@ public sealed class NetworkChunkEncoderTest
     }
 
     [Fact]
-    public void BoundedQueueRejectsWorkBeyondCapacity()
+    public void BoundedQueueRejectsWorkBeyondOutstandingLimit()
     {
         using var terrain = new Terrain();
         using var encodeStarted = new ManualResetEventSlim();
@@ -71,9 +71,38 @@ public sealed class NetworkChunkEncoderTest
         Assert.True(encoder.TrySchedule(terrain.AllocateChunk(0, 0)));
         Assert.True(encodeStarted.Wait(TimeSpan.FromSeconds(5)));
         Assert.True(encoder.TrySchedule(terrain.AllocateChunk(1, 0)));
-        Assert.True(encoder.TrySchedule(terrain.AllocateChunk(2, 0)));
-        Assert.False(encoder.TrySchedule(terrain.AllocateChunk(3, 0)));
-        Assert.Equal(3, encoder.OutstandingCount);
+        Assert.False(encoder.TrySchedule(terrain.AllocateChunk(2, 0)));
+        Assert.Equal(2, encoder.OutstandingCount);
+
+        allowEncode.Set();
+    }
+
+    [Fact]
+    public void DefaultQueueAcceptsEntireConfiguredSendWindow()
+    {
+        using var terrain = new Terrain();
+        using var encodeStarted = new ManualResetEventSlim();
+        using var allowEncode = new ManualResetEventSlim();
+        using var encoder = new NetworkChunkEncoder(
+            NetworkTerrainPolicy.DefaultServerChunkCountSendPer,
+            snapshot =>
+            {
+                encodeStarted.Set();
+                Assert.True(allowEncode.Wait(TimeSpan.FromSeconds(5)));
+                return NetworkChunkCodec.Encode(snapshot);
+            });
+
+        Assert.True(encoder.TrySchedule(terrain.AllocateChunk(0, 0)));
+        Assert.True(encodeStarted.Wait(TimeSpan.FromSeconds(5)));
+        for (var i = 1; i < NetworkTerrainPolicy.DefaultServerChunkCountSendPer; i++)
+        {
+            Assert.True(encoder.TrySchedule(terrain.AllocateChunk(i, 0)));
+        }
+
+        Assert.False(encoder.TrySchedule(terrain.AllocateChunk(
+            NetworkTerrainPolicy.DefaultServerChunkCountSendPer,
+            0)));
+        Assert.Equal(NetworkTerrainPolicy.DefaultServerChunkCountSendPer, encoder.OutstandingCount);
 
         allowEncode.Set();
     }

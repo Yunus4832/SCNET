@@ -147,8 +147,8 @@ public class ComponentDiggingCracks : Component, IDrawable
         _players = Project.FindSubsystem<SubsystemPlayers>(true)!;
         _defaultTexture = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!.AnimatedBlocksTexture;
         _drawItem = new Dictionary<Texture2D, TerrainGeometry[]>();
-        var list = new TerrainGeometry[32];
-        for (var i = 0; i < 32; i++)
+        var list = new TerrainGeometry[TerrainChunk.SlicesCount];
+        for (var i = 0; i < TerrainChunk.SlicesCount; i++)
         {
             var t = new TerrainGeometry(_drawItem, i);
             list[i] = t;

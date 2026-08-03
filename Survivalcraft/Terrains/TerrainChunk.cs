@@ -8,7 +8,7 @@ public class TerrainChunk : IDisposable
 
     private const int _height = 256;
 
-    private const int _slicesCount = 32;
+    public const int SlicesCount = _height / SliceHeight;
 
     private const int _heightMinusOne = 255;
 
@@ -30,7 +30,7 @@ public class TerrainChunk : IDisposable
 
     public Vector2 Center;
 
-    public TerrainGeometry[] ChunkSliceGeometries = new TerrainGeometry[_slicesCount];
+    public TerrainGeometry[] ChunkSliceGeometries = new TerrainGeometry[SlicesCount];
 
     public Point2 Coords;
 
@@ -40,7 +40,7 @@ public class TerrainChunk : IDisposable
 
     public readonly Dictionary<Texture2D, TerrainGeometry[]> Draws = new();
 
-    public readonly int[] GeneratedSliceContentsHashes = new int[_slicesCount];
+    public readonly int[] GeneratedSliceContentsHashes = new int[SlicesCount];
 
     public readonly TerrainChunkGeometry Geometry = new();
 
@@ -64,7 +64,7 @@ public class TerrainChunk : IDisposable
 
     public long[] Shafts = new long[_size * _size];
 
-    public readonly int[] SliceContentsHashes = new int[_slicesCount];
+    public readonly int[] SliceContentsHashes = new int[SlicesCount];
 
     public long StartTime;
 

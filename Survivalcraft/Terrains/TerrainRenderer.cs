@@ -300,15 +300,16 @@ public class TerrainRenderer : IDisposable
         {
             var geometry = item.Value;
             var num = 0;
-            while (num < 224)
+            var geometryItemsCount = 7 * TerrainChunk.SlicesCount;
+            while (num < geometryItemsCount)
             {
                 var num2 = 0;
                 var num3 = 0;
                 int i;
-                for (i = num; i < 224; i++)
+                for (i = num; i < geometryItemsCount; i++)
                 {
-                    var num4 = i / 32;
-                    var num5 = i % 32;
+                    var num4 = i / TerrainChunk.SlicesCount;
+                    var num5 = i % TerrainChunk.SlicesCount;
                     var terrainGeometrySubset = geometry[num5].Subsets[num4];
                     if (vertexTransform != null)
                     {
@@ -344,8 +345,8 @@ public class TerrainRenderer : IDisposable
                     var num7 = 0;
                     for (var j = num; j < i; j++)
                     {
-                        var num8 = j / 32;
-                        var num9 = j % 32;
+                        var num8 = j / TerrainChunk.SlicesCount;
+                        var num9 = j % TerrainChunk.SlicesCount;
                         var terrainGeometrySubset2 = geometry[num9].Subsets[num8];
                         if (num9 == 0 || j == num)
                         {
@@ -368,7 +369,7 @@ public class TerrainRenderer : IDisposable
                             num6 += terrainGeometrySubset2.Vertices.Count;
                         }
 
-                        if (num9 == 31 || j == i - 1)
+                        if (num9 == TerrainChunk.SlicesCount - 1 || j == i - 1)
                         {
                             buffer.SubsetIndexBufferEnds[num8] = num7;
                         }

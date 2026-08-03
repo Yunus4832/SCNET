@@ -23,4 +23,9 @@ public interface ITerrainContentsGenerator
     void GenerateChunkContentsPass3(TerrainChunk chunk);
 
     void GenerateChunkContentsPass4(TerrainChunk chunk);
+
+    bool TryTakeSeedGeneratedChunkBasis(TerrainChunk chunk)
+    {
+        return false;
+    }
 }
