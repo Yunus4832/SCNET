@@ -141,28 +141,34 @@ public class TextBoxWidget : Widget
         _textInputSession = TextInputManager.BeginInput(
             commitText: text =>
             {
-                if (HasFocus)
+                if (!HasFocus)
                 {
-                    ClearComposition();
-                    EnterText(text);
+                    return;
                 }
+
+                ClearComposition();
+                EnterText(text);
             },
             backspace: () =>
             {
-                if (HasFocus)
+                if (!HasFocus)
                 {
-                    ClearComposition();
-                    DeleteCharacterBeforeCaret();
+                    return;
                 }
+
+                ClearComposition();
+                DeleteCharacterBeforeCaret();
             },
             updateComposition: composition =>
             {
-                if (HasFocus)
+                if (!HasFocus)
                 {
-                    _compositionText = composition.Text;
-                    _compositionCaretPosition = composition.CaretPosition;
-                    _focusStartTime = Time.RealTime;
+                    return;
                 }
+
+                _compositionText = composition.Text;
+                _compositionCaretPosition = composition.CaretPosition;
+                _focusStartTime = Time.RealTime;
             });
     }
 
@@ -194,7 +200,17 @@ public class TextBoxWidget : Widget
         // 处理电脑键盘输入时会处理成游戏输入
         if (Input.Click.HasValue)
         {
-            HasFocus = HitTestGlobal(Input.Click.Value.Start) == this && HitTestGlobal(Input.Click.Value.End) == this;
+            var isClicked = HitTestGlobal(Input.Click.Value.Start) == this &&
+                            HitTestGlobal(Input.Click.Value.End) == this;
+            if (isClicked && HasFocus)
+            {
+                // 已聚焦时再次点击需要重新唤起输入法
+                BeginTextInput();
+            }
+            else
+            {
+                HasFocus = isClicked;
+            }
         }
 
         if (!HasFocus)
@@ -331,11 +347,21 @@ public class TextBoxWidget : Widget
     private void SubmitText()
     {
         Enter?.Invoke(this);
+        if (PlatformManager.Platform is Platform.Android && _compositionText.Length == 0)
+        {
+            HasFocus = false;
+        }
     }
 
     private void CancelText()
     {
         Escape?.Invoke(this);
+    }
+
+    public override void UpdateCeases()
+    {
+        HasFocus = false;
+        base.UpdateCeases();
     }
 
     public void MoveNext(WidgetsList widgets)
