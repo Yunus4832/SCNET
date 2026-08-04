@@ -37,12 +37,17 @@ public class HelpScreen : Screen
                 ShowTopic(helpTopic2);
             }
         };
+        LoadTopics();
+    }
+
+    private void LoadTopics()
+    {
         if (LanguageManager.KeyWords["Help"] is not JsonObject kvs)
         {
             return;
         }
 
-        foreach (var (_, item) in kvs)
+        foreach (var (key, item) in kvs)
         {
             if (item is not JsonObject item3)
             {
@@ -60,26 +65,12 @@ public class HelpScreen : Screen
                 }
             }
 
-            var title = item3.ContainsKey("Title") ? item3["Title"]?.ToString() ?? string.Empty : string.Empty;
-            var name = item3.ContainsKey("Name") ? item3["Name"]?.ToString() ?? string.Empty : string.Empty;
-            var value = item3.ContainsKey("value") ? item3["value"]?.ToString() ?? string.Empty : string.Empty;
-            var text = string.Empty;
-            var array = value.Split(["\n"], StringSplitOptions.None);
-            text = array.Aggregate(text, (current, text2) => current + text2.Trim() + " ");
-            text = text.Replace("\r", "");
-            text = text.Replace("â€™", "'");
-            text = text.Replace("\\n", "\n");
-            var helpTopic = new HelpTopic
-            {
-                Name = name,
-                Title = title,
-                Text = text
-            };
+            var helpTopic = HelpTopic.Create(key, item3);
             if (!string.IsNullOrEmpty(helpTopic.Name))
             {
                 if (_topics.ContainsKey(helpTopic.Name))
                 {
-                    Log.Error($"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Title}\" was skipped.");
+                    Log.Error($"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Key}\" was skipped.");
                     continue;
                 }
 

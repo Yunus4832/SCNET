@@ -7,13 +7,11 @@ using Silk.NET.SDL;
 
 namespace Engine.Input;
 
-public sealed unsafe class SdlTextInputBackend : ITextInputBackend
+public sealed unsafe class SdlTextInputBackend(bool processEditingKeyEvents = false) : ITextInputBackend
 {
     private const int _sdlBackspaceKeycode = '\b';
 
     private readonly Lock _stateLock = new();
-
-    private readonly bool _processEditingKeyEvents;
 
     private Sdl? _sdl;
 
@@ -26,11 +24,6 @@ public sealed unsafe class SdlTextInputBackend : ITextInputBackend
     private bool _windowFocused = true;
 
     private bool _isComposing;
-
-    public SdlTextInputBackend(bool processEditingKeyEvents = false)
-    {
-        _processEditingKeyEvents = processEditingKeyEvents;
-    }
 
     public bool IsAvailable { get; private set; }
 
@@ -166,7 +159,7 @@ public sealed unsafe class SdlTextInputBackend : ITextInputBackend
         switch ((EventType)sdlEvent->Type)
         {
             case EventType.Keydown when
-                _processEditingKeyEvents &&
+                processEditingKeyEvents &&
                 sdlEvent->Key.Keysym.Sym == _sdlBackspaceKeycode:
                 Backspace();
                 break;

@@ -325,6 +325,23 @@ public static class LanguageManager
         return Get("ContentWidgets", name, prop);
     }
 
+    public static string GetHelpTopic(string key, string property)
+    {
+        var value = Get("Help", key, property);
+        if (!string.Equals(property, "value", StringComparison.Ordinal))
+        {
+            return value;
+        }
+
+        var text = string.Empty;
+        var array = value.Split(["\n"], StringSplitOptions.None);
+        text = array.Aggregate(text, (current, text2) => current + text2.Trim() + " ");
+        text = text.Replace("\r", "");
+        text = text.Replace("â€™", "'");
+        text = text.Replace("\\n", "\n");
+        return text;
+    }
+
     public static string GetContentWidgets(string name, int pos)
     {
         return Get("ContentWidgets", name, pos.ToString());

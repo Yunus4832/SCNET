@@ -86,6 +86,11 @@ public class LabelWidget : Widget
         if (value.StartsWith('[') && value.EndsWith(']'))
         {
             var parts = value.Substring(1, value.Length - 2).Split([':']);
+            if (parts.Length == 3 && parts[0] == "Help")
+            {
+                return LanguageManager.GetHelpTopic(parts[1], parts[2]);
+            }
+
             return parts.Length > 1
                 ? LanguageManager.GetContentWidgets(parts[0], parts[1])
                 : value;
