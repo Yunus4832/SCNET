@@ -68,13 +68,11 @@ public class HelpScreen : Screen
             var helpTopic = HelpTopic.Create(key, item3);
             if (!string.IsNullOrEmpty(helpTopic.Name))
             {
-                if (_topics.ContainsKey(helpTopic.Name))
+                if (!_topics.TryAdd(helpTopic.Name, helpTopic))
                 {
                     Log.Error($"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Key}\" was skipped.");
                     continue;
                 }
-
-                _topics.Add(helpTopic.Name, helpTopic);
             }
 
             _topicsList.AddItem(helpTopic);
