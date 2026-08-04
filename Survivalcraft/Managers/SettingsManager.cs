@@ -50,11 +50,6 @@ public static class SettingsManager
             : Guid.NewGuid().ToString();
         Current.OnlineAccessToken = defaultOnlineAccessToken;
 
-        if (PlatformManager.Platform is Platform.Android)
-        {
-            Current.UIScale = 0.8f;
-        }
-
         var screenWidth = RunMode.Value is RunModeType.HeadlessServer ? 1280 : Window.ScreenSize.X;
         var screenHeight = RunMode.Value is RunModeType.HeadlessServer ? 720 : Window.ScreenSize.Y;
         var isWideScreen = screenWidth / (float)screenHeight > 1.33333337f;
