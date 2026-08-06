@@ -340,12 +340,21 @@ public static class GameManager
     private static void HandleServerClientConnected(Project project, NetNode net, Client client)
     {
         var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
-        if (subsystemPlayers.MakePlayerOnline(client.GUID, out var playerData, out var entity))
+        try
         {
-            client.CachePlayerEntity = entity!;
-            net.QueuePackage(new PlayerDataPackage(playerData!, PlayerDataPackage.DataType.AddPlayer)
-                { Except = client });
-            net.QueuePackage(new PlayerListPackage(subsystemPlayers));
+            if (subsystemPlayers.MakePlayerOnline(client.GUID, out var playerData, out var entity))
+            {
+                client.CachePlayerEntity = entity!;
+                net.QueuePackage(new PlayerDataPackage(playerData!, PlayerDataPackage.DataType.AddPlayer)
+                    { Except = client });
+                net.QueuePackage(new PlayerListPackage(subsystemPlayers));
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"玩家数据恢复失败，断开连接: guid={client.GUID:N}, error={ex.Message}");
+            net.RemoveClient(client, "玩家数据加载失败，请稍后重试");
+            return;
         }
 
         byte[]? textureData = null;

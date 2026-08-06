@@ -141,9 +141,14 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
     public void AddPlayerData(PlayerData playerData)
     {
-        if (_playersData.Contains(playerData) || _playersData.Any(pd => pd.PlayerGUID == playerData.PlayerGUID))
+        var existing = _playersData.FirstOrDefault(pd => pd.PlayerGUID == playerData.PlayerGUID);
+        if (existing != null && !ReferenceEquals(existing, playerData))
         {
-            throw new InvalidOperationException("Player already added.");
+            // 玩家重连时服务端会重新广播 PlayerData，旧数据可能因客户端未收到离线通知而残留。
+            // 直接替换旧记录，避免“Player already added”异常导致新 PlayerData 无法建立、
+            // 以及后续玩家实体加载失败。
+            _playersData.Remove(existing);
+            _usedIndies.Remove(existing.PlayerIndex);
         }
 
         _playersData.Add(playerData);
@@ -534,8 +539,12 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
                     $"Restored entity does not belong to player {playerGuid}.");
             }
 
-            Project.AttachEntities(entityList, true);
-            _offlinePlayers.Remove(playerGuid);
+            // 延迟挂载：实体先不加入项目，等客户端到达 ProjectLoaded 后由 GameManager 挂载。
+            // 这样 AddPlayer(PlayerData) 广播必然先于实体广播到达其它客户端，避免实体先于
+            // PlayerData 被解码导致玩家实体加载失败。
+            entity.EntityId = 0;
+            // 离线记录保留在 _offlinePlayers 中（读取不删除），避免客户端在 ProjectLoaded
+            // 之前断开时丢失玩家数据；下次正常退出时会重新覆盖为最新数据。
             playerData = restoredPlayerData;
             return true;
         }
