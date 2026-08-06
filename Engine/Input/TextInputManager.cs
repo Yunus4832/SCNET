@@ -60,7 +60,8 @@ public static class TextInputManager
     public static TextInputSession BeginInput(
         Action<string>? commitText = null,
         Action? backspace = null,
-        Action<TextComposition>? updateComposition = null)
+        Action<TextComposition>? updateComposition = null,
+        TextInputRectangle? initialRectangle = null)
     {
         _activeSession?.Dispose();
 
@@ -69,10 +70,15 @@ public static class TextInputManager
             backspace ?? delegate { },
             updateComposition ?? delegate { });
         _activeSession = session;
-        _cursorRectangle = null;
+        _cursorRectangle = initialRectangle;
 
         try
         {
+            if (initialRectangle is { } rectangle)
+            {
+                TryInvokeBackend(() => _backend.SetCursorRectangle(rectangle));
+            }
+
             _backend.BeginInput(new SessionSink(session));
         }
         catch (Exception ex)

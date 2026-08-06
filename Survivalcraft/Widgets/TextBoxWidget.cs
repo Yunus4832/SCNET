@@ -137,6 +137,15 @@ public class TextBoxWidget : Widget
     {
         ClearPendingTextInput();
         CaretPosition = _text.Length;
+        TextInputRectangle? initialRectangle = null;
+        if (ActualSize.X > 0f && ActualSize.Y > 0f)
+        {
+            var displayText = GetDisplayText();
+            var displayCaretPosition = CaretPosition + _compositionCaretPosition;
+            var caretX = CalculateCaretX(displayText, displayCaretPosition);
+            initialRectangle = CreateTextInputRectangle(caretX);
+        }
+
         _textInputSession?.Dispose();
         _textInputSession = TextInputManager.BeginInput(
             commitText: text =>
@@ -169,7 +178,8 @@ public class TextBoxWidget : Widget
                 _compositionText = composition.Text;
                 _compositionCaretPosition = composition.CaretPosition;
                 _focusStartTime = Time.RealTime;
-            });
+            },
+            initialRectangle: initialRectangle);
     }
 
     private void EndTextInput()
@@ -428,16 +438,7 @@ public class TextBoxWidget : Widget
         }
 
         var displayCaretPosition = CaretPosition + _compositionCaretPosition;
-        var num = CalculateCharacterPosition?.Invoke(
-                      displayText,
-                      displayCaretPosition,
-                      FontScale,
-                      FontSpacing) ??
-                  Font.CalculateCharacterPosition(
-                      displayText,
-                      displayCaretPosition,
-                      new Vector2(FontScale),
-                      FontSpacing);
+        var num = CalculateCaretX(displayText, displayCaretPosition);
 
         var v = new Vector2(0f, ActualSize.Y / 2f) + new Vector2(num - _scroll, 0f);
 
@@ -549,16 +550,34 @@ public class TextBoxWidget : Widget
             return;
         }
 
+        TextInputManager.SetCursorRectangle(CreateTextInputRectangle(caretX));
+    }
+
+    private float CalculateCaretX(string displayText, int displayCaretPosition)
+    {
+        return CalculateCharacterPosition?.Invoke(
+                   displayText,
+                   displayCaretPosition,
+                   FontScale,
+                   FontSpacing) ??
+               Font.CalculateCharacterPosition(
+                   displayText,
+                   displayCaretPosition,
+                   new Vector2(FontScale),
+                   FontSpacing);
+    }
+
+    private TextInputRectangle CreateTextInputRectangle(float caretX)
+    {
         var localPosition = new Vector2(
             caretX - _scroll,
             ActualSize.Y / 2f + Font.GlyphHeight * FontScale * Font.Scale / 2f);
         var screenPosition = WidgetToScreen(localPosition);
         var windowScale = MathUtils.Max(Window.Scale, 0.0001f);
-        TextInputManager.SetCursorRectangle(
-            new TextInputRectangle(
-                (int)MathF.Round(screenPosition.X / windowScale),
-                (int)MathF.Round(screenPosition.Y / windowScale),
-                1,
-                Math.Max(1, (int)MathF.Round(Font.GlyphHeight * FontScale * Font.Scale / windowScale))));
+        return new TextInputRectangle(
+            (int)MathF.Round(screenPosition.X / windowScale),
+            (int)MathF.Round(screenPosition.Y / windowScale),
+            1,
+            Math.Max(1, (int)MathF.Round(Font.GlyphHeight * FontScale * Font.Scale / windowScale)));
     }
 }

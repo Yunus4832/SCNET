@@ -25,6 +25,8 @@ public sealed unsafe class SdlTextInputBackend(bool processEditingKeyEvents = fa
 
     private bool _isComposing;
 
+    private TextInputRectangle? _pendingCursorRectangle;
+
     public bool IsAvailable { get; private set; }
 
     public bool SuppressDirectText => IsAvailable && _active && _windowFocused;
@@ -57,6 +59,11 @@ public sealed unsafe class SdlTextInputBackend(bool processEditingKeyEvents = fa
 
         if (IsAvailable && _windowFocused)
         {
+            if (_pendingCursorRectangle is { } rectangle)
+            {
+                ApplyCursorRectangle(rectangle);
+            }
+
             StartTextInput();
         }
     }
@@ -81,11 +88,17 @@ public sealed unsafe class SdlTextInputBackend(bool processEditingKeyEvents = fa
 
     public void SetCursorRectangle(TextInputRectangle rectangle)
     {
+        _pendingCursorRectangle = rectangle;
         if (!IsAvailable || !_active)
         {
             return;
         }
 
+        ApplyCursorRectangle(rectangle);
+    }
+
+    private void ApplyCursorRectangle(TextInputRectangle rectangle)
+    {
         var sdlRectangle = new Rectangle<int>(
             rectangle.X,
             rectangle.Y,
