@@ -1003,8 +1003,37 @@ public class NetNode
             return [];
         }
 
-        var writer = CreatePackageWriter(packages, transport, out var packetSize);
         var maxPacketSize = peer.GetMaxSinglePacketSize(transport.DeliveryMethod);
+        var remainingPackages = new List<IPackage>(packages.Count);
+        foreach (var package in packages)
+        {
+            if (package is SubsystemBodyPackage
+                {
+                    PackageEventType: SubsystemBodyPackage.EventType.BodyUpdate
+                } bodyPackage)
+            {
+                CreatePackageWriter([bodyPackage], transport, out var bodyPackageSize);
+                if (bodyPackageSize > maxPacketSize)
+                {
+                    foreach (var chunk in SplitOversizedBodyPackage(bodyPackage, transport, maxPacketSize))
+                    {
+                        var chunkWriter = CreatePackageWriter([chunk], transport, out _);
+                        peer.Send(chunkWriter, transport.ChannelNumber, transport.DeliveryMethod);
+                    }
+
+                    continue;
+                }
+            }
+
+            remainingPackages.Add(package);
+        }
+
+        if (remainingPackages.Count == 0)
+        {
+            return [];
+        }
+
+        var writer = CreatePackageWriter(remainingPackages, transport, out var packetSize);
         if (packetSize <= maxPacketSize || CanFragment(transport.DeliveryMethod))
         {
             peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
@@ -1013,12 +1042,12 @@ public class NetNode
 
         if (transport.Coalesce)
         {
-            return SendBudgetedSnapshot(peer, packages, transport, maxPacketSize);
+            return SendBudgetedSnapshot(peer, remainingPackages, transport, maxPacketSize);
         }
 
         var batch = new List<IPackage>();
 
-        foreach (var package in packages)
+        foreach (var package in remainingPackages)
         {
             batch.Add(package);
             CreatePackageWriter(batch, transport, out packetSize);
@@ -1069,6 +1098,47 @@ public class NetNode
         var writer = CreatePackageWriter(selectedPackages, transport, out _);
         peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
         return deferredPackages;
+    }
+
+    private List<SubsystemBodyPackage> SplitOversizedBodyPackage(
+        SubsystemBodyPackage bodyPackage,
+        PackageTransport transport,
+        int maxPacketSize)
+    {
+        var chunks = new List<SubsystemBodyPackage>();
+        var chunk = new SubsystemBodyPackage
+        {
+            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
+            To = bodyPackage.To,
+            Except = bodyPackage.Except
+        };
+
+        foreach (var item in bodyPackage.BodyList)
+        {
+            chunk.BodyList.Add(item);
+            CreatePackageWriter([chunk], transport, out var chunkSize);
+            if (chunkSize <= maxPacketSize)
+            {
+                continue;
+            }
+
+            chunk.BodyList.RemoveAt(chunk.BodyList.Count - 1);
+            chunks.Add(chunk);
+            chunk = new SubsystemBodyPackage
+            {
+                PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
+                To = bodyPackage.To,
+                Except = bodyPackage.Except
+            };
+            chunk.BodyList.Add(item);
+        }
+
+        if (chunk.BodyList.Count > 0)
+        {
+            chunks.Add(chunk);
+        }
+
+        return chunks;
     }
 
     private void SendPackageBatch(

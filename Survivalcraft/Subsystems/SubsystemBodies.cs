@@ -11,6 +11,12 @@ public class SubsystemBodies : Subsystem, IUpdateable
 {
     public const float AreaSize = 8f;
 
+    /// <summary>
+    /// 单个身体快照包最多包含的生物数量。快照通道使用 Sequenced 投递且不分片，
+    /// 超过 MTU 的包会被无限延迟，因此需要在打包阶段主动拆包。
+    /// </summary>
+    private const int _maxBodiesPerSnapshotPackage = 20;
+
     private readonly Dictionary<Client, List<ComponentBody>> _toSendList = new();
 
     private Dictionary<ushort, ComponentBody> _idBodies = new();
@@ -81,9 +87,12 @@ public class SubsystemBodies : Subsystem, IUpdateable
             {
                 foreach (var item in _toSendList)
                 {
-                    if (item.Value.Count > 0)
+                    var bodies = item.Value;
+                    for (var i = 0; i < bodies.Count; i += _maxBodiesPerSnapshotPackage)
                     {
-                        CommonLib.Net.QueuePackage(new SubsystemBodyPackage(item.Value) { To = item.Key });
+                        var count = Math.Min(_maxBodiesPerSnapshotPackage, bodies.Count - i);
+                        var chunk = bodies.GetRange(i, count);
+                        CommonLib.Net.QueuePackage(new SubsystemBodyPackage(chunk) { To = item.Key });
                     }
                 }
 
