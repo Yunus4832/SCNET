@@ -12,14 +12,25 @@ public class SubsystemBodies : Subsystem, IUpdateable
     public const float AreaSize = 8f;
 
     /// <summary>
-    /// 单个身体快照包最多包含的生物数量。快照通道使用 Sequenced 投递且不分片，
-    /// 超过 MTU 的包会被无限延迟，因此需要在打包阶段主动拆包。
+    /// 单个状态流包最多包含的生物数量。生物状态使用 Unreliable 投递，
+    /// 同一轮拆出的兄弟包互不淘汰；极端超 MTU 时由发送侧再按 MTU 拆分。
     /// </summary>
     private const int _maxBodiesPerSnapshotPackage = 20;
 
     private readonly Dictionary<Client, List<ComponentBody>> _toSendList = new();
 
-    private Dictionary<ushort, ComponentBody> _idBodies = new();
+    /// <summary>状态流轮次序号，每轮递增，同一轮所有生物包共享。</summary>
+    private uint _stateTick;
+
+    /// <summary>每个客户端应持有的无骑手非玩家生物 ID 集合（服务端驱动 AOI 移除用）。</summary>
+    private readonly Dictionary<Client, HashSet<int>> _clientCreatureSets = new();
+
+    /// <summary>生物离开客户端 AOI 后的连续快照轮次数（去抖）。</summary>
+    private readonly Dictionary<Client, Dictionary<int, int>> _clientOutOfRangeTicks = new();
+
+    private const int _outOfRangeRemoveTicks = 30;
+
+    private readonly Dictionary<ushort, ComponentBody> _idBodies = new();
 
     private readonly Dictionary<ComponentBody, Point2> _areaByComponentBody = new();
 
@@ -85,6 +96,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
             }
 
             {
+                _stateTick++;
                 foreach (var item in _toSendList)
                 {
                     var bodies = item.Value;
@@ -92,24 +104,18 @@ public class SubsystemBodies : Subsystem, IUpdateable
                     {
                         var count = Math.Min(_maxBodiesPerSnapshotPackage, bodies.Count - i);
                         var chunk = bodies.GetRange(i, count);
-                        CommonLib.Net.QueuePackage(new SubsystemBodyPackage(chunk) { To = item.Key });
+                        CommonLib.Net.QueuePackage(
+                            new SubsystemBodyPackage(chunk) { To = item.Key, StateTick = _stateTick });
                     }
                 }
 
-                //在这里重置标志
+                UpdateClientCreatureSets();
+
+                // FlyOrderChange 是一次性标志，发送后重置；其它字段改为每轮全量发送，无需重置。
                 foreach (var item in _toSendList)
                 foreach (var body in item.Value)
                 {
-                    body.SendPosition = null;
-                    body.SendRotation = null;
-                    body.SendVelocity = null;
-                    if (body.Locomotion == null)
-                    {
-                        continue;
-                    }
-
-                    body.Locomotion.SendLookAngles = null;
-                    body.Locomotion.FlyOrderChange = false;
+                    body.Locomotion?.FlyOrderChange = false;
                 }
             }
         }
@@ -131,12 +137,14 @@ public class SubsystemBodies : Subsystem, IUpdateable
         for (var i = num; i <= num3; i++)
         for (var j = num2; j <= num4; j++)
         {
-            if (_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
+            if (!_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
             {
-                for (var k = 0; k < value.Count; k++)
-                {
-                    result.Add(value.Array[k]);
-                }
+                continue;
+            }
+
+            for (var k = 0; k < value.Count; k++)
+            {
+                result.Add(value.Array[k]);
             }
         }
     }
@@ -152,12 +160,14 @@ public class SubsystemBodies : Subsystem, IUpdateable
         for (var i = num; i <= num3; i++)
         for (var j = num2; j <= num4; j++)
         {
-            if (_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
+            if (!_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
             {
-                for (var k = 0; k < value.Count; k++)
-                {
-                    result.Add(value.Array[k]);
-                }
+                continue;
+            }
+
+            for (var k = 0; k < value.Count; k++)
+            {
+                result.Add(value.Array[k]);
             }
         }
     }
@@ -250,11 +260,119 @@ public class SubsystemBodies : Subsystem, IUpdateable
 
     public override void OnEntityRemoved(Entity entity)
     {
+        var hasBody = false;
         foreach (var item in entity.FindComponents<ComponentBody>())
         {
-            if (item != null)
+            if (item == null)
             {
-                RemoveBody(item);
+                continue;
+            }
+
+            RemoveBody(item);
+            hasBody = true;
+        }
+
+        if (hasBody && CommonLib.Net.IsServer)
+        {
+            // 服务器移除生物时通过可靠的生命周期消息通知客户端，不再依赖快照成员列表。
+            CommonLib.Net.QueuePackage(new EntityPackage(entity.EntityId));
+            foreach (var set in _clientCreatureSets.Values)
+            {
+                set.Remove(entity.EntityId);
+            }
+
+            foreach (var ticks in _clientOutOfRangeTicks.Values)
+            {
+                ticks.Remove(entity.EntityId);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 服务端驱动的 AOI 离场移除：对比每个客户端上一轮与当前轮的快照集合，
+    /// 对连续多轮离开范围的生物发送 EntityPackage(Remove) 通知客户端删除。
+    /// 客户端重新进入范围时通过 RequestSync 重新加载实体。
+    /// </summary>
+    private void UpdateClientCreatureSets()
+    {
+        foreach (var client in _clientCreatureSets.Keys.ToList())
+        {
+            if (CommonLib.Net.Clients.TryGetValue(client.ID, out var current) && ReferenceEquals(current, client))
+            {
+                continue;
+            }
+
+            _clientCreatureSets.Remove(client);
+            _clientOutOfRangeTicks.Remove(client);
+        }
+
+        var clients = new HashSet<Client>(_toSendList.Keys);
+        clients.UnionWith(_clientCreatureSets.Keys);
+        foreach (var client in clients)
+        {
+            if (!_clientCreatureSets.TryGetValue(client, out var expected))
+            {
+                // 首轮以全部无骑手生物做种子：客户端 ProjectLoaded 时收到了全部实体，
+                // 范围外的生物由后续轮次的定向移除清理掉。
+                expected = [];
+                foreach (var body in Bodies)
+                {
+                    if (body.Player == null && body.ChildBodies.Count == 0)
+                    {
+                        expected.Add(body.Entity.EntityId);
+                    }
+                }
+
+                _clientCreatureSets[client] = expected;
+            }
+
+            var current = _toSendList.TryGetValue(client, out var list)
+                ? list.Select(body => body.Entity.EntityId).ToHashSet()
+                : [];
+
+            if (!_clientOutOfRangeTicks.TryGetValue(client, out var outTicks))
+            {
+                outTicks = new Dictionary<int, int>();
+                _clientOutOfRangeTicks[client] = outTicks;
+            }
+
+            foreach (var creatureId in expected.ToList())
+            {
+                if (current.Contains(creatureId))
+                {
+                    outTicks.Remove(creatureId);
+                    continue;
+                }
+
+                // 生物已不在快照范围：只有仍是无骑手非玩家生物才通知客户端移除；
+                // 变成被骑乘/玩家或已从服务器移除时，交给其它包处理，不再跟踪。
+                if (!_idBodies.TryGetValue((ushort)creatureId, out var body) ||
+                    body.Player != null ||
+                    body.ChildBodies.Count != 0)
+                {
+                    expected.Remove(creatureId);
+                    outTicks.Remove(creatureId);
+                    continue;
+                }
+
+                var ticks = outTicks.TryGetValue(creatureId, out var count) ? count : 0;
+                if (++ticks < _outOfRangeRemoveTicks)
+                {
+                    outTicks[creatureId] = ticks;
+                    continue;
+                }
+
+                expected.Remove(creatureId);
+                outTicks.Remove(creatureId);
+                CommonLib.Net.QueuePackage(new EntityPackage(creatureId) { To = client });
+            }
+
+            foreach (var creatureId in current)
+            {
+                if (expected.Add(creatureId))
+                {
+                    outTicks.Remove(creatureId);
+                }
             }
         }
     }

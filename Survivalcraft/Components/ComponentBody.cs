@@ -88,6 +88,9 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public Vector3? SendVelocity;
 
+    /// <summary>最近一次应用的状态流轮次序号（客户端联机用，用于丢弃旧包）。</summary>
+    public uint LastBodyStateTick;
+
     static ComponentBody()
     {
         var list = new List<Vector3>();

@@ -39,12 +39,6 @@ public static class SnapshotPackageCoalescer
                     package.To,
                     package.Except);
                 return true;
-            case SubsystemBodyPackage
-            {
-                PackageEventType: SubsystemBodyPackage.EventType.BodyUpdate
-            }:
-                key = new SnapshotKey(typeof(SubsystemBodyPackage), 0, package.To, package.Except);
-                return true;
             case PickablePackage { Type: PickablePackage.PickType.Update }:
                 key = new SnapshotKey(typeof(PickablePackage), 0, package.To, package.Except);
                 return true;
@@ -63,9 +57,6 @@ public static class SnapshotPackageCoalescer
         {
             case (ComponentPlayerPackage olderPlayer, ComponentPlayerPackage newerPlayer):
                 MergePlayer(olderPlayer, newerPlayer);
-                break;
-            case (SubsystemBodyPackage olderBodies, SubsystemBodyPackage newerBodies):
-                MergeBodies(olderBodies, newerBodies);
                 break;
         }
 
@@ -107,55 +98,6 @@ public static class SnapshotPackageCoalescer
         {
             copy(older, newer);
         }
-    }
-
-    private static void MergeBodies(SubsystemBodyPackage older, SubsystemBodyPackage newer)
-    {
-        var olderItems = older.BodyList.ToDictionary(item => item.CreatureId);
-        for (var i = 0; i < newer.BodyList.Count; i++)
-        {
-            var newerItem = newer.BodyList[i];
-            if (!olderItems.TryGetValue(newerItem.CreatureId, out var olderItem))
-            {
-                continue;
-            }
-
-            if (HasOlderValue(olderItem, newerItem, SubsystemBodyPackage.ChangeFlag.LookAnglesChange))
-            {
-                newerItem.LookAngles = olderItem.LookAngles;
-            }
-
-            if (HasOlderValue(olderItem, newerItem, SubsystemBodyPackage.ChangeFlag.FlyOrderChange))
-            {
-                newerItem.FlyOrder = olderItem.FlyOrder;
-            }
-
-            if (HasOlderValue(olderItem, newerItem, SubsystemBodyPackage.ChangeFlag.PositionChange))
-            {
-                newerItem.Position = olderItem.Position;
-            }
-
-            if (HasOlderValue(olderItem, newerItem, SubsystemBodyPackage.ChangeFlag.RotationChange))
-            {
-                newerItem.Rotation = olderItem.Rotation;
-            }
-
-            if (HasOlderValue(olderItem, newerItem, SubsystemBodyPackage.ChangeFlag.VelocityChange))
-            {
-                newerItem.Velocity = olderItem.Velocity;
-            }
-
-            newerItem.ChangeFlag |= olderItem.ChangeFlag;
-            newer.BodyList[i] = newerItem;
-        }
-    }
-
-    private static bool HasOlderValue(
-        SubsystemBodyPackage.BodyItem older,
-        SubsystemBodyPackage.BodyItem newer,
-        SubsystemBodyPackage.ChangeFlag flag)
-    {
-        return older.ChangeFlag.HasFlag(flag) && !newer.ChangeFlag.HasFlag(flag);
     }
 
     private readonly record struct SnapshotKey(Type Type, int EntityId, Client? To, Client? Except);

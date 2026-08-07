@@ -21,7 +21,6 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
             case SubsystemBodyPackage.EventType.BodyUpdate:
                 var bodies = project.FindSubsystem<SubsystemBodies>(true)!;
                 var ml = new List<int>();
-                var rl = new List<ComponentBody>();
                 // 服务器的动物列表
                 foreach (var item in package.BodyList)
                 {
@@ -29,6 +28,13 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
                         item.CreatureId,
                         body =>
                         {
+                            // 应用层最新优先：同一实体的旧轮次快照到达时直接丢弃。
+                            if (!IsNewer(package.StateTick, body.LastBodyStateTick))
+                            {
+                                return;
+                            }
+
+                            body.LastBodyStateTick = package.StateTick;
                             if (item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.PositionChange))
                             {
                                 body.NetPosition.SetNext(item.Position);
@@ -67,27 +73,9 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
                     );
                 }
 
-                foreach (var item2 in bodies.Bodies)
-                {
-                    SubsystemBodyPackage.BodyItem?
-                        m = package.BodyList.Find(x => x.CreatureId == item2.Entity.EntityId);
-                    if (!m.HasValue)
-                    {
-                        rl.Add(item2);
-                    }
-                }
-
                 if (ml.Count > 0)
                 {
                     netNode.QueuePackage(new EntityPackage(ml));
-                }
-
-                if (rl.Count > 0)
-                {
-                    foreach (var b in rl)
-                    {
-                        project.RemoveEntity(b.Entity, true);
-                    }
                 }
 
                 break;
@@ -109,5 +97,11 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
                     .FindBodyByCreatureID(package.CreatureId, body => { body.ApplyImpulseNet(package.Impulse); });
                 break;
         }
+    }
+
+    /// <summary>无符号回绕安全的大小比较：value 是否比 previous 更新。</summary>
+    private static bool IsNewer(uint value, uint previous)
+    {
+        return unchecked((int)(value - previous)) > 0;
     }
 }

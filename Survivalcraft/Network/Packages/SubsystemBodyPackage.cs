@@ -45,6 +45,12 @@ public class SubsystemBodyPackage : IPackage
 
     public ClientState MinNeedState => ClientState.Playing;
 
+    /// <summary>
+    /// 状态流轮次序号：同一轮拆出的所有生物包共享同一个值，
+    /// 客户端按实体比较此序号丢弃旧包，实现“最新优先”。
+    /// </summary>
+    public uint StateTick;
+
     public SubsystemBodyPackage()
     {
     }
@@ -79,6 +85,7 @@ public class SubsystemBodyPackage : IPackage
         switch (PackageEventType)
         {
             case EventType.BodyUpdate:
+                StateTick = reader.ReadUInt32();
                 var cnt = reader.ReadUInt16();
                 for (ushort i = 0; i < cnt; i++)
                 {
@@ -104,6 +111,7 @@ public class SubsystemBodyPackage : IPackage
         switch (PackageEventType)
         {
             case EventType.BodyUpdate:
+                writer.Write(StateTick);
                 writer.Write((ushort)BodyList.Count);
                 foreach (var i in BodyList)
                 {
@@ -126,35 +134,23 @@ public class SubsystemBodyPackage : IPackage
 
     public void AddItem(ComponentBody body)
     {
+        // 每轮发送完整当前状态（位置/旋转/速度/视线角），快照自包含：
+        // 丢包后下一轮即恢复，不会因“停止移动前最后一包丢失”而长期停在旧位置。
         var bodyItem = new BodyItem
         {
             CreatureId = body.Entity.EntityId
         };
-        if (body.SendPosition.HasValue)
-        {
-            bodyItem.ChangeFlag |= ChangeFlag.PositionChange;
-            bodyItem.Position = body.SendPosition.Value;
-        }
-
-        if (body.SendRotation.HasValue)
-        {
-            bodyItem.ChangeFlag |= ChangeFlag.RotationChange;
-            bodyItem.Rotation = body.SendRotation.Value;
-        }
-
-        if (body.SendVelocity.HasValue)
-        {
-            bodyItem.ChangeFlag |= ChangeFlag.VelocityChange;
-            bodyItem.Velocity = body.SendVelocity.Value;
-        }
+        bodyItem.ChangeFlag |= ChangeFlag.PositionChange;
+        bodyItem.Position = body.Position;
+        bodyItem.ChangeFlag |= ChangeFlag.RotationChange;
+        bodyItem.Rotation = body.Rotation;
+        bodyItem.ChangeFlag |= ChangeFlag.VelocityChange;
+        bodyItem.Velocity = body.Velocity;
 
         if (body.Locomotion != null)
         {
-            if (body.Locomotion.SendLookAngles.HasValue)
-            {
-                bodyItem.ChangeFlag |= ChangeFlag.LookAnglesChange;
-                bodyItem.LookAngles = body.Locomotion.SendLookAngles.Value;
-            }
+            bodyItem.ChangeFlag |= ChangeFlag.LookAnglesChange;
+            bodyItem.LookAngles = body.Locomotion.LookAngles;
 
             if (body.Locomotion.FlyOrderChange)
             {

@@ -9,6 +9,44 @@ namespace Survivalcraft.Test.Network;
 public sealed class SubsystemBodyPackageChunkingTest
 {
     [Fact]
+    public void BodySnapshotRoundTripsSnapshotIdAndFullState()
+    {
+        var package = new SubsystemBodyPackage
+        {
+            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
+            StateTick = 12345u
+        };
+        package.BodyList.Add(new SubsystemBodyPackage.BodyItem
+        {
+            CreatureId = 7,
+            ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange |
+                         SubsystemBodyPackage.ChangeFlag.RotationChange |
+                         SubsystemBodyPackage.ChangeFlag.VelocityChange |
+                         SubsystemBodyPackage.ChangeFlag.LookAnglesChange |
+                         SubsystemBodyPackage.ChangeFlag.FlyOrderChange,
+            Position = new Vector3(1f, 2f, 3f),
+            Rotation = Quaternion.Identity,
+            Velocity = new Vector3(4f, 5f, 6f),
+            LookAngles = new Vector2(0.1f, 0.2f),
+            FlyOrder = new Vector3(7f, 8f, 9f)
+        });
+
+        var writer = new PackageStreamWriter();
+        package.WriteData(writer);
+        var clone = new SubsystemBodyPackage();
+        clone.ReadData(new PackageStreamReader(writer.Data()));
+
+        Assert.Equal(package.StateTick, clone.StateTick);
+        var item = Assert.Single(clone.BodyList);
+        Assert.Equal(7, item.CreatureId);
+        Assert.Equal(new Vector3(1f, 2f, 3f), item.Position);
+        Assert.Equal(Quaternion.Identity, item.Rotation);
+        Assert.Equal(new Vector3(4f, 5f, 6f), item.Velocity);
+        Assert.Equal(new Vector2(0.1f, 0.2f), item.LookAngles);
+        Assert.Equal(new Vector3(7f, 8f, 9f), item.FlyOrder);
+    }
+
+    [Fact]
     public void FullBodySnapshotExceedingMtuCanBeSplitIntoFittingChunks()
     {
         const int maxPacketSize = 1428;

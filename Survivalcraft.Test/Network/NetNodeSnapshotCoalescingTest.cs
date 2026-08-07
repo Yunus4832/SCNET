@@ -40,43 +40,26 @@ public class NetNodeSnapshotCoalescingTest
     }
 
     [Fact]
-    public void BodySnapshotsUseLatestMembershipAndPreservePendingChanges()
+    public void BodySnapshotsAreNotCoalescedToKeepIndependentPackages()
     {
         var packages = new List<IPackage>();
         var older = new SubsystemBodyPackage
         {
             PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
         };
-        older.BodyList.Add(new SubsystemBodyPackage.BodyItem
-        {
-            CreatureId = 1,
-            ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange,
-            Position = new Vector3(1f, 2f, 3f)
-        });
-        older.BodyList.Add(new SubsystemBodyPackage.BodyItem { CreatureId = 2 });
+        older.BodyList.Add(new SubsystemBodyPackage.BodyItem { CreatureId = 1 });
 
         var newer = new SubsystemBodyPackage
         {
             PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
         };
-        newer.BodyList.Add(new SubsystemBodyPackage.BodyItem
-        {
-            CreatureId = 1,
-            ChangeFlag = SubsystemBodyPackage.ChangeFlag.VelocityChange,
-            Velocity = new Vector3(4f, 5f, 6f)
-        });
-        newer.BodyList.Add(new SubsystemBodyPackage.BodyItem { CreatureId = 3 });
+        newer.BodyList.Add(new SubsystemBodyPackage.BodyItem { CreatureId = 2 });
 
         packages.Add(older);
-        Assert.True(SnapshotPackageCoalescer.TryCoalesce(packages, newer));
-
-        var package = Assert.IsType<SubsystemBodyPackage>(Assert.Single(packages));
-        Assert.Equal([1, 3], package.BodyList.Select(item => item.CreatureId));
-        var item = package.BodyList[0];
-        Assert.True(item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.PositionChange));
-        Assert.True(item.ChangeFlag.HasFlag(SubsystemBodyPackage.ChangeFlag.VelocityChange));
-        Assert.Equal(new Vector3(1f, 2f, 3f), item.Position);
-        Assert.Equal(new Vector3(4f, 5f, 6f), item.Velocity);
+        // 生物快照按独立小包发送，不允许合并器吃掉其它分块。
+        Assert.False(SnapshotPackageCoalescer.TryCoalesce(packages, newer));
+        Assert.Single(packages);
+        Assert.Same(older, packages[0]);
     }
 
     [Fact]

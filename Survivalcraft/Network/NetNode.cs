@@ -1193,7 +1193,7 @@ public class NetNode
         IEnumerable<IPackage> packages,
         PackageTransport transport)
     {
-        if (transport.Channel is NetworkChannel.Snapshot or NetworkChannel.Effect)
+        if (transport.Mode != TransportMode.Reliable)
         {
             return CommonLib.CompressionPolicy.None;
         }
