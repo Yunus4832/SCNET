@@ -73,21 +73,6 @@ public class Settings
 
     public ScreenshotSize ScreenshotSize { get; set; } = ScreenshotSize.ScreenSize;
 
-    public WindowMode WindowMode
-    {
-        get;
-        set
-        {
-            if (value == field)
-            {
-                return;
-            }
-
-            Window.WindowMode = value;
-            field = value;
-        }
-    }
-
     public bool HideMoveLookPads { get; set; }
 
     public MoveControlMode MoveControlMode { get; set; } = MoveControlMode.Pad;

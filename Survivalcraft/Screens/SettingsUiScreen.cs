@@ -59,8 +59,10 @@ public class SettingsUiScreen : Screen
 
         if (_windowModeButton.IsClicked)
         {
-            SettingsManager.Current.WindowMode = (WindowMode)((int)(SettingsManager.Current.WindowMode + 1) %
-                                                      EnumUtils.GetEnumValues(typeof(WindowMode)).Count);
+            var windowMode = (WindowMode)(((int)RunningSettingManager.Current.WindowMode + 1) %
+                                          EnumUtils.GetEnumValues(typeof(WindowMode)).Count);
+            Window.WindowMode = windowMode;
+            RunningSettingManager.SaveCurrent(rs => rs.WindowMode = windowMode);
         }
 
         if (_uiScaleSlider.SlidingCompleted)
@@ -114,7 +116,7 @@ public class SettingsUiScreen : Screen
         }
 
         // 更新按钮文本
-        _windowModeButton.Text = LanguageManager.Get("WindowMode", SettingsManager.Current.WindowMode.ToString());
+        _windowModeButton.Text = LanguageManager.Get("WindowMode", RunningSettingManager.Current.WindowMode.ToString());
         _languageButton.Text = LanguageManager.Get("Language", "Name");
         _upsideDownButton.Text = SettingsManager.Current.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
         _hideMoveLookPadsButton.Text = SettingsManager.Current.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;

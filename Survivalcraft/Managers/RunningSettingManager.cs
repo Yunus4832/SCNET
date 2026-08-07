@@ -44,6 +44,9 @@ public static class RunningSettingManager
             var root = new XElement("RunningSetting",
                 new XAttribute(nameof(RunningSetting.RunMode), runningSetting.RunMode.ToString()),
                 new XAttribute(nameof(RunningSetting.LogLevel), runningSetting.LogLevel.ToString()),
+                new XAttribute(nameof(RunningSetting.WindowMode), runningSetting.WindowMode.ToString()),
+                new XAttribute(nameof(RunningSetting.WindowWidth), runningSetting.WindowWidth),
+                new XAttribute(nameof(RunningSetting.WindowHeight), runningSetting.WindowHeight),
                 new XAttribute(nameof(RunningSetting.DefaultSessionId), NormalizeDefaultSessionId(runningSetting.DefaultSessionId)),
                 new XAttribute(nameof(RunningSetting.PendingSessionId), NormalizePendingSessionId(runningSetting.PendingSessionId)),
                 new XElement(nameof(RunningSetting.RemainingArgs),
@@ -100,6 +103,13 @@ public static class RunningSettingManager
             runningSetting.LogLevel = ParseLogLevel(
                 root.Attribute(nameof(RunningSetting.LogLevel))?.Value,
                 runningSetting.LogLevel);
+            runningSetting.WindowMode = ParseWindowMode(
+                root.Attribute(nameof(RunningSetting.WindowMode))?.Value,
+                runningSetting.WindowMode);
+            runningSetting.WindowWidth = ParseWindowSize(
+                root.Attribute(nameof(RunningSetting.WindowWidth))?.Value);
+            runningSetting.WindowHeight = ParseWindowSize(
+                root.Attribute(nameof(RunningSetting.WindowHeight))?.Value);
             runningSetting.DefaultSessionId = NormalizeDefaultSessionId(
                 root.Attribute(nameof(RunningSetting.DefaultSessionId))?.Value);
             runningSetting.PendingSessionId = NormalizePendingSessionId(
@@ -127,6 +137,8 @@ public static class RunningSettingManager
         var remainingArgs = new List<string>(runningSetting.RemainingArgs);
         string? worldOverride = null;
         string? seedOverride = null;
+        string? windowModeOverride = null;
+        string? windowSizeOverride = null;
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
@@ -202,7 +214,63 @@ public static class RunningSettingManager
                 continue;
             }
 
+            if (string.Equals(arg, "--window-mode", StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < args.Length)
+                {
+                    windowModeOverride = args[++i];
+                }
+
+                continue;
+            }
+
+            if (string.Equals(arg, "--window-size", StringComparison.OrdinalIgnoreCase))
+            {
+                if (i + 1 < args.Length)
+                {
+                    windowSizeOverride = args[++i];
+                }
+
+                continue;
+            }
+
             remainingArgs.Add(arg);
+        }
+
+        // 窗口参数只在 GUI 模式生效：headless 无窗口，覆盖值既不应应用也不应随 --save 持久化。
+        if (runningSetting.RunMode == RunModeType.HeadlessServer)
+        {
+            if (windowModeOverride != null || windowSizeOverride != null)
+            {
+                Log.Warning("Ignoring --window-mode/--window-size because the run mode is headless server.");
+            }
+        }
+        else
+        {
+            if (windowModeOverride != null)
+            {
+                if (Enum.TryParse<WindowMode>(windowModeOverride, true, out var windowMode))
+                {
+                    runningSetting.WindowMode = windowMode;
+                }
+                else
+                {
+                    Log.Warning($"Ignoring --window-mode because the value '{windowModeOverride}' is invalid.");
+                }
+            }
+
+            if (windowSizeOverride != null)
+            {
+                if (TryParseWindowSize(windowSizeOverride, out var width, out var height))
+                {
+                    runningSetting.WindowWidth = width;
+                    runningSetting.WindowHeight = height;
+                }
+                else
+                {
+                    Log.Warning($"Ignoring --window-size because the value '{windowSizeOverride}' is invalid.");
+                }
+            }
         }
 
         if (!runningSetting.HasExplicitSessionRequest)
@@ -284,8 +352,36 @@ public static class RunningSettingManager
         return Enum.TryParse(value, true, out LogType logLevel) ? logLevel : fallback;
     }
 
+    private static WindowMode ParseWindowMode(string? value, WindowMode fallback)
+    {
+        return Enum.TryParse(value, true, out WindowMode windowMode) ? windowMode : fallback;
+    }
+
+    private static int ParseWindowSize(string? value)
+    {
+        return int.TryParse(value, out var size) ? Math.Max(size, 0) : 0;
+    }
+
+    private static bool TryParseWindowSize(string value, out int width, out int height)
+    {
+        width = 0;
+        height = 0;
+        var separatorIndex = value.IndexOfAny(['x', 'X']);
+        if (separatorIndex <= 0 || separatorIndex == value.Length - 1)
+        {
+            return false;
+        }
+
+        return int.TryParse(value[..separatorIndex], out width) &&
+               int.TryParse(value[(separatorIndex + 1)..], out height) &&
+               width > 0 &&
+               height > 0;
+    }
+
     private static void Normalize(RunningSetting runningSetting)
     {
+        runningSetting.WindowWidth = Math.Max(runningSetting.WindowWidth, 0);
+        runningSetting.WindowHeight = Math.Max(runningSetting.WindowHeight, 0);
         runningSetting.DefaultSessionId = NormalizeDefaultSessionId(runningSetting.DefaultSessionId);
         runningSetting.PendingSessionId = NormalizePendingSessionId(runningSetting.PendingSessionId);
         runningSetting.ActiveSessionId = NormalizeActiveSessionId(runningSetting.ActiveSessionId);
@@ -300,6 +396,9 @@ public static class RunningSettingManager
         {
             RunMode = runningSetting.RunMode,
             LogLevel = runningSetting.LogLevel,
+            WindowMode = runningSetting.WindowMode,
+            WindowWidth = runningSetting.WindowWidth,
+            WindowHeight = runningSetting.WindowHeight,
             DefaultSessionId = runningSetting.DefaultSessionId,
             PendingSessionId = runningSetting.PendingSessionId,
             RemainingArgs = runningSetting.RemainingArgs.ToArray(),

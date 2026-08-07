@@ -21,6 +21,12 @@ public static class GameEntry
 
     private static readonly List<HandleUriItem> _urisToHandle = [];
 
+    /// <summary>用户最近一次调整后的窗口逻辑尺寸（用于退出时保存到 RunningSetting）。</summary>
+    private static Point2 _lastWindowSize;
+
+    /// <summary>窗口初始化稳定后才开始记录用户调整，排除启动时的自动缩放事件。</summary>
+    private static bool _windowStateReady;
+
     public static GameModRuntime? ModRuntime => CurrentModRuntime.Value;
 
     public static Action<string, string> RamDataChangeException = delegate { }; //内存数值被修改事件
@@ -46,6 +52,7 @@ public static class GameEntry
         Window.HandleUri += HandleUriHandler;
         Window.Deactivated += DeactivatedHandler;
         Window.Frame += FrameHandler;
+        Window.Resized += OnWindowResized;
         Window.Closed += Closed;
         RamDataChangeException += (_, _) =>
         {
@@ -79,7 +86,11 @@ public static class GameEntry
             Log.Error(e.Exception.Message);
             e.IsHandled = true;
         };
-        Window.Run(0, 0, WindowMode.Resizable, VersionsManager.Title);
+        Window.Run(
+            runningSetting.WindowWidth,
+            runningSetting.WindowHeight,
+            runningSetting.WindowMode,
+            VersionsManager.Title);
         return GameExitManager.ExitAction;
     }
 
@@ -107,11 +118,35 @@ public static class GameEntry
             return;
         }
 
+        if (Time.FrameIndex == 30)
+        {
+            _windowStateReady = true;
+        }
+
         Run();
+    }
+
+    private static void OnWindowResized()
+    {
+        if (!_windowStateReady)
+        {
+            return;
+        }
+
+        _lastWindowSize = new Point2(Window.View.Size.X, Window.View.Size.Y);
     }
 
     public static void Closed()
     {
+        if (_windowStateReady && _lastWindowSize is { X: > 0, Y: > 0 })
+        {
+            RunningSettingManager.SaveCurrent(rs =>
+            {
+                rs.WindowWidth = _lastWindowSize.X;
+                rs.WindowHeight = _lastWindowSize.Y;
+            });
+        }
+
         ModRuntime?.Dispose();
         CurrentModRuntime.Set(null);
         SettingsManager.SaveSettings();
@@ -144,9 +179,11 @@ public static class GameEntry
         _processCpuTimeBegin = currentCpuTime;
         if (Keyboard.IsKeyDownOnce(Key.F11))
         {
-            SettingsManager.Current.WindowMode = SettingsManager.Current.WindowMode == WindowMode.Fullscreen
+            var windowMode = RunningSettingManager.Current.WindowMode == WindowMode.Fullscreen
                 ? WindowMode.Resizable
                 : WindowMode.Fullscreen;
+            Window.WindowMode = windowMode;
+            RunningSettingManager.SaveCurrent(rs => rs.WindowMode = windowMode);
         }
 
         Window.VSync = SettingsManager.Current.VSync;
