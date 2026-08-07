@@ -74,7 +74,18 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
                 project.FindEntityById(package.TargetId, e =>
                 {
                     var h = e.FindComponent<ComponentHealth>();
-                    h?.Health = package.Health;
+                    if (h == null)
+                    {
+                        return;
+                    }
+
+                    h.Health = package.Health;
+                    // 服务端在死亡时通过 SyncHealth 携带死亡原因，
+                    // 客户端在此应用，避免死亡视角显示“未知原因”。
+                    if (h.Health == 0f && !string.IsNullOrEmpty(package.Cause))
+                    {
+                        h.CauseOfDeath = package.Cause;
+                    }
                 });
                 break;
             case ComponentHealthPackage.EventType.Damage:

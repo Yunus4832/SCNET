@@ -135,6 +135,7 @@ public class ComponentHealthPackage : IPackage
             case EventType.SyncHealth:
                 writer.Write(TargetId);
                 writer.Write(Health);
+                writer.Write(Cause);
                 break;
             case EventType.Damage:
                 writer.Write(TargetId);
@@ -174,6 +175,7 @@ public class ComponentHealthPackage : IPackage
             case EventType.SyncHealth:
                 TargetId = reader.ReadInt32();
                 Health = reader.ReadSingle();
+                Cause = reader.ReadString();
                 break;
             case EventType.Damage:
                 TargetId = reader.ReadInt32();
