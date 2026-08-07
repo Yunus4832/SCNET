@@ -47,6 +47,9 @@ public partial class PlayerData : IDisposable
 
     private SpawnMode _spawnMode;
 
+    /// <summary>本次生成是否由死亡重生触发（用于只在重生时显示死亡物品提示）。</summary>
+    private bool _respawnAfterDeath;
+
     private readonly StateMachine _stateMachine = new();
 
     public readonly SubsystemGameInfo SubsystemGameInfo;
@@ -273,7 +276,9 @@ public partial class PlayerData : IDisposable
                         CommonLib.WorkType != WorkType.Client
                             ? string.Format(LanguageManager.Get(TypeName, 2), Name, MathUtils.Floor(Level))
                             : string.Format(LanguageManager.Get(TypeName, 14), Name, MathUtils.Floor(Level)),
-                        LanguageManager.Get(TypeName, 3));
+                        // 死亡物品提示只在真正死亡重生时显示；进入世界/客户端连接
+                        // 时虽然带着存档出生点，但并不是重生。
+                        _respawnAfterDeath ? LanguageManager.Get(TypeName, 3) : string.Empty);
                 }
                 else
                 {
@@ -315,6 +320,7 @@ public partial class PlayerData : IDisposable
                     SpawnMode.Respawn => FindNoIntroSpawnPosition(SpawnPosition, true),
                     _ => throw new InvalidOperationException(LanguageManager.Get(TypeName, 5))
                 };
+                _respawnAfterDeath = false;
 
                 _stateMachine.TransitionTo("WaitForTerrain");
             },
@@ -518,6 +524,7 @@ public partial class PlayerData : IDisposable
             return;
         }
 
+        _respawnAfterDeath = true;
         var requestKind = ResolveRespawnRequestKind();
         var respawnContext = new PlayerRespawnRequestedContext(this, ComponentPlayer, requestKind);
         CurrentModRuntime.Value?.Gameplay.Invoke(respawnContext);
