@@ -19,20 +19,22 @@ public class Starter
 {
     public static void Main(string[] args)
     {
-        RegisterStorageRoots();
+        var instance = RegisterStorageRoots(args);
         TextInputManager.RegisterBackend(new SdlTextInputBackend());
         PlatformManager.RegisterPlatform(Platform.Desktop);
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
         PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
         PlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         PlatformManager.RegisterExternalContentProviderFactory(() => new DiskExternalContentProvider());
-        var runningSetting = RunningSettingManager.Load(args);
+        var runningSetting = RunningSettingManager.Load(instance.GameArguments);
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
             RunHeadlessServer(runningSetting);
-            if (GameExitManager.ExitAction is GameExitAction.Restart)
+            if (GameExitManager.ExitAction is GameExitAction.Restart or GameExitAction.SwitchInstance)
             {
-                Restart([]);
+                Restart(GameExitManager.ExitAction is GameExitAction.SwitchInstance
+                    ? GameExitManager.SwitchInstanceId
+                    : instance.Id);
             }
 
             return;
@@ -41,20 +43,27 @@ public class Starter
         RunMode.Value = RunModeType.Gui;
         Window.IconStream = LoadWindowIcon();
         PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
-        if (GameEntry.EntryPoint(runningSetting) is GameExitAction.Restart)
+        var exitAction = GameEntry.EntryPoint(runningSetting);
+        if (exitAction is GameExitAction.Restart or GameExitAction.SwitchInstance)
         {
-            Restart(args);
+            Restart(exitAction is GameExitAction.SwitchInstance
+                ? GameExitManager.SwitchInstanceId
+                : instance.Id);
         }
     }
 
-    private static void RegisterStorageRoots()
+    private static StarterInstanceContext RegisterStorageRoots(string[] args)
     {
         var appPath = AppContext.BaseDirectory;
         Storage.RegisterFileSystemRoot("app", appPath, readOnly: true);
-        Storage.RegisterFileSystemRoot("external", appPath);
-        Storage.RegisterFileSystemRoot("data", Path.Combine(appPath, "Data"));
-        Storage.RegisterFileSystemRoot("config", Path.Combine(appPath, "Config"));
+        Storage.RegisterFileSystemRoot("starter", appPath);
         Storage.RegisterFileSystemRoot("system", Path.GetPathRoot(appPath) ?? appPath, allowEscapingRoot: true);
+        var instance = StarterInstanceManager.Initialize(args);
+        var instancePath = Storage.GetSystemPath(instance.InstancePath);
+        Storage.RegisterFileSystemRoot("external", instancePath);
+        Storage.RegisterFileSystemRoot("data", Path.Combine(instancePath, "Data"));
+        Storage.RegisterFileSystemRoot("config", Path.Combine(instancePath, "Config"));
+        return instance;
     }
 
     /// <summary>
@@ -73,15 +82,13 @@ public class Starter
         HeadlessEntry.Main(runningSetting);
     }
 
-    private static void Restart(string[] args)
+    private static void Restart(string instanceId)
     {
         var executablePath = Environment.ProcessPath
                              ?? throw new InvalidOperationException("Cannot determine executable path.");
         var startInfo = new ProcessStartInfo(executablePath) { UseShellExecute = false };
-        foreach (var arg in args)
-        {
-            startInfo.ArgumentList.Add(arg);
-        }
+        startInfo.ArgumentList.Add(StarterInstanceManager.InstanceArgument);
+        startInfo.ArgumentList.Add(instanceId);
 
         Process.Start(startInfo);
     }

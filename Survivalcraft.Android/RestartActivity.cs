@@ -52,6 +52,11 @@ public class RestartActivity : BlackActivity
         await Task.Delay(_mainProcessExitDelayMilliseconds);
 
         var restartIntent = new Intent(this, typeof(MainActivity));
+        var instanceId = Intent?.GetStringExtra(MainActivity.instanceIdExtra);
+        if (!string.IsNullOrWhiteSpace(instanceId))
+        {
+            restartIntent.PutExtra(MainActivity.instanceIdExtra, instanceId);
+        }
         restartIntent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTop);
         StartActivity(restartIntent);
 

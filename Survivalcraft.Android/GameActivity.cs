@@ -46,9 +46,7 @@ public class GameActivity : EngineActivity
         try
         {
             var exitAction = GameEntry.EntryPoint(RunningSettingManager.Load([]));
-            SetResult(exitAction is GameExitAction.Restart
-                ? (Result)MainActivity.restartResultCode
-                : (Result)MainActivity.exitResultCode);
+            SetResult(GetResultCode(exitAction));
         }
         finally
         {
@@ -58,9 +56,17 @@ public class GameActivity : EngineActivity
 
     private void OnExitRequested(GameExitAction exitAction)
     {
-        SetResult(exitAction is GameExitAction.Restart
-            ? (Result)MainActivity.restartResultCode
-            : (Result)MainActivity.exitResultCode);
+        SetResult(GetResultCode(exitAction));
+    }
+
+    private static Result GetResultCode(GameExitAction exitAction)
+    {
+        return exitAction switch
+        {
+            GameExitAction.Restart => (Result)MainActivity.restartResultCode,
+            GameExitAction.SwitchInstance => (Result)MainActivity.switchInstanceResultCode,
+            _ => (Result)MainActivity.exitResultCode
+        };
     }
 
     private void InitializeAndroidId()

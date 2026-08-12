@@ -350,6 +350,10 @@ public class ServerActivity : BlackActivity
             {
                 SetResult((Result)MainActivity.restartResultCode);
             }
+            else if (GameExitManager.ExitAction is GameExitAction.SwitchInstance)
+            {
+                SetResult((Result)MainActivity.switchInstanceResultCode);
+            }
             else
             {
                 SetResult((Result)MainActivity.exitResultCode);

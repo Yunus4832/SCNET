@@ -6,6 +6,8 @@ using Android.Runtime;
 
 using Game;
 
+using Game.Managers;
+
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
 using AndroidProviderSettings = Android.Provider.Settings;
@@ -37,6 +39,8 @@ public class MainActivity : BlackActivity
 {
     internal const int exitResultCode = 100;
     internal const int restartResultCode = 101;
+    internal const int switchInstanceResultCode = 102;
+    internal const string instanceIdExtra = "Survivalcraft.Android.InstanceId";
 
     private const int _permissionRequestCode = 1;
     private const int _routeRequestCode = 2;
@@ -44,24 +48,33 @@ public class MainActivity : BlackActivity
     private bool _routeStarted;
     private bool _waitingForStoragePermission;
 
+    private StarterInstanceContext? _instance;
+
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
-        RegisterStorageRoots();
+        _instance = RegisterStorageRoots(Intent?.GetStringExtra(instanceIdExtra));
         GamePlatformManager.RegisterPlatform(Platform.Android);
         RouteWhenReady();
     }
 
-    private static void RegisterStorageRoots()
+    private static StarterInstanceContext RegisterStorageRoots(string? instanceId)
     {
         var externalPath = Path.Combine(AndroidEnvironment.ExternalStorageDirectory?.AbsolutePath ?? string.Empty,
             "scnet");
         var assets = Application.Context.Assets
                      ?? throw new InvalidOperationException("Android asset manager is unavailable.");
         Storage.RegisterRoot("app", new AndroidAssetsStorageRoot(assets));
-        Storage.RegisterFileSystemRoot("external", externalPath);
-        Storage.RegisterFileSystemRoot("data", Path.Combine(externalPath, "Data"));
-        Storage.RegisterFileSystemRoot("config", Path.Combine(externalPath, "Config"));
+        Storage.RegisterFileSystemRoot("starter", externalPath);
+        var args = string.IsNullOrWhiteSpace(instanceId)
+            ? []
+            : new[] { StarterInstanceManager.InstanceArgument, instanceId };
+        var instance = StarterInstanceManager.Initialize(args);
+        var instancePath = Storage.GetSystemPath(instance.InstancePath);
+        Storage.RegisterFileSystemRoot("external", instancePath);
+        Storage.RegisterFileSystemRoot("data", Path.Combine(instancePath, "Data"));
+        Storage.RegisterFileSystemRoot("config", Path.Combine(instancePath, "Config"));
+        return instance;
     }
 
     protected override void OnResume()
@@ -98,7 +111,10 @@ public class MainActivity : BlackActivity
         switch ((int)resultCode)
         {
             case restartResultCode:
-                RestartApplication();
+                RestartApplication(_instance?.Id ?? StarterInstanceManager.DefaultInstanceId);
+                break;
+            case switchInstanceResultCode:
+                RestartApplication(GameExitManager.SwitchInstanceId);
                 break;
             default:
                 ExitApplication();
@@ -116,10 +132,11 @@ public class MainActivity : BlackActivity
         AndroidProcess.KillProcess(AndroidProcess.MyPid());
     }
 
-    private void RestartApplication()
+    private void RestartApplication(string instanceId)
     {
         var restartIntent = new Intent(this, typeof(RestartActivity));
         restartIntent.PutExtra(RestartActivity.mainProcessIdExtra, AndroidProcess.MyPid());
+        restartIntent.PutExtra(instanceIdExtra, instanceId);
         restartIntent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
         StartActivity(restartIntent);
     }

@@ -36,6 +36,7 @@ Android 不依赖命令行参数切换无头模式。它读取 `config:RunningSe
 
 ## 常用参数
 
+- `--instance <实例名>`: 选择或创建 `Instances/<实例名>` 数据实例；省略时由 `Starter.xml` 选择
 - `-d` / `--server`: 切换到 `HeadlessServer`
 - `--session <名称>`: 选择或创建一个具名启动会话
 - `--world <名称>`: 给 `--session` 指定世界名或世界目录名
@@ -48,14 +49,24 @@ Android 不依赖命令行参数切换无头模式。它读取 `config:RunningSe
 示例：
 
 ```bash
-./SurvivalcraftStarter --server --session survival --world World --seed 123456 --log-level Information --save
+./SurvivalcraftStarter --instance server --server --session survival --world World --seed 123456 --log-level Information --save
 ```
 
 再次启动同一个服务器：
 
 ```bash
-./SurvivalcraftStarter --server --session survival
+./SurvivalcraftStarter --instance server --server --session survival
 ```
+
+## 数据实例
+
+Starter 首先在程序基础目录注册 `starter:`，读取 `starter:Starter.xml`，再将选中实例的目录注册为游戏使用的 `external:`、`data:` 和 `config:`。实例目录位于：
+
+```text
+Instances/<实例名>/
+```
+
+因此不同实例拥有独立的设置、身份、世界、模组、缓存和日志。`--instance` 由 Starter 消费，不会写入 `RunningSetting.RemainingArgs`。不存在的命令行实例会自动创建。
 
 ## 配置文件
 

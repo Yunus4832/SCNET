@@ -2,6 +2,7 @@
 
 启动会话把“怎么启动游戏”拆成两层：
 
+- `Starter.xml`: 选择程序数据实例
 - `RunningSetting`: 当前进程的启动入口状态
 - `SessionInfo`: 可恢复的具体目标，例如世界、服务器浏览器或远程服务器
 
@@ -32,6 +33,7 @@
 
 命令行参数：
 
+- `--instance <实例名>`: 在加载 `RunningSetting` 之前选择或创建数据实例
 - `-d` / `--server`: 设置 `RunMode=HeadlessServer`
 - `--gui`: 设置 `RunMode=Gui`
 - `--session <名称>`: 按名称选择或创建 session
@@ -41,6 +43,23 @@
 - `--save`: 保存合并后的启动设置
 
 `--world` 和 `--seed` 没有 `--session` 时会被忽略。
+
+## 数据实例
+
+Starter 使用两阶段 Storage 注册：先将程序基础目录注册为 `starter:`，读取 `starter:Starter.xml` 并选择实例；随后将 `starter:Instances/<实例名>` 注册为该进程的 `external:`、`data:` 和 `config:`。
+
+```xml
+<Starter CurrentInstance="default" NextInstance="" />
+```
+
+实例选择优先级为：
+
+1. 启动参数 `--instance <实例名>`；不存在时自动创建
+2. `NextInstance`；消费后写入 `CurrentInstance` 并清空
+3. `CurrentInstance`
+4. `default`
+
+命令行选择实例不会修改 `CurrentInstance`，因此可以同时启动互不干扰的 GUI 和 Headless 调试实例。普通应用重启保持当前进程的实例；`GameExitAction.SwitchInstance` 则消费 `NextInstance` 并进入目标实例。实例内部的 `RunningSetting` 和 session 不保存实例 ID。
 
 ## SessionInfo
 

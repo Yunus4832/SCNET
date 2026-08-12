@@ -11,6 +11,7 @@ internal static class TestStorageRoots
     {
         var appPath = AppContext.BaseDirectory;
         Storage.RegisterFileSystemRoot("app", appPath, readOnly: true);
+        Storage.RegisterFileSystemRoot("starter", appPath);
         Storage.RegisterFileSystemRoot("external", appPath);
         Storage.RegisterFileSystemRoot("data", Path.Combine(appPath, "Data"));
         Storage.RegisterFileSystemRoot("config", Path.Combine(appPath, "Config"));
