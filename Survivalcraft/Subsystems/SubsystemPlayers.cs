@@ -28,6 +28,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
     private readonly List<PlayerData> _playersData = [];
 
+    private bool _startupPlayerCreateRequested;
+
     private SubsystemTerrain _subsystemTerrain = null!;
 
     private SubsystemGameWidgets _subsystemGameWidgets = null!;
@@ -66,7 +68,15 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             (_playersData.Count == 0 ||
              _playersData.All(p => !p.IsMainPlayer)))
         {
-            ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
+            if (!TryPrepareStartupPlayer())
+            {
+                ScreensManager.SwitchScreen("Player", PlayerScreen.Mode.Initial, Project);
+            }
+        }
+        else if (_startupPlayerCreateRequested && _playersData.Any(player => player.IsMainPlayer))
+        {
+            _startupPlayerCreateRequested = false;
+            ScreensManager.SwitchScreen("Game", CommonLib.WorkType);
         }
 
         foreach (var playersDatum in _playersData) // 断开连接离线
@@ -193,6 +203,42 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         _subsystemTerrain.TerrainUpdater.SetLastChunksUpdateCenter(-1, null);
+    }
+
+    private bool TryPrepareStartupPlayer()
+    {
+        var requestedName = RunningSettingManager.Current.PlayerOverride;
+        if (string.IsNullOrWhiteSpace(requestedName))
+        {
+            return false;
+        }
+
+        if (_startupPlayerCreateRequested)
+        {
+            return true;
+        }
+
+        var playerData = new PlayerData(Project)
+        {
+            Name = PlayerData.SanitizeName(requestedName.Trim())
+        };
+        if (!PlayerData.VerifyName(playerData.Name))
+        {
+            Log.Warning($"Ignoring --player because '{requestedName}' is not a valid player name.");
+            return false;
+        }
+
+        _startupPlayerCreateRequested = true;
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            CommonLib.Net.QueuePackage(new PlayerDataPackage(playerData, PlayerDataPackage.DataType.Create));
+        }
+        else
+        {
+            playerData.SetMain();
+            AddPlayerData(playerData);
+        }
+        return true;
     }
 
     public void RemovePlayerData(PlayerData playerData, bool disposeEntity = true)

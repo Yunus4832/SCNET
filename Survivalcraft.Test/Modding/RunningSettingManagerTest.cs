@@ -84,6 +84,45 @@ public sealed class RunningSettingManagerTest : IDisposable
     }
 
     [Fact]
+    public void ConnectAndPlayerOverridesAreTransientWithoutSave()
+    {
+        var setting = RunningSettingManager.Load([
+            "--session", "client-smoke",
+            "--connect", "127.0.0.1:28987",
+            "--player", "DebugPlayer",
+            "--server-port", "28987",
+            "--broadcast-port", "28988"
+        ]);
+
+        var session = SessionInfoManager.ResolveStartupSession(setting);
+        Assert.Equal(SessionTarget.RemoteServer, session.Target);
+        Assert.Equal("127.0.0.1", session.ServerHost);
+        Assert.Equal(28987, session.ServerPort);
+        Assert.Equal("DebugPlayer", setting.PlayerOverride);
+        Assert.Equal(28987, session.ServerPort);
+        Assert.Equal(28988, session.BroadcastPort);
+        Assert.False(setting.SaveRequested);
+        Assert.Null(SessionInfoManager.LoadByName("client-smoke"));
+    }
+
+    [Fact]
+    public void ConnectOverrideIsSavedOnlyWhenRequested()
+    {
+        var setting = RunningSettingManager.Load([
+            "--session", "saved-client",
+            "--connect", "localhost:29987",
+            "--save"
+        ]);
+
+        var saved = SessionInfoManager.LoadByName("saved-client");
+        Assert.NotNull(saved);
+        Assert.Equal(SessionTarget.RemoteServer, saved!.Target);
+        Assert.Equal("localhost", saved.ServerHost);
+        Assert.Equal(29987, saved.ServerPort);
+        Assert.True(setting.SaveRequested);
+    }
+
+    [Fact]
     public void LoadIgnoresSessionArgumentWhenNameIsMissing()
     {
         SaveRunningSetting(new RunningSetting

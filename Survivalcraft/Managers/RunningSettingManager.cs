@@ -139,6 +139,10 @@ public static class RunningSettingManager
         string? seedOverride = null;
         string? windowModeOverride = null;
         string? windowSizeOverride = null;
+        string? connectOverride = null;
+        string? playerOverride = null;
+        int? serverPortOverride = null;
+        int? broadcastPortOverride = null;
         for (var i = 0; i < args.Length; i++)
         {
             var arg = args[i];
@@ -214,6 +218,30 @@ public static class RunningSettingManager
                 continue;
             }
 
+            if (string.Equals(arg, "--connect", StringComparison.OrdinalIgnoreCase))
+            {
+                connectOverride = ReadOptionValue(args, ref i, "--connect");
+                continue;
+            }
+
+            if (string.Equals(arg, "--player", StringComparison.OrdinalIgnoreCase))
+            {
+                playerOverride = ReadOptionValue(args, ref i, "--player")?.Trim();
+                continue;
+            }
+
+            if (string.Equals(arg, "--server-port", StringComparison.OrdinalIgnoreCase))
+            {
+                serverPortOverride = ParsePort(ReadOptionValue(args, ref i, "--server-port"), "--server-port");
+                continue;
+            }
+
+            if (string.Equals(arg, "--broadcast-port", StringComparison.OrdinalIgnoreCase))
+            {
+                broadcastPortOverride = ParsePort(ReadOptionValue(args, ref i, "--broadcast-port"), "--broadcast-port");
+                continue;
+            }
+
             if (string.Equals(arg, "--window-mode", StringComparison.OrdinalIgnoreCase))
             {
                 if (i + 1 < args.Length)
@@ -286,7 +314,63 @@ public static class RunningSettingManager
 
         runningSetting.SessionWorldOverride = worldOverride;
         runningSetting.SessionSeedOverride = seedOverride;
+        if (TryParseEndpoint(connectOverride, out var connectHost, out var connectPort))
+        {
+            runningSetting.SessionConnectHostOverride = connectHost;
+            runningSetting.SessionConnectPortOverride = connectPort;
+        }
+        runningSetting.PlayerOverride = string.IsNullOrWhiteSpace(playerOverride) ? null : playerOverride;
+        runningSetting.SessionServerPortOverride = serverPortOverride;
+        runningSetting.SessionBroadcastPortOverride = broadcastPortOverride;
+        runningSetting.SaveRequested = saveRequested;
         return remainingArgs.ToArray();
+    }
+
+    private static string? ReadOptionValue(string[] args, ref int index, string option)
+    {
+        if (index + 1 < args.Length)
+        {
+            return args[++index];
+        }
+
+        Log.Warning($"Ignoring {option} because its value is missing.");
+        return null;
+    }
+
+    private static int? ParsePort(string? value, string option)
+    {
+        if (int.TryParse(value, out var port) && port is > 0 and <= 65535)
+        {
+            return port;
+        }
+
+        if (value != null)
+        {
+            Log.Warning($"Ignoring {option} because '{value}' is not a valid port.");
+        }
+        return null;
+    }
+
+    private static bool TryParseEndpoint(string? value, out string host, out int port)
+    {
+        host = string.Empty;
+        port = 0;
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return false;
+        }
+
+        var separator = value.LastIndexOf(':');
+        if (separator <= 0 || separator == value.Length - 1 ||
+            !int.TryParse(value[(separator + 1)..], out port) || port is <= 0 or > 65535)
+        {
+            Log.Warning($"Ignoring --connect because '{value}' is not in HOST:PORT format.");
+            port = 0;
+            return false;
+        }
+
+        host = value[..separator].Trim().Trim('[', ']');
+        return !string.IsNullOrWhiteSpace(host);
     }
 
     private static void FinalizeStartupState(RunningSetting runningSetting)
@@ -406,7 +490,13 @@ public static class RunningSettingManager
             HasExplicitSessionRequest = runningSetting.HasExplicitSessionRequest,
             RequestedSessionName = runningSetting.RequestedSessionName,
             SessionWorldOverride = runningSetting.SessionWorldOverride,
-            SessionSeedOverride = runningSetting.SessionSeedOverride
+            SessionSeedOverride = runningSetting.SessionSeedOverride,
+            SessionConnectHostOverride = runningSetting.SessionConnectHostOverride,
+            SessionConnectPortOverride = runningSetting.SessionConnectPortOverride,
+            PlayerOverride = runningSetting.PlayerOverride,
+            SessionServerPortOverride = runningSetting.SessionServerPortOverride,
+            SessionBroadcastPortOverride = runningSetting.SessionBroadcastPortOverride,
+            SaveRequested = runningSetting.SaveRequested
         };
     }
 

@@ -80,6 +80,17 @@ public static class CommonLib
         return Net.StartServer(SettingsManager.Current.ServerPort, SettingsManager.Current.BroadcastPort);
     }
 
+    public static bool StartServer(SessionInfo sessionInfo)
+    {
+        var serverPort = sessionInfo.ServerPort > 0
+            ? sessionInfo.ServerPort
+            : SettingsManager.Current.ServerPort;
+        var broadcastPort = sessionInfo.BroadcastPort > 0
+            ? sessionInfo.BroadcastPort
+            : SettingsManager.Current.BroadcastPort;
+        return Net.StartServer(serverPort, broadcastPort);
+    }
+
     public static NetDataWriter GetWriter(
         PackageStreamWriter writer,
         out int size,

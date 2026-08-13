@@ -383,7 +383,7 @@ public static class SessionInfoManager
         var startServer = CommonLib.WorkType == WorkType.Server || worldInfo!.WorldSettings.RunServer;
         if (startServer)
         {
-            if (!CommonLib.StartServer())
+            if (!CommonLib.StartServer(sessionInfo))
             {
                 Log.Warning("Cannot restore hosted world: server port is already in use.");
                 DialogsManager.Alert("恢复联机世界失败：端口被占用");
@@ -571,6 +571,7 @@ public static class SessionInfoManager
             new XAttribute(nameof(SessionInfo.Seed), sessionInfo.Seed),
             new XAttribute(nameof(SessionInfo.ServerHost), sessionInfo.ServerHost),
             new XAttribute(nameof(SessionInfo.ServerPort), sessionInfo.ServerPort),
+            new XAttribute(nameof(SessionInfo.BroadcastPort), sessionInfo.BroadcastPort),
             new XAttribute(nameof(SessionInfo.Password), sessionInfo.Password));
     }
 
@@ -583,6 +584,7 @@ public static class SessionInfoManager
         sessionInfo.Seed = element.Attribute(nameof(SessionInfo.Seed))?.Value ?? string.Empty;
         sessionInfo.ServerHost = element.Attribute(nameof(SessionInfo.ServerHost))?.Value ?? string.Empty;
         sessionInfo.ServerPort = ParseServerPort(element.Attribute(nameof(SessionInfo.ServerPort))?.Value);
+        sessionInfo.BroadcastPort = ParseServerPort(element.Attribute(nameof(SessionInfo.BroadcastPort))?.Value);
         sessionInfo.Password = element.Attribute(nameof(SessionInfo.Password))?.Value ?? string.Empty;
     }
 
@@ -627,7 +629,14 @@ public static class SessionInfoManager
 
     private static void ApplySessionOverrides(SessionInfo sessionInfo, RunningSetting runningSetting)
     {
-        if (runningSetting.HasExplicitSessionRequest)
+        if (!string.IsNullOrWhiteSpace(runningSetting.SessionConnectHostOverride) &&
+            runningSetting.SessionConnectPortOverride is > 0)
+        {
+            sessionInfo.Target = SessionTarget.RemoteServer;
+            sessionInfo.ServerHost = runningSetting.SessionConnectHostOverride;
+            sessionInfo.ServerPort = runningSetting.SessionConnectPortOverride.Value;
+        }
+        else if (runningSetting.HasExplicitSessionRequest)
         {
             sessionInfo.Target = SessionTarget.World;
         }
@@ -640,6 +649,16 @@ public static class SessionInfoManager
         if (runningSetting.SessionSeedOverride != null)
         {
             sessionInfo.Seed = runningSetting.SessionSeedOverride;
+        }
+
+        if (runningSetting.SessionServerPortOverride is { } serverPort)
+        {
+            sessionInfo.ServerPort = serverPort;
+        }
+
+        if (runningSetting.SessionBroadcastPortOverride is { } broadcastPort)
+        {
+            sessionInfo.BroadcastPort = broadcastPort;
         }
     }
 

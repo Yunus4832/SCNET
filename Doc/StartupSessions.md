@@ -34,6 +34,9 @@
 命令行参数：
 
 - `--instance <实例名>`: 在加载 `RunningSetting` 之前选择或创建数据实例
+- `--connect <主机:端口>`: 将本次有效 session 覆盖为远程服务器
+- `--player <名称>`: 显式请求自动使用当前身份角色；若服务器没有该身份角色则按名称创建
+- `--server-port <端口>` / `--broadcast-port <端口>`: 覆盖本次运行端口
 - `-d` / `--server`: 设置 `RunMode=HeadlessServer`
 - `--gui`: 设置 `RunMode=Gui`
 - `--session <名称>`: 按名称选择或创建 session
@@ -43,6 +46,8 @@
 - `--save`: 保存合并后的启动设置
 
 `--world` 和 `--seed` 没有 `--session` 时会被忽略。
+
+`--connect`、`--player` 和端口覆盖都是运行期字段，不写入 `RunningSetting.xml`。`--connect` 和端口只有与 `--save` 同时使用时才保存到解析后的 `SessionInfo`；Session 端口的优先级高于 `Settings`。未传 `--player` 时保持现有角色界面流程。
 
 ## 数据实例
 

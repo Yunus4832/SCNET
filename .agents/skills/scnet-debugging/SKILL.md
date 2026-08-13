@@ -17,8 +17,11 @@ Run from the repository root. Treat runtime logs, exit status, command results, 
 ```bash
 .agents/skills/scnet-debugging/scripts/smoke-headless.sh \
   --session codex-smoke \
-  --world TestWorld
+    --world TestWorld
 ```
+
+The script creates a dedicated data instance by default. Pass `--instance NAME` when a stable,
+inspectable instance is needed. Never run automated checks against the default instance.
 
 5. Inspect the reported artifact directory and `server.log`.
 6. Search for `ERROR:`, unhandled exceptions, command failures, disconnects, and missing readiness markers.
@@ -32,6 +35,18 @@ Run from the repository root. Treat runtime logs, exit status, command results, 
 - Use Headless smoke tests for startup, world loading, server networking, stdin commands, save/stop, and server-side Mods.
 - Use a GUI client only for rendering, input, screen transitions, widgets, and client/server interaction.
 - Use both Headless and GUI for network protocol or multiplayer behavior.
+
+## Multi-instance sessions
+
+Use a distinct `--instance` for every concurrently running process. The Starter consumes this
+argument before loading game settings and maps each process to `Instances/<name>`.
+
+```bash
+SurvivalcraftStarter --instance debug-server --server --session debug-server --world DebugWorld
+SurvivalcraftStarter --instance debug-client --gui
+```
+
+Read [references/multiplayer.md](references/multiplayer.md) before starting a GUI + Headless lab.
 
 ## Interactive sessions
 
@@ -56,3 +71,6 @@ For evidence contents and reporting, read [references/evidence.md](references/ev
 
 This Skill can build, start, observe, issue server stdin commands, and preserve evidence. It does not yet provide semantic player input or GUI control. Do not simulate those capabilities with direct world mutation when the test requires realistic player behavior.
 
+For an automated multiplayer startup, use `--server-port`, `--broadcast-port`, `--connect`, and
+the explicit `--player` option described in [references/multiplayer.md](references/multiplayer.md).
+These overrides are transient unless `--save` is explicitly supplied.

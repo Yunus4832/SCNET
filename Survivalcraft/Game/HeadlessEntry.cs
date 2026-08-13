@@ -116,14 +116,21 @@ public static class HeadlessEntry
                 return 0;
             }
 
+            var startupSession = SessionInfoManager.ResolveStartupSession(runningSetting);
             var world = SessionInfoManager.ResolveHeadlessWorld(runningSetting);
+            var serverPort = startupSession.ServerPort > 0
+                ? startupSession.ServerPort
+                : SettingsManager.Current.ServerPort;
+            var broadcastPort = startupSession.BroadcastPort > 0
+                ? startupSession.BroadcastPort
+                : SettingsManager.Current.BroadcastPort;
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information(
-                $"Server ports: game={SettingsManager.Current.ServerPort}, broadcast={SettingsManager.Current.BroadcastPort}");
+                $"Server ports: game={serverPort}, broadcast={broadcastPort}");
             CommonLib.WorkType = WorkType.Server;
             var gamesWidget = new GamesWidget();
             GameManager.LoadProject(world, gamesWidget);
-            if (!CommonLib.StartServer())
+            if (!CommonLib.StartServer(startupSession))
             {
                 Log.Error("Failed to start server (port may be in use).");
                 return 3;

@@ -5,15 +5,18 @@ set -euo pipefail
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../.." && pwd)"
 session_name=""
 world_name=""
+instance_name=""
 seed=""
 startup_timeout=60
+server_port=""
+broadcast_port=""
 artifact_dir=""
 skip_build=false
 server_pid=""
 input_fifo=""
 
 usage() {
-    echo "Usage: $0 --session NAME --world NAME [--seed VALUE] [--timeout SECONDS] [--artifacts DIR] [--no-build]"
+    echo "Usage: $0 --session NAME --world NAME [--instance NAME] [--server-port PORT] [--broadcast-port PORT] [--seed VALUE] [--timeout SECONDS] [--artifacts DIR] [--no-build]"
 }
 
 while (($# > 0)); do
@@ -24,6 +27,18 @@ while (($# > 0)); do
             ;;
         --world)
             world_name="${2:-}"
+            shift 2
+            ;;
+        --instance)
+            instance_name="${2:-}"
+            shift 2
+            ;;
+        --server-port)
+            server_port="${2:-}"
+            shift 2
+            ;;
+        --broadcast-port)
+            broadcast_port="${2:-}"
             shift 2
             ;;
         --seed)
@@ -58,6 +73,20 @@ if [[ -z "$session_name" || -z "$world_name" ]]; then
     usage >&2
     exit 2
 fi
+
+if [[ -z "$instance_name" ]]; then
+    instance_name="smoke-${session_name}"
+fi
+if ! [[ "$instance_name" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    echo "--instance must contain only ASCII letters, digits, '-' and '_'." >&2
+    exit 2
+fi
+for port_value in "$server_port" "$broadcast_port"; do
+    if [[ -n "$port_value" ]] && (! [[ "$port_value" =~ ^[0-9]+$ ]] || ((port_value < 1 || port_value > 65535))); then
+        echo "Port values must be integers from 1 to 65535." >&2
+        exit 2
+    fi
+done
 
 if ! [[ "$startup_timeout" =~ ^[1-9][0-9]*$ ]]; then
     echo "--timeout must be a positive integer." >&2
@@ -107,6 +136,7 @@ fi
 
 args=(
     "$starter"
+    --instance "$instance_name"
     --server
     --session "$session_name"
     --world "$world_name"
@@ -114,6 +144,12 @@ args=(
 )
 if [[ -n "$seed" ]]; then
     args+=(--seed "$seed")
+fi
+if [[ -n "$server_port" ]]; then
+    args+=(--server-port "$server_port")
+fi
+if [[ -n "$broadcast_port" ]]; then
+    args+=(--broadcast-port "$broadcast_port")
 fi
 
 {
@@ -123,6 +159,7 @@ fi
     echo
     echo "session=$session_name"
     echo "world=$world_name"
+    echo "instance=$instance_name"
 } > "$metadata_file"
 
 mkfifo "$input_fifo"

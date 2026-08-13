@@ -37,6 +37,8 @@ Android 不依赖命令行参数切换无头模式。它读取 `config:RunningSe
 ## 常用参数
 
 - `--instance <实例名>`: 选择或创建 `Instances/<实例名>` 数据实例；省略时由 `Starter.xml` 选择
+- `--server-port <端口>`: 仅覆盖本次运行的游戏端口
+- `--broadcast-port <端口>`: 仅覆盖本次运行的广播端口
 - `-d` / `--server`: 切换到 `HeadlessServer`
 - `--session <名称>`: 选择或创建一个具名启动会话
 - `--world <名称>`: 给 `--session` 指定世界名或世界目录名
@@ -45,6 +47,7 @@ Android 不依赖命令行参数切换无头模式。它读取 `config:RunningSe
 - `--save`: 将运行模式、日志级别和未消费参数写入 `RunningSetting.xml`
 
 `--world` 和 `--seed` 只有在同时指定 `--session` 时才会生效。没有 `--session` 时它们会被忽略，避免一次临时命令覆盖默认启动状态。
+端口覆盖默认只作用于内存中的有效 Session；与 `--save` 同时使用时才会写入 `SessionInfo.xml`。Session 未指定端口时回退到 `Settings.xml` 的默认端口。
 
 示例：
 

@@ -30,4 +30,16 @@ public sealed class RunningSetting
     public string? SessionWorldOverride { get; set; }
 
     public string? SessionSeedOverride { get; set; }
+
+    public string? SessionConnectHostOverride { get; set; }
+
+    public int? SessionConnectPortOverride { get; set; }
+
+    public string? PlayerOverride { get; set; }
+
+    public int? SessionServerPortOverride { get; set; }
+
+    public int? SessionBroadcastPortOverride { get; set; }
+
+    public bool SaveRequested { get; set; }
 }

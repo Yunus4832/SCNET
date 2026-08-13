@@ -25,5 +25,7 @@ public sealed class SessionInfo
 
     public int ServerPort { get; set; }
 
+    public int BroadcastPort { get; set; }
+
     public string Password { get; set; } = string.Empty;
 }
