@@ -552,7 +552,7 @@ public class Project : IDisposable
             }
             catch (Exception ex)
             {
-                Log.Error($"Failed to load entity {dataItems[i].Id}, will skip it. Error: {ex.Message}");
+                Log.Error($"Failed to load entity {dataItems[i].Id}, will skip it. Error: {ex}");
                 entitiesToRemove.Add(entities[i]);
             }
         }

@@ -16,7 +16,7 @@ public class NetNode
     public enum Stage
     {
         NotConnected,
-        WaitForClientList,
+        Bootstrapping,
         Connected
     }
 
@@ -57,9 +57,19 @@ public class NetNode
 
     public Action<Client>? OnClientStateChanged;
 
+    public Action<Client>? OnClientTransportConnected;
+
+    public Action<Client>? OnClientBootstrapApplied;
+
+    public Action<Client>? OnClientBecameLive;
+
     public NetPeer? PendingPeer;
 
     public Guid TokenId;
+
+    public Guid ConnectionEpoch { get; set; }
+
+    public ConnectionPhase CurrentConnectionPhase { get; set; }
 
     public NetNode()
     {
@@ -580,7 +590,7 @@ public class NetNode
                 Log.Information("连接错误" + arg);
                 Stop(arg.ToString());
             };
-            CurrentStage = Stage.WaitForClientList;
+            CurrentStage = Stage.Bootstrapping;
             CommonLib.WorkType = WorkType.Client;
             Window.Frame += Update;
             Window.Closed += StopImmediate;
@@ -610,14 +620,10 @@ public class NetNode
         }
 
         AddClient(PendingClient);
-        if (PendingClient.State != ClientState.Connected)
-        {
-            PendingClient.State = ClientState.Connected;
-            OnClientStateChanged?.Invoke(PendingClient);
-        }
-
-        QueuePackage(new ClientPackage(Clients.Values) { To = PendingClient });
-        Log.Debug($"Client[{PendingClient.ID}]已完成加入过程");
+        PendingClient.ConnectionEpoch = Guid.NewGuid();
+        PendingClient.ConnectionPhase = ConnectionPhase.TransportConnected;
+        OnClientTransportConnected?.Invoke(PendingClient);
+        Log.Debug($"Client[{PendingClient.ID}]传输连接完成，开始Bootstrap");
         PendingPeer = null;
     }
 
@@ -672,6 +678,11 @@ public class NetNode
             Listener.ClearPeerConnectedEvent();
             OnReceive = null;
             OnClientStateChanged = null;
+            OnClientTransportConnected = null;
+            OnClientBootstrapApplied = null;
+            OnClientBecameLive = null;
+            ConnectionEpoch = Guid.Empty;
+            CurrentConnectionPhase = ConnectionPhase.TransportConnected;
             CurrentStage = Stage.NotConnected;
             CommonLib.WorkType = WorkType.Local;
             if (wasClient)
@@ -1243,6 +1254,16 @@ public class NetNode
             return false;
         }
 
-        return !checkClientState || client.State >= package.MinNeedState;
+        if (!checkClientState)
+        {
+            return true;
+        }
+
+        if (package is BootstrapPackage or InitialWorldSnapshotPackage)
+        {
+            return true;
+        }
+
+        return client.ConnectionPhase == ConnectionPhase.Live && client.State >= package.MinNeedState;
     }
 }

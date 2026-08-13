@@ -218,18 +218,27 @@ public static class GameManager
         project.EntityRemoved += (_, arg) => { entityMaps.Remove(arg.Entity.EntityId); };
         project.EntityAdded += (_, arg) =>
         {
-            if (ShouldSendEntityToClients(arg.Entity))
+            if (!ShouldSendEntityToClients(arg.Entity))
             {
-                net.QueuePackage(new EntityPackage(arg.Entity));
+                return;
             }
+
+            var componentPlayer = arg.Entity.FindComponent<ComponentPlayer>();
+            net.QueuePackage(componentPlayer?.PlayerData.Client != null
+                ? new PlayerJoinedPackage(project, componentPlayer.PlayerData, arg.Entity)
+                : new EntityPackage(arg.Entity));
         };
         project.EntityRemoved += (_, arg) => { net.QueuePackage(new EntityPackage(arg.Entity.EntityId)); };
         net.OnClientStateChanged += client => OnServerClientStateChanged(project, net, client);
+        net.OnClientTransportConnected += client => SendBootstrap(project, net, client);
+        net.OnClientBootstrapApplied += client => SendInitialWorldSnapshot(project, net, client);
+        net.OnClientBecameLive += client => CompleteClientJoin(project, client);
     }
 
     private static void SetupClientNetworkHandlers(Project project, NetNode net)
     {
-        net.QueuePackage(new ClientPackage(net.Self!.ID, ClientState.ProjectLoaded));
+        net.CurrentConnectionPhase = ConnectionPhase.BootstrapApplied;
+        net.QueuePackage(new ConnectionPhaseAckPackage(net.ConnectionEpoch, ConnectionPhase.BootstrapApplied));
         net.OnClientStateChanged += c =>
         {
             c.SetProject(project);
@@ -295,17 +304,11 @@ public static class GameManager
         net.QueuePackage(new ClientPackage(client.ID, client.State) { Except = client });
         switch (client.State)
         {
-            case ClientState.Connected:
-                HandleServerClientConnected(project, net, client);
-                break;
             case ClientState.NotConnected:
                 var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
                 subsystemPlayers.MakePlayerOffline(client.GUID);
                 net.QueuePackage(new PlayerListPackage(subsystemPlayers));
                 GC.Collect();
-                break;
-            case ClientState.ProjectLoaded:
-                HandleServerClientProjectLoaded(project, net, client);
                 break;
             case ClientState.LoadTerrain:
                 GC.Collect();
@@ -337,7 +340,7 @@ public static class GameManager
         }
     }
 
-    private static void HandleServerClientConnected(Project project, NetNode net, Client client)
+    private static void SendBootstrap(Project project, NetNode net, Client client)
     {
         var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
         try
@@ -345,8 +348,6 @@ public static class GameManager
             if (subsystemPlayers.MakePlayerOnline(client.GUID, out var playerData, out var entity))
             {
                 client.CachePlayerEntity = entity!;
-                net.QueuePackage(new PlayerDataPackage(playerData!, PlayerDataPackage.DataType.AddPlayer)
-                    { Except = client });
                 net.QueuePackage(new PlayerListPackage(subsystemPlayers));
             }
         }
@@ -375,16 +376,22 @@ public static class GameManager
             return;
         }
 
-        net.QueuePackage(new ProjectPackage(textureData, data) { To = client });
+        client.ConnectionPhase = ConnectionPhase.BootstrapSent;
+        net.QueuePackage(new BootstrapPackage(client.ConnectionEpoch, net.Clients.Values, textureData, data)
+            { To = client });
     }
 
-    private static void HandleServerClientProjectLoaded(Project project, NetNode net, Client client)
+    private static void SendInitialWorldSnapshot(Project project, NetNode net, Client client)
     {
         var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
-        net.QueuePackage(new PlayerListPackage(subsystemPlayers) { To = client });
-        net.QueuePackage(new OnlinePlayerStatePackage(subsystemPlayers) { To = client });
         var sendList = project.EntityKeys.Where(ShouldSendEntityToClients).ToList();
-        net.QueuePackage(new EntityPackage(sendList) { To = client });
+        client.ConnectionPhase = ConnectionPhase.WorldSnapshotSent;
+        net.QueuePackage(new InitialWorldSnapshotPackage(client.ConnectionEpoch, project, net.Clients.Values,
+            subsystemPlayers.PlayersData, sendList) { To = client });
+    }
+
+    private static void CompleteClientJoin(Project project, Client client)
+    {
         if (client.CachePlayerEntity == null)
         {
             return;

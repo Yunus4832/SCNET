@@ -13,7 +13,6 @@ public enum PackageType : byte
     ServerInfo,
     ConnectionRequest,
     ConnectionReject,
-    Project,
     Client,
     Pickable,
     SubsystemBody,
@@ -53,6 +52,10 @@ public enum PackageType : byte
     Command,
     PlayerList,
     OnlinePlayerState,
+    Bootstrap,
+    ConnectionPhaseAck,
+    InitialWorldSnapshot,
+    PlayerJoined,
 
     ModPackage = 255 // 为后面的mod数据传输做保留
 }
@@ -80,7 +83,6 @@ public class PackageManager
         RegisterBuiltInPackage<ServerInfoPackage, ServerInfoPackageHandler>(PackageType.ServerInfo);
         RegisterBuiltInPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>(PackageType.ConnectionRequest);
         RegisterBuiltInPackage<ConnectionRejectPackage, ConnectionRejectPackageHandler>(PackageType.ConnectionReject);
-        RegisterBuiltInPackage<ProjectPackage, ProjectPackageHandler>(PackageType.Project);
         RegisterBuiltInPackage<ClientPackage, ClientPackageHandler>(PackageType.Client);
         RegisterBuiltInPackage<PickablePackage, PickablePackageHandler>(PackageType.Pickable);
         RegisterBuiltInPackage<SubsystemBodyPackage, SubsystemBodyPackageHandler>(PackageType.SubsystemBody);
@@ -120,6 +122,12 @@ public class PackageManager
         RegisterBuiltInPackage<PlayerListPackage, PlayerListPackageHandler>(PackageType.PlayerList);
         RegisterBuiltInPackage<OnlinePlayerStatePackage, OnlinePlayerStatePackageHandler>(
             PackageType.OnlinePlayerState);
+        RegisterBuiltInPackage<BootstrapPackage, BootstrapPackageHandler>(PackageType.Bootstrap);
+        RegisterBuiltInPackage<ConnectionPhaseAckPackage, ConnectionPhaseAckPackageHandler>(
+            PackageType.ConnectionPhaseAck);
+        RegisterBuiltInPackage<InitialWorldSnapshotPackage, InitialWorldSnapshotPackageHandler>(
+            PackageType.InitialWorldSnapshot);
+        RegisterBuiltInPackage<PlayerJoinedPackage, PlayerJoinedPackageHandler>(PackageType.PlayerJoined);
         RegisterBuiltInPackage<ModEnvelopePackage, ModEnvelopePackageHandler>(PackageType.ModPackage);
     }
 

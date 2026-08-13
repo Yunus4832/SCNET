@@ -12,8 +12,6 @@ public class PlayerDataPackage : IPackage
         Create,
         Modify,
         Delete,
-        ClientKnownPlayer,
-        AddPlayer,
         SetUpdateLocation,
         CloseTime,
         Bugle,
@@ -85,7 +83,6 @@ public class PlayerDataPackage : IPackage
         writer.WriteEnum(Type);
         switch (Type)
         {
-            case DataType.AddPlayer:
             case DataType.Create:
                 if (Vd != null)
                 {
@@ -99,9 +96,6 @@ public class PlayerDataPackage : IPackage
                 writer.Write(PlayerName);
                 writer.Write(SkinName);
                 writer.WriteEnum(PlayerClass);
-                break;
-            case DataType.ClientKnownPlayer:
-                writer.Write(PlayerGuid);
                 break;
             case DataType.SetUpdateLocation:
                 writer.Write(UpdateLocation.Center);
@@ -128,7 +122,6 @@ public class PlayerDataPackage : IPackage
         Type = reader.ReadEnum<DataType>();
         switch (Type)
         {
-            case DataType.AddPlayer:
             case DataType.Create:
                 var messagePack = reader.ReadBuff();
                 Vd = new ValuesDictionary();
@@ -139,9 +132,6 @@ public class PlayerDataPackage : IPackage
                 PlayerName = reader.ReadString();
                 SkinName = reader.ReadString();
                 PlayerClass = reader.ReadEnum<PlayerClass>();
-                break;
-            case DataType.ClientKnownPlayer:
-                PlayerGuid = reader.ReadGuid();
                 break;
             case DataType.SetUpdateLocation:
                 UpdateLocation = new TerrainUpdater.UpdateLocation();

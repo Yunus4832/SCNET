@@ -21,6 +21,11 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
         switch (package.Type)
         {
             case PlayerDataPackage.DataType.Create:
+                if (!isServer)
+                {
+                    break;
+                }
+
                 playerData = new PlayerData(project);
                 if (package.Vd != null)
                 {
@@ -29,8 +34,6 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
 
                 subsystemPlayers.AddPlayerData(playerData);
                 playerData.Name = PlayerData.CreateNewName(playerData.Name);
-                // 服务器广播给所有客户端，添加玩家
-                netNode.QueuePackage(new PlayerDataPackage(playerData, PlayerDataPackage.DataType.AddPlayer));
                 netNode.QueuePackage(new PlayerListPackage(subsystemPlayers));
                 break;
             case PlayerDataPackage.DataType.Modify:
@@ -50,17 +53,6 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                 break;
             case PlayerDataPackage.DataType.Delete:
                 netNode.RemoveClient(package.From);
-                break;
-            case PlayerDataPackage.DataType.AddPlayer:
-                //客户端接收到添加玩家广播
-                playerData = new PlayerData(project);
-                if (package.Vd != null)
-                {
-                    playerData.Load(package.Vd);
-                }
-
-                subsystemPlayers.AddPlayerData(playerData);
-                netNode.QueuePackage(new PlayerDataPackage(playerData, PlayerDataPackage.DataType.ClientKnownPlayer));
                 break;
             case PlayerDataPackage.DataType.SetUpdateLocation:
                 var player = subsystemPlayers.PlayersData.Find(x => x.Client == package.From);

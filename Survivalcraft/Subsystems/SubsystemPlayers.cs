@@ -64,6 +64,12 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
     public void Update(float dt)
     {
+        if (CommonLib.WorkType == WorkType.Client &&
+            CommonLib.Net.CurrentConnectionPhase != ConnectionPhase.Live)
+        {
+            return;
+        }
+
         if (RunMode.Value is RunModeType.Gui &&
             (_playersData.Count == 0 ||
              _playersData.All(p => !p.IsMainPlayer)))
@@ -585,9 +591,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
                     $"Restored entity does not belong to player {playerGuid}.");
             }
 
-            // 延迟挂载：实体先不加入项目，等客户端到达 ProjectLoaded 后由 GameManager 挂载。
-            // 这样 AddPlayer(PlayerData) 广播必然先于实体广播到达其它客户端，避免实体先于
-            // PlayerData 被解码导致玩家实体加载失败。
+            // 恢复的实体先不加入项目，等连接完成初始世界快照后再挂载。
+            // 挂载时玩家数据和实体通过 PlayerJoinedPackage 原子同步。
             entity.EntityId = 0;
             // 离线记录保留在 _offlinePlayers 中（读取不删除），避免客户端在 ProjectLoaded
             // 之前断开时丢失玩家数据；下次正常退出时会重新覆盖为最新数据。

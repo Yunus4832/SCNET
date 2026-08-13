@@ -25,6 +25,8 @@ public class GameLoadingScreen : Screen
 
     private bool _isServerReply;
 
+    private bool _isWorldSnapshotApplied;
+
     private byte[] _blockTextureData = [];
 
     private string _password = string.Empty;
@@ -94,7 +96,7 @@ public class GameLoadingScreen : Screen
             {
                 SetSpawnDialogMessage("等待服务器响应", 0.25f);
                 //Fix me::客户端中断连接口再次连接会卡住
-                if (CommonLib.Net.CurrentStage == Stage.WaitForClientList)
+                if (CommonLib.Net.CurrentStage == Stage.Bootstrapping)
                 {
                     if (_timer.ElapsedMilliseconds >= CommonLib.DisconnectTimeout)
                     {
@@ -167,11 +169,29 @@ public class GameLoadingScreen : Screen
                 GameManager.LoadProject(_projectXmlData,
                     ScreensManager.FindScreen<GameScreen>("Game", true)!.Children
                         .Find<ContainerWidget>("GamesWidget")!);
-                ScreensManager.SwitchScreen("Game");
                 _projectXmlData = [];
                 _blockTextureData = [];
                 _isServerReply = false;
                 ExistBlockTexture = false;
+                _stateMachine.TransitionTo("WaitWorldSnapshot");
+            },
+            Actions.Empty
+        );
+
+        _stateMachine.AddState(
+            "WaitWorldSnapshot",
+            delegate { _timer.Restart(); },
+            delegate
+            {
+                SetSpawnDialogMessage("应用初始世界快照", 0.8f);
+                if (_isWorldSnapshotApplied)
+                {
+                    ScreensManager.SwitchScreen("Game");
+                }
+                else if (_timer.ElapsedMilliseconds >= CommonLib.DisconnectTimeout)
+                {
+                    CommonLib.Net.Stop("初始世界快照超时");
+                }
             },
             Actions.Empty
         );
@@ -204,11 +224,11 @@ public class GameLoadingScreen : Screen
                     Log.Error($"[{package.GetType().Name}]{e.Message}");
                 }
             }
-            else if (package is ProjectPackage projectPackage)
+            else if (package is BootstrapPackage bootstrapPackage)
             {
                 try
                 {
-                    PackageDispatcher.Handle(projectPackage, node, false);
+                    PackageDispatcher.Handle(bootstrapPackage, node, false);
                 }
                 catch (Exception e)
                 {
@@ -237,6 +257,11 @@ public class GameLoadingScreen : Screen
         }
 
         _projectXmlData = projectData;
+    }
+
+    public void WorldSnapshotApplied()
+    {
+        _isWorldSnapshotApplied = true;
     }
 
     private void SetSpawnDialogMessage(string msg, float progress)
@@ -296,6 +321,8 @@ public class GameLoadingScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _isServerReply = false;
+        _isWorldSnapshotApplied = false;
         if (CommonLib.WorkType == WorkType.Local)
         {
             CommonLib.Net.StartLocal();

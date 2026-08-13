@@ -55,7 +55,9 @@ public static class PackageTransportPolicy
             PickablePackage => ReliableEvent,
             ExplosionsPackage => ReliableEvent,
             EntityPackage { Type: EntityPackage.EventType.LoadList } => Bulk,
-            ProjectPackage => Bulk,
+            BootstrapPackage => Bulk,
+            InitialWorldSnapshotPackage => Bulk,
+            PlayerJoinedPackage => Bulk,
             SubsystemTerrainPackage { Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkList } => Bulk,
             FurniturePackage
             {

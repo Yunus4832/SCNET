@@ -97,6 +97,10 @@ public class Client
 
     public ClientState State { get; set; }
 
+    public ConnectionPhase ConnectionPhase { get; set; }
+
+    public Guid ConnectionEpoch { get; set; }
+
     public PlayerData PlayerData
     {
         get { return SubsystemPlayers.PlayersData.Find(p => p.ClientId == ID)!; }
