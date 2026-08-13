@@ -37,6 +37,8 @@ public sealed class RunningSetting
 
     public string? PlayerOverride { get; set; }
 
+    public bool ForceWorldRunServer { get; set; }
+
     public int? SessionServerPortOverride { get; set; }
 
     public int? SessionBroadcastPortOverride { get; set; }

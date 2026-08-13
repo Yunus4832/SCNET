@@ -377,7 +377,17 @@ public static class SessionInfoManager
                 return false;
             }
 
-            worldInfo = CreateWorld(sessionInfo.World, sessionInfo.Seed, runServer: false);
+            worldInfo = CreateWorld(
+                sessionInfo.World,
+                sessionInfo.Seed,
+                runServer: RunningSettingManager.Current.ForceWorldRunServer);
+        }
+        else if (RunningSettingManager.Current.ForceWorldRunServer &&
+                 !worldInfo!.WorldSettings.RunServer)
+        {
+            Log.Information($"Enabling RunServer for world \"{worldInfo.WorldSettings.Name}\" because --host was specified.");
+            worldInfo.WorldSettings.RunServer = true;
+            WorldsManager.ChangeWorld(worldInfo.DirectoryName, worldInfo.WorldSettings);
         }
 
         var startServer = CommonLib.WorkType == WorkType.Server || worldInfo!.WorldSettings.RunServer;

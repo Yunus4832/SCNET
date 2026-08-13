@@ -141,6 +141,7 @@ public static class RunningSettingManager
         string? windowSizeOverride = null;
         string? connectOverride = null;
         string? playerOverride = null;
+        var forceWorldRunServer = false;
         int? serverPortOverride = null;
         int? broadcastPortOverride = null;
         for (var i = 0; i < args.Length; i++)
@@ -227,6 +228,12 @@ public static class RunningSettingManager
             if (string.Equals(arg, "--player", StringComparison.OrdinalIgnoreCase))
             {
                 playerOverride = ReadOptionValue(args, ref i, "--player")?.Trim();
+                continue;
+            }
+
+            if (string.Equals(arg, "--host", StringComparison.OrdinalIgnoreCase))
+            {
+                forceWorldRunServer = true;
                 continue;
             }
 
@@ -319,7 +326,13 @@ public static class RunningSettingManager
             runningSetting.SessionConnectHostOverride = connectHost;
             runningSetting.SessionConnectPortOverride = connectPort;
         }
+        if (forceWorldRunServer && !string.IsNullOrWhiteSpace(runningSetting.SessionConnectHostOverride))
+        {
+            Log.Warning("Ignoring --host because --connect selects a remote server session.");
+            forceWorldRunServer = false;
+        }
         runningSetting.PlayerOverride = string.IsNullOrWhiteSpace(playerOverride) ? null : playerOverride;
+        runningSetting.ForceWorldRunServer = forceWorldRunServer;
         runningSetting.SessionServerPortOverride = serverPortOverride;
         runningSetting.SessionBroadcastPortOverride = broadcastPortOverride;
         runningSetting.SaveRequested = saveRequested;
@@ -494,6 +507,7 @@ public static class RunningSettingManager
             SessionConnectHostOverride = runningSetting.SessionConnectHostOverride,
             SessionConnectPortOverride = runningSetting.SessionConnectPortOverride,
             PlayerOverride = runningSetting.PlayerOverride,
+            ForceWorldRunServer = runningSetting.ForceWorldRunServer,
             SessionServerPortOverride = runningSetting.SessionServerPortOverride,
             SessionBroadcastPortOverride = runningSetting.SessionBroadcastPortOverride,
             SaveRequested = runningSetting.SaveRequested

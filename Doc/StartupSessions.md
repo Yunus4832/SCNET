@@ -36,6 +36,7 @@
 - `--instance <实例名>`: 在加载 `RunningSetting` 之前选择或创建数据实例
 - `--connect <主机:端口>`: 将本次有效 session 覆盖为远程服务器
 - `--player <名称>`: 显式请求自动使用当前身份角色；若服务器没有该身份角色则按名称创建
+- `--host`: GUI 模式下强制将目标世界设置为 `WorldSettings.RunServer=true`
 - `--server-port <端口>` / `--broadcast-port <端口>`: 覆盖本次运行端口
 - `-d` / `--server`: 设置 `RunMode=HeadlessServer`
 - `--gui`: 设置 `RunMode=Gui`
@@ -47,7 +48,7 @@
 
 `--world` 和 `--seed` 没有 `--session` 时会被忽略。
 
-`--connect`、`--player` 和端口覆盖都是运行期字段，不写入 `RunningSetting.xml`。`--connect` 和端口只有与 `--save` 同时使用时才保存到解析后的 `SessionInfo`；Session 端口的优先级高于 `Settings`。未传 `--player` 时保持现有角色界面流程。
+`--connect`、`--host`、`--player` 和端口覆盖不写入 `RunningSetting.xml`。`--host` 是强制调试参数：新世界直接创建为联机世界，已有非联机世界则更新并持久化其 `WorldSettings.RunServer=true`，之后统一走正常联机世界启动流程。`--connect` 和端口只有与 `--save` 同时使用时才保存到解析后的 `SessionInfo`；Session 端口的优先级高于 `Settings`。未传 `--player` 时保持现有角色界面流程。`--connect` 与 `--host` 同时出现时按远程连接处理并忽略 `--host`。
 
 ## 数据实例
 

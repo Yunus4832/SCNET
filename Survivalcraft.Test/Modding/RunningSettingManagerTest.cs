@@ -123,6 +123,47 @@ public sealed class RunningSettingManagerTest : IDisposable
     }
 
     [Fact]
+    public void GuiHostOverridesAreTransientAndUseSessionPorts()
+    {
+        var setting = RunningSettingManager.Load([
+            "--gui",
+            "--host",
+            "--session", "gui-server",
+            "--world", "GuiServerWorld",
+            "--player", "HostPlayer",
+            "--server-port", "30987",
+            "--broadcast-port", "30988"
+        ]);
+
+        var session = SessionInfoManager.ResolveStartupSession(setting);
+        Assert.Equal(RunModeType.Gui, setting.RunMode);
+        Assert.True(setting.ForceWorldRunServer);
+        Assert.Equal(SessionTarget.World, session.Target);
+        Assert.Equal("GuiServerWorld", session.World);
+        Assert.Equal("HostPlayer", setting.PlayerOverride);
+        Assert.Equal(30987, session.ServerPort);
+        Assert.Equal(30988, session.BroadcastPort);
+        Assert.Null(SessionInfoManager.LoadByName("gui-server"));
+    }
+
+    [Fact]
+    public void ConnectTakesPriorityOverHost()
+    {
+        var setting = RunningSettingManager.Load([
+            "--gui",
+            "--host",
+            "--session", "remote-client",
+            "--connect", "127.0.0.1:31987"
+        ]);
+
+        var session = SessionInfoManager.ResolveStartupSession(setting);
+        Assert.False(setting.ForceWorldRunServer);
+        Assert.Equal(SessionTarget.RemoteServer, session.Target);
+        Assert.Equal("127.0.0.1", session.ServerHost);
+        Assert.Equal(31987, session.ServerPort);
+    }
+
+    [Fact]
     public void LoadIgnoresSessionArgumentWhenNameIsMissing()
     {
         SaveRunningSetting(new RunningSetting
