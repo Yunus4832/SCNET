@@ -287,7 +287,8 @@ public class ServerActivity : BlackActivity
 
         InitializeAndroidId();
         RunMode.Value = RunModeType.HeadlessServer;
-        var runningSetting = RunningSettingManager.Load([]);
+        var gameArguments = Intent?.GetStringArrayExtra(MainActivity.gameArgumentsExtra) ?? [];
+        var runningSetting = RunningSettingManager.Load(gameArguments);
         _serverTask = Task.Run(() => HeadlessEntry.Main(runningSetting));
         _ = CompleteServerRunAsync(_serverTask);
         PollCommandConsoleState();

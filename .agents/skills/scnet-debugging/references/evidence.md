@@ -2,7 +2,7 @@
 
 Preserve one artifact directory per run with:
 
-- complete stdout/stderr log;
+- complete instance runtime log, plus stdout/stderr when separately available;
 - exact command line;
 - session and world names;
 - start and stop timestamps;
@@ -23,4 +23,3 @@ Report:
 7. the verification performed after a fix.
 
 Do not store credentials, server passwords, tokens, or unrelated user data in artifacts.
-

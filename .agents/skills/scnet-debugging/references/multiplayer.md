@@ -50,3 +50,30 @@ follow the same transient-by-default rule.
 player matching its stable client identity. If none arrives, it sends the existing player-create
 protocol once using the requested display name. It never takes over another identity merely because
 the display name matches. Without `--player`, the normal PlayerScreen flow remains unchanged.
+
+## GUI server
+
+Use the repository helper to start a GUI-hosted world with an explicit local player:
+
+```bash
+.agents/skills/scnet-debugging/scripts/start-gui-server.sh \
+  --instance debug-gui-server \
+  --session debug-gui-server \
+  --world DebugGuiWorld \
+  --player DebugHost \
+  --server-port 29987 \
+  --broadcast-port 29988
+```
+
+The helper launches `--gui --host`. This debugging override forces and persists
+`WorldSettings.RunServer=true` for both new and existing worlds, after which startup follows the
+normal GUI server path. The local player is created through the normal GUI server player path.
+Close the GUI normally when the lab is done.
+
+## Android client
+
+Android accepts the same transient `--session`, `--connect`, and `--player` options through its
+startup Intent. Use a desktop server plus one device or emulator per concurrent Android client.
+Follow [android.md](android.md) for the exact ADB launch, port mapping, log collection, and cleanup
+procedure. Named instances isolate Android data but do not create concurrent processes within the
+same installed package.

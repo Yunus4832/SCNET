@@ -1,6 +1,6 @@
 ---
 name: scnet-debugging
-description: Diagnose and smoke-test SCNET game and Headless server changes with repeatable build, startup-session, stdin-command, log, exception, timeout, and evidence-preservation workflows. Use when reproducing runtime bugs, validating networking or Mod changes, starting a test world, inspecting crashes or hangs, or verifying a fix without relying only on unit tests.
+description: Diagnose and smoke-test SCNET game, Android client, and Headless server changes on Linux, Windows, or Android with repeatable build, startup-session, command, log, exception, timeout, and evidence-preservation workflows. Use when reproducing runtime bugs, validating networking or Mod changes, starting a test world, inspecting crashes or hangs, or verifying a fix without relying only on unit tests.
 ---
 
 # SCNET Debugging
@@ -10,9 +10,9 @@ Run from the repository root. Treat runtime logs, exit status, command results, 
 ## Workflow
 
 1. Check `git status --short` and preserve unrelated changes.
-2. Read [references/runtime.md](references/runtime.md) before starting GUI or Headless sessions.
+2. Read [references/runtime.md](references/runtime.md) before starting GUI or Headless sessions. On Windows, also read [references/windows.md](references/windows.md) and use its PowerShell commands instead of Bash scripts. For an Android client, read [references/android.md](references/android.md) before using ADB.
 3. Build the narrowest affected project and run focused tests.
-4. For a repeatable Headless check, run:
+4. On Linux, run the repeatable Headless helper:
 
 ```bash
 .agents/skills/scnet-debugging/scripts/smoke-headless.sh \
@@ -22,8 +22,10 @@ Run from the repository root. Treat runtime logs, exit status, command results, 
 
 The script creates a dedicated data instance by default. Pass `--instance NAME` when a stable,
 inspectable instance is needed. Never run automated checks against the default instance.
+On Windows, follow the equivalent log-driven procedure in [references/windows.md](references/windows.md).
 
-5. Inspect the reported artifact directory and `server.log`.
+5. Inspect the reported artifact directory and complete instance runtime logs. Treat the files under
+   `Instances/<instance>/Logs` as the authoritative runtime record on both platforms.
 6. Search for `ERROR:`, unhandled exceptions, command failures, disconnects, and missing readiness markers.
 7. Correlate a failure with the operation immediately before it. Preserve the complete exception and relevant preceding log context.
 8. Stop all started processes cleanly. Never leave a Headless server running after validation unless the user explicitly asks for an interactive session.
@@ -34,6 +36,7 @@ inspectable instance is needed. Never run automated checks against the default i
 - Use unit tests for parsers, registries, serialization, permissions, Mod lifecycle, and deterministic state.
 - Use Headless smoke tests for startup, world loading, server networking, stdin commands, save/stop, and server-side Mods.
 - Use a GUI client only for rendering, input, screen transitions, widgets, and client/server interaction.
+- Use an Android client with ADB for Android startup, networking, lifecycle, graphics, and device-specific failures.
 - Use both Headless and GUI for network protocol or multiplayer behavior.
 
 ## Multi-instance sessions
@@ -50,7 +53,10 @@ Read [references/multiplayer.md](references/multiplayer.md) before starting a GU
 
 ## Interactive sessions
 
-Use a PTY when the user needs to interact with a live server. Wait for the exact `Headless server started` marker before reporting readiness. Send stdin commands without a leading slash or with one; both are accepted by the dispatcher. Use `Ctrl+C` for graceful shutdown and verify process exit.
+On Linux, use a PTY when the user needs to interact with a live server. On Windows, read the instance
+log for observation and use the allocated Headless console only for command input. Wait for the exact
+`Headless server started` marker in the runtime log before reporting readiness. Send stdin commands
+without a leading slash or with one; both are accepted by the dispatcher. Stop gracefully and verify process exit.
 
 Do not mutate `RunningSetting.xml` with `--save` for temporary tests. Always provide a named `--session`; provide `--world` only together with `--session`.
 
@@ -74,3 +80,8 @@ This Skill can build, start, observe, issue server stdin commands, and preserve 
 For an automated multiplayer startup, use `--server-port`, `--broadcast-port`, `--connect`, and
 the explicit `--player` option described in [references/multiplayer.md](references/multiplayer.md).
 These overrides are transient unless `--save` is explicitly supplied.
+
+For a GUI-hosted server on Linux, use `scripts/start-gui-server.sh`. On Windows, invoke the Windows
+Starter with the equivalent arguments from [references/windows.md](references/windows.md).
+For an Android client, inject the same transient startup options through the
+`Survivalcraft.Android.CommandLine` Intent extra as described in [references/android.md](references/android.md).

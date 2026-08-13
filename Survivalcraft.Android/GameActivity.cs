@@ -45,7 +45,8 @@ public class GameActivity : EngineActivity
         GameExitManager.ExitRequested += OnExitRequested;
         try
         {
-            var exitAction = GameEntry.EntryPoint(RunningSettingManager.Load([]));
+            var gameArguments = Intent?.GetStringArrayExtra(MainActivity.gameArgumentsExtra) ?? [];
+            var exitAction = GameEntry.EntryPoint(RunningSettingManager.Load(gameArguments));
             SetResult(GetResultCode(exitAction));
         }
         finally

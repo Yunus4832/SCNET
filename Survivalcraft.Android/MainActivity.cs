@@ -5,6 +5,7 @@ using Android.OS;
 using Android.Runtime;
 
 using Game;
+using Game.Commands;
 
 using Game.Managers;
 
@@ -41,6 +42,8 @@ public class MainActivity : BlackActivity
     internal const int restartResultCode = 101;
     internal const int switchInstanceResultCode = 102;
     internal const string instanceIdExtra = "Survivalcraft.Android.InstanceId";
+    internal const string commandLineExtra = "Survivalcraft.Android.CommandLine";
+    internal const string gameArgumentsExtra = "Survivalcraft.Android.GameArguments";
 
     private const int _permissionRequestCode = 1;
     private const int _routeRequestCode = 2;
@@ -49,16 +52,18 @@ public class MainActivity : BlackActivity
     private bool _waitingForStoragePermission;
 
     private StarterInstanceContext? _instance;
+    private string? _commandLine;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
-        _instance = RegisterStorageRoots(Intent?.GetStringExtra(instanceIdExtra));
+        _commandLine = Intent?.GetStringExtra(commandLineExtra);
+        _instance = RegisterStorageRoots(Intent?.GetStringExtra(instanceIdExtra), _commandLine);
         GamePlatformManager.RegisterPlatform(Platform.Android);
         RouteWhenReady();
     }
 
-    private static StarterInstanceContext RegisterStorageRoots(string? instanceId)
+    private static StarterInstanceContext RegisterStorageRoots(string? instanceId, string? commandLine)
     {
         var externalPath = Path.Combine(AndroidEnvironment.ExternalStorageDirectory?.AbsolutePath ?? string.Empty,
             "scnet");
@@ -66,10 +71,19 @@ public class MainActivity : BlackActivity
                      ?? throw new InvalidOperationException("Android asset manager is unavailable.");
         Storage.RegisterRoot("app", new AndroidAssetsStorageRoot(assets));
         Storage.RegisterFileSystemRoot("starter", externalPath);
-        var args = string.IsNullOrWhiteSpace(instanceId)
-            ? []
-            : new[] { StarterInstanceManager.InstanceArgument, instanceId };
-        var instance = StarterInstanceManager.Initialize(args);
+        if (!CommandLineTokenizer.TryTokenize(commandLine ?? string.Empty, out var gameArguments, out var error))
+        {
+            throw new ArgumentException($"Invalid Android startup command line: {error}", nameof(commandLine));
+        }
+
+        var args = new List<string>();
+        if (!string.IsNullOrWhiteSpace(instanceId))
+        {
+            args.Add(StarterInstanceManager.InstanceArgument);
+            args.Add(instanceId);
+        }
+        args.AddRange(gameArguments);
+        var instance = StarterInstanceManager.Initialize(args.ToArray());
         var instancePath = Storage.GetSystemPath(instance.InstancePath);
         Storage.RegisterFileSystemRoot("external", instancePath);
         Storage.RegisterFileSystemRoot("data", Path.Combine(instancePath, "Data"));
@@ -111,10 +125,10 @@ public class MainActivity : BlackActivity
         switch ((int)resultCode)
         {
             case restartResultCode:
-                RestartApplication(_instance?.Id ?? StarterInstanceManager.DefaultInstanceId);
+                RestartApplication(_instance?.Id ?? StarterInstanceManager.DefaultInstanceId, _commandLine);
                 break;
             case switchInstanceResultCode:
-                RestartApplication(GameExitManager.SwitchInstanceId);
+                RestartApplication(GameExitManager.SwitchInstanceId, _commandLine);
                 break;
             default:
                 ExitApplication();
@@ -132,11 +146,15 @@ public class MainActivity : BlackActivity
         AndroidProcess.KillProcess(AndroidProcess.MyPid());
     }
 
-    private void RestartApplication(string instanceId)
+    private void RestartApplication(string instanceId, string? commandLine)
     {
         var restartIntent = new Intent(this, typeof(RestartActivity));
         restartIntent.PutExtra(RestartActivity.mainProcessIdExtra, AndroidProcess.MyPid());
         restartIntent.PutExtra(instanceIdExtra, instanceId);
+        if (!string.IsNullOrWhiteSpace(commandLine))
+        {
+            restartIntent.PutExtra(commandLineExtra, commandLine);
+        }
         restartIntent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
         StartActivity(restartIntent);
     }
@@ -160,7 +178,7 @@ public class MainActivity : BlackActivity
         }
 
         _routeStarted = true;
-        var runningSetting = RunningSettingManager.Load([]);
+        var runningSetting = RunningSettingManager.Load(_instance?.GameArguments ?? []);
         var activityType = runningSetting.RunMode is RunModeType.HeadlessServer
             ? typeof(ServerActivity)
             : typeof(GameActivity);
@@ -168,6 +186,10 @@ public class MainActivity : BlackActivity
         if (activityType == typeof(GameActivity) && Intent?.Data is not null)
         {
             intent.SetData(Intent.Data);
+        }
+        if (_instance is not null)
+        {
+            intent.PutExtra(gameArgumentsExtra, _instance.GameArguments);
         }
 
         StartActivityForResult(intent, _routeRequestCode);

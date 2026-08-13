@@ -57,6 +57,11 @@ public class RestartActivity : BlackActivity
         {
             restartIntent.PutExtra(MainActivity.instanceIdExtra, instanceId);
         }
+        var commandLine = Intent?.GetStringExtra(MainActivity.commandLineExtra);
+        if (!string.IsNullOrWhiteSpace(commandLine))
+        {
+            restartIntent.PutExtra(MainActivity.commandLineExtra, commandLine);
+        }
         restartIntent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTop);
         StartActivity(restartIntent);
 
