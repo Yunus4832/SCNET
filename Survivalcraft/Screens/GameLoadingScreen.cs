@@ -184,7 +184,9 @@ public class GameLoadingScreen : Screen
             delegate
             {
                 SetSpawnDialogMessage("应用初始世界快照", 0.8f);
-                if (_isWorldSnapshotApplied)
+                if (_isWorldSnapshotApplied &&
+                    GameManager.Project?.FindSubsystem<SubsystemPlayers>()?.PlayersData
+                        .Any(player => player.IsMainPlayer) == true)
                 {
                     ScreensManager.SwitchScreen("Game");
                 }
