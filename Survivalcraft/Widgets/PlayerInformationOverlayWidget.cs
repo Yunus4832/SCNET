@@ -6,6 +6,16 @@ namespace Game.Widgets;
 /// </summary>
 public sealed class PlayerInformationOverlayWidget : CanvasWidget
 {
+    private readonly BevelledRectangleWidget _background = new()
+    {
+        CenterColor = new Color(0, 0, 0, 88),
+        BevelColor = Color.Transparent,
+        BevelSize = 0f,
+        RoundingRadius = 8f,
+        ShadowColor = Color.Transparent,
+        ShadowSize = 0f
+    };
+
     private readonly PlayerData _playerData;
 
     private string _lastGroupKey;
@@ -19,7 +29,7 @@ public sealed class PlayerInformationOverlayWidget : CanvasWidget
     public PlayerInformationOverlayWidget(GameWidget gameWidget)
     {
         _playerData = gameWidget.PlayerData;
-        var overlaySize = new Vector2(196f, 96f);
+        var overlaySize = new Vector2(196f, 105f);
         DisplayEnabled = SettingsManager.Current.ShowPlayerInformationOverlay;
         Filter = SettingsManager.Current.PlayerInformationFilter;
         PlayerListWidget = new PlayerListWidget(
@@ -31,6 +41,7 @@ public sealed class PlayerInformationOverlayWidget : CanvasWidget
         Size = overlaySize;
         ClampToBounds = true;
         IsHitTestVisible = false;
+        Children.Add(_background);
         Children.Add(PlayerListWidget);
         _lastGroupKey = _playerData.GroupKey;
         RefreshView();

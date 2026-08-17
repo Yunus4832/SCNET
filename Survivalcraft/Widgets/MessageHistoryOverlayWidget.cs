@@ -12,11 +12,11 @@ public sealed class MessageHistoryOverlayWidget : CanvasWidget
 
     private readonly ChatTranscriptWidget _transcript = new()
     {
-        Size = new Vector2(380f, 88f),
+        Size = new Vector2(196f, 96f),
         MaximumMessages = 4,
-        Padding = 0f,
+        Padding = 6f,
         IsBackgroundVisible = false,
-        MessageContentScale = 0.68f,
+        MessageContentScale = 0.6f,
         NormalTextColor = new Color(220, 224, 228, 225),
         UseTextDropShadow = true,
         FadeOlderMessages = true

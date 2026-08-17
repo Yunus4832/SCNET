@@ -13,36 +13,50 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
 
     private readonly LabelWidget _distance = new()
     {
-        FontScale = 0.56f,
+        FontScale = 0.49f,
         Color = new Color(230, 220, 160, 230),
         DropShadow = true,
         VerticalAlignment = WidgetAlignment.Center
     };
 
-    private readonly RectangleWidget _health = new()
+    private readonly BevelledRectangleWidget _health = new()
     {
-        FillColor = new Color(210, 65, 65, 220),
-        OutlineThickness = 0f,
-        VerticalAlignment = WidgetAlignment.Far
+        CenterColor = new Color(92, 205, 112, 220),
+        BevelColor = Color.Transparent,
+        BevelSize = 0f,
+        RoundingRadius = 1f,
+        ShadowColor = Color.Transparent,
+        ShadowSize = 0f,
+        VerticalAlignment = WidgetAlignment.Far,
+        Margin = new Vector2(0f, 1f)
     };
 
-    private readonly RectangleWidget _healthBackground = new()
+    private readonly BevelledRectangleWidget _healthBackground = new()
     {
-        FillColor = new Color(0, 0, 0, 120),
-        OutlineThickness = 0f,
-        VerticalAlignment = WidgetAlignment.Far
+        CenterColor = new Color(0, 0, 0, 145),
+        BevelColor = Color.Transparent,
+        BevelSize = 0f,
+        RoundingRadius = 1f,
+        ShadowColor = Color.Transparent,
+        ShadowSize = 0f,
+        VerticalAlignment = WidgetAlignment.Far,
+        Margin = new Vector2(0f, 1f)
     };
 
     private readonly LabelWidget _name = new()
     {
-        FontScale = 0.62f,
+        FontScale = 0.55f,
         DropShadow = true,
-        VerticalAlignment = WidgetAlignment.Center
+        VerticalAlignment = WidgetAlignment.Center,
+        ClampToBounds = true,
+        Ellipsis = true,
+        MaxLines = 1,
+        Margin = new Vector2(3f, 0f)
     };
 
     private readonly ImageWidget _direction = new()
     {
-        Size = new Vector2(10f, 12f),
+        Size = new Vector2(9f, 10f),
         HorizontalAlignment = WidgetAlignment.Center,
         VerticalAlignment = WidgetAlignment.Center,
         Margin = new Vector2(4f, 0f),
@@ -51,7 +65,7 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
 
     private readonly ImageWidget _sleeping = new()
     {
-        Size = new Vector2(12f),
+        Size = new Vector2(10f),
         HorizontalAlignment = WidgetAlignment.Far,
         VerticalAlignment = WidgetAlignment.Center,
         Margin = new Vector2(5f, 0f)
@@ -62,6 +76,14 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
         Direction = LayoutDirection.Horizontal,
         HorizontalAlignment = WidgetAlignment.Far,
         VerticalAlignment = WidgetAlignment.Stretch
+    };
+
+    private readonly CanvasWidget _statusHost = new()
+    {
+        Size = new Vector2(64f, 19f),
+        HorizontalAlignment = WidgetAlignment.Far,
+        VerticalAlignment = WidgetAlignment.Near,
+        IsHitTestVisible = false
     };
 
     private readonly PlayerData _main;
@@ -79,9 +101,9 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
             _ => throw new InvalidOperationException("Unsupported player observation item.")
         };
         _main = main;
-        Size = new Vector2(width, 24f);
+        Size = new Vector2(width, 21f);
         IsHitTestVisible = false;
-        _name.Size = new Vector2(MathUtils.Max(width - 90f, 40f), 22f);
+        _name.Size = new Vector2(width, 19f);
         _healthBackground.Size = new Vector2(width, 2f);
         _health.Size = new Vector2(width, 2f);
         _direction.SubTexture = _arrow;
@@ -89,10 +111,11 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
         _status.Children.Add(_distance);
         _status.Children.Add(_direction);
         _status.Children.Add(_sleeping);
+        _statusHost.Children.Add(_status);
         Children.Add(_healthBackground);
         Children.Add(_health);
         Children.Add(_name);
-        Children.Add(_status);
+        Children.Add(_statusHost);
     }
 
     public override void Update()
@@ -116,10 +139,12 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
                 ? new Color(255, 205, 135, 235)
                 : new Color(150, 220, 170, 230);
         _sleeping.IsVisible = isSleeping;
-        _healthBackground.IsVisible = isOnline;
-        _health.IsVisible = isOnline;
+        var showHealth = isOnline &&
+                         _main.SubsystemGameInfo.WorldSettings.GameMode != GameMode.Creative;
+        _healthBackground.IsVisible = showHealth;
+        _health.IsVisible = showHealth;
 
-        if (isOnline)
+        if (showHealth)
         {
             var health = playerComponent is not null
                 ? MathUtils.Saturate(playerComponent.ComponentHealth.Health)
@@ -127,6 +152,11 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
                     ? playerState.Health
                     : 1f;
             _health.Size = new Vector2(Size.X * health, 2f);
+            _health.CenterColor = health > 0.6f
+                ? new Color(92, 205, 112, 220)
+                : health > 0.3f
+                    ? new Color(230, 190, 72, 220)
+                    : new Color(218, 76, 70, 225);
         }
 
         var hasPlayerPosition = playerComponent is not null || hasPlayerState;
@@ -140,6 +170,10 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
             hasMainPosition;
         _distance.IsVisible = showRelativePosition;
         _direction.IsVisible = showRelativePosition;
+        _statusHost.IsVisible = isSleeping || showRelativePosition;
+        _name.Size = new Vector2(
+            _statusHost.IsVisible ? MathUtils.Max(Size.X - _statusHost.Size.X, 40f) : Size.X,
+            19f);
         if (!showRelativePosition)
         {
             return;

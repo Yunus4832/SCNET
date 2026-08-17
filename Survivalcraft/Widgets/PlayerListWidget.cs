@@ -64,15 +64,21 @@ public class PlayerListWidget : CanvasWidget
         _kind = kind;
         var isReadOnly1 = isReadOnly;
 
-        var itemWidth = MathUtils.Max(Size.X - 32f, 0f);
+        var itemWidth = MathUtils.Max(Size.X - (isReadOnly ? 8f : 32f), 0f);
         Players.HorizontalAlignment = WidgetAlignment.Center;
         Children.Add(Players);
 
         _mainPlayer = main;
-        Players.ItemSize = isReadOnly1 ? 24f : 52f;
+        Players.ItemSize = isReadOnly1 ? 21f : 52f;
         Players.SelectionColor = MultiplayerUiStyle.ListSelectionColor;
         Players.IsHitTestVisible = !isReadOnly1;
         Players.IsSelectionEnabled = !isReadOnly1;
+        if (isReadOnly1)
+        {
+            Players.ScrollPosition = 0f;
+            Players.ScrollSpeed = 0f;
+        }
+
         Players.ItemWidgetFactory = obj =>
         {
             if (!isReadOnly1)

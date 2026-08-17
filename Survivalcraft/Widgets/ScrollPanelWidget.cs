@@ -185,7 +185,10 @@ public class ScrollPanelWidget : ContainerWidget
     {
         var color = new Color((byte)128, (byte)128, (byte)128) * GlobalColorTransform *
                     MathUtils.Saturate(_scrollBarAlpha);
-        if (color.A <= 0 || !(ScrollAreaLength > 0f))
+        var viewportLength = Direction == LayoutDirection.Horizontal
+            ? ActualSize.X
+            : ActualSize.Y;
+        if (color.A <= 0 || ScrollAreaLength <= viewportLength)
         {
             return;
         }
