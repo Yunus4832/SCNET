@@ -399,17 +399,26 @@ public class CommandDispatcherTest
     }
 
     [Fact]
-    public void BuiltInSeasonAndWeatherSuggestionsRemainConstrained()
+    public void BuiltInTimeSeasonAndWeatherSuggestionsRemainConstrained()
     {
         var owner = new ModId("game");
         var player = Player(
             "Player",
             [
+                new ResourceId(owner, "world.time.set"),
                 new ResourceId(owner, "world.season.set"),
                 new ResourceId(owner, "world.weather.precipitation.set"),
                 new ResourceId(owner, "world.weather.fog.set")
             ]);
         var adapter = new TextCommandAdapter(BuiltInRegistry());
+
+        var timeSuggestions = adapter.Suggest("/time set ", player);
+        Assert.Equal(
+            ["day", "night", "sunrise", "sunset"],
+            timeSuggestions.Select(item => item.Value));
+        Assert.Equal(
+            timeSuggestions.Count,
+            timeSuggestions.Select(item => item.Description).Distinct().Count());
 
         var seasonSuggestions = adapter.Suggest("/season set ", player);
         Assert.Equal(

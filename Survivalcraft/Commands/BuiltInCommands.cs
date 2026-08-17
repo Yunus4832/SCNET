@@ -495,7 +495,11 @@ public static class BuiltInCommands
                 new CommandRoute(
                     [
                         new CommandLiteral("set"),
-                        new CommandArgument("value", CommandArgumentKind.String, choices)
+                        new CommandArgument(
+                            "value",
+                            CommandArgumentKind.String,
+                            choices,
+                            _ => TimeSuggestions())
                     ],
                     typeof(SetWorldTimeCommand),
                     arguments => new SetWorldTimeCommand(arguments.Get<string>("value")),
@@ -1178,6 +1182,25 @@ public static class BuiltInCommands
             new CommandArgumentSuggestion(
                 "spring",
                 CommandDescription("SeasonSpring_Description", "春季"))
+        ];
+    }
+
+    private static IEnumerable<CommandArgumentSuggestion> TimeSuggestions()
+    {
+        return
+        [
+            new CommandArgumentSuggestion(
+                "sunrise",
+                new LocalizedText("TimeOfDayMode", "Sunrise", "黎明")),
+            new CommandArgumentSuggestion(
+                "day",
+                new LocalizedText("TimeOfDayMode", "Day", "中午")),
+            new CommandArgumentSuggestion(
+                "sunset",
+                new LocalizedText("TimeOfDayMode", "Sunset", "黄昏")),
+            new CommandArgumentSuggestion(
+                "night",
+                new LocalizedText("TimeOfDayMode", "Night", "午夜"))
         ];
     }
 
