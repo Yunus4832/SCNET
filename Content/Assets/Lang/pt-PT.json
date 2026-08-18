@@ -42,9 +42,7 @@
     },
     "MainMenuScreen": {
         "1": "Falha na aquisição de anúncios",
-        "2": "Nenhum anúncio foi emitido por enquanto.\nOu não se conecta à Internet para obter informações de anúncio.",
-        "13": "Tem a certeza de que quer mudar para o modo de servidor?",
-        "14": "Tem a certeza de que quer sair do jogo?"
+        "2": "Nenhum anúncio foi emitido por enquanto.\nOu não se conecta à Internet para obter informações de anúncio."
     },
     "ModManagementScreen": {
         "Title": "Gestão de Mods",
@@ -3398,20 +3396,28 @@
             "1": "Ajuda Interface"
         },
         "MainMenuScreen": {
-            "1": "",
             "2": "jogo",
             "3": "Conectar ao servidor",
             "4": "Definições",
             "5": "Ajuda",
             "6": "Compre a versão completa",
-            "7": "Copyright 2011 - 2025 Candy Rufus Games.",
             "8": "Site Oficial do Jogo:",
             "9": "kaalus.wordpress.com",
             "10": "Para obter mais informações",
-            "11": "Retirada",
             "12": "Conteúdo",
-            "13": "Tem a certeza de que quer mudar para o modo de servidor?",
-            "14": "Tem a certeza de que quer sair do jogo?"
+            "NoOtherInstances": "Não existem outras instâncias para mudar.",
+            "SelectInstance": "Selecionar instância",
+            "HeadlessDefaultWorld": "Default",
+            "SelectHeadlessWorld": "Selecionar mundo Headless",
+            "ConfirmRestart": "Tem a certeza de que pretende reiniciar o jogo?",
+            "ConfirmSwitchInstance": "Tem a certeza de que pretende mudar para a instância “{0}”?",
+            "ConfirmRestartHeadless": "Reiniciar como servidor Headless usando o mundo “{0}”?",
+            "ConfirmExit": "Tem a certeza de que pretende sair do jogo?",
+            "Restart": "Reiniciar",
+            "SwitchInstance": "Mudar instância",
+            "RestartHeadless": "Reiniciar como servidor",
+            "Exit": "Sair",
+            "Bulletin": "Anúncios"
         },
         "ModManagementScreen": {
             "Title": "Gestão de Mods",
@@ -3974,7 +3980,7 @@
         "PlayersList_Description": "Mostrar a lista de jogadores",
         "RunMode_Description": "Ver ou alterar o modo de execução do processo",
         "RunModeGet_Description": "Mostrar o modo de execução atual",
-        "RunModeSet_Description": "Alterar o modo de execução e reiniciar no menu principal",
+        "RunModeSet_Description": "Alterar o modo de execução e reiniciar",
         "Stop_Description": "Guardar o mundo e parar o servidor Headless",
         "StopAction_Description": "Parar o servidor Headless",
         "Season_Description": "Definir a estação atual",
@@ -4032,7 +4038,7 @@
         "CurrentRunMode_Message": "Modo de execução atual: {0}.",
         "RunModeInvalid_Message": "Modo de execução não suportado.",
         "RunModeUnchanged_Message": "O processo já está no modo {0}; não é necessário reiniciar.",
-        "RunModeRestarting_Message": "Modo de execução alterado para {0}; a reiniciar no menu principal.",
+        "RunModeRestarting_Message": "Modo de execução alterado para {0}; a reiniciar.",
         "AuthClaimed_Message": "A administração do servidor já foi reivindicada.",
         "AuthUnclaimedConsole_Message": "A administração do servidor não foi reivindicada.\nUse auth code para ver o código e peça a um jogador online para executar /auth claim <code>.",
         "AuthUnclaimedPlayer_Message": "A administração do servidor não foi reivindicada.\nIntroduza /auth claim <code> para criar o primeiro administrador.",
@@ -4149,7 +4155,15 @@
         "SeasonSpring_Description": "Primavera",
         "SeasonStart_Description": "Início da estação",
         "SeasonMiddle_Description": "Meio da estação",
-        "SeasonEnd_Description": "Fim da estação"
+        "SeasonEnd_Description": "Fim da estação",
+        "ApplicationRestart_Description": "Reiniciar a aplicação",
+        "InstanceSwitch_Description": "Mudar a instância de dados e reiniciar",
+        "ApplicationExit_Description": "Sair da aplicação",
+        "ApplicationRestarting_Message": "A reiniciar a aplicação.",
+        "InstanceUnchanged_Message": "A aplicação já está a ser executada nessa instância.",
+        "InstanceNotFound_Message": "Instância não encontrada: {0}.",
+        "InstanceSwitching_Message": "A mudar para a instância {0}.",
+        "ApplicationExiting_Message": "A sair da aplicação."
     },
     "AndroidServer": {
         "Title": "Registo do servidor",

@@ -42,9 +42,7 @@
     },
     "MainMenuScreen": {
         "1": "Announcement retrieval failed",
-        "2": "There are currently no published announcements,\nor you are not connected to the network to fetch announcement information",
-        "13": "Are you sure you want to switch to server mode?",
-        "14": "Are you sure you want to exit the game?"
+        "2": "There are currently no published announcements,\nor you are not connected to the network to fetch announcement information"
     },
     "ModManagementScreen": {
         "Title": "Mod Management",
@@ -3398,20 +3396,28 @@
             "1": "Help Topics"
         },
         "MainMenuScreen": {
-            "1": "",
             "2": "Game",
             "3": "Connect to Server",
             "4": "Settings",
             "5": "Help",
             "6": "Buy Full Version",
-            "7": "Copyright © 2011-2025 Candy Rufus Games.",
             "8": "Official Website:",
             "9": "kaalus.wordpress.com",
             "10": "More Info",
-            "11": "Exit",
             "12": "Content",
-            "13": "Are you sure you want to switch to server mode?",
-            "14": "Are you sure you want to exit the game?"
+            "NoOtherInstances": "There are no other instances to switch to.",
+            "SelectInstance": "Select Instance",
+            "HeadlessDefaultWorld": "Default",
+            "SelectHeadlessWorld": "Select Headless World",
+            "ConfirmRestart": "Are you sure you want to restart the game?",
+            "ConfirmSwitchInstance": "Are you sure you want to switch to instance “{0}”?",
+            "ConfirmRestartHeadless": "Restart as a Headless server using world “{0}”?",
+            "ConfirmExit": "Are you sure you want to exit the game?",
+            "Restart": "Restart",
+            "SwitchInstance": "Switch Instance",
+            "RestartHeadless": "Restart as Server",
+            "Exit": "Exit",
+            "Bulletin": "Announcements"
         },
         "ModManagementScreen": {
             "Title": "Mod Management",
@@ -3974,7 +3980,7 @@
         "PlayersList_Description": "Show the player list",
         "RunMode_Description": "View or switch process run mode",
         "RunModeGet_Description": "Show current run mode",
-        "RunModeSet_Description": "Switch run mode and restart to the main menu",
+        "RunModeSet_Description": "Switch run mode and restart",
         "Stop_Description": "Save the world and stop the Headless server",
         "StopAction_Description": "Stop the Headless server",
         "Season_Description": "Set the current season",
@@ -4032,7 +4038,7 @@
         "CurrentRunMode_Message": "Current run mode: {0}.",
         "RunModeInvalid_Message": "Unsupported run mode.",
         "RunModeUnchanged_Message": "The process is already in {0} mode; no restart is needed.",
-        "RunModeRestarting_Message": "Run mode changed to {0}; restarting to the main menu.",
+        "RunModeRestarting_Message": "Run mode changed to {0}; restarting.",
         "AuthClaimed_Message": "Server administration has already been claimed.",
         "AuthUnclaimedConsole_Message": "Server administration is unclaimed.\nUse auth code to view the claim code, then have an online player run /auth claim <code>.",
         "AuthUnclaimedPlayer_Message": "Server administration is unclaimed.\nEnter /auth claim <code> to initialize the first administrator.",
@@ -4149,7 +4155,15 @@
         "SeasonSpring_Description": "Spring",
         "SeasonStart_Description": "Start of season",
         "SeasonMiddle_Description": "Middle of season",
-        "SeasonEnd_Description": "End of season"
+        "SeasonEnd_Description": "End of season",
+        "ApplicationRestart_Description": "Restart the application",
+        "InstanceSwitch_Description": "Switch data instance and restart",
+        "ApplicationExit_Description": "Exit the application",
+        "ApplicationRestarting_Message": "Restarting the application.",
+        "InstanceUnchanged_Message": "The application is already running in that instance.",
+        "InstanceNotFound_Message": "Instance not found: {0}.",
+        "InstanceSwitching_Message": "Switching to instance {0}.",
+        "ApplicationExiting_Message": "Exiting the application."
     },
     "AndroidServer": {
         "Title": "Server Log",

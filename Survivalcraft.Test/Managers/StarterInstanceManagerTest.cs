@@ -24,6 +24,7 @@ public sealed class StarterInstanceManagerTest : IDisposable
         var context = StarterInstanceManager.Initialize([]);
 
         Assert.Equal("default", context.Id);
+        Assert.Equal(context, StarterInstanceManager.Current);
         Assert.Empty(context.GameArguments);
         Assert.True(Directory.Exists(Path.Combine(_directory, "Instances", "default")));
         var settings = XElement.Load(Path.Combine(_directory, "Starter.xml"));
@@ -42,6 +43,7 @@ public sealed class StarterInstanceManagerTest : IDisposable
             ["--server", "--instance", "debug_server", "--session", "smoke"]);
 
         Assert.Equal("debug_server", context.Id);
+        Assert.Equal("debug_server", StarterInstanceManager.Current.Id);
         Assert.Equal(["--server", "--session", "smoke"], context.GameArguments);
         Assert.True(Directory.Exists(Path.Combine(_directory, "Instances", "debug_server")));
     }

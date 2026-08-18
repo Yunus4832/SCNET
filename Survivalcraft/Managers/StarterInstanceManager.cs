@@ -15,6 +15,11 @@ public static class StarterInstanceManager
     private const string _settingsPath = "starter:Starter.xml";
     private const string _instancesPath = "starter:Instances";
 
+    public static StarterInstanceContext Current { get; private set; } = new(
+        DefaultInstanceId,
+        string.Empty,
+        []);
+
     public static StarterInstanceContext Initialize(string[] args)
     {
         ArgumentNullException.ThrowIfNull(args);
@@ -50,7 +55,11 @@ public static class StarterInstanceManager
             Save(settings);
         }
 
-        return new StarterInstanceContext(instanceId, instancePath, parsedArguments.GameArguments);
+        Current = new StarterInstanceContext(
+            instanceId,
+            instancePath,
+            parsedArguments.GameArguments);
+        return Current;
     }
 
     public static void RequestSwitch(string targetInstanceId)

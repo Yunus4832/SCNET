@@ -26,7 +26,16 @@ public sealed record ListPlayersCommand : IGameCommand;
 
 public sealed record GetRunModeCommand : IGameCommand;
 
-public sealed record SetRunModeCommand(RunModeType TargetMode) : IGameCommand;
+public sealed record SetRunModeCommand(
+    RunModeType TargetMode,
+    SessionInfo? RestartSession = null) : IGameCommand;
+
+public sealed record RestartApplicationCommand(
+    SessionInfo? RestartSession = null) : IGameCommand;
+
+public sealed record SwitchInstanceCommand(string InstanceId) : IGameCommand;
+
+public sealed record ExitApplicationCommand : IGameCommand;
 
 public sealed record GetLanguageCommand : IGameCommand;
 

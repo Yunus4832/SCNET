@@ -10,7 +10,7 @@
             <RectangleWidget Name="Logo" Size="800, 100" OutlineColor="0, 0, 0, 0" HorizontalAlignment="Center"
                              FillColor="255, 255, 255" Margin="0, 0" Subtexture="{Textures/Gui/Logo}"/>
             <CanvasWidget Size="0, 5"/>
-            <LabelWidget Name="Version" FontScale="0.5" Text="[MainMenuScreen:1]" HorizontalAlignment="Center"
+            <LabelWidget Name="Version" FontScale="0.5" HorizontalAlignment="Center"
                          Color="64, 192, 64" DropShadow="true"/>
         </StackPanelWidget>
 
@@ -48,14 +48,12 @@
             <StackPanelWidget HorizontalAlignment="Center">
                 <StackPanelWidget Name="BulletinStackPanel" Direction="Horizontal" VerticalAlignment="Center">
                     <BevelledButtonWidget Name="BulletinButton" CenterColor="0, 0, 0, 0" BevelColor="0, 0, 0, 0"
-                                          Size="100, 30" VerticalAlignment="Center" HorizontalAlignment="Center">
-                        <LabelWidget Text="点此查看公告" Font="{Fonts/Pericles}" FontScale="0.7"
-                                     HorizontalAlignment="Near" VerticalAlignment="Center" Color="64, 192, 64"
+                                          Size="120, 30" VerticalAlignment="Center" HorizontalAlignment="Center">
+                        <LabelWidget Text="[MainMenuScreen:Bulletin]" Font="{Fonts/Pericles}" FontScale="0.7"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center" Color="64, 192, 64"
                                      DropShadow="true" IsVisible="true"/>
                     </BevelledButtonWidget>
                 </StackPanelWidget>
-                <LabelWidget Name="CopyrightLabel" Text="[MainMenuScreen:7]" Color="255, 255, 255, 255"
-                             VerticalAlignment="Center" FontScale="0.7" DropShadow="true"/>
                 <LabelWidget Text="[MainMenuScreen:8]" Color="255, 255, 255, 255" VerticalAlignment="Center"
                              FontScale="0.7" DropShadow="true" _ExcludePlatforms="Ios"/>
                 <LinkWidget Name="Link" Text="[MainMenuScreen:9]" Color="64, 192, 64" FontScale="0.7"
@@ -69,23 +67,6 @@
     </StackPanelWidget>
     <StackPanelWidget Name="LeftBottomBar" Direction="Vertical" HorizontalAlignment="Near" VerticalAlignment="Far"
                       Margin="8, 8">
-        <BevelledButtonWidget Name="Exit" Size="60, 60" IsAutoCheckingEnabled="false">
-            <RectangleWidget Name="ExitIcon" Size="28, 28" HorizontalAlignment="Center" VerticalAlignment="Center"
-                             Subtexture="{Textures/Gui/Exit}" OutlineColor="0, 0, 0, 0"
-                             FillColor="255, 255, 255" IsVisible="true"/>
-        </BevelledButtonWidget>
-        <CanvasWidget Size="0, 8"/>
-        <BevelledButtonWidget Name="ServerModeButton" Size="60, 60" IsAutoCheckingEnabled="false">
-            <RectangleWidget Name="ServerModeIcon" Size="28, 28" HorizontalAlignment="Center"
-                             VerticalAlignment="Center" Subtexture="{Textures/Gui/Terminal}"
-                             OutlineColor="0, 0, 0, 0" FillColor="255, 255, 255" IsVisible="true"/>
-        </BevelledButtonWidget>
-        <CanvasWidget Size="0, 8"/>
-        <BevelledButtonWidget Name="LanguageButton" Size="60, 60" IsAutoCheckingEnabled="false">
-            <RectangleWidget Name="LanguageIcon" Size="28, 28" HorizontalAlignment="Center"
-                             VerticalAlignment="Center" Subtexture="{Textures/Gui/Earth}" OutlineColor="0, 0, 0, 0"
-                             FillColor="255, 255, 255" IsVisible="true"/>
-        </BevelledButtonWidget>
+        <VerticalTabMenuWidget Name="MainMenuTabs"/>
     </StackPanelWidget>
-
 </Screen>

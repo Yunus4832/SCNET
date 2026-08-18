@@ -36,6 +36,13 @@ public static class GameExitManager
         RequestApplicationExit();
     }
 
+    public static void RequestExit()
+    {
+        ExitAction = GameExitAction.Exit;
+        ExitRequested?.Invoke(ExitAction);
+        RequestApplicationExit();
+    }
+
     internal static void BeginSession()
     {
         ExitAction = GameExitAction.Exit;

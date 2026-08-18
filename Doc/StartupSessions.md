@@ -138,6 +138,12 @@ Headless 使用 `World` session。远程联机重启使用 `RemoteServer` sessio
 
 Headless 不使用这个机制准备模组。它在启动阶段直接解析 profile、下载缺失包并启动 runtime。
 
+## 应用生命周期命令
+
+主菜单的电源菜单通过应用域命令请求重新启动、切换实例、切换运行模式或退出，不直接关闭窗口。`GameExitManager` 统一产生 `Exit`、`Restart` 或 `SwitchInstance` 动作，再由 Windows、Linux 或 Android Starter 完成平台级退出和重启。
+
+`SetRunModeCommand` 可以携带可选的重启 session。提供 session 时，下一次启动恢复到其中描述的世界或目标；不提供时，不会临时询问用户，而是继续使用 pending、default 或 Headless 自身的默认解析逻辑。主菜单若让用户选择了 Headless 存档，会在执行命令前构造对应的 `World` session。
+
 ## Mod Profile
 
 模组 profile 决定本次运行加载哪些模组。

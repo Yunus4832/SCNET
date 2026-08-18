@@ -1,0 +1,13 @@
+<VerticalTabMenuWidget xmlns="runtime-namespace:Game.Widgets" Size="280, 260">
+    <CanvasWidget Name="VerticalTabMenu.Popup" HorizontalAlignment="Near" VerticalAlignment="Far"
+                  Margin="64, 0" IsVisible="false" ClampToBounds="true">
+        <BevelledRectangleWidget Name="VerticalTabMenu.Background" DirectionalLight="0" AmbientLight="1"
+                                 BevelColor="0, 0, 0, 0" CenterColor="0, 0, 0, 128"
+                                 ShadowColor="0, 0, 0, 0" BevelSize="0"
+                                 RoundingRadius="8" RoundingCount="4"/>
+        <StackPanelWidget Name="VerticalTabMenu.Items" Direction="Vertical"
+                          HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4, 4"/>
+    </CanvasWidget>
+    <StackPanelWidget Name="VerticalTabMenu.Tabs" Direction="Vertical" HorizontalAlignment="Near"
+                      VerticalAlignment="Far"/>
+</VerticalTabMenuWidget>

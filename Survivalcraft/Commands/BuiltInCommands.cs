@@ -189,7 +189,25 @@ public static class BuiltInCommands
                 CommandDomain.Application,
                 CommandDescription(
                     "RunModeSet_Description",
-                    "切换运行模式并重启到主菜单")));
+                    "切换运行模式并重启")));
+        commands.Register(
+            new ResourceId(owner, "application/restart"),
+            new CommandDefinition<RestartApplicationCommand>(
+                ExecuteApplicationRestart,
+                CommandDomain.Application,
+                CommandDescription("ApplicationRestart_Description", "重新启动应用")));
+        commands.Register(
+            new ResourceId(owner, "application/instance/switch"),
+            new CommandDefinition<SwitchInstanceCommand>(
+                ExecuteInstanceSwitch,
+                CommandDomain.Application,
+                CommandDescription("InstanceSwitch_Description", "切换数据实例并重启")));
+        commands.Register(
+            new ResourceId(owner, "application/exit"),
+            new CommandDefinition<ExitApplicationCommand>(
+                ExecuteApplicationExit,
+                CommandDomain.Application,
+                CommandDescription("ApplicationExit_Description", "退出应用")));
         commands.Register(
             new ResourceId(owner, "application/language/get"),
             new CommandDefinition<GetLanguageCommand>(
@@ -1018,7 +1036,7 @@ public static class BuiltInCommands
                 "不支持的运行模式。");
         }
 
-        if (command.TargetMode == RunMode.Value)
+        if (command.TargetMode == RunMode.Value && command.RestartSession == null)
         {
             return CommandResult.LocalizedOk(
                 "application.run_mode.unchanged",
@@ -1028,15 +1046,69 @@ public static class BuiltInCommands
         }
 
         RunningSettingManager.SetRunMode(command.TargetMode);
-        GameExitManager.RequestRestart(new SessionInfo
-        {
-            Target = SessionTarget.MainMenu
-        });
+        GameExitManager.RequestRestart(command.RestartSession);
         return CommandResult.LocalizedOk(
             "application.run_mode.restarting",
             "RunModeRestarting_Message",
-            "运行模式已切换为 {0}，正在重启到主菜单。",
+            "运行模式已切换为 {0}，正在重启。",
             FormatRunMode(command.TargetMode));
+    }
+
+    private static CommandResult ExecuteApplicationRestart(
+        CommandContext context,
+        RestartApplicationCommand command)
+    {
+        GameExitManager.RequestRestart(command.RestartSession);
+        return CommandResult.LocalizedOk(
+            "application.restarting",
+            "ApplicationRestarting_Message",
+            "正在重新启动应用。");
+    }
+
+    private static CommandResult ExecuteInstanceSwitch(
+        CommandContext context,
+        SwitchInstanceCommand command)
+    {
+        var instanceId = command.InstanceId?.Trim() ?? string.Empty;
+        if (string.Equals(
+                instanceId,
+                StarterInstanceManager.Current.Id,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.unchanged",
+                "InstanceUnchanged_Message",
+                "当前已经在该实例中运行。");
+        }
+
+        if (!StarterInstanceManager.ListInstances().Contains(
+                instanceId,
+                StringComparer.OrdinalIgnoreCase))
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.not_found",
+                "InstanceNotFound_Message",
+                "找不到实例：{0}。",
+                instanceId);
+        }
+
+        GameExitManager.RequestInstanceSwitch(instanceId);
+        return CommandResult.LocalizedOk(
+            "application.instance.switching",
+            "InstanceSwitching_Message",
+            "正在切换到实例 {0}。",
+            instanceId);
+    }
+
+    private static CommandResult ExecuteApplicationExit(
+        CommandContext context,
+        ExitApplicationCommand command)
+    {
+        GameExitManager.RequestExit();
+        return CommandResult.LocalizedOk(
+            "application.exiting",
+            "ApplicationExiting_Message",
+            "正在退出应用。");
     }
 
     private static CommandResult ExecuteLanguageGet(

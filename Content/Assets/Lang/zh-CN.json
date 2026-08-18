@@ -42,9 +42,7 @@
     },
     "MainMenuScreen": {
         "1": "公告获取失败",
-        "2": "当前暂无发布公告，\n或者没有联网获取公告信息",
-        "13": "确定要切换到服务器模式吗？",
-        "14": "确定要退出游戏吗？"
+        "2": "当前暂无发布公告，\n或者没有联网获取公告信息"
     },
     "ModManagementScreen": {
         "Title": "模组管理",
@@ -3398,20 +3396,28 @@
             "1": "帮助界面"
         },
         "MainMenuScreen": {
-            "1": "",
             "2": "游戏",
             "3": "连接服务器",
             "4": "设置",
             "5": "帮助",
             "6": "购买完整版",
-            "7": "版权所有 2011-2025 Candy Rufus Games.",
             "8": "游戏官网:",
             "9": "kaalus.wordpress.com",
             "10": "查询更多信息",
-            "11": "退出",
             "12": "内容",
-            "13": "确定要切换到服务器模式吗？",
-            "14": "确定要退出游戏吗？"
+            "NoOtherInstances": "没有可切换的其他实例。",
+            "SelectInstance": "选择实例",
+            "HeadlessDefaultWorld": "Default",
+            "SelectHeadlessWorld": "选择 Headless 存档",
+            "ConfirmRestart": "确定要重新启动游戏吗？",
+            "ConfirmSwitchInstance": "确定要切换到实例“{0}”吗？",
+            "ConfirmRestartHeadless": "确定要重启到 Headless 服务端并使用存档“{0}”吗？",
+            "ConfirmExit": "确定要退出游戏吗？",
+            "Restart": "重新启动",
+            "SwitchInstance": "切换实例",
+            "RestartHeadless": "重启到服务器",
+            "Exit": "退出游戏",
+            "Bulletin": "查看公告"
         },
         "ModManagementScreen": {
             "Title": "模组管理",
@@ -3974,7 +3980,7 @@
         "PlayersList_Description": "显示玩家列表",
         "RunMode_Description": "查询或切换进程运行模式",
         "RunModeGet_Description": "显示当前运行模式",
-        "RunModeSet_Description": "切换运行模式并重启到主菜单",
+        "RunModeSet_Description": "切换运行模式并重启",
         "Stop_Description": "保存世界并停止 Headless 服务端",
         "StopAction_Description": "停止 Headless 服务端",
         "Season_Description": "设置当前季节",
@@ -4032,7 +4038,7 @@
         "CurrentRunMode_Message": "当前运行模式：{0}。",
         "RunModeInvalid_Message": "不支持的运行模式。",
         "RunModeUnchanged_Message": "当前已经是 {0} 模式，无需重启。",
-        "RunModeRestarting_Message": "运行模式已切换为 {0}，正在重启到主菜单。",
+        "RunModeRestarting_Message": "运行模式已切换为 {0}，正在重启。",
         "AuthClaimed_Message": "服务器管理员已经完成首次认领。",
         "AuthUnclaimedConsole_Message": "服务器尚未认领。\n使用 auth code 查看认领码，玩家上线后执行 /auth claim <code>。",
         "AuthUnclaimedPlayer_Message": "服务器尚未认领。\n请输入 /auth claim <code> 完成首次管理员授权。",
@@ -4149,7 +4155,15 @@
         "SeasonSpring_Description": "春季",
         "SeasonStart_Description": "季节初期",
         "SeasonMiddle_Description": "季节中期",
-        "SeasonEnd_Description": "季节末期"
+        "SeasonEnd_Description": "季节末期",
+        "ApplicationRestart_Description": "重新启动应用",
+        "InstanceSwitch_Description": "切换数据实例并重启",
+        "ApplicationExit_Description": "退出应用",
+        "ApplicationRestarting_Message": "正在重新启动应用。",
+        "InstanceUnchanged_Message": "当前已经在该实例中运行。",
+        "InstanceNotFound_Message": "找不到实例：{0}。",
+        "InstanceSwitching_Message": "正在切换到实例 {0}。",
+        "ApplicationExiting_Message": "正在退出应用。"
     },
     "AndroidServer": {
         "Title": "服务器日志",

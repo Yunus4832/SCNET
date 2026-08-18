@@ -9,15 +9,9 @@ namespace Game.Screens;
 
 public class MainMenuScreen : Screen
 {
-    private readonly StackPanelWidget _bulletinStackPanel;
-
-    private readonly LabelWidget _copyrightLabel;
-
-    private readonly BevelledButtonWidget _languageSwitchButton;
-
-    private readonly BevelledButtonWidget _serverModeButton;
-
     private readonly ButtonWidget _showBulletinButton;
+
+    private readonly VerticalTabMenuWidget _mainMenuTabs;
 
     private static readonly string _versionString = $"Version {VersionsManager.Version}";
 
@@ -26,18 +20,10 @@ public class MainMenuScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
         LoadContents(this, node);
         _showBulletinButton = Children.Find<ButtonWidget>("BulletinButton")!;
-        _bulletinStackPanel = Children.Find<StackPanelWidget>("BulletinStackPanel")!;
-        _copyrightLabel = Children.Find<LabelWidget>("CopyrightLabel")!;
-        _serverModeButton = Children.Find<BevelledButtonWidget>("ServerModeButton")!;
-        _languageSwitchButton = Children.Find<BevelledButtonWidget>("LanguageButton")!;
+        _mainMenuTabs = Children.Find<VerticalTabMenuWidget>("MainMenuTabs")!;
+        Children.Find<LabelWidget>("Version")!.Text = _versionString;
 
-        // 绑定语言切换按钮的点击事件
-        _languageSwitchButton.ClickableWidget.OnClick += OnLanguageButtonClick;
-        _serverModeButton.ClickableWidget.OnClick += OnServerModeButtonClick;
-
-        var isChinese = LanguageManager.CurrentLanguage == "zh-CN";
-        _bulletinStackPanel.IsVisible = isChinese;
-        _copyrightLabel.IsVisible = !isChinese;
+        ConfigureMainMenuTabs();
     }
 
     public override void Enter(object[] parameters)
@@ -62,58 +48,143 @@ public class MainMenuScreen : Screen
         Keyboard.BackButtonQuitsApp = false;
     }
 
-    private static void OnLanguageButtonClick()
+    private void ConfigureMainMenuTabs()
     {
-        // 显示语言选择对话框
+        _mainMenuTabs.AddTab(new VerticalTabMenu(
+            "Textures/Gui/Exit",
+            () =>
+            [
+                new VerticalTabMenuItem(MainMenuText("Restart"),
+                    () => ExecutePowerMenuAction(PowerMenuAction.Restart)),
+                new VerticalTabMenuItem(MainMenuText("SwitchInstance"),
+                    () => ExecutePowerMenuAction(PowerMenuAction.SwitchInstance)),
+                new VerticalTabMenuItem(MainMenuText("RestartHeadless"),
+                    () => ExecutePowerMenuAction(PowerMenuAction.RestartHeadless)),
+                new VerticalTabMenuItem(MainMenuText("Exit"),
+                    () => ExecutePowerMenuAction(PowerMenuAction.Exit))
+            ],
+            new Vector2(180f, 44f)));
+        _mainMenuTabs.AddTab(new VerticalTabMenu(
+            "Textures/Gui/Earth",
+            () => LanguageManager.LanguageTypes
+                .Select(languageType => new VerticalTabMenuItem(
+                    LanguageManager.GetLanguageDisplayName(languageType),
+                    () => SettingsUiScreen.ChangeLanguage(languageType)))
+                .ToArray(),
+            new Vector2(180f, 44f)));
+    }
+
+    private static void ExecutePowerMenuAction(PowerMenuAction action)
+    {
+        switch (action)
+        {
+            case PowerMenuAction.Restart:
+                ConfirmAction(MainMenuText("ConfirmRestart"), () =>
+                    ExecuteApplicationCommand(new RestartApplicationCommand(new SessionInfo
+                    {
+                        Target = SessionTarget.MainMenu
+                    })));
+                break;
+            case PowerMenuAction.SwitchInstance:
+                ShowInstanceMenu();
+                break;
+            case PowerMenuAction.RestartHeadless:
+                ShowHeadlessTargetMenu();
+                break;
+            case PowerMenuAction.Exit:
+                ConfirmExit();
+                break;
+        }
+    }
+
+    private static void ShowInstanceMenu()
+    {
+        var instances = StarterInstanceManager.ListInstances()
+            .Where(instanceId => !string.Equals(
+                instanceId,
+                StarterInstanceManager.Current.Id,
+                StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+        if (instances.Length == 0)
+        {
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    MainMenuText("SelectInstance"),
+                    MainMenuText("NoOtherInstances"),
+                    LanguageManager.Ok));
+            return;
+        }
+
         DialogsManager.ShowDialog(
             null,
             new ListSelectionDialog(
-                string.Empty,
-                LanguageManager.LanguageTypes,
-                70f,
-                item => LanguageManager.GetLanguageDisplayName((string)item),
-                delegate(object item)
+                MainMenuText("SelectInstance"),
+                instances,
+                60f,
+                item => (string)item,
+                item =>
                 {
-                    // 用户选择语言后调用 ChangeLanguage 方法
-                    SettingsUiScreen.ChangeLanguage((string)item);
-                }
-            )
-        );
+                    var instanceId = (string)item;
+                    ConfirmAction(
+                        string.Format(MainMenuText("ConfirmSwitchInstance"), instanceId),
+                        () => ExecuteApplicationCommand(
+                            new SwitchInstanceCommand(instanceId)));
+                }));
     }
 
-    private static void OnServerModeButtonClick()
+    private static void ShowHeadlessTargetMenu()
     {
-        DialogsManager.Confirm(LanguageManager.Get("MainMenuScreen", 13), button =>
+        WorldsManager.UpdateWorldsList();
+        var targets = new List<HeadlessTarget>
         {
-            if (button != MessageDialogButton.Button1)
-            {
-                return;
-            }
+            new(null, MainMenuText("HeadlessDefaultWorld"))
+        };
+        targets.AddRange(WorldsManager.WorldInfos.Select(worldInfo => new HeadlessTarget(
+            worldInfo.DirectoryName,
+            worldInfo.WorldSettings.Name)));
 
-            var result = CommandExecutor.ExecuteApplication(
-                new SetRunModeCommand(RunModeType.HeadlessServer),
-                GameManager.Project);
-            if (!result.Success)
-            {
-                DialogsManager.ShowDialog(
-                    null,
-                    new MessageDialog(
-                        LanguageManager.Error,
-                        CommandText.Resolve(result),
-                        LanguageManager.Ok));
-            }
-        });
+        DialogsManager.ShowDialog(
+            null,
+            new ListSelectionDialog(
+                MainMenuText("SelectHeadlessWorld"),
+                targets,
+                60f,
+                item => ((HeadlessTarget)item).DisplayName,
+                item =>
+                {
+                    var target = (HeadlessTarget)item;
+                    var restartSession = target.WorldDirectoryName == null
+                        ? null
+                        : new SessionInfo
+                        {
+                            Target = SessionTarget.World,
+                            World = target.WorldDirectoryName
+                        };
+                    ConfirmAction(
+                        string.Format(MainMenuText("ConfirmRestartHeadless"), target.DisplayName),
+                        () => ExecuteApplicationCommand(new SetRunModeCommand(
+                            RunModeType.HeadlessServer,
+                            restartSession)));
+                }));
+    }
+
+    private static void ExecuteApplicationCommand(IGameCommand command)
+    {
+        var result = CommandExecutor.ExecuteApplication(command, GameManager.Project);
+        if (!result.Success)
+        {
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageManager.Error,
+                    CommandText.Resolve(result),
+                    LanguageManager.Ok));
+        }
     }
 
     public override void Update()
     {
-        var isChinese = LanguageManager.CurrentLanguage == "zh-CN";
-        _bulletinStackPanel.IsVisible = isChinese;
-        _copyrightLabel.IsVisible = !isChinese;
-
-        // 更新版本号显示
-        Children.Find<LabelWidget>("Version")!.Text = _versionString;
-
         // 动态调整 Logo 大小
         var rectangleWidget = Children.Find<RectangleWidget>("Logo")!;
         var scale = 1f + 0.02f * MathUtils.Sin(1.5f * (float)MathUtils.Remainder(Time.FrameStartTime, 10000.0));
@@ -145,13 +216,21 @@ public class MainMenuScreen : Screen
 
         if (_showBulletinButton.IsClicked)
         {
-            if (string.IsNullOrEmpty(MotdManager.BulletinDefault.Content) ||
-                string.Equals(MotdManager.BulletinDefault.Title.ToLower(), "null", StringComparison.Ordinal))
+            var isChinese = LanguageManager.CurrentLanguage == "zh-CN";
+            var bulletinContent = isChinese
+                ? MotdManager.BulletinDefault.Content
+                : MotdManager.BulletinDefault.EnContent;
+            var bulletinTitle = isChinese
+                ? MotdManager.BulletinDefault.Title
+                : MotdManager.BulletinDefault.EnTitle;
+            if (string.IsNullOrEmpty(bulletinContent) ||
+                string.Equals(bulletinTitle, "null", StringComparison.OrdinalIgnoreCase))
             {
                 DialogsManager.ShowDialog(
                     null,
                     new MessageDialog(
-                        "公告获取失败", "当前暂无发布公告，\n或者没有联网获取公告信息",
+                        LanguageManager.Get("MainMenuScreen", 1),
+                        LanguageManager.Get("MainMenuScreen", 2),
                         LanguageManager.Ok
                     )
                 );
@@ -167,24 +246,54 @@ public class MainMenuScreen : Screen
             ScreensManager.SwitchScreen("NetPlay");
         }
 
-        var exitRequested =
-            Children.Find<ButtonWidget>("Exit")!.IsClicked ||
-            (Input.Back && !Keyboard.BackButtonQuitsApp) ||
-            Input.IsKeyDownOnce(Key.Escape);
+        var exitRequested = Input.Back && !Keyboard.BackButtonQuitsApp;
         if (exitRequested)
         {
-            ConfirmExit();
+            if (DialogsManager.HasDialogs(this) || DialogsManager.HasDialogs(ScreensManager.RootWidget))
+            {
+                return;
+            }
+
+            if (_mainMenuTabs.IsOpen)
+            {
+                _mainMenuTabs.Close();
+            }
+            else
+            {
+                ConfirmExit();
+            }
         }
     }
 
     private static void ConfirmExit()
     {
-        DialogsManager.Confirm(LanguageManager.Get("MainMenuScreen", 14), button =>
+        ConfirmAction(MainMenuText("ConfirmExit"), () =>
+            ExecuteApplicationCommand(new ExitApplicationCommand()));
+    }
+
+    private static void ConfirmAction(string message, Action action)
+    {
+        DialogsManager.Confirm(message, button =>
         {
             if (button is MessageDialogButton.Button1)
             {
-                Window.Close();
+                action();
             }
         });
     }
+
+    private static string MainMenuText(string key) =>
+        LanguageManager.GetContentWidgets("MainMenuScreen", key);
+
+    private enum PowerMenuAction
+    {
+        Restart,
+        SwitchInstance,
+        RestartHeadless,
+        Exit
+    }
+
+    private sealed record HeadlessTarget(
+        string? WorldDirectoryName,
+        string DisplayName);
 }

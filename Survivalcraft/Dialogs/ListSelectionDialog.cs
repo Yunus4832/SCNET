@@ -5,7 +5,13 @@ namespace Game.Dialogs;
 
 public class ListSelectionDialog : Dialog
 {
+    private const float _dialogVerticalPadding = 80f;
+
     private readonly CanvasWidget _contentWidget;
+
+    private readonly Vector2 _maximumContentSize;
+
+    private readonly float _itemsHeight;
 
     private double? _dismissTime;
 
@@ -40,25 +46,8 @@ public class ListSelectionDialog : Dialog
             _listWidget.AddItem(item);
         }
 
-        var num = _listWidget.Items.Count;
-        float num2;
-        while (true)
-        {
-            if (num < 0)
-            {
-                return;
-            }
-
-            num2 = MathUtils.Min(num + 0.5f, _listWidget.Items.Count);
-            if (num2 * itemSize <= _contentWidget.Size.Y)
-            {
-                break;
-            }
-
-            num--;
-        }
-
-        _contentWidget.Size = new Vector2(_contentWidget.Size.X, num2 * itemSize);
+        _maximumContentSize = _contentWidget.Size;
+        _itemsHeight = _listWidget.Items.Count * itemSize;
     }
 
     public ListSelectionDialog(
@@ -86,6 +75,17 @@ public class ListSelectionDialog : Dialog
     {
         get => _contentWidget.Size;
         set => _contentWidget.Size = value;
+    }
+
+    protected override void MeasureOverride(Vector2 parentAvailableSize)
+    {
+        var availableContentSize = new Vector2(
+            MathUtils.Max(parentAvailableSize.X - 40f, 0f),
+            MathUtils.Max(parentAvailableSize.Y - _dialogVerticalPadding, 0f));
+        _contentWidget.Size = new Vector2(
+            MathUtils.Min(_maximumContentSize.X, availableContentSize.X),
+            MathUtils.Min(_itemsHeight, MathUtils.Min(_maximumContentSize.Y, availableContentSize.Y)));
+        base.MeasureOverride(parentAvailableSize);
     }
 
     public override void Update()

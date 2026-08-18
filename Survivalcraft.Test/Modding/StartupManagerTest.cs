@@ -207,7 +207,7 @@ public sealed class StartupManagerTest : IDisposable
     }
 
     [Fact]
-    public void RunModeCommandPersistsModeAndCreatesPendingRestartSession()
+    public void RunModeCommandWithoutSessionUsesDefaultRestartLogic()
     {
         var previousRunMode = RunMode.Value;
         try
@@ -225,12 +225,49 @@ public sealed class StartupManagerTest : IDisposable
                     CommandPrincipal.ApplicationUser, null, "run-mode-test"));
 
             var settings = RunningSettingManager.Load();
-            Assert.True(result.Success);
+            Assert.True(result.Success, result.Message);
             Assert.Equal(GameExitAction.Restart, GameExitManager.ExitAction);
             Assert.Equal(RunModeType.Gui, settings.RunMode);
-            Assert.False(string.IsNullOrWhiteSpace(settings.PendingSessionId));
-            Assert.Equal(SessionTarget.MainMenu,
-                SessionInfoManager.Load(settings.PendingSessionId).Target);
+            Assert.Equal(string.Empty, settings.PendingSessionId);
+        }
+        finally
+        {
+            RunMode.Value = previousRunMode;
+            GameExitManager.BeginSession();
+        }
+    }
+
+    [Fact]
+    public void RunModeCommandUsesProvidedRestartSession()
+    {
+        var previousRunMode = RunMode.Value;
+        try
+        {
+            RunningSettingManager.Save(new RunningSetting { RunMode = RunModeType.HeadlessServer });
+            RunMode.Value = RunModeType.HeadlessServer;
+            GameExitManager.BeginSession();
+            var registry = new CommandRegistry();
+            BuiltInCommands.Register(registry, new ModId("game"));
+            registry.Freeze();
+
+            var result = new CommandDispatcher(registry).Execute(
+                new SetRunModeCommand(
+                    RunModeType.Gui,
+                    new SessionInfo
+                    {
+                        Target = SessionTarget.World,
+                        World = "HeadlessWorld"
+                    }),
+                new CommandContext(CommandInvocationChannel.UserInterface,
+                    CommandPrincipal.ApplicationUser, null, "run-mode-session-test"));
+
+            var settings = RunningSettingManager.Load();
+            var pendingSession = SessionInfoManager.Load(settings.PendingSessionId);
+            Assert.True(result.Success, result.Message);
+            Assert.Equal(GameExitAction.Restart, GameExitManager.ExitAction);
+            Assert.Equal(RunModeType.Gui, settings.RunMode);
+            Assert.Equal(SessionTarget.World, pendingSession.Target);
+            Assert.Equal("HeadlessWorld", pendingSession.World);
         }
         finally
         {

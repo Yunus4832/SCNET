@@ -353,6 +353,9 @@ public class CommandDispatcherTest
 
         AssertDomain<GetLanguageCommand>(registry, CommandDomain.Application);
         AssertDomain<SetRunModeCommand>(registry, CommandDomain.Application);
+        AssertDomain<RestartApplicationCommand>(registry, CommandDomain.Application);
+        AssertDomain<SwitchInstanceCommand>(registry, CommandDomain.Application);
+        AssertDomain<ExitApplicationCommand>(registry, CommandDomain.Application);
         AssertDomain<SetWorldTimeCommand>(registry, CommandDomain.World);
         AssertDomain<CreateTeamCommand>(registry, CommandDomain.World);
         AssertDomain<StopServerCommand>(registry, CommandDomain.Server);

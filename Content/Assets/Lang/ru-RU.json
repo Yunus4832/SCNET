@@ -42,9 +42,7 @@
     },
     "MainMenuScreen": {
         "1": "Не удалось получить объявления",
-        "2": "Сейчас нет опубликованных объявлений,\nили устройство не подключено к сети для получения информации об объявлениях",
-        "13": "Вы уверены, что хотите переключиться в режим сервера?",
-        "14": "Вы уверены, что хотите выйти из игры?"
+        "2": "Сейчас нет опубликованных объявлений,\nили устройство не подключено к сети для получения информации об объявлениях"
     },
     "ModManagementScreen": {
         "Title": "Моды",
@@ -3398,20 +3396,28 @@
             "1": "Помощь"
         },
         "MainMenuScreen": {
-            "1": "",
             "2": "Игра",
             "3": "Подключиться к серверу",
             "4": "Настройки",
             "5": "Помощь",
             "6": "Купить полную версию",
-            "7": "Все права защищены 2011-2025 Candy Rufus Games.",
             "8": "Официальный сайт:",
             "9": "kaalus.wordpress.com",
             "10": "Узнать больше",
-            "11": "Выход",
             "12": "Контент",
-            "13": "Вы уверены, что хотите переключиться в режим сервера?",
-            "14": "Вы уверены, что хотите выйти из игры?"
+            "NoOtherInstances": "Нет других экземпляров для переключения.",
+            "SelectInstance": "Выберите экземпляр",
+            "HeadlessDefaultWorld": "Default",
+            "SelectHeadlessWorld": "Выберите мир для Headless",
+            "ConfirmRestart": "Перезапустить игру?",
+            "ConfirmSwitchInstance": "Переключиться на экземпляр «{0}»?",
+            "ConfirmRestartHeadless": "Перезапустить как Headless-сервер с миром «{0}»?",
+            "ConfirmExit": "Выйти из игры?",
+            "Restart": "Перезапустить",
+            "SwitchInstance": "Сменить экземпляр",
+            "RestartHeadless": "Перезапустить как сервер",
+            "Exit": "Выйти",
+            "Bulletin": "Объявления"
         },
         "ModManagementScreen": {
             "Title": "Моды",
@@ -3974,7 +3980,7 @@
         "PlayersList_Description": "Показать список игроков",
         "RunMode_Description": "Просмотр или смена режима запуска процесса",
         "RunModeGet_Description": "Показать текущий режим запуска",
-        "RunModeSet_Description": "Сменить режим запуска и перезапустить в главное меню",
+        "RunModeSet_Description": "Сменить режим запуска и перезапустить",
         "Stop_Description": "Сохранить мир и остановить Headless-сервер",
         "StopAction_Description": "Остановить Headless-сервер",
         "Season_Description": "Установить текущий сезон",
@@ -4032,7 +4038,7 @@
         "CurrentRunMode_Message": "Текущий режим запуска: {0}.",
         "RunModeInvalid_Message": "Неподдерживаемый режим запуска.",
         "RunModeUnchanged_Message": "Процесс уже работает в режиме {0}; перезапуск не требуется.",
-        "RunModeRestarting_Message": "Режим запуска изменён на {0}; перезапуск в главное меню.",
+        "RunModeRestarting_Message": "Режим запуска изменён на {0}; выполняется перезапуск.",
         "AuthClaimed_Message": "Права администратора сервера уже получены.",
         "AuthUnclaimedConsole_Message": "Права администратора сервера не получены.\nИспользуйте auth code, затем онлайн-игрок должен выполнить /auth claim <code>.",
         "AuthUnclaimedPlayer_Message": "Права администратора сервера не получены.\nВведите /auth claim <code>, чтобы назначить первого администратора.",
@@ -4149,7 +4155,15 @@
         "SeasonSpring_Description": "Весна",
         "SeasonStart_Description": "Начало сезона",
         "SeasonMiddle_Description": "Середина сезона",
-        "SeasonEnd_Description": "Конец сезона"
+        "SeasonEnd_Description": "Конец сезона",
+        "ApplicationRestart_Description": "Перезапустить приложение",
+        "InstanceSwitch_Description": "Сменить экземпляр данных и перезапустить",
+        "ApplicationExit_Description": "Выйти из приложения",
+        "ApplicationRestarting_Message": "Приложение перезапускается.",
+        "InstanceUnchanged_Message": "Приложение уже запущено в этом экземпляре.",
+        "InstanceNotFound_Message": "Экземпляр не найден: {0}.",
+        "InstanceSwitching_Message": "Переключение на экземпляр {0}.",
+        "ApplicationExiting_Message": "Выполняется выход из приложения."
     },
     "AndroidServer": {
         "Title": "Журнал сервера",
