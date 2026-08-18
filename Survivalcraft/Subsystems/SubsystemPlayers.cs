@@ -213,7 +213,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
     private bool TryPrepareStartupPlayer()
     {
-        var requestedName = RunningSettingManager.Current.PlayerOverride;
+        var requestedName = StartupManager.Current.Request.PlayerName;
         if (string.IsNullOrWhiteSpace(requestedName))
         {
             return false;

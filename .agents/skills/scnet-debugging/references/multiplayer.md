@@ -27,6 +27,7 @@ SurvivalcraftStarter \
   --server \
   --session debug-server \
   --world DebugWorld \
+  --game-mode Creative \
   --server-port 28987 \
   --broadcast-port 28988
 ```
@@ -45,6 +46,11 @@ SurvivalcraftStarter \
 `--connect` modifies only the in-memory effective session. `--save` persists that session when
 explicitly requested. Port overrides are also Session fields, take priority over Settings, and
 follow the same transient-by-default rule.
+
+`--game-mode MODE` follows the same session precedence. New worlds are created in that mode.
+Existing worlds run in the session mode, while automatic and shutdown saves preserve the mode
+stored in the world. Use one of `Creative`, `Harmless`, `Survival`, `Challenging`, `Cruel`, or
+`Adventure`.
 
 `--player` activates automation only when explicitly present. The client first accepts an existing
 player matching its stable client identity. If none arrives, it sends the existing player-create

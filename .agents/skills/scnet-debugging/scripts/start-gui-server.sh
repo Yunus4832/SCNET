@@ -8,10 +8,11 @@ world_name=""
 player_name=""
 server_port=""
 broadcast_port=""
+game_mode=""
 skip_build=false
 
 usage() {
-    echo "Usage: $0 --instance NAME --session NAME --world NAME --player NAME [--server-port PORT] [--broadcast-port PORT] [--no-build]"
+    echo "Usage: $0 --instance NAME --session NAME --world NAME --player NAME [--game-mode MODE] [--server-port PORT] [--broadcast-port PORT] [--no-build]"
 }
 
 while (($# > 0)); do
@@ -20,6 +21,7 @@ while (($# > 0)); do
         --session) session_name="${2:-}"; shift 2 ;;
         --world) world_name="${2:-}"; shift 2 ;;
         --player) player_name="${2:-}"; shift 2 ;;
+        --game-mode) game_mode="${2:-}"; shift 2 ;;
         --server-port) server_port="${2:-}"; shift 2 ;;
         --broadcast-port) broadcast_port="${2:-}"; shift 2 ;;
         --no-build) skip_build=true; shift ;;
@@ -44,6 +46,12 @@ for port_value in "$server_port" "$broadcast_port"; do
         exit 2
     fi
 done
+if [[ -n "$game_mode" ]]; then
+    case "${game_mode,,}" in
+        creative|harmless|survival|challenging|cruel|adventure) ;;
+        *) echo "--game-mode must be Creative, Harmless, Survival, Challenging, Cruel, or Adventure." >&2; exit 2 ;;
+    esac
+fi
 
 if [[ "$skip_build" == false ]]; then
     dotnet build "$repo_root/Survivalcraft.Linux/Survivalcraft.Linux.csproj" --no-restore
@@ -66,6 +74,9 @@ if [[ -n "$server_port" ]]; then
 fi
 if [[ -n "$broadcast_port" ]]; then
     args+=(--broadcast-port "$broadcast_port")
+fi
+if [[ -n "$game_mode" ]]; then
+    args+=(--game-mode "$game_mode")
 fi
 
 printf 'Starting GUI server:'

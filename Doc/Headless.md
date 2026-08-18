@@ -32,7 +32,7 @@ dotnet run --project Survivalcraft.Linux/Survivalcraft.Linux.csproj -- --server
 
 ### Android
 
-Android 不依赖命令行参数切换无头模式。它读取 `config:RunningSetting.xml`，当 `RunMode` 为 `HeadlessServer` 时进入无头服务端流程。
+Android 同样通过 `RunningSettingManager` 选择 GUI 或 Headless。正常应用重启会读取 `config:RunningSetting.xml`；ADB 调试也可以通过 `Survivalcraft.Android.CommandLine` Intent Extra 临时传入 `--server`、`--session`、`--world`、`--game-mode` 等同一套参数。`Survivalcraft.Android.InstanceId` 用于选择隔离的数据实例。
 
 ## 常用参数
 
@@ -43,16 +43,18 @@ Android 不依赖命令行参数切换无头模式。它读取 `config:RunningSe
 - `--session <名称>`: 选择或创建一个具名启动会话
 - `--world <名称>`: 给 `--session` 指定世界名或世界目录名
 - `--seed <种子>`: 给 `--session` 指定新建世界时使用的种子
+- `--game-mode <模式>`: 给 `--session` 指定游戏模式覆盖
 - `--log-level <级别>`: `Debug`、`Verbose`、`Information`、`Warning`、`Error`
-- `--save`: 将运行模式、日志级别和未消费参数写入 `RunningSetting.xml`
+- `--save`: 保存适用的 `RunningSetting` 字段，并将当前有效 session 写入 `SessionInfo.xml`
 
-`--world` 和 `--seed` 只有在同时指定 `--session` 时才会生效。没有 `--session` 时它们会被忽略，避免一次临时命令覆盖默认启动状态。
-端口覆盖默认只作用于内存中的有效 Session；与 `--save` 同时使用时才会写入 `SessionInfo.xml`。Session 未指定端口时回退到 `Settings.xml` 的默认端口。
+`--world`、`--seed` 和 `--game-mode` 只有在同时指定 `--session` 时才会生效。没有 `--session` 时它们会被忽略，避免一次临时命令覆盖默认启动状态。
+模式可取 `Creative`、`Harmless`、`Survival`、`Challenging`、`Cruel`、`Adventure`。新世界以该模式创建；已有世界仅在有效 session 中使用该模式，保存时仍保留原存档模式。
+端口和游戏模式覆盖默认只作用于内存中的有效 session；与 `--save` 同时使用时才会写入 `SessionInfo.xml`。Session 未指定端口时回退到 `Settings.xml` 的默认端口。
 
 示例：
 
 ```bash
-./SurvivalcraftStarter --instance server --server --session survival --world World --seed 123456 --log-level Information --save
+./SurvivalcraftStarter --instance server --server --session survival --world World --seed 123456 --game-mode Creative --log-level Information --save
 ```
 
 再次启动同一个服务器：
@@ -79,12 +81,14 @@ Headless 启动主要涉及三个配置文件。
 
 路径：`config:RunningSetting.xml`
 
-`RunningSetting.xml` 只保存启动入口层面的状态，不保存世界名或种子。
+`RunningSetting.xml` 只保存启动入口层面的状态，不保存世界名、种子或游戏模式覆盖。
 
 示例：
 
 ```xml
-<RunningSetting RunMode="HeadlessServer" LogLevel="Information" DefaultSessionId="" PendingSessionId="">
+<RunningSetting RunMode="HeadlessServer" LogLevel="Information"
+                WindowMode="Resizable" WindowWidth="0" WindowHeight="0"
+                DefaultSessionId="" PendingSessionId="">
   <RemainingArgs />
 </RunningSetting>
 ```
@@ -93,6 +97,7 @@ Headless 启动主要涉及三个配置文件。
 
 - `RunMode`: `Gui` 或 `HeadlessServer`
 - `LogLevel`: 最低日志级别
+- `WindowMode` / `WindowWidth` / `WindowHeight`: GUI 窗口设置；Headless 保留字段但不使用窗口
 - `DefaultSessionId`: 没有命令行指定 session 时使用的默认会话 id
 - `PendingSessionId`: 重启恢复使用的临时会话 id
 - `RemainingArgs`: 启动器未消费、需要保留的参数
@@ -101,21 +106,27 @@ Headless 启动主要涉及三个配置文件。
 
 路径：`config:SessionInfo.xml`
 
-这里保存具名或临时启动会话。Headless 会解析当前 active session，得到目标世界、种子和远程/本地目标。
+这里保存多个具名或临时启动会话。`StartupManager` 将 `RunningSetting`、本次 `StartupRequest` 与选中的 session 合并成 `StartupContext`；Headless 直接使用其中的有效 session，得到目标世界、种子、游戏模式覆盖和端口。
 
 Headless 使用的会话通常是：
 
 ```xml
-<SessionInfo
-  SessionId="..."
-  Name="survival"
-  Target="World"
-  World="World"
-  Seed="123456"
-  ServerHost=""
-  ServerPort="0"
-  Password="" />
+<Sessions>
+  <SessionInfo
+    SessionId="..."
+    Name="survival"
+    Target="World"
+    World="World"
+    Seed="123456"
+    GameMode="Creative"
+    ServerHost=""
+    ServerPort="0"
+    BroadcastPort="0"
+    Password="" />
+</Sessions>
 ```
+
+`GameMode` 是可选字段。旧 session 没有该字段时，不会覆盖存档模式。
 
 ### ModProfile.xml
 
@@ -134,6 +145,7 @@ Headless 启动时：
 - 如果 session 指向的世界存在，直接加载该世界
 - 如果世界不存在，会按 session 中的 `World` 和 `Seed` 创建
 - 如果世界已存在，`Seed` 不再影响该世界
+- session 含 `GameMode` 时，新世界以该模式创建；已有世界以该模式运行，但保存仍保留原存档模式
 - 如果世界没有开启 `RunServer`，Headless 会自动启用它并保存世界设置
 
 ## 模组仓库

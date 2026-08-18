@@ -63,9 +63,9 @@ public class LoadingScreen : Screen
                 Storage.GetSystemPath(GamePaths.ModCache),
                 Log.Information
             );
-            var startupSession = SessionInfoManager.ResolveStartupSession();
+            var startupSession = StartupManager.Current.Session;
             if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
-                    RunningSettingManager.Current.ActiveSessionId,
+                    StartupManager.Current.Session.SessionId,
                     startupSession,
                     Storage.GetSystemPath(GamePaths.ModCache),
                     Log.Information))
@@ -76,7 +76,7 @@ public class LoadingScreen : Screen
             Log.Information("初始化模组运行时");
             ContentManager.Initialize();
             var profile = ModProfileManager.LoadEffectiveProfile(
-                RunningSettingManager.Current.ActiveSessionId,
+                StartupManager.Current.Session.SessionId,
                 startupSession
             );
             GameEntry.SetModRuntime(GameModRuntime.StartFromProfile(

@@ -97,8 +97,8 @@ dotnet test Survivalcraft.Test/
 ## 详细文档
 
 - [结构与分层](Doc/Architecture.md) — 设计重心、分层架构与各层职责
-- [Headless 模式](Doc/Headless.md) — 启动方式、参数、配置与运行时行为
-- [启动会话](Doc/StartupSessions.md) — `RunningSetting`、`SessionInfo`、pending session 和模组 profile 的职责
+- [Headless 模式](Doc/Headless.md) — 多实例启动、session 参数、游戏模式覆盖、配置与运行时行为
+- [启动会话](Doc/StartupSessions.md) — `Starter`、`RunningSetting`、`StartupRequest`、`StartupContext`、`SessionInfo`、覆盖优先级和模组 profile 的职责
 - [构建与共享配置](Doc/BuildAndConfig.md) — 构建流程、共享属性与打包行为
 - [模组使用说明](Doc/Mods.md) — `.scpak`、本地缓存、profile、仓库和联机 required mods
 - [模组开发](Doc/Modding.md) — 模组模板、`.scpak` 构建、示例模组与 NuGet 包边界

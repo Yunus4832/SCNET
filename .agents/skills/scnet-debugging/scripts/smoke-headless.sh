@@ -7,6 +7,7 @@ session_name=""
 world_name=""
 instance_name=""
 seed=""
+game_mode=""
 startup_timeout=60
 server_port=""
 broadcast_port=""
@@ -16,7 +17,7 @@ server_pid=""
 input_fifo=""
 
 usage() {
-    echo "Usage: $0 --session NAME --world NAME [--instance NAME] [--server-port PORT] [--broadcast-port PORT] [--seed VALUE] [--timeout SECONDS] [--artifacts DIR] [--no-build]"
+    echo "Usage: $0 --session NAME --world NAME [--instance NAME] [--server-port PORT] [--broadcast-port PORT] [--seed VALUE] [--game-mode MODE] [--timeout SECONDS] [--artifacts DIR] [--no-build]"
 }
 
 while (($# > 0)); do
@@ -43,6 +44,10 @@ while (($# > 0)); do
             ;;
         --seed)
             seed="${2:-}"
+            shift 2
+            ;;
+        --game-mode)
+            game_mode="${2:-}"
             shift 2
             ;;
         --timeout)
@@ -87,6 +92,12 @@ for port_value in "$server_port" "$broadcast_port"; do
         exit 2
     fi
 done
+if [[ -n "$game_mode" ]]; then
+    case "${game_mode,,}" in
+        creative|harmless|survival|challenging|cruel|adventure) ;;
+        *) echo "--game-mode must be Creative, Harmless, Survival, Challenging, Cruel, or Adventure." >&2; exit 2 ;;
+    esac
+fi
 
 if ! [[ "$startup_timeout" =~ ^[1-9][0-9]*$ ]]; then
     echo "--timeout must be a positive integer." >&2
@@ -145,6 +156,9 @@ args=(
 if [[ -n "$seed" ]]; then
     args+=(--seed "$seed")
 fi
+if [[ -n "$game_mode" ]]; then
+    args+=(--game-mode "$game_mode")
+fi
 if [[ -n "$server_port" ]]; then
     args+=(--server-port "$server_port")
 fi
@@ -160,6 +174,7 @@ fi
     echo "session=$session_name"
     echo "world=$world_name"
     echo "instance=$instance_name"
+    echo "game_mode=$game_mode"
 } > "$metadata_file"
 
 mkfifo "$input_fifo"

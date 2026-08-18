@@ -17,7 +17,8 @@ Run from the repository root. Treat runtime logs, exit status, command results, 
 ```bash
 .agents/skills/scnet-debugging/scripts/smoke-headless.sh \
   --session codex-smoke \
-    --world TestWorld
+  --world TestWorld \
+  --game-mode Creative
 ```
 
 The script creates a dedicated data instance by default. Pass `--instance NAME` when a stable,
@@ -45,7 +46,7 @@ Use a distinct `--instance` for every concurrently running process. The Starter 
 argument before loading game settings and maps each process to `Instances/<name>`.
 
 ```bash
-SurvivalcraftStarter --instance debug-server --server --session debug-server --world DebugWorld
+SurvivalcraftStarter --instance debug-server --server --session debug-server --world DebugWorld --game-mode Creative
 SurvivalcraftStarter --instance debug-client --gui
 ```
 

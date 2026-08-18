@@ -6,7 +6,7 @@
 - `SessionInfo` selects a world or remote target.
 - Temporary tests should use command-line overrides and should not pass `--save`.
 - Automated runs must use a dedicated `--instance`; never use the default instance.
-- `--world` and `--seed` are ignored unless `--session` is also supplied.
+- `--world`, `--seed`, and `--game-mode` are ignored unless `--session` is also supplied.
 - Read `Doc/Headless.md` and `Doc/StartupSessions.md` when changing startup behavior.
 
 ## Development commands
@@ -25,11 +25,14 @@ Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
   --server \
   --session codex-smoke \
   --world TestWorld \
+  --game-mode Creative \
   --log-level Debug
 ```
 
 Transient multiplayer overrides are `--server-port`, `--broadcast-port`, `--connect HOST:PORT`,
-and explicit `--player NAME`. Do not add `--save` unless persistence is part of the test.
+explicit `--player NAME`, and `--game-mode MODE`. A game-mode override is stored in the effective
+session; for an existing world it changes runtime behavior without replacing the saved game mode.
+Do not add `--save` unless session persistence is part of the test.
 
 The readiness marker is:
 

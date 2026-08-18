@@ -27,12 +27,13 @@ public class Starter
         PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
         PlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         PlatformManager.RegisterExternalContentProviderFactory(() => new DiskExternalContentProvider());
-        var runningSetting = RunningSettingManager.Load(instance.GameArguments);
+        var startup = StartupManager.Load(instance.GameArguments);
+        var runningSetting = startup.Settings;
         InstallDesktopEntries();
         GameExitAction exitAction;
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
-            RunHeadlessServer(runningSetting);
+            RunHeadlessServer(startup);
             exitAction = GameExitManager.ExitAction;
         }
         else
@@ -40,12 +41,12 @@ public class Starter
             RunMode.Value = RunModeType.Gui;
             Window.IconStream = LoadWindowIcon();
             PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
-            exitAction = GameEntry.EntryPoint(runningSetting);
+            exitAction = GameEntry.EntryPoint(startup);
         }
 
         if (exitAction is GameExitAction.Restart)
         {
-            var nextRunningSetting = RunningSettingManager.Load([]);
+            var nextRunningSetting = RunningSettingManager.Load();
             RestartFromDesktop(nextRunningSetting.RunMode, instance.Id);
         }
 
@@ -123,10 +124,10 @@ public class Starter
             true);
     }
 
-    private static void RunHeadlessServer(RunningSetting runningSetting)
+    private static void RunHeadlessServer(StartupContext startup)
     {
         RunMode.Value = RunModeType.HeadlessServer;
-        HeadlessEntry.Main(runningSetting);
+        HeadlessEntry.Main(startup);
     }
 
     private static string ReadClipboardText()

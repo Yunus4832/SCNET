@@ -31,11 +31,13 @@
 
 ### 1. 启动层
 
-桌面端和 Android 端都有自己的启动器工程，但最终都会落到启动会话模型上。`RunningSetting` 只决定进程入口状态，例如 GUI 或 HeadlessServer；具体要恢复到哪个世界、服务器浏览器或远程服务器，由 `SessionInfo` 描述。
+桌面端和 Android 端都有自己的启动器工程，但最终都会落到启动会话模型上。`RunningSetting` 只保存 GUI、HeadlessServer、日志和窗口等可持久化入口设置；`StartupRequest` 表示本次命令行或 Intent 的临时意图；`SessionInfo` 描述要恢复的世界、服务器浏览器或远程服务器。`StartupManager` 负责合并三者并生成只读入口语义的 `StartupContext`，后续流程直接消费其中的有效 session。
 
 - Windows / Linux：通过命令行参数切换 GUI 或 Headless
-- Android：通过 `config:RunningSetting.xml` 决定运行模式
-- 启动目标、世界、种子和远程服务器信息：通过 `config:SessionInfo.xml` 管理
+- Android：通过 `config:RunningSetting.xml` 决定常规运行模式，调试时也可通过 Intent Extra 注入同一套临时启动参数
+- 启动目标、世界、种子、运行期游戏模式覆盖、端口和远程服务器信息：通过 `config:SessionInfo.xml` 管理
+
+对于已有世界，session 游戏模式的优先级高于存档，但只改变本次运行时状态；世界保存仍写回原模式。这样调试实例可以切换 Creative、Survival 等模式，而不会污染测试存档。
 
 详见 [StartupSessions.md](./StartupSessions.md)。
 

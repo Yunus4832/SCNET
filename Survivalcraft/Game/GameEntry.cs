@@ -38,8 +38,9 @@ public static class GameEntry
     public static event Action<HandleUriItem>? HandleUri;
 
     [STAThread]
-    public static GameExitAction EntryPoint(RunningSetting runningSetting)
+    public static GameExitAction EntryPoint(StartupContext startup)
     {
+        var runningSetting = startup.Settings;
         GameExitManager.BeginSession();
         NetDebug.Logger = new LiteNetLog();
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;

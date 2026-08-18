@@ -26,10 +26,11 @@ public class Starter
         PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
         PlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         PlatformManager.RegisterExternalContentProviderFactory(() => new DiskExternalContentProvider());
-        var runningSetting = RunningSettingManager.Load(instance.GameArguments);
+        var startup = StartupManager.Load(instance.GameArguments);
+        var runningSetting = startup.Settings;
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
         {
-            RunHeadlessServer(runningSetting);
+            RunHeadlessServer(startup);
             if (GameExitManager.ExitAction is GameExitAction.Restart or GameExitAction.SwitchInstance)
             {
                 Restart(GameExitManager.ExitAction is GameExitAction.SwitchInstance
@@ -43,7 +44,7 @@ public class Starter
         RunMode.Value = RunModeType.Gui;
         Window.IconStream = LoadWindowIcon();
         PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
-        var exitAction = GameEntry.EntryPoint(runningSetting);
+        var exitAction = GameEntry.EntryPoint(startup);
         if (exitAction is GameExitAction.Restart or GameExitAction.SwitchInstance)
         {
             Restart(exitAction is GameExitAction.SwitchInstance
@@ -75,11 +76,11 @@ public class Starter
         return iconStream ?? throw new InvalidOperationException("Survivalcraft icon not found");
     }
 
-    private static void RunHeadlessServer(RunningSetting runningSetting)
+    private static void RunHeadlessServer(StartupContext startup)
     {
         RunMode.Value = RunModeType.HeadlessServer;
         AllocConsole();
-        HeadlessEntry.Main(runningSetting);
+        HeadlessEntry.Main(startup);
     }
 
     private static void Restart(string instanceId)

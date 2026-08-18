@@ -21,6 +21,8 @@ public sealed class SessionInfo
 
     public string Seed { get; set; } = string.Empty;
 
+    public GameMode? GameMode { get; set; }
+
     public string ServerHost { get; set; } = string.Empty;
 
     public int ServerPort { get; set; }

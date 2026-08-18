@@ -85,8 +85,9 @@ public static class HeadlessEntry
         return completion.Task;
     }
 
-    public static int Main(RunningSetting runningSetting)
+    public static int Main(StartupContext startup)
     {
+        var runningSetting = startup.Settings;
         try
         {
             GameExitManager.BeginSession();
@@ -116,8 +117,8 @@ public static class HeadlessEntry
                 return 0;
             }
 
-            var startupSession = SessionInfoManager.ResolveStartupSession(runningSetting);
-            var world = SessionInfoManager.ResolveHeadlessWorld(runningSetting);
+            var startupSession = startup.Session;
+            var world = SessionInfoManager.ResolveHeadlessWorld(startup);
             var serverPort = startupSession.ServerPort > 0
                 ? startupSession.ServerPort
                 : SettingsManager.Current.ServerPort;
@@ -379,9 +380,10 @@ public static class HeadlessEntry
             Log.Information
         );
 
-        var runningSetting = RunningSettingManager.Current;
-        var startupSession = SessionInfoManager.ResolveStartupSession(runningSetting);
-        var profile = ModProfileManager.LoadEffectiveProfile(runningSetting.ActiveSessionId, startupSession);
+        var startupSession = StartupManager.Current.Session;
+        var profile = ModProfileManager.LoadEffectiveProfile(
+            startupSession.SessionId,
+            startupSession);
         ModProfileResolver.EnsurePackagesAvailable(
             profile,
             Storage.GetSystemPath(GamePaths.ModCache),

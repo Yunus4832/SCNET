@@ -178,8 +178,8 @@ public class MainActivity : BlackActivity
         }
 
         _routeStarted = true;
-        var runningSetting = RunningSettingManager.Load(_instance?.GameArguments ?? []);
-        var activityType = runningSetting.RunMode is RunModeType.HeadlessServer
+        var startup = StartupManager.Load(_instance?.GameArguments ?? []);
+        var activityType = startup.Settings.RunMode is RunModeType.HeadlessServer
             ? typeof(ServerActivity)
             : typeof(GameActivity);
         var intent = new Intent(this, activityType);

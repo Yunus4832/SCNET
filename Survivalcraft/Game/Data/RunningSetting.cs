@@ -20,28 +20,4 @@ public sealed class RunningSetting
     public string PendingSessionId { get; set; } = string.Empty;
 
     public string[] RemainingArgs { get; set; } = [];
-
-    public string ActiveSessionId { get; set; } = string.Empty;
-
-    public bool HasExplicitSessionRequest { get; set; }
-
-    public string RequestedSessionName { get; set; } = string.Empty;
-
-    public string? SessionWorldOverride { get; set; }
-
-    public string? SessionSeedOverride { get; set; }
-
-    public string? SessionConnectHostOverride { get; set; }
-
-    public int? SessionConnectPortOverride { get; set; }
-
-    public string? PlayerOverride { get; set; }
-
-    public bool ForceWorldRunServer { get; set; }
-
-    public int? SessionServerPortOverride { get; set; }
-
-    public int? SessionBroadcastPortOverride { get; set; }
-
-    public bool SaveRequested { get; set; }
 }

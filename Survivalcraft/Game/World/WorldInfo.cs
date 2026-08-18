@@ -15,4 +15,6 @@ public class WorldInfo
     public long Size;
 
     public readonly WorldSettings WorldSettings = new();
+
+    public GameMode? GameModeOverride;
 }

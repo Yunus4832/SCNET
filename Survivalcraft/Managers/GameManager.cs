@@ -58,6 +58,16 @@ public static class GameManager
             throw new Exception("未能加载Project");
         }
 
+        if (worldInfo.GameModeOverride is { } gameModeOverride)
+        {
+            var subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
+            var persistedGameMode = subsystemGameInfo.WorldSettings.GameMode;
+            subsystemGameInfo.ApplyGameModeOverride(gameModeOverride);
+            worldInfo.WorldSettings.GameMode = gameModeOverride;
+            Log.Information(
+                $"Applied session game mode override: {persistedGameMode} -> {gameModeOverride} (world save remains {persistedGameMode}).");
+        }
+
         SetupNetworkHandlers(Project);
         WorldInfo = worldInfo;
         Log.Information(

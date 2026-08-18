@@ -28,7 +28,8 @@ public sealed class SessionInfoManagerTest : IDisposable
             Name = "Alpha",
             Target = SessionTarget.World,
             World = "AlphaWorld",
-            Seed = "11"
+            Seed = "11",
+            GameMode = GameMode.Creative
         });
         SessionInfoManager.Save(new SessionInfo
         {
@@ -47,6 +48,7 @@ public sealed class SessionInfoManagerTest : IDisposable
         Assert.Equal("AlphaWorld", alpha!.World);
         Assert.Equal("Alpha", alpha.Name);
         Assert.Equal("11", alpha.Seed);
+        Assert.Equal(GameMode.Creative, alpha.GameMode);
         Assert.Equal(SessionTarget.World, alpha.Target);
 
         Assert.Equal("BetaWorld", beta!.World);
@@ -97,11 +99,10 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void ResolveStartupSessionCreatesMainMenuSessionForGuiWhenNotEnteringSession()
     {
         var sessionId = Guid.NewGuid().ToString("N");
-        var sessionInfo = SessionInfoManager.ResolveStartupSession(new RunningSetting
-        {
-            RunMode = RunModeType.Gui,
-            ActiveSessionId = sessionId
-        });
+        var sessionInfo = SessionInfoManager.ResolveStartupSession(
+            new RunningSetting { RunMode = RunModeType.Gui },
+            new StartupRequest(),
+            sessionId);
 
         Assert.Equal(sessionId, sessionInfo.SessionId);
         Assert.Equal(string.Empty, sessionInfo.Name);
@@ -112,14 +113,15 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void ResolveStartupSessionCreatesWorldLoadingSessionForExplicitGuiSessionWithWorldOverride()
     {
         var sessionId = Guid.NewGuid().ToString("N");
-        var sessionInfo = SessionInfoManager.ResolveStartupSession(new RunningSetting
-        {
-            RunMode = RunModeType.Gui,
-            ActiveSessionId = sessionId,
-            HasExplicitSessionRequest = true,
-            RequestedSessionName = "alpha",
-            SessionWorldOverride = "CustomWorld"
-        });
+        var sessionInfo = SessionInfoManager.ResolveStartupSession(
+            new RunningSetting { RunMode = RunModeType.Gui },
+            new StartupRequest
+            {
+                HasExplicitSession = true,
+                SessionName = "alpha",
+                World = "CustomWorld"
+            },
+            sessionId);
 
         Assert.Equal(sessionId, sessionInfo.SessionId);
         Assert.Equal("alpha", sessionInfo.Name);
@@ -131,13 +133,14 @@ public sealed class SessionInfoManagerTest : IDisposable
     public void ResolveStartupSessionCreatesNamedWorldWhenExplicitGuiSessionDoesNotExistAndWorldIsMissing()
     {
         var sessionId = Guid.NewGuid().ToString("N");
-        var sessionInfo = SessionInfoManager.ResolveStartupSession(new RunningSetting
-        {
-            RunMode = RunModeType.Gui,
-            ActiveSessionId = sessionId,
-            HasExplicitSessionRequest = true,
-            RequestedSessionName = "alpha"
-        });
+        var sessionInfo = SessionInfoManager.ResolveStartupSession(
+            new RunningSetting { RunMode = RunModeType.Gui },
+            new StartupRequest
+            {
+                HasExplicitSession = true,
+                SessionName = "alpha"
+            },
+            sessionId);
 
         Assert.Equal(sessionId, sessionInfo.SessionId);
         Assert.Equal("alpha", sessionInfo.Name);
@@ -156,14 +159,15 @@ public sealed class SessionInfoManagerTest : IDisposable
             Target = SessionTarget.MainMenu
         });
 
-        var sessionInfo = SessionInfoManager.ResolveStartupSession(new RunningSetting
-        {
-            RunMode = RunModeType.Gui,
-            ActiveSessionId = sessionId,
-            HasExplicitSessionRequest = true,
-            RequestedSessionName = "alpha",
-            SessionWorldOverride = "CustomWorld"
-        });
+        var sessionInfo = SessionInfoManager.ResolveStartupSession(
+            new RunningSetting { RunMode = RunModeType.Gui },
+            new StartupRequest
+            {
+                HasExplicitSession = true,
+                SessionName = "alpha",
+                World = "CustomWorld"
+            },
+            sessionId);
 
         Assert.Equal(sessionId, sessionInfo.SessionId);
         Assert.Equal("alpha", sessionInfo.Name);

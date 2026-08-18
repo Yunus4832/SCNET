@@ -9,6 +9,8 @@ namespace Game.Subsystems;
 
 public class SubsystemGameInfo : Subsystem, IUpdateable
 {
+    private GameMode? _persistedGameMode;
+
     private double? _lastTotalElapsedGameTime;
 
     private SubsystemTime _subsystemTime = null!;
@@ -157,8 +159,19 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
     public override void Save(ValuesDictionary valuesDictionary)
     {
         WorldSettings.Save(valuesDictionary, false);
+        if (_persistedGameMode is { } persistedGameMode)
+        {
+            valuesDictionary.SetValue("GameMode", persistedGameMode);
+        }
+
         valuesDictionary.SetValue("WorldSeed", WorldSeed);
         valuesDictionary.SetValue("TotalElapsedGameTime", TotalElapsedGameTime);
         valuesDictionary.SetValue("ServerAdministrationClaimed", ServerAdministrationClaimed);
+    }
+
+    public void ApplyGameModeOverride(GameMode gameMode)
+    {
+        _persistedGameMode ??= WorldSettings.GameMode;
+        WorldSettings.GameMode = gameMode;
     }
 }
