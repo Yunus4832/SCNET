@@ -1,4 +1,4 @@
-<VerticalTabMenuWidget xmlns="runtime-namespace:Game.Widgets" Size="280, 260">
+<VerticalTabMenuWidget xmlns="runtime-namespace:Game.Widgets" Size="280, 260" IsHitTestVisible="false">
     <CanvasWidget Name="VerticalTabMenu.Popup" HorizontalAlignment="Near" VerticalAlignment="Far"
                   Margin="64, 0" IsVisible="false" ClampToBounds="true">
         <BevelledRectangleWidget Name="VerticalTabMenu.Background" DirectionalLight="0" AmbientLight="1"

@@ -66,7 +66,7 @@
         </StackPanelWidget>
     </StackPanelWidget>
     <StackPanelWidget Name="LeftBottomBar" Direction="Vertical" HorizontalAlignment="Near" VerticalAlignment="Far"
-                      Margin="8, 8">
+                      Margin="8, 8" IsHitTestVisible="false">
         <VerticalTabMenuWidget Name="MainMenuTabs"/>
     </StackPanelWidget>
 </Screen>
