@@ -21,8 +21,10 @@ Run from the repository root. Treat runtime logs, exit status, command results, 
   --game-mode Creative
 ```
 
-The script creates a dedicated data instance by default. Pass `--instance NAME` when a stable,
-inspectable instance is needed. Never run automated checks against the default instance.
+The script creates a dedicated data instance by default. It records whether the instance existed
+before the run, copies instance logs into the artifact directory, and deletes a newly created
+instance after a successful run. It preserves failed runs for diagnosis. Pass `--keep-instance`
+only when a successful run must remain reproducible. Never run automated checks against the default instance.
 On Windows, follow the equivalent log-driven procedure in [references/windows.md](references/windows.md).
 
 5. Inspect the reported artifact directory and complete instance runtime logs. Treat the files under
@@ -30,7 +32,10 @@ On Windows, follow the equivalent log-driven procedure in [references/windows.md
 6. Search for `ERROR:`, unhandled exceptions, command failures, disconnects, and missing readiness markers.
 7. Correlate a failure with the operation immediately before it. Preserve the complete exception and relevant preceding log context.
 8. Stop all started processes cleanly. Never leave a Headless server running after validation unless the user explicitly asks for an interactive session.
-9. Run the focused tests again after a fix, then a broader build/test proportional to the risk.
+9. Review every instance created during the task. Delete it after evidence has been copied unless it
+   is still required for reproduction, comparison, or explicit user inspection. Report the path and
+   reason for every retained instance. Never delete an instance that existed before the task.
+10. Run the focused tests again after a fix, then a broader build/test proportional to the risk.
 
 ## Choose the test surface
 
@@ -51,6 +56,9 @@ SurvivalcraftStarter --instance debug-client --gui
 ```
 
 Read [references/multiplayer.md](references/multiplayer.md) before starting a GUI + Headless lab.
+Record whether each server and client instance existed before the lab. At teardown, stop every
+process, preserve required logs, and remove only the instances created by the current lab. A retained
+instance requires an explicit reason in the final report.
 
 ## Interactive sessions
 

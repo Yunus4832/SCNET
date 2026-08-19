@@ -2871,7 +2871,15 @@
         "ScreenLayout_Quadruple_Name": "Quadruple",
         "ScreenLayout_Quadruple_Description": "Four players split evenly",
         "ScreenLayout_QuadrupleOpposite_Name": "Quadruple Opposite",
-        "ScreenLayout_QuadrupleOpposite_Description": "Opposite, for sharing touch devices"
+        "ScreenLayout_QuadrupleOpposite_Description": "Opposite, for sharing touch devices",
+        "InstanceCreate_Description": "Create a data instance",
+        "InstanceDelete_Description": "Delete a data instance",
+        "InstanceInvalidId_Message": "Instance IDs can contain only ASCII letters, digits, “-”, and “_”.",
+        "InstanceAlreadyExists_Message": "Instance already exists: {0}.",
+        "InstanceCreated_Message": "Created instance {0}.",
+        "InstanceCurrentDeleteForbidden_Message": "The current instance cannot be deleted.",
+        "InstanceDeleted_Message": "Deleted instance {0}.",
+        "InstanceRunningDeleteForbidden_Message": "A running instance cannot be deleted: {0}."
     },
     "ContentWidgets": {
         "BestiaryItem": {
@@ -3693,6 +3701,20 @@
         },
         "ModWorldSelectionDialog": {
             "Title": "Select Worlds"
+        },
+        "InstanceManagementScreen": {
+            "Title": "Instance Management",
+            "Create": "Create",
+            "Delete": "Delete",
+            "Switch": "Switch",
+            "CurrentRunning": "Running here",
+            "GuiMode": "GUI mode",
+            "HeadlessMode": "Server mode",
+            "CreateTitle": "Enter the new instance ID",
+            "ConfirmDelete": "Permanently delete instance “{0}” and all its data? This cannot be undone.",
+            "ConfirmSwitch": "Switch to instance “{0}”?",
+            "RunningElsewhere": "Running elsewhere",
+            "NotRunning": "Not running"
         }
     },
     "FireworksBlock": {

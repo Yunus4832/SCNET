@@ -203,6 +203,18 @@ public static class BuiltInCommands
                 CommandDomain.Application,
                 CommandDescription("InstanceSwitch_Description", "切换数据实例并重启")));
         commands.Register(
+            new ResourceId(owner, "application/instance/create"),
+            new CommandDefinition<CreateInstanceCommand>(
+                ExecuteInstanceCreate,
+                CommandDomain.Application,
+                CommandDescription("InstanceCreate_Description", "创建数据实例")));
+        commands.Register(
+            new ResourceId(owner, "application/instance/delete"),
+            new CommandDefinition<DeleteInstanceCommand>(
+                ExecuteInstanceDelete,
+                CommandDomain.Application,
+                CommandDescription("InstanceDelete_Description", "删除数据实例")));
+        commands.Register(
             new ResourceId(owner, "application/exit"),
             new CommandDefinition<ExitApplicationCommand>(
                 ExecuteApplicationExit,
@@ -1109,6 +1121,77 @@ public static class BuiltInCommands
             "application.exiting",
             "ApplicationExiting_Message",
             "正在退出应用。");
+    }
+
+    private static CommandResult ExecuteInstanceCreate(
+        CommandContext context,
+        CreateInstanceCommand command)
+    {
+        var instanceId = command.InstanceId?.Trim() ?? string.Empty;
+        try
+        {
+            StarterInstanceManager.CreateInstance(instanceId);
+        }
+        catch (ArgumentException)
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.invalid_id",
+                "InstanceInvalidId_Message",
+                "实例 ID 只能包含英文字母、数字、'-' 和 '_'。");
+        }
+        catch (InvalidOperationException)
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.already_exists",
+                "InstanceAlreadyExists_Message",
+                "实例已存在：{0}。",
+                instanceId);
+        }
+
+        return CommandResult.LocalizedOk(
+            "application.instance.created",
+            "InstanceCreated_Message",
+            "已创建实例 {0}。",
+            instanceId);
+    }
+
+    private static CommandResult ExecuteInstanceDelete(
+        CommandContext context,
+        DeleteInstanceCommand command)
+    {
+        var instanceId = command.InstanceId?.Trim() ?? string.Empty;
+        if (string.Equals(instanceId, StarterInstanceManager.Current.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.current_delete_forbidden",
+                "InstanceCurrentDeleteForbidden_Message",
+                "不能删除当前实例。");
+        }
+
+        if (!StarterInstanceManager.ListInstances().Contains(instanceId, StringComparer.OrdinalIgnoreCase))
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.not_found",
+                "InstanceNotFound_Message",
+                "找不到实例：{0}。",
+                instanceId);
+        }
+
+        if (StarterInstanceManager.IsInstanceRunning(instanceId))
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.running_delete_forbidden",
+                "InstanceRunningDeleteForbidden_Message",
+                "不能删除正在运行的实例：{0}。",
+                instanceId);
+        }
+
+        StarterInstanceManager.DeleteInstance(instanceId);
+        return CommandResult.LocalizedOk(
+            "application.instance.deleted",
+            "InstanceDeleted_Message",
+            "已删除实例 {0}。",
+            instanceId);
     }
 
     private static CommandResult ExecuteLanguageGet(

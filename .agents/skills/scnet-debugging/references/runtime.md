@@ -6,6 +6,8 @@
 - `SessionInfo` selects a world or remote target.
 - Temporary tests should use command-line overrides and should not pass `--save`.
 - Automated runs must use a dedicated `--instance`; never use the default instance.
+- Treat a dedicated debug instance as temporary unless it existed before the task or is explicitly
+  retained for reproduction. Copy evidence first, then delete it after all associated processes stop.
 - `--world`, `--seed`, and `--game-mode` are ignored unless `--session` is also supplied.
 - Read `Doc/Headless.md` and `Doc/StartupSessions.md` when changing startup behavior.
 

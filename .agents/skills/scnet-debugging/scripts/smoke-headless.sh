@@ -13,11 +13,14 @@ server_port=""
 broadcast_port=""
 artifact_dir=""
 skip_build=false
+keep_instance=false
 server_pid=""
 input_fifo=""
+instance_dir=""
+instance_created=false
 
 usage() {
-    echo "Usage: $0 --session NAME --world NAME [--instance NAME] [--server-port PORT] [--broadcast-port PORT] [--seed VALUE] [--game-mode MODE] [--timeout SECONDS] [--artifacts DIR] [--no-build]"
+    echo "Usage: $0 --session NAME --world NAME [--instance NAME] [--server-port PORT] [--broadcast-port PORT] [--seed VALUE] [--game-mode MODE] [--timeout SECONDS] [--artifacts DIR] [--no-build] [--keep-instance]"
 }
 
 while (($# > 0)); do
@@ -60,6 +63,10 @@ while (($# > 0)); do
             ;;
         --no-build)
             skip_build=true
+            shift
+            ;;
+        --keep-instance)
+            keep_instance=true
             shift
             ;;
         -h|--help)
@@ -116,6 +123,8 @@ metadata_file="$artifact_dir/run.txt"
 input_fifo="$artifact_dir/server.stdin"
 
 cleanup() {
+    exit_status=$?
+    set +e
     exec 3>&- 2>/dev/null || true
     if [[ -n "$server_pid" ]] && kill -0 "$server_pid" 2>/dev/null; then
         kill -INT "$server_pid" 2>/dev/null || true
@@ -127,11 +136,39 @@ cleanup() {
         done
         if kill -0 "$server_pid" 2>/dev/null; then
             kill -TERM "$server_pid" 2>/dev/null || true
+            wait "$server_pid" 2>/dev/null || true
         fi
     fi
     [[ -n "$input_fifo" ]] && rm -f "$input_fifo"
+
+    if [[ "$instance_created" == true && -d "$instance_dir" ]]; then
+        if [[ -d "$instance_dir/Logs" ]]; then
+            mkdir -p "$artifact_dir/instance-logs"
+            cp -a "$instance_dir/Logs/." "$artifact_dir/instance-logs/"
+        fi
+
+        if [[ "$exit_status" -eq 0 && "$keep_instance" != true ]]; then
+            expected_parent="$(dirname "$starter")/Instances"
+            if [[ "$(dirname "$instance_dir")" == "$expected_parent" && "$(basename "$instance_dir")" == "$instance_name" ]]; then
+                rm -rf -- "$instance_dir"
+                echo "instance_cleanup=deleted" >> "$metadata_file"
+                echo "Deleted temporary instance: $instance_dir"
+            else
+                echo "instance_cleanup=preserved_path_validation_failed" >> "$metadata_file"
+                echo "Preserved debug instance because path validation failed: $instance_dir"
+            fi
+        else
+            echo "instance_cleanup=preserved" >> "$metadata_file"
+            echo "Preserved debug instance: $instance_dir"
+        fi
+    elif [[ -n "$instance_dir" ]]; then
+        echo "instance_cleanup=preexisting" >> "$metadata_file"
+    fi
+    return "$exit_status"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 cd "$repo_root"
 
@@ -143,6 +180,10 @@ starter="$repo_root/Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/Survivalcraf
 if [[ ! -x "$starter" ]]; then
     echo "Linux starter was not produced at $starter." >&2
     exit 1
+fi
+instance_dir="$(dirname "$starter")/Instances/$instance_name"
+if [[ ! -d "$instance_dir" ]]; then
+    instance_created=true
 fi
 
 args=(
@@ -175,6 +216,8 @@ fi
     echo "world=$world_name"
     echo "instance=$instance_name"
     echo "game_mode=$game_mode"
+    echo "instance_created=$instance_created"
+    echo "keep_instance=$keep_instance"
 } > "$metadata_file"
 
 mkfifo "$input_fifo"

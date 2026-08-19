@@ -133,3 +133,15 @@ Select-String -Path $Log.FullName -Pattern 'ERROR:|Unhandled exception|COMMAND E
 
 Preserve the exact command lines, PIDs, logs, readiness markers, stop method, and exit codes according
 to [evidence.md](evidence.md).
+
+Before each run, record whether `$Output\Instances\<instance>` already exists. After all associated
+processes have stopped and required logs have been copied, remove a newly created successful-run
+instance with an exact validated path unless it is still needed for reproduction:
+
+```powershell
+$InstancePath = Join-Path $Output 'Instances\debug-server'
+Remove-Item -LiteralPath $InstancePath -Recurse -Force
+```
+
+Never remove a pre-existing instance. Preserve failed-run instances by default and report their path;
+delete them once diagnosis no longer needs their state.

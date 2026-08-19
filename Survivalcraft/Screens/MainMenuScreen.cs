@@ -64,6 +64,9 @@ public class MainMenuScreen : Screen
                     () => ExecutePowerMenuAction(PowerMenuAction.Exit))
             ],
             new Vector2(180f, 44f)));
+        _mainMenuTabs.AddNavigationTab(
+            "Textures/Gui/Instance",
+            () => ScreensManager.SwitchScreen("InstanceManagement"));
         _mainMenuTabs.AddTab(new VerticalTabMenu(
             "Textures/Gui/Earth",
             () => LanguageManager.LanguageTypes

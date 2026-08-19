@@ -2871,7 +2871,15 @@
         "ScreenLayout_Quadruple_Name": "Quatro pessoas divididas igualmente",
         "ScreenLayout_Quadruple_Description": "Jogos de tela dividida para quatro jogadores",
         "ScreenLayout_QuadrupleOpposite_Name": "Quatro para dividir",
-        "ScreenLayout_QuadrupleOpposite_Description": "ângulo de visão oposto para compartilhar dispositivos de toque"
+        "ScreenLayout_QuadrupleOpposite_Description": "ângulo de visão oposto para compartilhar dispositivos de toque",
+        "InstanceCreate_Description": "Criar uma instância de dados",
+        "InstanceDelete_Description": "Eliminar uma instância de dados",
+        "InstanceInvalidId_Message": "Os IDs de instância só podem conter letras ASCII, números, “-” e “_”.",
+        "InstanceAlreadyExists_Message": "A instância já existe: {0}.",
+        "InstanceCreated_Message": "Instância {0} criada.",
+        "InstanceCurrentDeleteForbidden_Message": "Não é possível eliminar a instância atual.",
+        "InstanceDeleted_Message": "Instância {0} eliminada.",
+        "InstanceRunningDeleteForbidden_Message": "Não é possível eliminar uma instância em execução: {0}."
     },
     "ContentWidgets": {
         "BestiaryItem": {
@@ -3693,6 +3701,20 @@
         },
         "ModWorldSelectionDialog": {
             "Title": "Selecionar mundos"
+        },
+        "InstanceManagementScreen": {
+            "Title": "Gestão de instâncias",
+            "Create": "Criar",
+            "Delete": "Eliminar",
+            "Switch": "Mudar",
+            "CurrentRunning": "Em execução aqui",
+            "GuiMode": "Modo GUI",
+            "HeadlessMode": "Modo servidor",
+            "CreateTitle": "Introduza o ID da nova instância",
+            "ConfirmDelete": "Eliminar permanentemente a instância “{0}” e todos os seus dados? Esta ação não pode ser anulada.",
+            "ConfirmSwitch": "Mudar para a instância “{0}”?",
+            "RunningElsewhere": "Em execução noutro processo",
+            "NotRunning": "Não está em execução"
         }
     },
     "FireworksBlock": {

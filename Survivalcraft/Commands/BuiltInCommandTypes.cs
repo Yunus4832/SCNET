@@ -35,6 +35,10 @@ public sealed record RestartApplicationCommand(
 
 public sealed record SwitchInstanceCommand(string InstanceId) : IGameCommand;
 
+public sealed record CreateInstanceCommand(string InstanceId) : IGameCommand;
+
+public sealed record DeleteInstanceCommand(string InstanceId) : IGameCommand;
+
 public sealed record ExitApplicationCommand : IGameCommand;
 
 public sealed record GetLanguageCommand : IGameCommand;

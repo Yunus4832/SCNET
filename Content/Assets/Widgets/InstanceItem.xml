@@ -1,0 +1,15 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="700, 64">
+    <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="14, 0">
+        <CanvasWidget Size="300, 64">
+            <LabelWidget Name="InstanceItem.Id" VerticalAlignment="Center" FontScale="0.8"/>
+        </CanvasWidget>
+        <CanvasWidget Size="210, 64">
+            <LabelWidget Name="InstanceItem.Status" VerticalAlignment="Center" HorizontalAlignment="Center"
+                         FontScale="0.65" Color="180, 180, 180"/>
+        </CanvasWidget>
+        <CanvasWidget Size="150, 64">
+            <LabelWidget Name="InstanceItem.RunMode" VerticalAlignment="Center" HorizontalAlignment="Far"
+                         FontScale="0.65" Color="180, 180, 180"/>
+        </CanvasWidget>
+    </StackPanelWidget>
+</CanvasWidget>

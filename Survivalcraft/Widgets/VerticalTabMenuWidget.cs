@@ -47,7 +47,16 @@ public sealed class VerticalTabMenuWidget : CanvasWidget
         ArgumentNullException.ThrowIfNull(menu);
         var button = CreateIconButton(menu.Icon, new Vector2(60f));
         _tabsPanel.Children.Add(button);
-        _tabs.Add(new TabBinding(menu, button));
+        _tabs.Add(new TabBinding(menu, null, button));
+    }
+
+    public void AddNavigationTab(string icon, Action selected)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(icon);
+        ArgumentNullException.ThrowIfNull(selected);
+        var button = CreateIconButton(icon, new Vector2(60f));
+        _tabsPanel.Children.Add(button);
+        _tabs.Add(new TabBinding(null, selected, button));
     }
 
     public bool IsOpen => _activeTab != null;
@@ -89,7 +98,15 @@ public sealed class VerticalTabMenuWidget : CanvasWidget
                 continue;
             }
 
-            ToggleTab(_tabs.IndexOf(tab));
+            if (tab.Selected != null)
+            {
+                Close();
+                tab.Selected();
+            }
+            else
+            {
+                ToggleTab(_tabs.IndexOf(tab));
+            }
             return;
         }
 
@@ -125,12 +142,13 @@ public sealed class VerticalTabMenuWidget : CanvasWidget
 
         _items.Clear();
         _itemsPanel.Children.Clear();
-        var menuItems = tab.Menu.Items();
+        var menu = tab.Menu ?? throw new InvalidOperationException("Navigation tabs cannot be opened.");
+        var menuItems = menu.Items();
         foreach (var item in menuItems)
         {
             var button = new ClickableTextRowWidget(item.Text)
             {
-                Size = tab.Menu.ItemSize,
+                Size = menu.ItemSize,
                 FontScale = 0.8f
             };
             _itemsPanel.Children.Add(button);
@@ -142,9 +160,9 @@ public sealed class VerticalTabMenuWidget : CanvasWidget
         }
 
         var height = _panelPadding * 2f +
-                     menuItems.Count * tab.Menu.ItemSize.Y +
+                     menuItems.Count * menu.ItemSize.Y +
                      Math.Max(menuItems.Count - 1, 0) * _itemSpacing;
-        var popupSize = new Vector2(tab.Menu.ItemSize.X + _panelPadding * 2f, height);
+        var popupSize = new Vector2(menu.ItemSize.X + _panelPadding * 2f, height);
         _popup.Size = popupSize;
         _background.Size = popupSize;
         _popup.IsVisible = menuItems.Count > 0;
@@ -171,7 +189,8 @@ public sealed class VerticalTabMenuWidget : CanvasWidget
     }
 
     private sealed record TabBinding(
-        VerticalTabMenu Menu,
+        VerticalTabMenu? Menu,
+        Action? Selected,
         BevelledButtonWidget Button);
 
     private sealed record ItemBinding(

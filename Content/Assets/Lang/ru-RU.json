@@ -2871,7 +2871,15 @@
         "ScreenLayout_Quadruple_Name": "Четверной",
         "ScreenLayout_Quadruple_Description": "Четыре игрока разделены поровну",
         "ScreenLayout_QuadrupleOpposite_Name": "Четверной напротив",
-        "ScreenLayout_QuadrupleOpposite_Description": "Напротив, для совместного использования сенсорных устройств"
+        "ScreenLayout_QuadrupleOpposite_Description": "Напротив, для совместного использования сенсорных устройств",
+        "InstanceCreate_Description": "Создать экземпляр данных",
+        "InstanceDelete_Description": "Удалить экземпляр данных",
+        "InstanceInvalidId_Message": "ID экземпляра может содержать только латинские буквы, цифры, «-» и «_».",
+        "InstanceAlreadyExists_Message": "Экземпляр уже существует: {0}.",
+        "InstanceCreated_Message": "Экземпляр {0} создан.",
+        "InstanceCurrentDeleteForbidden_Message": "Нельзя удалить текущий экземпляр.",
+        "InstanceDeleted_Message": "Экземпляр {0} удалён.",
+        "InstanceRunningDeleteForbidden_Message": "Нельзя удалить запущенный экземпляр: {0}."
     },
     "ContentWidgets": {
         "BestiaryItem": {
@@ -3693,6 +3701,20 @@
         },
         "ModWorldSelectionDialog": {
             "Title": "Выбор миров"
+        },
+        "InstanceManagementScreen": {
+            "Title": "Управление экземплярами",
+            "Create": "Создать",
+            "Delete": "Удалить",
+            "Switch": "Переключить",
+            "CurrentRunning": "Запущен здесь",
+            "GuiMode": "Режим GUI",
+            "HeadlessMode": "Режим сервера",
+            "CreateTitle": "Введите ID нового экземпляра",
+            "ConfirmDelete": "Навсегда удалить экземпляр «{0}» и все его данные? Это действие нельзя отменить.",
+            "ConfirmSwitch": "Переключиться на экземпляр «{0}»?",
+            "RunningElsewhere": "Запущен другим процессом",
+            "NotRunning": "Не запущен"
         }
     },
     "FireworksBlock": {

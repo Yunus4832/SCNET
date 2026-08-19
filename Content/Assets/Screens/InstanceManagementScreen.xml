@@ -1,0 +1,30 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}">
+            <LabelWidget Name="TopBar.Label" Text="[InstanceManagementScreen:Title]"/>
+        </CanvasWidget>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+            <CanvasWidget Size="0, 20"/>
+            <StackPanelWidget Direction="Vertical" Margin="20, 0">
+                <CanvasWidget Size="720, Infinity">
+                    <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                    <ListPanelWidget Name="InstancesList" Direction="Vertical" Margin="5, 3" ItemSize="64"
+                                     SelectionColor="10, 70, 0, 90"/>
+                </CanvasWidget>
+            </StackPanelWidget>
+            <CanvasWidget Size="0, 10"/>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+                <BevelledButtonWidget Name="CreateButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[InstanceManagementScreen:Create]"/>
+                <CanvasWidget Size="20, 0"/>
+                <BevelledButtonWidget Name="DeleteButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[InstanceManagementScreen:Delete]"/>
+                <CanvasWidget Size="20, 0"/>
+                <BevelledButtonWidget Name="SwitchButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[InstanceManagementScreen:Switch]"/>
+            </StackPanelWidget>
+            <CanvasWidget Size="0, 10"/>
+        </StackPanelWidget>
+    </StackPanelWidget>
+</Screen>

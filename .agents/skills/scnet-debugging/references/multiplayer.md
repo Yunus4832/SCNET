@@ -13,6 +13,10 @@ The Starter creates missing instances under `Instances/<name>`. Settings, identi
 caches, and logs are isolated. `--instance` is consumed by the Starter and is not persisted in
 `RunningSetting.RemainingArgs`.
 
+Before launching the lab, record which instance directories already exist. During teardown, stop
+all server and client processes before deleting only the directories created for that lab. Preserve
+logs outside those directories first. Do not keep successful lab instances by default.
+
 Normal restart preserves the process instance. Instance switching is a separate exit action.
 Linux restart uses a temporary desktop entry so GUI-to-Headless transitions receive a visible
 terminal; Windows uses process arguments and Android uses an Intent extra.

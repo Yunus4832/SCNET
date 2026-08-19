@@ -89,6 +89,25 @@ public sealed class StarterInstanceManagerTest : IDisposable
         Assert.Equal(RunModeType.Gui, StarterInstanceManager.GetRunMode("default"));
     }
 
+    [Fact]
+    public void CreateAndDeleteManageNonCurrentInstanceDirectories()
+    {
+        StarterInstanceManager.Initialize([]);
+
+        StarterInstanceManager.CreateInstance("secondary");
+        var instanceDirectory = Path.Combine(_directory, "Instances", "secondary");
+        Directory.CreateDirectory(Path.Combine(instanceDirectory, "Config"));
+        File.WriteAllText(Path.Combine(instanceDirectory, "Config", "value.txt"), "data");
+
+        Assert.Contains("secondary", StarterInstanceManager.ListInstances());
+        Assert.Throws<InvalidOperationException>(() => StarterInstanceManager.CreateInstance("secondary"));
+        Assert.Throws<InvalidOperationException>(() => StarterInstanceManager.DeleteInstance("default"));
+
+        StarterInstanceManager.DeleteInstance("secondary");
+
+        Assert.False(Directory.Exists(instanceDirectory));
+    }
+
     [Theory]
     [InlineData("../escape")]
     [InlineData("with/slash")]

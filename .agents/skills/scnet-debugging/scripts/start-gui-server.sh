@@ -10,9 +10,12 @@ server_port=""
 broadcast_port=""
 game_mode=""
 skip_build=false
+keep_instance=false
+instance_dir=""
+instance_created=false
 
 usage() {
-    echo "Usage: $0 --instance NAME --session NAME --world NAME --player NAME [--game-mode MODE] [--server-port PORT] [--broadcast-port PORT] [--no-build]"
+    echo "Usage: $0 --instance NAME --session NAME --world NAME --player NAME [--game-mode MODE] [--server-port PORT] [--broadcast-port PORT] [--no-build] [--keep-instance]"
 }
 
 while (($# > 0)); do
@@ -25,6 +28,7 @@ while (($# > 0)); do
         --server-port) server_port="${2:-}"; shift 2 ;;
         --broadcast-port) broadcast_port="${2:-}"; shift 2 ;;
         --no-build) skip_build=true; shift ;;
+        --keep-instance) keep_instance=true; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "Unknown argument: $1" >&2; usage >&2; exit 2 ;;
     esac
@@ -58,6 +62,10 @@ if [[ "$skip_build" == false ]]; then
 fi
 
 starter="$repo_root/Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter"
+instance_dir="$(dirname "$starter")/Instances/$instance_name"
+if [[ ! -d "$instance_dir" ]]; then
+    instance_created=true
+fi
 args=(
     "$starter"
     --instance "$instance_name"
@@ -82,4 +90,20 @@ fi
 printf 'Starting GUI server:'
 printf ' %q' "${args[@]}"
 printf '\n'
-exec "${args[@]}"
+set +e
+"${args[@]}"
+exit_code=$?
+set -e
+
+if [[ "$instance_created" == true && -d "$instance_dir" ]]; then
+    if [[ "$exit_code" -eq 0 && "$keep_instance" != true &&
+          "$(dirname "$instance_dir")" == "$(dirname "$starter")/Instances" &&
+          "$(basename "$instance_dir")" == "$instance_name" ]]; then
+        rm -rf -- "$instance_dir"
+        echo "Deleted temporary instance: $instance_dir"
+    else
+        echo "Preserved debug instance: $instance_dir"
+    fi
+fi
+
+exit "$exit_code"

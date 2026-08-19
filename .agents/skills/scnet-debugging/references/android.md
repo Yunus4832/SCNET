@@ -101,5 +101,7 @@ adb -s <serial> shell am force-stop com.candy.scnet
 adb -s <serial> forward --remove tcp:<host-port>
 ```
 
-Do not delete `/storage/emulated/0/scnet` as cleanup. Each named instance may contain evidence or
-user data; remove a specific disposable instance only when the user explicitly authorizes it.
+Do not delete `/storage/emulated/0/scnet` as cleanup. Record whether the selected named instance
+existed before the run. After force-stopping the package and pulling required evidence, remove only
+the exact disposable instance created by the current task unless it must be retained for diagnosis.
+Never remove a pre-existing instance. Report the path and reason for every retained debug instance.

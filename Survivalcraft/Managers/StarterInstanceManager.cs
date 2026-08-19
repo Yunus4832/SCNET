@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Xml.Linq;
 
 namespace Game.Managers;
@@ -14,6 +15,11 @@ public static class StarterInstanceManager
 
     private const string _settingsPath = "starter:Starter.xml";
     private const string _instancesPath = "starter:Instances";
+    private const string _runtimeDirectoryName = ".runtime";
+
+    private static string? _currentRuntimeMarkerPath;
+
+    private static bool _processExitRegistered;
 
     public static StarterInstanceContext Current { get; private set; } = new(
         DefaultInstanceId,
@@ -59,6 +65,15 @@ public static class StarterInstanceManager
             instanceId,
             instancePath,
             parsedArguments.GameArguments);
+        try
+        {
+            RegisterCurrentProcess();
+        }
+        catch (Exception ex)
+        {
+            _currentRuntimeMarkerPath = null;
+            Log.Warning($"Failed to register starter instance process: {ex.Message}");
+        }
         return Current;
     }
 
@@ -73,6 +88,66 @@ public static class StarterInstanceManager
         var settings = Load();
         settings.NextInstance = targetInstanceId;
         Save(settings);
+    }
+
+    public static void CreateInstance(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        var instancePath = GetInstancePath(instanceId);
+        if (Storage.DirectoryExists(instancePath))
+        {
+            throw new InvalidOperationException($"Starter instance '{instanceId}' already exists.");
+        }
+
+        Storage.CreateDirectory(instancePath);
+    }
+
+    public static void DeleteInstance(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        if (string.Equals(instanceId, Current.Id, StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("The current starter instance cannot be deleted.");
+        }
+
+        if (IsInstanceRunning(instanceId))
+        {
+            throw new InvalidOperationException("A running starter instance cannot be deleted.");
+        }
+
+        var instancePath = GetInstancePath(instanceId);
+        if (!Storage.DirectoryExists(instancePath))
+        {
+            throw new InvalidOperationException($"Starter instance '{instanceId}' does not exist.");
+        }
+
+        Storage.DeleteDirectoryRecursive(instancePath);
+    }
+
+    public static bool IsInstanceRunning(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        var runtimeDirectory = Storage.CombinePaths(GetInstancePath(instanceId), _runtimeDirectoryName);
+        if (!Storage.DirectoryExists(runtimeDirectory))
+        {
+            return false;
+        }
+
+        var isRunning = false;
+        foreach (var fileName in Storage.ListFileNames(runtimeDirectory).ToArray())
+        {
+            var markerPath = Storage.CombinePaths(runtimeDirectory, fileName);
+            if (IsRuntimeMarkerAlive(markerPath))
+            {
+                isRunning = true;
+            }
+            else
+            {
+                TryDeleteFile(markerPath);
+            }
+        }
+
+        return isRunning;
     }
 
     public static IReadOnlyList<string> ListInstances()
@@ -187,6 +262,76 @@ public static class StarterInstanceManager
     private static string GetInstancePath(string instanceId)
     {
         return Storage.CombinePaths(_instancesPath, instanceId);
+    }
+
+    private static void RegisterCurrentProcess()
+    {
+        if (_currentRuntimeMarkerPath != null)
+        {
+            TryDeleteFile(_currentRuntimeMarkerPath);
+        }
+
+        var runtimeDirectory = Storage.CombinePaths(Current.InstancePath, _runtimeDirectoryName);
+        Storage.CreateDirectory(runtimeDirectory);
+        var process = Process.GetCurrentProcess();
+        _currentRuntimeMarkerPath = Storage.CombinePaths(runtimeDirectory, $"{process.Id}.xml");
+        var marker = new XElement("InstanceProcess",
+            new XAttribute("Pid", process.Id),
+            new XAttribute("StartTimeUtcTicks", process.StartTime.ToUniversalTime().Ticks));
+        using (var stream = Storage.OpenFile(_currentRuntimeMarkerPath, OpenFileMode.Create))
+        {
+            marker.Save(stream);
+        }
+
+        if (!_processExitRegistered)
+        {
+            AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+            {
+                if (_currentRuntimeMarkerPath != null)
+                {
+                    TryDeleteFile(_currentRuntimeMarkerPath);
+                }
+            };
+            _processExitRegistered = true;
+        }
+    }
+
+    private static bool IsRuntimeMarkerAlive(string markerPath)
+    {
+        try
+        {
+            using var stream = Storage.OpenFile(markerPath, OpenFileMode.Read);
+            var marker = XElement.Load(stream);
+            var pid = (int?)marker.Attribute("Pid");
+            var startTimeUtcTicks = (long?)marker.Attribute("StartTimeUtcTicks");
+            if (!pid.HasValue || !startTimeUtcTicks.HasValue)
+            {
+                return false;
+            }
+
+            using var process = Process.GetProcessById(pid.Value);
+            return !process.HasExited &&
+                   process.StartTime.ToUniversalTime().Ticks == startTimeUtcTicks.Value;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        try
+        {
+            if (Storage.FileExists(path))
+            {
+                Storage.DeleteFile(path);
+            }
+        }
+        catch (Exception ex)
+        {
+            Log.Warning($"Failed to delete starter runtime marker '{path}': {ex.Message}");
+        }
     }
 
     private static string? NormalizeOptionalInstanceId(string? instanceId)

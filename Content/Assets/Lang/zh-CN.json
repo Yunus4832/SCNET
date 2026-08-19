@@ -2871,7 +2871,15 @@
         "ScreenLayout_Quadruple_Name": "四人平分",
         "ScreenLayout_Quadruple_Description": "四个玩家平分屏幕游戏",
         "ScreenLayout_QuadrupleOpposite_Name": "四人对分",
-        "ScreenLayout_QuadrupleOpposite_Description": "视角相反，用于共享触摸设备"
+        "ScreenLayout_QuadrupleOpposite_Description": "视角相反，用于共享触摸设备",
+        "InstanceCreate_Description": "创建数据实例",
+        "InstanceDelete_Description": "删除数据实例",
+        "InstanceInvalidId_Message": "实例 ID 只能包含英文字母、数字、“-”和“_”。",
+        "InstanceAlreadyExists_Message": "实例已存在：{0}。",
+        "InstanceCreated_Message": "已创建实例 {0}。",
+        "InstanceCurrentDeleteForbidden_Message": "不能删除当前实例。",
+        "InstanceDeleted_Message": "已删除实例 {0}。",
+        "InstanceRunningDeleteForbidden_Message": "不能删除正在运行的实例：{0}。"
     },
     "ContentWidgets": {
         "BestiaryItem": {
@@ -3693,6 +3701,20 @@
         },
         "ModWorldSelectionDialog": {
             "Title": "选择世界"
+        },
+        "InstanceManagementScreen": {
+            "Title": "实例管理",
+            "Create": "创建",
+            "Delete": "删除",
+            "Switch": "切换",
+            "CurrentRunning": "当前运行",
+            "GuiMode": "GUI 模式",
+            "HeadlessMode": "服务器模式",
+            "CreateTitle": "输入新实例 ID",
+            "ConfirmDelete": "确定要永久删除实例“{0}”及其全部数据吗？此操作无法撤销。",
+            "ConfirmSwitch": "确定要切换到实例“{0}”吗？",
+            "RunningElsewhere": "其他进程运行中",
+            "NotRunning": "未运行"
         }
     },
     "FireworksBlock": {

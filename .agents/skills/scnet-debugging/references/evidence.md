@@ -12,6 +12,10 @@ Preserve one artifact directory per run with:
 - focused test results when relevant;
 - screenshots or traces when available.
 
+Copy required logs out of temporary instances before deleting them. Record whether each debug
+instance was pre-existing, deleted, or intentionally preserved. For a preserved instance, include
+its full path and the reason it is still needed.
+
 Report:
 
 1. what operation was attempted;

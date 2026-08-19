@@ -147,6 +147,7 @@ public class LoadingScreen : Screen
     private void InitScreens()
     {
         AddLoadAction(delegate { AddScreen("MainMenu", new MainMenuScreen()); });
+        AddLoadAction(delegate { AddScreen("InstanceManagement", new InstanceManagementScreen()); });
         AddLoadAction(delegate { AddScreen("Recipaedia", new RecipaediaScreen()); });
         AddLoadAction(delegate { AddScreen("RecipaediaRecipes", new RecipaediaRecipesScreen()); });
         AddLoadAction(delegate { AddScreen("RecipaediaDescription", new RecipaediaDescriptionScreen()); });
