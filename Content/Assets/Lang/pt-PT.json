@@ -2879,7 +2879,11 @@
         "InstanceCreated_Message": "Instância {0} criada.",
         "InstanceCurrentDeleteForbidden_Message": "Não é possível eliminar a instância atual.",
         "InstanceDeleted_Message": "Instância {0} eliminada.",
-        "InstanceRunningDeleteForbidden_Message": "Não é possível eliminar uma instância em execução: {0}."
+        "InstanceRunningDeleteForbidden_Message": "Não é possível eliminar uma instância em execução: {0}.",
+        "InstanceClone_Description": "Clonar uma instância de dados",
+        "InstanceRunningCloneForbidden_Message": "Não é possível clonar uma instância utilizada por outro processo: {0}.",
+        "InstanceCloneFailed_Message": "Falha ao clonar a instância.",
+        "InstanceCloned_Message": "A instância {0} foi clonada como {1}."
     },
     "ContentWidgets": {
         "BestiaryItem": {
@@ -3714,7 +3718,11 @@
             "ConfirmDelete": "Eliminar permanentemente a instância “{0}” e todos os seus dados? Esta ação não pode ser anulada.",
             "ConfirmSwitch": "Mudar para a instância “{0}”?",
             "RunningElsewhere": "Em execução noutro processo",
-            "NotRunning": "Não está em execução"
+            "NotRunning": "Não está em execução",
+            "Clone": "Clonar",
+            "CloneTitle": "Clonar a instância “{0}” para um novo ID",
+            "Working": "A processar a instância",
+            "OperationFailed": "A operação da instância falhou."
         }
     },
     "FireworksBlock": {

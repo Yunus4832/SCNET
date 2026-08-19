@@ -18,6 +18,9 @@
                 <BevelledButtonWidget Name="CreateButton" Style="{Styles/ButtonStyle_160x60}"
                                       Text="[InstanceManagementScreen:Create]"/>
                 <CanvasWidget Size="20, 0"/>
+                <BevelledButtonWidget Name="CloneButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[InstanceManagementScreen:Clone]"/>
+                <CanvasWidget Size="20, 0"/>
                 <BevelledButtonWidget Name="DeleteButton" Style="{Styles/ButtonStyle_160x60}"
                                       Text="[InstanceManagementScreen:Delete]"/>
                 <CanvasWidget Size="20, 0"/>

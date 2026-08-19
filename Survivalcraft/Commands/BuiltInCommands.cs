@@ -215,6 +215,12 @@ public static class BuiltInCommands
                 CommandDomain.Application,
                 CommandDescription("InstanceDelete_Description", "删除数据实例")));
         commands.Register(
+            new ResourceId(owner, "application/instance/clone"),
+            new CommandDefinition<CloneInstanceCommand>(
+                ExecuteInstanceClone,
+                CommandDomain.Application,
+                CommandDescription("InstanceClone_Description", "克隆数据实例")));
+        commands.Register(
             new ResourceId(owner, "application/exit"),
             new CommandDefinition<ExitApplicationCommand>(
                 ExecuteApplicationExit,
@@ -1192,6 +1198,72 @@ public static class BuiltInCommands
             "InstanceDeleted_Message",
             "已删除实例 {0}。",
             instanceId);
+    }
+
+    private static CommandResult ExecuteInstanceClone(
+        CommandContext context,
+        CloneInstanceCommand command)
+    {
+        var sourceInstanceId = command.SourceInstanceId?.Trim() ?? string.Empty;
+        var targetInstanceId = command.TargetInstanceId?.Trim() ?? string.Empty;
+        try
+        {
+            StarterInstanceManager.ValidateInstanceId(targetInstanceId);
+        }
+        catch (ArgumentException)
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.invalid_id",
+                "InstanceInvalidId_Message",
+                "实例 ID 只能包含英文字母、数字、'-' 和 '_'。");
+        }
+
+        if (!StarterInstanceManager.ListInstances().Contains(sourceInstanceId, StringComparer.OrdinalIgnoreCase))
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.not_found",
+                "InstanceNotFound_Message",
+                "找不到实例：{0}。",
+                sourceInstanceId);
+        }
+
+        if (!StarterInstanceManager.CanCloneInstance(sourceInstanceId))
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.running_clone_forbidden",
+                "InstanceRunningCloneForbidden_Message",
+                "不能克隆其他进程正在使用的实例：{0}。",
+                sourceInstanceId);
+        }
+
+        if (StarterInstanceManager.ListInstances().Contains(targetInstanceId, StringComparer.OrdinalIgnoreCase))
+        {
+            return CommandResult.LocalizedFail(
+                "application.instance.already_exists",
+                "InstanceAlreadyExists_Message",
+                "实例已存在：{0}。",
+                targetInstanceId);
+        }
+
+        try
+        {
+            StarterInstanceManager.CloneInstance(sourceInstanceId, targetInstanceId);
+        }
+        catch (Exception ex)
+        {
+            Log.Error($"Failed to clone starter instance '{sourceInstanceId}' to '{targetInstanceId}': {ex}");
+            return CommandResult.LocalizedFail(
+                "application.instance.clone_failed",
+                "InstanceCloneFailed_Message",
+                "克隆实例失败。");
+        }
+
+        return CommandResult.LocalizedOk(
+            "application.instance.cloned",
+            "InstanceCloned_Message",
+            "已将实例 {0} 克隆为 {1}。",
+            sourceInstanceId,
+            targetInstanceId);
     }
 
     private static CommandResult ExecuteLanguageGet(

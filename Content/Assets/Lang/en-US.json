@@ -2879,7 +2879,11 @@
         "InstanceCreated_Message": "Created instance {0}.",
         "InstanceCurrentDeleteForbidden_Message": "The current instance cannot be deleted.",
         "InstanceDeleted_Message": "Deleted instance {0}.",
-        "InstanceRunningDeleteForbidden_Message": "A running instance cannot be deleted: {0}."
+        "InstanceRunningDeleteForbidden_Message": "A running instance cannot be deleted: {0}.",
+        "InstanceClone_Description": "Clone a data instance",
+        "InstanceRunningCloneForbidden_Message": "An instance used by another process cannot be cloned: {0}.",
+        "InstanceCloneFailed_Message": "Failed to clone the instance.",
+        "InstanceCloned_Message": "Cloned instance {0} as {1}."
     },
     "ContentWidgets": {
         "BestiaryItem": {
@@ -3714,7 +3718,11 @@
             "ConfirmDelete": "Permanently delete instance “{0}” and all its data? This cannot be undone.",
             "ConfirmSwitch": "Switch to instance “{0}”?",
             "RunningElsewhere": "Running elsewhere",
-            "NotRunning": "Not running"
+            "NotRunning": "Not running",
+            "Clone": "Clone",
+            "CloneTitle": "Clone instance “{0}” to a new ID",
+            "Working": "Processing instance",
+            "OperationFailed": "The instance operation failed."
         }
     },
     "FireworksBlock": {

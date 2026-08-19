@@ -8,6 +8,8 @@ public class InstanceManagementScreen : Screen
 {
     private readonly ButtonWidget _createButton;
 
+    private readonly ButtonWidget _cloneButton;
+
     private readonly ButtonWidget _deleteButton;
 
     private readonly ListPanelWidget _instancesList;
@@ -21,6 +23,7 @@ public class InstanceManagementScreen : Screen
         LoadContents(this, ContentManager.Get<XElement>("Screens/InstanceManagementScreen"));
         _instancesList = Children.Find<ListPanelWidget>("InstancesList")!;
         _createButton = Children.Find<ButtonWidget>("CreateButton")!;
+        _cloneButton = Children.Find<ButtonWidget>("CloneButton")!;
         _deleteButton = Children.Find<ButtonWidget>("DeleteButton")!;
         _switchButton = Children.Find<ButtonWidget>("SwitchButton")!;
         _instancesList.ItemWidgetFactory = CreateInstanceItemWidget;
@@ -43,6 +46,7 @@ public class InstanceManagementScreen : Screen
         var isCurrent = selected?.IsCurrent == true;
         _deleteButton.IsEnabled = selected != null && !isCurrent && !selected.IsRunning;
         _switchButton.IsEnabled = selected != null && !isCurrent;
+        _cloneButton.IsEnabled = selected?.CanClone == true;
 
         if (_createButton.IsClicked)
         {
@@ -52,6 +56,11 @@ public class InstanceManagementScreen : Screen
         if (_deleteButton.IsClicked && selected != null && !isCurrent)
         {
             ConfirmDelete(selected);
+        }
+
+        if (_cloneButton.IsClicked && selected?.CanClone == true)
+        {
+            ShowCloneDialog(selected);
         }
 
         if (_switchButton.IsClicked && selected != null && !isCurrent)
@@ -95,8 +104,10 @@ public class InstanceManagementScreen : Screen
                 instanceId,
                 string.Equals(instanceId, StarterInstanceManager.Current.Id, StringComparison.OrdinalIgnoreCase),
                 StarterInstanceManager.IsInstanceRunning(instanceId),
+                StarterInstanceManager.CanCloneInstance(instanceId),
                 StarterInstanceManager.GetRunMode(instanceId)));
         }
+
     }
 
     private void ShowCreateDialog()
@@ -136,6 +147,28 @@ public class InstanceManagementScreen : Screen
             });
     }
 
+    private void ShowCloneDialog(InstanceItem source)
+    {
+        DialogsManager.ShowDialog(
+            null,
+            new TextBoxDialog(
+                string.Format(Text("CloneTitle"), source.Id),
+                string.Empty,
+                32,
+                targetInstanceId =>
+                {
+                    if (string.IsNullOrWhiteSpace(targetInstanceId))
+                    {
+                        return;
+                    }
+
+                    ExecuteLongOperation(
+                        new CloneInstanceCommand(source.Id, targetInstanceId.Trim()),
+                        RefreshInstances);
+                },
+                false));
+    }
+
     private static void ConfirmSwitch(InstanceItem instance)
     {
         DialogsManager.Confirm(
@@ -166,6 +199,47 @@ public class InstanceManagementScreen : Screen
         return false;
     }
 
+    private void ExecuteLongOperation(
+        IGameCommand command,
+        Action? success)
+    {
+        var busyDialog = new CancellableBusyDialog(Text("Working"), false)
+        {
+            IsCancelButtonEnabled = false
+        };
+        DialogsManager.ShowDialog(null, busyDialog);
+        Task.Run(() => CommandExecutor.ExecuteApplication(command, GameManager.Project))
+            .ContinueWith(task => Dispatcher.Dispatch(() =>
+            {
+                DialogsManager.HideDialog(busyDialog);
+                if (task.IsFaulted)
+                {
+                    Log.Error($"Instance operation failed: {task.Exception}");
+                    DialogsManager.ShowDialog(
+                        null,
+                        new MessageDialog(
+                            LanguageManager.Error,
+                            Text("OperationFailed"),
+                            LanguageManager.Ok));
+                    return;
+                }
+
+                var result = task.Result;
+                if (!result.Success)
+                {
+                    DialogsManager.ShowDialog(
+                        null,
+                        new MessageDialog(
+                            LanguageManager.Error,
+                            CommandText.Resolve(result),
+                            LanguageManager.Ok));
+                    return;
+                }
+
+                success?.Invoke();
+            }));
+    }
+
     private static string Text(string key) =>
         LanguageManager.GetContentWidgets(nameof(InstanceManagementScreen), key);
 
@@ -173,5 +247,6 @@ public class InstanceManagementScreen : Screen
         string Id,
         bool IsCurrent,
         bool IsRunning,
+        bool CanClone,
         RunModeType RunMode);
 }

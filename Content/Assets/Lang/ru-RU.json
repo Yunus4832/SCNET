@@ -2879,7 +2879,11 @@
         "InstanceCreated_Message": "Экземпляр {0} создан.",
         "InstanceCurrentDeleteForbidden_Message": "Нельзя удалить текущий экземпляр.",
         "InstanceDeleted_Message": "Экземпляр {0} удалён.",
-        "InstanceRunningDeleteForbidden_Message": "Нельзя удалить запущенный экземпляр: {0}."
+        "InstanceRunningDeleteForbidden_Message": "Нельзя удалить запущенный экземпляр: {0}.",
+        "InstanceClone_Description": "Клонировать экземпляр данных",
+        "InstanceRunningCloneForbidden_Message": "Нельзя клонировать экземпляр, используемый другим процессом: {0}.",
+        "InstanceCloneFailed_Message": "Не удалось клонировать экземпляр.",
+        "InstanceCloned_Message": "Экземпляр {0} клонирован как {1}."
     },
     "ContentWidgets": {
         "BestiaryItem": {
@@ -3714,7 +3718,11 @@
             "ConfirmDelete": "Навсегда удалить экземпляр «{0}» и все его данные? Это действие нельзя отменить.",
             "ConfirmSwitch": "Переключиться на экземпляр «{0}»?",
             "RunningElsewhere": "Запущен другим процессом",
-            "NotRunning": "Не запущен"
+            "NotRunning": "Не запущен",
+            "Clone": "Клонировать",
+            "CloneTitle": "Клонировать экземпляр «{0}» с новым ID",
+            "Working": "Обработка экземпляра",
+            "OperationFailed": "Операция с экземпляром завершилась ошибкой."
         }
     },
     "FireworksBlock": {

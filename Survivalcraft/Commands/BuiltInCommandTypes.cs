@@ -39,6 +39,10 @@ public sealed record CreateInstanceCommand(string InstanceId) : IGameCommand;
 
 public sealed record DeleteInstanceCommand(string InstanceId) : IGameCommand;
 
+public sealed record CloneInstanceCommand(
+    string SourceInstanceId,
+    string TargetInstanceId) : IGameCommand;
+
 public sealed record ExitApplicationCommand : IGameCommand;
 
 public sealed record GetLanguageCommand : IGameCommand;

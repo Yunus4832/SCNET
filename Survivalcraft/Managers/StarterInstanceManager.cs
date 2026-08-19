@@ -80,10 +80,7 @@ public static class StarterInstanceManager
     public static void RequestSwitch(string targetInstanceId)
     {
         ValidateInstanceId(targetInstanceId);
-        if (!Storage.DirectoryExists(GetInstancePath(targetInstanceId)))
-        {
-            throw new InvalidOperationException($"Starter instance '{targetInstanceId}' does not exist.");
-        }
+        targetInstanceId = ResolveExistingInstanceId(targetInstanceId);
 
         var settings = Load();
         settings.NextInstance = targetInstanceId;
@@ -94,7 +91,7 @@ public static class StarterInstanceManager
     {
         ValidateInstanceId(instanceId);
         var instancePath = GetInstancePath(instanceId);
-        if (Storage.DirectoryExists(instancePath))
+        if (ListInstances().Contains(instanceId, StringComparer.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException($"Starter instance '{instanceId}' already exists.");
         }
@@ -105,6 +102,7 @@ public static class StarterInstanceManager
     public static void DeleteInstance(string instanceId)
     {
         ValidateInstanceId(instanceId);
+        instanceId = ResolveExistingInstanceId(instanceId);
         if (string.Equals(instanceId, Current.Id, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException("The current starter instance cannot be deleted.");
@@ -124,9 +122,58 @@ public static class StarterInstanceManager
         Storage.DeleteDirectoryRecursive(instancePath);
     }
 
+    public static void CloneInstance(string sourceInstanceId, string targetInstanceId)
+    {
+        ValidateInstanceId(sourceInstanceId);
+        ValidateInstanceId(targetInstanceId);
+        sourceInstanceId = ResolveExistingInstanceId(sourceInstanceId);
+        var sourcePath = GetInstancePath(sourceInstanceId);
+        var targetPath = GetInstancePath(targetInstanceId);
+        if (ListInstances().Contains(targetInstanceId, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException($"Starter instance '{targetInstanceId}' already exists.");
+        }
+
+        if (!CanCloneInstance(sourceInstanceId))
+        {
+            throw new InvalidOperationException("An instance used by another process cannot be cloned.");
+        }
+
+        Storage.CreateDirectory(targetPath);
+        try
+        {
+            CopyInstanceDirectory(sourcePath, targetPath, true);
+        }
+        catch
+        {
+            Storage.DeleteDirectoryRecursive(targetPath);
+            throw;
+        }
+    }
+
     public static bool IsInstanceRunning(string instanceId)
     {
         ValidateInstanceId(instanceId);
+        return HasLiveRuntimeMarker(instanceId, false);
+    }
+
+    public static bool IsInstanceRunningElsewhere(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        return HasLiveRuntimeMarker(instanceId, true);
+    }
+
+    public static bool CanCloneInstance(string instanceId)
+    {
+        ValidateInstanceId(instanceId);
+        instanceId = ResolveExistingInstanceId(instanceId);
+        return string.Equals(instanceId, Current.Id, StringComparison.OrdinalIgnoreCase)
+            ? !IsInstanceRunningElsewhere(instanceId)
+            : !IsInstanceRunning(instanceId);
+    }
+
+    private static bool HasLiveRuntimeMarker(string instanceId, bool excludeCurrentProcess)
+    {
         var runtimeDirectory = Storage.CombinePaths(GetInstancePath(instanceId), _runtimeDirectoryName);
         if (!Storage.DirectoryExists(runtimeDirectory))
         {
@@ -139,7 +186,11 @@ public static class StarterInstanceManager
             var markerPath = Storage.CombinePaths(runtimeDirectory, fileName);
             if (IsRuntimeMarkerAlive(markerPath))
             {
-                isRunning = true;
+                if (!excludeCurrentProcess ||
+                    !string.Equals(markerPath, _currentRuntimeMarkerPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    isRunning = true;
+                }
             }
             else
             {
@@ -262,6 +313,36 @@ public static class StarterInstanceManager
     private static string GetInstancePath(string instanceId)
     {
         return Storage.CombinePaths(_instancesPath, instanceId);
+    }
+
+    private static string ResolveExistingInstanceId(string instanceId)
+    {
+        return ListInstances().FirstOrDefault(
+                   candidate => string.Equals(candidate, instanceId, StringComparison.OrdinalIgnoreCase))
+               ?? throw new InvalidOperationException($"Starter instance '{instanceId}' does not exist.");
+    }
+
+    private static void CopyInstanceDirectory(string sourcePath, string targetPath, bool isRoot)
+    {
+        foreach (var fileName in Storage.ListFileNames(sourcePath))
+        {
+            Storage.CopyFile(
+                Storage.CombinePaths(sourcePath, fileName),
+                Storage.CombinePaths(targetPath, fileName));
+        }
+
+        foreach (var directoryName in Storage.ListDirectoryNames(sourcePath))
+        {
+            if (isRoot && string.Equals(directoryName, _runtimeDirectoryName, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var sourceDirectory = Storage.CombinePaths(sourcePath, directoryName);
+            var targetDirectory = Storage.CombinePaths(targetPath, directoryName);
+            Storage.CreateDirectory(targetDirectory);
+            CopyInstanceDirectory(sourceDirectory, targetDirectory, false);
+        }
     }
 
     private static void RegisterCurrentProcess()

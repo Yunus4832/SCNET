@@ -108,6 +108,39 @@ public sealed class StarterInstanceManagerTest : IDisposable
         Assert.False(Directory.Exists(instanceDirectory));
     }
 
+    [Fact]
+    public void CloneCopiesStoppedInstanceWithoutRuntimeMarkers()
+    {
+        StarterInstanceManager.Initialize([]);
+        StarterInstanceManager.CreateInstance("source");
+        var sourceDirectory = Path.Combine(_directory, "Instances", "source");
+        Directory.CreateDirectory(Path.Combine(sourceDirectory, "Data"));
+        File.WriteAllText(Path.Combine(sourceDirectory, "Data", "value.txt"), "data");
+        Directory.CreateDirectory(Path.Combine(sourceDirectory, ".runtime"));
+        File.WriteAllText(Path.Combine(sourceDirectory, ".runtime", "stale.xml"), "stale");
+
+        StarterInstanceManager.CloneInstance("source", "clone");
+
+        Assert.Equal("data", File.ReadAllText(Path.Combine(_directory, "Instances", "clone", "Data", "value.txt")));
+        Assert.False(Directory.Exists(Path.Combine(_directory, "Instances", "clone", ".runtime")));
+    }
+
+    [Fact]
+    public void CurrentInstanceCanBeClonedWithoutAnotherProcess()
+    {
+        StarterInstanceManager.Initialize([]);
+        var defaultData = Path.Combine(_directory, "Instances", "default", "Data");
+        Directory.CreateDirectory(defaultData);
+        File.WriteAllText(Path.Combine(defaultData, "value.txt"), "current");
+
+        Assert.True(StarterInstanceManager.CanCloneInstance("default"));
+        StarterInstanceManager.CloneInstance("default", "current-clone");
+
+        Assert.Equal(
+            "current",
+            File.ReadAllText(Path.Combine(_directory, "Instances", "current-clone", "Data", "value.txt")));
+    }
+
     [Theory]
     [InlineData("../escape")]
     [InlineData("with/slash")]

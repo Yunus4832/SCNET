@@ -357,6 +357,7 @@ public class CommandDispatcherTest
         AssertDomain<SwitchInstanceCommand>(registry, CommandDomain.Application);
         AssertDomain<CreateInstanceCommand>(registry, CommandDomain.Application);
         AssertDomain<DeleteInstanceCommand>(registry, CommandDomain.Application);
+        AssertDomain<CloneInstanceCommand>(registry, CommandDomain.Application);
         AssertDomain<ExitApplicationCommand>(registry, CommandDomain.Application);
         AssertDomain<SetWorldTimeCommand>(registry, CommandDomain.World);
         AssertDomain<CreateTeamCommand>(registry, CommandDomain.World);

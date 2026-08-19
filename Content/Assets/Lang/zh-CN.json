@@ -2879,7 +2879,11 @@
         "InstanceCreated_Message": "已创建实例 {0}。",
         "InstanceCurrentDeleteForbidden_Message": "不能删除当前实例。",
         "InstanceDeleted_Message": "已删除实例 {0}。",
-        "InstanceRunningDeleteForbidden_Message": "不能删除正在运行的实例：{0}。"
+        "InstanceRunningDeleteForbidden_Message": "不能删除正在运行的实例：{0}。",
+        "InstanceClone_Description": "克隆数据实例",
+        "InstanceRunningCloneForbidden_Message": "不能克隆其他进程正在使用的实例：{0}。",
+        "InstanceCloneFailed_Message": "克隆实例失败。",
+        "InstanceCloned_Message": "已将实例 {0} 克隆为 {1}。"
     },
     "ContentWidgets": {
         "BestiaryItem": {
@@ -3714,7 +3718,11 @@
             "ConfirmDelete": "确定要永久删除实例“{0}”及其全部数据吗？此操作无法撤销。",
             "ConfirmSwitch": "确定要切换到实例“{0}”吗？",
             "RunningElsewhere": "其他进程运行中",
-            "NotRunning": "未运行"
+            "NotRunning": "未运行",
+            "Clone": "克隆",
+            "CloneTitle": "将实例“{0}”克隆为新 ID",
+            "Working": "正在处理实例",
+            "OperationFailed": "实例操作失败。"
         }
     },
     "FireworksBlock": {
