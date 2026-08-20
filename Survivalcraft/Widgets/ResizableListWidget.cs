@@ -24,6 +24,8 @@ public class ResizableListWidget : ScrollPanelWidget
 
     public Func<object, Widget> ItemWidgetFactory { get; set; }
 
+    public bool KeepItemsWholeWhenScrolling { get; set; }
+
     public override LayoutDirection Direction
     {
         get => base.Direction;
@@ -113,16 +115,11 @@ public class ResizableListWidget : ScrollPanelWidget
     {
         _items.Add(item);
         var w = ItemWidgetFactory.Invoke(item);
-        if (Direction == LayoutDirection.Horizontal)
-        {
-            w.Measure(new Vector2(0f, ActualSize.Y));
-        }
-        else
-        {
-            w.Measure(new Vector2(ActualSize.X, 0f));
-        }
+        w.Measure(Direction == LayoutDirection.Horizontal
+            ? new Vector2(0f, ActualSize.Y)
+            : new Vector2(ActualSize.X, 0f));
 
-        var previous = _itemWidgetSize.Count == 0 ? 0f : _itemWidgetSize[_itemWidgetSize.Count - 1];
+        var previous = _itemWidgetSize.Count == 0 ? 0f : _itemWidgetSize[^1];
         _itemWidgetSize.Add(previous +
                             (Direction == LayoutDirection.Horizontal ? w.ParentDesiredSize.X : w.ParentDesiredSize.Y));
         _widgetsDirty = true;
@@ -142,9 +139,9 @@ public class ResizableListWidget : ScrollPanelWidget
         var item = _items[index];
         _items.RemoveAt(index);
         Widget w;
-        if (_widgetsByIndex.ContainsKey(index))
+        if (_widgetsByIndex.TryGetValue(index, out var widget))
         {
-            w = _widgetsByIndex[index];
+            w = widget;
         }
         else
         {
@@ -177,7 +174,19 @@ public class ResizableListWidget : ScrollPanelWidget
 
     public override float CalculateScrollAreaLength()
     {
-        return _itemWidgetSize.Count == 0 ? 0 : _itemWidgetSize[_itemWidgetSize.Count - 1];
+        if (_itemWidgetSize.Count == 0)
+        {
+            return 0f;
+        }
+
+        var length = _itemWidgetSize[^1];
+        if (KeepItemsWholeWhenScrolling)
+        {
+            var viewportLength = Direction == LayoutDirection.Horizontal ? ActualSize.X : ActualSize.Y;
+            length += MathUtils.Max(viewportLength - GetItemSize(_itemWidgetSize.Count - 1), 0f);
+        }
+
+        return length;
     }
 
     private float GetItemPosition(int num)
@@ -205,7 +214,21 @@ public class ResizableListWidget : ScrollPanelWidget
                 var itemSize = GetItemSize(num);
                 if (num2 > ScrollPosition + num3 - itemSize)
                 {
-                    ScrollPosition = num2 - num3 + itemSize;
+                    var scrollPosition = num2 - num3 + itemSize;
+                    if (KeepItemsWholeWhenScrolling && itemSize <= num3)
+                    {
+                        for (var i = 0; i <= num; i++)
+                        {
+                            var itemPosition = GetItemPosition(i);
+                            if (itemPosition >= scrollPosition)
+                            {
+                                scrollPosition = itemPosition;
+                                break;
+                            }
+                        }
+                    }
+
+                    ScrollPosition = scrollPosition;
                 }
             }
         }
@@ -235,40 +258,37 @@ public class ResizableListWidget : ScrollPanelWidget
             }
         }
 
-        if (_widgetsDirty)
+        if (!_widgetsDirty)
         {
-            _widgetsDirty = false;
-            _itemWidgetSize.Clear();
-            for (var i = 0; i < _items.Count; i++)
+            return;
+        }
+
+        _widgetsDirty = false;
+        _itemWidgetSize.Clear();
+        for (var i = 0; i < _items.Count; i++)
+        {
+            Widget w;
+            if (_widgetsByIndex.TryGetValue(i, out var widget))
             {
-                Widget w;
-                if (_widgetsByIndex.ContainsKey(i))
-                {
-                    w = _widgetsByIndex[i];
-                }
-                else
-                {
-                    w = ItemWidgetFactory.Invoke(_items[i]);
-                    w.Measure(Vector2.Zero);
-                }
-
-                if (Direction == LayoutDirection.Horizontal)
-                {
-                    w.Measure(new Vector2(0f, ActualSize.Y));
-                }
-                else
-                {
-                    w.Measure(new Vector2(ActualSize.X, 0f));
-                }
-
-                var previous = _itemWidgetSize.Count == 0 ? 0f : _itemWidgetSize[^1];
-                _itemWidgetSize.Add(previous + (Direction == LayoutDirection.Horizontal
-                    ? w.ParentDesiredSize.X
-                    : w.ParentDesiredSize.Y));
+                w = widget;
+            }
+            else
+            {
+                w = ItemWidgetFactory.Invoke(_items[i]);
+                w.Measure(Vector2.Zero);
             }
 
-            CreateListWidgets(Direction == LayoutDirection.Horizontal ? ActualSize.X : ActualSize.Y);
+            w.Measure(Direction == LayoutDirection.Horizontal
+                ? new Vector2(0f, ActualSize.Y)
+                : new Vector2(ActualSize.X, 0f));
+
+            var previous = _itemWidgetSize.Count == 0 ? 0f : _itemWidgetSize[^1];
+            _itemWidgetSize.Add(previous + (Direction == LayoutDirection.Horizontal
+                ? w.ParentDesiredSize.X
+                : w.ParentDesiredSize.Y));
         }
+
+        CreateListWidgets(Direction == LayoutDirection.Horizontal ? ActualSize.X : ActualSize.Y);
     }
 
     public override void ArrangeOverride()
@@ -308,20 +328,24 @@ public class ResizableListWidget : ScrollPanelWidget
             _clickAllowed = !flag;
         }
 
-        if (Input.Click.HasValue && _clickAllowed && HitTestPanel(Input.Click.Value.Start) &&
-            HitTestPanel(Input.Click.Value.End))
+        if (!Input.Click.HasValue ||
+            !_clickAllowed ||
+            !HitTestPanel(Input.Click.Value.Start) ||
+            !HitTestPanel(Input.Click.Value.End))
         {
-            var num = PositionToItemIndex(Input.Click.Value.End);
-            if (ItemClicked != null && num >= 0 && num < _items.Count)
-            {
-                ItemClicked(Items[num]);
-            }
+            return;
+        }
 
-            SelectedIndex = num;
-            if (SelectedIndex.HasValue)
-            {
-                AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-            }
+        var num = PositionToItemIndex(Input.Click.Value.End);
+        if (ItemClicked != null && num >= 0 && num < _items.Count)
+        {
+            ItemClicked(Items[num]);
+        }
+
+        SelectedIndex = num;
+        if (SelectedIndex.HasValue)
+        {
+            AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
         }
     }
 

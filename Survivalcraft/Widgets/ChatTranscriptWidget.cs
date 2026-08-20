@@ -23,7 +23,8 @@ public sealed class ChatTranscriptWidget : CanvasWidget
     {
         Direction = LayoutDirection.Vertical,
         ClampToBounds = true,
-        Margin = new Vector2(12f)
+        Margin = new Vector2(12f),
+        KeepItemsWholeWhenScrolling = true
     };
 
     public int MaximumMessages { get; set; } = 200;

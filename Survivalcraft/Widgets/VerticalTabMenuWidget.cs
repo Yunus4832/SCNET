@@ -117,6 +117,7 @@ public sealed class VerticalTabMenuWidget : CanvasWidget
                 continue;
             }
 
+            Input.Clear();
             Close();
             item.Item.Selected();
             return;
