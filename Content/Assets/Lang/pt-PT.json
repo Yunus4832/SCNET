@@ -2851,7 +2851,6 @@
         "FriendlyFire_False": "Os jogadores não poderão atacar e ferir outros jogadores.",
         "CharacterSkin_Description": "Escolha a pele do personagem a usar no jogo.",
         "BlocksTexture_Description": "Selecione a textura de quadrados para usar ao desenhar o mundo. Você pode mudar completamente a aparência do mundo usando diferentes texturas de quadrados.",
-        "Settings_Compatibility_UseReducedZRange_Description": "Habilite este recurso se você tiver problemas gráficos, como transparência em algumas caixas ou confusão de texturas durante o jogo. Ele reduz a faixa do espaço de clipe Z de -1 / 1 para 0 / 1, já que alguns dispositivos Android têm problemas de buffering de profundidade e clipping em toda a faixa.",
         "ScreenLayout_Single_Name": "Individual",
         "ScreenLayout_Single_Description": "Jogos de tela cheia para um jogador",
         "ScreenLayout_DoubleVertical_Name": "Duas pessoas Vertical",
@@ -3585,14 +3584,12 @@
             "3": "Volume da música de fundo"
         },
         "SettingsCompatibilityScreen": [
-            "Load Mod (debug)",
             "Compatibilidade",
-            "Use essas configurações apenas se tiver problemas com o jogo",
             "Usando a faixa Z reduzida",
-            "Verifique o log de do jogo",
-            "...",
-            "Restaurar os padrões",
-            "Reset (reset)"
+            "Registo do jogo:",
+            "Ver",
+            "Restaurar predefinições:",
+            "Repor"
         ],
         "SettingsControlsScreen": [
             "Ajuste das configurações de controle",
@@ -3633,7 +3630,7 @@
             "6": "Qualidade do céu",
             "7": "Objeto Shadow",
             "8": "Limitação do número de frames",
-            "9": "Número de quadros exibidos",
+            "9": "Exibir informações de depuração",
             "10": "Exibir dados de desempenho",
             "11": "Baixa taxa de quadros limita a velocidade do jogo",
             "12": "Modo de aceleração do sono"

@@ -5,70 +5,41 @@
     <StackPanelWidget Direction="Horizontal">
 
         <CanvasWidget Style="{Widgets/TopBarContents}">
-            <LabelWidget Name="TopBar.Label" Text="[SettingsCompatibilityScreen:1]"/>
+            <LabelWidget Name="TopBar.Label" Text="[SettingsCompatibilityScreen:0]"/>
         </CanvasWidget>
 
-        <StackPanelWidget Direction="Vertical" Margin="10, 0">
-
-            <CanvasWidget Size="0, 20"/>
-
-            <LabelWidget Color="255, 255, 255" HorizontalAlignment="Center" TextAnchor="HorizontalCenter"
-                         WordWrap="true" Text="[SettingsCompatibilityScreen:2]"/>
-
-            <CanvasWidget Size="0, 20"/>
-
-            <CanvasWidget>
-                <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+        <CanvasWidget Margin="10, 20">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ScrollPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Margin="3, 3">
                     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
 
-                        <UniformSpacingPanelWidget Direction="Horizontal">
-                            <LabelWidget Text="[SettingsCompatibilityScreen:0]" HorizontalAlignment="Far"
-                                         VerticalAlignment="Center" Margin="20, 0"/>
-                            <BevelledButtonWidget Name="EnableMod" Style="{Styles/ButtonStyle_310x60}"
-                                                  VerticalAlignment="Center" Margin="20, 0"/>
-                        </UniformSpacingPanelWidget>
-
-                        <UniformSpacingPanelWidget Name="UseReducedZRangeContainer" Direction="Horizontal">
-                            <LabelWidget Text="[SettingsCompatibilityScreen:3]" HorizontalAlignment="Far"
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[SettingsCompatibilityScreen:1]" HorizontalAlignment="Far"
                                          VerticalAlignment="Center" Margin="20, 0"/>
                             <BevelledButtonWidget Name="UseReducedZRangeButton" Style="{Styles/ButtonStyle_310x60}"
                                                   VerticalAlignment="Center" Margin="20, 0"/>
                         </UniformSpacingPanelWidget>
 
-                        <CanvasWidget Size="0, 20"/>
-
-                        <UniformSpacingPanelWidget Direction="Horizontal">
-                            <LabelWidget Text="[SettingsCompatibilityScreen:4]" HorizontalAlignment="Far"
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[SettingsCompatibilityScreen:2]" HorizontalAlignment="Far"
                                          VerticalAlignment="Center" Margin="20, 0"/>
                             <BevelledButtonWidget Name="ViewGameLogButton" Style="{Styles/ButtonStyle_310x60}"
+                                                  VerticalAlignment="Center" Margin="20, 0"
+                                                  Text="[SettingsCompatibilityScreen:3]"/>
+                        </UniformSpacingPanelWidget>
+
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[SettingsCompatibilityScreen:4]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center" Margin="20, 0"/>
+                            <BevelledButtonWidget Name="ResetDefaultsButton" Style="{Styles/ButtonStyle_310x60}"
                                                   VerticalAlignment="Center" Margin="20, 0"
                                                   Text="[SettingsCompatibilityScreen:5]"/>
                         </UniformSpacingPanelWidget>
 
-                        <UniformSpacingPanelWidget Direction="Horizontal">
-                            <LabelWidget Text="[SettingsCompatibilityScreen:6]" HorizontalAlignment="Far"
-                                         VerticalAlignment="Center" Margin="20, 0"/>
-                            <BevelledButtonWidget Name="ResetDefaultsButton" Style="{Styles/ButtonStyle_310x60}"
-                                                  VerticalAlignment="Center" Margin="20, 0"
-                                                  Text="[SettingsCompatibilityScreen:7]"/>
-                        </UniformSpacingPanelWidget>
-
                     </StackPanelWidget>
                 </ScrollPanelWidget>
-            </CanvasWidget>
-
-            <CanvasWidget Size="0, 10"/>
-
-            <CanvasWidget Size="Infinity, 80" HorizontalAlignment="Center" VerticalAlignment="Center">
-                <LabelWidget Name="Description" HorizontalAlignment="Center" VerticalAlignment="Center"
-                             TextAnchor="HorizontalCenter, VerticalCenter" Color="128, 128, 128" WordWrap="true"/>
-            </CanvasWidget>
-
-            <CanvasWidget Size="0, 10"/>
-
-        </StackPanelWidget>
+        </CanvasWidget>
     </StackPanelWidget>
 
 </Screen>

@@ -10,7 +10,7 @@
 
         <CanvasWidget Size="Infinity, Infinity" Margin="10, 10">
 
-            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+            <BevelledRectangleWidget Style="{Styles/Area}"/>
 
             <ScrollPanelWidget Name="ScrollPanel" Direction="Vertical" Margin="3, 3" ClampToBounds="true">
                 <CanvasWidget HorizontalAlignment="Center" VerticalAlignment="Near">

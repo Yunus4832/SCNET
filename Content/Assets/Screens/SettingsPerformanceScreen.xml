@@ -63,7 +63,7 @@
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
                         <LabelWidget Text="[SettingsPerformanceScreen:9]" HorizontalAlignment="Far"
                                      VerticalAlignment="Center" Margin="20, 0"/>
-                        <BevelledButtonWidget Name="DisplayFpsCounterButton" Style="{Styles/ButtonStyle_310x60}"
+                        <BevelledButtonWidget Name="DisplayDebugInfoButton" Style="{Styles/ButtonStyle_310x60}"
                                               VerticalAlignment="Center" Margin="20, 0"/>
                     </UniformSpacingPanelWidget>
 

@@ -2851,7 +2851,6 @@
         "FriendlyFire_False": "玩家将不能攻击和伤害其他玩家。",
         "CharacterSkin_Description": "选择在游戏中使用的角色皮肤。",
         "BlocksTexture_Description": "选择绘制世界时使用的方块纹理。你可以通过使用不同的方块纹理完全改变世界的外观。",
-        "Settings_Compatibility_UseReducedZRange_Description": "如果您遇到图形问题，例如游戏时部分方块出现透明现象或纹理混乱，请启用此功能。它将剪辑空间Z的范围从-1/1减小到0/1，因为某些Android设备在整个范围内都有深度缓冲和剪切问题。",
         "ScreenLayout_Single_Name": "单人",
         "ScreenLayout_Single_Description": "单人全屏游戏",
         "ScreenLayout_DoubleVertical_Name": "双人垂直",
@@ -3585,12 +3584,10 @@
             "3": "背景音乐音量"
         },
         "SettingsCompatibilityScreen": [
-            "加载Mod(调试)",
             "调整设备兼容性",
-            "只有在遇到游戏问题时才使用这些设置",
             "使用缩小的Z范围",
-            "查看游戏运行日志",
-            "...",
+            "游戏运行日志",
+            "查看",
             "恢复默认设置",
             "重置"
         ],
@@ -3633,7 +3630,7 @@
             "6": "天空画质",
             "7": "对象阴影",
             "8": "帧数限制",
-            "9": "显示帧数",
+            "9": "显示调试信息",
             "10": "显示性能数据",
             "11": "低帧率限制游戏运行速度",
             "12": "睡眠时间加速方式"

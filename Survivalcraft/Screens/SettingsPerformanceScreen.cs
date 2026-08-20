@@ -18,7 +18,7 @@ public class SettingsPerformanceScreen : Screen
 
     private const string _typeName = nameof(SettingsPerformanceScreen);
 
-    private readonly ButtonWidget _displayFpsCounterButton;
+    private readonly ButtonWidget _displayDebugInfoButton;
 
     private readonly ButtonWidget _displayFpsRibbonButton;
 
@@ -49,7 +49,7 @@ public class SettingsPerformanceScreen : Screen
         _skyRenderingModeButton = Children.Find<ButtonWidget>("SkyRenderingModeButton")!;
         _objectShadowsButton = Children.Find<ButtonWidget>("ObjectShadowsButton")!;
         _framerateLimitButton = Children.Find<ButtonWidget>("FramerateLimitButton")!;
-        _displayFpsCounterButton = Children.Find<ButtonWidget>("DisplayFpsCounterButton")!;
+        _displayDebugInfoButton = Children.Find<ButtonWidget>("DisplayDebugInfoButton")!;
         _displayFpsRibbonButton = Children.Find<ButtonWidget>("DisplayFpsRibbonButton")!;
         _visibilityRangeSlider.MinValue = 0f;
         _visibilityRangeSlider.MaxValue = _visibilityRanges.Count - 1;
@@ -106,9 +106,9 @@ public class SettingsPerformanceScreen : Screen
             SettingsManager.Current.VSync = !SettingsManager.Current.VSync;
         }
 
-        if (_displayFpsCounterButton.IsClicked)
+        if (_displayDebugInfoButton.IsClicked)
         {
-            SettingsManager.Current.DisplayFpsCounter = !SettingsManager.Current.DisplayFpsCounter;
+            SettingsManager.Current.DisplayDebugInfo = !SettingsManager.Current.DisplayDebugInfo;
         }
 
         if (_displayFpsRibbonButton.IsClicked)
@@ -175,7 +175,7 @@ public class SettingsPerformanceScreen : Screen
             ? LanguageManager.Get(_typeName, 11)
             : LanguageManager.Get(_typeName, 8);
 
-        _displayFpsCounterButton.Text = SettingsManager.Current.DisplayFpsCounter
+        _displayDebugInfoButton.Text = SettingsManager.Current.DisplayDebugInfo
             ? LanguageManager.Yes
             : LanguageManager.No;
 

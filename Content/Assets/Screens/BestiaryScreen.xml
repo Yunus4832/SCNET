@@ -14,7 +14,7 @@
 
             <StackPanelWidget Direction="Vertical" Margin="20, 0">
                 <CanvasWidget>
-                    <RectangleWidget FillColor="0, 0, 0, 64" OutlineColor="128, 128, 128, 128"/>
+                    <BevelledRectangleWidget Style="{Styles/Area}"/>
                     <ListPanelWidget Name="CreaturesList" Direction="Vertical" Margin="5, 3" ItemSize="120"
                                      SelectionColor="10, 70, 0, 90"/>
                 </CanvasWidget>

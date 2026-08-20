@@ -8,9 +8,9 @@
             <LabelWidget Name="TopBar.Label" Text="[ContentScreen:1]"/>
         </CanvasWidget>
 
-        <CanvasWidget Size="Infinity, 0"/>
-
-        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <CanvasWidget Margin="10, 20">
+            <BevelledRectangleWidget Style="{Styles/Area}"/>
+            <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
 
             <StackPanelWidget Direction="Horizontal">
                 <CanvasWidget Size="350, 90">
@@ -69,9 +69,8 @@
                                       VerticalAlignment="Center"/>
             </StackPanelWidget>
 
-        </StackPanelWidget>
-
-        <CanvasWidget Size="Infinity, 0"/>
+            </StackPanelWidget>
+        </CanvasWidget>
 
     </StackPanelWidget>
 

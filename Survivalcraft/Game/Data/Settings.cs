@@ -1,3 +1,5 @@
+using Engine.Graphics;
+
 namespace Game;
 
 public class Settings
@@ -125,13 +127,19 @@ public class Settings
 
     public CommunityContentMode CommunityContentMode { get; set; } = CommunityContentMode.Normal;
 
-    public bool UseReducedZRange { get; set; }
-
-    public bool EnableMod { get; set; } = true;
+    public bool UseReducedZRange
+    {
+        get;
+        set
+        {
+            field = value;
+            Display.UseReducedZRange = value;
+        }
+    }
 
     public int IsolatedStorageMigrationCounter { get; set; }
 
-    public bool DisplayFpsCounter { get; set; }
+    public bool DisplayDebugInfo { get; set; }
 
     public bool DisplayFpsRibbon { get; set; }
 

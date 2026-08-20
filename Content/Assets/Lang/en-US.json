@@ -2851,7 +2851,6 @@
         "FriendlyFire_False": "Players will not be able to attack and injure other players.",
         "CharacterSkin_Description": "Choose character skin to use during the game.",
         "BlocksTexture_Description": "Choose blocks texture to use when drawing the world. You can completely change appearance of the world by using a different blocks texture.",
-        "Settings_Compatibility_UseReducedZRange_Description": "Enable this if you experience issues with graphics like invisible parts of the world near the player or garbled textures. It reduces the clip-space Z range from -1/1 to 0/1, as some Android devices have depth buffering and clipping issues with the full range.",
         "ScreenLayout_Single_Name": "Single",
         "ScreenLayout_Single_Description": "Single player full screen",
         "ScreenLayout_DoubleVertical_Name": "Double Vertical",
@@ -3585,13 +3584,11 @@
             "3": "Music Volume:"
         },
         "SettingsCompatibilityScreen": [
-            "Load Mod (Debug)",
             "Adjust Device Compatibility",
-            "Only use these settings when encountering game issues",
             "Use Reduced Z Range",
-            "View Game Runtime Log",
-            "...",
-            "Restore Default Settings",
+            "Game Log:",
+            "View",
+            "Restore Defaults:",
             "Reset"
         ],
         "SettingsControlsScreen": [
@@ -3633,7 +3630,7 @@
             "6": "Sky Rendering Mode:",
             "7": "Object Shadows:",
             "8": "Framerate Limit:",
-            "9": "Display FPS Counter:",
+            "9": "Display Debug Information:",
             "10": "Display FPS Ribbon:",
             "11": "Limit Game Run In Low FPS:",
             "12": "Time Acceleration Method During Sleep:"

@@ -26,7 +26,7 @@
             <CanvasWidget Size="0, 8"/>
 
             <CanvasWidget Margin="10, 0">
-                <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ListPanelWidget Name="DirectoryList" Direction="Vertical" Margin="3, 3" ItemSize="70"
                                  SelectionColor="10, 70, 0, 90"/>
             </CanvasWidget>

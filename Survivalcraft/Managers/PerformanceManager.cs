@@ -160,12 +160,15 @@ public static class PerformanceManager
     {
         var scale = new Vector2(MathUtils.Round(MathUtils.Clamp(ScreensManager.RootWidget.GlobalScale, 1f, 4f)));
         var viewport = Display.Viewport;
-        if (SettingsManager.Current.DisplayFpsCounter)
+        if (SettingsManager.Current.DisplayDebugInfo)
         {
             if (Time.PeriodicEvent(1.0, 0.0))
             {
                 _statsString =
-                    $"CPUMEM {TotalMemoryUsed / 1024f / 1024f:0}MB, GPUMEM {TotalGpuMemoryUsed / 1024f / 1024f:0}MB\nCPU {_cpuUtilization * 100f:0}%, {1f / AverageFrameTime:0.0} FPS";
+                    $"SCREEN {ScreensManager.GetCurrentScreenName()}, " +
+                    $"CPUMEM {TotalMemoryUsed / 1024f / 1024f:0}MB, " +
+                    $"GPUMEM {TotalGpuMemoryUsed / 1024f / 1024f:0}MB, " +
+                    $"CPU {_cpuUtilization * 100f:0}%, {1f / AverageFrameTime:0.0} FPS";
                 if (CommonLib.WorkType == WorkType.Client)
                 {
                     if (CommonLib.Net.Server != null)
