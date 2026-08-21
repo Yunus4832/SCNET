@@ -15,9 +15,6 @@ public class ComponentMiner : Component, IUpdateable
 
     public const string Name = "ComponentMiner";
 
-    //简单防止内存修改
-    private readonly SafeFloat _attackPower = new();
-
     public bool DigFaceChange;
 
     private ComponentHealth _componentHealth = null!;
@@ -62,11 +59,7 @@ public class ComponentMiner : Component, IUpdateable
 
     public int ActiveBlockValue => Inventory.GetSlotValue(Inventory.ActiveSlotIndex);
 
-    private float AttackPower
-    {
-        get => _attackPower.Get();
-        set => _attackPower.Set(value);
-    }
+    private float AttackPower { get; set; }
 
     public float PokingPhase { get; set; }
 

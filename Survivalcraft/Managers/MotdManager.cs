@@ -144,12 +144,6 @@ public static class MotdManager
 
     public static void Update()
     {
-        //Database防修改检测
-        if (Time.PeriodicEvent(60, 15))
-        {
-            DatabaseManager.CheckDataBaseValid();
-        }
-
         if (!_forceChecked && Time.PeriodicEvent(30, 15))
         {
             ClientCheck();
@@ -216,16 +210,18 @@ public static class MotdManager
             var message = new Message();
             foreach (var item2 in xElement.Elements())
             {
-                if (Widget.IsNodeIncludedOnCurrentPlatform(item2))
+                if (!Widget.IsNodeIncludedOnCurrentPlatform(item2))
                 {
-                    var item = new Line
-                    {
-                        Time = XmlUtils.GetAttributeValue<float>(item2, "Time"),
-                        Node = item2.Elements().FirstOrDefault(),
-                        Text = item2.Value
-                    };
-                    message.Lines.Add(item);
+                    continue;
                 }
+
+                var item = new Line
+                {
+                    Time = XmlUtils.GetAttributeValue<float>(item2, "Time"),
+                    Node = item2.Elements().FirstOrDefault(),
+                    Text = item2.Value
+                };
+                message.Lines.Add(item);
             }
 
             LoadBulletin(dataString);
@@ -258,18 +254,20 @@ public static class MotdManager
         var languageType = !AppConfigStore.Values.TryGetValue("Language", out var config) ? "zh-CN" : config;
         foreach (var item in xElement.Elements())
         {
-            if (item.Name.LocalName == "Bulletin")
+            if (item.Name.LocalName != "Bulletin")
             {
-                BulletinDefault = new Bulletin
-                {
-                    Title = item.Attribute("Title")?.Value ?? string.Empty,
-                    EnTitle = item.Attribute("EnTitle")?.Value ?? string.Empty,
-                    Time = languageType + "$" + item.Attribute("Time")?.Value,
-                    Content = item.Element("Content")?.Value ?? string.Empty,
-                    EnContent = item.Element("EnContent")?.Value ?? string.Empty,
-                };
-                break;
+                continue;
             }
+
+            BulletinDefault = new Bulletin
+            {
+                Title = item.Attribute("Title")?.Value ?? string.Empty,
+                EnTitle = item.Attribute("EnTitle")?.Value ?? string.Empty,
+                Time = languageType + "$" + item.Attribute("Time")?.Value,
+                Content = item.Element("Content")?.Value ?? string.Empty,
+                EnContent = item.Element("EnContent")?.Value ?? string.Empty,
+            };
+            break;
         }
     }
 
@@ -324,18 +322,20 @@ public static class MotdManager
         FilterModAll.Clear();
         foreach (var item in xElement.Elements())
         {
-            if (item.Name.LocalName == "FilterMod")
+            if (item.Name.LocalName != "FilterMod")
             {
-                var filterMod = new FilterMod
-                {
-                    Name = item.Attribute("Name")?.Value ?? string.Empty,
-                    PackageName = item.Attribute("PackageName")?.Value ?? string.Empty,
-                    Version = item.Attribute("Version")?.Value ?? string.Empty,
-                    FilterApiVersion = item.Attribute("FilterAPIVersion")?.Value ?? string.Empty,
-                    Explanation = item.Value
-                };
-                FilterModAll.Add(filterMod);
+                continue;
             }
+
+            var filterMod = new FilterMod
+            {
+                Name = item.Attribute("Name")?.Value ?? string.Empty,
+                PackageName = item.Attribute("PackageName")?.Value ?? string.Empty,
+                Version = item.Attribute("Version")?.Value ?? string.Empty,
+                FilterApiVersion = item.Attribute("FilterAPIVersion")?.Value ?? string.Empty,
+                Explanation = item.Value
+            };
+            FilterModAll.Add(filterMod);
         }
     }
 
@@ -420,22 +420,24 @@ public static class MotdManager
                         : config;
                     foreach (var item in xElement.Elements())
                     {
-                        if (item.Name.LocalName == "Bulletin")
+                        if (item.Name.LocalName != "Bulletin")
                         {
-                            if (IsCnLanguageType())
-                            {
-                                item.Attribute("Title")?.Value = titleLabel.Text;
-                                item.Element("Content")?.Value = contentLabel.Text;
-                            }
-                            else
-                            {
-                                item.Attribute("EnTitle")?.Value = titleLabel.Text;
-                                item.Element("EnContent")?.Value = contentLabel.Text;
-                            }
-
-                            item.Attribute("Time")?.Value = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-                            break;
+                            continue;
                         }
+
+                        if (IsCnLanguageType())
+                        {
+                            item.Attribute("Title")?.Value = titleLabel.Text;
+                            item.Element("Content")?.Value = contentLabel.Text;
+                        }
+                        else
+                        {
+                            item.Attribute("EnTitle")?.Value = titleLabel.Text;
+                            item.Element("EnContent")?.Value = contentLabel.Text;
+                        }
+
+                        item.Attribute("Time")?.Value = DateTime.Now.ToString(CultureInfo.InvariantCulture);
+                        break;
                     }
 
                     var newDownloadedData = SettingsManager.Current.MotdLastDownloadedData.Substring(0, num);

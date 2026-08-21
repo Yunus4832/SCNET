@@ -9,11 +9,7 @@ namespace Game.Components;
 
 public class ComponentLocomotion : Component, IUpdateable
 {
-    private readonly SafeFloat _jumpOrder = new();
-
     private readonly Random _random = new();
-
-    private readonly SafeFloat _speed = new();
 
     public bool FlyOrderChange;
 
@@ -69,11 +65,7 @@ public class ComponentLocomotion : Component, IUpdateable
 
     public float AccelerationFactor { get; set; }
 
-    public float WalkSpeed
-    {
-        get => _speed.Get();
-        set => _speed.Set(value);
-    }
+    public float WalkSpeed { get; set; }
 
     public float LadderSpeed { get; set; }
 
@@ -179,8 +171,8 @@ public class ComponentLocomotion : Component, IUpdateable
 
     public float JumpOrder
     {
-        get => _jumpOrder.Get();
-        set => _jumpOrder.Set(MathUtils.Saturate(value));
+        get;
+        set => field = MathUtils.Saturate(value);
     }
 
     public float StunTime { get; set; }

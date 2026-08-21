@@ -15,16 +15,6 @@ public class ComponentVitalStats : Component, IUpdateable
 {
     private const string _typeName = nameof(ComponentVitalStats);
 
-    private readonly SafeFloat _food = new();
-
-    private readonly SafeFloat _sleep = new();
-
-    private readonly SafeFloat _stamina = new();
-
-    private readonly SafeFloat _temperature = new();
-
-    private readonly SafeFloat _wetness = new();
-
     private ComponentPlayer _componentPlayer = null!;
 
     private float _densityModifierApplied;
@@ -73,32 +63,32 @@ public class ComponentVitalStats : Component, IUpdateable
 
     public float Food
     {
-        get => _food.Get();
-        set => _food.Set(MathUtils.Saturate(value));
+        get;
+        set => field = MathUtils.Saturate(value);
     }
 
     public float Stamina
     {
-        get => _stamina.Get();
-        set => _stamina.Set(MathUtils.Saturate(value));
+        get;
+        set => field = MathUtils.Saturate(value);
     }
 
     public float Sleep
     {
-        get => _sleep.Get();
-        set => _sleep.Set(MathUtils.Saturate(value));
+        get;
+        set => field = MathUtils.Saturate(value);
     }
 
     public float Temperature
     {
-        get => _temperature.Get();
-        set => _temperature.Set(MathUtils.Clamp(value, 0f, 24f));
+        get;
+        set => field = MathUtils.Clamp(value, 0f, 24f);
     }
 
     public float Wetness
     {
-        get => _wetness.Get();
-        set => _wetness.Set(MathUtils.Saturate(value));
+        get;
+        set => field = MathUtils.Saturate(value);
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
@@ -367,17 +357,17 @@ public class ComponentVitalStats : Component, IUpdateable
                 {
                     switch (runGui)
                     {
-                        case true when Food < 0.1f && ((_lastFood >= 0.1f) | flag3):
+                        case true when Food < 0.1f && (_lastFood >= 0.1f) | flag3:
                             _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 11),
                                 Color.White,
                                 true, true);
                             break;
-                        case true when Food < 0.25f && ((_lastFood >= 0.25f) | flag3):
+                        case true when Food < 0.25f && (_lastFood >= 0.25f) | flag3:
                             _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 12),
                                 Color.White,
                                 true, true);
                             break;
-                        case true when Food < 0.5f && ((_lastFood >= 0.5f) | flag3):
+                        case true when Food < 0.5f && (_lastFood >= 0.5f) | flag3:
                             _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 13),
                                 Color.White,
                                 true, false);

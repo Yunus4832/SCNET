@@ -21,15 +21,6 @@ public class ComponentLevel : Component, IUpdateable
 
     public const string Name = "ComponentLevel";
 
-    //简单防内存修改
-    private readonly SafeFloat _sw = new();
-
-    private readonly SafeFloat _sx = new();
-
-    private readonly SafeFloat _sy = new();
-
-    private readonly SafeFloat _sz = new();
-
     private ComponentPlayer _componentPlayer = null!;
 
     private readonly List<Factor> _factors = [];
@@ -44,29 +35,13 @@ public class ComponentLevel : Component, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
-    public float StrengthFactor
-    {
-        get => _sx.Get();
-        set => _sx.Set(value);
-    }
+    public float StrengthFactor { get; set; }
 
-    public float ResilienceFactor
-    {
-        get => _sy.Get();
-        set => _sy.Set(value);
-    }
+    public float ResilienceFactor { get; set; }
 
-    public float SpeedFactor
-    {
-        get => _sz.Get();
-        set => _sz.Set(value);
-    }
+    public float SpeedFactor { get; set; }
 
-    public float HungerFactor
-    {
-        get => _sw.Get();
-        set => _sw.Set(value);
-    }
+    public float HungerFactor { get; set; }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -272,16 +247,19 @@ public class ComponentLevel : Component, IUpdateable
 
         var num15 = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless ? 1.25f : 1f;
         var result = num14 * num15;
-        if (factors.Count > 0)
+
+        if (factors.Count <= 0)
         {
-            item = new Factor
-            {
-                Value = num15,
-                Description = string.Format(LanguageManager.Get(Name, 12),
-                    _subsystemGameInfo.WorldSettings.GameMode.ToString())
-            };
-            factors.Add(item);
+            return result;
         }
+
+        item = new Factor
+        {
+            Value = num15,
+            Description = string.Format(LanguageManager.Get(Name, 12),
+                _subsystemGameInfo.WorldSettings.GameMode.ToString())
+        };
+        factors.Add(item);
 
         return result;
     }
@@ -352,16 +330,19 @@ public class ComponentLevel : Component, IUpdateable
         };
 
         var result = num8 * num9;
-        if (factors.Count > 0)
+
+        if (factors.Count <= 0)
         {
-            item = new Factor
-            {
-                Value = num9,
-                Description = string.Format(LanguageManager.Get(Name, 12),
-                    _subsystemGameInfo.WorldSettings.GameMode.ToString())
-            };
-            factors.Add(item);
+            return result;
         }
+
+        item = new Factor
+        {
+            Value = num9,
+            Description = string.Format(LanguageManager.Get(Name, 12),
+                _subsystemGameInfo.WorldSettings.GameMode.ToString())
+        };
+        factors.Add(item);
 
         return result;
     }
@@ -528,16 +509,19 @@ public class ComponentLevel : Component, IUpdateable
             _ => 1f
         };
         var result = num4 * num5;
-        if (factors.Count > 0)
+
+        if (factors.Count <= 0)
         {
-            item = new Factor
-            {
-                Value = num5,
-                Description = string.Format(LanguageManager.Get(Name, 12),
-                    _subsystemGameInfo.WorldSettings.GameMode.ToString())
-            };
-            factors.Add(item);
+            return result;
         }
+
+        item = new Factor
+        {
+            Value = num5,
+            Description = string.Format(LanguageManager.Get(Name, 12),
+                _subsystemGameInfo.WorldSettings.GameMode.ToString())
+        };
+        factors.Add(item);
 
         return result;
     }

@@ -142,7 +142,8 @@ public abstract class ComponentInventoryBase : Component, IInventory
         if (count > 0 && slotIndex >= 0 && slotIndex < slots.Count)
         {
             var slot = slots[slotIndex];
-            if ((GetSlotCount(slotIndex) != 0 && !BlocksManager.Blocks[Terrain.ExtractContents(value)].CanAutoStack(GetSlotValue(slotIndex), value)) ||
+            if ((GetSlotCount(slotIndex) != 0 && !BlocksManager.Blocks[Terrain.ExtractContents(value)]
+                    .CanAutoStack(GetSlotValue(slotIndex), value)) ||
                 GetSlotCount(slotIndex) + count > GetSlotCapacity(slotIndex, value))
             {
                 return false;
@@ -180,7 +181,8 @@ public abstract class ComponentInventoryBase : Component, IInventory
         for (var i = 0; i < SlotsCount; i++)
         {
             DropSlotItems(i, position,
-                sharedRandom.Float(5f, 10f) * Vector3.Normalize(new Vector3(sharedRandom.Float(-1f, 1f), sharedRandom.Float(1f, 2f),
+                sharedRandom.Float(5f, 10f) * Vector3.Normalize(new Vector3(sharedRandom.Float(-1f, 1f),
+                    sharedRandom.Float(1f, 2f),
                     sharedRandom.Float(-1f, 1f))));
         }
     }
@@ -205,7 +207,8 @@ public abstract class ComponentInventoryBase : Component, IInventory
     {
         for (var i = 0; i < inventory.SlotsCount; i++)
         {
-            if (inventory.GetSlotCount(i) > 0 && BlocksManager.Blocks[Terrain.ExtractContents(value)].CanAutoStack(inventory.GetSlotValue(i), value) &&
+            if (inventory.GetSlotCount(i) > 0 && BlocksManager.Blocks[Terrain.ExtractContents(value)]
+                    .CanAutoStack(inventory.GetSlotValue(i), value) &&
                 inventory.GetSlotCount(i) < inventory.GetSlotCapacity(i, value))
             {
                 return i;
@@ -314,21 +317,8 @@ public abstract class ComponentInventoryBase : Component, IInventory
 
     public sealed class Slot
     {
-        private readonly SafeInt _encodeCount = new();
+        public int Value { get; set; }
 
-        //说明 简单防止内存修改作弊
-        private readonly SafeInt _encodeValue = new();
-
-        public int Value
-        {
-            get => _encodeValue.Get();
-            set => _encodeValue.Set(value);
-        }
-
-        public int Count
-        {
-            get => _encodeCount.Get();
-            set => _encodeCount.Set(value);
-        }
+        public int Count { get; set; }
     }
 }

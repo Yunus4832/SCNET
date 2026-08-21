@@ -1,19 +1,10 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-
 namespace Game.Components;
 
 public class ComponentFrame : Component
 {
-    //简易内存修改检测
-    private readonly SafeFloat _px = new();
-
-    private readonly SafeFloat _py = new();
-
-    private readonly SafeFloat _pz = new();
-
     private bool _cachedMatrixValid;
 
     public Vector3? SendPosition;
@@ -22,17 +13,7 @@ public class ComponentFrame : Component
 
     public virtual Vector3 Position
     {
-        get
-        {
-            if (field.X.UncloseTo(_px.Get()) ||
-                field.Y.UncloseTo(_py.Get()) ||
-                field.Z.UncloseTo(_pz.Get()))
-            {
-                GameEntry.RamDataChangeException(GetType().FullName!, "Position");
-            }
-
-            return field;
-        }
+        get;
         set
         {
             if (value == field)
@@ -42,9 +23,6 @@ public class ComponentFrame : Component
 
             _cachedMatrixValid = false;
             field = value;
-            _px.Set(value.X);
-            _py.Set(value.Y);
-            _pz.Set(value.Z);
             PositionChanged?.Invoke(this);
         }
     }

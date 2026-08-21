@@ -31,8 +31,6 @@ public static class GameEntry
 
     public static GameModRuntime? ModRuntime => CurrentModRuntime.Value;
 
-    public static Action<string, string> RamDataChangeException = delegate { }; //内存数值被修改事件
-
     public static float LastFrameTime { get; set; }
 
     public static float LastCpuFrameTime { get; set; }
@@ -57,28 +55,6 @@ public static class GameEntry
         Window.Frame += FrameHandler;
         Window.Resized += OnWindowResized;
         Window.Closed += Closed;
-        RamDataChangeException += (_, _) =>
-        {
-            var modPath = Storage.GetSystemPath(GamePaths.Mods);
-            if (Directory.Exists(modPath) && Directory.GetFiles(modPath).Length > 0)
-            {
-                return;
-            }
-
-            Log.Warning("no zuo no die");
-            try
-            {
-                var player = GameManager.Project?.FindSubsystem<SubsystemPlayers>()?.MainPlayer;
-                player?.ComponentHealth.Injure(1.0f, null, true, "尝试作弊被审判死神带走");
-            }
-            catch
-            {
-                // ignored
-            }
-
-            Window.Close();
-        };
-
         Display.DeviceReset += ContentManager.DisplayDeviceReset;
         Window.UnhandledException += delegate(UnhandledExceptionInfo e)
         {

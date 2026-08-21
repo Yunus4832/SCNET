@@ -11,16 +11,6 @@ public class ComponentHealth : Component, IUpdateable
 {
     public const string Name = "ComponentHealth";
 
-    //简单防内存修改
-    private readonly SafeFloat _attackResilience = new();
-
-    private readonly SafeFloat _fallResilience = new();
-
-    private readonly SafeFloat _fireResilience = new();
-
-    //简单防内存修改
-    private readonly SafeFloat _health = new();
-
     private ComponentCreature _componentCreature = null!;
 
     private ComponentOnFire _componentOnFire = null!;
@@ -51,11 +41,7 @@ public class ComponentHealth : Component, IUpdateable
 
     public bool IsInvulnerable { get; set; }
 
-    public float Health
-    {
-        get => _health.Get();
-        set => _health.Set(value);
-    }
+    public float Health { get; set; }
 
     public float HealthChange { get; set; }
 
@@ -67,23 +53,11 @@ public class ComponentHealth : Component, IUpdateable
 
     public bool CanStrand { get; set; }
 
-    public float AttackResilience
-    {
-        get => _attackResilience.Get();
-        set => _attackResilience.Set(value);
-    }
+    public float AttackResilience { get; set; }
 
-    public float FallResilience
-    {
-        get => _fallResilience.Get();
-        set => _fallResilience.Set(value);
-    }
+    public float FallResilience { get; set; }
 
-    public float FireResilience
-    {
-        get => _fireResilience.Get();
-        set => _fireResilience.Set(value);
-    }
+    public float FireResilience { get; set; }
 
     public double? DeathTime { get; set; }
 

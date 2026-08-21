@@ -57,13 +57,15 @@ public static class DatabaseManager
     {
         foreach (var item in entityVd.Values.OfType<ValuesDictionary>())
         {
-            if (item.DatabaseObject.Type == GameDatabase.MemberComponentTemplateType)
+            if (item.DatabaseObject.Type != GameDatabase.MemberComponentTemplateType)
             {
-                var type = TypeCache.FindType(item.GetValue<string>("Class"), true, true)!;
-                if (componentType.GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
-                {
-                    return item;
-                }
+                continue;
+            }
+
+            var type = TypeCache.FindType(item.GetValue<string>("Class"), true, true)!;
+            if (componentType.GetTypeInfo().IsAssignableFrom(type.GetTypeInfo()))
+            {
+                return item;
             }
         }
 
@@ -89,42 +91,4 @@ public static class DatabaseManager
         return project.CreateEntity(valuesDictionary);
     }
 
-    /// <summary>
-    /// 检查Database数据是否被修改器修改
-    /// </summary>
-    public static void CheckDataBaseValid()
-    {
-        Task.Run(() =>
-        {
-            var startTime = Time.RealTime;
-            if (DatabaseNodeField == null)
-            {
-                return;
-            }
-
-            var d = new GameDatabase(XmlDatabaseSerializer.LoadDatabase(DatabaseNodeField));
-            var llBase = GetParameterTypeList(GameDatabase);
-            var ll = GetParameterTypeList(d);
-            var useTime = Time.RealTime - startTime;
-            for (var i = 0; i < ll.Count; i++)
-            {
-                var a = ll[i];
-                var b = llBase[i];
-                if (a.Value.ToString() != b.Value.ToString())
-                {
-                    GameEntry.RamDataChangeException("Database", a.Name);
-                }
-            }
-            Log.Debug($"本次检测Database数据耗时：{useTime:0.000}s");
-        });
-    }
-
-    private static List<DatabaseObject> GetParameterTypeList(GameDatabase database)
-    {
-        var playerEntityGuid = new Guid("4be6c1c5-d65d-4537-8a8b-a391969e6dc2");
-        var djBase = database.Database.FindDatabaseObject(playerEntityGuid, database.EntityTemplateType, true)!;
-        var pp = djBase.GetExplicitNestingChildren(database.MemberComponentTemplateType, true);
-
-        return pp.SelectMany(pa => pa.GetExplicitNestingChildren(database.ParameterType, true)).ToList();
-    }
 }
