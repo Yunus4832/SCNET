@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET Change Validation"
+  short_description: "Choose proportional builds, tests, and runtime checks."
+  default_prompt: "Use $scnet-change-validation to choose and run the smallest justified validation for the current SCNET changes."
