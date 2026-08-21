@@ -7,6 +7,7 @@ using Engine.Input;
 
 using Game.Commands;
 using Game.Network;
+using Game.Automation;
 
 using LiteNetLib;
 
@@ -140,6 +141,7 @@ public static class GameEntry
 
     public static void Closed()
     {
+        AutomationInputController.Clear();
         HttpCommandHostManager.Stop();
         if (_windowStateReady && _lastWindowSize is { X: > 0, Y: > 0 })
         {
@@ -223,6 +225,7 @@ public static class GameEntry
                 MusicManager.Update();
                 ScreensManager.Update();
                 DialogsManager.Update();
+                AutomationInputController.Update();
                 HttpCommandExecutionQueue.Update();
                 AsyncDispatcher.Update();
             }

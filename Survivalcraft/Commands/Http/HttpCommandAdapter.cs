@@ -107,6 +107,19 @@ public sealed class HttpCommandArguments(JsonObject values)
                ?? throw new InvalidDataException(
                    $"HTTP command argument \"{name}\" cannot be converted to {typeof(T).Name}.");
     }
+
+    public T GetOrDefault<T>(string name, T defaultValue)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        if (!Values.TryGetPropertyValue(name, out var node) || node is null)
+        {
+            return defaultValue;
+        }
+
+        return node.Deserialize<T>(_jsonOptions)
+               ?? throw new InvalidDataException(
+                   $"HTTP command argument \"{name}\" cannot be converted to {typeof(T).Name}.");
+    }
 }
 
 public sealed class HttpCommandBinding : ICommandAdapterBinding

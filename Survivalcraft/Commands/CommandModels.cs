@@ -1,4 +1,5 @@
 using EntitySystem.Core;
+using System.Text.Json.Nodes;
 
 using Game.Localization;
 using Game.Modding;
@@ -44,7 +45,8 @@ public enum CommandPrincipalKind
 public enum CommandHostRequirement
 {
     None,
-    HeadlessServer
+    HeadlessServer,
+    Gui
 }
 
 public enum PermissionGrantPolicy
@@ -151,7 +153,8 @@ public sealed record CommandResult(
     CommandResultState State = CommandResultState.Completed,
     CommandResultPresentation Presentation = CommandResultPresentation.Default,
     string MessageKey = "",
-    IReadOnlyList<string>? MessageArguments = null)
+    IReadOnlyList<string>? MessageArguments = null,
+    JsonNode? Data = null)
 {
     public static CommandResult Ok(string message, string code = "command.ok") => new(true, code, message);
 

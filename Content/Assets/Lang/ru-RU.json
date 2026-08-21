@@ -4190,7 +4190,14 @@
         "InstanceUnchanged_Message": "Приложение уже запущено в этом экземпляре.",
         "InstanceNotFound_Message": "Экземпляр не найден: {0}.",
         "InstanceSwitching_Message": "Переключение на экземпляр {0}.",
-        "ApplicationExiting_Message": "Выполняется выход из приложения."
+        "ApplicationExiting_Message": "Выполняется выход из приложения.",
+        "AutomationUiContext_Description": "Показать контекст автоматизации интерфейса",
+        "AutomationUiTap_Description": "Нажать цель автоматизации интерфейса",
+        "AutomationUiKey_Description": "Отправить нажатие клавиши автоматизации",
+        "AutomationUiScreenshot_Description": "Сделать снимок интерфейса автоматизации",
+        "AutomationUiScroll_Description": "Прокрутить цель автоматизации интерфейса",
+        "AutomationUiSwipe_Description": "Провести по цели автоматизации интерфейса",
+        "AutomationMouseMove_Description": "Отправить относительное движение мыши"
     },
     "AndroidServer": {
         "Title": "Журнал сервера",

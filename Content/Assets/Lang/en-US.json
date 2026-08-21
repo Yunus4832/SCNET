@@ -4190,7 +4190,14 @@
         "InstanceUnchanged_Message": "The application is already running in that instance.",
         "InstanceNotFound_Message": "Instance not found: {0}.",
         "InstanceSwitching_Message": "Switching to instance {0}.",
-        "ApplicationExiting_Message": "Exiting the application."
+        "ApplicationExiting_Message": "Exiting the application.",
+        "AutomationUiContext_Description": "Show the automation UI context",
+        "AutomationUiTap_Description": "Tap an automation UI target",
+        "AutomationUiKey_Description": "Send an automation UI key press",
+        "AutomationUiScreenshot_Description": "Capture an automation UI screenshot",
+        "AutomationUiScroll_Description": "Scroll an automation UI target",
+        "AutomationUiSwipe_Description": "Swipe an automation UI target",
+        "AutomationMouseMove_Description": "Send relative mouse movement"
     },
     "AndroidServer": {
         "Title": "Server Log",

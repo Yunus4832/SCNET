@@ -4190,7 +4190,14 @@
         "InstanceUnchanged_Message": "A aplicação já está a ser executada nessa instância.",
         "InstanceNotFound_Message": "Instância não encontrada: {0}.",
         "InstanceSwitching_Message": "A mudar para a instância {0}.",
-        "ApplicationExiting_Message": "A sair da aplicação."
+        "ApplicationExiting_Message": "A sair da aplicação.",
+        "AutomationUiContext_Description": "Mostrar o contexto de IU da automatização",
+        "AutomationUiTap_Description": "Tocar num alvo de IU da automatização",
+        "AutomationUiKey_Description": "Enviar uma tecla de IU da automatização",
+        "AutomationUiScreenshot_Description": "Capturar uma imagem da IU da automatização",
+        "AutomationUiScroll_Description": "Deslocar um alvo de IU da automatização",
+        "AutomationUiSwipe_Description": "Deslizar um alvo de IU da automatização",
+        "AutomationMouseMove_Description": "Enviar movimento relativo do rato"
     },
     "AndroidServer": {
         "Title": "Registo do servidor",

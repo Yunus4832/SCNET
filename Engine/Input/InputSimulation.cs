@@ -56,6 +56,11 @@ public static class InputSimulation
         public void Deliver() => Mouse.ProcessSimulatedMouseMove(Position);
     }
 
+    private sealed record MouseMovementInputEvent(Point2 Delta) : IInputEvent
+    {
+        public void Deliver() => Mouse.ProcessSimulatedMouseMovement(Delta);
+    }
+
     private sealed record MouseWheelInputEvent(float Value) : IInputEvent
     {
         public void Deliver() => Mouse.ProcessMouseWheel(Value);
@@ -100,6 +105,8 @@ public static class InputSimulation
     }
 
     public static void EnqueueMouseMove(Point2 position) => _events.Enqueue(new MouseMoveInputEvent(position));
+
+    public static void EnqueueMouseMovement(Point2 delta) => _events.Enqueue(new MouseMovementInputEvent(delta));
 
     public static void EnqueueMouseDown(MouseButton button, Point2 position) =>
         _events.Enqueue(new MouseButtonInputEvent(button, position, true));

@@ -4190,7 +4190,14 @@
         "InstanceUnchanged_Message": "当前已经在该实例中运行。",
         "InstanceNotFound_Message": "找不到实例：{0}。",
         "InstanceSwitching_Message": "正在切换到实例 {0}。",
-        "ApplicationExiting_Message": "正在退出应用。"
+        "ApplicationExiting_Message": "正在退出应用。",
+        "AutomationUiContext_Description": "显示自动化 UI 上下文",
+        "AutomationUiTap_Description": "点击自动化 UI 目标",
+        "AutomationUiKey_Description": "发送自动化 UI 按键",
+        "AutomationUiScreenshot_Description": "捕获自动化 UI 截图",
+        "AutomationUiScroll_Description": "滚动自动化 UI 目标",
+        "AutomationUiSwipe_Description": "滑动自动化 UI 目标",
+        "AutomationMouseMove_Description": "发送相对鼠标移动"
     },
     "AndroidServer": {
         "Title": "服务器日志",

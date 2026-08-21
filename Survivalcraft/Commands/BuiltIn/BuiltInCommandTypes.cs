@@ -1,3 +1,5 @@
+using Engine.Input;
+
 namespace Game.Commands;
 
 public sealed record ShowCommandHelpCommand(string? CommandName = null) : IGameCommand;
@@ -50,6 +52,24 @@ public sealed record GetLanguageCommand : IGameCommand;
 public sealed record SetLanguageCommand(string LanguageType) : IGameCommand;
 
 public sealed record StopServerCommand : IGameCommand;
+
+public sealed record GetAutomationUiContextCommand : IGameCommand;
+
+public sealed record TapAutomationUiCommand(string Selector) : IGameCommand;
+
+public sealed record ScrollAutomationUiCommand(string Selector, float Delta) : IGameCommand;
+
+public sealed record SwipeAutomationUiCommand(
+    string Selector,
+    float DeltaX,
+    float DeltaY,
+    int DurationFrames) : IGameCommand;
+
+public sealed record MoveAutomationMouseCommand(int DeltaX, int DeltaY) : IGameCommand;
+
+public sealed record PressAutomationKeyCommand(Key Key) : IGameCommand;
+
+public sealed record CaptureAutomationScreenshotCommand : IGameCommand;
 
 public sealed record ShowServerAuthHelpCommand : IGameCommand;
 

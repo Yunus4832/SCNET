@@ -203,6 +203,14 @@ public static partial class Mouse
 
     internal static void ProcessSimulatedMouseMove(Point2 position) => ProcessMouseMove(position);
 
+    internal static void ProcessSimulatedMouseMovement(Point2 delta)
+    {
+        if (Window.IsActive)
+        {
+            MouseMovement += delta;
+        }
+    }
+
     public static void SetCursorType(CursorType cursorType)
     {
         SetCursorTypePlatform(cursorType);

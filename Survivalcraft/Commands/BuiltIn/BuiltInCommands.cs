@@ -1,5 +1,7 @@
 using EntitySystem.Core;
 
+using Engine.Input;
+
 using Game.Localization;
 using Game.Messaging;
 using Game.Network;
@@ -450,6 +452,41 @@ public static class BuiltInCommands
                 allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (_, _) => { },
                 read: static _ => new LeaveTeamCommand()));
+        commands.Register(new ResourceId(owner, "automation/ui/context/get"),
+            new CommandDefinition<GetAutomationUiContextCommand>(AutomationCommandHandlers.GetContext,
+                CommandDomain.Application,
+                CommandDescription("AutomationUiContext_Description", "显示自动化 UI 上下文"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/ui/tap"),
+            new CommandDefinition<TapAutomationUiCommand>(AutomationCommandHandlers.Tap,
+                CommandDomain.Application,
+                CommandDescription("AutomationUiTap_Description", "点击自动化 UI 目标"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/ui/scroll"),
+            new CommandDefinition<ScrollAutomationUiCommand>(AutomationCommandHandlers.Scroll,
+                CommandDomain.Application,
+                CommandDescription("AutomationUiScroll_Description", "滚动自动化 UI 目标"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/ui/swipe"),
+            new CommandDefinition<SwipeAutomationUiCommand>(AutomationCommandHandlers.Swipe,
+                CommandDomain.Application,
+                CommandDescription("AutomationUiSwipe_Description", "滑动自动化 UI 目标"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/input/mouse/move"),
+            new CommandDefinition<MoveAutomationMouseCommand>(AutomationCommandHandlers.MoveMouse,
+                CommandDomain.Application,
+                CommandDescription("AutomationMouseMove_Description", "发送相对鼠标移动"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/ui/key"),
+            new CommandDefinition<PressAutomationKeyCommand>(AutomationCommandHandlers.PressKey,
+                CommandDomain.Application,
+                CommandDescription("AutomationUiKey_Description", "发送自动化 UI 按键"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/ui/screenshot"),
+            new CommandDefinition<CaptureAutomationScreenshotCommand>(AutomationCommandHandlers.Screenshot,
+                CommandDomain.Application,
+                CommandDescription("AutomationUiScreenshot_Description", "捕获自动化 UI 截图"),
+                hostRequirement: CommandHostRequirement.Gui));
 
         commands.Adapters.Register(new ResourceId(owner, "text/help"), CreateHelpText());
         commands.Adapters.Register(new ResourceId(owner, "text/time"), CreateTimeText());
@@ -483,6 +520,39 @@ public static class BuiltInCommands
         commands.Adapters.Register(
             new ResourceId(owner, "server/stop"),
             HttpCommandBinding.Create(static _ => new StopServerCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/ui/context/get"),
+            HttpCommandBinding.Create(static _ => new GetAutomationUiContextCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/ui/tap"),
+            HttpCommandBinding.Create(arguments => new TapAutomationUiCommand(arguments.Get<string>("selector")),
+                new HttpCommandArgumentDefinition("selector", "string")));
+        commands.Adapters.Register(new ResourceId(owner, "automation/ui/scroll"),
+            HttpCommandBinding.Create(arguments => new ScrollAutomationUiCommand(
+                    arguments.Get<string>("selector"),
+                    arguments.Get<float>("delta")),
+                new HttpCommandArgumentDefinition("selector", "string"),
+                new HttpCommandArgumentDefinition("delta", "number")));
+        commands.Adapters.Register(new ResourceId(owner, "automation/ui/swipe"),
+            HttpCommandBinding.Create(arguments => new SwipeAutomationUiCommand(
+                    arguments.Get<string>("selector"),
+                    arguments.Get<float>("deltaX"),
+                    arguments.Get<float>("deltaY"),
+                    arguments.GetOrDefault("durationFrames", 4)),
+                new HttpCommandArgumentDefinition("selector", "string"),
+                new HttpCommandArgumentDefinition("deltaX", "number"),
+                new HttpCommandArgumentDefinition("deltaY", "number"),
+                new HttpCommandArgumentDefinition("durationFrames", "integer", false)));
+        commands.Adapters.Register(new ResourceId(owner, "automation/input/mouse/move"),
+            HttpCommandBinding.Create(arguments => new MoveAutomationMouseCommand(
+                    arguments.Get<int>("deltaX"),
+                    arguments.Get<int>("deltaY")),
+                new HttpCommandArgumentDefinition("deltaX", "integer"),
+                new HttpCommandArgumentDefinition("deltaY", "integer")));
+        commands.Adapters.Register(new ResourceId(owner, "automation/ui/key"),
+            HttpCommandBinding.Create(arguments => new PressAutomationKeyCommand(
+                    Enum.Parse<Key>(arguments.Get<string>("key"), true)),
+                new HttpCommandArgumentDefinition("key", "string")));
+        commands.Adapters.Register(new ResourceId(owner, "automation/ui/screenshot"),
+            HttpCommandBinding.Create(static _ => new CaptureAutomationScreenshotCommand()));
     }
 
     private static void RegisterCreativePermission(

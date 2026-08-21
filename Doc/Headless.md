@@ -95,6 +95,8 @@ HTTP 只暴露显式注册了 `HttpCommandBinding` 的命令。Headless HTTP 请
 curl -H "Authorization: Bearer <token>" http://127.0.0.1:28889/commands
 ```
 
+GUI 模式还会发现 `game:automation/ui/context/get`、`tap`、`scroll`、`swipe`、`key`、`screenshot`，以及相对鼠标输入 `game:automation/input/mouse/move`。上下文命令返回当前 Screen、Dialog、目标 Widget 的 selector、文本、逻辑边界与支持的 actions；点击、滚轮、跨帧触摸滑动和相对鼠标移动都通过 Engine 合成输入执行。Headless 不会发现或执行这些 GUI 专用命令。
+
 ## 数据实例
 
 Starter 首先在程序基础目录注册 `starter:`，读取 `starter:Starter.xml`，再将选中实例的目录注册为游戏使用的 `external:`、`data:` 和 `config:`。实例目录位于：

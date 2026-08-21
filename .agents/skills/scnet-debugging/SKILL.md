@@ -82,9 +82,20 @@ Treat any of the following as a failed smoke test until explained:
 
 For evidence contents and reporting, read [references/evidence.md](references/evidence.md).
 
-## Current automation boundary
+## GUI automation
 
-This Skill can build, start, observe, issue server stdin commands, and preserve evidence. It does not yet provide semantic player input or GUI control. Do not simulate those capabilities with direct world mutation when the test requires realistic player behavior.
+When a GUI instance enables the HTTP command service, discover `game:automation/ui/*` with
+`GET /commands`. Call `context/get`, select an exact returned widget selector, invoke `tap`, then
+poll `context/get` until the expected Screen appears. Use `screenshot` to preserve rendered UI
+evidence. These commands simulate Engine input; do not replace them with direct Screen switches or
+Widget state mutation. For targets whose returned `actions` include `scroll` or `swipe`, use
+`scroll` to inject a mouse-wheel delta, or `swipe` to inject a multi-frame touch gesture. Swipe
+`deltaX` and `deltaY` describe finger movement from the target center (negative `deltaY` swipes up),
+and `durationFrames` is optional. They do not provide 3D player control.
+
+Use `game:automation/input/mouse/move` for relative mouse movement such as changing the in-game
+view direction. Its signed `deltaX` and `deltaY` are merged with physical mouse movement for one
+Engine frame. This is raw input simulation, not a direct camera-state mutation.
 
 ## HTTP command host
 

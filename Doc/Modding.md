@@ -152,3 +152,7 @@ commands.Adapters.Register(
 ```
 
 `GET /commands` 只返回当前 HTTP 主体在当前运行模式下可能执行的 binding，并提供 identity、本地化说明及参数的 `name`、`valueType`、`required`。只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。HTTP 宿主通过 Bearer Token 认证，并按当前宿主创建可信的 `ApplicationUser` 或 `ServerOperator`；调用入口记录为 `CommandInvocationChannel.HttpApi`，命令仍会执行正常的命令域、权限和宿主环境校验。宿主只监听 loopback，且仅在有效 session 或实例 `Settings.xml` 启用时启动；实例默认配置、启动参数和可保存的 session 覆盖见 [Headless.md](./Headless.md)。
+
+内置 GUI 自动化命令位于 `game:automation/ui/*`，业务实现集中在 `Game.Automation`，命令层只负责参数校验和结果封装。`context/get` 返回目标支持的 `actions`；`tap`、`scroll`（鼠标滚轮）和 `swipe`（跨帧触摸轨迹）都必须通过 `Engine.Input.InputSimulation` 注入，不应直接修改 Widget 状态或调用 Screen 回调。`swipe` 的 `deltaX/deltaY` 表示手指从目标中心移动的方向和距离，例如向上滑动使用负的 `deltaY`。
+
+相对鼠标输入使用 `game:automation/input/mouse/move`，其 `deltaX/deltaY` 会与同一帧的物理鼠标位移合并，可用于游戏内视角控制。它与用于 UI 命中定位的绝对鼠标坐标是两种不同语义。

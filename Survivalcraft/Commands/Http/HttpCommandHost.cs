@@ -154,7 +154,8 @@ public sealed class HttpCommandHost : IDisposable
                 success = result.Success,
                 code = result.Code,
                 message = CommandText.Resolve(result),
-                state = result.State.ToString()
+                state = result.State.ToString(),
+                data = result.Data
             }, CancellationToken.None);
         }
         catch (TimeoutException)

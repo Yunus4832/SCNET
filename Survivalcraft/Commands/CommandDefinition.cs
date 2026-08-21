@@ -108,6 +108,11 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         {
             return false;
         }
+        if (HostRequirement is CommandHostRequirement.Gui &&
+            RunMode.Value is not RunModeType.Gui)
+        {
+            return false;
+        }
 
         return Domain switch
         {
@@ -132,6 +137,10 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         if (HostRequirement is CommandHostRequirement.HeadlessServer &&
             (workType is not WorkType.Server ||
              runMode is not RunModeType.HeadlessServer))
+        {
+            return false;
+        }
+        if (HostRequirement is CommandHostRequirement.Gui && runMode is not RunModeType.Gui)
         {
             return false;
         }
