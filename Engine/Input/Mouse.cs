@@ -10,6 +10,10 @@ public static partial class Mouse
 
     private static readonly bool[] _mouseButtonsDownArray;
 
+    private static readonly bool[] _physicalMouseButtonsDownArray;
+
+    private static readonly bool[] _simulatedMouseButtonsDownArray;
+
     private static readonly bool[] _mouseButtonsDownOnceArray;
 
     private static readonly bool[] _mouseButtonsDelayedUpArray;
@@ -19,6 +23,8 @@ public static partial class Mouse
     static Mouse()
     {
         _mouseButtonsDownArray = new bool[Enum.GetValues<MouseButton>().Length];
+        _physicalMouseButtonsDownArray = new bool[Enum.GetValues<MouseButton>().Length];
+        _simulatedMouseButtonsDownArray = new bool[Enum.GetValues<MouseButton>().Length];
         _mouseButtonsDelayedUpArray = new bool[Enum.GetValues<MouseButton>().Length];
         _mouseButtonsDownOnceArray = new bool[Enum.GetValues<MouseButton>().Length];
         _mouseButtonsUpOnceArray = new bool[Enum.GetValues<MouseButton>().Length];
@@ -69,6 +75,8 @@ public static partial class Mouse
         for (var i = 0; i < _mouseButtonsDownArray.Length; i++)
         {
             _mouseButtonsDownArray[i] = false;
+            _physicalMouseButtonsDownArray[i] = false;
+            _simulatedMouseButtonsDownArray[i] = false;
             _mouseButtonsDelayedUpArray[i] = false;
             _mouseButtonsDownOnceArray[i] = false;
             _mouseButtonsUpOnceArray[i] = false;
@@ -97,15 +105,30 @@ public static partial class Mouse
         MouseWheelMovement = 0;
     }
 
-    private static void ProcessMouseDown(MouseButton mouseButton, Point2 position)
+    private static void ProcessMouseDown(MouseButton mouseButton, Point2 position, bool simulated = false)
     {
         if (!Window.IsActive)
         {
             return;
         }
 
-        _mouseButtonsDownArray[(int)mouseButton] = true;
-        _mouseButtonsDownOnceArray[(int)mouseButton] = true;
+        var index = (int)mouseButton;
+        var wasDown = _mouseButtonsDownArray[index];
+        if (simulated)
+        {
+            _simulatedMouseButtonsDownArray[index] = true;
+        }
+        else
+        {
+            _physicalMouseButtonsDownArray[index] = true;
+        }
+
+        _mouseButtonsDownArray[index] =
+            _physicalMouseButtonsDownArray[index] || _simulatedMouseButtonsDownArray[index];
+        if (!wasDown && _mouseButtonsDownArray[index])
+        {
+            _mouseButtonsDownOnceArray[index] = true;
+        }
 
         var scaledPosition = position * Window.Scale;
 
@@ -119,14 +142,25 @@ public static partial class Mouse
         }
     }
 
-    private static void ProcessMouseUp(MouseButton mouseButton, Point2 position)
+    private static void ProcessMouseUp(MouseButton mouseButton, Point2 position, bool simulated = false)
     {
         if (!Window.IsActive)
         {
             return;
         }
 
-        _mouseButtonsDownArray[(int)mouseButton] = false;
+        var index = (int)mouseButton;
+        if (simulated)
+        {
+            _simulatedMouseButtonsDownArray[index] = false;
+        }
+        else
+        {
+            _physicalMouseButtonsDownArray[index] = false;
+        }
+
+        _mouseButtonsDownArray[index] =
+            _physicalMouseButtonsDownArray[index] || _simulatedMouseButtonsDownArray[index];
         var scaledPosition = position * Window.Scale;
         if (IsMouseVisible && MouseUp != null)
         {
@@ -160,6 +194,14 @@ public static partial class Mouse
             MouseWheelMovement += (int)(120 * value);
         }
     }
+
+    internal static void ProcessSimulatedMouseDown(MouseButton button, Point2 position) =>
+        ProcessMouseDown(button, position, simulated: true);
+
+    internal static void ProcessSimulatedMouseUp(MouseButton button, Point2 position) =>
+        ProcessMouseUp(button, position, simulated: true);
+
+    internal static void ProcessSimulatedMouseMove(Point2 position) => ProcessMouseMove(position);
 
     public static void SetCursorType(CursorType cursorType)
     {

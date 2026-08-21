@@ -12,6 +12,10 @@ public static partial class Keyboard
 
     private static readonly bool[] _keysDownArray = new bool[Enum.GetValues(typeof(Key)).Length];
 
+    private static readonly bool[] _physicalKeysDownArray = new bool[Enum.GetValues(typeof(Key)).Length];
+
+    private static readonly bool[] _simulatedKeysDownArray = new bool[Enum.GetValues(typeof(Key)).Length];
+
     private static readonly bool[] _keysDownOnceArray = new bool[Enum.GetValues(typeof(Key)).Length];
 
     private static readonly double[] _keysDownRepeatArray = new double[Enum.GetValues(typeof(Key)).Length];
@@ -63,6 +67,8 @@ public static partial class Keyboard
         for (var i = 0; i < _keysDownArray.Length; i++)
         {
             _keysDownArray[i] = false;
+            _physicalKeysDownArray[i] = false;
+            _simulatedKeysDownArray[i] = false;
             _keysDownOnceArray[i] = false;
             _keysDownRepeatArray[i] = 0.0;
         }
@@ -108,7 +114,7 @@ public static partial class Keyboard
         }
     }
 
-    private static bool ProcessKeyDown(Key key)
+    private static bool ProcessKeyDown(Key key, bool simulated = false)
     {
         if (!Window.IsActive)
         {
@@ -125,28 +131,46 @@ public static partial class Keyboard
         }
 
         LastKey = key;
-        if (!_keysDownArray[(int)key])
+        var index = (int)key;
+        var wasDown = _keysDownArray[index];
+        if (simulated)
         {
-            _keysDownArray[(int)key] = true;
-            _keysDownOnceArray[(int)key] = true;
-            _keysDownRepeatArray[(int)key] = -1.0;
+            _simulatedKeysDownArray[index] = true;
+        }
+        else
+        {
+            _physicalKeysDownArray[index] = true;
+        }
+
+        _keysDownArray[index] = _physicalKeysDownArray[index] || _simulatedKeysDownArray[index];
+        if (!wasDown && _keysDownArray[index])
+        {
+            _keysDownOnceArray[index] = true;
+            _keysDownRepeatArray[index] = -1.0;
         }
 
         KeyDown?.Invoke(key);
         return true;
     }
 
-    private static bool ProcessKeyUp(Key key)
+    private static bool ProcessKeyUp(Key key, bool simulated = false)
     {
         if (!Window.IsActive)
         {
             return false;
         }
 
-        if (_keysDownArray[(int)key])
+        var index = (int)key;
+        if (simulated)
         {
-            _keysDownArray[(int)key] = false;
+            _simulatedKeysDownArray[index] = false;
         }
+        else
+        {
+            _physicalKeysDownArray[index] = false;
+        }
+
+        _keysDownArray[index] = _physicalKeysDownArray[index] || _simulatedKeysDownArray[index];
 
         KeyUp?.Invoke(key);
         return true;
@@ -164,6 +188,12 @@ public static partial class Keyboard
         CharacterEntered?.Invoke(ch);
         return true;
     }
+
+    internal static bool ProcessSimulatedKeyDown(Key key) => ProcessKeyDown(key, simulated: true);
+
+    internal static bool ProcessSimulatedKeyUp(Key key) => ProcessKeyUp(key, simulated: true);
+
+    internal static bool ProcessSimulatedCharacter(char character) => ProcessCharacterEntered(character);
 
     private static void ProcessPlatformKeyDown(Key key, int scanCode)
     {

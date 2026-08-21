@@ -155,6 +155,7 @@ public static partial class Window
         Keyboard.Clear();
         Mouse.Clear();
         Touch.Clear();
+        InputSimulation.Clear();
     }
 
     private static void ClosedHandler()
@@ -267,6 +268,7 @@ public static partial class Window
         Keyboard.BeforeFrame();
         Mouse.BeforeFrame();
         Touch.BeforeFrame();
+        InputSimulation.BeforeFrame();
         GamePad.BeforeFrame();
         Mixer.BeforeFrame();
     }
