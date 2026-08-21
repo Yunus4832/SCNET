@@ -125,6 +125,18 @@ public static class StartupManager
                 continue;
             }
 
+            if (string.Equals(arg, "--http-command", StringComparison.OrdinalIgnoreCase))
+            {
+                request.HttpCommandEnabled = true;
+                continue;
+            }
+
+            if (string.Equals(arg, "--no-http-command", StringComparison.OrdinalIgnoreCase))
+            {
+                request.HttpCommandEnabled = false;
+                continue;
+            }
+
             if (string.Equals(arg, "--http-command-port", StringComparison.OrdinalIgnoreCase))
             {
                 request.HttpCommandPort = ParseHttpCommandPort(

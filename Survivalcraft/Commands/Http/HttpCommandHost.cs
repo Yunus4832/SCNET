@@ -252,6 +252,11 @@ public static class HttpCommandHostManager
             return;
         }
 
+        if (!(session.HttpCommandEnabled ?? SettingsManager.Current.HttpCommandEnabled))
+        {
+            return;
+        }
+
         var port = session.HttpCommandPort ?? SettingsManager.Current.HttpCommandPort;
         var accessToken = string.IsNullOrWhiteSpace(session.HttpCommandAccessToken)
             ? SettingsManager.Current.HttpCommandAccessToken

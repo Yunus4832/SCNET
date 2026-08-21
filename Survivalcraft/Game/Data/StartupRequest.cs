@@ -24,6 +24,9 @@ public sealed class StartupRequest
 
     public int? BroadcastPort { get; set; }
 
+    /// <summary>Optional HTTP command host enablement override for this startup session.</summary>
+    public bool? HttpCommandEnabled { get; set; }
+
     /// <summary>
     /// Optional HTTP command listener port override for this process.
     /// </summary>

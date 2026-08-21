@@ -39,6 +39,8 @@ Android 同样通过 `RunningSettingManager` 选择 GUI 或 Headless。正常应
 - `--instance <实例名>`: 选择或创建 `Instances/<实例名>` 数据实例；省略时由 `Starter.xml` 选择
 - `--server-port <端口>`: 仅覆盖本次运行的游戏端口
 - `--broadcast-port <端口>`: 仅覆盖本次运行的广播端口
+- `--http-command`: 为本次有效 session 启用 loopback HTTP 命令宿主
+- `--no-http-command`: 为本次有效 session 禁用 loopback HTTP 命令宿主
 - `--http-command-port <端口>`: 覆盖 loopback HTTP 命令宿主的默认端口 `28889`
 - `--http-command-access-token <Token>`: 覆盖本次运行使用的 Bearer Token；至少 32 个字符
 - `-d` / `--server`: 切换到 `HeadlessServer`
@@ -67,15 +69,15 @@ Android 同样通过 `RunningSettingManager` 选择 GUI 或 Headless。正常应
 
 ## HTTP 命令宿主
 
-HTTP 命令宿主默认使用 `28889`，并且当前只监听 `127.0.0.1`。可以为多实例指定其他端口：
+HTTP 命令宿主默认关闭；`Settings.xml` 的 `HttpCommandEnabled` 是实例默认开关，启动参数或保存的 session 可以覆盖它。启用后默认使用 `28889`，并且当前只监听 `127.0.0.1`。可以为多实例指定其他端口：
 
 ```bash
-./SurvivalcraftStarter --instance server --server --session survival --http-command-port 29889
+./SurvivalcraftStarter --instance server --server --session survival --http-command --http-command-port 29889
 ```
 
 端口和长期 access token 保存在当前实例的 `Settings.xml`，默认端口为 `28889`。旧配置没有 `HttpCommandAccessToken` 或 token 无效时，加载设置后会生成一个 256-bit 随机 token 并立即保存。配置端口无效、端口被占用或监听失败时会记录明确错误，并且本次运行不启动 HTTP Host；游戏和服务器本身继续启动，不会静默改用其他端口。
 
-`--http-command-port` 和 `--http-command-access-token` 会先合并进本次有效 `SessionInfo`，优先级高于 `Settings.xml`。默认只影响本次启动；与 `--save` 同用时写入对应命名 session，之后按该 session 启动可以恢复相同的 HTTP 配置覆盖。命令行参数可能被本机进程查看工具读取，因此长期部署应保护好实例的 `Settings.xml` 和 `SessionInfo.xml`。
+`--http-command`、`--no-http-command`、`--http-command-port` 和 `--http-command-access-token` 会先合并进本次有效 `SessionInfo`，优先级高于 `Settings.xml`。默认只影响本次启动；与 `--save` 同用时写入对应命名 session，之后按该 session 启动可以恢复相同的 HTTP 配置覆盖。命令行参数可能被本机进程查看工具读取，因此长期部署应保护好实例的 `Settings.xml` 和 `SessionInfo.xml`。
 
 ```http
 POST /commands

@@ -595,6 +595,10 @@ public static class SessionInfoManager
         {
             element.Add(new XAttribute(nameof(SessionInfo.GameMode), gameMode));
         }
+        if (sessionInfo.HttpCommandEnabled is { } httpCommandEnabled)
+        {
+            element.Add(new XAttribute(nameof(SessionInfo.HttpCommandEnabled), httpCommandEnabled));
+        }
         if (sessionInfo.HttpCommandPort is { } httpCommandPort)
         {
             element.Add(new XAttribute(nameof(SessionInfo.HttpCommandPort), httpCommandPort));
@@ -621,6 +625,8 @@ public static class SessionInfoManager
         sessionInfo.ServerHost = element.Attribute(nameof(SessionInfo.ServerHost))?.Value ?? string.Empty;
         sessionInfo.ServerPort = ParseServerPort(element.Attribute(nameof(SessionInfo.ServerPort))?.Value);
         sessionInfo.BroadcastPort = ParseServerPort(element.Attribute(nameof(SessionInfo.BroadcastPort))?.Value);
+        sessionInfo.HttpCommandEnabled = ParseOptionalBoolean(
+            element.Attribute(nameof(SessionInfo.HttpCommandEnabled))?.Value);
         sessionInfo.HttpCommandPort = ParseOptionalPort(
             element.Attribute(nameof(SessionInfo.HttpCommandPort))?.Value);
         sessionInfo.HttpCommandAccessToken =
@@ -709,6 +715,11 @@ public static class SessionInfoManager
             sessionInfo.BroadcastPort = broadcastPort;
         }
 
+        if (request.HttpCommandEnabled is { } httpCommandEnabled)
+        {
+            sessionInfo.HttpCommandEnabled = httpCommandEnabled;
+        }
+
         if (request.HttpCommandPort is { } httpCommandPort)
         {
             sessionInfo.HttpCommandPort = httpCommandPort;
@@ -773,6 +784,11 @@ public static class SessionInfoManager
     private static int? ParseOptionalPort(string? value)
     {
         return int.TryParse(value, out var port) ? port : null;
+    }
+
+    private static bool? ParseOptionalBoolean(string? value)
+    {
+        return bool.TryParse(value, out var result) ? result : null;
     }
 
     private static GameMode? ParseGameMode(string? value)

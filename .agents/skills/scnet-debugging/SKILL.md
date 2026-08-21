@@ -86,6 +86,15 @@ For evidence contents and reporting, read [references/evidence.md](references/ev
 
 This Skill can build, start, observe, issue server stdin commands, and preserve evidence. It does not yet provide semantic player input or GUI control. Do not simulate those capabilities with direct world mutation when the test requires realistic player behavior.
 
+## HTTP command host
+
+The HTTP command host is disabled by default. For HTTP integration debugging, explicitly pass
+`--http-command` and, for parallel instances, a unique `--http-command-port`. The session's
+`HttpCommandAccessToken` overrides the token in the instance `Settings.xml`; otherwise use the
+generated instance token. Do not expect `.runtime` to contain HTTP endpoint settings or credentials:
+it is only the Starter's process-liveness registry. Do not pass `--save` unless persistence of the
+HTTP session override is itself under test.
+
 For an automated multiplayer startup, use `--server-port`, `--broadcast-port`, `--connect`, and
 the explicit `--player` option described in [references/multiplayer.md](references/multiplayer.md).
 These overrides are transient unless `--save` is explicitly supplied.

@@ -29,6 +29,9 @@ public sealed class SessionInfo
 
     public int BroadcastPort { get; set; }
 
+    /// <summary>Optional HTTP command host enablement override restored with this startup session.</summary>
+    public bool? HttpCommandEnabled { get; set; }
+
     /// <summary>Optional HTTP command port override restored with this startup session.</summary>
     public int? HttpCommandPort { get; set; }
 
