@@ -1,4 +1,5 @@
 using System.Xml.Linq;
+using System.Security.Cryptography;
 
 using Engine.Serialization;
 
@@ -62,9 +63,18 @@ public static class SettingsManager
         }
 
         LoadSettings();
+        var settingsChanged = false;
         if (RepairOnlineAccessToken(Current, defaultOnlineAccessToken))
         {
             Log.Warning("Invalid OnlineAccessToken in settings. The local identity token has been restored.");
+            settingsChanged = true;
+        }
+        if (EnsureHttpCommandAccessToken(Current))
+        {
+            settingsChanged = true;
+        }
+        if (settingsChanged)
+        {
             SaveSettings();
         }
 
@@ -84,6 +94,20 @@ public static class SettingsManager
         }
 
         settings.OnlineAccessToken = fallbackToken;
+        return true;
+    }
+
+    internal static bool EnsureHttpCommandAccessToken(Settings settings)
+    {
+        if (!string.IsNullOrWhiteSpace(settings.HttpCommandAccessToken) &&
+            settings.HttpCommandAccessToken.Length >= 32)
+        {
+            return false;
+        }
+
+        settings.HttpCommandAccessToken = Convert.ToBase64String(
+            RandomNumberGenerator.GetBytes(32));
+        Log.Information("Generated a new HTTP command access token for this instance.");
         return true;
     }
 

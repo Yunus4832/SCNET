@@ -29,5 +29,11 @@ public sealed class SessionInfo
 
     public int BroadcastPort { get; set; }
 
+    /// <summary>Optional HTTP command port override restored with this startup session.</summary>
+    public int? HttpCommandPort { get; set; }
+
+    /// <summary>Optional HTTP command access token restored with this startup session.</summary>
+    public string? HttpCommandAccessToken { get; set; }
+
     public string Password { get; set; } = string.Empty;
 }

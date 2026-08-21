@@ -138,6 +138,9 @@ public static class HeadlessEntry
             }
 
             SetCommandConsoleReady(true);
+            HttpCommandHostManager.Start(
+                startup.Session,
+                CommandPrincipal.ServerOperator);
             Log.Information("Headless server started. Press Ctrl+C to stop.");
             WriteAdministrationBootstrapInstructions();
             StartConsoleReader();
@@ -151,6 +154,7 @@ public static class HeadlessEntry
         }
         finally
         {
+            HttpCommandHostManager.Stop();
             SetCommandConsoleReady(false);
             FailPendingConsoleRequests();
             try
@@ -186,6 +190,7 @@ public static class HeadlessEntry
                 Dispatcher.BeforeFrame();
                 CommonLib.Net.Update();
                 GameManager.UpdateProject();
+                HttpCommandExecutionQueue.Update();
                 ExecuteConsoleCommands();
                 ExecuteConsoleSuggestions();
                 AsyncDispatcher.Update();

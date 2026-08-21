@@ -8,6 +8,10 @@ public class Settings
 
     public int BroadcastPort { get; set; } = 28888;
 
+    public int HttpCommandPort { get; set; } = Commands.HttpCommandProtocol.DefaultPort;
+
+    public string HttpCommandAccessToken { get; set; } = string.Empty;
+
     public float SoundsVolume
     {
         get;

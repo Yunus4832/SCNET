@@ -50,6 +50,8 @@
 - `--player <名称>`: 显式请求自动使用当前身份角色；若服务器没有该身份角色则按名称创建
 - `--host`: GUI 模式下强制将目标世界设置为 `WorldSettings.RunServer=true`
 - `--server-port <端口>` / `--broadcast-port <端口>`: 覆盖本次运行端口
+- `--http-command-port <端口>`: 覆盖 loopback HTTP 命令宿主的默认端口 `28889`
+- `--http-command-access-token <Token>`: 覆盖本次运行使用的 HTTP Bearer Token
 - `-d` / `--server`: 设置 `RunMode=HeadlessServer`
 - `--gui`: 设置 `RunMode=Gui`
 - `--session <名称>`: 按名称选择或创建 session
@@ -65,7 +67,7 @@
 
 `--window-mode` 和 `--window-size` 只在 GUI 模式生效；Headless 会忽略它们，也不会因 `--save` 将其覆盖值持久化。
 
-`--connect`、`--host`、`--player`、`--game-mode` 和端口覆盖不写入 `RunningSetting.xml`。`--host` 是强制调试参数：新世界直接创建为联机世界，已有非联机世界则更新并持久化其 `WorldSettings.RunServer=true`，之后统一走正常联机世界启动流程。未传 `--player` 时保持现有角色界面流程。`--connect` 与 `--host` 同时出现时按远程连接处理并忽略 `--host`。
+`--connect`、`--host`、`--player`、`--game-mode` 和端口覆盖不写入 `RunningSetting.xml`。HTTP 命令端口和 access token 的实例默认值保存在 `Settings.xml`；对应启动参数由 `StartupRequest` 解析后合并进本次有效 `SessionInfo`，具有更高优先级，并在使用 `--save` 时随命名 session 写入 `SessionInfo.xml`。`.runtime` 目录只用于 Starter 的实例进程存活登记，不承载 HTTP 配置或凭证。`--host` 是强制调试参数：新世界直接创建为联机世界，已有非联机世界则更新并持久化其 `WorldSettings.RunServer=true`，之后统一走正常联机世界启动流程。未传 `--player` 时保持现有角色界面流程。`--connect` 与 `--host` 同时出现时按远程连接处理并忽略 `--host`。
 
 `--save` 会保存 `RunningSetting` 中适用的入口设置，并把 `StartupContext.Session` 保存到 `SessionInfo.xml`。因此 `--connect`、端口和 `--game-mode` 默认只存在于 `StartupRequest` 和本次有效 session 中，与 `--save` 同用时才成为具名 session 的后续默认值。
 
@@ -104,6 +106,8 @@ Starter 使用两阶段 Storage 注册：先将程序基础目录注册为 `star
 - `ServerPort`
 - `BroadcastPort`
 - `Password`
+
+`HttpCommandPort` 和 `HttpCommandAccessToken` 是可选的 session 覆盖。未设置时回退到当前实例的 `Settings.xml`；使用 `--save` 保存后，可以通过同名 session 恢复。
 
 `Target` 可取：
 

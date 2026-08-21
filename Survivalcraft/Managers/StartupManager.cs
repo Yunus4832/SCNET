@@ -125,6 +125,22 @@ public static class StartupManager
                 continue;
             }
 
+            if (string.Equals(arg, "--http-command-port", StringComparison.OrdinalIgnoreCase))
+            {
+                request.HttpCommandPort = ParseHttpCommandPort(
+                    ReadOptionValue(args, ref i, "--http-command-port"));
+                continue;
+            }
+
+            if (string.Equals(arg, "--http-command-access-token", StringComparison.OrdinalIgnoreCase))
+            {
+                request.HttpCommandAccessToken = ReadOptionValue(
+                    args,
+                    ref i,
+                    "--http-command-access-token")?.Trim();
+                continue;
+            }
+
             if (string.Equals(arg, "--log-level", StringComparison.OrdinalIgnoreCase))
             {
                 settings.LogLevel = ParseLogLevel(
@@ -281,6 +297,18 @@ public static class StartupManager
             Log.Warning($"Ignoring {option} because '{value}' is not a valid port.");
         }
         return null;
+    }
+
+    private static int ParseHttpCommandPort(string? value)
+    {
+        if (int.TryParse(value, out var port) && port is > 0 and <= 65535)
+        {
+            return port;
+        }
+        Log.Error(
+            $"HTTP command host is disabled because --http-command-port " +
+            $"value '{value ?? "<missing>"}' is invalid.");
+        return 0;
     }
 
     private static LogType ParseLogLevel(string? value, LogType fallback) =>

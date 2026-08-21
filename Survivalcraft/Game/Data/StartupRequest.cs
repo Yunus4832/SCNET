@@ -24,5 +24,13 @@ public sealed class StartupRequest
 
     public int? BroadcastPort { get; set; }
 
+    /// <summary>
+    /// Optional HTTP command listener port override for this process.
+    /// </summary>
+    public int? HttpCommandPort { get; set; }
+
+    /// <summary>Optional HTTP command access token override for this process.</summary>
+    public string? HttpCommandAccessToken { get; set; }
+
     public bool Save { get; set; }
 }

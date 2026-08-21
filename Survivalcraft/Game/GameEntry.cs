@@ -5,6 +5,7 @@ using System.Text;
 using Engine.Graphics;
 using Engine.Input;
 
+using Game.Commands;
 using Game.Network;
 
 using LiteNetLib;
@@ -139,6 +140,7 @@ public static class GameEntry
 
     public static void Closed()
     {
+        HttpCommandHostManager.Stop();
         if (_windowStateReady && _lastWindowSize is { X: > 0, Y: > 0 })
         {
             RunningSettingManager.SaveCurrent(rs =>
@@ -157,6 +159,12 @@ public static class GameEntry
     {
         ModRuntime?.Dispose();
         CurrentModRuntime.Set(runtime);
+        if (runtime is not null)
+        {
+            HttpCommandHostManager.Start(
+                StartupManager.Current.Session,
+                CommandPrincipal.ApplicationUser);
+        }
     }
 
     public static void Initialize()
@@ -215,6 +223,7 @@ public static class GameEntry
                 MusicManager.Update();
                 ScreensManager.Update();
                 DialogsManager.Update();
+                HttpCommandExecutionQueue.Update();
                 AsyncDispatcher.Update();
             }
             else

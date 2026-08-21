@@ -130,7 +130,7 @@ CommandPrincipalKind.Player` 声明主体要求；这与命令来自消息面板
 
 命令说明使用通用的 `Game.Localization.LocalizedText`，注册时不会读取当前语言。候选菜单和帮助信息在展示时解析资源，因此初始化语言或运行时切换语言都不需要重新注册命令。模组应在自己的语言资源中提供对应 section 和 key；只有 GUID 等运行时数据才应显式使用 `LocalizedText.Literal(...)`。
 
-HTTP 服务尚未实现；已预留的协议契约使用统一的 `POST /commands` 入口，不为每条命令建立路径。请求通过 identity 分发：
+HTTP 命令宿主使用统一的 `POST /commands` 入口，不为每条命令建立路径。请求通过 identity 分发：
 
 ```json
 {
@@ -141,4 +141,4 @@ HTTP 服务尚未实现；已预留的协议契约使用统一的 `POST /command
 }
 ```
 
-只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。未来 HTTP 宿主负责认证并创建可信的 `CommandPrincipal`，同时将调用入口记录为 `CommandInvocationChannel.HttpApi`；命令仍会执行正常的命令域、权限和宿主环境校验。
+只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。HTTP 宿主通过 Bearer Token 认证，并按当前宿主创建可信的 `ApplicationUser` 或 `ServerOperator`；调用入口记录为 `CommandInvocationChannel.HttpApi`，命令仍会执行正常的命令域、权限和宿主环境校验。宿主只监听 loopback；实例默认配置、启动参数和可保存的 session 覆盖见 [Headless.md](./Headless.md)。

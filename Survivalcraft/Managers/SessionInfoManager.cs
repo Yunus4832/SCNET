@@ -595,6 +595,16 @@ public static class SessionInfoManager
         {
             element.Add(new XAttribute(nameof(SessionInfo.GameMode), gameMode));
         }
+        if (sessionInfo.HttpCommandPort is { } httpCommandPort)
+        {
+            element.Add(new XAttribute(nameof(SessionInfo.HttpCommandPort), httpCommandPort));
+        }
+        if (!string.IsNullOrWhiteSpace(sessionInfo.HttpCommandAccessToken))
+        {
+            element.Add(new XAttribute(
+                nameof(SessionInfo.HttpCommandAccessToken),
+                sessionInfo.HttpCommandAccessToken));
+        }
 
         return element;
     }
@@ -611,6 +621,10 @@ public static class SessionInfoManager
         sessionInfo.ServerHost = element.Attribute(nameof(SessionInfo.ServerHost))?.Value ?? string.Empty;
         sessionInfo.ServerPort = ParseServerPort(element.Attribute(nameof(SessionInfo.ServerPort))?.Value);
         sessionInfo.BroadcastPort = ParseServerPort(element.Attribute(nameof(SessionInfo.BroadcastPort))?.Value);
+        sessionInfo.HttpCommandPort = ParseOptionalPort(
+            element.Attribute(nameof(SessionInfo.HttpCommandPort))?.Value);
+        sessionInfo.HttpCommandAccessToken =
+            element.Attribute(nameof(SessionInfo.HttpCommandAccessToken))?.Value;
         sessionInfo.Password = element.Attribute(nameof(SessionInfo.Password))?.Value ?? string.Empty;
     }
 
@@ -694,6 +708,16 @@ public static class SessionInfoManager
         {
             sessionInfo.BroadcastPort = broadcastPort;
         }
+
+        if (request.HttpCommandPort is { } httpCommandPort)
+        {
+            sessionInfo.HttpCommandPort = httpCommandPort;
+        }
+
+        if (request.HttpCommandAccessToken is not null)
+        {
+            sessionInfo.HttpCommandAccessToken = request.HttpCommandAccessToken;
+        }
     }
 
     private static WorldInfo CreateWorld(
@@ -744,6 +768,11 @@ public static class SessionInfoManager
     private static int ParseServerPort(string? value)
     {
         return int.TryParse(value, out var port) ? port : 0;
+    }
+
+    private static int? ParseOptionalPort(string? value)
+    {
+        return int.TryParse(value, out var port) ? port : null;
     }
 
     private static GameMode? ParseGameMode(string? value)

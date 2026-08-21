@@ -462,6 +462,26 @@ public static class BuiltInCommands
         commands.Adapters.Register(new ResourceId(owner, "text/auth"), CreateAuthText());
         commands.Adapters.Register(new ResourceId(owner, "text/permission"), CreatePermissionText());
         commands.Adapters.Register(new ResourceId(owner, "text/team"), CreateTeamText());
+
+        commands.Adapters.Register(
+            new ResourceId(owner, "world/time/get"),
+            HttpCommandBinding.Create(static _ => new GetWorldTimeCommand()));
+        commands.Adapters.Register(
+            new ResourceId(owner, "world/time/set"),
+            HttpCommandBinding.Create(static arguments =>
+                new SetWorldTimeCommand(arguments.Get<string>("preset"))));
+        commands.Adapters.Register(
+            new ResourceId(owner, "player/list"),
+            HttpCommandBinding.Create(static _ => new ListPlayersCommand()));
+        commands.Adapters.Register(
+            new ResourceId(owner, "application/run_mode/get"),
+            HttpCommandBinding.Create(static _ => new GetRunModeCommand()));
+        commands.Adapters.Register(
+            new ResourceId(owner, "application/language/get"),
+            HttpCommandBinding.Create(static _ => new GetLanguageCommand()));
+        commands.Adapters.Register(
+            new ResourceId(owner, "server/stop"),
+            HttpCommandBinding.Create(static _ => new StopServerCommand()));
     }
 
     private static void RegisterCreativePermission(

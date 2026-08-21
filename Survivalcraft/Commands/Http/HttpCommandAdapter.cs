@@ -9,6 +9,8 @@ namespace Game.Commands;
 /// </summary>
 public static class HttpCommandProtocol
 {
+    public const int DefaultPort = 28889;
+
     public const string Endpoint = "/commands";
 
     public const string IdentityProperty = "identity";
