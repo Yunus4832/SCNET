@@ -95,6 +95,10 @@ generated instance token. Do not expect `.runtime` to contain HTTP endpoint sett
 it is only the Starter's process-liveness registry. Do not pass `--save` unless persistence of the
 HTTP session override is itself under test.
 
+After authenticating, call `GET /commands` before sending automation commands. It returns the
+currently executable HTTP command identities and their declared argument contracts. Use the returned
+identity and arguments with `POST /commands`; do not infer a command contract from text-command help.
+
 For an automated multiplayer startup, use `--server-port`, `--broadcast-port`, `--connect`, and
 the explicit `--player` option described in [references/multiplayer.md](references/multiplayer.md).
 These overrides are transient unless `--save` is explicitly supplied.

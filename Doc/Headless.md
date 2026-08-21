@@ -89,6 +89,12 @@ Content-Type: application/json
 
 HTTP 只暴露显式注册了 `HttpCommandBinding` 的命令。Headless HTTP 请求以 `ServerOperator` 执行，但仍受命令域、宿主要求和权限规则约束。当前监听仅限本机；跨主机管理应通过 SSH 隧道等受保护的传输访问，不应直接公开端口。
 
+认证后可通过 `GET /commands` 发现当前宿主实际可执行的 HTTP 命令。返回值包含稳定 identity、本地化说明和显式声明的参数名、类型与必填状态；它已按当前运行模式、宿主主体和权限过滤。客户端应先发现命令，再以同一 identity 向 `POST /commands` 发送调用请求。
+
+```bash
+curl -H "Authorization: Bearer <token>" http://127.0.0.1:28889/commands
+```
+
 ## 数据实例
 
 Starter 首先在程序基础目录注册 `starter:`，读取 `starter:Starter.xml`，再将选中实例的目录注册为游戏使用的 `external:`、`data:` 和 `config:`。实例目录位于：

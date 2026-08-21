@@ -469,7 +469,8 @@ public static class BuiltInCommands
         commands.Adapters.Register(
             new ResourceId(owner, "world/time/set"),
             HttpCommandBinding.Create(static arguments =>
-                new SetWorldTimeCommand(arguments.Get<string>("preset"))));
+                new SetWorldTimeCommand(arguments.Get<string>("preset")),
+                new HttpCommandArgumentDefinition("preset", "string")));
         commands.Adapters.Register(
             new ResourceId(owner, "player/list"),
             HttpCommandBinding.Create(static _ => new ListPlayersCommand()));

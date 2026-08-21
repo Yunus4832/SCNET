@@ -141,4 +141,14 @@ HTTP 命令宿主使用统一的 `POST /commands` 入口，不为每条命令建
 }
 ```
 
-只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。HTTP 宿主通过 Bearer Token 认证，并按当前宿主创建可信的 `ApplicationUser` 或 `ServerOperator`；调用入口记录为 `CommandInvocationChannel.HttpApi`，命令仍会执行正常的命令域、权限和宿主环境校验。宿主只监听 loopback，且仅在有效 session 或实例 `Settings.xml` 启用时启动；实例默认配置、启动参数和可保存的 session 覆盖见 [Headless.md](./Headless.md)。
+每个 HTTP binding 必须显式声明参数契约，使认证后的 `GET /commands` 能让客户端发现可调用命令及其格式：
+
+```csharp
+commands.Adapters.Register(
+    new ResourceId(owner, "example/echo"),
+    HttpCommandBinding.Create(
+        arguments => new EchoCommand(arguments.Get<string>("text")),
+        new HttpCommandArgumentDefinition("text", "string")));
+```
+
+`GET /commands` 只返回当前 HTTP 主体在当前运行模式下可能执行的 binding，并提供 identity、本地化说明及参数的 `name`、`valueType`、`required`。只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。HTTP 宿主通过 Bearer Token 认证，并按当前宿主创建可信的 `ApplicationUser` 或 `ServerOperator`；调用入口记录为 `CommandInvocationChannel.HttpApi`，命令仍会执行正常的命令域、权限和宿主环境校验。宿主只监听 loopback，且仅在有效 session 或实例 `Settings.xml` 启用时启动；实例默认配置、启动参数和可保存的 session 覆盖见 [Headless.md](./Headless.md)。

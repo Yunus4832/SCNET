@@ -71,6 +71,18 @@ public sealed record HttpCommandRequest(
     ResourceId Identity,
     JsonObject Arguments);
 
+/// <summary>One declared argument in the HTTP command envelope.</summary>
+public sealed record HttpCommandArgumentDefinition(
+    string Name,
+    string ValueType,
+    bool Required = true);
+
+/// <summary>One HTTP command available to the current authenticated principal.</summary>
+public sealed record HttpDiscoveredCommand(
+    string Identity,
+    string Description,
+    IReadOnlyList<HttpCommandArgumentDefinition> Arguments);
+
 public sealed class HttpCommandArguments(JsonObject values)
 {
     private static readonly JsonSerializerOptions _jsonOptions =
@@ -103,22 +115,28 @@ public sealed class HttpCommandBinding : ICommandAdapterBinding
 
     public Type CommandType { get; }
 
+    public IReadOnlyList<HttpCommandArgumentDefinition> Arguments { get; }
+
     private HttpCommandBinding(
         Type commandType,
-        Func<HttpCommandArguments, IGameCommand> createCommand)
+        Func<HttpCommandArguments, IGameCommand> createCommand,
+        IReadOnlyList<HttpCommandArgumentDefinition> arguments)
     {
         CommandType = commandType;
         _createCommand = createCommand;
+        Arguments = arguments;
     }
 
     public static HttpCommandBinding Create<TCommand>(
-        Func<HttpCommandArguments, TCommand> createCommand)
+        Func<HttpCommandArguments, TCommand> createCommand,
+        params HttpCommandArgumentDefinition[] arguments)
         where TCommand : IGameCommand
     {
         ArgumentNullException.ThrowIfNull(createCommand);
         return new HttpCommandBinding(
             typeof(TCommand),
-            arguments => createCommand(arguments));
+            arguments => createCommand(arguments),
+            arguments ?? []);
     }
 
     internal IGameCommand CreateCommand(HttpCommandArguments arguments)

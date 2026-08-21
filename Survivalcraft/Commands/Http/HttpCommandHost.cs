@@ -96,9 +96,27 @@ public sealed class HttpCommandHost : IDisposable
                 return;
             }
 
-            if (!string.Equals(context.Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase) ||
-                !string.Equals(context.Request.Url?.AbsolutePath, HttpCommandProtocol.Endpoint,
+            if (!string.Equals(context.Request.Url?.AbsolutePath, HttpCommandProtocol.Endpoint,
                     StringComparison.Ordinal))
+            {
+                await WriteResponseAsync(context.Response, 404, new
+                {
+                    success = false,
+                    code = "http.not_found",
+                    message = "Endpoint not found."
+                }, cancellationToken);
+                return;
+            }
+
+            if (string.Equals(context.Request.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
+            {
+                var commands = await HttpCommandExecutionQueue.DiscoverAsync(_principal)
+                    .WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
+                await WriteResponseAsync(context.Response, 200, new { commands }, CancellationToken.None);
+                return;
+            }
+
+            if (!string.Equals(context.Request.HttpMethod, "POST", StringComparison.OrdinalIgnoreCase))
             {
                 await WriteResponseAsync(context.Response, 404, new
                 {
