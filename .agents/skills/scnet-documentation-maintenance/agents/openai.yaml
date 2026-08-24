@@ -1,4 +1,4 @@
 interface:
   display_name: "SCNET Documentation Maintenance"
-  short_description: "Keep SCNET documentation aligned with behavior changes."
-  default_prompt: "Use $scnet-documentation-maintenance to assess documentation impact and update only the SCNET documents affected by the current change."
+  short_description: "Keep SCNET docs and agent guidance aligned."
+  default_prompt: "Use $scnet-documentation-maintenance to assess documentation and agent-guidance impact, then update only the SCNET materials affected by the current change."
