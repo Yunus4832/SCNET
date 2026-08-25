@@ -7,8 +7,6 @@ using Android.Runtime;
 using Game;
 using Game.Commands;
 
-using Game.Managers;
-
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
 using AndroidProviderSettings = Android.Provider.Settings;

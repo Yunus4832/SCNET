@@ -1,6 +1,5 @@
 using Game.Messaging;
 using Game.Network;
-using Game.Network.Enums;
 using Game.Network.Packages;
 
 namespace Game.Commands;

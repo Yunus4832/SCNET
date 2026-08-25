@@ -1,7 +1,7 @@
 using Android.Content;
+using Android.Content.PM;
 using Android.Net;
 using Android.OS;
-using Android.Content.PM;
 
 using Game;
 using Game.ContentProviders;

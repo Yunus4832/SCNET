@@ -1,6 +1,5 @@
 using EntitySystem.Core;
 
-using Game.Modding;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;

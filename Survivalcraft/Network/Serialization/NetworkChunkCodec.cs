@@ -1,8 +1,8 @@
 using System.IO.Compression;
 
-namespace Game.Network.Serialization;
-
 using Game.Terrains.Distribution;
+
+namespace Game.Network.Serialization;
 
 public sealed record EncodedTerrainChunk(Point2 Coords, long ContentVersion, byte[] Payload);
 

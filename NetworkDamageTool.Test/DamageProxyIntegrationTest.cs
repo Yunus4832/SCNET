@@ -1,8 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
 
-using NetworkDamageTool;
-
 namespace NetworkDamageTool.Test;
 
 public sealed class DamageProxyIntegrationTest

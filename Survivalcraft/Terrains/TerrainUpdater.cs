@@ -1,5 +1,4 @@
 using Game.Network;
-using Game.Network.Enums;
 using Game.Network.Packages;
 using Game.Terrains.Distribution;
 using Game.TerrainSerializers;

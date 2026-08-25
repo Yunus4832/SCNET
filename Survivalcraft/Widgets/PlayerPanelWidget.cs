@@ -1,7 +1,6 @@
 using System.Xml.Linq;
 
 using Game.Commands;
-using Game.Network;
 
 namespace Game.Widgets;
 

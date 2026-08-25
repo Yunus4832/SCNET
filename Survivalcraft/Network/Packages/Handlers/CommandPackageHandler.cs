@@ -2,7 +2,6 @@ using EntitySystem.Core;
 
 using Game.Commands;
 using Game.Messaging;
-using Game.Modding;
 
 namespace Game.Network.Packages.Handlers;
 

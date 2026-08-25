@@ -1,7 +1,5 @@
 using EntitySystem.Core;
 
-using Game.Modding;
-
 namespace Game.Commands;
 
 public sealed class CommandPermissionRegistry

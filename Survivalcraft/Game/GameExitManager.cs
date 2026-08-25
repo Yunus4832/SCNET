@@ -1,7 +1,5 @@
 namespace Game;
 
-using Game.Managers;
-
 public enum GameExitAction
 {
     Exit,

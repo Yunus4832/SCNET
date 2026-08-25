@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 
 using Game.Localization;
-using Game.Modding;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Serialization;

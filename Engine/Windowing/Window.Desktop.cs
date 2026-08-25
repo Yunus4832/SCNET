@@ -1,9 +1,9 @@
 #if DESKTOP
+
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 using Engine.Core;
-using Engine.Input;
 
 using Silk.NET.Core;
 using Silk.NET.Input;

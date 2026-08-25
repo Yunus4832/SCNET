@@ -1,7 +1,5 @@
 using EntitySystem.Core;
 
-using Game.Modding;
-
 namespace Game.Commands;
 
 public static class CommandExecutor

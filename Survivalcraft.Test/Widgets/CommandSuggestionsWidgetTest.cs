@@ -1,9 +1,9 @@
+using System.Runtime.CompilerServices;
+
 using Engine.Core;
 
 using Game.Commands;
 using Game.Widgets;
-
-using System.Runtime.CompilerServices;
 
 namespace Survivalcraft.Test.Widgets;
 

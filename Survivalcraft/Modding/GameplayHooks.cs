@@ -1,5 +1,4 @@
 using EntitySystem.Core;
-using Game.Components;
 
 namespace Game.Modding;
 

@@ -5,7 +5,6 @@ using Game;
 using Game.Commands;
 using Game.Managers;
 using Game.Modding;
-using Game.Network.Enums;
 
 namespace Survivalcraft.Test.Modding;
 

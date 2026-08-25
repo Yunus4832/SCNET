@@ -1,7 +1,8 @@
 #if DESKTOP
-using Silk.NET.Input;
 
 using Engine.Core;
+
+using Silk.NET.Input;
 
 using Window = Engine.Windowing.Window;
 

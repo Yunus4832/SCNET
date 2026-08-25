@@ -5,9 +5,9 @@ using System.Text;
 using Engine.Graphics;
 using Engine.Input;
 
+using Game.Automation;
 using Game.Commands;
 using Game.Network;
-using Game.Automation;
 
 using LiteNetLib;
 

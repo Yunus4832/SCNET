@@ -2,7 +2,6 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Localization;
-using Game.Modding;
 
 namespace Game.Commands;
 

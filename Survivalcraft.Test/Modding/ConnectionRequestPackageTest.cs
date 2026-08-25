@@ -1,6 +1,6 @@
+using Game.Modding;
 using Game.Network.Packages;
 using Game.Network.Serialization;
-using Game.Modding;
 
 namespace Survivalcraft.Test.Modding;
 

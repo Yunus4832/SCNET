@@ -1,5 +1,3 @@
-using Game.Components;
-
 namespace Game.Modding;
 
 public interface IModPlayerContextActionHooks

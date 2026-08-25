@@ -1,6 +1,6 @@
-using EntitySystem.Core;
-
 using Engine.Input;
+
+using EntitySystem.Core;
 
 using Game.Localization;
 using Game.Messaging;

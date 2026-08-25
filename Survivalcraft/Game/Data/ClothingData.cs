@@ -1,7 +1,5 @@
 using Engine.Graphics;
 
-using Game.Managers;
-
 namespace Game;
 
 public class ClothingData

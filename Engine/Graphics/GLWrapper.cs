@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 using Engine.Core;
 using Engine.Windowing;
 

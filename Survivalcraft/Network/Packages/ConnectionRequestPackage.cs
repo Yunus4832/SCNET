@@ -1,5 +1,6 @@
 using Game.Network.Enums;
 using Game.Network.Serialization;
+
 namespace Game.Network.Packages;
 
 public class ConnectionRequestPackage : IPackage

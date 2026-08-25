@@ -1,5 +1,3 @@
-using NetworkDamageTool;
-
 namespace NetworkDamageTool.Test;
 
 public sealed class LinkImpairmentTest
