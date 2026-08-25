@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET Network Stability"
+  short_description: "Run repeatable weak-network and capacity experiments."
+  default_prompt: "Use $scnet-network-stability to run a repeatable SCNET network impairment or server-capacity experiment and preserve evidence."
