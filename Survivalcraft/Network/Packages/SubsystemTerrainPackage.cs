@@ -1,53 +1,35 @@
 using Game.Network.Enums;
 using Game.Network.Serialization;
+using Game.Terrains.Distribution;
 
 namespace Game.Network.Packages;
 
-public struct CellChange
-{
-    public int X;
-    public int Y;
-    public int Z;
-    public int Value;
-}
-
 public class SubsystemTerrainPackage : IPackage
 {
+    public const int MaximumFragmentRequestsPerPackage = 1;
+
+    public const int MaximumRequestedFragmentCount = EncodedTerrainChunkFragmenter.MaximumFragmentCount;
+
     public enum DataType
     {
         RequestSyncChunks,
-        SyncTerrainChunkList,
+        RequestTerrainChunkFragments,
+        SyncTerrainChunkFragment,
         ReplyResult,
-        ChangeCell,
-        RequestChangeCell,
-        ChangeCellList // 有这个的话，后面创世神，命令方块处理方块就不用一个包一个包的发了
+        SyncTerrainCellDelta
     }
 
-    public readonly List<CellChange> CellChanges = [];
+    public List<ChunkContentRequest> ChunkRequests = [];
 
-    public int[] Cells = [];
+    public List<ChunkAllocationId> FailedChunkRequests = [];
 
-    public List<TerrainChunk> Chunks = [];
+    public List<TerrainChunkFragmentRequest> FragmentRequests = [];
 
-    public List<EncodedTerrainChunk> EncodedChunks = [];
+    public EncodedTerrainChunkFragment ChunkFragment;
 
-    public List<Point3> ModifyCells = [];
-
-    public List<int> ModifyValues = [];
+    public TerrainCellDelta CellDelta;
 
     public DataType Type;
-
-    public int Value;
-
-    public int X;
-
-    public int Y;
-
-    public int Z;
-
-    public List<Point2> RelateChunks = [];
-
-    public int[] Shafts = [];
 
     public byte ID => (byte)PackageType.SubsystemTerrain;
 
@@ -63,43 +45,39 @@ public class SubsystemTerrainPackage : IPackage
     {
     }
 
-    public SubsystemTerrainPackage(List<Point2> points)
+    public SubsystemTerrainPackage(List<ChunkContentRequest> requests)
     {
         Type = DataType.RequestSyncChunks;
-        RelateChunks.AddRange(points);
+        ChunkRequests.AddRange(requests);
     }
 
-    public SubsystemTerrainPackage(List<Point2> resultPoints, byte r)
+    public SubsystemTerrainPackage(List<ChunkAllocationId> failedRequests, byte r)
     {
         Type = DataType.ReplyResult;
-        RelateChunks.AddRange(resultPoints);
+        FailedChunkRequests.AddRange(failedRequests);
     }
 
-    public SubsystemTerrainPackage(List<TerrainChunk> chunks)
+    public SubsystemTerrainPackage(EncodedTerrainChunkFragment fragment)
     {
-        Type = DataType.SyncTerrainChunkList;
-        EncodedChunks.AddRange(chunks.Select(NetworkChunkCodec.Encode));
+        Type = DataType.SyncTerrainChunkFragment;
+        ChunkFragment = fragment;
     }
 
-    public SubsystemTerrainPackage(EncodedTerrainChunk chunk)
+    public static SubsystemTerrainPackage CreateFragmentRequest(
+        IEnumerable<TerrainChunkFragmentRequest> requests)
     {
-        Type = DataType.SyncTerrainChunkList;
-        EncodedChunks.Add(chunk);
+        var package = new SubsystemTerrainPackage
+        {
+            Type = DataType.RequestTerrainChunkFragments
+        };
+        package.FragmentRequests.AddRange(requests);
+        return package;
     }
 
-    public SubsystemTerrainPackage(List<CellChange> changeList)
+    public SubsystemTerrainPackage(TerrainCellDelta delta)
     {
-        CellChanges = changeList;
-        Type = DataType.ChangeCellList;
-    }
-
-    public SubsystemTerrainPackage(int x, int y, int z, int v, bool request = false)
-    {
-        Type = request ? DataType.RequestChangeCell : DataType.ChangeCell;
-        X = x;
-        Y = y;
-        Z = z;
-        Value = v;
+        Type = DataType.SyncTerrainCellDelta;
+        CellDelta = delta;
     }
 
     public void WriteData(PackageStreamWriter writer)
@@ -108,46 +86,64 @@ public class SubsystemTerrainPackage : IPackage
         switch (Type)
         {
             case DataType.RequestSyncChunks:
-                writer.Write(RelateChunks.Count);
-                foreach (var p in RelateChunks)
+                writer.Write(ChunkRequests.Count);
+                foreach (var request in ChunkRequests)
                 {
-                    writer.Write(p);
+                    writer.Write(request.Allocation.Coords);
+                    writer.Write(request.Allocation.Generation);
+                    writer.Write(request.KnownContentVersion);
                 }
 
                 break;
-            case DataType.SyncTerrainChunkList:
-                writer.Write((ushort)EncodedChunks.Count);
-                foreach (var chunk in EncodedChunks)
-                {
-                    writer.Write(chunk.Coords);
-                    writer.Write(chunk.Payload.Length);
-                    writer.Write(chunk.Payload);
-                }
-
+            case DataType.SyncTerrainChunkFragment:
+                writer.Write(ChunkFragment.Allocation.Coords);
+                writer.Write(ChunkFragment.Allocation.Generation);
+                writer.Write(ChunkFragment.ContentVersion);
+                writer.Write(ChunkFragment.TotalLength);
+                writer.Write(ChunkFragment.FragmentIndex);
+                writer.Write(ChunkFragment.FragmentCount);
+                writer.Write((ushort)ChunkFragment.Payload.Length);
+                writer.Write(ChunkFragment.Payload);
                 break;
-            case DataType.RequestChangeCell:
-            case DataType.ChangeCell:
-                writer.Write(X);
-                writer.Write(Y);
-                writer.Write(Z);
-                writer.Write(Value);
+            case DataType.RequestTerrainChunkFragments:
+                if (FragmentRequests.Count is <= 0 or > MaximumFragmentRequestsPerPackage)
+                {
+                    throw new InvalidDataException("Invalid terrain fragment request count.");
+                }
+                writer.Write((ushort)FragmentRequests.Count);
+                foreach (var request in FragmentRequests)
+                {
+                    if (request.FragmentCount is 0 or > MaximumRequestedFragmentCount ||
+                        request.MissingFragmentIndices.Length == 0 ||
+                        request.MissingFragmentIndices.Any(index => index >= request.FragmentCount))
+                    {
+                        throw new InvalidDataException("Invalid missing terrain fragment metadata.");
+                    }
+                    writer.Write(request.Allocation.Coords);
+                    writer.Write(request.Allocation.Generation);
+                    writer.Write(request.ContentVersion);
+                    writer.Write(request.FragmentCount);
+                    var bitmap = new byte[(request.FragmentCount + 7) / 8];
+                    foreach (var index in request.MissingFragmentIndices)
+                    {
+                        bitmap[index / 8] |= (byte)(1 << (index % 8));
+                    }
+                    writer.Write((ushort)bitmap.Length);
+                    writer.Write(bitmap);
+                }
+                break;
+            case DataType.SyncTerrainCellDelta:
+                writer.Write(CellDelta.Cell);
+                writer.Write(CellDelta.Value);
+                writer.Write(CellDelta.BaseContentVersion);
+                writer.Write(CellDelta.ResultContentVersion);
                 break;
             case DataType.ReplyResult:
-                writer.Write((ushort)RelateChunks.Count);
-                foreach (var p in RelateChunks)
+                writer.Write((ushort)FailedChunkRequests.Count);
+                foreach (var allocation in FailedChunkRequests)
                 {
-                    writer.Write(p);
-                }
-
-                break;
-            case DataType.ChangeCellList:
-                writer.Write(CellChanges.Count);
-                foreach (var cellChange in CellChanges)
-                {
-                    writer.Write(cellChange.X);
-                    writer.Write(cellChange.Y);
-                    writer.Write(cellChange.Z);
-                    writer.Write(cellChange.Value);
+                    writer.Write(allocation.Coords);
+                    writer.Write(allocation.Generation);
                 }
 
                 break;
@@ -160,75 +156,89 @@ public class SubsystemTerrainPackage : IPackage
         switch (Type)
         {
             case DataType.RequestSyncChunks:
-                RelateChunks = [];
+                ChunkRequests = [];
                 var count = reader.ReadInt32();
                 while (count-- > 0)
                 {
-                    RelateChunks.Add(reader.ReadPoint2());
+                    ChunkRequests.Add(new ChunkContentRequest(
+                        new ChunkAllocationId(reader.ReadPoint2(), reader.ReadUInt64()),
+                        reader.ReadInt64()));
                 }
 
                 break;
-            case DataType.SyncTerrainChunkList:
-                var cn = reader.ReadUInt16();
-                Chunks = new List<TerrainChunk>(cn);
-                while (cn-- > 0)
+            case DataType.SyncTerrainChunkFragment:
+                var fragmentAllocation = new ChunkAllocationId(reader.ReadPoint2(), reader.ReadUInt64());
+                var fragmentContentVersion = reader.ReadInt64();
+                var totalLength = reader.ReadInt32();
+                var fragmentIndex = reader.ReadUInt16();
+                var fragmentCount = reader.ReadUInt16();
+                var fragmentLength = reader.ReadUInt16();
+                ChunkFragment = new EncodedTerrainChunkFragment(
+                    fragmentAllocation,
+                    fragmentContentVersion,
+                    totalLength,
+                    fragmentIndex,
+                    fragmentCount,
+                    reader.ReadBytes(fragmentLength));
+                break;
+            case DataType.RequestTerrainChunkFragments:
+                FragmentRequests = [];
+                var requestCount = reader.ReadUInt16();
+                if (requestCount is 0 or > MaximumFragmentRequestsPerPackage)
                 {
-                    var coords = reader.ReadPoint2();
-                    var length = reader.ReadInt32();
-                    if (length is < 0 or > 2 * 1024 * 1024)
-                    {
-                        throw new InvalidDataException($"Invalid terrain chunk payload size: {length}.");
-                    }
-
-                    Chunks.Add(NetworkChunkCodec.Decode(coords, reader.ReadBytes(length)));
+                    throw new InvalidDataException("Invalid terrain fragment request count.");
                 }
-
+                while (requestCount-- > 0)
+                {
+                    var allocation = new ChunkAllocationId(reader.ReadPoint2(), reader.ReadUInt64());
+                    var contentVersion = reader.ReadInt64();
+                    var requestedFragmentCount = reader.ReadUInt16();
+                    var bitmapLength = reader.ReadUInt16();
+                    var expectedBitmapLength = (requestedFragmentCount + 7) / 8;
+                    if (requestedFragmentCount is 0 or > MaximumRequestedFragmentCount ||
+                        bitmapLength != expectedBitmapLength)
+                    {
+                        throw new InvalidDataException("Invalid missing terrain fragment bitmap.");
+                    }
+                    var bitmap = reader.ReadBytes(bitmapLength);
+                    var missing = new List<ushort>();
+                    for (var index = 0; index < requestedFragmentCount; index++)
+                    {
+                        if ((bitmap[index / 8] & (1 << (index % 8))) != 0)
+                        {
+                            missing.Add((ushort)index);
+                        }
+                    }
+                    if (missing.Count == 0)
+                    {
+                        throw new InvalidDataException("Missing terrain fragment bitmap is empty.");
+                    }
+                    FragmentRequests.Add(new TerrainChunkFragmentRequest(
+                        allocation,
+                        contentVersion,
+                        requestedFragmentCount,
+                        [.. missing]));
+                }
                 break;
-            case DataType.RequestChangeCell:
-            case DataType.ChangeCell:
-                X = reader.ReadInt32();
-                Y = reader.ReadInt32();
-                Z = reader.ReadInt32();
-                Value = reader.ReadInt32();
+            case DataType.SyncTerrainCellDelta:
+                CellDelta = new TerrainCellDelta(
+                    reader.ReadPoint3(),
+                    reader.ReadInt32(),
+                    reader.ReadInt64(),
+                    reader.ReadInt64());
                 break;
             case DataType.ReplyResult:
-                RelateChunks = [];
+                FailedChunkRequests = [];
                 var mc = reader.ReadUInt16();
                 while (mc-- > 0)
                 {
-                    RelateChunks.Add(reader.ReadPoint2());
-                }
-
-                break;
-            case DataType.ChangeCellList:
-                var cellCount = reader.ReadInt32();
-                while (cellCount-- > 0)
-                {
-                    var cellChange = new CellChange
-                    {
-                        X = reader.ReadInt32(),
-                        Y = reader.ReadInt32(),
-                        Z = reader.ReadInt32(),
-                        Value = reader.ReadInt32()
-                    };
-                    CellChanges.Add(cellChange);
+                    FailedChunkRequests.Add(new ChunkAllocationId(
+                        reader.ReadPoint2(),
+                        reader.ReadUInt64()));
                 }
 
                 break;
         }
     }
 
-    public void ApplyOneChunk(SubsystemTerrain subsystemTerrain, TerrainChunk chunk)
-    {
-        var x = chunk.Coords.X;
-        var y = chunk.Coords.Y;
-        var target = subsystemTerrain.Terrain.GetChunkAtCoords(x, y) ??
-                     subsystemTerrain.Terrain.AllocateChunk(x, y);
-        target.Cells = chunk.Cells;
-        target.Shafts = chunk.Shafts;
-        target.ThreadState = TerrainChunkState.InvalidLight;
-        target.IsRequested = false;
-        target.IsLoaded = true;
-        target.WasUpgraded = true;
-    }
 }

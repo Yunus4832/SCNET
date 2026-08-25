@@ -1,31 +1,24 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
-
 using Game.Network.Serialization;
+using Game.Terrains.Distribution;
 
 namespace Game.Network;
 
 internal sealed class NetworkChunkEncoder : IDisposable
 {
     private readonly ConcurrentQueue<EncodingCompletion> _completions = new();
-
-    private readonly Func<NetworkChunkSnapshot, EncodedTerrainChunk> _encode;
-
+    private readonly Func<AuthorityChunkSnapshot, EncodedTerrainChunk> _encode;
     private readonly Lock _lock = new();
-
-    private readonly HashSet<TerrainChunk> _pending = new(ReferenceEqualityComparer.Instance);
-
-    private readonly Channel<TerrainChunk> _queue;
-
+    private readonly HashSet<AuthorityChunkDescriptor> _pending = [];
+    private readonly Channel<AuthorityChunkSnapshot> _queue;
     private readonly int _maximumOutstanding;
-
     private readonly Task _worker;
-
     private bool _disposed;
 
     public NetworkChunkEncoder(
         int maximumOutstanding = NetworkTerrainPolicy.DefaultServerChunkCountSendPer,
-        Func<NetworkChunkSnapshot, EncodedTerrainChunk>? encode = null)
+        Func<AuthorityChunkSnapshot, EncodedTerrainChunk>? encode = null)
     {
         if (maximumOutstanding <= 0)
         {
@@ -34,7 +27,7 @@ internal sealed class NetworkChunkEncoder : IDisposable
 
         _maximumOutstanding = maximumOutstanding;
         _encode = encode ?? NetworkChunkCodec.Encode;
-        _queue = Channel.CreateBounded<TerrainChunk>(new BoundedChannelOptions(maximumOutstanding)
+        _queue = Channel.CreateBounded<AuthorityChunkSnapshot>(new BoundedChannelOptions(maximumOutstanding)
         {
             AllowSynchronousContinuations = false,
             FullMode = BoundedChannelFullMode.Wait,
@@ -55,49 +48,51 @@ internal sealed class NetworkChunkEncoder : IDisposable
         }
     }
 
-    public IReadOnlyList<TerrainChunk> DrainCompleted(Terrain terrain, NetworkChunkCache cache)
+    public bool IsScheduled(AuthorityChunkDescriptor descriptor)
     {
-        ArgumentNullException.ThrowIfNull(terrain);
-        ArgumentNullException.ThrowIfNull(cache);
+        lock (_lock)
+        {
+            return _pending.Contains(descriptor);
+        }
+    }
 
-        List<TerrainChunk>? ready = null;
+    public IReadOnlyList<EncodedTerrainChunk> DrainCompleted(NetworkChunkCache cache)
+    {
+        ArgumentNullException.ThrowIfNull(cache);
+        List<EncodedTerrainChunk>? ready = null;
         while (_completions.TryDequeue(out var completion))
         {
             lock (_lock)
             {
-                _pending.Remove(completion.Source);
+                _pending.Remove(completion.Descriptor);
             }
 
             if (completion.Error != null)
             {
                 Log.Warning(
-                    $"Failed to encode terrain chunk {completion.Source.Coords}: " +
+                    $"Failed to encode terrain chunk {completion.Descriptor.Coords}: " +
                     $"{completion.Error.GetType().Name}: {completion.Error.Message}");
                 continue;
             }
 
-            var current = terrain.GetChunkAtCoords(completion.Source.Coords.X, completion.Source.Coords.Y);
-            if (!ReferenceEquals(current, completion.Source) ||
-                completion.Source.NetworkContentRevision != completion.Revision ||
-                completion.Encoded == null)
+            if (completion.Encoded != null)
             {
-                continue;
+                cache.Store(completion.Encoded);
+                (ready ??= []).Add(completion.Encoded);
             }
-
-            cache.Store(completion.Source, completion.Revision, completion.Encoded);
-            (ready ??= []).Add(completion.Source);
         }
 
-        return ready is null ? Array.Empty<TerrainChunk>() : ready;
+        return ready is null ? Array.Empty<EncodedTerrainChunk>() : ready;
     }
 
-    public bool TrySchedule(TerrainChunk chunk)
+    public bool TrySchedule(AuthorityChunkSnapshot snapshot)
     {
-        ArgumentNullException.ThrowIfNull(chunk);
+        ArgumentNullException.ThrowIfNull(snapshot);
+        var descriptor = new AuthorityChunkDescriptor(snapshot.Coords, snapshot.ContentVersion);
         lock (_lock)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            if (_pending.Contains(chunk))
+            if (_pending.Contains(descriptor))
             {
                 return true;
             }
@@ -107,17 +102,14 @@ internal sealed class NetworkChunkEncoder : IDisposable
                 return false;
             }
 
-            _pending.Add(chunk);
+            _pending.Add(descriptor);
         }
 
         var scheduled = false;
         try
         {
-            scheduled = _queue.Writer.TryWrite(chunk);
-            if (scheduled)
-            {
-                return true;
-            }
+            scheduled = _queue.Writer.TryWrite(snapshot);
+            return scheduled;
         }
         finally
         {
@@ -125,12 +117,10 @@ internal sealed class NetworkChunkEncoder : IDisposable
             {
                 lock (_lock)
                 {
-                    _pending.Remove(chunk);
+                    _pending.Remove(descriptor);
                 }
             }
         }
-
-        return false;
     }
 
     public void Dispose()
@@ -159,36 +149,22 @@ internal sealed class NetworkChunkEncoder : IDisposable
 
     private async Task WorkerLoop()
     {
-        await foreach (var chunk in _queue.Reader.ReadAllAsync().ConfigureAwait(false))
+        await foreach (var snapshot in _queue.Reader.ReadAllAsync().ConfigureAwait(false))
         {
-            NetworkChunkSnapshot? snapshot = null;
+            var descriptor = new AuthorityChunkDescriptor(snapshot.Coords, snapshot.ContentVersion);
             try
             {
-                snapshot = NetworkChunkSnapshot.TryCapture(chunk);
-                _completions.Enqueue(new EncodingCompletion(
-                    chunk,
-                    snapshot?.Revision ?? chunk.NetworkContentRevision,
-                    snapshot == null ? null : _encode(snapshot),
-                    null));
+                _completions.Enqueue(new EncodingCompletion(descriptor, _encode(snapshot), null));
             }
             catch (Exception exception)
             {
-                _completions.Enqueue(new EncodingCompletion(
-                    chunk,
-                    snapshot?.Revision ?? chunk.NetworkContentRevision,
-                    null,
-                    exception));
-            }
-            finally
-            {
-                snapshot?.Dispose();
+                _completions.Enqueue(new EncodingCompletion(descriptor, null, exception));
             }
         }
     }
 
     private sealed record EncodingCompletion(
-        TerrainChunk Source,
-        long Revision,
+        AuthorityChunkDescriptor Descriptor,
         EncodedTerrainChunk? Encoded,
         Exception? Error);
 }

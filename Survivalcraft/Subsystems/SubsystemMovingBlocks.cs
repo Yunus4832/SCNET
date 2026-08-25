@@ -96,7 +96,6 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             _shader.GetParameter("u_hazeStartDensity")
                 .SetValue(new Vector2(_subsystemSky.ViewHazeStart, _subsystemSky.ViewHazeDensity));
             _shader.GetParameter("u_alphaThreshold").SetValue(0.5f);
-            //_shader.GetParameter("u_fogStartInvLength").SetValue(new Vector2(_subsystemSky.ViewFogRange.X, 1f / (_subsystemSky.ViewFogRange.Y - _subsystemSky.ViewFogRange.X)));
             var vertexBuffer = new VertexBuffer(TerrainVertex.VertexDeclaration, _vertices.Count);
             var indexBuffer = new IndexBuffer(IndexFormat.ThirtyTwoBits, _indices.Count);
             vertexBuffer.SetData(_vertices.Array, 0, _vertices.Count);
@@ -119,7 +118,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                 Terrain.ToCell(movingBlockSet.Position.X),
                 Terrain.ToCell(movingBlockSet.Position.Z),
                 false);
-            if (chunkAtCell is not { State: > TerrainChunkState.InvalidContents4 })
+            if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
             {
                 continue;
             }

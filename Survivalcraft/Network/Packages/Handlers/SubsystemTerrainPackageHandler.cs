@@ -1,3 +1,5 @@
+using Game.Terrains.Distribution;
+
 namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<SubsystemTerrainPackage>
@@ -19,66 +21,43 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                     break;
                 }
 
-                if (!subsystemTerrain.TerrainUpdater.WaitChunkList.TryGetValue(package.From, out var list))
-                {
-                    list = [];
-                    subsystemTerrain.TerrainUpdater.WaitChunkList.Add(package.From, list);
-                }
-
-                list.AddRange(package.RelateChunks);
+                var scheduler = subsystemTerrain.TerrainUpdater.ServerChunkDistribution ??
+                                throw new InvalidOperationException(
+                                    "Terrain chunk requests require an authoritative server scheduler.");
+                scheduler.Enqueue(package.From, package.ChunkRequests);
                 break;
-            case SubsystemTerrainPackage.DataType.SyncTerrainChunkList:
-                foreach (var c in package.Chunks)
+            case SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments:
+                if (package.From is null)
                 {
-                    package.ApplyOneChunk(subsystemTerrain, c);
+                    break;
                 }
+                var fragmentScheduler = subsystemTerrain.TerrainUpdater.ServerChunkDistribution ??
+                                        throw new InvalidOperationException(
+                                            "Terrain fragment requests require an authoritative server scheduler.");
+                fragmentScheduler.EnqueueMissing(package.From, package.FragmentRequests);
+                break;
+            case SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment:
+                var transport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
+                                throw new InvalidOperationException(
+                                    "Remote terrain snapshots require a network chunk transport.");
+                transport.Receive(package.ChunkFragment);
 
                 break;
-            case SubsystemTerrainPackage.DataType.RequestChangeCell:
-            case SubsystemTerrainPackage.DataType.ChangeCell:
-            {
-                var chunkX = package.X >> 4;
-                var chunkZ = package.Z >> 4;
-                var chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
-                if (chunk != null)
+            case SubsystemTerrainPackage.DataType.SyncTerrainCellDelta:
+                if (isServer)
                 {
-                    if (package.Type == SubsystemTerrainPackage.DataType.RequestChangeCell)
-                    {
-                        subsystemTerrain.ChangeCell(package.X, package.Y, package.Z, package.Value);
-                    }
-                    else
-                    {
-                        subsystemTerrain.ChangeCellNet(package.X, package.Y, package.Z, package.Value);
-                    }
+                    break;
                 }
-            }
+                var deltaTransport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
+                                     throw new InvalidOperationException(
+                                         "Remote terrain cell deltas require a network chunk transport.");
+                deltaTransport.Receive(package.CellDelta);
                 break;
             case SubsystemTerrainPackage.DataType.ReplyResult:
-                foreach (var p in package.RelateChunks)
-                {
-                    var chunk2 = subsystemTerrain.Terrain.GetChunkAtCoords(p.X, p.Y);
-                    if (chunk2 == null)
-                    {
-                        continue;
-                    }
-
-                    chunk2.IsRequested = false;
-                    chunk2.WasUpgraded = true;
-                    chunk2.WasDowngraded = true;
-                }
-
-                break;
-            case SubsystemTerrainPackage.DataType.ChangeCellList:
-                foreach (var cellChange in package.CellChanges)
-                {
-                    var chunkX = cellChange.X >> 4;
-                    var chunkZ = cellChange.Y >> 4;
-                    var chunk = subsystemTerrain.Terrain.GetChunkAtCoords(chunkX, chunkZ);
-                    if (chunk != null)
-                    {
-                        subsystemTerrain.ChangeCellNet(cellChange.X, cellChange.Y, cellChange.Z, cellChange.Value);
-                    }
-                }
+                var failureTransport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
+                                       throw new InvalidOperationException(
+                                           "Remote terrain failures require a network chunk transport.");
+                failureTransport.ReceiveFailures(package.FailedChunkRequests);
 
                 break;
         }

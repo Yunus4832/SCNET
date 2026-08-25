@@ -79,7 +79,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             var num3 = Terrain.ExtractContents(projectile.Value);
             var block = BlocksManager.Blocks[num3];
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-            if (chunkAtCell is { State: >= TerrainChunkState.InvalidVertices1 } && num2 is >= 0 and < 255)
+            if (chunkAtCell is { MainThreadState: >= TerrainChunkState.InvalidVertices1 } && num2 is >= 0 and < 255)
             {
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
@@ -138,7 +138,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                     Terrain.ToCell(projectile.Position.Z),
                     false
                 );
-                if (chunkAtCell is not { State: > TerrainChunkState.InvalidContents4 })
+                if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
                 {
                     projectile.NoChunk = true;
                     projectile.TrailParticleSystem?.IsStopped = true;

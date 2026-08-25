@@ -88,7 +88,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
             var num3 = Terrain.ToCell(particle.Position.Y);
             var num4 = Terrain.ToCell(particle.Position.Z);
             var chunkAtCell = terrain.GetChunkAtCell(num2, num4, false);
-            if (chunkAtCell is { State: >= TerrainChunkState.InvalidVertices1 })
+            if (chunkAtCell is { MainThreadState: >= TerrainChunkState.InvalidVertices1 })
             {
                 particle.Light = terrain.GetCellLight(num2, num3, num4);
             }

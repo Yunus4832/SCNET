@@ -162,12 +162,9 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             chunk.BoundingBox.Max + new Vector3(16f));
         var dynamicArray = new DynamicArray<IMovingBlockSet>();
         _subsystemMovingBlocks.FindMovingBlocks(boundingBox, false, dynamicArray);
-        foreach (var item in dynamicArray)
+        foreach (var item in dynamicArray.Where(item => item.Id == IdString))
         {
-            if (item.Id == IdString)
-            {
-                StopPiston((Point3)item.Tag);
-            }
+            StopPiston((Point3)item.Tag);
         }
     }
 
@@ -217,7 +214,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             for (var j = -1; j <= 1; j++)
             {
                 var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(key2.X + i * 16, key2.Z + j * 16, false);
-                if (chunkAtCell is not { State: > TerrainChunkState.InvalidContents4 })
+                if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
                 {
                     flag = false;
                 }
@@ -242,42 +239,44 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         foreach (var movingBlockSet in _subsystemMovingBlocks.ReadonlyMovingBlockSets)
         {
-            if (movingBlockSet.Id == IdString)
+            if (movingBlockSet.Id != IdString)
             {
-                var point = (Point3)movingBlockSet.Tag;
-                var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-                if (Terrain.ExtractContents(cellValue) != 237)
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                var data = Terrain.ExtractData(cellValue);
-                var mode = PistonBlock.GetMode(data);
-                var face = PistonBlock.GetFace(data);
-                var p = CellFace.FaceToPoint3(face);
-                var num = int.MaxValue;
-                foreach (var block in movingBlockSet.Blocks)
-                {
-                    num = MathUtils.Min(num, block.Offset.X * p.X + block.Offset.Y * p.Y + block.Offset.Z * p.Z);
-                }
+            var point = (Point3)movingBlockSet.Tag;
+            var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
+            if (Terrain.ExtractContents(cellValue) != 237)
+            {
+                continue;
+            }
 
-                var num2 = movingBlockSet.Position.X * p.X + movingBlockSet.Position.Y * p.Y +
-                           movingBlockSet.Position.Z * p.Z;
-                float num3 = point.X * p.X + point.Y * p.Y + point.Z * p.Z;
-                if (num2 > num3)
+            var data = Terrain.ExtractData(cellValue);
+            var mode = PistonBlock.GetMode(data);
+            var face = PistonBlock.GetFace(data);
+            var p = CellFace.FaceToPoint3(face);
+            var num = int.MaxValue;
+            foreach (var block in movingBlockSet.Blocks)
+            {
+                num = MathUtils.Min(num, block.Offset.X * p.X + block.Offset.Y * p.Y + block.Offset.Z * p.Z);
+            }
+
+            var num2 = movingBlockSet.Position.X * p.X + movingBlockSet.Position.Y * p.Y +
+                       movingBlockSet.Position.Z * p.Z;
+            float num3 = point.X * p.X + point.Y * p.Y + point.Z * p.Z;
+            if (num2 > num3)
+            {
+                if (num + num2 - num3 > 1f)
                 {
-                    if (num + num2 - num3 > 1f)
-                    {
-                        movingBlockSet.SetBlock(p * (num - 1),
-                            Terrain.MakeBlockValue(238, 0,
-                                PistonHeadBlock.SetFace(
-                                    PistonHeadBlock.SetIsShaft(PistonHeadBlock.SetMode(0, mode), true), face)));
-                    }
+                    movingBlockSet.SetBlock(p * (num - 1),
+                        Terrain.MakeBlockValue(238, 0,
+                            PistonHeadBlock.SetFace(
+                                PistonHeadBlock.SetIsShaft(PistonHeadBlock.SetMode(0, mode), true), face)));
                 }
-                else if (num2 < num3 && num + num2 - num3 <= 0f)
-                {
-                    movingBlockSet.SetBlock(p * num, 0);
-                }
+            }
+            else if (num2 < num3 && num + num2 - num3 <= 0f)
+            {
+                movingBlockSet.SetBlock(p * num, 0);
             }
         }
     }
@@ -307,12 +306,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public bool MovePiston(Point3 position, int length)
     {
-        if (CommonLib.WorkType == WorkType.Client)
-        {
-            return true;
-        }
-
-        return MovePistonNet(position, length);
+        return CommonLib.WorkType == WorkType.Client || MovePistonNet(position, length);
     }
 
     public bool MovePistonNet(Point3 position, int length)
@@ -340,20 +334,18 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 break;
             }
 
-            var movingBlocks = _movingBlocks;
             item = new MovingBlock
             {
                 Offset = offset,
                 Value = cellValue
             };
-            movingBlocks.Add(item);
+            _movingBlocks.Add(item);
             offset += point;
             num++;
         }
 
         if (length > num)
         {
-            var movingBlocks2 = _movingBlocks;
             item = new MovingBlock
             {
                 Offset = Point3.Zero,
@@ -361,13 +353,15 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     PistonHeadBlock.SetFace(PistonHeadBlock.SetMode(PistonHeadBlock.SetIsShaft(0, num > 0), mode),
                         face))
             };
-            movingBlocks2.Add(item);
+            _movingBlocks.Add(item);
             var num3 = 0;
             var pass = true;
             while (num3 < 8)
             {
-                if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(position.X + offset.X,
-                        position.Z + offset.Z, out var territoriy))
+                if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(
+                        position.X + offset.X,
+                        position.Z + offset.Z,
+                        out var territoriy))
                 {
                     if (territoriy!.IsVisible)
                     {
@@ -376,20 +370,22 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     }
                 }
 
-                var cellValue2 =
-                    terrain.GetCellValue(position.X + offset.X, position.Y + offset.Y, position.Z + offset.Z);
+                var cellValue2 = terrain.GetCellValue(
+                    position.X + offset.X,
+                    position.Y + offset.Y,
+                    position.Z + offset.Z
+                );
                 if (!IsBlockMovable(cellValue2, face, position.Y + offset.Y, out var isEnd))
                 {
                     break;
                 }
 
-                var movingBlocks3 = _movingBlocks;
                 item = new MovingBlock
                 {
                     Offset = offset,
                     Value = cellValue2
                 };
-                movingBlocks3.Add(item);
+                _movingBlocks.Add(item);
                 num3++;
                 offset += point;
                 if (isEnd)
@@ -398,111 +394,120 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 }
             }
 
-            if (!IsBlockBlocking(terrain.GetCellValue(position.X + offset.X, position.Y + offset.Y,
-                    position.Z + offset.Z)) && pass)
+            if (IsBlockBlocking(terrain.GetCellValue(
+                    position.X + offset.X,
+                    position.Y + offset.Y,
+                    position.Z + offset.Z)) ||
+                !pass)
             {
-                GetSpeedAndSmoothness(speed, out var speed2, out var smoothness);
-                var p = position + (length - num) * point;
-                if (_subsystemMovingBlocks.AddMovingBlockSet(new Vector3(position) + 0.01f * new Vector3(point),
-                        new Vector3(p), speed2, 0f, 0f, smoothness, _movingBlocks, IdString, position, true) != null)
-                {
-                    _allowPistonHeadRemove = true;
-                    try
-                    {
-                        foreach (var movingBlock in _movingBlocks)
-                        {
-                            if (movingBlock.Offset != Point3.Zero)
-                            {
-                                _subsystemTerrain.ChangeCell(position.X + movingBlock.Offset.X,
-                                    position.Y + movingBlock.Offset.Y, position.Z + movingBlock.Offset.Z, 0);
-                            }
-                        }
-                    }
-                    finally
-                    {
-                        _allowPistonHeadRemove = false;
-                    }
+                return false;
+            }
 
-                    _subsystemTerrain.ChangeCell(position.X, position.Y, position.Z,
-                        Terrain.MakeBlockValue(PistonBlock.Index, 0, PistonBlock.SetIsExtended(data, true)));
-                    _subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, new Vector3(position), 2f, true);
+            GetSpeedAndSmoothness(speed, out var speed2, out var smoothness);
+            var p = position + (length - num) * point;
+            if (_subsystemMovingBlocks.AddMovingBlockSet(new Vector3(position) + 0.01f * new Vector3(point),
+                    new Vector3(p), speed2, 0f, 0f, smoothness, _movingBlocks, IdString, position, true) == null)
+            {
+                return false;
+            }
+
+            _allowPistonHeadRemove = true;
+            try
+            {
+                foreach (var movingBlock in _movingBlocks.Where(movingBlock => movingBlock.Offset != Point3.Zero))
+                {
+                    _subsystemTerrain.ChangeCell(position.X + movingBlock.Offset.X,
+                        position.Y + movingBlock.Offset.Y, position.Z + movingBlock.Offset.Z, 0);
                 }
             }
+            finally
+            {
+                _allowPistonHeadRemove = false;
+            }
+
+            _subsystemTerrain.ChangeCell(position.X, position.Y, position.Z,
+                Terrain.MakeBlockValue(PistonBlock.Index, 0, PistonBlock.SetIsExtended(data, true)));
+            _subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, new Vector3(position), 2f, true);
 
             return false;
         }
 
-        if (length < num)
+        if (length >= num)
         {
-            if (mode != 0)
+            return true;
+        }
+
+        if (mode != 0)
+        {
+            var num4 = 0;
+            for (var i = 0; i < pullCount + 1; i++)
             {
-                var num4 = 0;
-                for (var i = 0; i < pullCount + 1; i++)
+                if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(position.X + offset.X,
+                        position.Z + offset.Z, out var territoriy))
                 {
-                    if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(position.X + offset.X,
-                            position.Z + offset.Z, out var territoriy))
-                    {
-                        if (territoriy!.IsVisible)
-                        {
-                            break;
-                        }
-                    }
-
-                    var cellValue3 = terrain.GetCellValue(position.X + offset.X, position.Y + offset.Y,
-                        position.Z + offset.Z);
-                    if (!IsBlockMovable(cellValue3, face, position.Y + offset.Y, out var isEnd2))
-                    {
-                        break;
-                    }
-
-                    var movingBlocks4 = _movingBlocks;
-                    item = new MovingBlock
-                    {
-                        Offset = offset,
-                        Value = cellValue3
-                    };
-                    movingBlocks4.Add(item);
-                    offset += point;
-                    num4++;
-                    if (isEnd2)
+                    if (territoriy!.IsVisible)
                     {
                         break;
                     }
                 }
 
-                if (mode == PistonMode.StrictPulling && num4 < pullCount + 1)
+                var cellValue3 = terrain.GetCellValue(position.X + offset.X, position.Y + offset.Y,
+                    position.Z + offset.Z);
+                if (!IsBlockMovable(cellValue3, face, position.Y + offset.Y, out var isEnd2))
                 {
-                    return false;
+                    break;
+                }
+
+                item = new MovingBlock
+                {
+                    Offset = offset,
+                    Value = cellValue3
+                };
+                _movingBlocks.Add(item);
+                offset += point;
+                num4++;
+                if (isEnd2)
+                {
+                    break;
                 }
             }
 
-            GetSpeedAndSmoothness(speed, out var speed3, out var smoothness2);
-            var s = length == 0 ? 0.01f : 0f;
-            var targetPosition = new Vector3(position) + (length - num) * new Vector3(point) + s * new Vector3(point);
-            if (_subsystemMovingBlocks.AddMovingBlockSet(new Vector3(position), targetPosition, speed3, 0f, 0f,
-                    smoothness2, _movingBlocks, IdString, position, true) != null)
+            if (mode == PistonMode.StrictPulling && num4 < pullCount + 1)
             {
-                _allowPistonHeadRemove = true;
-                try
-                {
-                    foreach (var movingBlock2 in _movingBlocks)
-                    {
-                        _subsystemTerrain.ChangeCell(position.X + movingBlock2.Offset.X,
-                            position.Y + movingBlock2.Offset.Y, position.Z + movingBlock2.Offset.Z, 0);
-                    }
-                }
-                finally
-                {
-                    _allowPistonHeadRemove = false;
-                }
-
-                _subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, new Vector3(position), 2f, true);
+                return false;
             }
+        }
 
+        GetSpeedAndSmoothness(speed, out var speed3, out var smoothness2);
+        var s = length == 0 ? 0.01f : 0f;
+        var targetPosition = new Vector3(position) + (length - num) * new Vector3(point) + s * new Vector3(point);
+        if (_subsystemMovingBlocks.AddMovingBlockSet(new Vector3(position), targetPosition, speed3, 0f, 0f,
+                smoothness2, _movingBlocks, IdString, position, true) == null)
+        {
             return false;
         }
 
-        return true;
+        _allowPistonHeadRemove = true;
+        try
+        {
+            foreach (var movingBlock2 in _movingBlocks)
+            {
+                _subsystemTerrain.ChangeCell(
+                    position.X + movingBlock2.Offset.X,
+                    position.Y + movingBlock2.Offset.Y,
+                    position.Z + movingBlock2.Offset.Z,
+                    0
+                );
+            }
+        }
+        finally
+        {
+            _allowPistonHeadRemove = false;
+        }
+
+        _subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, new Vector3(position), 2f, true);
+
+        return false;
     }
 
     public void StopPiston(Point3 position)
@@ -516,38 +521,44 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
     public void StopPistonNet(Point3 position)
     {
         var movingBlockSet = _subsystemMovingBlocks.FindMovingBlocks(IdString, position);
-        if (movingBlockSet != null)
+        if (movingBlockSet is null)
         {
-            var cellValue = _subsystemTerrain.Terrain.GetCellValue(position.X, position.Y, position.Z);
-            var num = Terrain.ExtractContents(cellValue);
-            var data = Terrain.ExtractData(cellValue);
-            var flag = num == PistonBlock.Index;
-            var isExtended = false;
-            _subsystemMovingBlocks.RemoveMovingBlockSet(movingBlockSet);
-            foreach (var block in movingBlockSet.Blocks)
+            return;
+        }
+
+        var cellValue = _subsystemTerrain.Terrain.GetCellValue(position.X, position.Y, position.Z);
+        var num = Terrain.ExtractContents(cellValue);
+        var data = Terrain.ExtractData(cellValue);
+        var flag = num == PistonBlock.Index;
+        var isExtended = false;
+        _subsystemMovingBlocks.RemoveMovingBlockSet(movingBlockSet);
+        foreach (var block in movingBlockSet.Blocks)
+        {
+            var x = Terrain.ToCell(MathUtils.Round(movingBlockSet.Position.X)) + block.Offset.X;
+            var y = Terrain.ToCell(MathUtils.Round(movingBlockSet.Position.Y)) + block.Offset.Y;
+            var z = Terrain.ToCell(MathUtils.Round(movingBlockSet.Position.Z)) + block.Offset.Z;
+            if (new Point3(x, y, z) == position)
             {
-                var x = Terrain.ToCell(MathUtils.Round(movingBlockSet.Position.X)) + block.Offset.X;
-                var y = Terrain.ToCell(MathUtils.Round(movingBlockSet.Position.Y)) + block.Offset.Y;
-                var z = Terrain.ToCell(MathUtils.Round(movingBlockSet.Position.Z)) + block.Offset.Z;
-                if (!(new Point3(x, y, z) == position))
-                {
-                    var num2 = Terrain.ExtractContents(block.Value);
-                    if (flag || num2 != PistonHeadBlock.Index)
-                    {
-                        _subsystemTerrain.DestroyCell(0, x, y, z, block.Value, false, false);
-                        if (num2 == PistonHeadBlock.Index)
-                        {
-                            isExtended = true;
-                        }
-                    }
-                }
+                continue;
             }
 
-            if (flag)
+            var num2 = Terrain.ExtractContents(block.Value);
+            if (!flag && num2 == PistonHeadBlock.Index)
             {
-                _subsystemTerrain.ChangeCell(position.X, position.Y, position.Z,
-                    Terrain.MakeBlockValue(PistonBlock.Index, 0, PistonBlock.SetIsExtended(data, isExtended)));
+                continue;
             }
+
+            _subsystemTerrain.DestroyCell(0, x, y, z, block.Value, false, false);
+            if (num2 == PistonHeadBlock.Index)
+            {
+                isExtended = true;
+            }
+        }
+
+        if (flag)
+        {
+            _subsystemTerrain.ChangeCell(position.X, position.Y, position.Z,
+                Terrain.MakeBlockValue(PistonBlock.Index, 0, PistonBlock.SetIsExtended(data, isExtended)));
         }
     }
 
@@ -590,16 +601,18 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        if (Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z)) == PistonBlock.Index)
+        if (Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z)) != PistonBlock.Index)
         {
-            if (!_actions.TryGetValue(key, out var value))
-            {
-                value = new QueuedAction();
-                _actions.Add(key, value);
-            }
-
-            value.Stop = true;
+            return;
         }
+
+        if (!_actions.TryGetValue(key, out var value))
+        {
+            value = new QueuedAction();
+            _actions.Add(key, value);
+        }
+
+        value.Stop = true;
     }
 
     public static bool IsBlockMovable(int value, int pistonFace, int y, out bool isEnd)
@@ -633,26 +646,18 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             default:
             {
                 var block = BlocksManager.Blocks[num];
-                if (block is BottomSuckerBlock)
+                switch (block)
                 {
-                    return false;
-                }
-
-                if (block is MountedElectricElementBlock elementBlock)
-                {
-                    isEnd = true;
-                    return elementBlock.GetFace(value) == pistonFace;
-                }
-
-                if (block is DoorBlock or TrapdoorBlock)
-                {
-                    return false;
-                }
-
-                if (block is LadderBlock)
-                {
-                    isEnd = true;
-                    return pistonFace == LadderBlock.GetFace(data);
+                    case BottomSuckerBlock:
+                        return false;
+                    case MountedElectricElementBlock elementBlock:
+                        isEnd = true;
+                        return elementBlock.GetFace(value) == pistonFace;
+                    case DoorBlock or TrapdoorBlock:
+                        return false;
+                    case LadderBlock:
+                        isEnd = true;
+                        return pistonFace == LadderBlock.GetFace(data);
                 }
 
                 if (block is not AttachedSignBlock)

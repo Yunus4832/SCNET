@@ -56,7 +56,15 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                 break;
             case PlayerDataPackage.DataType.SetUpdateLocation:
                 var player = subsystemPlayers.PlayersData.Find(x => x.Client == package.From);
-                if (player != null && NetworkTerrainPolicy.TryClampClientUpdateLocation(
+                if (player == null)
+                {
+                    Log.Warning(
+                        $"Ignored terrain update location without matching player: " +
+                        $"client={package.From?.ID.ToString() ?? "null"}, center={package.UpdateLocation.Center}.");
+                    break;
+                }
+
+                if (NetworkTerrainPolicy.TryClampClientUpdateLocation(
                         package.UpdateLocation,
                         SettingsManager.Current.MaxClientVisibilityRange,
                         out var updateLocation
@@ -64,13 +72,28 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                    )
                 {
                     var updater = project.FindSubsystem<SubsystemTerrain>(true)!.TerrainUpdater;
-                    updater.SetLastChunksUpdateCenter(player.PlayerIndex, updateLocation.LastChunksUpdateCenter);
+                    // LastChunksUpdateCenter belongs to the server updater. Copying the client's
+                    // value first makes SetUpdateLocation treat every remote move as unchanged and
+                    // leaves server terrain generation centered at the old player position.
                     updater.SetUpdateLocation(
                         player.PlayerIndex,
                         updateLocation.Center,
                         updateLocation.VisibilityDistance,
                         updateLocation.ContentDistance
                     );
+                    if (updater.ServerChunkDistribution != null && package.From != null)
+                    {
+                        updater.ServerChunkDistribution.UpdateClientLocation(
+                            package.From,
+                            updateLocation.Center,
+                            updateLocation.ContentDistance);
+                    }
+                }
+                else
+                {
+                    Log.Warning(
+                        $"Rejected invalid terrain update location: client={package.From?.ID.ToString() ?? "null"}, " +
+                        $"center={package.UpdateLocation.Center}.");
                 }
 
                 break;

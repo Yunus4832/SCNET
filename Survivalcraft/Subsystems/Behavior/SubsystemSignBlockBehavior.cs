@@ -143,28 +143,35 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         var num = Terrain.ExtractContents(cellValueFast);
         var data = Terrain.ExtractData(cellValueFast);
         var block = BlocksManager.Blocks[num];
-        if (block is AttachedSignBlock)
+        switch (block)
         {
-            var point = CellFace.FaceToPoint3(AttachedSignBlock.GetFace(data));
-            var x2 = x - point.X;
-            var y2 = y - point.Y;
-            var z2 = z - point.Z;
-            var cellValue = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
-            var cellContents = Terrain.ExtractContents(cellValue);
-            if (!BlocksManager.Blocks[cellContents].IsCollidable(cellValue))
+            case AttachedSignBlock:
             {
-                SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-            }
-        }
-        else if (block is PostedSignBlock)
-        {
-            var num2 = PostedSignBlock.GetHanging(data)
-                ? SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z)
-                : SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
+                var point = CellFace.FaceToPoint3(AttachedSignBlock.GetFace(data));
+                var x2 = x - point.X;
+                var y2 = y - point.Y;
+                var z2 = z - point.Z;
+                var cellValue = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
+                var cellContents = Terrain.ExtractContents(cellValue);
+                if (!BlocksManager.Blocks[cellContents].IsCollidable(cellValue))
+                {
+                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+                }
 
-            if (!BlocksManager.Blocks[Terrain.ExtractContents(num2)].IsCollidable(num2))
+                break;
+            }
+            case PostedSignBlock:
             {
-                SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+                var num2 = PostedSignBlock.GetHanging(data)
+                    ? SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z)
+                    : SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
+
+                if (!BlocksManager.Blocks[Terrain.ExtractContents(num2)].IsCollidable(num2))
+                {
+                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+                }
+
+                break;
             }
         }
     }
@@ -363,11 +370,13 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         var list2 = new List<Color>();
         for (var i = 0; i < textData.Lines.Length; i++)
         {
-            if (!string.IsNullOrEmpty(textData.Lines[i]))
+            if (string.IsNullOrEmpty(textData.Lines[i]))
             {
-                list.Add(textData.Lines[i].Replace("\\", "").ToUpper());
-                list2.Add(textData.Colors[i]);
+                continue;
             }
+
+            list.Add(textData.Lines[i].Replace("\\", "").ToUpper());
+            list2.Add(textData.Colors[i]);
         }
 
         if (list.Count <= 0)
@@ -413,11 +422,13 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
             var flag2 = false;
             foreach (var lastUpdatePosition in _lastUpdatePositions)
             {
-                if (Vector3.DistanceSquared(gameWidget.ActiveCamera.ViewPosition, lastUpdatePosition) < 4f)
+                if (!(Vector3.DistanceSquared(gameWidget.ActiveCamera.ViewPosition, lastUpdatePosition) < 4f))
                 {
-                    flag2 = true;
-                    break;
+                    continue;
                 }
+
+                flag2 = true;
+                break;
             }
 
             if (flag2)
@@ -549,7 +560,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
             var data = Terrain.ExtractData(cellValue);
             var signSurfaceBlockMesh = signBlock.GetSignSurfaceBlockMesh(data);
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(nearText.Point.X, nearText.Point.Z, false);
-            if (chunkAtCell is { State: >= TerrainChunkState.InvalidVertices1 })
+            if (chunkAtCell is { MainThreadState: >= TerrainChunkState.InvalidVertices1 })
             {
                 nearText.Light = Terrain.ExtractLight(cellValue);
             }

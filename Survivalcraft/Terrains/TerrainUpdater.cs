@@ -1,6 +1,7 @@
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Terrains.Distribution;
 using Game.TerrainSerializers;
 
 namespace Game.Terrains;
@@ -10,6 +11,8 @@ namespace Game.Terrains;
 /// </summary>
 public class TerrainUpdater
 {
+    public const double NetworkChunkRequestRetrySeconds = 5.0;
+
     /// <summary>
     /// 慢速地形更新间隔（帧数）
     /// </summary>
@@ -64,7 +67,17 @@ public class TerrainUpdater
     /// <summary>
     /// 客户端请求的待同步区块列表（用于联机模式）
     /// </summary>
-    private readonly List<Point2> _requestSyncChunkList = [];
+    private readonly List<ChunkContentRequest> _requestSyncChunkList = [];
+
+    private readonly List<ClientChunkSnapshot> _receivedChunkSnapshots = [];
+
+    private readonly List<ChunkAllocationId> _failedChunkAllocations = [];
+
+    private readonly List<TerrainCellDelta> _receivedCellDeltas = [];
+
+    private readonly Dictionary<Point2, long> _remoteChunkLastAccess = [];
+
+    private long _remoteChunkAccessClock;
 
     /// <summary>
     /// 上一次的天空光照值，用于检测光照变化
@@ -148,19 +161,9 @@ public class TerrainUpdater
     );
 
 
-    /// <summary>
-    /// 等待发送区块数据的客户端列表（服务器端使用）
-    /// </summary>
-    public readonly Dictionary<Client, List<Point2>> WaitChunkList = new();
+    public ServerChunkDistributionScheduler? ServerChunkDistribution { get; }
 
-    private readonly NetworkChunkCache _networkChunkCache = new();
-
-    private readonly NetworkChunkEncoder _networkChunkEncoder;
-
-    /// <summary>
-    /// 需要移除的等待客户端列表
-    /// </summary>
-    private readonly List<Client> _waitChunkListToRemove = [];
+    private double _lastNetworkChunkDiagnosticTime;
 
     /// <summary>
     /// 更新位置字典
@@ -206,8 +209,14 @@ public class TerrainUpdater
         _updateParameters.Locations = new Dictionary<int, UpdateLocation>();
         _threadUpdateParameters.Chunks = [];
         _threadUpdateParameters.Locations = new Dictionary<int, UpdateLocation>();
-        _networkChunkEncoder = new NetworkChunkEncoder(
-            Math.Max(1, SettingsManager.Current.ServerChunkCountSendPer));
+        if (_subsystemTerrain.ContentRole == TerrainContentRole.Authority)
+        {
+            ServerChunkDistribution = new ServerChunkDistributionScheduler(
+                _subsystemTerrain.ChunkContentAuthority ??
+                throw new InvalidOperationException("Authoritative terrain requires a content authority."),
+                Math.Max(1, SettingsManager.Current.ServerChunkCountSendPer));
+        }
+
         SettingsManager.BrightnessChanged += SettingsManagerBrightnessChanged;
         SetUpdateLocation(-1, Vector2.Zero, 4, 4);
         _task = Task.Factory.StartNew(
@@ -230,7 +239,7 @@ public class TerrainUpdater
         UpdateEvent.Set();
         _task.GetAwaiter().GetResult();
 
-        _networkChunkEncoder.Dispose();
+        ServerChunkDistribution?.Dispose();
 
         _pauseEvent.Dispose();
         UpdateEvent.Dispose();
@@ -288,7 +297,7 @@ public class TerrainUpdater
         location.ContentDistance = contentDistance;
         location.LastChunksUpdateCenter = center;
         _pendingLocations[locationIndex] = location;
-        if (CommonLib.WorkType == WorkType.Client)
+        if (_subsystemTerrain.UsesRemoteChunkTransport)
         {
             CommonLib.Net.QueuePackage(new PlayerDataPackage(location));
         }
@@ -347,7 +356,7 @@ public class TerrainUpdater
                 v1: location.Center);
             if (distanceSqrFromChunkToLocation <= visibilityDistanceSqr)
             {
-                if (chunk == null || chunk.State < TerrainChunkState.Valid)
+                if (chunk == null || chunk.MainThreadState < TerrainChunkState.Valid)
                 {
                     invalidChunkCount++;
                 }
@@ -358,7 +367,7 @@ public class TerrainUpdater
             }
             else if (distanceSqrFromChunkToLocation <= contentDistanceSqr)
             {
-                if (chunk == null || chunk.State < TerrainChunkState.InvalidLight)
+                if (chunk == null || chunk.MainThreadState < TerrainChunkState.InvalidLight)
                 {
                     invalidChunkCount++;
                 }
@@ -387,7 +396,8 @@ public class TerrainUpdater
     /// </remarks>
     public void Update()
     {
-        SendCompletedNetworkChunks();
+        TryDrainReceivedChunkContents();
+        ServerChunkDistribution?.Update();
 
         // 如果光照变化，降级所有的区块到 InvalidLight 状态
         if (_subsystemSky.SkyLightValue != _lastSkylightValue)
@@ -454,6 +464,7 @@ public class TerrainUpdater
                 }
             }
         }
+
         // 位置更新不能阻止主、后台区块状态交换，否则已经生成的几何会长期保持不可见。
         if (_updateParametersLock.TryEnter())
         {
@@ -470,21 +481,34 @@ public class TerrainUpdater
             }
         }
 
+        var activeLocations = _updateParameters.Locations.Values.ToArray();
         foreach (var terrainChunk in _terrain.AllocatedChunks)
         {
-            if (CommonLib.WorkType == WorkType.Client)
+            if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica)
             {
-                if (terrainChunk is { ThreadState: TerrainChunkState.NotLoaded, IsRequested: false })
+                var now = Time.RealTime;
+                if (terrainChunk.WorkerState == TerrainChunkState.NotLoaded &&
+                    IsChunkInRange(
+                        terrainChunk.Center,
+                        activeLocations) &&
+                    ShouldRequestNetworkChunk(terrainChunk, now))
                 {
                     terrainChunk.IsRequested = true;
+                    terrainChunk.NetworkRequestTime = now;
+                    terrainChunk.NetworkRequestAttempts++;
+
                     lock (_requestSyncChunkList)
                     {
-                        _requestSyncChunkList.Add(terrainChunk.Coords);
+                        _requestSyncChunkList.Add(new ChunkContentRequest(
+                            new ChunkAllocationId(
+                                terrainChunk.Coords,
+                                terrainChunk.AllocationGeneration),
+                            terrainChunk.NetworkContentVersion));
                     }
                 }
             }
 
-            if (terrainChunk.State < TerrainChunkState.InvalidVertices1 || terrainChunk.AreBehaviorsNotified)
+            if (terrainChunk.MainThreadState < TerrainChunkState.InvalidVertices1 || terrainChunk.AreBehaviorsNotified)
             {
                 continue;
             }
@@ -493,122 +517,143 @@ public class TerrainUpdater
             NotifyBlockBehaviors(terrainChunk);
         }
 
+        LogStalledNetworkChunks();
+
         lock (_requestSyncChunkList)
         {
-            if (_requestSyncChunkList.Count > 0 && Time.PeriodicEvent(0.5, 0.0))
+            if (_requestSyncChunkList.Count <= 0 || !Time.PeriodicEvent(0.5, 0.0))
             {
-                CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(_requestSyncChunkList));
-                _requestSyncChunkList.Clear();
+                return;
             }
+
+            var transport = _subsystemTerrain.ChunkContentTransport ??
+                            throw new InvalidOperationException(
+                                "Client terrain requests require a chunk content transport.");
+            transport.Request(_requestSyncChunkList);
+            _requestSyncChunkList.Clear();
         }
-
-        foreach (var item in WaitChunkList)
-        {
-            var toRemove = new List<Point2>();
-            var result = new List<Point2>();
-            if (Time.PeriodicEvent(1, 0.6))
-            {
-                var sc = Math.Min(item.Value.Count, SettingsManager.Current.ServerChunkCountSendPer);
-                for (var i = 0; i < sc; i++)
-                {
-                    var coord = item.Value[i];
-                    var chunk = _subsystemTerrain.Terrain.GetChunkAtCoords(coord.X, coord.Y);
-                    if (chunk != null)
-                    {
-                        if (chunk.ThreadState > TerrainChunkState.InvalidContents4)
-                        {
-                            if (_networkChunkCache.TryGet(chunk, out var encoded))
-                            {
-                                CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(encoded)
-                                {
-                                    To = item.Key
-                                });
-                                toRemove.Add(coord);
-                            }
-                            else
-                            {
-                                _networkChunkEncoder.TrySchedule(chunk);
-                            }
-                        }
-                        else
-                            // 回复客户端加载失败，让客户端重新请求
-                        {
-                            result.Add(new Point2(coord.X, coord.Y));
-                            toRemove.Add(coord);
-                        }
-                    }
-                    else
-                    {
-                        // 回复客户端加载失败，让客户端重新请求
-                        result.Add(new Point2(coord.X, coord.Y));
-                        toRemove.Add(coord);
-                    }
-                }
-
-                if (result.Count > 0)
-                {
-                    CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(result, 0) { To = item.Key });
-                }
-            }
-
-            foreach (var item2 in toRemove)
-            {
-                item.Value.Remove(item2);
-            }
-
-            if (item.Value.Count == 0)
-            {
-                _waitChunkListToRemove.Add(item.Key);
-            }
-        }
-
-        foreach (var item in _waitChunkListToRemove)
-        {
-            WaitChunkList.Remove(item);
-        }
-
-        _waitChunkListToRemove.Clear();
     }
 
-    private void SendCompletedNetworkChunks()
+    private bool TryDrainReceivedChunkContents()
     {
-        var completed = _networkChunkEncoder.DrainCompleted(_terrain, _networkChunkCache);
-        if (completed.Count == 0 || WaitChunkList.Count == 0)
+        var transport = _subsystemTerrain.ChunkContentTransport;
+        var coordinator = _subsystemTerrain.ClientChunkContents;
+        if (transport == null || coordinator == null)
         {
-            return;
+            return true;
         }
 
-        foreach (var item in WaitChunkList)
+        // Installing authoritative arrays and resetting their derived state must not race
+        // a lighting or geometry step. Leave deliveries queued when the worker owns the token.
+        _pauseEvent.Reset();
+        if (!UpdateEvent.WaitOne(0))
         {
-            foreach (var chunk in completed)
+            return false;
+        }
+
+        _pauseEvent.Set();
+        try
+        {
+            _receivedChunkSnapshots.Clear();
+            transport.DrainReceived(_receivedChunkSnapshots);
+            foreach (var snapshot in _receivedChunkSnapshots)
             {
-                if (!_networkChunkCache.TryGet(chunk, out var encoded))
+                coordinator.TryInstall(snapshot);
+            }
+
+            _receivedCellDeltas.Clear();
+            transport.DrainDeltas(_receivedCellDeltas);
+            var deltaCoordinator = _subsystemTerrain.ClientTerrainDeltas;
+            if (deltaCoordinator != null)
+            {
+                foreach (var delta in _receivedCellDeltas)
+                {
+                    deltaCoordinator.Receive(delta);
+                }
+            }
+
+            _failedChunkAllocations.Clear();
+            transport.DrainFailed(_failedChunkAllocations);
+            foreach (var allocation in _failedChunkAllocations)
+            {
+                var chunk = _terrain.GetChunkAtCoords(allocation.Coords.X, allocation.Coords.Y);
+                if (chunk == null || chunk.AllocationGeneration != allocation.Generation)
                 {
                     continue;
                 }
 
-                var removed = item.Value.RemoveAll(coords => coords == chunk.Coords);
-                if (removed > 0)
-                {
-                    CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(encoded)
-                    {
-                        To = item.Key
-                    });
-                }
+                chunk.IsRequested = false;
+                chunk.NetworkRequestTime = 0.0;
+                TerrainChunkStateExchange.RequestDowngrade(chunk, chunk.MainThreadState);
             }
 
-            if (item.Value.Count == 0)
-            {
-                _waitChunkListToRemove.Add(item.Key);
-            }
+            return true;
         }
-
-        foreach (var client in _waitChunkListToRemove)
+        finally
         {
-            WaitChunkList.Remove(client);
+            UpdateEvent.Set();
+        }
+    }
+
+    public static bool ShouldRequestNetworkChunk(TerrainChunk chunk, double now)
+    {
+        ArgumentNullException.ThrowIfNull(chunk);
+        return !chunk.IsRequested ||
+               chunk.NetworkRequestTime <= 0.0 ||
+               now < chunk.NetworkRequestTime ||
+               now - chunk.NetworkRequestTime >= NetworkChunkRequestRetrySeconds;
+    }
+
+    private void LogStalledNetworkChunks()
+    {
+        if (_subsystemTerrain.ContentRole != TerrainContentRole.Replica)
+        {
+            return;
         }
 
-        _waitChunkListToRemove.Clear();
+        var now = Time.RealTime;
+        if (now - _lastNetworkChunkDiagnosticTime < NetworkChunkRequestRetrySeconds)
+        {
+            return;
+        }
+
+        _lastNetworkChunkDiagnosticTime = now;
+        var activeLocations = _updateParameters.Locations.Values.ToArray();
+        var stalled = _terrain.AllocatedChunks
+            .Where(chunk => IsChunkInRange(chunk.Center, activeLocations))
+            .Where(chunk => IsNetworkChunkStalled(chunk, now))
+            .ToArray();
+        if (stalled.Length == 0)
+        {
+            return;
+        }
+
+        Log.Warning($"Terrain chunk stalled summary: count={stalled.Length}.");
+    }
+
+    internal static bool IsNetworkChunkStalled(TerrainChunk chunk, double now)
+    {
+        if (!chunk.IsLoaded)
+        {
+            return chunk.IsRequested && now - chunk.NetworkRequestTime >= NetworkChunkRequestRetrySeconds;
+        }
+
+        if (chunk.NetworkContentReceiveTime <= 0.0 ||
+            now - chunk.NetworkContentReceiveTime < NetworkChunkRequestRetrySeconds)
+        {
+            return false;
+        }
+
+        // Lighting or neighbor invalidation may rebuild derived data while the currently
+        // uploaded geometry for the same authoritative contents remains visible.
+        if (ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk))
+        {
+            return false;
+        }
+
+        return chunk.WorkerState < TerrainChunkState.Valid ||
+               chunk.MainThreadState < TerrainChunkState.Valid ||
+               !chunk.NetworkGeometryUploaded;
     }
 
     /// <summary>
@@ -640,14 +685,18 @@ public class TerrainUpdater
             SendReceiveChunkStatesThread();
             foreach (var item in list)
             {
-                if (!CanSynchronouslyUpdateChunk(CommonLib.WorkType, item))
+                if (!CanSynchronouslyUpdateChunk(_subsystemTerrain.ContentRole, item))
                 {
                     continue;
                 }
 
-                while (item.ThreadState < TerrainChunkState.Valid)
+                while (item.WorkerState < TerrainChunkState.Valid)
                 {
-                    UpdateChunkSingleStep(item, _subsystemSky.SkyLightValue);
+                    var dependency = ClientDerivedTerrainPolicy.FindPendingLightingDependency(
+                        _terrain,
+                        _subsystemTerrain.ContentRole,
+                        item);
+                    UpdateChunkSingleStep(dependency ?? item, _subsystemSky.SkyLightValue);
                 }
             }
 
@@ -660,9 +709,9 @@ public class TerrainUpdater
         }
     }
 
-    internal static bool CanSynchronouslyUpdateChunk(WorkType workType, TerrainChunk chunk)
+    internal static bool CanSynchronouslyUpdateChunk(TerrainContentRole role, TerrainChunk chunk)
     {
-        return workType != WorkType.Client || chunk.IsLoaded;
+        return role != TerrainContentRole.Replica || chunk.IsLoaded;
     }
 
     /// <summary>
@@ -684,16 +733,16 @@ public class TerrainUpdater
                 continue;
             }
 
-            if (chunkAtCoords.State > state)
+            if (chunkAtCoords.MainThreadState > state)
             {
-                chunkAtCoords.State = state;
+                chunkAtCoords.MainThreadState = state;
                 if (forceGeometryRegeneration)
                 {
                     chunkAtCoords.InvalidateSliceContentsHashes();
                 }
             }
 
-            chunkAtCoords.WasDowngraded = true;
+            TerrainChunkStateExchange.RequestDowngrade(chunkAtCoords, state);
         }
     }
 
@@ -707,16 +756,16 @@ public class TerrainUpdater
         var allocatedChunks = _terrain.AllocatedChunks;
         foreach (var terrainChunk in allocatedChunks)
         {
-            if (terrainChunk.State > state)
+            if (terrainChunk.MainThreadState > state)
             {
-                terrainChunk.State = state;
+                terrainChunk.MainThreadState = state;
                 if (forceGeometryRegeneration)
                 {
                     terrainChunk.InvalidateSliceContentsHashes();
                 }
             }
 
-            terrainChunk.WasDowngraded = true;
+            TerrainChunkStateExchange.RequestDowngrade(terrainChunk, state);
         }
     }
 
@@ -726,12 +775,15 @@ public class TerrainUpdater
     /// <param name="chunkCenter">区块中心坐标</param>
     /// <param name="locations">更新位置数组</param>
     /// <returns>如果在任一位置的 ContentDistance 范围内则返回 true</returns>
-    private static bool IsChunkInRange(Vector2 chunkCenter, UpdateLocation[] locations)
+    internal static bool IsChunkInRange(
+        Vector2 chunkCenter,
+        UpdateLocation[] locations,
+        float distanceMargin = 0f)
     {
         for (var i = 0; i < locations.Length; i++)
         {
             var distance = Vector2.DistanceSquared(locations[i].Center, chunkCenter);
-            var content = MathUtils.Sqr(locations[i].ContentDistance);
+            var content = MathUtils.Sqr(locations[i].ContentDistance + distanceMargin);
             if (distance <= content)
             {
                 return true;
@@ -751,14 +803,44 @@ public class TerrainUpdater
         var result = false;
         var hasDeferredChunkDiscards = false;
         var allocatedChunks = _terrain.AllocatedChunks;
+        HashSet<Point2> retentionEvictions = [];
+        if (_subsystemTerrain.UsesRemoteChunkTransport)
+        {
+            var access = ++_remoteChunkAccessClock;
+            foreach (var chunk in allocatedChunks.Where(chunk =>
+                         IsChunkInRange(chunk.Center, locations)))
+            {
+                _remoteChunkLastAccess[chunk.Coords] = access;
+            }
+
+            var retained = allocatedChunks
+                .Where(chunk => !IsChunkInRange(chunk.Center, locations))
+                .Where(chunk => IsChunkInRange(
+                    chunk.Center,
+                    locations,
+                    NetworkTerrainPolicy.ClientChunkRetentionMargin))
+                .Select(chunk => (chunk.Coords, _remoteChunkLastAccess.GetValueOrDefault(chunk.Coords)))
+                .ToArray();
+            retentionEvictions = SelectRetainedChunkCoordsToEvict(
+                    retained,
+                    NetworkTerrainPolicy.ClientRetainedChunkCapacity)
+                .ToHashSet();
+        }
+
         foreach (var terrainChunk in allocatedChunks)
         {
-            if (IsChunkInRange(terrainChunk.Center, locations))
+            var retentionMargin = _subsystemTerrain.UsesRemoteChunkTransport
+                ? NetworkTerrainPolicy.ClientChunkRetentionMargin
+                : 0f;
+            if (IsChunkInRange(terrainChunk.Center, locations, retentionMargin) &&
+                !retentionEvictions.Contains(terrainChunk.Coords))
             {
                 continue;
             }
 
-            var saveCoordinator = _subsystemTerrain.TerrainSaveCoordinator;
+            var saveCoordinator = _subsystemTerrain.ContentRole == TerrainContentRole.Authority
+                ? _subsystemTerrain.TerrainSaveCoordinator
+                : null;
             if (saveCoordinator != null && TerrainSaveCoordinator.RequiresSave(terrainChunk) &&
                 !saveCoordinator.CanAcceptUnloadSnapshot)
             {
@@ -776,7 +858,17 @@ public class TerrainUpdater
                 _subsystemTerrain,
                 terrainChunk));
 
-            _networkChunkCache.Remove(terrainChunk);
+            var localHost = _subsystemTerrain.LocalChunkHost;
+            var localAuthorityChunk = localHost?.AuthorityTerrain.GetChunkAtCoords(
+                terrainChunk.Coords.X,
+                terrainChunk.Coords.Y);
+            if (localAuthorityChunk != null && !localHost!.Release(terrainChunk.Coords))
+            {
+                hasDeferredChunkDiscards = true;
+                continue;
+            }
+
+            ServerChunkDistribution?.OnChunkRemoved(terrainChunk);
             if (saveCoordinator != null)
             {
                 if (!saveCoordinator.TryQueueChunkForUnload(terrainChunk))
@@ -785,13 +877,15 @@ public class TerrainUpdater
                     continue;
                 }
             }
-            else
+            else if (_subsystemTerrain.ContentRole == TerrainContentRole.Authority)
             {
                 _subsystemTerrain.TerrainSerializer.SaveChunk(terrainChunk);
             }
 
             result = true;
+            _subsystemTerrain.ClientTerrainDeltas?.Discard(terrainChunk.Coords);
             _terrain.FreeChunk(terrainChunk);
+            _remoteChunkLastAccess.Remove(terrainChunk.Coords);
             if (RunMode.Value is RunModeType.Gui)
             {
                 _subsystemTerrain.TerrainRenderer.DisposeTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
@@ -821,6 +915,11 @@ public class TerrainUpdater
 
                     result = true;
                     _terrain.AllocateChunk(k, l);
+                    if (_subsystemTerrain.UsesRemoteChunkTransport)
+                    {
+                        _remoteChunkLastAccess[new Point2(k, l)] = _remoteChunkAccessClock;
+                    }
+
                     DowngradeChunkNeighborhoodState(new Point2(k, l), 0, TerrainChunkState.NotLoaded, false);
                     DowngradeChunkNeighborhoodState(new Point2(k, l), 1, TerrainChunkState.InvalidLight, false);
                 }
@@ -834,6 +933,25 @@ public class TerrainUpdater
         return new ChunkAllocationResult(result, false);
     }
 
+    internal static IReadOnlyList<Point2> SelectRetainedChunkCoordsToEvict(
+        IEnumerable<(Point2 Coords, long LastAccess)> retainedChunks,
+        int capacity)
+    {
+        ArgumentNullException.ThrowIfNull(retainedChunks);
+        if (capacity < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(capacity));
+        }
+
+        return retainedChunks
+            .OrderByDescending(item => item.LastAccess)
+            .ThenBy(item => item.Coords.X)
+            .ThenBy(item => item.Coords.Y)
+            .Skip(capacity)
+            .Select(item => item.Coords)
+            .ToArray();
+    }
+
     private readonly record struct ChunkAllocationResult(bool Changed, bool RetryRequired);
 
     internal static bool CanCompleteLocationUpdate(bool retryRequired)
@@ -845,61 +963,23 @@ public class TerrainUpdater
     /// 在主线程中处理区块状态的升降级同步
     /// </summary>
     /// <remarks>
-    /// 处理 WasDowngraded 标记（降级）和 UpgradedState（升级），
-    /// 并重置相应状态标记
+    /// 接收后台线程发布的状态；待处理降级始终优先。
     /// </remarks>
     /// <returns>如果有区块被降级则返回 true</returns>
     private bool SendReceiveChunkStates()
     {
-        return ReceiveMainThreadChunkStates(_updateParameters.Chunks);
-    }
-
-    internal static bool ReceiveMainThreadChunkStates(TerrainChunk[] chunks)
-    {
-        var hasDowngradedChunk = false;
-        foreach (var terrainChunk in chunks)
-        {
-            if (terrainChunk.WasDowngraded)
-            {
-                terrainChunk.DowngradedState = terrainChunk.State;
-                terrainChunk.WasDowngraded = false;
-                hasDowngradedChunk = true;
-            }
-            else if (terrainChunk.UpgradedState.HasValue)
-            {
-                terrainChunk.State = terrainChunk.UpgradedState.Value;
-            }
-
-            terrainChunk.UpgradedState = null;
-        }
-
-        return hasDowngradedChunk;
+        return TerrainChunkStateExchange.ReceiveOnMainThread(_updateParameters.Chunks);
     }
 
     /// <summary>
     /// 在更新线程中处理区块状态的升降级同步
     /// </summary>
     /// <remarks>
-    /// 处理 DowngradedState（降级）和 WasUpgraded 标记（升级），
-    /// 并重置相应状态标记
+    /// 接收主线程降级请求，或发布后台线程的当前状态。
     /// </remarks>
     private void SendReceiveChunkStatesThread()
     {
-        var chunks = _threadUpdateParameters.Chunks;
-        foreach (var terrainChunk in chunks)
-        {
-            if (terrainChunk.DowngradedState.HasValue)
-            {
-                terrainChunk.ThreadState = terrainChunk.DowngradedState.Value;
-                terrainChunk.DowngradedState = null;
-            }
-            else if (terrainChunk.WasUpgraded)
-            {
-                terrainChunk.UpgradedState = terrainChunk.ThreadState;
-            }
-
-            terrainChunk.WasUpgraded = false;
-        }
+        TerrainChunkStateExchange.ExchangeOnWorkerThread(_threadUpdateParameters.Chunks);
     }
 
     /// <summary>
@@ -968,7 +1048,7 @@ public class TerrainUpdater
         }
 
         // 如果区块不是预期的状态，则更新它
-        if (terrainChunk.ThreadState < desiredState)
+        if (terrainChunk.WorkerState < desiredState)
         {
             UpdateChunkSingleStep(terrainChunk, _subsystemSky.SkyLightValue);
         }
@@ -999,8 +1079,16 @@ public class TerrainUpdater
         // 逐渐收敛距离的最大限制，找到最合适的更新区块和预期的状态
         foreach (var terrainChunk in chunks)
         {
+            // A client cannot advance a chunk until its contents arrive from the server.
+            // Selecting a nearby NotLoaded chunk repeatedly would otherwise starve loaded
+            // chunks (for example, chunks waiting for lighting and geometry) under packet loss.
+            if (!CanBackgroundUpdateChunk(_subsystemTerrain.ContentRole, terrainChunk))
+            {
+                continue;
+            }
+
             // 跳过 Valid 状态的区块
-            if (terrainChunk.ThreadState >= TerrainChunkState.Valid)
+            if (terrainChunk.WorkerState >= TerrainChunkState.Valid)
             {
                 continue;
             }
@@ -1024,7 +1112,7 @@ public class TerrainUpdater
                 }
                 // 否则，如果区块的线程状态小于 InvalidVertices1, 并且距离小于位置的 ContentDistance 的距离，
                 // 则预期的区块状态为 InvalidVertices1, 更新最大限制为当前距离
-                else if (terrainChunk.ThreadState < TerrainChunkState.InvalidVertices1 &&
+                else if (terrainChunk.WorkerState < TerrainChunkState.InvalidVertices1 &&
                          distanceSquared <= MathUtils.Sqr(location.ContentDistance))
                 {
                     desiredState = TerrainChunkState.InvalidVertices1;
@@ -1034,7 +1122,47 @@ public class TerrainUpdater
             }
         }
 
-        return result;
+        if (result == null)
+        {
+            return result;
+        }
+
+        var dependency = ClientDerivedTerrainPolicy.FindPendingLightingDependency(
+            _terrain,
+            _subsystemTerrain.ContentRole,
+            result
+        );
+
+        if (dependency == null)
+        {
+            return result;
+        }
+
+        desiredState = TerrainChunkState.InvalidPropagatedLight;
+        return dependency;
+    }
+
+    internal static bool CanBackgroundUpdateChunk(TerrainContentRole role, TerrainChunk chunk) =>
+        role != TerrainContentRole.Replica || chunk.WorkerState != TerrainChunkState.NotLoaded;
+
+    public void NotifyNetworkChunkLoaded()
+    {
+        UnpauseUpdateThread();
+    }
+
+    public void OnNetworkChunkContentInstalled(TerrainChunk target)
+    {
+        var derivation = _subsystemTerrain.ClientChunkDerivation ??
+                         throw new InvalidOperationException(
+                             "Installed client contents require a derivation pipeline.");
+        derivation.Begin(target);
+        target.IsRequested = false;
+        target.NetworkRequestTime = 0.0;
+        target.NetworkContentReceiveTime = Time.RealTime;
+        target.NetworkGeometryReadyTime = 0.0;
+        target.NetworkGeometryUploadTime = 0.0;
+        target.NetworkGeometryUploaded = false;
+        NotifyNetworkChunkLoaded();
     }
 
     /// <summary>
@@ -1060,7 +1188,7 @@ public class TerrainUpdater
         foreach (var vector2 in obj)
         {
             var chunkAtCell = _terrain.GetChunkAtCell(Terrain.ToCell(vector2.X), Terrain.ToCell(vector2.Z), false);
-            if (chunkAtCell is { State: < TerrainChunkState.Valid } && !list.Contains(chunkAtCell))
+            if (chunkAtCell is { MainThreadState: < TerrainChunkState.Valid } && !list.Contains(chunkAtCell))
             {
                 list.Add(chunkAtCell);
             }
@@ -1079,94 +1207,30 @@ public class TerrainUpdater
     /// </remarks>
     private void UpdateChunkSingleStep(TerrainChunk chunk, int skylightValue)
     {
-        switch (chunk.ThreadState)
+        if (chunk.WorkerState <= TerrainChunkState.InvalidContents4)
         {
-            case TerrainChunkState.NotLoaded:
+            var generation = _subsystemTerrain.AuthoritativeChunkGeneration;
+            if (generation == null)
             {
-                if (CommonLib.WorkType == WorkType.Client)
-                {
-                    chunk.WasUpgraded = true;
-                }
-                else
-                {
-                    var restoredPendingSave = _subsystemTerrain.TerrainSaveCoordinator?
-                        .TryRestorePendingSnapshot(chunk) == true;
-                    if (restoredPendingSave || _subsystemTerrain.TerrainSerializer.LoadChunk(chunk))
-                    {
-                        chunk.ThreadState = TerrainChunkState.InvalidLight;
-                        chunk.WasUpgraded = true;
-                        chunk.IsLoaded = true;
-                    }
-                    else
-                    {
-                        chunk.ThreadState = TerrainChunkState.InvalidContents1;
-                        chunk.WasUpgraded = true;
-                    }
-                }
+                throw new InvalidOperationException(
+                    $"Client attempted authoritative terrain generation at {chunk.Coords} ({chunk.WorkerState}).");
+            }
 
-                break;
-            }
-            case TerrainChunkState.InvalidContents1:
-            {
-                if (_subsystemTerrain.TerrainContentsGenerator.TryTakeSeedGeneratedChunkBasis(chunk))
-                {
-                    chunk.ThreadState = TerrainChunkState.InvalidContents4;
-                    chunk.WasUpgraded = true;
-                    break;
-                }
+            generation.TryAdvance(chunk);
+            return;
+        }
 
-                _subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass1(chunk);
-                chunk.ThreadState = TerrainChunkState.InvalidContents2;
-                chunk.WasUpgraded = true;
-                break;
-            }
-            case TerrainChunkState.InvalidContents2:
-            {
-                _subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass2(chunk);
-                chunk.ThreadState = TerrainChunkState.InvalidContents3;
-                chunk.WasUpgraded = true;
-                break;
-            }
-            case TerrainChunkState.InvalidContents3:
-            {
-                _subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass3(chunk);
-                chunk.ThreadState = TerrainChunkState.InvalidContents4;
-                chunk.WasUpgraded = true;
-                break;
-            }
-            case TerrainChunkState.InvalidContents4:
-            {
-                _subsystemTerrain.TerrainContentsGenerator.GenerateChunkContentsPass4(chunk);
-                CurrentModRuntime.Value?.Gameplay.Invoke(new TerrainChunkGeneratedContext(
-                    _subsystemTerrain,
-                    chunk));
-                chunk.ThreadState = TerrainChunkState.InvalidLight;
-                chunk.WasUpgraded = true;
-                break;
-            }
+        switch (chunk.WorkerState)
+        {
             case TerrainChunkState.InvalidLight:
             {
                 GenerateChunkSunLightAndHeight(chunk, skylightValue);
-                chunk.ThreadState = TerrainChunkState.InvalidPropagatedLight;
-                chunk.WasUpgraded = true;
+                chunk.WorkerState = TerrainChunkState.InvalidPropagatedLight;
                 chunk.LightPropagationMask = 0;
                 break;
             }
             case TerrainChunkState.InvalidPropagatedLight:
             {
-                for (var i = -2; i <= 2; i++)
-                for (var j = -2; j <= 2; j++)
-                {
-                    var chunkAtCell = _terrain.GetChunkAtCell(chunk.Origin.X + i * 16, chunk.Origin.Y + j * 16, false);
-                    if (chunkAtCell is not { ThreadState: < TerrainChunkState.InvalidPropagatedLight })
-                    {
-                        continue;
-                    }
-
-                    UpdateChunkSingleStep(chunkAtCell, skylightValue);
-                    return;
-                }
-
                 _lightSources.Clear();
                 for (var k = -1; k <= 1; k++)
                 for (var l = -1; l <= 1; l++)
@@ -1178,7 +1242,10 @@ public class TerrainUpdater
                     }
 
                     var chunkAtCell2 = _terrain.GetChunkAtCell(chunk.Origin.X + k * 16, chunk.Origin.Y + l * 16, false);
-                    if (chunkAtCell2 == null)
+                    if (chunkAtCell2 == null ||
+                        !ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
+                            _subsystemTerrain.ContentRole,
+                            chunkAtCell2))
                     {
                         continue;
                     }
@@ -1188,16 +1255,14 @@ public class TerrainUpdater
                 }
 
                 PropagateLight();
-                chunk.ThreadState = TerrainChunkState.InvalidVertices1;
-                chunk.WasUpgraded = true;
+                chunk.WorkerState = TerrainChunkState.InvalidVertices1;
                 break;
             }
             case TerrainChunkState.InvalidVertices1:
             {
                 if (RunMode.Value is RunModeType.HeadlessServer)
                 {
-                    chunk.ThreadState = TerrainChunkState.Valid;
-                    chunk.WasUpgraded = true;
+                    chunk.WorkerState = TerrainChunkState.Valid;
                     break;
                 }
 
@@ -1208,16 +1273,14 @@ public class TerrainUpdater
                     GenerateChunkVertices(chunk, true);
                 }
 
-                chunk.ThreadState = TerrainChunkState.InvalidVertices2;
-                chunk.WasUpgraded = true;
+                chunk.WorkerState = TerrainChunkState.InvalidVertices2;
                 break;
             }
             case TerrainChunkState.InvalidVertices2:
             {
                 if (RunMode.Value is RunModeType.HeadlessServer)
                 {
-                    chunk.ThreadState = TerrainChunkState.Valid;
-                    chunk.WasUpgraded = true;
+                    chunk.WorkerState = TerrainChunkState.Valid;
                     break;
                 }
 
@@ -1227,8 +1290,14 @@ public class TerrainUpdater
                     chunk.NewGeometryData = true;
                 }
 
-                chunk.ThreadState = TerrainChunkState.Valid;
-                chunk.WasUpgraded = true;
+                chunk.WorkerState = TerrainChunkState.Valid;
+                if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
+                    chunk.NetworkContentReceiveTime > 0.0)
+                {
+                    ClientChunkDerivationPipeline.CompleteGeometry(chunk);
+                    chunk.NetworkGeometryReadyTime = Time.RealTime;
+                }
+
                 break;
             }
         }

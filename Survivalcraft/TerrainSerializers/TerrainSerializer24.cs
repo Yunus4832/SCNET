@@ -63,7 +63,7 @@ public class TerrainSerializer24 : IDisposable
     /// <returns> 是否加载成功 </returns>
     public void SaveChunk(TerrainChunk chunk)
     {
-        if (chunk is not { State: > TerrainChunkState.InvalidContents4, ModificationCounter: > 0 })
+        if (chunk is not { MainThreadState: > TerrainChunkState.InvalidContents4, ModificationCounter: > 0 })
         {
             return;
         }
@@ -123,8 +123,7 @@ public class TerrainSerializer24 : IDisposable
         catch (Exception e)
         {
             Log.Error(ExceptionManager.MakeFullErrorMessage(
-                string.Format("Error saving chunk ({0},{1},{2},{3}).", chunk.Coords.X, chunk.Coords.Y,
-                    chunk.Origin.X, chunk.Origin.Y), e));
+                $"Error saving chunk ({chunk.Coords.X},{chunk.Coords.Y},{chunk.Origin.X},{chunk.Origin.Y}).", e));
             return false;
         }
     }
@@ -534,18 +533,20 @@ public class TerrainSerializer24 : IDisposable
             Storage.DeleteFile(_tmpFilePath);
             foreach (var item in Storage.ListFileNames(_regionsDirectoryName))
             {
-                if (Storage.GetExtension(item) == ".new")
+                if (Storage.GetExtension(item) != ".new")
                 {
-                    var text = Storage.CombinePaths(_regionsDirectoryName, item);
-                    var text2 = Storage.ChangeExtension(text, "");
-                    if (!Storage.FileExists(text2))
-                    {
-                        Storage.MoveFile(text, text2);
-                    }
-                    else
-                    {
-                        Storage.DeleteFile(text);
-                    }
+                    continue;
+                }
+
+                var text = Storage.CombinePaths(_regionsDirectoryName, item);
+                var text2 = Storage.ChangeExtension(text, "");
+                if (!Storage.FileExists(text2))
+                {
+                    Storage.MoveFile(text, text2);
+                }
+                else
+                {
+                    Storage.DeleteFile(text);
                 }
             }
         }
@@ -563,19 +564,22 @@ public class TerrainSerializer24 : IDisposable
                 var region = new Point2(coords.X >> 4, coords.Y >> 4);
                 var chunkPosition = new Point2(coords.X & 0xF, coords.Y & 0xF);
                 var regionStream = GetRegionStream(region, false);
-                if (regionStream != null)
+                if (regionStream == null)
                 {
-                    using var reader = new BinaryReader(regionStream, Encoding.UTF8, true);
-                    var directoryEntry = ReadDirectoryEntry(reader, chunkPosition);
-
-                    if (directoryEntry.Offset > 0)
-                    {
-                        ReadData(reader, directoryEntry.Offset, buffer, directoryEntry.Size);
-                        return directoryEntry.Size;
-                    }
+                    return -1;
                 }
 
-                return -1;
+                using var reader = new BinaryReader(regionStream, Encoding.UTF8, true);
+                var directoryEntry = ReadDirectoryEntry(reader, chunkPosition);
+
+                if (directoryEntry.Offset <= 0)
+                {
+                    return -1;
+                }
+
+                ReadData(reader, directoryEntry.Offset, buffer, directoryEntry.Size);
+                return directoryEntry.Size;
+
             }
         }
 

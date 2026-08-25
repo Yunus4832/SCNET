@@ -43,10 +43,10 @@ public static class LightingManager
         var chunkAtCell2 = terrain.GetChunkAtCell(x, num3, false);
         var chunkAtCell3 = terrain.GetChunkAtCell(num, z, false);
         var chunkAtCell4 = terrain.GetChunkAtCell(x, z, false);
-        if (chunkAtCell is not { State: >= TerrainChunkState.InvalidVertices1 } ||
-            chunkAtCell2 is not { State: >= TerrainChunkState.InvalidVertices1 } ||
-            chunkAtCell3 is not { State: >= TerrainChunkState.InvalidVertices1 } ||
-            chunkAtCell4 is not { State: >= TerrainChunkState.InvalidVertices1 })
+        if (chunkAtCell is not { MainThreadState: >= TerrainChunkState.InvalidVertices1 } ||
+            chunkAtCell2 is not { MainThreadState: >= TerrainChunkState.InvalidVertices1 } ||
+            chunkAtCell3 is not { MainThreadState: >= TerrainChunkState.InvalidVertices1 } ||
+            chunkAtCell4 is not { MainThreadState: >= TerrainChunkState.InvalidVertices1 })
         {
             return null;
         }

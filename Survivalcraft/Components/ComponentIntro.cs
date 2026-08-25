@@ -184,7 +184,7 @@ public class ComponentIntro : Component, IUpdateable
         num -= MathUtils.Abs(num3 - 20f);
         var num4 = 0;
         var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-        if (chunkAtCell is { State: >= TerrainChunkState.InvalidLight })
+        if (chunkAtCell is { MainThreadState: >= TerrainChunkState.InvalidLight })
         {
             var oceanLevel = _subsystemTerrain.TerrainContentsGenerator.OceanLevel;
             var num5 = oceanLevel;

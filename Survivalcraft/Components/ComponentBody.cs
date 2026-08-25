@@ -341,7 +341,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         var position = base.Position;
         var chunkAtCell =
             _subsystemTerrain.Terrain.GetChunkAtCell(Terrain.ToCell(position.X), Terrain.ToCell(position.Z), false);
-        if (chunkAtCell is not { State: > TerrainChunkState.InvalidContents4 })
+        if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
         {
             Velocity = Vector3.Zero;
             return;

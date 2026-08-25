@@ -96,7 +96,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public SaplingData LoadSaplingData(string data)
     {
-        var array = data.Split(new[] { ";" }, StringSplitOptions.None);
+        var array = data.Split([";"], StringSplitOptions.None);
         if (array.Length != 3)
         {
             throw new InvalidOperationException("Invalid sapling data string.");
@@ -143,10 +143,10 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var chunkAtCell2 = SubsystemTerrain.Terrain.GetChunkAtCell(x - 6, z + 6, false);
         var chunkAtCell3 = SubsystemTerrain.Terrain.GetChunkAtCell(x + 6, z - 6, false);
         var chunkAtCell4 = SubsystemTerrain.Terrain.GetChunkAtCell(x + 6, z + 6, false);
-        if (chunkAtCell is { State: TerrainChunkState.Valid } &&
-            chunkAtCell2 is { State: TerrainChunkState.Valid } &&
-            chunkAtCell3 is { State: TerrainChunkState.Valid } &&
-            chunkAtCell4 is { State: TerrainChunkState.Valid })
+        if (chunkAtCell is { MainThreadState: TerrainChunkState.Valid } &&
+            chunkAtCell2 is { MainThreadState: TerrainChunkState.Valid } &&
+            chunkAtCell3 is { MainThreadState: TerrainChunkState.Valid } &&
+            chunkAtCell4 is { MainThreadState: TerrainChunkState.Valid })
         {
             var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
             if (cellContents is 2 or 8)

@@ -6,6 +6,18 @@ public static class NetworkTerrainPolicy
 
     public const int DefaultServerChunkCountSendPer = 100;
 
+    public const int DefaultServerChunkBytesSendPerSecond = 128 * 1024;
+
+    public const int MaxTerrainReliablePacketsInQueue = 32;
+
+    public const float ClientChunkRetentionMargin = 32f;
+
+    public const int ClientRetainedChunkCapacity = 256;
+
+    public const float ClientPredictionSeconds = 0.75f;
+
+    public const float MaximumPredictedClientSpeed = 128f;
+
     public static bool TryClampClientUpdateLocation(
         TerrainUpdater.UpdateLocation requested,
         int configuredMaximum,

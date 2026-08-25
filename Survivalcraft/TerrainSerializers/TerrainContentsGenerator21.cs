@@ -94,6 +94,8 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
     public SubsystemTerrain SubsystemTerrain;
 
+    private readonly Terrain _terrain;
+
     public WorldSettings WorldSettings;
 
 
@@ -102,9 +104,10 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
         CreateBrushes();
     }
 
-    public TerrainContentsGenerator21(SubsystemTerrain subsystemTerrain)
+    public TerrainContentsGenerator21(SubsystemTerrain subsystemTerrain, Terrain? terrain = null)
     {
         SubsystemTerrain = subsystemTerrain;
+        _terrain = terrain ?? subsystemTerrain.Terrain;
         SubsystemBottomSuckerBlockBehavior =
             subsystemTerrain.Project.FindSubsystem<SubsystemBottomSuckerBlockBehavior>(true)!;
         var subsystemGameInfo = subsystemTerrain.Project.FindSubsystem<SubsystemGameInfo>(true)!;
@@ -413,7 +416,6 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
     {
         var num = x2 - x1;
         var num2 = z2 - z1;
-        _ = SubsystemTerrain.Terrain;
         var num3 = chunk.Origin.X + x1;
         var num4 = chunk.Origin.Y + z1;
         var grid2D = new Grid2D(num, num2);
@@ -524,7 +526,6 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
     public void GenerateSurface(TerrainChunk chunk)
     {
-        var terrain = SubsystemTerrain.Terrain;
         var random = new Random(_seed + chunk.Coords.X + 101 * chunk.Coords.Y);
         for (var i = 0; i < 16; i++)
         for (var j = 0; j < 16; j++)
@@ -539,8 +540,8 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                 if (!BlocksManager.Blocks[num5].Transparent)
                 {
                     var num6 = CalculateMountainRangeFactor(num, num2);
-                    var temperature = terrain.GetTemperature(num, num2);
-                    var humidity = terrain.GetHumidity(num, num2);
+                    var temperature = _terrain.GetTemperature(num, num2);
+                    var humidity = _terrain.GetHumidity(num, num2);
                     var f = MathUtils.Saturate(MathUtils.Saturate((num6 - 0.9f) / 0.1f) -
                                                MathUtils.Saturate((humidity - 3f) / 12f) +
                                                _tgSurfaceMultiplier * MathUtils.Saturate((num4 - 85f) * 0.05f));
@@ -941,7 +942,6 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
             return;
         }
 
-        var terrain = SubsystemTerrain.Terrain;
         var x = chunk.Origin.X;
         var num = x + 16;
         var y = chunk.Origin.Y;
@@ -976,13 +976,13 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
                 var num7 = i * 16 + random.Int(0, 15);
                 var num8 = j * 16 + random.Int(0, 15);
-                var num9 = terrain.CalculateTopmostCellHeight(num7, num8);
+                var num9 = _terrain.CalculateTopmostCellHeight(num7, num8);
                 if (num9 < 66)
                 {
                     continue;
                 }
 
-                var cellContentsFast = terrain.GetCellContentsFast(num7, num9, num8);
+                var cellContentsFast = _terrain.GetCellContentsFast(num7, num9, num8);
                 if (cellContentsFast != 2 && cellContentsFast != 8)
                 {
                     continue;
@@ -1018,29 +1018,25 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                 {
                     var num11 = num7 + point.X * l;
                     var num12 = num8 + point.Z * l;
-                    if (num11 < x + 1 || num11 >= num - 1 || num12 < y + 1 || num12 >= num2 - 1)
+                    if (num11 < x + 1 || num11 >= num - 1 || num12 < y + 1 || num12 >= num2 - 1 || BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
                     {
                         flag = false;
                         break;
                     }
 
-                    if (BlocksManager.Blocks[terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
+                    if (!BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
                     {
-                        flag = false;
-                        break;
+                        continue;
                     }
 
-                    if (BlocksManager.Blocks[terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
+                    if (l <= MathUtils.Max(num10 / 2, 0))
                     {
-                        if (l <= MathUtils.Max(num10 / 2, 0))
-                        {
-                            flag2 = true;
-                        }
+                        flag2 = true;
+                    }
 
-                        if (l >= MathUtils.Min(num10 / 2 + 1, num10 - 1))
-                        {
-                            flag3 = true;
-                        }
+                    if (l >= MathUtils.Min(num10 / 2 + 1, num10 - 1))
+                    {
+                        flag3 = true;
                     }
                 }
 
@@ -1062,43 +1058,45 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                     {
                         var num13 = num7 + point.X * m;
                         var num14 = num8 + point.Z * m;
-                        terrain.SetCellValueFast(num13, num9, num14, treeTrunkValue);
-                        if (m > num10 / 2)
+                        _terrain.SetCellValueFast(num13, num9, num14, treeTrunkValue);
+                        if (m <= num10 / 2)
                         {
-                            if (random.Bool(0.3f) && !BlocksManager
-                                    .Blocks[terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
-                                    .Collidable)
-                            {
-                                terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeLeavesValue);
-                            }
+                            continue;
+                        }
 
-                            if (random.Bool(0.05f) && !BlocksManager
-                                    .Blocks[terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
-                                    .Collidable)
-                            {
-                                terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeTrunkValue);
-                            }
+                        if (random.Bool(0.3f) && !BlocksManager
+                                .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                                .Collidable)
+                        {
+                            _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeLeavesValue);
+                        }
 
-                            if (random.Bool(0.3f) && !BlocksManager
-                                    .Blocks[terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
-                                    .Collidable)
-                            {
-                                terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeLeavesValue);
-                            }
+                        if (random.Bool(0.05f) && !BlocksManager
+                                .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                                .Collidable)
+                        {
+                            _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeTrunkValue);
+                        }
 
-                            if (random.Bool(0.05f) && !BlocksManager
-                                    .Blocks[terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
-                                    .Collidable)
-                            {
-                                terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeTrunkValue);
-                            }
+                        if (random.Bool(0.3f) && !BlocksManager
+                                .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                                .Collidable)
+                        {
+                            _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeLeavesValue);
+                        }
 
-                            if (random.Bool(0.1f) && !BlocksManager
-                                    .Blocks[terrain.GetCellContentsFast(num13, num9 + 1, num14)]
-                                    .Collidable)
-                            {
-                                terrain.SetCellValueFast(num13, num9 + 1, num14, treeLeavesValue);
-                            }
+                        if (random.Bool(0.05f) && !BlocksManager
+                                .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                                .Collidable)
+                        {
+                            _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeTrunkValue);
+                        }
+
+                        if (random.Bool(0.1f) && !BlocksManager
+                                .Blocks[_terrain.GetCellContentsFast(num13, num9 + 1, num14)]
+                                .Collidable)
+                        {
+                            _terrain.SetCellValueFast(num13, num9 + 1, num14, treeLeavesValue);
                         }
                     }
                 }
@@ -1117,35 +1115,37 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
                 var randomX = i * 16 + random.Int(2, 13);
                 var randomZ = j * 16 + random.Int(2, 13);
-                var randomY = terrain.CalculateTopmostCellHeight(randomX, randomZ);
+                var randomY = _terrain.CalculateTopmostCellHeight(randomX, randomZ);
                 if (randomY < 66)
                 {
                     continue;
                 }
 
-                var cellContentsFast2 = terrain.GetCellContentsFast(randomX, randomY, randomZ);
+                var cellContentsFast2 = _terrain.GetCellContentsFast(randomX, randomY, randomZ);
                 if (cellContentsFast2 != 2 && cellContentsFast2 != 8)
                 {
                     continue;
                 }
 
                 randomY++;
-                if (!BlocksManager.Blocks[terrain.GetCellContentsFast(randomX + 1, randomY, randomZ)].Collidable &&
-                    !BlocksManager.Blocks[terrain.GetCellContentsFast(randomX - 1, randomY, randomZ)].Collidable &&
-                    !BlocksManager.Blocks[terrain.GetCellContentsFast(randomX, randomY, randomZ + 1)].Collidable &&
-                    !BlocksManager.Blocks[terrain.GetCellContentsFast(randomX, randomY, randomZ - 1)].Collidable)
+                if (BlocksManager.Blocks[_terrain.GetCellContentsFast(randomX + 1, randomY, randomZ)].Collidable ||
+                    BlocksManager.Blocks[_terrain.GetCellContentsFast(randomX - 1, randomY, randomZ)].Collidable ||
+                    BlocksManager.Blocks[_terrain.GetCellContentsFast(randomX, randomY, randomZ + 1)].Collidable ||
+                    BlocksManager.Blocks[_terrain.GetCellContentsFast(randomX, randomY, randomZ - 1)].Collidable)
                 {
-                    var treeType2 = PlantsManager.GenerateRandomTreeType(random,
-                        temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight(randomY), humidity, randomY);
-                    if (treeType2.HasValue)
-                    {
-                        var treeBrushes = PlantsManager.GetTreeBrushes(treeType2.Value);
-                        var treeBrush = treeBrushes[random.Int(treeBrushes.Count)];
-                        treeBrush.PaintFast(chunk, randomX, randomY, randomZ);
-                    }
-
-                    num16++;
+                    continue;
                 }
+
+                var treeType2 = PlantsManager.GenerateRandomTreeType(random,
+                    temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight(randomY), humidity, randomY);
+                if (treeType2.HasValue)
+                {
+                    var treeBrushes = PlantsManager.GetTreeBrushes(treeType2.Value);
+                    var treeBrush = treeBrushes[random.Int(treeBrushes.Count)];
+                    treeBrush.PaintFast(chunk, randomX, randomY, randomZ);
+                }
+
+                num16++;
             }
         }
     }
@@ -1182,27 +1182,29 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
         {
             var cellValueFast = chunk.GetCellValueFast(i, num, j);
             var num2 = Terrain.ExtractContents(cellValueFast);
-            if (num2 != 0)
+            if (num2 == 0)
             {
-                if (!(BlocksManager.Blocks[num2] is FluidBlock))
-                {
-                    var temperatureFast = chunk.GetTemperatureFast(i, j);
-                    var humidityFast = chunk.GetHumidityFast(i, j);
-                    var num3 = PlantsManager.GenerateRandomPlantValue(random, cellValueFast, temperatureFast,
-                        humidityFast, num + 1);
-                    if (num3 != 0)
-                    {
-                        chunk.SetCellValueFast(i, num + 1, j, num3);
-                    }
+                continue;
+            }
 
-                    if (num2 == 2)
-                    {
-                        chunk.SetCellValueFast(i, num, j, Terrain.MakeBlockValue(8, 0, 0));
-                    }
+            if (!(BlocksManager.Blocks[num2] is FluidBlock))
+            {
+                var temperatureFast = chunk.GetTemperatureFast(i, j);
+                var humidityFast = chunk.GetHumidityFast(i, j);
+                var num3 = PlantsManager.GenerateRandomPlantValue(random, cellValueFast, temperatureFast,
+                    humidityFast, num + 1);
+                if (num3 != 0)
+                {
+                    chunk.SetCellValueFast(i, num + 1, j, num3);
                 }
 
-                break;
+                if (num2 == 2)
+                {
+                    chunk.SetCellValueFast(i, num, j, Terrain.MakeBlockValue(8, 0, 0));
+                }
             }
+
+            break;
         }
     }
 
@@ -1238,65 +1240,71 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                     num3++;
                     var face = random.UniformInt(0, 5);
                     var point = CellFace.FaceToPoint3(face);
-                    if (i + point.X >= 0 && i + point.X < 16 && num4 + point.Y >= 0 && num4 + point.Y < 254 &&
-                        j + point.Z >= 0 && j + point.Z < 16)
+                    if (i + point.X < 0 || i + point.X >= 16 || num4 + point.Y < 0 || num4 + point.Y >= 254 ||
+                        j + point.Z < 0 || j + point.Z >= 16)
                     {
-                        var cellValueFast = chunk.GetCellValueFast(i + point.X, num4 + point.Y, j + point.Z);
-                        if (SubsystemBottomSuckerBlockBehavior.IsSupport(cellValueFast, CellFace.OppositeFace(face)))
-                        {
-                            var num5 = 0;
-                            var num6 = 0.6f;
-                            var num7 = 0.4f;
-                            if (temperatureFast < 8)
-                            {
-                                num6 = 0.9f;
-                                num7 = 0.1f;
-                            }
-
-                            if (num3 > 6)
-                            {
-                                num6 *= 0.25f;
-                            }
-
-                            if (num3 > 12)
-                            {
-                                num7 *= 0.5f;
-                            }
-
-                            if (num3 < 4)
-                            {
-                                num7 *= 0.5f;
-                            }
-
-                            if (num4 < 45)
-                            {
-                                num6 *= 0.1f;
-                                num7 *= 0.1f;
-                            }
-
-                            var num8 = random.UniformFloat(0f, 1f);
-                            num8 -= num6;
-                            if (num5 == 0 && num8 < 0f)
-                            {
-                                num5 = 226;
-                            }
-
-                            num8 -= num7;
-                            if (num5 == 0 && num8 < 0f)
-                            {
-                                num5 = 229;
-                            }
-
-                            if (num5 != 0)
-                            {
-                                var face2 = random.UniformInt(0, 3);
-                                var data = BottomSuckerBlock.SetFace(BottomSuckerBlock.SetSubvariant(0, face2),
-                                    CellFace.OppositeFace(face));
-                                var value = Terrain.MakeBlockValue(num5, 0, data);
-                                chunk.SetCellValueFast(i, num4, j, value);
-                            }
-                        }
+                        continue;
                     }
+
+                    var cellValueFast = chunk.GetCellValueFast(i + point.X, num4 + point.Y, j + point.Z);
+                    if (!SubsystemBottomSuckerBlockBehavior.IsSupport(cellValueFast, CellFace.OppositeFace(face)))
+                    {
+                        continue;
+                    }
+
+                    var num5 = 0;
+                    var num6 = 0.6f;
+                    var num7 = 0.4f;
+                    if (temperatureFast < 8)
+                    {
+                        num6 = 0.9f;
+                        num7 = 0.1f;
+                    }
+
+                    if (num3 > 6)
+                    {
+                        num6 *= 0.25f;
+                    }
+
+                    if (num3 > 12)
+                    {
+                        num7 *= 0.5f;
+                    }
+
+                    if (num3 < 4)
+                    {
+                        num7 *= 0.5f;
+                    }
+
+                    if (num4 < 45)
+                    {
+                        num6 *= 0.1f;
+                        num7 *= 0.1f;
+                    }
+
+                    var num8 = random.UniformFloat(0f, 1f);
+                    num8 -= num6;
+                    if (num5 == 0 && num8 < 0f)
+                    {
+                        num5 = 226;
+                    }
+
+                    num8 -= num7;
+                    if (num5 == 0 && num8 < 0f)
+                    {
+                        num5 = 229;
+                    }
+
+                    if (num5 == 0)
+                    {
+                        continue;
+                    }
+
+                    var face2 = random.UniformInt(0, 3);
+                    var data = BottomSuckerBlock.SetFace(BottomSuckerBlock.SetSubvariant(0, face2),
+                        CellFace.OppositeFace(face));
+                    var value = Terrain.MakeBlockValue(num5, 0, data);
+                    chunk.SetCellValueFast(i, num4, j, value);
                 }
                 else
                 {
@@ -1430,13 +1438,15 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
             var num2 = i % 3 - 1;
             var num3 = i / 3 - 1;
             random.Reset(_seed + x + num2 + 850 * (y + num3));
-            if (random.Bool(0.2f))
+            if (!random.Bool(0.2f))
             {
-                num = MathUtils.Max(num, 0.025f);
-                if (i == 4)
-                {
-                    num = MathUtils.Max(num, 0.1f);
-                }
+                continue;
+            }
+
+            num = MathUtils.Max(num, 0.025f);
+            if (i == 4)
+            {
+                num = MathUtils.Max(num, 0.1f);
             }
         }
 
@@ -1476,29 +1486,31 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                 {
                     var num13 = Terrain.ExtractContents(chunk.GetCellValueFast(x2, num12, z));
                     var block = BlocksManager.Blocks[num13];
-                    if (num13 != 0)
+                    if (num13 == 0)
                     {
-                        if (!(block is WaterBlock))
+                        continue;
+                    }
+
+                    if (block is not WaterBlock)
+                    {
+                        if (num13 is 2 or 7 or 72 && num11 >= 2)
                         {
-                            if ((num13 == 2 || num13 == 7 || num13 == 72) && num11 >= 2)
+                            var num14 = flag
+                                ? random.UniformInt(num11 - 2, num11 - 1)
+                                : random.UniformInt(num11 - 1, num11);
+                            for (var l = 0; l < num14; l++)
                             {
-                                var num14 = flag
-                                    ? random.UniformInt(num11 - 2, num11 - 1)
-                                    : random.UniformInt(num11 - 1, num11);
-                                for (var l = 0; l < num14; l++)
-                                {
-                                    chunk.SetCellValueFast(x2, num12 + 1 + l, z, Terrain.MakeBlockValue(232));
-                                }
+                                chunk.SetCellValueFast(x2, num12 + 1 + l, z, Terrain.MakeBlockValue(232));
                             }
-
-                            break;
                         }
 
-                        num11++;
-                        if (num11 > num10)
-                        {
-                            break;
-                        }
+                        break;
+                    }
+
+                    num11++;
+                    if (num11 > num10)
+                    {
+                        break;
                     }
                 }
             }
@@ -1542,7 +1554,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
                             break;
                         default:
-                            if (num6 > 1 && (num8 == 2 || num8 == 7 || num8 == 72 || num8 == 3))
+                            if (num6 > 1 && num8 is 2 or 7 or 72 or 3)
                             {
                                 var x3 = !random.Bool(0.1f) ? 1 : 2;
                                 x3 = flag ? MathUtils.Min(x3, num6 - 1) : MathUtils.Min(x3, num6);
@@ -1654,7 +1666,6 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
-        _ = SubsystemTerrain.Terrain;
         var random = new Random(_seed + x + 2113 * y);
         if (!random.Bool(0.15f) || !(CalculateOceanShoreDistance(chunk.Origin.X, chunk.Origin.Y) > 50f))
         {
@@ -1715,11 +1726,13 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                     }
 
                     chunk.SetCellValueFast(k, num7.Value, l, Terrain.MakeBlockValue(87));
-                    if (flag)
+                    if (!flag)
                     {
-                        var data = SpikedPlankBlock.SetSpikesState(0, random.UniformFloat(0f, 1f) < 0.33f);
-                        chunk.SetCellValueFast(k, num7.Value - num6 + 1, l, Terrain.MakeBlockValue(86, 0, data));
+                        continue;
                     }
+
+                    var data = SpikedPlankBlock.SetSpikesState(0, random.UniformFloat(0f, 1f) < 0.33f);
+                    chunk.SetCellValueFast(k, num7.Value - num6 + 1, l, Terrain.MakeBlockValue(86, 0, data));
                 }
 
                 break;
@@ -1755,7 +1768,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                 var num5 = num2 + random.UniformInt(-4, 4);
                 var num6 = num3 + random.UniformInt(-4, 4);
                 var num7 = chunk.CalculateTopmostCellHeight(num5, num6);
-                if (num7 < 10 || num7 > 246)
+                if (num7 is < 10 or > 246)
                 {
                     continue;
                 }
@@ -1783,7 +1796,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                                 continue;
                             }
                         }
-                        else if (num14 == 8 || num14 == 2 || num14 == 7 || num14 == 3 || num14 == 4)
+                        else if (num14 is 8 or 2 or 7 or 3 or 4)
                         {
                             continue;
                         }
@@ -1952,52 +1965,55 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
             {
                 var cellValueFast = chunk.GetCellValueFast(i, num3, j);
                 var num4 = Terrain.ExtractContents(cellValueFast);
-                if (num4 != 0)
+                if (num4 == 0)
                 {
-                    if (!SubsystemWeather.IsPlaceFrozen(chunk.GetTemperatureFast(i, j), num3))
-                    {
-                        break;
-                    }
+                    continue;
+                }
 
-                    if (BlocksManager.Blocks[num4] is WaterBlock)
-                    {
-                        if (CalculateOceanShoreDistance(num, num2) > -20f)
-                        {
-                            float num5 = 1 +
-                                         (int)(2f * MathUtils.Sqr(SimplexNoise.OctavedNoise(num, num2, 0.2f, 1, 2f,
-                                             1f)));
-                            for (var k = 0; k < num5; k++)
-                            {
-                                if (num3 - k > 0)
-                                {
-                                    if (!(BlocksManager.Blocks[
-                                            chunk.GetCellContentsFast(i, num3 - k, j)] is WaterBlock))
-                                    {
-                                        break;
-                                    }
-
-                                    chunk.SetCellValueFast(i, num3 - k, j, 62);
-                                }
-                            }
-
-                            if (SubsystemWeather.ShaftHasSnowOnIce(num, num2))
-                            {
-                                chunk.SetCellValueFast(i, num3 + 1, j, 61);
-                            }
-                        }
-                    }
-                    else if (SubsystemSnowBlockBehavior.CanSupportSnow(cellValueFast))
-                    {
-                        chunk.SetCellValueFast(i, num3 + 1, j, 61);
-                    }
-
-                    if (num4 == 8)
-                    {
-                        chunk.SetCellValueFast(i, num3, j, Terrain.MakeBlockValue(8, 0, 1));
-                    }
-
+                if (!SubsystemWeather.IsPlaceFrozen(chunk.GetTemperatureFast(i, j), num3))
+                {
                     break;
                 }
+
+                if (BlocksManager.Blocks[num4] is WaterBlock)
+                {
+                    if (CalculateOceanShoreDistance(num, num2) > -20f)
+                    {
+                        float num5 = 1 +
+                                     (int)(2f * MathUtils.Sqr(SimplexNoise.OctavedNoise(num, num2, 0.2f, 1, 2f,
+                                         1f)));
+                        for (var k = 0; k < num5; k++)
+                        {
+                            if (num3 - k <= 0)
+                            {
+                                continue;
+                            }
+
+                            if (BlocksManager.Blocks[ chunk.GetCellContentsFast(i, num3 - k, j)] is not WaterBlock)
+                            {
+                                break;
+                            }
+
+                            chunk.SetCellValueFast(i, num3 - k, j, 62);
+                        }
+
+                        if (SubsystemWeather.ShaftHasSnowOnIce(num, num2))
+                        {
+                            chunk.SetCellValueFast(i, num3 + 1, j, 61);
+                        }
+                    }
+                }
+                else if (SubsystemSnowBlockBehavior.CanSupportSnow(cellValueFast))
+                {
+                    chunk.SetCellValueFast(i, num3 + 1, j, 61);
+                }
+
+                if (num4 == 8)
+                {
+                    chunk.SetCellValueFast(i, num3, j, Terrain.MakeBlockValue(8, 0, 1));
+                }
+
+                break;
             }
         }
     }
@@ -2688,11 +2704,11 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
         public class InternalRandom
         {
-            private int _inext;
+            private int _iNext;
 
-            private int _inextp;
+            private int _iNextP;
 
-            private int[] _seedArray;
+            private readonly int[] _seedArray;
 
             public InternalRandom(int seed)
             {
@@ -2724,8 +2740,8 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                     }
                 }
 
-                _inext = 0;
-                _inextp = 21;
+                _iNext = 0;
+                _iNextP = 21;
             }
 
             public double GetSampleForLargeRange()
@@ -2741,19 +2757,19 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
 
             public int InternalSample()
             {
-                var inext = _inext;
-                var inextp = _inextp;
-                if (++inext >= 56)
+                var iNext = _iNext;
+                var iNextP = _iNextP;
+                if (++iNext >= 56)
                 {
-                    inext = 1;
+                    iNext = 1;
                 }
 
-                if (++inextp >= 56)
+                if (++iNextP >= 56)
                 {
-                    inextp = 1;
+                    iNextP = 1;
                 }
 
-                var num = _seedArray[inext] - _seedArray[inextp];
+                var num = _seedArray[iNext] - _seedArray[iNextP];
                 if (num == 2147483647)
                 {
                     num--;
@@ -2764,9 +2780,9 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                     num += 2147483647;
                 }
 
-                _seedArray[inext] = num;
-                _inext = inext;
-                _inextp = inextp;
+                _seedArray[iNext] = num;
+                _iNext = iNext;
+                _iNextP = iNextP;
                 return num;
             }
 
@@ -2779,7 +2795,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
             {
                 if (maxValue < 0)
                 {
-                    throw new ArgumentOutOfRangeException("maxValue");
+                    throw new ArgumentOutOfRangeException(nameof(maxValue));
                 }
 
                 return (int)(Sample() * maxValue);
@@ -2789,7 +2805,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
             {
                 if (minValue > maxValue)
                 {
-                    throw new ArgumentOutOfRangeException("minValue");
+                    throw new ArgumentOutOfRangeException(nameof(minValue));
                 }
 
                 long num = maxValue - minValue;
@@ -2805,7 +2821,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
             {
                 if (buffer == null)
                 {
-                    throw new ArgumentNullException("buffer");
+                    throw new ArgumentNullException(nameof(buffer));
                 }
 
                 for (var i = 0; i < buffer.Length; i++)

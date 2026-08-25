@@ -6,6 +6,7 @@ using EntitySystem.TemplatesDatabase;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Terrains.Distribution;
 using Game.TerrainSerializers;
 
 namespace Game.Subsystems;
@@ -58,6 +59,30 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
     public Terrain Terrain { get; set; } = null!;
 
     public TerrainUpdater TerrainUpdater { get; set; } = null!;
+
+    public ClientChunkContentCoordinator? ClientChunkContents { get; private set; }
+
+    public IChunkContentTransport? ChunkContentTransport { get; private set; }
+
+    public LocalChunkContentHost? LocalChunkHost { get; private set; }
+
+    public ClientChunkDerivationPipeline? ClientChunkDerivation { get; private set; }
+
+    public ClientTerrainDeltaCoordinator? ClientTerrainDeltas { get; private set; }
+
+    public AuthoritativeChunkGenerationPipeline? AuthoritativeChunkGeneration { get; private set; }
+
+    public IChunkContentAuthority? ChunkContentAuthority { get; private set; }
+
+    public TerrainCellAuthority CellAuthority { get; private set; } = null!;
+
+    public Terrain AuthoritativeTerrain => CellAuthority.Terrain;
+
+    public TerrainContentRole ContentRole => ClientChunkContents != null
+        ? TerrainContentRole.Replica
+        : TerrainContentRole.Authority;
+
+    public bool UsesRemoteChunkTransport => ChunkContentTransport is NetworkChunkContentTransport;
 
     public TerrainRenderer TerrainRenderer { get; set; } = null!;
 
@@ -293,7 +318,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
                 Terrain.ToCell(vector2.Z),
                 false
             );
-            if (chunkAtCell is { State: TerrainChunkState.Valid } && !list.Contains(chunkAtCell))
+            if (chunkAtCell is { MainThreadState: TerrainChunkState.Valid } && !list.Contains(chunkAtCell))
             {
                 list.Add(chunkAtCell);
             }
@@ -309,15 +334,38 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         ComponentMiner? miner = null
     )
     {
+        var authorityChunk = CommonLib.WorkType != WorkType.Client
+            ? CellAuthority.Terrain.GetChunkAtCell(x, z, false)
+            : null;
+        var baseContentVersion = authorityChunk?.NetworkContentRevision + 1 ?? 0;
+        if (!ReferenceEquals(CellAuthority.Terrain, Terrain))
+        {
+            CellAuthority.ChangeCell(x, y, z, value, updateModificationCounter);
+        }
+
         var cellValueFast = Terrain.GetCellValueFast(x, y, z);
         value = Terrain.ReplaceLight(value, 0);
         cellValueFast = Terrain.ReplaceLight(cellValueFast, 0);
         if (value == cellValueFast)
         {
+            PublishAuthoritativeCellDelta(
+                authorityChunk,
+                baseContentVersion,
+                x,
+                y,
+                z,
+                value);
             return;
         }
 
         Terrain.SetCellValueFast(x, y, z, value);
+        PublishAuthoritativeCellDelta(
+            authorityChunk,
+            baseContentVersion,
+            x,
+            y,
+            z,
+            value);
         var chunkAtCell = Terrain.GetChunkAtCell(x, z, false);
         if (chunkAtCell != null)
         {
@@ -382,6 +430,34 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         }
     }
 
+    private void PublishAuthoritativeCellDelta(
+        TerrainChunk? authorityChunk,
+        long baseContentVersion,
+        int x,
+        int y,
+        int z,
+        int value)
+    {
+        if (authorityChunk == null)
+        {
+            return;
+        }
+
+        var resultContentVersion = authorityChunk.NetworkContentRevision + 1;
+        if (resultContentVersion <= baseContentVersion)
+        {
+            return;
+        }
+
+        var delta = new TerrainCellDelta(
+            new Point3(x, y, z),
+            value,
+            baseContentVersion,
+            resultContentVersion);
+        ClientTerrainDeltas?.Receive(delta);
+        CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(delta));
+    }
+
     public void ChangeCell(
         int x, int y, int z,
         int value,
@@ -429,7 +505,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             x,
             y,
             z,
-            Terrain.GetCellValue(x, y, z),
+            CellAuthority.GetCellValue(x, y, z),
             value,
             miner);
         CurrentModRuntime.Value?.Gameplay.Invoke(changingContext);
@@ -440,7 +516,6 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
         value = changingContext.NewValue;
         ChangeCellNet(x, y, z, value, updateModificationCounter, miner);
-        CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(x, y, z, value));
     }
 
     public void DestroyCell(
@@ -578,6 +653,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public void Update(float dt)
     {
+        LocalChunkHost?.Update(8);
         TerrainUpdater.Update();
         ProcessModifiedCells();
     }
@@ -593,12 +669,18 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         SubsystemFurnitureBlockBehavior = Project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
         SubsystemPalette = Project.FindSubsystem<SubsystemPalette>(true)!;
         Terrain = new Terrain();
+        CellAuthority = new TerrainCellAuthority(Terrain);
         if (RunMode.Value is RunModeType.Gui)
         {
             TerrainRenderer = new TerrainRenderer(this);
         }
 
-        TerrainUpdater = new TerrainUpdater(this);
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            ClientChunkContents = new ClientChunkContentCoordinator(Terrain);
+            ChunkContentTransport = new NetworkChunkContentTransport();
+            ClientChunkDerivation = new ClientChunkDerivationPipeline(Terrain);
+        }
         TerrainSerializer = CommonLib.WorkType != WorkType.Client
             ? new TerrainSerializer24(SubsystemGameInfo.DirectoryName)
             : new TerrainSerializerNet();
@@ -610,28 +692,77 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         BlockGeometryGenerator = new BlockGeometryGenerator(Terrain, this,
             Project.FindSubsystem<SubsystemElectricity>(true)!, SubsystemFurnitureBlockBehavior,
             Project.FindSubsystem<SubsystemMetersBlockBehavior>(true)!, SubsystemPalette);
+        TerrainContentsGenerator = CreateTerrainContentsGenerator(Terrain);
+
+        if (CommonLib.WorkType == WorkType.Local)
+        {
+            var authorityTerrain = new Terrain();
+            TerrainContentsGenerator = CreateTerrainContentsGenerator(authorityTerrain);
+            var generation = new AuthoritativeChunkGenerationPipeline(
+                TerrainContentsGenerator,
+                chunk => TerrainSaveCoordinator?.TryRestorePendingSnapshot(chunk) == true,
+                TerrainSerializer.LoadChunk,
+                chunk => CurrentModRuntime.Value?.Gameplay.Invoke(
+                    new TerrainChunkGeneratedContext(this, chunk)));
+            LocalChunkHost = new LocalChunkContentHost(
+                authorityTerrain,
+                generation,
+                chunk => TerrainSaveCoordinator?.TryQueueChunkForUnload(chunk) ?? true);
+            CellAuthority = LocalChunkHost.CellAuthority;
+            ClientChunkContents = new ClientChunkContentCoordinator(Terrain);
+            ChunkContentTransport = LocalChunkHost;
+            ClientChunkDerivation = new ClientChunkDerivationPipeline(Terrain);
+        }
+        else if (CommonLib.WorkType != WorkType.Client)
+        {
+            AuthoritativeChunkGeneration = new AuthoritativeChunkGenerationPipeline(this);
+            ChunkContentAuthority = new TerrainChunkContentAuthority(Terrain);
+        }
+
+        // Start the worker only after every service it can reach has been composed.
+        TerrainUpdater = new TerrainUpdater(this);
+        if (ClientChunkContents != null)
+        {
+            ClientTerrainDeltas = new ClientTerrainDeltaCoordinator(
+                Terrain,
+                delta => ChangeCellNet(
+                    delta.Cell.X,
+                    delta.Cell.Y,
+                    delta.Cell.Z,
+                    delta.Value));
+            ClientChunkContents.ContentInstalled += TerrainUpdater.OnNetworkChunkContentInstalled;
+            // Replay deltas after the ordinary snapshot derivation reset. A detected version gap
+            // must be the final state transition so it can leave the replica at NotLoaded.
+            ClientChunkContents.ContentInstalled += chunk => ClientTerrainDeltas.OnContentInstalled(chunk);
+        }
+    }
+
+    internal ITerrainContentsGenerator CreateTerrainContentsGenerator(Terrain terrain)
+    {
+        ArgumentNullException.ThrowIfNull(terrain);
         var terrainGenerationMode = SubsystemGameInfo.WorldSettings.TerrainGenerationMode;
         if (TerrainGenerationModes.IsFlat(terrainGenerationMode))
         {
-            TerrainContentsGenerator = new TerrainContentsGeneratorFlat(this);
+            return new TerrainContentsGeneratorFlat(this, terrain);
         }
-        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent22 or TerrainGenerationMode.LegacyIsland22)
+
+        if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent22 or TerrainGenerationMode.LegacyIsland22)
         {
-            TerrainContentsGenerator = new TerrainContentsGenerator22(this);
+            return new TerrainContentsGenerator22(this, terrain);
         }
-        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent23 or TerrainGenerationMode.LegacyIsland23)
+
+        if (terrainGenerationMode is TerrainGenerationMode.LegacyContinent23 or TerrainGenerationMode.LegacyIsland23)
         {
-            TerrainContentsGenerator = new TerrainContentsGenerator23(this);
+            return new TerrainContentsGenerator23(this, terrain);
         }
-        else if (terrainGenerationMode is TerrainGenerationMode.LegacyContinentPre21 or TerrainGenerationMode.LegacyIslandPre21
-                 or TerrainGenerationMode.LegacyContinent21 or TerrainGenerationMode.LegacyIsland21)
+
+        if (terrainGenerationMode is TerrainGenerationMode.LegacyContinentPre21 or TerrainGenerationMode.LegacyIslandPre21
+            or TerrainGenerationMode.LegacyContinent21 or TerrainGenerationMode.LegacyIsland21)
         {
-            TerrainContentsGenerator = new TerrainContentsGenerator21(this);
+            return new TerrainContentsGenerator21(this, terrain);
         }
-        else
-        {
-            TerrainContentsGenerator = new TerrainContentsGenerator24(this);
-        }
+
+        return new TerrainContentsGenerator24(this, terrain);
     }
 
     private void SaveChunk()
@@ -640,7 +771,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         try
         {
             TerrainSaveCoordinator?.Flush();
-            var allocatedChunks = Terrain.AllocatedChunks;
+            var allocatedChunks = AuthoritativeTerrain.AllocatedChunks;
             foreach (var chunk in allocatedChunks)
             {
                 TerrainSerializer.SaveChunk(chunk);
@@ -686,8 +817,17 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         TerrainSerializer.Dispose();
         TerrainSerializer = null!;
 
-        Terrain.Dispose();
+        var renderTerrain = Terrain;
+        var authorityTerrain = AuthoritativeTerrain;
+        renderTerrain.Dispose();
         Terrain = null!;
+
+        if (!ReferenceEquals(authorityTerrain, renderTerrain))
+        {
+            authorityTerrain.Dispose();
+        }
+
+        LocalChunkHost = null;
 
         BlockGeometryGenerator = null!;
     }

@@ -38,7 +38,7 @@ public class SubsystemBlocksScanner : Subsystem, IUpdateable
 
         while (_pollCount >= 1f)
         {
-            if (nextChunk.State <= TerrainChunkState.InvalidContents4)
+            if (nextChunk.MainThreadState <= TerrainChunkState.InvalidContents4)
             {
                 _pollCount -= 65536f;
             }

@@ -199,6 +199,9 @@ public class Settings
     public int ServerChunkCountSendPer { get; set; } =
         Network.NetworkTerrainPolicy.DefaultServerChunkCountSendPer;
 
+    public int ServerChunkBytesSendPerSecond { get; set; } =
+        Network.NetworkTerrainPolicy.DefaultServerChunkBytesSendPerSecond;
+
     public bool AutoGarbageCollect { get; set; } = true;
 
     public string DefaultModRepositoryUrl { get; set; } = string.Empty;

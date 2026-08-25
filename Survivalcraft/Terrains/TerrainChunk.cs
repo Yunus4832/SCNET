@@ -22,6 +22,8 @@ public class TerrainChunk : IDisposable
 
     public bool AreBehaviorsNotified;
 
+    public ulong AllocationGeneration { get; internal set; }
+
     public BoundingBox BoundingBox;
 
     public readonly DynamicArray<TerrainChunkGeometry.Buffer> Buffers = [];
@@ -33,8 +35,6 @@ public class TerrainChunk : IDisposable
     public TerrainGeometry[] ChunkSliceGeometries = new TerrainGeometry[SlicesCount];
 
     public Point2 Coords;
-
-    public TerrainChunkState? DowngradedState;
 
     public float DrawDistanceSquared;
 
@@ -49,6 +49,22 @@ public class TerrainChunk : IDisposable
     public bool IsLoaded;
 
     public bool IsRequested;
+
+    public double NetworkRequestTime;
+
+    public int NetworkRequestAttempts;
+
+    public double NetworkContentReceiveTime;
+
+    public double NetworkGeometryReadyTime;
+
+    public double NetworkGeometryUploadTime;
+
+    public bool NetworkGeometryUploaded;
+
+    public long NetworkContentVersion;
+
+    public long ClientGeometryContentVersion;
 
     public int LightPropagationMask;
 
@@ -68,15 +84,14 @@ public class TerrainChunk : IDisposable
 
     public long StartTime;
 
-    public TerrainChunkState State;
+    /// <summary>State consumed by gameplay and rendering on the main thread.</summary>
+    public TerrainChunkState MainThreadState { get; internal set; }
 
     public readonly Terrain Terrain;
 
-    public TerrainChunkState? UpgradedState;
+    private int _queuedWorkerDowngrade = -1;
 
-    public bool WasDowngraded;
-
-    public bool WasUpgraded;
+    private int _publishedWorkerState = -1;
 
     public TerrainChunk(Terrain terrain, int x, int z)
     {
@@ -88,7 +103,51 @@ public class TerrainChunk : IDisposable
         Center = new Vector2(Origin.X + 8f, Origin.Y + 8f);
     }
 
-    public TerrainChunkState ThreadState { get; set; }
+    /// <summary>State owned by the terrain worker or an isolated authority generation pipeline.</summary>
+    public TerrainChunkState WorkerState { get; internal set; }
+
+    internal bool HasQueuedWorkerDowngrade => Volatile.Read(ref _queuedWorkerDowngrade) >= 0;
+
+    internal void QueueWorkerDowngrade(TerrainChunkState state)
+    {
+        var requested = (int)state;
+        while (true)
+        {
+            var current = Volatile.Read(ref _queuedWorkerDowngrade);
+            var desired = current < 0 ? requested : Math.Min(current, requested);
+            if (current == desired ||
+                Interlocked.CompareExchange(ref _queuedWorkerDowngrade, desired, current) == current)
+            {
+                return;
+            }
+        }
+    }
+
+    internal bool TryConsumeWorkerDowngrade(out TerrainChunkState state)
+    {
+        var value = Interlocked.Exchange(ref _queuedWorkerDowngrade, -1);
+        state = value >= 0 ? (TerrainChunkState)value : default;
+        return value >= 0;
+    }
+
+    internal void PublishWorkerState(TerrainChunkState state) =>
+        Interlocked.Exchange(ref _publishedWorkerState, (int)state);
+
+    internal bool TryConsumePublishedWorkerState(out TerrainChunkState state)
+    {
+        var value = Interlocked.Exchange(ref _publishedWorkerState, -1);
+        state = value >= 0 ? (TerrainChunkState)value : default;
+        return value >= 0;
+    }
+
+    internal void DiscardPublishedWorkerState() =>
+        Interlocked.Exchange(ref _publishedWorkerState, -1);
+
+    internal void ResetStateExchange()
+    {
+        Interlocked.Exchange(ref _queuedWorkerDowngrade, -1);
+        Interlocked.Exchange(ref _publishedWorkerState, -1);
+    }
 
     public void Dispose()
     {

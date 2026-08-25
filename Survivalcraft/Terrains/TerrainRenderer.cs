@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Game.Terrains.Distribution;
+
 namespace Game.Terrains;
 
 public class TerrainRenderer : IDisposable
@@ -99,6 +101,12 @@ public class TerrainRenderer : IDisposable
                     {
                         terrainChunk.NewGeometryData = false;
                         SetupTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
+                        if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
+                            terrainChunk.NetworkContentReceiveTime > 0.0)
+                        {
+                            terrainChunk.NetworkGeometryUploaded = true;
+                            terrainChunk.NetworkGeometryUploadTime = Time.RealTime;
+                        }
                     }
                 }
             }
@@ -108,10 +116,13 @@ public class TerrainRenderer : IDisposable
             {
                 if (viewFrustum.Intersection(terrainChunk.BoundingBox))
                 {
-                    _chunksToDraw.Add(terrainChunk);
+                    if (ClientChunkDerivationPipeline.CanDraw(_subsystemTerrain.ContentRole, terrainChunk))
+                    {
+                        _chunksToDraw.Add(terrainChunk);
+                    }
                 }
 
-                if (terrainChunk.State != TerrainChunkState.Valid)
+                if (terrainChunk.MainThreadState != TerrainChunkState.Valid)
                 {
                     continue;
                 }
@@ -250,14 +261,13 @@ public class TerrainRenderer : IDisposable
         _transparentShader.GetParameter("u_fogBottomTopDensity").SetValue(new Vector3(_subsystemSky.ViewFogBottom,
             _subsystemSky.ViewFogTop, _subsystemSky.ViewFogDensity));
         var parameter = _transparentShader.GetParameter("u_hazeStartDensity");
-        for (var i = 0; i < _chunksToDraw.Count; i++)
+        foreach (var terrainChunk in _chunksToDraw)
         {
-            var terrainChunk = _chunksToDraw[i];
             var num = MathUtils.Min(terrainChunk.HazeEnds[gameWidgetIndex],
                 _subsystemSky.ViewHazeStart + 1f / _subsystemSky.ViewHazeDensity);
             var num2 = MathUtils.Min(_subsystemSky.ViewHazeStart, num - 1f);
             parameter.SetValue(new Vector2(num2, 1f / (num - num2)));
-            var subsetsMask = 64;
+            const int subsetsMask = 64;
             DrawTerrainChunkGeometrySubsets(_transparentShader, terrainChunk, subsetsMask);
         }
     }
@@ -268,6 +278,12 @@ public class TerrainRenderer : IDisposable
         var allocatedChunks = _subsystemTerrain.Terrain.AllocatedChunks;
         foreach (var terrainChunk in allocatedChunks)
         {
+            if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica)
+            {
+                terrainChunk.NetworkGeometryUploaded = false;
+                terrainChunk.ClientGeometryContentVersion = 0;
+            }
+
             DisposeTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
         }
     }
@@ -296,9 +312,8 @@ public class TerrainRenderer : IDisposable
         Func<TerrainVertex, TerrainVertex>? vertexTransform = null
     )
     {
-        foreach (var item in list)
+        foreach (var (key, geometry) in list)
         {
-            var geometry = item.Value;
             var num = 0;
             var geometryItemsCount = 7 * TerrainChunk.SlicesCount;
             while (num < geometryItemsCount)
@@ -337,7 +352,7 @@ public class TerrainRenderer : IDisposable
                     var buffer = new TerrainChunkGeometry.Buffer
                     {
                         IndexBuffer = new IndexBuffer(IndexFormat.ThirtyTwoBits, num3),
-                        Texture = item.Key,
+                        Texture = key,
                         VertexBuffer = new VertexBuffer(TerrainVertex.VertexDeclaration, num2)
                     };
                     buffers.Add(buffer);

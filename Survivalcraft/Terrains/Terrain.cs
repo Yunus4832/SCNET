@@ -147,6 +147,8 @@ public class Terrain : IDisposable
 
     private readonly HashSet<TerrainChunk> _allocatedChunks = [];
 
+    private readonly Dictionary<Point2, ulong> _allocationGenerations = [];
+
     private TerrainChunk[] _allocatedChunksArray = [];
 
     /// <summary>
@@ -277,6 +279,10 @@ public class Terrain : IDisposable
         }
 
         var terrainChunk = new TerrainChunk(this, chunkX, chunkZ);
+        var coords = terrainChunk.Coords;
+        var generation = _allocationGenerations.GetValueOrDefault(coords) + 1;
+        _allocationGenerations[coords] = generation;
+        terrainChunk.AllocationGeneration = generation;
         _allocatedChunks.Add(terrainChunk);
         _allChunks.Add(chunkX, chunkZ, terrainChunk);
         _allocatedChunksArray = [];

@@ -123,40 +123,36 @@ public class SubsystemSpawn : Subsystem, IUpdateable
         valuesDictionary.SetValue("Chunks", valuesDictionary2);
         foreach (var value2 in _chunks.Values)
         {
-            if (value2.LastVisitedTime.HasValue)
+            if (!value2.LastVisitedTime.HasValue)
             {
-                var valuesDictionary3 = new ValuesDictionary();
-                valuesDictionary2.SetValue(HumanReadableConverter.ConvertToString(value2.Point), valuesDictionary3);
-                valuesDictionary3.SetValue("IsSpawned", value2.IsSpawned);
-                valuesDictionary3.SetValue("LastVisitedTime", value2.LastVisitedTime.Value);
-                var value = SaveSpawnsData(value2.SpawnsData);
-                if (!string.IsNullOrEmpty(value))
-                {
-                    valuesDictionary3.SetValue("SpawnsData", value);
-                }
+                continue;
+            }
+
+            var valuesDictionary3 = new ValuesDictionary();
+            valuesDictionary2.SetValue(HumanReadableConverter.ConvertToString(value2.Point), valuesDictionary3);
+            valuesDictionary3.SetValue("IsSpawned", value2.IsSpawned);
+            valuesDictionary3.SetValue("LastVisitedTime", value2.LastVisitedTime.Value);
+            var value = SaveSpawnsData(value2.SpawnsData);
+            if (!string.IsNullOrEmpty(value))
+            {
+                valuesDictionary3.SetValue("SpawnsData", value);
             }
         }
     }
 
     public override void OnEntityAdded(Entity entity)
     {
-        foreach (var item in entity.FindComponents<ComponentSpawn>())
+        foreach (var item in entity.FindComponents<ComponentSpawn>().OfType<ComponentSpawn>())
         {
-            if (item != null)
-            {
-                _spawns.Add(item, true);
-            }
+            _spawns.Add(item, true);
         }
     }
 
     public override void OnEntityRemoved(Entity entity)
     {
-        foreach (var item in entity.FindComponents<ComponentSpawn>())
+        foreach (var item in entity.FindComponents<ComponentSpawn>().OfType<ComponentSpawn>())
         {
-            if (item != null)
-            {
-                _spawns.Remove(item);
-            }
+            _spawns.Remove(item);
         }
     }
 
@@ -218,7 +214,8 @@ public class SubsystemSpawn : Subsystem, IUpdateable
         var centers = new List<Vector2>();
         foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
         {
-            centers.Add(new Vector2(componentPlayer.ComponentBody.Position.X, componentPlayer.ComponentBody.Position.Z));
+            centers.Add(new Vector2(componentPlayer.ComponentBody.Position.X,
+                componentPlayer.ComponentBody.Position.Z));
         }
 
         foreach (var v in centers)
@@ -238,7 +235,7 @@ public class SubsystemSpawn : Subsystem, IUpdateable
 
                 var chunkAtCell =
                     _subsystemTerrain.Terrain.GetChunkAtCell(Terrain.ToCell(v2.X), Terrain.ToCell(v2.Y), false);
-                if (chunkAtCell is not { State: > TerrainChunkState.InvalidPropagatedLight })
+                if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidPropagatedLight })
                 {
                     continue;
                 }
@@ -267,28 +264,30 @@ public class SubsystemSpawn : Subsystem, IUpdateable
         var list = new List<ComponentSpawn>();
         foreach (var key in _spawns.Keys)
         {
-            if (key is { AutoDespawn: true, IsDespawning: false })
+            if (key is not { AutoDespawn: true, IsDespawning: false })
             {
-                var flag = true;
-                var position = key.ComponentFrame.Position;
-                var v = new Vector2(position.X, position.Z);
-                foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
-                {
-                    var viewPosition = componentPlayer.ComponentBody.Position;
-                    var v2 = new Vector2(viewPosition.X, viewPosition.Z);
-                    if (!(Vector2.DistanceSquared(v, v2) <= 2704f))
-                    {
-                        continue;
-                    }
+                continue;
+            }
 
-                    flag = false;
-                    break;
+            var flag = true;
+            var position = key.ComponentFrame.Position;
+            var v = new Vector2(position.X, position.Z);
+            foreach (var componentPlayer in _subsystemPlayers.ComponentPlayers)
+            {
+                var viewPosition = componentPlayer.ComponentBody.Position;
+                var v2 = new Vector2(viewPosition.X, viewPosition.Z);
+                if (!(Vector2.DistanceSquared(v, v2) <= 2704f))
+                {
+                    continue;
                 }
 
-                if (flag)
-                {
-                    list.Add(key);
-                }
+                flag = false;
+                break;
+            }
+
+            if (flag)
+            {
+                list.Add(key);
             }
         }
 

@@ -37,6 +37,7 @@
 | `Survivalcraft.Android.X64/` | Android x64 变体 |
 | `Survivalcraft.Android.X86/` | Android x86 变体 |
 | `Engine.Test/`、`EntitySystem.Test/`、`Survivalcraft.Test/` | 单元测试工程 |
+| `NetworkDamageTool/` | 本机 UDP 网络损伤代理，用于弱网集成实验 |
 
 ## 快速开始
 
@@ -105,6 +106,8 @@ dotnet test Survivalcraft.Test/
 - [模组服务器](Doc/ModServer.md) — 私有 `.scpak` 仓库的上传、索引与匿名分发
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问
 - [外部依赖](Doc/Dependencies.md) — 工具链、运行时包与测试依赖
+- [网络稳定性与容量测试](Doc/NetworkTesting.md) — UDP 损伤代理、弱网实验与并发容量测试边界
+- [地形内容分发架构](Doc/TerrainDistribution.md) — 权威内容、客户端派生、版本门禁与线程所有权
 
 ## 版权与法律
 

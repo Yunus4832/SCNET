@@ -157,7 +157,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
         }
 
         var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(coordinates.X, coordinates.Z, false);
-        if (chunkAtCell is { State: TerrainChunkState.Valid })
+        if (chunkAtCell is { MainThreadState: TerrainChunkState.Valid })
         {
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(coordinates.X, coordinates.Y, coordinates.Z);
             var contents = Terrain.ExtractContents(cellValue);

@@ -1,6 +1,8 @@
+using Engine.Core;
 using Game;
-using Game.Network.Enums;
+using Game.Network;
 using Game.Terrains;
+using Game.Terrains.Distribution;
 using Game.TerrainSerializers;
 
 namespace Survivalcraft.Test.Terrains;
@@ -60,12 +62,12 @@ public sealed class TerrainUpdaterTest
     {
         var chunk = new TerrainChunk(null!, 1, 2);
 
-        Assert.False(TerrainUpdater.CanSynchronouslyUpdateChunk(WorkType.Client, chunk));
-        Assert.True(TerrainUpdater.CanSynchronouslyUpdateChunk(WorkType.Local, chunk));
+        Assert.False(TerrainUpdater.CanSynchronouslyUpdateChunk(TerrainContentRole.Replica, chunk));
+        Assert.True(TerrainUpdater.CanSynchronouslyUpdateChunk(TerrainContentRole.Authority, chunk));
 
         chunk.IsLoaded = true;
 
-        Assert.True(TerrainUpdater.CanSynchronouslyUpdateChunk(WorkType.Client, chunk));
+        Assert.True(TerrainUpdater.CanSynchronouslyUpdateChunk(TerrainContentRole.Replica, chunk));
     }
 
     [Fact]
@@ -73,17 +75,153 @@ public sealed class TerrainUpdaterTest
     {
         var chunk = new TerrainChunk(null!, 1, 2)
         {
-            State = TerrainChunkState.InvalidLight,
-            ThreadState = TerrainChunkState.Valid,
-            UpgradedState = TerrainChunkState.Valid,
-            WasUpgraded = true,
+            MainThreadState = TerrainChunkState.InvalidLight,
+            WorkerState = TerrainChunkState.Valid,
             NewGeometryData = true
         };
+        chunk.PublishWorkerState(TerrainChunkState.Valid);
 
-        var downgraded = TerrainUpdater.ReceiveMainThreadChunkStates([chunk]);
+        var downgraded = TerrainChunkStateExchange.ReceiveOnMainThread([chunk]);
 
         Assert.False(downgraded);
-        Assert.Equal(TerrainChunkState.Valid, chunk.State);
-        Assert.Null(chunk.UpgradedState);
+        Assert.Equal(TerrainChunkState.Valid, chunk.MainThreadState);
+    }
+
+    [Fact]
+    public void ClientBackgroundUpdaterSkipsChunksAwaitingNetworkContent()
+    {
+        var awaitingContent = new TerrainChunk(null!, 1, 2);
+        var receivedContent = new TerrainChunk(null!, 2, 2)
+        {
+            WorkerState = TerrainChunkState.InvalidLight,
+            IsLoaded = true
+        };
+
+        Assert.False(TerrainUpdater.CanBackgroundUpdateChunk(TerrainContentRole.Replica, awaitingContent));
+        Assert.True(TerrainUpdater.CanBackgroundUpdateChunk(TerrainContentRole.Replica, receivedContent));
+        Assert.True(TerrainUpdater.CanBackgroundUpdateChunk(TerrainContentRole.Authority, awaitingContent));
+    }
+
+    [Fact]
+    public void InstalledContentBaselineCannotBeOverwrittenByPendingNotLoadedTransition()
+    {
+        var terrain = new Terrain();
+        var chunk = terrain.AllocateChunk(1, 2);
+        chunk.MainThreadState = TerrainChunkState.NotLoaded;
+        chunk.WorkerState = TerrainChunkState.NotLoaded;
+        chunk.IsLoaded = true;
+        chunk.QueueWorkerDowngrade(TerrainChunkState.NotLoaded);
+        chunk.PublishWorkerState(TerrainChunkState.NotLoaded);
+
+        new ClientChunkDerivationPipeline(terrain).Begin(chunk);
+        TerrainChunkStateExchange.ReceiveOnMainThread([chunk]);
+
+        Assert.Equal(TerrainChunkState.InvalidLight, chunk.MainThreadState);
+        Assert.Equal(TerrainChunkState.InvalidLight, chunk.WorkerState);
+        Assert.False(chunk.HasQueuedWorkerDowngrade);
+    }
+
+    [Fact]
+    public void NetworkChunkRequestRetriesOnlyAfterRecoveryWindow()
+    {
+        var chunk = new TerrainChunk(null!, 1, 2)
+        {
+            IsRequested = true,
+            NetworkRequestTime = 10.0
+        };
+
+        Assert.False(TerrainUpdater.ShouldRequestNetworkChunk(chunk, 14.999));
+        Assert.True(TerrainUpdater.ShouldRequestNetworkChunk(chunk, 15.0));
+    }
+
+    [Fact]
+    public void NetworkChunkRequestRecoversFromMissingOrInvalidTimestamp()
+    {
+        var chunk = new TerrainChunk(null!, 1, 2) { IsRequested = true };
+
+        Assert.True(TerrainUpdater.ShouldRequestNetworkChunk(chunk, 20.0));
+
+        chunk.NetworkRequestTime = 30.0;
+        Assert.True(TerrainUpdater.ShouldRequestNetworkChunk(chunk, 20.0));
+    }
+
+    [Fact]
+    public void NetworkChunkStallClassificationDistinguishesPipelineStages()
+    {
+        var chunk = new TerrainChunk(null!, 1, 2)
+        {
+            IsRequested = true,
+            NetworkRequestTime = 10.0
+        };
+
+        Assert.True(TerrainUpdater.IsNetworkChunkStalled(chunk, 15.0));
+
+        chunk.IsRequested = false;
+        chunk.IsLoaded = true;
+        chunk.NetworkContentReceiveTime = 20.0;
+        chunk.NetworkContentVersion = 2;
+        chunk.ClientGeometryContentVersion = 2;
+        chunk.WorkerState = TerrainChunkState.Valid;
+        chunk.MainThreadState = TerrainChunkState.Valid;
+        Assert.True(TerrainUpdater.IsNetworkChunkStalled(chunk, 25.0));
+
+        chunk.NetworkGeometryUploaded = true;
+        Assert.False(TerrainUpdater.IsNetworkChunkStalled(chunk, 25.0));
+
+        chunk.WorkerState = TerrainChunkState.InvalidPropagatedLight;
+        chunk.MainThreadState = TerrainChunkState.InvalidPropagatedLight;
+        Assert.False(TerrainUpdater.IsNetworkChunkStalled(chunk, 25.0));
+    }
+
+    [Fact]
+    public void ClientRetentionMarginCreatesAllocationHysteresis()
+    {
+        var locations = new[]
+        {
+            new TerrainUpdater.UpdateLocation
+            {
+                Center = Vector2.Zero,
+                VisibilityDistance = 128,
+                ContentDistance = 128
+            }
+        };
+        var bufferedCenter = new Vector2(152, 0);
+
+        Assert.False(TerrainUpdater.IsChunkInRange(bufferedCenter, locations));
+        Assert.True(TerrainUpdater.IsChunkInRange(
+            bufferedCenter,
+            locations,
+            NetworkTerrainPolicy.ClientChunkRetentionMargin));
+        Assert.False(TerrainUpdater.IsChunkInRange(
+            new Vector2(161, 0),
+            locations,
+            NetworkTerrainPolicy.ClientChunkRetentionMargin));
+    }
+
+    [Fact]
+    public void RetentionCapacityEvictsLeastRecentlyUsedChunks()
+    {
+        var oldest = new Point2(1, 0);
+        var middle = new Point2(2, 0);
+        var newest = new Point2(3, 0);
+
+        var evicted = TerrainUpdater.SelectRetainedChunkCoordsToEvict([
+            (middle, 20),
+            (oldest, 10),
+            (newest, 30)
+        ], 2);
+
+        Assert.Equal([oldest], evicted);
+    }
+
+    [Fact]
+    public void ZeroRetentionCapacityEvictsEveryBufferedChunk()
+    {
+        var evicted = TerrainUpdater.SelectRetainedChunkCoordsToEvict([
+            (new Point2(1, 0), 10),
+            (new Point2(2, 0), 20)
+        ], 0);
+
+        Assert.Equal(2, evicted.Count);
     }
 }

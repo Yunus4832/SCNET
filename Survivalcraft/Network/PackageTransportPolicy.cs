@@ -33,6 +33,12 @@ public static class PackageTransportPolicy
     public static readonly PackageTransport Bulk =
         new(NetworkChannel.Bulk, DeliveryMethod.ReliableOrdered, 0.10);
 
+    public static readonly PackageTransport TerrainBulk =
+        new(NetworkChannel.TerrainBulk, DeliveryMethod.ReliableUnordered, 0.10);
+
+    public static readonly PackageTransport TerrainFragment =
+        new(NetworkChannel.TerrainFragment, DeliveryMethod.Unreliable, 0.02);
+
     /// <summary>按包类型解析传输方式。新包类型在此注册。</summary>
     public static PackageTransport Get(IPackage package)
     {
@@ -58,7 +64,8 @@ public static class PackageTransportPolicy
             BootstrapPackage => Bulk,
             InitialWorldSnapshotPackage => Bulk,
             PlayerJoinedPackage => Bulk,
-            SubsystemTerrainPackage { Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkList } => Bulk,
+            SubsystemTerrainPackage { Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment } =>
+                TerrainFragment,
             FurniturePackage
             {
                 PackageEventType: FurniturePackage.EventType.Add or

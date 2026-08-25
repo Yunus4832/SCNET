@@ -159,17 +159,21 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         for (var i = point.X - num; i <= point.X + num; i++)
         for (var j = point.Y - num; j <= point.Y + num; j++)
         {
-            if (MathUtils.Sqr(i + 0.5f - vector.X) + MathUtils.Sqr(j + 0.5f - vector.Y) <= num2)
+            if (!(MathUtils.Sqr(i + 0.5f - vector.X) + MathUtils.Sqr(j + 0.5f - vector.Y) <= num2))
             {
-                var point2 = new Point2(i, j);
-                if (!activeShafts.ContainsKey(point2))
-                {
-                    var precipitationShaftParticleSystem = new PrecipitationShaftParticleSystem(camera.GameWidget, this,
-                        _random, point2, GetPrecipitationShaftInfo(point2.X, point2.Y).Type);
-                    _subsystemParticles.AddParticleSystem(precipitationShaftParticleSystem);
-                    activeShafts.Add(point2, precipitationShaftParticleSystem);
-                }
+                continue;
             }
+
+            var point2 = new Point2(i, j);
+            if (activeShafts.ContainsKey(point2))
+            {
+                continue;
+            }
+
+            var precipitationShaftParticleSystem = new PrecipitationShaftParticleSystem(camera.GameWidget, this,
+                _random, point2, GetPrecipitationShaftInfo(point2.X, point2.Y).Type);
+            _subsystemParticles.AddParticleSystem(precipitationShaftParticleSystem);
+            activeShafts.Add(point2, precipitationShaftParticleSystem);
         }
     }
 
@@ -222,7 +226,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
             foreach (var _ in allocatedChunks)
             {
                 var terrainChunk = allocatedChunks[_random.Int(0, allocatedChunks.Length - 1)];
-                if (terrainChunk.State < TerrainChunkState.InvalidVertices1 ||
+                if (terrainChunk.MainThreadState < TerrainChunkState.InvalidVertices1 ||
                     !_random.Bool(LightningIntensity * 0.0002f))
                 {
                     continue;
@@ -541,11 +545,13 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
 
     public Dictionary<Point2, PrecipitationShaftParticleSystem> GetActiveShafts(GameWidget gameWidget)
     {
-        if (!_activeShafts.TryGetValue(gameWidget, out var value))
+        if (_activeShafts.TryGetValue(gameWidget, out var value))
         {
-            value = new Dictionary<Point2, PrecipitationShaftParticleSystem>();
-            _activeShafts.Add(gameWidget, value);
+            return value;
         }
+
+        value = new Dictionary<Point2, PrecipitationShaftParticleSystem>();
+        _activeShafts.Add(gameWidget, value);
 
         return value;
     }

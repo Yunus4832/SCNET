@@ -280,7 +280,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
         for (var l = -7; l <= 7; l++)
         {
             var chunkAtCell2 = SubsystemTerrain.Terrain.GetChunkAtCell(x + k, z + l, false);
-            if (chunkAtCell2 == null || chunkAtCell2.State < TerrainChunkState.InvalidVertices1)
+            if (chunkAtCell2 == null || chunkAtCell2.MainThreadState < TerrainChunkState.InvalidVertices1)
             {
                 continue;
             }

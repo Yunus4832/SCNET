@@ -2,7 +2,9 @@ using System.IO.Compression;
 
 namespace Game.Network.Serialization;
 
-public sealed record EncodedTerrainChunk(Point2 Coords, byte[] Payload);
+using Game.Terrains.Distribution;
+
+public sealed record EncodedTerrainChunk(Point2 Coords, long ContentVersion, byte[] Payload);
 
 public static class NetworkChunkCodec
 {
@@ -26,15 +28,25 @@ public static class NetworkChunkCodec
 
     public static EncodedTerrainChunk Encode(TerrainChunk chunk)
     {
-        return Encode(chunk.Coords, chunk.Cells, chunk.Shafts);
+        return Encode(chunk.Coords, chunk.NetworkContentRevision + 1, chunk.Cells, chunk.Shafts);
     }
 
     internal static EncodedTerrainChunk Encode(NetworkChunkSnapshot snapshot)
     {
-        return Encode(snapshot.Coords, snapshot.Cells, snapshot.Shafts);
+        return Encode(snapshot.Coords, snapshot.Revision + 1, snapshot.Cells, snapshot.Shafts);
     }
 
-    private static EncodedTerrainChunk Encode(Point2 coords, int[] cells, long[] shafts)
+    internal static EncodedTerrainChunk Encode(AuthorityChunkSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        return Encode(
+            snapshot.Coords,
+            snapshot.ContentVersion,
+            snapshot.Cells.ToArray(),
+            snapshot.Shafts.ToArray());
+    }
+
+    private static EncodedTerrainChunk Encode(Point2 coords, long contentVersion, int[] cells, long[] shafts)
     {
         using var rleStream = new MemoryStream(_rawBodySize / 4);
         using (var writer = new BinaryWriter(rleStream, System.Text.Encoding.UTF8, true))
@@ -79,7 +91,7 @@ public static class NetworkChunkCodec
         payloadWriter.Write((byte)compression);
         payloadWriter.Write(body.Length);
         payloadWriter.Write(payloadBody);
-        return new EncodedTerrainChunk(coords, payloadStream.ToArray());
+        return new EncodedTerrainChunk(coords, contentVersion, payloadStream.ToArray());
     }
 
     public static TerrainChunk Decode(Point2 coords, byte[] payload)
@@ -135,6 +147,19 @@ public static class NetworkChunkCodec
         return bodyReader.BaseStream.Position != bodyReader.BaseStream.Length
             ? throw new InvalidDataException("Terrain chunk body contains trailing data.")
             : chunk;
+    }
+
+    public static ClientChunkSnapshot DecodeSnapshot(
+        ChunkAllocationId allocation,
+        long contentVersion,
+        byte[] payload)
+    {
+        var chunk = Decode(allocation.Coords, payload);
+        return new ClientChunkSnapshot(
+            allocation,
+            contentVersion,
+            chunk.Cells,
+            chunk.Shafts);
     }
 
     private static void WriteClimate(BinaryWriter writer, long[] shafts)

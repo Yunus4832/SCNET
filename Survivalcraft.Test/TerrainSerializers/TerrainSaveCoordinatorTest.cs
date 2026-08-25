@@ -138,7 +138,7 @@ public sealed class TerrainSaveCoordinatorTest
     {
         var chunk = new TerrainChunk(terrain, x, z)
         {
-            State = TerrainChunkState.Valid,
+            MainThreadState = TerrainChunkState.Valid,
             ModificationCounter = 1
         };
         chunk.Cells[0] = value;

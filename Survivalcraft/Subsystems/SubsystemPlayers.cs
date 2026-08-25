@@ -466,7 +466,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         var updater = _subsystemTerrain.TerrainUpdater;
         if (pd.Client != null)
         {
-            updater.WaitChunkList.Remove(pd.Client);
+            updater.ServerChunkDistribution?.RemoveClient(pd.Client);
         }
 
         var componentPlayer = pd.ComponentPlayer;

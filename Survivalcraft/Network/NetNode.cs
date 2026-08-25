@@ -1005,13 +1005,22 @@ public class NetNode
     {
         if (packages.Any(IsTerrainChunkPackage))
         {
+            var deferred = new List<IPackage>();
             foreach (var package in packages)
             {
+                if (peer.GetPacketsCountInReliableQueue(
+                        PackageTransportPolicy.TerrainBulk.ChannelNumber,
+                        false) >= NetworkTerrainPolicy.MaxTerrainReliablePacketsInQueue)
+                {
+                    deferred.Add(package);
+                    continue;
+                }
+
                 var chunkWriter = CreatePackageWriter([package], transport, out _);
                 peer.Send(chunkWriter, transport.ChannelNumber, transport.DeliveryMethod);
             }
 
-            return [];
+            return deferred;
         }
 
         var maxPacketSize = peer.GetMaxSinglePacketSize(transport.DeliveryMethod);
@@ -1218,7 +1227,7 @@ public class NetNode
     private static bool IsTerrainChunkPackage(IPackage package) =>
         package is SubsystemTerrainPackage
         {
-            Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkList
+            Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment
         };
 
     private static bool CanFragment(DeliveryMethod deliveryMethod)

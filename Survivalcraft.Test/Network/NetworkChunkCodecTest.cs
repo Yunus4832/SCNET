@@ -1,6 +1,7 @@
 using Game.Network;
 using Game.Network.Serialization;
 using Game.Terrains;
+using Game.Terrains.Distribution;
 
 namespace Survivalcraft.Test.Network;
 
@@ -71,12 +72,19 @@ public sealed class NetworkChunkCodecTest
         var chunk = new TerrainChunk(terrain, 0, 0);
         var cache = new NetworkChunkCache();
 
-        var first = cache.GetOrEncode(chunk);
-        var second = cache.GetOrEncode(chunk);
+        var firstSnapshot = Snapshot(chunk);
+        var first = cache.GetOrEncode(firstSnapshot);
+        var second = cache.GetOrEncode(firstSnapshot);
         Assert.Same(first.Payload, second.Payload);
 
         chunk.SetCellValueFast(0, 0, 0, Terrain.MakeBlockValue(2));
-        var changed = cache.GetOrEncode(chunk);
+        var changed = cache.GetOrEncode(Snapshot(chunk));
         Assert.NotSame(first.Payload, changed.Payload);
     }
+
+    private static AuthorityChunkSnapshot Snapshot(TerrainChunk chunk) => new(
+        chunk.Coords,
+        chunk.NetworkContentRevision + 1,
+        chunk.Cells.ToArray(),
+        chunk.Shafts.ToArray());
 }

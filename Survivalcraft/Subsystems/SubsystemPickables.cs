@@ -92,7 +92,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             var num5 = Terrain.ToCell(position.Y);
             var z = Terrain.ToCell(position.Z);
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-            if (chunkAtCell is { State: >= TerrainChunkState.InvalidVertices1 } && num5 is >= 0 and < 255)
+            if (chunkAtCell is { MainThreadState: >= TerrainChunkState.InvalidVertices1 } && num5 is >= 0 and < 255)
             {
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
@@ -162,7 +162,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                     Terrain.ToCell(pickable.Position.Z),
                     false
                 );
-                if (chunkAtCell is not { State: > TerrainChunkState.InvalidContents4 })
+                if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
                 {
                     continue;
                 }

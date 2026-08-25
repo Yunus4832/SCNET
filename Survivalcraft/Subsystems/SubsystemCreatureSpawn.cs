@@ -158,23 +158,17 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
 
     public override void OnEntityAdded(Entity entity)
     {
-        foreach (var item in entity.FindComponents<ComponentCreature>())
+        foreach (var item in entity.FindComponents<ComponentCreature>().OfType<ComponentCreature>())
         {
-            if (item != null)
-            {
-                _creatures.Add(item, true);
-            }
+            _creatures.Add(item, true);
         }
     }
 
     public override void OnEntityRemoved(Entity entity)
     {
-        foreach (var item in entity.FindComponents<ComponentCreature>())
+        foreach (var item in entity.FindComponents<ComponentCreature>().OfType<ComponentCreature>())
         {
-            if (item != null)
-            {
-                _creatures.Remove(item);
-            }
+            _creatures.Remove(item);
         }
     }
 
@@ -1423,7 +1417,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
         var num = MathUtils.Clamp(spawnPoint.Y, 1, 253);
         var z = spawnPoint.Z;
         var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-        if (chunkAtCell is not { State: > TerrainChunkState.InvalidPropagatedLight })
+        if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidPropagatedLight })
         {
             return null;
         }

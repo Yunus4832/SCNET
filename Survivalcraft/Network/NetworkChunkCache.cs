@@ -1,4 +1,5 @@
 using Game.Network.Serialization;
+using Game.Terrains.Distribution;
 
 namespace Game.Network;
 
@@ -6,8 +7,6 @@ public sealed class NetworkChunkCache(long capacityBytes = 64L * 1024 * 1024)
 {
     private sealed class Entry
     {
-        public required TerrainChunk Chunk;
-        public required long Revision;
         public required EncodedTerrainChunk Encoded;
         public long LastAccess;
     }
@@ -17,54 +16,31 @@ public sealed class NetworkChunkCache(long capacityBytes = 64L * 1024 * 1024)
     private long _accessCounter;
     private long _size;
 
-    public EncodedTerrainChunk GetOrEncode(TerrainChunk chunk)
+    public EncodedTerrainChunk GetOrEncode(AuthorityChunkSnapshot snapshot)
     {
-        if (TryGet(chunk, out var cached))
+        ArgumentNullException.ThrowIfNull(snapshot);
+        if (TryGet(snapshot.Coords, snapshot.ContentVersion, out var cached))
         {
             return cached;
         }
 
-        var revision = chunk.NetworkContentRevision;
-        EncodedTerrainChunk encoded = null!;
-        var stable = false;
-        for (var attempt = 0; attempt < 3; attempt++)
-        {
-            revision = chunk.NetworkContentRevision;
-            encoded = NetworkChunkCodec.Encode(chunk);
-            if (revision != chunk.NetworkContentRevision)
-            {
-                continue;
-            }
-
-            stable = true;
-            break;
-        }
-
-        // A continuously changing chunk is still safe to send as a snapshot, but must not be cached.
-        if (!stable)
-        {
-            return encoded;
-        }
-
-        Store(chunk, revision, encoded);
+        var encoded = NetworkChunkCodec.Encode(snapshot);
+        Store(encoded);
         return encoded;
     }
 
-    public void Store(TerrainChunk chunk, long revision, EncodedTerrainChunk encoded)
+    public void Store(EncodedTerrainChunk encoded)
     {
-        ArgumentNullException.ThrowIfNull(chunk);
         ArgumentNullException.ThrowIfNull(encoded);
         lock (_lock)
         {
-            if (_entries.Remove(chunk.Coords, out var previous))
+            if (_entries.Remove(encoded.Coords, out var previous))
             {
                 _size -= previous.Encoded.Payload.Length;
             }
 
-            _entries[chunk.Coords] = new Entry
+            _entries[encoded.Coords] = new Entry
             {
-                Chunk = chunk,
-                Revision = revision,
                 Encoded = encoded,
                 LastAccess = ++_accessCounter
             };
@@ -73,12 +49,12 @@ public sealed class NetworkChunkCache(long capacityBytes = 64L * 1024 * 1024)
         }
     }
 
-    public bool TryGet(TerrainChunk chunk, out EncodedTerrainChunk encoded)
+    public bool TryGet(Point2 coords, long contentVersion, out EncodedTerrainChunk encoded)
     {
         lock (_lock)
         {
-            if (_entries.TryGetValue(chunk.Coords, out var cached) &&
-                ReferenceEquals(cached.Chunk, chunk) && cached.Revision == chunk.NetworkContentRevision)
+            if (_entries.TryGetValue(coords, out var cached) &&
+                cached.Encoded.ContentVersion == contentVersion)
             {
                 cached.LastAccess = ++_accessCounter;
                 encoded = cached.Encoded;
@@ -90,17 +66,14 @@ public sealed class NetworkChunkCache(long capacityBytes = 64L * 1024 * 1024)
         return false;
     }
 
-    public void Remove(TerrainChunk chunk)
+    public void Remove(Point2 coords)
     {
         lock (_lock)
         {
-            if (!_entries.TryGetValue(chunk.Coords, out var entry) || !ReferenceEquals(entry.Chunk, chunk))
+            if (_entries.Remove(coords, out var entry))
             {
-                return;
+                _size -= entry.Encoded.Payload.Length;
             }
-
-            _entries.Remove(chunk.Coords);
-            _size -= entry.Encoded.Payload.Length;
         }
     }
 

@@ -16,11 +16,14 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
 
     private readonly SubsystemTerrain _subsystemTerrain;
 
+    private readonly Terrain _terrain;
+
     private readonly WorldSettings _worldSettings;
 
-    public TerrainContentsGeneratorFlat(SubsystemTerrain subsystemTerrain)
+    public TerrainContentsGeneratorFlat(SubsystemTerrain subsystemTerrain, Terrain? terrain = null)
     {
         _subsystemTerrain = subsystemTerrain;
+        _terrain = terrain ?? subsystemTerrain.Terrain;
         var subsystemGameInfo = subsystemTerrain.Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _worldSettings = subsystemGameInfo.WorldSettings;
         _oceanCorner = TerrainGenerationModes.IsPre21(_worldSettings.TerrainGenerationMode)
@@ -55,7 +58,7 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
         {
             var vector = _oceanCorner + new Vector2(i, j);
             var num = CalculateOceanShoreDistance(vector.X, vector.Y);
-            if (num >= 1f && num <= 20f)
+            if (num is >= 1f and <= 20f)
             {
                 return new Vector3(vector.X, CalculateHeight(vector.X, vector.Y), vector.Y);
             }
@@ -176,7 +179,7 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
 
     public void UpdateFluidIsTop(TerrainChunk chunk)
     {
-        _ = _subsystemTerrain.Terrain;
+        _ = _terrain;
         for (var i = 0; i < 16; i++)
         for (var j = 0; j < 16; j++)
         {
