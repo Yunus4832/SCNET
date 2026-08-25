@@ -60,7 +60,7 @@ public class TerrainChunk : IDisposable
 
     public double NetworkGeometryUploadTime;
 
-    public bool NetworkGeometryUploaded;
+    public bool GeometryUploaded;
 
     public long NetworkContentVersion;
 

@@ -166,7 +166,7 @@ public sealed class TerrainUpdaterTest
         chunk.MainThreadState = TerrainChunkState.Valid;
         Assert.True(TerrainUpdater.IsNetworkChunkStalled(chunk, 25.0));
 
-        chunk.NetworkGeometryUploaded = true;
+        chunk.GeometryUploaded = true;
         Assert.False(TerrainUpdater.IsNetworkChunkStalled(chunk, 25.0));
 
         chunk.WorkerState = TerrainChunkState.InvalidPropagatedLight;

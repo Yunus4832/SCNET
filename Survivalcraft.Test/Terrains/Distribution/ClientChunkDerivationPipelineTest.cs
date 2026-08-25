@@ -48,7 +48,7 @@ public sealed class ClientChunkDerivationPipelineTest
     }
 
     [Fact]
-    public void ClientKeepsCurrentUploadedGeometryVisibleDuringDerivedRebuild()
+    public void ClientKeepsLastUploadedGeometryVisibleDuringDerivedRebuild()
     {
         var chunk = new TerrainChunk(null!, 0, 0)
         {
@@ -56,12 +56,44 @@ public sealed class ClientChunkDerivationPipelineTest
             IsLoaded = true,
             NetworkContentVersion = 6,
             ClientGeometryContentVersion = 6,
-            NetworkGeometryUploaded = true
+            GeometryUploaded = true
         };
 
         Assert.True(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk));
 
         chunk.NetworkContentVersion = 7;
+        Assert.False(ClientChunkDerivationPipeline.HasCurrentGeometry(TerrainContentRole.Replica, chunk));
+        Assert.True(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk));
+    }
+
+    [Fact]
+    public void ClientDoesNotDrawInitialContentBeforeGeometryUpload()
+    {
+        var chunk = new TerrainChunk(null!, 0, 0)
+        {
+            IsLoaded = true,
+            NetworkContentVersion = 1,
+            ClientGeometryContentVersion = 1,
+            GeometryUploaded = false
+        };
+
+        Assert.True(ClientChunkDerivationPipeline.HasCurrentGeometry(TerrainContentRole.Replica, chunk));
         Assert.False(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk));
     }
+
+    [Fact]
+    public void GuiAuthorityKeepsUploadedGeometryVisibleDuringDerivedRebuild()
+    {
+        var chunk = new TerrainChunk(null!, 0, 0)
+        {
+            MainThreadState = TerrainChunkState.InvalidLight,
+            GeometryUploaded = true
+        };
+
+        Assert.True(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Authority, chunk));
+
+        chunk.GeometryUploaded = false;
+        Assert.False(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Authority, chunk));
+    }
+
 }

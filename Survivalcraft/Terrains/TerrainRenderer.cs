@@ -101,10 +101,10 @@ public class TerrainRenderer : IDisposable
                     {
                         terrainChunk.NewGeometryData = false;
                         SetupTerrainChunkGeometryVertexIndexBuffers(terrainChunk);
+                        terrainChunk.GeometryUploaded = true;
                         if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
                             terrainChunk.NetworkContentReceiveTime > 0.0)
                         {
-                            terrainChunk.NetworkGeometryUploaded = true;
                             terrainChunk.NetworkGeometryUploadTime = Time.RealTime;
                         }
                     }
@@ -278,9 +278,9 @@ public class TerrainRenderer : IDisposable
         var allocatedChunks = _subsystemTerrain.Terrain.AllocatedChunks;
         foreach (var terrainChunk in allocatedChunks)
         {
+            terrainChunk.GeometryUploaded = false;
             if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica)
             {
-                terrainChunk.NetworkGeometryUploaded = false;
                 terrainChunk.ClientGeometryContentVersion = 0;
             }
 

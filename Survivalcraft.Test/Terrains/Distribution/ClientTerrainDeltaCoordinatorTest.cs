@@ -97,7 +97,7 @@ public sealed class ClientTerrainDeltaCoordinatorTest
         chunk.MainThreadState = TerrainChunkState.Valid;
         chunk.WorkerState = TerrainChunkState.Valid;
         chunk.ClientGeometryContentVersion = version;
-        chunk.NetworkGeometryUploaded = true;
+        chunk.GeometryUploaded = true;
         return chunk;
     }
 

@@ -1,3 +1,5 @@
+using Engine;
+
 namespace Game.Terrains.Distribution;
 
 /// <summary>
@@ -87,6 +89,9 @@ public sealed class ClientTerrainDeltaCoordinator(
         var requiredVersion = _requiredVersions.GetValueOrDefault(coords);
         if (chunk.NetworkContentVersion < requiredVersion)
         {
+            Log.Warning(
+                $"Terrain replica version gap at {coords}: installed={chunk.NetworkContentVersion}, " +
+                $"required={requiredVersion}, pending={deltas.Count}; requesting full snapshot.");
             InvalidateForSnapshot(chunk);
             return TerrainDeltaApplyResult.ResyncRequired;
         }
@@ -103,7 +108,7 @@ public sealed class ClientTerrainDeltaCoordinator(
         chunk.NetworkRequestTime = 0.0;
         chunk.NetworkContentReceiveTime = 0.0;
         chunk.ClientGeometryContentVersion = 0;
-        chunk.NetworkGeometryUploaded = false;
+        chunk.GeometryUploaded = false;
         chunk.NewGeometryData = false;
         chunk.MainThreadState = TerrainChunkState.NotLoaded;
         chunk.WorkerState = TerrainChunkState.NotLoaded;

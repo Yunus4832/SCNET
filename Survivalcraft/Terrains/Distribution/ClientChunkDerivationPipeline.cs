@@ -39,8 +39,11 @@ public sealed class ClientChunkDerivationPipeline(Terrain terrain)
     {
         ArgumentNullException.ThrowIfNull(target);
         return role == TerrainContentRole.Replica
-            ? HasCurrentGeometry(role, target) && target.NetworkGeometryUploaded
-            : target.MainThreadState == TerrainChunkState.Valid;
+            // Keep the last uploaded geometry visible while a newer content version is
+            // being lit and rebuilt. Initial content and explicit resyncs clear the
+            // upload flag, so they still cannot expose absent or unrelated geometry.
+            ? target is { IsLoaded: true, GeometryUploaded: true }
+            : target.GeometryUploaded;
     }
 
     private void InvalidateLoadedNeighbors(TerrainChunk target)

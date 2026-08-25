@@ -483,7 +483,7 @@ public class TerrainUpdater
         var activeLocations = _updateParameters.Locations.Values.ToArray();
         foreach (var terrainChunk in _terrain.AllocatedChunks)
         {
-            if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica)
+            if (_subsystemTerrain.UsesRemoteChunkTransport)
             {
                 var now = Time.RealTime;
                 if (terrainChunk.WorkerState == TerrainChunkState.NotLoaded &&
@@ -652,7 +652,7 @@ public class TerrainUpdater
 
         return chunk.WorkerState < TerrainChunkState.Valid ||
                chunk.MainThreadState < TerrainChunkState.Valid ||
-               !chunk.NetworkGeometryUploaded;
+               !chunk.GeometryUploaded;
     }
 
     /// <summary>
@@ -1160,7 +1160,7 @@ public class TerrainUpdater
         target.NetworkContentReceiveTime = Time.RealTime;
         target.NetworkGeometryReadyTime = 0.0;
         target.NetworkGeometryUploadTime = 0.0;
-        target.NetworkGeometryUploaded = false;
+        target.GeometryUploaded = false;
         NotifyNetworkChunkLoaded();
     }
 
@@ -1286,17 +1286,19 @@ public class TerrainUpdater
                 lock (chunk.Geometry)
                 {
                     GenerateChunkVertices(chunk, false);
+                    if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
+                        chunk.NetworkContentReceiveTime > 0.0)
+                    {
+                        ClientChunkDerivationPipeline.CompleteGeometry(chunk);
+                        chunk.NetworkGeometryReadyTime = Time.RealTime;
+                    }
+
+                    // Publish only after the geometry version and timing metadata describe
+                    // the buffers that the renderer is about to upload.
                     chunk.NewGeometryData = true;
                 }
 
                 chunk.WorkerState = TerrainChunkState.Valid;
-                if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
-                    chunk.NetworkContentReceiveTime > 0.0)
-                {
-                    ClientChunkDerivationPipeline.CompleteGeometry(chunk);
-                    chunk.NetworkGeometryReadyTime = Time.RealTime;
-                }
-
                 break;
             }
         }
