@@ -77,6 +77,46 @@ public sealed class ModServerClientTest : IDisposable
         Assert.Equal(LocalModRepository.ComputePackageHash(Path.Combine(_root, "alpha.scpak")), entry.PackageHash);
     }
 
+    [Fact]
+    public void ClientLoadsAllPagedRepositoryResults()
+    {
+        var packages = Enumerable.Range(1, 11)
+            .Select(index => new ModRepositoryPackage
+            {
+                ModId = $"example.{index}",
+                Version = "1.0.0",
+                PackageHash = index.ToString("x64"),
+                FileName = $"example.{index}.scpak",
+                DownloadUrl = $"/api/v1/packages/{index:x64}"
+            })
+            .ToArray();
+        using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            var pageIndex = request.RequestUri!.Query.Contains("pageIndex=2", StringComparison.Ordinal) ? 2 : 1;
+            var items = pageIndex == 1 ? packages.Take(10) : packages.Skip(10);
+            return CreateJsonResponse(new
+            {
+                success = true,
+                message = string.Empty,
+                code = 200,
+                data = new
+                {
+                    items,
+                    total = packages.Length,
+                    pageIndex,
+                    pageSize = 10
+                }
+            });
+        }));
+        using var client = new ModServerClient("https://mods.example", httpClient);
+
+        var result = client.ListPackages();
+
+        Assert.Equal(11, result.Count);
+        Assert.Equal("example.1", result[0].ModId);
+        Assert.Equal("example.11", result[10].ModId);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))

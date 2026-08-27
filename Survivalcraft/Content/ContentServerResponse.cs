@@ -10,3 +10,14 @@ internal sealed class ContentServerResponse<T>
 
     public T? Data { get; init; }
 }
+
+internal sealed class ContentServerPage<T>
+{
+    public List<T> Items { get; init; } = [];
+
+    public int Total { get; init; }
+
+    public int PageIndex { get; init; }
+
+    public int PageSize { get; init; }
+}

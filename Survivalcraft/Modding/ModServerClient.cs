@@ -44,11 +44,7 @@ public sealed class ModServerClient : IDisposable
 
     private async Task<IReadOnlyList<ModRepositoryPackage>> ListPackagesAsync(CancellationToken cancellationToken)
     {
-        var response = await _httpClient
-            .GetFromJsonAsync<ContentServerResponse<ModRepositoryListResponse>>(
-                "api/v1/mods", cancellationToken)
-            .ConfigureAwait(false);
-        return response?.Data?.Items ?? [];
+        return await ListPagesAsync("api/v1/mods", cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<IReadOnlyList<ModRepositoryPackage>> ListPackagesByModIdAsync(
@@ -56,12 +52,9 @@ public sealed class ModServerClient : IDisposable
         CancellationToken cancellationToken)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modId);
-        var response = await _httpClient
-            .GetFromJsonAsync<ContentServerResponse<ModRepositoryModResponse>>(
-                $"api/v1/mods/{Uri.EscapeDataString(modId)}",
-                cancellationToken)
-            .ConfigureAwait(false);
-        return response?.Data?.Items ?? [];
+        return await ListPagesAsync(
+            $"api/v1/mods/{Uri.EscapeDataString(modId)}",
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<ModRepositoryPackage?> FindPackageAsync(
@@ -112,6 +105,35 @@ public sealed class ModServerClient : IDisposable
         return repository.AddOrUpdatePackage(content, $"{package.PackageHash}.scpak");
     }
 
+    private async Task<IReadOnlyList<ModRepositoryPackage>> ListPagesAsync(
+        string path,
+        CancellationToken cancellationToken)
+    {
+        var items = new List<ModRepositoryPackage>();
+        for (var pageIndex = 1; ; pageIndex++)
+        {
+            var separator = path.Contains('?', StringComparison.Ordinal) ? '&' : '?';
+            var response = await _httpClient
+                .GetFromJsonAsync<ContentServerResponse<ContentServerPage<ModRepositoryPackage>>>(
+                    $"{path}{separator}pageIndex={pageIndex}&pageSize=10",
+                    cancellationToken)
+                .ConfigureAwait(false);
+            var page = response?.Data;
+            if (page is null || page.Items.Count == 0)
+            {
+                break;
+            }
+
+            items.AddRange(page.Items);
+            if (items.Count >= page.Total)
+            {
+                break;
+            }
+        }
+
+        return items;
+    }
+
     public void Dispose()
     {
         if (_disposeClient)
@@ -131,15 +153,4 @@ public sealed class ModServerClient : IDisposable
         return action(CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
     }
 
-    private sealed class ModRepositoryListResponse
-    {
-        public List<ModRepositoryPackage> Items { get; init; } = [];
-    }
-
-    private sealed class ModRepositoryModResponse
-    {
-        public string ModId { get; init; } = string.Empty;
-
-        public List<ModRepositoryPackage> Items { get; init; } = [];
-    }
 }

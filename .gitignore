@@ -57,6 +57,11 @@ project.lock.json
 project.fragment.lock.json
 artifacts/
 
+# ContentServer local SQLite data
+ContentServer/Data/*.db
+ContentServer/Data/*.db-shm
+ContentServer/Data/*.db-wal
+
 # StyleCop
 StyleCopReport.xml
 
@@ -187,6 +192,9 @@ PublishScripts/
 **/[Pp]ackages/*
 # except build/, which is used as an MSBuild target.
 !**/[Pp]ackages/build/
+# ContentServer uses Packages as a domain source directory.
+!ContentServer/Domain/Packages/
+!ContentServer/Domain/Packages/**
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files
@@ -342,8 +350,10 @@ healthchecksdb
 
 ~*
 Content.zip
-Content.scpak
 Publish/*
 
 # 避免被 NuGet 规则忽略
 !Survivalcraft/Network/Packages/*
+
+# ContentServer 前端构建产物（由 ContentWebUI dist 组合生成，构建时重建）
+ContentServer/wwwroot/

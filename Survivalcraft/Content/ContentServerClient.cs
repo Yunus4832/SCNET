@@ -17,9 +17,28 @@ public sealed class ContentServerClient : IDisposable
 
     public async Task<IReadOnlyList<ContentCatalogItem>> ListAsync(CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.GetFromJsonAsync<ContentServerResponse<ContentCatalogResponse>>(
-            "api/v1/content", cancellationToken).ConfigureAwait(false);
-        return response?.Data?.Items ?? [];
+        var items = new List<ContentCatalogItem>();
+        for (var pageIndex = 1; ; pageIndex++)
+        {
+            var response = await _httpClient
+                .GetFromJsonAsync<ContentServerResponse<ContentServerPage<ContentCatalogItem>>>(
+                    $"api/v1/content?pageIndex={pageIndex}&pageSize=10",
+                    cancellationToken)
+                .ConfigureAwait(false);
+            var page = response?.Data;
+            if (page is null || page.Items.Count == 0)
+            {
+                break;
+            }
+
+            items.AddRange(page.Items);
+            if (items.Count >= page.Total)
+            {
+                break;
+            }
+        }
+
+        return items;
     }
 
     public async Task<byte[]> DownloadAsync(ContentCatalogItem item, CancellationToken cancellationToken = default)
@@ -36,10 +55,6 @@ public sealed class ContentServerClient : IDisposable
         }
     }
 
-    private sealed class ContentCatalogResponse
-    {
-        public List<ContentCatalogItem> Items { get; init; } = [];
-    }
 }
 
 public sealed class ContentCatalogItem

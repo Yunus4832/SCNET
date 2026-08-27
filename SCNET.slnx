@@ -107,6 +107,25 @@
         </Project>
     </Folder>
 
+    <Folder Name="/06 Content/">
+        <Project Path="ContentWebUI\ContentWebUI.esproj">
+            <Build Solution="ANDROID|*" Project="false"/>
+            <Build Solution="DESKTOP|*" Project="false"/>
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
+        <Project Path="ContentServer\ContentServer.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+        </Project>
+        <Project Path="ContentServer.Test\ContentServer.Test.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
+    </Folder>
+
     <Folder Name="/07 Tools/">
         <Project Path="LanguageTool\LanguageTool.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
