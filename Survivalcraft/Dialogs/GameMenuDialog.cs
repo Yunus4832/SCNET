@@ -311,22 +311,6 @@ public class GameMenuDialog : Dialog
                 }));
             }
 
-            if (GetRateableItems().FirstOrDefault() != null && UserManager.ActiveUser != null)
-            {
-                list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 85), delegate
-                {
-                    DialogsManager.ShowDialog(ParentWidget, new ListSelectionDialog(LanguageManager.Get(_typeName, 86),
-                        GetRateableItems(), 60f, o => ((ActiveExternalContentInfo)o).DisplayName,
-                        delegate(object o)
-                        {
-                            var activeExternalContentInfo = (ActiveExternalContentInfo)o;
-                            DialogsManager.ShowDialog(ParentWidget,
-                                new RateCommunityContentDialog(activeExternalContentInfo.Address,
-                                    activeExternalContentInfo.DisplayName, UserManager.ActiveUser.UniqueId));
-                        }));
-                }));
-            }
-
             list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 87),
                 delegate
                 {
@@ -378,28 +362,6 @@ public class GameMenuDialog : Dialog
 
         GameManager.DisposeProject();
         CommonLib.Net.Stop();
-    }
-
-    public IEnumerable<ActiveExternalContentInfo> GetRateableItems()
-    {
-        if (UserManager.ActiveUser == null)
-        {
-            yield break;
-        }
-
-        if (GameManager.Project is null)
-        {
-            throw new InvalidOperationException("GameManager.Project is not initialized");
-        }
-
-        var subsystemGameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>(true)!;
-        foreach (var item in subsystemGameInfo.GetActiveExternalContent())
-        {
-            if (!CommunityContentManager.IsContentRated(item.Address, UserManager.ActiveUser.UniqueId))
-            {
-                yield return item;
-            }
-        }
     }
 
     public static string FormatDistance(double value)

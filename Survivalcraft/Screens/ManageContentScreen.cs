@@ -16,11 +16,9 @@ public class ManageContentScreen : Screen
 
     private readonly ButtonWidget _deleteButton;
 
-    private ExternalContentType _filter;
+    private ContentType _filter;
 
     private readonly LabelWidget _filterLabel;
-
-    private readonly ButtonWidget _uploadButton;
 
     public ManageContentScreen()
     {
@@ -28,14 +26,13 @@ public class ManageContentScreen : Screen
         LoadContents(this, node);
         _contentList = Children.Find<ListPanelWidget>("ContentList")!;
         _deleteButton = Children.Find<ButtonWidget>("DeleteButton")!;
-        _uploadButton = Children.Find<ButtonWidget>("UploadButton")!;
         _changeFilterButton = Children.Find<ButtonWidget>("ChangeFilter")!;
         _filterLabel = Children.Find<LabelWidget>("Filter")!;
         _contentList.ItemWidgetFactory = delegate(object obj)
         {
             var listItem = (ListItem)obj;
             ContainerWidget containerWidget;
-            if (listItem.Type == ExternalContentType.BlocksTexture)
+            if (listItem.Type == ContentType.BlocksTexture)
             {
                 var node2 = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
                 containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
@@ -60,9 +57,9 @@ public class ManageContentScreen : Screen
             }
             else
             {
-                if (listItem.Type != ExternalContentType.CharacterSkin)
+                if (listItem.Type != ContentType.CharacterSkin)
                 {
-                    if (listItem.Type != ExternalContentType.FurniturePack)
+                    if (listItem.Type != ContentType.FurniturePack)
                     {
                         throw new InvalidOperationException(LanguageManager.Get(_typeName, 10));
                     }
@@ -140,26 +137,26 @@ public class ManageContentScreen : Screen
         _filterLabel.Text = GetFilterDisplayName(_filter);
         if (_changeFilterButton.IsClicked)
         {
-            var list = new List<ExternalContentType>
+            var list = new List<ContentType>
             {
-                ExternalContentType.Unknown,
-                ExternalContentType.BlocksTexture,
-                ExternalContentType.CharacterSkin,
-                ExternalContentType.FurniturePack
+                ContentType.Unknown,
+                ContentType.BlocksTexture,
+                ContentType.CharacterSkin,
+                ContentType.FurniturePack
             };
             DialogsManager.ShowDialog(
                 null,
                 new ListSelectionDialog(
                     LanguageManager.Get(_typeName, 7),
                     list, 60f,
-                    item => GetFilterDisplayName((ExternalContentType)item), delegate(object item)
+                    item => GetFilterDisplayName((ContentType)item), delegate(object item)
                     {
-                        if ((ExternalContentType)item == _filter)
+                        if ((ContentType)item == _filter)
                         {
                             return;
                         }
 
-                        _filter = (ExternalContentType)item;
+                        _filter = (ContentType)item;
                         UpdateList();
                     }
                 )
@@ -170,12 +167,10 @@ public class ManageContentScreen : Screen
         if (selectedItem == null)
         {
             _deleteButton.IsEnabled = false;
-            _uploadButton.IsEnabled = false;
             return;
         }
 
         _deleteButton.IsEnabled = selectedItem is { IsBuiltIn: false };
-        _uploadButton.IsEnabled = selectedItem is { IsBuiltIn: false };
         if (_deleteButton.IsClicked)
         {
             var smallMessage = selectedItem.UseCount <= 0
@@ -194,59 +189,55 @@ public class ManageContentScreen : Screen
                             return;
                         }
 
-                        ExternalContentManager.DeleteExternalContent(selectedItem.Type, selectedItem.Name);
+                        ContentPackageManager.DeleteContent(selectedItem.Type, selectedItem.Name);
                         UpdateList();
                     }
                 )
             );
         }
 
-        if (_uploadButton.IsClicked)
-        {
-            ExternalContentManager.ShowUploadUi(selectedItem.Type, selectedItem.Name);
-        }
     }
 
     private void UpdateList()
     {
         WorldsManager.UpdateWorldsList();
         var list = new List<ListItem>();
-        if (_filter is ExternalContentType.BlocksTexture or ExternalContentType.Unknown)
+        if (_filter is ContentType.BlocksTexture or ContentType.Unknown)
         {
             BlocksTexturesManager.UpdateBlocksTexturesList();
             list.AddRange(BlocksTexturesManager.ReadOnlyBlockTexturesNames.Select(name2 => new ListItem
             {
                 Name = name2,
                 IsBuiltIn = BlocksTexturesManager.IsBuiltIn(name2),
-                Type = ExternalContentType.BlocksTexture,
+                Type = ContentType.BlocksTexture,
                 DisplayName = BlocksTexturesManager.GetDisplayName(name2),
                 CreationTime = BlocksTexturesManager.GetCreationDate(name2),
                 UseCount = WorldsManager.WorldInfos.Count(wi => wi.WorldSettings.BlocksTextureName == name2)
             }));
         }
 
-        if (_filter is ExternalContentType.CharacterSkin or ExternalContentType.Unknown)
+        if (_filter is ContentType.CharacterSkin or ContentType.Unknown)
         {
             CharacterSkinsManager.UpdateCharacterSkinsList();
             list.AddRange(CharacterSkinsManager.ReadOnlyCharacterSkinsNames.Select(name => new ListItem
             {
                 Name = name,
                 IsBuiltIn = CharacterSkinsManager.IsBuiltIn(name),
-                Type = ExternalContentType.CharacterSkin,
+                Type = ContentType.CharacterSkin,
                 DisplayName = CharacterSkinsManager.GetDisplayName(name),
                 CreationTime = CharacterSkinsManager.GetCreationDate(name),
                 UseCount = WorldsManager.WorldInfos.Count(wi => wi.PlayerInfos.Any(pi => pi.CharacterSkinName == name))
             }));
         }
 
-        if (_filter == ExternalContentType.FurniturePack || _filter == ExternalContentType.Unknown)
+        if (_filter == ContentType.FurniturePack || _filter == ContentType.Unknown)
         {
             FurniturePacksManager.UpdateFurniturePacksList();
             list.AddRange(FurniturePacksManager.ReadOnlyFurniturePackNames.Select(furniturePackName => new ListItem
             {
                 Name = furniturePackName,
                 IsBuiltIn = false,
-                Type = ExternalContentType.FurniturePack,
+                Type = ContentType.FurniturePack,
                 DisplayName = FurniturePacksManager.GetDisplayName(furniturePackName),
                 CreationTime = FurniturePacksManager.GetCreationDate(furniturePackName)
             }));
@@ -280,11 +271,11 @@ public class ManageContentScreen : Screen
         }
     }
 
-    private static string GetFilterDisplayName(ExternalContentType filter)
+    private static string GetFilterDisplayName(ContentType filter)
     {
-        return filter == ExternalContentType.Unknown
+        return filter == ContentType.Unknown
             ? LanguageManager.Get(_typeName, 8)
-            : ExternalContentManager.GetEntryTypeDescription(filter);
+            : ContentPackageManager.GetTypeDescription(filter);
     }
 
     private class ListItem
@@ -297,7 +288,7 @@ public class ManageContentScreen : Screen
 
         public string Name = string.Empty;
 
-        public ExternalContentType Type;
+        public ContentType Type;
 
         public int UseCount;
     }

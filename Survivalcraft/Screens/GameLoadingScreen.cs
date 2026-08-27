@@ -29,8 +29,6 @@ public class GameLoadingScreen : Screen
 
     private byte[] _blockTextureData = [];
 
-    private string _password = string.Empty;
-
     private byte[] _projectXmlData = [];
 
     private IPEndPoint? _serverEndPoint;
@@ -48,8 +46,6 @@ public class GameLoadingScreen : Screen
     public WorldInfo? CurrentWorldInfo => _serverEndPoint == null ? _worldInfo : null;
 
     public IPEndPoint? CurrentServerEndPoint => _serverEndPoint;
-
-    public string CurrentPassword => _password;
 
     public GameLoadingScreen()
     {
@@ -70,7 +66,7 @@ public class GameLoadingScreen : Screen
                     SetSpawnDialogMessage("连接服务器", 0.2f);
                     if (_serverEndPoint != null)
                     {
-                        CommonLib.Net.ConnectServer(_serverEndPoint, _password);
+                        CommonLib.Net.ConnectServer(_serverEndPoint);
                         DialogsManager.ShowDialog(this, SpawnDialog);
                         _stateMachine.TransitionTo("WaitServerReply");
                         // 客户端开启包处理
@@ -341,10 +337,6 @@ public class GameLoadingScreen : Screen
         {
             _worldSnapshotName = string.Empty;
             _serverEndPoint = (IPEndPoint)parameters[2];
-            if (parameters.Length == 4)
-            {
-                _password = (string)parameters[3];
-            }
         }
 
         _stateMachine.TransitionTo("WaitingForFadeIn");

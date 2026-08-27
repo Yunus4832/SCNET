@@ -36,22 +36,22 @@ public class ClientPackage : IPackage
     {
     }
 
-    public ClientPackage(byte id, Guid tokenId, Guid guid, string communityId, string nickname)
+    public ClientPackage(byte id, Guid tokenId, Guid guid)
     {
         PackageEventType = EventType.Add;
-        Client = new Client(null, id, tokenId, guid, null, communityId, nickname);
+        Client = new Client(null, id, tokenId, guid, null);
     }
 
     public ClientPackage(byte id)
     {
         PackageEventType = EventType.Remove;
-        Client = new Client(null, id, Guid.Empty, Guid.Empty, null, string.Empty, string.Empty);
+        Client = new Client(null, id, Guid.Empty, Guid.Empty, null);
     }
 
     public ClientPackage(byte id, ClientState clientState)
     {
         PackageEventType = EventType.StateChange;
-        Client = new Client(null, id, Guid.Empty, Guid.Empty, null, string.Empty, string.Empty)
+        Client = new Client(null, id, Guid.Empty, Guid.Empty, null)
         {
             State = clientState
         };
@@ -73,7 +73,7 @@ public class ClientPackage : IPackage
                 Client = ReadItem(reader);
                 break;
             case EventType.Remove:
-                Client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null, string.Empty, string.Empty);
+                Client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null);
                 break;
             case EventType.SyncList:
                 List = [];
@@ -85,7 +85,7 @@ public class ClientPackage : IPackage
 
                 break;
             case EventType.StateChange:
-                Client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null, string.Empty, string.Empty)
+                Client = new Client(null, reader.ReadByte(), Guid.Empty, Guid.Empty, null)
                 {
                     State = reader.ReadEnum<ClientState>()
                 };
@@ -124,13 +124,10 @@ public class ClientPackage : IPackage
         writer.Write(client.ID);
         writer.Write(client.TokenId);
         writer.Write(client.GUID);
-        writer.Write(client.CommunityAccountId);
-        writer.Write(client.Nickname);
     }
 
     public Client ReadItem(PackageStreamReader reader)
     {
-        return new Client(null, reader.ReadByte(), reader.ReadGuid(), reader.ReadGuid(), null, reader.ReadString(),
-            reader.ReadString());
+        return new Client(null, reader.ReadByte(), reader.ReadGuid(), reader.ReadGuid(), null);
     }
 }

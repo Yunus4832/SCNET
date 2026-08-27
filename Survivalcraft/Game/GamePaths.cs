@@ -14,15 +14,11 @@ public static class GamePaths
 
     public static string Worlds => $"{_gameDataPath}/Worlds";
 
-    public static string UserData => $"{_gameDataPath}/UserId.dat";
-
     public static string CharacterSkins => $"{_gameDataPath}/CharacterSkins";
 
     public static string FurniturePacks => $"{_gameDataPath}/FurniturePacks";
 
     public static string BlockTextures => $"{_gameDataPath}/TexturePacks";
-
-    public static string CommunityContentCache => $"{_gameDataPath}/CommunityContentCache.xml";
 
     public static string ModCache => $"{_gameDataPath}/ModsCache";
 
@@ -39,6 +35,8 @@ public static class GamePaths
     public static string SessionProfilesDirectory => Storage.CombinePaths(Config, "SessionProfiles");
 
     public static string LocalModsImportStateFile => "config:LocalModsImportState.xml";
+
+    public static string InstalledContentFile => "config:InstalledContent.json";
 
     public static string NetChunksTempFile => "config:NetChunks.tmp";
 }

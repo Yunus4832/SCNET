@@ -23,13 +23,10 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
             };
             c.Name = c.IP;
             c.GameMode = package.GameMode;
-            c.HasPassword = package.NeedPasswd;
-            c.IsNeedLoginCommunity = package.NeedLogin;
             c.MaxCount = package.MaxPlayerCount;
             c.PlayerCount = package.ClientCount;
             c.FromBroadcast = package.From?.IsLocalRemote ?? false;
             c.FromLocal = false;
-            c.FromCommunity = false;
             c.UsedTime = package.Ping;
             c.Version = package.Version;
             c.TimeOfDay = package.TimeOfDay;
@@ -53,8 +50,6 @@ public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPack
                 found.IP = string.IsNullOrEmpty(dns) ? found.IP : c.IP;
                 found.Name = string.IsNullOrEmpty(name) ? found.Name : c.Name;
                 found.GameMode = c.GameMode;
-                found.HasPassword = c.HasPassword;
-                found.IsNeedLoginCommunity = c.IsNeedLoginCommunity;
                 found.MaxCount = c.MaxCount;
                 found.PlayerCount = c.PlayerCount;
                 found.FromBroadcast = c.FromBroadcast;

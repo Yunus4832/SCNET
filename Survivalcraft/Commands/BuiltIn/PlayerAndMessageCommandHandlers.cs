@@ -22,8 +22,7 @@ internal static class PlayerAndMessageCommandHandlers
             players,
             command.Name,
             command.SkinName,
-            command.PlayerClass,
-            enforceConnectionNickname: true);
+            command.PlayerClass);
     }
 
     public static CommandResult UpdatePlayerProfile(
@@ -54,8 +53,7 @@ internal static class PlayerAndMessageCommandHandlers
             players,
             command.Name,
             command.SkinName,
-            command.PlayerClass,
-            enforceConnectionNickname: false);
+            command.PlayerClass);
     }
 
     private static CommandResult ApplyProfile(
@@ -63,8 +61,7 @@ internal static class PlayerAndMessageCommandHandlers
         SubsystemPlayers players,
         string requestedName,
         string skinName,
-        PlayerClass playerClass,
-        bool enforceConnectionNickname)
+        PlayerClass playerClass)
     {
         string name;
         try
@@ -89,12 +86,7 @@ internal static class PlayerAndMessageCommandHandlers
                 "玩家名称不能为空。");
         }
 
-        if (enforceConnectionNickname &&
-            actor.Client is { Nickname.Length: > 0 } client)
-        {
-            name = client.Nickname;
-        }
-        else if (players.PlayersData.Any(
+        if (players.PlayersData.Any(
                      player => player != actor &&
                                string.Equals(player.Name, name, StringComparison.Ordinal)))
         {

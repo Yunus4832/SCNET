@@ -147,7 +147,7 @@ public class NetNode
     /// <summary>
     /// 创建客户端
     /// </summary>
-    public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid, string dataId, string nickname)
+    public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid)
     {
         if (!IsServer)
         {
@@ -162,10 +162,10 @@ public class NetNode
                 continue;
             }
 
-            RemoveClient(p, "账号从其它设备登录");
+            RemoveClient(p, "相同的联机客户端 ID 已经连接");
         }
 
-        var client = new Client(peer, FindUnusedIndex(), tokenId, guid, GameManager.Project, dataId, nickname);
+        var client = new Client(peer, FindUnusedIndex(), tokenId, guid, GameManager.Project);
         peer.Tag = client;
         return client;
     }
@@ -480,17 +480,21 @@ public class NetNode
     public void StartLocal()
     {
         Clients.Clear();
-        Guid localGuid;
+        Guid multiplayerClientId;
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
-            localGuid = Guid.NewGuid();
+            multiplayerClientId = Guid.NewGuid();
         }
-        else if (!Guid.TryParse(SettingsManager.Current.OnlineAccessToken, out localGuid))
+        else
         {
-            throw new InvalidOperationException("The local online access token is invalid.");
+            multiplayerClientId = SettingsManager.Current.MultiplayerClientId;
+            if (multiplayerClientId == Guid.Empty)
+            {
+                throw new InvalidOperationException("The local multiplayer client id is invalid.");
+            }
         }
 
-        Self = new Client(localGuid, GameManager.Project!);
+        Self = new Client(multiplayerClientId, GameManager.Project!);
         AddClient(Self);
     }
 
@@ -521,9 +525,9 @@ public class NetNode
 
             if (flag)
             {
-                if (!string.IsNullOrEmpty(SettingsManager.Current.DefaultModRepositoryUrl))
+                if (!string.IsNullOrEmpty(SettingsManager.Current.ContentServerUrl))
                 {
-                    Log.Information($"默认模组仓库已被指定为: {SettingsManager.Current.DefaultModRepositoryUrl}");
+                    Log.Information($"内容服务器已被指定为: {SettingsManager.Current.ContentServerUrl}");
                 }
 
                 Log.Information($"开启服务器成功，端口 {NetManager.LocalPort}");
@@ -557,9 +561,8 @@ public class NetNode
     /// 连接服务器
     /// </summary>
     /// <param name="ep"></param>
-    /// <param name="passwd"></param>
     /// <returns></returns>
-    public void ConnectServer(IPEndPoint ep, string passwd = "")
+    public void ConnectServer(IPEndPoint ep)
     {
         try
         {
@@ -572,9 +575,7 @@ public class NetNode
                 new ConnectionRequestPackage(
                     TokenId,
                     VersionsManager.ProtocolVersion,
-                    SettingsManager.Current.CommunityAccessUser,
-                    SettingsManager.Current.OnlineAccessToken,
-                    passwd,
+                    SettingsManager.Current.MultiplayerClientId,
                     CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash
                 ),
                 ep,

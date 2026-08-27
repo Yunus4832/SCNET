@@ -153,14 +153,13 @@ public static class SessionInfoManager
         return effective;
     }
 
-    public static SessionInfo CreateRemoteClientSession(IPEndPoint endPoint, string password)
+    public static SessionInfo CreateRemoteClientSession(IPEndPoint endPoint)
     {
         var sessionInfo = Load(StartupManager.Current.Session.SessionId);
         sessionInfo.SessionId = NormalizeSessionId(StartupManager.Current.Session.SessionId);
         sessionInfo.Target = SessionTarget.RemoteServer;
         sessionInfo.ServerHost = endPoint.Address.ToString();
         sessionInfo.ServerPort = endPoint.Port;
-        sessionInfo.Password = password;
         return sessionInfo;
     }
 
@@ -231,8 +230,7 @@ public static class SessionInfoManager
                 Name = worldArg,
                 Seed = string.IsNullOrWhiteSpace(seedArg) ? GenerateRandomSeed() : seedArg,
                 GameMode = sessionInfo.GameMode ?? GameMode.Survival,
-                RunServer = true,
-                IsNeedCommunityLogin = false
+                RunServer = true
             };
             var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldArg);
             Log.Information($"Creating new world with seed: {worldSettings.Seed}");
@@ -338,7 +336,6 @@ public static class SessionInfoManager
             sessionInfo.Target = SessionTarget.RemoteServer;
             sessionInfo.ServerHost = loadingScreen.CurrentServerEndPoint.Address.ToString();
             sessionInfo.ServerPort = loadingScreen.CurrentServerEndPoint.Port;
-            sessionInfo.Password = loadingScreen.CurrentPassword;
             return true;
         }
 
@@ -423,7 +420,7 @@ public static class SessionInfoManager
             return true;
         }
 
-        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, endPoint, sessionInfo.Password);
+        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, endPoint);
         return true;
     }
 
@@ -589,8 +586,7 @@ public static class SessionInfoManager
             new XAttribute(nameof(SessionInfo.Seed), sessionInfo.Seed),
             new XAttribute(nameof(SessionInfo.ServerHost), sessionInfo.ServerHost),
             new XAttribute(nameof(SessionInfo.ServerPort), sessionInfo.ServerPort),
-            new XAttribute(nameof(SessionInfo.BroadcastPort), sessionInfo.BroadcastPort),
-            new XAttribute(nameof(SessionInfo.Password), sessionInfo.Password));
+            new XAttribute(nameof(SessionInfo.BroadcastPort), sessionInfo.BroadcastPort));
         if (sessionInfo.GameMode is { } gameMode)
         {
             element.Add(new XAttribute(nameof(SessionInfo.GameMode), gameMode));
@@ -631,7 +627,6 @@ public static class SessionInfoManager
             element.Attribute(nameof(SessionInfo.HttpCommandPort))?.Value);
         sessionInfo.HttpCommandAccessToken =
             element.Attribute(nameof(SessionInfo.HttpCommandAccessToken))?.Value;
-        sessionInfo.Password = element.Attribute(nameof(SessionInfo.Password))?.Value ?? string.Empty;
     }
 
     private static SessionInfo CreateDefault(string sessionId)
@@ -643,8 +638,7 @@ public static class SessionInfoManager
             Target = SessionTarget.MainMenu,
             World = "World",
             Seed = string.Empty,
-            ServerHost = string.Empty,
-            Password = string.Empty
+            ServerHost = string.Empty
         };
     }
 
@@ -742,8 +736,7 @@ public static class SessionInfoManager
             Name = NormalizeWorld(worldName),
             Seed = string.IsNullOrWhiteSpace(seed) ? GenerateRandomSeed() : seed,
             GameMode = gameMode ?? GameMode.Survival,
-            RunServer = runServer,
-            IsNeedCommunityLogin = false
+            RunServer = runServer
         };
         var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldSettings.Name);
         Log.Information($"Creating new world with seed: {worldSettings.Seed}");

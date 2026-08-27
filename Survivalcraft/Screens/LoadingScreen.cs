@@ -120,8 +120,6 @@ public class LoadingScreen : Screen
         {
             BlocksTexturesManager.Initialize();
             CharacterSkinsManager.Initialize();
-            CommunityContentManager.Initialize();
-            ExternalContentManager.Initialize();
             FurniturePacksManager.Initialize();
             LightingManager.Initialize();
             WorldsManager.Initialize();
@@ -169,12 +167,10 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("WorldOptions", new WorldOptionsScreen()); });
         AddLoadAction(delegate { AddScreen("GameLoading", new GameLoadingScreen()); });
         AddLoadAction(delegate { AddScreen("Game", new GameScreen()); });
-        AddLoadAction(delegate { AddScreen("ExternalContent", new ExternalContentScreen()); });
-        AddLoadAction(delegate { AddScreen("CommunityContent", new CommunityContentScreen()); });
         AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
+        AddLoadAction(delegate { AddScreen("ContentServer", new ContentServerScreen()); });
         AddLoadAction(delegate { AddScreen("ModManagement", new ModManagementScreen()); });
         AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
-        AddLoadAction(delegate { AddScreen("ManageUser", new ManageUserScreen()); });
         AddLoadAction(delegate { AddScreen("Players", new PlayersScreen()); });
         AddLoadAction(delegate { AddScreen("Player", new PlayerScreen()); });
         AddLoadAction(delegate { AddScreen("NetPlay", new NetPlayScreen()); });

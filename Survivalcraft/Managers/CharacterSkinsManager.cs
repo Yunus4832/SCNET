@@ -195,7 +195,7 @@ public static class CharacterSkinsManager
 
     public static string ImportCharacterSkin(string name, Stream stream)
     {
-        var ex = ExternalContentManager.VerifyExternalContentName(name);
+        var ex = ContentPackageManager.VerifyContentName(name);
         if (ex != null)
         {
             throw ex;

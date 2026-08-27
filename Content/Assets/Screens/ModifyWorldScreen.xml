@@ -55,11 +55,9 @@
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
                 <BevelledButtonWidget Name="Delete" Style="{Styles/ButtonStyle_160x60}"
                                       Text="[ModifyWorldScreen:7]" Margin="6, 0"/>
-                <BevelledButtonWidget Name="Upload" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[ModifyWorldScreen:8]" Margin="6, 0"/>
                 <CanvasWidget Size="Infinity, 0"/>
                 <BevelledButtonWidget Name="Apply" Style="{Styles/ButtonStyle_310x60}"
-                                      Text="[ModifyWorldScreen:9]" Margin="6, 0"/>
+                                      Text="[ModifyWorldScreen:8]" Margin="6, 0"/>
             </StackPanelWidget>
         </StackPanelWidget>
     </StackPanelWidget>

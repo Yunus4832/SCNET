@@ -7,23 +7,15 @@ public class ConnectionRequestPackage : IPackage
 {
     public const int VerifyMagic = 9421523; //校验码
 
-    public string CommunityAccountId = string.Empty;
-
     public int Magic;
-
-    public string Password = string.Empty;
 
     public Guid TmpToken;
 
-    public string Token = string.Empty;
-
-    public string User = string.Empty;
+    public Guid MultiplayerClientId;
 
     public string Version = string.Empty;
 
     public string ModDataHash = string.Empty;
-
-    public string Nickname = string.Empty;
 
     public byte ID => (byte)PackageType.ConnectionRequest;
 
@@ -42,18 +34,14 @@ public class ConnectionRequestPackage : IPackage
     public ConnectionRequestPackage(
         Guid tmpToken,
         string serverVersion,
-        string user,
-        string token,
-        string passwd,
+        Guid multiplayerClientId,
         string modDataHash
     )
     {
         Magic = VerifyMagic;
         TmpToken = tmpToken;
-        User = user;
-        Token = token;
+        MultiplayerClientId = multiplayerClientId;
         Version = serverVersion;
-        Password = passwd;
         ModDataHash = modDataHash;
     }
 
@@ -62,10 +50,8 @@ public class ConnectionRequestPackage : IPackage
     {
         Magic = reader.ReadInt32();
         Version = reader.ReadString();
-        Password = reader.ReadString();
-        User = reader.ReadString();
         TmpToken = reader.ReadGuid();
-        Token = reader.ReadString();
+        MultiplayerClientId = reader.ReadGuid();
         ModDataHash = reader.ReadString();
     }
 
@@ -73,10 +59,8 @@ public class ConnectionRequestPackage : IPackage
     {
         writer.Write(Magic);
         writer.Write(Version);
-        writer.Write(Password);
-        writer.Write(User);
         writer.Write(TmpToken);
-        writer.Write(Token);
+        writer.Write(MultiplayerClientId);
         writer.Write(ModDataHash);
     }
 

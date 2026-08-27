@@ -18,10 +18,6 @@ public class ServerInfoPackage : IPackage
 
     public ModProfile? RequiredModProfile;
 
-    public bool NeedLogin;
-
-    public bool NeedPasswd;
-
     public bool RequestInfo;
 
     /// <summary>
@@ -78,11 +74,9 @@ public class ServerInfoPackage : IPackage
         ClientCount = (ushort)CommonLib.Net.ClientCount;
         MaxPlayerCount = subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount;
         GameMode = subsystemGameInfo.WorldSettings.GameMode;
-        NeedLogin = subsystemGameInfo.WorldSettings.IsNeedCommunityLogin;
-        NeedPasswd = !string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.Password);
         TimeOfDay = subsystemTimeOfDay.CalculateTimeOfDay();
         RequiredModProfile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
-        ModRepositoryUrl = RequiredModProfile?.RepositoryUrl ?? SettingsManager.Current.DefaultModRepositoryUrl;
+        ModRepositoryUrl = RequiredModProfile?.RepositoryUrl ?? SettingsManager.Current.ContentServerUrl;
         Season = subsystemSeasons.Season;
         TimeOfSeason = subsystemSeasons.TimeOfSeason;
     }
@@ -100,8 +94,6 @@ public class ServerInfoPackage : IPackage
         ClientCount = reader.ReadUInt16();
         MaxPlayerCount = reader.ReadUInt16();
         GameMode = reader.ReadEnum<GameMode>();
-        NeedLogin = reader.ReadBoolean();
-        NeedPasswd = reader.ReadBoolean();
         TimeOfDay = reader.ReadSingle();
         // 如果不考虑兼容03.04版本可以删掉try-catch语句
         try
@@ -131,8 +123,6 @@ public class ServerInfoPackage : IPackage
         writer.Write(ClientCount);
         writer.Write(MaxPlayerCount);
         writer.WriteEnum(GameMode);
-        writer.Write(NeedLogin);
-        writer.Write(NeedPasswd);
         writer.Write(TimeOfDay);
         writer.Write(ModRepositoryUrl);
         WriteProfile(writer, RequiredModProfile);

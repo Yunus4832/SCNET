@@ -12,9 +12,7 @@ public class ConnectionRequestPackageTest
         var package = new ConnectionRequestPackage(
             Guid.NewGuid(),
             "1.0.0",
-            "user",
-            "token",
-            "pwd",
+            Guid.NewGuid(),
             "mod-data-hash");
 
         var writer = new PackageStreamWriter();
@@ -25,7 +23,7 @@ public class ConnectionRequestPackageTest
 
         Assert.Equal(package.ModDataHash, clone.ModDataHash);
         Assert.Equal(package.Version, clone.Version);
-        Assert.Equal(package.Password, clone.Password);
+        Assert.Equal(package.MultiplayerClientId, clone.MultiplayerClientId);
     }
 
     [Fact]

@@ -44,22 +44,6 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
             WorldSettings.TimeOfYear = IntervalUtils.Normalize(WorldSettings.TimeOfYear + 10f / num);
         }
 
-        if (_subsystemTime.GameTime >= 600.0 && _subsystemTime.GameTime - _subsystemTime.GameTimeDelta < 600.0 &&
-            UserManager.ActiveUser != null)
-        {
-            foreach (var item in GetActiveExternalContent())
-            {
-                CommunityContentManager.SendPlayTime(
-                    item.Address,
-                    UserManager.ActiveUser.UniqueId,
-                    _subsystemTime.GameTime,
-                    new CancellableProgress(),
-                    Actions.Empty,
-                    delegate { }
-                );
-            }
-        }
-
         //客户端禁用时间计算
         if (CommonLib.WorkType == WorkType.Client)
         {
@@ -69,78 +53,6 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
         if (_subsystemTime.PeriodicGameTimeEvent(1.0, 0.0))
         {
             CommonLib.Net.QueuePackage(new SubsystemTimePackage(TotalElapsedGameTime, TimeOfDay.TimeOfDayOffset));
-        }
-    }
-
-    public IEnumerable<ActiveExternalContentInfo> GetActiveExternalContent()
-    {
-        var downloadedContentAddress =
-            CommunityContentManager.GetDownloadedContentAddress(ExternalContentType.World, DirectoryName);
-        if (!string.IsNullOrEmpty(downloadedContentAddress))
-        {
-            yield return new ActiveExternalContentInfo
-            {
-                Address = downloadedContentAddress,
-                DisplayName = WorldSettings.Name,
-                Type = ExternalContentType.World
-            };
-        }
-
-        if (!BlocksTexturesManager.IsBuiltIn(WorldSettings.BlocksTextureName))
-        {
-            downloadedContentAddress =
-                CommunityContentManager.GetDownloadedContentAddress(ExternalContentType.BlocksTexture,
-                    WorldSettings.BlocksTextureName);
-            if (!string.IsNullOrEmpty(downloadedContentAddress))
-            {
-                yield return new ActiveExternalContentInfo
-                {
-                    Address = downloadedContentAddress,
-                    DisplayName = BlocksTexturesManager.GetDisplayName(WorldSettings.BlocksTextureName),
-                    Type = ExternalContentType.BlocksTexture
-                };
-            }
-        }
-
-        var subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
-        foreach (var playersDatum in subsystemPlayers.PlayersData)
-        {
-            if (!CharacterSkinsManager.IsBuiltIn(playersDatum.CharacterSkinName))
-            {
-                downloadedContentAddress =
-                    CommunityContentManager.GetDownloadedContentAddress(ExternalContentType.CharacterSkin,
-                        playersDatum.CharacterSkinName);
-                yield return new ActiveExternalContentInfo
-                {
-                    Address = downloadedContentAddress,
-                    DisplayName = CharacterSkinsManager.GetDisplayName(playersDatum.CharacterSkinName),
-                    Type = ExternalContentType.CharacterSkin
-                };
-            }
-        }
-
-        var subsystemFurnitureBlockBehavior = Project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
-        foreach (var furnitureSet in subsystemFurnitureBlockBehavior.FurnitureSets)
-        {
-            if (!string.IsNullOrEmpty(furnitureSet.ImportedFrom))
-            {
-                downloadedContentAddress =
-                    CommunityContentManager.GetDownloadedContentAddress(ExternalContentType.FurniturePack,
-                        furnitureSet.ImportedFrom);
-                if (string.IsNullOrEmpty(downloadedContentAddress))
-                {
-                    continue;
-                }
-
-                {
-                    yield return new ActiveExternalContentInfo
-                    {
-                        Address = downloadedContentAddress,
-                        DisplayName = FurniturePacksManager.GetDisplayName(furnitureSet.ImportedFrom),
-                        Type = ExternalContentType.FurniturePack
-                    };
-                }
-            }
         }
     }
 

@@ -2,10 +2,6 @@
     "Language": {
         "Name": "English"
     },
-    "DiskExternalContentProvider": {
-        "DisplayName": "disk",
-        "Description": "No login required; Save to disk"
-    },
     "FurnitureBlock": [
         "Combine furniture into interactive design",
         "Too many different furniture designs"
@@ -17,9 +13,6 @@
     },
     "ContentManager": {
         "1": "Content \"{0}\" has type {1}, requested type was {2}"
-    },
-    "AndroidSdCardExternalContentProvider": {
-        "1": "SD Card"
     },
     "ContentScreen": {
         "2": "Content Management",
@@ -93,28 +86,6 @@
     "SubsystemFireworksBlockBehavior": {
         "1": "Happy New Year!",
         "2": "--- Enjoy the fireworks ---"
-    },
-    "ExternalContentManager": {
-        "1": "Name empty.",
-        "2": "Name too long. Maximum 50 characters allowed.",
-        "3": "Name cannot start or end with a space.",
-        "4": "Unsupported external content type.",
-        "5": "Logging in",
-        "6": "Login Required",
-        "7": "Do you want to login to {0}?",
-        "8": "Login",
-        "9": "Select Upload Destination",
-        "10": "Uploading",
-        "11": "Cannot upload this item.",
-        "12": "Unsupported content type.",
-        "13": "Compressing world",
-        "14": "Uploading",
-        "15": "{0} uploaded.",
-        "Directory": "Directory",
-        "World": "World",
-        "Blocks Texture": "Blocks Texture",
-        "Character Skin": "Character Skin",
-        "Furniture Pack": "Furniture Pack"
     },
     "PlayerWidget": [
         "{0} Controlled by {1}",
@@ -270,10 +241,6 @@
         "Error": "Error",
         "Warning": "Warning"
     },
-    "MoreCommunityLinkDialog": {
-        "1": "No users",
-        "2": "Select the user to use"
-    },
     "FurnitureDesignWidget": [
         "Front",
         "Side"
@@ -311,22 +278,6 @@
         "26": "All furniture in the set will become uncategorized and will be deleted if not used in the world.",
         "27": "Delete",
         "28": "Cancel"
-    },
-    "ExternalContentScreen": {
-        "1": "Enter",
-        "2": "Download",
-        "3": "Contents Of ",
-        "4": "Not logged in",
-        "5": "Logout",
-        "6": "Login",
-        "7": "Select Content Source",
-        "8": "Creating Link",
-        "9": "Retrieving Directory",
-        "10": "Downloading",
-        "11": " | (downloaded)",
-        "12": "Importing",
-        "13": "Failed to open file",
-        "14": "File type is not supported: "
     },
     "FourLedBlock": {
         "1": "Make colored 4-LEDs from copper, glass and paint"
@@ -492,67 +443,6 @@
         "weight": "Weight:\n",
         "range": "{0} to {1}"
     },
-    "CommunityContentScreen": {
-        "1": "Downloading {0}",
-        "2": "Retrieving Content",
-        "3": "Deleting {0}",
-        "4": "Are you sure?",
-        "5": "The link will be deleted from the server.",
-        "6": "Link Deleted",
-        "7": "It will stop appearing in the listings in a few minutes.",
-        "8": "Your Items Only",
-        "9": "All Items",
-        "10": "Invalid filter.",
-        "11": "Top Ranked",
-        "12": "Recently Added",
-        "13": "Invalid order.",
-        "14": "Star",
-        "15": "Add to Boutique",
-        "16": "Remove from Boutique",
-        "17": "Operation",
-        "18": "Please enter rating, the default value is 5.",
-        "19": "Add to Boutique Successfully:",
-        "20": "Operation Done",
-        "21": "Confirm Removing from Boutique?",
-        "22": "Remove from Boutique Successfully:",
-        "23": "Delete",
-        "24": "Publish",
-        "25": "Hide",
-        "26": "Confirm Deleting",
-        "27": "Delete Successfully:",
-        "28": "Publish Successfully:",
-        "29": "Hide Successfully:",
-        "30": "Not published",
-        "31": "ByRank",
-        "32": "ByTime",
-        "33": "ByBoutique",
-        "34": "ByHide",
-        "35": "Load more",
-        "Unknown": "Unknown",
-        "Directory": "Directory",
-        "World": "World",
-        "BlocksTexture": "BlocksTexture",
-        "CharacterSkin": "CharacterSkin",
-        "FurniturePack": "FurniturePack",
-        "ByRank": "ByRank",
-        "ByTime": "ByTime",
-        "ByBoutique": "Featured",
-        "ByHide": "Hidden",
-        "Order Type": "Order Type",
-        "Filter": "Filter"
-    },
-    "OriginalCommunityContentScreen": {
-        "1": "Select Sort Order",
-        "2": "Select Items Filter",
-        "3": "Selected User's Items",
-        "4": "Top Ranked",
-        "5": "Most Recent",
-        "6": "Most Downloaded",
-        "7": "Largest",
-        "8": "Newest Version",
-        "9": "Oldest Version",
-        "10": "downloads"
-    },
     "ComponentClothing": {
         "1": "Must be level {0} to wear {1}",
         "2": "Your clothing has worn out"
@@ -593,12 +483,6 @@
         "Easy": "Easy",
         "Medium": "Medium",
         "Hard": "Hard"
-    },
-    "CommunityContentMode": {
-        "Disabled": "Disabled",
-        "Strict": "Strict",
-        "Normal": "Normal",
-        "ShowAll": "ShowAll"
     },
     "MoveControlMode": {
         "Pad": "Pad",
@@ -2774,14 +2658,6 @@
             "value": "\\n Sometimes when you are stuck, the only option is to force respawn at your last sleeping place.\\n \\n\\n\\n To do it, open the body screen and repeatedly press the skull and bones button.\\n ",
             "Title": "Force Respawn"
         },
-        "40": {
-            "value": "\\n The game uses Dropbox service to allow you to download and upload data to/from your device.\\n \\n\\n\\n Through Dropbox, you can backup and share worlds with others.\\n You can also download custom blocks textures, character skins, furniture packs.\\n \\n\\n\\n To login to Dropbox, click on the login button on the Dropbox screen.\\n If you don't have a Dropbox account yet, you will be able to setup one during the login.\\n \\n\\n\\n Once you log in, the Dropbox screen will show you the contents of your online Dropbox folders, and allow you to download the files to your device.\\n \\n\\n\\n See https://dropbox.com website for more details.\\n ",
-            "Title": "Dropbox"
-        },
-        "41": {
-            "value": "\\n The game uses transfer.sh anonymous file service to allow you to upload data from your device without the hassle of creating any user accounts.\\n \\n\\n\\n Use the link provided after the upload to access the data.\\n Transfer.sh keeps the data for a few days only, after that it is automatically deleted.\\n \\n\\n\\n Do not use these temporary links for Community Content uploads, your item will be deleted by the service and Community Content item will stop working.\\n \\n\\n\\n It is not possible to see the list of items you uploaded, the sole access to data is through the links.\\n \\n\\n\\n See https://transfer.sh website for more details.\\n \\n\\n\\n Big Kudos to The Dutch Coders!\\n ",
-            "Title": "Transfer.sh"
-        },
         "42": {
             "value": "\\n\\nThe game lets you import and export worlds to the SD card for sharing and backup.\\n\\n\\n\\n\\n\\nIf your device does not have an SD card, the common external storage folder will be used.\\n\\nThe data location on the device is usually /sdcard/Survivalcraft2.2\\n ",
             "Title": "SD Card",
@@ -2794,10 +2670,6 @@
         "44": {
             "value": "\\n\\nFlying mode is only available in Creative mode.\\n\\nTo toggle flying mode, tap the fly button on the right side of the screen.\\n\\nJumping twice in quick succession also toggles flying mode.\\n\\n\\nFlying is much faster than walking and lets you quickly reach places that are hard to access on foot.\\n ",
             "Title": "Flying"
-        },
-        "45": {
-            "value": "\\n\\nThe game lets you browse lists of worlds, textures, and other files published by other Survivalcraft community members, then download them.\\n\\n\\n\\n\\n\\nOnce you have made something interesting, you can also publish it through this service and it will appear in the list for anyone to download.\\n\\n\\n\\n\\n\\nTo publish content, you must first put it on the internet so everyone can access it.\\n\\nDropbox is the easiest place to use, but you can use any other provider.\\n\\nOnce that is done, you can publish the link through the in-game \"Publish Link\" dialog.\\n\\n\\n\\n\\n\\nNote: the server does not store your content, only the link.\\n\\nJust like a search engine.\\n\\nYou are responsible for keeping the data accessible through the published link.\\n\\nBe careful not to exceed your provider's bandwidth limits. Links near the top of the list can cause your content to receive many downloads in a short time.\\n ",
-            "Title": "Community Content"
         }
     },
     "Strings": {
@@ -2910,14 +2782,6 @@
             "3": "",
             "4": ""
         },
-        "CommunityContentItem": {
-            "1": "",
-            "2": "",
-            "3": ""
-        },
-        "CommunityContentItemMore": {
-            "1": "More Items..."
-        },
         "CraftingRecipeSlot": {
             "1": ""
         },
@@ -2942,10 +2806,6 @@
             "3": "Dispense",
             "4": "Shoot",
             "5": "Accepts Drops"
-        },
-        "ExternalContentItem": {
-            "1": "",
-            "2": ""
         },
         "FullInventoryWidget": {
             "1": "...",
@@ -3043,16 +2903,6 @@
             "Save",
             "Cancel"
         ],
-        "ManipulateOfflineTokenDialog": {
-            "1": "Player ID",
-            "2": "Can be copied for future progress transfer.",
-            "3": "Player ID:",
-            "4": "Create",
-            "5": "Copy",
-            "6": "Paste",
-            "7": "Save",
-            "8": "Cancel"
-        },
         "BuildFurnitureDialog": {
             "1": "...",
             "2": "Build",
@@ -3063,16 +2913,6 @@
         },
         "CancellableBusyDialog": {
             "1": "Cancel"
-        },
-        "DownloadContentFromLinkDialog": {
-            "1": "Enter Link To A File",
-            "2": "The name and type will be autofilled from link if possible, otherwise you must specify them manually.",
-            "3": "Link:",
-            "4": "Name:",
-            "5": "Content Type:",
-            "6": "...",
-            "7": "Download",
-            "8": "Cancel"
         },
         "EditAdjustableDelayGateDialog": {
             "1": "Adjust Delay",
@@ -3159,10 +2999,6 @@
             "20": "Enter up to 16 binary characters (0 and 1)",
             "21": "OK",
             "22": "Cancel"
-        },
-        "ExternalContentLinkDialog": {
-            "1": "Link Copied To Clipboard",
-            "2": "OK"
         },
         "GameMenuDialog": {
             "1": "Resume",
@@ -3277,41 +3113,6 @@
             "1": "Current multipliers:",
             "2": "OK"
         },
-        "MoreCommunityLinkDialog": {
-            "1": "Community Content",
-            "2": "User name is used to identify users when publishing and rating community content.",
-            "3": "Active User:",
-            "4": "-",
-            "5": "...",
-            "6": "User ID:",
-            "7": "-",
-            "8": "Copy",
-            "9": "Publish Link",
-            "10": "Close"
-        },
-        "PublishCommunityLinkDialog": {
-            "1": "Publish Link To A File",
-            "2": "Publishing a link does not upload the linked file to the server. Only links are stored on the server. You are responsible for keeping your file accessible through the published link.",
-            "3": "Link:",
-            "4": "Name:",
-            "5": "Content Type:",
-            "6": "...",
-            "7": "Publish",
-            "8": "Cancel"
-        },
-        "RateCommunityContentDialog": {
-            "1": "Rate Community Content",
-            "2": "Offensive content?",
-            "3": "Report",
-            "4": "Rate",
-            "5": "Cancel"
-        },
-        "ReportCommunityContentDialog": {
-            "1": "Report Community Content",
-            "2": "Please tick one that applies most:",
-            "3": "Report",
-            "4": "Cancel"
-        },
         "TextBoxDialog": {
             "1": "OK",
             "2": "Cancel"
@@ -3349,50 +3150,14 @@
         "BestiaryScreen": {
             "1": "Bestiary"
         },
-        "CommunityContentScreen": {
-            "1": "Community Content",
-            "2": "-",
-            "3": "...",
-            "4": "-",
-            "5": "...",
-            "6": "Download",
-            "7": "Delete",
-            "8": "...",
-            "9": "Input Keywords",
-            "10": "Search",
-            "11": "Add to Boutique"
-        },
-        "OriginalCommunityContentScreen": {
-            "1": "Original Community Content",
-            "2": "-",
-            "3": "...",
-            "4": "Download",
-            "5": "Delete",
-            "6": "Search",
-            "7": "x"
-        },
         "ContentScreen": {
             "1": "Choose Content Type",
-            "2": "Access content previously uploaded to one of your public storage spaces",
-            "3": "Private",
-            "4": "Access content created by other community members and registered for public access",
-            "5": "Community",
-            "6": "Download a file directly from a web link, if you know it (it's best to use copy/paste to enter links)",
-            "7": "From Link",
             "8": "Manage downloaded content",
             "9": "Manage",
-            "10": "Access content created by other Original community members and registered for public access",
-            "11": "Original Community",
             "12": "Manage global and world mods",
-            "13": "Mods"
-        },
-        "ExternalContentScreen": {
-            "1": "",
-            "2": "-",
-            "3": "...",
-            "4": "-",
-            "5": "-",
-            "6": "Copy Link"
+            "13": "Mods",
+            "RemoteDescription": "Browse approved resources from the content server",
+            "Remote": "Online Content"
         },
         "GameLoadingScreen": {
             "1": "Loading World"
@@ -3444,9 +3209,7 @@
         },
         "ManageContentScreen": {
             "1": "Manage Content",
-            "2": "(Download more using Community Content)",
             "3": "Delete",
-            "4": "Upload",
             "5": "..."
         },
         "ModifyWorldScreen": [
@@ -3458,18 +3221,7 @@
             "World Options...",
             "Invalid world name",
             "Delete",
-            "Upload",
-            "Apply Changes",
-            "Create Server",
-            "Room Password",
-            "Max Players",
-            "Community login required",
-            "Day/Night speed",
-            "Keyword filter",
-            "Keyword filter (separate multiple with ;)",
-            "Enter room password",
-            "Maximum online players",
-            "Disabled blocks (separate multiple with ;)"
+            "Apply Changes"
         ],
         "NewWorldScreen": [
             "Start A New World",
@@ -3501,8 +3253,6 @@
         "WorldServerSettingsScreen": {
             "Title": "Server Settings",
             "RunServer": "Create Server",
-            "NeedLogin": "Require Community Login",
-            "Password": "Room Password",
             "MaxPlayers": "Max Players",
             "DaySpeed": "Day Length Factor",
             "RecoverySpeed": "Sleep Recovery Factor",
@@ -3510,8 +3260,6 @@
             "RandomSpawnPosition": "Random Spawn Position",
             "KeywordBlocking": "Keyword Filter",
             "RunServerDescription": "When enabled, entering this world also starts a local server.",
-            "NeedLoginDescription": "When enabled, players must sign in to the community before joining the server.",
-            "PasswordDescription": "Sets the room password required to join the server. Leave empty for no password.",
             "MaxPlayersDescription": "Limits how many players can be online on the server at the same time.",
             "DaySpeedDescription": "Controls how fast day and night pass on the server. The recommended default is 1.",
             "RecoverySpeedDescription": "Controls the recovery multiplier while players sleep. The value must be above 0.",
@@ -3653,11 +3401,7 @@
             "Hide Move/Look Pads:",
             "Show UI in screenshots:",
             "Show logo in screenshots:",
-            "Screenshot resolution:",
-            "Chinese Community Content:",
-            "Show loading log:",
-            "Input \"yes\" to delete world:",
-            "Original Community Content"
+            "Screenshot resolution:"
         ],
         "TrialEndedScreen": {
             "1": "The day has ended",
@@ -3720,6 +3464,12 @@
             "CloneTitle": "Clone instance “{0}” to a new ID",
             "Working": "Processing instance",
             "OperationFailed": "The instance operation failed."
+        },
+        "ContentServerScreen": {
+            "Title": "Online Content",
+            "Download": "Download",
+            "Uninstall": "Uninstall",
+            "Refresh": "Refresh"
         }
     },
     "FireworksBlock": {
@@ -4211,5 +3961,18 @@
         "GuiConfirmMessage": "The run mode will be saved and restarted in the graphical interface.",
         "Confirm": "Confirm",
         "Cancel": "Cancel"
+    },
+    "ContentPackageManager": {
+        "1": "Name empty.",
+        "2": "Name too long. Maximum 50 characters allowed.",
+        "4": "Unsupported external content type.",
+        "World": "World",
+        "Blocks Texture": "Blocks Texture",
+        "Character Skin": "Character Skin",
+        "Furniture Pack": "Furniture Pack"
+    },
+    "ContentServerScreen": {
+        "ServerNotConfigured": "The content server address is not configured.",
+        "Installed": "Content installed."
     }
 }

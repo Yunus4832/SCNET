@@ -5,37 +5,26 @@ namespace Survivalcraft.Test.Managers;
 
 public sealed class SettingsManagerTest
 {
-    [Theory]
-    [InlineData("")]
-    [InlineData("invalid-token")]
-    public void RepairOnlineAccessTokenReplacesInvalidValue(string token)
+    [Fact]
+    public void EnsureMultiplayerClientIdCreatesMissingValue()
     {
-        var fallbackToken = Guid.NewGuid().ToString("N");
-        var settings = new Settings { OnlineAccessToken = token };
+        var settings = new Settings();
 
-        var repaired = SettingsManager.RepairOnlineAccessToken(settings, fallbackToken);
+        var changed = SettingsManager.EnsureMultiplayerClientId(settings);
 
-        Assert.True(repaired);
-        Assert.Equal(fallbackToken, settings.OnlineAccessToken);
+        Assert.True(changed);
+        Assert.NotEqual(Guid.Empty, settings.MultiplayerClientId);
     }
 
     [Fact]
-    public void RepairOnlineAccessTokenPreservesValidValue()
+    public void EnsureMultiplayerClientIdPreservesExistingValue()
     {
-        var token = Guid.NewGuid().ToString("N");
-        var settings = new Settings { OnlineAccessToken = token };
+        var id = Guid.NewGuid();
+        var settings = new Settings { MultiplayerClientId = id };
 
-        var repaired = SettingsManager.RepairOnlineAccessToken(settings, Guid.NewGuid().ToString("N"));
+        var changed = SettingsManager.EnsureMultiplayerClientId(settings);
 
-        Assert.False(repaired);
-        Assert.Equal(token, settings.OnlineAccessToken);
-    }
-
-    [Fact]
-    public void RepairOnlineAccessTokenRejectsInvalidFallback()
-    {
-        var settings = new Settings { OnlineAccessToken = "invalid-token" };
-
-        Assert.Throws<ArgumentException>(() => SettingsManager.RepairOnlineAccessToken(settings, "invalid-fallback"));
+        Assert.False(changed);
+        Assert.Equal(id, settings.MultiplayerClientId);
     }
 }

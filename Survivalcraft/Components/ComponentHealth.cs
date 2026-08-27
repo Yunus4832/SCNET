@@ -377,7 +377,7 @@ public class ComponentHealth : Component, IUpdateable
                     if (player != null && player2 != null)
                     {
                         CauseOfDeath =
-                            $" 被 {player2.PlayerData.Name}({player2.PlayerData.Client?.CommunityAccountId}) 噶了";
+                            $" 被 {player2.PlayerData.Name} 噶了";
                     }
                 }
 

@@ -27,24 +27,18 @@ public class Client
     /// <param name="tokenId">客户端tokenId</param>
     /// <param name="guid">客户端Guid</param>
     /// <param name="project">Project</param>
-    /// <param name="dataId">社区账号ID</param>
-    /// <param name="nickName">社区昵称</param>
     public Client(
         NetPeer? netPeer,
         byte id,
         Guid tokenId,
         Guid guid,
-        Project? project,
-        string dataId,
-        string nickName
+        Project? project
     )
     {
         ID = id;
         GUID = guid;
         TokenId = tokenId;
         Project = project;
-        Nickname = nickName;
-        CommunityAccountId = dataId;
         Peer = netPeer;
         IsAddedToNetNode = true;
     }
@@ -71,8 +65,6 @@ public class Client
 
     public bool IsLocalRemote { get; set; }
 
-    public string Nickname { get; set; } = string.Empty;
-
     public byte ID { get; internal set; }
 
     public Guid GUID { get; }
@@ -92,8 +84,6 @@ public class Client
     private SubsystemPlayers SubsystemPlayers { get; set; } = null!;
 
     public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
-
-    public string CommunityAccountId { get; set; } = "-1";
 
     public ClientState State { get; set; }
 

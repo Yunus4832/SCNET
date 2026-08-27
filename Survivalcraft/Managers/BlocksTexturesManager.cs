@@ -90,7 +90,7 @@ public static class BlocksTexturesManager
 
     public static string ImportBlocksTexture(string name, Stream stream)
     {
-        var ex = ExternalContentManager.VerifyExternalContentName(name);
+        var ex = ContentPackageManager.VerifyContentName(name);
         if (ex != null)
         {
             throw ex;

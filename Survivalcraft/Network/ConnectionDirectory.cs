@@ -26,8 +26,7 @@ public static class ConnectionDirectory
             {
                 var ip = element.Attribute("IP")?.Value ?? throw new InvalidOperationException("IP is null");
                 var name = element.Attribute("Name")?.Value ?? string.Empty;
-                var password = element.Attribute("Pass")?.Value ?? string.Empty;
-                Saved.Add(new Connect { IP = ip, Name = name, SavedPassword = password });
+                Saved.Add(new Connect { IP = ip, Name = name });
             }
         }
 
@@ -41,8 +40,7 @@ public static class ConnectionDirectory
         {
             var ip = element.Attribute("IP")?.Value ?? throw new InvalidOperationException("IP is null");
             var name = element.Attribute("Name")?.Value ?? string.Empty;
-            var password = element.Attribute("Pass")?.Value ?? string.Empty;
-            Collected.Add(new Connect { IP = ip, Name = name, SavedPassword = password });
+            Collected.Add(new Connect { IP = ip, Name = name });
         }
     }
 
@@ -54,7 +52,6 @@ public static class ConnectionDirectory
             var node = XmlUtils.AddElement(savedConnects, "SaveConnects");
             node.SetAttributeValue("IP", connect.IP);
             node.SetAttributeValue("Name", connect.Name);
-            node.SetAttributeValue("Pass", connect.SavedPassword);
         }
 
         root.Add(savedConnects);
@@ -65,7 +62,6 @@ public static class ConnectionDirectory
             var node = XmlUtils.AddElement(collectedConnects, "CollectConnects");
             node.SetAttributeValue("IP", connect.IP);
             node.SetAttributeValue("Name", connect.Name);
-            node.SetAttributeValue("Pass", connect.SavedPassword);
         }
 
         root.Add(collectedConnects);

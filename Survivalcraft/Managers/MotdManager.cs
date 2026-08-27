@@ -6,31 +6,19 @@ using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
 
-using Game.ContentProviders;
-
 namespace Game.Managers;
 
 public static class MotdManager
 {
-    private static readonly string _defaultMotdUpdateUrl =
-        SchubExternalContentProvider.GetPath("/com/motd?v={0}&l={1}");
-
-    private static readonly string _defaultMotdUpdateCheckUrl =
-        SchubExternalContentProvider.GetPath("/com/motd?v={0}&cmd=version_check&platform={1}&apiv={2}&l={3}");
-
     public static Bulletin BulletinDefault = Bulletin.Default;
 
     public static bool CanShowBulletin { get; set; }
 
     private static bool _canDownloadMotd = true;
 
-    private static bool _forceChecked;
-
     public static readonly List<FilterMod> FilterModAll = [];
 
     public static JsonObject? UpdateResult;
-
-    private static bool _isAdmin;
 
     public static Message MessageOfTheDay
     {
@@ -51,6 +39,11 @@ public static class MotdManager
 
     public static void UpdateVersion()
     {
+        if (string.IsNullOrWhiteSpace(SettingsManager.Current.MotdUpdateCheckUrl))
+        {
+            return;
+        }
+
         var url = string.Format(
             GetMotdUpdateCheckUrl(),
             VersionsManager.Version,
@@ -70,6 +63,11 @@ public static class MotdManager
 
     private static void DownloadMotd()
     {
+        if (string.IsNullOrWhiteSpace(SettingsManager.Current.MotdUpdateUrl))
+        {
+            return;
+        }
+
         var url = GetMotdUrl();
         WebManager.Get(
             url,
@@ -94,66 +92,11 @@ public static class MotdManager
         );
     }
 
-    private static void ClientCheck()
-    {
-        try
-        {
-            var header = new Dictionary<string, string>
-            {
-                { "Content-Type", "application/x-www-form-urlencoded" }
-            };
-            var dictionary = new Dictionary<string, string>
-            {
-                { "version", VersionsManager.ProtocolVersion }
-            };
-            WebManager.Post(
-                SchubExternalContentProvider.GetPath("/com/api/zh/forceCheckCode"),
-                new Dictionary<string, string>(),
-                header,
-                WebManager.UrlParametersToStream(dictionary),
-                new CancellableProgress(),
-                delegate(byte[] data)
-                {
-                    _forceChecked = true;
-                    if (WebManager.JsonFromBytes(data) is not JsonObject result)
-                    {
-                        return;
-                    }
-
-                    if (result.TryGetPropertyValue("code", out var codeNode) && codeNode?.ToString() != "200")
-                    {
-                        return;
-                    }
-
-                    if (!result.TryGetPropertyValue("msg", out var msgNode) || msgNode?.ToString() != "Bomb")
-                    {
-                        return;
-                    }
-
-                    Log.Warning("当前版本已过期，请等待新版本");
-                    Window.Close();
-                },
-                delegate { }
-            );
-        }
-        catch
-        {
-            // ignored
-        }
-    }
-
     public static void Update()
     {
-        if (!_forceChecked && Time.PeriodicEvent(30, 15))
-        {
-            ClientCheck();
-        }
-
         if (_canDownloadMotd)
         {
             DownloadMotd();
-            CommunityContentManager.IsAdmin(new CancellableProgress(), delegate(bool isAdmin) { _isAdmin = isAdmin; },
-                delegate { });
             _canDownloadMotd = false;
         }
 
@@ -271,39 +214,6 @@ public static class MotdManager
         }
     }
 
-    private static void SaveBulletin(
-        string dataString,
-        CancellableProgress progress,
-        Action<byte[]> success,
-        Action<Exception> failure
-    )
-    {
-        if (!WebManager.IsInternetConnectionAvailable())
-        {
-            failure(new InvalidOperationException("Internet connection is unavailable."));
-            return;
-        }
-
-        var header = new Dictionary<string, string>
-        {
-            { "Content-Type", "application/x-www-form-urlencoded" }
-        };
-        var dictionary = new Dictionary<string, string>
-        {
-            { "Operater", SettingsManager.Current.CommunityAccessToken },
-            { "Content", dataString }
-        };
-        WebManager.Post(
-            SchubExternalContentProvider.GetPath("/com/api/zh/setnotice"),
-            new Dictionary<string, string>(),
-            header,
-            WebManager.UrlParametersToStream(dictionary),
-            progress,
-            success,
-            failure
-        );
-    }
-
     private static void LoadFilterMods(string dataString)
     {
         var num = dataString.IndexOf("<Motd3", StringComparison.Ordinal);
@@ -355,136 +265,8 @@ public static class MotdManager
             var content = IsCnLanguageType() ? BulletinDefault.Content : BulletinDefault.EnContent;
             var bulletinDialog = new BulletinDialog(title, content, time,
                 delegate { SettingsManager.Current.BulletinTime = BulletinDefault.Time; },
-                delegate(LabelWidget titleLabel, LabelWidget contentLabel)
-                {
-                    DialogsManager.ShowDialog(
-                        null,
-                        new TextBoxDialog(
-                            "请输入标题",
-                            titleLabel.Text,
-                            1024,
-                            delegate(string inputTitle)
-                            {
-                                DialogsManager.ShowDialog(
-                                    null,
-                                    new TextBoxDialog(
-                                        "请输入内容",
-                                        contentLabel.Text.Replace("\n", "[n]"),
-                                        8192,
-                                        delegate(string inputContent)
-                                        {
-                                            if (string.IsNullOrEmpty(inputTitle) ||
-                                                string.IsNullOrEmpty(inputContent))
-                                            {
-                                                return;
-                                            }
-
-                                            titleLabel.Text = inputTitle;
-                                            contentLabel.Text = inputContent.Replace("[n]", "\n");
-                                            if (IsCnLanguageType())
-                                            {
-                                                BulletinDefault.Title = titleLabel.Text;
-                                                BulletinDefault.Content = contentLabel.Text;
-                                            }
-                                            else
-                                            {
-                                                BulletinDefault.EnTitle = titleLabel.Text;
-                                                BulletinDefault.EnContent = contentLabel.Text;
-                                            }
-
-                                            var languageType =
-                                                !AppConfigStore.Values.TryGetValue("Language", out var config)
-                                                    ? "zh-CN"
-                                                    : config;
-                                            BulletinDefault.Time = languageType + "$" + DateTime.Now;
-                                        },
-                                        delegate(TextBoxWidget textBox)
-                                        {
-                                            textBox.Text = textBox.Text.Replace("\n", "[n]");
-                                        }
-                                    )
-                                );
-                            }
-                        )
-                    );
-                },
-                delegate(LabelWidget titleLabel, LabelWidget contentLabel)
-                {
-                    var num = SettingsManager.Current.MotdLastDownloadedData.IndexOf("<Motd2", StringComparison.Ordinal);
-                    var num2 = SettingsManager.Current.MotdLastDownloadedData.IndexOf("</Motd2>", StringComparison.Ordinal) + 8;
-                    var xElement =
-                        XmlUtils.LoadXmlFromString(SettingsManager.Current.MotdLastDownloadedData.Substring(num, num2 - num),
-                            true);
-                    _ = !AppConfigStore.Values.TryGetValue("Language", out var config)
-                        ? "zh-CN"
-                        : config;
-                    foreach (var item in xElement.Elements())
-                    {
-                        if (item.Name.LocalName != "Bulletin")
-                        {
-                            continue;
-                        }
-
-                        if (IsCnLanguageType())
-                        {
-                            item.Attribute("Title")?.Value = titleLabel.Text;
-                            item.Element("Content")?.Value = contentLabel.Text;
-                        }
-                        else
-                        {
-                            item.Attribute("EnTitle")?.Value = titleLabel.Text;
-                            item.Element("EnContent")?.Value = contentLabel.Text;
-                        }
-
-                        item.Attribute("Time")?.Value = DateTime.Now.ToString(CultureInfo.InvariantCulture);
-                        break;
-                    }
-
-                    var newDownloadedData = SettingsManager.Current.MotdLastDownloadedData.Substring(0, num);
-                    newDownloadedData += xElement.ToString();
-                    newDownloadedData += SettingsManager.Current.MotdLastDownloadedData.Substring(num2);
-                    var busyDialog = new CancellableBusyDialog("操作等待中", false);
-                    DialogsManager.ShowDialog(null, busyDialog);
-                    SaveBulletin(
-                        newDownloadedData,
-                        busyDialog.Progress,
-                        delegate(byte[] data)
-                        {
-                            DialogsManager.HideDialog(busyDialog);
-                            if (WebManager.JsonFromBytes(data) is not JsonObject result)
-                            {
-                                return;
-                            }
-
-                            var msg = result[0]?.ToString() == "200" ? "公告已更新,建议重启游戏检查效果" : result[1]?.ToString();
-                            msg ??= string.Empty;
-                            if (result[0]?.ToString() == "200")
-                            {
-                                SettingsManager.Current.MotdLastDownloadedData = newDownloadedData;
-                            }
-
-                            DialogsManager.ShowDialog(
-                                null,
-                                new MessageDialog(
-                                    "操作成功",
-                                    msg,
-                                    LanguageManager.Ok
-                                )
-                            );
-                        },
-                        delegate(Exception e)
-                        {
-                            DialogsManager.HideDialog(busyDialog);
-                            Log.Error("SaveBulletin:" + e.Message);
-                        });
-                });
-            CommunityContentManager.IsAdmin(
-                new CancellableProgress(),
-                delegate(bool isAdmin) { _isAdmin = isAdmin; },
-                delegate { }
-            );
-            bulletinDialog.EditButton.IsVisible = _isAdmin;
-            bulletinDialog.UpdateButton.IsVisible = _isAdmin;
+                delegate { },
+                delegate { });
             DialogsManager.ShowDialog(null, bulletinDialog);
             CanShowBulletin = false;
         }
@@ -507,14 +289,10 @@ public static class MotdManager
     }
 
     private static string GetMotdUpdateUrl() =>
-        string.IsNullOrWhiteSpace(SettingsManager.Current.MotdUpdateUrl)
-            ? _defaultMotdUpdateUrl
-            : SettingsManager.Current.MotdUpdateUrl;
+        SettingsManager.Current.MotdUpdateUrl;
 
     private static string GetMotdUpdateCheckUrl() =>
-        string.IsNullOrWhiteSpace(SettingsManager.Current.MotdUpdateCheckUrl)
-            ? _defaultMotdUpdateCheckUrl
-            : SettingsManager.Current.MotdUpdateCheckUrl;
+        SettingsManager.Current.MotdUpdateCheckUrl;
 
     public class Message
     {

@@ -10,7 +10,6 @@ using Engine.Input;
 using Engine.Windowing;
 
 using Game;
-using Game.ContentProviders;
 using Game.Managers;
 
 namespace Survivalcraft.Windows;
@@ -25,7 +24,6 @@ public class Starter
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
         PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
         PlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
-        PlatformManager.RegisterExternalContentProviderFactory(() => new DiskExternalContentProvider());
         var startup = StartupManager.Load(instance.GameArguments);
         var runningSetting = startup.Settings;
         if (runningSetting.RunMode is RunModeType.HeadlessServer)

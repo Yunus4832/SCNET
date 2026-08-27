@@ -112,7 +112,7 @@ public static class ModProfileResolver
     private static string? GetRepositoryUrl(ModProfile profile)
     {
         return string.IsNullOrWhiteSpace(profile.RepositoryUrl)
-            ? SettingsManager.Current.DefaultModRepositoryUrl
+            ? SettingsManager.Current.ContentServerUrl
             : profile.RepositoryUrl;
     }
 }

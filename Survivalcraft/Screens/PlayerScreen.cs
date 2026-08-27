@@ -180,16 +180,6 @@ public class PlayerScreen : Screen
             _nameTextBox.Text = _playerData.Name;
         }
 
-        var gameInfo = GameManager.Project.FindSubsystem<SubsystemGameInfo>();
-        if (gameInfo is { WorldSettings.IsNeedCommunityLogin: true })
-        {
-            if (!string.IsNullOrEmpty(SettingsManager.Current.CommunityNickName))
-            {
-                _nameTextBox.Text = SettingsManager.Current.CommunityNickName;
-                _nameTextBox.IsEnabled = false;
-            }
-        }
-
         _characterSkinLabel.Text = CharacterSkinsManager.GetDisplayName(_playerData.CharacterSkinName);
         _controlsLabel.Text =
             GetDeviceDisplayName(_inputDevices.FirstOrDefault(id => (id & _playerData.InputDevice) != 0));

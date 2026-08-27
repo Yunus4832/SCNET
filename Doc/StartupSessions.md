@@ -90,6 +90,11 @@ Starter 使用两阶段 Storage 注册：先将程序基础目录注册为 `star
 
 命令行选择实例不会修改 `CurrentInstance`，因此可以同时启动互不干扰的 GUI 和 Headless 调试实例。普通应用重启保持当前进程的实例；`GameExitAction.SwitchInstance` 则消费 `NextInstance` 并进入目标实例。实例内部的 `RunningSetting` 和 session 不保存实例 ID。
 
+Starter 还负责注册平台能力。交互式文件打开与保存统一通过 `Engine.FileStorage.FilePicker` 暴露，
+具体 `IFilePicker` 由 Windows、Linux 或 Android Starter 提供；它不参与实例选择、Storage 根目录
+注册或 session 持久化。未注册实现时 `FilePicker.IsAvailable` 为 `false`，Headless 不提供交互式
+文件选择。
+
 ## SessionInfo
 
 路径：`config:SessionInfo.xml`
@@ -107,7 +112,6 @@ Starter 使用两阶段 Storage 注册：先将程序基础目录注册为 `star
 - `ServerHost`
 - `ServerPort`
 - `BroadcastPort`
-- `Password`
 
 `HttpCommandEnabled`、`HttpCommandPort` 和 `HttpCommandAccessToken` 是可选的 session 覆盖。未设置时回退到当前实例的 `Settings.xml`；使用 `--save` 保存后，可以通过同名 session 恢复。
 
@@ -178,6 +182,6 @@ Starter 会在实例的 `.runtime` 目录登记当前进程的 PID 和启动时�
 仓库地址解析：
 
 1. `ModProfile.RepositoryUrl`
-2. `Settings.DefaultModRepositoryUrl`
+2. `Settings.ContentServerUrl`
 
 远程服务器下发的 `RequiredModProfile.RepositoryUrl` 优先级最高，客户端不会用本地默认仓库覆盖它。

@@ -37,6 +37,12 @@
 - Android：通过 `config:RunningSetting.xml` 决定常规运行模式，调试时也可通过 Intent Extra 注入同一套临时启动参数
 - 启动目标、世界、种子、运行期游戏模式覆盖、端口和远程服务器信息：通过 `config:SessionInfo.xml` 管理
 
+平台文件选择能力定义在 `Engine.FileStorage`。GUI 平台的 Starter 在进入游戏主体前注册
+`IFilePicker` 实现；游戏逻辑只接收用户选择目标所提供的读写流，不依赖系统路径、Android URI
+或桌面文件对话框类型。Headless 和尚未提供实现的平台不注册 picker，并通过
+`FilePicker.IsAvailable` 表明该能力不可用。远程内容查询与下载使用独立的 ContentServer API，
+不实现或复用文件选择接口。
+
 对于已有世界，session 游戏模式的优先级高于存档，但只改变本次运行时状态；世界保存仍写回原模式。这样调试实例可以切换 Creative、Survival 等模式，而不会污染测试存档。
 
 详见 [StartupSessions.md](./StartupSessions.md)。

@@ -80,7 +80,7 @@ assets/<mod-id>/**
 解析顺序：
 
 1. 当前有效 `ModProfile.RepositoryUrl`
-2. `Settings.DefaultModRepositoryUrl`
+2. `Settings.ContentServerUrl`
 
 远程服务器下发的 `RequiredModProfile.RepositoryUrl` 优先级最高。客户端连接远程服务器时，不会用本地默认仓库覆盖服务器声明的仓库。
 
@@ -120,9 +120,9 @@ Headless 启动时没有 GUI 中途切换流程。它会直接解析启动 sessi
 
 联机校验使用运行时计算的 mod data hash。客户端和服务端有效模组不同会被拒绝。
 
-## 默认模组仓库
+## 默认内容服务器
 
-`Settings.DefaultModRepositoryUrl` 是本地默认仓库地址，供模组管理界面和没有显式仓库地址的 profile 使用。
+`Settings.ContentServerUrl` 是可部署内容服务的基础地址。目前模组管理界面和没有显式仓库地址的 profile 会将它作为模组包下载地址；后续内容服务协议确定后，模组仓库将作为统一内容 API 的一个资源类型。
 
 它不是“当前联机服务器地址”。服务器对客户端声明的仓库地址来自当前有效 profile，profile 为空时才 fallback 到默认仓库。
 

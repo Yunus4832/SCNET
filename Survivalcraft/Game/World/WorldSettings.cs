@@ -34,8 +34,6 @@ public class WorldSettings
 
     public Vector2 IslandSize = new(400f, 400f);
 
-    public bool IsNeedCommunityLogin;
-
     public string KeywordBlocking = string.Empty;
 
     public ushort MaxOnlinePlayerCount = 20;
@@ -45,8 +43,6 @@ public class WorldSettings
     public string Name = string.Empty;
 
     public WorldPalette Palette = new();
-
-    public string Password = string.Empty;
 
     public bool RandomSpawnPosition;
 
@@ -139,7 +135,6 @@ public class WorldSettings
         TerrainGenerationMode = valuesDictionary.GetValue("TerrainGenerationMode", TerrainGenerationMode.Continent);
         IslandSize = valuesDictionary.GetValue("IslandSize", new Vector2(200f, 200f));
         TerrainLevel = valuesDictionary.GetValue("TerrainLevel", 64);
-        Password = valuesDictionary.GetValue("Password", string.Empty);
         ShoreRoughness = valuesDictionary.GetValue("ShoreRoughness", 0f);
         KeywordBlocking = valuesDictionary.GetValue("KeywordBlocking", string.Empty);
         KeywordBlocking = XmlConvert.DecodeName(KeywordBlocking);
@@ -152,7 +147,6 @@ public class WorldSettings
         SeaLevelOffset = valuesDictionary.GetValue("SeaLevelOffset", 0);
         BiomeSize = valuesDictionary.GetValue("BiomeSize", 1f);
         RunServer = valuesDictionary.GetValue("RunServer", false);
-        IsNeedCommunityLogin = valuesDictionary.GetValue("IsNeedCommunityLogin", true);
         MaxOnlinePlayerCount = valuesDictionary.GetValue("MaxOnlinePlayerCount", MaxOnlinePlayerCount);
         ModProfileResolutionStrategy = valuesDictionary.GetValue(
             nameof(ModProfileResolutionStrategy),
@@ -205,10 +199,8 @@ public class WorldSettings
         valuesDictionary.SetValue("AreAdventureSurvivalMechanicsEnabled", AreAdventureSurvivalMechanicsEnabled);
         valuesDictionary.SetValue("AreSupernaturalCreaturesEnabled", AreSupernaturalCreaturesEnabled);
         valuesDictionary.SetValue("IsFriendlyFireEnabled", IsFriendlyFireEnabled);
-        valuesDictionary.SetValue("Password", Password);
         valuesDictionary.SetValue("RunServer", RunServer);
         valuesDictionary.SetValue("KeywordBlocking", XmlConvert.EncodeName(KeywordBlocking));
-        valuesDictionary.SetValue("IsNeedCommunityLogin", IsNeedCommunityLogin);
         valuesDictionary.SetValue(nameof(ModProfileResolutionStrategy), ModProfileResolutionStrategy);
         if (!liveModifiableParametersOnly)
         {

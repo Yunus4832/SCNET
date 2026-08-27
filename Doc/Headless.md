@@ -155,8 +155,7 @@ Headless 使用的会话通常是：
     GameMode="Creative"
     ServerHost=""
     ServerPort="0"
-    BroadcastPort="0"
-    Password="" />
+    BroadcastPort="0" />
 </Sessions>
 ```
 
@@ -187,7 +186,7 @@ Headless 启动时：
 模组下载地址按以下顺序解析：
 
 1. 当前有效 `ModProfile.RepositoryUrl`
-2. `Settings.DefaultModRepositoryUrl`
+2. `Settings.ContentServerUrl`
 
 如果两者都为空，只能使用本地已经存在的模组包。
 

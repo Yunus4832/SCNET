@@ -4,7 +4,6 @@ using Android.Net;
 using Android.OS;
 
 using Game;
-using Game.ContentProviders;
 
 using AndroidClipboardManager = Android.Content.ClipboardManager;
 using AndroidUri = Android.Net.Uri;
@@ -37,7 +36,6 @@ public class GameActivity : EngineActivity
         GamePlatformManager.RegisterWebBrowserLauncher(OpenLink);
         GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
         GamePlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
-        GamePlatformManager.RegisterExternalContentProviderFactory(() => new AndroidSdCardExternalContentProvider());
         EngineTextInputManager.RegisterBackend(new EngineSdlTextInputBackend(processEditingKeyEvents: true));
         InitializeAndroidId();
         LoadAssetAssemblies();

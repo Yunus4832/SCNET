@@ -21,13 +21,19 @@ public sealed class ModServerClientTest : IDisposable
         {
             if (request.RequestUri!.AbsoluteUri == "https://mods.example/api/v1/mods/example.test/versions/1.0.0")
             {
-                return CreateJsonResponse(new ModRepositoryPackage
+                return CreateJsonResponse(new
                 {
-                    ModId = "example.test",
-                    Version = "1.0.0",
-                    PackageHash = packageHash,
-                    FileName = "example.test.1.0.0.scpak",
-                    DownloadUrl = $"https://mods.example/api/v1/packages/{packageHash}"
+                    success = true,
+                    message = string.Empty,
+                    code = 200,
+                    data = new ModRepositoryPackage
+                    {
+                        ModId = "example.test",
+                        Version = "1.0.0",
+                        PackageHash = packageHash,
+                        FileName = "example.test.1.0.0.scpak",
+                        DownloadUrl = $"https://mods.example/api/v1/packages/{packageHash}"
+                    }
                 });
             }
 

@@ -2,10 +2,6 @@
     "Language": {
         "Name": "Chinês"
     },
-    "DiskExternalContentProvider": {
-        "DisplayName": "Armazenamento local",
-        "Description": "Nenhum login necessário, armazenamento direto"
-    },
     "FurnitureBlock": [
         "Combinar móveis diferentes em móveis interativos",
         "Muitos tipos de móveis."
@@ -17,9 +13,6 @@
     },
     "ContentManager": {
         "1": "Conteúdo [{0}] tem o tipo {1}, mas o tipo necessário é {2}"
-    },
-    "AndroidSdCardExternalContentProvider": {
-        "1": "Armazenamento interno"
     },
     "ContentScreen": {
         "2": "Gestão de Recursos",
@@ -93,28 +86,6 @@
     "SubsystemFireworksBlockBehavior": {
         "1": "Feliz Ano Novo!",
         "2": "Desfrute dos fogos de artifício"
-    },
-    "ExternalContentManager": {
-        "1": "Nome não pode estar vazio",
-        "2": "O nome não pode exceder 50 caracteres",
-        "3": "Os nomes não podem começar ou terminar com um espaço",
-        "4": "Tipos não suportados",
-        "5": "Logado em",
-        "6": "Login é necessário",
-        "7": "Você está logando em {0}?",
-        "8": "Log em",
-        "9": "Escolha o destino para o upload",
-        "10": "Uploading em",
-        "11": "Não posso carregar isso",
-        "12": "Tipos não suportados",
-        "13": "Em um mundo comprimido",
-        "14": "Uploading em",
-        "15": "{0}Carregado",
-        "Directory": "Folder",
-        "World": "O mundo",
-        "Blocks Texture": "Materiais quadrados",
-        "Character Skin": "Pelas do personagem",
-        "Furniture Pack": "Bolsa de móveis"
     },
     "PlayerWidget": [
         "{0}Controle por {1}",
@@ -270,10 +241,6 @@
         "Error": "Erro",
         "Warning": "Aviso"
     },
-    "MoreCommunityLinkDialog": {
-        "1": "Nenhum usuário",
-        "2": "Selecione o usuário para usar"
-    },
     "FurnitureDesignWidget": [
         "Frente à frente",
         "Lado"
@@ -311,22 +278,6 @@
         "26": "Todos os móveis da coleção serão desclassificados e removidos se não forem utilizados no mundo.",
         "27": "Exclusão",
         "28": "Cancelamento"
-    },
-    "ExternalContentScreen": {
-        "1": "Entrar em",
-        "2": "Download",
-        "3": "Conteúdo",
-        "4": "Não logado",
-        "5": "Descrição",
-        "6": "Log em",
-        "7": "Escolha uma fonte de conteúdo",
-        "8": "Criação de links",
-        "9": "Obtenção de conteúdo de catálogo",
-        "10": "Download em curso",
-        "11": " | (Download)",
-        "12": "Em Importação",
-        "13": "Falha em abrir arquivo",
-        "14": "Tipo de arquivo não suportado:"
     },
     "FourLedBlock": {
         "1": "Fabricação de lâmpadas de 4 LED com cobre, vidro e pigmentos"
@@ -492,67 +443,6 @@
         "weight": "Peso:\n",
         "range": "{0}para {1}"
     },
-    "CommunityContentScreen": {
-        "1": "Download de {0}...",
-        "2": "Obtenha conteúdo...",
-        "3": "Excluir {0}",
-        "4": "Você tem certeza disso?",
-        "5": "Este link será removido do servidor",
-        "6": "Link foi removido",
-        "7": "Ele vai desaparecer da lista em alguns minutos.",
-        "8": "Olhe para mim mesmo.",
-        "9": "Todos eles",
-        "10": "Filtração inválida",
-        "11": "A pontuação mais alta",
-        "12": "Recentemente adicionado",
-        "13": "Ordenamento inválido",
-        "14": "Recomendação de produtos",
-        "15": "Refinamento",
-        "16": "Cancelar o refinamento",
-        "17": "Operações",
-        "18": "O trabalho é refinado, por favor, insira o índice de recomendação, padrão é 5",
-        "19": "Refinamento bem sucedido:",
-        "20": "Operação Concluída",
-        "21": "Você tem certeza de que vai sair da área boutique?",
-        "22": "Cancelamento de refinamento bem sucedido:",
-        "23": "Exclusão",
-        "24": "Publicação",
-        "25": "Baixar o rack",
-        "26": "Confirmação de remoção",
-        "27": "Exclusão bem-sucedida:",
-        "28": "Lançamento bem sucedido:",
-        "29": "Removido com sucesso:",
-        "30": "Ainda não publicado",
-        "31": "A pontuação mais alta",
-        "32": "Último lançamento",
-        "33": "Recomendação de produtos",
-        "34": "Ainda não publicado",
-        "35": "Carregar mais",
-        "Unknown": "Desconhecido",
-        "Directory": "Folder",
-        "World": "O mundo",
-        "BlocksTexture": "Materiais quadrados",
-        "CharacterSkin": "Pelas do personagem",
-        "FurniturePack": "Bolsa de móveis",
-        "ByRank": "Pontuação",
-        "ByTime": "Tempo",
-        "ByBoutique": "PRODUÇÃO Fine",
-        "ByHide": "Escondido",
-        "Order Type": "Método de ordem",
-        "Filter": "Filtração"
-    },
-    "OriginalCommunityContentScreen": {
-        "1": "Escolha Sort Method",
-        "2": "Seleção de filtros",
-        "3": "Itens do usuário selecionados",
-        "4": "Máxima pontuação",
-        "5": "Publicado recentemente",
-        "6": "Download máximo",
-        "7": "Maior volume",
-        "8": "Versão mais recente",
-        "9": "Versão mais antiga",
-        "10": "Download"
-    },
     "ComponentClothing": {
         "1": "Você deve usar o nível {0} para usar o {1}",
         "2": "Suas roupas estão danificadas"
@@ -593,12 +483,6 @@
         "Easy": "Simplicidade",
         "Medium": "Médio",
         "Hard": "Dificuldades"
-    },
-    "CommunityContentMode": {
-        "Disabled": "Proibição",
-        "Strict": "Estritamente",
-        "Normal": "Normal",
-        "ShowAll": "Mostrar tudo"
     },
     "MoveControlMode": {
         "Pad": "Touchpad",
@@ -2774,14 +2658,6 @@
             "value": "Quando estiver preso ou perdido, se a única opção for renascer à força no último lugar onde dormir. Depois podes tentar matar-te. \\ n\\ n para fazer isto, abra o ecrã de propriedades do personagem e carregue no botão Caveira repetidamente. \\ n o s",
             "Title": "Suicídio"
         },
-        "40": {
-            "value": "O jogo usa o serviço Dropbox, que permite baixar e carregar dados do dispositivo. Com o Dropbox, você pode fazer backup e compartilhar seu mundo com outras pessoas. Você também pode baixar texturas de blocos personalizadas, peles de personagens, pacotes de móveis. Para fazer login no Dropbox, clique no botão de login na tela do Dropbox.\\ Se você ainda não tiver uma conta do Dropbox, você pode configurar uma ao fazer login.\\ Depois de fazer login, a tela \"Dropbox\" exibirá o conteúdo da pasta Dropbox online e permitirá que você faça o download de arquivos para o dispositivo. n\\ n\\ nPara obter mais detalhes, consulte o site https://dropbox.com.\\ n ",
-            "Title": "Serviços do Dropbox"
-        },
-        "41": {
-            "value": "O jogo usa o serviço de arquivos anônimos transfer.sh, o que permite que você faça o upload de dados do dispositivo sem criar nenhuma conta de usuário. Acesse os dados usando o link fornecido após o upload.\\ n\\ ntransfer.sh retém os dados apenas por alguns dias, após o qual eles são excluídos automaticamente.\\ Não use esses links temporários para carregamentos de conteúdo da comunidade, seu projeto será excluído pelo servidor e o projeto de conteúdo da comunidade deixará de funcionar.\\ n\\ n\\ n\\ n\\ n\\ nNão é possível ver a lista de itens que você carregou, os dados só podem ser acessados através de um link.\\ n\\ n\\ n\\ n\\ n\\ n\\ nVocê pode encontrar mais detalhes no site https://transfer.sh.\\ n\\ n\\ n\\ n\\ n\\ n ",
-            "Title": "Serviços Transfer.sh"
-        },
         "42": {
             "value": "O jogo permite importar e exportar mundos para um cartão SD para compartilhamento e backup. Se o seu dispositivo não tiver um cartão SD, a pasta de armazenamento externo comum será usada. n\\ nA localização dos dados no dispositivo é normalmente / sdcard / Survivalcraft2.2\\n ",
             "Title": "cartão SD",
@@ -2794,10 +2670,6 @@
         "44": {
             "value": "O modo de vôo só pode ser usado no modo de criação. Para alternar o modo de voo, clique no botão de voo no lado direito da tela. Dois saltos rápidos consecutivos também alteram o modo de voo. Voar é muito mais rápido do que andar e permite chegar rapidamente a lugares difíceis de alcançar a pé. n ",
             "Title": "Voar"
-        },
-        "45": {
-            "value": "O jogo permite que você navegue por listas de mundos, texturas e outros arquivos publicados por outros membros da comunidade Survivalcraft e, em seguida, baixá - los. Uma vez que você fizer algo interessante, você também pode publicá - lo através deste serviço e ele aparecerá na lista para qualquer pessoa baixá - lo.\\ Para publicar um conteúdo, você primeiro precisa publicá - lo na Internet para que possa ser acessado por todos.\\ O lugar mais fácil de usar é o Dropbox, embora você possa usar qualquer outro provedor também. Uma vez concluído, você pode publicar o link através da caixa de diálogo \"Publicar link\" no jogo. Nota: o servidor não armazena seu conteúdo, apenas links.\\É como um motor de busca. Você é responsável por manter os dados acessíveis através de links publicados. Observe se o limite de largura de banda do provedor foi excedido. Os links no topo da lista levarão seu conteúdo a um número significativo de downloads em um curto período de tempo. n ",
-            "Title": "Conteúdo da comunidade"
         }
     },
     "Strings": {
@@ -2910,14 +2782,6 @@
             "3": "",
             "4": ""
         },
-        "CommunityContentItem": {
-            "1": "",
-            "2": "",
-            "3": ""
-        },
-        "CommunityContentItemMore": {
-            "1": "Carregar mais..."
-        },
         "CraftingRecipeSlot": {
             "1": ""
         },
@@ -2942,10 +2806,6 @@
             "3": "Lançamento",
             "4": "Lançamento",
             "5": "Aceitação de Drop"
-        },
-        "ExternalContentItem": {
-            "1": "",
-            "2": ""
         },
         "FullInventoryWidget": {
             "1": "...",
@@ -3043,16 +2903,6 @@
             "Salvação de dados",
             "Cancelamento"
         ],
-        "ManipulateOfflineTokenDialog": {
-            "1": "ID do jogador",
-            "2": "Você pode copiá - lo para futuras transferências.",
-            "3": "ID do jogador:",
-            "4": "Criação",
-            "5": "Duplicação",
-            "6": "Passo",
-            "7": "Preservação",
-            "8": "Cancelamento"
-        },
         "BuildFurnitureDialog": {
             "1": "...",
             "2": "Criação",
@@ -3063,16 +2913,6 @@
         },
         "CancellableBusyDialog": {
             "1": "Cancelamento"
-        },
-        "DownloadContentFromLinkDialog": {
-            "1": "Introduzir um link de texto",
-            "2": "O link pode ser preenchido automaticamente, se não for possível, insira manualmente.",
-            "3": "Links:",
-            "4": "Nome do nome:",
-            "5": "Tipo de conteúdo:",
-            "6": "...",
-            "7": "Download",
-            "8": "Cancelamento"
         },
         "EditAdjustableDelayGateDialog": {
             "1": "Ajuste do atraso",
@@ -3159,10 +2999,6 @@
             "20": "Você pode inserir até 16 caracteres binários (0 e 1)",
             "21": "Determinação",
             "22": "Cancelamento"
-        },
-        "ExternalContentLinkDialog": {
-            "1": "O link foi copiado para o clipboard",
-            "2": "Ok, ok."
         },
         "GameMenuDialog": {
             "1": "Retorno",
@@ -3277,41 +3113,6 @@
             "1": "Multiplicador atual:",
             "2": "Determinação"
         },
-        "MoreCommunityLinkDialog": {
-            "1": "Conteúdo da comunidade",
-            "2": "O nome de usuário é uma identificação usada para publicar e avaliar conteúdo da comunidade.",
-            "3": "Utilizador:",
-            "4": "-",
-            "5": "...",
-            "6": "Usuário ID:",
-            "7": "-",
-            "8": "Duplicação",
-            "9": "Publicação Link",
-            "10": "fechamento"
-        },
-        "PublishCommunityLinkDialog": {
-            "1": "Link de arquivo de publicação",
-            "2": "Ao publicar um link de arquivo em vez do arquivo em si na área de serviço, é sua responsabilidade manter o link de arquivo aberto.",
-            "3": "Links:",
-            "4": "Nome: Nome:",
-            "5": "Tipo de conteúdo",
-            "6": "...",
-            "7": "Publicação",
-            "8": "Cancelamento"
-        },
-        "RateCommunityContentDialog": {
-            "1": "Avaliação do conteúdo da comunidade",
-            "2": "Conteúdo ofensivo?",
-            "3": "Relatório",
-            "4": "Avaliação",
-            "5": "Cancelamento"
-        },
-        "ReportCommunityContentDialog": {
-            "1": "Reportar conteúdo comunitário adverso",
-            "2": "Por favor, escolha:",
-            "3": "Relatório",
-            "4": "Cancelamento"
-        },
         "TextBoxDialog": {
             "1": "Determinação",
             "2": "Cancelamento"
@@ -3349,50 +3150,14 @@
         "BestiaryScreen": {
             "1": "Biografia"
         },
-        "CommunityContentScreen": {
-            "1": "Conteúdo da Comunidade Chinesa",
-            "2": "-",
-            "3": "...",
-            "4": "-",
-            "5": "...",
-            "6": "Download",
-            "7": "Exclusão",
-            "8": "...",
-            "9": "Insira uma palavra-chave de pesquisa",
-            "10": "Busca",
-            "11": "Refinamento"
-        },
-        "OriginalCommunityContentScreen": {
-            "1": "Conteúdo da comunidade original",
-            "2": "-",
-            "3": "...",
-            "4": "Download",
-            "5": "Exclusão",
-            "6": "Busca",
-            "7": "x"
-        },
         "ContentScreen": {
             "1": "Escolha o método de aquisição",
-            "2": "Obtenção de conteúdo do armazenamento local",
-            "3": "localmente",
-            "4": "Obtenha conteúdo da comunidade chinesa",
-            "5": "Comunidade Chinesa",
-            "6": "Obtenha conteúdo do link de download",
-            "7": "Links",
             "8": "Gestão de conteúdo existente",
             "9": "Administração",
-            "10": "Obtenha conteúdo da comunidade original",
-            "11": "Comunidade original",
             "12": "Gerir mods globais e dos mundos",
-            "13": "Mods"
-        },
-        "ExternalContentScreen": {
-            "1": "",
-            "2": "-",
-            "3": "...",
-            "4": "-",
-            "5": "-",
-            "6": "Copia do link"
+            "13": "Mods",
+            "RemoteDescription": "Explorar recursos aprovados do servidor de conteúdos",
+            "Remote": "Conteúdo online"
         },
         "GameLoadingScreen": {
             "1": "Carregando o mundo"
@@ -3444,9 +3209,7 @@
         },
         "ManageContentScreen": {
             "1": "Gestão de conteúdo",
-            "2": "(Download de conteúdo da comunidade)",
             "3": "Exclusão",
-            "4": "Upload",
             "5": "..."
         },
         "ModifyWorldScreen": [
@@ -3458,18 +3221,7 @@
             "Opções do mundo...",
             "Nome do mundo inválido",
             "Exclusão",
-            "Upload",
-            "Aplicação de alterações",
-            "Criar um servidor",
-            "Código do quarto",
-            "Número máximo",
-            "Requer login na comunidade",
-            "Fluxo de tempo dia e noite",
-            "Palavras-chave mascaradas",
-            "Máscara de palavras-chave (múltiplas; separadas)",
-            "Introduzir a senha do quarto",
-            "Número máximo de pessoas online",
-            "Desabilitar quadros (múltiples; separados)"
+            "Aplicação de alterações"
         ],
         "NewWorldScreen": [
             "Criar um novo mundo",
@@ -3501,8 +3253,6 @@
         "WorldServerSettingsScreen": {
             "Title": "Configurações do servidor",
             "RunServer": "Criar servidor",
-            "NeedLogin": "Requer login da comunidade",
-            "Password": "Senha da sala",
             "MaxPlayers": "Máximo de jogadores",
             "DaySpeed": "Fator de duração do dia",
             "RecoverySpeed": "Fator de recuperação do sono",
@@ -3510,8 +3260,6 @@
             "RandomSpawnPosition": "Ponto de nascimento aleatório",
             "KeywordBlocking": "Filtro de palavras",
             "RunServerDescription": "Quando ativado, entrar neste mundo também inicia um servidor local.",
-            "NeedLoginDescription": "Quando ativado, os jogadores precisam iniciar sessão na comunidade antes de entrar.",
-            "PasswordDescription": "Define a senha necessária para entrar no servidor. Deixe vazio para não usar senha.",
             "MaxPlayersDescription": "Limita quantos jogadores podem estar online no servidor ao mesmo tempo.",
             "DaySpeedDescription": "Controla a velocidade do ciclo de dia e noite no servidor. O valor padrão recomendado é 1.",
             "RecoverySpeedDescription": "Controla o multiplicador de recuperação enquanto os jogadores dormem. Deve ser maior que 0.",
@@ -3653,11 +3401,7 @@
             "Oculta o ícone de visualização móvel:",
             "Screenshot da interface de exibição:",
             "A captura de tela mostra o logo:",
-            "Resolução Screenshot:",
-            "Conteúdo da Comunidade Chinesa:",
-            "Show Load Log:",
-            "Excluir o mundo Digite \"sim\" para confirmar:",
-            "Conteúdo da comunidade original"
+            "Resolução Screenshot:"
         ],
         "TrialEndedScreen": {
             "1": "O dia acabou.",
@@ -3720,6 +3464,12 @@
             "CloneTitle": "Clonar a instância “{0}” para um novo ID",
             "Working": "A processar a instância",
             "OperationFailed": "A operação da instância falhou."
+        },
+        "ContentServerScreen": {
+            "Title": "Conteúdo online",
+            "Download": "Transferir",
+            "Uninstall": "Desinstalar",
+            "Refresh": "Atualizar"
         }
     },
     "FireworksBlock": {
@@ -4211,5 +3961,18 @@
         "GuiConfirmMessage": "O modo de execução será guardado e reiniciado na interface gráfica.",
         "Confirm": "Confirmar",
         "Cancel": "Cancelar"
+    },
+    "ContentPackageManager": {
+        "1": "Nome não pode estar vazio",
+        "2": "O nome não pode exceder 50 caracteres",
+        "4": "Tipos não suportados",
+        "World": "O mundo",
+        "Blocks Texture": "Materiais quadrados",
+        "Character Skin": "Pelas do personagem",
+        "Furniture Pack": "Bolsa de móveis"
+    },
+    "ContentServerScreen": {
+        "ServerNotConfigured": "O endereço do servidor de conteúdos não está configurado.",
+        "Installed": "Conteúdo instalado."
     }
 }

@@ -33,7 +33,6 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
                 }
 
                 subsystemPlayers.AddPlayerData(playerData);
-                playerData.Name = PlayerData.CreateNewName(playerData.Name);
                 netNode.QueuePackage(new PlayerListPackage(subsystemPlayers));
                 break;
             case PlayerDataPackage.DataType.Modify:

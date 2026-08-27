@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Xml.Linq;
 
-using Game.ContentProviders;
 using Game.Network;
 using Game.Network.Packages;
 using Game.Network.Serialization;
@@ -25,9 +24,7 @@ public class NetPlayScreen : Screen
     private enum FilterType
     {
         Collect,
-        Local,
-        Community,
-        CommunityOther
+        Local
     }
 
     private const string _typeName = nameof(NetPlayScreen);
@@ -46,11 +43,7 @@ public class NetPlayScreen : Screen
 
     private readonly ButtonWidget _filter1Button;
 
-    private readonly ButtonWidget _filter2Button;
-
-    private readonly ButtonWidget _filter3Button;
-
-    private FilterType _filterType; // 0收藏，1本地，2社区服，3其他服
+    private FilterType _filterType;
 
     private bool _isLoadingList;
 
@@ -73,24 +66,13 @@ public class NetPlayScreen : Screen
         _worldsListWidget = Children.Find<ListPanelWidget>("WorldsList")!;
 
         _filter0Button = Children.Find<ButtonWidget>("TabPage")!;
-        _filter0Button.Text = LanguageManager.Get("NetPlayScreen", 1);
+        _filter0Button.Text = LanguageManager.Get("NetPlayScreen", 3);
         _filter0Button.Size = new Vector2(180, 60);
         _filter1Button = new BevelledButtonWidget
             { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _filter1Button.Text = LanguageManager.Get("NetPlayScreen", 2);
+        _filter1Button.Text = LanguageManager.Get("NetPlayScreen", 4);
         _filter1Button.Size = new Vector2(180, 60);
         _filter0Button.ParentWidget?.AddChildren(_filter1Button);
-        _filter2Button = new BevelledButtonWidget
-            { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _filter2Button.Text = LanguageManager.Get("NetPlayScreen", 3);
-        _filter2Button.Size = new Vector2(180, 60);
-        _filter0Button.ParentWidget?.AddChildren(_filter2Button);
-        _filter3Button = new BevelledButtonWidget
-            { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _filter3Button.Text = LanguageManager.Get("NetPlayScreen", 4);
-        _filter3Button.Size = new Vector2(180, 60);
-        _filter0Button.ParentWidget?.AddChildren(_filter3Button);
-
         _addButton = Children.Find<ButtonWidget>("Play")!;
         _addButton.Text = LanguageManager.Get("NetPlayScreen", 7);
         _addButton.Size = new Vector2(220, 60);
@@ -135,9 +117,6 @@ public class NetPlayScreen : Screen
             var season =
                 $" | {LanguageManager.Get("NetPlayScreen", 19)}: " +
                 $"{GetSeasonText(connect.Season, connect.TimeOfSeason)}";
-            var needLogin = connect.IsNeedLoginCommunity
-                ? $" | {LanguageManager.Get("NetPlayScreen", "16")}"
-                : string.Empty;
             var validTime = !string.IsNullOrEmpty(connect.ValidTime)
                 ? $" | {LanguageManager.Get("NetPlayScreen", 18)}: {connect.ValidTime}"
                 : string.Empty;
@@ -149,7 +128,7 @@ public class NetPlayScreen : Screen
                 {
                     labelWidget.Text = $"{connect} ({connect.UsedTime / 2:0} ms)";
                     labelWidget.Color = Color.LightGreen;
-                    labelWidget2.Text = $"{version}{players}{gameMode}{timeOfDay}{season}{needLogin}{validTime}";
+                    labelWidget2.Text = $"{version}{players}{gameMode}{timeOfDay}{season}{validTime}";
 
                     break;
                 }
@@ -185,32 +164,15 @@ public class NetPlayScreen : Screen
 
             var ip = uri.Uri.AbsolutePath[1..];
             var connect = new Connect();
-            var arr = ip.Split(['/'], StringSplitOptions.None);
-            if (arr.Length > 0)
+            if (!string.IsNullOrWhiteSpace(ip))
             {
-                switch (arr.Length)
-                {
-                    case 1:
-                        connect.IP = arr[0];
-                        connect.SavedPassword = string.Empty;
-                        connect.Name = "scheme_" + DateTime.Now.Ticks;
-                        break;
-                    case 2:
-                        connect.IP = arr[0];
-                        connect.SavedPassword = arr[1];
-                        connect.Name = "scheme_" + DateTime.Now.Ticks;
-                        break;
-                    case 3:
-                        connect.IP = arr[0];
-                        connect.SavedPassword = arr[1];
-                        connect.Name = arr[2];
-                        break;
-                }
+                connect.IP = ip;
+                connect.Name = "scheme_" + DateTime.Now.Ticks;
 
                 Time.QueueTimeDelayedExecution(Time.RealTime + 1, () =>
                 {
-                    Log.Information($"连接到服务器:{connect.IP}/{connect.SavedPassword}");
-                    ConnectTo(connect, connect.SavedPassword);
+                    Log.Information($"连接到服务器:{connect.IP}");
+                    ConnectTo(connect);
                 });
             }
             else
@@ -245,8 +207,6 @@ public class NetPlayScreen : Screen
         {
             FilterType.Collect => ConnectionDirectory.Collected.Find(x => x.Equals(connect)),
             FilterType.Local => ConnectionDirectory.Saved.Find(x => x.Equals(connect)),
-            FilterType.Community or FilterType.CommunityOther =>
-                ConnectionDirectory.Discovered.Find(x => x.Equals(connect)),
             _ => null
         };
 
@@ -282,55 +242,10 @@ public class NetPlayScreen : Screen
         }
 
         var connect = (Connect)item;
-        if (connect.IsNeedLoginCommunity && string.IsNullOrEmpty(SettingsManager.Current.CommunityAccessUser))
-        {
-            DialogsManager.Confirm("请登录社区后再进行操作", btn =>
-            {
-                if (btn == MessageDialogButton.Button1)
-                {
-                    DialogsManager.ShowDialog(null, new LoginDialog());
-                }
-            });
-        }
-        else
-        {
-            if (connect.HasPassword)
-            {
-                var pwdx = string.Empty;
-                if (CheckConnectExists(connect, out var found))
-                {
-                    found?.SavedPassword = connect.SavedPassword;
-                    pwdx = found?.SavedPassword ?? string.Empty;
-                }
-
-                DialogsManager.ShowDialog(
-                    this,
-                    new TextBoxDialog(
-                        "请输入房间密码",
-                        pwdx,
-                        16,
-                        pwd =>
-                        {
-                            if (!string.IsNullOrEmpty(pwd))
-                            {
-                                ConnectTo(connect, pwd);
-                            }
-                            else
-                            {
-                                DialogsManager.HideAllDialogs();
-                            }
-                        }
-                    )
-                );
-            }
-            else
-            {
-                ConnectTo(connect);
-            }
-        }
+        ConnectTo(connect);
     }
 
-    public void ConnectTo(Connect connect, string passwd = "")
+    public void ConnectTo(Connect connect)
     {
         //如果本地没有，则保存到本地
         if (!CheckSaveConnectExists(connect, out _))
@@ -344,8 +259,7 @@ public class NetPlayScreen : Screen
         }
         else
         {
-            found!.SavedPassword = passwd;
-            found.Name = connect.Name;
+            found!.Name = connect.Name;
             found.IP = connect.IP;
         }
 
@@ -356,7 +270,7 @@ public class NetPlayScreen : Screen
                 Log.Information($"远程模组仓库已声明为: {connect.ModRepositoryUrl}");
             }
 
-            PrepareRemoteSessionAndConnect(ep!, passwd, connect.RequiredModProfile);
+            PrepareRemoteSessionAndConnect(ep!, connect.RequiredModProfile);
         }
         else
         {
@@ -366,12 +280,11 @@ public class NetPlayScreen : Screen
 
     private void PrepareRemoteSessionAndConnect(
         IPEndPoint endPoint,
-        string password,
         ModProfile? requiredProfile)
     {
         if (requiredProfile is not { Packages.Count: > 0 })
         {
-            ConnectPreparedRemoteSession(endPoint, password);
+            ConnectPreparedRemoteSession(endPoint);
             return;
         }
 
@@ -382,7 +295,7 @@ public class NetPlayScreen : Screen
             try
             {
                 var result = ModRestartHelper.PrepareRemoteSession(
-                    SessionInfoManager.CreateRemoteClientSession(endPoint, password),
+                    SessionInfoManager.CreateRemoteClientSession(endPoint),
                     requiredProfile,
                     message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
                 Dispatcher.Dispatch(() =>
@@ -390,7 +303,7 @@ public class NetPlayScreen : Screen
                     DialogsManager.HideDialog(busyDialog);
                     if (!result.RequiresRestart)
                     {
-                        ConnectPreparedRemoteSession(endPoint, password);
+                        ConnectPreparedRemoteSession(endPoint);
                         return;
                     }
 
@@ -410,10 +323,10 @@ public class NetPlayScreen : Screen
         });
     }
 
-    private static void ConnectPreparedRemoteSession(IPEndPoint endPoint, string password)
+    private static void ConnectPreparedRemoteSession(IPEndPoint endPoint)
     {
         DialogsManager.HideAllDialogs();
-        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, endPoint, password);
+        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, endPoint);
     }
 
     private static void ConfirmRemoteModRestart(RemoteModSessionPreparation result)
@@ -449,10 +362,6 @@ public class NetPlayScreen : Screen
             else if (_filterType == FilterType.Local)
             {
                 UpdateLocalList();
-            }
-            else if (_filterType is FilterType.Community or FilterType.CommunityOther)
-            {
-                UpdateCommunityList();
             }
         }
         catch (Exception e)
@@ -502,30 +411,6 @@ public class NetPlayScreen : Screen
         foreach (var connection in ConnectionDirectory.Saved)
         {
             AddConnectToListWidget(connection);
-        }
-
-        _isLoadingList = false;
-    }
-
-    private void UpdateCommunityList()
-    {
-        if (!CheckingConnects(ConnectionDirectory.Discovered))
-        {
-            return;
-        }
-
-        ConnectionDirectory.Discovered.Sort((c1, c2) => (int)c2.State - (int)c1.State);
-        foreach (var connection in ConnectionDirectory.Discovered)
-        {
-            if (_filterType == FilterType.Community && connection.FromCommunity)
-            {
-                AddConnectToListWidget(connection);
-            }
-
-            if (_filterType == FilterType.CommunityOther && connection.FromCommunityOther)
-            {
-                AddConnectToListWidget(connection);
-            }
         }
 
         _isLoadingList = false;
@@ -683,65 +568,11 @@ public class NetPlayScreen : Screen
             UpdateList();
         }
 
-        if (_filterType == FilterType.Community || _filterType == FilterType.CommunityOther) //社区服&其他服
-        {
-            ConnectionDirectory.Discovered.Clear();
-            LoadExternalServerList(SchubExternalContentProvider.RedirectUri + "/com/serverlist?version=" +
-                                   VersionsManager.ProtocolVersion);
-            LoadExternalServerList("http://schelper.trk34.top:34340" + "/com/serverlist?version=" +
-                                   VersionsManager.ProtocolVersion);
-        }
-    }
-
-    public void LoadExternalServerList(string url)
-    {
-        WebManager.Get(
-            url,
-            new Dictionary<string, string>(),
-            new Dictionary<string, string>(),
-            new CancellableProgress(),
-            data =>
-            {
-                var streamReader = new StreamReader(new MemoryStream(data) { Position = 0L });
-                var connects = JsonUtils.Deserialize<ServerList>(streamReader.ReadToEnd()) ?? new ServerList();
-                ProcessConnectList(connects);
-            },
-            _ => { }
-        );
-    }
-
-    public void ProcessConnectList(ServerList connects)
-    {
-        foreach (var c in connects.ConnectionList)
-        {
-            DNSToName[c.IP] = c.Name;
-            if (!CheckOnlineConnectExists(c, out var found))
-            {
-                found = c;
-                found.FromCommunity = c.Level == 1;
-                found.FromCommunityOther = c.Level == 0;
-                found.State = ConnectState.Checking;
-                ConnectionDirectory.Discovered.Add(found);
-                AddIntoCheckList(found);
-            }
-            else
-            {
-                found!.Name = c.Name;
-                found.FromCommunity = c.Level == 1;
-                found.FromCommunityOther = c.Level == 0;
-                found.State = ConnectState.Checking;
-                found.ValidTime = c.ValidTime;
-                AddIntoCheckList(found);
-            }
-        }
-
-        UpdateList();
     }
 
     public override void Enter(object[] parameters)
     {
-        _filterType = FilterType.Community;
-        //_filterButton.Text = "自定义";
+        _filterType = FilterType.Local;
         RefreshConnects();
     }
 
@@ -776,39 +607,25 @@ public class NetPlayScreen : Screen
 
             _refreshButton.IsEnabled = _refreshTime > 1f;
             _refreshButton.Color = _refreshButton.IsEnabled ? Color.Green : Color.LightGray;
-            _filter0Button.Color = _filterType == FilterType.Community ? Color.Green : Color.White;
-            _filter1Button.Color = _filterType == FilterType.CommunityOther ? Color.Green : Color.White;
-            _filter2Button.Color = _filterType == FilterType.Collect ? Color.Green : Color.White;
-            _filter3Button.Color = _filterType == FilterType.Local ? Color.Green : Color.White;
+            _filter0Button.Color = _filterType == FilterType.Collect ? Color.Green : Color.White;
+            _filter1Button.Color = _filterType == FilterType.Local ? Color.Green : Color.White;
 
             var loadingText = LanguageManager.Get("NetPlayScreen", 17);
-            _filter0Button.Text = _filterType == FilterType.Community
-                ? loadingText
-                : LanguageManager.Get("NetPlayScreen", 1);
-            _filter1Button.Text = _filterType == FilterType.CommunityOther
-                ? loadingText
-                : LanguageManager.Get("NetPlayScreen", 2);
-            _filter2Button.Text = _filterType == FilterType.Collect
+            _filter0Button.Text = _filterType == FilterType.Collect
                 ? loadingText
                 : LanguageManager.Get("NetPlayScreen", 3);
-            _filter3Button.Text = _filterType == FilterType.Local
+            _filter1Button.Text = _filterType == FilterType.Local
                 ? loadingText
                 : LanguageManager.Get("NetPlayScreen", 4);
 
             if (!_isLoadingList)
             {
-                _filter0Button.Text = _filterType == FilterType.Community
-                    ? LanguageManager.Get("NetPlayScreen", 1)
-                    : _filter0Button.Text;
-                _filter1Button.Text = _filterType == FilterType.CommunityOther
-                    ? LanguageManager.Get("NetPlayScreen", 2)
-                    : _filter1Button.Text;
-                _filter2Button.Text = _filterType == FilterType.Collect
+                _filter0Button.Text = _filterType == FilterType.Collect
                     ? LanguageManager.Get("NetPlayScreen", 3)
-                    : _filter2Button.Text;
-                _filter3Button.Text = _filterType == FilterType.Local
+                    : _filter0Button.Text;
+                _filter1Button.Text = _filterType == FilterType.Local
                     ? LanguageManager.Get("NetPlayScreen", 4)
-                    : _filter3Button.Text;
+                    : _filter1Button.Text;
             }
 
             if (_addButton.IsClicked) //添加服务器
@@ -892,28 +709,14 @@ public class NetPlayScreen : Screen
                 RefreshConnects();
             }
 
-            if (_filter0Button.IsClicked && _filterType != FilterType.Community) //社区服
-            {
-                _isLoadingList = true;
-                _filterType = FilterType.Community;
-                RefreshConnects();
-            }
-
-            if (_filter1Button.IsClicked && _filterType != FilterType.CommunityOther) //个人服
-            {
-                _isLoadingList = true;
-                _filterType = FilterType.CommunityOther;
-                RefreshConnects();
-            }
-
-            if (_filter2Button.IsClicked && _filterType != FilterType.Collect) //收藏
+            if (_filter0Button.IsClicked && _filterType != FilterType.Collect)
             {
                 _isLoadingList = true;
                 _filterType = FilterType.Collect;
                 RefreshConnects();
             }
 
-            if (_filter3Button.IsClicked && _filterType != FilterType.Local) //本地
+            if (_filter1Button.IsClicked && _filterType != FilterType.Local)
             {
                 _isLoadingList = true;
                 _filterType = FilterType.Local;
@@ -952,30 +755,17 @@ public class NetPlayScreen : Screen
         return LanguageManager.Get("SubsystemSeasons", seasonIndex);
     }
 
-    public class ServerList
-    {
-        public readonly List<Connect> ConnectionList = [];
-    }
-
     public class Connect
     {
         public bool FromBroadcast;
 
         public bool FromCollect;
 
-        public bool FromCommunity;
-
-        public bool FromCommunityOther;
-
         public bool FromLocal;
 
         public GameMode GameMode;
 
-        public bool HasPassword;
-
         public string IP = string.Empty;
-
-        public bool IsNeedLoginCommunity;
 
         public long Level;
 
@@ -988,8 +778,6 @@ public class NetPlayScreen : Screen
         public ushort PlayerCount;
 
         public ModProfile? RequiredModProfile;
-
-        public string SavedPassword = string.Empty;
 
         public ConnectState State;
 

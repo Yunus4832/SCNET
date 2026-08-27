@@ -1,0 +1,20 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+  <PanoramaWidget/>
+  <StackPanelWidget Direction="Horizontal">
+    <CanvasWidget Style="{Widgets/TopBarContents}">
+      <LabelWidget Name="TopBar.Label" Text="[ContentServerScreen:Title]"/>
+    </CanvasWidget>
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+      <CanvasWidget Margin="15, 10">
+        <BevelledRectangleWidget Style="{Styles/Area}"/>
+        <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="72" SelectionColor="10, 70, 0, 90"/>
+      </CanvasWidget>
+      <StackPanelWidget Direction="Horizontal" Margin="0, 10">
+        <BevelledButtonWidget Name="Download" Style="{Styles/ButtonStyle_160x60}" Text="[ContentServerScreen:Download]" Margin="6, 0"/>
+        <BevelledButtonWidget Name="Uninstall" Style="{Styles/ButtonStyle_160x60}" Text="[ContentServerScreen:Uninstall]" Margin="6, 0"/>
+        <CanvasWidget Size="Infinity, 0"/>
+        <BevelledButtonWidget Name="Refresh" Style="{Styles/ButtonStyle_160x60}" Text="[ContentServerScreen:Refresh]" Margin="6, 0"/>
+      </StackPanelWidget>
+    </StackPanelWidget>
+  </StackPanelWidget>
+</Screen>

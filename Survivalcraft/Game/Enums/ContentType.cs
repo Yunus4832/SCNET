@@ -1,9 +1,9 @@
 namespace Game;
 
-public enum ExternalContentType
+public enum ContentType
 {
     Unknown,
-    Directory,
+    Mod,
     World,
     BlocksTexture,
     CharacterSkin,

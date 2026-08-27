@@ -70,13 +70,6 @@
                                               VerticalAlignment="Center" Margin="20, 0"/>
                     </UniformSpacingPanelWidget>
 
-                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                        <LabelWidget Text="[SettingsUiScreen:9]" HorizontalAlignment="Far" VerticalAlignment="Center"
-                                     Margin="20, 0"/>
-                        <BevelledButtonWidget Name="CommunityContentModeButton" Style="{Styles/ButtonStyle_310x60}"
-                                              VerticalAlignment="Center" Margin="20, 0"/>
-                    </UniformSpacingPanelWidget>
-
                 </StackPanelWidget>
             </ScrollPanelWidget>
         </CanvasWidget>

@@ -1,5 +1,3 @@
-using Game.ContentProviders;
-
 namespace Game.Managers;
 
 public static class PlatformManager
@@ -8,13 +6,10 @@ public static class PlatformManager
 
     public const string LegacyScheme = "com.candy.survivalcraft";
 
-    public const string DropboxRedirectScheme = "com.candyrufusgames.survivalcraft2";
-
     private static readonly string[] _knownSchemes =
     [
         Scheme,
-        LegacyScheme,
-        DropboxRedirectScheme
+        LegacyScheme
     ];
 
     public static Platform Platform { get; private set; } = Platform.Desktop;
@@ -67,8 +62,4 @@ public static class PlatformManager
         ClipboardManager.RegisterClipboard(reader, writer);
     }
 
-    public static void RegisterExternalContentProviderFactory(Func<IExternalContentProvider> factory)
-    {
-        ExternalContentManager.RegisterProviderFactory(factory);
-    }
 }

@@ -222,14 +222,14 @@ public class GameModRuntimeTest
     }
 
     [Fact]
-    public void RuntimeUsesDefaultModRepositoryUrlWhenProfileDoesNotSpecifyRepository()
+    public void RuntimeUsesContentServerUrlWhenProfileDoesNotSpecifyRepository()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"scnet-runtime-test-{Guid.NewGuid():N}");
-        var previousRepositoryUrl = SettingsManager.Current.DefaultModRepositoryUrl;
+        var previousRepositoryUrl = SettingsManager.Current.ContentServerUrl;
         Directory.CreateDirectory(directory);
         try
         {
-            SettingsManager.Current.DefaultModRepositoryUrl = "https://mods.example/";
+            SettingsManager.Current.ContentServerUrl = "https://mods.example/";
             WritePackage(Path.Combine(directory, "example.addon.scpak"), """
                 {
                   "id": "example.addon",
@@ -262,7 +262,7 @@ public class GameModRuntimeTest
         }
         finally
         {
-            SettingsManager.Current.DefaultModRepositoryUrl = previousRepositoryUrl;
+            SettingsManager.Current.ContentServerUrl = previousRepositoryUrl;
             Directory.Delete(directory, true);
         }
     }

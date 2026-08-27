@@ -25,8 +25,7 @@ public sealed class PlayerJoinedPackage : IPackage
     public PlayerJoinedPackage(Project project, PlayerData playerData, Entity entity)
     {
         var client = playerData.Client ?? throw new InvalidOperationException("Player client is not connected");
-        ClientInfo = new ClientPackage(client.ID, client.TokenId, client.GUID,
-            client.CommunityAccountId, client.Nickname);
+        ClientInfo = new ClientPackage(client.ID, client.TokenId, client.GUID);
         playerData.Save(PlayerData);
         EntityData = InitialWorldSnapshotPackage.SerializeEntities(project, [entity]);
     }

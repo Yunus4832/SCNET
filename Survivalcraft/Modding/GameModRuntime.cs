@@ -307,7 +307,7 @@ public sealed class GameModRuntime : IDisposable
     private static string? ResolveRepositoryUrl(string? repositoryUrl)
     {
         return string.IsNullOrWhiteSpace(repositoryUrl)
-            ? NormalizeRepositoryUrlOrNull(SettingsManager.Current.DefaultModRepositoryUrl)
+            ? NormalizeRepositoryUrlOrNull(SettingsManager.Current.ContentServerUrl)
             : NormalizeRepositoryUrlOrNull(repositoryUrl);
     }
 

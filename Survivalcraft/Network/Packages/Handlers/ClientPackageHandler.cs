@@ -25,9 +25,8 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
                     package.From?.Peer,
                     package.Client!.ID,
                     package.Client.TokenId,
-                    package.Client.GUID, project,
-                    package.Client.CommunityAccountId,
-                    package.Client.Nickname)
+                    package.Client.GUID,
+                    project)
                 );
                 break;
             case ClientPackage.EventType.Remove:

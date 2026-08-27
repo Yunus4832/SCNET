@@ -185,12 +185,6 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         if (CommonLib.WorkType == WorkType.Server)
         {
             var client = playerData.Client;
-            if (client is not null && !string.IsNullOrEmpty(client.Nickname))
-            {
-                playerData.Name = client.Nickname;
-            }
-
-
             if (client is not null)
             {
                 _subsystemGameWidgets.Messages.Publish(

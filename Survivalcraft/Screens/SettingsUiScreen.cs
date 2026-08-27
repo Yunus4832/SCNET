@@ -8,8 +8,6 @@ public class SettingsUiScreen : Screen
 {
     private const string _typeName = nameof(SettingsUiScreen);
 
-    private readonly ButtonWidget _communityContentModeButton;
-
     private readonly ButtonWidget _hideMoveLookPadsButton;
 
     private readonly ButtonWidget _languageButton;
@@ -42,7 +40,6 @@ public class SettingsUiScreen : Screen
         _showGuiInScreenshotsButton = Children.Find<ButtonWidget>("ShowGuiInScreenshotsButton")!;
         _showLogoInScreenshotsButton = Children.Find<ButtonWidget>("ShowLogoInScreenshotsButton")!;
         _screenshotSizeButton = Children.Find<ButtonWidget>("ScreenshotSizeButton")!;
-        _communityContentModeButton = Children.Find<ButtonWidget>("CommunityContentModeButton")!;
     }
 
     public override void Enter(object[] parameters)
@@ -108,13 +105,6 @@ public class SettingsUiScreen : Screen
                                                               EnumUtils.GetEnumValues(typeof(ScreenshotSize)).Count);
         }
 
-        if (_communityContentModeButton.IsClicked)
-        {
-            SettingsManager.Current.CommunityContentMode =
-                (CommunityContentMode)((int)(SettingsManager.Current.CommunityContentMode + 1) %
-                                       EnumUtils.GetEnumValues(typeof(CommunityContentMode)).Count);
-        }
-
         // 更新按钮文本
         _windowModeButton.Text = LanguageManager.Get("WindowMode", RunningSettingManager.Current.WindowMode.ToString());
         _languageButton.Text = LanguageManager.Get("Language", "Name");
@@ -125,9 +115,6 @@ public class SettingsUiScreen : Screen
         _showLogoInScreenshotsButton.Text =
             SettingsManager.Current.ShowLogoInScreenshots ? LanguageManager.Yes : LanguageManager.No;
         _screenshotSizeButton.Text = LanguageManager.Get("ScreenshotSize", SettingsManager.Current.ScreenshotSize.ToString());
-        _communityContentModeButton.Text =
-            LanguageManager.Get("CommunityContentMode", SettingsManager.Current.CommunityContentMode.ToString());
-
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             SettingsManager.SaveSettings();

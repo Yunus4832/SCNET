@@ -36,8 +36,6 @@ public class ModifyWorldScreen : Screen
 
     private readonly ButtonWidget _serverSettingsButton;
 
-    private readonly ButtonWidget _uploadButton;
-
     private readonly ButtonWidget _worldOptionsButton;
 
     private WorldSettings WorldSettings
@@ -58,7 +56,6 @@ public class ModifyWorldScreen : Screen
         _errorLabel = Children.Find<LabelWidget>("Error")!;
         _applyButton = Children.Find<ButtonWidget>("Apply")!;
         _deleteButton = Children.Find<ButtonWidget>("Delete")!;
-        _uploadButton = Children.Find<ButtonWidget>("Upload")!;
 
         _nameTextBox.TextChanged += delegate { WorldSettings.Name = _nameTextBox.Text; };
     }
@@ -103,7 +100,6 @@ public class ModifyWorldScreen : Screen
         _gameModeButton.Text = LanguageManager.Get("GameMode", WorldSettings.GameMode.ToString());
         _gameModeButton.IsEnabled = _changingGameModeAllowed;
         _errorLabel.IsVisible = !flag2;
-        _uploadButton.IsEnabled = flag2 && !flag;
         _applyButton.IsEnabled = flag2 && flag;
         if (_worldOptionsButton.IsClicked)
         {
@@ -138,11 +134,6 @@ public class ModifyWorldScreen : Screen
                 AutoHide = false
             };
             DialogsManager.ShowDialog(null, dialog);
-        }
-
-        if (_uploadButton.IsClicked && flag2 && !flag)
-        {
-            ExternalContentManager.ShowUploadUi(ExternalContentType.World, _directoryName);
         }
 
         if ((_applyButton.IsClicked && flag2) & flag)

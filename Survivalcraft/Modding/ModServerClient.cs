@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 
+using Game.Content;
+
 namespace Game.Modding;
 
 public sealed class ModServerClient : IDisposable
@@ -43,9 +45,10 @@ public sealed class ModServerClient : IDisposable
     private async Task<IReadOnlyList<ModRepositoryPackage>> ListPackagesAsync(CancellationToken cancellationToken)
     {
         var response = await _httpClient
-            .GetFromJsonAsync<ModRepositoryListResponse>("api/v1/mods", cancellationToken)
+            .GetFromJsonAsync<ContentServerResponse<ModRepositoryListResponse>>(
+                "api/v1/mods", cancellationToken)
             .ConfigureAwait(false);
-        return response?.Items ?? [];
+        return response?.Data?.Items ?? [];
     }
 
     private async Task<IReadOnlyList<ModRepositoryPackage>> ListPackagesByModIdAsync(
@@ -54,11 +57,11 @@ public sealed class ModServerClient : IDisposable
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modId);
         var response = await _httpClient
-            .GetFromJsonAsync<ModRepositoryModResponse>(
+            .GetFromJsonAsync<ContentServerResponse<ModRepositoryModResponse>>(
                 $"api/v1/mods/{Uri.EscapeDataString(modId)}",
                 cancellationToken)
             .ConfigureAwait(false);
-        return response?.Items ?? [];
+        return response?.Data?.Items ?? [];
     }
 
     private async Task<ModRepositoryPackage?> FindPackageAsync(
@@ -80,9 +83,11 @@ public sealed class ModServerClient : IDisposable
         }
 
         response.EnsureSuccessStatusCode();
-        return await response.Content
-            .ReadFromJsonAsync<ModRepositoryPackage>(cancellationToken: cancellationToken)
+        var result = await response.Content
+            .ReadFromJsonAsync<ContentServerResponse<ModRepositoryPackage>>(
+                cancellationToken: cancellationToken)
             .ConfigureAwait(false);
+        return result?.Data;
     }
 
     private async Task<LocalModPackageEntry> DownloadPackageAsync(

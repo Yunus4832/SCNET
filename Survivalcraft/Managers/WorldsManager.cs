@@ -381,7 +381,7 @@ public static class WorldsManager
         string directoryName,
         Stream targetStream,
         Func<string, bool>? filter,
-        bool embedExternalContent
+        bool embedContentPackages
     )
     {
         var worldInfo = GetWorldInfo(directoryName);
@@ -410,7 +410,7 @@ public static class WorldsManager
             AddZipEntry(zipArchive, fileName, source);
         }
 
-        if (!embedExternalContent)
+        if (!embedContentPackages)
         {
             return;
         }
@@ -458,7 +458,7 @@ public static class WorldsManager
         }
     }
 
-    private static void UnpackWorld(string directoryName, Stream sourceStream, bool importEmbeddedExternalContent)
+    private static void UnpackWorld(string directoryName, Stream sourceStream, bool installEmbeddedContentPackages)
     {
         if (!Storage.DirectoryExists(directoryName))
         {
@@ -480,7 +480,7 @@ public static class WorldsManager
             {
                 try
                 {
-                    if (importEmbeddedExternalContent)
+                    if (installEmbeddedContentPackages)
                     {
                         var memoryStream = new MemoryStream();
                         using (var entryStream = item.Open())
@@ -489,8 +489,8 @@ public static class WorldsManager
                         }
 
                         memoryStream.Position = 0L;
-                        var type = ExternalContentManager.ExtensionToType(extension);
-                        ExternalContentManager.ImportExternalContentSync(memoryStream, type,
+                        var type = ContentPackageManager.ExtensionToType(extension);
+                        ContentPackageManager.InstallPackage(memoryStream, type,
                             Storage.GetFileNameWithoutExtension(text));
                     }
                 }

@@ -26,24 +26,6 @@
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
                             <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:NeedLogin]" Color="128, 128, 128"
-                                         Margin="20, 0"/>
-                            <CheckboxWidget Name="NeedLogin" VerticalAlignment="Center" Margin="20, 14"/>
-                        </UniformSpacingPanelWidget>
-
-                        <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:Password]" Color="128, 128, 128"
-                                         Margin="20, 0"/>
-                            <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
-                                <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
-                                <TextBoxWidget Name="Password" Size="380, 50" VerticalAlignment="Center"
-                                               MaximumLength="16" Margin="10, 0"/>
-                            </CanvasWidget>
-                        </UniformSpacingPanelWidget>
-
-                        <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
                                          Text="[WorldServerSettingsScreen:MaxPlayers]" Color="128, 128, 128"
                                          Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">

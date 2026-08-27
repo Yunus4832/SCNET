@@ -197,7 +197,7 @@ public class ModManagementScreen : Screen
 
     private void SaveRepositoryUrlFromTextBox()
     {
-        SettingsManager.Current.DefaultModRepositoryUrl = NormalizeRepositoryUrl(_repositoryTextBox.Text);
+        SettingsManager.Current.ContentServerUrl = NormalizeRepositoryUrl(_repositoryTextBox.Text);
         SettingsManager.SaveSettings();
     }
 
@@ -424,7 +424,7 @@ public class ModManagementScreen : Screen
 
     private static string GetRepositoryUrl()
     {
-        return NormalizeRepositoryUrl(SettingsManager.Current.DefaultModRepositoryUrl);
+        return NormalizeRepositoryUrl(SettingsManager.Current.ContentServerUrl);
     }
 
     private static string NormalizeRepositoryUrl(string? repositoryUrl)

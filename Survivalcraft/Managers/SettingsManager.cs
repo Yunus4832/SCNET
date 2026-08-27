@@ -15,17 +15,6 @@ public static class SettingsManager
 
     public static event Action? BrightnessChanged;
 
-    public static void SetOnlineAccessToken(string newToken)
-    {
-        if (!Guid.TryParse(newToken, out _))
-        {
-            throw new ArgumentException("Online access token must be a valid GUID.", nameof(newToken));
-        }
-
-        Current.OnlineAccessToken = newToken;
-        SaveSettings();
-    }
-
     internal static void NotifyBrightnessChanged()
     {
         BrightnessChanged?.Invoke();
@@ -33,24 +22,6 @@ public static class SettingsManager
 
     public static void Initialize()
     {
-        if (RunMode.Value is RunModeType.HeadlessServer)
-        {
-            Current.CommunityContentMode = CommunityContentMode.Disabled;
-        }
-        else
-        {
-            Current.CommunityAccessToken = Guid.NewGuid().ToString();
-        }
-
-        var machineId = PlatformManager.Platform is Platform.Android
-            ? GetMachineID.GetAndroidID()
-            : GetMachineID.GetMachineGuid();
-
-        var defaultOnlineAccessToken = !string.IsNullOrEmpty(machineId)
-            ? HashUtils.ComputeMd5(machineId)
-            : Guid.NewGuid().ToString();
-        Current.OnlineAccessToken = defaultOnlineAccessToken;
-
         var screenWidth = RunMode.Value is RunModeType.HeadlessServer ? 1280 : Window.ScreenSize.X;
         var screenHeight = RunMode.Value is RunModeType.HeadlessServer ? 720 : Window.ScreenSize.Y;
         var isWideScreen = screenWidth / (float)screenHeight > 1.33333337f;
@@ -64,9 +35,8 @@ public static class SettingsManager
 
         LoadSettings();
         var settingsChanged = false;
-        if (RepairOnlineAccessToken(Current, defaultOnlineAccessToken))
+        if (EnsureMultiplayerClientId(Current))
         {
-            Log.Warning("Invalid OnlineAccessToken in settings. The local identity token has been restored.");
             settingsChanged = true;
         }
         if (EnsureHttpCommandAccessToken(Current))
@@ -81,19 +51,15 @@ public static class SettingsManager
         Window.Deactivated += SaveSettings;
     }
 
-    internal static bool RepairOnlineAccessToken(Settings settings, string fallbackToken)
+    internal static bool EnsureMultiplayerClientId(Settings settings)
     {
-        if (Guid.TryParse(settings.OnlineAccessToken, out _))
+        if (settings.MultiplayerClientId != Guid.Empty)
         {
             return false;
         }
 
-        if (!Guid.TryParse(fallbackToken, out _))
-        {
-            throw new ArgumentException("Fallback online access token must be a valid GUID.", nameof(fallbackToken));
-        }
-
-        settings.OnlineAccessToken = fallbackToken;
+        settings.MultiplayerClientId = Guid.NewGuid();
+        Log.Information("Generated a new local multiplayer client id for this instance.");
         return true;
     }
 

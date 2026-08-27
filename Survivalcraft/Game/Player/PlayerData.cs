@@ -682,11 +682,6 @@ public partial class PlayerData : IDisposable
             ServerManager = true;
         }
 
-        var client = Client;
-        if (client != null && !string.IsNullOrEmpty(client.Nickname))
-        {
-            Name = client.Nickname;
-        }
     }
 
     public void Save(ValuesDictionary valuesDictionary)
@@ -1293,30 +1288,6 @@ public partial class PlayerData : IDisposable
         return sanitized.Length > 0
             ? sanitized.ToString()
             : throw new InvalidOperationException("Invalid input");
-    }
-
-    public static bool IsDuplicateName(string name)
-    {
-        if (GameManager.Project is null)
-        {
-            throw new InvalidOperationException("GameManager.Project is not initialized");
-        }
-
-        var subsystemPlayers = GameManager.Project.FindSubsystem<SubsystemPlayers>(true)!;
-        return subsystemPlayers.PlayersData.Any(playerData => playerData.Name == name);
-    }
-
-    public static string CreateNewName(string originName)
-    {
-        if (string.IsNullOrEmpty(originName))
-        {
-            originName = string.Empty;
-        }
-
-        // 生成4位大写的随机16进制数 (0000~FFFF)
-        var randomHex = new System.Random().Next(0, 65536).ToString("X4");
-
-        return $"{originName.Trim()}_{randomHex}";
     }
 
     [GeneratedRegex(@"^[\u4E00-\u9FA5A-Za-z0-9_-]+$", RegexOptions.Compiled)]

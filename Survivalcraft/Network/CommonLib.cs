@@ -121,9 +121,6 @@ public static class CommonLib
         w.Put((ushort)Net.ClientCount);
         w.Put(subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount);
         w.Put((byte)subsystemGameInfo.WorldSettings.GameMode);
-        w.Put(!string.IsNullOrEmpty(subsystemGameInfo.WorldSettings.Password));
-
-        w.Put(subsystemGameInfo.WorldSettings.IsNeedCommunityLogin);
         w.Put(subsystemTimeOfDay.CalculateTimeOfDay());
     }
 
@@ -134,8 +131,6 @@ public static class CommonLib
         c.PlayerCount = r.GetUShort();
         c.MaxCount = r.GetUShort();
         c.GameMode = (GameMode)r.GetByte();
-        c.HasPassword = r.GetBool();
-        c.IsNeedLoginCommunity = r.GetBool();
         c.TimeOfDay = r.GetFloat();
         c.State = NetPlayScreen.ConnectState.Available;
         c.UsedTime = s.ElapsedMilliseconds;

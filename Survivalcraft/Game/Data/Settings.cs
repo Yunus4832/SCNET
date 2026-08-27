@@ -112,8 +112,6 @@ public class Settings
 
     public bool HorizontalCreativeFlight { get; set; } = true;
 
-    public string DropboxAccessToken { get; set; } = string.Empty;
-
     public string MotdUpdateUrl { get; set; } = string.Empty;
 
     public string MotdUpdateCheckUrl { get; set; } = string.Empty;
@@ -124,15 +122,13 @@ public class Settings
 
     public string MotdLastDownloadedData { get; set; } = string.Empty;
 
-    public string CommunityAccessUser { get; set; } = string.Empty;
+    /// <summary>
+    /// Stable identifier for this local multiplayer client. This is not an account credential
+    /// and does not authenticate the player to a remote service.
+    /// </summary>
+    public Guid MultiplayerClientId { get; set; }
 
-    public string OnlineAccessToken { get; set; } = string.Empty;
-
-    public string CommunityAccessToken { get; set; } = string.Empty;
-
-    public string UserId { get; set; } = string.Empty;
-
-    public CommunityContentMode CommunityContentMode { get; set; } = CommunityContentMode.Normal;
+    public string ContentServerUrl { get; set; } = string.Empty;
 
     public bool UseReducedZRange
     {
@@ -171,10 +167,6 @@ public class Settings
 
     public string BulletinTime { get; set; } = string.Empty;
 
-    public string ScpboxUserInfo { get; set; } = string.Empty;
-
-    public string CommunityNickName { get; set; } = string.Empty;
-
     /** 生物数量配置 **/
     public int CreatureTotalLimit { get; set; } = 24;
 
@@ -203,8 +195,6 @@ public class Settings
         Network.NetworkTerrainPolicy.DefaultServerChunkBytesSendPerSecond;
 
     public bool AutoGarbageCollect { get; set; } = true;
-
-    public string DefaultModRepositoryUrl { get; set; } = string.Empty;
 
     public int RejectedUpdateCount { get; set; } = 0;
 }

@@ -17,10 +17,6 @@ public class WorldServerSettingsScreen : Screen
 
     private readonly TextBoxWidget _maxPlayer;
 
-    private readonly CheckboxWidget _needLogin;
-
-    private readonly TextBoxWidget _password;
-
     private readonly CheckboxWidget _randomSpawnPosition;
 
     private readonly TextBoxWidget _recoverySpeed;
@@ -38,9 +34,7 @@ public class WorldServerSettingsScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/WorldServerSettingsScreen");
         LoadContents(this, node);
         _runServer = Children.Find<CheckboxWidget>("RunServer")!;
-        _needLogin = Children.Find<CheckboxWidget>("NeedLogin")!;
         _randomSpawnPosition = Children.Find<CheckboxWidget>("RandomSpawnPosition")!;
-        _password = Children.Find<TextBoxWidget>("Password")!;
         _maxPlayer = Children.Find<TextBoxWidget>("MaxPlayers")!;
         _daySpeedTextBox = Children.Find<TextBoxWidget>("DaySpeed")!;
         _recoverySpeed = Children.Find<TextBoxWidget>("RecoverySpeed")!;
@@ -66,9 +60,7 @@ public class WorldServerSettingsScreen : Screen
         }
 
         _runServer.IsChecked = _worldSettings.RunServer;
-        _needLogin.IsChecked = _worldSettings.IsNeedCommunityLogin;
         _randomSpawnPosition.IsChecked = _worldSettings.RandomSpawnPosition;
-        _password.Text = _worldSettings.Password;
         _maxPlayer.Text = MathUtils.Max(_worldSettings.MaxOnlinePlayerCount, 1).ToString(CultureInfo.InvariantCulture);
         _daySpeedTextBox.Text = NormalizeDaySpeed(_worldSettings.DaySpeed).ToString(CultureInfo.InvariantCulture);
         _recoverySpeed.Text = NormalizeRecoverySpeed(_worldSettings.RecoverFactor).ToString(CultureInfo.InvariantCulture);
@@ -93,8 +85,6 @@ public class WorldServerSettingsScreen : Screen
         _worldSettings.RunServer = _runServer.IsChecked;
         int.TryParse(_maxPlayer.Text, out var maxPlayers);
         _worldSettings.MaxOnlinePlayerCount = (ushort)MathUtils.Max(maxPlayers, 1);
-        _worldSettings.IsNeedCommunityLogin = _needLogin.IsChecked;
-        _worldSettings.Password = _password.Text;
         _worldSettings.RandomSpawnPosition = _randomSpawnPosition.IsChecked;
         _worldSettings.DisableBlocks = _disableBlocks.Text;
         _worldSettings.KeywordBlocking = _keywordBlocking.Text;
@@ -111,17 +101,9 @@ public class WorldServerSettingsScreen : Screen
         {
             SetDescription("RunServer");
         }
-        else if (_needLogin.IsClicked)
-        {
-            SetDescription("NeedLogin");
-        }
         else if (_randomSpawnPosition.IsClicked)
         {
             SetDescription("RandomSpawnPosition");
-        }
-        else if (_password.HasFocus)
-        {
-            SetDescription("Password");
         }
         else if (_maxPlayer.HasFocus)
         {

@@ -14,34 +14,12 @@
 
             <StackPanelWidget Direction="Horizontal">
                 <CanvasWidget Size="350, 90">
-                    <LabelWidget Text="[ContentScreen:2]" Color="128, 128, 128" WordWrap="true"
-                                 HorizontalAlignment="Far" VerticalAlignment="Center"
-                                 TextAnchor="VerticalCenter,HorizontalCenter"/>
-                </CanvasWidget>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="External" Text="[ContentScreen:3]" Style="{Styles/ButtonStyle_310x60}"
-                                      VerticalAlignment="Center"/>
-            </StackPanelWidget>
-
-            <StackPanelWidget Direction="Horizontal">
-                <CanvasWidget Size="350, 90">
-                    <LabelWidget Text="[ContentScreen:4]" Color="128, 128, 128" WordWrap="true"
-                                 HorizontalAlignment="Far" VerticalAlignment="Center"
-                                 TextAnchor="VerticalCenter,HorizontalCenter"/>
-                </CanvasWidget>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="Community" Text="[ContentScreen:5]" Style="{Styles/ButtonStyle_310x60}"
-                                      VerticalAlignment="Center"/>
-            </StackPanelWidget>
-
-            <StackPanelWidget Direction="Horizontal">
-                <CanvasWidget Size="350, 90">
-                    <LabelWidget Text="[ContentScreen:6]" Color="128, 128, 128" WordWrap="true"
+                    <LabelWidget Text="[ContentScreen:RemoteDescription]" Color="128, 128, 128" WordWrap="true"
                                  HorizontalAlignment="Far" VerticalAlignment="Center"
                                  TextAnchor="VerticalCenter, HorizontalCenter"/>
                 </CanvasWidget>
                 <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="Link" Text="[ContentScreen:7]" Style="{Styles/ButtonStyle_310x60}"
+                <BevelledButtonWidget Name="Remote" Text="[ContentScreen:Remote]" Style="{Styles/ButtonStyle_310x60}"
                                       VerticalAlignment="Center"/>
             </StackPanelWidget>
 
