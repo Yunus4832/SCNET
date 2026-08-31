@@ -148,13 +148,31 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<Guid>("ContentId")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("BlobHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("MetadataJson")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Identifier")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("PackageBlobId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PackageHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PublisherId")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTimeOffset?>("PublishedAt")
@@ -195,9 +213,9 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<byte[]>("Data")
+                    b.Property<string>("BlobHash")
                         .IsRequired()
-                        .HasColumnType("BLOB");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("FileName")
                         .IsRequired()

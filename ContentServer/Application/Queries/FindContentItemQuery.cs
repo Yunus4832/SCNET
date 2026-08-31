@@ -8,7 +8,7 @@ using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Application.Queries;
 
-public sealed record ContentItemLookupDto(ContentId ContentId);
+public sealed record ContentItemLookupDto(ContentId ContentId, PublisherId PublisherId, string Type);
 
 public sealed record FindContentItemQuery(
     PublisherId PublisherId,
@@ -25,9 +25,8 @@ public sealed class FindContentItemQueryHandler(
     {
         var normalizedIdentifier = query.Identifier.ToLowerInvariant();
         return await db.Contents.AsNoTracking()
-            .Where(content => content.PublisherId == query.PublisherId &&
-                              content.NormalizedIdentifier == normalizedIdentifier)
-            .Select(content => new ContentItemLookupDto(content.Id))
+            .Where(content => content.NormalizedIdentifier == normalizedIdentifier)
+            .Select(content => new ContentItemLookupDto(content.Id, content.PublisherId, content.Type))
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

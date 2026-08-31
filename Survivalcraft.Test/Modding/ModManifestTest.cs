@@ -14,7 +14,7 @@ public class ModManifestTest
                               "version": "1.2.0",
                               "side": "server",
                               "dependencies": [
-                                { "id": "game.content", "minimumVersion": "1.0" }
+                                { "id": "game.content", "minimumVersion": "1.0.0" }
                               ]
                             }
                             """;

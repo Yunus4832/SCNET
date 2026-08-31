@@ -7,6 +7,7 @@ using ContentServer.Domain.Administration;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Publishers;
 using ContentServer.Middlewares;
+using ContentServer.Infrastructure;
 
 using MediatR;
 
@@ -21,7 +22,8 @@ namespace ContentServer.Controllers;
 [Route("api/v1/admin")]
 public sealed class AdminController(
     IMediator mediator,
-    ApiKeyAuthenticationContext authenticationContext
+    ApiKeyAuthenticationContext authenticationContext,
+    ContentPackageStore packageStore
 ) : ControllerBase
 {
     [HttpGet("administrator-applications")]
@@ -360,7 +362,7 @@ public sealed class AdminController(
             "submission_package_not_found",
             StatusCodes.Status404NotFound
         );
-        return File(package.Data, package.MediaType, package.FileName, true);
+        return File(packageStore.Open(package.Hash), package.MediaType, package.FileName, true);
     }
 
     private static ResponseData Success()

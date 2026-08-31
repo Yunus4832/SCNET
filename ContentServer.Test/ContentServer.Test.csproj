@@ -17,5 +17,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ContentServer\ContentServer.csproj"/>
+        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj"/>
     </ItemGroup>
 </Project>

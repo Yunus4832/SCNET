@@ -61,7 +61,7 @@ public partial class InitialContentServer : Migration
                 Size = table.Column<long>(type: "INTEGER", nullable: false),
                 FileName = table.Column<string>(type: "TEXT", nullable: false),
                 MediaType = table.Column<string>(type: "TEXT", nullable: false),
-                Data = table.Column<byte[]>(type: "BLOB", nullable: false),
+                BlobHash = table.Column<string>(type: "TEXT", nullable: false),
                 CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
             },
             constraints: table =>
@@ -134,8 +134,13 @@ public partial class InitialContentServer : Migration
             {
                 Id = table.Column<Guid>(type: "TEXT", nullable: false),
                 ContentId = table.Column<Guid>(type: "TEXT", nullable: false),
+                PublisherId = table.Column<Guid>(type: "TEXT", nullable: false),
+                ContentType = table.Column<string>(type: "TEXT", nullable: false),
+                Identifier = table.Column<string>(type: "TEXT", nullable: false),
                 Version = table.Column<string>(type: "TEXT", nullable: false),
                 PackageBlobId = table.Column<Guid>(type: "TEXT", nullable: false),
+                PackageHash = table.Column<string>(type: "TEXT", nullable: false),
+                BlobHash = table.Column<string>(type: "TEXT", nullable: true),
                 MetadataJson = table.Column<string>(type: "TEXT", nullable: true),
                 Status = table.Column<string>(type: "TEXT", nullable: false),
                 ReviewMessage = table.Column<string>(type: "TEXT", nullable: true),

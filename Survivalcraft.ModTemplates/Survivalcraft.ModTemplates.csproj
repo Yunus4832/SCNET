@@ -5,7 +5,7 @@
         <PackageId>SCNET.ModTemplates</PackageId>
         <PackageType>Template</PackageType>
         <Title>SCNET Survivalcraft Mod Templates</Title>
-        <Description>dotnet new templates for creating SCNET Survivalcraft .scpak mods.</Description>
+        <Description>dotnet new templates for creating SCNET Survivalcraft .scpkg mods.</Description>
         <PackageTags>dotnet-new;templates;scnet;survivalcraft;modding</PackageTags>
         <IncludeBuildOutput>false</IncludeBuildOutput>
         <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>

@@ -3,10 +3,12 @@
         <SurvivalcraftModManifest Condition="'$(SurvivalcraftModManifest)' == ''">$(MSBuildProjectDirectory)/manifest.json</SurvivalcraftModManifest>
         <SurvivalcraftModId Condition="'$(SurvivalcraftModId)' == ''">$(AssemblyName)</SurvivalcraftModId>
         <SurvivalcraftModPackageName Condition="'$(SurvivalcraftModPackageName)' == ''">$(SurvivalcraftModId)</SurvivalcraftModPackageName>
-        <SurvivalcraftModPackageExtension>.scpak</SurvivalcraftModPackageExtension>
+        <SurvivalcraftModPackageExtension>.scpkg</SurvivalcraftModPackageExtension>
         <BuildSurvivalcraftModPackage Condition="'$(BuildSurvivalcraftModPackage)' == ''">true</BuildSurvivalcraftModPackage>
         <IncludeSourceRevisionInInformationalVersion Condition="'$(IncludeSourceRevisionInInformationalVersion)' == ''">false</IncludeSourceRevisionInInformationalVersion>
         <SurvivalcraftAssembly Condition="'$(SurvivalcraftAssembly)' == ''">$(MSBuildThisFileDirectory)../bin/$(Configuration)/$(TargetFramework)/Survivalcraft.dll</SurvivalcraftAssembly>
+        <SurvivalcraftContentTool Condition="'$(SurvivalcraftContentTool)' == '' and Exists('$(MSBuildThisFileDirectory)../../ContentTool/bin/$(Configuration)/$(TargetFramework)/SCNET.ContentTool.dll')">$(MSBuildThisFileDirectory)../../ContentTool/bin/$(Configuration)/$(TargetFramework)/SCNET.ContentTool.dll</SurvivalcraftContentTool>
+        <SurvivalcraftContentTool Condition="'$(SurvivalcraftContentTool)' == ''">$(MSBuildThisFileDirectory)../tools/net10.0/any/SCNET.ContentTool.dll</SurvivalcraftContentTool>
     </PropertyGroup>
 
     <ItemGroup Condition="'$(SurvivalcraftUseLocalReferences)' == 'true'">
@@ -37,9 +39,10 @@
             <_SurvivalcraftModPackageDirectory Condition="'$(SurvivalcraftModPackageDirectory)' == ''">$(TargetDir)packages</_SurvivalcraftModPackageDirectory>
             <_SurvivalcraftModPackageDirectory Condition="'$(SurvivalcraftModPackageDirectory)' != ''">$(SurvivalcraftModPackageDirectory)</_SurvivalcraftModPackageDirectory>
             <_SurvivalcraftModPackagePath>$(_SurvivalcraftModPackageDirectory)/$(SurvivalcraftModPackageName)$(SurvivalcraftModPackageExtension)</_SurvivalcraftModPackagePath>
-            <_SurvivalcraftModStage>$(IntermediateOutputPath)scpak</_SurvivalcraftModStage>
+            <_SurvivalcraftModStage>$(IntermediateOutputPath)scpkg-payload</_SurvivalcraftModStage>
         </PropertyGroup>
         <Error Condition="!Exists('$(SurvivalcraftModManifest)')" Text="Survivalcraft mod manifest was not found: $(SurvivalcraftModManifest)"/>
+        <Error Condition="!Exists('$(SurvivalcraftContentTool)')" Text="SCNET ContentTool was not found: $(SurvivalcraftContentTool)"/>
         <ItemGroup>
             <_SurvivalcraftModData Include="$(MSBuildProjectDirectory)/Data/**/*"/>
             <_SurvivalcraftModAssets Include="$(MSBuildProjectDirectory)/Assets/**/*"/>
@@ -53,7 +56,9 @@
         </ItemGroup>
         <RemoveDir Directories="$(_SurvivalcraftModStage)"/>
         <MakeDir Directories="$(_SurvivalcraftModStage)/assemblies;$(_SurvivalcraftModStage)/data;$(_SurvivalcraftModStage)/assets/$(SurvivalcraftModId);$(_SurvivalcraftModPackageDirectory)"/>
-        <Copy SourceFiles="$(SurvivalcraftModManifest)" DestinationFiles="$(_SurvivalcraftModStage)/manifest.json"/>
+        <WriteLinesToFile File="$(_SurvivalcraftModStage)/mod.json"
+                          Lines="{ &quot;formatVersion&quot;: 1 }"
+                          Overwrite="true" Encoding="UTF-8"/>
         <Copy SourceFiles="$(TargetPath)" DestinationFiles="$(_SurvivalcraftModStage)/assemblies/$(TargetFileName)"/>
         <Copy SourceFiles="@(_SurvivalcraftModDependencies)" DestinationFolder="$(_SurvivalcraftModStage)/assemblies" SkipUnchangedFiles="true"/>
         <Copy SourceFiles="@(_SurvivalcraftModData)"
@@ -62,8 +67,7 @@
         <Copy SourceFiles="@(_SurvivalcraftModAssets)"
               DestinationFiles="@(_SurvivalcraftModAssets->'$(_SurvivalcraftModStage)/assets/$(SurvivalcraftModId)/%(RecursiveDir)%(Filename)%(Extension)')"
               SkipUnchangedFiles="true" Condition="'@(_SurvivalcraftModAssets)' != ''"/>
-        <Delete Files="$(_SurvivalcraftModPackagePath)"/>
-        <ZipDirectory SourceDirectory="$(_SurvivalcraftModStage)" DestinationFile="$(_SurvivalcraftModPackagePath)" Overwrite="true"/>
+        <Exec Command="dotnet &quot;$(SurvivalcraftContentTool)&quot; pack &quot;$(SurvivalcraftModManifest)&quot; &quot;$(_SurvivalcraftModStage)&quot; &quot;$(_SurvivalcraftModPackagePath)&quot;"/>
         <Message Text="Created Survivalcraft package: $(_SurvivalcraftModPackagePath)" Importance="high"/>
     </Target>
 </Project>

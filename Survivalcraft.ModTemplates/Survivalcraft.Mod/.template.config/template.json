@@ -4,7 +4,7 @@
   "classifications": ["Survivalcraft", "Mod"],
   "identity": "SCNET.Survivalcraft.Mod",
   "name": "Survivalcraft Mod",
-  "shortName": "scpakmod",
+  "shortName": "scpkgmod",
   "sourceName": "Survivalcraft.ModTemplate",
   "preferNameDirectory": true,
   "symbols": {

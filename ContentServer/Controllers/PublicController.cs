@@ -2,6 +2,7 @@ using ContentServer.Application.Queries;
 using ContentServer.Controllers.Contracts.Requests;
 using ContentServer.Controllers.Contracts.Responses;
 using ContentServer.Controllers.Mappings;
+using ContentServer.Infrastructure;
 
 using MediatR;
 
@@ -14,7 +15,7 @@ namespace ContentServer.Controllers;
 
 [ApiController]
 [Route("api/v1")]
-public sealed class PublicController(IMediator mediator) : ControllerBase
+public sealed class PublicController(IMediator mediator, ContentPackageStore packageStore) : ControllerBase
 {
     [HttpGet("health")]
     public ResponseData<HealthResponse> Health()
@@ -77,7 +78,7 @@ public sealed class PublicController(IMediator mediator) : ControllerBase
             throw new KnownException("package_not_found", StatusCodes.Status404NotFound);
         }
 
-        return File(blob.Data, blob.MediaType, blob.FileName, true);
+        return File(packageStore.Open(blob.Hash), blob.MediaType, blob.FileName, true);
     }
 
     [HttpGet("mods")]

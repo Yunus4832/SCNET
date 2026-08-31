@@ -35,7 +35,7 @@ public class ModHostTest
     {
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.content", "Content", "1.0"),
+            new ModManifest("example.content", "Content", "1.0.0"),
             () => new RegisteringMod());
 
         host.LoadAndStart([descriptor]);
@@ -56,7 +56,7 @@ public class ModHostTest
     {
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.commands", "Commands", "1.0"),
+            new ModManifest("example.commands", "Commands", "1.0.0"),
             () => new CommandMod());
 
         host.LoadAndStart([descriptor]);
@@ -91,7 +91,7 @@ public class ModHostTest
         var host = new ModHost();
         var first = Descriptor("example.first", calls);
         var failing = new ModDescriptor(
-            new ModManifest("example.second", "Second", "1.0", [new ModDependency("example.first")]),
+            new ModManifest("example.second", "Second", "1.0.0", [new ModDependency("example.first")]),
             () => new FailingMod(calls));
 
         Assert.Throws<InvalidOperationException>(() => host.LoadAndStart([failing, first]));
@@ -107,7 +107,7 @@ public class ModHostTest
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.hooks", "Hooks", "1.0"),
+            new ModManifest("example.hooks", "Hooks", "1.0.0"),
             () => new HookMod(calls));
 
         host.LoadAndStart([descriptor]);
@@ -130,7 +130,7 @@ public class ModHostTest
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.terrain", "Terrain", "1.0"),
+            new ModManifest("example.terrain", "Terrain", "1.0.0"),
             () => new TerrainHookMod(calls));
 
         host.LoadAndStart([descriptor]);
@@ -151,7 +151,7 @@ public class ModHostTest
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.blocks", "Blocks", "1.0"),
+            new ModManifest("example.blocks", "Blocks", "1.0.0"),
             () => new BlockBehaviorHookMod(calls));
 
         host.LoadAndStart([descriptor]);
@@ -172,7 +172,7 @@ public class ModHostTest
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.players", "Players", "1.0"),
+            new ModManifest("example.players", "Players", "1.0.0"),
             () => new PlayerLifecycleHookMod(calls));
 
         host.LoadAndStart([descriptor]);
@@ -201,7 +201,7 @@ public class ModHostTest
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.actions", "Actions", "1.0"),
+            new ModManifest("example.actions", "Actions", "1.0.0"),
             () => new ContextActionHookMod(calls));
 
         host.LoadAndStart([descriptor]);
@@ -228,7 +228,7 @@ public class ModHostTest
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.ai", "Ai", "1.0"),
+            new ModManifest("example.ai", "Ai", "1.0.0"),
             () => new CreatureTargetHookMod(calls));
 
         host.LoadAndStart([descriptor]);
@@ -259,7 +259,7 @@ public class ModHostTest
         var calls = new List<string>();
         var host = new ModHost();
         var descriptor = new ModDescriptor(
-            new ModManifest("example.net", "Net", "1.0"),
+            new ModManifest("example.net", "Net", "1.0.0"),
             () => new ModNetworkHookMod(calls));
 
         host.LoadAndStart([descriptor]);
@@ -278,7 +278,7 @@ public class ModHostTest
         List<string> calls,
         params ModDependency[] dependencies)
     {
-        var manifest = new ModManifest(id, id, "1.0", dependencies);
+        var manifest = new ModManifest(id, id, "1.0.0", dependencies);
         return new ModDescriptor(manifest, () => new RecordingMod(manifest, calls));
     }
 

@@ -1,6 +1,8 @@
 using System.IO.Compression;
 using System.Text;
 
+using Content.Packaging;
+
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
@@ -26,7 +28,7 @@ public class ModPackageTest
             }
             """,
             includeTestAssembly: true);
-        var package = ModPackage.Read("test.scpak", packageStream);
+        var package = ModPackage.Read("test.scpkg", packageStream);
         var host = new ModHost();
 
         host.LoadAndStart([package.CreateDescriptor(ModSide.Server)]);
@@ -46,11 +48,11 @@ public class ModPackageTest
         using var stream = new MemoryStream();
         using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, true))
         {
-            archive.CreateEntry("assemblies/Unused.dll");
+            archive.CreateEntry("payload/mod.json");
         }
 
         stream.Position = 0;
-        var exception = Assert.Throws<ModPackageException>(() => ModPackage.Read("missing.scpak", stream));
+        var exception = Assert.Throws<ModPackageException>(() => ModPackage.Read("missing.scpkg", stream));
 
         Assert.Contains("manifest.json", exception.Message);
     }
@@ -69,7 +71,7 @@ public class ModPackageTest
                                                   }
                                                 }
                                                 """);
-        var package = ModPackage.Read("client.scpak", packageStream);
+        var package = ModPackage.Read("client.scpkg", packageStream);
 
         var exception = Assert.Throws<ModPackageException>(() => package.CreateDescriptor(ModSide.Server));
 
@@ -83,8 +85,8 @@ public class ModPackageTest
         Directory.CreateDirectory(directory);
         try
         {
-            WritePackage(Path.Combine(directory, "addon.scpak"), Manifest("example.addon", "example.core"));
-            WritePackage(Path.Combine(directory, "core.scpak"), Manifest("example.core"));
+            WritePackage(Path.Combine(directory, "addon.scpkg"), Manifest("example.addon", "example.core"));
+            WritePackage(Path.Combine(directory, "core.scpkg"), Manifest("example.core"));
             File.WriteAllBytes(Path.Combine(directory, "legacy.scmod"), [1, 2, 3]);
 
             var plan = ModPackageCatalog.CreateLoadPlan(directory, ModSide.Server);
@@ -108,8 +110,8 @@ public class ModPackageTest
         var addon = CreateDataPackage(Manifest("example.addon", "example.core")).ToArray();
         var sources = new[]
         {
-            new ModPackageSource("addon.scpak", () => new MemoryStream(addon, writable: false)),
-            new ModPackageSource("core.scpak", () => new MemoryStream(core, writable: false))
+            new ModPackageSource("addon.scpkg", () => new MemoryStream(addon, writable: false)),
+            new ModPackageSource("core.scpkg", () => new MemoryStream(core, writable: false))
         };
 
         var plan = ModPackageCatalog.CreateLoadPlan(sources, ModSide.Server);
@@ -138,7 +140,7 @@ public class ModPackageTest
                 ["data/database/entities.xdb"] = "<Patch />",
                 ["data/recipes/items.cr"] = "<Recipes />"
             });
-        var package = ModPackage.Read("data.scpak", packageStream);
+        var package = ModPackage.Read("data.scpkg", packageStream);
         var descriptor = package.CreateDescriptor(ModSide.Server);
         var host = new ModHost();
 
@@ -166,7 +168,7 @@ public class ModPackageTest
                 ["assets/example.assets/text/readme.txt"] = "namespaced content",
                 ["assets/example.assets/lang/zh-CN.json"] = "{\"Usual\":{\"ok\":\"OK\"}}"
             });
-        var package = ModPackage.Read("assets.scpak", packageStream);
+        var package = ModPackage.Read("assets.scpkg", packageStream);
         var host = new ModHost();
         host.LoadAndStart([package.CreateDescriptor(ModSide.Server)]);
         var catalog = ContentCatalog.Compile(host.Extensions);
@@ -185,24 +187,25 @@ public class ModPackageTest
     }
 
     [Fact]
-    public void PackageRejectsAssetsOutsideItsNamespace()
+    public void WriterRejectsAssetsOutsideModNamespace()
     {
-        using var packageStream = CreatePackage(
+        var exception = Assert.Throws<ContentPackageException>(() => CreatePackage(
             """
             {
               "id": "example.assets",
               "name": "Asset Mod",
-              "version": "1.0.0"
+              "version": "1.0.0",
+              "entrypoints": {
+                "common": "Example.ModEntry, Example"
+              }
             }
             """,
             new Dictionary<string, string>
             {
                 ["assets/other.mod/readme.txt"] = "not owned"
-            });
+            }));
 
-        var exception = Assert.Throws<ModPackageException>(() => ModPackage.Read("assets.scpak", packageStream));
-
-        Assert.Contains("must be inside assets/example.assets/", exception.Message);
+        Assert.Contains("invalid", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -215,8 +218,8 @@ public class ModPackageTest
             Manifest("example.hash"),
             new Dictionary<string, string> { ["data/blocks/items.csv"] = "second" });
 
-        var first = ModPackage.Read("first.scpak", firstStream);
-        var second = ModPackage.Read("second.scpak", secondStream);
+        var first = ModPackage.Read("first.scpkg", firstStream);
+        var second = ModPackage.Read("second.scpkg", secondStream);
 
         Assert.NotEqual(first.PackageHash, second.PackageHash);
     }
@@ -239,8 +242,8 @@ public class ModPackageTest
                 ["data/blocks/a.csv"] = "A"
             });
 
-        var first = ModPackage.Read("first.scpak", firstStream);
-        var second = ModPackage.Read("second.scpak", secondStream);
+        var first = ModPackage.Read("first.scpkg", firstStream);
+        var second = ModPackage.Read("second.scpkg", secondStream);
 
         Assert.Equal(first.PackageHash, second.PackageHash);
     }
@@ -250,36 +253,8 @@ public class ModPackageTest
         IReadOnlyDictionary<string, string>? dataFiles = null,
         bool includeTestAssembly = false)
     {
-        var stream = new MemoryStream();
-        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, true))
-        {
-            var manifestEntry = archive.CreateEntry("manifest.json");
-            using (var writer = new StreamWriter(manifestEntry.Open(), Encoding.UTF8, leaveOpen: false))
-            {
-                writer.Write(manifest);
-            }
-
-            if (includeTestAssembly)
-            {
-                var assemblyEntry = archive.CreateEntry("assemblies/Survivalcraft.Test.dll");
-                using var entryStream = assemblyEntry.Open();
-                using var assemblyStream = File.OpenRead(typeof(ModPackageTest).Assembly.Location);
-                assemblyStream.CopyTo(entryStream);
-            }
-
-            if (dataFiles is not null)
-            {
-                foreach (var (path, content) in dataFiles)
-                {
-                    var dataEntry = archive.CreateEntry(path);
-                    using var dataWriter = new StreamWriter(dataEntry.Open(), Encoding.UTF8, leaveOpen: false);
-                    dataWriter.Write(content);
-                }
-            }
-        }
-
-        stream.Position = 0;
-        return stream;
+        return ScpkgTestPackage.Create(manifest, dataFiles,
+            includeTestAssembly ? typeof(ModPackageTest).Assembly.Location : null);
     }
 
     private static void WritePackage(string path, string manifest)

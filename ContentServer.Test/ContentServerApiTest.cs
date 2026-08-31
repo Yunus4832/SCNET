@@ -3,7 +3,11 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 
+using Content.Packaging;
+
 using ContentServer.Infrastructure;
+
+using Game.Modding;
 
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -17,6 +21,7 @@ public sealed class ContentServerApiTest : IDisposable
 {
     private const string _administratorKey = "integration-administrator-key";
     private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"content-server-{Guid.NewGuid():N}.db");
+    private readonly string _storagePath = Path.Combine(Path.GetTempPath(), $"content-server-files-{Guid.NewGuid():N}");
 
     [Fact]
     public async Task PublisherApprovalContentApprovalAndAnonymousDownloadFormOneFlow()
@@ -114,13 +119,10 @@ public sealed class ContentServerApiTest : IDisposable
 
         using var submissionRequest = CreateAuthorizedRequest(
             HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey);
+        var firstPackage = CreateModPackage("1.0.0");
         submissionRequest.Content = new MultipartFormDataContent
         {
-            { new StringContent("Mod"), "type" },
-            { new StringContent("integration.example"), "identifier" },
-            { new StringContent("Integration Mod"), "name" },
-            { new StringContent("1.0.0"), "version" },
-            { new ByteArrayContent([1, 2, 3, 4]), "package", "integration.scpak" }
+            { new ByteArrayContent(firstPackage), "package", "integration.scpkg" }
         };
         using var submissionResponse = await client.SendAsync(submissionRequest);
         submissionResponse.EnsureSuccessStatusCode();
@@ -128,6 +130,33 @@ public sealed class ContentServerApiTest : IDisposable
         var contentId = submission.GetProperty("contentId").GetString()!;
         var versionId = submission.GetProperty("versionId").GetString()!;
         var packageHash = submission.GetProperty("packageHash").GetString()!;
+
+        using var idempotentRequest = CreateAuthorizedRequest(
+            HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey);
+        idempotentRequest.Content = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(firstPackage), "package", "same-logical-package.scpkg" }
+        };
+        var idempotent = await ReadDataAsync(await client.SendAsync(idempotentRequest));
+        Assert.Equal(versionId, idempotent.GetProperty("versionId").GetString());
+
+        using var conflictingRequest = CreateAuthorizedRequest(
+            HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey);
+        conflictingRequest.Content = new MultipartFormDataContent
+        {
+            { new ByteArrayContent(CreateModPackage("1.0.0", "different")), "package", "conflict.scpkg" }
+        };
+        using var conflictingResponse = await client.SendAsync(conflictingRequest);
+        Assert.Equal(HttpStatusCode.Conflict, conflictingResponse.StatusCode);
+
+        using var invalidRequest = CreateAuthorizedRequest(
+            HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey);
+        invalidRequest.Content = new MultipartFormDataContent
+        {
+            { new ByteArrayContent([1, 2, 3, 4]), "package", "invalid.scpkg" }
+        };
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(invalidRequest)).StatusCode);
+        Assert.Empty(Directory.EnumerateFiles(Path.Combine(_storagePath, "temp")));
 
         using var submissionStatusRequest = CreateAuthorizedRequest(
             HttpMethod.Get, $"/api/v1/publisher/submissions/{versionId}", publisherKey);
@@ -138,11 +167,7 @@ public sealed class ContentServerApiTest : IDisposable
             HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey);
         secondSubmissionRequest.Content = new MultipartFormDataContent
         {
-            { new StringContent("Mod"), "type" },
-            { new StringContent("integration.example"), "identifier" },
-            { new StringContent("Integration Mod"), "name" },
-            { new StringContent("1.1.0"), "version" },
-            { new ByteArrayContent([5, 6, 7, 8]), "package", "integration-1.1.scpak" }
+            { new ByteArrayContent(CreateModPackage("1.1.0")), "package", "integration-1.1.scpkg" }
         };
         using var secondSubmissionResponse = await client.SendAsync(secondSubmissionRequest);
         secondSubmissionResponse.EnsureSuccessStatusCode();
@@ -156,11 +181,7 @@ public sealed class ContentServerApiTest : IDisposable
                 HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey);
             additionalSubmissionRequest.Content = new MultipartFormDataContent
             {
-                { new StringContent("Mod"), "type" },
-                { new StringContent("integration.example"), "identifier" },
-                { new StringContent("Integration Mod"), "name" },
-                { new StringContent($"1.{index}.0"), "version" },
-                { new ByteArrayContent([(byte)index]), "package", $"integration-1.{index}.scpak" }
+                { new ByteArrayContent(CreateModPackage($"1.{index}.0")), "package", $"integration-1.{index}.scpkg" }
             };
             using var additionalSubmissionResponse = await client.SendAsync(additionalSubmissionRequest);
             additionalSubmissionResponse.EnsureSuccessStatusCode();
@@ -214,7 +235,7 @@ public sealed class ContentServerApiTest : IDisposable
             _administratorKey);
         using var reviewDownloadResponse = await client.SendAsync(reviewDownloadRequest);
         reviewDownloadResponse.EnsureSuccessStatusCode();
-        Assert.Equal([1, 2, 3, 4], await reviewDownloadResponse.Content.ReadAsByteArrayAsync());
+        Assert.Equal(firstPackage, await reviewDownloadResponse.Content.ReadAsByteArrayAsync());
 
         using var approveContent = CreateAuthorizedRequest(
             HttpMethod.Post, $"/api/v1/admin/submissions/{versionId}/approve", _administratorKey);
@@ -233,7 +254,14 @@ public sealed class ContentServerApiTest : IDisposable
             await client.GetAsync("/api/v1/mods/integration.example"));
         Assert.Equal(1, publicModVersions.GetProperty("total").GetInt32());
 
-        Assert.Equal([1, 2, 3, 4], await client.GetByteArrayAsync($"/api/v1/packages/{packageHash}"));
+        var downloadedPackage = await client.GetByteArrayAsync($"/api/v1/packages/{packageHash}");
+        Assert.Equal(firstPackage, downloadedPackage);
+        using (var downloadedStream = new MemoryStream(downloadedPackage, writable: false))
+        {
+            var runtimePackage = ModPackage.Read("content-server-download.scpkg", downloadedStream);
+            Assert.Equal(packageHash, runtimePackage.PackageHash);
+            Assert.Equal("integration.example", runtimePackage.Manifest.Id);
+        }
 
         using var publisherContentRequest = CreateAuthorizedRequest(
             HttpMethod.Get, "/api/v1/publisher/content", publisherKey);
@@ -249,13 +277,69 @@ public sealed class ContentServerApiTest : IDisposable
         using var publisherEnableContent = CreateAuthorizedRequest(
             HttpMethod.Post, $"/api/v1/publisher/content/{contentId}/enable", publisherKey);
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(publisherEnableContent)).StatusCode);
-        Assert.Equal([1, 2, 3, 4], await client.GetByteArrayAsync($"/api/v1/packages/{packageHash}"));
+        Assert.Equal(firstPackage, await client.GetByteArrayAsync($"/api/v1/packages/{packageHash}"));
 
         using var disableContent = CreateAuthorizedRequest(
             HttpMethod.Post, $"/api/v1/admin/content/{contentId}/disable", _administratorKey);
         disableContent.Content = JsonContent.Create(new { });
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(disableContent)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/v1/packages/{packageHash}")).StatusCode);
+
+        var concurrentPackage = CreateModPackage("2.0.0");
+        async Task<JsonElement> SubmitPackageAsync(byte[] bytes, string fileName)
+        {
+            using var request = CreateAuthorizedRequest(
+                HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey);
+            request.Content = new MultipartFormDataContent
+            {
+                { new ByteArrayContent(bytes), "package", fileName }
+            };
+            return await ReadDataAsync(await client.SendAsync(request));
+        }
+        var concurrentResults = await Task.WhenAll(
+            SubmitPackageAsync(concurrentPackage, "concurrent-a.scpkg"),
+            SubmitPackageAsync(concurrentPackage, "concurrent-b.scpkg"));
+        Assert.Equal(concurrentResults[0].GetProperty("versionId").GetString(),
+            concurrentResults[1].GetProperty("versionId").GetString());
+
+        var failedPackage = CreateModPackage("1.0.0", markerSuffix: "failure", identifier: "failure.example");
+        string failedHash;
+        using (var failedStream = new MemoryStream(failedPackage, writable: false))
+        {
+            failedHash = ContentPackageReader.Inspect(failedStream).PackageHash;
+        }
+        await using (var failureScope = factory.Services.CreateAsyncScope())
+        {
+            var failureDb = failureScope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+            await failureDb.Database.ExecuteSqlRawAsync("""
+                CREATE TRIGGER fail_content_version_insert
+                BEFORE INSERT ON ContentVersions
+                BEGIN
+                    SELECT RAISE(FAIL, 'injected transaction failure');
+                END;
+                """);
+        }
+        using (var failedRequest = CreateAuthorizedRequest(
+                   HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey))
+        {
+            failedRequest.Content = new MultipartFormDataContent
+            {
+                { new ByteArrayContent(failedPackage), "package", "failure.scpkg" }
+            };
+            Assert.Equal(HttpStatusCode.Conflict,
+                (await client.SendAsync(failedRequest)).StatusCode);
+        }
+        await using (var failureScope = factory.Services.CreateAsyncScope())
+        {
+            var failureDb = failureScope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+            await failureDb.Database.ExecuteSqlRawAsync("DROP TRIGGER fail_content_version_insert");
+            Assert.False(await failureDb.PackageBlobs.AnyAsync(item => item.Hash == failedHash));
+            Assert.False(await failureDb.Contents.AnyAsync(item => item.Identifier == "failure.example"));
+            var failureStore = failureScope.ServiceProvider.GetRequiredService<ContentPackageStore>();
+            var referenced = await failureDb.PackageBlobs.Select(item => item.Hash).ToHashSetAsync();
+            Assert.Single(failureStore.AuditOrphans(referenced));
+            Assert.Equal(1, failureStore.CleanOrphans(referenced));
+        }
 
         using var revokeKey = CreateAuthorizedRequest(
             HttpMethod.Post, $"/api/v1/admin/publishers/{publisherId}/revoke-key", _administratorKey);
@@ -272,11 +356,19 @@ public sealed class ContentServerApiTest : IDisposable
         var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
         Assert.Equal(2, await db.AdministratorKeys.CountAsync());
         Assert.Equal(5, await db.ReviewRecords.CountAsync());
-        Assert.Equal(11, await db.PackageBlobs.CountAsync());
-        Assert.Equal(11, await db.ContentVersions.CountAsync());
+        Assert.Equal(12, await db.PackageBlobs.CountAsync());
+        Assert.Equal(12, await db.ContentVersions.CountAsync());
         var storedPackage = await db.PackageBlobs.SingleAsync(item => item.Hash == packageHash);
         var storedVersion = await db.ContentVersions.SingleAsync(item => item.Id == new ContentServer.Domain.Contents.ContentVersionId(Guid.Parse(versionId)));
         Assert.Equal(storedPackage.Id, storedVersion.PackageBlobId);
+
+        var packageStore = scope.ServiceProvider.GetRequiredService<ContentPackageStore>();
+        var orphanPath = Path.Combine(_storagePath, "packages", new string('a', 64) + ".scpkg");
+        await File.WriteAllBytesAsync(orphanPath, firstPackage);
+        var referencedHashes = await db.PackageBlobs.Select(item => item.Hash).ToHashSetAsync();
+        Assert.Contains(orphanPath, packageStore.AuditOrphans(referencedHashes));
+        Assert.Equal(1, packageStore.CleanOrphans(referencedHashes));
+        Assert.False(File.Exists(orphanPath));
     }
 
     public void Dispose()
@@ -284,6 +376,10 @@ public sealed class ContentServerApiTest : IDisposable
         if (File.Exists(_databasePath))
         {
             File.Delete(_databasePath);
+        }
+        if (Directory.Exists(_storagePath))
+        {
+            Directory.Delete(_storagePath, recursive: true);
         }
     }
 
@@ -295,9 +391,35 @@ public sealed class ContentServerApiTest : IDisposable
             builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(
                 new Dictionary<string, string?>
                 {
-                    ["ContentServer:DatabasePath"] = _databasePath
+                    ["ContentServer:DatabasePath"] = _databasePath,
+                    ["ContentServer:PackageStoragePath"] = _storagePath
                 }));
         });
+    }
+
+    private static byte[] CreateModPackage(
+        string version,
+        string? markerSuffix = null,
+        string identifier = "integration.example")
+    {
+        using var metadata = JsonDocument.Parse("""
+        {"side":"common","entrypoints":{},"dependencies":[]}
+        """);
+        var manifest = new ContentPackageManifest(1, ContentPackageType.Mod, identifier,
+            "Integration Mod", version,
+            new ContentPackagePayload("scnet.mod-v1", "payload/mod.json", "application/json"),
+            metadata.RootElement.Clone());
+        var modJson = "{\"formatVersion\":1}"u8.ToArray();
+        var marker = System.Text.Encoding.UTF8.GetBytes(version + markerSuffix);
+        using var output = new MemoryStream();
+        ContentPackageWriter.Write(output, manifest,
+        [
+            new ContentPackageWriteEntry("payload/mod.json", modJson.Length,
+                () => new MemoryStream(modJson, writable: false)),
+            new ContentPackageWriteEntry("payload/data/version.txt", marker.Length,
+                () => new MemoryStream(marker, writable: false))
+        ]);
+        return output.ToArray();
     }
 
     private static HttpRequestMessage CreateAuthorizedRequest(HttpMethod method, string uri, string key)

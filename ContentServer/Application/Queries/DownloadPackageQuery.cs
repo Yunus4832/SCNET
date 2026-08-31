@@ -7,7 +7,7 @@ using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Application.Queries;
 
-public sealed record PackageDownloadDto(byte[] Data, string FileName, string MediaType);
+public sealed record PackageDownloadDto(string Hash, string FileName, string MediaType);
 
 public sealed record DownloadPackageQuery(string Hash) : IQuery<PackageDownloadDto?>;
 
@@ -35,6 +35,6 @@ public sealed class DownloadPackageQueryHandler(
         var isPublic = await db.Contents.AsNoTracking()
             .AnyAsync(content => contentIds.Contains(content.Id) &&
                                  content.Status == ContentStatus.Active, cancellationToken);
-        return isPublic ? new PackageDownloadDto(blob.Data, blob.FileName, blob.MediaType) : null;
+        return isPublic ? new PackageDownloadDto(blob.Hash, blob.FileName, blob.MediaType) : null;
     }
 }

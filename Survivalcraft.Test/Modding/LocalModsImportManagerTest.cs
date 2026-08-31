@@ -1,6 +1,3 @@
-using System.IO.Compression;
-using System.Text;
-
 using Engine.FileStorage;
 
 using Game;
@@ -20,7 +17,7 @@ public sealed class LocalModsImportManagerTest : IDisposable
     {
         Directory.CreateDirectory(_sourceDirectory);
         Directory.CreateDirectory(_repositoryDirectory);
-        var sourcePath = Path.Combine(_sourceDirectory, "example.alpha.scpak");
+        var sourcePath = Path.Combine(_sourceDirectory, "example.alpha.scpkg");
         File.WriteAllBytes(sourcePath, CreatePackageBytes("example.alpha", "1.0.0"));
 
         LocalModsImportManager.ImportInstalledMods(_sourceDirectory, _repositoryDirectory);
@@ -43,7 +40,7 @@ public sealed class LocalModsImportManagerTest : IDisposable
     {
         Directory.CreateDirectory(_sourceDirectory);
         Directory.CreateDirectory(_repositoryDirectory);
-        var sourcePath = Path.Combine(_sourceDirectory, "example.alpha.scpak");
+        var sourcePath = Path.Combine(_sourceDirectory, "example.alpha.scpkg");
         File.WriteAllBytes(sourcePath, CreatePackageBytes("example.alpha", "1.0.0"));
 
         LocalModsImportManager.ImportInstalledMods(_sourceDirectory, _repositoryDirectory);
@@ -65,7 +62,7 @@ public sealed class LocalModsImportManagerTest : IDisposable
         Directory.CreateDirectory(_sourceDirectory);
         Directory.CreateDirectory(_repositoryDirectory);
         var repository = new LocalModRepository(_repositoryDirectory);
-        var sourcePath = Path.Combine(_sourceDirectory, "example.alpha.scpak");
+        var sourcePath = Path.Combine(_sourceDirectory, "example.alpha.scpkg");
         File.WriteAllBytes(sourcePath, CreatePackageBytes("example.alpha", "1.0.0"));
         var entry = repository.ImportPackage(sourcePath);
         var exportDirectory = Path.Combine(Path.GetTempPath(), $"scnet-exported-mods-{Guid.NewGuid():N}");
@@ -103,20 +100,13 @@ public sealed class LocalModsImportManagerTest : IDisposable
 
     private static byte[] CreatePackageBytes(string modId, string version)
     {
-        using var stream = new MemoryStream();
-        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, true))
-        {
-            var manifestEntry = archive.CreateEntry("manifest.json");
-            using var writer = new StreamWriter(manifestEntry.Open(), Encoding.UTF8, leaveOpen: false);
-            writer.Write($$"""
+        using var stream = ScpkgTestPackage.Create($$"""
                            {
                              "id": "{{modId}}",
                              "name": "{{modId}}",
                              "version": "{{version}}"
                            }
-                           """);
-        }
-
+                           """, new Dictionary<string, string> { ["data/marker.txt"] = "data" });
         return stream.ToArray();
     }
 

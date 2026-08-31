@@ -75,10 +75,13 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
     public ContentVersion SubmitVersion(
         string version,
         PackageBlobId packageBlobId,
+        string packageHash,
+        string blobHash,
         string? metadata,
         DateTimeOffset now)
     {
-        var item = ContentVersion.Create(version, packageBlobId, NormalizeOptionalText(metadata), now);
+        var item = ContentVersion.Create(PublisherId, Type, Identifier, version, packageBlobId,
+            packageHash, blobHash, NormalizeOptionalText(metadata), now);
         Versions.Add(item);
         AddDomainEvent(new ContentVersionSubmittedDomainEvent(this, item));
         return item;
@@ -149,6 +152,16 @@ public class ContentVersion : Entity<ContentVersionId>
 
     public string Version { get; private set; } = string.Empty;
 
+    public PublisherId PublisherId { get; private set; } = null!;
+
+    public string ContentType { get; private set; } = string.Empty;
+
+    public string Identifier { get; private set; } = string.Empty;
+
+    public string PackageHash { get; private set; } = string.Empty;
+
+    public string? BlobHash { get; private set; }
+
     public PackageBlobId PackageBlobId { get; private set; } = null!;
 
     public string? MetadataJson { get; private set; }
@@ -168,16 +181,26 @@ public class ContentVersion : Entity<ContentVersionId>
     public virtual ContentItem Owner { get; private set; } = null!;
 
     public static ContentVersion Create(
+        PublisherId publisherId,
+        string contentType,
+        string identifier,
         string version,
         PackageBlobId packageBlobId,
+        string packageHash,
+        string? blobHash,
         string? metadata,
         DateTimeOffset now
     )
     {
         return new ContentVersion
         {
+            PublisherId = publisherId,
+            ContentType = contentType,
+            Identifier = identifier,
             Version = version,
             PackageBlobId = packageBlobId,
+            PackageHash = packageHash,
+            BlobHash = blobHash,
             MetadataJson = metadata,
             Status = ContentVersionStatus.Pending,
             CreatedAt = now,

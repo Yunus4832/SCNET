@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
+using Content.Packaging;
+
 namespace Game.Modding;
 
 public sealed record ModDependency(string Id, string? MinimumVersion = null, bool Optional = false);
@@ -28,7 +30,7 @@ public sealed record ModManifest(
 {
     public ModId ModId => new(Id);
 
-    public Version ParsedVersion => System.Version.TryParse(Version, out var version)
+    public SemanticVersion ParsedVersion => SemanticVersion.TryParse(Version, out var version)
         ? version
         : throw new InvalidOperationException($"Mod {Id} has invalid version \"{Version}\".");
 
@@ -62,7 +64,7 @@ public sealed record ModManifest(
                 throw new InvalidOperationException($"Mod {Id} declares dependency {dependencyId} more than once.");
             }
 
-            if (dependency.MinimumVersion is not null && !System.Version.TryParse(dependency.MinimumVersion, out _))
+            if (dependency.MinimumVersion is not null && !SemanticVersion.TryParse(dependency.MinimumVersion, out _))
             {
                 throw new InvalidOperationException(
                     $"Mod {Id} has invalid minimum version \"{dependency.MinimumVersion}\" for {dependencyId}.");

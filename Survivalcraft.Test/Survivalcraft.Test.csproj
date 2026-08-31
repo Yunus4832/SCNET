@@ -17,6 +17,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
         <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj"/>
     </ItemGroup>
 

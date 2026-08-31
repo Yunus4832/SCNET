@@ -8,7 +8,7 @@ public class ModDependencyResolverTest
     public void ResolveOrdersDependenciesBeforeDependents()
     {
         var core = Descriptor("example.core");
-        var addon = Descriptor("example.addon", new ModDependency("example.core", "1.0"));
+        var addon = Descriptor("example.addon", new ModDependency("example.core", "1.0.0"));
 
         var result = ModDependencyResolver.Resolve([addon, core]);
 
@@ -39,7 +39,7 @@ public class ModDependencyResolverTest
 
     private static ModDescriptor Descriptor(string id, params ModDependency[] dependencies)
     {
-        return new ModDescriptor(new ModManifest(id, id, "1.0", dependencies), () => new EmptyMod());
+        return new ModDescriptor(new ModManifest(id, id, "1.0.0", dependencies), () => new EmptyMod());
     }
 
     private sealed class EmptyMod : IMod

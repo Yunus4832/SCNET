@@ -102,7 +102,7 @@ public sealed class ModServerClient : IDisposable
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        return repository.AddOrUpdatePackage(content, $"{package.PackageHash}.scpak");
+        return repository.AddOrUpdatePackage(content, $"{package.PackageHash}{ModPackage.FileExtension}");
     }
 
     private async Task<IReadOnlyList<ModRepositoryPackage>> ListPagesAsync(

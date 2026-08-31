@@ -1,4 +1,3 @@
-using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -16,7 +15,7 @@ public sealed class ModServerClientTest : IDisposable
     {
         Directory.CreateDirectory(_root);
         var packageBytes = CreatePackageBytes("example.test", "1.0.0");
-        var packageHash = LocalModRepository.ComputePackageHash(packageBytes, "example.test.1.0.0.scpak");
+        var packageHash = LocalModRepository.ComputePackageHash(packageBytes, "example.test.1.0.0.scpkg");
         using var httpClient = new HttpClient(new StubHttpMessageHandler(request =>
         {
             if (request.RequestUri!.AbsoluteUri == "https://mods.example/api/v1/mods/example.test/versions/1.0.0")
@@ -31,7 +30,7 @@ public sealed class ModServerClientTest : IDisposable
                         ModId = "example.test",
                         Version = "1.0.0",
                         PackageHash = packageHash,
-                        FileName = "example.test.1.0.0.scpak",
+                        FileName = "example.test.1.0.0.scpkg",
                         DownloadUrl = $"https://mods.example/api/v1/packages/{packageHash}"
                     }
                 });
@@ -58,14 +57,14 @@ public sealed class ModServerClientTest : IDisposable
         Assert.Equal("example.test", localEntry.ModId);
         Assert.Equal("1.0.0", localEntry.Version);
         Assert.Equal(packageHash, localEntry.PackageHash);
-        Assert.EndsWith(".scpak", localEntry.FileName);
+        Assert.EndsWith(".scpkg", localEntry.FileName);
     }
 
     [Fact]
     public void LocalModRepositoryIndexesValidPackagesOnly()
     {
         Directory.CreateDirectory(_root);
-        File.WriteAllBytes(Path.Combine(_root, "alpha.scpak"), CreatePackageBytes("example.alpha", "1.0.0"));
+        File.WriteAllBytes(Path.Combine(_root, "alpha.scpkg"), CreatePackageBytes("example.alpha", "1.0.0"));
         File.WriteAllBytes(Path.Combine(_root, "notes.txt"), [1, 2, 3]);
 
         var repository = new LocalModRepository(_root);
@@ -74,7 +73,7 @@ public sealed class ModServerClientTest : IDisposable
         var entry = Assert.Single(entries);
         Assert.Equal("example.alpha", entry.ModId);
         Assert.Equal("1.0.0", entry.Version);
-        Assert.Equal(LocalModRepository.ComputePackageHash(Path.Combine(_root, "alpha.scpak")), entry.PackageHash);
+        Assert.Equal(LocalModRepository.ComputePackageHash(Path.Combine(_root, "alpha.scpkg")), entry.PackageHash);
     }
 
     [Fact]
@@ -86,7 +85,7 @@ public sealed class ModServerClientTest : IDisposable
                 ModId = $"example.{index}",
                 Version = "1.0.0",
                 PackageHash = index.ToString("x64"),
-                FileName = $"example.{index}.scpak",
+                FileName = $"example.{index}.scpkg",
                 DownloadUrl = $"/api/v1/packages/{index:x64}"
             })
             .ToArray();
@@ -135,20 +134,13 @@ public sealed class ModServerClientTest : IDisposable
 
     private static byte[] CreatePackageBytes(string modId, string version)
     {
-        using var stream = new MemoryStream();
-        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, true))
-        {
-            var manifestEntry = archive.CreateEntry("manifest.json");
-            using var writer = new StreamWriter(manifestEntry.Open(), Encoding.UTF8, leaveOpen: false);
-            writer.Write($$"""
+        using var stream = ScpkgTestPackage.Create($$"""
                            {
                              "id": "{{modId}}",
                              "name": "{{modId}}",
                              "version": "{{version}}"
                            }
-                           """);
-        }
-
+                           """, new Dictionary<string, string> { ["data/marker.txt"] = "data" });
         return stream.ToArray();
     }
 

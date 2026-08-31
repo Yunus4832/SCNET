@@ -7,7 +7,7 @@ using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Application.Queries;
 
-public sealed record SubmissionPackageDto(byte[] Data, string FileName, string MediaType);
+public sealed record SubmissionPackageDto(string Hash, string FileName, string MediaType);
 
 public sealed record DownloadSubmissionPackageQuery(
     ContentVersionId VersionId) : IQuery<SubmissionPackageDto?>;
@@ -32,7 +32,7 @@ public sealed class DownloadSubmissionPackageQueryHandler(
 
         return await db.PackageBlobs.AsNoTracking()
             .Where(blob => blob.Id == packageId)
-            .Select(blob => new SubmissionPackageDto(blob.Data, blob.FileName, blob.MediaType))
+            .Select(blob => new SubmissionPackageDto(blob.Hash, blob.FileName, blob.MediaType))
             .SingleOrDefaultAsync(cancellationToken);
     }
 }

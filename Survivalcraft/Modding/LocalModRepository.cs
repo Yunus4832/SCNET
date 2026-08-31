@@ -35,12 +35,12 @@ public sealed class LocalModRepository(string directoryPath)
 
     public string GetCachePath(string packageHash)
     {
-        return Path.Combine(directoryPath, $"{packageHash.ToLowerInvariant()}.scpak");
+        return Path.Combine(directoryPath, $"{packageHash.ToLowerInvariant()}{ModPackage.FileExtension}");
     }
 
     public LocalModPackageEntry AddOrUpdatePackage(byte[] content, string? fileName = null)
     {
-        var packageHash = ComputePackageHash(content, fileName ?? "download.scpak");
+        var packageHash = ComputePackageHash(content, fileName ?? $"download{ModPackage.FileExtension}");
         Directory.CreateDirectory(directoryPath);
         var targetPath = !string.IsNullOrWhiteSpace(fileName)
             ? GetTargetPath(fileName)
@@ -111,7 +111,7 @@ public sealed class LocalModRepository(string directoryPath)
         return ComputePackageHash(stream, path);
     }
 
-    public static string ComputePackageHash(byte[] content, string source = "package.scpak")
+    public static string ComputePackageHash(byte[] content, string source = "package.scpkg")
     {
         using var stream = new MemoryStream(content, writable: false);
         return ComputePackageHash(stream, source);

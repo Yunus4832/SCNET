@@ -1,9 +1,19 @@
 {
-  "id": "verification.block",
+  "formatVersion": 1,
+  "type": "mod",
+  "identifier": "verification.block",
   "name": "Verification Block",
   "version": "1.0.0",
-  "side": "common",
-  "entrypoints": {
-    "common": "VerificationBlockMod.ModEntry, VerificationBlockMod"
+  "payload": {
+    "format": "scnet.mod-v1",
+    "entry": "payload/mod.json",
+    "mediaType": "application/json"
+  },
+  "metadata": {
+    "side": "common",
+    "entrypoints": {
+      "common": "VerificationBlockMod.ModEntry, VerificationBlockMod"
+    },
+    "dependencies": []
   }
 }

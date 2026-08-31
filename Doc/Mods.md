@@ -1,29 +1,33 @@
 # 模组使用说明
 
-SCNET 的模组系统以 `.scpak` 包和 `ModProfile` 为核心。
+SCNET 的模组系统以统一内容包 `.scpkg` 和 `ModProfile` 为核心。
 
 包是否存在不代表会被加载。只有当前有效 profile 中列出的模组才会进入运行时。
 
 ## 核心概念
 
-### `.scpak`
+### `.scpkg`
 
-`.scpak` 是一个 zip 包，内部包含：
+`.scpkg` 是统一内容包协议定义的 ZIP 容器。Mod payload 包含：
 
 ```text
 manifest.json
-assemblies/*.dll
-data/**
-assets/<mod-id>/**
+payload/mod.json
+payload/assemblies/*.dll
+payload/data/**
+payload/assets/<mod-id>/**
 ```
 
-`manifest.json` 至少描述：
+`manifest.json` 的公共字段及 Mod metadata 至少描述：
 
-- `id`
+- `formatVersion` 与 `type`
+- `identifier`（即 ModId）
 - `name`
 - `version`
-- `side`
-- `entrypoints`
+- `payload`
+- `metadata.side`
+- `metadata.entrypoints`
+- `metadata.dependencies`
 
 `side` 可为：
 
@@ -35,13 +39,13 @@ assets/<mod-id>/**
 
 路径：`GamePaths.Mods`
 
-这是用户手动放置 `.scpak` 的入口目录。启动时，程序会扫描这个目录，把包导入到本地缓存。
+这是迁移期间用户手动放置 `.scpkg` 的入口目录。启动时，程序会扫描这个目录，把包导入到本地缓存；该扫描入口将在统一 FilePicker 导入可用后按迁移计划删除。
 
 ### 本地缓存
 
 路径：`GamePaths.ModCache`
 
-缓存按包 hash 存储 `.scpak`，用于避免重复保存同一个包。运行时真正解析 required mods 时，会从缓存中查找匹配的 `ModId + Version`。
+缓存按 PackageHash 存储 `.scpkg`，用于避免重复保存同一个包。运行时真正解析 required mods 时，会从缓存中查找匹配的 `ModId + Version`。
 
 ### ModProfile
 
@@ -89,7 +93,7 @@ assets/<mod-id>/**
 GUI 启动时：
 
 1. 扫描 `GamePaths.Mods`
-2. 导入 `.scpak` 到 `GamePaths.ModCache`
+2. 导入 `.scpkg` 到 `GamePaths.ModCache`
 3. 解析当前启动会话对应的有效 `ModProfile`
 4. 如果 profile 中的包本地缺失，尝试从仓库下载
 5. 使用解析到的包启动模组 runtime
@@ -143,7 +147,7 @@ dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
 输出：
 
 ```text
-VerificationBlockMod/bin/Debug/net10.0/packages/verification.block.scpak
+VerificationBlockMod/bin/Debug/net10.0/packages/verification.block.scpkg
 ```
 
 ## 开发文档

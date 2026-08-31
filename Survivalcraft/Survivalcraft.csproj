@@ -25,6 +25,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
+        <ProjectReference Include="..\ContentTool\ContentTool.csproj" ReferenceOutputAssembly="false"/>
         <ProjectReference Include="..\Engine\Engine.csproj"/>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
     </ItemGroup>
@@ -39,6 +41,17 @@
         <None Include="Modding\Survivalcraft.Mod.targets"
               Pack="true"
               PackagePath="buildTransitive\SCNET.Survivalcraft.targets"/>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\ContentTool\bin\$(Configuration)\$(GlobalTargetFramework)\SCNET.ContentTool.dll"
+              Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.dll"/>
+        <None Include="..\ContentTool\bin\$(Configuration)\$(GlobalTargetFramework)\SCNET.ContentTool.deps.json"
+              Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.deps.json"/>
+        <None Include="..\ContentTool\bin\$(Configuration)\$(GlobalTargetFramework)\SCNET.ContentTool.runtimeconfig.json"
+              Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.runtimeconfig.json"/>
+        <None Include="..\ContentTool\bin\$(Configuration)\$(GlobalTargetFramework)\SCNET.Content.Packaging.dll"
+              Pack="true" PackagePath="tools\net10.0\any\SCNET.Content.Packaging.dll"/>
+        <None Include="..\ContentTool\bin\$(Configuration)\$(GlobalTargetFramework)\SixLabors.ImageSharp.dll"
+              Pack="true" PackagePath="tools\net10.0\any\SixLabors.ImageSharp.dll"/>
     </ItemGroup>
 
     <Import Project="..\SharedProperties\GlobalUsing.props"/>

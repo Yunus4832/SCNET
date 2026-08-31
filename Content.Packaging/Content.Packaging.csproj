@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>SCNET.Content.Packaging</AssemblyName>
+        <RootNamespace>Content.Packaging</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Content.Packaging</PackageId>
+        <Description>SCNET unified .scpkg protocol reader, writer and validation contracts.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

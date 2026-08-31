@@ -1,7 +1,9 @@
 using System.IO.Compression;
 using System.Runtime.Loader;
-using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+
+using Content.Packaging;
 
 using Game.Modding.Blocks;
 using Game.Modding.Content;
@@ -11,13 +13,8 @@ namespace Game.Modding;
 
 public sealed class ModPackage
 {
-    public const string FileExtension = ".scpak";
-    public const string SearchPattern = "*.scpak";
-
-    private const int _maxManifestSize = 1024 * 1024;
-    private const long _maxAssemblyBytes = 128L * 1024 * 1024;
-    private const long _maxDataBytes = 128L * 1024 * 1024;
-    private const long _maxAssetBytes = 256L * 1024 * 1024;
+    public const string FileExtension = ContentPackageReader.FileExtension;
+    public const string SearchPattern = "*.scpkg";
     private readonly IReadOnlyDictionary<string, byte[]> _assemblies;
     private readonly IReadOnlyDictionary<string, byte[]> _dataFiles;
     private readonly IReadOnlyDictionary<string, byte[]> _assetFiles;
@@ -49,120 +46,79 @@ public sealed class ModPackage
         ArgumentException.ThrowIfNullOrWhiteSpace(source);
         ArgumentNullException.ThrowIfNull(stream);
 
-        using var archive = new System.IO.Compression.ZipArchive(stream, ZipArchiveMode.Read, true);
-        var manifestEntry = archive.GetEntry("manifest.json")
-                            ?? throw new ModPackageException(source, "Package does not contain manifest.json.");
-        if (manifestEntry.Length > _maxManifestSize)
-        {
-            throw new ModPackageException(source, "Manifest is too large.");
-        }
-
-        string manifestJson;
-        using (var reader = new StreamReader(manifestEntry.Open(), Encoding.UTF8, true, leaveOpen: false))
-        {
-            manifestJson = reader.ReadToEnd();
-        }
-
-        ModManifest manifest;
         try
         {
-            manifest = ModManifest.Parse(manifestJson);
+            var inspection = ContentPackageReader.Inspect(stream);
+            if (inspection.Manifest.Type != ContentPackageType.Mod)
+            {
+                throw new ContentPackageException("Content package is not a Mod package.");
+            }
+
+            var manifest = CreateRuntimeManifest(inspection.Manifest);
+            stream.Position = 0;
+            using var archive = new ZipArchive(stream, ZipArchiveMode.Read, true);
+            var assemblies = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
+            var dataFiles = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+            var assetFiles = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+            var assetPrefix = $"payload/assets/{manifest.Id}/";
+            foreach (var entry in archive.Entries)
+            {
+                if (entry.FullName.StartsWith("payload/data/", StringComparison.Ordinal))
+                {
+                    dataFiles.Add(entry.FullName["payload/".Length..], ReadEntry(entry));
+                }
+                else if (entry.FullName.StartsWith(assetPrefix, StringComparison.Ordinal))
+                {
+                    assetFiles.Add(entry.FullName[assetPrefix.Length..], ReadEntry(entry));
+                }
+                else if (entry.FullName.StartsWith("payload/assemblies/", StringComparison.Ordinal))
+                {
+                    assemblies.Add(Path.GetFileNameWithoutExtension(entry.Name), ReadEntry(entry));
+                }
+            }
+
+            return new ModPackage(source, manifest, assemblies, dataFiles, assetFiles, inspection.PackageHash);
         }
-        catch (Exception exception)
+        catch (Exception exception) when (exception is ContentPackageException or InvalidDataException or JsonException)
         {
-            throw new ModPackageException(source, "Manifest is invalid.", exception);
+            throw new ModPackageException(source, exception.Message, exception);
         }
+    }
 
-        long totalAssemblyBytes = 0;
-        long totalDataBytes = 0;
-        long totalAssetBytes = 0;
-        var assemblies = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
-        var dataFiles = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-        var assetFiles = new Dictionary<string, byte[]>(StringComparer.Ordinal);
-        foreach (var entry in archive.Entries)
+    private static ModManifest CreateRuntimeManifest(ContentPackageManifest packageManifest)
+    {
+        var metadata = packageManifest.Metadata;
+        var side = metadata.GetProperty("side").GetString() switch
         {
-            if (entry.FullName.EndsWith('/'))
-            {
-                continue;
-            }
+            "common" => ModSide.Common,
+            "client" => ModSide.Client,
+            "server" => ModSide.Server,
+            _ => throw new ContentPackageException("Mod side is invalid.")
+        };
+        var entrypointsElement = metadata.GetProperty("entrypoints");
+        var entrypoints = new ModEntrypoints(
+            GetOptionalString(entrypointsElement, "common"),
+            GetOptionalString(entrypointsElement, "client"),
+            GetOptionalString(entrypointsElement, "server"));
+        var dependencies = metadata.GetProperty("dependencies").EnumerateArray()
+            .Select(dependency => new ModDependency(
+                dependency.GetProperty("identifier").GetString()!,
+                dependency.GetProperty("minimumVersion").GetString(),
+                dependency.GetProperty("optional").GetBoolean()))
+            .ToArray();
+        return new ModManifest(packageManifest.Identifier, packageManifest.Name, packageManifest.Version,
+            dependencies, side, entrypoints);
+    }
 
-            if (entry.FullName.StartsWith("data/", StringComparison.Ordinal))
-            {
-                totalDataBytes += entry.Length;
-                if (totalDataBytes > _maxDataBytes)
-                {
-                    throw new ModPackageException(source, "Package data files exceed the size limit.");
-                }
+    private static string? GetOptionalString(JsonElement element, string name) =>
+        element.TryGetProperty(name, out var value) ? value.GetString() : null;
 
-                using var dataStream = entry.Open();
-                using var dataMemory = new MemoryStream((int)entry.Length);
-                dataStream.CopyTo(dataMemory);
-                if (!dataFiles.TryAdd(entry.FullName, dataMemory.ToArray()))
-                {
-                    throw new ModPackageException(source, $"Package contains duplicate data file {entry.FullName}.");
-                }
-
-                continue;
-            }
-
-            var assetPrefix = $"assets/{manifest.Id}/";
-            if (entry.FullName.StartsWith("assets/", StringComparison.Ordinal))
-            {
-                if (!entry.FullName.StartsWith(assetPrefix, StringComparison.Ordinal))
-                {
-                    throw new ModPackageException(
-                        source,
-                        $"Asset {entry.FullName} must be inside {assetPrefix}.");
-                }
-
-                totalAssetBytes += entry.Length;
-                if (totalAssetBytes > _maxAssetBytes)
-                {
-                    throw new ModPackageException(source, "Package assets exceed the size limit.");
-                }
-
-                var relativePath = entry.FullName[assetPrefix.Length..];
-                ValidateAssetPath(source, relativePath);
-                using var assetStream = entry.Open();
-                using var assetMemory = new MemoryStream((int)entry.Length);
-                assetStream.CopyTo(assetMemory);
-                if (!assetFiles.TryAdd(relativePath, assetMemory.ToArray()))
-                {
-                    throw new ModPackageException(source, $"Package contains duplicate asset {entry.FullName}.");
-                }
-
-                continue;
-            }
-
-            if (!entry.FullName.StartsWith("assemblies/", StringComparison.Ordinal) ||
-                !entry.FullName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            totalAssemblyBytes += entry.Length;
-            if (totalAssemblyBytes > _maxAssemblyBytes)
-            {
-                throw new ModPackageException(source, "Package assemblies exceed the size limit.");
-            }
-
-            var assemblyName = Path.GetFileNameWithoutExtension(entry.Name);
-            using var assemblyStream = entry.Open();
-            using var memoryStream = new MemoryStream((int)entry.Length);
-            assemblyStream.CopyTo(memoryStream);
-            if (!assemblies.TryAdd(assemblyName, memoryStream.ToArray()))
-            {
-                throw new ModPackageException(source, $"Package contains duplicate assembly {assemblyName}.");
-            }
-        }
-
-        return new ModPackage(
-            source,
-            manifest,
-            assemblies,
-            dataFiles,
-            assetFiles,
-            ComputePackageHash(manifestJson, assemblies, dataFiles, assetFiles));
+    private static byte[] ReadEntry(ZipArchiveEntry entry)
+    {
+        using var input = entry.Open();
+        using var output = new MemoryStream(checked((int)entry.Length));
+        input.CopyTo(output);
+        return output.ToArray();
     }
 
     public ModDescriptor CreateDescriptor(ModSide hostSide)
@@ -194,57 +150,6 @@ public sealed class ModPackage
             PackageHash);
     }
 
-    private static string ComputePackageHash(
-        string manifestJson,
-        IReadOnlyDictionary<string, byte[]> assemblies,
-        IReadOnlyDictionary<string, byte[]> dataFiles,
-        IReadOnlyDictionary<string, byte[]> assetFiles)
-    {
-        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
-        Append("manifest.json", Encoding.UTF8.GetBytes(manifestJson));
-        foreach (var (name, bytes) in assemblies.OrderBy(item => item.Key, StringComparer.OrdinalIgnoreCase))
-        {
-            Append($"assemblies/{name}.dll", bytes);
-        }
-
-        foreach (var (path, bytes) in dataFiles.OrderBy(item => item.Key, StringComparer.Ordinal))
-        {
-            Append(path, bytes);
-        }
-
-        foreach (var (path, bytes) in assetFiles.OrderBy(item => item.Key, StringComparer.Ordinal))
-        {
-            Append($"assets/{path}", bytes);
-        }
-
-        return Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant();
-
-        void Append(string path, byte[] bytes)
-        {
-            hash.AppendData(Encoding.UTF8.GetBytes(path));
-            hash.AppendData([0]);
-            hash.AppendData(bytes);
-        }
-    }
-
-    private static void ValidateAssetPath(string source, string relativePath)
-    {
-        if (string.IsNullOrWhiteSpace(relativePath) ||
-            relativePath.StartsWith('/') ||
-            relativePath.Split('/').Any(segment => segment is "" or "." or ".."))
-        {
-            throw new ModPackageException(source, $"Asset path {relativePath} is invalid.");
-        }
-
-        try
-        {
-            _ = new ResourceId(new ModId("asset"), relativePath);
-        }
-        catch (ArgumentException exception)
-        {
-            throw new ModPackageException(source, $"Asset path {relativePath} is invalid.", exception);
-        }
-    }
 }
 
 internal sealed class PackageMod(

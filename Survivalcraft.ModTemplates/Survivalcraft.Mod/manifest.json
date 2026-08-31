@@ -1,9 +1,19 @@
 {
-  "id": "example.mod",
+  "formatVersion": 1,
+  "type": "mod",
+  "identifier": "example.mod",
   "name": "Example Mod",
   "version": "1.0.0",
-  "side": "common",
-  "entrypoints": {
-    "common": "Survivalcraft.ModTemplate.ModEntry, Survivalcraft.ModTemplate"
+  "payload": {
+    "format": "scnet.mod-v1",
+    "entry": "payload/mod.json",
+    "mediaType": "application/json"
+  },
+  "metadata": {
+    "side": "common",
+    "entrypoints": {
+      "common": "Survivalcraft.ModTemplate.ModEntry, Survivalcraft.ModTemplate"
+    },
+    "dependencies": []
   }
 }

@@ -12,30 +12,31 @@ public sealed class PackageBlob : Entity<PackageBlobId>, IAggregateRoot
 
     public string Hash { get; private set; } = string.Empty;
 
+    public string BlobHash { get; private set; } = string.Empty;
+
     public long Size { get; private set; }
 
     public string FileName { get; private set; } = string.Empty;
 
     public string MediaType { get; private set; } = string.Empty;
 
-    public byte[] Data { get; private set; } = [];
-
     public DateTimeOffset CreatedAt { get; private set; }
 
     public static PackageBlob Create(
         string hash,
+        string blobHash,
+        long size,
         string fileName,
         string mediaType,
-        byte[] data,
         DateTimeOffset now)
     {
         return new PackageBlob
         {
             Hash = hash,
-            Size = data.LongLength,
+            BlobHash = blobHash,
+            Size = size,
             FileName = fileName,
             MediaType = mediaType,
-            Data = data,
             CreatedAt = now
         };
     }

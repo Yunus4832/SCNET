@@ -1,0 +1,17 @@
+{
+  "formatVersion": 1,
+  "type": "mod",
+  "identifier": "example.golden",
+  "name": "Golden Mod",
+  "version": "1.0.0",
+  "payload": {
+    "format": "scnet.mod-v1",
+    "entry": "payload/mod.json",
+    "mediaType": "application/json"
+  },
+  "metadata": {
+    "side": "common",
+    "entrypoints": {},
+    "dependencies": []
+  }
+}

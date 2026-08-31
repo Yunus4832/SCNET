@@ -5,6 +5,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="MediatR" Version="12.5.0"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
             <PrivateAssets>all</PrivateAssets>

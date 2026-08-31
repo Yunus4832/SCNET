@@ -217,7 +217,7 @@ Content.Packaging（共享 SDK）
       └── ContentWebUI 简单内容界面
 ```
 
-- `Content.Packaging`：拥有统一 manifest、reader/writer、PackageHash、schema 和 payload codec，不依赖 UI 或 ContentServer。
+- `Content.Packaging`：拥有统一 manifest、reader/writer、PackageHash、schema 和 payload codec，不依赖 UI、ContentServer 或游戏运行时；所有协议相关公共依赖均归集到独立的解决方案 Protocol 文件夹。
 - 模组 MSBuild target：从模组项目配置和构建输出自动生成可发布内容包，不要求作者额外运行打包命令。
 - `ContentTool` CLI：服务 CI、批量制作、格式检查和高级创作者，调用同一 SDK，不重新实现协议。
 - 游戏内容包制造器：游戏内完整的非 Mod 制造入口；使用同一 SDK 从游戏资产或 FilePicker 素材生成临时包并保存到用户选择的位置，不隐式写入统一缓存。
@@ -335,53 +335,59 @@ Data/
 
 ## 分阶段实施
 
+阶段按依赖关系组织，遵守以下规则：
+
+- 每个交付项只归属一个阶段；早期阶段可以定义后续契约，但不提前要求后续 UI、平台或运行时实现完成。
+- 阶段门禁只能依赖当前阶段及更早阶段的产物，不能引用尚未实施的后续阶段。
+- 公共协议先于共享 SDK，共享 SDK 先于服务端和游戏基础设施，基础设施先于平台 UI，最后统一删除旧实现。
+- 跨层端到端验证归入最后一个必需组件所在的阶段；早期阶段只执行当时可闭合的组件级或纵向验证。
+
 ### 阶段 0：固化统一内容包协议
 
-- [ ] 将 `.scpkg` 定为唯一公共扩展名，并确认媒体类型、ZIP 目录布局和 `formatVersion` 规则。
-- [ ] 将单层容器、展开 payload 和禁止公共嵌套归档写入格式规范；逐类根据当前游戏数据语义定义全新的规范 payload，不建立旧扩展名输入映射。
-- [ ] 定义公共 manifest schema、公共字段约束以及各类型 metadata schema。
-- [ ] 明确发布者、包内 manifest 和服务端分别拥有哪些元数据的写入权与审核权。
-- [ ] 将首阶段“无签名”写入协议和 UI 信任词汇：ContentServer 来源只表示仓库审核，本地 FilePicker 来源未验证，可执行 Mod 必须警告；不得出现“发布者签名已验证”状态。
-- [ ] 为未来独立 attestation 方案记录兼容原则：证明按 PackageHash 关联并与 `.scpkg` 分离，不进入 manifest、PackageHash 或包缓存事实来源；本阶段不实现解析、验证、密钥或吊销代码。
-- [ ] 定义统一 `PackageHash` 的逐字节算法、路径规范化、安全限制和公开 API 含义。
-- [ ] 明确 PackageHash 与可选内部 BlobHash；BlobHash 如保留不得进入客户端内容身份。
-- [ ] 设计五种内容的规范 payload 以及安装后的游戏资产布局；旧格式只用于理解当前数据语义，不作为新 reader、writer 或内部安装格式保留。
-- [ ] 固化 World 解包即脱离来源、创建新世界/覆盖指定世界、默认/自定义名称、重名追加序号、原子替换和制造新内容/新版本的规则。
-- [ ] 固化 Identifier 全局唯一、ModId 等于 Identifier、其他类型使用 UUID Identifier、ContentId 仅由服务端生成及 SemVer 2.0 规则。
-- [ ] 新协议不定义 `.scpak`、`.scworld`、`.scbtex`、`.scskin`、`.scfpack` 输入，不设计兼容解析或双格式入口；实际代码删除在替代 reader、writer、installer 全部就绪后的阶段 6 执行。
-- [ ] 为所有类型形成黄金包和统一 PackageHash 测试向量，覆盖 ZIP 顺序、压缩方式、时间戳、重复/危险路径和 payload 修改。
-- [ ] 对大型 World 验证流式制造、FilePicker 保存、导入和安装的峰值内存、包大小限制及取消行为，不允许为计算 hash、制造或安装而把完整包读入 `byte[]`。
-- [ ] 设计并验证模组构建集成、游戏内非 Mod 内容包制造、打包 CLI 和 WebUI 简单内容制造/提交，普通玩家路径不得要求手写 manifest 或操作 ZIP。
-- [ ] 定义浏览器 IndexedDB 草稿 schema、容量失败提示、导入/导出草稿和数据清理警告；ContentServer 不保存草稿。
-- [ ] 为皮肤和材质完成无代码上传、预览、权威校验、浏览器草稿、打包和提交审核流程，不实现图片编辑。
-- [ ] 将最终协议写入正式文档，再允许修改 ContentServer 数据模型和共享安装接口。
+- [x] 将 `.scpkg` 定为唯一公共扩展名，并确认媒体类型、ZIP 目录布局和 `formatVersion` 规则。
+- [x] 将单层容器、展开 payload 和禁止公共嵌套归档写入格式规范；逐类根据当前游戏数据语义定义全新的规范 payload，不建立旧扩展名输入映射。
+- [x] 定义公共 manifest schema、公共字段约束以及各类型 metadata schema。
+- [x] 明确发布者、包内 manifest 和服务端分别拥有哪些元数据的写入权与审核权。
+- [x] 将首阶段“无签名”写入协议和 UI 信任词汇：ContentServer 来源只表示仓库审核，本地 FilePicker 来源未验证，可执行 Mod 必须警告；不得出现“发布者签名已验证”状态。
+- [x] 为未来独立 attestation 方案记录兼容原则：证明按 PackageHash 关联并与 `.scpkg` 分离，不进入 manifest、PackageHash 或包缓存事实来源；本阶段不实现解析、验证、密钥或吊销代码。
+- [x] 定义统一 `PackageHash` 的逐字节算法、路径规范化、安全限制和公开 API 含义。
+- [x] 明确 PackageHash 与可选内部 BlobHash；BlobHash 如保留不得进入客户端内容身份。
+- [x] 设计五种内容的规范 payload 以及安装后的游戏资产布局；旧格式只用于理解当前数据语义，不作为新 reader、writer 或内部安装格式保留。
+- [x] 固化 World 解包即脱离来源、创建新世界/覆盖指定世界、默认/自定义名称、重名追加序号、原子替换和制造新内容/新版本的规则。
+- [x] 固化 Identifier 全局唯一、ModId 等于 Identifier、其他类型使用 UUID Identifier、ContentId 仅由服务端生成及 SemVer 2.0 规则。
+- [x] 新协议不定义 `.scpak`、`.scworld`、`.scbtex`、`.scskin`、`.scfpack` 输入，不设计兼容解析或双格式入口；实际代码删除在替代 reader、writer、installer 全部就绪后的阶段 6 执行。
+- [x] 定义模组构建、打包 CLI、游戏内非 Mod 制造和 WebUI 简单内容制造/提交的输入输出与职责边界；普通玩家路径不得要求手写 manifest 或操作 ZIP。各入口的实现和端到端验证归入对应后续阶段。
+- [x] 定义浏览器 IndexedDB 草稿 schema、容量失败提示、导入/导出草稿和数据清理警告；ContentServer 不保存草稿。
+- [x] 定义皮肤和材质无代码上传、预览、权威校验、浏览器草稿、打包和提交审核的交互与 API 契约；不设计图片编辑能力，实际实现归入阶段 3。
+- [x] 将最终协议写入正式文档，再允许修改 ContentServer 数据模型和共享安装接口。
 
 门禁：阶段 0 未完成前，不修改 ContentServer 初始数据库结构，不实现五套临时上传协议，也不让新内容管理层直接接收旧格式作为最终公共契约。
 
 ### 阶段 1：建立统一包 SDK 与测试向量
 
-- [ ] 实现不依赖游戏运行时的统一 manifest 解析、ZIP 安全校验和 PackageHash 组件。
-- [ ] 实现五种 payload 验证器，让游戏端和 ContentServer 引用相同协议实现并删除重复解析代码。
-- [ ] 为皮肤和材质选择可同时用于 Content.Packaging、ContentServer 与游戏端的确定性图像读取/校验实现，避免共享 SDK 反向依赖完整 Engine、Graphics 或游戏运行时。
-- [ ] 建立 `Content.Packaging.Test`，固化五类黄金包、恶意包和跨 writer 一致性测试。
-- [ ] 提供最小 `pack`、`inspect`、`verify` ContentTool，用于开发、CI 和诊断。
-- [ ] 修改模组 MSBuild target 和模板，使构建直接输出通过 verify 的 `.scpkg`。
-- [ ] 修改游戏 Mod 包解析器和 GameModRuntime，使其从 `.scpkg` 条目流直接校验并加载 Mod payload，不保留 `.scpak` parser 或完整包 `byte[]` 路径。
+- [x] 实现不依赖游戏运行时的统一 manifest 解析、ZIP 安全校验和 PackageHash 组件。
+- [x] 在共享 SDK 中实现五种 payload codec 和验证器，不依赖游戏运行时或 ContentServer。
+- [x] 为皮肤和材质选择可同时用于 Content.Packaging、ContentServer 与游戏端的确定性图像读取/校验实现，避免共享 SDK 反向依赖完整 Engine、Graphics 或游戏运行时。
+- [x] 建立 `Content.Packaging.Test`，固化五类黄金包、恶意包和跨 writer 一致性测试。
+- [x] 提供最小 `pack`、`inspect`、`verify` ContentTool，用于开发、CI 和诊断。
+- [x] 修改模组 MSBuild target 和模板，使构建直接输出通过 verify 的 `.scpkg`。
+- [x] 修改游戏 Mod 包解析器和 GameModRuntime，使其从 `.scpkg` 条目流直接校验并加载 Mod payload，不保留 `.scpak` parser 或完整包 `byte[]` 路径。
 
-门禁：五类黄金包必须证明 SDK、模组构建和游戏解析计算相同的 PackageHash。
+门禁：五类黄金包必须固定 SDK 的逻辑 PackageHash；Mod 黄金包必须进一步证明 SDK、MSBuild 构建和游戏解析得到相同的 PackageHash。阶段 1 不要求 ContentServer 或非 Mod 游戏安装器已经接入。
 
 ### 阶段 2：重构 ContentServer 存储与统一发布
 
-- [ ] 将 PackageBlob 的 SQLite `byte[]` 存储改为 `Data/packages/<PackageHash>.scpkg` 内容寻址文件。
-- [ ] 实现 `Data/temp` 流式写入、校验后原子移动、失败清理和孤儿包审计/清理。
-- [ ] ContentServer 所有提交改为统一内容包 manifest 驱动，新 Identifier 由服务端生成 ContentId 并绑定发布者，更新验证 Identifier 归属。
-- [ ] 将 PublisherId、ContentType、Identifier、Version、PackageHash、可选 BlobHash、提交时间以及完整审核状态变更记录作为不可变审计事实保存；不得因改名、下架或账号状态变化重写历史归属，以支持未来按 PackageHash 补发证明。
-- [ ] 数据库对规范化 Identifier 建立全局唯一约束；上传只建立服务端关系，不重写包，因此上传前后 PackageHash 完全一致。
-- [ ] 对所有 ContentType 实现 Identifier 类型稳定、SemVer 版本唯一、同版本同包幂等、同版本不同包冲突，不提供 replace；规则与本地 ContentPackageCache 完全一致。
-- [ ] 明确 PackageHash 对应单一物理代表制品：首次接受的 ZIP 文件保留，后续逻辑 hash 相同但容器字节不同的提交幂等引用已有文件，API 不承诺返回后一次提交的物理字节。
-- [ ] 更新当前初始迁移和数据库快照，SQLite 不再包含包或草稿 BLOB。
-- [ ] 实现流式匿名下载和管理员审核下载，保持 Pending/Published/Rejected 与内容上下架门禁。
-- [ ] 扩展 API 集成测试覆盖文件提交、事务失败、临时文件清理、孤儿审计和并发同包上传。
+- [x] 让 ContentServer 引用 `Content.Packaging`，所有上传和下载校验复用共享 Reader、五种 payload codec 与 PackageHash；删除服务端重复的包、manifest 和 hash 解析代码。
+- [x] 将 PackageBlob 的 SQLite `byte[]` 存储改为 `Data/packages/<PackageHash>.scpkg` 内容寻址文件。
+- [x] 实现 `Data/temp` 流式写入、校验后原子移动、失败清理和孤儿包审计/清理。
+- [x] ContentServer 所有提交改为统一内容包 manifest 驱动，新 Identifier 由服务端生成 ContentId 并绑定发布者，更新验证 Identifier 归属。
+- [x] 将 PublisherId、ContentType、Identifier、Version、PackageHash、可选 BlobHash、提交时间以及完整审核状态变更记录作为不可变审计事实保存；不得因改名、下架或账号状态变化重写历史归属，以支持未来按 PackageHash 补发证明。
+- [x] 数据库对规范化 Identifier 建立全局唯一约束；上传只建立服务端关系，不重写包，因此上传前后 PackageHash 完全一致。
+- [x] 对所有 ContentType 实现 Identifier 类型稳定、SemVer 版本唯一、同版本同包幂等、同版本不同包冲突，不提供 replace；规则与本地 ContentPackageCache 完全一致。
+- [x] 明确 PackageHash 对应单一物理代表制品：首次接受的 ZIP 文件保留，后续逻辑 hash 相同但容器字节不同的提交幂等引用已有文件，API 不承诺返回后一次提交的物理字节。
+- [x] 更新当前初始迁移和数据库快照，SQLite 不再包含包或草稿 BLOB。
+- [x] 实现流式匿名下载和管理员审核下载，保持 Pending/Published/Rejected 与内容上下架门禁。
+- [x] 扩展 API 集成测试覆盖文件提交、事务失败、临时文件清理、孤儿审计和并发同包上传。
 
 门禁：Mod 纵向链路必须完成提交、审核、精确查询、流式下载、PackageHash 校验和游戏解析；大包路径不得完整物化为 `byte[]`。
 
@@ -416,8 +422,9 @@ Data/
 - [ ] 为 World、皮肤、材质和家具制造器提供显式“创建新内容/创建新版本”模式；新版本从用户选择的同类型基线 `.scpkg` 只继承 Identifier，重新填写 SemVer 并使用当前素材制造。Mod 继续由项目构建流程维护版本身份。
 - [ ] 验证 Mod 版本共存且导入/下载不修改任何 Profile。
 - [ ] 将 ContentServer 客户端下载和安装改为流式，不使用 `GetByteArrayAsync`。
+- [ ] 使用可控的非平台测试流对大型 World 执行制造、缓存导入和安装压力测试，验证峰值内存、包大小限制、取消和失败清理；不得为计算 hash、制造或安装而把完整包读入 `byte[]`。真实 FilePicker 保存与取消验证归入阶段 5。
 
-门禁：FilePicker 输入的测试流与 ContentServer 下载流对同一包产生相同安装结果；五类安装失败均不留下半安装资产，缓存已提交的有效包仍可重试安装。
+门禁：等价的本地输入测试流与 ContentServer 下载流对同一包产生相同安装结果；五类安装失败均不留下半安装资产，缓存已提交的有效包仍可重试安装；大型 World 压力测试满足内存和取消指标。本阶段不依赖任何平台 FilePicker 实现。
 
 ### 阶段 5：实现 FilePicker 并迁移游戏 UI
 

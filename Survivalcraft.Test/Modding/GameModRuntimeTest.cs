@@ -195,7 +195,7 @@ public class GameModRuntimeTest
         Directory.CreateDirectory(directory);
         try
         {
-            WritePackage(Path.Combine(directory, "example.addon.scpak"), """
+            WritePackage(Path.Combine(directory, "example.addon.scpkg"), """
                 {
                   "id": "example.addon",
                   "name": "Addon",
@@ -230,7 +230,7 @@ public class GameModRuntimeTest
         try
         {
             SettingsManager.Current.ContentServerUrl = "https://mods.example/";
-            WritePackage(Path.Combine(directory, "example.addon.scpak"), """
+            WritePackage(Path.Combine(directory, "example.addon.scpkg"), """
                 {
                   "id": "example.addon",
                   "name": "Addon",
@@ -309,24 +309,8 @@ public class GameModRuntimeTest
         string manifest,
         IReadOnlyDictionary<string, string>? dataFiles = null)
     {
+        using var package = ScpkgTestPackage.Create(manifest, dataFiles);
         using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
-        using var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: false);
-        var manifestEntry = archive.CreateEntry("manifest.json");
-        using (var writer = new StreamWriter(manifestEntry.Open(), Encoding.UTF8, leaveOpen: false))
-        {
-            writer.Write(manifest);
-        }
-
-        if (dataFiles is null)
-        {
-            return;
-        }
-
-        foreach (var (entryPath, content) in dataFiles)
-        {
-            var entry = archive.CreateEntry(entryPath);
-            using var dataWriter = new StreamWriter(entry.Open(), Encoding.UTF8, leaveOpen: false);
-            dataWriter.Write(content);
-        }
+        package.CopyTo(stream);
     }
 }

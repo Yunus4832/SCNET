@@ -44,6 +44,8 @@ builder.Services.AddMediatR(configuration => configuration
     .AddUnitOfWorkBehaviors());
 builder.Services.AddUnitOfWork<ContentServerDbContext>();
 builder.Services.AddRepositories(typeof(ContentServerDbContext).Assembly);
+builder.Services.AddSingleton<ContentPackageStore>();
+builder.Services.AddSingleton<ContentSubmissionLock>();
 builder.Services.AddScoped<ApiKeyAuthenticationContext>();
 builder.Services.AddScoped<ApiKeyAuthenticationMiddleware>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
@@ -77,6 +79,14 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
     await db.Database.MigrateAsync();
+    var packageStore = scope.ServiceProvider.GetRequiredService<ContentPackageStore>();
+    packageStore.CleanTemporaryFiles();
+    var referencedHashes = await db.PackageBlobs.AsNoTracking().Select(package => package.Hash).ToHashSetAsync();
+    var orphanCount = packageStore.AuditOrphans(referencedHashes).Count;
+    if (orphanCount > 0)
+    {
+        app.Logger.LogWarning("Content package storage contains {OrphanCount} orphan package files", orphanCount);
+    }
 }
 app.UseExceptionHandler();
 app.UseDefaultFiles();

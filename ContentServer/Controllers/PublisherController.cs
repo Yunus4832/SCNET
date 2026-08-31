@@ -6,6 +6,9 @@ using ContentServer.Controllers.Mappings;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Publishers;
 using ContentServer.Middlewares;
+using ContentServer.Infrastructure;
+
+using Content.Packaging;
 
 using MediatR;
 
@@ -22,7 +25,9 @@ namespace ContentServer.Controllers;
 public sealed class PublisherController(
     IMediator mediator,
     IOptions<ContentServerOptions> options,
-    ApiKeyAuthenticationContext authenticationContext) : ControllerBase
+    ApiKeyAuthenticationContext authenticationContext,
+    ContentPackageStore packageStore,
+    ContentSubmissionLock submissionLock) : ControllerBase
 {
     [HttpGet]
     public async Task<ResponseData<PublisherResponse>> Self(CancellationToken cancellationToken)
@@ -116,55 +121,79 @@ public sealed class PublisherController(
 
         var form = await Request.ReadFormAsync(cancellationToken);
         var file = form.Files.GetFile("package");
-        var type = form["type"].ToString().Trim();
-        var identifier = form["identifier"].ToString().Trim();
-        var name = form["name"].ToString().Trim();
-        var version = form["version"].ToString().Trim();
-        if (file is null || file.Length == 0 || file.Length > options.Value.MaximumPackageBytes
-            || !new[] { "Mod", "World", "BlocksTexture", "CharacterSkin", "FurniturePack" }.Contains(type)
-            || identifier.Length < 3 || string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(version))
+        if (file is null || file.Length == 0 || file.Length > options.Value.MaximumPackageBytes)
         {
             throw new KnownException("invalid_submission", StatusCodes.Status400BadRequest);
         }
 
+        StagedContentPackage staged;
+        try
+        {
+            await using var input = file.OpenReadStream();
+            staged = await packageStore.StageAsync(input, file.FileName,
+                "application/vnd.scnet.content-package", options.Value.MaximumPackageBytes, cancellationToken);
+        }
+        catch (ContentPackageException)
+        {
+            throw new KnownException("invalid_content_package", StatusCodes.Status400BadRequest);
+        }
+
+        var manifest = staged.Inspection.Manifest;
+        var type = manifest.Type.ToString();
+        var identifier = manifest.Identifier;
+        var name = manifest.Name;
+        var version = manifest.Version;
+        IDisposable submissionLease;
+        try
+        {
+            submissionLease = await submissionLock.EnterAsync(cancellationToken);
+        }
+        catch
+        {
+            packageStore.DeleteTemporary(staged);
+            throw;
+        }
+        using (submissionLease)
+        {
         var existingContent = await mediator.Send(
             new FindContentItemQuery(publisher.PublisherId, identifier),
             cancellationToken);
+        if (existingContent is not null && existingContent.PublisherId != publisher.PublisherId)
+        {
+            packageStore.DeleteTemporary(staged);
+            throw new KnownException("identifier_not_owned", StatusCodes.Status403Forbidden);
+        }
+        if (existingContent is not null && existingContent.Type != type)
+        {
+            packageStore.DeleteTemporary(staged);
+            throw new KnownException("content_type_conflict", StatusCodes.Status409Conflict);
+        }
+        var existingVersion = await mediator.Send(
+            new GetContentVersionQuery(publisher.PublisherId, identifier, version), cancellationToken);
+        if (existingVersion is not null)
+        {
+            packageStore.DeleteTemporary(staged);
+            if (existingVersion.PackageHash != staged.Inspection.PackageHash)
+            {
+                throw new KnownException("content_version_conflict", StatusCodes.Status409Conflict);
+            }
+            return existingVersion.ToResponse().AsResponseData();
+        }
 
-        await using var input = file.OpenReadStream();
-        using var output = new MemoryStream();
-        await input.CopyToAsync(output, cancellationToken);
-        var package = await mediator.Send(new StorePackageBlobCommand(
-                Path.GetFileName(file.FileName),
-                string.IsNullOrWhiteSpace(file.ContentType)
-                    ? "application/octet-stream"
-                    : file.ContentType,
-                output.ToArray()),
-            cancellationToken
-        );
-        if (existingContent is null)
-        {
-            await mediator.Send(new CreateContentItemCommand(
-                publisher.PublisherId,
-                type,
-                identifier,
-                name,
-                form["summary"],
-                version,
-                form["metadata"],
-                package.Id), cancellationToken);
-        }
-        else
-        {
-            await mediator.Send(new UpdateContentItemVersionCommand(
-                    existingContent.ContentId,
-                    name,
-                    form["summary"],
-                    version,
-                    form["metadata"],
-                    package.Id), cancellationToken
-            );
-        }
+        packageStore.Commit(staged);
+        await mediator.Send(new SubmitContentPackageCommand(
+            publisher.PublisherId,
+            type,
+            identifier,
+            name,
+            form["summary"],
+            version,
+            manifest.Metadata.GetRawText(),
+            staged.Inspection.PackageHash,
+            staged.BlobHash,
+            staged.Size,
+            staged.FileName,
+            staged.MediaType), cancellationToken);
 
         var submittedVersion = await mediator.Send(
             new GetContentVersionQuery(
@@ -183,6 +212,7 @@ public sealed class PublisherController(
         return submittedVersion
             .ToResponse()
             .AsResponseData(code: StatusCodes.Status201Created);
+        }
     }
 
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)

@@ -38,7 +38,19 @@
         </Project>
     </Folder>
 
-    <Folder Name="/03 Survivalcraft/">
+    <Folder Name="/03 Protocol/">
+        <Project Path="Content.Packaging\Content.Packaging.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+        </Project>
+        <Project Path="Content.Packaging.Test\Content.Packaging.Test.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
+    </Folder>
+
+    <Folder Name="/04 Survivalcraft/">
         <Project Path="Survivalcraft\Survivalcraft.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
@@ -50,7 +62,7 @@
         </Project>
     </Folder>
 
-    <Folder Name="/04 Desktop/">
+    <Folder Name="/05 Desktop/">
         <Project Path="Survivalcraft.Linux\Survivalcraft.Linux.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
@@ -63,7 +75,7 @@
         </Project>
     </Folder>
 
-    <Folder Name="/05 Android/">
+    <Folder Name="/06 Android/">
         <Project Path="Survivalcraft.Android\Survivalcraft.Android.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
@@ -88,7 +100,7 @@
         </Project>
     </Folder>
 
-    <Folder Name="/06 Mod/">
+    <Folder Name="/07 Mod/">
         <Project Path="Survivalcraft.ModTemplates\Survivalcraft.ModTemplates.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
@@ -107,7 +119,7 @@
         </Project>
     </Folder>
 
-    <Folder Name="/06 Content/">
+    <Folder Name="/08 Content/">
         <Project Path="ContentWebUI\ContentWebUI.esproj">
             <Build Solution="ANDROID|*" Project="false"/>
             <Build Solution="DESKTOP|*" Project="false"/>
@@ -126,7 +138,12 @@
         </Project>
     </Folder>
 
-    <Folder Name="/07 Tools/">
+    <Folder Name="/09 Tools/">
+        <Project Path="ContentTool\ContentTool.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+        </Project>
         <Project Path="LanguageTool\LanguageTool.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
@@ -154,7 +171,7 @@
         </Project>
     </Folder>
 
-    <Folder Name="/08 SolutionItem/">
+    <Folder Name="/10 SolutionItem/">
         <File Path="SCNET.slnx"/>
         <File Path="README.md"/>
         <File Path=".editorconfig"/>

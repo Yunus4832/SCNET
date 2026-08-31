@@ -6,6 +6,8 @@ public sealed class ContentServerOptions
 
     public string DatabasePath { get; set; } = "Data/content-server.db";
 
+    public string PackageStoragePath { get; set; } = "Data";
+
     public long MaximumPackageBytes { get; set; } = 256L * 1024L * 1024L;
 
     public string[] AllowedOrigins { get; set; } = [];

@@ -58,7 +58,7 @@ public static class ModDependencyResolver
                 }
 
                 if (dependency.MinimumVersion is not null &&
-                    (!Version.TryParse(dependency.MinimumVersion, out var minimumVersion) ||
+                    (!global::Content.Packaging.SemanticVersion.TryParse(dependency.MinimumVersion, out var minimumVersion) ||
                      dependencyMod.Manifest.ParsedVersion < minimumVersion))
                 {
                     throw new ModDependencyException(

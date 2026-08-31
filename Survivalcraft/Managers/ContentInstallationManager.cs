@@ -29,7 +29,8 @@ public static class ContentInstallationManager
         if (type == ContentType.Mod)
         {
             var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ModCache));
-            installedName = repository.AddOrUpdatePackage(package, $"{item.PackageHash}.scpak").FileName;
+            installedName = repository.AddOrUpdatePackage(package,
+                $"{item.PackageHash}{ModPackage.FileExtension}").FileName;
         }
         else
         {

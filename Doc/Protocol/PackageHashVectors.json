@@ -1,0 +1,28 @@
+{
+  "formatVersion": 1,
+  "description": "Paths are UTF-8, lengths are unsigned big-endian, and entries are sorted by path ordinal.",
+  "entries": [
+    {
+      "path": "payload/a.txt",
+      "contentBase64": "aGVsbG8="
+    },
+    {
+      "path": "manifest.json",
+      "contentBase64": "e30="
+    }
+  ],
+  "packageHash": "5b41dca579cbbcf86944e71360af4baef1b5a480de07159a2bb51c519a963fb5",
+  "utf8OrderingVector": {
+    "entries": [
+      {
+        "path": "payload/𐀀.txt",
+        "contentBase64": "Qg=="
+      },
+      {
+        "path": "payload/.txt",
+        "contentBase64": "QQ=="
+      }
+    ],
+    "packageHash": "7c759cd7448ef42962c80391449514052c26b91f5c7bb5687325a77291b42d56"
+  }
+}

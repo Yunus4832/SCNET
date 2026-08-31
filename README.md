@@ -60,7 +60,7 @@ dotnet run --project Survivalcraft.Linux/Survivalcraft.Linux.csproj -- --server
 
 ### 模组
 
-当前模组系统使用 `.scpak` 包和 `ModProfile` 控制加载范围。包可以来自本地 `Mods` 目录，也可以从私有 `ModServer` 仓库按 `ModId + Version` 下载。
+当前模组运行时使用统一 `.scpkg` 内容包和 `ModProfile` 控制加载范围。迁移期间包可以来自本地 `Mods` 目录；远程仓库正在按内容管理迁移计划收口到 ContentServer。
 
 示例模组构建：
 
@@ -101,8 +101,8 @@ dotnet test Survivalcraft.Test/
 - [Headless 模式](Doc/Headless.md) — 多实例启动、session 参数、游戏模式覆盖、配置与运行时行为
 - [启动会话](Doc/StartupSessions.md) — `Starter`、`RunningSetting`、`StartupRequest`、`StartupContext`、`SessionInfo`、覆盖优先级和模组 profile 的职责
 - [构建与共享配置](Doc/BuildAndConfig.md) — 构建流程、共享属性与打包行为
-- [模组使用说明](Doc/Mods.md) — `.scpak`、本地缓存、profile、仓库和联机 required mods
-- [模组开发](Doc/Modding.md) — 模组模板、`.scpak` 构建、示例模组与 NuGet 包边界
+- [模组使用说明](Doc/Mods.md) — `.scpkg`、本地缓存、profile、仓库和联机 required mods
+- [模组开发](Doc/Modding.md) — 模组模板、`.scpkg` 构建、示例模组与 NuGet 包边界
 - [模组服务器](Doc/ModServer.md) — 私有 `.scpak` 仓库的上传、索引与匿名分发
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问
 - [外部依赖](Doc/Dependencies.md) — 工具链、运行时包与测试依赖
