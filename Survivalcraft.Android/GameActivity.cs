@@ -3,6 +3,8 @@ using Android.Content.PM;
 using Android.Net;
 using Android.OS;
 
+using Engine.FileStorage;
+
 using Game;
 
 using AndroidClipboardManager = Android.Content.ClipboardManager;
@@ -28,6 +30,8 @@ namespace Survivalcraft.Android;
 )]
 public class GameActivity : EngineActivity
 {
+    private AndroidFilePicker? _filePicker;
+
     protected override void OnRun()
     {
         base.OnRun();
@@ -37,6 +41,8 @@ public class GameActivity : EngineActivity
         GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
         GamePlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         EngineTextInputManager.RegisterBackend(new EngineSdlTextInputBackend(processEditingKeyEvents: true));
+        _filePicker = new AndroidFilePicker(this);
+        FilePicker.Register(_filePicker);
         InitializeAndroidId();
         LoadAssetAssemblies();
 
@@ -51,6 +57,12 @@ public class GameActivity : EngineActivity
         {
             GameExitManager.ExitRequested -= OnExitRequested;
         }
+    }
+
+    protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
+    {
+        if (_filePicker?.HandleActivityResult(requestCode, resultCode, data) == true) return;
+        base.OnActivityResult(requestCode, resultCode, data);
     }
 
     private void OnExitRequested(GameExitAction exitAction)

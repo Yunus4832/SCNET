@@ -95,6 +95,8 @@ Starter 还负责注册平台能力。交互式文件打开与保存统一通过
 注册或 session 持久化。未注册实现时 `FilePicker.IsAvailable` 为 `false`，Headless 不提供交互式
 文件选择。
 
+Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 未探测到 `zenity` 时保持未注册。Android 仅由 GameActivity 注册 Storage Access Framework 实现，ServerActivity 不注册。
+
 ## SessionInfo
 
 路径：`config:SessionInfo.xml`

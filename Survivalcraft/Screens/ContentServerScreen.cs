@@ -114,7 +114,8 @@ public sealed class ContentServerScreen : Screen
                 Dispatcher.Dispatch(() =>
                 {
                     _busy = false;
-                    SelectInstallMode(cached);
+                    ContentPackageInstallDialogs.Show(cached, busy => _busy = busy,
+                        () => DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed")), ShowError);
                 });
             }
             catch (Exception exception)
@@ -127,127 +128,6 @@ public sealed class ContentServerScreen : Screen
             }
         });
     }
-
-    private void SelectInstallMode(ContentPackageCacheEntry cached)
-    {
-        if (cached.Type == ContentPackageType.Mod)
-        {
-            RunInstallation(cached.PackageHash, null);
-            return;
-        }
-
-        var replacements = GetReplacementTargets(cached.Type);
-        if (replacements.Count == 0)
-        {
-            ConfirmCreate(cached);
-            return;
-        }
-        var create = LanguageManager.Get(_typeName, "CreateNew");
-        var replace = LanguageManager.Get(_typeName, "ReplaceExisting");
-        DialogsManager.ShowDialog(null, new ListSelectionDialog(
-            LanguageManager.Get(_typeName, "InstallModeTitle"), new[] { create, replace }, 64f,
-            item => (string)item,
-            item =>
-            {
-                if ((string)item == create) ConfirmCreate(cached);
-                else SelectReplacement(cached, replacements);
-            }));
-    }
-
-    private void ConfirmCreate(ContentPackageCacheEntry cached)
-    {
-        DialogsManager.ShowDialog(null, new MessageDialog(
-            LanguageManager.Get(_typeName, "InstallModeTitle"),
-            string.Format(LanguageManager.Get(_typeName, "ConfirmCreate"), cached.Name),
-            LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
-            button =>
-            {
-                if (button == MessageDialogButton.Button1) RunInstallation(cached.PackageHash, null);
-            }));
-    }
-
-    private void SelectReplacement(ContentPackageCacheEntry cached, IReadOnlyList<ReplacementTarget> targets)
-    {
-        DialogsManager.ShowDialog(null, new ListSelectionDialog(
-            LanguageManager.Get(_typeName, "SelectReplacement"), targets, 64f,
-            item => ((ReplacementTarget)item).DisplayName,
-            item => ConfirmReplacement(cached, (ReplacementTarget)item)));
-    }
-
-    private void ConfirmReplacement(ContentPackageCacheEntry cached, ReplacementTarget target)
-    {
-        DialogsManager.ShowDialog(null, new MessageDialog(
-            LanguageManager.Get(_typeName, "ReplaceExisting"),
-            string.Format(LanguageManager.Get(_typeName, "ConfirmReplace"), cached.Name, target.DisplayName,
-                target.ReferenceCount),
-            LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
-            button =>
-            {
-                if (button == MessageDialogButton.Button1)
-                    RunInstallation(cached.PackageHash, new ContentInstallOptions(target.AssetKey));
-            }));
-    }
-
-    private void RunInstallation(string packageHash, ContentInstallOptions? options)
-    {
-        _busy = true;
-        Task.Run(() =>
-        {
-            try
-            {
-                var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
-                ContentPackageWorkflow.InstallCached(cache, packageHash, options);
-                Dispatcher.Dispatch(() =>
-                {
-                    _busy = false;
-                    DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed"));
-                });
-            }
-            catch (Exception exception)
-            {
-                Dispatcher.Dispatch(() =>
-                {
-                    _busy = false;
-                    ShowError(exception);
-                });
-            }
-        });
-    }
-
-    private static IReadOnlyList<ReplacementTarget> GetReplacementTargets(ContentPackageType type)
-    {
-        if (type == ContentPackageType.World)
-        {
-            WorldsManager.UpdateWorldsList();
-            var running = GameManager.Project?.FindSubsystem<SubsystemGameInfo>()?.DirectoryName;
-            return WorldsManager.WorldInfos.Where(world =>
-                    !string.Equals(world.DirectoryName, running, StringComparison.OrdinalIgnoreCase))
-                .Select(world => new ReplacementTarget(Storage.GetFileName(world.DirectoryName),
-                    world.WorldSettings.Name, 0)).ToArray();
-        }
-        if (type == ContentPackageType.BlocksTexture)
-        {
-            WorldsManager.UpdateWorldsList();
-            BlocksTexturesManager.UpdateBlocksTexturesList();
-            return BlocksTexturesManager.ReadOnlyBlockTexturesNames.Where(name => !BlocksTexturesManager.IsBuiltIn(name))
-                .Select(name => new ReplacementTarget(name, BlocksTexturesManager.GetDisplayName(name),
-                    WorldsManager.WorldInfos.Count(world => world.WorldSettings.BlocksTextureName == name))).ToArray();
-        }
-        if (type == ContentPackageType.CharacterSkin)
-        {
-            WorldsManager.UpdateWorldsList();
-            CharacterSkinsManager.UpdateCharacterSkinsList();
-            return CharacterSkinsManager.ReadOnlyCharacterSkinsNames.Where(name => !CharacterSkinsManager.IsBuiltIn(name))
-                .Select(name => new ReplacementTarget(name, CharacterSkinsManager.GetDisplayName(name),
-                    WorldsManager.WorldInfos.Count(world => world.PlayerInfos.Any(player => player.CharacterSkinName == name))))
-                .ToArray();
-        }
-        FurniturePacksManager.UpdateFurniturePacksList();
-        return FurniturePacksManager.ReadOnlyFurniturePackNames
-            .Select(name => new ReplacementTarget(name, FurniturePacksManager.GetDisplayName(name), 0)).ToArray();
-    }
-
-    private sealed record ReplacementTarget(string AssetKey, string DisplayName, int ReferenceCount);
 
     private static void ShowError(Exception exception)
     {

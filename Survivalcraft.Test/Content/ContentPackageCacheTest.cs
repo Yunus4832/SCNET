@@ -71,6 +71,33 @@ public sealed class ContentPackageCacheTest : IDisposable
         Assert.Equal(bytes, destination.ToArray());
     }
 
+    [Fact]
+    public async Task ExpectedTypeMismatchDoesNotCommitPackage()
+    {
+        var cache = new ContentPackageCache(_directory);
+        await using var source = new MemoryStream(CreatePackage(), writable: false);
+
+        await Assert.ThrowsAsync<ContentPackageException>(() =>
+            cache.ImportExpectedAsync(source, ContentPackageType.World));
+
+        Assert.Empty(cache.List());
+        Assert.Empty(Directory.EnumerateFiles(Path.Combine(_directory, ".temp")));
+    }
+
+    [Fact]
+    public async Task AllowedTypesRejectModBeforeCommittingPackage()
+    {
+        var cache = new ContentPackageCache(_directory);
+        await using var source = new MemoryStream(CreatePackage(), writable: false);
+
+        await Assert.ThrowsAsync<ContentPackageException>(() => cache.ImportAllowedAsync(source,
+            [ContentPackageType.World, ContentPackageType.BlocksTexture, ContentPackageType.CharacterSkin,
+                ContentPackageType.FurniturePack]));
+
+        Assert.Empty(cache.List());
+        Assert.Empty(Directory.EnumerateFiles(Path.Combine(_directory, ".temp")));
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_directory)) Directory.Delete(_directory, true);

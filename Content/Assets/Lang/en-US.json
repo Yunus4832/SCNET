@@ -58,7 +58,6 @@
         "DownloadModFailed": "Failed to download mod",
         "DeleteCacheTitle": "Delete Cache",
         "DeleteCacheQuestion": "Delete local cache {0}@{1}?",
-        "DeleteCacheImportedQuestion": "Delete local cache {0}@{1}?\nThis mod still exists in the external Mods directory and will be imported again on next startup.",
         "ExportComplete": "Export Complete",
         "ExportModFailed": "Failed to export mod",
         "NoWorldTitle": "No Worlds",
@@ -68,7 +67,14 @@
         "StatusHashMismatch": "Hash mismatch",
         "StatusGlobal": "Global",
         "StatusWorld": "World",
-        "SideLocal": "local"
+        "SideLocal": "local",
+        "Import": "Import",
+        "PickerUnavailable": "File selection is unavailable on this platform.",
+        "SelectPackages": "Select mod packages",
+        "Importing": "Importing mod packages",
+        "ImportComplete": "Imported {0} mod package(s).",
+        "ImportModFailed": "Failed to import mod packages",
+        "ExportTitle": "Export mod package"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Unsuitable block found",
@@ -3157,7 +3163,9 @@
             "12": "Manage global and world mods",
             "13": "Mods",
             "RemoteDescription": "Browse approved resources from the content server",
-            "Remote": "Online Content"
+            "Remote": "Online Content",
+            "PackagesDescription": "Manage downloaded or file-imported content packages",
+            "Packages": "Packages"
         },
         "GameLoadingScreen": {
             "1": "Loading World"
@@ -3205,7 +3213,9 @@
             "AddGlobal": "Global",
             "World": "World",
             "PreviousPage": "Prev",
-            "NextPage": "Next"
+            "NextPage": "Next",
+            "Import": "Import",
+            "PickerUnavailable": "File selection is unavailable on this platform; import and export are disabled."
         },
         "ManageContentScreen": {
             "1": "Manage Content",
@@ -3470,6 +3480,15 @@
             "Download": "Download",
             "Uninstall": "Uninstall",
             "Refresh": "Refresh"
+        },
+        "ContentPackageScreen": {
+            "Title": "Content Package Cache",
+            "PickerUnavailable": "File selection is unavailable on this platform; import and export are disabled.",
+            "Import": "Import",
+            "Export": "Export",
+            "Install": "Install",
+            "Delete": "Delete",
+            "Create": "Create"
         }
     },
     "FireworksBlock": {
@@ -3973,12 +3992,42 @@
     },
     "ContentServerScreen": {
         "ServerNotConfigured": "The content server address is not configured.",
+        "Installed": "Content installed."
+    },
+    "ContentPackageScreen": {
+        "SelectPackages": "Select content packages",
+        "ImportComplete": "Imported {0} content package(s).",
+        "ExportTitle": "Export content package",
+        "ExportComplete": "Export complete",
         "Installed": "Content installed.",
+        "DeleteTitle": "Delete cached package",
+        "DeleteQuestion": "Delete cached package “{0} {1}”? Installed assets will not be affected.",
+        "CreationSaved": "Content package saved. Import it explicitly to use it."
+    },
+    "ContentPackageInstallDialogs": {
         "InstallModeTitle": "Choose installation mode",
         "CreateNew": "Create new asset",
         "ReplaceExisting": "Replace existing asset",
         "SelectReplacement": "Select asset to replace",
         "ConfirmReplace": "Replace “{1}” with “{0}”? The existing AssetKey will be preserved and {2} references are affected.",
         "ConfirmCreate": "Install “{0}” as a new independent asset?"
+    },
+    "ContentPackageCreationDialogs": {
+        "PickerUnavailable": "File selection is unavailable on this platform.",
+        "SelectType": "Select package type",
+        "SelectSource": "Select creation source",
+        "SelectImage": "Select a PNG source image",
+        "NoSources": "No local assets are available for creating this package type.",
+        "Name": "Content name",
+        "NameRequired": "Content name cannot be empty.",
+        "Version": "Semantic version",
+        "PreviewTitle": "Validate and preview package",
+        "Preview": "Type: {0}\\nName: {1}\\nVersion: {2}\\nIdentifier: {3}\\nPackageHash: {4}\\n\\nSaving does not import or install the package.",
+        "Save": "Save",
+        "SaveTitle": "Save created content package",
+        "World": "World",
+        "BlocksTexture": "Blocks texture",
+        "CharacterSkin": "Character skin",
+        "FurniturePack": "Furniture pack"
     }
 }

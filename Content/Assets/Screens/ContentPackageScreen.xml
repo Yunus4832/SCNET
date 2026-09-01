@@ -1,0 +1,22 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+  <PanoramaWidget/>
+  <StackPanelWidget Direction="Horizontal">
+    <CanvasWidget Style="{Widgets/TopBarContents}">
+      <LabelWidget Name="TopBar.Label" Text="[ContentPackageScreen:Title]"/>
+    </CanvasWidget>
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+      <CanvasWidget Margin="15, 10">
+        <BevelledRectangleWidget Style="{Styles/Area}"/>
+        <ListPanelWidget Name="PackageList" Direction="Vertical" Margin="3, 3" ItemSize="72" SelectionColor="10, 70, 0, 90"/>
+      </CanvasWidget>
+      <LabelWidget Name="PickerUnavailable" Text="[ContentPackageScreen:PickerUnavailable]" Color="255, 180, 80" Margin="0, 4"/>
+      <StackPanelWidget Direction="Horizontal" Margin="0, 6">
+        <BevelledButtonWidget Name="Create" Style="{Styles/ButtonStyle_160x60}" Text="[ContentPackageScreen:Create]" Margin="4, 0"/>
+        <BevelledButtonWidget Name="Import" Style="{Styles/ButtonStyle_160x60}" Text="[ContentPackageScreen:Import]" Margin="4, 0"/>
+        <BevelledButtonWidget Name="Export" Style="{Styles/ButtonStyle_160x60}" Text="[ContentPackageScreen:Export]" Margin="4, 0"/>
+        <BevelledButtonWidget Name="Install" Style="{Styles/ButtonStyle_160x60}" Text="[ContentPackageScreen:Install]" Margin="4, 0"/>
+        <BevelledButtonWidget Name="Delete" Style="{Styles/ButtonStyle_160x60}" Text="[ContentPackageScreen:Delete]" Margin="4, 0"/>
+      </StackPanelWidget>
+    </StackPanelWidget>
+  </StackPanelWidget>
+</Screen>

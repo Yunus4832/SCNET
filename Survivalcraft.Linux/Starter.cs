@@ -37,6 +37,7 @@ public class Starter
         else
         {
             RunMode.Value = RunModeType.Gui;
+            if (LinuxFilePicker.IsSupported) FilePicker.Register(new LinuxFilePicker());
             Window.IconStream = LoadWindowIcon();
             PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
             exitAction = GameEntry.EntryPoint(startup);

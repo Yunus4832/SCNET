@@ -58,16 +58,11 @@ public class LoadingScreen : Screen
     {
         AddLoadAction(delegate
         {
-            LocalModsImportManager.ImportInstalledMods(
-                Storage.GetSystemPath(GamePaths.Mods),
-                Storage.GetSystemPath(GamePaths.ModCache),
-                Log.Information
-            );
             var startupSession = StartupManager.Current.Session;
             if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
                     StartupManager.Current.Session.SessionId,
                     startupSession,
-                    Storage.GetSystemPath(GamePaths.ModCache),
+                    Storage.GetSystemPath(GamePaths.ContentPackageCache),
                     Log.Information))
             {
                 return;
@@ -81,7 +76,7 @@ public class LoadingScreen : Screen
             );
             GameEntry.SetModRuntime(GameModRuntime.StartFromProfile(
                     profile,
-                    Storage.GetSystemPath(GamePaths.ModCache),
+                    Storage.GetSystemPath(GamePaths.ContentPackageCache),
                     ModSide.Client,
                     Log.Information
                 )
@@ -169,6 +164,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("Game", new GameScreen()); });
         AddLoadAction(delegate { AddScreen("Content", new ContentScreen()); });
         AddLoadAction(delegate { AddScreen("ContentServer", new ContentServerScreen()); });
+        AddLoadAction(delegate { AddScreen("ContentPackages", new ContentPackageScreen()); });
         AddLoadAction(delegate { AddScreen("ModManagement", new ModManagementScreen()); });
         AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
         AddLoadAction(delegate { AddScreen("Players", new PlayersScreen()); });

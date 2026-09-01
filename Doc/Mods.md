@@ -35,17 +35,13 @@ payload/assets/<mod-id>/**
 - `client`
 - `server`
 
-### 本地模组目录
-
-路径：`GamePaths.Mods`
-
-这是迁移期间用户手动放置 `.scpkg` 的入口目录。启动时，程序会扫描这个目录，把包导入到本地缓存；该扫描入口将在统一 FilePicker 导入可用后按迁移计划删除。
-
 ### 本地缓存
 
-路径：`GamePaths.ContentPackageCache`（`GamePaths.ModCache` 仅是迁移期查询别名）
+路径：`GamePaths.ContentPackageCache`
 
 统一缓存按 PackageHash 存储所有类型的 `.scpkg`。Mod 运行时通过 `LocalModRepository` 查询适配器筛选 `type = Mod`，再查找匹配的 `ModId + Version`。
+
+Mod 管理界面的导入只刷新缓存列表，不自动加入全局或世界 Profile；启用仍是独立操作。导出通过 FilePicker 保存目标流原样复制缓存 `.scpkg`，不会重新封装、改变 PackageHash 或登记外部源路径。
 
 ### ModProfile
 
@@ -92,11 +88,10 @@ payload/assets/<mod-id>/**
 
 GUI 启动时：
 
-1. 扫描 `GamePaths.Mods`
-2. 导入 `.scpkg` 到 `GamePaths.ModCache`
-3. 解析当前启动会话对应的有效 `ModProfile`
-4. 如果 profile 中的包本地缺失，尝试从仓库下载
-5. 使用解析到的包启动模组 runtime
+1. 解析当前启动会话对应的有效 `ModProfile`
+2. 从统一 ContentPackageCache 查询所需包
+3. 如果 profile 中的包本地缺失，尝试从仓库下载到统一缓存
+4. 使用解析到的包启动模组 runtime
 
 之后玩家进入本地 world 时：
 

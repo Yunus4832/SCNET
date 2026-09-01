@@ -12,6 +12,8 @@ public class ContentScreen : Screen
 
     private readonly ButtonWidget _remoteButton;
 
+    private readonly ButtonWidget _packagesButton;
+
     public ContentScreen()
     {
         var node = ContentManager.Get<XElement>("Screens/ContentScreen");
@@ -19,6 +21,7 @@ public class ContentScreen : Screen
         _modsButton = Children.Find<ButtonWidget>("Mods")!;
         _manageButton = Children.Find<BevelledButtonWidget>("Manage")!;
         _remoteButton = Children.Find<ButtonWidget>("Remote")!;
+        _packagesButton = Children.Find<ButtonWidget>("Packages")!;
     }
 
     public void OpenManageSelectDialog()
@@ -36,6 +39,11 @@ public class ContentScreen : Screen
         if (_remoteButton.IsClicked)
         {
             ScreensManager.SwitchScreen("ContentServer");
+        }
+
+        if (_packagesButton.IsClicked)
+        {
+            ScreensManager.SwitchScreen("ContentPackages");
         }
 
         if (_manageButton.IsClicked)

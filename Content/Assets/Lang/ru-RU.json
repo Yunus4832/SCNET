@@ -58,7 +58,6 @@
         "DownloadModFailed": "Не удалось скачать мод",
         "DeleteCacheTitle": "Удалить кэш",
         "DeleteCacheQuestion": "Удалить локальный кэш {0}@{1}?",
-        "DeleteCacheImportedQuestion": "Удалить локальный кэш {0}@{1}?\nЭтот мод всё ещё есть во внешней папке Mods и будет импортирован снова при следующем запуске.",
         "ExportComplete": "Экспорт завершён",
         "ExportModFailed": "Не удалось экспортировать мод",
         "NoWorldTitle": "Нет миров",
@@ -68,7 +67,14 @@
         "StatusHashMismatch": "Hash отличается",
         "StatusGlobal": "Глобальный",
         "StatusWorld": "Мир",
-        "SideLocal": "локальный"
+        "SideLocal": "локальный",
+        "Import": "Импорт",
+        "PickerUnavailable": "Выбор файлов недоступен на этой платформе.",
+        "SelectPackages": "Выберите пакеты модов",
+        "Importing": "Импорт пакетов модов",
+        "ImportComplete": "Импортировано пакетов модов: {0}.",
+        "ImportModFailed": "Не удалось импортировать пакеты модов",
+        "ExportTitle": "Экспорт пакета мода"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Превращение в мебель не поддерживается",
@@ -3157,7 +3163,9 @@
             "12": "Управление глобальными модами и модами миров",
             "13": "Моды",
             "RemoteDescription": "Просмотр одобренных ресурсов сервера контента",
-            "Remote": "Онлайн-контент"
+            "Remote": "Онлайн-контент",
+            "PackagesDescription": "Управление загруженными или импортированными пакетами содержимого",
+            "Packages": "Пакеты"
         },
         "GameLoadingScreen": {
             "1": "Загрузка мира"
@@ -3205,7 +3213,9 @@
             "AddGlobal": "Глобально",
             "World": "Мир",
             "PreviousPage": "Назад",
-            "NextPage": "Далее"
+            "NextPage": "Далее",
+            "Import": "Импорт",
+            "PickerUnavailable": "Выбор файлов недоступен на этой платформе; импорт и экспорт отключены."
         },
         "ManageContentScreen": {
             "1": "Содержимое",
@@ -3470,6 +3480,15 @@
             "Download": "Скачать",
             "Uninstall": "Удалить",
             "Refresh": "Обновить"
+        },
+        "ContentPackageScreen": {
+            "Title": "Кэш пакетов содержимого",
+            "PickerUnavailable": "Выбор файлов недоступен на этой платформе; импорт и экспорт отключены.",
+            "Import": "Импорт",
+            "Export": "Экспорт",
+            "Install": "Установить",
+            "Delete": "Удалить",
+            "Create": "Создать"
         }
     },
     "FireworksBlock": {
@@ -3973,12 +3992,42 @@
     },
     "ContentServerScreen": {
         "ServerNotConfigured": "Адрес сервера контента не настроен.",
-        "Installed": "Контент установлен.",
+        "Installed": "Контент установлен."
+    },
+    "ContentPackageScreen": {
+        "SelectPackages": "Выберите пакеты содержимого",
+        "ImportComplete": "Импортировано пакетов содержимого: {0}.",
+        "ExportTitle": "Экспорт пакета содержимого",
+        "ExportComplete": "Экспорт завершён",
+        "Installed": "Содержимое установлено.",
+        "DeleteTitle": "Удаление пакета из кэша",
+        "DeleteQuestion": "Удалить пакет «{0} {1}» из кэша? Установленные ресурсы не изменятся.",
+        "CreationSaved": "Пакет сохранён. Для использования импортируйте его явно."
+    },
+    "ContentPackageInstallDialogs": {
         "InstallModeTitle": "Выберите способ установки",
         "CreateNew": "Создать новый ресурс",
         "ReplaceExisting": "Заменить существующий ресурс",
         "SelectReplacement": "Выберите ресурс для замены",
         "ConfirmReplace": "Заменить «{1}» на «{0}»? Существующий AssetKey будет сохранён; затронуто ссылок: {2}.",
         "ConfirmCreate": "Установить «{0}» как новый независимый ресурс?"
+    },
+    "ContentPackageCreationDialogs": {
+        "PickerUnavailable": "Выбор файлов недоступен на этой платформе.",
+        "SelectType": "Выберите тип пакета",
+        "SelectSource": "Выберите исходный материал",
+        "SelectImage": "Выберите исходное изображение PNG",
+        "NoSources": "Нет локальных ресурсов для создания пакета этого типа.",
+        "Name": "Название содержимого",
+        "NameRequired": "Название содержимого не может быть пустым.",
+        "Version": "Семантическая версия",
+        "PreviewTitle": "Проверка и предварительный просмотр",
+        "Preview": "Тип: {0}\\nНазвание: {1}\\nВерсия: {2}\\nIdentifier: {3}\\nPackageHash: {4}\\n\\nСохранение не импортирует и не устанавливает пакет.",
+        "Save": "Сохранить",
+        "SaveTitle": "Сохранить созданный пакет",
+        "World": "Мир",
+        "BlocksTexture": "Текстура блоков",
+        "CharacterSkin": "Скин персонажа",
+        "FurniturePack": "Пакет мебели"
     }
 }

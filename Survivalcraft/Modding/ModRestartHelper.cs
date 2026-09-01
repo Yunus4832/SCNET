@@ -17,7 +17,7 @@ public static class ModRestartHelper
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, requiredProfile);
         var downloadedAny = ModProfileResolver.EnsurePackagesAvailable(
             sessionProfile,
-            Storage.GetSystemPath(GamePaths.ModCache),
+            Storage.GetSystemPath(GamePaths.ContentPackageCache),
             log);
         if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
         {
@@ -46,7 +46,7 @@ public static class ModRestartHelper
         var downloadedAny = desiredProfile.Packages.Count > 0 &&
                             ModProfileResolver.EnsurePackagesAvailable(
                                 desiredProfile,
-                                Storage.GetSystemPath(GamePaths.ModCache),
+                                Storage.GetSystemPath(GamePaths.ContentPackageCache),
                                 log);
         if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, desiredProfile))
         {

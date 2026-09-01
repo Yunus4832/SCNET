@@ -40,6 +40,7 @@ public class Starter
         }
 
         RunMode.Value = RunModeType.Gui;
+        FilePicker.Register(new WindowsFilePicker());
         Window.IconStream = LoadWindowIcon();
         PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
         var exitAction = GameEntry.EntryPoint(startup);

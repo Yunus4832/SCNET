@@ -43,7 +43,7 @@ ContentPackageCache ─> 原包导出 ─> FilePicker 指定的保存目标
 18. “制造并保存新包”与“导出缓存包”是两个操作：制造从游戏资产或 FilePicker 素材在临时区生成并校验新 `.scpkg`，再由 FilePicker 保存，不自动写入缓存或安装；缓存包导出只复制已经导入/下载的缓存制品。用户要使用制造结果时必须显式重新导入。
 19. 非 Mod 安装成功是内容包职责的终点；内容包管理 Screen 不持有安装关系、不展示已安装状态，也不负责重命名、使用或删除派生资产。后续生命周期完全由现有对应游戏资产管理 Screen 负责。
 
-## 当前基线与已知缺口
+## 立项基线与已知缺口（实施前）
 
 - `Engine.FileStorage` 已定义 `IFilePicker`、`FilePicker`、请求和流式结果模型。
 - Windows、Linux、Android 当前均未实现或注册 `IFilePicker`，`FilePicker.IsAvailable` 实际始终为 `false`。
@@ -428,28 +428,28 @@ Data/
 
 ### 阶段 5：实现 FilePicker 并迁移游戏 UI
 
-- [ ] 为 Windows 实现并在 GUI Starter 初始化阶段注册 `IFilePicker`。
-- [ ] 为 Linux 实现并注册 `IFilePicker`，明确桌面 portal 不可用时的行为。
-- [ ] 为 Android 实现并注册 `IFilePicker`，使用系统文档选择/创建能力并管理 URI 流生命周期。
-- [ ] 验证打开单文件、多文件、保存目标、取消、异常和重复调用；Headless 保持不注册。
-- [ ] Mod 管理 Screen 通过 FilePicker 多选导入统一 Mod 内容包到 ContentPackageCache，并只负责 Profile 启用/停用和 Mod 包管理。
-- [ ] 模组导出通过 FilePicker 原样复制缓存包，不重新生成内容包，也不再写入 `GamePaths.Mods`。
-- [ ] 内容包管理 Screen 承担其他类型的缓存包导入/导出和从缓存发起安装，不展示或删除安装后的本地资产，并与 Mod Screen 复用底层包服务。
-- [ ] 内容包管理 Screen 提供非 Mod 内容包制造入口：选择类型和素材、填写名称与版本、预览和校验，通过 FilePicker 保存；另行提供显式导入和缓存包导出。第一阶段不在游戏中实现 Publisher 登录或提交审核。
-- [ ] FilePicker 不可用时隐藏或禁用交互式导入导出，并提供明确说明。
-- [ ] 包导入完成后只刷新缓存包列表；安装完成后只刷新对应游戏资产 Screen 的数据。启用、选择或进入内容必须是独立的显式操作。
-- [ ] 删除对外部源路径的持久化和展示依赖。
-- [ ] 更新 `Doc/Architecture.md`、`Doc/FileStorage.md` 和 `Doc/StartupSessions.md` 中的平台支持现状。
+- [x] 为 Windows 实现并在 GUI Starter 初始化阶段注册 `IFilePicker`。
+- [x] 为 Linux 实现并注册 `IFilePicker`，明确桌面 portal 不可用时的行为。
+- [x] 为 Android 实现并注册 `IFilePicker`，使用系统文档选择/创建能力并管理 URI 流生命周期。
+- [x] 验证打开单文件、多文件、保存目标、取消、异常和重复调用；Headless 保持不注册。
+- [x] Mod 管理 Screen 通过 FilePicker 多选导入统一 Mod 内容包到 ContentPackageCache，并只负责 Profile 启用/停用和 Mod 包管理。
+- [x] 模组导出通过 FilePicker 原样复制缓存包，不重新生成内容包，也不再写入 `GamePaths.Mods`。
+- [x] 内容包管理 Screen 承担其他类型的缓存包导入/导出和从缓存发起安装，不展示或删除安装后的本地资产，并与 Mod Screen 复用底层包服务。
+- [x] 内容包管理 Screen 提供非 Mod 内容包制造入口：选择类型和素材、填写名称与版本、预览和校验，通过 FilePicker 保存；另行提供显式导入和缓存包导出。第一阶段不在游戏中实现 Publisher 登录或提交审核。
+- [x] FilePicker 不可用时隐藏或禁用交互式导入导出，并提供明确说明。
+- [x] 包导入完成后只刷新缓存包列表；安装完成后只刷新对应游戏资产 Screen 的数据。启用、选择或进入内容必须是独立的显式操作。
+- [x] 删除对外部源路径的持久化和展示依赖。
+- [x] 更新 `Doc/Architecture.md`、`Doc/FileStorage.md` 和 `Doc/StartupSessions.md` 中的平台支持现状。
 
 门禁：至少在 Windows、Linux、Android 各完成一次真实打开与保存 smoke test；Headless 构建和启动不得依赖 picker。
 
 ### 阶段 6：收口启动、远程仓库并删除旧实现
 
-- [ ] 从 GUI `LoadingScreen` 删除 `ImportInstalledMods`。
-- [ ] 从 Headless 初始化删除相同调用。
-- [ ] 删除 `LocalModsImportManager`、`LocalModsImportState.xml` 和相关 `GamePaths` 字段。
-- [ ] 删除自动扫描 `GamePaths.Mods` 的行为、导出后登记源文件的行为以及相应 UI 文案。
-- [ ] GUI 和 Headless 继续共用 ContentPackageCache 优先、远程补缺的解析器。
+- [x] 从 GUI `LoadingScreen` 删除 `ImportInstalledMods`。
+- [x] 从 Headless 初始化删除相同调用。
+- [x] 删除 `LocalModsImportManager`、`LocalModsImportState.xml` 和相关 `GamePaths` 字段。
+- [x] 删除自动扫描 `GamePaths.Mods` 的行为、导出后登记源文件的行为以及相应 UI 文案。
+- [x] GUI 和 Headless 继续共用 ContentPackageCache 优先、远程补缺的解析器。
 - [ ] 游戏端远程仓库客户端和类型统一改用 ContentServer 命名。
 - [ ] Profile、联机服务器信息和界面中的仓库地址统一为 ContentServer 语义。
 - [ ] 删除 `ModServer/` 项目、部署脚本、解决方案项和测试。

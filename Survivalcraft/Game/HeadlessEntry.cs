@@ -379,24 +379,18 @@ public static class HeadlessEntry
         SettingsManager.Initialize();
         ContentManager.Initialize();
         PackageManager.Initialize();
-        LocalModsImportManager.ImportInstalledMods(
-            Storage.GetSystemPath(GamePaths.Mods),
-            Storage.GetSystemPath(GamePaths.ModCache),
-            Log.Information
-        );
-
         var startupSession = StartupManager.Current.Session;
         var profile = ModProfileManager.LoadEffectiveProfile(
             startupSession.SessionId,
             startupSession);
         ModProfileResolver.EnsurePackagesAvailable(
             profile,
-            Storage.GetSystemPath(GamePaths.ModCache),
+            Storage.GetSystemPath(GamePaths.ContentPackageCache),
             Log.Information
         );
         _modRuntime = GameModRuntime.StartFromProfile(
             profile,
-            Storage.GetSystemPath(GamePaths.ModCache),
+            Storage.GetSystemPath(GamePaths.ContentPackageCache),
             ModSide.Server,
             Log.Information
         );

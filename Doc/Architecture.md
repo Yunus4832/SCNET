@@ -43,6 +43,8 @@
 `FilePicker.IsAvailable` 表明该能力不可用。远程内容查询与下载使用独立的 ContentServer API，
 不实现或复用文件选择接口。
 
+Windows GUI Starter 通过系统 PowerShell/WinForms 对话框提供 picker；Linux GUI Starter 只在探测到 `zenity` 时注册实现，缺失时保持 `FilePicker.IsAvailable=false`；Android GameActivity 使用 Storage Access Framework 的 `ACTION_OPEN_DOCUMENT` 与 `ACTION_CREATE_DOCUMENT`，并持久化授权后的 URI 访问。Headless 分支均在注册之前返回或进入独立 Activity，因此不会暴露交互式 picker。
+
 对于已有世界，session 游戏模式的优先级高于存档，但只改变本次运行时状态；世界保存仍写回原模式。这样调试实例可以切换 Creative、Survival 等模式，而不会污染测试存档。
 
 详见 [StartupSessions.md](./StartupSessions.md)。

@@ -58,7 +58,6 @@
         "DownloadModFailed": "Falha ao baixar mod",
         "DeleteCacheTitle": "Apagar cache",
         "DeleteCacheQuestion": "Apagar cache local {0}@{1}?",
-        "DeleteCacheImportedQuestion": "Apagar cache local {0}@{1}?\nEste mod ainda existe na pasta externa Mods e será importado novamente no próximo arranque.",
         "ExportComplete": "Exportação concluída",
         "ExportModFailed": "Falha ao exportar mod",
         "NoWorldTitle": "Sem mundos",
@@ -68,7 +67,14 @@
         "StatusHashMismatch": "Hash diferente",
         "StatusGlobal": "Global",
         "StatusWorld": "Mundo",
-        "SideLocal": "local"
+        "SideLocal": "local",
+        "Import": "Importar",
+        "PickerUnavailable": "A seleção de ficheiros não está disponível nesta plataforma.",
+        "SelectPackages": "Selecionar pacotes de mods",
+        "Importing": "A importar pacotes de mods",
+        "ImportComplete": "Foram importados {0} pacote(s) de mods.",
+        "ImportModFailed": "Falha ao importar pacotes de mods",
+        "ExportTitle": "Exportar pacote de mod"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Nenhuma caixa adequada foi encontrada",
@@ -3157,7 +3163,9 @@
             "12": "Gerir mods globais e dos mundos",
             "13": "Mods",
             "RemoteDescription": "Explorar recursos aprovados do servidor de conteúdos",
-            "Remote": "Conteúdo online"
+            "Remote": "Conteúdo online",
+            "PackagesDescription": "Gerir pacotes de conteúdo transferidos ou importados de ficheiros",
+            "Packages": "Pacotes"
         },
         "GameLoadingScreen": {
             "1": "Carregando o mundo"
@@ -3205,7 +3213,9 @@
             "AddGlobal": "Global",
             "World": "Mundo",
             "PreviousPage": "Anterior",
-            "NextPage": "Próxima"
+            "NextPage": "Próxima",
+            "Import": "Importar",
+            "PickerUnavailable": "A seleção de ficheiros não está disponível nesta plataforma; importar e exportar estão desativados."
         },
         "ManageContentScreen": {
             "1": "Gestão de conteúdo",
@@ -3470,6 +3480,15 @@
             "Download": "Transferir",
             "Uninstall": "Desinstalar",
             "Refresh": "Atualizar"
+        },
+        "ContentPackageScreen": {
+            "Title": "Cache de pacotes de conteúdo",
+            "PickerUnavailable": "A seleção de ficheiros não está disponível nesta plataforma; importar e exportar estão desativados.",
+            "Import": "Importar",
+            "Export": "Exportar",
+            "Install": "Instalar",
+            "Delete": "Eliminar",
+            "Create": "Criar"
         }
     },
     "FireworksBlock": {
@@ -3973,12 +3992,42 @@
     },
     "ContentServerScreen": {
         "ServerNotConfigured": "O endereço do servidor de conteúdos não está configurado.",
+        "Installed": "Conteúdo instalado."
+    },
+    "ContentPackageScreen": {
+        "SelectPackages": "Selecionar pacotes de conteúdo",
+        "ImportComplete": "Foram importados {0} pacote(s) de conteúdo.",
+        "ExportTitle": "Exportar pacote de conteúdo",
+        "ExportComplete": "Exportação concluída",
         "Installed": "Conteúdo instalado.",
+        "DeleteTitle": "Eliminar pacote em cache",
+        "DeleteQuestion": "Eliminar o pacote em cache “{0} {1}”? Os recursos instalados não serão afetados.",
+        "CreationSaved": "Pacote de conteúdo guardado. Importe-o explicitamente para o utilizar."
+    },
+    "ContentPackageInstallDialogs": {
         "InstallModeTitle": "Escolher modo de instalação",
         "CreateNew": "Criar novo recurso",
         "ReplaceExisting": "Substituir recurso existente",
         "SelectReplacement": "Selecionar recurso a substituir",
         "ConfirmReplace": "Substituir “{1}” por “{0}”? O AssetKey existente será preservado e {2} referências serão afetadas.",
         "ConfirmCreate": "Instalar “{0}” como um novo recurso independente?"
+    },
+    "ContentPackageCreationDialogs": {
+        "PickerUnavailable": "A seleção de ficheiros não está disponível nesta plataforma.",
+        "SelectType": "Selecionar tipo de pacote",
+        "SelectSource": "Selecionar origem de criação",
+        "SelectImage": "Selecionar uma imagem PNG de origem",
+        "NoSources": "Não existem recursos locais disponíveis para criar este tipo de pacote.",
+        "Name": "Nome do conteúdo",
+        "NameRequired": "O nome do conteúdo não pode estar vazio.",
+        "Version": "Versão semântica",
+        "PreviewTitle": "Validar e pré-visualizar pacote",
+        "Preview": "Tipo: {0}\\nNome: {1}\\nVersão: {2}\\nIdentifier: {3}\\nPackageHash: {4}\\n\\nGuardar não importa nem instala o pacote.",
+        "Save": "Guardar",
+        "SaveTitle": "Guardar pacote de conteúdo criado",
+        "World": "Mundo",
+        "BlocksTexture": "Textura de blocos",
+        "CharacterSkin": "Visual de personagem",
+        "FurniturePack": "Pacote de mobiliário"
     }
 }

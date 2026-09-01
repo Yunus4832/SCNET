@@ -6,6 +6,7 @@ using Engine.Core;
 
 using Game;
 using Game.Blocks;
+using Game.Content;
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
@@ -195,7 +196,7 @@ public class GameModRuntimeTest
         Directory.CreateDirectory(directory);
         try
         {
-            WritePackage(Path.Combine(directory, "example.addon.scpkg"), """
+            ImportPackage(directory, """
                 {
                   "id": "example.addon",
                   "name": "Addon",
@@ -230,7 +231,7 @@ public class GameModRuntimeTest
         try
         {
             SettingsManager.Current.ContentServerUrl = "https://mods.example/";
-            WritePackage(Path.Combine(directory, "example.addon.scpkg"), """
+            ImportPackage(directory, """
                 {
                   "id": "example.addon",
                   "name": "Addon",
@@ -304,13 +305,13 @@ public class GameModRuntimeTest
         }
     }
 
-    private static void WritePackage(
-        string path,
+    private static void ImportPackage(
+        string directory,
         string manifest,
         IReadOnlyDictionary<string, string>? dataFiles = null)
     {
         using var package = ScpkgTestPackage.Create(manifest, dataFiles);
-        using var stream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None);
-        package.CopyTo(stream);
+        var cache = new ContentPackageCache(directory);
+        cache.ImportAsync(package).GetAwaiter().GetResult();
     }
 }

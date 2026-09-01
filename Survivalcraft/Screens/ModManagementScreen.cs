@@ -1,5 +1,9 @@
 using System.Xml.Linq;
 
+using Content.Packaging;
+
+using Game.Content;
+
 namespace Game.Screens;
 
 public class ModManagementScreen : Screen
@@ -10,9 +14,11 @@ public class ModManagementScreen : Screen
     private readonly ButtonWidget _cacheButton;
     private readonly ButtonWidget _exportButton;
     private readonly ButtonWidget _globalModButton;
+    private readonly ButtonWidget _importButton;
     private readonly ListPanelWidget _modsList;
     private readonly ButtonWidget _nextPageButton;
     private readonly ButtonWidget _previousPageButton;
+    private readonly LabelWidget _pickerUnavailableLabel;
     private readonly ButtonWidget _refreshButton;
     private readonly TextBoxWidget _repositoryTextBox;
     private readonly ButtonWidget _saveDefaultRepositoryButton;
@@ -28,9 +34,11 @@ public class ModManagementScreen : Screen
         _cacheButton = Children.Find<ButtonWidget>("CacheButton")!;
         _exportButton = Children.Find<ButtonWidget>("ExportButton")!;
         _globalModButton = Children.Find<ButtonWidget>("GlobalModButton")!;
+        _importButton = Children.Find<ButtonWidget>("ImportButton")!;
         _modsList = Children.Find<ListPanelWidget>("RepositoryModsList")!;
         _nextPageButton = Children.Find<ButtonWidget>("NextPageButton")!;
         _previousPageButton = Children.Find<ButtonWidget>("PreviousPageButton")!;
+        _pickerUnavailableLabel = Children.Find<LabelWidget>("PickerUnavailable")!;
         _refreshButton = Children.Find<ButtonWidget>("RefreshButton")!;
         _repositoryTextBox = Children.Find<TextBoxWidget>("RepositoryTextBox")!;
         _saveDefaultRepositoryButton = Children.Find<ButtonWidget>("SaveDefaultRepositoryButton")!;
@@ -62,13 +70,20 @@ public class ModManagementScreen : Screen
         _cacheButton.Text = selectedItem?.LocalEntry != null
             ? LanguageManager.Get(_typeName, "DeleteCacheShort")
             : LanguageManager.Get(_typeName, "Download");
-        _exportButton.IsEnabled = selectedItem?.LocalEntry != null;
+        _exportButton.IsEnabled = FilePicker.IsAvailable && selectedItem?.LocalEntry != null;
+        _importButton.IsEnabled = FilePicker.IsAvailable;
+        _pickerUnavailableLabel.IsVisible = !FilePicker.IsAvailable;
         _previousPageButton.IsEnabled = false;
         _nextPageButton.IsEnabled = false;
 
         if (_refreshButton.IsClicked)
         {
             RefreshRepositoryPackages();
+        }
+
+        if (_importButton.IsClicked)
+        {
+            ImportPackages();
         }
 
         if (_saveDefaultRepositoryButton.IsClicked)
@@ -167,7 +182,7 @@ public class ModManagementScreen : Screen
 
     private void LoadLocalPackages()
     {
-        var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ModCache));
+        var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
         foreach (var entry in repository.ListAll())
         {
             UpsertItem(new RepositoryModItem(entry));
@@ -215,7 +230,7 @@ public class ModManagementScreen : Screen
             try
             {
                 using var client = new ModServerClient(mod.RepositoryUrl);
-                var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ModCache));
+                var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
                 var entry = client.DownloadPackage(mod.RemotePackage, repository);
                 Dispatcher.Dispatch(() =>
                 {
@@ -237,10 +252,7 @@ public class ModManagementScreen : Screen
 
     private void ConfirmDeleteCache(RepositoryModItem mod)
     {
-        var importedSources = FindImportedSources(mod);
-        var message = importedSources.Count == 0
-            ? string.Format(LanguageManager.Get(_typeName, "DeleteCacheQuestion"), mod.ModId, mod.Version)
-            : string.Format(LanguageManager.Get(_typeName, "DeleteCacheImportedQuestion"), mod.ModId, mod.Version);
+        var message = string.Format(LanguageManager.Get(_typeName, "DeleteCacheQuestion"), mod.ModId, mod.Version);
         DialogsManager.ShowDialog(null, new MessageDialog(
             LanguageManager.Get(_typeName, "DeleteCacheTitle"),
             message,
@@ -262,7 +274,7 @@ public class ModManagementScreen : Screen
             return;
         }
 
-        var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ModCache));
+        var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
         repository.DeletePackage(mod.LocalEntry);
         mod.LocalEntry = null;
         if (mod.RemotePackage == null)
@@ -273,7 +285,44 @@ public class ModManagementScreen : Screen
         RefreshState();
     }
 
-    private void ExportPackage(RepositoryModItem mod)
+    private async void ImportPackages()
+    {
+        try
+        {
+            var files = await FilePicker.PickFilesAsync(new FilePickerRequest([ContentPackageReader.FileExtension],
+                AllowMultiple: true, Title: LanguageManager.Get(_typeName, "SelectPackages")));
+            if (files.Count == 0) return;
+            var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "Importing"), string.Empty);
+            Dispatcher.Dispatch(() => DialogsManager.ShowDialog(null, busyDialog));
+            var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+            var imported = 0;
+            try
+            {
+                foreach (var file in files)
+                {
+                    await using var source = await file.OpenReadAsync(CancellationToken.None);
+                    await cache.ImportExpectedAsync(source, ContentPackageType.Mod);
+                    imported++;
+                }
+            }
+            finally
+            {
+                Dispatcher.Dispatch(() => DialogsManager.HideDialog(busyDialog));
+            }
+            Dispatcher.Dispatch(() =>
+            {
+                LoadLocalPackages();
+                RefreshState();
+                DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
+            });
+        }
+        catch (Exception ex)
+        {
+            Dispatcher.Dispatch(() => DialogsManager.Alert(LanguageManager.Get(_typeName, "ImportModFailed"), ex.Message));
+        }
+    }
+
+    private async void ExportPackage(RepositoryModItem mod)
     {
         if (mod.LocalEntry == null)
         {
@@ -282,14 +331,18 @@ public class ModManagementScreen : Screen
 
         try
         {
-            var targetPath = LocalModsImportManager.ExportPackage(
-                mod.LocalEntry,
-                Storage.GetSystemPath(GamePaths.Mods));
-            DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), targetPath);
+            var target = await FilePicker.PickSaveTargetAsync(new FileSaveRequest(
+                $"{mod.ModId}-{mod.Version}{ContentPackageReader.FileExtension}",
+                "application/vnd.scnet.content-package", LanguageManager.Get(_typeName, "ExportTitle")));
+            if (target is null) return;
+            var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+            await using var destination = await target.OpenWriteAsync(CancellationToken.None);
+            repository.ExportPackage(mod.LocalEntry, destination);
+            Dispatcher.Dispatch(() => DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name));
         }
         catch (Exception ex)
         {
-            DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), ex.Message);
+            Dispatcher.Dispatch(() => DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), ex.Message));
         }
     }
 
@@ -406,20 +459,6 @@ public class ModManagementScreen : Screen
     {
         return profile.Packages.Any(package =>
             string.Equals(package.ModId, modId, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static List<string> FindImportedSources(RepositoryModItem mod)
-    {
-        if (mod.LocalEntry == null)
-        {
-            return [];
-        }
-
-        return LocalModsImportManager.ListImportedMods()
-            .Where(entry =>
-                string.Equals(entry.PackageHash, mod.LocalEntry.PackageHash, StringComparison.OrdinalIgnoreCase))
-            .Select(entry => entry.Path)
-            .ToList();
     }
 
     private static string GetRepositoryUrl()

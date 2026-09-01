@@ -26,7 +26,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
-        <ProjectReference Include="..\ContentTool\ContentTool.csproj" ReferenceOutputAssembly="false"/>
+        <ProjectReference Include="..\ContentTool\ContentTool.csproj" ReferenceOutputAssembly="false"
+                          GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained"/>
         <ProjectReference Include="..\Engine\Engine.csproj"/>
         <ProjectReference Include="..\EntitySystem\EntitySystem.csproj"/>
     </ItemGroup>

@@ -43,10 +43,15 @@
                                  SelectionColor="10, 70, 0, 90"/>
             </CanvasWidget>
 
+            <LabelWidget Name="PickerUnavailable" Text="[ModManagementScreen:PickerUnavailable]"
+                         Color="255, 180, 80" Margin="0, 3"/>
+
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4">
                 <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Near">
+                    <BevelledButtonWidget Name="ImportButton" Size="112, 60" FontScale="0.9"
+                                          Text="[ModManagementScreen:Import]" Margin="0, 0"/>
                     <BevelledButtonWidget Name="CacheButton" Size="112, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:Download]" Margin="0, 0"/>
+                                          Text="[ModManagementScreen:Download]" Margin="6, 0"/>
                     <BevelledButtonWidget Name="ExportButton" Size="112, 60" FontScale="0.9"
                                           Text="[ModManagementScreen:Export]" Margin="6, 0"/>
                     <BevelledButtonWidget Name="GlobalModButton" Size="112, 60" FontScale="0.9"

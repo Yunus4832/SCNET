@@ -16,6 +16,10 @@ public interface IContentPackageCache
     IReadOnlyList<ContentPackageCacheEntry> List();
     ContentPackageCacheEntry? Find(string packageHash);
     Task<ContentPackageCacheEntry> ImportAsync(Stream source, CancellationToken cancellationToken = default);
+    Task<ContentPackageCacheEntry> ImportExpectedAsync(Stream source, ContentPackageType expectedType,
+        CancellationToken cancellationToken = default);
+    Task<ContentPackageCacheEntry> ImportAllowedAsync(Stream source,
+        IReadOnlyCollection<ContentPackageType> allowedTypes, CancellationToken cancellationToken = default);
     Stream OpenValidated(string packageHash);
     Task ExportAsync(string packageHash, Stream destination, CancellationToken cancellationToken = default);
     bool Delete(string packageHash);
@@ -45,6 +49,27 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         Stream source,
         CancellationToken cancellationToken = default)
     {
+        return await ImportCoreAsync(source, null, cancellationToken);
+    }
+
+    public async Task<ContentPackageCacheEntry> ImportExpectedAsync(Stream source, ContentPackageType expectedType,
+        CancellationToken cancellationToken = default)
+    {
+        return await ImportCoreAsync(source, [expectedType], cancellationToken);
+    }
+
+    public async Task<ContentPackageCacheEntry> ImportAllowedAsync(Stream source,
+        IReadOnlyCollection<ContentPackageType> allowedTypes, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(allowedTypes);
+        if (allowedTypes.Count == 0) throw new ArgumentException("At least one package type must be allowed.", nameof(allowedTypes));
+        return await ImportCoreAsync(source, allowedTypes, cancellationToken);
+    }
+
+    private async Task<ContentPackageCacheEntry> ImportCoreAsync(Stream source,
+        IReadOnlyCollection<ContentPackageType>? allowedTypes,
+        CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(source);
         Directory.CreateDirectory(directoryPath);
         Directory.CreateDirectory(TemporaryDirectory);
@@ -70,6 +95,8 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
             ContentPackageInspection inspection;
             await using (var input = File.OpenRead(temporaryPath))
                 inspection = ContentPackageReader.Inspect(input);
+            if (allowedTypes is not null && !allowedTypes.Contains(inspection.Manifest.Type))
+                throw new ContentPackageException($"Package type {inspection.Manifest.Type} is not allowed here.");
             var targetPath = GetPath(inspection.PackageHash);
             if (File.Exists(targetPath))
             {

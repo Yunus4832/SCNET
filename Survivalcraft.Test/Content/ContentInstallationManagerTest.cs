@@ -157,6 +157,22 @@ public sealed class ContentInstallationManagerTest : IDisposable
     }
 
     [Fact]
+    public void ImageCreationRejectsNonPngAndCleansTemporaryInput()
+    {
+        if (!Storage.DirectoryExists(GamePaths.ContentPackageCreationTemp))
+            Storage.CreateDirectory(GamePaths.ContentPackageCreationTemp);
+        var before = Storage.ListFileNames(GamePaths.ContentPackageCreationTemp)
+            .ToHashSet(StringComparer.Ordinal);
+        using var gif = new MemoryStream("GIF89a"u8.ToArray(), writable: false);
+
+        Assert.ThrowsAny<Exception>(() => ContentPackageCreationManager.CreateImage(
+            ContentPackageType.CharacterSkin, new ContentCreationIdentity("Not PNG", "1.0.0"), gif));
+
+        Assert.Equal(before, Storage.ListFileNames(GamePaths.ContentPackageCreationTemp)
+            .ToHashSet(StringComparer.Ordinal));
+    }
+
+    [Fact]
     public async Task LargeWorldManufactureCacheAndInstallRemainStreaming()
     {
         const int regionSize = 8 * 1024 * 1024;

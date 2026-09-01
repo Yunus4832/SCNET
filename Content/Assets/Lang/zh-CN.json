@@ -58,7 +58,6 @@
         "DownloadModFailed": "下载模组失败",
         "DeleteCacheTitle": "删除缓存",
         "DeleteCacheQuestion": "删除本地缓存 {0}@{1}？",
-        "DeleteCacheImportedQuestion": "删除本地缓存 {0}@{1}？\n该模组仍存在于外部 Mods 目录，下次启动会重新导入。",
         "ExportComplete": "导出完成",
         "ExportModFailed": "导出模组失败",
         "NoWorldTitle": "没有世界",
@@ -68,7 +67,14 @@
         "StatusHashMismatch": "Hash不一致",
         "StatusGlobal": "全局",
         "StatusWorld": "世界",
-        "SideLocal": "本地"
+        "SideLocal": "本地",
+        "Import": "导入",
+        "PickerUnavailable": "当前平台未提供文件选择功能。",
+        "SelectPackages": "选择模组内容包",
+        "Importing": "正在导入模组内容包",
+        "ImportComplete": "已导入 {0} 个模组内容包。",
+        "ImportModFailed": "导入模组失败",
+        "ExportTitle": "导出模组内容包"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "没有找到合适的方块",
@@ -3157,7 +3163,9 @@
             "12": "全局模组和存档模组管理",
             "13": "模组",
             "RemoteDescription": "浏览内容服务器中已审核的资源",
-            "Remote": "在线内容"
+            "Remote": "在线内容",
+            "PackagesDescription": "管理已下载或从文件导入的内容包",
+            "Packages": "内容包"
         },
         "GameLoadingScreen": {
             "1": "正在加载世界"
@@ -3205,7 +3213,9 @@
             "AddGlobal": "加入全局",
             "World": "世界",
             "PreviousPage": "上页",
-            "NextPage": "下页"
+            "NextPage": "下页",
+            "Import": "导入",
+            "PickerUnavailable": "当前平台未提供文件选择功能，无法导入或导出。"
         },
         "ManageContentScreen": {
             "1": "管理内容",
@@ -3470,6 +3480,15 @@
             "Download": "下载",
             "Uninstall": "卸载",
             "Refresh": "刷新"
+        },
+        "ContentPackageScreen": {
+            "Title": "内容包缓存",
+            "PickerUnavailable": "当前平台未提供文件选择功能，无法导入或导出。",
+            "Import": "导入",
+            "Export": "导出",
+            "Install": "安装",
+            "Delete": "删除缓存",
+            "Create": "制造新包"
         }
     },
     "FireworksBlock": {
@@ -3973,12 +3992,42 @@
     },
     "ContentServerScreen": {
         "ServerNotConfigured": "尚未配置内容服务器地址。",
+        "Installed": "内容已安装。"
+    },
+    "ContentPackageScreen": {
+        "SelectPackages": "选择内容包",
+        "ImportComplete": "已导入 {0} 个内容包。",
+        "ExportTitle": "导出内容包",
+        "ExportComplete": "导出完成",
         "Installed": "内容已安装。",
+        "DeleteTitle": "删除缓存包",
+        "DeleteQuestion": "删除缓存包“{0} {1}”？已安装资产不会受到影响。",
+        "CreationSaved": "内容包已保存；如需使用，请显式导入。"
+    },
+    "ContentPackageInstallDialogs": {
         "InstallModeTitle": "选择安装方式",
         "CreateNew": "创建新资产",
         "ReplaceExisting": "替换现有资产",
         "SelectReplacement": "选择要替换的资产",
         "ConfirmReplace": "确定用“{0}”替换“{1}”吗？将保留原有 AssetKey，并影响 {2} 个引用。",
         "ConfirmCreate": "确定将“{0}”安装为新的独立资产吗？"
+    },
+    "ContentPackageCreationDialogs": {
+        "PickerUnavailable": "当前平台未提供文件选择功能。",
+        "SelectType": "选择内容包类型",
+        "SelectSource": "选择制造素材",
+        "SelectImage": "选择 PNG 图像素材",
+        "NoSources": "没有可用于制造此类内容包的本地资产。",
+        "Name": "内容名称",
+        "NameRequired": "内容名称不能为空。",
+        "Version": "语义版本",
+        "PreviewTitle": "验证并预览内容包",
+        "Preview": "类型：{0}\\n名称：{1}\\n版本：{2}\\nIdentifier：{3}\\nPackageHash：{4}\\n\\n保存不会自动导入或安装。",
+        "Save": "保存",
+        "SaveTitle": "保存制造的内容包",
+        "World": "世界",
+        "BlocksTexture": "方块材质",
+        "CharacterSkin": "人物皮肤",
+        "FurniturePack": "家具包"
     }
 }
