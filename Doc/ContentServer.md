@@ -334,7 +334,8 @@ dotnet run --project ContentServer/ContentServer.csproj
 ContentServer            linux-x64 单文件可执行（含 .NET 运行时）
 wwwroot/                 前端 SPA 产物（编译后的 HTML/CSS/JS）
 appsettings.json         配置
-Data/content-server.db   SQLite 单文件数据库（首次运行时在内容根旁创建）
+Data/content-server.db   SQLite 元数据数据库（首次运行时在内容根旁创建）
+Data/packages/           按 PackageHash 寻址的原始 .scpkg 制品
 ```
 
 部署时拷贝上述四项即可，运行：
@@ -343,7 +344,7 @@ Data/content-server.db   SQLite 单文件数据库（首次运行时在内容根
 cd Publish/ContentServer && ./ContentServer
 ```
 
-数据库 `Data/content-server.db` 内含内容包（`PackageBlobs`）、内容、版本与审核记录，随目录整体备份与迁移；
+数据库 `Data/content-server.db` 只保存包元数据、内容、版本与审核记录，不保存包 BLOB。备份或迁移时必须同时保留 `Data/packages/`；
 不启用裁剪以保持 ASP.NET Core / EF Core / MediatR 运行可靠性。发布机需具备 Node 与 npm 以自动构建前端，
 若纯 .NET 环境可预先在 `ContentWebUI` 执行 `npm run build` 生成 `dist`。
 
@@ -351,7 +352,7 @@ cd Publish/ContentServer && ./ContentServer
 
 游戏从 `Settings.ContentServerUrl` 读取服务器地址。“在线内容”页面匿名读取目录并下载内容包：
 
-- 模组写入 `GamePaths.ModCache`，继续由现有 profile、缓存和按需加载流程管理；
+- 所有下载先进入 `GamePaths.ContentPackageCache`；Mod 再由现有 profile 和按需加载流程管理；
 - 世界、材质、皮肤和家具包通过 `ContentPackageManager` 安装到相应 `GamePaths`；
-- `config:InstalledContent.json` 记录由 ContentServer 安装的项目，用于卸载；
+- ContentServer 下载只把原包写入统一缓存；非 Mod 安装后成为与来源脱离的本地资产，不维护来源安装记录；
 - 下架只阻止后续查询和下载，不处理客户端已经下载的内容。

@@ -9,6 +9,9 @@ using ContentServer.Infrastructure;
 
 using Game.Modding;
 
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -103,10 +106,32 @@ public sealed class ContentServerApiTest : IDisposable
         var application = await ReadDataAsync(applicationResponse);
         var publisherId = application.GetProperty("publisherId").GetString()!;
         var publisherKey = application.GetProperty("apiKey").GetString()!;
+        var imageSource = CreatePng();
+
+        using (var anonymousImageValidation = new MultipartFormDataContent
+               {
+                   { new StringContent("CharacterSkin"), "type" },
+                   { new ByteArrayContent(imageSource), "source", "source.png" }
+               })
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized,
+                (await client.PostAsync("/api/v1/publisher/packages/image/validate-source",
+                    anonymousImageValidation)).StatusCode);
+        }
 
         using var pendingRequest = CreateAuthorizedRequest(HttpMethod.Get, "/api/v1/publisher", publisherKey);
         using var pendingResponse = await client.SendAsync(pendingRequest);
         Assert.Equal("pending", (await ReadDataAsync(pendingResponse)).GetProperty("status").GetString());
+        using (var pendingImageRequest = CreateAuthorizedRequest(HttpMethod.Post,
+                   "/api/v1/publisher/packages/image/validate-source", publisherKey))
+        {
+            pendingImageRequest.Content = new MultipartFormDataContent
+            {
+                { new StringContent("CharacterSkin"), "type" },
+                { new ByteArrayContent(imageSource), "source", "source.png" }
+            };
+            Assert.Equal(HttpStatusCode.Forbidden, (await client.SendAsync(pendingImageRequest)).StatusCode);
+        }
 
         using var approvePublisher = CreateAuthorizedRequest(
             HttpMethod.Post, $"/api/v1/admin/publishers/{publisherId}/approve", _administratorKey);
@@ -341,6 +366,55 @@ public sealed class ContentServerApiTest : IDisposable
             Assert.Equal(1, failureStore.CleanOrphans(referenced));
         }
 
+        using (var validationRequest = CreateAuthorizedRequest(HttpMethod.Post,
+                   "/api/v1/publisher/packages/image/validate-source", publisherKey))
+        {
+            validationRequest.Content = new MultipartFormDataContent
+            {
+                { new StringContent("CharacterSkin"), "type" },
+                { new ByteArrayContent(imageSource), "source", "skin.png" }
+            };
+            var validation = await ReadDataAsync(await client.SendAsync(validationRequest));
+            Assert.Equal(16, validation.GetProperty("width").GetInt32());
+            Assert.Equal(16, validation.GetProperty("height").GetInt32());
+            Assert.Equal("image/png", validation.GetProperty("mediaType").GetString());
+        }
+
+        var imageIdentifier = Guid.NewGuid().ToString();
+        MultipartFormDataContent ImageCreationForm() => new()
+        {
+            { new StringContent("CharacterSkin"), "type" },
+            { new StringContent(imageIdentifier), "identifier" },
+            { new StringContent("Integration Skin"), "name" },
+            { new StringContent("1.0.0"), "version" },
+            { new StringContent("Generated in the API integration test"), "description" },
+            { new ByteArrayContent(imageSource), "source", "skin.png" }
+        };
+        byte[] builtImagePackage;
+        using (var buildRequest = CreateAuthorizedRequest(HttpMethod.Post,
+                   "/api/v1/publisher/packages/image/build", publisherKey))
+        {
+            buildRequest.Content = ImageCreationForm();
+            using var buildResponse = await client.SendAsync(buildRequest);
+            buildResponse.EnsureSuccessStatusCode();
+            builtImagePackage = await buildResponse.Content.ReadAsByteArrayAsync();
+        }
+        string builtImageHash;
+        using (var stream = new MemoryStream(builtImagePackage, writable: false))
+        {
+            var inspection = ContentPackageReader.Inspect(stream);
+            Assert.Equal(ContentPackageType.CharacterSkin, inspection.Manifest.Type);
+            builtImageHash = inspection.PackageHash;
+        }
+        using (var generatedSubmitRequest = CreateAuthorizedRequest(HttpMethod.Post,
+                   "/api/v1/publisher/packages/image/submit", publisherKey))
+        {
+            generatedSubmitRequest.Content = ImageCreationForm();
+            var generated = await ReadDataAsync(await client.SendAsync(generatedSubmitRequest));
+            Assert.Equal(builtImageHash, generated.GetProperty("packageHash").GetString());
+            Assert.Equal("pending", generated.GetProperty("status").GetString());
+        }
+
         using var revokeKey = CreateAuthorizedRequest(
             HttpMethod.Post, $"/api/v1/admin/publishers/{publisherId}/revoke-key", _administratorKey);
         revokeKey.Content = JsonContent.Create(new { });
@@ -356,8 +430,8 @@ public sealed class ContentServerApiTest : IDisposable
         var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
         Assert.Equal(2, await db.AdministratorKeys.CountAsync());
         Assert.Equal(5, await db.ReviewRecords.CountAsync());
-        Assert.Equal(12, await db.PackageBlobs.CountAsync());
-        Assert.Equal(12, await db.ContentVersions.CountAsync());
+        Assert.Equal(13, await db.PackageBlobs.CountAsync());
+        Assert.Equal(13, await db.ContentVersions.CountAsync());
         var storedPackage = await db.PackageBlobs.SingleAsync(item => item.Hash == packageHash);
         var storedVersion = await db.ContentVersions.SingleAsync(item => item.Id == new ContentServer.Domain.Contents.ContentVersionId(Guid.Parse(versionId)));
         Assert.Equal(storedPackage.Id, storedVersion.PackageBlobId);
@@ -419,6 +493,14 @@ public sealed class ContentServerApiTest : IDisposable
             new ContentPackageWriteEntry("payload/data/version.txt", marker.Length,
                 () => new MemoryStream(marker, writable: false))
         ]);
+        return output.ToArray();
+    }
+
+    private static byte[] CreatePng()
+    {
+        using var image = new Image<Rgba32>(16, 16, new Rgba32(32, 96, 160, 255));
+        using var output = new MemoryStream();
+        image.SaveAsPng(output);
         return output.ToArray();
     }
 

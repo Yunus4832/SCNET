@@ -29,7 +29,7 @@
 | Mod MSBuild target | 项目 manifest、程序集、Data、Assets | 使用项目声明的稳定 ModId | 输出并 verify `.scpkg`；不发布、不安装 |
 | ContentTool `pack` | manifest 文件与 payload 目录 | 使用 manifest 中已确认的值 | 输出并 verify `.scpkg`；适用于 CI/高级创作者 |
 | 游戏制造器 | World/Furniture Manager 快照或 FilePicker 图片流 | 新内容生成 UUID；新版本只从用户选择的同类型基线包继承 | 临时生成并 verify，交给 FilePicker 保存；不缓存、不安装、不发布 |
-| WebUI 简单制造 | 浏览器选择的 PNG 与草稿字段 | 新草稿生成 UUID；导入同类型草稿/基线时显式继承 | 后端无状态生成下载包，或同次请求生成后提交 Pending |
+| WebUI 简单制造 | 浏览器选择的 PNG 与草稿字段 | 新草稿生成 UUID；选择同类型基线包时显式继承 | 后端无状态生成下载包，或同次请求生成后提交 Pending |
 
 `IContentCreationSource` 位于游戏内容层，只投影 manifest 输入和可重开的条目流。World/Furniture 源必须在读取期间获得一致快照；图片源只暴露选中的一个 PNG。取消令牌贯穿源读取、Writer、临时文件刷新和 FilePicker 复制，取消后清理临时制品。
 
@@ -73,7 +73,7 @@ updatedAt           ISO 8601 UTC
 
 容量写入失败必须保留旧草稿，提示浏览器存储不足并允许直接制造/下载而不保存草稿。界面始终提示：草稿仅存在当前浏览器配置，清理站点数据、隐私模式回收或浏览器策略可能永久删除它。
 
-草稿导出是一个只供 WebUI 使用的 JSON + PNG ZIP，不是 `.scpkg`，扩展名固定 `.scdraft`；导入只恢复浏览器草稿，不能提交、缓存或安装。JSON 必须包含上述 schemaVersion 和字段，源文件固定为 `source.png`，未知版本拒绝。该格式不属于公共游戏内容协议。
+第一阶段不定义草稿交换格式，也不提供导入或导出。用户可以删除单条草稿或一次清理全部草稿及其源 Blob；清理必须在同一 IndexedDB 事务中覆盖 `drafts` 和 `sources`，不能留下无主源文件。
 
 ## 5. 无代码图片制造与提交契约
 

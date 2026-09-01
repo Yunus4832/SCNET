@@ -1,4 +1,5 @@
 using ContentServer.Application.Commands;
+using ContentServer.Application;
 using ContentServer.Application.Queries;
 using ContentServer.Controllers.Contracts.Requests;
 using ContentServer.Controllers.Contracts.Responses;
@@ -27,7 +28,7 @@ public sealed class PublisherController(
     IOptions<ContentServerOptions> options,
     ApiKeyAuthenticationContext authenticationContext,
     ContentPackageStore packageStore,
-    ContentSubmissionLock submissionLock) : ControllerBase
+    ContentPackageSubmissionService submissionService) : ControllerBase
 {
     [HttpGet]
     public async Task<ResponseData<PublisherResponse>> Self(CancellationToken cancellationToken)
@@ -138,81 +139,12 @@ public sealed class PublisherController(
             throw new KnownException("invalid_content_package", StatusCodes.Status400BadRequest);
         }
 
-        var manifest = staged.Inspection.Manifest;
-        var type = manifest.Type.ToString();
-        var identifier = manifest.Identifier;
-        var name = manifest.Name;
-        var version = manifest.Version;
-        IDisposable submissionLease;
-        try
-        {
-            submissionLease = await submissionLock.EnterAsync(cancellationToken);
-        }
-        catch
-        {
-            packageStore.DeleteTemporary(staged);
-            throw;
-        }
-        using (submissionLease)
-        {
-        var existingContent = await mediator.Send(
-            new FindContentItemQuery(publisher.PublisherId, identifier),
-            cancellationToken);
-        if (existingContent is not null && existingContent.PublisherId != publisher.PublisherId)
-        {
-            packageStore.DeleteTemporary(staged);
-            throw new KnownException("identifier_not_owned", StatusCodes.Status403Forbidden);
-        }
-        if (existingContent is not null && existingContent.Type != type)
-        {
-            packageStore.DeleteTemporary(staged);
-            throw new KnownException("content_type_conflict", StatusCodes.Status409Conflict);
-        }
-        var existingVersion = await mediator.Send(
-            new GetContentVersionQuery(publisher.PublisherId, identifier, version), cancellationToken);
-        if (existingVersion is not null)
-        {
-            packageStore.DeleteTemporary(staged);
-            if (existingVersion.PackageHash != staged.Inspection.PackageHash)
-            {
-                throw new KnownException("content_version_conflict", StatusCodes.Status409Conflict);
-            }
-            return existingVersion.ToResponse().AsResponseData();
-        }
-
-        packageStore.Commit(staged);
-        await mediator.Send(new SubmitContentPackageCommand(
-            publisher.PublisherId,
-            type,
-            identifier,
-            name,
-            form["summary"],
-            version,
-            manifest.Metadata.GetRawText(),
-            staged.Inspection.PackageHash,
-            staged.BlobHash,
-            staged.Size,
-            staged.FileName,
-            staged.MediaType), cancellationToken);
-
-        var submittedVersion = await mediator.Send(
-            new GetContentVersionQuery(
-                publisher.PublisherId,
-                identifier,
-                version
-            ),
-            cancellationToken
-        ) ?? throw new KnownException(
-            "content_version_not_found",
-            StatusCodes.Status500InternalServerError
-        );
-
-        Response.StatusCode = StatusCodes.Status201Created;
-
-        return submittedVersion
+        var result = await submissionService.SubmitAsync(
+            publisher.PublisherId, staged, form["summary"], cancellationToken);
+        Response.StatusCode = result.Created ? StatusCodes.Status201Created : StatusCodes.Status200OK;
+        return result.Version
             .ToResponse()
-            .AsResponseData(code: StatusCodes.Status201Created);
-        }
+            .AsResponseData(code: Response.StatusCode);
     }
 
     private async Task<PublisherDto> RequirePublisherAsync(CancellationToken cancellationToken)

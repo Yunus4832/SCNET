@@ -2,6 +2,7 @@ using System.Text.Json;
 
 using ContentServer;
 using ContentServer.Application.Commands;
+using ContentServer.Application;
 using ContentServer.Infrastructure;
 using ContentServer.Middlewares;
 
@@ -46,6 +47,8 @@ builder.Services.AddUnitOfWork<ContentServerDbContext>();
 builder.Services.AddRepositories(typeof(ContentServerDbContext).Assembly);
 builder.Services.AddSingleton<ContentPackageStore>();
 builder.Services.AddSingleton<ContentSubmissionLock>();
+builder.Services.AddSingleton<ImageContentPackageBuilder>();
+builder.Services.AddScoped<ContentPackageSubmissionService>();
 builder.Services.AddScoped<ApiKeyAuthenticationContext>();
 builder.Services.AddScoped<ApiKeyAuthenticationMiddleware>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

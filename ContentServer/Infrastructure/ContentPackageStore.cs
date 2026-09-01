@@ -96,6 +96,26 @@ public sealed class ContentPackageStore
 
     public FileStream Open(string packageHash) => OpenRead(GetPath(packageHash));
 
+    public string CreateTemporaryPath(string suffix) =>
+        Path.Combine(_temporaryPath, $"{Guid.NewGuid():N}{suffix}");
+
+    public async Task<StagedContentPackage> InspectTemporaryPackageAsync(
+        string temporaryPath,
+        string fileName,
+        CancellationToken cancellationToken)
+    {
+        ContentPackageInspection inspection;
+        string blobHash;
+        await using (var input = OpenRead(temporaryPath))
+        {
+            inspection = ContentPackageReader.Inspect(input);
+            input.Position = 0;
+            blobHash = Convert.ToHexString(await SHA256.HashDataAsync(input, cancellationToken)).ToLowerInvariant();
+        }
+        return new StagedContentPackage(temporaryPath, inspection, blobHash,
+            new FileInfo(temporaryPath).Length, fileName, "application/vnd.scnet.content-package");
+    }
+
     public void DeleteTemporary(StagedContentPackage package) => File.Delete(package.TemporaryPath);
 
     public IReadOnlyList<string> AuditOrphans(IReadOnlySet<string> referencedHashes) =>
