@@ -155,7 +155,7 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
     }
 
     /// <summary>
-    /// 获取放置参数
+    ///     获取放置参数
     /// </summary>
     /// <param name="subsystemTerrain"> 地形子系统 </param>
     /// <param name="componentMiner"> 矿工对象 </param>

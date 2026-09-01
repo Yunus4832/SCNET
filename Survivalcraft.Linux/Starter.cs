@@ -37,7 +37,11 @@ public class Starter
         else
         {
             RunMode.Value = RunModeType.Gui;
-            if (LinuxFilePicker.IsSupported) FilePicker.Register(new LinuxFilePicker());
+            if (LinuxFilePicker.IsSupported)
+            {
+                FilePicker.Register(new LinuxFilePicker());
+            }
+
             Window.IconStream = LoadWindowIcon();
             PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
             exitAction = GameEntry.EntryPoint(startup);
@@ -71,7 +75,7 @@ public class Starter
     }
 
     /// <summary>
-    /// 加载窗口图标
+    ///     加载窗口图标
     /// </summary>
     private static Stream LoadWindowIcon()
     {

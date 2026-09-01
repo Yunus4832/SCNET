@@ -22,6 +22,7 @@ internal static class ContentPayloadValidation
         {
             throw new ContentPackageException("manifest.payload.entry does not exist in the package.");
         }
+
         if (!allowAdditionalPayload && !context.Paths.SetEquals(["manifest.json", entry]))
         {
             throw new ContentPackageException(

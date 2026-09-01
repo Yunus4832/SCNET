@@ -39,10 +39,12 @@ public static class SettingsManager
         {
             settingsChanged = true;
         }
+
         if (EnsureHttpCommandAccessToken(Current))
         {
             settingsChanged = true;
         }
+
         if (settingsChanged)
         {
             SaveSettings();
@@ -124,7 +126,6 @@ public static class SettingsManager
                             );
                         }
                     }
-
                 }
 
                 Log.Information("Loaded settings.");

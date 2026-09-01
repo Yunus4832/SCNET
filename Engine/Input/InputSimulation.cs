@@ -5,9 +5,9 @@ using Engine.Core;
 namespace Engine.Input;
 
 /// <summary>
-/// Queues synthetic input for delivery during the engine input phase.
-/// Synthetic and physical button/key states are merged, so releasing a
-/// simulated input never releases a still-held physical device input.
+///     Queues synthetic input for delivery during the engine input phase.
+///     Synthetic and physical button/key states are merged, so releasing a
+///     simulated input never releases a still-held physical device input.
 /// </summary>
 public static class InputSimulation
 {

@@ -46,8 +46,8 @@ public class SubsystemBodyPackage : IPackage
     public ClientState MinNeedState => ClientState.Playing;
 
     /// <summary>
-    /// 状态流轮次序号：同一轮拆出的所有生物包共享同一个值，
-    /// 客户端按实体比较此序号丢弃旧包，实现“最新优先”。
+    ///     状态流轮次序号：同一轮拆出的所有生物包共享同一个值，
+    ///     客户端按实体比较此序号丢弃旧包，实现“最新优先”。
     /// </summary>
     public uint StateTick;
 

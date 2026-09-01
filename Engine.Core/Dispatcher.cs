@@ -8,7 +8,8 @@ public static class Dispatcher
 
     private static readonly List<ActionInfo> _currentActionInfos = [];
 
-    public static int MainThreadId => _mainThreadId ?? throw new InvalidOperationException("Dispatcher is not initialized.");
+    public static int MainThreadId =>
+        _mainThreadId ?? throw new InvalidOperationException("Dispatcher is not initialized.");
 
     public static bool IsMainThread => Environment.CurrentManagedThreadId == MainThreadId;
 

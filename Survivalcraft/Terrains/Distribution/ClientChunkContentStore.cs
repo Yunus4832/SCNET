@@ -1,7 +1,7 @@
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Owns client chunk allocation lifetimes and installed authoritative contents.
+///     Owns client chunk allocation lifetimes and installed authoritative contents.
 /// </summary>
 public sealed class ClientChunkContentStore
 {

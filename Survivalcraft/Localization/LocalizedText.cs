@@ -3,8 +3,8 @@ using System.Globalization;
 namespace Game.Localization;
 
 /// <summary>
-/// A lazily resolved text resource that can be safely stored by long-lived
-/// registrations such as widgets, commands and mods.
+///     A lazily resolved text resource that can be safely stored by long-lived
+///     registrations such as widgets, commands and mods.
 /// </summary>
 public sealed record LocalizedText
 {
@@ -51,8 +51,8 @@ public sealed record LocalizedText
 }
 
 /// <summary>
-/// Resolves a language resource with a stable fallback for resources supplied
-/// by the base game or a mod.
+///     Resolves a language resource with a stable fallback for resources supplied
+///     by the base game or a mod.
 /// </summary>
 public static class LocalizationText
 {

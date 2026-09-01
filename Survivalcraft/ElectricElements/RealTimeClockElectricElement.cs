@@ -46,7 +46,6 @@ public class RealTimeClockElectricElement : RotateableElectricElement
 
         _lastClockValue = clockValue;
         return true;
-
     }
 
     public int GetClockValue()

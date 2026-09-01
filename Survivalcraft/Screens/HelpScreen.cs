@@ -70,7 +70,8 @@ public class HelpScreen : Screen
             {
                 if (!_topics.TryAdd(helpTopic.Name, helpTopic))
                 {
-                    Log.Error($"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Key}\" was skipped.");
+                    Log.Error(
+                        $"Duplicate help topic name \"{helpTopic.Name}\". Topic \"{helpTopic.Key}\" was skipped.");
                     continue;
                 }
             }

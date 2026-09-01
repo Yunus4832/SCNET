@@ -8,7 +8,7 @@ using Game.Network.Serialization;
 namespace Game.Commands;
 
 /// <summary>
-/// A concrete operation. Frontends create commands; domains determine routing.
+///     A concrete operation. Frontends create commands; domains determine routing.
 /// </summary>
 public interface IGameCommand;
 
@@ -107,6 +107,7 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         {
             return false;
         }
+
         if (HostRequirement is CommandHostRequirement.Gui &&
             RunMode.Value is not RunModeType.Gui)
         {
@@ -139,6 +140,7 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         {
             return false;
         }
+
         if (HostRequirement is CommandHostRequirement.Gui && runMode is not RunModeType.Gui)
         {
             return false;

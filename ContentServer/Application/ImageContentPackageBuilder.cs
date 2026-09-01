@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text.Json;
 
 using Content.Packaging;
+
 using ContentServer.Infrastructure;
 
 using SixLabors.ImageSharp;
@@ -43,7 +44,9 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         CancellationToken cancellationToken)
     {
         if (type is not (ContentPackageType.BlocksTexture or ContentPackageType.CharacterSkin))
+        {
             throw new ContentPackageException("Web image manufacturing only supports texture and skin packages.");
+        }
 
         var sourcePath = packageStore.CreateTemporaryPath(".png-source");
         var packagePath = packageStore.CreateTemporaryPath(ContentPackageReader.FileExtension);
@@ -75,6 +78,7 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
                 ]);
                 await output.FlushAsync(cancellationToken);
             }
+
             return await packageStore.InspectTemporaryPackageAsync(packagePath,
                 $"{identifier}-{version}{ContentPackageReader.FileExtension}", cancellationToken);
         }
@@ -100,9 +104,14 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
         {
             total += read;
-            if (total > maximumBytes) throw new ContentPackageException("PNG source exceeds the size limit.");
+            if (total > maximumBytes)
+            {
+                throw new ContentPackageException("PNG source exceeds the size limit.");
+            }
+
             await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
         }
+
         await output.FlushAsync(cancellationToken);
     }
 
@@ -113,13 +122,19 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         await using var input = File.OpenRead(path);
         var imageInfo = await Image.IdentifyAsync(input, cancellationToken);
         if (imageInfo.Metadata.DecodedImageFormat is not PngFormat)
+        {
             throw new ContentPackageException("Image source must be PNG.");
+        }
+
         input.Position = 0;
         using (var image = await Image.LoadAsync(input, cancellationToken))
         {
             if (image.Frames.Count != 1)
+            {
                 throw new ContentPackageException("PNG source must contain exactly one frame.");
+            }
         }
+
         input.Position = 0;
         var hash = Convert.ToHexString(await SHA256.HashDataAsync(input, cancellationToken)).ToLowerInvariant();
         return new ImageSourceInspection(imageInfo.Width, imageInfo.Height, input.Length, hash, "image/png");
@@ -135,6 +150,8 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         };
         if (width <= 0 || height <= 0 || (width & (width - 1)) != 0 || (height & (height - 1)) != 0 ||
             width > maximum || height > maximum)
+        {
             throw new ContentPackageException("PNG source dimensions are invalid for the selected content type.");
+        }
     }
 }

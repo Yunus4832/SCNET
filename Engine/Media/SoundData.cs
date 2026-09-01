@@ -162,7 +162,6 @@ public class SoundData
         }
 
         Wav.Save(soundData, stream);
-
     }
 
     public static void Save(SoundData soundData, string fileName, SoundFileFormat format)

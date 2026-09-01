@@ -26,7 +26,7 @@ public static class ContentPackageHash
             BinaryPrimitives.WriteUInt64BigEndian(contentLength, checked((ulong)entry.Length));
             hash.AppendData(contentLength);
             using var stream = entry.OpenRead() ??
-                throw new ContentPackageException($"Hash source '{entry.Path}' returned null.");
+                               throw new ContentPackageException($"Hash source '{entry.Path}' returned null.");
             AppendContent(hash, stream, entry.Length, entry.Path);
         }
 

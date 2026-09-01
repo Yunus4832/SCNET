@@ -572,8 +572,7 @@ public class CommandDispatcherTest
         registry.Adapters.Register(
             _owner,
             identity,
-            HttpCommandBinding.Create<ScaleCommand>(
-                arguments => new ScaleCommand(arguments.Get<double>("value"))));
+            HttpCommandBinding.Create<ScaleCommand>(arguments => new ScaleCommand(arguments.Get<double>("value"))));
         registry.Freeze();
         var adapter = new HttpCommandAdapter(registry);
 
@@ -627,9 +626,8 @@ public class CommandDispatcherTest
         registry.Adapters.Register(
             _owner,
             Id("missing"),
-            HttpCommandBinding.Create<ScaleCommand>(
-                arguments => new ScaleCommand(
-                    arguments.Get<double>("value"))));
+            HttpCommandBinding.Create<ScaleCommand>(arguments => new ScaleCommand(
+                arguments.Get<double>("value"))));
 
         var exception = Assert.Throws<InvalidOperationException>(
             registry.Freeze);

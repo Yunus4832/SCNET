@@ -158,7 +158,8 @@ public sealed class ModNetworkHooks
         foreach (var group in _registrations.GroupBy(registration => registration.Owner))
         {
             var messageRoutes = new Dictionary<string, Registration[]>(StringComparer.Ordinal);
-            foreach (var messageGroup in group.GroupBy(registration => registration.MessageType, StringComparer.Ordinal))
+            foreach (var messageGroup in group.GroupBy(registration => registration.MessageType,
+                         StringComparer.Ordinal))
             {
                 messageRoutes[messageGroup.Key] = messageGroup
                     .OrderByDescending(registration => registration.Priority)

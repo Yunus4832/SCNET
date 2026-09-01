@@ -41,7 +41,6 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
         SubsystemTerrain.Project.FindSubsystem<SubsystemAudio>(true)!.PlaySound(name, 0.7f,
             _sharedRandom.Float(-0.1f, 0.1f), new Vector3(x, y, z), 4f, true);
         return true;
-
     }
 
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
@@ -57,7 +56,6 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
 
         var open = TrapdoorBlock.GetOpen(data);
         return OpenCloseTrapdoor(cellFace.X, cellFace.Y, cellFace.Z, !open);
-
     }
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)

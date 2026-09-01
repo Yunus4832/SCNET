@@ -41,6 +41,4 @@ public class SubsystemSeasonPackage : IPackage
         SeasonIndexNet = reader.ReadInt32();
         TimeOfSeasonNet = BitConverter.ToSingle(BitConverter.GetBytes(reader.ReadInt32()), 0);
     }
-
-
 }

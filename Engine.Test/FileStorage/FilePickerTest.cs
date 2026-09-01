@@ -14,7 +14,10 @@ public sealed class FilePickerTest
         var multiple = await FilePicker.PickFilesAsync(new FilePickerRequest([".scpkg"], true));
         var target = await FilePicker.PickSaveTargetAsync(new FileSaveRequest("package.scpkg"));
         await using (var output = await target!.OpenWriteAsync(CancellationToken.None))
+        {
             await output.WriteAsync("saved"u8.ToArray());
+        }
+
         using var cancelled = new CancellationTokenSource();
         cancelled.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
@@ -58,7 +61,11 @@ public sealed class FilePickerTest
 
         private void MaybeThrow()
         {
-            if (!ThrowOnNextRequest) return;
+            if (!ThrowOnNextRequest)
+            {
+                return;
+            }
+
             ThrowOnNextRequest = false;
             throw new InvalidOperationException("picker failed");
         }

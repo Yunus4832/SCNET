@@ -37,5 +37,4 @@ public sealed class SessionInfo
 
     /// <summary>Optional HTTP command access token restored with this startup session.</summary>
     public string? HttpCommandAccessToken { get; set; }
-
 }

@@ -48,7 +48,9 @@ public class SubsystemPalette : Subsystem
     {
         if (index.HasValue)
         {
-            return subsystemTerrain is { SubsystemPalette: not null } ? subsystemTerrain.SubsystemPalette.GetColor(index.Value) : WorldPalette.DefaultColors[index.Value];
+            return subsystemTerrain is { SubsystemPalette: not null }
+                ? subsystemTerrain.SubsystemPalette.GetColor(index.Value)
+                : WorldPalette.DefaultColors[index.Value];
         }
 
         return Color.White;
@@ -68,7 +70,9 @@ public class SubsystemPalette : Subsystem
     {
         if (index.HasValue)
         {
-            return subsystemTerrain is { SubsystemPalette: not null } ? subsystemTerrain.SubsystemPalette.GetFabricColor(index.Value) : DefaultFabricColors[index.Value];
+            return subsystemTerrain is { SubsystemPalette: not null }
+                ? subsystemTerrain.SubsystemPalette.GetFabricColor(index.Value)
+                : DefaultFabricColors[index.Value];
         }
 
         return Color.White;

@@ -21,14 +21,19 @@ public static class ModPackageReferenceTracker
     {
         yield return ModProfileManager.LoadGlobalProfile();
         if (CurrentModRuntime.Value?.EffectiveProfile is { } runtimeProfile)
+        {
             yield return runtimeProfile;
+        }
 
         if (Storage.DirectoryExists(GamePaths.SessionProfilesDirectory))
         {
             foreach (var fileName in Storage.ListFileNames(GamePaths.SessionProfilesDirectory))
             {
                 var profile = ModProfileManager.LoadSessionProfile(Path.GetFileNameWithoutExtension(fileName));
-                if (profile is not null) yield return profile;
+                if (profile is not null)
+                {
+                    yield return profile;
+                }
             }
         }
 
@@ -38,7 +43,10 @@ public static class ModPackageReferenceTracker
             {
                 var profile = ModProfileManager.LoadWorldProfile(
                     Storage.CombinePaths(GamePaths.Worlds, directoryName));
-                if (profile is not null) yield return profile;
+                if (profile is not null)
+                {
+                    yield return profile;
+                }
             }
         }
     }

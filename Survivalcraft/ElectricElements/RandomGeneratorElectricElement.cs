@@ -74,7 +74,6 @@ public class RandomGeneratorElectricElement : RotateableElectricElement
 
         SubsystemElectricity.WritePersistentVoltage(CellFaces[0].Point, _voltage);
         return true;
-
     }
 
     public float GetRandomVoltage()

@@ -3,12 +3,12 @@ namespace Game.Network;
 public class HalfFloat
 {
     /// <summary>
-    /// 指数的位数
+    ///     指数的位数
     /// </summary>
     private const int _expSize = 6;
 
     /// <summary>
-    /// 尾数的位数
+    ///     尾数的位数
     /// </summary>
     private const int _mSize = 15 - _expSize;
 

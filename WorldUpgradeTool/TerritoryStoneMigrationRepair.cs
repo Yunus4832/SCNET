@@ -46,7 +46,8 @@ internal static class TerritoryStoneMigrationRepair
         var removedBlockCount = RemoveLegacyTerrainBlocks(directoryName, territoryCoordinates);
         if (removedBlockCount > 0)
         {
-            Console.WriteLine($"Removed {removedBlockCount} legacy territory stone block{(removedBlockCount == 1 ? string.Empty : "s")}.");
+            Console.WriteLine(
+                $"Removed {removedBlockCount} legacy territory stone block{(removedBlockCount == 1 ? string.Empty : "s")}.");
         }
     }
 

@@ -1176,5 +1176,4 @@ internal static class GLWrapper
             _ => throw new InvalidOperationException("Unsupported DepthFormat.")
         };
     }
-
 }

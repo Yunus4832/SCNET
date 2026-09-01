@@ -110,6 +110,7 @@ public class SubsystemTerrainPackage : IPackage
                 {
                     throw new InvalidDataException("Invalid terrain fragment request count.");
                 }
+
                 writer.Write((ushort)FragmentRequests.Count);
                 foreach (var request in FragmentRequests)
                 {
@@ -119,6 +120,7 @@ public class SubsystemTerrainPackage : IPackage
                     {
                         throw new InvalidDataException("Invalid missing terrain fragment metadata.");
                     }
+
                     writer.Write(request.Allocation.Coords);
                     writer.Write(request.Allocation.Generation);
                     writer.Write(request.ContentVersion);
@@ -128,9 +130,11 @@ public class SubsystemTerrainPackage : IPackage
                     {
                         bitmap[index / 8] |= (byte)(1 << (index % 8));
                     }
+
                     writer.Write((ushort)bitmap.Length);
                     writer.Write(bitmap);
                 }
+
                 break;
             case DataType.SyncTerrainCellDelta:
                 writer.Write(CellDelta.Cell);
@@ -188,6 +192,7 @@ public class SubsystemTerrainPackage : IPackage
                 {
                     throw new InvalidDataException("Invalid terrain fragment request count.");
                 }
+
                 while (requestCount-- > 0)
                 {
                     var allocation = new ChunkAllocationId(reader.ReadPoint2(), reader.ReadUInt64());
@@ -200,6 +205,7 @@ public class SubsystemTerrainPackage : IPackage
                     {
                         throw new InvalidDataException("Invalid missing terrain fragment bitmap.");
                     }
+
                     var bitmap = reader.ReadBytes(bitmapLength);
                     var missing = new List<ushort>();
                     for (var index = 0; index < requestedFragmentCount; index++)
@@ -209,16 +215,19 @@ public class SubsystemTerrainPackage : IPackage
                             missing.Add((ushort)index);
                         }
                     }
+
                     if (missing.Count == 0)
                     {
                         throw new InvalidDataException("Missing terrain fragment bitmap is empty.");
                     }
+
                     FragmentRequests.Add(new TerrainChunkFragmentRequest(
                         allocation,
                         contentVersion,
                         requestedFragmentCount,
                         [.. missing]));
                 }
+
                 break;
             case DataType.SyncTerrainCellDelta:
                 CellDelta = new TerrainCellDelta(
@@ -240,5 +249,4 @@ public class SubsystemTerrainPackage : IPackage
                 break;
         }
     }
-
 }

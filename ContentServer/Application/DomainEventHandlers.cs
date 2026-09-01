@@ -13,7 +13,8 @@ public sealed class AdministratorStatusChangedHandler(IMediator mediator)
     : IDomainEventHandler<AdministratorStatusChangedDomainEvent>
 {
     public Task Handle(AdministratorStatusChangedDomainEvent e, CancellationToken ct) => mediator.Send(
-        new CreateReviewRecordCommand(e.ReviewerId, "Administrator", e.Administrator.Id.ToString(), e.Status.ToString(), e.Message, e.OccurredAt), ct);
+        new CreateReviewRecordCommand(e.ReviewerId, "Administrator", e.Administrator.Id.ToString(), e.Status.ToString(),
+            e.Message, e.OccurredAt), ct);
 }
 
 public sealed class PublisherAppliedHandler(

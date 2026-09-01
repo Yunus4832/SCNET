@@ -90,7 +90,6 @@ public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget
 
         var designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(slotValue));
         return _furnitureInventoryPanel.SubsystemFurnitureBlockBehavior.GetDesign(designIndex);
-
     }
 
     private int CountFurnitureDesigns()

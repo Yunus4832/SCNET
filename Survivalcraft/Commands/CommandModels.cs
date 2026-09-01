@@ -351,7 +351,7 @@ public sealed class CommandSuggestionContext(
 }
 
 /// <summary>
-/// Describes one textual route and converts parsed arguments into a typed command.
+///     Describes one textual route and converts parsed arguments into a typed command.
 /// </summary>
 public sealed class CommandRoute(
     IEnumerable<CommandSegment> segments,
@@ -371,12 +371,11 @@ public sealed class CommandRoute(
 
     public Func<CommandArguments, IGameCommand> CreateCommand { get; } =
         createCommand ?? throw new ArgumentNullException(nameof(createCommand));
-
 }
 
 /// <summary>
-/// Declares textual names and routes for the text frontend. This is a binding,
-/// not an executable command definition.
+///     Declares textual names and routes for the text frontend. This is a binding,
+///     not an executable command definition.
 /// </summary>
 public sealed class TextCommand : ICommandAdapterBinding
 {
@@ -428,7 +427,6 @@ public sealed class TextCommand : ICommandAdapterBinding
                 }
             }
         }
-
     }
 
     private static string ValidateName(string value, string parameterName)

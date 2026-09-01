@@ -38,6 +38,7 @@ public sealed class TerrainChunkFragmentReassembler
             {
                 _assemblies.Remove(obsolete);
             }
+
             foreach (var obsolete in _completed.Where(candidate =>
                          candidate.Allocation == fragment.Allocation && candidate != key).ToArray())
             {
@@ -87,6 +88,7 @@ public sealed class TerrainChunkFragmentReassembler
             {
                 _completed.Remove(_completedOrder.Dequeue());
             }
+
             encoded = new EncodedTerrainChunk(fragment.Allocation.Coords, fragment.ContentVersion, payload);
             return true;
         }
@@ -134,6 +136,7 @@ public sealed class TerrainChunkFragmentReassembler
             {
                 current[allocation.Coords] = allocation;
             }
+
             var obsolete = _assemblies.Keys.Where(key =>
                     current.TryGetValue(key.Allocation.Coords, out var allocation) &&
                     allocation != key.Allocation)

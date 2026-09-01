@@ -107,7 +107,6 @@ public class InstanceManagementScreen : Screen
                 StarterInstanceManager.CanCloneInstance(instanceId),
                 StarterInstanceManager.GetRunMode(instanceId)));
         }
-
     }
 
     private void ShowCreateDialog()

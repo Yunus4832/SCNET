@@ -7,17 +7,17 @@ public class ViewGameLogDialog : Dialog
     private enum FilterType
     {
         /// <summary>
-        /// 全部
+        ///     全部
         /// </summary>
         All,
 
         /// <summary>
-        /// 警告
+        ///     警告
         /// </summary>
         Warning,
 
         /// <summary>
-        /// 错误
+        ///     错误
         /// </summary>
         Error
     }

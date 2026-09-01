@@ -35,12 +35,14 @@ internal static class PngPayloadValidator
             {
                 throw new ContentPackageException($"PNG payload '{path}' cannot be animated.");
             }
+
             if (type[0] is >= (byte)'A' and <= (byte)'Z' &&
                 !type.SequenceEqual("IHDR"u8) && !type.SequenceEqual("PLTE"u8) &&
                 !type.SequenceEqual("IDAT"u8) && !type.SequenceEqual("IEND"u8))
             {
                 throw new ContentPackageException($"PNG payload '{path}' contains an unsupported critical chunk.");
             }
+
             var crc = Crc32.Start();
             crc = Crc32.Append(crc, type);
             var data = ArrayPool<byte>.Shared.Rent(_bufferSize);
@@ -123,7 +125,8 @@ internal static class PngPayloadValidator
             BinaryPrimitives.ReadInt32BigEndian(data[4..8]) != expectedHeight ||
             data[10] != 0 || data[11] != 0 || data[12] != 0 || !IsValidColorDepth(data[8], data[9]))
         {
-            throw new ContentPackageException($"PNG payload '{path}' does not match its declared dimensions or format.");
+            throw new ContentPackageException(
+                $"PNG payload '{path}' does not match its declared dimensions or format.");
         }
     }
 

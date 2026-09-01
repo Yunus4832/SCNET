@@ -1,7 +1,5 @@
 using System.Xml.Linq;
 
-using Content.Packaging;
-
 using Game.Content;
 
 namespace Game.Screens;
@@ -53,10 +51,12 @@ public sealed class ContentServerScreen : Screen
         {
             Refresh();
         }
+
         if (_downloadButton.IsClicked && selected is not null)
         {
             Install(selected);
         }
+
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen("Content");
@@ -87,6 +87,7 @@ public sealed class ContentServerScreen : Screen
                     {
                         _contentList.AddItem(item);
                     }
+
                     _busy = false;
                 });
             }

@@ -1,8 +1,8 @@
 using System.Text.Json;
 
 using ContentServer;
-using ContentServer.Application.Commands;
 using ContentServer.Application;
+using ContentServer.Application.Commands;
 using ContentServer.Infrastructure;
 using ContentServer.Middlewares;
 
@@ -91,6 +91,7 @@ await using (var scope = app.Services.CreateAsyncScope())
         app.Logger.LogWarning("Content package storage contains {OrphanCount} orphan package files", orphanCount);
     }
 }
+
 app.UseExceptionHandler();
 app.UseDefaultFiles();
 app.UseStaticFiles();

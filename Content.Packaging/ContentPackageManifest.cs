@@ -1,5 +1,5 @@
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Content.Packaging;
@@ -105,6 +105,7 @@ public sealed record ContentPackageManifest(
             {
                 throw new ContentPackageException($"{context} contains duplicate property '{property.Name}'.");
             }
+
             if (!allowedNames.Contains(property.Name))
             {
                 throw new ContentPackageException($"{context} contains unknown property '{property.Name}'.");
@@ -146,7 +147,6 @@ public sealed record ContentPackageManifest(
             throw new ContentPackageException("manifest.version must be SemVer 2.0.0 without build metadata.");
         }
     }
-
 }
 
 public sealed record ContentPackagePayload(string Format, string Entry, string MediaType)

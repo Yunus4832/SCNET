@@ -84,5 +84,4 @@ public class NetNodeSnapshotCoalescingTest
         var package = Assert.IsType<PickablePackage>(Assert.Single(packages));
         Assert.Equal((ushort)2, Assert.Single(package.Pickables).Id);
     }
-
 }

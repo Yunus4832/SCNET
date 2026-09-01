@@ -5,8 +5,8 @@ using Game.Commands;
 namespace Game.Widgets;
 
 /// <summary>
-/// Full player operations panel. It is hosted by ComponentGui.ModalPanelWidget
-/// and is therefore mutually exclusive with inventory, clothing and messages.
+///     Full player operations panel. It is hosted by ComponentGui.ModalPanelWidget
+///     and is therefore mutually exclusive with inventory, clothing and messages.
 /// </summary>
 public sealed class PlayerPanelWidget : CanvasWidget
 {

@@ -31,12 +31,12 @@ public class NetNode
     public readonly NetManager NetManager;
 
     /// <summary>
-    /// 包处理队列
+    ///     包处理队列
     /// </summary>
     private readonly List<IPackage> _pendingHandlePackages = [];
 
     /// <summary>
-    /// 包发送队列
+    ///     包发送队列
     /// </summary>
     private readonly List<IPackage> _pendingPackages = [];
 
@@ -145,7 +145,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 创建客户端
+    ///     创建客户端
     /// </summary>
     public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid)
     {
@@ -236,7 +236,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 服务器关闭，不执行OnClientStateChanged，防止多次Dispose
+    ///     服务器关闭，不执行OnClientStateChanged，防止多次Dispose
     /// </summary>
     public void RemoveAllClients(string reason = "")
     {
@@ -293,7 +293,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 连接断开事件 服务端
+    ///     连接断开事件 服务端
     /// </summary>
     private void PeerDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo)
     {
@@ -339,7 +339,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 连接断开事件 客户端
+    ///     连接断开事件 客户端
     /// </summary>
     /// <param name="remoteEndPoint"></param>
     /// <param name="reader"></param>
@@ -384,7 +384,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 数据接收事件
+    ///     数据接收事件
     /// </summary>
     /// <param name="peer"></param>
     /// <param name="reader"></param>
@@ -424,7 +424,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 连接被拒绝事件
+    ///     连接被拒绝事件
     /// </summary>
     /// <param name="sender"></param>
     /// <param name="reader"></param>
@@ -443,7 +443,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 新客户端连接事件
+    ///     新客户端连接事件
     /// </summary>
     /// <param name="request"></param>
     private void ConnectionRequestEvent(ConnectionRequest request)
@@ -499,7 +499,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 开启服务器
+    ///     开启服务器
     /// </summary>
     /// <param name="port"></param>
     /// <param name="broadcastPort"></param>
@@ -558,7 +558,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 连接服务器
+    ///     连接服务器
     /// </summary>
     /// <param name="ep"></param>
     /// <returns></returns>
@@ -603,7 +603,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 发送回调事件
+    ///     发送回调事件
     /// </summary>
     /// <param name="peer"></param>
     /// <param name="userData"></param>
@@ -708,7 +708,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 开启包处理
+    ///     开启包处理
     /// </summary>
     public void TurnOnPackageHandle(Project project)
     {
@@ -739,7 +739,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 发送一个数据包到还未连接的远程
+    ///     发送一个数据包到还未连接的远程
     /// </summary>
     /// <param name="package">数据包</param>
     /// <param name="request">远程连接请求</param>
@@ -755,7 +755,7 @@ public class NetNode
     }
 
     /// <summary>
-    /// 发送多个数据包
+    ///     发送多个数据包
     /// </summary>
     /// <param name="packages"></param>
     /// <param name="netPeer"></param>

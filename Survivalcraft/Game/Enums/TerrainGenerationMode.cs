@@ -1,27 +1,27 @@
 namespace Game;
 
 /// <summary>
-/// 地形生成模式
+///     地形生成模式
 /// </summary>
 public enum TerrainGenerationMode
 {
     /// <summary>
-    /// 大陆
+    ///     大陆
     /// </summary>
     Continent,
 
     /// <summary>
-    /// 岛屿
+    ///     岛屿
     /// </summary>
     Island,
 
     /// <summary>
-    /// 平坦大陆
+    ///     平坦大陆
     /// </summary>
     FlatContinent,
 
     /// <summary>
-    /// 平坦岛屿
+    ///     平坦岛屿
     /// </summary>
     FlatIsland,
 
@@ -94,11 +94,14 @@ public static class TerrainGenerationModes
         return mode switch
         {
             TerrainGenerationMode.LegacyIslandPre21 or TerrainGenerationMode.LegacyIsland21
-                or TerrainGenerationMode.LegacyIsland22 or TerrainGenerationMode.LegacyIsland23 => TerrainGenerationMode.Island,
+                or TerrainGenerationMode.LegacyIsland22
+                or TerrainGenerationMode.LegacyIsland23 => TerrainGenerationMode.Island,
             TerrainGenerationMode.LegacyFlatContinentPre21 or TerrainGenerationMode.LegacyFlatContinent21
-                or TerrainGenerationMode.LegacyFlatContinent22 or TerrainGenerationMode.LegacyFlatContinent23 => TerrainGenerationMode.FlatContinent,
+                or TerrainGenerationMode.LegacyFlatContinent22
+                or TerrainGenerationMode.LegacyFlatContinent23 => TerrainGenerationMode.FlatContinent,
             TerrainGenerationMode.LegacyFlatIslandPre21 or TerrainGenerationMode.LegacyFlatIsland21
-                or TerrainGenerationMode.LegacyFlatIsland22 or TerrainGenerationMode.LegacyFlatIsland23 => TerrainGenerationMode.FlatIsland,
+                or TerrainGenerationMode.LegacyFlatIsland22
+                or TerrainGenerationMode.LegacyFlatIsland23 => TerrainGenerationMode.FlatIsland,
             TerrainGenerationMode.Continent or TerrainGenerationMode.Island
                 or TerrainGenerationMode.FlatContinent or TerrainGenerationMode.FlatIsland => mode,
             _ => TerrainGenerationMode.Continent

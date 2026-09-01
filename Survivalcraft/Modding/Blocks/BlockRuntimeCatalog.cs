@@ -27,7 +27,8 @@ public sealed class BlockRuntimeCatalog
     {
         var byId = new Dictionary<ResourceId, BlockEntry>();
         var byIndex = new BlockEntry?[Capacity];
-        foreach (var (id, registration) in registry.Entries.OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal))
+        foreach (var (id, registration) in
+                 registry.Entries.OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal))
         {
             if (registration.LegacyIndex is < 0 or >= Capacity)
             {

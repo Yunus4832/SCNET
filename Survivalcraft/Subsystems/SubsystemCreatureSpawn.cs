@@ -27,7 +27,8 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
 
     private static readonly float _spawnIntervalTime = SettingsManager.Current.CreatureSpawnIntervalTime;
 
-    private static readonly float _constantSpawnIntervalTime = SettingsManager.Current.CreatureConstantSpawnIntervalTime;
+    private static readonly float _constantSpawnIntervalTime =
+        SettingsManager.Current.CreatureConstantSpawnIntervalTime;
 
     private readonly DynamicArray<ComponentBody> _componentBodies = [];
 

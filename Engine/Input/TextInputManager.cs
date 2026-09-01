@@ -29,7 +29,6 @@ public static class TextInputManager
             var normalized = new TextComposition(text, caret, selectionLength);
             _pendingActions.Enqueue(() => session.UpdateComposition(normalized));
         }
-
     }
 
     private static readonly ConcurrentQueue<Action> _pendingActions = [];
@@ -130,7 +129,8 @@ public static class TextInputManager
         {
             _backend.Initialize();
             _isInitialized = true;
-            Log.Information($"Text input backend initialized: {_backend.GetType().Name}, available={_backend.IsAvailable}.");
+            Log.Information(
+                $"Text input backend initialized: {_backend.GetType().Name}, available={_backend.IsAvailable}.");
         }
         catch (Exception ex)
         {

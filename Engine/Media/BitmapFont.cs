@@ -99,7 +99,7 @@ public class BitmapFont : IDisposable
     }
 
     /// <summary>
-    /// 纹理图
+    ///     纹理图
     /// </summary>
     public static BitmapFont Initialize(Stream textureStream, Stream glyphsStream, Vector2? customGlyphOffset = null)
     {

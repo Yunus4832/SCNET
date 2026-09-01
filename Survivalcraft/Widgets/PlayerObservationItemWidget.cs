@@ -1,7 +1,7 @@
 namespace Game.Widgets;
 
 /// <summary>
-/// Compact read-only player row used by the persistent HUD player list.
+///     Compact read-only player row used by the persistent HUD player list.
 /// </summary>
 public sealed class PlayerObservationItemWidget : CanvasWidget
 {
@@ -121,8 +121,7 @@ public sealed class PlayerObservationItemWidget : CanvasWidget
     public override void Update()
     {
         _name.Text = PlayerName;
-        var playerData = _main.SubsystemPlayers.FindPlayerData(
-            player => player.PlayerGUID == PlayerGuid);
+        var playerData = _main.SubsystemPlayers.FindPlayerData(player => player.PlayerGUID == PlayerGuid);
         var playerComponent = playerData?.ComponentPlayer;
         var mainComponent = _main.ComponentPlayer;
         _main.SubsystemPlayers.PlayerList.TryGetValue(PlayerGuid, out var listedPlayer);

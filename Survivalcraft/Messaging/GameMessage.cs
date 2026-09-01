@@ -83,7 +83,6 @@ public sealed class MessageContent
 
     public static MessageContent Plain(string text) =>
         new([new MessageSegment(text ?? string.Empty)]);
-
 }
 
 public sealed record GameMessage(

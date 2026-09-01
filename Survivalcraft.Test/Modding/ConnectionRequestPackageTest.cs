@@ -63,7 +63,8 @@ public class ConnectionRequestPackageTest
         {
             Packages =
             [
-                new ModPackageRequirement { ModId = "example.addon", Version = "2.0.0", PackageHash = "changed-package-hash" },
+                new ModPackageRequirement
+                    { ModId = "example.addon", Version = "2.0.0", PackageHash = "changed-package-hash" },
                 new ModPackageRequirement { ModId = "other.addon", Version = "1.0.0", PackageHash = "other-hash" }
             ]
         });

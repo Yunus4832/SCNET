@@ -65,12 +65,12 @@ public static class XmlUtils
         return (T)GetAttributeValue(node, attributeName, typeof(T));
     }
 
-    public static T GetAttributeValue<T>(XElement node, string attributeName, T defaultValue) where T: notnull
+    public static T GetAttributeValue<T>(XElement node, string attributeName, T defaultValue) where T : notnull
     {
         return (T)GetAttributeValue(node, attributeName, typeof(T), defaultValue);
     }
 
-    public static T? GetAttributeValue<T>(XElement node, string attributeName, bool throwIfNotFound) where T: notnull
+    public static T? GetAttributeValue<T>(XElement node, string attributeName, bool throwIfNotFound) where T : notnull
     {
         return (T?)GetAttributeValue(node, attributeName, typeof(T), throwIfNotFound);
     }

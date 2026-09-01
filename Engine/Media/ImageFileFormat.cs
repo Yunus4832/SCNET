@@ -1,6 +1,7 @@
 namespace Engine.Media;
 
-public enum ImageFileFormat {
+public enum ImageFileFormat
+{
     RawRgba, //Not Support
     Bmp, //无压缩无损格式
     Png, //有压缩无损格式

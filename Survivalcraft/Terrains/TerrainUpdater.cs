@@ -6,44 +6,44 @@ using Game.TerrainSerializers;
 namespace Game.Terrains;
 
 /// <summary>
-/// 地形更新类
+///     地形更新类
 /// </summary>
 public class TerrainUpdater
 {
     public const double NetworkChunkRequestRetrySeconds = 5.0;
 
     /// <summary>
-    /// 慢速地形更新间隔（帧数）
+    ///     慢速地形更新间隔（帧数）
     /// </summary>
     public static int SlowTerrainUpdate;
 
     /// <summary>
-    /// 是否记录地形更新统计信息
+    ///     是否记录地形更新统计信息
     /// </summary>
     public static bool LogTerrainUpdateStats;
 
     /// <summary>
-    /// 区块更新计数
+    ///     区块更新计数
     /// </summary>
     public static int ChunkUpdates;
 
     /// <summary>
-    /// 光源列表
+    ///     光源列表
     /// </summary>
     private readonly DynamicArray<LightSource> _lightSources = [];
 
     /// <summary>
-    /// 暂停/恢复更新线程的信号量
+    ///     暂停/恢复更新线程的信号量
     /// </summary>
     private readonly ManualResetEvent _pauseEvent = new(true);
 
     /// <summary>
-    /// 更新事件信号，用于同步主线程和更新线程
+    ///     更新事件信号，用于同步主线程和更新线程
     /// </summary>
     public AutoResetEvent UpdateEvent { get; } = new(true);
 
     /// <summary>
-    /// 待处理的 Location 位置字典
+    ///     待处理的 Location 位置字典
     /// </summary>
     private readonly Dictionary<int, UpdateLocation?> _pendingLocations = new();
 
@@ -54,17 +54,17 @@ public class TerrainUpdater
     private readonly Terrain _terrain;
 
     /// <summary>
-    /// 恢复更新线程的锁对象
+    ///     恢复更新线程的锁对象
     /// </summary>
     private readonly Lock _unpauseLock = new();
 
     /// <summary>
-    /// 更新参数的锁对象
+    ///     更新参数的锁对象
     /// </summary>
     private readonly Lock _updateParametersLock = new();
 
     /// <summary>
-    /// 客户端请求的待同步区块列表（用于联机模式）
+    ///     客户端请求的待同步区块列表（用于联机模式）
     /// </summary>
     private readonly List<ChunkContentRequest> _requestSyncChunkList = [];
 
@@ -79,62 +79,62 @@ public class TerrainUpdater
     private long _remoteChunkAccessClock;
 
     /// <summary>
-    /// 上一次的天空光照值，用于检测光照变化
+    ///     上一次的天空光照值，用于检测光照变化
     /// </summary>
     private int _lastSkylightValue;
 
     /// <summary>
-    /// 是否退出更新线程
+    ///     是否退出更新线程
     /// </summary>
     private volatile bool _quitUpdateThread;
 
     /// <summary>
-    /// 动画纹理子系统
+    ///     动画纹理子系统
     /// </summary>
     private readonly SubsystemAnimatedTextures _subsystemAnimatedTextures;
 
     /// <summary>
-    /// 游戏信息子系统
+    ///     游戏信息子系统
     /// </summary>
     private readonly SubsystemGameInfo _subsystemGameInfo;
 
     /// <summary>
-    /// 季节子系统
+    ///     季节子系统
     /// </summary>
     private readonly SubsystemSeasons _subsystemSeasons;
 
     /// <summary>
-    /// 天空子系统
+    ///     天空子系统
     /// </summary>
     private readonly SubsystemSky _subsystemSky;
 
     /// <summary>
-    /// 请求同步更新的帧索引
+    ///     请求同步更新的帧索引
     /// </summary>
     private int _synchronousUpdateFrame;
 
     /// <summary>
-    /// 地形更新后台任务
+    ///     地形更新后台任务
     /// </summary>
     private readonly Task _task;
 
     /// <summary>
-    /// 更新线程中使用的更新参数的引用
+    ///     更新线程中使用的更新参数的引用
     /// </summary>
     private UpdateParameters _threadUpdateParameters;
 
     /// <summary>
-    /// 是否请求恢复更新线程
+    ///     是否请求恢复更新线程
     /// </summary>
     private bool _unpauseUpdateThread;
 
     /// <summary>
-    /// 更新参数
+    ///     更新参数
     /// </summary>
     private UpdateParameters _updateParameters;
 
     /// <summary>
-    /// 温度曲线
+    ///     温度曲线
     /// </summary>
     private FloatCurve _temperatureCurve = new(
         new Vector2(0f, 0f),
@@ -149,7 +149,7 @@ public class TerrainUpdater
     );
 
     /// <summary>
-    /// 湿度曲线
+    ///     湿度曲线
     /// </summary>
     private FloatCurve _humidityCurve = new(
         new Vector2(0f, 0f),
@@ -165,34 +165,34 @@ public class TerrainUpdater
     private double _lastNetworkChunkDiagnosticTime;
 
     /// <summary>
-    /// 更新位置字典
+    ///     更新位置字典
     /// </summary>
     public Dictionary<int, UpdateLocation> UpdateLocations => _updateParameters.Locations;
 
     /// <summary>
-    /// 区块初始化完成事件
+    ///     区块初始化完成事件
     /// </summary>
     public event Action<TerrainChunk>? OnChunkInit;
 
     /// <summary>
-    /// 区块被释放事件
+    ///     区块被释放事件
     /// </summary>
     public event Action<TerrainChunk>? OnChunkDiscard;
 
 #pragma warning disable CS0067 // Event is never used
     /// <summary>
-    /// 区块初始化事件（已弃用）
+    ///     区块初始化事件（已弃用）
     /// </summary>
     public event Action<TerrainChunk>? ChunkInitialized;
 #pragma warning restore CS0067 // Event is never used
 
     /// <summary>
-    /// 地形更新进度完成事件
+    ///     地形更新进度完成事件
     /// </summary>
     public event Action? UpdateProgressFinished;
 
     /// <summary>
-    /// 初始化 TerrainUpdater 实例
+    ///     初始化 TerrainUpdater 实例
     /// </summary>
     /// <param name="subsystemTerrain">地形子系统</param>
     public TerrainUpdater(SubsystemTerrain subsystemTerrain)
@@ -228,7 +228,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 释放资源
+    ///     释放资源
     /// </summary>
     public void Dispose()
     {
@@ -245,7 +245,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 请求在当前帧同步更新地形
+    ///     请求在当前帧同步更新地形
     /// </summary>
     public void RequestSynchronousUpdate()
     {
@@ -253,7 +253,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 设置指定位置的最后更新中心点
+    ///     设置指定位置的最后更新中心点
     /// </summary>
     /// <param name="locationIndex">位置索引</param>
     /// <param name="value">中心点坐标</param>
@@ -269,11 +269,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 设置更新位置的属性
+    ///     设置更新位置的属性
     /// </summary>
     /// <remarks>
-    /// 在 <see cref="_updateParameters"/> 中查找指定索引的 Location，
-    /// 如果参数发生变化或位置移动超过阈值，则更新并加入待处理列表
+    ///     在 <see cref="_updateParameters" /> 中查找指定索引的 Location，
+    ///     如果参数发生变化或位置移动超过阈值，则更新并加入待处理列表
     /// </remarks>
     /// <param name="locationIndex">位置索引</param>
     /// <param name="center">位置中心坐标</param>
@@ -303,7 +303,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 移除指定索引的更新位置
+    ///     移除指定索引的更新位置
     /// </summary>
     /// <param name="locationIndex">位置索引</param>
     public void RemoveUpdateLocation(int locationIndex)
@@ -313,7 +313,7 @@ public class TerrainUpdater
 
 
     /// <summary>
-    /// 获取指定位置的区块更新进度
+    ///     获取指定位置的区块更新进度
     /// </summary>
     /// <param name="locationIndex">位置索引</param>
     /// <param name="visibilityDistance">可视距离</param>
@@ -387,11 +387,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 主更新方法，每帧调用
+    ///     主更新方法，每帧调用
     /// </summary>
     /// <remarks>
-    /// 处理光照变化、季节变化、多线程/单线程更新切换、
-    /// 位置更新同步以及区块状态管理等
+    ///     处理光照变化、季节变化、多线程/单线程更新切换、
+    ///     位置更新同步以及区块状态管理等
     /// </remarks>
     public void Update()
     {
@@ -656,11 +656,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 准备绘制前的同步更新
+    ///     准备绘制前的同步更新
     /// </summary>
     /// <param name="camera">当前摄像机</param>
     /// <remarks>
-    /// 设置相机位置为更新位置，并立即同步更新视野内的关键区块
+    ///     设置相机位置为更新位置，并立即同步更新视野内的关键区块
     /// </remarks>
     public void PrepareForDrawing(Camera camera)
     {
@@ -714,7 +714,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 降级指定坐标周围区块的状态
+    ///     降级指定坐标周围区块的状态
     /// </summary>
     /// <param name="coordinates">中心区块坐标</param>
     /// <param name="radius">影响半径（区块数）</param>
@@ -746,7 +746,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 降级所有已分配区块的状态
+    ///     降级所有已分配区块的状态
     /// </summary>
     /// <param name="state">目标降级状态</param>
     /// <param name="forceGeometryRegeneration">是否强制重新生成几何体</param>
@@ -769,7 +769,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 检查区块中心是否在任一更新位置的范围内
+    ///     检查区块中心是否在任一更新位置的范围内
     /// </summary>
     /// <param name="chunkCenter">区块中心坐标</param>
     /// <param name="locations">更新位置数组</param>
@@ -793,7 +793,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 根据更新位置分配和释放区块
+    ///     根据更新位置分配和释放区块
     /// </summary>
     /// <param name="locations">更新位置数组</param>
     /// <returns>区块是否发生变化，以及是否需要在后续帧重试</returns>
@@ -959,10 +959,10 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 在主线程中处理区块状态的升降级同步
+    ///     在主线程中处理区块状态的升降级同步
     /// </summary>
     /// <remarks>
-    /// 接收后台线程发布的状态；待处理降级始终优先。
+    ///     接收后台线程发布的状态；待处理降级始终优先。
     /// </remarks>
     /// <returns>如果有区块被降级则返回 true</returns>
     private bool SendReceiveChunkStates()
@@ -971,10 +971,10 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 在更新线程中处理区块状态的升降级同步
+    ///     在更新线程中处理区块状态的升降级同步
     /// </summary>
     /// <remarks>
-    /// 接收主线程降级请求，或发布后台线程的当前状态。
+    ///     接收主线程降级请求，或发布后台线程的当前状态。
     /// </remarks>
     private void SendReceiveChunkStatesThread()
     {
@@ -982,11 +982,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 更新线程的主循环逻辑
+    ///     更新线程的主循环逻辑
     /// </summary>
     /// <remarks>
-    /// 在线程中循环调用 <see cref="ProcessNextChunkUpdate"/> 进行地形更新，
-    /// 使用 <see cref="_pauseEvent"/> 和 <see cref="UpdateEvent"/> 进行线程同步
+    ///     在线程中循环调用 <see cref="ProcessNextChunkUpdate" /> 进行地形更新，
+    ///     使用 <see cref="_pauseEvent" /> 和 <see cref="UpdateEvent" /> 进行线程同步
     /// </remarks>
     private void ThreadUpdateFunction()
     {
@@ -1024,11 +1024,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 处理一个地形更新步骤
+    ///     处理一个地形更新步骤
     /// </summary>
     /// <remarks>
-    /// 查找并更新一个最佳区块的状态，如果所有区块都已更新完毕则返回 true。
-    /// 该方法只由地形更新线程调用
+    ///     查找并更新一个最佳区块的状态，如果所有区块都已更新完毕则返回 true。
+    ///     该方法只由地形更新线程调用
     /// </remarks>
     /// <returns>如果所有区块都已完成更新则返回 true，否则返回 false</returns>
     private bool ProcessNextChunkUpdate()
@@ -1056,11 +1056,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 查找最适合更新的区块（按距离优先级）
+    ///     查找最适合更新的区块（按距离优先级）
     /// </summary>
     /// <remarks>
-    /// 使用距离收敛策略：从最近的区块开始，优先更新可视范围内的区块到 Valid 状态，
-    /// 其次是内容范围内的区块到 InvalidVertices1 状态
+    ///     使用距离收敛策略：从最近的区块开始，优先更新可视范围内的区块到 Valid 状态，
+    ///     其次是内容范围内的区块到 InvalidVertices1 状态
     /// </remarks>
     /// <param name="desiredState">输出参数，找到区块的目标状态</param>
     /// <returns>需要更新的区块，如果没有则返回 null</returns>
@@ -1165,7 +1165,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 确定需要同步更新的关键区块（视野内优先）
+    ///     确定需要同步更新的关键区块（视野内优先）
     /// </summary>
     /// <param name="viewPosition">视点位置</param>
     /// <param name="viewDirection">视线方向</param>
@@ -1197,12 +1197,12 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 单步更新区块的状态
+    ///     单步更新区块的状态
     /// </summary>
     /// <param name="chunk">要更新的区块</param>
     /// <param name="skylightValue">当前天空光照值</param>
     /// <remarks>
-    /// 根据区块当前状态执行相应的处理：加载数据、生成内容、计算光照、生成顶点等
+    ///     根据区块当前状态执行相应的处理：加载数据、生成内容、计算光照、生成顶点等
     /// </remarks>
     private void UpdateChunkSingleStep(TerrainChunk chunk, int skylightValue)
     {
@@ -1305,12 +1305,12 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 生成区块的天空光照和高度信息
+    ///     生成区块的天空光照和高度信息
     /// </summary>
     /// <param name="chunk">目标区块</param>
     /// <param name="skylightValue">天空光照值</param>
     /// <remarks>
-    /// 计算每个列的最高不透明方块高度，并填充天空光照
+    ///     计算每个列的最高不透明方块高度，并填充天空光照
     /// </remarks>
     private void GenerateChunkSunLightAndHeight(TerrainChunk chunk, int skylightValue)
     {
@@ -1398,11 +1398,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 生成区块的光源列表（用于传播光照计算）
+    ///     生成区块的光源列表（用于传播光照计算）
     /// </summary>
     /// <param name="chunk">目标区块</param>
     /// <remarks>
-    /// 扫描区块内所有发光方块和受邻近区块光照影响的方块
+    ///     扫描区块内所有发光方块和受邻近区块光照影响的方块
     /// </remarks>
     private void GenerateChunkLightSources(TerrainChunk chunk)
     {
@@ -1481,7 +1481,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 从指定位置传播光源到相邻方块
+    ///     从指定位置传播光源到相邻方块
     /// </summary>
     /// <param name="x">X坐标</param>
     /// <param name="y">Y坐标</param>
@@ -1521,10 +1521,10 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 传播所有光源的光照
+    ///     传播所有光源的光照
     /// </summary>
     /// <remarks>
-    /// 遍历光源列表，向六个方向传播光照（限制最多处理 120000 个光源）
+    ///     遍历光源列表，向六个方向传播光照（限制最多处理 120000 个光源）
     /// </remarks>
     private void PropagateLight()
     {
@@ -1555,12 +1555,12 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 生成区块的顶点数据
+    ///     生成区块的顶点数据
     /// </summary>
     /// <param name="chunk">目标区块</param>
     /// <param name="even">是否生成偶数层的切片</param>
     /// <remarks>
-    /// 分两遍生成：第一遍生成偶数切片，第二遍生成奇数切片
+    ///     分两遍生成：第一遍生成偶数切片，第二遍生成奇数切片
     /// </remarks>
     private void GenerateChunkVertices(TerrainChunk chunk, bool even)
     {
@@ -1686,7 +1686,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 计算光照传播位掩码的索引
+    ///     计算光照传播位掩码的索引
     /// </summary>
     /// <param name="x">相对 X 偏移（-1, 0, 1）</param>
     /// <param name="z">相对 Z 偏移（-1, 0, 1）</param>
@@ -1697,11 +1697,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 更新邻近区块的光照传播位掩码
+    ///     更新邻近区块的光照传播位掩码
     /// </summary>
     /// <param name="chunk">当前区块</param>
     /// <remarks>
-    /// 标记周围 3x3 区域的区块，表示它们需要重新计算光照
+    ///     标记周围 3x3 区域的区块，表示它们需要重新计算光照
     /// </remarks>
     private void UpdateNeighborsLightPropagationBitmasks(TerrainChunk chunk)
     {
@@ -1720,7 +1720,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 计算区块切片的哈希值
+    ///     计算区块切片的哈希值
     /// </summary>
     /// <param name="chunk">目标区块</param>
     /// <param name="sliceIndex">切片索引</param>
@@ -1774,7 +1774,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 计算所有区块切片的哈希值
+    ///     计算所有区块切片的哈希值
     /// </summary>
     /// <param name="chunk">目标区块</param>
     private void CalculateChunkSliceContentsHash(TerrainChunk chunk)
@@ -1851,11 +1851,11 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 通知方块行为器区块已初始化
+    ///     通知方块行为器区块已初始化
     /// </summary>
     /// <param name="chunk">已初始化的区块</param>
     /// <remarks>
-    /// 触发 OnChunkInit 事件，并调用所有方块行为器的 OnChunkInitialized 和 OnBlockGenerated 方法
+    ///     触发 OnChunkInit 事件，并调用所有方块行为器的 OnChunkInitialized 和 OnBlockGenerated 方法
     /// </remarks>
     private void NotifyBlockBehaviors(TerrainChunk chunk)
     {
@@ -1897,7 +1897,7 @@ public class TerrainUpdater
     }
 
     /// <summary>
-    /// 恢复（唤醒）更新线程
+    ///     恢复（唤醒）更新线程
     /// </summary>
     private void UnpauseUpdateThread()
     {
@@ -1916,64 +1916,64 @@ public class TerrainUpdater
     public struct UpdateLocation
     {
         /// <summary>
-        /// Location 位置中心
+        ///     Location 位置中心
         /// </summary>
         public Vector2 Center;
 
         /// <summary>
-        /// 上次更新的位置中心（用于检测位置变化）
+        ///     上次更新的位置中心（用于检测位置变化）
         /// </summary>
         public Vector2? LastChunksUpdateCenter;
 
         /// <summary>
-        /// 可视距离
+        ///     可视距离
         /// </summary>
         public float VisibilityDistance;
 
         /// <summary>
-        /// 内容加载距离（一般大于等于可视距离）
+        ///     内容加载距离（一般大于等于可视距离）
         /// </summary>
         public float ContentDistance;
     }
 
     /// <summary>
-    /// 地形更新参数结构体
+    ///     地形更新参数结构体
     /// </summary>
     private struct UpdateParameters
     {
         /// <summary>
-        /// 需要更新的区块数组
+        ///     需要更新的区块数组
         /// </summary>
         public TerrainChunk[] Chunks;
 
         /// <summary>
-        /// 更新位置索引字典
+        ///     更新位置索引字典
         /// </summary>
         public Dictionary<int, UpdateLocation> Locations;
     }
 
     /// <summary>
-    /// 光源
+    ///     光源
     /// </summary>
     private struct LightSource
     {
         /// <summary>
-        /// X 坐标
+        ///     X 坐标
         /// </summary>
         public int X;
 
         /// <summary>
-        /// Y 坐标
+        ///     Y 坐标
         /// </summary>
         public int Y;
 
         /// <summary>
-        /// Z 坐标
+        ///     Z 坐标
         /// </summary>
         public int Z;
 
         /// <summary>
-        /// 光照强度值
+        ///     光照强度值
         /// </summary>
         public int Light;
     }

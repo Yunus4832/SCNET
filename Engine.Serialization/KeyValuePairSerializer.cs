@@ -1,6 +1,6 @@
 namespace Engine.Serialization;
 
-internal class KeyValuePairSerializer<TK, TV> : ISerializer<KeyValuePair<TK, TV?>> where TK: notnull
+internal class KeyValuePairSerializer<TK, TV> : ISerializer<KeyValuePair<TK, TV?>> where TK : notnull
 {
     public void Serialize(InputArchive archive, ref KeyValuePair<TK, TV?> value)
     {

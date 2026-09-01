@@ -1,7 +1,7 @@
 namespace Engine.FileStorage;
 
 /// <summary>
-/// Provides access to the platform file picker. Implementations are registered by the platform starter.
+///     Provides access to the platform file picker. Implementations are registered by the platform starter.
 /// </summary>
 public interface IFilePicker
 {

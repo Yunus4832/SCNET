@@ -61,7 +61,6 @@ public class SubsystemSpikesBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         return true;
-
     }
 
     public override void OnCollide(CellFace cellFace, float velocity, ComponentBody componentBody)

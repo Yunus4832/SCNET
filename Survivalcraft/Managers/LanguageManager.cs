@@ -90,7 +90,7 @@ public static class LanguageManager
     }
 
     /// <summary>
-    /// 新的 loadJson 方法，接受语言类型参数
+    ///     新的 loadJson 方法，接受语言类型参数
     /// </summary>
     public static void LoadJson(Stream stream, string id)
     {

@@ -22,12 +22,14 @@ public sealed class FurniturePackPayloadCodec : IContentPayloadCodec
         try
         {
             using var stream = context.OpenEntry(entry);
-            using var reader = XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit });
+            using var reader =
+                XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit });
             var document = XDocument.Load(reader, LoadOptions.None);
             if (document.Root?.Name != "FurnitureDesigns")
             {
                 throw new ContentPackageException("Furniture payload root must be FurnitureDesigns.");
             }
+
             var indexes = new HashSet<int>();
             var designs = document.Root.Elements().ToArray();
             foreach (var design in designs)
@@ -37,12 +39,14 @@ public sealed class FurniturePackPayloadCodec : IContentPayloadCodec
                     name is null || !int.TryParse(name, System.Globalization.NumberStyles.None,
                         System.Globalization.CultureInfo.InvariantCulture, out var index) || index < 0 ||
                     index.ToString(System.Globalization.CultureInfo.InvariantCulture) != name ||
-                    !indexes.Add(index) || design.Attributes().Any(attribute => attribute.Name.Namespace != XNamespace.None) ||
+                    !indexes.Add(index) ||
+                    design.Attributes().Any(attribute => attribute.Name.Namespace != XNamespace.None) ||
                     design.DescendantsAndSelf().Any(element => element.Name.Namespace != XNamespace.None))
                 {
                     throw new ContentPackageException("Furniture payload contains an invalid design entry.");
                 }
             }
+
             if (designs.Length != expectedCount)
             {
                 throw new ContentPackageException("Furniture metadata.designCount does not match the payload.");

@@ -3,8 +3,8 @@ using Game.Network;
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Incremental in-process authority used by Local mode. It owns authoritative allocations while
-/// exposing the same request/snapshot transport contract as a remote server.
+///     Incremental in-process authority used by Local mode. It owns authoritative allocations while
+///     exposing the same request/snapshot transport contract as a remote server.
 /// </summary>
 public sealed class LocalChunkContentHost : IChunkContentTransport
 {
@@ -54,8 +54,8 @@ public sealed class LocalChunkContentHost : IChunkContentTransport
     }
 
     /// <summary>
-    /// Advances at most <paramref name="maximumSteps"/> allocation/load/generation steps.
-    /// Incomplete requests rotate to the tail to preserve fairness.
+    ///     Advances at most <paramref name="maximumSteps" /> allocation/load/generation steps.
+    ///     Incomplete requests rotate to the tail to preserve fairness.
     /// </summary>
     public int Update(int maximumSteps)
     {

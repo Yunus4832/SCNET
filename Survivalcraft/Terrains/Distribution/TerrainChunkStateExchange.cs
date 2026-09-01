@@ -1,7 +1,7 @@
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Exchanges state between the main thread and terrain worker through two one-way mailboxes.
+///     Exchanges state between the main thread and terrain worker through two one-way mailboxes.
 /// </summary>
 public static class TerrainChunkStateExchange
 {

@@ -31,7 +31,8 @@ public sealed record ListContentItemsQuery(
 public sealed class ListContentItemsQueryHandler(ContentServerDbContext db)
     : IQueryHandler<ListContentItemsQuery, PagedData<ContentItemDto>>
 {
-    public async Task<PagedData<ContentItemDto>> Handle(ListContentItemsQuery query, CancellationToken cancellationToken)
+    public async Task<PagedData<ContentItemDto>> Handle(ListContentItemsQuery query,
+        CancellationToken cancellationToken)
     {
         var search = string.IsNullOrWhiteSpace(query.Search) ? null : query.Search.Trim();
         return await db.Contents.AsNoTracking()

@@ -11,4 +11,3 @@ public interface IPackageHandler<in TPackage> : IPackageHandler where TPackage :
 {
     void Handle(TPackage package, NetNode? netNode, bool isServer);
 }
-

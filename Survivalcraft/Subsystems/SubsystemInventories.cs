@@ -50,6 +50,7 @@ public class SubsystemInventories : Subsystem
             action?.Invoke(inventory);
             return true;
         }
+
         if (CommonLib.WorkType == WorkType.Client && Log.MinimumLogType is LogType.Debug)
         {
             CommonLib.Net.QueuePackage(new ComponentInventoryPackage(id,

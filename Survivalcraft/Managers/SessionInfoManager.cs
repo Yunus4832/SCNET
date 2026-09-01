@@ -76,7 +76,8 @@ public static class SessionInfoManager
                 return null;
             }
 
-            var sessionInfo = CreateDefault(NormalizeSessionId(sessionElement.Attribute(nameof(SessionInfo.SessionId))?.Value));
+            var sessionInfo =
+                CreateDefault(NormalizeSessionId(sessionElement.Attribute(nameof(SessionInfo.SessionId))?.Value));
             PopulateFromElement(sessionInfo, sessionElement);
             return sessionInfo;
         }
@@ -373,7 +374,8 @@ public static class SessionInfoManager
         {
             if (!createIfMissing)
             {
-                Log.Warning($"Cannot restore session \"{sessionInfo.SessionId}\": world \"{sessionInfo.World}\" not found.");
+                Log.Warning(
+                    $"Cannot restore session \"{sessionInfo.SessionId}\": world \"{sessionInfo.World}\" not found.");
                 return false;
             }
 
@@ -389,7 +391,8 @@ public static class SessionInfoManager
             if (StartupManager.Current.Request.ForceWorldRunServer &&
                 !worldInfo.WorldSettings.RunServer)
             {
-                Log.Information($"Enabling RunServer for world \"{worldInfo.WorldSettings.Name}\" because --host was specified.");
+                Log.Information(
+                    $"Enabling RunServer for world \"{worldInfo.WorldSettings.Name}\" because --host was specified.");
                 worldInfo.WorldSettings.RunServer = true;
                 WorldsManager.ChangeWorld(worldInfo.DirectoryName, worldInfo.WorldSettings);
             }
@@ -533,7 +536,6 @@ public static class SessionInfoManager
         var sessions = new XElement("Sessions");
         sessions.Add(new XElement(root));
         return sessions;
-
     }
 
     private static XElement? FindSessionElement(XElement root, string sessionId)
@@ -591,14 +593,17 @@ public static class SessionInfoManager
         {
             element.Add(new XAttribute(nameof(SessionInfo.GameMode), gameMode));
         }
+
         if (sessionInfo.HttpCommandEnabled is { } httpCommandEnabled)
         {
             element.Add(new XAttribute(nameof(SessionInfo.HttpCommandEnabled), httpCommandEnabled));
         }
+
         if (sessionInfo.HttpCommandPort is { } httpCommandPort)
         {
             element.Add(new XAttribute(nameof(SessionInfo.HttpCommandPort), httpCommandPort));
         }
+
         if (!string.IsNullOrWhiteSpace(sessionInfo.HttpCommandAccessToken))
         {
             element.Add(new XAttribute(

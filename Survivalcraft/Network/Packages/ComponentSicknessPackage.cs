@@ -47,6 +47,4 @@ public class ComponentSicknessPackage : IPackage
         EntityId = reader.ReadInt32();
         SicknessDuration = reader.ReadSingle();
     }
-
-
 }

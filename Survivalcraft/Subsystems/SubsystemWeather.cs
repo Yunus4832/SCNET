@@ -78,8 +78,8 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
     public SnowSplashParticleSystem SnowSplashParticleSystem { get; set; } = null!;
 
     /// <summary>
-    /// 判断降水是否已经开始。
-    /// 如果当前时间在降水开始和结束时间之间（减去渐变时间），返回 true。
+    ///     判断降水是否已经开始。
+    ///     如果当前时间在降水开始和结束时间之间（减去渐变时间），返回 true。
     /// </summary>
     public bool IsPrecipitationStarted
     {
@@ -95,8 +95,8 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
     }
 
     /// <summary>
-    /// 判断雾气是否已经开始。
-    /// 逻辑与降水类似。
+    ///     判断雾气是否已经开始。
+    ///     逻辑与降水类似。
     /// </summary>
     public bool IsFogStarted
     {
@@ -120,7 +120,8 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
             return;
         }
 
-        var num = SettingsManager.Current.VisibilityRange > 128 ? 9 : SettingsManager.Current.VisibilityRange <= 64 ? 7 : 8;
+        var num = SettingsManager.Current.VisibilityRange > 128 ? 9 :
+            SettingsManager.Current.VisibilityRange <= 64 ? 7 : 8;
         var num2 = num * num;
         var activeShafts = GetActiveShafts(camera.GameWidget);
         var b = (byte)(255f * MathUtils.Lerp(0.15f, 1f, SubsystemSky.SkyLightIntensity));

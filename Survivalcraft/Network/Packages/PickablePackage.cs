@@ -250,6 +250,4 @@ public class PickablePackage : IPackage
                 break;
         }
     }
-
-
 }

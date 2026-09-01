@@ -49,8 +49,8 @@ public sealed class GroupManagePackage : IPackage
         {
             Command = operation.Kind is
                 SubsystemPlayers.PendingGroupOperationKind.JoinRequest
-                    ? CommandType.PromptJoinRequest
-                    : CommandType.PromptInvitation,
+                ? CommandType.PromptJoinRequest
+                : CommandType.PromptInvitation,
             OperationId = operation.OperationId,
             FromPlayer = operation.Initiator,
             ToPlayer = operation.Responder,
@@ -103,6 +103,7 @@ public sealed class GroupManagePackage : IPackage
                         writer.Write(member);
                     }
                 }
+
                 break;
         }
     }
@@ -137,6 +138,7 @@ public sealed class GroupManagePackage : IPackage
 
                     Groups.Add(group);
                 }
+
                 break;
         }
     }

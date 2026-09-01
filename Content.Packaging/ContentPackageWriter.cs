@@ -42,9 +42,12 @@ public static class ContentPackageWriter
             foreach (var entry in entries)
             {
                 AppendHeader(hash, entry.Path, entry.Length);
-                var compression = entry.Path.EndsWith(".png", StringComparison.Ordinal) ? CompressionLevel.NoCompression : CompressionLevel.Optimal;
+                var compression = entry.Path.EndsWith(".png", StringComparison.Ordinal)
+                    ? CompressionLevel.NoCompression
+                    : CompressionLevel.Optimal;
                 var zipEntry = archive.CreateEntry(entry.Path, compression);
-                using var source = entry.OpenRead() ?? throw new ContentPackageException($"Payload source '{entry.Path}' returned null.");
+                using var source = entry.OpenRead() ??
+                                   throw new ContentPackageException($"Payload source '{entry.Path}' returned null.");
                 using var target = zipEntry.Open();
                 CopyAndHash(source, target, hash, entry.Length, entry.Path);
             }
@@ -67,7 +70,8 @@ public static class ContentPackageWriter
     {
         ArgumentNullException.ThrowIfNull(manifest);
         using var output = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(output, new JsonWriterOptions { Indented = true, SkipValidation = false }))
+        using (var writer =
+               new Utf8JsonWriter(output, new JsonWriterOptions { Indented = true, SkipValidation = false }))
         {
             writer.WriteStartObject();
             writer.WriteNumber("formatVersion", manifest.FormatVersion);
@@ -117,6 +121,7 @@ public static class ContentPackageWriter
             {
                 totalLength += entry.Length;
             }
+
             if (totalLength > ContentPackageReader.MaxTotalBytes)
             {
                 throw new ContentPackageException("Package exceeds the uncompressed size limit.");
@@ -148,7 +153,8 @@ public static class ContentPackageWriter
         hash.AppendData(contentLength);
     }
 
-    private static void CopyAndHash(Stream source, Stream target, IncrementalHash hash, long expectedLength, string path)
+    private static void CopyAndHash(Stream source, Stream target, IncrementalHash hash, long expectedLength,
+        string path)
     {
         var buffer = ArrayPool<byte>.Shared.Rent(_copyBufferSize);
         try

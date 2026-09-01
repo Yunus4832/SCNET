@@ -81,7 +81,8 @@ public class PackageManager
     private static void RegisterBuiltInPackages()
     {
         RegisterBuiltInPackage<ServerInfoPackage, ServerInfoPackageHandler>(PackageType.ServerInfo);
-        RegisterBuiltInPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>(PackageType.ConnectionRequest);
+        RegisterBuiltInPackage<ConnectionRequestPackage, ConnectionRequestPackageHandler>(PackageType
+            .ConnectionRequest);
         RegisterBuiltInPackage<ConnectionRejectPackage, ConnectionRejectPackageHandler>(PackageType.ConnectionReject);
         RegisterBuiltInPackage<ClientPackage, ClientPackageHandler>(PackageType.Client);
         RegisterBuiltInPackage<PickablePackage, PickablePackageHandler>(PackageType.Pickable);
@@ -90,16 +91,22 @@ public class PackageManager
         RegisterBuiltInPackage<SubsystemTimePackage, SubsystemTimePackageHandler>(PackageType.SubsystemTime);
         RegisterBuiltInPackage<SubsystemSkyPackage, SubsystemSkyPackageHandler>(PackageType.SubsystemSky);
         RegisterBuiltInPackage<SubsystemWeatherPackage, SubsystemWeatherPackageHandler>(PackageType.SubsystemWeather);
-        RegisterBuiltInPackage<SubsystemElectricityPackage, SubsystemElectricityPackageHandler>(PackageType.SubsystemElectricity);
+        RegisterBuiltInPackage<SubsystemElectricityPackage, SubsystemElectricityPackageHandler>(PackageType
+            .SubsystemElectricity);
         RegisterBuiltInPackage<SubsystemPlayersPackage, SubsystemPlayersPackageHandler>(PackageType.SubsystemPlayers);
         RegisterBuiltInPackage<ComponentPlayerPackage, ComponentPlayerPackageHandler>(PackageType.ComponentPlayer);
-        RegisterBuiltInPackage<ComponentInventoryPackage, ComponentInventoryPackageHandler>(PackageType.ComponentInventory);
-        RegisterBuiltInPackage<ComponentVitalStatPackage, ComponentVitalStatPackageHandler>(PackageType.ComponentVitalStat);
-        RegisterBuiltInPackage<ComponentClothingPackage, ComponentClothingPackageHandler>(PackageType.ComponentClothing);
-        RegisterBuiltInPackage<ComponentBehaviorPackage, ComponentBehaviorPackageHandler>(PackageType.ComponentBehavior);
+        RegisterBuiltInPackage<ComponentInventoryPackage, ComponentInventoryPackageHandler>(PackageType
+            .ComponentInventory);
+        RegisterBuiltInPackage<ComponentVitalStatPackage, ComponentVitalStatPackageHandler>(PackageType
+            .ComponentVitalStat);
+        RegisterBuiltInPackage<ComponentClothingPackage, ComponentClothingPackageHandler>(PackageType
+            .ComponentClothing);
+        RegisterBuiltInPackage<ComponentBehaviorPackage, ComponentBehaviorPackageHandler>(PackageType
+            .ComponentBehavior);
         RegisterBuiltInPackage<ComponentHealthPackage, ComponentHealthPackageHandler>(PackageType.ComponentHealth);
         RegisterBuiltInPackage<ComponentMountPackage, ComponentMountPackageHandler>(PackageType.ComponentMount);
-        RegisterBuiltInPackage<ComponentSicknessPackage, ComponentSicknessPackageHandler>(PackageType.ComponentSickness);
+        RegisterBuiltInPackage<ComponentSicknessPackage, ComponentSicknessPackageHandler>(PackageType
+            .ComponentSickness);
         RegisterBuiltInPackage<ComponentFluPackage, ComponentFluPackageHandler>(PackageType.ComponentFlu);
         RegisterBuiltInPackage<ComponentOnFirePackage, ComponentOnFirePackageHandler>(PackageType.ComponentOnFire);
         RegisterBuiltInPackage<ComponentSleepPackage, ComponentSleepPackageHandler>(PackageType.ComponentSleep);
@@ -168,7 +175,8 @@ public class PackageManager
     public static void RegisterPackage(IPackage package)
     {
         var packageType = package.GetType();
-        RegisterPackage(package.ID, packageType.Name, packageType, () => (IPackage)Activator.CreateInstance(packageType)!);
+        RegisterPackage(package.ID, packageType.Name, packageType,
+            () => (IPackage)Activator.CreateInstance(packageType)!);
     }
 
     private static void RegisterPackage(
@@ -194,6 +202,7 @@ public class PackageManager
             {
                 PackageDispatcher.RegisterLegacyHandler(packageType);
             }
+
             Log.Debug($"注册Package[{packageName}]，ID:{packageID}");
         }
         else

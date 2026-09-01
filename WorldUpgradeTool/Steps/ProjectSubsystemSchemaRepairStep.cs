@@ -71,7 +71,8 @@ internal sealed class ProjectSubsystemSchemaRepairStep : IWorldMaintenanceStep
             XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
         }
 
-        Console.WriteLine($"Removed {removedCount} obsolete project subsystem entr{(removedCount == 1 ? "y" : "ies")}.");
+        Console.WriteLine(
+            $"Removed {removedCount} obsolete project subsystem entr{(removedCount == 1 ? "y" : "ies")}.");
     }
 
     private static HashSet<string>? TryLoadCurrentSubsystemNames()

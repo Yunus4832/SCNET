@@ -404,7 +404,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
     }
 
     /// <summary>
-    /// 遍历背包方块，如果不存在，则让它为null
+    ///     遍历背包方块，如果不存在，则让它为null
     /// </summary>
     public void GarbageCollectDesigns()
     {

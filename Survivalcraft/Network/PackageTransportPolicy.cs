@@ -5,8 +5,8 @@ using LiteNetLib;
 namespace Game.Network;
 
 /// <summary>
-/// 传输方式注册表：数据包保持简单，不声明传输方式；
-/// 由这里按包类型集中解析（<see cref="Get"/>），便于统一调整与动态扩展。
+///     传输方式注册表：数据包保持简单，不声明传输方式；
+///     由这里按包类型集中解析（<see cref="Get" />），便于统一调整与动态扩展。
 /// </summary>
 public static class PackageTransportPolicy
 {
@@ -20,9 +20,9 @@ public static class PackageTransportPolicy
         new(NetworkChannel.Snapshot, DeliveryMethod.Sequenced, 0.05, true);
 
     /// <summary>
-    /// 状态流：一个逻辑快照拆成多个小包时，Unreliable 没有按数据报去重，
-    /// 同 tick 的兄弟包互不淘汰；丢包只影响包内几只生物，下一轮自动恢复。
-    /// 最新优先由应用层 StateTick 按实体比较实现。
+    ///     状态流：一个逻辑快照拆成多个小包时，Unreliable 没有按数据报去重，
+    ///     同 tick 的兄弟包互不淘汰；丢包只影响包内几只生物，下一轮自动恢复。
+    ///     最新优先由应用层 StateTick 按实体比较实现。
     /// </summary>
     public static readonly PackageTransport StateStream =
         new(NetworkChannel.StateStream, DeliveryMethod.Unreliable, 0.05);
@@ -69,7 +69,7 @@ public static class PackageTransportPolicy
             FurniturePackage
             {
                 PackageEventType: FurniturePackage.EventType.Add or
-                    FurniturePackage.EventType.TryAddDesignChain
+                FurniturePackage.EventType.TryAddDesignChain
             } => Bulk,
             _ => Control
         };

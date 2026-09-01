@@ -1,4 +1,5 @@
 using System.Text;
+
 using EntitySystem.Core;
 
 namespace Game.Network.Packages.Handlers;
@@ -74,10 +75,12 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
             {
                 connectionError.AppendLine("客户端模组与服务器不一致，请刷新服务器信息后重试");
             }
-            else if (netNode.ClientCount >= project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount)
+            else if (netNode.ClientCount >=
+                     project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount)
             {
                 connectionError.AppendLine("在线人数达到最大，拒绝加入");
             }
+
             if (connectionError.Length > 0)
             {
                 if (package.From == null || package.From.Request == null)

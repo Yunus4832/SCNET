@@ -1,7 +1,7 @@
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Owns authoritative single-cell reads and writes independently from any render replica.
+///     Owns authoritative single-cell reads and writes independently from any render replica.
 /// </summary>
 public sealed class TerrainCellAuthority(Terrain terrain)
 {

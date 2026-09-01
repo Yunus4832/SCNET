@@ -4,7 +4,7 @@ using Game.Network.Serialization;
 namespace Game.Network.Packages;
 
 /// <summary>
-/// 发射器
+///     发射器
 /// </summary>
 public class DispenserPackage : IPackage
 {

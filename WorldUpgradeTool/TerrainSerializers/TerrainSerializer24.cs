@@ -8,13 +8,13 @@ using Game;
 namespace WorldUpgradeTool.TerrainSerializers;
 
 /// <summary>
-/// 版本 2.4 地形序列化工具，版本 2.4 的区块高度是 256
+///     版本 2.4 地形序列化工具，版本 2.4 的区块高度是 256
 /// </summary>
 public class TerrainSerializer24 : IDisposable
 {
     /// <summary>
-    /// 最大数据块大小: 一个 Cell 占 8 Byte, 一个 Chunk 数据块有 16 x 16 x 256 = 65_536 Cell
-    /// 因此，最糟糕的情况下，一个未经压缩的 Chunk 数据块的大小为 65_536 x 8 = 524_800
+    ///     最大数据块大小: 一个 Cell 占 8 Byte, 一个 Chunk 数据块有 16 x 16 x 256 = 65_536 Cell
+    ///     因此，最糟糕的情况下，一个未经压缩的 Chunk 数据块的大小为 65_536 x 8 = 524_800
     /// </summary>
     private const int _worstCaseChunkDataSize = 524_800;
 
@@ -43,7 +43,7 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 同 LoadChunkData, 保存 Chunk 数据块
+    ///     同 LoadChunkData, 保存 Chunk 数据块
     /// </summary>
     /// <param name="chunk"> 需要保存的 Chunk 数据块对象 </param>
     /// <returns> 是否加载成功 </returns>
@@ -53,7 +53,7 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 同 LoadChunkData 加载 Chunk 数据块, 但是增加额外的 ChunkState 校验
+    ///     同 LoadChunkData 加载 Chunk 数据块, 但是增加额外的 ChunkState 校验
     /// </summary>
     /// <param name="chunk"> 加载结果 </param>
     /// <returns> 是否加载成功 </returns>
@@ -69,7 +69,7 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 加载 Chunk 数据块
+    ///     加载 Chunk 数据块
     /// </summary>
     /// <param name="chunk"> 加载结果 </param>
     /// <returns> 是否加载成功 </returns>
@@ -103,7 +103,7 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 保存 Chunk 数据块
+    ///     保存 Chunk 数据块
     /// </summary>
     /// <param name="chunk"> 需要保存的 Chunk 数据块对象 </param>
     private void SaveChunkData(TerrainChunk chunk)
@@ -129,7 +129,7 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 压缩数据块
+    ///     压缩数据块
     /// </summary>
     /// <param name="chunk"> 需要压缩的数据块对象 </param>
     /// <param name="buffer"> 压缩后的数据块 buffer </param>
@@ -209,7 +209,7 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 解压数据块
+    ///     解压数据块
     /// </summary>
     /// <param name="chunk"> 解压结果 </param>
     /// <param name="buffer"> 原始数据缓冲区 </param>
@@ -335,7 +335,7 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 从缓冲区读取一个 int 值 4 Byte
+    ///     从缓冲区读取一个 int 值 4 Byte
     /// </summary>
     /// <param name="buffer"> 读取的缓冲区 </param>
     /// <param name="i"> 缓冲区索引 </param>
@@ -347,17 +347,17 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 从 buffer 中读取经过 Run-Length Encoding (RLE) 游程编码压缩的数据
+    ///     从 buffer 中读取经过 Run-Length Encoding (RLE) 游程编码压缩的数据
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// RLE: 游程编码压缩是一种对于有大量重复数据的场景而行之有效的压缩算法，核心思想是将连续重复的值（称为游程）替换为一个值和重复次数。
-    /// 简单的示例: AAAABBBCCCCCDD -> A4B3C5D2
-    /// </para>
-    /// <para>
-    /// ValueCountPair 结构: 前 2 个 Byte [ Count (6 bits) | Value (10 bits) ]，后 2 个 Byte 空闲，如果 Count = 15, 则在该
-    /// ValueCountPair 4 Byte 之后的 1 个 Byte 和 Count 的加和表示该值重复的次数。
-    /// </para>
+    ///     <para>
+    ///         RLE: 游程编码压缩是一种对于有大量重复数据的场景而行之有效的压缩算法，核心思想是将连续重复的值（称为游程）替换为一个值和重复次数。
+    ///         简单的示例: AAAABBBCCCCCDD -> A4B3C5D2
+    ///     </para>
+    ///     <para>
+    ///         ValueCountPair 结构: 前 2 个 Byte [ Count (6 bits) | Value (10 bits) ]，后 2 个 Byte 空闲，如果 Count = 15, 则在该
+    ///         ValueCountPair 4 Byte 之后的 1 个 Byte 和 Count 的加和表示该值重复的次数。
+    ///     </para>
     /// </remarks>
     /// <param name="buffer"> 数据源 </param>
     /// <param name="i"> 开始读取 buffer 的索引 </param>
@@ -394,7 +394,7 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 写入一个 int 值 4 Byte 到缓冲区
+    ///     写入一个 int 值 4 Byte 到缓冲区
     /// </summary>
     /// <param name="buffer"> 写入的目标缓冲区 </param>
     /// <param name="i"> 缓冲区索引 </param>
@@ -409,17 +409,17 @@ public class TerrainSerializer24 : IDisposable
     }
 
     /// <summary>
-    /// 使用 RLE 算法将数据写入到缓冲区
+    ///     使用 RLE 算法将数据写入到缓冲区
     /// </summary>
     /// <remarks>
-    /// <para>
-    /// RLE: 游程编码压缩是一种对于有大量重复数据的场景而行之有效的压缩算法，核心思想是将连续重复的值（称为游程）替换为一个值和重复次数。
-    /// 简单的示例: AAAABBBCCCCCDD -> A4B3C5D2
-    /// </para>
-    /// <para>
-    /// ValueCountPair 结构: 前 2 个 Byte [ Count (6 bits) | Value (10 bits) ]，后 2 个 Byte 空闲，如果 Count > 15, 则在该
-    /// ValueCountPair 4 Byte 之后的 1 个 Byte 和 Count 的加和表示该值重复的次数。
-    /// </para>
+    ///     <para>
+    ///         RLE: 游程编码压缩是一种对于有大量重复数据的场景而行之有效的压缩算法，核心思想是将连续重复的值（称为游程）替换为一个值和重复次数。
+    ///         简单的示例: AAAABBBCCCCCDD -> A4B3C5D2
+    ///     </para>
+    ///     <para>
+    ///         ValueCountPair 结构: 前 2 个 Byte [ Count (6 bits) | Value (10 bits) ]，后 2 个 Byte 空闲，如果 Count > 15, 则在该
+    ///         ValueCountPair 4 Byte 之后的 1 个 Byte 和 Count 的加和表示该值重复的次数。
+    ///     </para>
     /// </remarks>
     /// <param name="buffer"> 写入的 buffer </param>
     /// <param name="i"> 写入 buffer 索引 </param>
@@ -456,14 +456,14 @@ public class TerrainSerializer24 : IDisposable
     public interface IStorage : IDisposable
     {
         /// <summary>
-        /// 打开 Region 文件夹，并将需要替换或更新的 Region 文件进行处理
+        ///     打开 Region 文件夹，并将需要替换或更新的 Region 文件进行处理
         /// </summary>
         /// <param name="directoryName"> Region 文件目录 </param>
         /// <param name="suffix"> Region 目录的后缀，默认为空字符串 </param>
         void Open(string directoryName, string suffix = "");
 
         /// <summary>
-        /// 从 Region 文件中加载一个 Chunk 数据块
+        ///     从 Region 文件中加载一个 Chunk 数据块
         /// </summary>
         /// <param name="coords"> 坐标 </param>
         /// <param name="buffer"> Chunk 数据块缓冲区 </param>
@@ -471,7 +471,7 @@ public class TerrainSerializer24 : IDisposable
         int Load(Point2 coords, byte[] buffer);
 
         /// <summary>
-        /// 保存一个 Chunk 数据块到 Region 文件，如果文件不存在，则创建，存在则更新
+        ///     保存一个 Chunk 数据块到 Region 文件，如果文件不存在，则创建，存在则更新
         /// </summary>
         /// <param name="coords"> 坐标 </param>
         /// <param name="buffer"> Chunk 数据块缓冲区 </param>
@@ -479,7 +479,7 @@ public class TerrainSerializer24 : IDisposable
         void Save(Point2 coords, byte[] buffer, int size);
 
         /// <summary>
-        /// 判断数据块或 Region 文件是否存在
+        ///     判断数据块或 Region 文件是否存在
         /// </summary>
         /// <param name="coords"> 坐标 </param>
         /// <returns> 是否存在 </returns>
@@ -519,7 +519,7 @@ public class TerrainSerializer24 : IDisposable
         }
 
         /// <summary>
-        /// 打开 Region 文件夹，并将需要替换或更新的 Region 文件进行处理
+        ///     打开 Region 文件夹，并将需要替换或更新的 Region 文件进行处理
         /// </summary>
         /// <param name="directoryName"> Region 文件目录 </param>
         /// <param name="suffix"> Region 目录的后缀，默认为空字符串 </param>
@@ -550,7 +550,7 @@ public class TerrainSerializer24 : IDisposable
         }
 
         /// <summary>
-        /// 从 Region 文件中加载一个 Chunk 数据块
+        ///     从 Region 文件中加载一个 Chunk 数据块
         /// </summary>
         /// <param name="coords"> 坐标 </param>
         /// <param name="buffer"> Chunk 数据块缓冲区 </param>
@@ -577,12 +577,11 @@ public class TerrainSerializer24 : IDisposable
 
                 ReadData(reader, directoryEntry.Offset, buffer, directoryEntry.Size);
                 return directoryEntry.Size;
-
             }
         }
 
         /// <summary>
-        /// 保存一个 Chunk 数据块到 Region 文件，如果文件不存在，则创建，存在则更新
+        ///     保存一个 Chunk 数据块到 Region 文件，如果文件不存在，则创建，存在则更新
         /// </summary>
         /// <param name="coords"> 坐标 </param>
         /// <param name="buffer"> Chunk 数据块缓冲区 </param>
@@ -732,7 +731,7 @@ public class TerrainSerializer24 : IDisposable
         }
 
         /// <summary>
-        /// 判断数据块或 Region 文件是否存在
+        ///     判断数据块或 Region 文件是否存在
         /// </summary>
         /// <param name="coords"> 坐标 </param>
         /// <returns> 是否存在 </returns>
@@ -923,7 +922,7 @@ public class TerrainSerializer24 : IDisposable
         }
 
         /// <summary>
-        /// 计算合适的 Chunk 空闲空间以避免频繁的重建 Region 文件
+        ///     计算合适的 Chunk 空闲空间以避免频繁的重建 Region 文件
         /// </summary>
         /// <param name="size"> 占用的大小 </param>
         /// <returns> 调整后的大小 </returns>
@@ -933,7 +932,7 @@ public class TerrainSerializer24 : IDisposable
         }
 
         /// <summary>
-        /// 将长度为 4 的字符串转换成无符号整形数 unit
+        ///     将长度为 4 的字符串转换成无符号整形数 unit
         /// </summary>
         /// <param name="s"> 需要转换的字符串 </param>
         /// <returns> 转换结果 </returns>

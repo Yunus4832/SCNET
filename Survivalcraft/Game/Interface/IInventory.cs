@@ -23,7 +23,7 @@ public interface IInventory
     void OnSlotChange(int slotIndex);
 
     /// <summary>
-    /// 获取某个物品的容量
+    ///     获取某个物品的容量
     /// </summary>
     /// <param name="slotIndex"></param>
     /// <param name="value"></param>
@@ -31,7 +31,7 @@ public interface IInventory
     int GetSlotCapacity(int slotIndex, int value);
 
     /// <summary>
-    /// 获取当某个物品拖向另一个物品的容量
+    ///     获取当某个物品拖向另一个物品的容量
     /// </summary>
     /// <param name="slotIndex"></param>
     /// <param name="value"></param>
@@ -43,7 +43,7 @@ public interface IInventory
     bool AddNetSlotItems(int slotIndex, int value, int count);
 
     /// <summary>
-    /// 当某个物品拖向另一个物品时执行
+    ///     当某个物品拖向另一个物品时执行
     /// </summary>
     /// <param name="sourceInventory">源Inventory</param>
     /// <param name="sourceSlotIndex">源slotIndex</param>

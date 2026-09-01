@@ -9,7 +9,7 @@ internal static class SeedTerrainGenerationPolicy
 }
 
 /// <summary>
-/// Owns seed-generated Pass1-Pass3 terrain data until the real chunk can adopt it.
+///     Owns seed-generated Pass1-Pass3 terrain data until the real chunk can adopt it.
 /// </summary>
 internal sealed class SeedGeneratedChunkBasis(int[] cells, long[] shafts)
 {

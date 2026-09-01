@@ -1,5 +1,3 @@
-using System.IO.Compression;
-using System.Text;
 using System.Xml.Linq;
 
 using Engine.Core;
@@ -39,9 +37,11 @@ public class GameModRuntimeTest
     public void BlocksManagerConsumesCatalogDataWithoutLegacyModList()
     {
         var host = new ModHost();
-        host.LoadAndStart([new ModDescriptor(
-            new ModManifest("example", "Example", "1.0.0"),
-            static () => new DataBlockMod())]);
+        host.LoadAndStart([
+            new ModDescriptor(
+                new ModManifest("example", "Example", "1.0.0"),
+                static () => new DataBlockMod())
+        ]);
         var blocks = host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
         var data = host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName);
         var catalog = BlockRuntimeCatalog.Compile(blocks, data);
@@ -58,9 +58,11 @@ public class GameModRuntimeTest
     public void CraftingRecipesManagerConsumesCompiledRecipeDocument()
     {
         var host = new ModHost();
-        host.LoadAndStart([new ModDescriptor(
-            new ModManifest("example", "Example", "1.0.0"),
-            static () => new DataBlockMod())]);
+        host.LoadAndStart([
+            new ModDescriptor(
+                new ModManifest("example", "Example", "1.0.0"),
+                static () => new DataBlockMod())
+        ]);
         var blocks = host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
         var blockData = host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName);
         BlocksManager.Initialize(BlockRuntimeCatalog.Compile(blocks, blockData));
@@ -197,15 +199,15 @@ public class GameModRuntimeTest
         try
         {
             ImportPackage(directory, """
-                {
-                  "id": "example.addon",
-                  "name": "Addon",
-                  "version": "1.0.0"
-                }
-                """, new Dictionary<string, string>
-                {
-                    ["data/blocks/items.csv"] = "Type;DisplayName\nAirBlock;Profile Runtime"
-                });
+                                     {
+                                       "id": "example.addon",
+                                       "name": "Addon",
+                                       "version": "1.0.0"
+                                     }
+                                     """, new Dictionary<string, string>
+            {
+                ["data/blocks/items.csv"] = "Type;DisplayName\nAirBlock;Profile Runtime"
+            });
 
             var descriptors = ModPackageCatalog.CreateLoadPlan(directory, ModSide.Server);
             using var runtime = GameModRuntime.Start(descriptors);
@@ -232,15 +234,15 @@ public class GameModRuntimeTest
         {
             SettingsManager.Current.ContentServerUrl = "https://mods.example/";
             ImportPackage(directory, """
-                {
-                  "id": "example.addon",
-                  "name": "Addon",
-                  "version": "1.0.0"
-                }
-                """, new Dictionary<string, string>
-                {
-                    ["data/blocks/items.csv"] = "Type;DisplayName\nAirBlock;Profile Runtime"
-                });
+                                     {
+                                       "id": "example.addon",
+                                       "name": "Addon",
+                                       "version": "1.0.0"
+                                     }
+                                     """, new Dictionary<string, string>
+            {
+                ["data/blocks/items.csv"] = "Type;DisplayName\nAirBlock;Profile Runtime"
+            });
 
             using var runtime = GameModRuntime.StartFromProfile(
                 new ModProfile

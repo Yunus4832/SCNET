@@ -132,7 +132,8 @@ public sealed class GameplayHooks
         public IDisposable OnTerrainChunkGenerated(Action<TerrainChunkGeneratedContext> handler, int priority = 0) =>
             hooks._terrainChunkGenerated.Register(owner, handler, priority);
 
-        public IDisposable OnTerrainChunkInitialized(Action<TerrainChunkInitializedContext> handler, int priority = 0) =>
+        public IDisposable
+            OnTerrainChunkInitialized(Action<TerrainChunkInitializedContext> handler, int priority = 0) =>
             hooks._terrainChunkInitialized.Register(owner, handler, priority);
 
         public IDisposable OnTerrainChunkDiscarding(Action<TerrainChunkDiscardingContext> handler, int priority = 0) =>

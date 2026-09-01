@@ -37,6 +37,7 @@ public sealed class TeamListWidget : CanvasWidget
         {
             selectedGroupKey = _playerData.GroupKey;
         }
+
         Teams.ClearItems();
         foreach (var pair in _playerData.SubsystemPlayers.ServerGroups
                      .OrderBy(pair => pair.Value.Name, StringComparer.OrdinalIgnoreCase))

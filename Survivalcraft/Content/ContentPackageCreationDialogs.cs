@@ -1,14 +1,11 @@
 using Content.Packaging;
 
-using Engine.FileStorage;
-
-using Game.Managers;
-
 namespace Game.Content;
 
 public static class ContentPackageCreationDialogs
 {
     private const string _typeName = nameof(ContentPackageCreationDialogs);
+
     private static readonly ContentPackageType[] _types =
     [
         ContentPackageType.World,
@@ -69,6 +66,7 @@ public static class ContentPackageCreationDialogs
             failed(new InvalidOperationException(LanguageManager.Get(_typeName, "NoSources")));
             return;
         }
+
         DialogsManager.ShowDialog(null, new ListSelectionDialog(
             LanguageManager.Get(_typeName, "SelectSource"), sources, 64f,
             item => ((AssetSource)item).DisplayName,
@@ -82,7 +80,11 @@ public static class ContentPackageCreationDialogs
         {
             var files = await FilePicker.PickFilesAsync(new FilePickerRequest([".png"], false,
                 LanguageManager.Get(_typeName, "SelectImage")));
-            if (files.Count == 0) return;
+            if (files.Count == 0)
+            {
+                return;
+            }
+
             var file = files[0];
             Dispatcher.Dispatch(() => AskIdentity(type,
                 new AssetSource(string.Empty, Path.GetFileNameWithoutExtension(file.Name)), file,
@@ -106,13 +108,15 @@ public static class ContentPackageCreationDialogs
                     failed(new ContentPackageException(LanguageManager.Get(_typeName, "NameRequired")));
                     return;
                 }
+
                 DialogsManager.ShowDialog(null, new TextBoxDialog(
                     LanguageManager.Get(_typeName, "Version"), "1.0.0", 40,
-                    version => Create(type, source, image, name.Trim(), version.Trim(), setBusy, saved, failed), false));
+                    version => _ = Create(type, source, image, name.Trim(), version.Trim(), setBusy, saved, failed),
+                    false));
             }, false));
     }
 
-    private static async void Create(ContentPackageType type, AssetSource source, PickedFile? image,
+    private static async Task Create(ContentPackageType type, AssetSource source, PickedFile? image,
         string name, string version, Action<bool> setBusy, Action saved, Action<Exception> failed)
     {
         setBusy(true);
@@ -128,11 +132,13 @@ public static class ContentPackageCreationDialogs
             else
             {
                 artifact = await Task.Run(() => type == ContentPackageType.World
-                    ? ContentPackageCreationManager.CreateWorld(new ContentCreationIdentity(name, version), source.AssetKey)
-                    : ContentPackageCreationManager.CreateFurniture(new ContentCreationIdentity(name, version), source.AssetKey));
+                    ? ContentPackageCreationManager.CreateWorld(new ContentCreationIdentity(name, version),
+                        source.AssetKey)
+                    : ContentPackageCreationManager.CreateFurniture(new ContentCreationIdentity(name, version),
+                        source.AssetKey));
             }
 
-            using var validationStream = artifact.OpenRead();
+            await using var validationStream = artifact.OpenRead();
             var inspection = ContentPackageReader.Inspect(validationStream);
             Dispatcher.Dispatch(() => ShowPreview(artifact, inspection, setBusy, saved, failed));
         }
@@ -158,13 +164,17 @@ public static class ContentPackageCreationDialogs
             button =>
             {
                 if (button == MessageDialogButton.Button1)
-                    SaveArtifact(artifact, manifest, setBusy, saved, failed);
+                {
+                    _ = SaveArtifact(artifact, manifest, setBusy, saved, failed);
+                }
                 else
+                {
                     artifact.Dispose();
+                }
             }));
     }
 
-    private static async void SaveArtifact(ContentPackageCreationArtifact artifact, ContentPackageManifest manifest,
+    private static async Task SaveArtifact(ContentPackageCreationArtifact artifact, ContentPackageManifest manifest,
         Action<bool> setBusy, Action saved, Action<Exception> failed)
     {
         setBusy(true);
@@ -173,7 +183,11 @@ public static class ContentPackageCreationDialogs
             var target = await FilePicker.PickSaveTargetAsync(new FileSaveRequest(
                 MakeFileName($"{manifest.Name}-{manifest.Version}") + ContentPackageReader.FileExtension,
                 "application/vnd.scnet.content-package", LanguageManager.Get(_typeName, "SaveTitle")));
-            if (target is null) return;
+            if (target is null)
+            {
+                return;
+            }
+
             await using var source = artifact.OpenRead();
             await using var destination = await target.OpenWriteAsync(CancellationToken.None);
             await source.CopyToAsync(destination, 64 * 1024);

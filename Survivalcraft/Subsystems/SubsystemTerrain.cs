@@ -681,6 +681,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             ChunkContentTransport = new NetworkChunkContentTransport();
             ClientChunkDerivation = new ClientChunkDerivationPipeline(Terrain);
         }
+
         TerrainSerializer = CommonLib.WorkType != WorkType.Client
             ? new TerrainSerializer24(SubsystemGameInfo.DirectoryName)
             : new TerrainSerializerNet();
@@ -756,7 +757,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             return new TerrainContentsGenerator23(this, terrain);
         }
 
-        if (terrainGenerationMode is TerrainGenerationMode.LegacyContinentPre21 or TerrainGenerationMode.LegacyIslandPre21
+        if (terrainGenerationMode is TerrainGenerationMode.LegacyContinentPre21
+            or TerrainGenerationMode.LegacyIslandPre21
             or TerrainGenerationMode.LegacyContinent21 or TerrainGenerationMode.LegacyIsland21)
         {
             return new TerrainContentsGenerator21(this, terrain);

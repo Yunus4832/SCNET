@@ -68,7 +68,7 @@ public static class Flac
         }
 
         /// <summary>
-        /// 复制出一个新的流
+        ///     复制出一个新的流
         /// </summary>
         public override StreamingSource Duplicate()
         {

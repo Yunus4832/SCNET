@@ -34,8 +34,9 @@ public class GameMenuDialog : Dialog
         }
 
         if (!_increaseDetailDialogShown && PerformanceManager.LongTermAverageFrameTime.HasValue &&
-            PerformanceManager.LongTermAverageFrameTime.Value * 1000f < 25f && (SettingsManager.Current.VisibilityRange <= 64 ||
-                                                                                SettingsManager.Current.ResolutionMode == ResolutionMode.Low))
+            PerformanceManager.LongTermAverageFrameTime.Value * 1000f < 25f &&
+            (SettingsManager.Current.VisibilityRange <= 64 ||
+             SettingsManager.Current.ResolutionMode == ResolutionMode.Low))
         {
             _increaseDetailDialogShown = true;
             DialogsManager.ShowDialog(ParentWidget,
@@ -48,8 +49,9 @@ public class GameMenuDialog : Dialog
         }
 
         if (!_decreaseDetailDialogShown && PerformanceManager.LongTermAverageFrameTime.HasValue &&
-            PerformanceManager.LongTermAverageFrameTime.Value * 1000f > 50f && (SettingsManager.Current.VisibilityRange >= 64 ||
-                SettingsManager.Current.ResolutionMode == ResolutionMode.High))
+            PerformanceManager.LongTermAverageFrameTime.Value * 1000f > 50f &&
+            (SettingsManager.Current.VisibilityRange >= 64 ||
+             SettingsManager.Current.ResolutionMode == ResolutionMode.High))
         {
             _decreaseDetailDialogShown = true;
             DialogsManager.ShowDialog(ParentWidget,
@@ -176,7 +178,8 @@ public class GameMenuDialog : Dialog
             });
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 34), playerStats.PlayerKills.ToString("N0"));
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 35), playerStats.LandCreatureKills.ToString("N0"));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 36), playerStats.WaterCreatureKills.ToString("N0"));
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 36),
+                playerStats.WaterCreatureKills.ToString("N0"));
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 37), playerStats.AirCreatureKills.ToString("N0"));
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 38), playerStats.MeleeAttacks.ToString("N0"));
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 39), playerStats.MeleeHits.ToString("N0"),
@@ -197,7 +200,8 @@ public class GameMenuDialog : Dialog
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 45), playerStats.BlocksPlaced.ToString("N0"));
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 46), playerStats.BlocksInteracted.ToString("N0"));
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 47), playerStats.ItemsCrafted.ToString("N0"));
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 48), playerStats.FurnitureItemsMade.ToString("N0"));
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 48),
+                playerStats.FurnitureItemsMade.ToString("N0"));
             stackPanelWidget.Children.Add(new LabelWidget
             {
                 Text = LanguageManager.Get(_typeName, 49),
@@ -206,7 +210,8 @@ public class GameMenuDialog : Dialog
                 Margin = new Vector2(0f, 10f),
                 Color = white
             });
-            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 50), FormatDistance(playerStats.DistanceTravelled));
+            AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 50),
+                FormatDistance(playerStats.DistanceTravelled));
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 51), FormatDistance(playerStats.DistanceWalked),
                 $"({(playerStats.DistanceTravelled > 0.0 ? playerStats.DistanceWalked / playerStats.DistanceTravelled * 100.0 : 0.0):0.0}%)");
             AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 52), FormatDistance(playerStats.DistanceFallen),

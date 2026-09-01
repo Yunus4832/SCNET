@@ -35,7 +35,8 @@ public static class BlockExtensions
             new BlockRegistration(
                 legacyIndex,
                 () => (Block)(Activator.CreateInstance(blockType)
-                              ?? throw new InvalidOperationException($"Could not create block {blockType.FullName}."))));
+                              ?? throw new InvalidOperationException(
+                                  $"Could not create block {blockType.FullName}."))));
     }
 
     public static IDisposable RegisterBlockData(

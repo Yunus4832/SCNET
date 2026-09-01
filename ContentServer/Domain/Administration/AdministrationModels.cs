@@ -2,7 +2,13 @@ using NetCorePal.Extensions.Domain;
 
 namespace ContentServer.Domain.Administration;
 
-public enum AdministratorStatus { Pending, Active, Rejected, Suspended }
+public enum AdministratorStatus
+{
+    Pending,
+    Active,
+    Rejected,
+    Suspended
+}
 
 public partial record AdministratorId : IGuidStronglyTypedId;
 
@@ -71,31 +77,59 @@ public class Administrator : Entity<AdministratorId>, IAggregateRoot
 
     public bool Review(AdministratorStatus status, AdministratorId reviewerId, string? message, DateTimeOffset now)
     {
-        if (Status != AdministratorStatus.Pending || status is not (AdministratorStatus.Active or AdministratorStatus.Rejected))
+        if (Status != AdministratorStatus.Pending ||
+            status is not (AdministratorStatus.Active or AdministratorStatus.Rejected))
         {
             return false;
         }
 
-        Status = status; ReviewMessage = Normalize(message); ReviewedAt = now; UpdatedAt = now;
+        Status = status;
+        ReviewMessage = Normalize(message);
+        ReviewedAt = now;
+        UpdatedAt = now;
         AddDomainEvent(new AdministratorStatusChangedDomainEvent(this, reviewerId, status, ReviewMessage, now));
         return true;
     }
 
     public bool RevokeKeys(DateTimeOffset now)
     {
-        if (IsSuperAdministrator) return false;
+        if (IsSuperAdministrator)
+        {
+            return false;
+        }
+
         var keys = Keys.Where(key => key.RevokedAt is null).ToArray();
-        if (keys.Length == 0) return false;
-        foreach (var key in keys) key.Revoke(now);
+        if (keys.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (var key in keys)
+        {
+            key.Revoke(now);
+        }
+
         return true;
     }
 
     public bool RestoreKeys(DateTimeOffset now)
     {
-        if (IsSuperAdministrator) return false;
+        if (IsSuperAdministrator)
+        {
+            return false;
+        }
+
         var keys = Keys.Where(key => key.RevokedAt is not null).ToArray();
-        if (keys.Length == 0) return false;
-        foreach (var key in keys) key.Restore();
+        if (keys.Length == 0)
+        {
+            return false;
+        }
+
+        foreach (var key in keys)
+        {
+            key.Restore();
+        }
+
         UpdatedAt = now;
         return true;
     }
@@ -103,8 +137,11 @@ public class Administrator : Entity<AdministratorId>, IAggregateRoot
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }
 
-public sealed record AdministratorStatusChangedDomainEvent(Administrator Administrator,
-    AdministratorId ReviewerId, AdministratorStatus Status, string? Message,
+public sealed record AdministratorStatusChangedDomainEvent(
+    Administrator Administrator,
+    AdministratorId ReviewerId,
+    AdministratorStatus Status,
+    string? Message,
     DateTimeOffset OccurredAt) : IDomainEvent;
 
 public class AdministratorKey : Entity<AdministratorKeyId>

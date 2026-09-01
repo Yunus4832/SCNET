@@ -81,7 +81,7 @@ public class SkyShader : Shader
         bool useTexture,
         bool useAlphaThreshold)
     {
-        return PrepareShaderMacros(useVertexColor, useTexture,  useAlphaThreshold, []);
+        return PrepareShaderMacros(useVertexColor, useTexture, useAlphaThreshold, []);
     }
 
     private static ShaderMacro[] PrepareShaderMacros(

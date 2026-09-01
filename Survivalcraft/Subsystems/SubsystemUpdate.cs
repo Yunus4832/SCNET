@@ -85,7 +85,6 @@ public class SubsystemUpdate : Subsystem
                     Log.Error(e);
                 }
             }
-
         }
 
         IsLastUpdateInFrame = false;
@@ -161,17 +160,17 @@ public class SubsystemUpdate : Subsystem
 
         public int Compare(IUpdateable? u1, IUpdateable? u2)
         {
-            if(u1 == null && u2 == null)
+            if (u1 == null && u2 == null)
             {
                 return 0;
             }
 
-            if(u1 is null)
+            if (u1 is null)
             {
                 return -1;
             }
 
-            if(u2 is null)
+            if (u2 is null)
             {
                 return 1;
             }

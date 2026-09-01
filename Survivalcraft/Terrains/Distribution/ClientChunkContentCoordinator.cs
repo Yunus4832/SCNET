@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Single installation boundary for authoritative contents entering a client terrain.
+///     Single installation boundary for authoritative contents entering a client terrain.
 /// </summary>
 public sealed class ClientChunkContentCoordinator(Terrain terrain)
 {

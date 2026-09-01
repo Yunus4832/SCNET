@@ -24,8 +24,9 @@ public sealed class ContentInstallationManagerTest : IDisposable
     public void ModInstallOnlyAcknowledgesValidatedCachedPackage()
     {
         using var package = ScpkgTestPackage.Create("""
-            {"id":"installer.example","name":"Installer Example","version":"1.0.0"}
-            """, new Dictionary<string, string> { ["data/marker.txt"] = "installed" });
+                                                    {"id":"installer.example","name":"Installer Example","version":"1.0.0"}
+                                                    """,
+            new Dictionary<string, string> { ["data/marker.txt"] = "installed" });
 
         var result = ContentInstallationManager.Install(package);
 
@@ -51,7 +52,11 @@ public sealed class ContentInstallationManagerTest : IDisposable
     public void ImageInstallAcceptsNonSeekablePayloadAndCreatesIndependentAssets(ContentPackageType type)
     {
         var directory = type == ContentPackageType.BlocksTexture ? GamePaths.BlockTextures : GamePaths.CharacterSkins;
-        if (!Storage.DirectoryExists(directory)) Storage.CreateDirectory(directory);
+        if (!Storage.DirectoryExists(directory))
+        {
+            Storage.CreateDirectory(directory);
+        }
+
         using var first = CreateImagePackage(type);
         using var second = CreateImagePackage(type);
 
@@ -59,7 +64,9 @@ public sealed class ContentInstallationManagerTest : IDisposable
         var secondResult = ContentInstallationManager.Install(second);
         var firstName = firstResult.AssetKey!;
         var secondName = secondResult.AssetKey!;
-        var contentType = type == ContentPackageType.BlocksTexture ? ContentType.BlocksTexture : ContentType.CharacterSkin;
+        var contentType = type == ContentPackageType.BlocksTexture
+            ? ContentType.BlocksTexture
+            : ContentType.CharacterSkin;
         _installedAssets.Add((contentType, firstName));
         _installedAssets.Add((contentType, secondName));
 
@@ -67,12 +74,15 @@ public sealed class ContentInstallationManagerTest : IDisposable
         Assert.NotEqual(firstResult.AssetKey, secondResult.AssetKey);
         Assert.Matches("^[0-9a-f]{32}$", firstName);
         if (type == ContentPackageType.BlocksTexture)
+        {
             Assert.EndsWith(".png", BlocksTexturesManager.GetFileName(firstName), StringComparison.Ordinal);
+        }
         else
         {
             Assert.True(CharacterSkinsManager.GetFileName(firstName, out var skinPath));
             Assert.EndsWith(".png", skinPath, StringComparison.Ordinal);
         }
+
         Assert.Equal("Installed Image", type == ContentPackageType.BlocksTexture
             ? BlocksTexturesManager.GetDisplayName(firstName)
             : CharacterSkinsManager.GetDisplayName(firstName));
@@ -81,7 +91,11 @@ public sealed class ContentInstallationManagerTest : IDisposable
     [Fact]
     public void InvalidAssetImportLeavesNoTemporaryOrVisibleAsset()
     {
-        if (!Storage.DirectoryExists(GamePaths.BlockTextures)) Storage.CreateDirectory(GamePaths.BlockTextures);
+        if (!Storage.DirectoryExists(GamePaths.BlockTextures))
+        {
+            Storage.CreateDirectory(GamePaths.BlockTextures);
+        }
+
         var before = Storage.ListFileNames(GamePaths.BlockTextures).ToHashSet(StringComparer.Ordinal);
         using var invalid = new MemoryStream("not an image"u8.ToArray());
 
@@ -93,7 +107,11 @@ public sealed class ContentInstallationManagerTest : IDisposable
     [Fact]
     public void ImageReplacementPreservesAssetKeyAndUpdatesDisplayName()
     {
-        if (!Storage.DirectoryExists(GamePaths.BlockTextures)) Storage.CreateDirectory(GamePaths.BlockTextures);
+        if (!Storage.DirectoryExists(GamePaths.BlockTextures))
+        {
+            Storage.CreateDirectory(GamePaths.BlockTextures);
+        }
+
         using var original = CreateImagePackage(ContentPackageType.BlocksTexture);
         var created = ContentInstallationManager.Install(original);
         _installedAssets.Add((ContentType.BlocksTexture, created.AssetKey!));
@@ -125,14 +143,20 @@ public sealed class ContentInstallationManagerTest : IDisposable
     [Fact]
     public void AssetReferenceReplacementUpdatesPersistedWorldByAssetKey()
     {
-        if (!Storage.DirectoryExists(GamePaths.Worlds)) Storage.CreateDirectory(GamePaths.Worlds);
+        if (!Storage.DirectoryExists(GamePaths.Worlds))
+        {
+            Storage.CreateDirectory(GamePaths.Worlds);
+        }
+
         var directory = Storage.CombinePaths(GamePaths.Worlds, $"ReferenceTest{Guid.NewGuid():N}");
         Storage.CreateDirectory(directory);
         _installedWorlds.Add(directory);
         var project = Storage.CombinePaths(directory, "Project.xml");
         using (var output = Storage.OpenFile(project, OpenFileMode.Create))
         using (var writer = new StreamWriter(output))
+        {
             writer.Write("<Project><Value Name=\"BlockTextureName\" Value=\"old-key\" /></Project>");
+        }
 
         var count = WorldsManager.ReplaceAssetReferences(ContentType.BlocksTexture, "old-key", "new-key");
 
@@ -167,7 +191,10 @@ public sealed class ContentInstallationManagerTest : IDisposable
     public void ImageCreationRejectsNonPngAndCleansTemporaryInput()
     {
         if (!Storage.DirectoryExists(GamePaths.ContentPackageCreationTemp))
+        {
             Storage.CreateDirectory(GamePaths.ContentPackageCreationTemp);
+        }
+
         var before = Storage.ListFileNames(GamePaths.ContentPackageCreationTemp)
             .ToHashSet(StringComparer.Ordinal);
         using var gif = new MemoryStream("GIF89a"u8.ToArray(), writable: false);
@@ -183,22 +210,32 @@ public sealed class ContentInstallationManagerTest : IDisposable
     public async Task LargeWorldManufactureCacheAndInstallRemainStreaming()
     {
         const int regionSize = 8 * 1024 * 1024;
-        if (!Storage.DirectoryExists(GamePaths.Worlds)) Storage.CreateDirectory(GamePaths.Worlds);
+        if (!Storage.DirectoryExists(GamePaths.Worlds))
+        {
+            Storage.CreateDirectory(GamePaths.Worlds);
+        }
+
         var sourceDirectory = Storage.CombinePaths(GamePaths.Worlds, $"LargeSource{Guid.NewGuid():N}");
         var regions = Storage.CombinePaths(sourceDirectory, "Regions");
         Storage.CreateDirectory(regions);
         _installedWorlds.Add(sourceDirectory);
         using (var output = Storage.OpenFile(Storage.CombinePaths(sourceDirectory, "Project.xml"), OpenFileMode.Create))
         using (var writer = new StreamWriter(output))
-            writer.Write("<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>");
+        {
+            writer.Write(
+                "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>");
+        }
+
         var random = new Random(42);
         var buffer = new byte[64 * 1024];
         using (var output = Storage.OpenFile(Storage.CombinePaths(regions, "0,0.dat"), OpenFileMode.Create))
+        {
             for (var remaining = regionSize; remaining > 0; remaining -= buffer.Length)
             {
                 random.NextBytes(buffer);
                 output.Write(buffer, 0, Math.Min(buffer.Length, remaining));
             }
+        }
 
         using var artifact = ContentPackageCreationManager.CreateWorld(
             new ContentCreationIdentity("Large World", "1.0.0"), Storage.GetFileName(sourceDirectory));
@@ -221,7 +258,11 @@ public sealed class ContentInstallationManagerTest : IDisposable
     [Fact]
     public async Task LocalImportAndDownloadedCacheUseSameInstallationWorkflow()
     {
-        if (!Storage.DirectoryExists(GamePaths.BlockTextures)) Storage.CreateDirectory(GamePaths.BlockTextures);
+        if (!Storage.DirectoryExists(GamePaths.BlockTextures))
+        {
+            Storage.CreateDirectory(GamePaths.BlockTextures);
+        }
+
         var localCachePath = Path.Combine(Path.GetTempPath(), $"scnet-local-flow-{Guid.NewGuid():N}");
         var remoteCachePath = Path.Combine(Path.GetTempPath(), $"scnet-remote-flow-{Guid.NewGuid():N}");
         _temporaryDirectories.Add(localCachePath);
@@ -245,11 +286,25 @@ public sealed class ContentInstallationManagerTest : IDisposable
     public void Dispose()
     {
         foreach (var installedWorld in _installedWorlds)
-            if (Storage.DirectoryExists(installedWorld)) WorldsManager.DeleteWorld(installedWorld);
+        {
+            if (Storage.DirectoryExists(installedWorld))
+            {
+                WorldsManager.DeleteWorld(installedWorld);
+            }
+        }
+
         foreach (var (type, name) in _installedAssets)
+        {
             ContentPackageManager.DeleteContent(type, name);
+        }
+
         foreach (var directory in _temporaryDirectories)
-            if (Directory.Exists(directory)) Directory.Delete(directory, true);
+        {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, true);
+            }
+        }
     }
 
     private static MemoryStream CreateWorldPackage(string regionMarker = "region")
@@ -303,29 +358,44 @@ public sealed class ContentInstallationManagerTest : IDisposable
         public override bool CanSeek => inner.CanSeek;
         public override bool CanWrite => false;
         public override long Length => inner.Length;
-        public override long Position { get => inner.Position; set => inner.Position = value; }
+
+        public override long Position
+        {
+            get => inner.Position;
+            set => inner.Position = value;
+        }
+
         public override void Flush() => inner.Flush();
+
         public override int Read(byte[] buffer, int offset, int count)
         {
             MaximumReadSize = Math.Max(MaximumReadSize, count);
             return inner.Read(buffer, offset, count);
         }
+
         public override int Read(Span<byte> buffer)
         {
             MaximumReadSize = Math.Max(MaximumReadSize, buffer.Length);
             return inner.Read(buffer);
         }
+
         public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
         {
             MaximumReadSize = Math.Max(MaximumReadSize, buffer.Length);
             return inner.ReadAsync(buffer, cancellationToken);
         }
+
         public override long Seek(long offset, SeekOrigin origin) => inner.Seek(offset, origin);
         public override void SetLength(long value) => throw new NotSupportedException();
         public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
         protected override void Dispose(bool disposing)
         {
-            if (disposing) inner.Dispose();
+            if (disposing)
+            {
+                inner.Dispose();
+            }
+
             base.Dispose(disposing);
         }
     }

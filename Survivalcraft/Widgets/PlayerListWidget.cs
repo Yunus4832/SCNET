@@ -1,7 +1,7 @@
 namespace Game.Widgets;
 
 /// <summary>
-/// 玩家列表组件
+///     玩家列表组件
 /// </summary>
 public class PlayerListWidget : CanvasWidget
 {
@@ -13,12 +13,12 @@ public class PlayerListWidget : CanvasWidget
     }
 
     /// <summary>
-    /// 主玩家
+    ///     主玩家
     /// </summary>
     private readonly PlayerData _mainPlayer;
 
     /// <summary>
-    /// 展示类型
+    ///     展示类型
     /// </summary>
     private ListKind _kind;
 
@@ -38,7 +38,7 @@ public class PlayerListWidget : CanvasWidget
     }
 
     /// <summary>
-    /// 玩家列表
+    ///     玩家列表
     /// </summary>
     public readonly ListPanelWidget Players = new() { Direction = LayoutDirection.Vertical };
 
@@ -47,7 +47,7 @@ public class PlayerListWidget : CanvasWidget
     public override WidgetAlignment VerticalAlignment { get; set; } = WidgetAlignment.Center;
 
     /// <summary>
-    /// 构造函数
+    ///     构造函数
     /// </summary>
     /// <param name="main">主玩家</param>
     /// <param name="kind">列表数据范围</param>

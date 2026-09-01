@@ -4,7 +4,7 @@ using Game.Network.Serialization;
 namespace Game.Network.Packages;
 
 /// <summary>
-/// 基础包模板复制
+///     基础包模板复制
 /// </summary>
 public class ServerInfoPackage : IPackage
 {
@@ -21,14 +21,14 @@ public class ServerInfoPackage : IPackage
     public bool RequestInfo;
 
     /// <summary>
-    /// 季节
+    ///     季节
     /// </summary>
     public Season Season;
 
     public float TimeOfDay;
 
     /// <summary>
-    /// 季节进度
+    ///     季节进度
     /// </summary>
     public float TimeOfSeason;
 

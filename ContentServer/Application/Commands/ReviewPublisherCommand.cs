@@ -13,7 +13,12 @@ public sealed record ReviewPublisherCommand(
     string? Message
 ) : ICommand<ReviewPublisherResult>;
 
-public enum ReviewPublisherResult { Completed, NotFound, InvalidState }
+public enum ReviewPublisherResult
+{
+    Completed,
+    NotFound,
+    InvalidState
+}
 
 public sealed class ReviewPublisherCommandHandler(
     PublisherRepository repository
@@ -32,6 +37,8 @@ public sealed class ReviewPublisherCommandHandler(
             command.AdministratorId,
             command.Message,
             DateTimeOffset.UtcNow
-        ) ? ReviewPublisherResult.Completed : ReviewPublisherResult.InvalidState;
+        )
+            ? ReviewPublisherResult.Completed
+            : ReviewPublisherResult.InvalidState;
     }
 }

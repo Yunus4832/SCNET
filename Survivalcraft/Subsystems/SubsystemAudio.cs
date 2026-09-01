@@ -245,7 +245,6 @@ public class SubsystemAudio : Subsystem, IUpdateable
         value.LastPlayedVolume = volume;
         value.Value += 1f;
         return true;
-
     }
 
     public class Congestion

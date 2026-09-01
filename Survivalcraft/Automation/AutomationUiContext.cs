@@ -37,7 +37,7 @@ public static class AutomationUiContext
         var candidate = root is null
             ? null
             : Enumerate(root, rootSelector)
-            .FirstOrDefault(item => string.Equals(item.Selector, selector, StringComparison.Ordinal));
+                .FirstOrDefault(item => string.Equals(item.Selector, selector, StringComparison.Ordinal));
         if (candidate is null)
         {
             target = null!;

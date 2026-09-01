@@ -12,8 +12,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
     public const float AreaSize = 8f;
 
     /// <summary>
-    /// 单个状态流包最多包含的生物数量。生物状态使用 Unreliable 投递，
-    /// 同一轮拆出的兄弟包互不淘汰；极端超 MTU 时由发送侧再按 MTU 拆分。
+    ///     单个状态流包最多包含的生物数量。生物状态使用 Unreliable 投递，
+    ///     同一轮拆出的兄弟包互不淘汰；极端超 MTU 时由发送侧再按 MTU 拆分。
     /// </summary>
     private const int _maxBodiesPerSnapshotPackage = 20;
 
@@ -289,9 +289,9 @@ public class SubsystemBodies : Subsystem, IUpdateable
     }
 
     /// <summary>
-    /// 服务端驱动的 AOI 离场移除：对比每个客户端上一轮与当前轮的快照集合，
-    /// 对连续多轮离开范围的生物发送 EntityPackage(Remove) 通知客户端删除。
-    /// 客户端重新进入范围时通过 RequestSync 重新加载实体。
+    ///     服务端驱动的 AOI 离场移除：对比每个客户端上一轮与当前轮的快照集合，
+    ///     对连续多轮离开范围的生物发送 EntityPackage(Remove) 通知客户端删除。
+    ///     客户端重新进入范围时通过 RequestSync 重新加载实体。
     /// </summary>
     private void UpdateClientCreatureSets()
     {

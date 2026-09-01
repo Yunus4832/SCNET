@@ -11,12 +11,12 @@ namespace Game.Subsystems;
 public class Territoriy
 {
     /// <summary>
-    /// 范围高度
+    ///     范围高度
     /// </summary>
     private const int _height = 32;
 
     /// <summary>
-    /// 显示范围修正
+    ///     显示范围修正
     /// </summary>
     private const int _rangeFix = 16;
 
@@ -61,7 +61,7 @@ public class SubsystemTerritoryBlockBehavior : SubsystemBlockBehavior, IDrawable
     public const int TerritoriySize = 1;
 
     /// <summary>
-    /// 所有的领地
+    ///     所有的领地
     /// </summary>
     public static readonly Dictionary<Guid, Territoriy> Territories = new();
 

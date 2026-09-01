@@ -79,7 +79,7 @@ public class Image
         }
     }
 
-    public readonly Image<Rgba32> TrueImage = new(1,1, new Rgba32());
+    public readonly Image<Rgba32> TrueImage = new(1, 1, new Rgba32());
 
     public bool IsDisposed;
 

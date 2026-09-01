@@ -1018,7 +1018,8 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                 {
                     var num11 = num7 + point.X * l;
                     var num12 = num8 + point.Z * l;
-                    if (num11 < x + 1 || num11 >= num - 1 || num12 < y + 1 || num12 >= num2 - 1 || BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
+                    if (num11 < x + 1 || num11 >= num - 1 || num12 < y + 1 || num12 >= num2 - 1 ||
+                        BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
                     {
                         flag = false;
                         break;
@@ -1989,7 +1990,7 @@ public class TerrainContentsGenerator21 : ITerrainContentsGenerator
                                 continue;
                             }
 
-                            if (BlocksManager.Blocks[ chunk.GetCellContentsFast(i, num3 - k, j)] is not WaterBlock)
+                            if (BlocksManager.Blocks[chunk.GetCellContentsFast(i, num3 - k, j)] is not WaterBlock)
                             {
                                 break;
                             }

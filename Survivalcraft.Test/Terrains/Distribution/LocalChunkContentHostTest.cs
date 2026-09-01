@@ -137,9 +137,19 @@ public sealed class LocalChunkContentHostTest
         public int CalculateTemperature(float x, float z) => 0;
         public int CalculateHumidity(float x, float z) => 0;
         public float CalculateMountainRangeFactor(float x, float z) => 0;
-        public void GenerateChunkContentsPass1(TerrainChunk chunk) { }
-        public void GenerateChunkContentsPass2(TerrainChunk chunk) { }
-        public void GenerateChunkContentsPass3(TerrainChunk chunk) { }
+
+        public void GenerateChunkContentsPass1(TerrainChunk chunk)
+        {
+        }
+
+        public void GenerateChunkContentsPass2(TerrainChunk chunk)
+        {
+        }
+
+        public void GenerateChunkContentsPass3(TerrainChunk chunk)
+        {
+        }
+
         public void GenerateChunkContentsPass4(TerrainChunk chunk) => chunk.SetCellValueFast(0, 0, 0, 42);
     }
 }

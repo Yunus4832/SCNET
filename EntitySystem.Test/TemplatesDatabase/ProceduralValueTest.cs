@@ -3,8 +3,8 @@ using EntitySystem.TemplatesDatabase;
 namespace EntitySystem.Test.TemplatesDatabase;
 
 /// <summary>
-/// ProceduralValue 结构体的单元测试类。
-/// 测试解析过程值表达式的各种场景，包括 GUID 引用、路径导航和值提取。
+///     ProceduralValue 结构体的单元测试类。
+///     测试解析过程值表达式的各种场景，包括 GUID 引用、路径导航和值提取。
 /// </summary>
 public class ProceduralValueTest
 {
@@ -14,7 +14,7 @@ public class ProceduralValueTest
     private readonly DatabaseObject _rootObject;
 
     /// <summary>
-    /// 初始化测试环境，创建必要的数据库对象类型和数据库实例。
+    ///     初始化测试环境，创建必要的数据库对象类型和数据库实例。
     /// </summary>
     public ProceduralValueTest()
     {
@@ -42,7 +42,7 @@ public class ProceduralValueTest
     #region Parse Method Tests
 
     /// <summary>
-    /// 测试当整个 Procedure 是单个引用且对象支持值时，返回对象的值。
+    ///     测试当整个 Procedure 是单个引用且对象支持值时，返回对象的值。
     /// </summary>
     [Fact]
     public void Parse_SingleReferenceWithValue_ReturnsValue()
@@ -62,7 +62,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试当整个 Procedure 是单个引用但对象不支持值时，返回对象的名称。
+    ///     测试当整个 Procedure 是单个引用但对象不支持值时，返回对象的名称。
     /// </summary>
     [Fact]
     public void Parse_SingleReferenceWithoutValue_ReturnsName()
@@ -82,7 +82,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试当引用的对象不存在时，返回错误消息。
+    ///     测试当引用的对象不存在时，返回错误消息。
     /// </summary>
     [Fact]
     public void Parse_NonExistentReference_ReturnsErrorMessage()
@@ -98,7 +98,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试当 Procedure 包含多个引用时，正确替换所有引用。
+    ///     测试当 Procedure 包含多个引用时，正确替换所有引用。
     /// </summary>
     [Fact]
     public void Parse_MultipleReferences_ReplacesAll()
@@ -118,7 +118,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试当 Procedure 不包含任何引用时，返回原字符串。
+    ///     测试当 Procedure 不包含任何引用时，返回原字符串。
     /// </summary>
     [Fact]
     public void Parse_NoReferences_ReturnsOriginal()
@@ -134,7 +134,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用 GUID 引用对象时正确解析。
+    ///     测试使用 GUID 引用对象时正确解析。
     /// </summary>
     [Fact]
     public void Parse_GuidReference_ReturnsValue()
@@ -159,7 +159,7 @@ public class ProceduralValueTest
     #region ResolveReference Path Navigation Tests
 
     /// <summary>
-    /// 测试使用路径导航到子对象。
+    ///     测试使用路径导航到子对象。
     /// </summary>
     [Fact]
     public void ResolveReference_PathToChild_ReturnsChild()
@@ -183,7 +183,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用 ".." 导航到父对象。
+    ///     测试使用 ".." 导航到父对象。
     /// </summary>
     [Fact]
     public void ResolveReference_ParentNavigation_ReturnsParent()
@@ -203,7 +203,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用 "..." 导航到根对象。
+    ///     测试使用 "..." 导航到根对象。
     /// </summary>
     [Fact]
     public void ResolveReference_RootNavigation_ReturnsRoot()
@@ -227,7 +227,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用 "...TypeName" 导航到指定类型的祖先。
+    ///     测试使用 "...TypeName" 导航到指定类型的祖先。
     /// </summary>
     [Fact]
     public void ResolveReference_TypedRootNavigation_ReturnsTypedAncestor()
@@ -251,7 +251,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用 "." 表示当前对象（不改变位置）。
+    ///     测试使用 "." 表示当前对象（不改变位置）。
     /// </summary>
     [Fact]
     public void ResolveReference_CurrentNavigation_StaysCurrent()
@@ -275,7 +275,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用 "^^" 导航到有效继承父级。
+    ///     测试使用 "^^" 导航到有效继承父级。
     /// </summary>
     [Fact]
     public void ResolveReference_InheritanceParent_ReturnsInheritanceParent()
@@ -300,7 +300,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用 "^^^" 导航到继承根。
+    ///     测试使用 "^^^" 导航到继承根。
     /// </summary>
     [Fact]
     public void ResolveReference_InheritanceRoot_ReturnsInheritanceRoot()
@@ -325,8 +325,8 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用 "^^^TypeName" 导航到指定类型的继承祖先。
-    /// 注意：此测试验证行为 - 如果当前对象类型与指定类型匹配，则返回当前对象。
+    ///     测试使用 "^^^TypeName" 导航到指定类型的继承祖先。
+    ///     注意：此测试验证行为 - 如果当前对象类型与指定类型匹配，则返回当前对象。
     /// </summary>
     [Fact]
     public void ResolveReference_TypedInheritanceNavigation_ReturnsTypedAncestor()
@@ -356,7 +356,7 @@ public class ProceduralValueTest
     #region ResolveReference Edge Cases
 
     /// <summary>
-    /// 测试向上查找链中查找引用。
+    ///     测试向上查找链中查找引用。
     /// </summary>
     [Fact]
     public void ResolveReference_UpwardChainSearch_FindsInAncestor()
@@ -384,7 +384,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试当上下文为 null 时，ResolveReference 返回 null。
+    ///     测试当上下文为 null 时，ResolveReference 返回 null。
     /// </summary>
     [Fact]
     public void ResolveReference_NullContext_ReturnsNull()
@@ -397,7 +397,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试不存在的路径返回 null。
+    ///     测试不存在的路径返回 null。
     /// </summary>
     [Fact]
     public void ResolveReference_NonExistentPath_ReturnsNull()
@@ -410,7 +410,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试空路径组件被忽略（以斜杠开头的路径）。
+    ///     测试空路径组件被忽略（以斜杠开头的路径）。
     /// </summary>
     [Fact]
     public void ResolveReference_EmptyPathComponents_IgnoresEmpty()
@@ -434,7 +434,7 @@ public class ProceduralValueTest
     #region Complex Scenario Tests
 
     /// <summary>
-    /// 测试复杂路径组合：从深层嵌套对象导航并取值。
+    ///     测试复杂路径组合：从深层嵌套对象导航并取值。
     /// </summary>
     [Fact]
     public void Parse_ComplexPathNavigation_ResolvesCorrectly()
@@ -463,7 +463,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试混合解析：部分引用存在，部分不存在。
+    ///     测试混合解析：部分引用存在，部分不存在。
     /// </summary>
     [Fact]
     public void Parse_MixedReferences_ExistsAndNotExists()
@@ -483,7 +483,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试继承对象中的值解析。
+    ///     测试继承对象中的值解析。
     /// </summary>
     [Fact]
     public void Parse_InheritedValue_ReturnsInheritedValue()
@@ -514,7 +514,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试多级继承导航。
+    ///     测试多级继承导航。
     /// </summary>
     [Fact]
     public void ResolveReference_MultiLevelInheritance_ReturnsCorrectLevel()
@@ -544,7 +544,7 @@ public class ProceduralValueTest
     }
 
     /// <summary>
-    /// 测试使用带值的对象作为多引用替换的一部分时，值被正确转换。
+    ///     测试使用带值的对象作为多引用替换的一部分时，值被正确转换。
     /// </summary>
     [Fact]
     public void Parse_MultipleValues_HumanReadableConversion()

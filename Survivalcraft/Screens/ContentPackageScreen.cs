@@ -2,8 +2,6 @@ using System.Xml.Linq;
 
 using Content.Packaging;
 
-using Engine.FileStorage;
-
 using Game.Content;
 
 namespace Game.Screens;
@@ -11,6 +9,7 @@ namespace Game.Screens;
 public sealed class ContentPackageScreen : Screen
 {
     private const string _typeName = nameof(ContentPackageScreen);
+
     private static readonly ContentPackageType[] _allowedTypes =
     [
         ContentPackageType.World,
@@ -68,18 +67,37 @@ public sealed class ContentPackageScreen : Screen
         _installButton.IsEnabled = !_busy && selected is not null;
         _deleteButton.IsEnabled = !_busy && selected is not null;
 
-        if (_importButton.IsClicked) ImportPackages();
+        if (_importButton.IsClicked)
+        {
+            ImportPackages();
+        }
+
         if (_createButton.IsClicked)
+        {
             ContentPackageCreationDialogs.Show(busy => _busy = busy,
                 () => DialogsManager.Alert(LanguageManager.Get(_typeName, "CreationSaved")), ShowError);
-        if (_exportButton.IsClicked && selected is not null) ExportPackage(selected);
+        }
+
+        if (_exportButton.IsClicked && selected is not null)
+        {
+            ExportPackage(selected);
+        }
+
         if (_installButton.IsClicked && selected is not null)
+        {
             ContentPackageInstallDialogs.Show(selected, busy => _busy = busy,
                 () => DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed")), ShowError);
-        if (_deleteButton.IsClicked && selected is not null) ConfirmDelete(selected);
+        }
+
+        if (_deleteButton.IsClicked && selected is not null)
+        {
+            ConfirmDelete(selected);
+        }
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
+        {
             ScreensManager.SwitchScreen("Content");
+        }
     }
 
     private void Refresh()
@@ -93,7 +111,9 @@ public sealed class ContentPackageScreen : Screen
         {
             _packageList.AddItem(package);
             if (string.Equals(package.PackageHash, selectedHash, StringComparison.OrdinalIgnoreCase))
+            {
                 _packageList.SelectedItem = package;
+            }
         }
     }
 
@@ -104,7 +124,11 @@ public sealed class ContentPackageScreen : Screen
         {
             var files = await FilePicker.PickFilesAsync(new FilePickerRequest(
                 [ContentPackageReader.FileExtension], true, LanguageManager.Get(_typeName, "SelectPackages")));
-            if (files.Count == 0) return;
+            if (files.Count == 0)
+            {
+                return;
+            }
+
             var cache = CreateCache();
             var imported = 0;
             foreach (var file in files)
@@ -113,6 +137,7 @@ public sealed class ContentPackageScreen : Screen
                 await cache.ImportAllowedAsync(source, _allowedTypes);
                 imported++;
             }
+
             Dispatcher.Dispatch(() =>
             {
                 Refresh();
@@ -141,7 +166,11 @@ public sealed class ContentPackageScreen : Screen
             var fileName = MakeFileName($"{package.Identifier}-{package.Version}") + ContentPackageReader.FileExtension;
             var target = await FilePicker.PickSaveTargetAsync(new FileSaveRequest(fileName,
                 "application/vnd.scnet.content-package", LanguageManager.Get(_typeName, "ExportTitle")));
-            if (target is null) return;
+            if (target is null)
+            {
+                return;
+            }
+
             await using var destination = await target.OpenWriteAsync(CancellationToken.None);
             await CreateCache().ExportAsync(package.PackageHash, destination);
             Dispatcher.Dispatch(() =>
@@ -165,7 +194,11 @@ public sealed class ContentPackageScreen : Screen
             LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
             button =>
             {
-                if (button != MessageDialogButton.Button1) return;
+                if (button != MessageDialogButton.Button1)
+                {
+                    return;
+                }
+
                 CreateCache().Delete(package.PackageHash);
                 Refresh();
             }));

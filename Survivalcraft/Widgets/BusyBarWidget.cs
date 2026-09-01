@@ -2,7 +2,7 @@ namespace Game.Widgets;
 
 public class BusyBarWidget : Widget
 {
-    private const  int _barsCount = 5;
+    private const int _barsCount = 5;
 
     private const float _barSize = 8f;
 

@@ -1,10 +1,8 @@
-using Engine;
-
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Orders authoritative cell deltas against installed chunk snapshot versions.
-/// A version gap invalidates the replica so the normal snapshot request path restores convergence.
+///     Orders authoritative cell deltas against installed chunk snapshot versions.
+///     A version gap invalidates the replica so the normal snapshot request path restores convergence.
 /// </summary>
 public sealed class ClientTerrainDeltaCoordinator(
     Terrain terrain,

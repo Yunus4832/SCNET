@@ -223,6 +223,4 @@ public class FurniturePackage : IPackage
                 break;
         }
     }
-
-
 }

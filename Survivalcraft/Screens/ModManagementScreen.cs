@@ -291,7 +291,11 @@ public class ModManagementScreen : Screen
         {
             var files = await FilePicker.PickFilesAsync(new FilePickerRequest([ContentPackageReader.FileExtension],
                 AllowMultiple: true, Title: LanguageManager.Get(_typeName, "SelectPackages")));
-            if (files.Count == 0) return;
+            if (files.Count == 0)
+            {
+                return;
+            }
+
             var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "Importing"), string.Empty);
             Dispatcher.Dispatch(() => DialogsManager.ShowDialog(null, busyDialog));
             var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
@@ -309,6 +313,7 @@ public class ModManagementScreen : Screen
             {
                 Dispatcher.Dispatch(() => DialogsManager.HideDialog(busyDialog));
             }
+
             Dispatcher.Dispatch(() =>
             {
                 LoadLocalPackages();
@@ -318,7 +323,8 @@ public class ModManagementScreen : Screen
         }
         catch (Exception ex)
         {
-            Dispatcher.Dispatch(() => DialogsManager.Alert(LanguageManager.Get(_typeName, "ImportModFailed"), ex.Message));
+            Dispatcher.Dispatch(() =>
+                DialogsManager.Alert(LanguageManager.Get(_typeName, "ImportModFailed"), ex.Message));
         }
     }
 
@@ -334,15 +340,21 @@ public class ModManagementScreen : Screen
             var target = await FilePicker.PickSaveTargetAsync(new FileSaveRequest(
                 $"{mod.ModId}-{mod.Version}{ContentPackageReader.FileExtension}",
                 "application/vnd.scnet.content-package", LanguageManager.Get(_typeName, "ExportTitle")));
-            if (target is null) return;
+            if (target is null)
+            {
+                return;
+            }
+
             var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
             await using var destination = await target.OpenWriteAsync(CancellationToken.None);
             repository.ExportPackage(mod.LocalEntry, destination);
-            Dispatcher.Dispatch(() => DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name));
+            Dispatcher.Dispatch(() =>
+                DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name));
         }
         catch (Exception ex)
         {
-            Dispatcher.Dispatch(() => DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), ex.Message));
+            Dispatcher.Dispatch(() =>
+                DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), ex.Message));
         }
     }
 

@@ -50,11 +50,20 @@ public sealed class SubmitContentPackageCommandHandler(ContentServerDbContext db
         else
         {
             if (content.PublisherId != command.PublisherId)
+            {
                 throw new KnownException("identifier_not_owned", 403);
+            }
+
             if (content.Type != command.Type)
+            {
                 throw new KnownException("content_type_conflict", 409);
+            }
+
             if (content.Versions.Any(item => item.Version == command.Version))
+            {
                 throw new KnownException("content_version_conflict", 409);
+            }
+
             content.UpdateDetails(command.Name, command.Summary, now);
         }
 

@@ -1,6 +1,6 @@
 namespace Engine.Serialization;
 
-internal class DictionarySerializer<TK, TV> : ISerializer<Dictionary<TK, TV?>> where TK: notnull
+internal class DictionarySerializer<TK, TV> : ISerializer<Dictionary<TK, TV?>> where TK : notnull
 {
     public void Serialize(InputArchive archive, ref Dictionary<TK, TV?> value)
     {

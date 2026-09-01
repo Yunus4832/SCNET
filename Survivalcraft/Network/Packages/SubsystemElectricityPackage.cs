@@ -61,6 +61,4 @@ public class SubsystemElectricityPackage : IPackage
             NetSimulates.Add(netSimulate);
         }
     }
-
-
 }

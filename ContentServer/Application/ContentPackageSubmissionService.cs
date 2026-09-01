@@ -44,6 +44,7 @@ public sealed class ContentPackageSubmissionService(
                 packageStore.DeleteTemporary(staged);
                 throw new KnownException("identifier_not_owned", 403);
             }
+
             if (existingContent is not null && existingContent.Type != type)
             {
                 packageStore.DeleteTemporary(staged);
@@ -56,7 +57,10 @@ public sealed class ContentPackageSubmissionService(
             {
                 packageStore.DeleteTemporary(staged);
                 if (existingVersion.PackageHash != staged.Inspection.PackageHash)
+                {
                     throw new KnownException("content_version_conflict", 409);
+                }
+
                 return new ContentPackageSubmissionResult(existingVersion, false);
             }
 
@@ -67,8 +71,9 @@ public sealed class ContentPackageSubmissionService(
                 staged.Size, staged.FileName, staged.MediaType), cancellationToken);
 
             var submitted = await mediator.Send(
-                new GetContentVersionQuery(publisherId, manifest.Identifier, manifest.Version), cancellationToken)
-                ?? throw new KnownException("content_version_not_found", 500);
+                                new GetContentVersionQuery(publisherId, manifest.Identifier, manifest.Version),
+                                cancellationToken)
+                            ?? throw new KnownException("content_version_not_found", 500);
             return new ContentPackageSubmissionResult(submitted, true);
         }
     }

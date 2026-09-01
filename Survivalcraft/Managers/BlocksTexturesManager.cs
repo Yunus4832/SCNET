@@ -32,7 +32,9 @@ public static class BlocksTexturesManager
 
     public static string GetDisplayName(string name)
     {
-        return IsBuiltIn(name) ? "Survivalcraft" : ContentAssetStore.GetDisplayName(GamePaths.BlockTextures, name, _assetExtension);
+        return IsBuiltIn(name)
+            ? "Survivalcraft"
+            : ContentAssetStore.GetDisplayName(GamePaths.BlockTextures, name, _assetExtension);
     }
 
     public static DateTime GetCreationDate(string name)
@@ -131,7 +133,9 @@ public static class BlocksTexturesManager
         foreach (var item in Storage.ListFileNames(GamePaths.BlockTextures))
         {
             if (ContentAssetStore.IsComplete(GamePaths.BlockTextures, item, _assetExtension))
+            {
                 _blockTextureNames.Add(Storage.GetFileNameWithoutExtension(item));
+            }
         }
     }
 

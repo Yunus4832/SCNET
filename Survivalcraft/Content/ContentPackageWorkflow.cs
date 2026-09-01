@@ -1,5 +1,3 @@
-using Game.Managers;
-
 namespace Game.Content;
 
 public sealed record ContentPackageImportResult(ContentPackageCacheEntry CacheEntry, ContentInstallResult Installation);
@@ -7,7 +5,8 @@ public sealed record ContentPackageImportResult(ContentPackageCacheEntry CacheEn
 public static class ContentPackageWorkflow
 {
     public static async Task<ContentPackageImportResult> ImportAndInstallAsync(Stream source,
-        IContentPackageCache cache, ContentInstallOptions? options = null, CancellationToken cancellationToken = default)
+        IContentPackageCache cache, ContentInstallOptions? options = null,
+        CancellationToken cancellationToken = default)
     {
         var entry = await cache.ImportAsync(source, cancellationToken);
         var installation = InstallCached(cache, entry.PackageHash, options);

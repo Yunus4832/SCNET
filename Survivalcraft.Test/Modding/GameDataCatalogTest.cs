@@ -12,9 +12,11 @@ public class GameDataCatalogTest
     {
         var reads = 0;
         var host = new ModHost();
-        host.LoadAndStart([new ModDescriptor(
-            new ModManifest("example", "Example", "1.0.0"),
-            () => new DataMod(() => reads++))]);
+        host.LoadAndStart([
+            new ModDescriptor(
+                new ModManifest("example", "Example", "1.0.0"),
+                () => new DataMod(() => reads++))
+        ]);
 
         var catalog = GameDataCatalog.Compile(host.Extensions);
 

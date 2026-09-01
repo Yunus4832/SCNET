@@ -63,12 +63,12 @@ public struct PlayerInput
     public int? SelectInventorySlot;
 
     /// <summary>
-    /// 降水
+    ///     降水
     /// </summary>
     public bool Precipitation;
 
     /// <summary>
-    /// 雾气
+    ///     雾气
     /// </summary>
     public bool Fog;
 }

@@ -201,11 +201,14 @@ internal sealed class LanguageToolApp
         Console.WriteLine("Path\tKind\tFields\tChildren\tPreview\tIssues");
         foreach (var itemPath in overviewPaths)
         {
-            var nodes = cultures.ToDictionary(item => item, item => GetNode(documents[item].Root, itemPath), StringComparer.Ordinal);
+            var nodes = cultures.ToDictionary(item => item, item => GetNode(documents[item].Root, itemPath),
+                StringComparer.Ordinal);
             var sourceNode = nodes[sourceCulture];
             var kind = DescribeKinds(nodes);
             var fields = sourceNode is JsonObject sourceObject ? DescribeScalarFields(sourceObject) : string.Empty;
-            var children = sourceNode is JsonObject sourceObjectForChildren ? DescribeChildObjects(sourceObjectForChildren) : string.Empty;
+            var children = sourceNode is JsonObject sourceObjectForChildren
+                ? DescribeChildObjects(sourceObjectForChildren)
+                : string.Empty;
             var preview = sourceNode is null ? string.Empty : PreviewOverviewValue(sourceNode);
             var issues = DescribeStructureIssues(nodes);
             Console.WriteLine($"{DisplayPath(itemPath)}\t{kind}\t{fields}\t{children}\t{preview}\t{issues}");
@@ -245,7 +248,8 @@ internal sealed class LanguageToolApp
     {
         if (args.Length < 1)
         {
-            return Fail("Usage: search <text> [--culture all|zh-CN] [--in path|value|all] [--prefix ContentWidgets] [--limit 50]");
+            return Fail(
+                "Usage: search <text> [--culture all|zh-CN] [--in path|value|all] [--prefix ContentWidgets] [--limit 50]");
         }
 
         var query = args[0];
@@ -259,7 +263,8 @@ internal sealed class LanguageToolApp
             ? documents.Values
             : documents.TryGetValue(culture, out var selectedDocument)
                 ? [selectedDocument]
-                : throw new ArgumentException($"Unknown culture '{culture}'. Expected all or one of: {string.Join(", ", _defaultCultures)}");
+                : throw new ArgumentException(
+                    $"Unknown culture '{culture}'. Expected all or one of: {string.Join(", ", _defaultCultures)}");
 
         var count = 0;
         foreach (var document in selected)
@@ -304,7 +309,8 @@ internal sealed class LanguageToolApp
         {
             if (!documents.ContainsKey(culture))
             {
-                return Fail($"Unknown culture '{culture}'. Expected all or one of: {string.Join(", ", _defaultCultures)}");
+                return Fail(
+                    $"Unknown culture '{culture}'. Expected all or one of: {string.Join(", ", _defaultCultures)}");
             }
         }
 
@@ -336,20 +342,20 @@ internal sealed class LanguageToolApp
     {
         EnsureNoUnexpectedArgs(args);
         Console.WriteLine("""
-        SCNET language key rules:
-        - Language files live in Content/Assets/Lang/{culture}.json.
-        - All four language files must expose the same JSON key paths and value kinds.
-        - Runtime LanguageManager.Get(section, key) reads JSON path: {section}.{key}.
-        - Runtime LanguageManager.GetContentWidgets(name, key) reads JSON path: ContentWidgets.{name}.{key}.
-        - XML text like [ScreenName:Key] is resolved by LabelWidget through ContentWidgets.ScreenName.Key.
-        - Numeric keys are ordinary JSON object keys, not array indexes, unless the path explicitly uses [index].
-        - Prefer screen/dialog/widget class names as ContentWidgets section names.
-        - Avoid dots inside real JSON key names. Use underscores for compound flat keys, for example Strings.GameMode_Creative_Description.
-        - Existing dotted key names are still addressable with escaped dots, but new keys should not need this.
-        - Use overview to inspect a language subtree by level/depth before reading large JSON files.
-        - Use table for cross-culture section audits before opening large JSON files.
-        - Use sync-field for invariant metadata fields such as Help.*.Name; these fields are runtime IDs, not translatable text.
-        """);
+                          SCNET language key rules:
+                          - Language files live in Content/Assets/Lang/{culture}.json.
+                          - All four language files must expose the same JSON key paths and value kinds.
+                          - Runtime LanguageManager.Get(section, key) reads JSON path: {section}.{key}.
+                          - Runtime LanguageManager.GetContentWidgets(name, key) reads JSON path: ContentWidgets.{name}.{key}.
+                          - XML text like [ScreenName:Key] is resolved by LabelWidget through ContentWidgets.ScreenName.Key.
+                          - Numeric keys are ordinary JSON object keys, not array indexes, unless the path explicitly uses [index].
+                          - Prefer screen/dialog/widget class names as ContentWidgets section names.
+                          - Avoid dots inside real JSON key names. Use underscores for compound flat keys, for example Strings.GameMode_Creative_Description.
+                          - Existing dotted key names are still addressable with escaped dots, but new keys should not need this.
+                          - Use overview to inspect a language subtree by level/depth before reading large JSON files.
+                          - Use table for cross-culture section audits before opening large JSON files.
+                          - Use sync-field for invariant metadata fields such as Help.*.Name; these fields are runtime IDs, not translatable text.
+                          """);
         return 0;
     }
 
@@ -396,12 +402,14 @@ internal sealed class LanguageToolApp
         if (!allowPartial && suppliedCultures.Length != _defaultCultures.Length)
         {
             var missing = _defaultCultures.Where(culture => !options.ContainsKey(culture));
-            return Fail($"Set requires all cultures. Missing: {string.Join(", ", missing)}. Use --allow-partial only for intentional one-language edits.");
+            return Fail(
+                $"Set requires all cultures. Missing: {string.Join(", ", missing)}. Use --allow-partial only for intentional one-language edits.");
         }
 
         if (suppliedCultures.Length == 0)
         {
-            return Fail($"No language values supplied. Expected one or more of: {string.Join(", ", _defaultCultures.Select(culture => "--" + culture))}");
+            return Fail(
+                $"No language values supplied. Expected one or more of: {string.Join(", ", _defaultCultures.Select(culture => "--" + culture))}");
         }
 
         var segments = ParsePath(path);
@@ -424,14 +432,16 @@ internal sealed class LanguageToolApp
 
         var path = args[0];
         var field = args[1];
-        var options = ParseOptions(args.Skip(2).ToArray(), allowPositionals: false, flagNames: ["remove-extra", "dry-run"]);
+        var options = ParseOptions(args.Skip(2).ToArray(), allowPositionals: false,
+            flagNames: ["remove-extra", "dry-run"]);
         var sourceCulture = options.GetValueOrDefault("from") ?? "zh-CN";
         var removeExtra = options.ContainsKey("remove-extra");
         var dryRun = options.ContainsKey("dry-run");
         var documents = LoadLanguages(root);
         if (!documents.TryGetValue(sourceCulture, out var sourceDocument))
         {
-            return Fail($"Unknown source culture '{sourceCulture}'. Expected one of: {string.Join(", ", _defaultCultures)}");
+            return Fail(
+                $"Unknown source culture '{sourceCulture}'. Expected one of: {string.Join(", ", _defaultCultures)}");
         }
 
         var sourceNode = TryGetNode(sourceDocument.Root, ParsePath(path));
@@ -490,7 +500,8 @@ internal sealed class LanguageToolApp
             SaveLanguages(documents);
         }
 
-        Console.WriteLine($"{(dryRun ? "Would synchronize" : "Synchronized")} field '{field}' under '{path}' from {sourceCulture}: copied {copied}, removed {removed}.");
+        Console.WriteLine(
+            $"{(dryRun ? "Would synchronize" : "Synchronized")} field '{field}' under '{path}' from {sourceCulture}: copied {copied}, removed {removed}.");
         return dryRun ? 0 : Check(root, []);
     }
 
@@ -581,7 +592,8 @@ internal sealed class LanguageToolApp
     {
         foreach (var document in documents.Values)
         {
-            File.WriteAllText(document.FilePath, JsonFormatter.Format(document.Root), new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            File.WriteAllText(document.FilePath, JsonFormatter.Format(document.Root),
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }
     }
 
@@ -656,7 +668,8 @@ internal sealed class LanguageToolApp
             return byKind[0].Key;
         }
 
-        return string.Join(", ", nodes.Select(pair => $"{pair.Key}:{(pair.Value is null ? "missing" : GetKind(pair.Value))}"));
+        return string.Join(", ",
+            nodes.Select(pair => $"{pair.Key}:{(pair.Value is null ? "missing" : GetKind(pair.Value))}"));
     }
 
     private static string DescribeScalarFields(JsonObject obj)
@@ -783,7 +796,9 @@ internal sealed class LanguageToolApp
     {
         return segment.IsIndex
             ? node is JsonArray array && segment.Index < array.Count ? array[segment.Index] : null
-            : node is JsonObject obj ? obj[segment.Key] : null;
+            : node is JsonObject obj
+                ? obj[segment.Key]
+                : null;
     }
 
     private static JsonNode? GetNode(JsonObject root, string path)
@@ -954,7 +969,9 @@ internal sealed class LanguageToolApp
         {
             current = segment.IsIndex
                 ? current is JsonArray array && segment.Index < array.Count ? array[segment.Index] : null
-                : current is JsonObject obj ? obj[segment.Key] : null;
+                : current is JsonObject obj
+                    ? obj[segment.Key]
+                    : null;
             if (current is null)
             {
                 return null;
@@ -990,7 +1007,8 @@ internal sealed class LanguageToolApp
             {
                 if (current is not JsonObject obj)
                 {
-                    throw new InvalidOperationException($"Cannot create object key '{segment.Key}' under a non-object node.");
+                    throw new InvalidOperationException(
+                        $"Cannot create object key '{segment.Key}' under a non-object node.");
                 }
 
                 obj[segment.Key] ??= nextSegment.IsIndex ? new JsonArray() : new JsonObject();
@@ -1037,7 +1055,9 @@ internal sealed class LanguageToolApp
         {
             var next = segment.IsIndex
                 ? current is JsonArray array && segment.Index < array.Count ? array[segment.Index] : null
-                : current is JsonObject obj ? obj[segment.Key] : null;
+                : current is JsonObject obj
+                    ? obj[segment.Key]
+                    : null;
             if (next is null)
             {
                 return false;
@@ -1102,7 +1122,8 @@ internal sealed class LanguageToolApp
         }
     }
 
-    private static Dictionary<string, string> ParseOptions(string[] args, bool allowPositionals, string[]? flagNames = null)
+    private static Dictionary<string, string> ParseOptions(string[] args, bool allowPositionals,
+        string[]? flagNames = null)
     {
         var flags = new HashSet<string>(flagNames ?? [], StringComparer.Ordinal);
         var options = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -1172,7 +1193,9 @@ internal sealed class LanguageToolApp
     {
         return node is JsonValue value && value.TryGetValue<string>(out var text)
             ? Truncate(text.ReplaceLineEndings("\\n"), 120)
-            : Truncate(node.ToJsonString(new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }), 120);
+            : Truncate(
+                node.ToJsonString(new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }),
+                120);
     }
 
     private static string PreviewOverviewValue(JsonNode node)
@@ -1224,64 +1247,64 @@ internal sealed class LanguageToolApp
     private static void PrintHelp()
     {
         Console.WriteLine("""
-        SCNET language management tool
+                          SCNET language management tool
 
-        Commands:
-          check
-              Validate that zh-CN/en-US/pt-PT/ru-RU expose the same key paths and value kinds.
+                          Commands:
+                            check
+                                Validate that zh-CN/en-US/pt-PT/ru-RU expose the same key paths and value kinds.
 
-          rules
-              Print SCNET localization key mapping rules.
+                            rules
+                                Print SCNET localization key mapping rules.
 
-          list [--culture zh-CN] [--prefix ContentWidgets.ModManagementScreen]
-              List recursive key paths.
+                            list [--culture zh-CN] [--prefix ContentWidgets.ModManagementScreen]
+                                List recursive key paths.
 
-          children [path] [--culture zh-CN]
-              List direct children under a JSON path.
+                            children [path] [--culture zh-CN]
+                                List direct children under a JSON path.
 
-          overview [path] [--culture zh-CN|all|zh-CN,en-US] [--depth 2] [--limit 120]
-              Show a level/depth-oriented subtree summary with kind, scalar fields, child keys and structural issues.
+                            overview [path] [--culture zh-CN|all|zh-CN,en-US] [--depth 2] [--limit 120]
+                                Show a level/depth-oriented subtree summary with kind, scalar fields, child keys and structural issues.
 
-          show [path] [--culture zh-CN] [--depth 1] [--limit 80]
-              Preview a small subtree without opening the full language file.
+                            show [path] [--culture zh-CN] [--depth 1] [--limit 80]
+                                Preview a small subtree without opening the full language file.
 
-          table [path] [--fields Title,Name,value] [--cultures all|zh-CN,en-US] [--limit 80]
-              Print direct child objects as a culture comparison table.
+                            table [path] [--fields Title,Name,value] [--cultures all|zh-CN,en-US] [--limit 80]
+                                Print direct child objects as a culture comparison table.
 
-          search <text> [--culture all|zh-CN] [--in path|value|all] [--prefix ContentWidgets] [--limit 50]
-              Search key paths and/or localized values.
+                            search <text> [--culture all|zh-CN] [--in path|value|all] [--prefix ContentWidgets] [--limit 50]
+                                Search key paths and/or localized values.
 
-          get <path> [--culture zh-CN]
-              Print one localized value.
+                            get <path> [--culture zh-CN]
+                                Print one localized value.
 
-          set <path> --zh-CN value --en-US value --pt-PT value --ru-RU value
-              Add or update one key in all language files.
+                            set <path> --zh-CN value --en-US value --pt-PT value --ru-RU value
+                                Add or update one key in all language files.
 
-          set <path> --zh-CN value --allow-partial
-              Update only supplied cultures. Use sparingly, then run check.
+                            set <path> --zh-CN value --allow-partial
+                                Update only supplied cultures. Use sparingly, then run check.
 
-          sync-field <object-path> <field> [--from zh-CN] [--remove-extra] [--dry-run]
-              Copy one metadata field from a source culture to matching direct child objects in other cultures.
+                            sync-field <object-path> <field> [--from zh-CN] [--remove-extra] [--dry-run]
+                                Copy one metadata field from a source culture to matching direct child objects in other cultures.
 
-          remove <path>
-              Remove one key path from all language files.
+                            remove <path>
+                                Remove one key path from all language files.
 
-          rename <old-path> <new-path>
-              Rename one key path in all language files.
+                            rename <old-path> <new-path>
+                                Rename one key path in all language files.
 
-        Examples:
-          dotnet run --project LanguageTool -- check
-          dotnet run --project LanguageTool -- rules
-          dotnet run --project LanguageTool -- overview . --depth 1
-          dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 60
-          dotnet run --project LanguageTool -- children ContentWidgets.PlayScreen
-          dotnet run --project LanguageTool -- search restart --culture en-US --prefix ContentWidgets --limit 20
-          dotnet run --project LanguageTool -- table Help --fields Title,Name --limit 12
-          dotnet run --project LanguageTool -- sync-field Help Name --from zh-CN --remove-extra --dry-run
-          dotnet run --project LanguageTool -- get ContentWidgets.ModManagementScreen.Refresh --culture en-US
-          dotnet run --project LanguageTool -- get Strings.CharacterSkin_Description --culture en-US
-          dotnet run --project LanguageTool -- set ContentWidgets.ContentScreen.13 --zh-CN 模组 --en-US Mods --pt-PT Mods --ru-RU Моды
-        """);
+                          Examples:
+                            dotnet run --project LanguageTool -- check
+                            dotnet run --project LanguageTool -- rules
+                            dotnet run --project LanguageTool -- overview . --depth 1
+                            dotnet run --project LanguageTool -- overview Help --culture all --depth 2 --limit 60
+                            dotnet run --project LanguageTool -- children ContentWidgets.PlayScreen
+                            dotnet run --project LanguageTool -- search restart --culture en-US --prefix ContentWidgets --limit 20
+                            dotnet run --project LanguageTool -- table Help --fields Title,Name --limit 12
+                            dotnet run --project LanguageTool -- sync-field Help Name --from zh-CN --remove-extra --dry-run
+                            dotnet run --project LanguageTool -- get ContentWidgets.ModManagementScreen.Refresh --culture en-US
+                            dotnet run --project LanguageTool -- get Strings.CharacterSkin_Description --culture en-US
+                            dotnet run --project LanguageTool -- set ContentWidgets.ContentScreen.13 --zh-CN 模组 --en-US Mods --pt-PT Mods --ru-RU Моды
+                          """);
     }
 }
 
@@ -1379,7 +1402,8 @@ internal static class JsonFormatter
                 WriteArray(builder, jsonArray, depth);
                 break;
             default:
-                builder.Append(node.ToJsonString(new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+                builder.Append(node.ToJsonString(new JsonSerializerOptions
+                    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
                 break;
         }
     }
@@ -1394,7 +1418,8 @@ internal static class JsonFormatter
             foreach (var pair in jsonObject)
             {
                 Indent(builder, depth + 1);
-                builder.Append(JsonSerializer.Serialize(pair.Key, new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+                builder.Append(JsonSerializer.Serialize(pair.Key,
+                    new JsonSerializerOptions { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
                 builder.Append(": ");
                 WriteNode(builder, pair.Value, depth + 1);
                 if (++index < jsonObject.Count)
@@ -1439,5 +1464,4 @@ internal static class JsonFormatter
     {
         builder.Append(' ', depth * 4);
     }
-
 }

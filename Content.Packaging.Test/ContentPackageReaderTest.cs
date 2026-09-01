@@ -1,8 +1,6 @@
 using System.IO.Compression;
 using System.Text;
 
-using Content.Packaging;
-
 namespace Content.Packaging.Test;
 
 public sealed class ContentPackageReaderTest
@@ -102,6 +100,7 @@ public sealed class ContentPackageReaderTest
             WriteEntry(archive, "payload/mod.json", "{\"formatVersion\":1}");
             WriteEntry(archive, "payload/data/example.txt", "data");
         }
+
         stream.Position = 0;
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageReader.Inspect(stream));
@@ -116,6 +115,7 @@ public sealed class ContentPackageReaderTest
         {
             WriteEntry(archive, "payload/mod.json", "{\"formatVersion\":1}");
         }
+
         stream.Position = 0;
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageReader.Inspect(stream));
@@ -135,6 +135,7 @@ public sealed class ContentPackageReaderTest
             using var writer = new StreamWriter(link.Open(), new UTF8Encoding(false));
             writer.Write("target");
         }
+
         stream.Position = 0;
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageReader.Inspect(stream));
@@ -154,6 +155,7 @@ public sealed class ContentPackageReaderTest
             WriteEntry(archive, "payload/mod.json", "{\"formatVersion\":1}");
             WriteEntry(archive, path, "data");
         }
+
         stream.Position = 0;
 
         Assert.Throws<ContentPackageException>(() => ContentPackageReader.Inspect(stream));
@@ -169,8 +171,10 @@ public sealed class ContentPackageReaderTest
             {
                 WriteEntry(nestedArchive, "file.txt", "nested");
             }
+
             nested = nestedStream.ToArray();
         }
+
         var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(_modManifest));
         using var stream = new MemoryStream();
 
@@ -192,6 +196,7 @@ public sealed class ContentPackageReaderTest
             using var output = entry.Open();
             output.Write(new byte[1024 * 1024]);
         }
+
         stream.Position = 0;
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageReader.Inspect(stream));
@@ -212,7 +217,8 @@ public sealed class ContentPackageReaderTest
     public void RejectsDuplicateManifestProperty()
     {
         using var stream = CreateModPackage(CompressionLevel.Optimal, false,
-            manifest: _modManifest.Replace("\"version\": \"1.0.0\",", "\"version\": \"1.0.0\",\n  \"version\": \"2.0.0\","));
+            manifest: _modManifest.Replace("\"version\": \"1.0.0\",",
+                "\"version\": \"1.0.0\",\n  \"version\": \"2.0.0\","));
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageReader.Inspect(stream));
         Assert.Contains("duplicate property", exception.Message);
@@ -281,7 +287,8 @@ public sealed class ContentPackageReaderTest
         var image = _onePixelPng.ToArray();
         image[^1] ^= 1;
         var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(
-            ImageManifest("blocksTexture", "payload/texture.png", "scnet.blocks-texture.png-v1", "d24bfcc2-5f12-4956-9d91-0cbe5d5b224a")));
+            ImageManifest("blocksTexture", "payload/texture.png", "scnet.blocks-texture.png-v1",
+                "d24bfcc2-5f12-4956-9d91-0cbe5d5b224a")));
         using var stream = new MemoryStream();
         var exception = Assert.Throws<ContentPackageException>(() =>
             ContentPackageWriter.Write(stream, manifest, [Entry("payload/texture.png", image)]));
@@ -306,21 +313,22 @@ public sealed class ContentPackageReaderTest
     public void RejectsWorldFilesOutsideCanonicalLayout()
     {
         var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes("""
-            {
-              "formatVersion": 1,
-              "type": "world",
-              "identifier": "0f46af8f-134f-4b52-9397-c43ecbcd79d7",
-              "name": "World",
-              "version": "1.0.0",
-              "payload": { "format": "scnet.world-v1", "entry": "payload/world/Project.xml", "mediaType": "application/xml" },
-              "metadata": { "projectFormat": "scnet-project-xml-v1", "regionsDirectory": "payload/world/Regions" }
-            }
-            """));
+                                                                           {
+                                                                             "formatVersion": 1,
+                                                                             "type": "world",
+                                                                             "identifier": "0f46af8f-134f-4b52-9397-c43ecbcd79d7",
+                                                                             "name": "World",
+                                                                             "version": "1.0.0",
+                                                                             "payload": { "format": "scnet.world-v1", "entry": "payload/world/Project.xml", "mediaType": "application/xml" },
+                                                                             "metadata": { "projectFormat": "scnet-project-xml-v1", "regionsDirectory": "payload/world/Regions" }
+                                                                           }
+                                                                           """));
         using var stream = new MemoryStream();
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(stream, manifest,
         [
-            Entry("payload/world/Project.xml", "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"),
+            Entry("payload/world/Project.xml",
+                "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"),
             Entry("payload/world/notes.txt", "not canonical")
         ]));
 
@@ -331,20 +339,23 @@ public sealed class ContentPackageReaderTest
     public void RejectsFurnitureDesignWithoutCanonicalNumericIndex()
     {
         var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes("""
-            {
-              "formatVersion": 1,
-              "type": "furniturePack",
-              "identifier": "1d5700c1-85da-41e2-b9f0-d0422e2f7937",
-              "name": "Furniture",
-              "version": "1.0.0",
-              "payload": { "format": "scnet.furniture-designs-xml-v1", "entry": "payload/furniture/FurnitureDesigns.xml", "mediaType": "application/xml" },
-              "metadata": { "designCount": 1 }
-            }
-            """));
+                                                                           {
+                                                                             "formatVersion": 1,
+                                                                             "type": "furniturePack",
+                                                                             "identifier": "1d5700c1-85da-41e2-b9f0-d0422e2f7937",
+                                                                             "name": "Furniture",
+                                                                             "version": "1.0.0",
+                                                                             "payload": { "format": "scnet.furniture-designs-xml-v1", "entry": "payload/furniture/FurnitureDesigns.xml", "mediaType": "application/xml" },
+                                                                             "metadata": { "designCount": 1 }
+                                                                           }
+                                                                           """));
         using var stream = new MemoryStream();
 
         var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(stream, manifest,
-            [Entry("payload/furniture/FurnitureDesigns.xml", "<FurnitureDesigns><Values Name=\"01\" /></FurnitureDesigns>")]));
+        [
+            Entry("payload/furniture/FurnitureDesigns.xml",
+                "<FurnitureDesigns><Values Name=\"01\" /></FurnitureDesigns>")
+        ]));
 
         Assert.Contains("invalid design", exception.Message);
     }
@@ -426,7 +437,8 @@ public sealed class ContentPackageReaderTest
                 """,
                 ContentPackageType.World,
                 "722ee264e95bb2477a2f482b87e86d1f7ae3356ea2b6d4c7495079cdaba6df8a", [
-                    Entry("payload/world/Project.xml", "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"),
+                    Entry("payload/world/Project.xml",
+                        "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"),
                     Entry("payload/world/Regions/0,0.dat", "region")
                 ]
             },
@@ -481,8 +493,9 @@ public sealed class ContentPackageReaderTest
             foreach (var entry in reverseOrder ? entries.Reverse() : entries)
             {
                 WriteEntry(archive, entry.Path, entry.Contents, compression,
-                    reverseOrder ? new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero) :
-                    new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
+                    reverseOrder
+                        ? new DateTimeOffset(2024, 1, 1, 0, 0, 0, TimeSpan.Zero)
+                        : new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero));
             }
         }
 
@@ -499,6 +512,7 @@ public sealed class ContentPackageReaderTest
         {
             entry.LastWriteTime = timestamp.Value;
         }
+
         using var writer = new StreamWriter(entry.Open(), new UTF8Encoding(false));
         writer.Write(contents);
     }
@@ -522,8 +536,10 @@ public sealed class ContentPackageReaderTest
             {
                 return offset;
             }
+
             offset += 12 + length;
         }
+
         throw new InvalidOperationException("PNG chunk was not found.");
     }
 
@@ -538,6 +554,7 @@ public sealed class ContentPackageReaderTest
                 crc = (crc >> 1) ^ ((crc & 1) == 0 ? 0u : 0xedb88320u);
             }
         }
+
         return ~crc;
     }
 

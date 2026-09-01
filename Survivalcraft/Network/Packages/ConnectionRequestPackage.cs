@@ -63,5 +63,4 @@ public class ConnectionRequestPackage : IPackage
         writer.Write(MultiplayerClientId);
         writer.Write(ModDataHash);
     }
-
 }

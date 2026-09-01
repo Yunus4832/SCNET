@@ -80,7 +80,7 @@ public class CraftingRecipeWidget : CanvasWidget
         {
             var block = BlocksManager.Blocks[Terrain.ExtractContents(_recipe.ResultValue)];
             _nameWidget.Text = block.GetDisplayName(null, _recipe.ResultValue) +
-                                (!string.IsNullOrEmpty(NameSuffix) ? NameSuffix : string.Empty);
+                               (!string.IsNullOrEmpty(NameSuffix) ? NameSuffix : string.Empty);
             _descriptionWidget.Text = _recipe.Description;
             _nameWidget.IsVisible = true;
             _descriptionWidget.IsVisible = true;

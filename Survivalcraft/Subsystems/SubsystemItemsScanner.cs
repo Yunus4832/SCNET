@@ -127,7 +127,6 @@ public class SubsystemItemsScanner : Subsystem, IUpdateable
         var movingBlock = obj2.Blocks.ElementAt(itemData.IndexInContainer);
         obj2.SetBlock(movingBlock.Offset, newValue);
         return true;
-
     }
 
     public override void Load(ValuesDictionary valuesDictionary)

@@ -67,7 +67,6 @@ public class SubsystemRakeBlockBehavior : SubsystemBlockBehavior
 
         componentMiner.DamageActiveTool(1);
         return true;
-
     }
 
     public override void Load(ValuesDictionary valuesDictionary)

@@ -91,7 +91,6 @@ public struct Profiler : IDisposable
         _metric.MaxTicks = MathUtils.Max(_metric.MaxTicks, num);
         _metric.HitCount++;
         _metric = null;
-
     }
 
     public static void Sample()

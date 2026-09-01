@@ -86,7 +86,6 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
         GameWidget = widget;
         _subsystemDrawing = GameWidget.SubsystemGameWidgets.Project.FindSubsystem<SubsystemDrawing>(true)!;
         base.ChangeParent(widget);
-
     }
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)

@@ -105,7 +105,8 @@ public class RecipaediaDescriptionScreen : Screen
         if (block.GetRotPeriod(value) > 0)
         {
             dictionary.Add(LanguageManager.Get(_typeName, 6),
-                string.Format(LanguageManager.Get(_typeName, 25), $"{2 * block.GetRotPeriod(value) * 60f / 1200f:0.0}"));
+                string.Format(LanguageManager.Get(_typeName, 25),
+                    $"{2 * block.GetRotPeriod(value) * 60f / 1200f:0.0}"));
         }
 
         if (block.DigMethod != BlockDigMethod.None)
@@ -151,7 +152,8 @@ public class RecipaediaDescriptionScreen : Screen
 
         if (block.ShovelPower > 1f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 14), block.ShovelPower.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(LanguageManager.Get(_typeName, 14),
+                block.ShovelPower.ToString(CultureInfo.InvariantCulture));
             flag = true;
         }
 
@@ -163,7 +165,8 @@ public class RecipaediaDescriptionScreen : Screen
 
         if (block.QuarryPower > 1f)
         {
-            dictionary.Add(LanguageManager.Get(_typeName, 16), block.QuarryPower.ToString(CultureInfo.InvariantCulture));
+            dictionary.Add(LanguageManager.Get(_typeName, 16),
+                block.QuarryPower.ToString(CultureInfo.InvariantCulture));
             flag = true;
         }
 

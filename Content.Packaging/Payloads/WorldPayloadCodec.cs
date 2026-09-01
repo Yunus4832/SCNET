@@ -34,7 +34,8 @@ public sealed class WorldPayloadCodec : IContentPayloadCodec
         try
         {
             using var stream = context.OpenEntry("payload/world/Project.xml");
-            using var reader = XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit });
+            using var reader =
+                XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit });
             var document = XDocument.Load(reader, LoadOptions.None);
             var root = document.Root;
             if (root is null || root.Name != "Project" ||
@@ -46,7 +47,8 @@ public sealed class WorldPayloadCodec : IContentPayloadCodec
                 root.Elements("Entities").Count() != 1 ||
                 root.Elements().Count() != 2 ||
                 root.DescendantsAndSelf().Any(element => element.Name.Namespace != XNamespace.None ||
-                    element.Attributes().Any(attribute => attribute.Name.Namespace != XNamespace.None)))
+                                                         element.Attributes().Any(attribute =>
+                                                             attribute.Name.Namespace != XNamespace.None)))
             {
                 throw new ContentPackageException("World Project.xml does not match scnet-project-xml-v1.");
             }

@@ -47,7 +47,10 @@ public sealed class LocalModRepository(string directoryPath)
     {
         var entry = _cache.ImportAsync(content).GetAwaiter().GetResult();
         if (entry.Type != ContentPackageType.Mod)
+        {
             throw new ContentPackageException("Only Mod packages can be added through LocalModRepository.");
+        }
+
         return FindByHash(entry.PackageHash)!;
     }
 
@@ -62,8 +65,11 @@ public sealed class LocalModRepository(string directoryPath)
     {
         ArgumentNullException.ThrowIfNull(entry);
         if (ModPackageReferenceTracker.IsReferenced(entry))
+        {
             throw new InvalidOperationException(
                 $"Mod package '{entry.ModId}@{entry.Version}' is referenced by a profile or the current runtime.");
+        }
+
         if (File.Exists(entry.Path))
         {
             File.Delete(entry.Path);

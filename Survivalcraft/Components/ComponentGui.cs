@@ -466,7 +466,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             !SettingsManager.Current.HideMoveLookPads && componentInput.IsControlledByTouch;
         _lookRectangleContainerWidget.IsVisible = !SettingsManager.Current.HideMoveLookPads &&
                                                   componentInput.IsControlledByTouch &&
-                                                  (SettingsManager.Current.LookControlMode != LookControlMode.EntireScreen ||
+                                                  (SettingsManager.Current.LookControlMode !=
+                                                   LookControlMode.EntireScreen ||
                                                    SettingsManager.Current.MoveControlMode != MoveControlMode.Buttons);
         _lookPadContainerWidget.IsVisible = SettingsManager.Current.LookControlMode != LookControlMode.SplitTouch;
         MoveRoseWidget.IsVisible = componentInput.IsControlledByTouch;

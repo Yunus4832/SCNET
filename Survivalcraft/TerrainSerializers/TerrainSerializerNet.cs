@@ -29,7 +29,7 @@ public class TerrainSerializerNet : TerrainSerializer24
     }
 
     /// <summary>
-    /// 轮询删除文件夹下的文件
+    ///     轮询删除文件夹下的文件
     /// </summary>
     /// <param name="path"></param>
     public void Delete(string path)

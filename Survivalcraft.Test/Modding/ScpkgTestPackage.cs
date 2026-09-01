@@ -56,6 +56,7 @@ internal static class ScpkgTestPackage
                 new FileInfo(assemblyPath).Length,
                 () => File.OpenRead(assemblyPath)));
         }
+
         if (files is not null)
         {
             entries.AddRange(files.Select(pair =>

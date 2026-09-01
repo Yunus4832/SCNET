@@ -3,8 +3,6 @@ using Android.Content.PM;
 using Android.Net;
 using Android.OS;
 
-using Engine.FileStorage;
-
 using Game;
 
 using AndroidClipboardManager = Android.Content.ClipboardManager;
@@ -61,7 +59,11 @@ public class GameActivity : EngineActivity
 
     protected override void OnActivityResult(int requestCode, Result resultCode, Intent? data)
     {
-        if (_filePicker?.HandleActivityResult(requestCode, resultCode, data) == true) return;
+        if (_filePicker?.HandleActivityResult(requestCode, resultCode, data) == true)
+        {
+            return;
+        }
+
         base.OnActivityResult(requestCode, resultCode, data);
     }
 

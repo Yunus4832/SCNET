@@ -3,7 +3,7 @@ using System.Diagnostics;
 namespace Engine.Core;
 
 /// <summary>
-/// 异或移位随机算法
+///     异或移位随机算法
 /// </summary>
 public class Random
 {
@@ -177,7 +177,7 @@ public class Random
 }
 
 /// <summary>
-/// 线性同余随机算法
+///     线性同余随机算法
 /// </summary>
 public class LcgRandom
 {

@@ -3,11 +3,12 @@ using System.Collections.Concurrent;
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Local-mode adapter that preserves the same request/snapshot boundary without serialization.
+///     Local-mode adapter that preserves the same request/snapshot boundary without serialization.
 /// </summary>
 public sealed class InProcessChunkContentTransport(IChunkContentAuthority authority) : IChunkContentTransport
 {
-    private readonly IChunkContentAuthority _authority = authority ?? throw new ArgumentNullException(nameof(authority));
+    private readonly IChunkContentAuthority
+        _authority = authority ?? throw new ArgumentNullException(nameof(authority));
 
     private readonly ConcurrentDictionary<Point2, ClientChunkSnapshot> _received = new();
 

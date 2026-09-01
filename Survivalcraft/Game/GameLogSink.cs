@@ -1,38 +1,38 @@
 namespace Game;
 
 /// <summary>
-/// 游戏日志接收器，负责将日志写入文件并管理日志文件
+///     游戏日志接收器，负责将日志写入文件并管理日志文件
 /// </summary>
 public class GameLogSink : ILogSink
 {
     /// <summary>
-    /// 触发清理的日志文件数量阈值。当日志文件数量达到此值时，会触发清理操作
+    ///     触发清理的日志文件数量阈值。当日志文件数量达到此值时，会触发清理操作
     /// </summary>
     private const int _cleanupThreshold = 10;
 
     /// <summary>
-    /// 清理后保留的日志文件数量
+    ///     清理后保留的日志文件数量
     /// </summary>
     private const int _keepLogFiles = 2;
 
     /// <summary>
-    /// 单个日志文件的最大大小限制（2MB）超过此限制将截断文件
+    ///     单个日志文件的最大大小限制（2MB）超过此限制将截断文件
     /// </summary>
     private const long _maxFileSize = 2097152;
 
     /// <summary>
-    /// 当前日志文件的流实例
+    ///     当前日志文件的流实例
     /// </summary>
     private static Stream? _stream;
 
     /// <summary>
-    /// 用于写入日志的 StreamWriter 实例
+    ///     用于写入日志的 StreamWriter 实例
     /// </summary>
     private static StreamWriter _writer = null!;
 
     /// <summary>
-    /// 初始化 <see cref="GameLogSink"/> 的新实例
-    /// 创建日志目录，清理旧日志文件，并打开或创建当天的日志文件
+    ///     初始化 <see cref="GameLogSink" /> 的新实例
+    ///     创建日志目录，清理旧日志文件，并打开或创建当天的日志文件
     /// </summary>
     /// <exception cref="InvalidOperationException">当 GameLogSink 实例已存在时抛出</exception>
     public GameLogSink()
@@ -62,7 +62,7 @@ public class GameLogSink : ILogSink
     }
 
     /// <summary>
-    /// 获取当天的日志文件路径，并检查是否需要截断
+    ///     获取当天的日志文件路径，并检查是否需要截断
     /// </summary>
     /// <param name="shouldTruncate">输出参数，指示是否需要截断文件（文件大小超过限制时）</param>
     /// <returns>日志文件的完整路径</returns>
@@ -86,8 +86,8 @@ public class GameLogSink : ILogSink
     }
 
     /// <summary>
-    /// 清理旧的日志文件。当日志文件数量超过 <see cref="_cleanupThreshold"/> 时，
-    /// 只保留最近的 <see cref="_keepLogFiles"/> 个日志文件
+    ///     清理旧的日志文件。当日志文件数量超过 <see cref="_cleanupThreshold" /> 时，
+    ///     只保留最近的 <see cref="_keepLogFiles" /> 个日志文件
     /// </summary>
     private static void CleanupOldLogFiles()
     {
@@ -104,7 +104,8 @@ public class GameLogSink : ILogSink
                 }
 
                 var nameWithoutExt = fileName.Substring(4, fileName.Length - 8);
-                if (DateTime.TryParseExact(nameWithoutExt, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None, out var date))
+                if (DateTime.TryParseExact(nameWithoutExt, "yyyy-MM-dd", null, System.Globalization.DateTimeStyles.None,
+                        out var date))
                 {
                     logFiles.Add((file, date));
                 }
@@ -137,7 +138,7 @@ public class GameLogSink : ILogSink
     }
 
     /// <summary>
-    /// 写入一条日志消息到文件
+    ///     写入一条日志消息到文件
     /// </summary>
     /// <param name="type">日志类型</param>
     /// <param name="message">日志消息内容</param>
@@ -208,7 +209,7 @@ public class GameLogSink : ILogSink
     }
 
     /// <summary>
-    /// 获取最近指定字节数的日志内容
+    ///     获取最近指定字节数的日志内容
     /// </summary>
     /// <param name="bytesCount">要读取的字节数</param>
     /// <returns>日志内容字符串。如果日志流未初始化则返回空字符串</returns>
@@ -234,7 +235,7 @@ public class GameLogSink : ILogSink
     }
 
     /// <summary>
-    /// 获取最近指定字节数的日志内容，按行返回
+    ///     获取最近指定字节数的日志内容，按行返回
     /// </summary>
     /// <param name="bytesCount">要读取的字节数</param>
     /// <returns>日志行列表。如果日志流未初始化则返回空列表</returns>

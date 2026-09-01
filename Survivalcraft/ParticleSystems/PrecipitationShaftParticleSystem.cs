@@ -211,7 +211,7 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
 
     public override void Draw(Camera camera)
     {
-        if(SubsystemParticles is null)
+        if (SubsystemParticles is null)
         {
             throw new InvalidOperationException("SubsystemParticles is not initialized");
         }

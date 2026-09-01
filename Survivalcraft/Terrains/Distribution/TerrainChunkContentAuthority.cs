@@ -3,7 +3,7 @@ using Game.Network;
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Authoritative snapshot source backed by generated or loaded server terrain.
+///     Authoritative snapshot source backed by generated or loaded server terrain.
 /// </summary>
 public sealed class TerrainChunkContentAuthority(Terrain terrain) : IChunkContentAuthority
 {

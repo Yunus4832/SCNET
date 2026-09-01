@@ -20,7 +20,7 @@ public class Client
     }
 
     /// <summary>
-    /// 服务端创建新的Client
+    ///     服务端创建新的Client
     /// </summary>
     /// <param name="netPeer">peer</param>
     /// <param name="id">客户端ID</param>
@@ -99,7 +99,7 @@ public class Client
     public Entity? CachePlayerEntity { get; set; }
 
     /// <summary>
-    /// 是否在连接成功列表
+    ///     是否在连接成功列表
     /// </summary>
     public bool IsAddedToNetNode { get; private set; }
 

@@ -90,5 +90,4 @@ public static class DatabaseManager
         valuesDictionary.ApplyOverrides(overrides);
         return project.CreateEntity(valuesDictionary);
     }
-
 }

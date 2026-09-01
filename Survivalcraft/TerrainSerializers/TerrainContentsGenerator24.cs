@@ -39,22 +39,22 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
     private static readonly List<List<TerrainBrush>> _caveBrushesByType = [];
 
     /// <summary>
-    /// 山脉细节噪声频率（静态全局参数）
+    ///     山脉细节噪声频率（静态全局参数）
     /// </summary>
     private static float _tgMountainsDetailFreq;
 
     /// <summary>
-    /// 山脉细节噪声迭代次数（静态全局参数）
+    ///     山脉细节噪声迭代次数（静态全局参数）
     /// </summary>
     private static int _tgMountainsDetailOctaves;
 
     /// <summary>
-    /// 山脉细节噪声持久度（静态全局参数）
+    ///     山脉细节噪声持久度（静态全局参数）
     /// </summary>
     private static float _tgMountainsDetailPersistence;
 
     /// <summary>
-    /// 地形表面高度乘数（全局缩放）
+    ///     地形表面高度乘数（全局缩放）
     /// </summary>
     private static float _tgSurfaceMultiplier;
 
@@ -81,131 +81,132 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
     private readonly WorldSettings _worldSettings;
 
     /// <summary>
-    /// 控制生物群落的规模比例（影响不同生态区域的分布范围）
+    ///     控制生物群落的规模比例（影响不同生态区域的分布范围）
     /// </summary>
     private readonly float _tgBiomeScaling;
 
     /// <summary>
-    /// 是否生成地下洞穴和岩层孔洞
+    ///     是否生成地下洞穴和岩层孔洞
     /// </summary>
     private readonly bool _tgCavesAndPockets;
 
     /// <summary>
-    /// 地形密度基准偏移量（正值为致密化，负值稀疏化）
+    ///     地形密度基准偏移量（正值为致密化，负值稀疏化）
     /// </summary>
     private readonly float _tgDensityBias;
 
     /// <summary>
-    /// 是否生成特殊地形特征（如巨石/古树等）
+    ///     是否生成特殊地形特征（如巨石/古树等）
     /// </summary>
     private readonly bool _tgExtras;
 
     /// <summary>
-    /// 全局高度基准调整（正抬升/负降低整个地形）
+    ///     全局高度基准调整（正抬升/负降低整个地形）
     /// </summary>
     private readonly float _tgHeightBias;
 
     /// <summary>
-    /// 丘陵地形的细节频率（值小产生大尺度起伏）
+    ///     丘陵地形的细节频率（值小产生大尺度起伏）
     /// </summary>
     private readonly float _tgHillsFrequency;
 
     /// <summary>
-    /// 丘陵噪声的迭代次数（复杂度与性能消耗正相关）
+    ///     丘陵噪声的迭代次数（复杂度与性能消耗正相关）
     /// </summary>
     private readonly int _tgHillsOctaves;
 
     /// <summary>
-    /// 丘陵区域占地百分比（0-1范围）
+    ///     丘陵区域占地百分比（0-1范围）
     /// </summary>
     private readonly float _tgHillsPercentage;
 
     /// <summary>
-    /// 丘陵噪声的持久度（影响细节衰减率）
+    ///     丘陵噪声的持久度（影响细节衰减率）
     /// </summary>
     private readonly float _tgHillsPersistence;
 
     /// <summary>
-    /// 丘陵地形的起伏强度（影响垂直尺度）
+    ///     丘陵地形的起伏强度（影响垂直尺度）
     /// </summary>
     private readonly float _tgHillsStrength;
 
     /// <summary>
-    /// 调整岛屿的生成密度（值越高岛屿数量越多）
+    ///     调整岛屿的生成密度（值越高岛屿数量越多）
     /// </summary>
     private readonly float _tgIslandsFrequency;
 
     /// <summary>
-    /// 湍流扰动的最小阈值
+    ///     湍流扰动的最小阈值
     /// </summary>
     private readonly float _tgMinTurbulence;
 
     /// <summary>
-    /// 山脉分布的空间频率
+    ///     山脉分布的空间频率
     /// </summary>
     private readonly float _tgMountainRangeFreq;
 
     /// <summary>
-    /// 山脉区域占地百分比（0-1范围）
+    ///     山脉区域占地百分比（0-1范围）
     /// </summary>
     private readonly float _tgMountainsPercentage;
 
     /// <summary>
-    /// 山脉的最大隆起强度
+    ///     山脉的最大隆起强度
     /// </summary>
     private readonly float _tgMountainsStrength;
 
     /// <summary>
-    /// 定义海洋地形的倾斜角度（影响浅滩到深海的过渡梯度）
+    ///     定义海洋地形的倾斜角度（影响浅滩到深海的过渡梯度）
     /// </summary>
     private readonly float _tgOceanSlope;
 
     /// <summary>
-    /// 控制海洋坡度的随机变化幅度
+    ///     控制海洋坡度的随机变化幅度
     /// </summary>
     private readonly float _tgOceanSlopeVariation;
 
     /// <summary>
-    /// 河流侵蚀作用强度（影响河道深度）
+    ///     河流侵蚀作用强度（影响河道深度）
     /// </summary>
     private readonly float _tgRiversStrength;
 
     /// <summary>
-    /// 控制海岸线的不规则程度（值越大海岸线越曲折）
+    ///     控制海岸线的不规则程度（值越大海岸线越曲折）
     /// </summary>
     private readonly float _tgShoreFluctuations;
 
     /// <summary>
-    /// 调节海岸线波动的缩放比例（影响细节层次）
+    ///     调节海岸线波动的缩放比例（影响细节层次）
     /// </summary>
     private readonly float _tgShoreFluctuationsScaling;
 
     /// <summary>
-    /// 湍流噪声的基础频率
+    ///     湍流噪声的基础频率
     /// </summary>
     private readonly float _tgTurbulenceFreq;
 
     /// <summary>
-    /// 湍流噪声的迭代次数
+    ///     湍流噪声的迭代次数
     /// </summary>
     private readonly int _tgTurbulenceOctaves;
 
     /// <summary>
-    /// 湍流噪声的持久度
+    ///     湍流噪声的持久度
     /// </summary>
     private readonly float _tgTurbulencePersistence;
 
     /// <summary>
-    /// 地形湍流扰动强度（值越大地形越破碎）
+    ///     地形湍流扰动强度（值越大地形越破碎）
     /// </summary>
     private readonly float _tgTurbulenceStrength;
 
     /// <summary>
-    /// 湍力归零的基准线位置
+    ///     湍力归零的基准线位置
     /// </summary>
     private readonly float _tgTurbulenceZero;
 
-    private readonly ConcurrentDictionary<(int Seed, Point2 Coords), CleanTreeBrushCacheEntry> _cleanTreeBrushCache = new();
+    private readonly ConcurrentDictionary<(int Seed, Point2 Coords), CleanTreeBrushCacheEntry> _cleanTreeBrushCache =
+        new();
 
     private long _cleanTreeBrushCleanupTicks;
 
@@ -1506,6 +1507,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 treeCount++;
             }
         }
+
         return result.ToArray();
     }
 
@@ -1523,7 +1525,8 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
             return;
         }
 
-        if (Interlocked.CompareExchange(ref _cleanTreeBrushCleanupTicks, now, previousCleanupTicks) != previousCleanupTicks)
+        if (Interlocked.CompareExchange(ref _cleanTreeBrushCleanupTicks, now, previousCleanupTicks) !=
+            previousCleanupTicks)
         {
             return;
         }
@@ -1553,7 +1556,9 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
         }
     }
 
-    private sealed class CleanTreeBrushCacheEntry(BrushPaint[] brushPaints, long lastAccessTicks,
+    private sealed class CleanTreeBrushCacheEntry(
+        BrushPaint[] brushPaints,
+        long lastAccessTicks,
         SeedGeneratedChunkBasis? basis)
     {
         public readonly BrushPaint[] BrushPaints = brushPaints;

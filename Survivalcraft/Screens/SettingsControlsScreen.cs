@@ -64,14 +64,16 @@ public class SettingsControlsScreen : Screen
         GameManager.UpdateProject();
         if (_moveControlModeButton.IsClicked)
         {
-            SettingsManager.Current.MoveControlMode = (MoveControlMode)((int)(SettingsManager.Current.MoveControlMode + 1) %
-                                                                EnumUtils.GetEnumValues(typeof(MoveControlMode)).Count);
+            SettingsManager.Current.MoveControlMode =
+                (MoveControlMode)((int)(SettingsManager.Current.MoveControlMode + 1) %
+                                  EnumUtils.GetEnumValues(typeof(MoveControlMode)).Count);
         }
 
         if (_lookControlModeButton.IsClicked)
         {
-            SettingsManager.Current.LookControlMode = (LookControlMode)((int)(SettingsManager.Current.LookControlMode + 1) %
-                                                                EnumUtils.GetEnumValues(typeof(LookControlMode)).Count);
+            SettingsManager.Current.LookControlMode =
+                (LookControlMode)((int)(SettingsManager.Current.LookControlMode + 1) %
+                                  EnumUtils.GetEnumValues(typeof(LookControlMode)).Count);
         }
 
         if (_leftHandedLayoutButton.IsClicked)
@@ -151,9 +153,11 @@ public class SettingsControlsScreen : Screen
             ? LanguageManager.Get("Usual", "on")
             : LanguageManager.Get("Usual", "off");
         _moveSensitivitySlider.Value = SettingsManager.Current.MoveSensitivity;
-        _moveSensitivitySlider.Text = MathUtils.Round(SettingsManager.Current.MoveSensitivity * 10f).ToString(CultureInfo.InvariantCulture);
+        _moveSensitivitySlider.Text = MathUtils.Round(SettingsManager.Current.MoveSensitivity * 10f)
+            .ToString(CultureInfo.InvariantCulture);
         _lookSensitivitySlider.Value = SettingsManager.Current.LookSensitivity;
-        _lookSensitivitySlider.Text = MathUtils.Round(SettingsManager.Current.LookSensitivity * 10f).ToString(CultureInfo.InvariantCulture);
+        _lookSensitivitySlider.Text = MathUtils.Round(SettingsManager.Current.LookSensitivity * 10f)
+            .ToString(CultureInfo.InvariantCulture);
         _gamepadCursorSpeedSlider.Value = SettingsManager.Current.GamepadCursorSpeed;
         _gamepadCursorSpeedSlider.Text = $"{SettingsManager.Current.GamepadCursorSpeed:0.0}x";
         _gamepadDeadZoneSlider.Value = SettingsManager.Current.GamepadDeadZone;

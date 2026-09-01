@@ -38,8 +38,7 @@ internal static class PlayerAndMessageCommandHandlers
         }
 
         var players = context.Project.FindSubsystem<SubsystemPlayers>(true)!;
-        var player = players.FindPlayerData(
-            item => item.PlayerGUID == command.PlayerId);
+        var player = players.FindPlayerData(item => item.PlayerGUID == command.PlayerId);
         if (player is null)
         {
             return CommandResult.LocalizedFail(
@@ -86,9 +85,8 @@ internal static class PlayerAndMessageCommandHandlers
                 "玩家名称不能为空。");
         }
 
-        if (players.PlayersData.Any(
-                     player => player != actor &&
-                               string.Equals(player.Name, name, StringComparison.Ordinal)))
+        if (players.PlayersData.Any(player => player != actor &&
+                                              string.Equals(player.Name, name, StringComparison.Ordinal)))
         {
             return RejectProfile(
                 actor,
@@ -184,8 +182,7 @@ internal static class PlayerAndMessageCommandHandlers
             }
 
             recipients = group.Members
-                .Select(member => players.FindPlayerData(
-                    item => item.PlayerGUID == member))
+                .Select(member => players.FindPlayerData(item => item.PlayerGUID == member))
                 .Where(item => item?.Client is not null || item?.IsMainPlayer == true)
                 .Select(item => item!.ClientId)
                 .Distinct()

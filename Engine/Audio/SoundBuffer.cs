@@ -70,7 +70,7 @@ public sealed class SoundBuffer : IDisposable
             return;
         }
 
-        if(Mixer.AL is null)
+        if (Mixer.AL is null)
         {
             return;
         }

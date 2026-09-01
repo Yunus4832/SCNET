@@ -385,7 +385,7 @@ public class LitShader : Shader
     }
 
     /// <summary>
-    /// 获取 Lit.vsh 着色器文件
+    ///     获取 Lit.vsh 着色器文件
     /// </summary>
     /// <returns>着色器字符串</returns>
     private static string GetLitVshString()
@@ -397,7 +397,7 @@ public class LitShader : Shader
     }
 
     /// <summary>
-    /// 获取 Lit.psh 着色器文件
+    ///     获取 Lit.psh 着色器文件
     /// </summary>
     /// <returns>着色器字符串</returns>
     private static string GetLitPshString()

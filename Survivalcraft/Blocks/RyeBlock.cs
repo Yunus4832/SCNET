@@ -98,7 +98,6 @@ public class RyeBlock : CrossBlock
             Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
         return new BlockDebrisParticleSystem(subsystemTerrain, position, strength, DestructionDebrisScale, color,
             GetFaceTextureSlot(4, value));
-
     }
 
     public override int GetFaceTextureSlot(int face, int value)

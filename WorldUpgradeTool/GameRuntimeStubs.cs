@@ -125,7 +125,8 @@ namespace Game.Terrains
 
         public static long ReplaceSunlightHeight(long value, int sunlightHeight)
         {
-            return (value & ~_sunlightHeightMask) | (((long)sunlightHeight << _sunlightHeightShift) & _sunlightHeightMask);
+            return (value & ~_sunlightHeightMask) |
+                   (((long)sunlightHeight << _sunlightHeightShift) & _sunlightHeightMask);
         }
 
         public static long ReplaceHumidity(long value, int humidity)

@@ -45,7 +45,6 @@ public class SubsystemFertilizerBlockBehavior : SubsystemBlockBehavior
             componentMiner.ActiveBlockValue, 1.25f));
         componentMiner.RemoveActiveTool(1);
         return true;
-
     }
 
     public override void Load(ValuesDictionary valuesDictionary)

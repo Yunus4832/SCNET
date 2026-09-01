@@ -16,8 +16,10 @@ namespace Survivalcraft.Test.Modding;
 public sealed class ModProfileManagerTest : IDisposable
 {
     private readonly FileBackup _globalProfileBackup = FileBackup.Create(ModProfileManager.GlobalProfilePath);
+
     private readonly DirectoryBackup _sessionProfilesBackup =
         DirectoryBackup.Create(Storage.CombinePaths(GamePaths.Config, "SessionProfiles"));
+
     private readonly DirectoryBackup _worldsBackup =
         DirectoryBackup.Create(GamePaths.Worlds);
 
@@ -25,12 +27,12 @@ public sealed class ModProfileManagerTest : IDisposable
     public void LoadEffectiveProfilePrefersSessionProfile()
     {
         SaveGlobalProfile("""
-            <ModProfile Id="global" ContentServerUrl="https://global.example">
-              <Packages>
-                <Package ModId="global.mod" Version="1.0.0" />
-              </Packages>
-            </ModProfile>
-            """);
+                          <ModProfile Id="global" ContentServerUrl="https://global.example">
+                            <Packages>
+                              <Package ModId="global.mod" Version="1.0.0" />
+                            </Packages>
+                          </ModProfile>
+                          """);
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "session-a",
@@ -60,12 +62,12 @@ public sealed class ModProfileManagerTest : IDisposable
     public void RemoteServerSessionProfileDoesNotMergeGlobalProfile()
     {
         SaveGlobalProfile("""
-            <ModProfile Id="global" ContentServerUrl="https://global.example">
-              <Packages>
-                <Package ModId="global.mod" Version="1.0.0" />
-              </Packages>
-            </ModProfile>
-            """);
+                          <ModProfile Id="global" ContentServerUrl="https://global.example">
+                            <Packages>
+                              <Package ModId="global.mod" Version="1.0.0" />
+                            </Packages>
+                          </ModProfile>
+                          """);
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "remote-session",
@@ -231,13 +233,13 @@ public sealed class ModProfileManagerTest : IDisposable
     public void LoadEffectiveProfileMergesGlobalAndWorldProfileAccordingToStrategy()
     {
         SaveGlobalProfile("""
-            <ModProfile Id="global" ContentServerUrl="https://global.example">
-              <Packages>
-                <Package ModId="shared.mod" Version="1.0.0" />
-                <Package ModId="global.mod" Version="1.0.0" />
-              </Packages>
-            </ModProfile>
-            """);
+                          <ModProfile Id="global" ContentServerUrl="https://global.example">
+                            <Packages>
+                              <Package ModId="shared.mod" Version="1.0.0" />
+                              <Package ModId="global.mod" Version="1.0.0" />
+                            </Packages>
+                          </ModProfile>
+                          """);
         var worldDirectoryName = CreateWorldDirectory("WorldMerge", ModProfileResolutionStrategy.GlobalPlusWorld);
         ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
         {
@@ -324,12 +326,12 @@ public sealed class ModProfileManagerTest : IDisposable
     public void LoadGlobalProfileIgnoresPackageHashAttribute()
     {
         SaveGlobalProfile("""
-            <ModProfile Id="global" ContentServerUrl="https://global.example">
-              <Packages>
-                <Package ModId="legacy.mod" Version="1.0.0" PackageHash="legacy-hash" />
-              </Packages>
-            </ModProfile>
-            """);
+                          <ModProfile Id="global" ContentServerUrl="https://global.example">
+                            <Packages>
+                              <Package ModId="legacy.mod" Version="1.0.0" PackageHash="legacy-hash" />
+                            </Packages>
+                          </ModProfile>
+                          """);
 
         var profile = ModProfileManager.LoadGlobalProfile();
 
@@ -410,7 +412,8 @@ public sealed class ModProfileManagerTest : IDisposable
         XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
         projectData.Save(projectNode);
 
-        using var stream = Storage.OpenFile(Storage.CombinePaths(worldDirectoryName, "Project.xml"), OpenFileMode.Create);
+        using var stream =
+            Storage.OpenFile(Storage.CombinePaths(worldDirectoryName, "Project.xml"), OpenFileMode.Create);
         XmlUtils.SaveXmlToStream(projectNode, stream, null, true);
 
         return worldDirectoryName;

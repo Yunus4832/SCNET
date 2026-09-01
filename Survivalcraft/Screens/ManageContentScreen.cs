@@ -173,7 +173,8 @@ public class ManageContentScreen : Screen
         _deleteButton.IsEnabled = selectedItem is { IsBuiltIn: false };
         if (_deleteButton.IsClicked)
         {
-            if (selectedItem.UseCount > 0 && selectedItem.Type is ContentType.BlocksTexture or ContentType.CharacterSkin)
+            if (selectedItem.UseCount > 0 &&
+                selectedItem.Type is ContentType.BlocksTexture or ContentType.CharacterSkin)
             {
                 var replacements = _contentList.Items.Cast<ListItem>().Where(item =>
                     item.Type == selectedItem.Type && item.Name != selectedItem.Name).ToList();
@@ -183,36 +184,39 @@ public class ManageContentScreen : Screen
                     item => ConfirmDelete(selectedItem, (ListItem)item)));
                 return;
             }
+
             ConfirmDelete(selectedItem, null);
         }
-
     }
 
     private void ConfirmDelete(ListItem selectedItem, ListItem? replacement)
     {
-            var smallMessage = selectedItem.UseCount <= 0
-                ? string.Format(LanguageManager.Get(_typeName, 5), selectedItem.DisplayName)
-                : string.Format(LanguageManager.Get(_typeName, 6), selectedItem.DisplayName, selectedItem.UseCount);
-            DialogsManager.ShowDialog(
-                null,
-                new MessageDialog(
-                    LanguageManager.Get(_typeName, 9),
-                    smallMessage,
-                    LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
-                    delegate(MessageDialogButton button)
+        var smallMessage = selectedItem.UseCount <= 0
+            ? string.Format(LanguageManager.Get(_typeName, 5), selectedItem.DisplayName)
+            : string.Format(LanguageManager.Get(_typeName, 6), selectedItem.DisplayName, selectedItem.UseCount);
+        DialogsManager.ShowDialog(
+            null,
+            new MessageDialog(
+                LanguageManager.Get(_typeName, 9),
+                smallMessage,
+                LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
+                delegate(MessageDialogButton button)
+                {
+                    if (button != MessageDialogButton.Button1)
                     {
-                        if (button != MessageDialogButton.Button1)
-                        {
-                            return;
-                        }
-
-                        if (replacement is not null)
-                            WorldsManager.ReplaceAssetReferences(selectedItem.Type, selectedItem.Name, replacement.Name);
-                        ContentPackageManager.DeleteContent(selectedItem.Type, selectedItem.Name);
-                        UpdateList();
+                        return;
                     }
-                )
-            );
+
+                    if (replacement is not null)
+                    {
+                        WorldsManager.ReplaceAssetReferences(selectedItem.Type, selectedItem.Name, replacement.Name);
+                    }
+
+                    ContentPackageManager.DeleteContent(selectedItem.Type, selectedItem.Name);
+                    UpdateList();
+                }
+            )
+        );
     }
 
     private void UpdateList()

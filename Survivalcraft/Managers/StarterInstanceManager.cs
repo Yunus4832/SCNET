@@ -73,6 +73,7 @@ public static class StarterInstanceManager
             _currentRuntimeMarkerPath = null;
             Log.Warning($"Failed to register starter instance process: {ex.Message}");
         }
+
         return Current;
     }
 
@@ -316,8 +317,8 @@ public static class StarterInstanceManager
 
     private static string ResolveExistingInstanceId(string instanceId)
     {
-        return ListInstances().FirstOrDefault(
-                   candidate => string.Equals(candidate, instanceId, StringComparison.OrdinalIgnoreCase))
+        return ListInstances().FirstOrDefault(candidate =>
+                   string.Equals(candidate, instanceId, StringComparison.OrdinalIgnoreCase))
                ?? throw new InvalidOperationException($"Starter instance '{instanceId}' does not exist.");
     }
 

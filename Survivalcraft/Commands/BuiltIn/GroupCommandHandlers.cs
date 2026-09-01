@@ -218,8 +218,7 @@ internal static class GroupCommandHandlers
         bool changed,
         SubsystemPlayers.GroupOperationMessage message)
     {
-        var initiator = players.FindPlayerData(
-            player => player.PlayerGUID == operation.Initiator);
+        var initiator = players.FindPlayerData(player => player.PlayerGUID == operation.Initiator);
         if (initiator is null || initiator == responder)
         {
             return;

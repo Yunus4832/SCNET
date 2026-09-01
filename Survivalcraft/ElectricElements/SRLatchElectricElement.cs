@@ -116,6 +116,5 @@ public class SRLatchElectricElement : RotateableElectricElement
 
         SubsystemElectricity.WritePersistentVoltage(CellFaces[0].Point, _voltage);
         return true;
-
     }
 }

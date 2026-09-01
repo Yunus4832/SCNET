@@ -10,6 +10,7 @@ internal static class ContentToolProgram
         {
             return Task.FromResult(Pack(args[1], args[2], args[3]));
         }
+
         if (args.Length != 2 || args[0] is not ("inspect" or "verify"))
         {
             WriteUsage();
@@ -44,7 +45,8 @@ internal static class ContentToolProgram
 
             return Task.FromResult(0);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ContentPackageException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+                                              or ContentPackageException)
         {
             Console.Error.WriteLine($"ContentTool: {exception.Message}");
             return Task.FromResult(1);
@@ -87,7 +89,8 @@ internal static class ContentToolProgram
             Console.WriteLine($"PackageHash: {hash}");
             return 0;
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ContentPackageException)
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+                                              or ContentPackageException)
         {
             Console.Error.WriteLine($"ContentTool: {exception.Message}");
             return 1;

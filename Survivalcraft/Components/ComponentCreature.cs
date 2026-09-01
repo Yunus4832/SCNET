@@ -52,7 +52,8 @@ public class ComponentCreature : Component
             DisplayName = LanguageManager.GetDatabase("DisplayName", lp[1]);
         }
 
-        _killVerbs = HumanReadableConverter.ValuesListFromString<string>(',', valuesDictionary.GetValue<string>("KillVerbs"));
+        _killVerbs =
+            HumanReadableConverter.ValuesListFromString<string>(',', valuesDictionary.GetValue<string>("KillVerbs"));
         if (_killVerbs.Length == 0)
         {
             throw new InvalidOperationException("Must have at least one KillVerb");

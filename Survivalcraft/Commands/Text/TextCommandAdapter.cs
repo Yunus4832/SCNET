@@ -311,8 +311,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                 value = literal.Value;
                 return string.Equals(literal.Value, token, StringComparison.OrdinalIgnoreCase);
             case CommandArgument { Choices: { Count: > 0 } choices } argument:
-                var choice = choices.FirstOrDefault(
-                    item => string.Equals(item, token, StringComparison.OrdinalIgnoreCase));
+                var choice =
+                    choices.FirstOrDefault(item => string.Equals(item, token, StringComparison.OrdinalIgnoreCase));
                 if (choice is not null)
                 {
                     return TryConvert(argument.Kind, choice, out value);

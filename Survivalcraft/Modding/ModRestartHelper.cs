@@ -100,7 +100,6 @@ public static class ModRestartHelper
             : "该世界需要切换到指定模组列表，需要重启后启用：";
         return $"{prefix}\n{string.Join('\n', packages)}";
     }
-
 }
 
 public sealed class RemoteModSessionPreparation

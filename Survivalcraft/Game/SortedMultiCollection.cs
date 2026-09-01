@@ -2,7 +2,7 @@ using System.Collections;
 
 namespace Game;
 
-public class SortedMultiCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>> where TValue: class
+public class SortedMultiCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>> where TValue : class
 {
     public const int MinCapacity = 4;
 
@@ -115,7 +115,6 @@ public class SortedMultiCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey
         _count--;
         _version++;
         return true;
-
     }
 
     public void Clear()

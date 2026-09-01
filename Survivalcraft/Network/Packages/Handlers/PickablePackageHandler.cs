@@ -29,7 +29,8 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                 }
                 else
                 {
-                    subsystemPickable.CreatePickable(package.Id, package.Value, package.Count, package.Position, package.Velocity, package.StuckMatrix);
+                    subsystemPickable.CreatePickable(package.Id, package.Value, package.Count, package.Position,
+                        package.Velocity, package.StuckMatrix);
                 }
 
                 break;
@@ -68,7 +69,11 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
             case PickablePackage.PickType.RequestSync:
                 var flag = subsystemPickable.PickableAction(
                     package.Id,
-                    pick => { netNode.QueuePackage(new PickablePackage(pick, PickablePackage.PickType.Create) { To = package.From }); }
+                    pick =>
+                    {
+                        netNode.QueuePackage(new PickablePackage(pick, PickablePackage.PickType.Create)
+                            { To = package.From });
+                    }
                 );
                 if (!flag)
                 {

@@ -18,10 +18,7 @@ public static class Mixer
 
     private static nint _context;
 
-    public static bool IsAudioInitialized {
-        get;
-        private set;
-    }
+    public static bool IsAudioInitialized { get; private set; }
 
     public static float MasterVolume
     {
@@ -71,7 +68,7 @@ public static class Mixer
                 IsAudioInitialized = true;
             }
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             Log.Error($"OpenAL Audio is unsupported in this device, {e}");
         }

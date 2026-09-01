@@ -1,9 +1,9 @@
 namespace Game.Commands;
 
 /// <summary>
-/// Declarative contribution consumed by a command frontend adapter.
-/// Bindings describe how a frontend creates commands; they never provide
-/// principals or bypass command authorization.
+///     Declarative contribution consumed by a command frontend adapter.
+///     Bindings describe how a frontend creates commands; they never provide
+///     principals or bypass command authorization.
 /// </summary>
 public interface ICommandAdapterBinding;
 

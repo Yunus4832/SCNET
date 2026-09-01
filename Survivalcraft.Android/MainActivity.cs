@@ -80,6 +80,7 @@ public class MainActivity : BlackActivity
             args.Add(StarterInstanceManager.InstanceArgument);
             args.Add(instanceId);
         }
+
         args.AddRange(gameArguments);
         var instance = StarterInstanceManager.Initialize(args.ToArray());
         var instancePath = Storage.GetSystemPath(instance.InstancePath);
@@ -153,6 +154,7 @@ public class MainActivity : BlackActivity
         {
             restartIntent.PutExtra(commandLineExtra, commandLine);
         }
+
         restartIntent.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
         StartActivity(restartIntent);
     }
@@ -185,6 +187,7 @@ public class MainActivity : BlackActivity
         {
             intent.SetData(Intent.Data);
         }
+
         if (_instance is not null)
         {
             intent.PutExtra(gameArgumentsExtra, _instance.GameArguments);

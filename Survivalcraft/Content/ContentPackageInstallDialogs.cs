@@ -1,7 +1,5 @@
 using Content.Packaging;
 
-using Game.Managers;
-
 namespace Game.Content;
 
 public static class ContentPackageInstallDialogs
@@ -35,8 +33,14 @@ public static class ContentPackageInstallDialogs
             item => (string)item,
             item =>
             {
-                if ((string)item == create) ConfirmCreate(cached, setBusy, installed, failed);
-                else SelectReplacement(cached, replacements, setBusy, installed, failed);
+                if ((string)item == create)
+                {
+                    ConfirmCreate(cached, setBusy, installed, failed);
+                }
+                else
+                {
+                    SelectReplacement(cached, replacements, setBusy, installed, failed);
+                }
             }));
     }
 
@@ -49,7 +53,10 @@ public static class ContentPackageInstallDialogs
             LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
             button =>
             {
-                if (button == MessageDialogButton.Button1) RunInstallation(cached, null, setBusy, installed, failed);
+                if (button == MessageDialogButton.Button1)
+                {
+                    RunInstallation(cached, null, setBusy, installed, failed);
+                }
             }));
     }
 
@@ -73,11 +80,14 @@ public static class ContentPackageInstallDialogs
             button =>
             {
                 if (button == MessageDialogButton.Button1)
+                {
                     RunInstallation(cached, new ContentInstallOptions(target.AssetKey), setBusy, installed, failed);
+                }
             }));
     }
 
-    private static void RunInstallation(ContentPackageCacheEntry cached, ContentInstallOptions? options, Action<bool> setBusy,
+    private static void RunInstallation(ContentPackageCacheEntry cached, ContentInstallOptions? options,
+        Action<bool> setBusy,
         Action installed, Action<Exception> failed)
     {
         setBusy(true);
@@ -116,23 +126,29 @@ public static class ContentPackageInstallDialogs
                 .Select(world => new ReplacementTarget(Storage.GetFileName(world.DirectoryName),
                     world.WorldSettings.Name, 0)).ToArray();
         }
+
         if (type == ContentPackageType.BlocksTexture)
         {
             WorldsManager.UpdateWorldsList();
             BlocksTexturesManager.UpdateBlocksTexturesList();
-            return BlocksTexturesManager.ReadOnlyBlockTexturesNames.Where(name => !BlocksTexturesManager.IsBuiltIn(name))
+            return BlocksTexturesManager.ReadOnlyBlockTexturesNames
+                .Where(name => !BlocksTexturesManager.IsBuiltIn(name))
                 .Select(name => new ReplacementTarget(name, BlocksTexturesManager.GetDisplayName(name),
                     WorldsManager.WorldInfos.Count(world => world.WorldSettings.BlocksTextureName == name))).ToArray();
         }
+
         if (type == ContentPackageType.CharacterSkin)
         {
             WorldsManager.UpdateWorldsList();
             CharacterSkinsManager.UpdateCharacterSkinsList();
-            return CharacterSkinsManager.ReadOnlyCharacterSkinsNames.Where(name => !CharacterSkinsManager.IsBuiltIn(name))
+            return CharacterSkinsManager.ReadOnlyCharacterSkinsNames
+                .Where(name => !CharacterSkinsManager.IsBuiltIn(name))
                 .Select(name => new ReplacementTarget(name, CharacterSkinsManager.GetDisplayName(name),
-                    WorldsManager.WorldInfos.Count(world => world.PlayerInfos.Any(player => player.CharacterSkinName == name))))
+                    WorldsManager.WorldInfos.Count(world =>
+                        world.PlayerInfos.Any(player => player.CharacterSkinName == name))))
                 .ToArray();
         }
+
         FurniturePacksManager.UpdateFurniturePacksList();
         return FurniturePacksManager.ReadOnlyFurniturePackNames
             .Select(name => new ReplacementTarget(name, FurniturePacksManager.GetDisplayName(name), 0)).ToArray();

@@ -548,6 +548,7 @@ public class ComponentMiner : Component, IUpdateable
             damage = AttackPower * _random.Float(0.8f, 1.2f);
             playerHitRate = 0.66f;
         }
+
         _subsystemAudio.PlaySound("Audio/Swoosh", 1f, _random.Float(-0.2f, 0.2f), componentBody.Position, 3f,
             false);
         var flag = _random.Bool(ComponentPlayer != null ? playerHitRate : creatureHitRate);

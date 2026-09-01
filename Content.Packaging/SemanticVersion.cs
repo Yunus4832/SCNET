@@ -27,6 +27,7 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
         {
             throw new FormatException($"'{value}' is not a supported SemVer 2.0 version.");
         }
+
         return version;
     }
 
@@ -37,6 +38,7 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
         {
             return false;
         }
+
         var parts = value.Split('-', 2);
         var core = parts[0].Split('.');
         if (core.Length != 3 || !TryParseCore(core[0], out var major) ||
@@ -44,13 +46,17 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
         {
             return false;
         }
+
         var prerelease = parts.Length == 1 ? [] : parts[1].Split('.');
         if (prerelease.Any(identifier => identifier.Length == 0 ||
-                identifier.Any(character => !char.IsAsciiLetterOrDigit(character) && character != '-') ||
-                identifier.All(char.IsAsciiDigit) && identifier.Length > 1 && identifier[0] == '0'))
+                                         identifier.Any(character =>
+                                             !char.IsAsciiLetterOrDigit(character) && character != '-') ||
+                                         identifier.All(char.IsAsciiDigit) && identifier.Length > 1 &&
+                                         identifier[0] == '0'))
         {
             return false;
         }
+
         version = new SemanticVersion(major, minor, patch, prerelease, value);
         return true;
     }
@@ -61,19 +67,37 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
         {
             return 1;
         }
+
         var core = Major.CompareTo(other.Major);
-        if (core == 0) core = Minor.CompareTo(other.Minor);
-        if (core == 0) core = Patch.CompareTo(other.Patch);
-        if (core != 0) return core;
+        if (core == 0)
+        {
+            core = Minor.CompareTo(other.Minor);
+        }
+
+        if (core == 0)
+        {
+            core = Patch.CompareTo(other.Patch);
+        }
+
+        if (core != 0)
+        {
+            return core;
+        }
+
         if (_prerelease.Length == 0 || other._prerelease.Length == 0)
         {
             return _prerelease.Length.CompareTo(other._prerelease.Length) * -1;
         }
+
         for (var index = 0; index < Math.Min(_prerelease.Length, other._prerelease.Length); index++)
         {
             var comparison = CompareIdentifier(_prerelease[index], other._prerelease[index]);
-            if (comparison != 0) return comparison;
+            if (comparison != 0)
+            {
+                return comparison;
+            }
         }
+
         return _prerelease.Length.CompareTo(other._prerelease.Length);
     }
 
@@ -101,7 +125,12 @@ public sealed class SemanticVersion : IComparable<SemanticVersion>
             var lengthComparison = left.Length.CompareTo(right.Length);
             return lengthComparison != 0 ? lengthComparison : string.CompareOrdinal(left, right);
         }
-        if (leftNumeric != rightNumeric) return leftNumeric ? -1 : 1;
+
+        if (leftNumeric != rightNumeric)
+        {
+            return leftNumeric ? -1 : 1;
+        }
+
         return string.CompareOrdinal(left, right);
     }
 }

@@ -263,7 +263,6 @@ public class ComponentInput : Component, IUpdateable
         {
             _playerInput.SelectInventorySlot = 9;
         }
-
     }
 
     public void UpdateInputFromGamepad(WidgetInput input)
@@ -284,8 +283,10 @@ public class ComponentInput : Component, IUpdateable
         {
             input.IsPadCursorVisible = false;
             var zero = Vector3.Zero;
-            var padStickPosition = input.GetPadStickPosition(GamePadStick.Left, SettingsManager.Current.GamepadDeadZone);
-            var padStickPosition2 = input.GetPadStickPosition(GamePadStick.Right, SettingsManager.Current.GamepadDeadZone);
+            var padStickPosition =
+                input.GetPadStickPosition(GamePadStick.Left, SettingsManager.Current.GamepadDeadZone);
+            var padStickPosition2 =
+                input.GetPadStickPosition(GamePadStick.Right, SettingsManager.Current.GamepadDeadZone);
             var padTriggerPosition = input.GetPadTriggerPosition(GamePadTrigger.Left);
             var padTriggerPosition2 = input.GetPadTriggerPosition(GamePadTrigger.Right);
             zero += new Vector3(2f * padStickPosition.X, 0f, 2f * padStickPosition.Y);

@@ -149,7 +149,6 @@ public sealed class ModPackage
             lifetime,
             PackageHash);
     }
-
 }
 
 internal sealed class PackageMod(

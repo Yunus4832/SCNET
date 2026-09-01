@@ -1,6 +1,6 @@
 namespace Game;
 
-public interface IAStarStorage<in T> where T: unmanaged
+public interface IAStarStorage<in T> where T : unmanaged
 {
     void Clear();
 

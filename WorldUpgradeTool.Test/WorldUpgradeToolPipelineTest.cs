@@ -219,7 +219,6 @@ public sealed class WorldUpgradeToolPipelineTest
                 Directory.Delete(DirectoryPath, true);
             }
         }
-
     }
 
     private static string ToStoragePath(string path) =>

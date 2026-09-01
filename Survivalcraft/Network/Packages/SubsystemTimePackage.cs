@@ -41,6 +41,4 @@ public class SubsystemTimePackage : IPackage
         Time = reader.ReadDouble();
         TimeOfDayOffset = reader.ReadDouble();
     }
-
-
 }

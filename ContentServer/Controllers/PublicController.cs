@@ -31,7 +31,8 @@ public sealed class PublicController(IMediator mediator, ContentPackageStore pac
         CancellationToken cancellationToken)
     {
         var items = await mediator.Send(
-            new ListVersionsQuery(VersionQueryScope.Public, page.ToPageRequest(), Type: type, Search: query, LatestOnly: true),
+            new ListVersionsQuery(VersionQueryScope.Public, page.ToPageRequest(), Type: type, Search: query,
+                LatestOnly: true),
             cancellationToken
         );
         return items.Map(item => item.ToResponse())
@@ -39,7 +40,8 @@ public sealed class PublicController(IMediator mediator, ContentPackageStore pac
     }
 
     [HttpGet("content/{contentId}")]
-    public async Task<ResponseData<ContentVersionResponse>> Content(string contentId, CancellationToken cancellationToken)
+    public async Task<ResponseData<ContentVersionResponse>> Content(string contentId,
+        CancellationToken cancellationToken)
     {
         var id = ParseContentId(contentId);
         var items = await mediator.Send(new ListVersionsQuery(
@@ -48,7 +50,7 @@ public sealed class PublicController(IMediator mediator, ContentPackageStore pac
             ContentId: id,
             LatestOnly: true), cancellationToken);
         var item = items.Items.FirstOrDefault()
-            ?? throw new KnownException("content_not_found", StatusCodes.Status404NotFound);
+                   ?? throw new KnownException("content_not_found", StatusCodes.Status404NotFound);
         return item.ToResponse().AsResponseData();
     }
 
@@ -66,6 +68,7 @@ public sealed class PublicController(IMediator mediator, ContentPackageStore pac
         {
             throw new KnownException("content_not_found", StatusCodes.Status404NotFound);
         }
+
         return items.Map(item => item.ToResponse()).AsResponseData();
     }
 

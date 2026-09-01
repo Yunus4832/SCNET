@@ -6,9 +6,9 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
 {
     private readonly Random _random = new();
 
-    private  SubsystemAudio _subsystemAudio = null!;
+    private SubsystemAudio _subsystemAudio = null!;
 
-    private  SubsystemParticles _subsystemParticles = null!;
+    private SubsystemParticles _subsystemParticles = null!;
 
     public override int[] HandledBlocks =>
     [

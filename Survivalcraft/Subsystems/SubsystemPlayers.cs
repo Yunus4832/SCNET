@@ -238,6 +238,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             playerData.SetMain();
             AddPlayerData(playerData);
         }
+
         return true;
     }
 
@@ -445,7 +446,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
     }
 
     /// <summary>
-    /// 将实例保存为离线数据
+    ///     将实例保存为离线数据
     /// </summary>
     /// <param name="playerGuid"></param>
     /// <param name="showMsg">是否广播退出消息</param>
@@ -505,7 +506,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
     }
 
     /// <summary>
-    /// 将离线玩家数据恢复为活动玩家实体。
+    ///     将离线玩家数据恢复为活动玩家实体。
     /// </summary>
     /// <param name="playerGuid">客户端GUID</param>
     /// <param name="playerData">对应的玩家数据</param>
@@ -736,12 +737,12 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
     public class Group
     {
         /// <summary>
-        /// 队伍成员
+        ///     队伍成员
         /// </summary>
         public readonly List<Guid> Members = [];
 
         /// <summary>
-        /// 队伍名称
+        ///     队伍名称
         /// </summary>
         public string Name = string.Empty;
     }

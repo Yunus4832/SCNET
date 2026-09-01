@@ -61,5 +61,4 @@ public static class PlatformManager
     {
         ClipboardManager.RegisterClipboard(reader, writer);
     }
-
 }

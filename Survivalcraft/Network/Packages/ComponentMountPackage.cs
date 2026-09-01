@@ -60,6 +60,4 @@ public class ComponentMountPackage : IPackage
         FromId = reader.ReadInt32();
         TargetId = reader.ReadInt32();
     }
-
-
 }

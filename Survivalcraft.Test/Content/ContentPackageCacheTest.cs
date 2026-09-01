@@ -91,8 +91,10 @@ public sealed class ContentPackageCacheTest : IDisposable
         await using var source = new MemoryStream(CreatePackage(), writable: false);
 
         await Assert.ThrowsAsync<ContentPackageException>(() => cache.ImportAllowedAsync(source,
-            [ContentPackageType.World, ContentPackageType.BlocksTexture, ContentPackageType.CharacterSkin,
-                ContentPackageType.FurniturePack]));
+        [
+            ContentPackageType.World, ContentPackageType.BlocksTexture, ContentPackageType.CharacterSkin,
+            ContentPackageType.FurniturePack
+        ]));
 
         Assert.Empty(cache.List());
         Assert.Empty(Directory.EnumerateFiles(Path.Combine(_directory, ".temp")));
@@ -100,14 +102,18 @@ public sealed class ContentPackageCacheTest : IDisposable
 
     public void Dispose()
     {
-        if (Directory.Exists(_directory)) Directory.Delete(_directory, true);
+        if (Directory.Exists(_directory))
+        {
+            Directory.Delete(_directory, true);
+        }
     }
 
     private static byte[] CreatePackage()
     {
         using var stream = ScpkgTestPackage.Create("""
-            {"id":"cache.example","name":"Cache Example","version":"1.0.0"}
-            """, new Dictionary<string, string> { ["data/marker.txt"] = "cache" });
+                                                   {"id":"cache.example","name":"Cache Example","version":"1.0.0"}
+                                                   """,
+            new Dictionary<string, string> { ["data/marker.txt"] = "cache" });
         return stream.ToArray();
     }
 }

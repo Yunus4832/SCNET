@@ -370,7 +370,9 @@ public class ComponentPilot : Component, IUpdateable
 
         var num2 = v.Length();
         var v3 = Vector2.Normalize(xZ + Vector2.Normalize(v2) * num - position.XZ);
-        return Vector2.Dot(v / num2, v3) > 0.5f ? new Vector3(position.X + v3.X * num2, destination.Y, position.Z + v3.Y * num2) : destination;
+        return Vector2.Dot(v / num2, v3) > 0.5f
+            ? new Vector3(position.X + v3.X * num2, destination.Y, position.Z + v3.Y * num2)
+            : destination;
     }
 
     public static Vector2? CombineNullables(Vector2? v1, Vector2? v2)

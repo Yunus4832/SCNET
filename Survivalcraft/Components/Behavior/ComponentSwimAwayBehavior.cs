@@ -151,6 +151,5 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
         var num2 = Vector2.Distance(vector4, vector2);
         var num3 = Segment2.Distance(s, vector4);
         return num2 + 1.5f * num3 - num;
-
     }
 }

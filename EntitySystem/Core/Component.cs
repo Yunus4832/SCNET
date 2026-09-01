@@ -6,7 +6,6 @@ namespace EntitySystem.Core;
 
 public abstract class Component : IDisposable
 {
-
     public ValuesDictionary ValuesDictionary
     {
         get => field is not null ? field : throw new InvalidOperationException("Component was not initialized");
@@ -16,7 +15,7 @@ public abstract class Component : IDisposable
 
     public Entity Entity
     {
-        get =>  field is not null ? field : throw new InvalidOperationException("Component was not initialized");
+        get => field is not null ? field : throw new InvalidOperationException("Component was not initialized");
         private set;
     } = null!;
 

@@ -101,20 +101,23 @@ public class SettingsUiScreen : Screen
 
         if (_screenshotSizeButton.IsClicked)
         {
-            SettingsManager.Current.ScreenshotSize = (ScreenshotSize)((int)(SettingsManager.Current.ScreenshotSize + 1) %
-                                                              EnumUtils.GetEnumValues(typeof(ScreenshotSize)).Count);
+            SettingsManager.Current.ScreenshotSize =
+                (ScreenshotSize)((int)(SettingsManager.Current.ScreenshotSize + 1) %
+                                 EnumUtils.GetEnumValues(typeof(ScreenshotSize)).Count);
         }
 
         // 更新按钮文本
         _windowModeButton.Text = LanguageManager.Get("WindowMode", RunningSettingManager.Current.WindowMode.ToString());
         _languageButton.Text = LanguageManager.Get("Language", "Name");
         _upsideDownButton.Text = SettingsManager.Current.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
-        _hideMoveLookPadsButton.Text = SettingsManager.Current.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;
+        _hideMoveLookPadsButton.Text =
+            SettingsManager.Current.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;
         _showGuiInScreenshotsButton.Text =
             SettingsManager.Current.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
         _showLogoInScreenshotsButton.Text =
             SettingsManager.Current.ShowLogoInScreenshots ? LanguageManager.Yes : LanguageManager.No;
-        _screenshotSizeButton.Text = LanguageManager.Get("ScreenshotSize", SettingsManager.Current.ScreenshotSize.ToString());
+        _screenshotSizeButton.Text =
+            LanguageManager.Get("ScreenshotSize", SettingsManager.Current.ScreenshotSize.ToString());
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             SettingsManager.SaveSettings();

@@ -159,7 +159,7 @@ public partial class PlayerData : IDisposable
     public void TransitionTo(string state) => _stateMachine.TransitionTo(state);
 
     /// <summary>
-    /// 是否为服主
+    ///     是否为服主
     /// </summary>
     public bool ServerMaster
     {
@@ -290,7 +290,8 @@ public partial class PlayerData : IDisposable
                 //说明，客户端非主玩家不执行updateLocation
                 if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer))
                 {
-                    var initialVisibility = MathUtils.Max(32f, MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
+                    var initialVisibility =
+                        MathUtils.Max(32f, MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
                     _subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, SpawnPosition.XZ, initialVisibility,
                         64f);
                 }
@@ -681,7 +682,6 @@ public partial class PlayerData : IDisposable
         {
             ServerManager = true;
         }
-
     }
 
     public void Save(ValuesDictionary valuesDictionary)
@@ -1227,12 +1227,12 @@ public partial class PlayerData : IDisposable
             if (CommonLib.WorkType == WorkType.Server)
             {
                 SubsystemGameWidgets.Messages.Publish(GameMessage.System(
-                [
-                    new MessageSegment($"{Name} "),
-                    new MessageSegment(causeOfDeath, MessageTextStyle.Error)
-                ],
-                GameMessageTone.Warning,
-                GameMessagePresentation.Default | GameMessagePresentation.Toast));
+                    [
+                        new MessageSegment($"{Name} "),
+                        new MessageSegment(causeOfDeath, MessageTextStyle.Error)
+                    ],
+                    GameMessageTone.Warning,
+                    GameMessagePresentation.Default | GameMessagePresentation.Toast));
             }
         }
 

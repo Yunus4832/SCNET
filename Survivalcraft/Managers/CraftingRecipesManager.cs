@@ -20,7 +20,7 @@ public static class CraftingRecipesManager
     public static void Initialize()
     {
         var runtime = CurrentModRuntime.Value
-            ?? throw new InvalidOperationException("No active game mod runtime.");
+                      ?? throw new InvalidOperationException("No active game mod runtime.");
         runtime.InitializeCraftingRecipes();
     }
 
@@ -33,89 +33,89 @@ public static class CraftingRecipesManager
     {
         _recipes.Clear();
         var source2 = source.Descendants("Recipe");
-            foreach (var item in source2)
+        foreach (var item in source2)
+        {
+            var craftingRecipe = new CraftingRecipe();
+            var attributeValue = XmlUtils.GetAttributeValue<string>(item, "Result");
+            var desc = XmlUtils.GetAttributeValue<string>(item, "Description");
+            if (desc.StartsWith('[') && desc.EndsWith(']'))
             {
-                var craftingRecipe = new CraftingRecipe();
-                var attributeValue = XmlUtils.GetAttributeValue<string>(item, "Result");
-                var desc = XmlUtils.GetAttributeValue<string>(item, "Description");
-                if (desc.StartsWith('[') && desc.EndsWith(']'))
+                desc = LanguageManager.GetBlock(attributeValue,
+                    string.Concat("CRDescription:", desc.AsSpan(1, desc.Length - 2)));
+            }
+
+            craftingRecipe.ResultValue = DecodeResult(attributeValue, useLegacyHooks);
+            craftingRecipe.ResultCount = XmlUtils.GetAttributeValue<int>(item, "ResultCount");
+            var attributeValue2 = XmlUtils.GetAttributeValue(item, "Remains", string.Empty);
+            if (!string.IsNullOrEmpty(attributeValue2))
+            {
+                craftingRecipe.RemainsValue = DecodeResult(attributeValue2, useLegacyHooks);
+                craftingRecipe.RemainsCount = XmlUtils.GetAttributeValue<int>(item, "RemainsCount");
+            }
+
+            craftingRecipe.RequiredHeatLevel = XmlUtils.GetAttributeValue<float>(item, "RequiredHeatLevel");
+            craftingRecipe.RequiredPlayerLevel = XmlUtils.GetAttributeValue(item, "RequiredPlayerLevel", 1f);
+            craftingRecipe.Description = desc;
+            craftingRecipe.Message = XmlUtils.GetAttributeValue(item, "Message", string.Empty);
+            if (craftingRecipe.ResultCount >
+                BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.ResultValue)].MaxStacking)
+            {
+                throw new InvalidOperationException(
+                    $"In recipe for \"{attributeValue}\" ResultCount is larger than max stacking of result block.");
+            }
+
+            if (craftingRecipe.RemainsValue != 0 && craftingRecipe.RemainsCount >
+                BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking)
+            {
+                throw new InvalidOperationException(
+                    $"In Recipe for \"{attributeValue2}\" RemainsCount is larger than max stacking of remains block.");
+            }
+
+            var dictionary = new Dictionary<char, string>();
+            foreach (var item2 in from a in item.Attributes()
+                     where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
+                     select a)
+            {
+                DecodeIngredient(item2.Value, useLegacyHooks, out var craftingId, out var data);
+                if (BlocksManager.FindBlocksByCraftingId(craftingId).Length == 0)
                 {
-                    desc = LanguageManager.GetBlock(attributeValue,
-                        string.Concat("CRDescription:", desc.AsSpan(1, desc.Length - 2)));
+                    throw new InvalidOperationException($"Block with craftingId \"{item2.Value}\" not found.");
                 }
 
-                craftingRecipe.ResultValue = DecodeResult(attributeValue, useLegacyHooks);
-                craftingRecipe.ResultCount = XmlUtils.GetAttributeValue<int>(item, "ResultCount");
-                var attributeValue2 = XmlUtils.GetAttributeValue(item, "Remains", string.Empty);
-                if (!string.IsNullOrEmpty(attributeValue2))
-                {
-                    craftingRecipe.RemainsValue = DecodeResult(attributeValue2, useLegacyHooks);
-                    craftingRecipe.RemainsCount = XmlUtils.GetAttributeValue<int>(item, "RemainsCount");
-                }
-
-                craftingRecipe.RequiredHeatLevel = XmlUtils.GetAttributeValue<float>(item, "RequiredHeatLevel");
-                craftingRecipe.RequiredPlayerLevel = XmlUtils.GetAttributeValue(item, "RequiredPlayerLevel", 1f);
-                craftingRecipe.Description = desc;
-                craftingRecipe.Message = XmlUtils.GetAttributeValue(item, "Message", string.Empty);
-                if (craftingRecipe.ResultCount >
-                    BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.ResultValue)].MaxStacking)
+                if (data is < 0 or > 262143)
                 {
                     throw new InvalidOperationException(
-                        $"In recipe for \"{attributeValue}\" ResultCount is larger than max stacking of result block.");
+                        $"Data in recipe ingredient \"{item2.Value}\" must be between 0 and 0x3FFFF.");
                 }
 
-                if (craftingRecipe.RemainsValue != 0 && craftingRecipe.RemainsCount >
-                    BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking)
+                dictionary.Add(item2.Name.LocalName[0], item2.Value);
+            }
+
+            var array = item.Value.Trim().Split(["\n"], StringSplitOptions.None);
+            for (var i = 0; i < array.Length; i++)
+            {
+                var num = array[i].IndexOf('"');
+                var num2 = array[i].LastIndexOf('"');
+                if (num < 0 || num2 < 0 || num2 <= num)
                 {
-                    throw new InvalidOperationException(
-                        $"In Recipe for \"{attributeValue2}\" RemainsCount is larger than max stacking of remains block.");
+                    throw new InvalidOperationException("Invalid recipe line.");
                 }
 
-                var dictionary = new Dictionary<char, string>();
-                foreach (var item2 in from a in item.Attributes()
-                         where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
-                         select a)
+                var text = array[i].Substring(num + 1, num2 - num - 1);
+                for (var j = 0; j < text.Length; j++)
                 {
-                    DecodeIngredient(item2.Value, useLegacyHooks, out var craftingId, out var data);
-                    if (BlocksManager.FindBlocksByCraftingId(craftingId).Length == 0)
+                    var c = text[j];
+                    if (!char.IsLower(c))
                     {
-                        throw new InvalidOperationException($"Block with craftingId \"{item2.Value}\" not found.");
+                        continue;
                     }
 
-                    if (data is < 0 or > 262143)
-                    {
-                        throw new InvalidOperationException(
-                            $"Data in recipe ingredient \"{item2.Value}\" must be between 0 and 0x3FFFF.");
-                    }
-
-                    dictionary.Add(item2.Name.LocalName[0], item2.Value);
+                    var text2 = dictionary[c];
+                    craftingRecipe.Ingredients[j + i * 3] = text2;
                 }
+            }
 
-                var array = item.Value.Trim().Split(["\n"], StringSplitOptions.None);
-                for (var i = 0; i < array.Length; i++)
-                {
-                    var num = array[i].IndexOf('"');
-                    var num2 = array[i].LastIndexOf('"');
-                    if (num < 0 || num2 < 0 || num2 <= num)
-                    {
-                        throw new InvalidOperationException("Invalid recipe line.");
-                    }
-
-                    var text = array[i].Substring(num + 1, num2 - num - 1);
-                    for (var j = 0; j < text.Length; j++)
-                    {
-                        var c = text[j];
-                        if (!char.IsLower(c))
-                        {
-                            continue;
-                        }
-
-                        var text2 = dictionary[c];
-                        craftingRecipe.Ingredients[j + i * 3] = text2;
-                    }
-                }
-
-                _recipes.Add(craftingRecipe);
+            _recipes.Add(craftingRecipe);
         }
 
         var blocks = BlocksManager.Blocks;

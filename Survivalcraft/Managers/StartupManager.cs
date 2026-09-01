@@ -69,6 +69,7 @@ public static class StartupManager
                     request.SessionName = sessionName;
                     request.HasExplicitSession = true;
                 }
+
                 continue;
             }
 
@@ -183,6 +184,7 @@ public static class StartupManager
             request.ConnectHost = connectHost;
             request.ConnectPort = connectPort;
         }
+
         if (request.ForceWorldRunServer && !string.IsNullOrWhiteSpace(request.ConnectHost))
         {
             Log.Warning("Ignoring --host because --connect selects a remote server session.");
@@ -207,6 +209,7 @@ public static class StartupManager
             {
                 Log.Warning("Ignoring --window-mode/--window-size because the run mode is headless server.");
             }
+
             return;
         }
 
@@ -249,6 +252,7 @@ public static class StartupManager
         {
             Log.Warning("Ignoring --world/--seed/--game-mode because --session was not specified.");
         }
+
         request.World = null;
         request.Seed = null;
         request.GameMode = null;
@@ -262,14 +266,17 @@ public static class StartupManager
         {
             return SessionInfoManager.ResolveSessionIdForName(request.SessionName);
         }
+
         if (!string.IsNullOrWhiteSpace(settings.PendingSessionId))
         {
             return settings.PendingSessionId;
         }
+
         if (!string.IsNullOrWhiteSpace(settings.DefaultSessionId))
         {
             return settings.DefaultSessionId;
         }
+
         return Guid.NewGuid().ToString("N");
     }
 
@@ -279,6 +286,7 @@ public static class StartupManager
         {
             return args[++index];
         }
+
         Log.Warning($"Ignoring {option} because its value is missing.");
         return null;
     }
@@ -289,12 +297,14 @@ public static class StartupManager
         {
             return gameMode;
         }
+
         if (value != null)
         {
             Log.Warning(
                 $"Ignoring --game-mode because '{value}' is invalid. " +
                 $"Expected one of: {string.Join(", ", Enum.GetNames<GameMode>())}.");
         }
+
         return null;
     }
 
@@ -304,10 +314,12 @@ public static class StartupManager
         {
             return port;
         }
+
         if (value != null)
         {
             Log.Warning($"Ignoring {option} because '{value}' is not a valid port.");
         }
+
         return null;
     }
 
@@ -317,6 +329,7 @@ public static class StartupManager
         {
             return port;
         }
+
         Log.Error(
             $"HTTP command host is disabled because --http-command-port " +
             $"value '{value ?? "<missing>"}' is invalid.");
@@ -334,6 +347,7 @@ public static class StartupManager
         {
             return false;
         }
+
         var separator = value.LastIndexOf(':');
         if (separator <= 0 || separator == value.Length - 1 ||
             !int.TryParse(value[(separator + 1)..], out port) || port is <= 0 or > 65535)
@@ -342,6 +356,7 @@ public static class StartupManager
             port = 0;
             return false;
         }
+
         host = value[..separator].Trim().Trim('[', ']');
         return !string.IsNullOrWhiteSpace(host);
     }

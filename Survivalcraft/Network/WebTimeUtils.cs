@@ -4,19 +4,19 @@ using System.Net.Sockets;
 namespace Game.Network;
 
 /// <summary>
-/// 网络时间工具类
+///     网络时间工具类
 /// </summary>
 internal class WebTimeUtils
 {
     /// <summary>
-    /// ntp 服务器域名
+    ///     ntp 服务器域名
     /// </summary>
     private const string _ntpServer = "ntp.aliyun.com";
 
     private const byte _serverReplyTime = 40;
 
     /// <summary>
-    /// 获取网络时间
+    ///     获取网络时间
     /// </summary>
     public static DateTime GetWebTime()
     {
@@ -49,7 +49,7 @@ internal class WebTimeUtils
     }
 
     /// <summary>
-    /// 小端存储与大端存储的转换
+    ///     小端存储与大端存储的转换
     /// </summary>
     private static uint SwapEndian(ulong x)
     {

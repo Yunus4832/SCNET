@@ -28,7 +28,7 @@ public static class CommandResultPublisher
             message = message with
             {
                 Presentation =
-                    GameMessagePresentation.Default | GameMessagePresentation.Toast
+                GameMessagePresentation.Default | GameMessagePresentation.Toast
             };
             messages.Publish(message, includePublisher: includeServer);
         }
@@ -66,8 +66,8 @@ public static class CommandResultPublisher
             var message = GameMessage.Command(CommandText.Resolve(result), result.Success) with
             {
                 Presentation =
-                    GameMessagePresentation.Default |
-                    GameMessagePresentation.Toast
+                GameMessagePresentation.Default |
+                GameMessagePresentation.Toast
             };
             messages.Relay(message, recipients: null, except: requester);
             messages.DisplayLocal(message);
@@ -96,8 +96,8 @@ public static class CommandResultPublisher
             message = message with
             {
                 Presentation =
-                    GameMessagePresentation.Default |
-                    GameMessagePresentation.Toast
+                GameMessagePresentation.Default |
+                GameMessagePresentation.Toast
             };
         }
 

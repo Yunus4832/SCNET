@@ -18,7 +18,6 @@ public static class ClipboardManager
 
                 Log.Warning("No clipboard reader registered.");
                 return string.Empty;
-
             }
             catch (Exception ex)
             {

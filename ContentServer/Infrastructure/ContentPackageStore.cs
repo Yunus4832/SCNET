@@ -51,8 +51,10 @@ public sealed class ContentPackageStore
                     {
                         throw new ContentPackageException("Package exceeds the upload size limit.");
                     }
+
                     await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
                 }
+
                 await output.FlushAsync(cancellationToken);
             }
 
@@ -64,6 +66,7 @@ public sealed class ContentPackageStore
                 input.Position = 0;
                 blobHash = Convert.ToHexString(await SHA256.HashDataAsync(input, cancellationToken)).ToLowerInvariant();
             }
+
             return new StagedContentPackage(temporaryPath, inspection, blobHash,
                 new FileInfo(temporaryPath).Length, Path.GetFileName(fileName), mediaType);
         }
@@ -82,6 +85,7 @@ public sealed class ContentPackageStore
             File.Delete(package.TemporaryPath);
             return false;
         }
+
         try
         {
             File.Move(package.TemporaryPath, destination);
@@ -112,6 +116,7 @@ public sealed class ContentPackageStore
             input.Position = 0;
             blobHash = Convert.ToHexString(await SHA256.HashDataAsync(input, cancellationToken)).ToLowerInvariant();
         }
+
         return new StagedContentPackage(temporaryPath, inspection, blobHash,
             new FileInfo(temporaryPath).Length, fileName, "application/vnd.scnet.content-package");
     }
@@ -126,18 +131,27 @@ public sealed class ContentPackageStore
     public int CleanOrphans(IReadOnlySet<string> referencedHashes)
     {
         var paths = AuditOrphans(referencedHashes);
-        foreach (var path in paths) File.Delete(path);
+        foreach (var path in paths)
+        {
+            File.Delete(path);
+        }
+
         return paths.Count;
     }
 
     public int CleanTemporaryFiles()
     {
         var paths = Directory.EnumerateFiles(_temporaryPath, "*.upload").ToArray();
-        foreach (var path in paths) File.Delete(path);
+        foreach (var path in paths)
+        {
+            File.Delete(path);
+        }
+
         return paths.Length;
     }
 
-    private string GetPath(string packageHash) => Path.Combine(_packagesPath, packageHash + ContentPackageReader.FileExtension);
+    private string GetPath(string packageHash) =>
+        Path.Combine(_packagesPath, packageHash + ContentPackageReader.FileExtension);
 
     private static FileStream OpenRead(string path) => new(path, FileMode.Open, FileAccess.Read, FileShare.Read,
         64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan);

@@ -64,7 +64,6 @@ public class SubsystemCraftingTableBlockBehavior : SubsystemBlockBehavior
         AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
 
         return true;
-
     }
 
     public override void Load(ValuesDictionary valuesDictionary)

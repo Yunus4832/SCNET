@@ -107,6 +107,7 @@ public class SoilBlock : CubeBlock
     )
     {
         var block = BlocksManager.Blocks[Terrain.ExtractContents(attachBlockValue)];
-        return block is not BasePumpkinBlock && base.IsFaceNonAttachable(subsystemTerrain, face, value, attachBlockValue);
+        return block is not BasePumpkinBlock &&
+               base.IsFaceNonAttachable(subsystemTerrain, face, value, attachBlockValue);
     }
 }

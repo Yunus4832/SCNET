@@ -105,6 +105,7 @@ public sealed class VerticalTabMenuWidget : CanvasWidget
             {
                 ToggleTab(_tabs.IndexOf(tab));
             }
+
             return;
         }
 

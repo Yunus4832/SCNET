@@ -26,7 +26,6 @@ public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
         SubsystemTerrain.Project.FindSubsystem<SubsystemAudio>(true)!.PlaySound(name, 0.7f,
             _sharedRandom.Float(-0.1f, 0.1f), new Vector3(x, y, z), 4f, true);
         return true;
-
     }
 
     private bool IsGateElectricallyConnected(int x, int y, int z)
@@ -56,7 +55,6 @@ public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
 
         var open = FenceGateBlock.GetOpen(data);
         return OpenCloseGate(cellFace.X, cellFace.Y, cellFace.Z, !open);
-
     }
 
     public override void Load(ValuesDictionary valuesDictionary)

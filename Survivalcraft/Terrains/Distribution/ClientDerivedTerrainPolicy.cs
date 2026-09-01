@@ -1,7 +1,7 @@
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Dependency rules used while the legacy derived-data worker is being replaced.
+///     Dependency rules used while the legacy derived-data worker is being replaced.
 /// </summary>
 public static class ClientDerivedTerrainPolicy
 {

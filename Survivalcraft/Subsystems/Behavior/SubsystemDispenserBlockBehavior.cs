@@ -84,7 +84,6 @@ public class SubsystemDispenserBlockBehavior : SubsystemBlockBehavior
         AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
 
         return true;
-
     }
 
     public override void OnHitByProjectile(CellFace cellFace, WorldItem worldItem)

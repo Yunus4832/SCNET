@@ -1,15 +1,15 @@
-using ContentServer.Application.Commands;
+using Content.Packaging;
+
 using ContentServer.Application;
+using ContentServer.Application.Commands;
 using ContentServer.Application.Queries;
 using ContentServer.Controllers.Contracts.Requests;
 using ContentServer.Controllers.Contracts.Responses;
 using ContentServer.Controllers.Mappings;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Publishers;
-using ContentServer.Middlewares;
 using ContentServer.Infrastructure;
-
-using Content.Packaging;
+using ContentServer.Middlewares;
 
 using MediatR;
 

@@ -23,6 +23,7 @@ public sealed class NetworkChunkContentTransportTest
         {
             transport.Receive(fragment);
         }
+
         transport.ReceiveFailures([allocation]);
         var delta = new TerrainCellDelta(new Point3(1, 2, 3), 4, 2, 3);
         transport.Receive(delta);

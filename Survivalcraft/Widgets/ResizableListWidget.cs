@@ -58,7 +58,7 @@ public class ResizableListWidget : ScrollPanelWidget
 
     public int? SelectedIndex
     {
-        get => _selectedItemIndex  == -1 ? null : _selectedItemIndex;
+        get => _selectedItemIndex == -1 ? null : _selectedItemIndex;
         set
         {
             if (value.HasValue && (value.Value < 0 || value.Value >= _items.Count))
@@ -86,6 +86,7 @@ public class ResizableListWidget : ScrollPanelWidget
                 SelectedIndex = null;
                 return;
             }
+
             var num = _items.IndexOf(value);
             SelectedIndex = num;
         }

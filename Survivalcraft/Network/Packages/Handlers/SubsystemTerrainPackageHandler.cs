@@ -31,6 +31,7 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                 {
                     break;
                 }
+
                 var fragmentScheduler = subsystemTerrain.TerrainUpdater.ServerChunkDistribution ??
                                         throw new InvalidOperationException(
                                             "Terrain fragment requests require an authoritative server scheduler.");
@@ -48,6 +49,7 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                 {
                     break;
                 }
+
                 var deltaTransport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
                                      throw new InvalidOperationException(
                                          "Remote terrain cell deltas require a network chunk transport.");

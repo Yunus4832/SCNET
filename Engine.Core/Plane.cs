@@ -58,7 +58,6 @@ public struct Plane : IEquatable<Plane>
 
         var num2 = 1f / num;
         return new Plane(p.Normal * num2, p.D * num2);
-
     }
 
     public static bool operator ==(Plane p1, Plane p2)

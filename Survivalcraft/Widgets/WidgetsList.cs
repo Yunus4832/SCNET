@@ -89,7 +89,6 @@ public class WidgetsList(ContainerWidget containerWidget) : IEnumerable<Widget>
         }
 
         RemoveAt(num);
-
     }
 
     private void RemoveAt(int index)

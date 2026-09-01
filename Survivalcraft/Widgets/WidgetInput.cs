@@ -921,7 +921,8 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
                 if (Widget != null)
                 {
                     var x = Vector3.Dot(v, Vector3.Normalize(value.Right)) / value.Right.Length() * Widget.ActualSize.X;
-                    var y = (1f - Vector3.Dot(v, Vector3.Normalize(value.Up)) / value.Up.Length()) * Widget.ActualSize.Y;
+                    var y = (1f - Vector3.Dot(v, Vector3.Normalize(value.Up)) / value.Up.Length()) *
+                            Widget.ActualSize.Y;
                     VrCursorPosition = Vector2.Transform(new Vector2(x, y), Widget.GlobalTransform);
                 }
             }

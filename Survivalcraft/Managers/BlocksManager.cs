@@ -35,7 +35,7 @@ public static class BlocksManager
     public static void Initialize()
     {
         var runtime = CurrentModRuntime.Value
-            ?? throw new InvalidOperationException("No active game mod runtime.");
+                      ?? throw new InvalidOperationException("No active game mod runtime.");
         runtime.InitializeBlocks();
     }
 
@@ -49,7 +49,7 @@ public static class BlocksManager
         if (catalog is null)
         {
             var runtime = CurrentModRuntime.Value
-                ?? throw new InvalidOperationException("No active game mod runtime.");
+                          ?? throw new InvalidOperationException("No active game mod runtime.");
             catalog = runtime.Blocks;
             clothingData ??= runtime.Data.BuildClothing();
         }
@@ -120,7 +120,8 @@ public static class BlocksManager
             Blocks[num] = Blocks[0];
         }
 
-        var runtimeCatalog = catalog ?? throw new InvalidOperationException("Block runtime catalog is not initialized.");
+        var runtimeCatalog =
+            catalog ?? throw new InvalidOperationException("Block runtime catalog is not initialized.");
         foreach (var dataEntry in runtimeCatalog.DataEntries)
         {
             LoadBlocksData(dataEntry.Read());

@@ -1,18 +1,18 @@
 namespace Engine.Core;
 
 /// <summary>
-/// 常量定义
+///     常量定义
 /// </summary>
 public static class Constants
 {
     /// <summary>
-    /// 数值比较的容差
+    ///     数值比较的容差
     /// </summary>
     public const double Tolerance = 1e-10;
 }
 
 /// <summary>
-/// 常量扩展函数
+///     常量扩展函数
 /// </summary>
 public static class ConstantsExtension
 {

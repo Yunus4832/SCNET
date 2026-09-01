@@ -139,7 +139,7 @@ public class UnlitShader : Shader
     }
 
     /// <summary>
-    /// 获取 Unlit.vsh 着色器文件
+    ///     获取 Unlit.vsh 着色器文件
     /// </summary>
     /// <returns>着色器字符串</returns>
     private static string GetUnlitVshString()
@@ -151,7 +151,7 @@ public class UnlitShader : Shader
     }
 
     /// <summary>
-    /// 获取 Unlit.psh 着色器文件
+    ///     获取 Unlit.psh 着色器文件
     /// </summary>
     /// <returns>着色器字符串</returns>
     private static string GetUnlitPshString()

@@ -109,7 +109,7 @@ public static class CommonLib
     }
 
     /// <summary>
-    /// 写入服务器信息
+    ///     写入服务器信息
     /// </summary>
     /// <param name="w"></param>
     public static void WriteServerInfo(NetDataWriter w)
@@ -292,7 +292,7 @@ public static class CommonLib
 
 
     /// <summary>
-    /// 获取时间戳，单位0.1ms
+    ///     获取时间戳，单位0.1ms
     /// </summary>
     /// <returns></returns>
     public static long GetMicroSeconds()

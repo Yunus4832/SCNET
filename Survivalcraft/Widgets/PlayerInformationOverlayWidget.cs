@@ -1,8 +1,8 @@
 namespace Game.Widgets;
 
 /// <summary>
-/// Read-only filtered player list shown while playing.
-/// Player, team and blacklist operations belong to <see cref="PlayerPanelWidget"/>.
+///     Read-only filtered player list shown while playing.
+///     Player, team and blacklist operations belong to <see cref="PlayerPanelWidget" />.
 /// </summary>
 public sealed class PlayerInformationOverlayWidget : CanvasWidget
 {

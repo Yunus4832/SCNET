@@ -84,6 +84,4 @@ public class ComponentClothingPackage : IPackage
                 break;
         }
     }
-
-
 }

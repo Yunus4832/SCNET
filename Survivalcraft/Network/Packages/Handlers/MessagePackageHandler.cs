@@ -1,7 +1,7 @@
 namespace Game.Network.Packages.Handlers;
 
 /// <summary>
-/// Receives server-authored messages. Client chat requests use commands.
+///     Receives server-authored messages. Client chat requests use commands.
 /// </summary>
 public sealed class MessagePackageHandler : PackageHandlerBase<MessagePackage>
 {

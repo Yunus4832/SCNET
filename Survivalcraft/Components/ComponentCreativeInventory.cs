@@ -151,7 +151,6 @@ public class ComponentCreativeInventory : Component, IInventory
 
         _slots[slotIndex] = value;
         return true;
-
     }
 
     public int RemoveSlotItems(int slotIndex, int count)

@@ -1,7 +1,7 @@
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// A snapshot addressed to one specific client allocation lifetime.
+///     A snapshot addressed to one specific client allocation lifetime.
 /// </summary>
 public sealed class ClientChunkSnapshot
 {

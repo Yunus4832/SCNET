@@ -120,7 +120,8 @@ public class ModHostTest
 
         host.StopAll();
         calls.Clear();
-        host.Gameplay.Invoke(new CreatureInjuringContext(new Game.Components.ComponentHealth(), 4f, null, false, "test"));
+        host.Gameplay.Invoke(
+            new CreatureInjuringContext(new Game.Components.ComponentHealth(), 4f, null, false, "test"));
         Assert.Empty(calls);
     }
 
@@ -384,14 +385,8 @@ public class ModHostTest
     {
         public void Configure(IModContext context)
         {
-            context.Gameplay.OnTerrainChunkGenerated(generated =>
-            {
-                calls.Add("normal");
-            });
-            context.Gameplay.OnTerrainChunkGenerated(generated =>
-            {
-                calls.Add("high");
-            }, 100);
+            context.Gameplay.OnTerrainChunkGenerated(generated => { calls.Add("normal"); });
+            context.Gameplay.OnTerrainChunkGenerated(generated => { calls.Add("high"); }, 100);
         }
 
         public void Start(IModContext context)
@@ -407,14 +402,8 @@ public class ModHostTest
     {
         public void Configure(IModContext context)
         {
-            context.BlockBehaviors.OnEditBlock(edit =>
-            {
-                calls.Add("normal");
-            });
-            context.BlockBehaviors.OnEditBlock(edit =>
-            {
-                calls.Add("high");
-            }, 100);
+            context.BlockBehaviors.OnEditBlock(edit => { calls.Add("normal"); });
+            context.BlockBehaviors.OnEditBlock(edit => { calls.Add("high"); }, 100);
         }
 
         public void Start(IModContext context)
@@ -435,10 +424,7 @@ public class ModHostTest
                 calls.Add("normal");
                 respawn.Cancel = true;
             });
-            context.Gameplay.OnPlayerRespawnRequested(respawn =>
-            {
-                calls.Add("high");
-            }, 100);
+            context.Gameplay.OnPlayerRespawnRequested(respawn => { calls.Add("high"); }, 100);
         }
 
         public void Start(IModContext context)
@@ -504,14 +490,8 @@ public class ModHostTest
     {
         public void Configure(IModContext context)
         {
-            context.Network.OnMessage("downed.sync", message =>
-            {
-                calls.Add("normal");
-            });
-            context.Network.OnMessage("downed.sync", message =>
-            {
-                calls.Add("high");
-            }, 100);
+            context.Network.OnMessage("downed.sync", message => { calls.Add("normal"); });
+            context.Network.OnMessage("downed.sync", message => { calls.Add("high"); }, 100);
         }
 
         public void Start(IModContext context)

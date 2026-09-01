@@ -31,9 +31,11 @@ public class BlockRuntimeCatalogTest
     public void CatalogCreatesLegacyArrayAndStableLookup()
     {
         var host = new ModHost();
-        host.LoadAndStart([Descriptor(
-            ("air", 0, static () => new AirBlock()),
-            ("machine", 42, static () => new DirtBlock()))]);
+        host.LoadAndStart([
+            Descriptor(
+                ("air", 0, static () => new AirBlock()),
+                ("machine", 42, static () => new DirtBlock()))
+        ]);
         var registry = host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
 
         var catalog = BlockRuntimeCatalog.Compile(registry);
@@ -53,10 +55,12 @@ public class BlockRuntimeCatalogTest
     public void CatalogRejectsRuntimeIndexConflicts()
     {
         var host = new ModHost();
-        host.LoadAndStart([Descriptor(
-            ("air", 0, static () => new AirBlock()),
-            ("first", 42, static () => new DirtBlock()),
-            ("second", 42, static () => new DirtBlock()))]);
+        host.LoadAndStart([
+            Descriptor(
+                ("air", 0, static () => new AirBlock()),
+                ("first", 42, static () => new DirtBlock()),
+                ("second", 42, static () => new DirtBlock()))
+        ]);
         var registry = host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
 
         var exception = Assert.Throws<InvalidOperationException>(() => BlockRuntimeCatalog.Compile(registry));

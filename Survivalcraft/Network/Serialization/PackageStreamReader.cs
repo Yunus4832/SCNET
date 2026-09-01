@@ -254,8 +254,6 @@ public sealed class PackageStreamReader : BinaryReader
 
     public Matrix ReadMatrix()
     {
-
-
         var matrix = new Matrix
         {
             M11 = ReadSingle(),

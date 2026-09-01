@@ -409,7 +409,8 @@ public class TextBoxWidget : Widget
         }
 
         var displayText = GetDisplayText();
-        DesiredSize = Font.MeasureText(displayText.Length == 0 ? " " : displayText, new Vector2(FontScale), FontSpacing);
+        DesiredSize = Font.MeasureText(displayText.Length == 0 ? " " : displayText, new Vector2(FontScale),
+            FontSpacing);
 
         DesiredSize += new Vector2(1f * FontScale * Font.Scale, 0f);
     }

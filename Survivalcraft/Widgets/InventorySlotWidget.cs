@@ -708,7 +708,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             {
                 case false when
                     (targetCount == 0 ||
-                     BlocksManager.Blocks[Terrain.ExtractContents(sourceValue)].CanAutoStack(sourceValue, targetValue)) &&
+                     BlocksManager.Blocks[Terrain.ExtractContents(sourceValue)]
+                         .CanAutoStack(sourceValue, targetValue)) &&
                     targetCount < slotCapacity:
                 {
                     // 这个应该跟上面的移动一样吧

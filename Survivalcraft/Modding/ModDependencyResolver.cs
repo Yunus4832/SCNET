@@ -13,6 +13,7 @@ public static class ModDependencyResolver
                 throw new ModDependencyException($"Duplicate mod id {descriptor.Manifest.ModId}.");
             }
         }
+
         var result = new List<ModDescriptor>(mods.Count);
         var states = new Dictionary<ModId, VisitState>();
         var path = new Stack<ModId>();
@@ -58,7 +59,8 @@ public static class ModDependencyResolver
                 }
 
                 if (dependency.MinimumVersion is not null &&
-                    (!global::Content.Packaging.SemanticVersion.TryParse(dependency.MinimumVersion, out var minimumVersion) ||
+                    (!global::Content.Packaging.SemanticVersion.TryParse(dependency.MinimumVersion,
+                         out var minimumVersion) ||
                      dependencyMod.Manifest.ParsedVersion < minimumVersion))
                 {
                     throw new ModDependencyException(

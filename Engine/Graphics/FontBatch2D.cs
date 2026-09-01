@@ -125,6 +125,7 @@ public class FontBatch2D : BaseFontBatch
     {
         Flush(PrimitivesRenderer2D.ViewportMatrix(), clearAfterFlush);
     }
+
     public void QueueBatch(FontBatch2D batch, Matrix? matrix = null, Color? color = null)
     {
         var count = TriangleVertices.Count;

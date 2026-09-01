@@ -64,6 +64,4 @@ public class SubsystemWeatherPackage : IPackage
         FogRampTime = reader.ReadSingle();
         FogEndTime = reader.ReadDouble();
     }
-
-
 }

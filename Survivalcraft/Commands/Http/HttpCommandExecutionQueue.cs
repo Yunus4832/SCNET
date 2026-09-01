@@ -5,8 +5,8 @@ using Game.Network;
 namespace Game.Commands;
 
 /// <summary>
-/// Moves HTTP command requests from listener threads onto the game update
-/// thread. Other command frontends execute through their own dispatch paths.
+///     Moves HTTP command requests from listener threads onto the game update
+///     thread. Other command frontends execute through their own dispatch paths.
 /// </summary>
 public static class HttpCommandExecutionQueue
 {

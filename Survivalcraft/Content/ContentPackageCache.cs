@@ -16,10 +16,13 @@ public interface IContentPackageCache
     IReadOnlyList<ContentPackageCacheEntry> List();
     ContentPackageCacheEntry? Find(string packageHash);
     Task<ContentPackageCacheEntry> ImportAsync(Stream source, CancellationToken cancellationToken = default);
+
     Task<ContentPackageCacheEntry> ImportExpectedAsync(Stream source, ContentPackageType expectedType,
         CancellationToken cancellationToken = default);
+
     Task<ContentPackageCacheEntry> ImportAllowedAsync(Stream source,
         IReadOnlyCollection<ContentPackageType> allowedTypes, CancellationToken cancellationToken = default);
+
     Stream OpenValidated(string packageHash);
     Task ExportAsync(string packageHash, Stream destination, CancellationToken cancellationToken = default);
     bool Delete(string packageHash);
@@ -62,7 +65,11 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         IReadOnlyCollection<ContentPackageType> allowedTypes, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(allowedTypes);
-        if (allowedTypes.Count == 0) throw new ArgumentException("At least one package type must be allowed.", nameof(allowedTypes));
+        if (allowedTypes.Count == 0)
+        {
+            throw new ArgumentException("At least one package type must be allowed.", nameof(allowedTypes));
+        }
+
         return await ImportCoreAsync(source, allowedTypes, cancellationToken);
     }
 
@@ -86,30 +93,44 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
                 {
                     total += read;
                     if (total > _maximumPhysicalBytes)
+                    {
                         throw new ContentPackageException("Content package exceeds the cache size limit.");
+                    }
+
                     await output.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
                 }
+
                 await output.FlushAsync(cancellationToken);
             }
 
             ContentPackageInspection inspection;
             await using (var input = File.OpenRead(temporaryPath))
+            {
                 inspection = ContentPackageReader.Inspect(input);
+            }
+
             if (allowedTypes is not null && !allowedTypes.Contains(inspection.Manifest.Type))
+            {
                 throw new ContentPackageException($"Package type {inspection.Manifest.Type} is not allowed here.");
+            }
+
             var targetPath = GetPath(inspection.PackageHash);
             if (File.Exists(targetPath))
             {
                 await using var existing = File.OpenRead(targetPath);
                 var existingInspection = ContentPackageReader.Inspect(existing);
                 if (existingInspection.PackageHash != inspection.PackageHash)
+                {
                     throw new ContentPackageException("Cached package file does not match its content address.");
+                }
+
                 File.Delete(temporaryPath);
             }
             else
             {
                 File.Move(temporaryPath, targetPath);
             }
+
             RebuildIndex();
             return Find(inspection.PackageHash)!;
         }
@@ -129,7 +150,10 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         {
             var inspection = ContentPackageReader.Inspect(stream);
             if (!string.Equals(inspection.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase))
+            {
                 throw new ContentPackageException("Cached package file does not match its content address.");
+            }
+
             stream.Position = 0;
             return stream;
         }
@@ -154,7 +178,11 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
     public bool Delete(string packageHash)
     {
         var path = GetPath(packageHash);
-        if (!File.Exists(path)) return false;
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
         File.Delete(path);
         RebuildIndex();
         return true;
@@ -168,7 +196,11 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
 
     private void EnsureIndex()
     {
-        if (_index is not null) return;
+        if (_index is not null)
+        {
+            return;
+        }
+
         Directory.CreateDirectory(directoryPath);
         var entries = new List<ContentPackageCacheEntry>();
         foreach (var path in Directory.EnumerateFiles(directoryPath, $"*{ContentPackageReader.FileExtension}")
@@ -180,7 +212,10 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
                 var inspection = ContentPackageReader.Inspect(stream);
                 if (!string.Equals(Path.GetFileNameWithoutExtension(path), inspection.PackageHash,
                         StringComparison.OrdinalIgnoreCase))
+                {
                     continue;
+                }
+
                 entries.Add(ToEntry(path, inspection));
             }
             catch (ContentPackageException)
@@ -188,6 +223,7 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
                 // Invalid files are quarantined logically by omitting them from the index.
             }
         }
+
         _index = entries;
     }
 

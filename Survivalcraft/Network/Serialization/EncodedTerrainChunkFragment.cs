@@ -28,6 +28,7 @@ public static class EncodedTerrainChunkFragmenter
         {
             throw new InvalidDataException($"Terrain chunk payload is too large: {chunk.Payload.Length}.");
         }
+
         if (fragmentPayloadSize <= 0)
         {
             throw new ArgumentOutOfRangeException(nameof(fragmentPayloadSize));

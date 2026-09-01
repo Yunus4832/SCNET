@@ -63,7 +63,8 @@ public class WorldServerSettingsScreen : Screen
         _randomSpawnPosition.IsChecked = _worldSettings.RandomSpawnPosition;
         _maxPlayer.Text = MathUtils.Max(_worldSettings.MaxOnlinePlayerCount, 1).ToString(CultureInfo.InvariantCulture);
         _daySpeedTextBox.Text = NormalizeDaySpeed(_worldSettings.DaySpeed).ToString(CultureInfo.InvariantCulture);
-        _recoverySpeed.Text = NormalizeRecoverySpeed(_worldSettings.RecoverFactor).ToString(CultureInfo.InvariantCulture);
+        _recoverySpeed.Text =
+            NormalizeRecoverySpeed(_worldSettings.RecoverFactor).ToString(CultureInfo.InvariantCulture);
         _disableBlocks.Text = _worldSettings.DisableBlocks;
         _keywordBlocking.Text = _worldSettings.KeywordBlocking;
         SetDescription("RunServer");

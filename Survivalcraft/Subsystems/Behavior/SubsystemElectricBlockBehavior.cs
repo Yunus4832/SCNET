@@ -87,7 +87,6 @@ public class SubsystemElectricBlockBehavior : SubsystemBlockBehavior
             }
 
             num++;
-
         }
 
         electricElement.OnCollide(cellFace, velocity, componentBody);
@@ -114,7 +113,6 @@ public class SubsystemElectricBlockBehavior : SubsystemBlockBehavior
             }
 
             num++;
-
         }
 
         electricElement.OnHitByProjectile(cellFace, worldItem);

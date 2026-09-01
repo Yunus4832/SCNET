@@ -5,13 +5,24 @@ using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Application.Commands;
 
-public enum ReviewAdministratorResult { Completed, NotFound, InvalidState }
-public sealed record ReviewAdministratorCommand(AdministratorId AdministratorId, AdministratorId ReviewerId,
-    AdministratorStatus Status, string? Message) : ICommand<ReviewAdministratorResult>;
+public enum ReviewAdministratorResult
+{
+    Completed,
+    NotFound,
+    InvalidState
+}
+
+public sealed record ReviewAdministratorCommand(
+    AdministratorId AdministratorId,
+    AdministratorId ReviewerId,
+    AdministratorStatus Status,
+    string? Message) : ICommand<ReviewAdministratorResult>;
+
 public sealed class ReviewAdministratorCommandHandler(AdministratorRepository repository)
     : ICommandHandler<ReviewAdministratorCommand, ReviewAdministratorResult>
 {
-    public async Task<ReviewAdministratorResult> Handle(ReviewAdministratorCommand command, CancellationToken cancellationToken)
+    public async Task<ReviewAdministratorResult> Handle(ReviewAdministratorCommand command,
+        CancellationToken cancellationToken)
     {
         var item = await repository.FindAsync(command.AdministratorId, cancellationToken);
         if (item is null)
@@ -20,6 +31,7 @@ public sealed class ReviewAdministratorCommandHandler(AdministratorRepository re
         }
 
         return item.Review(command.Status, command.ReviewerId, command.Message, DateTimeOffset.UtcNow)
-            ? ReviewAdministratorResult.Completed : ReviewAdministratorResult.InvalidState;
+            ? ReviewAdministratorResult.Completed
+            : ReviewAdministratorResult.InvalidState;
     }
 }

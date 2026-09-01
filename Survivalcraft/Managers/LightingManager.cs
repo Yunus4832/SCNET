@@ -73,7 +73,6 @@ public static class LightingManager
         var num7 = (int)MathUtils.Ceiling(num5);
         var f4 = num5 - num6;
         return MathUtils.Lerp(LightIntensityByLightValue[num6], LightIntensityByLightValue[num7], f4);
-
     }
 
     private static void CalculateLightingTables()

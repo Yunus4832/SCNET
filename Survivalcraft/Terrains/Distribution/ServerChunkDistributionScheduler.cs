@@ -5,14 +5,15 @@ using Game.Network.Serialization;
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Owns server-side chunk request deduplication, encoding backpressure, caching and delivery.
+///     Owns server-side chunk request deduplication, encoding backpressure, caching and delivery.
 /// </summary>
 public sealed class ServerChunkDistributionScheduler(
     IChunkContentAuthority authority,
     int maximumOutstandingEncodes)
     : IDisposable
 {
-    private readonly IChunkContentAuthority _authority = authority ?? throw new ArgumentNullException(nameof(authority));
+    private readonly IChunkContentAuthority
+        _authority = authority ?? throw new ArgumentNullException(nameof(authority));
 
     private readonly NetworkChunkCache _cache = new();
 
@@ -76,6 +77,7 @@ public sealed class ServerChunkDistributionScheduler(
             missing.Remove(coords);
             removed++;
         }
+
         return removed;
     }
 
@@ -90,6 +92,7 @@ public sealed class ServerChunkDistributionScheduler(
             queue = [];
             _missing.Add(client, queue);
         }
+
         if (!_pending.ContainsKey(client))
         {
             _pending.Add(client, new PendingChunkRequestQueue());
@@ -102,8 +105,10 @@ public sealed class ServerChunkDistributionScheduler(
             {
                 added++;
             }
+
             queue[request.Allocation.Coords] = request;
         }
+
         return added;
     }
 
@@ -164,6 +169,7 @@ public sealed class ServerChunkDistributionScheduler(
                                     To = item.Key
                                 });
                             }
+
                             toRemove.Add(coords);
                             cachedCount++;
                             cachedBytes += transmissionBytes;
@@ -185,7 +191,6 @@ public sealed class ServerChunkDistributionScheduler(
                 {
                     CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(failures, 0) { To = item.Key });
                 }
-
             }
 
             foreach (var coords in toRemove)
@@ -234,6 +239,7 @@ public sealed class ServerChunkDistributionScheduler(
         {
             measured *= maximumSpeed / MathF.Sqrt(speedSquared);
         }
+
         var velocity = motion.Velocity * 0.5f + measured * 0.5f;
         _clientMotions[client] = new ClientMotion(center, velocity, now);
     }
@@ -265,18 +271,21 @@ public sealed class ServerChunkDistributionScheduler(
                 requests.Remove(coords);
                 continue;
             }
+
             if (descriptor.ContentVersion != request.ContentVersion)
             {
                 Enqueue(client, [new ChunkContentRequest(request.Allocation, request.ContentVersion)]);
                 requests.Remove(coords);
                 continue;
             }
+
             if (!_cache.TryGet(coords, descriptor.ContentVersion, out var encoded))
             {
                 if (!_encoder.IsScheduled(descriptor) && _authority.TryGetSnapshot(coords, out var snapshot))
                 {
                     _encoder.TrySchedule(snapshot);
                 }
+
                 continue;
             }
 
@@ -286,16 +295,19 @@ public sealed class ServerChunkDistributionScheduler(
                 requests.Remove(coords);
                 continue;
             }
+
             var transmissionBytes = fragments.Sum(fragment => fragment.Payload.Length);
             var byteBudget = Math.Max(1, SettingsManager.Current.ServerChunkBytesSendPerSecond);
             if (sentCount > 0 && sentBytes + transmissionBytes > byteBudget)
             {
                 break;
             }
+
             foreach (var fragment in fragments)
             {
                 CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(fragment) { To = client });
             }
+
             Interlocked.Add(ref _fragmentsRetransmitted, fragments.Length);
             Interlocked.Add(ref _fragmentBytesRetransmitted, transmissionBytes);
             requests.Remove(coords);

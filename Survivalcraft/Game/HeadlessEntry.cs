@@ -41,8 +41,8 @@ public static class HeadlessEntry
     }
 
     /// <summary>
-    /// Enqueues a trusted host-console command for execution on the Headless
-    /// server thread. The command uses the ServerOperator principal.
+    ///     Enqueues a trusted host-console command for execution on the Headless
+    ///     server thread. The command uses the ServerOperator principal.
     /// </summary>
     public static Task<CommandResult> SubmitConsoleCommandAsync(string input)
     {
@@ -69,8 +69,8 @@ public static class HeadlessEntry
     }
 
     /// <summary>
-    /// Enqueues a trusted host-console completion request for evaluation on
-    /// the Headless server thread.
+    ///     Enqueues a trusted host-console completion request for evaluation on
+    ///     the Headless server thread.
     /// </summary>
     public static Task<HeadlessCommandSuggestions> SubmitConsoleSuggestionsAsync(string input)
     {

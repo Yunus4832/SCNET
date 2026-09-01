@@ -49,97 +49,97 @@ namespace Game.Terrains;
  */
 
 /// <summary>
-/// 地形信息
+///     地形信息
 /// </summary>
 public class Terrain : IDisposable
 {
     /// <summary>
-    /// 区块高度
+    ///     区块高度
     /// </summary>
     private const int _height = 256;
 
     /// <summary>
-    /// 数据块区块坐标的偏移
+    ///     数据块区块坐标的偏移
     /// </summary>
     private const int _chunkRegionCoordsShift = 4;
 
     /// <summary>
-    /// 数据块坐标掩码
+    ///     数据块坐标掩码
     /// </summary>
     private const int _chunkCoordsMask = 0xF;
 
     /// <summary>
-    /// 内容掩码
+    ///     内容掩码
     /// </summary>
     private const int _contentsMask = 0x3FF;
 
     /// <summary>
-    /// 光照掩码
+    ///     光照掩码
     /// </summary>
     private const int _lightMask = 0x3C00;
 
     /// <summary>
-    /// 光照偏移
+    ///     光照偏移
     /// </summary>
     private const int _lightShift = 10;
 
     /// <summary>
-    /// 数据掩码
+    ///     数据掩码
     /// </summary>
     private const int _dataMask = unchecked((int)0xFFFFC000);
 
     /// <summary>
-    /// 数据偏移
+    ///     数据偏移
     /// </summary>
     private const int _dataShift = 14;
 
     /// <summary>
-    /// 最大高度掩码
+    ///     最大高度掩码
     /// </summary>
     private const long _topHeightMask = 0xFFF;
 
     /// <summary>
-    /// 最大高度偏移
+    ///     最大高度偏移
     /// </summary>
     private const int _topHeightShift = 0;
 
     /// <summary>
-    /// 温度掩码
+    ///     温度掩码
     /// </summary>
     private const long _temperatureMask = 0xF000;
 
     /// <summary>
-    /// 温度偏移
+    ///     温度偏移
     /// </summary>
     private const int _temperatureShift = 12;
 
     /// <summary>
-    /// 湿度掩码
+    ///     湿度掩码
     /// </summary>
     private const int _humidityMask = 0xF0000;
 
     /// <summary>
-    /// 湿度偏移
+    ///     湿度偏移
     /// </summary>
     private const int _humidityShift = 16;
 
     /// <summary>
-    /// 最小高度掩码
+    ///     最小高度掩码
     /// </summary>
     private const long _bottomHeightMask = 0xFFF00000;
 
     /// <summary>
-    /// 最小高度偏移
+    ///     最小高度偏移
     /// </summary>
     private const int _bottomHeightShift = 20;
 
     /// <summary>
-    /// 阳光高度掩码
+    ///     阳光高度掩码
     /// </summary>
     private const long _sunlightHeightMask = 0xFFF00000000;
 
     /// <summary>
-    /// 阳光高度偏移
+    ///     阳光高度偏移
     /// </summary>
     private const int _sunlightHeightShift = 32;
 
@@ -152,17 +152,17 @@ public class Terrain : IDisposable
     private TerrainChunk[] _allocatedChunksArray = [];
 
     /// <summary>
-    /// 季节湿度偏移值
+    ///     季节湿度偏移值
     /// </summary>
     public int SeasonHumidity;
 
     /// <summary>
-    /// 季节温度偏移值
+    ///     季节温度偏移值
     /// </summary>
     public int SeasonTemperature;
 
     /// <summary>
-    /// 已分配的所有区块数组（缓存优化）
+    ///     已分配的所有区块数组（缓存优化）
     /// </summary>
     public TerrainChunk[] AllocatedChunks
     {
@@ -178,7 +178,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 释放所有已分配的区块资源
+    ///     释放所有已分配的区块资源
     /// </summary>
     public void Dispose()
     {
@@ -189,7 +189,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取下一个可用的区块（按坐标顺序）
+    ///     获取下一个可用的区块（按坐标顺序）
     /// </summary>
     /// <param name="chunkX">区块 X 坐标</param>
     /// <param name="chunkZ">区块 Z 坐标</param>
@@ -229,7 +229,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 根据区块坐标获取区块
+    ///     根据区块坐标获取区块
     /// </summary>
     /// <param name="chunkX">区块 X 坐标</param>
     /// <param name="chunkZ">区块 Z 坐标</param>
@@ -241,7 +241,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 根据单元格坐标获取所在区块
+    ///     根据单元格坐标获取所在区块
     /// </summary>
     /// <param name="x">单元格 X 坐标</param>
     /// <param name="z">单元格 Z 坐标</param>
@@ -253,7 +253,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 根据三维单元格坐标获取所在区块
+    ///     根据三维单元格坐标获取所在区块
     /// </summary>
     /// <param name="x">单元格 X 坐标</param>
     /// <param name="y">单元格 Y 坐标</param>
@@ -261,11 +261,13 @@ public class Terrain : IDisposable
     /// <returns>找到的区块，如果 Y 坐标超出范围则返回 null</returns>
     public TerrainChunk? GetChunkAtCell(int x, int y, int z)
     {
-        return y is >= 0 and < _height ? _allChunks.Get(x >> _chunkRegionCoordsShift, z >> _chunkRegionCoordsShift) : null;
+        return y is >= 0 and < _height
+            ? _allChunks.Get(x >> _chunkRegionCoordsShift, z >> _chunkRegionCoordsShift)
+            : null;
     }
 
     /// <summary>
-    /// 分配一个新的区块
+    ///     分配一个新的区块
     /// </summary>
     /// <param name="chunkX">区块 X 坐标</param>
     /// <param name="chunkZ">区块 Z 坐标</param>
@@ -290,7 +292,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 释放指定区块
+    ///     释放指定区块
     /// </summary>
     /// <param name="chunk">要释放的区块</param>
     /// <exception cref="InvalidOperationException">如果该区块未被分配则抛出异常</exception>
@@ -306,11 +308,11 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 比较两个点的坐标顺序（先比较 Y，再比较 X）
+    ///     比较两个点的坐标顺序（先比较 Y，再比较 X）
     /// </summary>
     /// <param name="c1">第一个点</param>
     /// <param name="c2">第二个点</param>
-        /// <returns>差值，负数表示 c1 &lt; c2，正数表示 c1 &gt; c2</returns>
+    /// <returns>差值，负数表示 c1 &lt; c2，正数表示 c1 &gt; c2</returns>
     public static int ComparePoints(Point2 c1, Point2 c2)
     {
         if (c1.Y == c2.Y)
@@ -322,7 +324,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 将浮点坐标转换为区块坐标
+    ///     将浮点坐标转换为区块坐标
     /// </summary>
     public static Point2 ToChunk(Vector2 p)
     {
@@ -330,7 +332,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 将单元格坐标转换为区块坐标
+    ///     将单元格坐标转换为区块坐标
     /// </summary>
     public static Point2 ToChunk(int x, int z)
     {
@@ -338,7 +340,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 将浮点坐标向下取整为单元格坐标
+    ///     将浮点坐标向下取整为单元格坐标
     /// </summary>
     public static int ToCell(float x)
     {
@@ -346,7 +348,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 将浮点坐标转换为二维单元格坐标
+    ///     将浮点坐标转换为二维单元格坐标
     /// </summary>
     public static Point2 ToCell(float x, float y)
     {
@@ -354,7 +356,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 将二维向量转换为单元格坐标
+    ///     将二维向量转换为单元格坐标
     /// </summary>
     public static Point2 ToCell(Vector2 p)
     {
@@ -362,7 +364,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 将浮点坐标转换为三维单元格坐标
+    ///     将浮点坐标转换为三维单元格坐标
     /// </summary>
     public static Point3 ToCell(float x, float y, float z)
     {
@@ -370,7 +372,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 将三维向量转换为单元格坐标
+    ///     将三维向量转换为单元格坐标
     /// </summary>
     public static Point3 ToCell(Vector3 p)
     {
@@ -378,7 +380,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 检查单元格坐标是否有效（Y坐标范围检查）
+    ///     检查单元格坐标是否有效（Y坐标范围检查）
     /// </summary>
     public bool IsCellValid(int x, int y, int z)
     {
@@ -391,7 +393,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取单元格的值（带边界检查）
+    ///     获取单元格的值（带边界检查）
     /// </summary>
     public int GetCellValue(int x, int y, int z)
     {
@@ -399,7 +401,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取单元格的内容（带边界检查）
+    ///     获取单元格的内容（带边界检查）
     /// </summary>
     public int GetCellContents(int x, int y, int z)
     {
@@ -407,7 +409,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取单元格的光照值（带边界检查）
+    ///     获取单元格的光照值（带边界检查）
     /// </summary>
     public int GetCellLight(int x, int y, int z)
     {
@@ -415,7 +417,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 快速获取单元格的值（无边界检查）
+    ///     快速获取单元格的值（无边界检查）
     /// </summary>
     public int GetCellValueFast(int x, int y, int z)
     {
@@ -423,7 +425,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 快速获取单元格的值（假设区块已存在）
+    ///     快速获取单元格的值（假设区块已存在）
     /// </summary>
     public int GetCellValueFastChunkExists(int x, int y, int z)
     {
@@ -431,7 +433,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 快速获取单元格的内容类型
+    ///     快速获取单元格的内容类型
     /// </summary>
     public int GetCellContentsFast(int x, int y, int z)
     {
@@ -439,7 +441,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 快速获取单元格的光照值
+    ///     快速获取单元格的光照值
     /// </summary>
     public int GetCellLightFast(int x, int y, int z)
     {
@@ -447,7 +449,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 快速设置单元格的值
+    ///     快速设置单元格的值
     /// </summary>
     public void SetCellValueFast(int x, int y, int z, int value)
     {
@@ -455,7 +457,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 计算指定列的最高单元格高度
+    ///     计算指定列的最高单元格高度
     /// </summary>
     public int CalculateTopmostCellHeight(int x, int z)
     {
@@ -463,7 +465,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取列数据（Shaft）的原始值
+    ///     获取列数据（Shaft）的原始值
     /// </summary>
     /// <remarks>Shaft 存储了该列的温度、湿度、高度等信息</remarks>
     public long GetShaftValue(int x, int z)
@@ -472,7 +474,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 设置列数据（Shaft）的原始值
+    ///     设置列数据（Shaft）的原始值
     /// </summary>
     public void SetShaftValue(int x, int z, long value)
     {
@@ -480,7 +482,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取指定位置的温度值
+    ///     获取指定位置的温度值
     /// </summary>
     public int GetTemperature(int x, int z)
     {
@@ -488,7 +490,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 设置指定位置的温度值
+    ///     设置指定位置的温度值
     /// </summary>
     public void SetTemperature(int x, int z, int temperature)
     {
@@ -496,7 +498,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取指定位置的湿度值
+    ///     获取指定位置的湿度值
     /// </summary>
     public int GetHumidity(int x, int z)
     {
@@ -504,7 +506,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 设置指定位置的湿度值
+    ///     设置指定位置的湿度值
     /// </summary>
     public void SetHumidity(int x, int z, int humidity)
     {
@@ -512,7 +514,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取指定列的最高方块高度
+    ///     获取指定列的最高方块高度
     /// </summary>
     public int GetTopHeight(int x, int z)
     {
@@ -520,7 +522,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 设置指定列的最高方块高度
+    ///     设置指定列的最高方块高度
     /// </summary>
     public void SetTopHeight(int x, int z, int topHeight)
     {
@@ -528,7 +530,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取指定列的最低方块高度
+    ///     获取指定列的最低方块高度
     /// </summary>
     public int GetBottomHeight(int x, int z)
     {
@@ -536,7 +538,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 设置指定列的最低方块高度
+    ///     设置指定列的最低方块高度
     /// </summary>
     public void SetBottomHeight(int x, int z, int bottomHeight)
     {
@@ -544,7 +546,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取指定列的阳光能到达的最高高度
+    ///     获取指定列的阳光能到达的最高高度
     /// </summary>
     public int GetSunlightHeight(int x, int z)
     {
@@ -552,7 +554,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 设置指定列的阳光能到达的最高高度
+    ///     设置指定列的阳光能到达的最高高度
     /// </summary>
     public void SetSunlightHeight(int x, int z, int sunlightHeight)
     {
@@ -560,7 +562,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 创建方块值（仅包含内容类型）
+    ///     创建方块值（仅包含内容类型）
     /// </summary>
     /// <param name="contents">方块内容类型 ID</param>
     public static int MakeBlockValue(int contents)
@@ -569,7 +571,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 创建完整的方块值
+    ///     创建完整的方块值
     /// </summary>
     /// <param name="contents">方块内容类型 ID（10位）</param>
     /// <param name="light">光照值（4位）</param>
@@ -580,7 +582,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从方块值中提取内容类型 ID
+    ///     从方块值中提取内容类型 ID
     /// </summary>
     public static int ExtractContents(int value)
     {
@@ -588,7 +590,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从方块值中提取光照值
+    ///     从方块值中提取光照值
     /// </summary>
     public static int ExtractLight(int value)
     {
@@ -596,7 +598,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从方块值中提取数据
+    ///     从方块值中提取数据
     /// </summary>
     public static int ExtractData(int value)
     {
@@ -604,7 +606,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从 Shaft 值中提取最高方块高度
+    ///     从 Shaft 值中提取最高方块高度
     /// </summary>
     /// <param name="value">Shaft 数据值</param>
     /// <param name="topHeightMask">最高高度位掩码</param>
@@ -615,7 +617,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从 Shaft 值中提取最低方块高度
+    ///     从 Shaft 值中提取最低方块高度
     /// </summary>
     /// <param name="value">Shaft 数据值</param>
     /// <param name="bottomHeightMask">最低高度位掩码</param>
@@ -628,7 +630,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从 Shaft 值中提取阳光照射高度
+    ///     从 Shaft 值中提取阳光照射高度
     /// </summary>
     /// <param name="value">Shaft 数据值</param>
     /// <param name="sunlightHeightMask">阳光高度位掩码</param>
@@ -641,7 +643,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从 Shaft 值中提取湿度值
+    ///     从 Shaft 值中提取湿度值
     /// </summary>
     /// <param name="value">Shaft 数据值</param>
     /// <param name="humidityMask">湿度位掩码</param>
@@ -653,7 +655,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从 Shaft 值中提取温度值
+    ///     从 Shaft 值中提取温度值
     /// </summary>
     /// <param name="value">Shaft 数据值</param>
     /// <param name="temperatureMask">温度位掩码</param>
@@ -666,7 +668,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 替换方块值中的内容类型
+    ///     替换方块值中的内容类型
     /// </summary>
     public static int ReplaceContents(int value, int contents)
     {
@@ -674,7 +676,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 替换方块值中的光照值
+    ///     替换方块值中的光照值
     /// </summary>
     public static int ReplaceLight(int value, int light)
     {
@@ -682,7 +684,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 替换方块值中的数据
+    ///     替换方块值中的数据
     /// </summary>
     public static int ReplaceData(int value, int data)
     {
@@ -690,7 +692,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 替换 Shaft 值中的最高高度
+    ///     替换 Shaft 值中的最高高度
     /// </summary>
     /// <param name="value">原始 Shaft 值</param>
     /// <param name="topHeight">新的最高高度</param>
@@ -701,7 +703,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 替换 Shaft 值中的最低高度
+    ///     替换 Shaft 值中的最低高度
     /// </summary>
     /// <param name="value">原始 Shaft 值</param>
     /// <param name="bottomHeight">新的最低高度</param>
@@ -712,7 +714,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 替换 Shaft 值中的阳光高度
+    ///     替换 Shaft 值中的阳光高度
     /// </summary>
     /// <param name="value">原始 Shaft 值</param>
     /// <param name="sunlightHeight">新的阳光高度</param>
@@ -723,7 +725,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 替换 Shaft 值中的湿度
+    ///     替换 Shaft 值中的湿度
     /// </summary>
     /// <param name="value">原始 Shaft 值</param>
     /// <param name="humidity">新的湿度值</param>
@@ -734,7 +736,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 替换 Shaft 值中的温度
+    ///     替换 Shaft 值中的温度
     /// </summary>
     /// <param name="value">原始 Shaft 值</param>
     /// <param name="temperature">新的温度值</param>
@@ -745,7 +747,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取指定位置的含季节偏移的温度值
+    ///     获取指定位置的含季节偏移的温度值
     /// </summary>
     public int GetSeasonalTemperature(int x, int z)
     {
@@ -753,7 +755,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从 Shaft 值获取含季节偏移的温度值
+    ///     从 Shaft 值获取含季节偏移的温度值
     /// </summary>
     public int GetSeasonalTemperature(long shaftValue)
     {
@@ -761,7 +763,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 获取指定位置的含季节偏移的湿度值
+    ///     获取指定位置的含季节偏移的湿度值
     /// </summary>
     public int GetSeasonalHumidity(int x, int z)
     {
@@ -769,7 +771,7 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 从 Shaft 值获取含季节偏移的湿度值
+    ///     从 Shaft 值获取含季节偏移的湿度值
     /// </summary>
     public int GetSeasonalHumidity(long shaftValue)
     {
@@ -777,32 +779,32 @@ public class Terrain : IDisposable
     }
 
     /// <summary>
-    /// 区块存储器（使用开放寻址法实现的哈希表）
+    ///     区块存储器（使用开放寻址法实现的哈希表）
     /// </summary>
     private class ChunksStorage
     {
         /// <summary>
-        /// 坐标位移位数（用于哈希计算）
+        ///     坐标位移位数（用于哈希计算）
         /// </summary>
         private const int _shift = 8;
 
         /// <summary>
-        /// 存储容量（固定大小）
+        ///     存储容量（固定大小）
         /// </summary>
         private const int _capacity = 65536;
 
         /// <summary>
-        /// 容量掩码（用于快速取模）
+        ///     容量掩码（用于快速取模）
         /// </summary>
         private const int _capacityMinusOne = 0xFFFF;
 
         /// <summary>
-        /// 存储数组
+        ///     存储数组
         /// </summary>
         private readonly TerrainChunk?[] _array = new TerrainChunk[_capacity];
 
         /// <summary>
-        /// 根据坐标获取区块
+        ///     根据坐标获取区块
         /// </summary>
         /// <param name="x">区块 X 坐标</param>
         /// <param name="y">区块 Y（Z）坐标</param>
@@ -833,7 +835,7 @@ public class Terrain : IDisposable
         }
 
         /// <summary>
-        /// 添加区块到存储
+        ///     添加区块到存储
         /// </summary>
         public void Add(int x, int y, TerrainChunk chunk)
         {
@@ -847,7 +849,7 @@ public class Terrain : IDisposable
         }
 
         /// <summary>
-        /// 从存储中移除区块
+        ///     从存储中移除区块
         /// </summary>
         public void Remove(int x, int y)
         {

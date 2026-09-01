@@ -47,6 +47,5 @@ public struct Segment3(Vector3 start, Vector3 end)
 
         var num3 = MathUtils.Sqrt(v2.LengthSquared() - Vector3.Cross(p - s.Start, v).LengthSquared() / num2);
         return Vector3.Lerp(s.Start, s.End, num3 / MathUtils.Sqrt(num2));
-
     }
 }

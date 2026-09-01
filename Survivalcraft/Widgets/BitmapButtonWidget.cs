@@ -49,7 +49,7 @@ public class BitmapButtonWidget : ButtonWidget
     public required Subtexture ClickedSubtexture { get; set; }
 
     /// <summary>
-    /// 文本颜色
+    ///     文本颜色
     /// </summary>
     public override Color Color { get; set; } = Color.White;
 

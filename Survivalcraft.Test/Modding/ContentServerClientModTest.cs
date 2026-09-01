@@ -2,8 +2,8 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 
-using Game.Modding;
 using Game.Content;
+using Game.Modding;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -156,12 +156,13 @@ public sealed class ContentServerClientModTest : IDisposable
     private static byte[] CreatePackageBytes(string modId, string version)
     {
         using var stream = ScpkgTestPackage.Create($$"""
-                           {
-                             "id": "{{modId}}",
-                             "name": "{{modId}}",
-                             "version": "{{version}}"
-                           }
-                           """, new Dictionary<string, string> { ["data/marker.txt"] = "data" });
+                                                     {
+                                                       "id": "{{modId}}",
+                                                       "name": "{{modId}}",
+                                                       "version": "{{version}}"
+                                                     }
+                                                     """,
+            new Dictionary<string, string> { ["data/marker.txt"] = "data" });
         return stream.ToArray();
     }
 

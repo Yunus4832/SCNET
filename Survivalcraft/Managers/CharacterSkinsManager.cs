@@ -26,7 +26,7 @@ public static class CharacterSkinsManager
     }
 
     /// <summary>
-    /// 是否为Pak资源
+    ///     是否为Pak资源
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
@@ -36,7 +36,7 @@ public static class CharacterSkinsManager
     }
 
     /// <summary>
-    /// 是否具有皮肤资源
+    ///     是否具有皮肤资源
     /// </summary>
     /// <param name="name"></param>
     /// <returns></returns>
@@ -46,7 +46,7 @@ public static class CharacterSkinsManager
     }
 
     /// <summary>
-    /// 保存bytes皮肤数据为文件
+    ///     保存bytes皮肤数据为文件
     /// </summary>
     /// <param name="name"></param>
     /// <param name="skinData"></param>
@@ -74,7 +74,7 @@ public static class CharacterSkinsManager
     }
 
     /// <summary>
-    /// 获取Storage中的皮肤文件路径
+    ///     获取Storage中的皮肤文件路径
     /// </summary>
     /// <param name="name"></param>
     /// <param name="filename"></param>
@@ -93,7 +93,8 @@ public static class CharacterSkinsManager
         }
 
         filename = Storage.CombinePaths(GamePaths.CharacterSkins, name + _assetExtension);
-        return Storage.FileExists(filename) && ContentAssetStore.IsComplete(GamePaths.CharacterSkins, name + _assetExtension, _assetExtension);
+        return Storage.FileExists(filename) &&
+               ContentAssetStore.IsComplete(GamePaths.CharacterSkins, name + _assetExtension, _assetExtension);
     }
 
     public static string GetDisplayName(string name)
@@ -149,7 +150,7 @@ public static class CharacterSkinsManager
     }
 
     /// <summary>
-    /// 根据名称返回皮肤的Image资源
+    ///     根据名称返回皮肤的Image资源
     /// </summary>
     private static bool GetCharacterSkinImage(string name, out Texture2D? image)
     {

@@ -1,7 +1,7 @@
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Immutable-by-contract view of authoritative chunk contents.
+///     Immutable-by-contract view of authoritative chunk contents.
 /// </summary>
 public sealed class AuthorityChunkSnapshot
 {

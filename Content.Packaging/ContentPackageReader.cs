@@ -132,6 +132,7 @@ public static class ContentPackageReader
             {
                 return false;
             }
+
             read += count;
         }
 

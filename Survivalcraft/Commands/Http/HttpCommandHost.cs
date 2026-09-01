@@ -7,7 +7,7 @@ using System.Text.Json.Nodes;
 namespace Game.Commands;
 
 /// <summary>
-/// Loopback HTTP frontend for commands with an explicit HTTP binding.
+///     Loopback HTTP frontend for commands with an explicit HTTP binding.
 /// </summary>
 public sealed class HttpCommandHost : IDisposable
 {
@@ -215,10 +215,12 @@ public sealed class HttpCommandHost : IDisposable
             {
                 break;
             }
+
             if (body.Length + count > _maxBodyBytes)
             {
                 throw new InvalidDataException("HTTP request body is too large.");
             }
+
             body.Write(buffer, 0, count);
         }
 
@@ -255,9 +257,9 @@ public sealed class HttpCommandHost : IDisposable
             throw new InvalidOperationException(
                 "HTTP command access token must contain at least 32 characters.");
         }
+
         return accessToken;
     }
-
 }
 
 public static class HttpCommandHostManager
@@ -287,6 +289,7 @@ public static class HttpCommandHostManager
                 "Set HttpCommandPort in Settings.xml or provide --http-command-port with a value from 1 to 65535.");
             return;
         }
+
         try
         {
             _host = HttpCommandHost.Start(port, accessToken, principal);

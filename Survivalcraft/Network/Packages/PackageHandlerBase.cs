@@ -11,4 +11,3 @@ public abstract class PackageHandlerBase<TPackage> : IPackageHandler<TPackage> w
         Handle((TPackage)package, netNode, isServer);
     }
 }
-

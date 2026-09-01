@@ -182,7 +182,6 @@ public abstract class SubsystemFluidBlockBehavior(
 
         v += value;
         return v * 2f;
-
     }
 
     public Vector2? CalculateFlowSpeed(int x, int y, int z)
@@ -341,7 +340,6 @@ public abstract class SubsystemFluidBlockBehavior(
         SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
         Set(x, y, z, fluidValue);
         return true;
-
     }
 
     public float? CalculateDistanceToFluid(Vector3 p, int radius, bool flowingFluidOnly)

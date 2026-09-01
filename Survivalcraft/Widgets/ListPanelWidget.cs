@@ -112,6 +112,7 @@ public class ListPanelWidget : ScrollPanelWidget
                 SelectedIndex = null;
                 return;
             }
+
             var num = _items.IndexOf(value);
             SelectedIndex = num >= 0 ? new int?(num) : null;
         }

@@ -3,8 +3,8 @@ using Game.Messaging;
 namespace Game.Widgets;
 
 /// <summary>
-/// Read-only recent message history shown in the HUD.
-/// Sending messages and commands belongs to <see cref="MessagePanelWidget"/>.
+///     Read-only recent message history shown in the HUD.
+///     Sending messages and commands belongs to <see cref="MessagePanelWidget" />.
 /// </summary>
 public sealed class MessageHistoryOverlayWidget : CanvasWidget
 {

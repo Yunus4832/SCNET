@@ -106,7 +106,8 @@ public class ComponentFlu : Component, IUpdateable
                 if (_subsystemTime.GameTime - _lastMessageTime > 60.0)
                 {
                     _lastMessageTime = _subsystemTime.GameTime;
-                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 1), Color.White, true,
+                    _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 1), Color.White,
+                        true,
                         true);
                 }
             }

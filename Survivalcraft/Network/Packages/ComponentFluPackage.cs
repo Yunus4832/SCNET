@@ -69,6 +69,4 @@ public class ComponentFluPackage : IPackage
         CoughDuration = reader.ReadSingle();
         SneezeDuration = reader.ReadSingle();
     }
-
-
 }

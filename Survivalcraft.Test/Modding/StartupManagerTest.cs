@@ -340,6 +340,7 @@ public sealed class StartupManagerTest : IDisposable
             {
                 Storage.CopyFile(path, backupPath);
             }
+
             return new FileBackup(path, backupPath, hadOriginal);
         }
 
@@ -350,6 +351,7 @@ public sealed class StartupManagerTest : IDisposable
             {
                 Storage.CopyFile(_backupPath, _path);
             }
+
             DeleteIfExists(_backupPath);
         }
     }

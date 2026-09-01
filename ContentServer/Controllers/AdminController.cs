@@ -6,8 +6,8 @@ using ContentServer.Controllers.Mappings;
 using ContentServer.Domain.Administration;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Publishers;
-using ContentServer.Middlewares;
 using ContentServer.Infrastructure;
+using ContentServer.Middlewares;
 
 using MediatR;
 

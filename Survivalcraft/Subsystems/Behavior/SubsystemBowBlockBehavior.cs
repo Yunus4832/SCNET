@@ -13,11 +13,11 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
 
     private readonly Random _random = new();
 
-    private  SubsystemAudio _subsystemAudio = null!;
+    private SubsystemAudio _subsystemAudio = null!;
 
-    private  SubsystemProjectiles _subsystemProjectiles = null!;
+    private SubsystemProjectiles _subsystemProjectiles = null!;
 
-    private  SubsystemTime _subsystemTime = null!;
+    private SubsystemTime _subsystemTime = null!;
 
     private readonly ArrowBlock.ArrowType[] _supportedArrowTypes =
     [

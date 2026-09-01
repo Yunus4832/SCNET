@@ -11,6 +11,7 @@ public interface IContentInstaller
 }
 
 public sealed record ContentInstallResult(ContentPackageType Type, string? AssetKey, string DisplayName);
+
 public sealed record ContentInstallOptions(string? ReplaceAssetKey = null);
 
 public static class ContentInstallationManager
@@ -26,7 +27,10 @@ public static class ContentInstallationManager
     {
         ArgumentNullException.ThrowIfNull(package);
         if (!package.CanSeek)
+        {
             throw new ArgumentException("A validated, seekable cache package stream is required.", nameof(package));
+        }
+
         package.Position = 0;
         var inspection = ContentPackageReader.Inspect(package);
         package.Position = 0;
@@ -42,11 +46,15 @@ public static class ContentInstallationManager
     private sealed class ModContentInstaller : IContentInstaller
     {
         public ContentPackageType Type => ContentPackageType.Mod;
+
         public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
             ContentInstallOptions options)
         {
             if (options.ReplaceAssetKey is not null)
+            {
                 throw new InvalidOperationException("Mod packages cannot replace installed assets.");
+            }
+
             return new(Type, null, manifest.Name);
         }
     }
@@ -54,6 +62,7 @@ public static class ContentInstallationManager
     private sealed class WorldContentInstaller : IContentInstaller
     {
         public ContentPackageType Type => ContentPackageType.World;
+
         public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
             ContentInstallOptions options)
         {
@@ -67,6 +76,7 @@ public static class ContentInstallationManager
     private sealed class BlocksTextureContentInstaller : IContentInstaller
     {
         public ContentPackageType Type => ContentPackageType.BlocksTexture;
+
         public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
             ContentInstallOptions options)
         {
@@ -81,6 +91,7 @@ public static class ContentInstallationManager
     private sealed class CharacterSkinContentInstaller : IContentInstaller
     {
         public ContentPackageType Type => ContentPackageType.CharacterSkin;
+
         public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
             ContentInstallOptions options)
         {
@@ -95,6 +106,7 @@ public static class ContentInstallationManager
     private sealed class FurniturePackContentInstaller : IContentInstaller
     {
         public ContentPackageType Type => ContentPackageType.FurniturePack;
+
         public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
             ContentInstallOptions options)
         {

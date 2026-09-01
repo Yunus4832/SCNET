@@ -15,7 +15,7 @@ public class ComponentAutoJump : Component, IUpdateable
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
-    private SubsystemTime _subsystemTime  = null!;
+    private SubsystemTime _subsystemTime = null!;
 
     private ComponentCreature _componentCreature = null!;
 

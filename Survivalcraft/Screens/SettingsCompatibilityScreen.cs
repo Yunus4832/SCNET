@@ -37,7 +37,8 @@ public class SettingsCompatibilityScreen : Screen
             SettingsManager.Current.UseReducedZRange = false;
         }
 
-        _useReducedZRangeButton.Text = SettingsManager.Current.UseReducedZRange ? LanguageManager.On : LanguageManager.Off;
+        _useReducedZRangeButton.Text =
+            SettingsManager.Current.UseReducedZRange ? LanguageManager.On : LanguageManager.Off;
         _resetDefaultsButton.IsEnabled = SettingsManager.Current.UseReducedZRange;
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)

@@ -1,7 +1,7 @@
 namespace Engine.FileStorage;
 
 /// <summary>
-/// Process-wide entry point for the file picker registered by the active platform starter.
+///     Process-wide entry point for the file picker registered by the active platform starter.
 /// </summary>
 public static class FilePicker
 {

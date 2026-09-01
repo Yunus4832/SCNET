@@ -123,8 +123,8 @@ public class Settings
     public string MotdLastDownloadedData { get; set; } = string.Empty;
 
     /// <summary>
-    /// Stable identifier for this local multiplayer client. This is not an account credential
-    /// and does not authenticate the player to a remote service.
+    ///     Stable identifier for this local multiplayer client. This is not an account credential
+    ///     and does not authenticate the player to a remote service.
     /// </summary>
     public Guid MultiplayerClientId { get; set; }
 

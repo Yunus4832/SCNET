@@ -244,7 +244,6 @@ public class XmlInputArchive(XElement node, int version = 0) : InputArchive(vers
         runtimeType = xAttribute3 != null ? TypeCache.FindType(xAttribute3.Value, false, true) : null;
         isReference = false;
         objectId = int.Parse(xAttribute2.Value);
-
     }
 
     private void ReadObject(string? name, SerializeData staticSerializeData, ref object? value)

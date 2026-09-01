@@ -17,8 +17,10 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
             throw new ContentPackageException("Mod metadata.side is invalid.");
         }
 
-        var entrypoints = ContentPackageManifest.GetRequiredProperty(manifest.Metadata, "entrypoints", "manifest.metadata");
-        var dependencies = ContentPackageManifest.GetRequiredProperty(manifest.Metadata, "dependencies", "manifest.metadata");
+        var entrypoints =
+            ContentPackageManifest.GetRequiredProperty(manifest.Metadata, "entrypoints", "manifest.metadata");
+        var dependencies =
+            ContentPackageManifest.GetRequiredProperty(manifest.Metadata, "dependencies", "manifest.metadata");
         if (entrypoints.ValueKind != JsonValueKind.Object || dependencies.ValueKind != JsonValueKind.Array)
         {
             throw new ContentPackageException("Mod metadata.entrypoints and metadata.dependencies are invalid.");
@@ -57,9 +59,11 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
             {
                 throw new ContentPackageException("Mod payload/mod.json must be an object.");
             }
+
             ContentPackageManifest.EnsureExactProperties(document.RootElement, ["formatVersion"],
                 "Mod payload/mod.json");
-            if (ContentPackageManifest.GetRequiredInt32(document.RootElement, "formatVersion", "Mod payload/mod.json") != 1)
+            if (ContentPackageManifest.GetRequiredInt32(document.RootElement, "formatVersion",
+                    "Mod payload/mod.json") != 1)
             {
                 throw new ContentPackageException("Mod payload/mod.json formatVersion must be 1.");
             }
@@ -75,6 +79,7 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
             {
                 continue;
             }
+
             throw new ContentPackageException($"Mod payload path '{path}' is invalid.");
         }
     }
@@ -85,6 +90,7 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
         {
             throw new ContentPackageException("Mod dependencies must contain objects.");
         }
+
         ContentPackageManifest.EnsureExactProperties(dependency,
             ["identifier", "minimumVersion", "optional"], "manifest.metadata.dependencies[]");
         var identifier = ContentPackageManifest.GetRequiredString(dependency, "identifier",

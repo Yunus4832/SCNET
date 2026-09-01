@@ -40,6 +40,7 @@ public abstract class ImagePayloadCodec : IContentPayloadCodec
         {
             PngPayloadValidator.Validate(stream, width, height, Entry);
         }
+
         try
         {
             using var stream = context.OpenEntry(Entry);

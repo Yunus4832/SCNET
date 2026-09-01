@@ -1,7 +1,7 @@
 namespace Game.Widgets;
 
 /// <summary>
-/// Selectable player row used by the full player management panel.
+///     Selectable player row used by the full player management panel.
 /// </summary>
 public sealed class PlayerManagementItemWidget : CanvasWidget
 {

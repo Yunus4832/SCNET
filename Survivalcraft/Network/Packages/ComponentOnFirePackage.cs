@@ -116,6 +116,4 @@ public class ComponentOnFirePackage : IPackage
                 break;
         }
     }
-
-
 }

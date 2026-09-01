@@ -7,8 +7,8 @@ using Game.Network.Serialization;
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Remote transport boundary for authoritative chunk contents.
-/// Network handlers enqueue immutable snapshots; the terrain update loop owns installation.
+///     Remote transport boundary for authoritative chunk contents.
+///     Network handlers enqueue immutable snapshots; the terrain update loop owns installation.
 /// </summary>
 public sealed class NetworkChunkContentTransport : IChunkContentTransport
 {
@@ -67,6 +67,7 @@ public sealed class NetworkChunkContentTransport : IChunkContentTransport
             Interlocked.Add(ref _fullChunkRequestsSent, fullRequests.Count);
             CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(fullRequests));
         }
+
         foreach (var batch in fragmentRequests.Chunk(
                      SubsystemTerrainPackage.MaximumFragmentRequestsPerPackage))
         {

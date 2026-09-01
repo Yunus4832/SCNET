@@ -8,7 +8,7 @@ public abstract class BaseBatch
 
     public DepthStencilState DepthStencilState { get; set; } = DepthStencilState.None;
 
-    public RasterizerState RasterizerState { get; set; } =  RasterizerState.CullNoneScissor;
+    public RasterizerState RasterizerState { get; set; } = RasterizerState.CullNoneScissor;
 
     public BlendState BlendState { get; set; } = BlendState.Opaque;
 

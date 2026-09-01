@@ -3,7 +3,7 @@ using Game.Terrains.Distribution;
 namespace Game.Network;
 
 /// <summary>
-/// 保持首次请求顺序的区块请求去重队列。
+///     保持首次请求顺序的区块请求去重队列。
 /// </summary>
 public sealed class PendingChunkRequestQueue : IEnumerable<ChunkContentRequest>
 {

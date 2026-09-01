@@ -61,7 +61,6 @@ public class NewWorldScreen : Screen
                 Name = WorldsManager.NewWorldNames[_random.Int(0, WorldsManager.NewWorldNames.Count - 1)]
             };
         }
-
     }
 
     public override void Update()

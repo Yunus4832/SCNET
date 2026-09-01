@@ -417,7 +417,7 @@ public class NetPlayScreen : Screen
     }
 
     /// <summary>
-    /// 发现局域网服务器
+    ///     发现局域网服务器
     /// </summary>
     /// <param name="end"></param>
     private static void DiscoverLocalServers(Action end)
@@ -567,7 +567,6 @@ public class NetPlayScreen : Screen
 
             UpdateList();
         }
-
     }
 
     public override void Enter(object[] parameters)
@@ -736,7 +735,7 @@ public class NetPlayScreen : Screen
     }
 
     /// <summary>
-    /// 获取存档的季节
+    ///     获取存档的季节
     /// </summary>
     /// <param name="season">季节枚举</param>
     /// <param name="timeOfSeason">季节进度</param>
@@ -790,12 +789,12 @@ public class NetPlayScreen : Screen
         public string Version = string.Empty;
 
         /// <summary>
-        /// 季节
+        ///     季节
         /// </summary>
         public Season Season { get; set; }
 
         /// <summary>
-        /// 季节进度
+        ///     季节进度
         /// </summary>
         public float TimeOfSeason { get; set; }
 

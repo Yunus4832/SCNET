@@ -78,7 +78,8 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 if (isServer)
                 {
                     var subsystemBlockEntities = project.FindSubsystem<SubsystemBlockEntities>(true)!;
-                    var blockEntity = subsystemBlockEntities.GetBlockEntity(package.Point3.X, package.Point3.Y, package.Point3.Z);
+                    var blockEntity =
+                        subsystemBlockEntities.GetBlockEntity(package.Point3.X, package.Point3.Y, package.Point3.Z);
                     var inventory = blockEntity?.Entity.FindComponent<IInventory>(false);
                     if (inventory != null)
                     {
@@ -119,7 +120,8 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                     if (CommonLib.MainPlayer != null)
                     {
                         DialogsManager.ShowDialog(CommonLib.MainPlayer.GuiWidget,
-                            new EditSignDialog(project.FindSubsystem<SubsystemSignBlockBehavior>(true)!, package.Point3));
+                            new EditSignDialog(project.FindSubsystem<SubsystemSignBlockBehavior>(true)!,
+                                package.Point3));
                     }
                 }
 

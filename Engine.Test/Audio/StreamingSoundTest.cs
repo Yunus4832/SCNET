@@ -4,25 +4,26 @@ using Engine.Media;
 namespace Engine.Test.Audio;
 
 /// <summary>
-/// StreamingSound 类的单元测试。
-/// 测试流式音频播放器的各项功能，包括播放控制、音量设置和 OGG 格式支持。
+///     StreamingSound 类的单元测试。
+///     测试流式音频播放器的各项功能，包括播放控制、音量设置和 OGG 格式支持。
 /// </summary>
 /// <remarks>
-/// 所有测试都需要有效的音频输出设备。如果音频初始化失败，构造函数将抛出异常。
-/// 测试使用 Content/Assets/Music/AloneForever.ogg 作为测试音频文件。
+///     所有测试都需要有效的音频输出设备。如果音频初始化失败，构造函数将抛出异常。
+///     测试使用 Content/Assets/Music/AloneForever.ogg 作为测试音频文件。
 /// </remarks>
 public class StreamingSoundTest : IDisposable
 {
     private readonly string _musicFilePath;
 
     /// <summary>
-    /// 初始化测试环境，设置测试音频文件路径并初始化音频系统。
+    ///     初始化测试环境，设置测试音频文件路径并初始化音频系统。
     /// </summary>
     /// <exception cref="InvalidOperationException">音频系统初始化失败</exception>
     public StreamingSoundTest()
     {
         // 设置测试音乐文件路径
-        _musicFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Content", "Assets", "Music", "AloneForever.ogg");
+        _musicFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "..", "Content",
+            "Assets", "Music", "AloneForever.ogg");
         _musicFilePath = Path.GetFullPath(_musicFilePath);
 
         // 确保音频系统已初始化
@@ -34,12 +35,13 @@ public class StreamingSoundTest : IDisposable
         // 如果音频初始化失败，抛出异常终止测试
         if (!Mixer.IsAudioInitialized)
         {
-            throw new InvalidOperationException("Audio system initialization failed. Tests cannot run without audio device.");
+            throw new InvalidOperationException(
+                "Audio system initialization failed. Tests cannot run without audio device.");
         }
     }
 
     /// <summary>
-    /// 清理测试资源。
+    ///     清理测试资源。
     /// </summary>
     public void Dispose()
     {
@@ -47,7 +49,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：使用有效的 OGG 音频流创建 StreamingSound 实例。
+    ///     测试：使用有效的 OGG 音频流创建 StreamingSound 实例。
     /// </summary>
     [Fact]
     public void Constructor_WithValidOggStream_ShouldCreateStreamingSound()
@@ -65,7 +67,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：传入 null 流媒体源时应抛出 ArgumentNullException。
+    ///     测试：传入 null 流媒体源时应抛出 ArgumentNullException。
     /// </summary>
     [Fact]
     public void Constructor_WithNullStreamingSource_ShouldThrowArgumentNullException()
@@ -75,7 +77,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：播放 OGG 音乐后状态应变为 Playing。
+    ///     测试：播放 OGG 音乐后状态应变为 Playing。
     /// </summary>
     [Fact]
     public void Play_OggMusic_ShouldStartPlaying()
@@ -96,7 +98,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：暂停正在播放的音乐后状态应变为 Paused。
+    ///     测试：暂停正在播放的音乐后状态应变为 Paused。
     /// </summary>
     [Fact]
     public void Pause_PlayingOggMusic_ShouldPause()
@@ -118,7 +120,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：停止正在播放的音乐后状态应变为 Stopped。
+    ///     测试：停止正在播放的音乐后状态应变为 Stopped。
     /// </summary>
     [Fact]
     public void Stop_PlayingOggMusic_ShouldStop()
@@ -137,7 +139,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：停止后重新播放应从头开始，状态变为 Playing。
+    ///     测试：停止后重新播放应从头开始，状态变为 Playing。
     /// </summary>
     [Fact]
     public void Play_AfterStop_ShouldRestartFromBeginning()
@@ -160,7 +162,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：创建 StreamingSound 时设置自定义音量应生效。
+    ///     测试：创建 StreamingSound 时设置自定义音量应生效。
     /// </summary>
     [Fact]
     public void StreamingSound_WithCustomVolume_ShouldSetVolume()
@@ -175,7 +177,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：创建 StreamingSound 时设置自定义音高应生效。
+    ///     测试：创建 StreamingSound 时设置自定义音高应生效。
     /// </summary>
     [Fact]
     public void StreamingSound_WithCustomPitch_ShouldSetPitch()
@@ -190,7 +192,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：创建 StreamingSound 时启用循环播放应生效。
+    ///     测试：创建 StreamingSound 时启用循环播放应生效。
     /// </summary>
     [Fact]
     public void StreamingSound_WithLoopedEnabled_ShouldLoop()
@@ -205,7 +207,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：Ogg.Stream 方法应返回有效的流媒体源。
+    ///     测试：Ogg.Stream 方法应返回有效的流媒体源。
     /// </summary>
     [Fact]
     public void OggStream_ShouldReturnValidStreamingSource()
@@ -224,7 +226,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：从流媒体源读取数据应返回有效的音频数据。
+    ///     测试：从流媒体源读取数据应返回有效的音频数据。
     /// </summary>
     [Fact]
     public void StreamingSource_Read_ShouldReturnData()
@@ -242,7 +244,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：复制流媒体源应创建独立的副本，位置从0开始。
+    ///     测试：复制流媒体源应创建独立的副本，位置从0开始。
     /// </summary>
     [Fact]
     public void StreamingSource_Duplicate_ShouldCreateIndependentCopy()
@@ -267,7 +269,7 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 测试：CalculateBufferSize 方法应返回正确的缓冲区大小。
+    ///     测试：CalculateBufferSize 方法应返回正确的缓冲区大小。
     /// </summary>
     [Fact]
     public void CalculateBufferSize_ShouldReturnCorrectSize()
@@ -286,8 +288,8 @@ public class StreamingSoundTest : IDisposable
     }
 
     /// <summary>
-    /// 播放测试：实际播放音乐3秒钟，用于验证是否能听到声音。
-    /// 注意：此测试需要音频输出设备，且会实际播放声音。
+    ///     播放测试：实际播放音乐3秒钟，用于验证是否能听到声音。
+    ///     注意：此测试需要音频输出设备，且会实际播放声音。
     /// </summary>
     [Fact]
     public void Play_OggMusic_For3Seconds_ShouldActuallyPlaySound()

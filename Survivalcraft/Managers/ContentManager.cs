@@ -270,7 +270,7 @@ public static class ContentManager
     }
 
     /// <summary>
-    /// 可能需要带上文件后缀，即获取名字+获取的后缀
+    ///     可能需要带上文件后缀，即获取名字+获取的后缀
     /// </summary>
     public static void Dispose(string name)
     {

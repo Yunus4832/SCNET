@@ -60,6 +60,4 @@ public class ComponentSleepPackage : IPackage
         Result = reader.ReadBoolean();
         Reason = reader.ReadString();
     }
-
-
 }

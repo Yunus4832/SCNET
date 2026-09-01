@@ -74,6 +74,4 @@ public class ProjectilePackage : IPackage
         OwnerId = reader.ReadInt32();
         IsFireProjectile = reader.ReadBoolean();
     }
-
-
 }

@@ -79,7 +79,6 @@ public static class AsyncDispatcher
 
             action.Invoke();
             return true;
-
         }
     }
 

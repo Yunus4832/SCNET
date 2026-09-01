@@ -95,5 +95,4 @@ public sealed class ClientChunkDerivationPipelineTest
         chunk.GeometryUploaded = false;
         Assert.False(ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Authority, chunk));
     }
-
 }

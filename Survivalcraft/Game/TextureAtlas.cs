@@ -61,6 +61,5 @@ public class TextureAtlas
         value2.Z = value.Right / (float)Texture.Width;
         value2.W = value.Bottom / (float)Texture.Height;
         return value2;
-
     }
 }

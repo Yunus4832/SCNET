@@ -67,7 +67,7 @@ public class Starter
     }
 
     /// <summary>
-    /// 加载窗口图标
+    ///     加载窗口图标
     /// </summary>
     private static Stream LoadWindowIcon()
     {

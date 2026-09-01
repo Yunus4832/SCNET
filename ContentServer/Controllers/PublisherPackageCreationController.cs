@@ -1,4 +1,5 @@
 using Content.Packaging;
+
 using ContentServer.Application;
 using ContentServer.Application.Queries;
 using ContentServer.Controllers.Mappings;
@@ -54,6 +55,7 @@ public sealed class PublisherPackageCreationController(
         {
             throw new KnownException("invalid_content_package", 400);
         }
+
         packageStore.DeleteTemporary(staged);
         var manifest = staged.Inspection.Manifest;
         return new PackagePreviewResponse(manifest.Type.ToString(), manifest.Identifier, manifest.Name,
@@ -64,11 +66,18 @@ public sealed class PublisherPackageCreationController(
     public async Task<ResponseData<ImageSourceInspection>> ValidateImageSource(CancellationToken cancellationToken)
     {
         _ = await RequireActivePublisherAsync(cancellationToken);
-        if (!Request.HasFormContentType) throw new KnownException("form_required", 400);
+        if (!Request.HasFormContentType)
+        {
+            throw new KnownException("form_required", 400);
+        }
+
         var form = await Request.ReadFormAsync(cancellationToken);
         var file = form.Files.GetFile("source");
         if (file is null || file.Length == 0 || file.Length > options.Value.MaximumPackageBytes)
+        {
             throw new KnownException("invalid_file", 400);
+        }
+
         try
         {
             await using var input = file.OpenReadStream();
@@ -127,32 +136,50 @@ public sealed class PublisherPackageCreationController(
     private async Task<(IFormCollection Form, IFormFile File)> RequireImageBuildFormAsync(
         CancellationToken cancellationToken)
     {
-        if (!Request.HasFormContentType) throw new KnownException("form_required", 400);
+        if (!Request.HasFormContentType)
+        {
+            throw new KnownException("form_required", 400);
+        }
+
         var form = await Request.ReadFormAsync(cancellationToken);
         var file = form.Files.GetFile("source");
         if (file is null || file.Length == 0 || string.IsNullOrWhiteSpace(form["type"]) ||
             string.IsNullOrWhiteSpace(form["identifier"]) || string.IsNullOrWhiteSpace(form["name"]) ||
             string.IsNullOrWhiteSpace(form["version"]))
+        {
             throw new KnownException("invalid_image_creation_request", 400);
+        }
+
         return (form, file);
     }
 
     private async Task<IFormFile> RequireFormFileAsync(string name, CancellationToken cancellationToken)
     {
-        if (!Request.HasFormContentType) throw new KnownException("form_required", 400);
+        if (!Request.HasFormContentType)
+        {
+            throw new KnownException("form_required", 400);
+        }
+
         var form = await Request.ReadFormAsync(cancellationToken);
         var file = form.Files.GetFile(name);
         if (file is null || file.Length == 0 || file.Length > options.Value.MaximumPackageBytes)
+        {
             throw new KnownException("invalid_file", 400);
+        }
+
         return file;
     }
 
     private async Task<PublisherDto> RequireActivePublisherAsync(CancellationToken cancellationToken)
     {
         var publisher = await mediator.Send(
-            new GetPublisherQuery(authenticationContext.RequirePublisherId()), cancellationToken)
-            ?? throw new KnownException("publisher_not_found", 401);
-        if (publisher.Status != PublisherStatus.Active) throw new KnownException("publisher_not_active", 403);
+                            new GetPublisherQuery(authenticationContext.RequirePublisherId()), cancellationToken)
+                        ?? throw new KnownException("publisher_not_found", 401);
+        if (publisher.Status != PublisherStatus.Active)
+        {
+            throw new KnownException("publisher_not_active", 403);
+        }
+
         return publisher;
     }
 

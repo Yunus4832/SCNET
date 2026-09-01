@@ -70,7 +70,8 @@ public class PlayersScreen : Screen
                     );
                 }
                 else if (_subsystemPlayers.PlayersData.Count >=
-                         GameManager.Project!.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.MaxOnlinePlayerCount)
+                         GameManager.Project!.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings
+                             .MaxOnlinePlayerCount)
                 {
                     DialogsManager.ShowDialog(
                         null,

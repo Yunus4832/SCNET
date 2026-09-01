@@ -4,8 +4,8 @@ using System.Text.Json.Nodes;
 namespace Game.Commands;
 
 /// <summary>
-/// Protocol contract reserved for a future HTTP frontend. Every command uses
-/// one endpoint and is selected by its stable command identity.
+///     Protocol contract reserved for a future HTTP frontend. Every command uses
+///     one endpoint and is selected by its stable command identity.
 /// </summary>
 public static class HttpCommandProtocol
 {
@@ -57,8 +57,8 @@ public static class HttpCommandProtocol
         }
         catch (Exception exception) when (
             exception is InvalidOperationException or
-            ArgumentException or
-            FormatException)
+                ArgumentException or
+                FormatException)
         {
             request = null;
             error = "HTTP command envelope is invalid.";

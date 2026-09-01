@@ -9,14 +9,14 @@ using ContentServer.Infrastructure;
 
 using Game.Modding;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace ContentServer.Test;
 
@@ -78,11 +78,15 @@ public sealed class ContentServerApiTest : IDisposable
             (await ReadJsonAsync(repeatedInitializationResponse)).GetProperty("message").GetString());
 
         var administratorApplication = await ReadDataAsync(await client.PostAsJsonAsync(
-            "/api/v1/administrators/applications", new { name = "Second Administrator", contact = "admin2@example.test" }));
+            "/api/v1/administrators/applications",
+            new { name = "Second Administrator", contact = "admin2@example.test" }));
         var secondAdministratorId = administratorApplication.GetProperty("administratorId").GetString()!;
         var secondAdministratorKey = administratorApplication.GetProperty("apiKey").GetString()!;
-        using var administratorStatusRequest = CreateAuthorizedRequest(HttpMethod.Get, "/api/v1/administrator", secondAdministratorKey);
-        Assert.Equal("pending", (await ReadDataAsync(await client.SendAsync(administratorStatusRequest))).GetProperty("status").GetString());
+        using var administratorStatusRequest =
+            CreateAuthorizedRequest(HttpMethod.Get, "/api/v1/administrator", secondAdministratorKey);
+        Assert.Equal("pending",
+            (await ReadDataAsync(await client.SendAsync(administratorStatusRequest))).GetProperty("status")
+            .GetString());
         using var pendingAdministratorOperation = CreateAuthorizedRequest(
             HttpMethod.Get, "/api/v1/admin/content", secondAdministratorKey);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.SendAsync(pendingAdministratorOperation)).StatusCode);
@@ -90,10 +94,12 @@ public sealed class ContentServerApiTest : IDisposable
             HttpMethod.Get, "/api/v1/administrator", secondAdministratorKey);
         Assert.Equal("pending", (await ReadDataAsync(await client.SendAsync(administratorStatusAfterForbidden)))
             .GetProperty("status").GetString());
-        using var approveAdministrator = CreateAuthorizedRequest(HttpMethod.Post, $"/api/v1/admin/administrator-applications/{secondAdministratorId}/approve", _administratorKey);
+        using var approveAdministrator = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/administrator-applications/{secondAdministratorId}/approve", _administratorKey);
         approveAdministrator.Content = JsonContent.Create(new { });
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approveAdministrator)).StatusCode);
-        using var repeatAdministratorApproval = CreateAuthorizedRequest(HttpMethod.Post, $"/api/v1/admin/administrator-applications/{secondAdministratorId}/approve", _administratorKey);
+        using var repeatAdministratorApproval = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/administrator-applications/{secondAdministratorId}/approve", _administratorKey);
         repeatAdministratorApproval.Content = JsonContent.Create(new { });
         Assert.Equal(HttpStatusCode.Conflict, (await client.SendAsync(repeatAdministratorApproval)).StatusCode);
 
@@ -311,6 +317,7 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync($"/api/v1/packages/{packageHash}")).StatusCode);
 
         var concurrentPackage = CreateModPackage("2.0.0");
+
         async Task<JsonElement> SubmitPackageAsync(byte[] bytes, string fileName)
         {
             using var request = CreateAuthorizedRequest(
@@ -321,6 +328,7 @@ public sealed class ContentServerApiTest : IDisposable
             };
             return await ReadDataAsync(await client.SendAsync(request));
         }
+
         var concurrentResults = await Task.WhenAll(
             SubmitPackageAsync(concurrentPackage, "concurrent-a.scpkg"),
             SubmitPackageAsync(concurrentPackage, "concurrent-b.scpkg"));
@@ -333,17 +341,19 @@ public sealed class ContentServerApiTest : IDisposable
         {
             failedHash = ContentPackageReader.Inspect(failedStream).PackageHash;
         }
+
         await using (var failureScope = factory.Services.CreateAsyncScope())
         {
             var failureDb = failureScope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
             await failureDb.Database.ExecuteSqlRawAsync("""
-                CREATE TRIGGER fail_content_version_insert
-                BEFORE INSERT ON ContentVersions
-                BEGIN
-                    SELECT RAISE(FAIL, 'injected transaction failure');
-                END;
-                """);
+                                                        CREATE TRIGGER fail_content_version_insert
+                                                        BEFORE INSERT ON ContentVersions
+                                                        BEGIN
+                                                            SELECT RAISE(FAIL, 'injected transaction failure');
+                                                        END;
+                                                        """);
         }
+
         using (var failedRequest = CreateAuthorizedRequest(
                    HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey))
         {
@@ -354,6 +364,7 @@ public sealed class ContentServerApiTest : IDisposable
             Assert.Equal(HttpStatusCode.Conflict,
                 (await client.SendAsync(failedRequest)).StatusCode);
         }
+
         await using (var failureScope = factory.Services.CreateAsyncScope())
         {
             var failureDb = failureScope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
@@ -381,6 +392,7 @@ public sealed class ContentServerApiTest : IDisposable
         }
 
         var imageIdentifier = Guid.NewGuid().ToString();
+
         MultipartFormDataContent ImageCreationForm() => new()
         {
             { new StringContent("CharacterSkin"), "type" },
@@ -390,6 +402,7 @@ public sealed class ContentServerApiTest : IDisposable
             { new StringContent("Generated in the API integration test"), "description" },
             { new ByteArrayContent(imageSource), "source", "skin.png" }
         };
+
         byte[] builtImagePackage;
         using (var buildRequest = CreateAuthorizedRequest(HttpMethod.Post,
                    "/api/v1/publisher/packages/image/build", publisherKey))
@@ -399,6 +412,7 @@ public sealed class ContentServerApiTest : IDisposable
             buildResponse.EnsureSuccessStatusCode();
             builtImagePackage = await buildResponse.Content.ReadAsByteArrayAsync();
         }
+
         string builtImageHash;
         using (var stream = new MemoryStream(builtImagePackage, writable: false))
         {
@@ -406,6 +420,7 @@ public sealed class ContentServerApiTest : IDisposable
             Assert.Equal(ContentPackageType.CharacterSkin, inspection.Manifest.Type);
             builtImageHash = inspection.PackageHash;
         }
+
         using (var generatedSubmitRequest = CreateAuthorizedRequest(HttpMethod.Post,
                    "/api/v1/publisher/packages/image/submit", publisherKey))
         {
@@ -433,7 +448,8 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Equal(13, await db.PackageBlobs.CountAsync());
         Assert.Equal(13, await db.ContentVersions.CountAsync());
         var storedPackage = await db.PackageBlobs.SingleAsync(item => item.Hash == packageHash);
-        var storedVersion = await db.ContentVersions.SingleAsync(item => item.Id == new ContentServer.Domain.Contents.ContentVersionId(Guid.Parse(versionId)));
+        var storedVersion = await db.ContentVersions.SingleAsync(item =>
+            item.Id == new ContentServer.Domain.Contents.ContentVersionId(Guid.Parse(versionId)));
         Assert.Equal(storedPackage.Id, storedVersion.PackageBlobId);
 
         var packageStore = scope.ServiceProvider.GetRequiredService<ContentPackageStore>();
@@ -451,6 +467,7 @@ public sealed class ContentServerApiTest : IDisposable
         {
             File.Delete(_databasePath);
         }
+
         if (Directory.Exists(_storagePath))
         {
             Directory.Delete(_storagePath, recursive: true);
@@ -477,8 +494,8 @@ public sealed class ContentServerApiTest : IDisposable
         string identifier = "integration.example")
     {
         using var metadata = JsonDocument.Parse("""
-        {"side":"common","entrypoints":{},"dependencies":[]}
-        """);
+                                                {"side":"common","entrypoints":{},"dependencies":[]}
+                                                """);
         var manifest = new ContentPackageManifest(1, ContentPackageType.Mod, identifier,
             "Integration Mod", version,
             new ContentPackagePayload("scnet.mod-v1", "payload/mod.json", "application/json"),

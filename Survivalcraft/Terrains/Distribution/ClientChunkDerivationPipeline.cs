@@ -1,7 +1,7 @@
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Owns the client-only lifecycle from installed authoritative contents to derived geometry.
+///     Owns the client-only lifecycle from installed authoritative contents to derived geometry.
 /// </summary>
 public sealed class ClientChunkDerivationPipeline(Terrain terrain)
 {

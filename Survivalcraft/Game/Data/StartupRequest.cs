@@ -28,7 +28,7 @@ public sealed class StartupRequest
     public bool? HttpCommandEnabled { get; set; }
 
     /// <summary>
-    /// Optional HTTP command listener port override for this process.
+    ///     Optional HTTP command listener port override for this process.
     /// </summary>
     public int? HttpCommandPort { get; set; }
 

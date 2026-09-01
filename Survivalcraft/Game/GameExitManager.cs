@@ -61,10 +61,7 @@ public static class GameExitManager
             }
         }
 
-        RunningSettingManager.SaveCurrent(runningSetting =>
-        {
-            runningSetting.PendingSessionId = pendingSessionId;
-        });
+        RunningSettingManager.SaveCurrent(runningSetting => { runningSetting.PendingSessionId = pendingSessionId; });
         ExitAction = GameExitAction.Restart;
         ExitRequested?.Invoke(ExitAction);
         RequestApplicationExit();

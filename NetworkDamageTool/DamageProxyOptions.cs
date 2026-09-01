@@ -45,21 +45,21 @@ public sealed record DamageProxyOptions(
     public static void PrintHelp()
     {
         Console.WriteLine("""
-            Usage:
-              dotnet run --project NetworkDamageTool -- run \
-                --listen 127.0.0.1:28989 --target 127.0.0.1:28987 [options]
+                          Usage:
+                            dotnet run --project NetworkDamageTool -- run \
+                              --listen 127.0.0.1:28989 --target 127.0.0.1:28987 [options]
 
-            Common options:
-              --seed N                  Deterministic random seed (default: 1)
-              --events PATH             Write one JSONL statistics record per second
-              --duration-seconds N      Stop automatically; 0 runs until Ctrl+C
+                          Common options:
+                            --seed N                  Deterministic random seed (default: 1)
+                            --events PATH             Write one JSONL statistics record per second
+                            --duration-seconds N      Stop automatically; 0 runs until Ctrl+C
 
-            Direction options (replace DIR with up or down):
-              --DIR-latency-ms N        Fixed one-way delay
-              --DIR-jitter-ms N         Uniform +/- jitter
-              --DIR-loss P              Drop probability from 0 to 1
-              --DIR-bandwidth-kbps N    Link bandwidth; 0 means unlimited
-            """);
+                          Direction options (replace DIR with up or down):
+                            --DIR-latency-ms N        Fixed one-way delay
+                            --DIR-jitter-ms N         Uniform +/- jitter
+                            --DIR-loss P              Drop probability from 0 to 1
+                            --DIR-bandwidth-kbps N    Link bandwidth; 0 means unlimited
+                          """);
     }
 
     private static LinkImpairmentOptions ParseLink(Dictionary<string, string> options, string prefix) =>

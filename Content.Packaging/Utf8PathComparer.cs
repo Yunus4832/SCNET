@@ -12,10 +12,12 @@ internal sealed class Utf8PathComparer : IComparer<string>
         {
             return 0;
         }
+
         if (left is null)
         {
             return -1;
         }
+
         if (right is null)
         {
             return 1;

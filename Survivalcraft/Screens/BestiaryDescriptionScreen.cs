@@ -8,7 +8,7 @@ public class BestiaryDescriptionScreen : Screen
 {
     private const string _typeName = nameof(BestiaryDescriptionScreen);
 
-    private  readonly LabelWidget _descriptionWidget;
+    private readonly LabelWidget _descriptionWidget;
 
     private readonly ContainerWidget _dropsPanel;
 

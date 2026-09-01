@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -147,7 +146,8 @@ public static class MotdManager
             }
 
             var xElement = XmlUtils.LoadXmlFromString(dataString.Substring(num, num2 - num), true);
-            SettingsManager.Current.MotdUpdatePeriodHours = XmlUtils.GetAttributeValue(xElement, "UpdatePeriodHours", 24);
+            SettingsManager.Current.MotdUpdatePeriodHours =
+                XmlUtils.GetAttributeValue(xElement, "UpdatePeriodHours", 24);
             SettingsManager.Current.MotdUpdateUrl =
                 XmlUtils.GetAttributeValue(xElement, "UpdateUrl", GetMotdUpdateUrl());
             var message = new Message();

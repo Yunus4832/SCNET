@@ -3,8 +3,8 @@ using Game.TerrainSerializers;
 namespace Game.Terrains.Distribution;
 
 /// <summary>
-/// Owns persistence restore and procedural generation of authoritative chunk contents.
-/// Lighting and geometry are deliberately outside this service.
+///     Owns persistence restore and procedural generation of authoritative chunk contents.
+///     Lighting and geometry are deliberately outside this service.
 /// </summary>
 public sealed class AuthoritativeChunkGenerationPipeline(
     ITerrainContentsGenerator generator,

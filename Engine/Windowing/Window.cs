@@ -77,7 +77,7 @@ public static partial class Window
         ArgumentOutOfRangeException.ThrowIfNegative(width);
         ArgumentOutOfRangeException.ThrowIfNegative(height);
 
-        AppDomain.CurrentDomain.UnhandledException += delegate (object _, UnhandledExceptionEventArgs args)
+        AppDomain.CurrentDomain.UnhandledException += delegate(object _, UnhandledExceptionEventArgs args)
         {
             var ex = args.ExceptionObject as Exception ??
                      new Exception($"Unknown exception. Additional information: {args.ExceptionObject}");

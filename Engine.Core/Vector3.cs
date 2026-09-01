@@ -116,7 +116,7 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
 
     public bool Equals(Vector3 other)
     {
-        return X.CloseTo(other.X) && Y.CloseTo(other.Y) &&  Z.CloseTo(other.Z);
+        return X.CloseTo(other.X) && Y.CloseTo(other.Y) && Z.CloseTo(other.Z);
     }
 
     public static float Distance(Vector3 v1, Vector3 v2)

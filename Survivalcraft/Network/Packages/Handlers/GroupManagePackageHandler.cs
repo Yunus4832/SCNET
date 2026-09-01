@@ -3,8 +3,8 @@ using Game.Commands;
 namespace Game.Network.Packages.Handlers;
 
 /// <summary>
-/// Applies server-authored group state and interaction prompts on clients.
-/// Group mutations are commands and are never accepted through this package.
+///     Applies server-authored group state and interaction prompts on clients.
+///     Group mutations are commands and are never accepted through this package.
 /// </summary>
 public sealed class GroupManagePackageHandler : PackageHandlerBase<GroupManagePackage>
 {
@@ -40,8 +40,7 @@ public sealed class GroupManagePackageHandler : PackageHandlerBase<GroupManagePa
         PlayerData responder)
     {
         var subsystemPlayers = responder.SubsystemPlayers;
-        var initiator = subsystemPlayers.FindPlayerData(
-            player => player.PlayerGUID == package.FromPlayer);
+        var initiator = subsystemPlayers.FindPlayerData(player => player.PlayerGUID == package.FromPlayer);
         subsystemPlayers.ServerGroups.TryGetValue(package.GroupKey.ToString(), out var group);
         if (initiator is null || group is null)
         {
@@ -98,8 +97,7 @@ public sealed class GroupManagePackageHandler : PackageHandlerBase<GroupManagePa
             subsystemPlayers.ServerGroups.Add(key, group);
             foreach (var member in group.Members)
             {
-                var playerData = subsystemPlayers.FindPlayerData(
-                    player => player.PlayerGUID == member);
+                var playerData = subsystemPlayers.FindPlayerData(player => player.PlayerGUID == member);
                 if (playerData is not null)
                 {
                     playerData.GroupKey = key;

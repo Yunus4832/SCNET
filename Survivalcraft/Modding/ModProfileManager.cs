@@ -274,7 +274,8 @@ public static class ModProfileManager
     private static bool TryResolveWorldProfileContext(SessionInfo? sessionInfo, out WorldProfileContext context)
     {
         context = default;
-        if (sessionInfo == null || sessionInfo.Target != SessionTarget.World || string.IsNullOrWhiteSpace(sessionInfo.World))
+        if (sessionInfo == null || sessionInfo.Target != SessionTarget.World ||
+            string.IsNullOrWhiteSpace(sessionInfo.World))
         {
             return false;
         }
@@ -283,7 +284,8 @@ public static class ModProfileManager
         var normalizedWorld = sessionInfo.World.Trim();
         var worldInfo = WorldsManager.WorldInfos.FirstOrDefault(world =>
                             string.Equals(world.DirectoryName, normalizedWorld, StringComparison.OrdinalIgnoreCase) ||
-                            string.Equals(world.WorldSettings.Name, normalizedWorld, StringComparison.OrdinalIgnoreCase))
+                            string.Equals(world.WorldSettings.Name, normalizedWorld,
+                                StringComparison.OrdinalIgnoreCase))
                         ?? null;
         if (worldInfo == null)
         {

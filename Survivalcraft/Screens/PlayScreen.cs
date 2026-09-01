@@ -95,7 +95,8 @@ public class PlayScreen : Screen
             _worldsListWidget.SelectedItem = null;
         }
 
-        Children.Find<LabelWidget>("TopBar.Label")!.Text = string.Format(LanguageManager.GetContentWidgets(_typeName, 6),
+        Children.Find<LabelWidget>("TopBar.Label")!.Text = string.Format(
+            LanguageManager.GetContentWidgets(_typeName, 6),
             _worldsListWidget.Items.Count);
         Children.Find("Play")!.IsEnabled = _worldsListWidget.SelectedItem != null;
         Children.Find("Properties")!.IsEnabled = _worldsListWidget.SelectedItem != null;

@@ -94,6 +94,4 @@ public class TerritoriyPackage : IPackage
             IsVisible = true;
         }
     }
-
-
 }

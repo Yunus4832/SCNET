@@ -7,8 +7,8 @@ using Game.Network.Packages;
 namespace Game.Commands;
 
 /// <summary>
-/// Routes a player command to the local authoritative server or to the remote
-/// server without exposing transport details to UI adapters.
+///     Routes a player command to the local authoritative server or to the remote
+///     server without exposing transport details to UI adapters.
 /// </summary>
 public static class CommandGateway
 {

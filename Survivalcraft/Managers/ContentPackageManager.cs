@@ -49,5 +49,4 @@ public static class ContentPackageManager
                 throw new InvalidOperationException(LanguageManager.Get(_typeName, 4));
         }
     }
-
 }

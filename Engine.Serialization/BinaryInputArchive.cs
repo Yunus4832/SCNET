@@ -136,9 +136,9 @@ public class BinaryInputArchive(Stream stream, int version = 0) : InputArchive(v
             object? value2 = null;
             object? value3 = null;
             ReadObject(serializeData, ref value2);
-            if(value2 is null)
+            if (value2 is null)
             {
-                throw new  InvalidOperationException("Dictionary key can not be null");
+                throw new InvalidOperationException("Dictionary key can not be null");
             }
 
             if (dictionary.TryGetValue((TK)value2, out var value4))
