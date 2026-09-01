@@ -357,7 +357,7 @@ Data/
 - [x] 固化 Identifier 全局唯一、ModId 等于 Identifier、其他类型使用 UUID Identifier、ContentId 仅由服务端生成及 SemVer 2.0 规则。
 - [x] 新协议不定义 `.scpak`、`.scworld`、`.scbtex`、`.scskin`、`.scfpack` 输入，不设计兼容解析或双格式入口；实际代码删除在替代 reader、writer、installer 全部就绪后的阶段 6 执行。
 - [x] 定义模组构建、打包 CLI、游戏内非 Mod 制造和 WebUI 简单内容制造/提交的输入输出与职责边界；普通玩家路径不得要求手写 manifest 或操作 ZIP。各入口的实现和端到端验证归入对应后续阶段。
-- [x] 定义浏览器 IndexedDB 草稿 schema、容量失败提示、导入/导出草稿和数据清理警告；ContentServer 不保存草稿。
+- [x] 定义浏览器 IndexedDB 草稿 schema、容量失败提示、单条/全部清理和数据清理警告；ContentServer 不保存草稿，第一阶段不定义草稿交换格式。
 - [x] 定义皮肤和材质无代码上传、预览、权威校验、浏览器草稿、打包和提交审核的交互与 API 契约；不设计图片编辑能力，实际实现归入阶段 3。
 - [x] 将最终协议写入正式文档，再允许修改 ContentServer 数据模型和共享安装接口。
 
@@ -393,36 +393,36 @@ Data/
 
 ### 阶段 3：实现有限的 WebUI 简单内容制造
 
-- [ ] 保持 ContentServer 核心提交 API 只接收完整 `.scpkg`；为皮肤和材质额外实现边界隔离的无状态源文件验证、打包下载和直接提交接口，不支持 World、FurniturePack 或 Mod 制造。
-- [ ] ContentWebUI 提供完整 `.scpkg` 的选择、权威校验预览和提交审核入口，覆盖游戏、CLI 与 MSBuild 产生的包；不要求重新打包。
-- [ ] ContentWebUI 使用 IndexedDB 保存浏览器草稿，提供容量失败、清理风险、导入/导出草稿提示。
-- [ ] UI 只提供图片上传、预览、元数据、权威校验结果、打包和提交，不实现图片编辑。
-- [ ] 增加 WebUI 组件/API 测试和一条 Publisher 上传、预览、打包、提交的浏览器端到端测试。
-- [ ] 验证未认证或非 Active Publisher 不能调用后端打包与提交能力。
+- [x] 保持 ContentServer 核心提交 API 只接收完整 `.scpkg`；为皮肤和材质额外实现边界隔离的无状态源文件验证、打包下载和直接提交接口，不支持 World、FurniturePack 或 Mod 制造。
+- [x] ContentWebUI 提供完整 `.scpkg` 的选择、权威校验预览和提交审核入口，覆盖游戏、CLI 与 MSBuild 产生的包；不要求重新打包。
+- [x] ContentWebUI 使用 IndexedDB 保存浏览器草稿，提供容量失败、清理风险以及单条/全部草稿清理。
+- [x] UI 只提供图片上传、预览、元数据、权威校验结果、打包和提交，不实现图片编辑。
+- [x] 增加 WebUI 组件、IndexedDB 与 API 集成测试并验证生产构建；第一阶段不要求严格的 ContentServer 浏览器冒烟，浏览器自动化细节可后续调整。
+- [x] 验证未认证或非 Active Publisher 不能调用后端打包与提交能力。
 
-门禁：浏览器关闭后草稿可从 IndexedDB 恢复；服务器没有草稿记录或源 BLOB；同一次提交生成的包与 Pending 版本 PackageHash 一致。
+门禁：IndexedDB 测试覆盖草稿持久化与清理；服务器没有草稿记录或源 BLOB；同一次提交生成的包与 Pending 版本 PackageHash 一致。
 
 ### 阶段 4：建立统一包缓存、游戏安装和导出内核
 
-- [ ] 建立 `IContentPackageCache`，将所有类型的唯一缓存布局定为 `ContentPackageCache/<PackageHash>.scpkg`，提供流式写入、原子提交、统一索引、打开、删除和重建索引。
-- [ ] 实现缓存消费校验与损坏隔离：安装、Runtime 首次加载和导出以实际文件重算 PackageHash；索引缺失、过期或伪造不能绕过验证，远程包可以显式重新下载修复。
-- [ ] 实现缓存生命周期规则：第一阶段不自动驱逐；显式删除非 Mod 包不级联删除资产；拒绝删除被 Profile 或当前 Runtime 引用的 Mod 包。
-- [ ] 将 `LocalModRepository` 收敛为统一缓存的 Mod 查询适配边界或直接删除，由 ModProfile 和 Runtime 查询 `type = Mod` 的缓存包。
-- [ ] 让所有类型的导入和下载在临时文件完成统一校验后原子移动到 ContentPackageCache，不解包、不转换格式、不生成派生内容包。
-- [ ] 让所有包导出直接复制缓存中的原 `.scpkg` 到 FilePicker 输出流，不重新封装或改变 PackageHash。
-- [ ] 建立来源无关的内容安装入口和各内容类型处理器。
-- [ ] 让 ContentServer 下载与本地导入调用相同安装入口。
-- [ ] 明确缓存包目录与已安装游戏资产目录是两个生命周期；内容系统不建立非 Mod 安装记录，现有资产 Manager 生成稳定 AssetKey 并只持久化自身身份、名称和游戏所需数据，游戏配置不再用可变显示名称作引用键。
-- [ ] 为内置皮肤、默认材质等定义稳定的只读保留 AssetKey；资产选择逻辑继续支持它们，但安装替换和删除入口必须排除内置资产。
-- [ ] 实现独立删除语义：缓存移除不删除资产，资产删除不删除缓存；同一包多次安装的资产能够分别删除。
-- [ ] 在现有游戏资产管理 Screen 中为材质和皮肤实现引用检查与替换后删除，禁止删除后留下 World、玩家配置或当前会话的悬空引用。
-- [ ] 实现 World 创建新世界与覆盖指定世界两种安装模式；覆盖要求显式选目标、二次确认、运行状态检查、暂存校验和可恢复的原子替换，完成后仍脱离来源。
-- [ ] 实现材质、皮肤、家具包默认创建独立本地资产，也可显式替换所选同类型资产；替换保留 AssetKey、显示引用影响、二次确认并使用暂存校验与原子提交，不按包身份自动匹配。
-- [ ] 建立游戏内容包制造内核：World/FurniturePack 从游戏资产取材，BlocksTexture/CharacterSkin 接受 FilePicker 素材流；创建临时 `.scpkg`，校验后交给 FilePicker 保存，不写入缓存或安装。
-- [ ] 为 World、皮肤、材质和家具制造器提供显式“创建新内容/创建新版本”模式；新版本从用户选择的同类型基线 `.scpkg` 只继承 Identifier，重新填写 SemVer 并使用当前素材制造。Mod 继续由项目构建流程维护版本身份。
-- [ ] 验证 Mod 版本共存且导入/下载不修改任何 Profile。
-- [ ] 将 ContentServer 客户端下载和安装改为流式，不使用 `GetByteArrayAsync`。
-- [ ] 使用可控的非平台测试流对大型 World 执行制造、缓存导入和安装压力测试，验证峰值内存、包大小限制、取消和失败清理；不得为计算 hash、制造或安装而把完整包读入 `byte[]`。真实 FilePicker 保存与取消验证归入阶段 5。
+- [x] 建立 `IContentPackageCache`，将所有类型的唯一缓存布局定为 `ContentPackageCache/<PackageHash>.scpkg`，提供流式写入、原子提交、统一索引、打开、删除和重建索引。
+- [x] 实现缓存消费校验与损坏隔离：安装、Runtime 首次加载和导出以实际文件重算 PackageHash；索引缺失、过期或伪造不能绕过验证，远程包可以显式重新下载修复。
+- [x] 实现缓存生命周期规则：第一阶段不自动驱逐；显式删除非 Mod 包不级联删除资产；拒绝删除被 Profile 或当前 Runtime 引用的 Mod 包。
+- [x] 将 `LocalModRepository` 收敛为统一缓存的 Mod 查询适配边界或直接删除，由 ModProfile 和 Runtime 查询 `type = Mod` 的缓存包。
+- [x] 让所有类型的导入和下载在临时文件完成统一校验后原子移动到 ContentPackageCache，不解包、不转换格式、不生成派生内容包。
+- [x] 让所有包导出直接复制缓存中的原 `.scpkg` 到 FilePicker 输出流，不重新封装或改变 PackageHash。
+- [x] 建立来源无关的内容安装入口和各内容类型处理器。
+- [x] 让 ContentServer 下载与本地导入调用相同安装入口。
+- [x] 明确缓存包目录与已安装游戏资产目录是两个生命周期；内容系统不建立非 Mod 安装记录，现有资产 Manager 生成稳定 AssetKey 并只持久化自身身份、名称和游戏所需数据，游戏配置不再用可变显示名称作引用键。
+- [x] 为内置皮肤、默认材质等定义稳定的只读保留 AssetKey；资产选择逻辑继续支持它们，但安装替换和删除入口必须排除内置资产。
+- [x] 实现独立删除语义：缓存移除不删除资产，资产删除不删除缓存；同一包多次安装的资产能够分别删除。
+- [x] 在现有游戏资产管理 Screen 中为材质和皮肤实现引用检查与替换后删除，禁止删除后留下 World、玩家配置或当前会话的悬空引用。
+- [x] 实现 World 创建新世界与覆盖指定世界两种安装模式；覆盖要求显式选目标、二次确认、运行状态检查、暂存校验和可恢复的原子替换，完成后仍脱离来源。
+- [x] 实现材质、皮肤、家具包默认创建独立本地资产，也可显式替换所选同类型资产；替换保留 AssetKey、显示引用影响、二次确认并使用暂存校验与原子提交，不按包身份自动匹配。
+- [x] 建立游戏内容包制造内核：World/FurniturePack 从游戏资产取材，BlocksTexture/CharacterSkin 接受 FilePicker 素材流；创建临时 `.scpkg`，校验后交给 FilePicker 保存，不写入缓存或安装。
+- [x] 为 World、皮肤、材质和家具制造器提供显式“创建新内容/创建新版本”模式；新版本从用户选择的同类型基线 `.scpkg` 只继承 Identifier，重新填写 SemVer 并使用当前素材制造。Mod 继续由项目构建流程维护版本身份。
+- [x] 验证 Mod 版本共存且导入/下载不修改任何 Profile。
+- [x] 将 ContentServer 客户端下载和安装改为流式，不使用 `GetByteArrayAsync`。
+- [x] 使用可控的非平台测试流对大型 World 执行制造、缓存导入和安装压力测试，验证峰值内存、包大小限制、取消和失败清理；不得为计算 hash、制造或安装而把完整包读入 `byte[]`。真实 FilePicker 保存与取消验证归入阶段 5。
 
 门禁：等价的本地输入测试流与 ContentServer 下载流对同一包产生相同安装结果；五类安装失败均不留下半安装资产，缓存已提交的有效包仍可重试安装；大型 World 压力测试满足内存和取消指标。本阶段不依赖任何平台 FilePicker 实现。
 

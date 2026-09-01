@@ -1,92 +1,108 @@
-using System.Text.Json;
+using System.IO.Compression;
 
-using Game.Content;
+using Content.Packaging;
 
 namespace Game.Managers;
 
-public static class ContentInstallationManager
+public interface IContentInstaller
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web)
-    {
-        WriteIndented = true
-    };
-
-    public static IReadOnlyList<ContentInstallation> Load()
-    {
-        if (!Storage.FileExists(GamePaths.InstalledContentFile))
-        {
-            return [];
-        }
-
-        using var stream = Storage.OpenFile(GamePaths.InstalledContentFile, OpenFileMode.Read);
-        return JsonSerializer.Deserialize<List<ContentInstallation>>(stream, _jsonOptions) ?? [];
-    }
-
-    public static ContentInstallation Install(ContentCatalogItem item, byte[] package)
-    {
-        var type = Enum.Parse<ContentType>(item.Type, false);
-        string installedName;
-        if (type == ContentType.Mod)
-        {
-            var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ModCache));
-            installedName = repository.AddOrUpdatePackage(package,
-                $"{item.PackageHash}{ModPackage.FileExtension}").FileName;
-        }
-        else
-        {
-            using var stream = new MemoryStream(package, writable: false);
-            installedName = ContentPackageManager.InstallPackage(stream, type, item.FileName);
-        }
-
-        var installations = Load().ToList();
-        installations.RemoveAll(entry => entry.ContentId == item.ContentId && entry.VersionId == item.VersionId);
-        var installation = new ContentInstallation(
-            item.ContentId, item.VersionId, type, installedName, item.PackageHash, DateTimeOffset.UtcNow);
-        installations.Add(installation);
-        Save(installations);
-        return installation;
-    }
-
-    public static bool Uninstall(ContentCatalogItem item)
-    {
-        var installations = Load().ToList();
-        var installation = installations.FirstOrDefault(entry =>
-            entry.ContentId == item.ContentId && entry.VersionId == item.VersionId);
-        if (installation is null)
-        {
-            return false;
-        }
-
-        if (installation.Type == ContentType.Mod)
-        {
-            var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ModCache));
-            var package = repository.FindByHash(installation.PackageHash);
-            if (package is not null)
-            {
-                repository.DeletePackage(package);
-            }
-        }
-        else
-        {
-            ContentPackageManager.DeleteContent(installation.Type, installation.InstalledName);
-        }
-
-        installations.Remove(installation);
-        Save(installations);
-        return true;
-    }
-
-    private static void Save(IReadOnlyList<ContentInstallation> installations)
-    {
-        using var stream = Storage.OpenFile(GamePaths.InstalledContentFile, OpenFileMode.Create);
-        JsonSerializer.Serialize(stream, installations, _jsonOptions);
-    }
+    ContentPackageType Type { get; }
+    ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package, ContentInstallOptions options);
 }
 
-public sealed record ContentInstallation(
-    string ContentId,
-    string VersionId,
-    ContentType Type,
-    string InstalledName,
-    string PackageHash,
-    DateTimeOffset InstalledAt);
+public sealed record ContentInstallResult(ContentPackageType Type, string? AssetKey, string DisplayName);
+public sealed record ContentInstallOptions(string? ReplaceAssetKey = null);
+
+public static class ContentInstallationManager
+{
+    private static readonly IReadOnlyDictionary<ContentPackageType, IContentInstaller> _installers =
+        new IContentInstaller[]
+        {
+            new ModContentInstaller(), new WorldContentInstaller(), new BlocksTextureContentInstaller(),
+            new CharacterSkinContentInstaller(), new FurniturePackContentInstaller()
+        }.ToDictionary(installer => installer.Type);
+
+    public static ContentInstallResult Install(Stream package, ContentInstallOptions? options = null)
+    {
+        ArgumentNullException.ThrowIfNull(package);
+        if (!package.CanSeek)
+            throw new ArgumentException("A validated, seekable cache package stream is required.", nameof(package));
+        package.Position = 0;
+        var inspection = ContentPackageReader.Inspect(package);
+        package.Position = 0;
+        using var archive = new ZipArchive(package, ZipArchiveMode.Read, leaveOpen: true);
+        return _installers[inspection.Manifest.Type].Install(inspection.Manifest, archive,
+            options ?? new ContentInstallOptions());
+    }
+
+    private static Stream OpenPayload(ContentPackageManifest manifest, ZipArchive package) =>
+        package.GetEntry(manifest.Payload.Entry)?.Open()
+        ?? throw new ContentPackageException($"Package payload '{manifest.Payload.Entry}' is missing.");
+
+    private sealed class ModContentInstaller : IContentInstaller
+    {
+        public ContentPackageType Type => ContentPackageType.Mod;
+        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
+            ContentInstallOptions options)
+        {
+            if (options.ReplaceAssetKey is not null)
+                throw new InvalidOperationException("Mod packages cannot replace installed assets.");
+            return new(Type, null, manifest.Name);
+        }
+    }
+
+    private sealed class WorldContentInstaller : IContentInstaller
+    {
+        public ContentPackageType Type => ContentPackageType.World;
+        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
+            ContentInstallOptions options)
+        {
+            var name = options.ReplaceAssetKey is null
+                ? WorldsManager.ImportWorldPackage(package)
+                : WorldsManager.ReplaceWorldPackage(options.ReplaceAssetKey, package);
+            return new(Type, Storage.GetFileName(name), manifest.Name);
+        }
+    }
+
+    private sealed class BlocksTextureContentInstaller : IContentInstaller
+    {
+        public ContentPackageType Type => ContentPackageType.BlocksTexture;
+        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
+            ContentInstallOptions options)
+        {
+            using var payload = OpenPayload(manifest, package);
+            var name = options.ReplaceAssetKey is null
+                ? BlocksTexturesManager.ImportBlocksTexture(manifest.Name, payload)
+                : BlocksTexturesManager.ReplaceBlocksTexture(options.ReplaceAssetKey, manifest.Name, payload);
+            return new(Type, name, manifest.Name);
+        }
+    }
+
+    private sealed class CharacterSkinContentInstaller : IContentInstaller
+    {
+        public ContentPackageType Type => ContentPackageType.CharacterSkin;
+        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
+            ContentInstallOptions options)
+        {
+            using var payload = OpenPayload(manifest, package);
+            var name = options.ReplaceAssetKey is null
+                ? CharacterSkinsManager.ImportCharacterSkin(manifest.Name, payload)
+                : CharacterSkinsManager.ReplaceCharacterSkin(options.ReplaceAssetKey, manifest.Name, payload);
+            return new(Type, name, manifest.Name);
+        }
+    }
+
+    private sealed class FurniturePackContentInstaller : IContentInstaller
+    {
+        public ContentPackageType Type => ContentPackageType.FurniturePack;
+        public ContentInstallResult Install(ContentPackageManifest manifest, ZipArchive package,
+            ContentInstallOptions options)
+        {
+            using var payload = OpenPayload(manifest, package);
+            var name = options.ReplaceAssetKey is null
+                ? FurniturePacksManager.ImportFurnitureDesigns(manifest.Name, payload)
+                : FurniturePacksManager.ReplaceFurnitureDesigns(options.ReplaceAssetKey, manifest.Name, payload);
+            return new(Type, name, manifest.Name);
+        }
+    }
+}

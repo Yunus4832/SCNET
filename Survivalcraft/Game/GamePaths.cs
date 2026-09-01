@@ -20,7 +20,11 @@ public static class GamePaths
 
     public static string BlockTextures => $"{_gameDataPath}/TexturePacks";
 
-    public static string ModCache => $"{_gameDataPath}/ModsCache";
+    public static string ContentPackageCache => $"{_gameDataPath}/ContentPackageCache";
+
+    public static string ContentPackageCreationTemp => $"{_gameDataPath}/ContentPackageCreationTemp";
+
+    public static string ModCache => ContentPackageCache;
 
     public static string Logs => $"{External}/Logs";
 
@@ -36,7 +40,6 @@ public static class GamePaths
 
     public static string LocalModsImportStateFile => "config:LocalModsImportState.xml";
 
-    public static string InstalledContentFile => "config:InstalledContent.json";
 
     public static string NetChunksTempFile => "config:NetChunks.tmp";
 }

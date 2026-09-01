@@ -43,9 +43,9 @@ payload/assets/<mod-id>/**
 
 ### 本地缓存
 
-路径：`GamePaths.ModCache`
+路径：`GamePaths.ContentPackageCache`（`GamePaths.ModCache` 仅是迁移期查询别名）
 
-缓存按 PackageHash 存储 `.scpkg`，用于避免重复保存同一个包。运行时真正解析 required mods 时，会从缓存中查找匹配的 `ModId + Version`。
+统一缓存按 PackageHash 存储所有类型的 `.scpkg`。Mod 运行时通过 `LocalModRepository` 查询适配器筛选 `type = Mod`，再查找匹配的 `ModId + Version`。
 
 ### ModProfile
 

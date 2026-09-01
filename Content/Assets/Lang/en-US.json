@@ -3973,6 +3973,12 @@
     },
     "ContentServerScreen": {
         "ServerNotConfigured": "The content server address is not configured.",
-        "Installed": "Content installed."
+        "Installed": "Content installed.",
+        "InstallModeTitle": "Choose installation mode",
+        "CreateNew": "Create new asset",
+        "ReplaceExisting": "Replace existing asset",
+        "SelectReplacement": "Select asset to replace",
+        "ConfirmReplace": "Replace “{1}” with “{0}”? The existing AssetKey will be preserved and {2} references are affected.",
+        "ConfirmCreate": "Install “{0}” as a new independent asset?"
     }
 }

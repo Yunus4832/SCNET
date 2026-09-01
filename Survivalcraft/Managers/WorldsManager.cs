@@ -40,8 +40,86 @@ public static class WorldsManager
     {
         var unusedWorldDirectoryName = GetUnusedWorldDirectoryName();
         Storage.CreateDirectory(unusedWorldDirectoryName);
-        UnpackWorld(unusedWorldDirectoryName, sourceStream, true);
-        return unusedWorldDirectoryName;
+        try
+        {
+            UnpackWorld(unusedWorldDirectoryName, sourceStream, true);
+            return unusedWorldDirectoryName;
+        }
+        catch
+        {
+            DeleteWorld(unusedWorldDirectoryName);
+            throw;
+        }
+    }
+
+    public static string ImportWorldPackage(ZipArchive package)
+    {
+        var directoryName = GetUnusedWorldDirectoryName();
+        Storage.CreateDirectory(directoryName);
+        try
+        {
+            WriteWorldPackage(directoryName, package);
+            return directoryName;
+        }
+        catch
+        {
+            DeleteWorld(directoryName);
+            throw;
+        }
+    }
+
+    public static string ReplaceWorldPackage(string assetKey, ZipArchive package)
+    {
+        if (assetKey.Contains('/') || assetKey.Contains('\\') || string.IsNullOrWhiteSpace(assetKey))
+            throw new InvalidOperationException("World AssetKey is invalid.");
+        var target = Storage.CombinePaths(_worldsDirectoryName, assetKey);
+        if (!Storage.DirectoryExists(target)) throw new InvalidOperationException($"World '{assetKey}' does not exist.");
+        var runningDirectory = GameManager.Project?.FindSubsystem<SubsystemGameInfo>()?.DirectoryName;
+        if (runningDirectory is not null && string.Equals(runningDirectory, target, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("A running world cannot be replaced.");
+
+        var staging = Storage.CombinePaths(_worldsDirectoryName, $".{assetKey}.{Guid.NewGuid():N}.staging");
+        var backup = Storage.CombinePaths(_worldsDirectoryName, $".{assetKey}.{Guid.NewGuid():N}.backup");
+        Storage.CreateDirectory(staging);
+        try
+        {
+            WriteWorldPackage(staging, package);
+            if (!Storage.FileExists(Storage.CombinePaths(staging, "Project.xml")))
+                throw new InvalidOperationException("Staged world does not contain Project.xml.");
+            Storage.MoveDirectory(target, backup);
+            try
+            {
+                Storage.MoveDirectory(staging, target);
+            }
+            catch
+            {
+                Storage.MoveDirectory(backup, target);
+                throw;
+            }
+            Storage.DeleteDirectoryRecursive(backup);
+            return target;
+        }
+        catch
+        {
+            if (Storage.DirectoryExists(staging)) Storage.DeleteDirectoryRecursive(staging);
+            if (Storage.DirectoryExists(backup) && !Storage.DirectoryExists(target))
+                Storage.MoveDirectory(backup, target);
+            throw;
+        }
+    }
+
+    private static void WriteWorldPackage(string directoryName, ZipArchive package)
+    {
+        foreach (var entry in package.Entries.Where(entry => entry.FullName == "payload/world/Project.xml" ||
+                     entry.FullName.StartsWith("payload/world/Regions/", StringComparison.Ordinal)))
+        {
+            var target = Storage.CombinePaths(directoryName, entry.FullName["payload/world/".Length..]);
+            var parent = Storage.GetDirectoryName(target);
+            if (!Storage.DirectoryExists(parent)) Storage.CreateDirectory(parent);
+            using var input = entry.Open();
+            using var output = Storage.OpenFile(target, OpenFileMode.Create);
+            input.CopyTo(output);
+        }
     }
 
     public static void ExportWorld(string directoryName, Stream targetStream)
@@ -116,6 +194,68 @@ public static class WorldsManager
     public static bool ValidateWorldName(string name)
     {
         return !name.Contains('\\') && name.Length <= 128;
+    }
+
+    public static int ReplaceAssetReferences(ContentType type, string oldAssetKey, string newAssetKey)
+    {
+        if (type is not (ContentType.BlocksTexture or ContentType.CharacterSkin))
+            throw new ArgumentOutOfRangeException(nameof(type));
+        var valueName = type == ContentType.BlocksTexture ? "BlockTextureName" : "CharacterSkinName";
+        var changes = new List<(string Project, string Temporary, string Backup)>();
+        foreach (var worldName in Storage.ListDirectoryNames(_worldsDirectoryName))
+        {
+            var project = Storage.CombinePaths(_worldsDirectoryName, worldName, "Project.xml");
+            if (!Storage.FileExists(project)) continue;
+            using var input = Storage.OpenFile(project, OpenFileMode.Read);
+            var document = XDocument.Load(input);
+            var references = document.Descendants().Where(element =>
+                (string?)element.Attribute("Name") == valueName &&
+                (string?)element.Attribute("Value") == oldAssetKey).ToArray();
+            if (references.Length == 0) continue;
+            foreach (var reference in references) reference.SetAttributeValue("Value", newAssetKey);
+            var temporary = project + $".{Guid.NewGuid():N}.temp";
+            var backup = project + $".{Guid.NewGuid():N}.backup";
+            using (var output = Storage.OpenFile(temporary, OpenFileMode.Create)) document.Save(output);
+            changes.Add((project, temporary, backup));
+        }
+
+        var committed = new List<(string Project, string Backup)>();
+        try
+        {
+            foreach (var change in changes)
+            {
+                Storage.MoveFile(change.Project, change.Backup);
+                Storage.MoveFile(change.Temporary, change.Project);
+                committed.Add((change.Project, change.Backup));
+            }
+        }
+        catch
+        {
+            foreach (var change in changes.AsEnumerable().Reverse())
+                if (Storage.FileExists(change.Backup)) Storage.MoveFile(change.Backup, change.Project);
+            foreach (var change in changes)
+                if (Storage.FileExists(change.Temporary)) Storage.DeleteFile(change.Temporary);
+            throw;
+        }
+        foreach (var change in committed)
+            if (Storage.FileExists(change.Backup)) Storage.DeleteFile(change.Backup);
+
+        if (GameManager.Project is { } activeProject)
+        {
+            if (type == ContentType.BlocksTexture)
+            {
+                var settings = activeProject.FindSubsystem<SubsystemGameInfo>()?.WorldSettings;
+                if (settings?.BlocksTextureName == oldAssetKey) settings.BlocksTextureName = newAssetKey;
+            }
+            else
+            {
+                var players = activeProject.FindSubsystem<SubsystemPlayers>()?.PlayersData;
+                if (players is not null)
+                    foreach (var player in players)
+                        if (player.CharacterSkinName == oldAssetKey) player.CharacterSkinName = newAssetKey;
+            }
+        }
+        return changes.Count;
     }
 
     public static WorldInfo? GetWorldInfo(string directoryName)

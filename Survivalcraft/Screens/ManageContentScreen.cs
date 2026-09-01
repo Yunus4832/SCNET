@@ -173,6 +173,23 @@ public class ManageContentScreen : Screen
         _deleteButton.IsEnabled = selectedItem is { IsBuiltIn: false };
         if (_deleteButton.IsClicked)
         {
+            if (selectedItem.UseCount > 0 && selectedItem.Type is ContentType.BlocksTexture or ContentType.CharacterSkin)
+            {
+                var replacements = _contentList.Items.Cast<ListItem>().Where(item =>
+                    item.Type == selectedItem.Type && item.Name != selectedItem.Name).ToList();
+                DialogsManager.ShowDialog(null, new ListSelectionDialog(
+                    LanguageManager.Get(_typeName, 9), replacements, 60f,
+                    item => ((ListItem)item).DisplayName,
+                    item => ConfirmDelete(selectedItem, (ListItem)item)));
+                return;
+            }
+            ConfirmDelete(selectedItem, null);
+        }
+
+    }
+
+    private void ConfirmDelete(ListItem selectedItem, ListItem? replacement)
+    {
             var smallMessage = selectedItem.UseCount <= 0
                 ? string.Format(LanguageManager.Get(_typeName, 5), selectedItem.DisplayName)
                 : string.Format(LanguageManager.Get(_typeName, 6), selectedItem.DisplayName, selectedItem.UseCount);
@@ -189,13 +206,13 @@ public class ManageContentScreen : Screen
                             return;
                         }
 
+                        if (replacement is not null)
+                            WorldsManager.ReplaceAssetReferences(selectedItem.Type, selectedItem.Name, replacement.Name);
                         ContentPackageManager.DeleteContent(selectedItem.Type, selectedItem.Name);
                         UpdateList();
                     }
                 )
             );
-        }
-
     }
 
     private void UpdateList()

@@ -3973,6 +3973,12 @@
     },
     "ContentServerScreen": {
         "ServerNotConfigured": "O endereço do servidor de conteúdos não está configurado.",
-        "Installed": "Conteúdo instalado."
+        "Installed": "Conteúdo instalado.",
+        "InstallModeTitle": "Escolher modo de instalação",
+        "CreateNew": "Criar novo recurso",
+        "ReplaceExisting": "Substituir recurso existente",
+        "SelectReplacement": "Selecionar recurso a substituir",
+        "ConfirmReplace": "Substituir “{1}” por “{0}”? O AssetKey existente será preservado e {2} referências serão afetadas.",
+        "ConfirmCreate": "Instalar “{0}” como um novo recurso independente?"
     }
 }

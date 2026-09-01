@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Game.Content;
+
 namespace Game.Modding;
 
 public static class LocalModsImportManager
@@ -44,7 +46,9 @@ public static class LocalModsImportManager
             if (repository.FindByHash(packageHash) == null)
             {
                 log?.Invoke($"导入本地模组 {fileInfo.Name}");
-                repository.ImportPackage(path);
+                using var source = File.OpenRead(path);
+                var cache = new ContentPackageCache(repositoryDirectoryPath);
+                ContentPackageWorkflow.ImportAndInstallAsync(source, cache).GetAwaiter().GetResult();
             }
 
             importedEntries.Add(new ImportedModEntry(
@@ -64,7 +68,9 @@ public static class LocalModsImportManager
         Directory.CreateDirectory(targetDirectoryPath);
 
         var targetPath = Path.Combine(targetDirectoryPath, CreateExportFileName(entry));
-        File.Copy(entry.Path, targetPath, true);
+        var repository = new LocalModRepository(Path.GetDirectoryName(entry.Path)!);
+        using (var destination = new FileStream(targetPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            repository.ExportPackage(entry, destination);
         RecordInstalledMod(targetPath, entry.PackageHash);
         return targetPath;
     }

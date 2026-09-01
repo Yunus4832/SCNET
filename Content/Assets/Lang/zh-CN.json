@@ -3973,6 +3973,12 @@
     },
     "ContentServerScreen": {
         "ServerNotConfigured": "尚未配置内容服务器地址。",
-        "Installed": "内容已安装。"
+        "Installed": "内容已安装。",
+        "InstallModeTitle": "选择安装方式",
+        "CreateNew": "创建新资产",
+        "ReplaceExisting": "替换现有资产",
+        "SelectReplacement": "选择要替换的资产",
+        "ConfirmReplace": "确定用“{0}”替换“{1}”吗？将保留原有 AssetKey，并影响 {2} 个引用。",
+        "ConfirmCreate": "确定将“{0}”安装为新的独立资产吗？"
     }
 }

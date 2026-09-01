@@ -38,7 +38,14 @@
 - `<world>/Project.xml`
 - `<world>/WorldModProfile.xml`
 - `GamePaths.Mods`: 用户手动放置 `.scpak` 的入口目录
-- `GamePaths.ModCache`: 按包 hash 保存的本地模组缓存
+- `GamePaths.ContentPackageCache`: 按 PackageHash 保存所有类型原始 `.scpkg` 的统一缓存；`GamePaths.ModCache` 是迁移期别名
+- `GamePaths.BlockTextures`、`GamePaths.CharacterSkins`、`GamePaths.FurniturePacks`: 已安装资产目录；用户资产以稳定 GUID `AssetKey` 保存，显示名称位于伴随元数据中，与缓存包独立删除
+
+材质、皮肤和家具替换先写入并验证临时数据，再保留原 AssetKey 交换数据与元数据；World 覆盖使用同一 Worlds 根目录下的 staging/backup 目录完成可恢复替换。材质或皮肤删除前，管理界面要求为所有 World 与当前会话引用选择同类型替代资产，并以暂存 `Project.xml` 批量提交。
+
+游戏内容制造先在 `GamePaths.ContentPackageCreationTemp` 生成并通过共享 Reader 复验临时 `.scpkg`，调用方只获得可读取且可释放的临时制品。保存制品不写入 ContentPackageCache，也不自动安装；“创建新版本”只从同类型基线包继承 Identifier。
+
+本地输入流与 ContentServer 下载统一进入 `ContentPackageWorkflow`：先由 ContentPackageCache 原子提交和复验，再从缓存打开实际文件交给安装器。来源只影响 UI 的信任提示，不改变缓存或安装结果。
 - `app:Content.zip`
 - `data:` 下的世界、缓存和玩家数据
 

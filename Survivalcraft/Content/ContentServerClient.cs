@@ -41,10 +41,23 @@ public sealed class ContentServerClient : IDisposable
         return items;
     }
 
-    public async Task<byte[]> DownloadAsync(ContentCatalogItem item, CancellationToken cancellationToken = default)
+    public async Task<ContentPackageCacheEntry> DownloadToCacheAsync(
+        ContentCatalogItem item,
+        IContentPackageCache cache,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(item);
-        return await _httpClient.GetByteArrayAsync(item.DownloadUrl, cancellationToken).ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(cache);
+        var existing = cache.Find(item.PackageHash);
+        if (existing is not null) return existing;
+        using var response = await _httpClient.GetAsync(item.DownloadUrl,
+            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        var imported = await cache.ImportAsync(stream, cancellationToken).ConfigureAwait(false);
+        if (!string.Equals(imported.PackageHash, item.PackageHash, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Downloaded package hash does not match ContentServer metadata.");
+        return imported;
     }
 
     public void Dispose()

@@ -3,7 +3,7 @@
 > 状态：**已批准；实现进行中。** 本文将
 > [内容管理迁移临时实施计划](../ContentManagementMigrationPlan.md) 中的阶段 0 约束细化为
 > `Content.Packaging`、ContentServer 和游戏端的共同契约。Mod 构建与 Runtime 已迁移到 `.scpkg`；尚未替代的
-> `.scworld`、`.scbtex`、`.scskin` 和 `.scfpack` 运行行为暂时不变，它们不属于本协议，并将在对应 installer 就绪后删除。
+> `.scpkg` 安装器直接读取展开后的 payload。旧交换格式不属于本协议，其剩余入口将在阶段 6 清理。
 
 ## 1. 范围和术语
 

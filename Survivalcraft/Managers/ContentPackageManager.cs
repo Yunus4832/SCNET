@@ -33,7 +33,7 @@ public static class ContentPackageManager
                 yield return ".scskin";
                 break;
             case ContentType.FurniturePack:
-                yield return ".scfpack";
+                yield return ".scfurniture";
                 break;
         }
     }

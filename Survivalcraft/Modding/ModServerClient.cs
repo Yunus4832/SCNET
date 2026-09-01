@@ -101,8 +101,11 @@ public sealed class ModServerClient : IDisposable
             .GetAsync(package.DownloadUrl, cancellationToken)
             .ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
-        var content = await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-        return repository.AddOrUpdatePackage(content, $"{package.PackageHash}{ModPackage.FileExtension}");
+        await using var content = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        var entry = repository.AddPackage(content);
+        if (!string.Equals(entry.PackageHash, package.PackageHash, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("Downloaded package hash does not match ContentServer metadata.");
+        return entry;
     }
 
     private async Task<IReadOnlyList<ModRepositoryPackage>> ListPagesAsync(
