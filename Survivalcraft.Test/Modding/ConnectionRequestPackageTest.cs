@@ -79,11 +79,11 @@ public class ConnectionRequestPackageTest
         {
             RequestInfo = false,
             Version = "1.0.0",
-            ModRepositoryUrl = "http://127.0.0.1:9527",
+            ContentServerUrl = "http://127.0.0.1:9527",
             RequiredModProfile = new ModProfile
             {
                 Id = "server",
-                RepositoryUrl = "http://127.0.0.1:9527",
+                ContentServerUrl = "http://127.0.0.1:9527",
                 Packages =
                 [
                     new ModPackageRequirement
@@ -102,9 +102,9 @@ public class ConnectionRequestPackageTest
         var clone = new ServerInfoPackage();
         clone.ReadData(reader);
 
-        Assert.Equal(package.ModRepositoryUrl, clone.ModRepositoryUrl);
+        Assert.Equal(package.ContentServerUrl, clone.ContentServerUrl);
         Assert.NotNull(clone.RequiredModProfile);
-        Assert.Equal("http://127.0.0.1:9527", clone.RequiredModProfile.RepositoryUrl);
+        Assert.Equal("http://127.0.0.1:9527", clone.RequiredModProfile.ContentServerUrl);
         var requirement = Assert.Single(clone.RequiredModProfile.Packages);
         Assert.Equal("example.addon", requirement.ModId);
         Assert.Equal("2.0.0", requirement.Version);

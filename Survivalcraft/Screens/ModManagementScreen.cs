@@ -20,10 +20,10 @@ public class ModManagementScreen : Screen
     private readonly ButtonWidget _previousPageButton;
     private readonly LabelWidget _pickerUnavailableLabel;
     private readonly ButtonWidget _refreshButton;
-    private readonly TextBoxWidget _repositoryTextBox;
-    private readonly ButtonWidget _saveDefaultRepositoryButton;
+    private readonly TextBoxWidget _contentServerTextBox;
+    private readonly ButtonWidget _saveDefaultContentServerButton;
 
-    private readonly List<RepositoryModItem> _items = [];
+    private readonly List<ModItem> _items = [];
     private ModProfile _globalProfile = new();
 
     public ModManagementScreen()
@@ -35,13 +35,13 @@ public class ModManagementScreen : Screen
         _exportButton = Children.Find<ButtonWidget>("ExportButton")!;
         _globalModButton = Children.Find<ButtonWidget>("GlobalModButton")!;
         _importButton = Children.Find<ButtonWidget>("ImportButton")!;
-        _modsList = Children.Find<ListPanelWidget>("RepositoryModsList")!;
+        _modsList = Children.Find<ListPanelWidget>("ModsList")!;
         _nextPageButton = Children.Find<ButtonWidget>("NextPageButton")!;
         _previousPageButton = Children.Find<ButtonWidget>("PreviousPageButton")!;
         _pickerUnavailableLabel = Children.Find<LabelWidget>("PickerUnavailable")!;
         _refreshButton = Children.Find<ButtonWidget>("RefreshButton")!;
-        _repositoryTextBox = Children.Find<TextBoxWidget>("RepositoryTextBox")!;
-        _saveDefaultRepositoryButton = Children.Find<ButtonWidget>("SaveDefaultRepositoryButton")!;
+        _contentServerTextBox = Children.Find<TextBoxWidget>("ContentServerTextBox")!;
+        _saveDefaultContentServerButton = Children.Find<ButtonWidget>("SaveDefaultContentServerButton")!;
         _modsList.ItemWidgetFactory = CreateModItemWidget;
     }
 
@@ -49,18 +49,18 @@ public class ModManagementScreen : Screen
     {
         WorldsManager.UpdateWorldsList();
         _globalProfile = ModProfileManager.LoadGlobalProfile();
-        _repositoryTextBox.Text = GetRepositoryUrl();
+        _contentServerTextBox.Text = GetContentServerUrl();
         LoadLocalPackages();
         RefreshState();
-        if (_items.Count == 0 && !string.IsNullOrWhiteSpace(_repositoryTextBox.Text))
+        if (_items.Count == 0 && !string.IsNullOrWhiteSpace(_contentServerTextBox.Text))
         {
-            RefreshRepositoryPackages();
+            RefreshContentServerPackages();
         }
     }
 
     public override void Update()
     {
-        var selectedItem = _modsList.SelectedItem as RepositoryModItem;
+        var selectedItem = _modsList.SelectedItem as ModItem;
         _globalModButton.IsEnabled = selectedItem != null;
         _globalModButton.Text = selectedItem is { IsGlobal: true }
             ? LanguageManager.Get(_typeName, "RemoveGlobal")
@@ -78,7 +78,7 @@ public class ModManagementScreen : Screen
 
         if (_refreshButton.IsClicked)
         {
-            RefreshRepositoryPackages();
+            RefreshContentServerPackages();
         }
 
         if (_importButton.IsClicked)
@@ -86,9 +86,9 @@ public class ModManagementScreen : Screen
             ImportPackages();
         }
 
-        if (_saveDefaultRepositoryButton.IsClicked)
+        if (_saveDefaultContentServerButton.IsClicked)
         {
-            SaveRepositoryUrlFromTextBox();
+            SaveContentServerUrlFromTextBox();
         }
 
         if (_cacheButton.IsClicked && selectedItem != null)
@@ -133,25 +133,25 @@ public class ModManagementScreen : Screen
         }
     }
 
-    private void RefreshRepositoryPackages()
+    private void RefreshContentServerPackages()
     {
-        var repositoryUrl = NormalizeRepositoryUrl(_repositoryTextBox.Text);
-        if (string.IsNullOrWhiteSpace(repositoryUrl))
+        var contentServerUrl = NormalizeContentServerUrl(_contentServerTextBox.Text);
+        if (string.IsNullOrWhiteSpace(contentServerUrl))
         {
             DialogsManager.Alert(
-                LanguageManager.Get(_typeName, "RepositoryEmptyTitle"),
-                LanguageManager.Get(_typeName, "RepositoryEmptyMessage"));
+                LanguageManager.Get(_typeName, "ContentServerEmptyTitle"),
+                LanguageManager.Get(_typeName, "ContentServerEmptyMessage"));
             return;
         }
 
-        var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "ReadingRepository"), repositoryUrl);
+        var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "ReadingContentServer"), contentServerUrl);
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() =>
         {
             try
             {
-                using var client = new ModServerClient(repositoryUrl);
-                var packages = client.ListPackages();
+                using var client = new ContentServerClient(contentServerUrl);
+                var packages = client.ListMods();
                 Dispatcher.Dispatch(() =>
                 {
                     DialogsManager.HideDialog(busyDialog);
@@ -162,7 +162,7 @@ public class ModManagementScreen : Screen
 
                     foreach (var package in packages)
                     {
-                        UpsertItem(new RepositoryModItem(package, repositoryUrl));
+                        UpsertItem(new ModItem(package, contentServerUrl));
                     }
 
                     _items.RemoveAll(item => item.LocalEntry == null && item.RemotePackage == null);
@@ -174,7 +174,7 @@ public class ModManagementScreen : Screen
                 Dispatcher.Dispatch(() =>
                 {
                     DialogsManager.HideDialog(busyDialog);
-                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ReadRepositoryFailed"), ex.Message);
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ReadContentServerFailed"), ex.Message);
                 });
             }
         });
@@ -185,11 +185,11 @@ public class ModManagementScreen : Screen
         var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
         foreach (var entry in repository.ListAll())
         {
-            UpsertItem(new RepositoryModItem(entry));
+            UpsertItem(new ModItem(entry));
         }
     }
 
-    private void UpsertItem(RepositoryModItem newItem)
+    private void UpsertItem(ModItem newItem)
     {
         var existing = _items.FirstOrDefault(item =>
             string.Equals(item.ModId, newItem.ModId, StringComparison.OrdinalIgnoreCase) &&
@@ -210,15 +210,15 @@ public class ModManagementScreen : Screen
         RefreshState();
     }
 
-    private void SaveRepositoryUrlFromTextBox()
+    private void SaveContentServerUrlFromTextBox()
     {
-        SettingsManager.Current.ContentServerUrl = NormalizeRepositoryUrl(_repositoryTextBox.Text);
+        SettingsManager.Current.ContentServerUrl = NormalizeContentServerUrl(_contentServerTextBox.Text);
         SettingsManager.SaveSettings();
     }
 
-    private void DownloadPackage(RepositoryModItem mod)
+    private void DownloadPackage(ModItem mod)
     {
-        if (mod.RemotePackage == null || string.IsNullOrWhiteSpace(mod.RepositoryUrl))
+        if (mod.RemotePackage == null || string.IsNullOrWhiteSpace(mod.ContentServerUrl))
         {
             return;
         }
@@ -229,9 +229,9 @@ public class ModManagementScreen : Screen
         {
             try
             {
-                using var client = new ModServerClient(mod.RepositoryUrl);
+                using var client = new ContentServerClient(mod.ContentServerUrl);
                 var repository = new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
-                var entry = client.DownloadPackage(mod.RemotePackage, repository);
+                var entry = client.DownloadMod(mod.RemotePackage, repository);
                 Dispatcher.Dispatch(() =>
                 {
                     DialogsManager.HideDialog(busyDialog);
@@ -250,7 +250,7 @@ public class ModManagementScreen : Screen
         });
     }
 
-    private void ConfirmDeleteCache(RepositoryModItem mod)
+    private void ConfirmDeleteCache(ModItem mod)
     {
         var message = string.Format(LanguageManager.Get(_typeName, "DeleteCacheQuestion"), mod.ModId, mod.Version);
         DialogsManager.ShowDialog(null, new MessageDialog(
@@ -267,7 +267,7 @@ public class ModManagementScreen : Screen
             }));
     }
 
-    private void DeleteCache(RepositoryModItem mod)
+    private void DeleteCache(ModItem mod)
     {
         if (mod.LocalEntry == null)
         {
@@ -322,7 +322,7 @@ public class ModManagementScreen : Screen
         }
     }
 
-    private async void ExportPackage(RepositoryModItem mod)
+    private async void ExportPackage(ModItem mod)
     {
         if (mod.LocalEntry == null)
         {
@@ -346,7 +346,7 @@ public class ModManagementScreen : Screen
         }
     }
 
-    private void SelectWorldsForPackage(RepositoryModItem mod)
+    private void SelectWorldsForPackage(ModItem mod)
     {
         WorldsManager.UpdateWorldsList();
         if (WorldsManager.WorldInfos.Count == 0)
@@ -389,11 +389,11 @@ public class ModManagementScreen : Screen
                 }));
     }
 
-    private static void AddPackage(ModProfile profile, RepositoryModItem mod)
+    private static void AddPackage(ModProfile profile, ModItem mod)
     {
-        if (!string.IsNullOrWhiteSpace(mod.RepositoryUrl))
+        if (!string.IsNullOrWhiteSpace(mod.ContentServerUrl))
         {
-            profile.RepositoryUrl = mod.RepositoryUrl;
+            profile.ContentServerUrl = mod.ContentServerUrl;
         }
 
         RemovePackage(profile, mod.ModId);
@@ -412,7 +412,7 @@ public class ModManagementScreen : Screen
 
     private void RefreshState()
     {
-        var selectedItem = _modsList.SelectedItem as RepositoryModItem;
+        var selectedItem = _modsList.SelectedItem as ModItem;
         var anyWorldModIds = LoadAnyWorldModIds();
         foreach (var item in _items)
         {
@@ -461,19 +461,19 @@ public class ModManagementScreen : Screen
             string.Equals(package.ModId, modId, StringComparison.OrdinalIgnoreCase));
     }
 
-    private static string GetRepositoryUrl()
+    private static string GetContentServerUrl()
     {
-        return NormalizeRepositoryUrl(SettingsManager.Current.ContentServerUrl);
+        return NormalizeContentServerUrl(SettingsManager.Current.ContentServerUrl);
     }
 
-    private static string NormalizeRepositoryUrl(string? repositoryUrl)
+    private static string NormalizeContentServerUrl(string? contentServerUrl)
     {
-        return string.IsNullOrWhiteSpace(repositoryUrl) ? string.Empty : repositoryUrl.Trim();
+        return string.IsNullOrWhiteSpace(contentServerUrl) ? string.Empty : contentServerUrl.Trim();
     }
 
     private static Widget CreateModItemWidget(object item)
     {
-        var mod = (RepositoryModItem)item;
+        var mod = (ModItem)item;
         var status = new List<string>();
         if (mod.LocalEntry != null)
         {
@@ -535,17 +535,17 @@ public class ModManagementScreen : Screen
         };
     }
 
-    private sealed class RepositoryModItem
+    private sealed class ModItem
     {
-        public RepositoryModItem(ModRepositoryPackage package, string repositoryUrl)
+        public ModItem(ContentServerModPackage package, string contentServerUrl)
         {
             ModId = package.ModId;
             Version = package.Version;
             RemotePackage = package;
-            RepositoryUrl = repositoryUrl;
+            ContentServerUrl = contentServerUrl;
         }
 
-        public RepositoryModItem(LocalModPackageEntry localEntry)
+        public ModItem(LocalModPackageEntry localEntry)
         {
             ModId = localEntry.ModId;
             Version = localEntry.Version;
@@ -556,11 +556,11 @@ public class ModManagementScreen : Screen
 
         public string Version { get; }
 
-        public ModRepositoryPackage? RemotePackage { get; private set; }
+        public ContentServerModPackage? RemotePackage { get; private set; }
 
         public LocalModPackageEntry? LocalEntry { get; set; }
 
-        public string RepositoryUrl { get; private set; } = string.Empty;
+        public string ContentServerUrl { get; private set; } = string.Empty;
 
         public bool HasHashMismatch =>
             LocalEntry != null &&
@@ -572,12 +572,12 @@ public class ModManagementScreen : Screen
 
         public bool IsAnyWorld { get; set; }
 
-        public void Merge(RepositoryModItem other)
+        public void Merge(ModItem other)
         {
             if (other.RemotePackage != null)
             {
                 RemotePackage = other.RemotePackage;
-                RepositoryUrl = other.RepositoryUrl;
+                ContentServerUrl = other.ContentServerUrl;
             }
 
             if (other.LocalEntry != null)
@@ -589,7 +589,7 @@ public class ModManagementScreen : Screen
         public void ClearRemote()
         {
             RemotePackage = null;
-            RepositoryUrl = string.Empty;
+            ContentServerUrl = string.Empty;
         }
     }
 }

@@ -4,6 +4,11 @@ ContentServer 是 SCNET 的独立 ASP.NET Core 内容服务，项目位于 `Cont
 `SCNET.slnx` 的 `06 Content` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询和包下载；
 玩家身份、联机身份和平台 FilePicker 不属于该服务。
 
+ContentServer 也是游戏客户端唯一的远程内容地址。`ModProfile.ContentServerUrl` 和联机服务器信息可以为
+特定会话声明该地址；未声明时使用 `Settings.ContentServerUrl`。模组解析通过 `/api/v1/mods` 查询精确版本，
+所有类型最终都从 `/api/v1/packages/{sha256}` 流式下载并进入统一 ContentPackageCache。仓库中不再包含独立的
+模组服务或另一套模组存储协议。
+
 ## 分层与依赖方向
 
 ContentServer 保持为一个 Web 项目，但源码按 DDD 职责分为四个命名空间：

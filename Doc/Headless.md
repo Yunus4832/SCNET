@@ -181,11 +181,11 @@ Headless 启动时：
 - session 含 `GameMode` 时，新世界以该模式创建；已有世界以该模式运行，但保存仍保留原存档模式
 - 如果世界没有开启 `RunServer`，Headless 会自动启用它并保存世界设置
 
-## 模组仓库
+## 内容服务
 
 模组下载地址按以下顺序解析：
 
-1. 当前有效 `ModProfile.RepositoryUrl`
+1. 当前有效 `ModProfile.ContentServerUrl`
 2. `Settings.ContentServerUrl`
 
 如果两者都为空，只能使用本地已经存在的模组包。

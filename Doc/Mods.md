@@ -50,7 +50,7 @@ Mod 管理界面的导入只刷新缓存列表，不自动加入全局或世界 
 用户可编辑的 XML 只保存：
 
 ```xml
-<ModProfile Id="default" RepositoryUrl="http://example.com:9527">
+<ModProfile Id="default" ContentServerUrl="http://example.com:9527">
   <Packages>
     <Package ModId="verification.block" Version="1.0.0" />
   </Packages>
@@ -73,16 +73,16 @@ Mod 管理界面的导入只刷新缓存列表，不自动加入全局或世界 
 
 会话 profile 优先级最高，通常由进入 world 或远程联机前的重启流程生成。启动完成后，当前已生效的模组组合保存在 `CurrentModRuntime.Value.EffectiveProfile` 中。
 
-## 仓库地址
+## 内容服务地址
 
-模组仓库用于按 `ModId + Version` 下载缺失包。
+ContentServer 用于按 `ModId + Version` 查询和下载缺失包。
 
 解析顺序：
 
-1. 当前有效 `ModProfile.RepositoryUrl`
+1. 当前有效 `ModProfile.ContentServerUrl`
 2. `Settings.ContentServerUrl`
 
-远程服务器下发的 `RequiredModProfile.RepositoryUrl` 优先级最高。客户端连接远程服务器时，不会用本地默认仓库覆盖服务器声明的仓库。
+远程服务器下发的 `RequiredModProfile.ContentServerUrl` 优先级最高。客户端连接远程服务器时，不会用本地默认内容服务覆盖服务器声明的地址。
 
 ## 本地世界加载流程
 
@@ -121,7 +121,7 @@ Headless 启动时没有 GUI 中途切换流程。它会直接解析启动 sessi
 
 ## 默认内容服务器
 
-`Settings.ContentServerUrl` 是可部署内容服务的基础地址。目前模组管理界面和没有显式仓库地址的 profile 会将它作为模组包下载地址；后续内容服务协议确定后，模组仓库将作为统一内容 API 的一个资源类型。
+`Settings.ContentServerUrl` 是可部署内容服务的基础地址。模组管理界面和没有显式内容服务地址的 profile 使用它查询并下载模组包；模组只是统一内容 API 的一种资源类型。
 
 它不是“当前联机服务器地址”。服务器对客户端声明的仓库地址来自当前有效 profile，profile 为空时才 fallback 到默认仓库。
 
@@ -149,4 +149,4 @@ VerificationBlockMod/bin/Debug/net10.0/packages/verification.block.scpkg
 
 创建和打包模组见 [Modding.md](./Modding.md)。
 
-部署私有仓库见 [ModServer.md](./ModServer.md)。
+部署内容服务及其模组查询接口见 [ContentServer.md](./ContentServer.md)。

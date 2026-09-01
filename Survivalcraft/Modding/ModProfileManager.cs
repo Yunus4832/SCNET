@@ -119,7 +119,7 @@ public static class ModProfileManager
         return Normalize(new ModProfile
         {
             Id = NormalizeSessionId(sessionId),
-            RepositoryUrl = profile.RepositoryUrl,
+            ContentServerUrl = profile.ContentServerUrl,
             Packages = profile.Packages
                 .Select(package => new ModPackageRequirement
                 {
@@ -221,7 +221,7 @@ public static class ModProfileManager
         var profile = new ModProfile
         {
             Id = root.Attribute(nameof(ModProfile.Id))?.Value ?? "default",
-            RepositoryUrl = root.Attribute(nameof(ModProfile.RepositoryUrl))?.Value,
+            ContentServerUrl = root.Attribute(nameof(ModProfile.ContentServerUrl))?.Value,
             Packages = root.Element(nameof(ModProfile.Packages))?
                 .Elements("Package")
                 .Select(element => new ModPackageRequirement
@@ -238,7 +238,7 @@ public static class ModProfileManager
     {
         return new XElement("ModProfile",
             new XAttribute(nameof(ModProfile.Id), profile.Id),
-            CreateOptionalAttribute(nameof(ModProfile.RepositoryUrl), profile.RepositoryUrl),
+            CreateOptionalAttribute(nameof(ModProfile.ContentServerUrl), profile.ContentServerUrl),
             new XElement(nameof(ModProfile.Packages),
                 profile.Packages.Select(package => new XElement("Package",
                     new XAttribute(nameof(ModPackageRequirement.ModId), package.ModId),
@@ -248,7 +248,7 @@ public static class ModProfileManager
     private static ModProfile Normalize(ModProfile profile)
     {
         profile.Id = string.IsNullOrWhiteSpace(profile.Id) ? "default" : profile.Id.Trim();
-        profile.RepositoryUrl = NormalizeRepositoryUrl(profile.RepositoryUrl);
+        profile.ContentServerUrl = NormalizeContentServerUrl(profile.ContentServerUrl);
         profile.Packages ??= [];
         profile.Packages = profile.Packages
             .Where(package => !string.IsNullOrWhiteSpace(package.ModId) && !string.IsNullOrWhiteSpace(package.Version))
@@ -323,7 +323,7 @@ public static class ModProfileManager
                     globalProfile,
                     worldProfile!,
                     worldName,
-                    repositoryUrl: worldProfile!.RepositoryUrl ?? globalProfile.RepositoryUrl,
+                    contentServerUrl: worldProfile!.ContentServerUrl ?? globalProfile.ContentServerUrl,
                     worldOverrides: true)
                 : CloneProfile(globalProfile, worldName),
             ModProfileResolutionStrategy.WorldPlusGlobal => hasWorldProfile
@@ -331,7 +331,7 @@ public static class ModProfileManager
                     worldProfile!,
                     globalProfile,
                     worldName,
-                    repositoryUrl: worldProfile!.RepositoryUrl ?? globalProfile.RepositoryUrl,
+                    contentServerUrl: worldProfile!.ContentServerUrl ?? globalProfile.ContentServerUrl,
                     worldOverrides: false)
                 : CloneProfile(globalProfile, worldName),
             _ => CloneProfile(globalProfile, worldName)
@@ -342,7 +342,7 @@ public static class ModProfileManager
         ModProfile primary,
         ModProfile secondary,
         string resultId,
-        string? repositoryUrl,
+        string? contentServerUrl,
         bool worldOverrides)
     {
         var packages = new Dictionary<string, ModPackageRequirement>(StringComparer.OrdinalIgnoreCase);
@@ -362,7 +362,7 @@ public static class ModProfileManager
         return Normalize(new ModProfile
         {
             Id = string.IsNullOrWhiteSpace(resultId) ? "default" : resultId.Trim(),
-            RepositoryUrl = repositoryUrl,
+            ContentServerUrl = contentServerUrl,
             Packages = packages.Values
                 .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
@@ -376,7 +376,7 @@ public static class ModProfileManager
         return new ModProfile
         {
             Id = string.IsNullOrWhiteSpace(id) ? profile.Id : id.Trim(),
-            RepositoryUrl = profile.RepositoryUrl,
+            ContentServerUrl = profile.ContentServerUrl,
             Packages = profile.Packages.Select(CloneRequirement).ToList()
         };
     }
@@ -406,7 +406,7 @@ public static class ModProfileManager
         return string.IsNullOrWhiteSpace(sessionId) ? "default" : sessionId.Trim();
     }
 
-    private static string? NormalizeRepositoryUrl(string? value)
+    private static string? NormalizeContentServerUrl(string? value)
     {
         var normalized = value?.Trim();
         if (string.IsNullOrWhiteSpace(normalized))

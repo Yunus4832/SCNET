@@ -6,6 +6,7 @@ namespace Game.Managers;
 
 public static class FurniturePacksManager
 {
+    private const string _assetExtension = ".xml";
     private static readonly List<string> _furniturePackNames = [];
 
     public static ReadOnlyList<string> ReadOnlyFurniturePackNames => new(_furniturePackNames);
@@ -19,12 +20,12 @@ public static class FurniturePacksManager
 
     public static string GetFileName(string name)
     {
-        return Storage.CombinePaths(GamePaths.FurniturePacks, name + ".scfurniture");
+        return Storage.CombinePaths(GamePaths.FurniturePacks, name + _assetExtension);
     }
 
     public static string GetDisplayName(string name)
     {
-        return ContentAssetStore.GetDisplayName(GamePaths.FurniturePacks, name, ".scfurniture");
+        return ContentAssetStore.GetDisplayName(GamePaths.FurniturePacks, name, _assetExtension);
     }
 
     public static DateTime GetCreationDate(string name)
@@ -41,7 +42,7 @@ public static class FurniturePacksManager
 
     public static string ImportFurniturePack(string name, Stream stream)
     {
-        return ContentAssetStore.Install(GamePaths.FurniturePacks, ".scfurniture",
+        return ContentAssetStore.Install(GamePaths.FurniturePacks, _assetExtension,
             Storage.GetFileNameWithoutExtension(name), stream, ValidateFurniturePack);
     }
 
@@ -51,7 +52,7 @@ public static class FurniturePacksManager
     }
 
     public static string ReplaceFurnitureDesigns(string assetKey, string displayName, Stream designs) =>
-        ContentAssetStore.Replace(GamePaths.FurniturePacks, ".scfurniture", assetKey, displayName, designs,
+        ContentAssetStore.Replace(GamePaths.FurniturePacks, _assetExtension, assetKey, displayName, designs,
             ValidateFurniturePack);
 
     public static void ExportFurniturePack(string name, Stream stream)
@@ -77,7 +78,7 @@ public static class FurniturePacksManager
     {
         try
         {
-            ContentAssetStore.Delete(GamePaths.FurniturePacks, name, ".scfurniture");
+            ContentAssetStore.Delete(GamePaths.FurniturePacks, name, _assetExtension);
             FurniturePackDeleted?.Invoke(name);
         }
         catch (Exception e)
@@ -91,7 +92,7 @@ public static class FurniturePacksManager
         _furniturePackNames.Clear();
         foreach (var item in Storage.ListFileNames(GamePaths.FurniturePacks))
         {
-            if (ContentAssetStore.IsComplete(GamePaths.FurniturePacks, item, ".scfurniture"))
+            if (ContentAssetStore.IsComplete(GamePaths.FurniturePacks, item, _assetExtension))
             {
                 _furniturePackNames.Add(Storage.GetFileNameWithoutExtension(item));
             }

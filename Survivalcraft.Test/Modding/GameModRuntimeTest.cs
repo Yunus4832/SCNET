@@ -226,7 +226,7 @@ public class GameModRuntimeTest
     public void RuntimeUsesContentServerUrlWhenProfileDoesNotSpecifyRepository()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"scnet-runtime-test-{Guid.NewGuid():N}");
-        var previousRepositoryUrl = SettingsManager.Current.ContentServerUrl;
+        var previousContentServerUrl = SettingsManager.Current.ContentServerUrl;
         Directory.CreateDirectory(directory);
         try
         {
@@ -258,12 +258,12 @@ public class GameModRuntimeTest
                 directory,
                 ModSide.Server);
 
-            Assert.Equal("https://mods.example", runtime.EffectiveProfile.RepositoryUrl);
-            Assert.Equal("https://mods.example", runtime.CreateServerRequiredProfile()?.RepositoryUrl);
+            Assert.Equal("https://mods.example", runtime.EffectiveProfile.ContentServerUrl);
+            Assert.Equal("https://mods.example", runtime.CreateServerRequiredProfile()?.ContentServerUrl);
         }
         finally
         {
-            SettingsManager.Current.ContentServerUrl = previousRepositoryUrl;
+            SettingsManager.Current.ContentServerUrl = previousContentServerUrl;
             Directory.Delete(directory, true);
         }
     }

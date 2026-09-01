@@ -38,9 +38,9 @@
 - `<world>/Project.xml`
 - `<world>/WorldModProfile.xml`
 - `GamePaths.ContentPackageCache`: 按 PackageHash 保存所有类型原始 `.scpkg` 的统一缓存
-- `GamePaths.BlockTextures`、`GamePaths.CharacterSkins`、`GamePaths.FurniturePacks`: 已安装资产目录；用户资产以稳定 GUID `AssetKey` 保存，显示名称位于伴随元数据中，与缓存包独立删除
+- `GamePaths.BlockTextures`、`GamePaths.CharacterSkins`、`GamePaths.FurniturePacks`: 已安装资产目录；用户资产以稳定 GUID `AssetKey` 保存，材质和皮肤数据使用 `.png`，家具数据使用 `.xml`，显示名称位于伴随 `.json` 元数据中，与缓存包独立删除
 
-材质、皮肤和家具替换先写入并验证临时数据，再保留原 AssetKey 交换数据与元数据；World 覆盖使用同一 Worlds 根目录下的 staging/backup 目录完成可恢复替换。材质或皮肤删除前，管理界面要求为所有 World 与当前会话引用选择同类型替代资产，并以暂存 `Project.xml` 批量提交。
+材质、皮肤和家具替换先写入并验证临时数据，再保留原 AssetKey 交换数据与元数据；旧 `.scbtex`、`.scskin`、`.scfurniture` 不再作为导入协议或内部资产后缀。World 覆盖使用同一 Worlds 根目录下的 staging/backup 目录完成可恢复替换；旧 World ZIP 导入/导出及嵌入内容分派已删除，`.snapshot` 只作为同一世界目录内的内部恢复制品。材质或皮肤删除前，管理界面要求为所有 World 与当前会话引用选择同类型替代资产，并以暂存 `Project.xml` 批量提交。
 
 游戏内容制造先在 `GamePaths.ContentPackageCreationTemp` 生成并通过共享 Reader 复验临时 `.scpkg`，调用方只获得可读取且可释放的临时制品。GUI 制造向导按“类型、素材、名称、语义版本、清单预览、FilePicker 保存”推进：World/FurniturePack 选择本地资产，BlocksTexture/CharacterSkin 选择并验证 PNG 流，运行中的世界不作为快照源。取消预览、取消保存或保存失败都会释放临时制品。保存制品不写入 ContentPackageCache，也不自动安装；“创建新版本”只从同类型基线包继承 Identifier。
 

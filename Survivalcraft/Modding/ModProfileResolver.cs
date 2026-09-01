@@ -1,3 +1,5 @@
+using Game.Content;
+
 namespace Game.Modding;
 
 public static class ModProfileResolver
@@ -11,7 +13,7 @@ public static class ModProfileResolver
         Directory.CreateDirectory(localRepositoryPath);
         var repository = new LocalModRepository(localRepositoryPath);
         var resolvedSources = new List<ModPackageSource>();
-        using var client = CreateClient(GetRepositoryUrl(profile));
+        using var client = CreateClient(GetContentServerUrl(profile));
 
         foreach (var requirement in profile.Packages)
         {
@@ -43,7 +45,7 @@ public static class ModProfileResolver
         profile = profile ?? throw new ArgumentNullException(nameof(profile));
         Directory.CreateDirectory(localRepositoryPath);
         var repository = new LocalModRepository(localRepositoryPath);
-        using var client = CreateClient(GetRepositoryUrl(profile));
+        using var client = CreateClient(GetContentServerUrl(profile));
         var downloadedAny = false;
 
         foreach (var requirement in profile.Packages)
@@ -68,15 +70,15 @@ public static class ModProfileResolver
     }
 
     private static LocalModPackageEntry? DownloadPackage(
-        ModServerClient client,
+        ContentServerClient client,
         ModPackageRequirement requirement,
         LocalModRepository repository,
         Action<string>? log)
     {
-        ModRepositoryPackage? metadata;
+        ContentServerModPackage? metadata;
         try
         {
-            metadata = client.FindPackage(requirement.ModId, requirement.Version);
+            metadata = client.FindMod(requirement.ModId, requirement.Version);
         }
         catch (Exception ex)
         {
@@ -92,7 +94,7 @@ public static class ModProfileResolver
 
         try
         {
-            var localEntry = client.DownloadPackage(metadata, repository);
+            var localEntry = client.DownloadMod(metadata, repository);
             log?.Invoke($"已下载模组 {requirement.ModId}@{requirement.Version}");
             return localEntry;
         }
@@ -104,15 +106,15 @@ public static class ModProfileResolver
         }
     }
 
-    private static ModServerClient? CreateClient(string? repositoryUrl)
+    private static ContentServerClient? CreateClient(string? serverUrl)
     {
-        return string.IsNullOrWhiteSpace(repositoryUrl) ? null : new ModServerClient(repositoryUrl);
+        return string.IsNullOrWhiteSpace(serverUrl) ? null : new ContentServerClient(serverUrl);
     }
 
-    private static string? GetRepositoryUrl(ModProfile profile)
+    private static string? GetContentServerUrl(ModProfile profile)
     {
-        return string.IsNullOrWhiteSpace(profile.RepositoryUrl)
+        return string.IsNullOrWhiteSpace(profile.ContentServerUrl)
             ? SettingsManager.Current.ContentServerUrl
-            : profile.RepositoryUrl;
+            : profile.ContentServerUrl;
     }
 }

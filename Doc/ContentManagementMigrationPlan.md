@@ -450,14 +450,14 @@ Data/
 - [x] 删除 `LocalModsImportManager`、`LocalModsImportState.xml` 和相关 `GamePaths` 字段。
 - [x] 删除自动扫描 `GamePaths.Mods` 的行为、导出后登记源文件的行为以及相应 UI 文案。
 - [x] GUI 和 Headless 继续共用 ContentPackageCache 优先、远程补缺的解析器。
-- [ ] 游戏端远程仓库客户端和类型统一改用 ContentServer 命名。
-- [ ] Profile、联机服务器信息和界面中的仓库地址统一为 ContentServer 语义。
-- [ ] 删除 `ModServer/` 项目、部署脚本、解决方案项和测试。
-- [ ] 删除 `ModServerClient`、旧响应类型、旧配置名和旧语言文本，不保留适配器。
-- [ ] 删除 `.scpak`、`.scworld`、`.scbtex`、`.scskin`、`.scfpack` 的 reader、writer、扩展名分派、测试夹具和旧资产存储路径；不保留 fallback 或内部临时重建。
-- [ ] 删除 `Doc/ModServer.md`，将仍有效的仓库语义写入 `Doc/ContentServer.md` 和 `Doc/Mods.md`。
-- [ ] 更新 README、Headless、启动、文件存储和内容管理相关文档。
-- [ ] 全仓搜索 `ModServer`、`ModRepositoryUrl`、`GamePaths.Mods`、`LocalModsImportState` 等陈旧术语并逐项处理。
+- [x] 游戏端远程仓库客户端和类型统一改用 ContentServer 命名。
+- [x] Profile、联机服务器信息和界面中的仓库地址统一为 ContentServer 语义。
+- [x] 删除 `ModServer/` 项目、部署脚本、解决方案项和测试。
+- [x] 删除 `ModServerClient`、旧响应类型、旧配置名和旧语言文本，不保留适配器。
+- [x] 删除 `.scpak`、`.scworld`、`.scbtex`、`.scskin`、`.scfpack` 的 reader、writer、扩展名分派、测试夹具和旧资产存储路径；不保留 fallback 或内部临时重建。
+- [x] 删除 `Doc/ModServer.md`，将仍有效的仓库语义写入 `Doc/ContentServer.md` 和 `Doc/Mods.md`。
+- [x] 更新 README、Headless、启动、文件存储和内容管理相关文档。
+- [x] 全仓搜索 `ModServer`、`ModRepositoryUrl`、`GamePaths.Mods`、`LocalModsImportState` 等陈旧术语并逐项处理。
 
 门禁：空缓存、有缓存、远程补缺、无远程缺包四种情形在 GUI 和 Headless 中结果一致；仓库中不存在旧扩展名 parser、ModServer 或自动导入路径。
 

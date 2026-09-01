@@ -4,40 +4,6 @@ public static class ContentPackageManager
 {
     private const string _typeName = nameof(ContentPackageManager);
 
-    public static ContentType ExtensionToType(string extension)
-    {
-        extension = extension.ToLowerInvariant();
-        foreach (ContentType value in Enum.GetValues(typeof(ContentType)))
-        {
-            if (GetTypeExtensions(value).Contains(extension))
-            {
-                return value;
-            }
-        }
-
-        return ContentType.Unknown;
-    }
-
-    public static IEnumerable<string> GetTypeExtensions(ContentType type)
-    {
-        switch (type)
-        {
-            case ContentType.World:
-                yield return ".scworld";
-                break;
-            case ContentType.BlocksTexture:
-                yield return ".scbtex";
-                yield return ".png";
-                break;
-            case ContentType.CharacterSkin:
-                yield return ".scskin";
-                break;
-            case ContentType.FurniturePack:
-                yield return ".scfurniture";
-                break;
-        }
-    }
-
     public static string GetTypeDescription(ContentType type)
     {
         return type switch
@@ -84,15 +50,4 @@ public static class ContentPackageManager
         }
     }
 
-    public static string InstallPackage(Stream stream, ContentType type, string name)
-    {
-        return type switch
-        {
-            ContentType.World => WorldsManager.ImportWorld(stream),
-            ContentType.BlocksTexture => BlocksTexturesManager.ImportBlocksTexture(name, stream),
-            ContentType.CharacterSkin => CharacterSkinsManager.ImportCharacterSkin(name, stream),
-            ContentType.FurniturePack => FurniturePacksManager.ImportFurniturePack(name, stream),
-            _ => throw new InvalidOperationException(LanguageManager.Get(_typeName, 4))
-        };
-    }
 }

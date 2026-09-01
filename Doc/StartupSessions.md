@@ -183,7 +183,7 @@ Starter 会在实例的 `.runtime` 目录登记当前进程的 PID 和启动时�
 
 仓库地址解析：
 
-1. `ModProfile.RepositoryUrl`
+1. `ModProfile.ContentServerUrl`
 2. `Settings.ContentServerUrl`
 
-远程服务器下发的 `RequiredModProfile.RepositoryUrl` 优先级最高，客户端不会用本地默认仓库覆盖它。
+远程服务器下发的 `RequiredModProfile.ContentServerUrl` 优先级最高，客户端不会用本地默认内容服务覆盖它。

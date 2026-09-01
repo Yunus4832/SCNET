@@ -7,6 +7,7 @@ namespace Game.Managers;
 
 public static class CharacterSkinsManager
 {
+    private const string _assetExtension = ".png";
     private static readonly List<string> _characterSkinNames = [];
 
     private static readonly Dictionary<PlayerClass, Model> _playerModels = new();
@@ -91,15 +92,15 @@ public static class CharacterSkinsManager
             return false;
         }
 
-        filename = Storage.CombinePaths(GamePaths.CharacterSkins, name + ".scskin");
-        return Storage.FileExists(filename) && ContentAssetStore.IsComplete(GamePaths.CharacterSkins, name + ".scskin", ".scskin");
+        filename = Storage.CombinePaths(GamePaths.CharacterSkins, name + _assetExtension);
+        return Storage.FileExists(filename) && ContentAssetStore.IsComplete(GamePaths.CharacterSkins, name + _assetExtension, _assetExtension);
     }
 
     public static string GetDisplayName(string name)
     {
         if (!IsBuiltIn(name))
         {
-            return ContentAssetStore.GetDisplayName(GamePaths.CharacterSkins, name, ".scskin");
+            return ContentAssetStore.GetDisplayName(GamePaths.CharacterSkins, name, _assetExtension);
         }
 
         if (name.Contains("Female"))
@@ -201,12 +202,12 @@ public static class CharacterSkinsManager
             throw ex;
         }
 
-        return ContentAssetStore.Install(GamePaths.CharacterSkins, ".scskin",
+        return ContentAssetStore.Install(GamePaths.CharacterSkins, _assetExtension,
             Storage.GetFileNameWithoutExtension(name), stream, ValidateCharacterSkin);
     }
 
     public static string ReplaceCharacterSkin(string assetKey, string displayName, Stream stream) =>
-        ContentAssetStore.Replace(GamePaths.CharacterSkins, ".scskin", assetKey, displayName, stream,
+        ContentAssetStore.Replace(GamePaths.CharacterSkins, _assetExtension, assetKey, displayName, stream,
             ValidateCharacterSkin);
 
     public static void DeleteCharacterSkin(string name)
@@ -218,7 +219,7 @@ public static class CharacterSkinsManager
                 return;
             }
 
-            ContentAssetStore.Delete(GamePaths.CharacterSkins, name, ".scskin");
+            ContentAssetStore.Delete(GamePaths.CharacterSkins, name, _assetExtension);
             CharacterSkinDeleted?.Invoke(name);
         }
         catch (Exception e)
@@ -240,7 +241,7 @@ public static class CharacterSkinsManager
         _characterSkinNames.Add("$Female4");
         foreach (var item in Storage.ListFileNames(GamePaths.CharacterSkins))
         {
-            if (ContentAssetStore.IsComplete(GamePaths.CharacterSkins, item, ".scskin"))
+            if (ContentAssetStore.IsComplete(GamePaths.CharacterSkins, item, _assetExtension))
             {
                 _characterSkinNames.Add(Storage.GetFileNameWithoutExtension(item));
             }

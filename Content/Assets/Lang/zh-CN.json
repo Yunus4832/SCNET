@@ -39,7 +39,6 @@
     },
     "ModManagementScreen": {
         "Title": "模组管理",
-        "RepositoryAddress": "服务器地址",
         "Refresh": "刷新",
         "SaveDefault": "保存默认",
         "Download": "下载",
@@ -50,10 +49,6 @@
         "World": "世界",
         "PreviousPage": "上页",
         "NextPage": "下页",
-        "RepositoryEmptyTitle": "模组服务器地址为空",
-        "RepositoryEmptyMessage": "请先输入模组服务器地址。",
-        "ReadingRepository": "正在读取模组服务器",
-        "ReadRepositoryFailed": "读取模组服务器失败",
         "DownloadingMod": "正在下载模组",
         "DownloadModFailed": "下载模组失败",
         "DeleteCacheTitle": "删除缓存",
@@ -74,7 +69,12 @@
         "Importing": "正在导入模组内容包",
         "ImportComplete": "已导入 {0} 个模组内容包。",
         "ImportModFailed": "导入模组失败",
-        "ExportTitle": "导出模组内容包"
+        "ExportTitle": "导出模组内容包",
+        "ContentServerAddress": "内容服务地址",
+        "ContentServerEmptyTitle": "内容服务地址为空",
+        "ContentServerEmptyMessage": "请先输入内容服务地址。",
+        "ReadingContentServer": "正在读取内容服务",
+        "ReadContentServerFailed": "读取内容服务失败"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "没有找到合适的方块",
@@ -2496,11 +2496,11 @@
     },
     "Help": {
         "1": {
-            "value": "\\n Net也称联机版，是可以联机的版本，从旧版本api分离出来，很多旧mod并不兼容。当前模组系统使用 .scpkg 模组包。\\n\\n开发团队：(再回首zh)、(销锋镝铸)、(力学Lixue_jiu)、(小小怪xiaoxiaoguai)、(chenzho)、(_Tk34)、(攻守兼备)、(镜光天)、(把红色赋予黑海)、(Jiuru Li)、(清凝FYJD(老君))、(YYLMZXC)、(p0_INT32)。\\n\\n 转载请注明出处。\\n\\n原游戏版权归Kaalus(老k)所有。",
+            "value": "\\n联机版支持多人游戏。当前模组系统使用统一 .scpkg 内容包，并通过内容服务和模组管理界面进行分发与启用。\\n\\n转载请注明来源。原版游戏版权归 Kaalus 所有。",
             "Title": "Net联机相关信息"
         },
         "2": {
-            "value": "\\n 当前模组包格式为 .scpkg，只有在mod管理器中有显示的mod才是有效的。\\n \\nmod安装路径为/sdcard/SurvivalCraft2.4_Net/Mods \\n\\n(同理，电脑版在游戏目录的Mods文件夹) \\n\\n\\n 具体操作：\\n\\n用手机自带的文件管理器或MT管理器等等，找到当前版本可用的 .scpkg 模组包，移动或复制粘贴到手机内部存储中的Survivalcraft2.4_Net里的Mods文件夹中，移动完文件后重启游戏即可。\\n\\n如果要卸载mod，将Mods文件夹中的指定mod删除或移出Mods文件夹，最后重启游戏。\\n\\nMods文件夹每次更新后都需要重启一下游戏。\\n\\n\\n如果觉得麻烦，可以试试在内置社区下载mod，然后用自带mod管理器安装。",
+            "value": "\\n当前模组包格式为 .scpkg。请在模组管理界面使用“导入”选择一个或多个包。导入只加入统一缓存，不会自动启用；请随后明确加入全局配置或指定世界。\\n\\n导出会通过系统文件选择器原样保存缓存包。删除缓存前请先从所有配置中移除该模组。",
             "Title": "Net安装联机mod教程"
         },
         "3": {
@@ -3205,7 +3205,6 @@
         },
         "ModManagementScreen": {
             "Title": "模组管理",
-            "RepositoryAddress": "服务器地址",
             "Refresh": "刷新",
             "SaveDefault": "保存默认",
             "Download": "下载",
@@ -3215,7 +3214,8 @@
             "PreviousPage": "上页",
             "NextPage": "下页",
             "Import": "导入",
-            "PickerUnavailable": "当前平台未提供文件选择功能，无法导入或导出。"
+            "PickerUnavailable": "当前平台未提供文件选择功能，无法导入或导出。",
+            "ContentServerAddress": "内容服务地址"
         },
         "ManageContentScreen": {
             "1": "管理内容",

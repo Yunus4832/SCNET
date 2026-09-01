@@ -36,22 +36,6 @@ public static class WorldsManager
         _loaded = true;
     }
 
-    public static string ImportWorld(Stream sourceStream)
-    {
-        var unusedWorldDirectoryName = GetUnusedWorldDirectoryName();
-        Storage.CreateDirectory(unusedWorldDirectoryName);
-        try
-        {
-            UnpackWorld(unusedWorldDirectoryName, sourceStream, true);
-            return unusedWorldDirectoryName;
-        }
-        catch
-        {
-            DeleteWorld(unusedWorldDirectoryName);
-            throw;
-        }
-    }
-
     public static string ImportWorldPackage(ZipArchive package)
     {
         var directoryName = GetUnusedWorldDirectoryName();
@@ -122,11 +106,6 @@ public static class WorldsManager
         }
     }
 
-    public static void ExportWorld(string directoryName, Stream targetStream)
-    {
-        PackWorld(directoryName, targetStream, null, true);
-    }
-
     public static void DeleteWorld(string directoryName)
     {
         if (Storage.DirectoryExists(directoryName))
@@ -147,7 +126,7 @@ public static class WorldsManager
     {
         using var targetStream =
             Storage.OpenFile(MakeSnapshotFilename(directoryName, snapshotName), OpenFileMode.Create);
-        PackWorld(directoryName, targetStream, fn => Path.GetExtension(fn).ToLower() != ".snapshot", false);
+        PackWorld(directoryName, targetStream, fn => Path.GetExtension(fn).ToLower() != ".snapshot");
     }
 
     public static void RestoreWorldFromSnapshot(string directoryName, string snapshotName)
@@ -160,7 +139,7 @@ public static class WorldsManager
         DeleteWorldContents(directoryName, fn => Storage.GetExtension(fn).ToLower() != ".snapshot");
         using var sourceStream =
             Storage.OpenFile(MakeSnapshotFilename(directoryName, snapshotName), OpenFileMode.Read);
-        UnpackWorld(directoryName, sourceStream, false);
+        UnpackWorld(directoryName, sourceStream);
     }
 
     private static void DeleteWorldSnapshot(string directoryName, string snapshotName)
@@ -520,8 +499,7 @@ public static class WorldsManager
     private static void PackWorld(
         string directoryName,
         Stream targetStream,
-        Func<string, bool>? filter,
-        bool embedContentPackages
+        Func<string, bool>? filter
     )
     {
         var worldInfo = GetWorldInfo(directoryName);
@@ -550,55 +528,9 @@ public static class WorldsManager
             AddZipEntry(zipArchive, fileName, source);
         }
 
-        if (!embedContentPackages)
-        {
-            return;
-        }
-
-        if (!BlocksTexturesManager.IsBuiltIn(worldInfo.WorldSettings.BlocksTextureName))
-        {
-            try
-            {
-                using var source2 =
-                    Storage.OpenFile(
-                        BlocksTexturesManager.GetFileName(worldInfo.WorldSettings.BlocksTextureName),
-                        OpenFileMode.Read);
-                var filenameInZip = Storage.CombinePaths("EmbeddedContent",
-                    Storage.GetFileNameWithoutExtension(worldInfo.WorldSettings.BlocksTextureName) +
-                    ".scbtex");
-                AddZipEntry(zipArchive, filenameInZip, source2);
-            }
-            catch (Exception ex)
-            {
-                Log.Warning(
-                    $"Failed to embed blocks texture \"{worldInfo.WorldSettings.BlocksTextureName}\". Reason: {ex.Message}");
-            }
-        }
-
-        foreach (var playerInfo in worldInfo.PlayerInfos)
-        {
-            if (CharacterSkinsManager.IsBuiltIn(playerInfo.CharacterSkinName))
-            {
-                continue;
-            }
-
-            try
-            {
-                CharacterSkinsManager.GetFileName(playerInfo.CharacterSkinName, out var n);
-                using var source3 = Storage.OpenFile(n, OpenFileMode.Read);
-                var filenameInZip2 = Storage.CombinePaths("EmbeddedContent",
-                    Storage.GetFileNameWithoutExtension(playerInfo.CharacterSkinName) + ".scskin");
-                AddZipEntry(zipArchive, filenameInZip2, source3);
-            }
-            catch (Exception ex2)
-            {
-                Log.Warning(
-                    $"Failed to embed character skin \"{playerInfo.CharacterSkinName}\". Reason: {ex2.Message}");
-            }
-        }
     }
 
-    private static void UnpackWorld(string directoryName, Stream sourceStream, bool installEmbeddedContentPackages)
+    private static void UnpackWorld(string directoryName, Stream sourceStream)
     {
         if (!Storage.DirectoryExists(directoryName))
         {
@@ -615,29 +547,9 @@ public static class WorldsManager
             }
 
             var text = item.FullName.Replace('\\', '/');
-            var extension = Storage.GetExtension(text);
             if (text.StartsWith("EmbeddedContent"))
             {
-                try
-                {
-                    if (installEmbeddedContentPackages)
-                    {
-                        var memoryStream = new MemoryStream();
-                        using (var entryStream = item.Open())
-                        {
-                            entryStream.CopyTo(memoryStream);
-                        }
-
-                        memoryStream.Position = 0L;
-                        var type = ContentPackageManager.ExtensionToType(extension);
-                        ContentPackageManager.InstallPackage(memoryStream, type,
-                            Storage.GetFileNameWithoutExtension(text));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning($"Failed to import embedded content \"{text}\". Reason: {ex.Message}");
-                }
+                continue;
             }
             else
             {

@@ -5,6 +5,7 @@ namespace Game.Managers;
 
 public static class BlocksTexturesManager
 {
+    private const string _assetExtension = ".png";
     private static readonly List<string> _blockTextureNames = [];
 
     public static Texture2D DefaultBlocksTexture { get; set; } = null!;
@@ -26,12 +27,12 @@ public static class BlocksTexturesManager
 
     public static string GetFileName(string name)
     {
-        return IsBuiltIn(name) ? string.Empty : Storage.CombinePaths(GamePaths.BlockTextures, name + ".scbtex");
+        return IsBuiltIn(name) ? string.Empty : Storage.CombinePaths(GamePaths.BlockTextures, name + _assetExtension);
     }
 
     public static string GetDisplayName(string name)
     {
-        return IsBuiltIn(name) ? "Survivalcraft" : ContentAssetStore.GetDisplayName(GamePaths.BlockTextures, name, ".scbtex");
+        return IsBuiltIn(name) ? "Survivalcraft" : ContentAssetStore.GetDisplayName(GamePaths.BlockTextures, name, _assetExtension);
     }
 
     public static DateTime GetCreationDate(string name)
@@ -96,12 +97,12 @@ public static class BlocksTexturesManager
             throw ex;
         }
 
-        return ContentAssetStore.Install(GamePaths.BlockTextures, ".scbtex",
+        return ContentAssetStore.Install(GamePaths.BlockTextures, _assetExtension,
             Storage.GetFileNameWithoutExtension(name), stream, ValidateBlocksTexture);
     }
 
     public static string ReplaceBlocksTexture(string assetKey, string displayName, Stream stream) =>
-        ContentAssetStore.Replace(GamePaths.BlockTextures, ".scbtex", assetKey, displayName, stream,
+        ContentAssetStore.Replace(GamePaths.BlockTextures, _assetExtension, assetKey, displayName, stream,
             ValidateBlocksTexture);
 
     public static void DeleteBlocksTexture(string name)
@@ -114,7 +115,7 @@ public static class BlocksTexturesManager
                 return;
             }
 
-            ContentAssetStore.Delete(GamePaths.BlockTextures, name, ".scbtex");
+            ContentAssetStore.Delete(GamePaths.BlockTextures, name, _assetExtension);
             BlocksTextureDeleted?.Invoke(name);
         }
         catch (Exception e)
@@ -129,7 +130,7 @@ public static class BlocksTexturesManager
         _blockTextureNames.Add(string.Empty);
         foreach (var item in Storage.ListFileNames(GamePaths.BlockTextures))
         {
-            if (ContentAssetStore.IsComplete(GamePaths.BlockTextures, item, ".scbtex"))
+            if (ContentAssetStore.IsComplete(GamePaths.BlockTextures, item, _assetExtension))
                 _blockTextureNames.Add(Storage.GetFileNameWithoutExtension(item));
         }
     }

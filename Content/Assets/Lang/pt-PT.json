@@ -39,7 +39,6 @@
     },
     "ModManagementScreen": {
         "Title": "Gestão de Mods",
-        "RepositoryAddress": "Servidor",
         "Refresh": "Atualizar",
         "SaveDefault": "Padrão",
         "Download": "Baixar",
@@ -50,10 +49,6 @@
         "World": "Mundo",
         "PreviousPage": "Anterior",
         "NextPage": "Próxima",
-        "RepositoryEmptyTitle": "Endereço do servidor de mods vazio",
-        "RepositoryEmptyMessage": "Introduza primeiro um endereço de servidor de mods.",
-        "ReadingRepository": "Lendo servidor de mods",
-        "ReadRepositoryFailed": "Falha ao ler servidor de mods",
         "DownloadingMod": "Baixando mod",
         "DownloadModFailed": "Falha ao baixar mod",
         "DeleteCacheTitle": "Apagar cache",
@@ -74,7 +69,12 @@
         "Importing": "A importar pacotes de mods",
         "ImportComplete": "Foram importados {0} pacote(s) de mods.",
         "ImportModFailed": "Falha ao importar pacotes de mods",
-        "ExportTitle": "Exportar pacote de mod"
+        "ExportTitle": "Exportar pacote de mod",
+        "ContentServerAddress": "Servidor de conteúdo",
+        "ContentServerEmptyTitle": "O endereço do servidor de conteúdo está vazio",
+        "ContentServerEmptyMessage": "Introduza primeiro o endereço do servidor de conteúdo.",
+        "ReadingContentServer": "A ler o servidor de conteúdo",
+        "ReadContentServerFailed": "Falha ao ler o servidor de conteúdo"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Nenhuma caixa adequada foi encontrada",
@@ -2496,11 +2496,11 @@
     },
     "Help": {
         "1": {
-            "value": "\\ nThe net, também conhecida como a versão online, é a versão com suporte a multijogador. Foi separada da antiga versão da API e muitos mods antigos não são compatíveis. O sistema atual usa pacotes de mod .scpak. Equipa de Desenvolvimento: (ao olhar para trás na Zh), (Pin Feng dyprosium Casting), (Mechanic Lixue_jiu), (Xiaogai xiaoxiaoguai), (chenzho), (Tk34), (ambos ofensivos e defensivos), (Mirror Guangtian) (dando vermelho ao Mar Negro), (Jiuru Li), QingFYJD (Laojun)) Por favor, indique a fonte da reimpressão. O 'copyright' do jogo original pertence ao Kaalus (Lao k).",
+            "value": "\\nA edição multijogador suporta jogo online. O sistema de mods atual utiliza pacotes de conteúdo .scpkg unificados, distribuídos pelo servidor de conteúdo e ativados na gestão de mods.\\n\\nIndique a fonte ao republicar. Os direitos do jogo original pertencem a Kaalus.",
             "Title": "INFORMAÇÕES LÍQUIDAS EM LINHA"
         },
         "2": {
-            "value": "\\ nO formato atual do pacote de mod é .scpkg, e só o mod apresentado no Gestor de Mods é válido. \\ n\\ nA localização da instalação é / sdcard/ SurvivalCraft2. 4_ net/ Mods\\ n( Da mesma forma, a versão do computador está na pasta Mods da pasta do jogo)\\ n\\ nOperações:\\ nutilizar o gestor de ficheiros que vem com o telefone, o MT Manager ou outro gestor de ficheiros para encontrar um pacote de mod .scpkg compatível com a versão atual, mover ou copiar para a pasta Mods em SurvivalCraft2.4_Net no armazenamento interno do telemóvel e depois reiniciar o jogo. \\ n\\ nSe desejar desinstalar o mod, remova o mod indicado da pasta Mods ou retire-o dessa pasta e, finalmente, reinicie o jogo. A pasta\\ nMods precisa de ser reiniciada após cada actualização. \\ n\\ nSe o achar problemático, tente transferir o mod da comunidade integrada e instalá-lo com o gestor de mods.",
+            "value": "\\nO formato atual dos pacotes de mods é .scpkg. Utilize Importar na gestão de mods para selecionar um ou mais pacotes. A importação apenas os adiciona à cache unificada; ative-os explicitamente no perfil global ou nos mundos selecionados.\\n\\nExportar guarda o pacote original em cache através do seletor de ficheiros do sistema. Remova um mod de todos os perfis antes de eliminar a respetiva entrada da cache.",
             "Title": "Instalação de rede Mod tutorial online"
         },
         "3": {
@@ -3205,7 +3205,6 @@
         },
         "ModManagementScreen": {
             "Title": "Gestão de Mods",
-            "RepositoryAddress": "Servidor",
             "Refresh": "Atualizar",
             "SaveDefault": "Padrão",
             "Download": "Baixar",
@@ -3215,7 +3214,8 @@
             "PreviousPage": "Anterior",
             "NextPage": "Próxima",
             "Import": "Importar",
-            "PickerUnavailable": "A seleção de ficheiros não está disponível nesta plataforma; importar e exportar estão desativados."
+            "PickerUnavailable": "A seleção de ficheiros não está disponível nesta plataforma; importar e exportar estão desativados.",
+            "ContentServerAddress": "Servidor de conteúdo"
         },
         "ManageContentScreen": {
             "1": "Gestão de conteúdo",

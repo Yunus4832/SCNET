@@ -66,6 +66,13 @@ public sealed class ContentInstallationManagerTest : IDisposable
         Assert.NotEqual(firstName, secondName);
         Assert.NotEqual(firstResult.AssetKey, secondResult.AssetKey);
         Assert.Matches("^[0-9a-f]{32}$", firstName);
+        if (type == ContentPackageType.BlocksTexture)
+            Assert.EndsWith(".png", BlocksTexturesManager.GetFileName(firstName), StringComparison.Ordinal);
+        else
+        {
+            Assert.True(CharacterSkinsManager.GetFileName(firstName, out var skinPath));
+            Assert.EndsWith(".png", skinPath, StringComparison.Ordinal);
+        }
         Assert.Equal("Installed Image", type == ContentPackageType.BlocksTexture
             ? BlocksTexturesManager.GetDisplayName(firstName)
             : CharacterSkinsManager.GetDisplayName(firstName));

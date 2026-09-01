@@ -3,10 +3,11 @@ using System.Text;
 using System.Text.Json;
 
 using Game.Modding;
+using Game.Content;
 
 namespace Survivalcraft.Test.Modding;
 
-public sealed class ModServerClientTest : IDisposable
+public sealed class ContentServerClientModTest : IDisposable
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"scnet-modrepo-{Guid.NewGuid():N}");
 
@@ -26,7 +27,7 @@ public sealed class ModServerClientTest : IDisposable
                     success = true,
                     message = string.Empty,
                     code = 200,
-                    data = new ModRepositoryPackage
+                    data = new ContentServerModPackage
                     {
                         ModId = "example.test",
                         Version = "1.0.0",
@@ -47,11 +48,11 @@ public sealed class ModServerClientTest : IDisposable
 
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         }));
-        using var client = new ModServerClient("https://mods.example/", httpClient);
+        using var client = new ContentServerClient("https://mods.example/", httpClient);
         var repository = new LocalModRepository(_root);
 
-        var package = client.FindPackage("example.test", "1.0.0");
-        var localEntry = client.DownloadPackage(package!, repository);
+        var package = client.FindMod("example.test", "1.0.0");
+        var localEntry = client.DownloadMod(package!, repository);
 
         Assert.Equal("example.test", package!.ModId);
         Assert.Equal("1.0.0", package.Version);
@@ -100,7 +101,7 @@ public sealed class ModServerClientTest : IDisposable
     public void ClientLoadsAllPagedRepositoryResults()
     {
         var packages = Enumerable.Range(1, 11)
-            .Select(index => new ModRepositoryPackage
+            .Select(index => new ContentServerModPackage
             {
                 ModId = $"example.{index}",
                 Version = "1.0.0",
@@ -127,9 +128,9 @@ public sealed class ModServerClientTest : IDisposable
                 }
             });
         }));
-        using var client = new ModServerClient("https://mods.example", httpClient);
+        using var client = new ContentServerClient("https://mods.example", httpClient);
 
-        var result = client.ListPackages();
+        var result = client.ListMods();
 
         Assert.Equal(11, result.Count);
         Assert.Equal("example.1", result[0].ModId);

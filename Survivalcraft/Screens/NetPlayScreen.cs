@@ -265,9 +265,9 @@ public class NetPlayScreen : Screen
 
         if (CommonLib.Resolve(found.IP, out var ep))
         {
-            if (!string.IsNullOrWhiteSpace(connect.ModRepositoryUrl))
+            if (!string.IsNullOrWhiteSpace(connect.ContentServerUrl))
             {
-                Log.Information($"远程模组仓库已声明为: {connect.ModRepositoryUrl}");
+                Log.Information($"远程内容服务已声明为: {connect.ContentServerUrl}");
             }
 
             PrepareRemoteSessionAndConnect(ep!, connect.RequiredModProfile);
@@ -771,7 +771,7 @@ public class NetPlayScreen : Screen
 
         public ushort MaxCount;
 
-        public string ModRepositoryUrl = string.Empty;
+        public string ContentServerUrl = string.Empty;
 
         public string Name = string.Empty;
 

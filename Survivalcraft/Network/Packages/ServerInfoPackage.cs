@@ -14,7 +14,7 @@ public class ServerInfoPackage : IPackage
 
     public ushort MaxPlayerCount;
 
-    public string ModRepositoryUrl = string.Empty;
+    public string ContentServerUrl = string.Empty;
 
     public ModProfile? RequiredModProfile;
 
@@ -76,7 +76,7 @@ public class ServerInfoPackage : IPackage
         GameMode = subsystemGameInfo.WorldSettings.GameMode;
         TimeOfDay = subsystemTimeOfDay.CalculateTimeOfDay();
         RequiredModProfile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
-        ModRepositoryUrl = RequiredModProfile?.RepositoryUrl ?? SettingsManager.Current.ContentServerUrl;
+        ContentServerUrl = RequiredModProfile?.ContentServerUrl ?? SettingsManager.Current.ContentServerUrl;
         Season = subsystemSeasons.Season;
         TimeOfSeason = subsystemSeasons.TimeOfSeason;
     }
@@ -95,17 +95,8 @@ public class ServerInfoPackage : IPackage
         MaxPlayerCount = reader.ReadUInt16();
         GameMode = reader.ReadEnum<GameMode>();
         TimeOfDay = reader.ReadSingle();
-        // 如果不考虑兼容03.04版本可以删掉try-catch语句
-        try
-        {
-            ModRepositoryUrl = reader.ReadString();
-            RequiredModProfile = ReadProfile(reader);
-        }
-        catch
-        {
-            ModRepositoryUrl = string.Empty;
-            RequiredModProfile = null;
-        }
+        ContentServerUrl = reader.ReadString();
+        RequiredModProfile = ReadProfile(reader);
 
         Season = (Season)reader.ReadInt32();
         TimeOfSeason = reader.ReadSingle();
@@ -124,7 +115,7 @@ public class ServerInfoPackage : IPackage
         writer.Write(MaxPlayerCount);
         writer.WriteEnum(GameMode);
         writer.Write(TimeOfDay);
-        writer.Write(ModRepositoryUrl);
+        writer.Write(ContentServerUrl);
         WriteProfile(writer, RequiredModProfile);
         writer.Write((int)Season);
         writer.Write(TimeOfSeason);
@@ -140,7 +131,7 @@ public class ServerInfoPackage : IPackage
         var profile = new ModProfile
         {
             Id = reader.ReadString(),
-            RepositoryUrl = reader.ReadString(),
+            ContentServerUrl = reader.ReadString(),
             Packages = []
         };
         var count = reader.ReadUInt16();
@@ -166,7 +157,7 @@ public class ServerInfoPackage : IPackage
         }
 
         writer.Write(profile.Id);
-        writer.Write(profile.RepositoryUrl ?? string.Empty);
+        writer.Write(profile.ContentServerUrl ?? string.Empty);
         writer.Write((ushort)profile.Packages.Count);
         foreach (var package in profile.Packages)
         {

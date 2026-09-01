@@ -39,7 +39,6 @@
     },
     "ModManagementScreen": {
         "Title": "Mod Management",
-        "RepositoryAddress": "Server",
         "Refresh": "Refresh",
         "SaveDefault": "Default",
         "Download": "Download",
@@ -50,10 +49,6 @@
         "World": "World",
         "PreviousPage": "Prev",
         "NextPage": "Next",
-        "RepositoryEmptyTitle": "Mod server address is empty",
-        "RepositoryEmptyMessage": "Enter a mod server address first.",
-        "ReadingRepository": "Reading mod server",
-        "ReadRepositoryFailed": "Failed to read mod server",
         "DownloadingMod": "Downloading mod",
         "DownloadModFailed": "Failed to download mod",
         "DeleteCacheTitle": "Delete Cache",
@@ -74,7 +69,12 @@
         "Importing": "Importing mod packages",
         "ImportComplete": "Imported {0} mod package(s).",
         "ImportModFailed": "Failed to import mod packages",
-        "ExportTitle": "Export mod package"
+        "ExportTitle": "Export mod package",
+        "ContentServerAddress": "Content server",
+        "ContentServerEmptyTitle": "Content server address is empty",
+        "ContentServerEmptyMessage": "Enter the content server address first.",
+        "ReadingContentServer": "Reading content server",
+        "ReadContentServerFailed": "Failed to read content server"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Unsuitable block found",
@@ -2496,11 +2496,11 @@
     },
     "Help": {
         "1": {
-            "value": "\\n Net, also called the online version, is the version that supports multiplayer. It was separated from the old API version, and many old mods are not compatible. Multiplayer mod loading now uses .scpak packages managed by the current mod system.\\n\\nDevelopment team: (再回首zh), (销锋镝铸), (力学Lixue_jiu), (小小怪xiaoxiaoguai), (chenzho), (_Tk34), (攻守兼备), (镜光天), (把红色赋予黑海), (Jiuru Li), (清凝FYJD(老君)), (YYLMZXC), (p0_INT32).\\n\\n Please credit the source when reposting.\\n\\nThe original game copyright belongs to Kaalus.",
+            "value": "\\nThe multiplayer edition supports online play. The current mod system uses unified .scpkg content packages distributed through the content server and enabled in mod management.\\n\\nPlease credit the source when reposting. The original game copyright belongs to Kaalus.",
             "Title": "Net Multiplayer Information"
         },
         "2": {
-            "value": "\\n The current mod package format is .scpkg. Only mods shown in the mod manager are valid.\\n \\nThe local mod installation path is /sdcard/SurvivalCraft2.4_Net/Mods \\n\\n(On PC, the equivalent folder is Mods in the game directory.) \\n\\n\\n Steps:\\n\\nUse the phone's built-in file manager, MT Manager, or another file manager to find a .scpkg mod package compatible with the current version. Move or copy it into the Mods folder under Survivalcraft2.4_Net in internal storage, then restart the game.\\n\\nTo uninstall a mod, delete the selected mod from the Mods folder or move it out of that folder, then restart the game.\\n\\nThe game must be restarted after every change to the Mods folder.\\n\\n\\nIf this is inconvenient, you can also download mods from the built-in community and install them with the built-in mod manager.",
+            "value": "\\nThe current mod package format is .scpkg. Use Import in mod management to select one or more packages. Importing only adds them to the unified cache; enable them explicitly for the global profile or selected worlds.\\n\\nExport saves the original cached package through the system file picker. Remove a mod from every profile before deleting its cache entry.",
             "Title": "Installing Net Multiplayer Mods"
         },
         "3": {
@@ -3205,7 +3205,6 @@
         },
         "ModManagementScreen": {
             "Title": "Mod Management",
-            "RepositoryAddress": "Server",
             "Refresh": "Refresh",
             "SaveDefault": "Default",
             "Download": "Download",
@@ -3215,7 +3214,8 @@
             "PreviousPage": "Prev",
             "NextPage": "Next",
             "Import": "Import",
-            "PickerUnavailable": "File selection is unavailable on this platform; import and export are disabled."
+            "PickerUnavailable": "File selection is unavailable on this platform; import and export are disabled.",
+            "ContentServerAddress": "Content server"
         },
         "ManageContentScreen": {
             "1": "Manage Content",

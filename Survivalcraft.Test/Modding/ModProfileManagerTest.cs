@@ -25,7 +25,7 @@ public sealed class ModProfileManagerTest : IDisposable
     public void LoadEffectiveProfilePrefersSessionProfile()
     {
         SaveGlobalProfile("""
-            <ModProfile Id="global" RepositoryUrl="https://global.example">
+            <ModProfile Id="global" ContentServerUrl="https://global.example">
               <Packages>
                 <Package ModId="global.mod" Version="1.0.0" />
               </Packages>
@@ -34,7 +34,7 @@ public sealed class ModProfileManagerTest : IDisposable
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "session-a",
-            RepositoryUrl = "https://session.example/",
+            ContentServerUrl = "https://session.example/",
             Packages =
             [
                 new ModPackageRequirement
@@ -49,7 +49,7 @@ public sealed class ModProfileManagerTest : IDisposable
         var profile = ModProfileManager.LoadEffectiveProfile("session-a");
 
         Assert.Equal("session-a", profile.Id);
-        Assert.Equal("https://session.example", profile.RepositoryUrl);
+        Assert.Equal("https://session.example", profile.ContentServerUrl);
         var package = Assert.Single(profile.Packages);
         Assert.Equal("session.mod", package.ModId);
         Assert.Equal("2.0.0", package.Version);
@@ -60,7 +60,7 @@ public sealed class ModProfileManagerTest : IDisposable
     public void RemoteServerSessionProfileDoesNotMergeGlobalProfile()
     {
         SaveGlobalProfile("""
-            <ModProfile Id="global" RepositoryUrl="https://global.example">
+            <ModProfile Id="global" ContentServerUrl="https://global.example">
               <Packages>
                 <Package ModId="global.mod" Version="1.0.0" />
               </Packages>
@@ -69,7 +69,7 @@ public sealed class ModProfileManagerTest : IDisposable
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "remote-session",
-            RepositoryUrl = "https://server.example",
+            ContentServerUrl = "https://server.example",
             Packages =
             [
                 new ModPackageRequirement
@@ -89,7 +89,7 @@ public sealed class ModProfileManagerTest : IDisposable
         });
 
         Assert.Equal("remote-session", profile.Id);
-        Assert.Equal("https://server.example", profile.RepositoryUrl);
+        Assert.Equal("https://server.example", profile.ContentServerUrl);
         var package = Assert.Single(profile.Packages);
         Assert.Equal("server.mod", package.ModId);
         Assert.Equal("2.0.0", package.Version);
@@ -102,7 +102,7 @@ public sealed class ModProfileManagerTest : IDisposable
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "session-b",
-            RepositoryUrl = "https://session.example/",
+            ContentServerUrl = "https://session.example/",
             Packages =
             [
                 new ModPackageRequirement
@@ -118,7 +118,7 @@ public sealed class ModProfileManagerTest : IDisposable
 
         Assert.NotNull(profile);
         Assert.Equal("session-b", profile!.Id);
-        Assert.Equal("https://session.example", profile.RepositoryUrl);
+        Assert.Equal("https://session.example", profile.ContentServerUrl);
         Assert.Equal("session.mod", Assert.Single(profile.Packages).ModId);
     }
 
@@ -131,7 +131,7 @@ public sealed class ModProfileManagerTest : IDisposable
         var profile = ModProfileManager.LoadEffectiveProfile("missing");
 
         Assert.Equal("default", profile.Id);
-        Assert.Null(profile.RepositoryUrl);
+        Assert.Null(profile.ContentServerUrl);
         Assert.Empty(profile.Packages);
     }
 
@@ -231,7 +231,7 @@ public sealed class ModProfileManagerTest : IDisposable
     public void LoadEffectiveProfileMergesGlobalAndWorldProfileAccordingToStrategy()
     {
         SaveGlobalProfile("""
-            <ModProfile Id="global" RepositoryUrl="https://global.example">
+            <ModProfile Id="global" ContentServerUrl="https://global.example">
               <Packages>
                 <Package ModId="shared.mod" Version="1.0.0" />
                 <Package ModId="global.mod" Version="1.0.0" />
@@ -241,7 +241,7 @@ public sealed class ModProfileManagerTest : IDisposable
         var worldDirectoryName = CreateWorldDirectory("WorldMerge", ModProfileResolutionStrategy.GlobalPlusWorld);
         ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
         {
-            RepositoryUrl = "https://world.example/",
+            ContentServerUrl = "https://world.example/",
             Packages =
             [
                 new ModPackageRequirement
@@ -263,7 +263,7 @@ public sealed class ModProfileManagerTest : IDisposable
             World = "WorldMerge"
         });
 
-        Assert.Equal("https://world.example", profile.RepositoryUrl);
+        Assert.Equal("https://world.example", profile.ContentServerUrl);
         Assert.Equal(
             ["global.mod:1.0.0", "shared.mod:2.0.0", "world.mod:1.0.0"],
             profile.Packages.Select(package => $"{package.ModId}:{package.Version}").OrderBy(x => x));
@@ -324,7 +324,7 @@ public sealed class ModProfileManagerTest : IDisposable
     public void LoadGlobalProfileIgnoresPackageHashAttribute()
     {
         SaveGlobalProfile("""
-            <ModProfile Id="global" RepositoryUrl="https://global.example">
+            <ModProfile Id="global" ContentServerUrl="https://global.example">
               <Packages>
                 <Package ModId="legacy.mod" Version="1.0.0" PackageHash="legacy-hash" />
               </Packages>
