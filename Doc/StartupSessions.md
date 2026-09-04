@@ -95,7 +95,7 @@ Starter 还负责注册平台能力。交互式文件打开与保存统一通过
 注册或 session 持久化。未注册实现时 `FilePicker.IsAvailable` 为 `false`，Headless 不提供交互式
 文件选择。
 
-Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 未探测到 `zenity` 时保持未注册。Android 仅由 GameActivity 注册 Storage Access Framework 实现，ServerActivity 不注册。
+Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 实现通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，不依赖 `zenity`，portal 或桌面 backend 不可用时在发起选择请求时报错。Android 仅由 GameActivity 注册 Storage Access Framework 实现，ServerActivity 不注册。
 
 ## SessionInfo
 

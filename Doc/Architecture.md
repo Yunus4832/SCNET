@@ -43,7 +43,7 @@
 `FilePicker.IsAvailable` 表明该能力不可用。远程内容查询与下载使用独立的 ContentServer API，
 不实现或复用文件选择接口。
 
-Windows GUI Starter 通过系统 PowerShell/WinForms 对话框提供 picker；Linux GUI Starter 只在探测到 `zenity` 时注册实现，缺失时保持 `FilePicker.IsAvailable=false`；Android GameActivity 使用 Storage Access Framework 的 `ACTION_OPEN_DOCUMENT` 与 `ACTION_CREATE_DOCUMENT`，并持久化授权后的 URI 访问。Headless 分支均在注册之前返回或进入独立 Activity，因此不会暴露交互式 picker。
+Windows GUI Starter 在 Windows 项目内直接使用 WinForms `OpenFileDialog`/`SaveFileDialog`，对话框在专用 STA 线程运行，不启动 PowerShell 子进程；Linux GUI Starter 通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，具体对话框由桌面 portal backend 提供；Android GameActivity 使用 Storage Access Framework 的 `ACTION_OPEN_DOCUMENT` 与 `ACTION_CREATE_DOCUMENT`，并持久化授权后的 URI 访问。Headless 分支均在注册之前返回或进入独立 Activity，因此不会暴露交互式 picker。Linux GUI 不依赖 `zenity` 可执行文件；会话总线、portal 服务或桌面 backend 不可用时，实际选择请求失败并返回明确错误。
 
 对于已有世界，session 游戏模式的优先级高于存档，但只改变本次运行时状态；世界保存仍写回原模式。这样调试实例可以切换 Creative、Survival 等模式，而不会污染测试存档。
 

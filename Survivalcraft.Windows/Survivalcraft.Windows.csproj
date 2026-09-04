@@ -3,7 +3,10 @@
     <PropertyGroup>
         <AssemblyName>SurvivalcraftStarter</AssemblyName>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <TargetFramework>$(GlobalTargetFramework)-windows</TargetFramework>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
+        <UseWindowsForms>true</UseWindowsForms>
+        <ApplicationHighDpiMode>SystemAware</ApplicationHighDpiMode>
         <RuntimeIdentifier>win-x64</RuntimeIdentifier>
         <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
         <ApplicationManifest>app.manifest</ApplicationManifest>

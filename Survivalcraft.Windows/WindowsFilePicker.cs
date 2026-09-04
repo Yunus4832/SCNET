@@ -1,41 +1,30 @@
-using System.Diagnostics;
-using System.Text.Json;
-
 using Engine.FileStorage;
 
 namespace Survivalcraft.Windows;
 
 internal sealed class WindowsFilePicker : IFilePicker
 {
+    private readonly SemaphoreSlim _requestLock = new(1, 1);
+
     public async Task<IReadOnlyList<PickedFile>> PickFilesAsync(FilePickerRequest request,
         CancellationToken cancellationToken = default)
     {
-        var script = """
-                     Add-Type -AssemblyName System.Windows.Forms
-                     $dialog = [System.Windows.Forms.OpenFileDialog]::new()
-                     $dialog.Title = $env:SCNET_PICKER_TITLE
-                     $dialog.Filter = $env:SCNET_PICKER_FILTER
-                     $dialog.Multiselect = $env:SCNET_PICKER_MULTIPLE -eq '1'
-                     if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-                       $dialog.FileNames | ConvertTo-Json -Compress
-                     }
-                     """;
-        var environment = new Dictionary<string, string?>
+        ArgumentNullException.ThrowIfNull(request);
+        var paths = await RunDialogAsync(() =>
         {
-            ["SCNET_PICKER_TITLE"] = request.Title ?? string.Empty,
-            ["SCNET_PICKER_FILTER"] = BuildFilter(request.Extensions),
-            ["SCNET_PICKER_MULTIPLE"] = request.AllowMultiple ? "1" : "0"
-        };
-        var output = await RunPowerShellAsync(script, environment, cancellationToken);
-        if (string.IsNullOrWhiteSpace(output))
-        {
-            return [];
-        }
+            using var dialog = new OpenFileDialog();
+            dialog.Title = request.Title ?? string.Empty;
+            dialog.Filter = BuildFilter(request.Extensions);
+            dialog.Multiselect = request.AllowMultiple;
+            dialog.CheckFileExists = true;
+            dialog.CheckPathExists = true;
+            dialog.RestoreDirectory = true;
+            using var cancellation = cancellationToken.Register(dialog.Dispose);
+            var result = dialog.ShowDialog();
+            cancellationToken.ThrowIfCancellationRequested();
+            return result == DialogResult.OK ? dialog.FileNames : [];
+        }, cancellationToken).ConfigureAwait(false);
 
-        using var document = JsonDocument.Parse(output);
-        var paths = document.RootElement.ValueKind == JsonValueKind.Array
-            ? document.RootElement.EnumerateArray().Select(item => item.GetString()!).ToArray()
-            : [document.RootElement.GetString()!];
         return paths.Select(path => new PickedFile(Path.GetFileName(path), null,
             _ => Task.FromResult<Stream>(new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
                 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan)))).ToArray();
@@ -44,72 +33,75 @@ internal sealed class WindowsFilePicker : IFilePicker
     public async Task<PickedSaveTarget?> PickSaveTargetAsync(FileSaveRequest request,
         CancellationToken cancellationToken = default)
     {
-        var script = """
-                     Add-Type -AssemblyName System.Windows.Forms
-                     $dialog = [System.Windows.Forms.SaveFileDialog]::new()
-                     $dialog.Title = $env:SCNET_PICKER_TITLE
-                     $dialog.FileName = $env:SCNET_PICKER_NAME
-                     if ($dialog.ShowDialog() -eq [System.Windows.Forms.DialogResult]::OK) {
-                       $dialog.FileName | ConvertTo-Json -Compress
-                     }
-                     """;
-        var output = await RunPowerShellAsync(script, new Dictionary<string, string?>
+        ArgumentNullException.ThrowIfNull(request);
+        var path = await RunDialogAsync(() =>
         {
-            ["SCNET_PICKER_TITLE"] = request.Title ?? string.Empty,
-            ["SCNET_PICKER_NAME"] = request.SuggestedFileName
-        }, cancellationToken);
-        if (string.IsNullOrWhiteSpace(output))
+            using var dialog = new SaveFileDialog
+            {
+                Title = request.Title ?? string.Empty,
+                FileName = request.SuggestedFileName,
+                Filter = BuildSaveFilter(request.SuggestedFileName),
+                AddExtension = true,
+                CheckPathExists = true,
+                OverwritePrompt = true,
+                RestoreDirectory = true
+            };
+            using var cancellation = cancellationToken.Register(dialog.Dispose);
+            var result = dialog.ShowDialog();
+            cancellationToken.ThrowIfCancellationRequested();
+            return result == DialogResult.OK ? dialog.FileName : null;
+        }, cancellationToken).ConfigureAwait(false);
+
+        if (path is null)
         {
             return null;
         }
 
-        var path = JsonSerializer.Deserialize<string>(output)!;
         return new PickedSaveTarget(Path.GetFileName(path),
             _ => Task.FromResult<Stream>(new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None,
                 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan)));
     }
 
-    private static async Task<string> RunPowerShellAsync(string script,
-        IReadOnlyDictionary<string, string?> environment, CancellationToken cancellationToken)
+    private async Task<T> RunDialogAsync<T>(Func<T> operation, CancellationToken cancellationToken)
     {
-        var start = new ProcessStartInfo("powershell.exe")
+        await _requestLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true,
-            CreateNoWindow = true
-        };
-        start.ArgumentList.Add("-NoProfile");
-        start.ArgumentList.Add("-STA");
-        start.ArgumentList.Add("-Command");
-        start.ArgumentList.Add(script);
-        foreach (var pair in environment)
-        {
-            start.Environment[pair.Key] = pair.Value;
+            return await RunOnStaThreadAsync(operation, cancellationToken).ConfigureAwait(false);
         }
+        finally
+        {
+            _requestLock.Release();
+        }
+    }
 
-        using var process = Process.Start(start) ??
-                            throw new InvalidOperationException("Unable to start Windows file picker.");
-        using var registration = cancellationToken.Register(() =>
+    private static Task<T> RunOnStaThreadAsync<T>(Func<T> operation, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
         {
             try
             {
-                if (!process.HasExited)
-                {
-                    process.Kill(true);
-                }
+                cancellationToken.ThrowIfCancellationRequested();
+                completion.TrySetResult(operation());
             }
-            catch
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
+                completion.TrySetCanceled(cancellationToken);
             }
-        });
-        var output = await process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var error = await process.StandardError.ReadToEndAsync(cancellationToken);
-        await process.WaitForExitAsync(cancellationToken);
-        if (process.ExitCode != 0)
+            catch (Exception exception)
+            {
+                completion.TrySetException(exception);
+            }
+        })
         {
-            throw new InvalidOperationException($"Windows file picker failed: {error.Trim()}");
-        }
-
-        return output.Trim();
+            IsBackground = true,
+            Name = "SCNET Windows File Picker"
+        };
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return completion.Task;
     }
 
     private static string BuildFilter(IReadOnlyList<string> extensions)
@@ -117,7 +109,15 @@ internal sealed class WindowsFilePicker : IFilePicker
         var patterns = extensions.Select(extension => $"*{NormalizeExtension(extension)}").ToArray();
         return patterns.Length == 0
             ? "All files (*.*)|*.*"
-            : $"Supported files|{string.Join(';', patterns)}|All files (*.*)|*.*";
+            : $"Supported files ({string.Join(", ", patterns)})|{string.Join(';', patterns)}|All files (*.*)|*.*";
+    }
+
+    private static string BuildSaveFilter(string suggestedFileName)
+    {
+        var extension = Path.GetExtension(suggestedFileName);
+        return string.IsNullOrEmpty(extension)
+            ? "All files (*.*)|*.*"
+            : $"{extension.TrimStart('.').ToUpperInvariant()} files (*{extension})|*{extension}|All files (*.*)|*.*";
     }
 
     private static string NormalizeExtension(string extension) =>

@@ -52,7 +52,7 @@ GUI 的“内容包缓存”界面只列出非 Mod 缓存制品：FilePicker 多
 
 Starter 会先注册程序基础目录并读取 `Starter.xml`，再把选中的 `Instances/<name>` 重新注册为当前进程的 `external:`、`data:` 和 `config:`。桌面端可并发运行多个隔离实例；Android 同样隔离实例数据，但单个已安装包不提供并发游戏进程。不同实例拥有彼此隔离的 session、设置、世界、模组和日志；逻辑路径相同并不代表落到同一个物理目录。
 
-`FilePicker` 返回的 `PickedFile` 和 `PickedSaveTarget` 只暴露按需打开的流。Windows/Linux 实现将系统选择结果封装为文件流；Android 实现保留文档 URI 权限并在每次调用时通过 ContentResolver 打开流。取消选择返回空结果或 `null`，并发选择请求会被拒绝。Linux 缺少 `zenity` 时不注册实现，调用方应依据 `FilePicker.IsAvailable` 隐藏或禁用功能。
+`FilePicker` 返回的 `PickedFile` 和 `PickedSaveTarget` 只暴露按需打开的流。Windows/Linux 实现将系统选择结果封装为文件流；Android 实现保留文档 URI 权限并在每次调用时通过 ContentResolver 打开流。取消选择返回空结果或 `null`，各平台实现串行化选择请求。Linux GUI 始终注册实现，通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，不依赖 `zenity`；会话总线、portal 服务或桌面 backend 不可用时，请求会返回明确错误。Headless 不注册 `FilePicker`，调用方仍应依据 `FilePicker.IsAvailable` 隐藏或禁用交互功能。
 
 世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。升级工具仍可在缺少 `Project.xml` 时读取旧 `Project.json` 并转换为 `Project.xml` 后继续升级。
 

@@ -32,6 +32,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Tmds.DBus" Version="0.94.2"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <!-- 这里的 TargetFramework, RuntimeIdendifier 必须硬编码，MSBuid 的限制，请勿修改 -->
         <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj" SetTargetFramework="TargetFramework=net10.0">
             <AdditionalProperties>RuntimeIdentifier=linux-x64</AdditionalProperties>
