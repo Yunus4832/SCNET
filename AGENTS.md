@@ -22,3 +22,10 @@ runtime compatibility when either approach satisfies the requirement.
 
 Reassess and update this section when SCNET begins publishing releases, supporting external users,
 or maintaining third-party integrations.
+
+## C# code quality
+
+Treat `.editorconfig` as authoritative for C# style. Before completing any change that modifies C#,
+use the repository `scnet-code-style` Skill and run
+`.agents/skills/scnet-code-style/scripts/validate_changed_csharp.sh`. A successful build does not
+replace this changed-file style check. Keep unrelated legacy formatting out of functional changes.

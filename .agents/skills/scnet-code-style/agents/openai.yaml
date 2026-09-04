@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET Code Style"
+  short_description: "Keep C# style, files, and project boundaries consistent."
+  default_prompt: "Use $scnet-code-style to organize and validate the C# files changed in this task."

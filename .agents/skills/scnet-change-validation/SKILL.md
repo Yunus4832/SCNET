@@ -13,10 +13,11 @@ Inspect the affected paths and dependency surface. Prefer inexpensive checks whe
 
 - search for remaining or broken references with `rg`;
 - inspect the focused diff and run `git diff --check`;
+- when C# files changed, load `scnet-code-style` and run its changed-file validator; this is required even when compilation succeeds because builds do not currently enforce every `.editorconfig` diagnostic;
 - verify paired registrations, serialization paths, call sites, or configuration entries statically;
 - use an existing formatter or purpose-built repository validator when it directly covers the change.
 
-Pure comments, documentation, straightforward private implementation edits, and obvious local renames usually do not justify compilation by themselves.
+Pure comments, documentation, straightforward private implementation edits, and obvious local renames usually do not justify compilation by themselves. C# style validation remains required for any changed C# file even when compilation is unnecessary.
 
 ## When to compile
 

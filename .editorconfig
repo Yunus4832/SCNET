@@ -1,7 +1,7 @@
 root = true
 
 [*]
-end_of_line = crlf # 行尾 DOS 格式 CRLF
+end_of_line = lf # 全平台统一使用 LF
 charset = utf-8 # 文件编码字符集为 UTF-8
 trim_trailing_whitespace = true # 删除文件末尾空格
 insert_final_newline = true # 末尾插入新行
