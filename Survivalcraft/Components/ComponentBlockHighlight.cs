@@ -126,16 +126,16 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
                 num = MathUtils.Min(obj3.Distance, 2f);
                 break;
             default:
-            {
-                if (_highlightRaycastResult is not Ray3 ray3)
                 {
-                    return;
-                }
+                    if (_highlightRaycastResult is not Ray3 ray3)
+                    {
+                        return;
+                    }
 
-                ray = ray3;
-                num = 2f;
-                break;
-            }
+                    ray = ray3;
+                    num = 2f;
+                    break;
+                }
         }
 
         var color = Color.White * 0.5f;

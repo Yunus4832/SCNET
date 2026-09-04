@@ -399,17 +399,21 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
         _subsystemAmbientSounds = Project.FindSubsystem<SubsystemAmbientSounds>(true)!;
         for (var i = -2; i <= 2; i++)
-        for (var j = -1; j <= 2; j++)
-        for (var k = -2; k <= 2; k++)
         {
-            if (i != 0 || j != 0 || k != 0)
+            for (var j = -1; j <= 2; j++)
             {
-                var num = j < 0 ? 1.5f : 2.5f;
-                if (MathUtils.Sqrt(i * i + j * j + k * k) <= num)
+                for (var k = -2; k <= 2; k++)
                 {
-                    var num2 = MathUtils.Sqrt(i * i + k * k);
-                    var num3 = j > 0 ? 0.5f * j : -j;
-                    _expansionProbabilities[new Point3(i, j, k)] = 0.02f / (num2 + num3);
+                    if (i != 0 || j != 0 || k != 0)
+                    {
+                        var num = j < 0 ? 1.5f : 2.5f;
+                        if (MathUtils.Sqrt(i * i + j * j + k * k) <= num)
+                        {
+                            var num2 = MathUtils.Sqrt(i * i + k * k);
+                            var num3 = j > 0 ? 0.5f * j : -j;
+                            _expansionProbabilities[new Point3(i, j, k)] = 0.02f / (num2 + num3);
+                        }
+                    }
                 }
             }
         }

@@ -30,7 +30,7 @@ public class ComponentMoveAwayBehavior : ComponentBehavior, IUpdateable
     {
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
         _componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true)!;
-        _componentCreature.ComponentBody.CollidedWithBody += delegate(ComponentBody body)
+        _componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody body)
         {
             _target = body;
             _isFast = MathUtils.Max(body.Velocity.Length(), _componentCreature.ComponentBody.Velocity.Length()) > 3f;

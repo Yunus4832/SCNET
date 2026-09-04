@@ -45,11 +45,13 @@ public class FurnitureInventoryPanel : CanvasWidget
         _addButton = Children.Find<ButtonWidget>("AddButton")!;
         _moreButton = Children.Find<ButtonWidget>("MoreButton")!;
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)
-        for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
         {
-            var widget = new InventorySlotWidget();
-            _inventoryGrid.Children.Add(widget);
-            _inventoryGrid.SetWidgetCell(widget, new Point2(j, i));
+            for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
+            {
+                var widget = new InventorySlotWidget();
+                _inventoryGrid.Children.Add(widget);
+                _inventoryGrid.SetWidgetCell(widget, new Point2(j, i));
+            }
         }
 
         var furnitureSetList = _furnitureSetList;
@@ -154,7 +156,7 @@ public class FurnitureInventoryPanel : CanvasWidget
                     list,
                     64f,
                     t => ((Tuple<string, Action>)t).Item1,
-                    delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+                    delegate (object t) { ((Tuple<string, Action>)t).Item2(); }
                 )
             );
         }
@@ -206,7 +208,7 @@ public class FurnitureInventoryPanel : CanvasWidget
                 LanguageManager.Get(_typeName, 14),
                 list2, 64f,
                 t => ((Tuple<string, Action>)t).Item1,
-                delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+                delegate (object t) { ((Tuple<string, Action>)t).Item2(); }
             )
         );
     }
@@ -307,7 +309,7 @@ public class FurnitureInventoryPanel : CanvasWidget
             LanguageManager.Get(_typeName, 15),
             LanguageManager.Get(_typeName, 16),
             20,
-            delegate(string s)
+            delegate (string s)
             {
                 NewFurnitureSetLogic(s);
                 CommonLib.Net.QueuePackage(new FurniturePackage(s));
@@ -366,7 +368,7 @@ public class FurnitureInventoryPanel : CanvasWidget
             LanguageManager.Get(_typeName, 17),
             furnitureSet.Name,
             20,
-            delegate(string s)
+            delegate (string s)
             {
                 RenameFurnitureSetLogic(furnitureSet, s);
                 CommonLib.Net.QueuePackage(new FurniturePackage(furnitureSet.Name, s));
@@ -482,7 +484,7 @@ public class FurnitureInventoryPanel : CanvasWidget
         {
             DialogsManager.ShowDialog(_componentPlayer.GuiWidget, new ListSelectionDialog(
                 LanguageManager.Get(_typeName, 20), FurniturePacksManager.ReadOnlyFurniturePackNames, 64f,
-                s => FurniturePacksManager.GetDisplayName((string)s), delegate(object s)
+                s => FurniturePacksManager.GetDisplayName((string)s), delegate (object s)
                 {
                     try
                     {

@@ -56,32 +56,36 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
         }
 
         for (var i = x - 1; i <= x + 1; i++)
-        for (var j = z - 1; j <= z + 1; j++)
-        for (var k = y - 2; k <= y + 1; k++)
         {
-            var cellValue = SubsystemTerrain.Terrain.GetCellValue(i, k, j);
-            if (Terrain.ExtractContents(cellValue) != 2)
+            for (var j = z - 1; j <= z + 1; j++)
             {
-                continue;
-            }
-
-            var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(i, k + 1, j);
-            if (KillsGrassIfOnTopOfIt(cellValue2) || Terrain.ExtractLight(cellValue2) < 13 ||
-                !(_random.Float(0f, 1f) < 0.1f))
-            {
-                continue;
-            }
-
-            var num2 = Terrain.ReplaceContents(cellValue, 8);
-            _toUpdate[new Point3(i, k, j)] = num2;
-            if (Terrain.ExtractContents(cellValue2) == 0)
-            {
-                var temperature = SubsystemTerrain.Terrain.GetTemperature(i, j);
-                var humidity = SubsystemTerrain.Terrain.GetHumidity(i, j);
-                var num3 = PlantsManager.GenerateRandomPlantValue(_random, num2, temperature, humidity, k + 1);
-                if (num3 != 0)
+                for (var k = y - 2; k <= y + 1; k++)
                 {
-                    _toUpdate[new Point3(i, k + 1, j)] = num3;
+                    var cellValue = SubsystemTerrain.Terrain.GetCellValue(i, k, j);
+                    if (Terrain.ExtractContents(cellValue) != 2)
+                    {
+                        continue;
+                    }
+
+                    var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(i, k + 1, j);
+                    if (KillsGrassIfOnTopOfIt(cellValue2) || Terrain.ExtractLight(cellValue2) < 13 ||
+                        !(_random.Float(0f, 1f) < 0.1f))
+                    {
+                        continue;
+                    }
+
+                    var num2 = Terrain.ReplaceContents(cellValue, 8);
+                    _toUpdate[new Point3(i, k, j)] = num2;
+                    if (Terrain.ExtractContents(cellValue2) == 0)
+                    {
+                        var temperature = SubsystemTerrain.Terrain.GetTemperature(i, j);
+                        var humidity = SubsystemTerrain.Terrain.GetHumidity(i, j);
+                        var num3 = PlantsManager.GenerateRandomPlantValue(_random, num2, temperature, humidity, k + 1);
+                        if (num3 != 0)
+                        {
+                            _toUpdate[new Point3(i, k + 1, j)] = num3;
+                        }
+                    }
                 }
             }
         }

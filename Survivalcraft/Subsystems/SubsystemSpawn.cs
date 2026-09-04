@@ -201,10 +201,12 @@ public class SubsystemSpawn : Subsystem, IUpdateable
             var point = Terrain.ToChunk(p);
             var point2 = Terrain.ToChunk(p2);
             for (var i = point.X; i <= point2.X; i++)
-            for (var j = point.Y; j <= point2.Y; j++)
             {
-                var spawnChunk = GetSpawnChunk(new Point2(i, j));
-                spawnChunk?.LastVisitedTime = _subsystemGameInfo.TotalElapsedGameTime;
+                for (var j = point.Y; j <= point2.Y; j++)
+                {
+                    var spawnChunk = GetSpawnChunk(new Point2(i, j));
+                    spawnChunk?.LastVisitedTime = _subsystemGameInfo.TotalElapsedGameTime;
+                }
             }
         }
     }
@@ -225,31 +227,33 @@ public class SubsystemSpawn : Subsystem, IUpdateable
             var point = Terrain.ToChunk(p);
             var point2 = Terrain.ToChunk(p2);
             for (var i = point.X; i <= point2.X; i++)
-            for (var j = point.Y; j <= point2.Y; j++)
             {
-                var v2 = new Vector2((i + 0.5f) * 16f, (j + 0.5f) * 16f);
-                if (!(Vector2.DistanceSquared(v, v2) < 1600f))
+                for (var j = point.Y; j <= point2.Y; j++)
                 {
-                    continue;
-                }
+                    var v2 = new Vector2((i + 0.5f) * 16f, (j + 0.5f) * 16f);
+                    if (!(Vector2.DistanceSquared(v, v2) < 1600f))
+                    {
+                        continue;
+                    }
 
-                var chunkAtCell =
-                    _subsystemTerrain.Terrain.GetChunkAtCell(Terrain.ToCell(v2.X), Terrain.ToCell(v2.Y), false);
-                if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidPropagatedLight })
-                {
-                    continue;
-                }
+                    var chunkAtCell =
+                        _subsystemTerrain.Terrain.GetChunkAtCell(Terrain.ToCell(v2.X), Terrain.ToCell(v2.Y), false);
+                    if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidPropagatedLight })
+                    {
+                        continue;
+                    }
 
-                var point3 = new Point2(i, j);
-                var orCreateSpawnChunk = GetOrCreateSpawnChunk(point3);
-                foreach (var spawnsDatum in orCreateSpawnChunk.SpawnsData)
-                {
-                    SpawnEntity(spawnsDatum);
-                }
+                    var point3 = new Point2(i, j);
+                    var orCreateSpawnChunk = GetOrCreateSpawnChunk(point3);
+                    foreach (var spawnsDatum in orCreateSpawnChunk.SpawnsData)
+                    {
+                        SpawnEntity(spawnsDatum);
+                    }
 
-                orCreateSpawnChunk.SpawnsData.Clear();
-                SpawningChunk?.Invoke(orCreateSpawnChunk);
-                orCreateSpawnChunk.IsSpawned = true;
+                    orCreateSpawnChunk.SpawnsData.Clear();
+                    SpawningChunk?.Invoke(orCreateSpawnChunk);
+                    orCreateSpawnChunk.IsSpawned = true;
+                }
             }
         }
     }

@@ -144,11 +144,11 @@ public sealed record GameMessage(
                 FormatLocalizedText(template, normalizedArguments),
                 tone,
                 presentation) with
-            {
-                LocalizationSection = section,
-                LocalizationKey = key,
-                LocalizationArguments = normalizedArguments
-            };
+        {
+            LocalizationSection = section,
+            LocalizationKey = key,
+            LocalizationArguments = normalizedArguments
+        };
     }
 
     public GameMessage ResolveLocalization()

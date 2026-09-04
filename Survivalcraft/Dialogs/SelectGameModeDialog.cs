@@ -12,7 +12,7 @@ public class SelectGameModeDialog : ListSelectionDialog
         title,
         GetAllowedGameModes(allowAdventure),
         140f,
-        delegate(object item)
+        delegate (object item)
         {
             var gameMode = (GameMode)item;
             var node = ContentManager.Get<XElement>("Widgets/SelectGameModeItem");
@@ -23,7 +23,7 @@ public class SelectGameModeDialog : ListSelectionDialog
                 StringsManager.GetString("GameMode", gameMode, "Description");
             return obj;
         },
-        delegate(object item) { selectionHandler((GameMode)item); }
+        delegate (object item) { selectionHandler((GameMode)item); }
     )
     {
         ContentSize = new Vector2(750f, 420f);

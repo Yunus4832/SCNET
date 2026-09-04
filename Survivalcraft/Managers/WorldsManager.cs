@@ -361,8 +361,8 @@ public static class WorldsManager
             var playersValues = playersNode == null
                 ? null
                 : (from e in playersNode.Elements()
-                    where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
-                    select e).FirstOrDefault();
+                   where XmlUtils.GetAttributeValue<string>(e, "Name") == "Players"
+                   select e).FirstOrDefault();
             if (playersValues != null)
             {
                 foreach (var item2 in playersValues.Elements())
@@ -370,8 +370,8 @@ public static class WorldsManager
                     var playerInfo = new PlayerInfo();
                     worldInfo.PlayerInfos.Add(playerInfo);
                     var xElement2 = (from e in item2.Elements()
-                        where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
-                        select e).FirstOrDefault();
+                                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
+                                     select e).FirstOrDefault();
                     if (xElement2 != null)
                     {
                         playerInfo.CharacterSkinName =
@@ -556,16 +556,16 @@ public static class WorldsManager
     private static XElement GetGameInfoNode(XElement projectNode)
     {
         var xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-            where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "GameInfo"
-            select n).FirstOrDefault();
+                        where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "GameInfo"
+                        select n).FirstOrDefault();
         return xElement ?? throw new InvalidOperationException("GameInfo node not found in project.");
     }
 
     private static XElement? GetPlayersNode(XElement projectNode)
     {
         var xElement = (from n in projectNode.Element("Subsystems")?.Elements("Values")
-            where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Players"
-            select n).FirstOrDefault();
+                        where XmlUtils.GetAttributeValue(n, "Name", string.Empty) == "Players"
+                        select n).FirstOrDefault();
         return xElement;
     }
 

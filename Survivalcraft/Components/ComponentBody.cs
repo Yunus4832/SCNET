@@ -95,11 +95,15 @@ public class ComponentBody : ComponentFrame, IUpdateable
     {
         var list = new List<Vector3>();
         for (var i = -2; i <= 2; i++)
-        for (var j = -2; j <= 2; j++)
-        for (var k = -2; k <= 2; k++)
         {
-            var item = new Vector3(0.25f * i, 0.25f * j, 0.25f * k);
-            list.Add(item);
+            for (var j = -2; j <= 2; j++)
+            {
+                for (var k = -2; k <= 2; k++)
+                {
+                    var item = new Vector3(0.25f * i, 0.25f * j, 0.25f * k);
+                    list.Add(item);
+                }
+            }
         }
 
         list.Sort((o1, o2) => Comparer<float>.Default.Compare(o1.LengthSquared(), o2.LengthSquared()));
@@ -497,30 +501,30 @@ public class ComponentBody : ComponentFrame, IUpdateable
         switch (ImmersionFluidBlock)
         {
             case WaterBlock when ImmersionDepth > 0.3f && !_fluidEffectsPlayed:
-            {
-                _fluidEffectsPlayed = true;
-                _subsystemAudio.PlayRandomSound("Audio/WaterFallIn", _random.Float(0.75f, 1f), _random.Float(-0.3f, 0f),
-                    position, 4f, true);
-                if (RunMode.Value is RunModeType.Gui)
                 {
-                    _subsystemParticles.AddParticleSystem(new WaterSplashParticleSystem(_subsystemTerrain, position,
-                        (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
-                }
+                    _fluidEffectsPlayed = true;
+                    _subsystemAudio.PlayRandomSound("Audio/WaterFallIn", _random.Float(0.75f, 1f), _random.Float(-0.3f, 0f),
+                        position, 4f, true);
+                    if (RunMode.Value is RunModeType.Gui)
+                    {
+                        _subsystemParticles.AddParticleSystem(new WaterSplashParticleSystem(_subsystemTerrain, position,
+                            (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
+                    }
 
-                break;
-            }
+                    break;
+                }
             case MagmaBlock when ImmersionDepth > 0f && !_fluidEffectsPlayed:
-            {
-                _fluidEffectsPlayed = true;
-                _subsystemAudio.PlaySound("Audio/SizzleLong", 1f, 0f, position, 4f, true);
-                if (RunMode.Value is RunModeType.Gui)
                 {
-                    _subsystemParticles.AddParticleSystem(new MagmaSplashParticleSystem(_subsystemTerrain, position,
-                        (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
-                }
+                    _fluidEffectsPlayed = true;
+                    _subsystemAudio.PlaySound("Audio/SizzleLong", 1f, 0f, position, 4f, true);
+                    if (RunMode.Value is RunModeType.Gui)
+                    {
+                        _subsystemParticles.AddParticleSystem(new MagmaSplashParticleSystem(_subsystemTerrain, position,
+                            (BoundingBox.Max - BoundingBox.Min).Length() > 0.8f));
+                    }
 
-                break;
-            }
+                    break;
+                }
             case null:
                 _fluidEffectsPlayed = false;
                 break;
@@ -1133,60 +1137,62 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
 
         for (var i = point.X; i <= point2.X; i++)
-        for (var j = point.Z; j <= point2.Z; j++)
         {
-            var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
-            if (chunkAtCell == null)
+            for (var j = point.Z; j <= point2.Z; j++)
             {
-                continue;
-            }
-
-            var num = TerrainChunk.CalculateCellIndex(i & 0xF, point.Y, j & 0xF);
-            var num2 = point.Y;
-            var x = chunkAtCell.Coords.X * 16 + (i & 0xF);
-            var z = chunkAtCell.Coords.Y * 16 + (j & 0xF);
-            var allowPlayerPass = AllowPlayerPass(x, z);
-            if (!allowPlayerPass)
-            {
-                var block = BlocksManager.Blocks[46];
-                var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, 46);
-                var v = new Vector3(i, num2, j);
-                foreach (var collisionBox in customCollisionBoxes)
+                var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
+                if (chunkAtCell == null)
                 {
-                    result.Add(new CollisionBox
-                    {
-                        Box = new BoundingBox(v + collisionBox.Min, v + collisionBox.Max),
-                        BlockValue = 46
-                    });
+                    continue;
                 }
-            }
-            else
-            {
-                while (num2 <= point2.Y)
+
+                var num = TerrainChunk.CalculateCellIndex(i & 0xF, point.Y, j & 0xF);
+                var num2 = point.Y;
+                var x = chunkAtCell.Coords.X * 16 + (i & 0xF);
+                var z = chunkAtCell.Coords.Y * 16 + (j & 0xF);
+                var allowPlayerPass = AllowPlayerPass(x, z);
+                if (!allowPlayerPass)
                 {
-                    var cellValueFast = chunkAtCell.GetCellValueFast(num);
-                    var num3 = Terrain.ExtractContents(cellValueFast);
-                    if (num3 != 0)
+                    var block = BlocksManager.Blocks[46];
+                    var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, 46);
+                    var v = new Vector3(i, num2, j);
+                    foreach (var collisionBox in customCollisionBoxes)
                     {
-                        var block = BlocksManager.Blocks[num3];
-                        if (block.Collidable)
+                        result.Add(new CollisionBox
                         {
-                            var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, cellValueFast);
-                            var v = new Vector3(i, num2, j);
-                            foreach (var collisionBox in customCollisionBoxes)
+                            Box = new BoundingBox(v + collisionBox.Min, v + collisionBox.Max),
+                            BlockValue = 46
+                        });
+                    }
+                }
+                else
+                {
+                    while (num2 <= point2.Y)
+                    {
+                        var cellValueFast = chunkAtCell.GetCellValueFast(num);
+                        var num3 = Terrain.ExtractContents(cellValueFast);
+                        if (num3 != 0)
+                        {
+                            var block = BlocksManager.Blocks[num3];
+                            if (block.Collidable)
                             {
-                                result.Add(new CollisionBox
+                                var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, cellValueFast);
+                                var v = new Vector3(i, num2, j);
+                                foreach (var collisionBox in customCollisionBoxes)
                                 {
-                                    Box = new BoundingBox(v + collisionBox.Min,
-                                        v + collisionBox.Max),
-                                    BlockValue = cellValueFast
-                                });
+                                    result.Add(new CollisionBox
+                                    {
+                                        Box = new BoundingBox(v + collisionBox.Min,
+                                            v + collisionBox.Max),
+                                        BlockValue = cellValueFast
+                                    });
+                                }
                             }
                         }
-                    }
 
-                    num2++;
-                    num++;
+                        num2++;
+                        num++;
+                    }
                 }
             }
         }
@@ -1468,35 +1474,35 @@ public class ComponentBody : ComponentFrame, IUpdateable
         switch (axis)
         {
             case 0:
-            {
-                var num13 = b1.Min.X + b1.Max.X;
-                var num14 = b2.Min.X + b2.Max.X;
-                var num15 = b1.Max.X - b1.Min.X;
-                var num16 = b2.Max.X - b2.Min.X;
-                var num17 = num14 - num13;
-                var num18 = num15 + num16;
-                return 0.5f * (num17 > 0f ? num17 - num18 : num17 + num18);
-            }
+                {
+                    var num13 = b1.Min.X + b1.Max.X;
+                    var num14 = b2.Min.X + b2.Max.X;
+                    var num15 = b1.Max.X - b1.Min.X;
+                    var num16 = b2.Max.X - b2.Min.X;
+                    var num17 = num14 - num13;
+                    var num18 = num15 + num16;
+                    return 0.5f * (num17 > 0f ? num17 - num18 : num17 + num18);
+                }
             case 1:
-            {
-                var num7 = b1.Min.Y + b1.Max.Y;
-                var num8 = b2.Min.Y + b2.Max.Y;
-                var num9 = b1.Max.Y - b1.Min.Y;
-                var num10 = b2.Max.Y - b2.Min.Y;
-                var num11 = num8 - num7;
-                var num12 = num9 + num10;
-                return 0.5f * (num11 > 0f ? num11 - num12 : num11 + num12);
-            }
+                {
+                    var num7 = b1.Min.Y + b1.Max.Y;
+                    var num8 = b2.Min.Y + b2.Max.Y;
+                    var num9 = b1.Max.Y - b1.Min.Y;
+                    var num10 = b2.Max.Y - b2.Min.Y;
+                    var num11 = num8 - num7;
+                    var num12 = num9 + num10;
+                    return 0.5f * (num11 > 0f ? num11 - num12 : num11 + num12);
+                }
             default:
-            {
-                var num = b1.Min.Z + b1.Max.Z;
-                var num2 = b2.Min.Z + b2.Max.Z;
-                var num3 = b1.Max.Z - b1.Min.Z;
-                var num4 = b2.Max.Z - b2.Min.Z;
-                var num5 = num2 - num;
-                var num6 = num3 + num4;
-                return 0.5f * (num5 > 0f ? num5 - num6 : num5 + num6);
-            }
+                {
+                    var num = b1.Min.Z + b1.Max.Z;
+                    var num2 = b2.Min.Z + b2.Max.Z;
+                    var num3 = b1.Max.Z - b1.Min.Z;
+                    var num4 = b2.Max.Z - b2.Min.Z;
+                    var num5 = num2 - num;
+                    var num6 = num3 + num4;
+                    return 0.5f * (num5 > 0f ? num5 - num6 : num5 + num6);
+                }
         }
     }
 

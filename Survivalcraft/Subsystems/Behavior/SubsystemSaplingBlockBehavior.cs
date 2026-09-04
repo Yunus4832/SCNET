@@ -155,16 +155,18 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 {
                     var flag = false;
                     for (var i = x - 1; i <= x + 1; i++)
-                    for (var j = z - 1; j <= z + 1; j++)
                     {
-                        var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(i, y - 1, j);
-                        if (BlocksManager.Blocks[cellContents2] is not WaterBlock)
+                        for (var j = z - 1; j <= z + 1; j++)
                         {
-                            continue;
-                        }
+                            var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(i, y - 1, j);
+                            if (BlocksManager.Blocks[cellContents2] is not WaterBlock)
+                            {
+                                continue;
+                            }
 
-                        flag = true;
-                        break;
+                            flag = true;
+                            break;
+                        }
                     }
 
                     float num;

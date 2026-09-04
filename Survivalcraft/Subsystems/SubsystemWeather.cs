@@ -158,23 +158,25 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         }
 
         for (var i = point.X - num; i <= point.X + num; i++)
-        for (var j = point.Y - num; j <= point.Y + num; j++)
         {
-            if (!(MathUtils.Sqr(i + 0.5f - vector.X) + MathUtils.Sqr(j + 0.5f - vector.Y) <= num2))
+            for (var j = point.Y - num; j <= point.Y + num; j++)
             {
-                continue;
-            }
+                if (!(MathUtils.Sqr(i + 0.5f - vector.X) + MathUtils.Sqr(j + 0.5f - vector.Y) <= num2))
+                {
+                    continue;
+                }
 
-            var point2 = new Point2(i, j);
-            if (activeShafts.ContainsKey(point2))
-            {
-                continue;
-            }
+                var point2 = new Point2(i, j);
+                if (activeShafts.ContainsKey(point2))
+                {
+                    continue;
+                }
 
-            var precipitationShaftParticleSystem = new PrecipitationShaftParticleSystem(camera.GameWidget, this,
-                _random, point2, GetPrecipitationShaftInfo(point2.X, point2.Y).Type);
-            _subsystemParticles.AddParticleSystem(precipitationShaftParticleSystem);
-            activeShafts.Add(point2, precipitationShaftParticleSystem);
+                var precipitationShaftParticleSystem = new PrecipitationShaftParticleSystem(camera.GameWidget, this,
+                    _random, point2, GetPrecipitationShaftInfo(point2.X, point2.Y).Type);
+                _subsystemParticles.AddParticleSystem(precipitationShaftParticleSystem);
+                activeShafts.Add(point2, precipitationShaftParticleSystem);
+            }
         }
     }
 
@@ -184,7 +186,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
     public void Update(float dt)
     {
         if (_subsystemGameInfo.TotalElapsedGameTime > PrecipitationEndTime)
-            //客户端禁用天气生成
+        //客户端禁用天气生成
         {
             if (CommonLib.WorkType != WorkType.Client)
             {
@@ -237,12 +239,14 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                 var num3 = terrainChunk.Origin.Y + _random.Int(0, 15);
                 Vector3? vector = null;
                 for (var j = num2 - 8; j < num2 + 8; j++)
-                for (var k = num3 - 8; k < num3 + 8; k++)
                 {
-                    var topHeight = SubsystemTerrain.Terrain.GetTopHeight(j, k);
-                    if (!vector.HasValue || topHeight > vector.Value.Y)
+                    for (var k = num3 - 8; k < num3 + 8; k++)
                     {
-                        vector = new Vector3(j, topHeight, k);
+                        var topHeight = SubsystemTerrain.Terrain.GetTopHeight(j, k);
+                        if (!vector.HasValue || topHeight > vector.Value.Y)
+                        {
+                            vector = new Vector3(j, topHeight, k);
+                        }
                     }
                 }
 
@@ -276,22 +280,24 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                     var num9 = Terrain.ToCell(listenerPosition.Z) + 5;
                     Vector3 vector2 = default;
                     for (var l = num6; l <= num8; l++)
-                    for (var m = num7; m <= num9; m++)
                     {
-                        var precipitationShaftInfo = GetPrecipitationShaftInfo(l, m);
-                        if (precipitationShaftInfo is not { Type: PrecipitationType.Rain, Intensity: > 0f })
+                        for (var m = num7; m <= num9; m++)
                         {
-                            continue;
-                        }
+                            var precipitationShaftInfo = GetPrecipitationShaftInfo(l, m);
+                            if (precipitationShaftInfo is not { Type: PrecipitationType.Rain, Intensity: > 0f })
+                            {
+                                continue;
+                            }
 
-                        vector2.X = l + 0.5f;
-                        vector2.Y = MathUtils.Max(precipitationShaftInfo.YLimit, listenerPosition.Y);
-                        vector2.Z = m + 0.5f;
-                        var num10 = vector2.X - listenerPosition.X;
-                        var num11 = 8f * (vector2.Y - listenerPosition.Y);
-                        var num12 = vector2.Z - listenerPosition.Z;
-                        var distance = MathUtils.Sqrt(num10 * num10 + num11 * num11 + num12 * num12);
-                        num5 += _subsystemAudio.CalculateVolume(distance, 1.5f) * precipitationShaftInfo.Intensity;
+                            vector2.X = l + 0.5f;
+                            vector2.Y = MathUtils.Max(precipitationShaftInfo.YLimit, listenerPosition.Y);
+                            vector2.Z = m + 0.5f;
+                            var num10 = vector2.X - listenerPosition.X;
+                            var num11 = 8f * (vector2.Y - listenerPosition.Y);
+                            var num12 = vector2.Z - listenerPosition.Z;
+                            var distance = MathUtils.Sqrt(num10 * num10 + num11 * num11 + num12 * num12);
+                            num5 += _subsystemAudio.CalculateVolume(distance, 1.5f) * precipitationShaftInfo.Intensity;
+                        }
                     }
                 }
 
@@ -503,21 +509,23 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
         if (RunMode.Value is RunModeType.Gui)
         {
             for (var i = -7; i <= 7; i++)
-            for (var j = -7; j <= 7; j++)
             {
-                var distance = MathUtils.Sqrt(i * i + j * j);
-                _rainVolumeFactor += _subsystemAudio.CalculateVolume(distance, 1f);
+                for (var j = -7; j <= 7; j++)
+                {
+                    var distance = MathUtils.Sqrt(i * i + j * j);
+                    _rainVolumeFactor += _subsystemAudio.CalculateVolume(distance, 1f);
+                }
             }
         }
 
-        _subsystemBlocksScanner.ScanningChunkCompleted += delegate(TerrainChunk chunk)
+        _subsystemBlocksScanner.ScanningChunkCompleted += delegate (TerrainChunk chunk)
         {
             if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode == EnvironmentBehaviorMode.Living)
             {
                 FreezeThawAndDepositSnow(chunk, 0.66f, 0.66f, false); //new,冻结方法有更新
             }
         };
-        SubsystemTerrain.TerrainUpdater.ChunkInitialized += delegate(TerrainChunk chunk) //new
+        SubsystemTerrain.TerrainUpdater.ChunkInitialized += delegate (TerrainChunk chunk) //new
         {
             if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != EnvironmentBehaviorMode.Living)
             {

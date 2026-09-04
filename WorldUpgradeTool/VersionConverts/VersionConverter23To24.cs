@@ -14,8 +14,8 @@ public class VersionConverter23To24 : VersionConverter
     {
         XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
         foreach (var item in from e in projectNode.Element("Subsystems")?.Elements()
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
-                 select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
+                             select e)
         {
             var xElement = XmlUtils.AddElement(item, "Value");
             xElement.SetAttributeValue("Name", "AreSeasonsChanging");

@@ -119,7 +119,7 @@ public class EditPaletteDialog : Dialog
                         "Edit Color Name",
                         _labels[k].Text,
                         16,
-                        delegate(string s)
+                        delegate (string s)
                         {
                             if (WorldPalette.VerifyColorName(s))
                             {
@@ -144,7 +144,7 @@ public class EditPaletteDialog : Dialog
             {
                 DialogsManager.ShowDialog(
                     this,
-                    new EditColorDialog(_tmpPalette.Colors[k], delegate(Color? color)
+                    new EditColorDialog(_tmpPalette.Colors[k], delegate (Color? color)
                     {
                         if (color.HasValue)
                         {

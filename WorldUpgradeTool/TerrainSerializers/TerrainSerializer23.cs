@@ -141,12 +141,14 @@ public class TerrainSerializer23 : IDisposable
         // 当前缓冲区大小
         var bufferSize = 0;
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var shaftValue = chunk.GetShaftValueFast(i, j);
-            // 将温度和湿度写入到 buffer
-            _compressBuffer[bufferSize++] = (byte)((Terrain.ExtractTemperature(shaftValue) << 4) |
-                                                   Terrain.ExtractHumidity(shaftValue));
+            for (var j = 0; j < 16; j++)
+            {
+                var shaftValue = chunk.GetShaftValueFast(i, j);
+                // 将温度和湿度写入到 buffer
+                _compressBuffer[bufferSize++] = (byte)((Terrain.ExtractTemperature(shaftValue) << 4) |
+                                                       Terrain.ExtractHumidity(shaftValue));
+            }
         }
 
         // 缓冲区大小不能大于一个 Chunk 数据块的最大大小
@@ -159,33 +161,37 @@ public class TerrainSerializer23 : IDisposable
         var value = -1; // 值
         var count = 0; // 值重复的次数
         for (var k = 0; k < regionHeight; k++)
-        for (var l = 0; l < 16; l++)
-        for (var m = 0; m < 16; m++)
         {
-            // 获取下一个值, 注意: 在存档文件中，光照信息被清除并被用于存储 RLE 算法中 Cell 的重复次数
-            var nextValue = Terrain.ReplaceLight(chunk.GetCellValueFast(m, k, l), 0);
-            if (count == 0)
+            for (var l = 0; l < 16; l++)
             {
-                value = nextValue;
-                count = 1;
-                continue;
-            }
+                for (var m = 0; m < 16; m++)
+                {
+                    // 获取下一个值, 注意: 在存档文件中，光照信息被清除并被用于存储 RLE 算法中 Cell 的重复次数
+                    var nextValue = Terrain.ReplaceLight(chunk.GetCellValueFast(m, k, l), 0);
+                    if (count == 0)
+                    {
+                        value = nextValue;
+                        count = 1;
+                        continue;
+                    }
 
-            // 如果下一个值和当前值不等，说明不再重复，即找到了一个 ValueCountPair，则写入 buffer 并退出本次循环
-            if (nextValue != value)
-            {
-                bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
-                value = nextValue;
-                count = 1;
-                continue;
-            }
+                    // 如果下一个值和当前值不等，说明不再重复，即找到了一个 ValueCountPair，则写入 buffer 并退出本次循环
+                    if (nextValue != value)
+                    {
+                        bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
+                        value = nextValue;
+                        count = 1;
+                        continue;
+                    }
 
-            count++;
-            // 重复的最大次数是 271， 到达最大值时，强制创建 ValueCountPair, 写入 buffer 并退出本次循环
-            if (count == 271)
-            {
-                bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
-                count = 0;
+                    count++;
+                    // 重复的最大次数是 271， 到达最大值时，强制创建 ValueCountPair, 写入 buffer 并退出本次循环
+                    if (count == 271)
+                    {
+                        bufferSize = WriteRleValueToBuffer(_compressBuffer, bufferSize, value, count);
+                        count = 0;
+                    }
+                }
             }
         }
 
@@ -230,12 +236,14 @@ public class TerrainSerializer23 : IDisposable
         var bufferIndex = 0;
         // 从 buffer 中获取 Shaft （温度和湿度）信息并填入 TerrainChunk 对象中
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var shaftValueByte = _compressBuffer[bufferIndex++];
-            var shaftValue = Terrain.ReplaceTemperature(Terrain.ReplaceHumidity(0, shaftValueByte & 0xF),
-                shaftValueByte >> 4);
-            chunk.SetShaftValueFast(i, j, shaftValue);
+            for (var j = 0; j < 16; j++)
+            {
+                var shaftValueByte = _compressBuffer[bufferIndex++];
+                var shaftValue = Terrain.ReplaceTemperature(Terrain.ReplaceHumidity(0, shaftValueByte & 0xF),
+                    shaftValueByte >> 4);
+                chunk.SetShaftValueFast(i, j, shaftValue);
+            }
         }
 
         // Chunk 数据块的坐标系
@@ -576,7 +584,7 @@ public class TerrainSerializer23 : IDisposable
                             // Region 文件 Chunk 数据块默认的最小偏移
                             var localRegionDataOffset = _regionDataOffset;
                             for (var i = 0; i < entries.Length; i++)
-                                // 索引 i 等于当前 chunkIndex，更新当前的 Chunk 数据块映射条目的偏移和大小
+                            // 索引 i 等于当前 chunkIndex，更新当前的 Chunk 数据块映射条目的偏移和大小
                             {
                                 if (i == chunkIndex)
                                 {
@@ -603,7 +611,7 @@ public class TerrainSerializer23 : IDisposable
 
                             var buffer2 = new byte[entries.Max(e => e.Size)];
                             for (var j = 0; j < entries.Length; j++)
-                                // 索引 i 等于当前 chunkIndex，根据 Chunk 数据块映射条目的偏移和大小更新数据块
+                            // 索引 i 等于当前 chunkIndex，根据 Chunk 数据块映射条目的偏移和大小更新数据块
                             {
                                 if (j == chunkIndex)
                                 {

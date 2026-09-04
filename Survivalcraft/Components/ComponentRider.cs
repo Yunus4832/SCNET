@@ -98,7 +98,7 @@ public class ComponentRider : Component, IUpdateable
         if (_outOfMountTime > 0.1f ||
             componentHealth is { Health: <= 0f } ||
             ComponentCreature.ComponentHealth.Health <= 0f)
-            //服务器和客户端都由自己控制下马
+        //服务器和客户端都由自己控制下马
         {
             if (CommonLib.WorkType == WorkType.Local ||
                 ComponentCreature.ComponentBody.Player is not { PlayerData.IsMainPlayer: false })
@@ -125,10 +125,10 @@ public class ComponentRider : Component, IUpdateable
         var num = 0f;
         ComponentMount? result = null;
         foreach (var item in from b in _componentBodies
-                 select b.Entity.FindComponent<ComponentMount>()
+                             select b.Entity.FindComponent<ComponentMount>()
                  into m
-                 where m != null && m.Entity != Entity
-                 select m)
+                             where m != null && m.Entity != Entity
+                             select m)
         {
             var num2 = ScoreMount(item, 2.5f);
             if (!(num2 > num))

@@ -67,10 +67,12 @@ public class TerrainRenderer : IDisposable
             var num = 0L;
             var allocatedChunks = _subsystemTerrain.Terrain.AllocatedChunks;
             foreach (var terrainChunk in allocatedChunks)
-            foreach (var buffer in terrainChunk.Buffers)
             {
-                num += buffer.VertexBuffer.GetGpuMemoryUsage();
-                num += buffer.IndexBuffer.GetGpuMemoryUsage();
+                foreach (var buffer in terrainChunk.Buffers)
+                {
+                    num += buffer.VertexBuffer.GetGpuMemoryUsage();
+                    num += buffer.IndexBuffer.GetGpuMemoryUsage();
+                }
             }
 
             return $"{num / 1024 / 1024:0.0}MB";

@@ -69,7 +69,7 @@ public class NetPlayScreen : Screen
         _filter0Button.Text = LanguageManager.Get("NetPlayScreen", 3);
         _filter0Button.Size = new Vector2(180, 60);
         _filter1Button = new BevelledButtonWidget
-            { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
+        { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
         _filter1Button.Text = LanguageManager.Get("NetPlayScreen", 4);
         _filter1Button.Size = new Vector2(180, 60);
         _filter0Button.ParentWidget?.AddChildren(_filter1Button);
@@ -81,7 +81,7 @@ public class NetPlayScreen : Screen
         _removeButton.Size = new Vector2(220, 60);
 
         _collectButton = new BevelledButtonWidget
-            { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
+        { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
         _collectButton.Text = LanguageManager.Get("NetPlayScreen", 9);
         _collectButton.Size = new Vector2(160, 60);
         _addButton.ParentWidget?.AddChildren(_collectButton);
@@ -125,25 +125,25 @@ public class NetPlayScreen : Screen
             switch (connect.State)
             {
                 case ConnectState.Available:
-                {
-                    labelWidget.Text = $"{connect} ({connect.UsedTime / 2:0} ms)";
-                    labelWidget.Color = Color.LightGreen;
-                    labelWidget2.Text = $"{version}{players}{gameMode}{timeOfDay}{season}{validTime}";
+                    {
+                        labelWidget.Text = $"{connect} ({connect.UsedTime / 2:0} ms)";
+                        labelWidget.Color = Color.LightGreen;
+                        labelWidget2.Text = $"{version}{players}{gameMode}{timeOfDay}{season}{validTime}";
 
-                    break;
-                }
+                        break;
+                    }
                 case ConnectState.Checking:
-                {
-                    labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 17)}";
-                    labelWidget.Color = Color.White;
-                    break;
-                }
+                    {
+                        labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 17)}";
+                        labelWidget.Color = Color.White;
+                        break;
+                    }
                 case ConnectState.Unavailable:
-                {
-                    labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 15)}";
-                    labelWidget.Color = Color.LightRed;
-                    break;
-                }
+                    {
+                        labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 15)}";
+                        labelWidget.Color = Color.LightRed;
+                        break;
+                    }
             }
 
             stackPanelWidget.Children.Add(labelWidget);
@@ -549,7 +549,7 @@ public class NetPlayScreen : Screen
         {
             LookingForServer = true;
             var thread = new Thread(() => DiscoverLocalServers(delegate { LookingForServer = false; }))
-                { IsBackground = true };
+            { IsBackground = true };
             thread.Start();
             RunningTasks.Add(thread);
 

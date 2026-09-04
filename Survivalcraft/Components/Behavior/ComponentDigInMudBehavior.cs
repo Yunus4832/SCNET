@@ -90,7 +90,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
             ? BlocksManager.Blocks.First(b => b.GetType().Name == digInBlockName).BlockIndex
             : 0;
         _maxDigInDepth = valuesDictionary.GetValue<float>("MaxDigInDepth");
-        _componentCreature.ComponentBody.CollidedWithBody += delegate(ComponentBody b) { _collidedWithBody = b; };
+        _componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody b) { _collidedWithBody = b; };
         stateMachine.AddState(
             "Inactive",
             delegate { _importanceLevel = 0f; },
@@ -187,7 +187,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
                 vector2,
                 false,
                 false,
-                delegate(int value, float _)
+                delegate (int value, float _)
                 {
                     var num = Terrain.ExtractContents(value);
                     return !(BlocksManager.Blocks[num] is WaterBlock);

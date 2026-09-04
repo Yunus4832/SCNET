@@ -65,50 +65,50 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
         var num5 = (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0);
         var v = ((componentMiner.ComponentCreature.ComponentBody.IsSneaking ? 0.01f : 0.03f) +
                  0.2f * MathUtils.Saturate((num4 - 2.5f) / 6f)) * new Vector3
-        {
-            X = SimplexNoise.OctavedNoise(num5, 2f, 3, 2f, 0.5f),
-            Y = SimplexNoise.OctavedNoise(num5 + 100f, 2f, 3, 2f, 0.5f),
-            Z = SimplexNoise.OctavedNoise(num5 + 200f, 2f, 3, 2f, 0.5f)
-        };
+                 {
+                     X = SimplexNoise.OctavedNoise(num5, 2f, 3, 2f, 0.5f),
+                     Y = SimplexNoise.OctavedNoise(num5 + 100f, 2f, 3, 2f, 0.5f),
+                     Z = SimplexNoise.OctavedNoise(num5 + 200f, 2f, 3, 2f, 0.5f)
+                 };
         aim.Direction = Vector3.Normalize(aim.Direction + v);
         switch (state)
         {
             case AimState.InProgress:
-            {
-                if (num4 >= 10f)
                 {
-                    componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
-                    return true;
-                }
-
-                if (num4 > 0.5f && !MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
-                {
-                    num2 = Terrain.MakeBlockValue(num, 0,
-                        MusketBlock.SetHammerState(Terrain.ExtractData(num2), true));
-                    if (componentMiner.ComponentPlayer != null)
+                    if (num4 >= 10f)
                     {
-                        _subsystemAudio.PlaySound("Audio/HammerCock", 1f, _random.Float(-0.1f, 0.1f),
-                            componentMiner.ComponentPlayer.ComponentCreatureModel.EyePosition, 64f, false);
+                        componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
+                        return true;
                     }
-                }
 
-                var componentFirstPersonModel =
-                    componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
-                if (componentFirstPersonModel != null)
-                {
-                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position,
-                        aim.Direction);
-                    componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.21f, 0.15f, 0.08f);
-                    componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
-                }
+                    if (num4 > 0.5f && !MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
+                    {
+                        num2 = Terrain.MakeBlockValue(num, 0,
+                            MusketBlock.SetHammerState(Terrain.ExtractData(num2), true));
+                        if (componentMiner.ComponentPlayer != null)
+                        {
+                            _subsystemAudio.PlaySound("Audio/HammerCock", 1f, _random.Float(-0.1f, 0.1f),
+                                componentMiner.ComponentPlayer.ComponentCreatureModel.EyePosition, 64f, false);
+                        }
+                    }
 
-                componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.4f;
-                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder =
-                    new Vector3(-0.08f, -0.08f, 0.07f);
-                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder =
-                    new Vector3(-1.7f, 0f, 0f);
-                break;
-            }
+                    var componentFirstPersonModel =
+                        componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
+                    if (componentFirstPersonModel != null)
+                    {
+                        componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position,
+                            aim.Direction);
+                        componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.21f, 0.15f, 0.08f);
+                        componentFirstPersonModel.ItemRotationOrder = new Vector3(-0.7f, 0f, 0f);
+                    }
+
+                    componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.4f;
+                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder =
+                        new Vector3(-0.08f, -0.08f, 0.07f);
+                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder =
+                        new Vector3(-1.7f, 0f, 0f);
+                    break;
+                }
             case AimState.Cancelled:
                 if (MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
                 {
@@ -124,127 +124,127 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                 _aimStartTimes.Remove(componentMiner);
                 break;
             case AimState.Completed:
-            {
-                var flag = false;
-                var value2 = 0;
-                var num6 = 0;
-                var s = 0f;
-                var vector = Vector3.Zero;
-                var loadState = MusketBlock.GetLoadState(data);
-                var bulletType = MusketBlock.GetBulletType(data);
-                if (MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
                 {
-                    switch (loadState)
+                    var flag = false;
+                    var value2 = 0;
+                    var num6 = 0;
+                    var s = 0f;
+                    var vector = Vector3.Zero;
+                    var loadState = MusketBlock.GetLoadState(data);
+                    var bulletType = MusketBlock.GetBulletType(data);
+                    if (MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
                     {
-                        case MusketBlock.LoadState.Empty:
-                            componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                LanguageManager.Get(_typeName, 0), Color.White, true, false);
-                            break;
-                        case MusketBlock.LoadState.Gunpowder:
-                        case MusketBlock.LoadState.Wad:
-                            flag = true;
-                            componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                                LanguageManager.Get(_typeName, 1), Color.White, true, false);
-                            break;
-                        case MusketBlock.LoadState.Loaded:
-                            flag = true;
-                            if (bulletType == BulletBlock.BulletType.Buckshot)
-                            {
-                                value2 = Terrain.MakeBlockValue(214, 0,
-                                    BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall));
-                                num6 = 8;
-                                vector = new Vector3(0.04f, 0.04f, 0.25f);
-                                s = 80f;
-                            }
-                            else if (bulletType == BulletBlock.BulletType.BuckshotBall)
-                            {
-                                value2 = Terrain.MakeBlockValue(214, 0,
-                                    BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall));
-                                num6 = 1;
-                                vector = new Vector3(0.06f, 0.06f, 0f);
-                                s = 60f;
-                            }
-                            else if (bulletType.HasValue)
-                            {
-                                value2 = Terrain.MakeBlockValue(214, 0,
-                                    BulletBlock.SetBulletType(0, bulletType.Value));
-                                num6 = 1;
-                                s = 120f;
-                            }
-
-                            break;
-                    }
-                }
-
-                if (flag)
-                {
-                    if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor > 0.4f)
-                    {
-                        _subsystemAudio.PlaySound("Audio/MusketMisfire", 1f, _random.Float(-0.1f, 0.1f),
-                            componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 8f, true);
-                    }
-                    else
-                    {
-                        var vector2 = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition +
-                                      componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f -
-                                      componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
-                        var vector3 = Vector3.Normalize(vector2 + aim.Direction * 10f - vector2);
-                        var vector4 = Vector3.Normalize(Vector3.Cross(vector3, Vector3.UnitY));
-                        var v2 = Vector3.Normalize(Vector3.Cross(vector3, vector4));
-                        for (var i = 0; i < num6; i++)
+                        switch (loadState)
                         {
-                            var v3 = _random.Float(0f - vector.X, vector.X) * vector4 +
-                                     _random.Float(0f - vector.Y, vector.Y) * v2 +
-                                     _random.Float(0f - vector.Z, vector.Z) * vector3;
-                            var projectile = _subsystemProjectiles.FireProjectile(value2, vector2,
-                                s * (vector3 + v3), Vector3.Zero, componentMiner.ComponentCreature);
-                            if (projectile != null)
+                            case MusketBlock.LoadState.Empty:
+                                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                                    LanguageManager.Get(_typeName, 0), Color.White, true, false);
+                                break;
+                            case MusketBlock.LoadState.Gunpowder:
+                            case MusketBlock.LoadState.Wad:
+                                flag = true;
+                                componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                                    LanguageManager.Get(_typeName, 1), Color.White, true, false);
+                                break;
+                            case MusketBlock.LoadState.Loaded:
+                                flag = true;
+                                if (bulletType == BulletBlock.BulletType.Buckshot)
+                                {
+                                    value2 = Terrain.MakeBlockValue(214, 0,
+                                        BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall));
+                                    num6 = 8;
+                                    vector = new Vector3(0.04f, 0.04f, 0.25f);
+                                    s = 80f;
+                                }
+                                else if (bulletType == BulletBlock.BulletType.BuckshotBall)
+                                {
+                                    value2 = Terrain.MakeBlockValue(214, 0,
+                                        BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall));
+                                    num6 = 1;
+                                    vector = new Vector3(0.06f, 0.06f, 0f);
+                                    s = 60f;
+                                }
+                                else if (bulletType.HasValue)
+                                {
+                                    value2 = Terrain.MakeBlockValue(214, 0,
+                                        BulletBlock.SetBulletType(0, bulletType.Value));
+                                    num6 = 1;
+                                    s = 120f;
+                                }
+
+                                break;
+                        }
+                    }
+
+                    if (flag)
+                    {
+                        if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor > 0.4f)
+                        {
+                            _subsystemAudio.PlaySound("Audio/MusketMisfire", 1f, _random.Float(-0.1f, 0.1f),
+                                componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 8f, true);
+                        }
+                        else
+                        {
+                            var vector2 = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition +
+                                          componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f -
+                                          componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
+                            var vector3 = Vector3.Normalize(vector2 + aim.Direction * 10f - vector2);
+                            var vector4 = Vector3.Normalize(Vector3.Cross(vector3, Vector3.UnitY));
+                            var v2 = Vector3.Normalize(Vector3.Cross(vector3, vector4));
+                            for (var i = 0; i < num6; i++)
                             {
-                                projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+                                var v3 = _random.Float(0f - vector.X, vector.X) * vector4 +
+                                         _random.Float(0f - vector.Y, vector.Y) * v2 +
+                                         _random.Float(0f - vector.Z, vector.Z) * vector3;
+                                var projectile = _subsystemProjectiles.FireProjectile(value2, vector2,
+                                    s * (vector3 + v3), Vector3.Zero, componentMiner.ComponentCreature);
+                                if (projectile != null)
+                                {
+                                    projectile.ProjectileStoppedAction = ProjectileStoppedAction.Disappear;
+                                }
                             }
+
+                            _subsystemAudio.PlaySound("Audio/MusketFire", 1f, _random.Float(-0.1f, 0.1f),
+                                componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 64f, true);
+                            _subsystemParticles.AddParticleSystem(
+                                new GunSmokeParticleSystem(_subsystemTerrain, vector2 + 0.3f * vector3,
+                                    vector3));
+                            _subsystemNoise.MakeNoise(vector2, 1f, 40f);
+                            componentMiner.ComponentCreature.ComponentBody.ApplyImpulse(-4f * vector3);
                         }
 
-                        _subsystemAudio.PlaySound("Audio/MusketFire", 1f, _random.Float(-0.1f, 0.1f),
-                            componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 64f, true);
-                        _subsystemParticles.AddParticleSystem(
-                            new GunSmokeParticleSystem(_subsystemTerrain, vector2 + 0.3f * vector3,
-                                vector3));
-                        _subsystemNoise.MakeNoise(vector2, 1f, 40f);
-                        componentMiner.ComponentCreature.ComponentBody.ApplyImpulse(-4f * vector3);
+                        num2 = Terrain.MakeBlockValue(Terrain.ExtractContents(num2), 0,
+                            MusketBlock.SetLoadState(Terrain.ExtractData(num2), MusketBlock.LoadState.Empty));
+                        num3 = 1;
                     }
 
-                    num2 = Terrain.MakeBlockValue(Terrain.ExtractContents(num2), 0,
-                        MusketBlock.SetLoadState(Terrain.ExtractData(num2), MusketBlock.LoadState.Empty));
-                    num3 = 1;
-                }
+                    if (MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
+                    {
+                        num2 = Terrain.MakeBlockValue(Terrain.ExtractContents(num2), 0,
+                            MusketBlock.SetHammerState(Terrain.ExtractData(num2), false));
+                        _subsystemAudio.PlaySound("Audio/HammerRelease", 1f, _random.Float(-0.1f, 0.1f),
+                            componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 64f, false);
+                    }
 
-                if (MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
-                {
-                    num2 = Terrain.MakeBlockValue(Terrain.ExtractContents(num2), 0,
-                        MusketBlock.SetHammerState(Terrain.ExtractData(num2), false));
-                    _subsystemAudio.PlaySound("Audio/HammerRelease", 1f, _random.Float(-0.1f, 0.1f),
-                        componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition, 64f, false);
-                }
+                    _aimStartTimes.Remove(componentMiner);
+                    if (CommonLib.WorkType == WorkType.Client)
+                    {
+                        return true;
+                    }
 
-                _aimStartTimes.Remove(componentMiner);
-                if (CommonLib.WorkType == WorkType.Client)
-                {
+                    if (num2 != slotValue)
+                    {
+                        inventory.RemoveSlotItems(activeSlotIndex, 1);
+                        inventory.AddSlotItems(activeSlotIndex, num2, 1);
+                    }
+
+                    if (num3 > 0)
+                    {
+                        componentMiner.DamageActiveTool(num3);
+                    }
+
                     return true;
                 }
-
-                if (num2 != slotValue)
-                {
-                    inventory.RemoveSlotItems(activeSlotIndex, 1);
-                    inventory.AddSlotItems(activeSlotIndex, num2, 1);
-                }
-
-                if (num3 > 0)
-                {
-                    componentMiner.DamageActiveTool(num3);
-                }
-
-                return true;
-            }
         }
 
         if (CommonLib.WorkType != WorkType.Client)
@@ -318,12 +318,12 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                     bulletType = null;
                     break;
                 case MusketBlock.LoadState.Wad:
-                {
-                    loadState = MusketBlock.LoadState.Loaded;
-                    var data2 = Terrain.ExtractData(value);
-                    bulletType = BulletBlock.GetBulletType(data2);
-                    break;
-                }
+                    {
+                        loadState = MusketBlock.LoadState.Loaded;
+                        var data2 = Terrain.ExtractData(value);
+                        bulletType = BulletBlock.GetBulletType(data2);
+                        break;
+                    }
             }
 
             processedValue = 0;

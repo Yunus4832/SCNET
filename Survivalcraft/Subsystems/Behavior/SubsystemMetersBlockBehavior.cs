@@ -117,11 +117,11 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
         return value;
     }
 
-//        x, y, z: 温度计所在的坐标。
-//meterTemperature: 温度计本身的温度。
-//meterInsulation: 温度计的绝缘系数。
-//temperature: 计算出的温度（通过 out 返回）。
-//temperatureFlux: 温度波动值（通过 out 返回）。
+    //        x, y, z: 温度计所在的坐标。
+    //meterTemperature: 温度计本身的温度。
+    //meterInsulation: 温度计的绝缘系数。
+    //temperature: 计算出的温度（通过 out 返回）。
+    //temperatureFlux: 温度波动值（通过 out 返回）。
     public void CalculateTemperature(int x, int y, int z, float meterTemperature, float meterInsulation,
         out float temperature, out float temperatureFlux)
     {
@@ -131,7 +131,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
             _visited[i] = 0;
         }
         //            _toVisit 是一个动态数组，用于存储需要访问的坐标。
-//_visited 是一个布尔数组，用于标记哪些坐标已经访问过，避免重复计算。
+        //_visited 是一个布尔数组，用于标记哪些坐标已经访问过，避免重复计算。
 
         var num = 0f;
         var num2 = 0f; //num 和 num2: 累积热阻块的温度和权重。
@@ -144,11 +144,11 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
         _toVisit.Add(133152);
 
-//            133152 是一个编码形式的起始坐标(0, 0, 0)，表示相对于温度计的偏移量。编码规则如下：
-//x 偏移量占最低 6 位。
-//y 偏移量占中间 6 位。
-//z 偏移量占最高 6 位。
-//例如：x = 0, y = 0, z = 0，编码为 0x000000。
+        //            133152 是一个编码形式的起始坐标(0, 0, 0)，表示相对于温度计的偏移量。编码规则如下：
+        //x 偏移量占最低 6 位。
+        //y 偏移量占中间 6 位。
+        //z 偏移量占最高 6 位。
+        //例如：x = 0, y = 0, z = 0，编码为 0x000000。
         for (var j = 0; j < _toVisit.Count; j++)
         {
             var num7 = _toVisit.Array[j];
@@ -158,9 +158,9 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
             }
 
             _visited[num7 / 32] |= 1 << num7;
-//                遍历 _toVisit 数组，取出当前偏移量 num7。
-//检查当前偏移量是否已经访问过。如果访问过，则跳过。
-//标记当前偏移量为已访问。
+            //                遍历 _toVisit 数组，取出当前偏移量 num7。
+            //检查当前偏移量是否已经访问过。如果访问过，则跳过。
+            //标记当前偏移量为已访问。
 
             var num8 = (num7 & 0x3F) - 32;
             var num9 = ((num7 >> 6) & 0x3F) - 32;
@@ -174,7 +174,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var terrain = SubsystemTerrain.Terrain;
             var chunkAtCell = terrain.GetChunkAtCell(num11, num13, false);
             if (chunkAtCell == null || num12 < 0 || num12 >= 256)
-                // 获取当前坐标所在的地形块。如果地形块不存在（如超出世界范围）或 y 坐标超出有效范围[0, 256)，则跳过。
+            // 获取当前坐标所在的地形块。如果地形块不存在（如超出世界范围）或 y 坐标超出有效范围[0, 256)，则跳过。
             {
                 continue;
             }
@@ -185,9 +185,9 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var cellValueFast = chunkAtCell.GetCellValueFast(x2, y2, z2);
             var num14 = Terrain.ExtractContents(cellValueFast);
             var block = BlocksManager.Blocks[num14];
-//                计算当前坐标在地形块中的局部坐标(x2, y2, z2)。
-//获取该坐标处的块值 cellValueFast。
-//提取块的内容 ID num14，并获取对应的块对象 block。
+            //                计算当前坐标在地形块中的局部坐标(x2, y2, z2)。
+            //获取该坐标处的块值 cellValueFast。
+            //提取块的内容 ID num14，并获取对应的块对象 block。
 
             var heat = GetHeat(cellValueFast);
             if (heat > 0f)
@@ -198,9 +198,9 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 num5 += num17 * 36f * heat;
                 num6 += num17;
             }
-//                如果当前块是热源块（heat > 0），计算其对温度的贡献。
-//根据与温度计的曼哈顿距离 num15，计算权重 num17。
-//累积热源块的温度贡献到 num5 和权重到 num6。
+            //                如果当前块是热源块（heat > 0），计算其对温度的贡献。
+            //根据与温度计的曼哈顿距离 num15，计算权重 num17。
+            //累积热源块的温度贡献到 num5 和权重到 num6。
 
             else if (block.IsHeatBlocker(cellValueFast))
             {
@@ -217,8 +217,8 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 num += num20 * num23;
                 num2 += num20;
             }
-//                如果当前块是热阻块，计算其对温度的贡献。
-//考虑季节温度(num21)、高度调整温度(num22) 和块类型（如水块、冰块）的特殊处理。
+            //                如果当前块是热阻块，计算其对温度的贡献。
+            //考虑季节温度(num21)、高度调整温度(num22) 和块类型（如水块、冰块）的特殊处理。
 
             else if (y >= chunkAtCell.GetTopHeightFast(x2, z2))
             {
@@ -236,8 +236,8 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 num3 += num26 * (chunkAtCell.GetTemperatureFast(x2, z2) + num27 + num28 + num29 + num30);
                 num4 += num26;
             }
-//                如果当前坐标位于地形顶部以上，计算外部环境的温度贡献。
-//考虑季节温度、降水强度、光照强度等因素。
+            //                如果当前坐标位于地形顶部以上，计算外部环境的温度贡献。
+            //考虑季节温度、降水强度、光照强度等因素。
 
             else if (_toVisit.Count < 4090)
             {
@@ -277,40 +277,42 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var num31 = 0f;
         //局部热源处理
         for (var k = -7; k <= 7; k++)
-        for (var l = -7; l <= 7; l++)
         {
-            var chunkAtCell2 = SubsystemTerrain.Terrain.GetChunkAtCell(x + k, z + l, false);
-            if (chunkAtCell2 == null || chunkAtCell2.MainThreadState < TerrainChunkState.InvalidVertices1)
+            for (var l = -7; l <= 7; l++)
             {
-                continue;
-            }
-
-            for (var m = -7; m <= 7; m++)
-            {
-                var num32 = k * k + m * m + l * l;
-                if (num32 is > 49 or <= 0)
+                var chunkAtCell2 = SubsystemTerrain.Terrain.GetChunkAtCell(x + k, z + l, false);
+                if (chunkAtCell2 == null || chunkAtCell2.MainThreadState < TerrainChunkState.InvalidVertices1)
                 {
                     continue;
                 }
 
-                var x3 = (x + k) & 0xF;
-                var num33 = y + m;
-                var z3 = (z + l) & 0xF;
-                if (num33 is < 0 or >= 256)
+                for (var m = -7; m <= 7; m++)
                 {
-                    continue;
-                }
+                    var num32 = k * k + m * m + l * l;
+                    if (num32 is > 49 or <= 0)
+                    {
+                        continue;
+                    }
 
-                var heat2 = GetHeat(chunkAtCell2.GetCellValueFast(x3, num33, z3));
-                if (heat2 > 0f && !SubsystemTerrain.Raycast(new Vector3(x, y, z) + new Vector3(0.5f, 0.75f, 0.5f),
-                        new Vector3(x + k, y + m, z + l) + new Vector3(0.5f, 0.75f, 0.5f), false, true,
-                        delegate(int raycastValue, float _)
-                        {
-                            var block2 = BlocksManager.Blocks[Terrain.ExtractContents(raycastValue)];
-                            return block2 is { Collidable: true, Transparent: false };
-                        }).HasValue)
-                {
-                    num31 += heat2 * 3f / (num32 + 2);
+                    var x3 = (x + k) & 0xF;
+                    var num33 = y + m;
+                    var z3 = (z + l) & 0xF;
+                    if (num33 is < 0 or >= 256)
+                    {
+                        continue;
+                    }
+
+                    var heat2 = GetHeat(chunkAtCell2.GetCellValueFast(x3, num33, z3));
+                    if (heat2 > 0f && !SubsystemTerrain.Raycast(new Vector3(x, y, z) + new Vector3(0.5f, 0.75f, 0.5f),
+                            new Vector3(x + k, y + m, z + l) + new Vector3(0.5f, 0.75f, 0.5f), false, true,
+                            delegate (int raycastValue, float _)
+                            {
+                                var block2 = BlocksManager.Blocks[Terrain.ExtractContents(raycastValue)];
+                                return block2 is { Collidable: true, Transparent: false };
+                            }).HasValue)
+                    {
+                        num31 += heat2 * 3f / (num32 + 2);
+                    }
                 }
             }
         }

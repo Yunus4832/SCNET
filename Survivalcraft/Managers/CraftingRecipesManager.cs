@@ -73,8 +73,8 @@ public static class CraftingRecipesManager
 
             var dictionary = new Dictionary<char, string>();
             foreach (var item2 in from a in item.Attributes()
-                     where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
-                     select a)
+                                  where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
+                                  select a)
             {
                 DecodeIngredient(item2.Value, useLegacyHooks, out var craftingId, out var data);
                 if (BlocksManager.FindBlocksByCraftingId(craftingId).Length == 0)
@@ -125,7 +125,7 @@ public static class CraftingRecipesManager
         }
 
         _initialized?.Invoke();
-        _recipes.Sort(delegate(CraftingRecipe r1, CraftingRecipe r2)
+        _recipes.Sort(delegate (CraftingRecipe r1, CraftingRecipe r2)
         {
             var y = r1.Ingredients.Count(s => !string.IsNullOrEmpty(s));
             var x = r2.Ingredients.Count(s => !string.IsNullOrEmpty(s));
@@ -257,28 +257,32 @@ public static class CraftingRecipesManager
 
         var array = new string[9];
         for (var i = 0; i < 2; i++)
-        for (var j = -3; j <= 3; j++)
-        for (var k = -3; k <= 3; k++)
         {
-            var flip = i != 0;
-            if (!TransformRecipe(array, requiredIngredients, k, j, flip))
+            for (var j = -3; j <= 3; j++)
             {
-                continue;
-            }
-
-            var flag = true;
-            for (var l = 0; l < 9; l++)
-            {
-                if (!CompareIngredients(array[l], actualIngredients[l]))
+                for (var k = -3; k <= 3; k++)
                 {
-                    flag = false;
-                    break;
-                }
-            }
+                    var flip = i != 0;
+                    if (!TransformRecipe(array, requiredIngredients, k, j, flip))
+                    {
+                        continue;
+                    }
 
-            if (flag)
-            {
-                return true;
+                    var flag = true;
+                    for (var l = 0; l < 9; l++)
+                    {
+                        if (!CompareIngredients(array[l], actualIngredients[l]))
+                        {
+                            flag = false;
+                            break;
+                        }
+                    }
+
+                    if (flag)
+                    {
+                        return true;
+                    }
+                }
             }
         }
 
@@ -294,18 +298,20 @@ public static class CraftingRecipesManager
         }
 
         for (var j = 0; j < 3; j++)
-        for (var k = 0; k < 3; k++)
         {
-            var num = (flip ? 3 - k - 1 : k) + shiftX;
-            var num2 = j + shiftY;
-            var text = ingredients[k + j * 3];
-            if (num >= 0 && num2 >= 0 && num < 3 && num2 < 3)
+            for (var k = 0; k < 3; k++)
             {
-                transformedIngredients[num + num2 * 3] = text;
-            }
-            else if (!string.IsNullOrEmpty(text))
-            {
-                return false;
+                var num = (flip ? 3 - k - 1 : k) + shiftX;
+                var num2 = j + shiftY;
+                var text = ingredients[k + j * 3];
+                if (num >= 0 && num2 >= 0 && num < 3 && num2 < 3)
+                {
+                    transformedIngredients[num + num2 * 3] = text;
+                }
+                else if (!string.IsNullOrEmpty(text))
+                {
+                    return false;
+                }
             }
         }
 

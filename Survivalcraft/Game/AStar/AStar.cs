@@ -230,13 +230,13 @@ public class AStar<T> where T : unmanaged
         while (_nodesCacheIndex >= _nodesCache.Count)
         {
             _nodesCache.Add(new Node
-                {
-                    Position = position,
-                    PreviousPosition = previousPosition,
-                    F = g + h,
-                    G = g,
-                    H = h
-                }
+            {
+                Position = position,
+                PreviousPosition = previousPosition,
+                F = g + h,
+                G = g,
+                H = h
+            }
             );
         }
 

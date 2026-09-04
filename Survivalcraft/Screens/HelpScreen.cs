@@ -22,7 +22,7 @@ public class HelpScreen : Screen
         _topicsList = Children.Find<ListPanelWidget>("TopicsList")!;
         _recipaediaButton = Children.Find<ButtonWidget>("RecipaediaButton")!;
         _bestiaryButton = Children.Find<ButtonWidget>("BestiaryButton")!;
-        _topicsList.ItemWidgetFactory = delegate(object item)
+        _topicsList.ItemWidgetFactory = delegate (object item)
         {
             var helpTopic3 = (HelpTopic)item;
             var node2 = ContentManager.Get<XElement>("Widgets/HelpTopicItem");
@@ -30,7 +30,7 @@ public class HelpScreen : Screen
             obj.Children.Find<LabelWidget>("HelpTopicItem.Title")!.Text = helpTopic3.Title;
             return obj;
         };
-        _topicsList.ItemClicked += delegate(object item)
+        _topicsList.ItemClicked += delegate (object item)
         {
             if (item is HelpTopic helpTopic2)
             {

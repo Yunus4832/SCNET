@@ -186,16 +186,16 @@ public class BitmapFont : IDisposable
 
                     break;
                 default:
-                {
-                    var glyph = GetGlyph(c);
-                    vector.X += (glyph.Width + spacing.X) * scale.X;
-                    if (vector.X > result.X)
                     {
-                        result.X = vector.X;
-                    }
+                        var glyph = GetGlyph(c);
+                        vector.X += (glyph.Width + spacing.X) * scale.X;
+                        if (vector.X > result.X)
+                        {
+                            result.X = vector.X;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case '\r':
                     break;
             }
@@ -402,14 +402,16 @@ public class BitmapFont : IDisposable
         var num3 = int.MinValue;
         var num4 = int.MinValue;
         for (var i = rectangle.Left; i < rectangle.Left + rectangle.Width; i++)
-        for (var j = rectangle.Top; j < rectangle.Top + rectangle.Height; j++)
         {
-            if (image.GetPixel(i, j).A != 0)
+            for (var j = rectangle.Top; j < rectangle.Top + rectangle.Height; j++)
             {
-                num = MathUtils.Min(num, i);
-                num2 = MathUtils.Min(num2, j);
-                num3 = MathUtils.Max(num3, i);
-                num4 = MathUtils.Max(num4, j);
+                if (image.GetPixel(i, j).A != 0)
+                {
+                    num = MathUtils.Min(num, i);
+                    num2 = MathUtils.Min(num2, j);
+                    num3 = MathUtils.Max(num3, i);
+                    num4 = MathUtils.Max(num4, j);
+                }
             }
         }
 

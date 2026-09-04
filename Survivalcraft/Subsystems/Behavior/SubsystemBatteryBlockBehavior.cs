@@ -15,7 +15,7 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
         var data = Terrain.ExtractData(value);
         var voltageLevel = BatteryBlock.GetVoltageLevel(data);
         DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditBatteryDialog(voltageLevel,
-            delegate(int newVoltageLevel)
+            delegate (int newVoltageLevel)
             {
                 var data2 = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
                 var num = Terrain.ReplaceData(value, data2);
@@ -40,7 +40,7 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
         var data = Terrain.ExtractData(value);
         var voltageLevel = BatteryBlock.GetVoltageLevel(data);
         DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditBatteryDialog(voltageLevel,
-            delegate(int newVoltageLevel)
+            delegate (int newVoltageLevel)
             {
                 var num = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
                 if (num == data)

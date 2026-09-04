@@ -276,19 +276,21 @@ public static class ScreensManager
         var batch2 = _pr3.TexturedBatch(ContentManager.Get<Texture2D>("Textures/Blocks"), true, 1, null, null, null,
             SamplerState.PointClamp);
         for (var j = -8; j <= 8; j++)
-        for (var k = -8; k <= 8; k++)
         {
-            var num2 = 1f;
-            var num3 = 1f;
-            var vector3 = new Vector3((j - 0.5f) * num2, 0f, (k - 0.5f) * num2) +
-                          new Vector3(MathUtils.Round(hmdMatrix.Translation.X), 0f,
-                              MathUtils.Round(hmdMatrix.Translation.Z));
-            var num4 = Vector3.Distance(vector3, hmdMatrix.Translation);
-            var num5 = MathUtils.Lerp(1f, 0f, MathUtils.Saturate(num4 / 7f));
-            if (num5 > 0f)
+            for (var k = -8; k <= 8; k++)
             {
-                QueueQuad(batch2, vector3, new Vector3(num3, 0f, 0f), new Vector3(0f, 0f, num3), Color.Gray * num5,
-                    new Vector2(0.1875f, 0.25f), new Vector2(0.25f, 0.3125f));
+                var num2 = 1f;
+                var num3 = 1f;
+                var vector3 = new Vector3((j - 0.5f) * num2, 0f, (k - 0.5f) * num2) +
+                              new Vector3(MathUtils.Round(hmdMatrix.Translation.X), 0f,
+                                  MathUtils.Round(hmdMatrix.Translation.Z));
+                var num4 = Vector3.Distance(vector3, hmdMatrix.Translation);
+                var num5 = MathUtils.Lerp(1f, 0f, MathUtils.Saturate(num4 / 7f));
+                if (num5 > 0f)
+                {
+                    QueueQuad(batch2, vector3, new Vector3(num3, 0f, 0f), new Vector3(0f, 0f, num3), Color.Gray * num5,
+                        new Vector2(0.1875f, 0.25f), new Vector2(0.25f, 0.3125f));
+                }
             }
         }
     }

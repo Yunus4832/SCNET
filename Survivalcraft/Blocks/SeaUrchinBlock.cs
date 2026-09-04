@@ -42,26 +42,28 @@ public class SeaUrchinBlock : BottomSuckerBlock
             throw new InvalidOperationException("Required BottomMesh.ParentBone is null")
         );
         for (var i = 0; i < 6; i++)
-        for (var j = 0; j < 4; j++)
         {
-            var zero = Vector2.Zero;
-            if (i < 4)
+            for (var j = 0; j < 4; j++)
             {
-                zero.Y = i * (float)Math.PI / 2f;
-            }
-            else
-            {
-                zero.X = i == 4 ? -(float)Math.PI / 2f : (float)Math.PI / 2f;
-            }
+                var zero = Vector2.Zero;
+                if (i < 4)
+                {
+                    zero.Y = i * (float)Math.PI / 2f;
+                }
+                else
+                {
+                    zero.X = i == 4 ? -(float)Math.PI / 2f : (float)Math.PI / 2f;
+                }
 
-            var m = Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateRotationZ(0.3f + 2f * j) *
-                    Matrix.CreateTranslation(Offsets[j].X, Offsets[j].Y, -0.49f) * Matrix.CreateRotationX(zero.X) *
-                    Matrix.CreateRotationY(zero.Y) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-            var num = 4 * i + j;
-            BlockMeshes[num] = new BlockMesh();
-            BlockMeshes[num].AppendModelMeshPart(urchinMesh.MeshParts[0], boneAbsoluteTransform * m,
-                false, false, false, false, Color.White);
-            CollisionBoxes[num] = [BlockMeshes[num].CalculateBoundingBox()];
+                var m = Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateRotationZ(0.3f + 2f * j) *
+                        Matrix.CreateTranslation(Offsets[j].X, Offsets[j].Y, -0.49f) * Matrix.CreateRotationX(zero.X) *
+                        Matrix.CreateRotationY(zero.Y) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                var num = 4 * i + j;
+                BlockMeshes[num] = new BlockMesh();
+                BlockMeshes[num].AppendModelMeshPart(urchinMesh.MeshParts[0], boneAbsoluteTransform * m,
+                    false, false, false, false, Color.White);
+                CollisionBoxes[num] = [BlockMeshes[num].CalculateBoundingBox()];
+            }
         }
 
         StandaloneBlockMesh = new BlockMesh();

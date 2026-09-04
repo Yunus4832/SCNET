@@ -112,27 +112,31 @@ public class TerrainSerializer14 : IDisposable
                 var num3 = 0;
                 _stream.ReadExactly(_buffer, 0, 131072);
                 for (var i = 0; i < 16; i++)
-                for (var j = 0; j < 16; j++)
                 {
-                    var num4 = TerrainChunk.CalculateCellIndex(i, 0, j);
-                    for (var k = 0; k < 256; k++)
+                    for (var j = 0; j < 16; j++)
                     {
-                        int num5 = _buffer[num3++];
-                        num5 |= _buffer[num3++] << 8;
-                        chunk.SetCellValueFast(num4++, num5);
+                        var num4 = TerrainChunk.CalculateCellIndex(i, 0, j);
+                        for (var k = 0; k < 256; k++)
+                        {
+                            int num5 = _buffer[num3++];
+                            num5 |= _buffer[num3++] << 8;
+                            chunk.SetCellValueFast(num4++, num5);
+                        }
                     }
                 }
 
                 num3 = 0;
                 _stream.ReadExactly(_buffer, 0, 1024);
                 for (var l = 0; l < 16; l++)
-                for (var m = 0; m < 16; m++)
                 {
-                    int num6 = _buffer[num3++];
-                    num6 |= _buffer[num3++] << 8;
-                    num6 |= _buffer[num3++] << 16;
-                    num6 |= _buffer[num3++] << 24;
-                    terrain.SetShaftValue(l + chunk.Origin.X, m + chunk.Origin.Y, num6);
+                    for (var m = 0; m < 16; m++)
+                    {
+                        int num6 = _buffer[num3++];
+                        num6 |= _buffer[num3++] << 8;
+                        num6 |= _buffer[num3++] << 16;
+                        num6 |= _buffer[num3++] << 24;
+                        terrain.SetShaftValue(l + chunk.Origin.X, m + chunk.Origin.Y, num6);
+                    }
                 }
 
                 result = true;
@@ -170,27 +174,31 @@ public class TerrainSerializer14 : IDisposable
             WriteChunkHeader(_stream, num, num2);
             var num3 = 0;
             for (var i = 0; i < 16; i++)
-            for (var j = 0; j < 16; j++)
             {
-                var num4 = TerrainChunk.CalculateCellIndex(i, 0, j);
-                for (var k = 0; k < 256; k++)
+                for (var j = 0; j < 16; j++)
                 {
-                    var cellValueFast = chunk.GetCellValueFast(num4++);
-                    _buffer[num3++] = (byte)cellValueFast;
-                    _buffer[num3++] = (byte)(cellValueFast >> 8);
+                    var num4 = TerrainChunk.CalculateCellIndex(i, 0, j);
+                    for (var k = 0; k < 256; k++)
+                    {
+                        var cellValueFast = chunk.GetCellValueFast(num4++);
+                        _buffer[num3++] = (byte)cellValueFast;
+                        _buffer[num3++] = (byte)(cellValueFast >> 8);
+                    }
                 }
             }
 
             _stream.Write(_buffer, 0, 131072);
             num3 = 0;
             for (var l = 0; l < 16; l++)
-            for (var m = 0; m < 16; m++)
             {
-                var shaftValue = terrain.GetShaftValue(l + chunk.Origin.X, m + chunk.Origin.Y);
-                _buffer[num3++] = (byte)shaftValue;
-                _buffer[num3++] = (byte)(shaftValue >> 8);
-                _buffer[num3++] = (byte)(shaftValue >> 16);
-                _buffer[num3++] = (byte)(shaftValue >> 24);
+                for (var m = 0; m < 16; m++)
+                {
+                    var shaftValue = terrain.GetShaftValue(l + chunk.Origin.X, m + chunk.Origin.Y);
+                    _buffer[num3++] = (byte)shaftValue;
+                    _buffer[num3++] = (byte)(shaftValue >> 8);
+                    _buffer[num3++] = (byte)(shaftValue >> 16);
+                    _buffer[num3++] = (byte)(shaftValue >> 24);
+                }
             }
 
             _stream.Write(_buffer, 0, 1024);

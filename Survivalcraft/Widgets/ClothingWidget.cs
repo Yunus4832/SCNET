@@ -64,12 +64,14 @@ public class ClothingWidget : CanvasWidget
 
         var num = 10;
         for (var j = 0; j < _inventoryGrid.RowsCount; j++)
-        for (var k = 0; k < _inventoryGrid.ColumnsCount; k++)
         {
-            var inventorySlotWidget2 = new InventorySlotWidget();
-            inventorySlotWidget2.AssignInventorySlot(_componentPlayer.ComponentMiner.Inventory, num++);
-            _inventoryGrid.Children.Add(inventorySlotWidget2);
-            _inventoryGrid.SetWidgetCell(inventorySlotWidget2, new Point2(k, j));
+            for (var k = 0; k < _inventoryGrid.ColumnsCount; k++)
+            {
+                var inventorySlotWidget2 = new InventorySlotWidget();
+                inventorySlotWidget2.AssignInventorySlot(_componentPlayer.ComponentMiner.Inventory, num++);
+                _inventoryGrid.Children.Add(inventorySlotWidget2);
+                _inventoryGrid.SetWidgetCell(inventorySlotWidget2, new Point2(k, j));
+            }
         }
 
         _innerClothingModelWidget.PlayerClass = _componentPlayer.PlayerData.PlayerClass;

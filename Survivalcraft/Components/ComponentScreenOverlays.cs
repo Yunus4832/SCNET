@@ -206,23 +206,25 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
             _random.Seed(0);
             _iceVertices = new Vector2[(point.X + 1) * (point.Y + 1)];
             for (var i = 0; i <= point.X; i++)
-            for (var j = 0; j <= point.Y; j++)
             {
-                float num3 = i;
-                float num4 = j;
-                if (i != 0 && i != point.X)
+                for (var j = 0; j <= point.Y; j++)
                 {
-                    num3 += _random.Float(-0.4f, 0.4f);
-                }
+                    float num3 = i;
+                    float num4 = j;
+                    if (i != 0 && i != point.X)
+                    {
+                        num3 += _random.Float(-0.4f, 0.4f);
+                    }
 
-                if (j != 0 && j != point.Y)
-                {
-                    num4 += _random.Float(-0.4f, 0.4f);
-                }
+                    if (j != 0 && j != point.Y)
+                    {
+                        num4 += _random.Float(-0.4f, 0.4f);
+                    }
 
-                var x = num3 / point.X;
-                var y = num4 / point.Y;
-                _iceVertices[i + j * (point.X + 1)] = new Vector2(x, y);
+                    var x = num3 / point.X;
+                    var y = num4 / point.Y;
+                    _iceVertices[i + j * (point.X + 1)] = new Vector2(x, y);
+                }
             }
         }
 
@@ -242,25 +244,27 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
         var v3 = new Vector2(viewportSize.X / viewportSize.Y, 1f);
         var vector3 = new Vector2(point.X - 1, point.Y - 1);
         for (var k = 0; k < point.X; k++)
-        for (var l = 0; l < point.Y; l++)
         {
-            var num5 = (new Vector2(2 * k / vector3.X - 1f, 2 * l / vector3.Y - 1f) * v).Length() / num2;
-            if (1f - num5 + _random.Float(0f, 0.05f) < num)
+            for (var l = 0; l < point.Y; l++)
             {
-                var v4 = _iceVertices[k + l * (point.X + 1)];
-                var v5 = _iceVertices[k + 1 + l * (point.X + 1)];
-                var v6 = _iceVertices[k + 1 + (l + 1) * (point.X + 1)];
-                var v7 = _iceVertices[k + (l + 1) * (point.X + 1)];
-                var vector4 = v2 + v4.X * vector + v4.Y * vector2;
-                var p = v2 + v5.X * vector + v5.Y * vector2;
-                var vector5 = v2 + v6.X * vector + v6.Y * vector2;
-                var p2 = v2 + v7.X * vector + v7.Y * vector2;
-                var vector6 = v4 * v3;
-                var texCoord = v5 * v3;
-                var vector7 = v6 * v3;
-                var texCoord2 = v7 * v3;
-                texturedBatch3D.QueueTriangle(vector4, p, vector5, vector6, texCoord, vector7, color);
-                texturedBatch3D.QueueTriangle(vector5, p2, vector4, vector7, texCoord2, vector6, color);
+                var num5 = (new Vector2(2 * k / vector3.X - 1f, 2 * l / vector3.Y - 1f) * v).Length() / num2;
+                if (1f - num5 + _random.Float(0f, 0.05f) < num)
+                {
+                    var v4 = _iceVertices[k + l * (point.X + 1)];
+                    var v5 = _iceVertices[k + 1 + l * (point.X + 1)];
+                    var v6 = _iceVertices[k + 1 + (l + 1) * (point.X + 1)];
+                    var v7 = _iceVertices[k + (l + 1) * (point.X + 1)];
+                    var vector4 = v2 + v4.X * vector + v4.Y * vector2;
+                    var p = v2 + v5.X * vector + v5.Y * vector2;
+                    var vector5 = v2 + v6.X * vector + v6.Y * vector2;
+                    var p2 = v2 + v7.X * vector + v7.Y * vector2;
+                    var vector6 = v4 * v3;
+                    var texCoord = v5 * v3;
+                    var vector7 = v6 * v3;
+                    var texCoord2 = v7 * v3;
+                    texturedBatch3D.QueueTriangle(vector4, p, vector5, vector6, texCoord, vector7, color);
+                    texturedBatch3D.QueueTriangle(vector5, p2, vector4, vector7, texCoord2, vector6, color);
+                }
             }
         }
 

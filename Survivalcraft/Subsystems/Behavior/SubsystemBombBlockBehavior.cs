@@ -59,7 +59,7 @@ public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         _subsystemProjectiles.ProjectileAdded += ScanProjectile;
-        _subsystemProjectiles.ProjectileRemoved += delegate(Projectile projectile) { _projectiles.Remove(projectile); };
+        _subsystemProjectiles.ProjectileRemoved += delegate (Projectile projectile) { _projectiles.Remove(projectile); };
     }
 
     private void ScanProjectile(Projectile projectile)

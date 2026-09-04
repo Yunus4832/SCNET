@@ -47,10 +47,14 @@ public class SubsystemMagmaBlockBehavior() : SubsystemFluidBlockBehavior(
     {
         base.OnBlockAdded(value, oldValue, x, y, z);
         for (var i = -1; i <= 1; i++)
-        for (var j = -1; j <= 1; j++)
-        for (var k = -1; k <= 1; k++)
         {
-            ApplyMagmaNeighborhoodEffect(x + i, y + j, z + k);
+            for (var j = -1; j <= 1; j++)
+            {
+                for (var k = -1; k <= 1; k++)
+                {
+                    ApplyMagmaNeighborhoodEffect(x + i, y + j, z + k);
+                }
+            }
         }
     }
 

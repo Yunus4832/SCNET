@@ -451,45 +451,47 @@ public class SubsystemPathfinding : Subsystem
             var num5 = MathUtils.Min(Terrain.ToCell(box.Max.Y), 255);
             var num6 = Terrain.ToCell(box.Max.Z);
             for (var i = num; i <= num4; i++)
-            for (var j = num3; j <= num6; j++)
             {
-                var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
-                if (chunkAtCell == null)
+                for (var j = num3; j <= num6; j++)
                 {
-                    continue;
-                }
-
-                var num7 = TerrainChunk.CalculateCellIndex(i & 0xF, num2, j & 0xF);
-                var num8 = num2;
-                while (num8 <= num5)
-                {
-                    var cellValueFast = chunkAtCell.GetCellValueFast(num7);
-                    var num9 = Terrain.ExtractContents(cellValueFast);
-                    if (num9 != 0)
+                    var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
+                    if (chunkAtCell == null)
                     {
-                        var block = BlocksManager.Blocks[num9];
-                        if (block.ShouldAvoid(cellValueFast))
-                        {
-                            return true;
-                        }
+                        continue;
+                    }
 
-                        if (block.Collidable &&
-                            (!Request.IgnoreDoors || (block is not DoorBlock && block is not TrapdoorBlock)))
+                    var num7 = TerrainChunk.CalculateCellIndex(i & 0xF, num2, j & 0xF);
+                    var num8 = num2;
+                    while (num8 <= num5)
+                    {
+                        var cellValueFast = chunkAtCell.GetCellValueFast(num7);
+                        var num9 = Terrain.ExtractContents(cellValueFast);
+                        if (num9 != 0)
                         {
-                            var v = new Vector3(i, num8, j);
-                            var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
-                            foreach (var boundingBox in customCollisionBoxes)
+                            var block = BlocksManager.Blocks[num9];
+                            if (block.ShouldAvoid(cellValueFast))
                             {
-                                if (box.Intersection(new BoundingBox(v + boundingBox.Min, v + boundingBox.Max)))
+                                return true;
+                            }
+
+                            if (block.Collidable &&
+                                (!Request.IgnoreDoors || (block is not DoorBlock && block is not TrapdoorBlock)))
+                            {
+                                var v = new Vector3(i, num8, j);
+                                var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
+                                foreach (var boundingBox in customCollisionBoxes)
                                 {
-                                    return true;
+                                    if (box.Intersection(new BoundingBox(v + boundingBox.Min, v + boundingBox.Max)))
+                                    {
+                                        return true;
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    num8++;
-                    num7++;
+                        num8++;
+                        num7++;
+                    }
                 }
             }
 

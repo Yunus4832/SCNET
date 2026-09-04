@@ -483,23 +483,27 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         point2.Y = (int)MathUtils.Ceiling(movingBlockSet.Box.Bottom + movingBlockSet.Position.Y);
         point2.Z = (int)MathUtils.Ceiling(movingBlockSet.Box.Far + movingBlockSet.Position.Z);
         for (var i = point.X; i < point2.X; i++)
-        for (var j = point.Z; j < point2.Z; j++)
-        for (var k = point.Y; k < point2.Y; k++)
         {
-            if (Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(i, k, j)) != 0)
+            for (var j = point.Z; j < point2.Z; j++)
             {
-                CollidedWithTerrain?.Invoke(movingBlockSet, new Point3(i, k, j));
-            }
-            else
-            {
-                if (!SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(i, j, out var territoriy))
+                for (var k = point.Y; k < point2.Y; k++)
                 {
-                    continue;
-                }
+                    if (Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(i, k, j)) != 0)
+                    {
+                        CollidedWithTerrain?.Invoke(movingBlockSet, new Point3(i, k, j));
+                    }
+                    else
+                    {
+                        if (!SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(i, j, out var territoriy))
+                        {
+                            continue;
+                        }
 
-                if (territoriy!.IsVisible)
-                {
-                    movingBlockSet.Stop = true;
+                        if (territoriy!.IsVisible)
+                        {
+                            movingBlockSet.Stop = true;
+                        }
+                    }
                 }
             }
         }
@@ -539,26 +543,30 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                 Project.FindSubsystem<SubsystemPalette>(true)!
             );
             for (var i = 0; i < x; i++)
-            for (var j = 0; j < x; j++)
             {
-                _blockGeometryGenerator.Terrain.AllocateChunk(i, j);
+                for (var j = 0; j < x; j++)
+                {
+                    _blockGeometryGenerator.Terrain.AllocateChunk(i, j);
+                }
             }
         }
 
         var terrain = _subsystemTerrain.Terrain;
         for (var k = 0; k < point2.X + 2; k++)
-        for (var l = 0; l < point2.Z + 2; l++)
         {
-            var x2 = k + p.X + point.X - 1;
-            var z = l + p.Z + point.Z - 1;
-            var shaftValue = terrain.GetShaftValue(x2, z);
-            _blockGeometryGenerator.Terrain.SetTemperature(k, l, Terrain.ExtractTemperature(shaftValue));
-            _blockGeometryGenerator.Terrain.SetHumidity(k, l, Terrain.ExtractHumidity(shaftValue));
-            for (var m = 0; m < point2.Y + 2; m++)
+            for (var l = 0; l < point2.Z + 2; l++)
             {
-                var y = m + p.Y + point.Y - 1;
-                var light = Terrain.ExtractLight(terrain.GetCellValue(x2, y, z));
-                _blockGeometryGenerator.Terrain.SetCellValueFast(k, m, l, Terrain.MakeBlockValue(0, light, 0));
+                var x2 = k + p.X + point.X - 1;
+                var z = l + p.Z + point.Z - 1;
+                var shaftValue = terrain.GetShaftValue(x2, z);
+                _blockGeometryGenerator.Terrain.SetTemperature(k, l, Terrain.ExtractTemperature(shaftValue));
+                _blockGeometryGenerator.Terrain.SetHumidity(k, l, Terrain.ExtractHumidity(shaftValue));
+                for (var m = 0; m < point2.Y + 2; m++)
+                {
+                    var y = m + p.Y + point.Y - 1;
+                    var light = Terrain.ExtractLight(terrain.GetCellValue(x2, y, z));
+                    _blockGeometryGenerator.Terrain.SetCellValueFast(k, m, l, Terrain.MakeBlockValue(0, light, 0));
+                }
             }
         }
 
@@ -578,17 +586,21 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         movingBlockSet.Vertices.Clear();
         movingBlockSet.Indices.Clear();
         for (var n = 1; n < point2.X + 1; n++)
-        for (var num = 1; num < point2.Y + 1; num++)
-        for (var num2 = 1; num2 < point2.Z + 1; num2++)
         {
-            if (num + numk > 0 && num + numk < 256)
+            for (var num = 1; num < point2.Y + 1; num++)
             {
-                var cellValueFast = _blockGeometryGenerator.Terrain.GetCellValueFast(n, num, num2);
-                var num3 = Terrain.ExtractContents(cellValueFast);
-                if (num3 != 0)
+                for (var num2 = 1; num2 < point2.Z + 1; num2++)
                 {
-                    BlocksManager.Blocks[num3].GenerateTerrainVertices(_blockGeometryGenerator,
-                        movingBlockSet.Geometry, cellValueFast, n, num, num2);
+                    if (num + numk > 0 && num + numk < 256)
+                    {
+                        var cellValueFast = _blockGeometryGenerator.Terrain.GetCellValueFast(n, num, num2);
+                        var num3 = Terrain.ExtractContents(cellValueFast);
+                        if (num3 != 0)
+                        {
+                            BlocksManager.Blocks[num3].GenerateTerrainVertices(_blockGeometryGenerator,
+                                movingBlockSet.Geometry, cellValueFast, n, num, num2);
+                        }
+                    }
                 }
             }
         }

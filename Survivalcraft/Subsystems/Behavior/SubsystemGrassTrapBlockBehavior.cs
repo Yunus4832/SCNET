@@ -17,14 +17,16 @@ public class SubsystemGrassTrapBlockBehavior : SubsystemBlockBehavior, IUpdateab
             if (trapValue.Value.Damage > 1f)
             {
                 for (var i = -1; i <= 1; i++)
-                for (var j = -1; j <= 1; j++)
                 {
-                    if (MathUtils.Abs(i) + MathUtils.Abs(j) <= 1 &&
-                        SubsystemTerrain.Terrain.GetCellContents(trapValue.Key.X + i, trapValue.Key.Y,
-                            trapValue.Key.Z + j) == 87)
+                    for (var j = -1; j <= 1; j++)
                     {
-                        SubsystemTerrain.DestroyCell(0, trapValue.Key.X + i, trapValue.Key.Y, trapValue.Key.Z + j, 0,
-                            false, false);
+                        if (MathUtils.Abs(i) + MathUtils.Abs(j) <= 1 &&
+                            SubsystemTerrain.Terrain.GetCellContents(trapValue.Key.X + i, trapValue.Key.Y,
+                                trapValue.Key.Z + j) == 87)
+                        {
+                            SubsystemTerrain.DestroyCell(0, trapValue.Key.X + i, trapValue.Key.Y, trapValue.Key.Z + j, 0,
+                                false, false);
+                        }
                     }
                 }
 

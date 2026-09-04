@@ -226,7 +226,7 @@ public class ComponentLocomotion : Component, IUpdateable
         {
             //非玩家
             if (_componentPlayer == null)
-                //被骑乘
+            //被骑乘
             {
                 if (_componentCreature.ComponentBody.ChildBodies.Count > 0)
                 {

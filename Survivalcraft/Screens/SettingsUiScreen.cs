@@ -134,7 +134,7 @@ public class SettingsUiScreen : Screen
                 LanguageManager.LanguageTypes,
                 70f,
                 item => LanguageManager.GetLanguageDisplayName((string)item),
-                delegate(object item) { ChangeLanguage((string)item); }
+                delegate (object item) { ChangeLanguage((string)item); }
             )
         );
     }

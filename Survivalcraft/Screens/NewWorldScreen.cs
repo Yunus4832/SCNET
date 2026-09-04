@@ -69,7 +69,7 @@ public class NewWorldScreen : Screen
         {
             DialogsManager.ShowDialog(null,
                 new SelectGameModeDialog(string.Empty, false,
-                    delegate(GameMode gameMode) { _worldSettings.GameMode = gameMode; }));
+                    delegate (GameMode gameMode) { _worldSettings.GameMode = gameMode; }));
         }
 
         if (_startingPositionButton.IsClicked)

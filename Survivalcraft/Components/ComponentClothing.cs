@@ -391,11 +391,11 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         SanitizeInvalidClothes();
         _clothedTexturesValid = false;
         var num = (from clothe in _clothes
-            from item in clothe.Value
-            select GetClothingDataSafe(item)
+                   from item in clothe.Value
+                   select GetClothingDataSafe(item)
             into clothingData
-            where clothingData != null
-            select clothingData.DensityModifier).Sum();
+                   where clothingData != null
+                   select clothingData.DensityModifier).Sum();
 
         var num2 = num - _densityModifierApplied;
         _densityModifierApplied += num2;
@@ -727,19 +727,21 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 Vector2.One, Color.White);
             var innerSlotsOrder = _innerSlotsOrder;
             foreach (var slot in innerSlotsOrder)
-            foreach (var cloth in GetClothes(slot))
             {
-                var data = Terrain.ExtractData(cloth);
-                var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(cloth)].GetClothingData(data);
-                var fabricColor =
-                    SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data));
-                texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData.Texture, false, num++,
-                    DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
-                if (!clothingData.IsOuter)
+                foreach (var cloth in GetClothes(slot))
                 {
-                    texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
-                        new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height), 0f, Vector2.Zero,
-                        Vector2.One, fabricColor);
+                    var data = Terrain.ExtractData(cloth);
+                    var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(cloth)].GetClothingData(data);
+                    var fabricColor =
+                        SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data));
+                    texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData.Texture, false, num++,
+                        DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
+                    if (!clothingData.IsOuter)
+                    {
+                        texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
+                            new Vector2(_innerClothedTexture.Width, _innerClothedTexture.Height), 0f, Vector2.Zero,
+                            Vector2.One, fabricColor);
+                    }
                 }
             }
 
@@ -749,19 +751,21 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             num = 0;
             innerSlotsOrder = _outerSlotsOrder;
             foreach (var slot2 in innerSlotsOrder)
-            foreach (var clothe2 in GetClothes(slot2))
             {
-                var data2 = Terrain.ExtractData(clothe2);
-                var clothingData2 = BlocksManager.Blocks[Terrain.ExtractContents(clothe2)].GetClothingData(data2);
-                var fabricColor2 =
-                    SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data2));
-                texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData2.Texture, false, num++,
-                    DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
-                if (clothingData2.IsOuter)
+                foreach (var clothe2 in GetClothes(slot2))
                 {
-                    texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
-                        new Vector2(_outerClothedTexture.Width, _outerClothedTexture.Height), 0f, Vector2.Zero,
-                        Vector2.One, fabricColor2);
+                    var data2 = Terrain.ExtractData(clothe2);
+                    var clothingData2 = BlocksManager.Blocks[Terrain.ExtractContents(clothe2)].GetClothingData(data2);
+                    var fabricColor2 =
+                        SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data2));
+                    texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData2.Texture, false, num++,
+                        DepthStencilState.None, null, BlendState.NonPremultiplied, SamplerState.PointClamp);
+                    if (clothingData2.IsOuter)
+                    {
+                        texturedBatch2D.QueueQuad(new Vector2(0f, 0f),
+                            new Vector2(_outerClothedTexture.Width, _outerClothedTexture.Height), 0f, Vector2.Zero,
+                            Vector2.One, fabricColor2);
+                    }
                 }
             }
 

@@ -139,40 +139,40 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                 return true;
             case PaintStripperBucketBlock.Index:
             case PaintBucketBlock.Index:
-            {
-                var terrainRaycastResult3 = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Digging);
-                if (terrainRaycastResult3.HasValue)
                 {
-                    var cellFace2 = terrainRaycastResult3.Value.CellFace;
-                    var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
-                    var num3 = Terrain.ExtractContents(cellValue2);
-                    var block2 = BlocksManager.Blocks[num3];
-                    if (block2 is not IPaintableBlock block)
+                    var terrainRaycastResult3 = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Digging);
+                    if (terrainRaycastResult3.HasValue)
                     {
+                        var cellFace2 = terrainRaycastResult3.Value.CellFace;
+                        var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
+                        var num3 = Terrain.ExtractContents(cellValue2);
+                        var block2 = BlocksManager.Blocks[num3];
+                        if (block2 is not IPaintableBlock block)
+                        {
+                            return true;
+                        }
+
+                        var normal = CellFace.FaceToVector3(terrainRaycastResult3.Value.CellFace.Face);
+                        var position = terrainRaycastResult3.Value.HitPoint();
+                        var num4 = num == 128
+                            ? null
+                            : new int?(PaintBucketBlock.GetColor(Terrain.ExtractData(activeBlockValue)));
+                        var color = num4.HasValue
+                            ? SubsystemPalette.GetColor(SubsystemTerrain, num4)
+                            : new Color(128, 128, 128, 128);
+                        var value6 = block.Paint(SubsystemTerrain, cellValue2, num4);
+                        SubsystemTerrain.ChangeCell(cellFace2.X, cellFace2.Y, cellFace2.Z, value6);
+                        componentMiner.DamageActiveTool(1);
+                        _subsystemAudio.PlayRandomSound("Audio/Paint", 0.4f, _random.Float(-0.1f, 0.1f),
+                            componentMiner.ComponentCreature.ComponentBody.Position, 2f, true);
+                        _subsystemParticles.AddParticleSystem(new PaintParticleSystem(SubsystemTerrain, position,
+                            normal, color));
+
                         return true;
                     }
 
-                    var normal = CellFace.FaceToVector3(terrainRaycastResult3.Value.CellFace.Face);
-                    var position = terrainRaycastResult3.Value.HitPoint();
-                    var num4 = num == 128
-                        ? null
-                        : new int?(PaintBucketBlock.GetColor(Terrain.ExtractData(activeBlockValue)));
-                    var color = num4.HasValue
-                        ? SubsystemPalette.GetColor(SubsystemTerrain, num4)
-                        : new Color(128, 128, 128, 128);
-                    var value6 = block.Paint(SubsystemTerrain, cellValue2, num4);
-                    SubsystemTerrain.ChangeCell(cellFace2.X, cellFace2.Y, cellFace2.Z, value6);
-                    componentMiner.DamageActiveTool(1);
-                    _subsystemAudio.PlayRandomSound("Audio/Paint", 0.4f, _random.Float(-0.1f, 0.1f),
-                        componentMiner.ComponentCreature.ComponentBody.Position, 2f, true);
-                    _subsystemParticles.AddParticleSystem(new PaintParticleSystem(SubsystemTerrain, position,
-                        normal, color));
-
-                    return true;
+                    break;
                 }
-
-                break;
-            }
         }
 
         return false;

@@ -135,7 +135,7 @@ public class CreativeInventoryWidget : CanvasWidget
                             HorizontalAlignment = WidgetAlignment.Center,
                             VerticalAlignment = WidgetAlignment.Center
                         },
-                        delegate(object c)
+                        delegate (object c)
                         {
                             _componentCreativeInventory.CategoryIndex = _categories.IndexOf((Category)c);
                         }

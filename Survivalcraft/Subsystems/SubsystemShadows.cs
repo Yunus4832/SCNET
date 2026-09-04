@@ -53,48 +53,50 @@ public class SubsystemShadows : Subsystem, IDrawable
         var num7 = Terrain.ToCell(shadowPosition.X + num4);
         var num8 = Terrain.ToCell(shadowPosition.Z + num4);
         for (var i = num5; i <= num7; i++)
-        for (var j = num6; j <= num8; j++)
         {
-            var num9 = MathUtils.Min(Terrain.ToCell(shadowPosition.Y), 255);
-            var num10 = MathUtils.Max(num9 - 2, 0);
-            for (var num11 = num9; num11 >= num10; num11--)
+            for (var j = num6; j <= num8; j++)
             {
-                var cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(i, num11, j);
-                var num12 = Terrain.ExtractContents(cellValueFast);
-                var block = BlocksManager.Blocks[num12];
-                if (block.ObjectShadowStrength > 0f)
+                var num9 = MathUtils.Min(Terrain.ToCell(shadowPosition.Y), 255);
+                var num10 = MathUtils.Max(num9 - 2, 0);
+                for (var num11 = num9; num11 >= num10; num11--)
                 {
-                    var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
-                    foreach (var boundingBox in customCollisionBoxes)
+                    var cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(i, num11, j);
+                    var num12 = Terrain.ExtractContents(cellValueFast);
+                    var block = BlocksManager.Blocks[num12];
+                    if (block.ObjectShadowStrength > 0f)
                     {
-                        var num13 = boundingBox.Max.Y + num11;
-                        if (!(shadowPosition.Y - num13 > -0.5f))
+                        var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
+                        foreach (var boundingBox in customCollisionBoxes)
                         {
-                            continue;
+                            var num13 = boundingBox.Max.Y + num11;
+                            if (!(shadowPosition.Y - num13 > -0.5f))
+                            {
+                                continue;
+                            }
+
+                            var num14 = camera.ViewPosition.Y - num13;
+                            if (!(num14 > 0f))
+                            {
+                                continue;
+                            }
+
+                            var num15 = MathUtils.Max(num14 * 0.01f, 0.005f);
+                            var num16 = MathUtils.Saturate(1f - (shadowPosition.Y - num13) / 2f);
+                            var p = new Vector3(boundingBox.Min.X + i, num13 + num15, boundingBox.Min.Z + j);
+                            var p2 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Min.Z + j);
+                            var p3 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Max.Z + j);
+                            var p4 = new Vector3(boundingBox.Min.X + i, num13 + num15, boundingBox.Max.Z + j);
+                            DrawShadowOverQuad(p, p2, p3, p4, shadowPosition, shadowDiameter,
+                                0.45f * block.ObjectShadowStrength * alpha * num3 * num16);
                         }
 
-                        var num14 = camera.ViewPosition.Y - num13;
-                        if (!(num14 > 0f))
-                        {
-                            continue;
-                        }
-
-                        var num15 = MathUtils.Max(num14 * 0.01f, 0.005f);
-                        var num16 = MathUtils.Saturate(1f - (shadowPosition.Y - num13) / 2f);
-                        var p = new Vector3(boundingBox.Min.X + i, num13 + num15, boundingBox.Min.Z + j);
-                        var p2 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Min.Z + j);
-                        var p3 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Max.Z + j);
-                        var p4 = new Vector3(boundingBox.Min.X + i, num13 + num15, boundingBox.Max.Z + j);
-                        DrawShadowOverQuad(p, p2, p3, p4, shadowPosition, shadowDiameter,
-                            0.45f * block.ObjectShadowStrength * alpha * num3 * num16);
+                        break;
                     }
 
-                    break;
-                }
-
-                if (num12 == 18)
-                {
-                    break;
+                    if (num12 == 18)
+                    {
+                        break;
+                    }
                 }
             }
         }

@@ -47,12 +47,14 @@ public class SubsystemItemsScanner : Subsystem, IUpdateable
         }
 
         foreach (var entity in Project.EntityKeys)
-        foreach (var component in entity.Components)
         {
-            var inventory2 = component as IInventory;
-            if (inventory2 != null)
+            foreach (var component in entity.Components)
             {
-                ScanInventory(inventory2, _items);
+                var inventory2 = component as IInventory;
+                if (inventory2 != null)
+                {
+                    ScanInventory(inventory2, _items);
+                }
             }
         }
 

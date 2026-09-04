@@ -73,7 +73,7 @@ public static class MotdManager
             new Dictionary<string, string>(),
             new Dictionary<string, string>(),
             new CancellableProgress(),
-            delegate(byte[] result)
+            delegate (byte[] result)
             {
                 try
                 {
@@ -87,7 +87,7 @@ public static class MotdManager
                     Log.Error("Failed processing MOTD string. Reason: " + ex.Message);
                 }
             },
-            delegate(Exception error) { Log.Error("Failed downloading MOTD. Reason: {0}", error.Message); }
+            delegate (Exception error) { Log.Error("Failed downloading MOTD. Reason: {0}", error.Message); }
         );
     }
 

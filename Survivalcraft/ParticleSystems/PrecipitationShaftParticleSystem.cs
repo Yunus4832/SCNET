@@ -317,45 +317,45 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
         switch (_precipitationType)
         {
             case PrecipitationType.Rain:
-            {
-                var num4 = 8f;
-                var num5 = 12f;
-                _averageSpeed = (num4 + num5) / 2f;
-                _size = new Vector2(0.02f, 0.15f);
-                Texture = ContentManager.Get<Texture2D>("Textures/RainParticle");
-                foreach (var obj in _particles)
                 {
-                    obj.IsActive = false;
-                    obj.TexCoord1 = new Vector2(0f, 1f);
-                    obj.TexCoord2 = new Vector2(1f, 1f);
-                    obj.TexCoord3 = new Vector2(0.5f, 0f);
-                    obj.Speed = _random.Float(num4, num5);
-                }
+                    var num4 = 8f;
+                    var num5 = 12f;
+                    _averageSpeed = (num4 + num5) / 2f;
+                    _size = new Vector2(0.02f, 0.15f);
+                    Texture = ContentManager.Get<Texture2D>("Textures/RainParticle");
+                    foreach (var obj in _particles)
+                    {
+                        obj.IsActive = false;
+                        obj.TexCoord1 = new Vector2(0f, 1f);
+                        obj.TexCoord2 = new Vector2(1f, 1f);
+                        obj.TexCoord3 = new Vector2(0.5f, 0f);
+                        obj.Speed = _random.Float(num4, num5);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case PrecipitationType.Snow:
-            {
-                var num = 0.25f;
-                var num2 = 0.5f;
-                var num3 = 3f;
-                _averageSpeed = (num2 + num3) / 2f;
-                _size = new Vector2(0.07f, 0.07f);
-                Texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
-                foreach (var particle in _particles)
                 {
-                    particle.IsActive = false;
-                    particle.TextureSlot = (byte)_random.Int(0, 15);
-                    var v = new Vector2(particle.TextureSlot % 4, particle.TextureSlot / 4) * num;
-                    particle.TexCoord1 = v + new Vector2(0f, 0f);
-                    particle.TexCoord2 = v + new Vector2(num, 0f);
-                    particle.TexCoord3 = v + new Vector2(num, num);
-                    particle.TexCoord4 = v + new Vector2(0f, num);
-                    particle.Speed = _random.Float(num2, num3);
-                }
+                    var num = 0.25f;
+                    var num2 = 0.5f;
+                    var num3 = 3f;
+                    _averageSpeed = (num2 + num3) / 2f;
+                    _size = new Vector2(0.07f, 0.07f);
+                    Texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
+                    foreach (var particle in _particles)
+                    {
+                        particle.IsActive = false;
+                        particle.TextureSlot = (byte)_random.Int(0, 15);
+                        var v = new Vector2(particle.TextureSlot % 4, particle.TextureSlot / 4) * num;
+                        particle.TexCoord1 = v + new Vector2(0f, 0f);
+                        particle.TexCoord2 = v + new Vector2(num, 0f);
+                        particle.TexCoord3 = v + new Vector2(num, num);
+                        particle.TexCoord4 = v + new Vector2(0f, num);
+                        particle.Speed = _random.Float(num2, num3);
+                    }
 
-                break;
-            }
+                    break;
+                }
             default:
                 throw new InvalidOperationException("Unknown precipitation type.");
         }

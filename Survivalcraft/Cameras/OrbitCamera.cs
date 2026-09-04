@@ -52,18 +52,20 @@ public class OrbitCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
         var vector4 = Vector3.Normalize(Vector3.Cross(vector3, Vector3.UnitY));
         var v3 = Vector3.Normalize(Vector3.Cross(vector3, vector4));
         for (var i = 0; i <= 0; i++)
-        for (var j = 0; j <= 0; j++)
         {
-            var v4 = 0.5f * (vector4 * i + v3 * j);
-            var vector5 = vector + v4;
-            var end = vector5 + vector3 + Vector3.Normalize(vector3) * 0.5f;
-            var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(vector5, end, false,
-                true, (value, _) => !BlocksManager.Blocks[Terrain.ExtractContents(value)].Transparent);
-            if (terrainRaycastResult.HasValue)
+            for (var j = 0; j <= 0; j++)
             {
-                num = num.HasValue
-                    ? MathUtils.Min(num.Value, terrainRaycastResult.Value.Distance)
-                    : terrainRaycastResult.Value.Distance;
+                var v4 = 0.5f * (vector4 * i + v3 * j);
+                var vector5 = vector + v4;
+                var end = vector5 + vector3 + Vector3.Normalize(vector3) * 0.5f;
+                var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(vector5, end, false,
+                    true, (value, _) => !BlocksManager.Blocks[Terrain.ExtractContents(value)].Transparent);
+                if (terrainRaycastResult.HasValue)
+                {
+                    num = num.HasValue
+                        ? MathUtils.Min(num.Value, terrainRaycastResult.Value.Distance)
+                        : terrainRaycastResult.Value.Distance;
+                }
             }
         }
 

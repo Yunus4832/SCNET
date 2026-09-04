@@ -39,11 +39,11 @@ public class Entity : IDisposable
         ValuesDictionary = valuesDictionary;
         var list = new List<KeyValuePair<int, Component>>();
         var items = from x in valuesDictionary.Values
-            select x as ValuesDictionary
+                    select x as ValuesDictionary
             into x
-            where x is { DatabaseObject: not null } &&
-                  x.DatabaseObject.Type == project.GameDatabase.MemberComponentTemplateType
-            select x;
+                    where x is { DatabaseObject: not null } &&
+                          x.DatabaseObject.Type == project.GameDatabase.MemberComponentTemplateType
+                    select x;
 
         foreach (var item in items)
         {

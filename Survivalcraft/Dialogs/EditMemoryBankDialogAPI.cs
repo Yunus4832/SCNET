@@ -31,21 +31,25 @@ public class EditMemoryBankDialogApi : Dialog
         _data.AddRange(_memory.Data);
         var canvasWidget = new CanvasWidget
         {
-            Size = new Vector2(600f, 500f), HorizontalAlignment = WidgetAlignment.Center,
+            Size = new Vector2(600f, 500f),
+            HorizontalAlignment = WidgetAlignment.Center,
             VerticalAlignment = WidgetAlignment.Center
         };
         var rectangleWidget = new RectangleWidget
-            { FillColor = new Color(0, 0, 0, 255), OutlineColor = new Color(128, 128, 128, 128), OutlineThickness = 2 };
+        { FillColor = new Color(0, 0, 0, 255), OutlineColor = new Color(128, 128, 128, 128), OutlineThickness = 2 };
         var stackPanel = new StackPanelWidget { Direction = LayoutDirection.Vertical };
         var labelWidget = new LabelWidget
         {
-            Text = LanguageManager.GetContentWidgets(GetType().Name, 0), HorizontalAlignment = WidgetAlignment.Center,
+            Text = LanguageManager.GetContentWidgets(GetType().Name, 0),
+            HorizontalAlignment = WidgetAlignment.Center,
             Margin = new Vector2(0, 10)
         };
         var stackPanelWidget = new StackPanelWidget
         {
-            Direction = LayoutDirection.Horizontal, HorizontalAlignment = WidgetAlignment.Near,
-            VerticalAlignment = WidgetAlignment.Near, Margin = new Vector2(10f, 10f)
+            Direction = LayoutDirection.Horizontal,
+            HorizontalAlignment = WidgetAlignment.Near,
+            VerticalAlignment = WidgetAlignment.Near,
+            Margin = new Vector2(10f, 10f)
         };
         Children.Add(canvasWidget);
         canvasWidget.Children.Add(rectangleWidget);
@@ -144,8 +148,10 @@ public class EditMemoryBankDialogApi : Dialog
     {
         var stack = new StackPanelWidget
         {
-            Direction = LayoutDirection.Vertical, VerticalAlignment = WidgetAlignment.Center,
-            HorizontalAlignment = WidgetAlignment.Far, Margin = new Vector2(10, 0)
+            Direction = LayoutDirection.Vertical,
+            VerticalAlignment = WidgetAlignment.Center,
+            HorizontalAlignment = WidgetAlignment.Far,
+            Margin = new Vector2(10, 0)
         };
         for (var i = 0; i < 17; i++)
         {
@@ -210,8 +216,10 @@ public class EditMemoryBankDialogApi : Dialog
     {
         var stack = new StackPanelWidget
         {
-            Direction = LayoutDirection.Vertical, VerticalAlignment = WidgetAlignment.Center,
-            HorizontalAlignment = WidgetAlignment.Far, Margin = new Vector2(10, 10)
+            Direction = LayoutDirection.Vertical,
+            VerticalAlignment = WidgetAlignment.Center,
+            HorizontalAlignment = WidgetAlignment.Far,
+            Margin = new Vector2(10, 10)
         };
         for (var i = 0; i < 6; i++)
         {
@@ -340,9 +348,11 @@ public class EditMemoryBankDialogApi : Dialog
                             tmp.AddRange(_data);
                             tmp.Count = 256;
                             for (var c = 0; c < 16; c++)
-                            for (var d = 0; d < 16; d++)
                             {
-                                Write(c + d * 16, tmp[c * 16 + d]);
+                                for (var d = 0; d < 16; d++)
+                                {
+                                    Write(c + d * 16, tmp[c * 16 + d]);
+                                }
                             }
 
                             _clickPos = 0;
@@ -356,11 +366,14 @@ public class EditMemoryBankDialogApi : Dialog
 
         var labelWidget = new LabelWidget
         {
-            FontScale = 0.8f, Text = LanguageManager.GetContentWidgets(GetType().Name, 3),
-            HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(0f, 10f), Color = Color.DarkGray
+            FontScale = 0.8f,
+            Text = LanguageManager.GetContentWidgets(GetType().Name, 3),
+            HorizontalAlignment = WidgetAlignment.Center,
+            Margin = new Vector2(0f, 10f),
+            Color = Color.DarkGray
         };
         stack.Children.Add(labelWidget);
-        stack.Children.Add(MakeTextBox(delegate(TextBoxWidget textBoxWidget)
+        stack.Children.Add(MakeTextBox(delegate (TextBoxWidget textBoxWidget)
         {
             LoadString(textBoxWidget.Text);
             _isClick = true;
@@ -389,12 +402,15 @@ public class EditMemoryBankDialogApi : Dialog
     {
         var canvasWidget = new CanvasWidget { HorizontalAlignment = WidgetAlignment.Center };
         var rectangleWidget = new RectangleWidget
-            { FillColor = Color.Black, OutlineColor = Color.White, Size = new Vector2(120, 30) };
+        { FillColor = Color.Black, OutlineColor = Color.White, Size = new Vector2(120, 30) };
         var stack = new StackPanelWidget { Direction = LayoutDirection.Vertical };
         var textBox = new TextBoxWidget
         {
-            VerticalAlignment = WidgetAlignment.Center, Color = new Color(255, 255, 255), Margin = new Vector2(4f, 0f),
-            Size = new Vector2(120, 30), MaximumLength = 256
+            VerticalAlignment = WidgetAlignment.Center,
+            Color = new Color(255, 255, 255),
+            Margin = new Vector2(4f, 0f),
+            Size = new Vector2(120, 30),
+            MaximumLength = 256
         };
         textBox.FontScale = 0.7f;
         textBox.Text = text;

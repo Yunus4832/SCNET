@@ -144,19 +144,19 @@ public class PickablePackage : IPackage
                 writer.Write(Id);
                 break;
             case PickType.SyncList:
-            {
-                var pickables = subsystemPickables.Pickables;
-                writer.Write(pickables.Count);
-                foreach (var pickable in pickables)
                 {
-                    writer.Write(pickable.Id);
-                    writer.Write(pickable.Count);
-                    writer.Write(pickable.Value);
-                    writer.Write(pickable.Position);
-                    writer.Write(pickable.Velocity);
-                    writer.Write(pickable.StuckMatrix);
+                    var pickables = subsystemPickables.Pickables;
+                    writer.Write(pickables.Count);
+                    foreach (var pickable in pickables)
+                    {
+                        writer.Write(pickable.Id);
+                        writer.Write(pickable.Count);
+                        writer.Write(pickable.Value);
+                        writer.Write(pickable.Position);
+                        writer.Write(pickable.Velocity);
+                        writer.Write(pickable.StuckMatrix);
+                    }
                 }
-            }
                 break;
         }
     }
@@ -175,18 +175,18 @@ public class PickablePackage : IPackage
                 StuckMatrix = reader.ReadMatrixNullable();
                 break;
             case PickType.Update:
-            {
-                var count = reader.ReadInt32();
-                for (var i = 0; i < count; i++)
                 {
-                    var pickable = new Pickable
+                    var count = reader.ReadInt32();
+                    for (var i = 0; i < count; i++)
                     {
-                        Id = reader.ReadUInt16(),
-                        Position = reader.ReadVector3()
-                    };
-                    Pickables.Add(pickable);
+                        var pickable = new Pickable
+                        {
+                            Id = reader.ReadUInt16(),
+                            Position = reader.ReadVector3()
+                        };
+                        Pickables.Add(pickable);
+                    }
                 }
-            }
                 break;
             case PickType.SetFlyToPosition:
                 Id = reader.ReadUInt16();
@@ -197,56 +197,56 @@ public class PickablePackage : IPackage
                 PlaySound = reader.ReadBoolean();
                 break;
             case PickType.CreateList:
-            {
-                var count = reader.ReadInt32();
-                for (var i = 0; i < count; i++)
                 {
-                    var pickable = new Pickable
+                    var count = reader.ReadInt32();
+                    for (var i = 0; i < count; i++)
                     {
-                        Id = reader.ReadUInt16(),
-                        Count = reader.ReadInt32(),
-                        Value = reader.ReadInt32(),
-                        Position = reader.ReadVector3(),
-                        Velocity = reader.ReadVector3(),
-                        StuckMatrix = reader.ReadMatrixNullable()
-                    };
-                    Pickables.Add(pickable);
+                        var pickable = new Pickable
+                        {
+                            Id = reader.ReadUInt16(),
+                            Count = reader.ReadInt32(),
+                            Value = reader.ReadInt32(),
+                            Position = reader.ReadVector3(),
+                            Velocity = reader.ReadVector3(),
+                            StuckMatrix = reader.ReadMatrixNullable()
+                        };
+                        Pickables.Add(pickable);
+                    }
                 }
-            }
                 break;
             case PickType.DeleteList:
-            {
-                var count = reader.ReadInt32();
-                for (var i = 0; i < count; i++)
                 {
-                    var pickable = new Pickable
+                    var count = reader.ReadInt32();
+                    for (var i = 0; i < count; i++)
                     {
-                        Id = reader.ReadUInt16()
-                    };
-                    Pickables.Add(pickable);
+                        var pickable = new Pickable
+                        {
+                            Id = reader.ReadUInt16()
+                        };
+                        Pickables.Add(pickable);
+                    }
                 }
-            }
                 break;
             case PickType.RequestSync:
                 Id = reader.ReadUInt16();
                 break;
             case PickType.SyncList:
-            {
-                var count = reader.ReadInt32();
-                for (var i = 0; i < count; i++)
                 {
-                    var pickable = new Pickable
+                    var count = reader.ReadInt32();
+                    for (var i = 0; i < count; i++)
                     {
-                        Id = reader.ReadUInt16(),
-                        Count = reader.ReadInt32(),
-                        Value = reader.ReadInt32(),
-                        Position = reader.ReadVector3(),
-                        Velocity = reader.ReadVector3(),
-                        StuckMatrix = reader.ReadMatrixNullable()
-                    };
-                    Pickables.Add(pickable);
+                        var pickable = new Pickable
+                        {
+                            Id = reader.ReadUInt16(),
+                            Count = reader.ReadInt32(),
+                            Value = reader.ReadInt32(),
+                            Position = reader.ReadVector3(),
+                            Velocity = reader.ReadVector3(),
+                            StuckMatrix = reader.ReadMatrixNullable()
+                        };
+                        Pickables.Add(pickable);
+                    }
                 }
-            }
                 break;
         }
     }

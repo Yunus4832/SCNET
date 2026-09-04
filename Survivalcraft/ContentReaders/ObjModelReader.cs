@@ -48,83 +48,83 @@ public class ObjModelReader : IContentReader
                     switch (spl[0])
                     {
                         case "mtllib":
-                        {
-                            var mtllibStruct = ContentManager.Get<MtllibStruct>(spl[1]);
-                            texturePaths = mtllibStruct.TexturePaths;
-                            break;
-                        }
+                            {
+                                var mtllibStruct = ContentManager.Get<MtllibStruct>(spl[1]);
+                                texturePaths = mtllibStruct.TexturePaths;
+                                break;
+                            }
                         case "o":
-                        {
-                            if (meshes.TryGetValue(spl[1], out var mesh))
                             {
-                                objMesh = mesh;
-                            }
-                            else
-                            {
-                                objMesh = new ObjMesh(spl[1]);
-                                meshes.Add(spl[1], objMesh);
-                            }
-
-                            break;
-                        }
-                        case "v":
-                        {
-                            objPositions.Add(new ObjPosition(spl[1], spl[2], spl[3]));
-                            break;
-                        }
-                        case "vt":
-                        {
-                            objTexCoodList.Add(new ObjTexCood(spl[1], spl[2]));
-                            break;
-                        }
-                        case "vn":
-                        {
-                            objNormals.Add(new ObjNormal(spl[1], spl[2], spl[3]));
-                            break;
-                        }
-                        case "usemtl":
-                        {
-                            texturePaths.TryGetValue(spl[1], out currentKey);
-                            break;
-                        }
-                        case "f":
-                        {
-                            if (string.IsNullOrEmpty(currentKey))
-                            {
-                                currentKey = "Textures/NoneTexture";
-                            }
-
-                            objMesh!.TexturePath = currentKey;
-                            var sideCount = spl.Length - 1;
-                            if (sideCount != 3)
-                            {
-                                throw new Exception("模型必须为三角面");
-                            }
-
-                            var i = 0;
-                            var startCount = objMesh.Vertices.Count;
-                            while (++i < spl.Length)
-                            {
-                                var param = spl[i].Split(['/'], StringSplitOptions.None);
-                                if (param.Length != 3)
+                                if (meshes.TryGetValue(spl[1], out var mesh))
                                 {
-                                    throw new Exception("面参数错误");
+                                    objMesh = mesh;
+                                }
+                                else
+                                {
+                                    objMesh = new ObjMesh(spl[1]);
+                                    meshes.Add(spl[1], objMesh);
                                 }
 
-                                var pa = int.Parse(param[0]); // 顶点索引
-                                var pb = int.Parse(param[1]); // 纹理索引
-                                var pc = int.Parse(param[2]); // 法线索引
-                                var objPosition = objPositions[pa - 1];
-                                var texCood = objTexCoodList[pb - 1];
-                                var objNormal = objNormals[pc - 1];
-                                var face = CellFace.Vector3ToFace(new Vector3(objNormal.X, objNormal.Y, objNormal.Z));
-                                objMesh.Indices.Add((ushort)(startCount + _faceMap[face][i - 1]));
-                                objMesh.Vertices.Add(new ObjVertex
-                                    { Position = objPosition, ObjNormal = objNormal, TexCood = texCood });
+                                break;
                             }
+                        case "v":
+                            {
+                                objPositions.Add(new ObjPosition(spl[1], spl[2], spl[3]));
+                                break;
+                            }
+                        case "vt":
+                            {
+                                objTexCoodList.Add(new ObjTexCood(spl[1], spl[2]));
+                                break;
+                            }
+                        case "vn":
+                            {
+                                objNormals.Add(new ObjNormal(spl[1], spl[2], spl[3]));
+                                break;
+                            }
+                        case "usemtl":
+                            {
+                                texturePaths.TryGetValue(spl[1], out currentKey);
+                                break;
+                            }
+                        case "f":
+                            {
+                                if (string.IsNullOrEmpty(currentKey))
+                                {
+                                    currentKey = "Textures/NoneTexture";
+                                }
 
-                            break;
-                        }
+                                objMesh!.TexturePath = currentKey;
+                                var sideCount = spl.Length - 1;
+                                if (sideCount != 3)
+                                {
+                                    throw new Exception("模型必须为三角面");
+                                }
+
+                                var i = 0;
+                                var startCount = objMesh.Vertices.Count;
+                                while (++i < spl.Length)
+                                {
+                                    var param = spl[i].Split(['/'], StringSplitOptions.None);
+                                    if (param.Length != 3)
+                                    {
+                                        throw new Exception("面参数错误");
+                                    }
+
+                                    var pa = int.Parse(param[0]); // 顶点索引
+                                    var pb = int.Parse(param[1]); // 纹理索引
+                                    var pc = int.Parse(param[2]); // 法线索引
+                                    var objPosition = objPositions[pa - 1];
+                                    var texCood = objTexCoodList[pb - 1];
+                                    var objNormal = objNormals[pc - 1];
+                                    var face = CellFace.Vector3ToFace(new Vector3(objNormal.X, objNormal.Y, objNormal.Z));
+                                    objMesh.Indices.Add((ushort)(startCount + _faceMap[face][i - 1]));
+                                    objMesh.Vertices.Add(new ObjVertex
+                                    { Position = objPosition, ObjNormal = objNormal, TexCood = texCood });
+                                }
+
+                                break;
+                            }
                     }
                 }
             }

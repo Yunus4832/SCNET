@@ -54,13 +54,15 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
     public Vector3 FindCoarseSpawnPosition()
     {
         for (var i = -400; i <= 400; i += 10)
-        for (var j = -400; j <= 400; j += 10)
         {
-            var vector = _oceanCorner + new Vector2(i, j);
-            var num = CalculateOceanShoreDistance(vector.X, vector.Y);
-            if (num is >= 1f and <= 20f)
+            for (var j = -400; j <= 400; j += 10)
             {
-                return new Vector3(vector.X, CalculateHeight(vector.X, vector.Y), vector.Y);
+                var vector = _oceanCorner + new Vector2(i, j);
+                var num = CalculateOceanShoreDistance(vector.X, vector.Y);
+                if (num is >= 1f and <= 20f)
+                {
+                    return new Vector3(vector.X, CalculateHeight(vector.X, vector.Y), vector.Y);
+                }
             }
         }
 
@@ -70,48 +72,50 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
     public void GenerateChunkContentsPass1(TerrainChunk chunk)
     {
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = i + chunk.Origin.X;
-            var num2 = j + chunk.Origin.Y;
-            chunk.SetTemperatureFast(i, j, CalculateTemperature(num, num2));
-            chunk.SetHumidityFast(i, j, CalculateHumidity(num, num2));
-            var flag = CalculateOceanShoreDistance(num, num2) >= 0f;
-            var num3 = TerrainChunk.CalculateCellIndex(i, 0, j);
-            for (var k = 0; k < 256; k++)
+            for (var j = 0; j < 16; j++)
             {
-                var value = Terrain.MakeBlockValue(0);
-                if (flag)
+                var num = i + chunk.Origin.X;
+                var num2 = j + chunk.Origin.Y;
+                chunk.SetTemperatureFast(i, j, CalculateTemperature(num, num2));
+                chunk.SetHumidityFast(i, j, CalculateHumidity(num, num2));
+                var flag = CalculateOceanShoreDistance(num, num2) >= 0f;
+                var num3 = TerrainChunk.CalculateCellIndex(i, 0, j);
+                for (var k = 0; k < 256; k++)
                 {
-                    if (k < 2)
+                    var value = Terrain.MakeBlockValue(0);
+                    if (flag)
+                    {
+                        if (k < 2)
+                        {
+                            value = Terrain.MakeBlockValue(1);
+                        }
+                        else if (k < _worldSettings.TerrainLevel)
+                        {
+                            value = Terrain.MakeBlockValue(_worldSettings.TerrainBlockIndex == 8
+                                ? 2
+                                : _worldSettings.TerrainBlockIndex);
+                        }
+                        else if (k == _worldSettings.TerrainLevel)
+                        {
+                            value = Terrain.MakeBlockValue(_worldSettings.TerrainBlockIndex);
+                        }
+                        else if (k <= OceanLevel)
+                        {
+                            value = Terrain.MakeBlockValue(_worldSettings.TerrainOceanBlockIndex);
+                        }
+                    }
+                    else if (k < 2)
                     {
                         value = Terrain.MakeBlockValue(1);
-                    }
-                    else if (k < _worldSettings.TerrainLevel)
-                    {
-                        value = Terrain.MakeBlockValue(_worldSettings.TerrainBlockIndex == 8
-                            ? 2
-                            : _worldSettings.TerrainBlockIndex);
-                    }
-                    else if (k == _worldSettings.TerrainLevel)
-                    {
-                        value = Terrain.MakeBlockValue(_worldSettings.TerrainBlockIndex);
                     }
                     else if (k <= OceanLevel)
                     {
                         value = Terrain.MakeBlockValue(_worldSettings.TerrainOceanBlockIndex);
                     }
-                }
-                else if (k < 2)
-                {
-                    value = Terrain.MakeBlockValue(1);
-                }
-                else if (k <= OceanLevel)
-                {
-                    value = Terrain.MakeBlockValue(_worldSettings.TerrainOceanBlockIndex);
-                }
 
-                chunk.SetCellValueFast(num3 + k, value);
+                    chunk.SetCellValueFast(num3 + k, value);
+                }
             }
         }
     }
@@ -181,24 +185,26 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
     {
         _ = _terrain;
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = TerrainChunk.CalculateCellIndex(i, 255, j);
-            var num2 = 0;
-            var num3 = 255;
-            while (num3 >= 0)
+            for (var j = 0; j < 16; j++)
             {
-                var cellValueFast = chunk.GetCellValueFast(num);
-                var num4 = Terrain.ExtractContents(cellValueFast);
-                if (num4 != 0 && num4 != num2 && BlocksManager.Blocks[num4] is FluidBlock)
+                var num = TerrainChunk.CalculateCellIndex(i, 255, j);
+                var num2 = 0;
+                var num3 = 255;
+                while (num3 >= 0)
                 {
-                    var data = Terrain.ExtractData(cellValueFast);
-                    chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));
-                }
+                    var cellValueFast = chunk.GetCellValueFast(num);
+                    var num4 = Terrain.ExtractContents(cellValueFast);
+                    if (num4 != 0 && num4 != num2 && BlocksManager.Blocks[num4] is FluidBlock)
+                    {
+                        var data = Terrain.ExtractData(cellValueFast);
+                        chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));
+                    }
 
-                num2 = num4;
-                num3--;
-                num--;
+                    num2 = num4;
+                    num3--;
+                    num--;
+                }
             }
         }
     }

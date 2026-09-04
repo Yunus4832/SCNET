@@ -306,7 +306,7 @@ public class GameMenuDialog : Dialog
                 {
                     DialogsManager.ShowDialog(ParentWidget, new MessageDialog(LanguageManager.Get(_typeName, 83),
                         LanguageManager.Get(_typeName, 84), LanguageManager.Get("Usual", "yes"),
-                        LanguageManager.Get("Usual", "no"), delegate(MessageDialogButton result)
+                        LanguageManager.Get("Usual", "no"), delegate (MessageDialogButton result)
                         {
                             if (result == MessageDialogButton.Button1)
                             {
@@ -340,7 +340,7 @@ public class GameMenuDialog : Dialog
 
             var dialog = new ListSelectionDialog(LanguageManager.Get(_typeName, 92), list, 60f,
                 t => ((Tuple<string, Action>)t).Item1,
-                delegate(object t) { ((Tuple<string, Action>)t).Item2(); });
+                delegate (object t) { ((Tuple<string, Action>)t).Item2(); });
             DialogsManager.ShowDialog(ParentWidget, dialog);
         }
 

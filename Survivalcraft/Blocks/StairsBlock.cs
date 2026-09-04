@@ -270,22 +270,22 @@ public abstract class StairsBlock(int coloredTextureSlot) : Block, IPaintableBlo
                 switch (GetCornerType(data))
                 {
                     case CornerType.None:
-                    {
-                        var rotation2 = GetRotation(data);
-                        return face != ((rotation2 + 2) & 3);
-                    }
+                        {
+                            var rotation2 = GetRotation(data);
+                            return face != ((rotation2 + 2) & 3);
+                        }
                     case CornerType.OneQuarter:
                         return true;
                     default:
-                    {
-                        var rotation = GetRotation(data);
-                        if (face != ((rotation + 1) & 3))
                         {
-                            return face != ((rotation + 2) & 3);
-                        }
+                            var rotation = GetRotation(data);
+                            if (face != ((rotation + 1) & 3))
+                            {
+                                return face != ((rotation + 2) & 3);
+                            }
 
-                        return false;
-                    }
+                            return false;
+                        }
                 }
         }
     }

@@ -43,25 +43,27 @@ public class PanoramaWidget : Widget
         var num2 = ActualSize.X / 12f;
         var num3 = GlobalColorTransform.A / 255f;
         for (var num4 = 0f; num4 < ActualSize.X; num4 += num2)
-        for (var num5 = 0f; num5 < ActualSize.Y; num5 += num2)
         {
-            var num6 = 0.35f *
-                       MathUtils.Pow(
-                           MathUtils.Saturate(
-                               SimplexNoise.OctavedNoise(num4 + 1000f, num5, 0.7f * num, 0.5f, 1, 2f, 1f) - 0.1f), 1f) *
-                       num3;
-            var num7 = 0.7f * MathUtils.Pow(SimplexNoise.OctavedNoise(num4, num5, 0.5f * num, 0.5f, 1, 2f, 1f), 3f) *
-                       num3;
-            var corner = new Vector2(num4, num5);
-            var corner2 = new Vector2(num4 + num2, num5 + num2);
-            if (num6 > 0.01f)
+            for (var num5 = 0f; num5 < ActualSize.Y; num5 += num2)
             {
-                flatBatch2D.QueueRectangle(corner, corner2, 0f, new Color(0f, 0f, 0f, num6));
-            }
+                var num6 = 0.35f *
+                           MathUtils.Pow(
+                               MathUtils.Saturate(
+                                   SimplexNoise.OctavedNoise(num4 + 1000f, num5, 0.7f * num, 0.5f, 1, 2f, 1f) - 0.1f), 1f) *
+                           num3;
+                var num7 = 0.7f * MathUtils.Pow(SimplexNoise.OctavedNoise(num4, num5, 0.5f * num, 0.5f, 1, 2f, 1f), 3f) *
+                           num3;
+                var corner = new Vector2(num4, num5);
+                var corner2 = new Vector2(num4 + num2, num5 + num2);
+                if (num6 > 0.01f)
+                {
+                    flatBatch2D.QueueRectangle(corner, corner2, 0f, new Color(0f, 0f, 0f, num6));
+                }
 
-            if (num7 > 0.01f)
-            {
-                flatBatch2D.QueueQuad(corner, corner2, 0f, new Color(0f, 0f, 0f, num7));
+                if (num7 > 0.01f)
+                {
+                    flatBatch2D.QueueQuad(corner, corner2, 0f, new Color(0f, 0f, 0f, num7));
+                }
             }
         }
 

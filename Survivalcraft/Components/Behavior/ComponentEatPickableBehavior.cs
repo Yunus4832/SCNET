@@ -95,14 +95,14 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
             _foodFactors[(int)foodType] = (float)item.Value;
         }
 
-        _subsystemPickables.PickableAdded += delegate(Pickable pickable)
+        _subsystemPickables.PickableAdded += delegate (Pickable pickable)
         {
             if (TryAddPickable(pickable) && _pickable == null)
             {
                 _pickable = pickable;
             }
         };
-        _subsystemPickables.PickableRemoved += delegate(Pickable pickable)
+        _subsystemPickables.PickableRemoved += delegate (Pickable pickable)
         {
             _pickables.Remove(pickable);
             if (_pickable == pickable)
@@ -337,9 +337,9 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
         }
 
         return (from key in _pickables.Keys
-            let num = Vector3.DistanceSquared(position, key.Position)
-            where _random.Float(0f, 1f) > num / 512f
-            select key).FirstOrDefault();
+                let num = Vector3.DistanceSquared(position, key.Position)
+                where _random.Float(0f, 1f) > num / 512f
+                select key).FirstOrDefault();
     }
 
     public bool TryAddPickable(Pickable pickable)

@@ -69,10 +69,14 @@ public static class NetworkChunkCodec
             using var writer = new BinaryWriter(rawStream);
             WriteClimate(writer, shafts);
             for (var y = 0; y < 256; y++)
-            for (var z = 0; z < 16; z++)
-            for (var x = 0; x < 16; x++)
             {
-                writer.Write(Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(x, y, z)], 0));
+                for (var z = 0; z < 16; z++)
+                {
+                    for (var x = 0; x < 16; x++)
+                    {
+                        writer.Write(Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(x, y, z)], 0));
+                    }
+                }
             }
 
             body = rawStream.ToArray();
@@ -165,22 +169,26 @@ public static class NetworkChunkCodec
     private static void WriteClimate(BinaryWriter writer, long[] shafts)
     {
         for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            var shaft = shafts[x + z * 16];
-            writer.Write((byte)((Terrain.ExtractTemperature(shaft) << 4) | Terrain.ExtractHumidity(shaft)));
+            for (var x = 0; x < 16; x++)
+            {
+                var shaft = shafts[x + z * 16];
+                writer.Write((byte)((Terrain.ExtractTemperature(shaft) << 4) | Terrain.ExtractHumidity(shaft)));
+            }
         }
     }
 
     private static void ReadClimate(BinaryReader reader, TerrainChunk chunk)
     {
         for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            var climate = reader.ReadByte();
-            var shaft = Terrain.ReplaceTemperature(0, climate >> 4);
-            shaft = Terrain.ReplaceHumidity(shaft, climate & 0xF);
-            chunk.SetShaftValueFast(x, z, shaft);
+            for (var x = 0; x < 16; x++)
+            {
+                var climate = reader.ReadByte();
+                var shaft = Terrain.ReplaceTemperature(0, climate >> 4);
+                shaft = Terrain.ReplaceHumidity(shaft, climate & 0xF);
+                chunk.SetShaftValueFast(x, z, shaft);
+            }
         }
     }
 
@@ -189,25 +197,29 @@ public static class NetworkChunkCodec
         var value = 0;
         var count = 0;
         for (var y = 0; y < 256; y++)
-        for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            var next = Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(x, y, z)], 0);
-            if (count == 0)
+            for (var z = 0; z < 16; z++)
             {
-                value = next;
-                count = 1;
-            }
-            else if (next == value && count < ushort.MaxValue)
-            {
-                count++;
-            }
-            else
-            {
-                writer.Write(value);
-                writer.Write((ushort)count);
-                value = next;
-                count = 1;
+                for (var x = 0; x < 16; x++)
+                {
+                    var next = Terrain.ReplaceLight(cells[TerrainChunk.CalculateCellIndex(x, y, z)], 0);
+                    if (count == 0)
+                    {
+                        value = next;
+                        count = 1;
+                    }
+                    else if (next == value && count < ushort.MaxValue)
+                    {
+                        count++;
+                    }
+                    else
+                    {
+                        writer.Write(value);
+                        writer.Write((ushort)count);
+                        value = next;
+                        count = 1;
+                    }
+                }
             }
         }
 
@@ -246,10 +258,14 @@ public static class NetworkChunkCodec
     private static void ReadRawCells(BinaryReader reader, TerrainChunk chunk)
     {
         for (var y = 0; y < 256; y++)
-        for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            chunk.SetCellValueFast(x, y, z, Terrain.ReplaceLight(reader.ReadInt32(), 0));
+            for (var z = 0; z < 16; z++)
+            {
+                for (var x = 0; x < 16; x++)
+                {
+                    chunk.SetCellValueFast(x, y, z, Terrain.ReplaceLight(reader.ReadInt32(), 0));
+                }
+            }
         }
     }
 

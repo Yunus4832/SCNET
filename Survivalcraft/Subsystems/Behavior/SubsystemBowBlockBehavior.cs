@@ -72,50 +72,50 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
         var num3 = (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0);
         var v = ((componentMiner.ComponentCreature.ComponentBody.IsSneaking ? 0.02f : 0.04f) +
                  0.25f * MathUtils.Saturate((num2 - 2.1f) / 5f)) * new Vector3
-        {
-            X = SimplexNoise.OctavedNoise(num3, 2f, 3, 2f, 0.5f),
-            Y = SimplexNoise.OctavedNoise(num3 + 100f, 2f, 3, 2f, 0.5f),
-            Z = SimplexNoise.OctavedNoise(num3 + 200f, 2f, 3, 2f, 0.5f)
-        };
+                 {
+                     X = SimplexNoise.OctavedNoise(num3, 2f, 3, 2f, 0.5f),
+                     Y = SimplexNoise.OctavedNoise(num3 + 100f, 2f, 3, 2f, 0.5f),
+                     Z = SimplexNoise.OctavedNoise(num3 + 200f, 2f, 3, 2f, 0.5f)
+                 };
         aim.Direction = Vector3.Normalize(aim.Direction + v);
         switch (state)
         {
             case AimState.InProgress:
-            {
-                if (num2 >= 9f)
                 {
-                    componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
-                    return true;
-                }
-
-                var componentFirstPersonModel =
-                    componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
-                if (componentFirstPersonModel != null)
-                {
-                    componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position,
-                        aim.Direction);
-                    componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.1f, 0.15f, 0f);
-                    componentFirstPersonModel.ItemRotationOrder = new Vector3(0f, -0.7f, 0f);
-                }
-
-                componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.2f;
-                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder =
-                    new Vector3(0f, 0f, 0f);
-                componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder =
-                    new Vector3(0f, -0.2f, 0f);
-                if (_subsystemTime.PeriodicGameTimeEvent(0.1, 0.0))
-                {
-                    if (CommonLib.WorkType != WorkType.Client)
+                    if (num2 >= 9f)
                     {
-                        var draw2 = MathUtils.Min(BowBlock.GetDraw(data) + 1, 15);
-                        inventory.RemoveSlotItems(activeSlotIndex, 1);
-                        inventory.AddSlotItems(activeSlotIndex,
-                            Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, draw2)), 1);
+                        componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
+                        return true;
                     }
-                }
 
-                break;
-            }
+                    var componentFirstPersonModel =
+                        componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
+                    if (componentFirstPersonModel != null)
+                    {
+                        componentMiner.ComponentPlayer?.ComponentAimingSights.ShowAimingSights(aim.Position,
+                            aim.Direction);
+                        componentFirstPersonModel.ItemOffsetOrder = new Vector3(-0.1f, 0.15f, 0f);
+                        componentFirstPersonModel.ItemRotationOrder = new Vector3(0f, -0.7f, 0f);
+                    }
+
+                    componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 1.2f;
+                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemOffsetOrder =
+                        new Vector3(0f, 0f, 0f);
+                    componentMiner.ComponentCreature.ComponentCreatureModel.InHandItemRotationOrder =
+                        new Vector3(0f, -0.2f, 0f);
+                    if (_subsystemTime.PeriodicGameTimeEvent(0.1, 0.0))
+                    {
+                        if (CommonLib.WorkType != WorkType.Client)
+                        {
+                            var draw2 = MathUtils.Min(BowBlock.GetDraw(data) + 1, 15);
+                            inventory.RemoveSlotItems(activeSlotIndex, 1);
+                            inventory.AddSlotItems(activeSlotIndex,
+                                Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, draw2)), 1);
+                        }
+                    }
+
+                    break;
+                }
             case AimState.Cancelled:
                 if (CommonLib.WorkType != WorkType.Client)
                 {
@@ -127,75 +127,75 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                 _aimStartTimes.Remove(componentMiner);
                 break;
             case AimState.Completed:
-            {
-                var draw = BowBlock.GetDraw(data);
-                var arrowType = BowBlock.GetArrowType(data);
-                if (arrowType.HasValue)
                 {
-                    var vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition +
-                                 componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f -
-                                 componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
-                    var vector2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
-                    var num4 = MathUtils.Lerp(0f, 28f, MathUtils.Pow(draw / 15f, 0.75f));
-                    if (componentMiner.ComponentPlayer != null)
+                    var draw = BowBlock.GetDraw(data);
+                    var arrowType = BowBlock.GetArrowType(data);
+                    if (arrowType.HasValue)
                     {
-                        num4 *= 0.5f * (componentMiner.ComponentPlayer.ComponentLevel.StrengthFactor - 1f) +
-                                1f;
+                        var vector = componentMiner.ComponentCreature.ComponentCreatureModel.EyePosition +
+                                     componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f -
+                                     componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
+                        var vector2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
+                        var num4 = MathUtils.Lerp(0f, 28f, MathUtils.Pow(draw / 15f, 0.75f));
+                        if (componentMiner.ComponentPlayer != null)
+                        {
+                            num4 *= 0.5f * (componentMiner.ComponentPlayer.ComponentLevel.StrengthFactor - 1f) +
+                                    1f;
+                        }
+
+                        var vector3 = Vector3.Zero;
+                        if (arrowType == ArrowBlock.ArrowType.WoodenArrow)
+                        {
+                            vector3 = new Vector3(0.025f, 0.025f, 0.025f);
+                        }
+
+                        if (arrowType == ArrowBlock.ArrowType.StoneArrow)
+                        {
+                            vector3 = new Vector3(0.01f, 0.01f, 0.01f);
+                        }
+
+                        var value2 = Terrain.MakeBlockValue(192, 0,
+                            ArrowBlock.SetArrowType(0, arrowType.Value));
+                        var vector4 = Vector3.Normalize(Vector3.Cross(vector2, Vector3.UnitY));
+                        var v2 = Vector3.Normalize(Vector3.Cross(vector2, vector4));
+                        var v3 = _random.Float(0f - vector3.X, vector3.X) * vector4 +
+                                 _random.Float(0f - vector3.Y, vector3.Y) * v2 +
+                                 _random.Float(0f - vector3.Z, vector3.Z) * vector2;
+                        if (_subsystemProjectiles.FireProjectile(value2, vector, (vector2 + v3) * num4,
+                                Vector3.Zero, componentMiner.ComponentCreature) != null)
+                        {
+                            data = BowBlock.SetArrowType(data, null);
+                            _subsystemAudio.PlaySound("Audio/Bow", 1f, _random.Float(-0.1f, 0.1f), vector, 3f,
+                                true);
+                        }
+                    }
+                    else
+                    {
+                        componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
+                            LanguageManager.Get(_typeName, 0), Color.White, true, false);
                     }
 
-                    var vector3 = Vector3.Zero;
-                    if (arrowType == ArrowBlock.ArrowType.WoodenArrow)
+                    if (CommonLib.WorkType != WorkType.Client)
                     {
-                        vector3 = new Vector3(0.025f, 0.025f, 0.025f);
+                        inventory.RemoveSlotItems(activeSlotIndex, 1);
+                        var value3 = Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, 0));
+                        inventory.AddSlotItems(activeSlotIndex, value3, 1);
+                        var damageCount = 0;
+                        if (draw >= 15)
+                        {
+                            damageCount = 2;
+                        }
+                        else if (draw >= 4)
+                        {
+                            damageCount = 1;
+                        }
+
+                        componentMiner.DamageActiveTool(damageCount);
                     }
 
-                    if (arrowType == ArrowBlock.ArrowType.StoneArrow)
-                    {
-                        vector3 = new Vector3(0.01f, 0.01f, 0.01f);
-                    }
-
-                    var value2 = Terrain.MakeBlockValue(192, 0,
-                        ArrowBlock.SetArrowType(0, arrowType.Value));
-                    var vector4 = Vector3.Normalize(Vector3.Cross(vector2, Vector3.UnitY));
-                    var v2 = Vector3.Normalize(Vector3.Cross(vector2, vector4));
-                    var v3 = _random.Float(0f - vector3.X, vector3.X) * vector4 +
-                             _random.Float(0f - vector3.Y, vector3.Y) * v2 +
-                             _random.Float(0f - vector3.Z, vector3.Z) * vector2;
-                    if (_subsystemProjectiles.FireProjectile(value2, vector, (vector2 + v3) * num4,
-                            Vector3.Zero, componentMiner.ComponentCreature) != null)
-                    {
-                        data = BowBlock.SetArrowType(data, null);
-                        _subsystemAudio.PlaySound("Audio/Bow", 1f, _random.Float(-0.1f, 0.1f), vector, 3f,
-                            true);
-                    }
+                    _aimStartTimes.Remove(componentMiner);
+                    return true;
                 }
-                else
-                {
-                    componentMiner.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-                        LanguageManager.Get(_typeName, 0), Color.White, true, false);
-                }
-
-                if (CommonLib.WorkType != WorkType.Client)
-                {
-                    inventory.RemoveSlotItems(activeSlotIndex, 1);
-                    var value3 = Terrain.MakeBlockValue(num, 0, BowBlock.SetDraw(data, 0));
-                    inventory.AddSlotItems(activeSlotIndex, value3, 1);
-                    var damageCount = 0;
-                    if (draw >= 15)
-                    {
-                        damageCount = 2;
-                    }
-                    else if (draw >= 4)
-                    {
-                        damageCount = 1;
-                    }
-
-                    componentMiner.DamageActiveTool(damageCount);
-                }
-
-                _aimStartTimes.Remove(componentMiner);
-                return true;
-            }
         }
 
         return false;

@@ -82,7 +82,8 @@ public static class Png
 
         var encoder = new PngEncoder
         {
-            ColorType = pngColorType, CompressionLevel = compressionLevel,
+            ColorType = pngColorType,
+            CompressionLevel = compressionLevel,
             TransparentColorMode = PngTransparentColorMode.Clear
         };
         if (sync)

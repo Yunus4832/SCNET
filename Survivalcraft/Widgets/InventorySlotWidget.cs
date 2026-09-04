@@ -711,29 +711,29 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                      BlocksManager.Blocks[Terrain.ExtractContents(sourceValue)]
                          .CanAutoStack(sourceValue, targetValue)) &&
                     targetCount < slotCapacity:
-                {
-                    // 这个应该跟上面的移动一样吧
-                    var num2 = MathUtils.Min(slotCapacity - targetCount, sourceCount);
-                    if (num2 > 0)
                     {
-                        var count2 = sourceInventory.RemoveSlotItems(sourceSlotIndex, num2);
-                        targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count2);
-                        flag = true;
-                    }
+                        // 这个应该跟上面的移动一样吧
+                        var num2 = MathUtils.Min(slotCapacity - targetCount, sourceCount);
+                        if (num2 > 0)
+                        {
+                            var count2 = sourceInventory.RemoveSlotItems(sourceSlotIndex, num2);
+                            targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count2);
+                            flag = true;
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case false when targetInventory.GetSlotCapacity(targetSlotIndex, sourceValue) >= sourceCount &&
                                 sourceInventory.GetSlotCapacity(sourceSlotIndex, targetValue) >= targetCount &&
                                 sourceInventory.GetSlotCount(sourceSlotIndex) == sourceCount:
-                {
-                    var count3 = targetInventory.RemoveSlotItems(targetSlotIndex, targetCount);
-                    var count4 = sourceInventory.RemoveSlotItems(sourceSlotIndex, sourceCount);
-                    targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count4);
-                    sourceInventory.AddSlotItems(sourceSlotIndex, targetValue, count3);
-                    flag = true;
-                    break;
-                }
+                    {
+                        var count3 = targetInventory.RemoveSlotItems(targetSlotIndex, targetCount);
+                        var count4 = sourceInventory.RemoveSlotItems(sourceSlotIndex, sourceCount);
+                        targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count4);
+                        sourceInventory.AddSlotItems(sourceSlotIndex, targetValue, count3);
+                        flag = true;
+                        break;
+                    }
             }
         }
 

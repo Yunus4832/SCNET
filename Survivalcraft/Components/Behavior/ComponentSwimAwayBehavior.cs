@@ -45,7 +45,7 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
         _componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true)!;
         _componentHerdBehavior = Entity.FindComponent<ComponentHerdBehavior>();
-        _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
+        _componentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
         {
             SwimAwayFrom(attacker.ComponentBody);
         };
@@ -113,7 +113,7 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
             var v = Vector3.Normalize(new Vector3(vector2.X, y, vector2.Y));
             var vector3 = vector + _random.Float(10f, 20f) * v;
             var terrainRaycastResult = _subsystemTerrain.Raycast(vector, vector3, false, false,
-                delegate(int value, float d)
+                delegate (int value, float d)
                 {
                     var num3 = Terrain.ExtractContents(value);
                     return !(BlocksManager.Blocks[num3] is WaterBlock);

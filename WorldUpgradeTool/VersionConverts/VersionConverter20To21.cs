@@ -15,12 +15,12 @@ public class VersionConverter20To21 : VersionConverter
         XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
         var value = string.Empty;
         foreach (var item in from e in projectNode.Element("Subsystems")?.Elements()
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
-                 select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "GameInfo"
+                             select e)
         {
             foreach (var item2 in from e in item.Elements("Value")
-                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "TerrainGenerationMode"
-                     select e)
+                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "TerrainGenerationMode"
+                                  select e)
             {
                 if (XmlUtils.GetAttributeValue(item2, "Value", "") == "Normal")
                 {
@@ -29,8 +29,8 @@ public class VersionConverter20To21 : VersionConverter
             }
 
             var xElement = (from e in item.Elements("Value")
-                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
-                select e).FirstOrDefault();
+                            where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CharacterSkinName"
+                            select e).FirstOrDefault();
             if (xElement != null)
             {
                 value = XmlUtils.GetAttributeValue(xElement, "Value", string.Empty);
@@ -43,8 +43,8 @@ public class VersionConverter20To21 : VersionConverter
         }
 
         foreach (var item3 in from e in projectNode.Element("Subsystems")?.Elements()
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Player"
-                 select e)
+                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Player"
+                              select e)
         {
             XmlUtils.SetAttributeValue(item3, "Name", "Players");
             var xElement2 = new XElement("Values");
@@ -67,12 +67,12 @@ public class VersionConverter20To21 : VersionConverter
         }
 
         foreach (var item4 in from e in projectNode.Element("Subsystems")?.Elements()
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "PlayerStats"
-                 select e)
+                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "PlayerStats"
+                              select e)
         {
             var xElement5 = (from e in item4.Elements("Values")
-                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "PlayerStats"
-                select e).FirstOrDefault();
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "PlayerStats"
+                             select e).FirstOrDefault();
             if (xElement5 != null)
             {
                 var xElement6 = new XElement("Values");
@@ -85,19 +85,21 @@ public class VersionConverter20To21 : VersionConverter
         }
 
         foreach (var item5 in from e in projectNode.Element("Entities")?.Elements()
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty).StartsWith("Player")
-                 select e)
+                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty).StartsWith("Player")
+                              select e)
         {
             XmlUtils.SetAttributeValue(item5, "Guid", "bef1b918-6418-41c9-a598-95e8ffd39ab3");
             XmlUtils.SetAttributeValue(item5, "Name", "MalePlayer");
         }
 
         foreach (var item6 in projectNode.Element("Entities")?.Elements() ?? [])
-        foreach (var item7 in (from e in item6.Descendants("Value")
-                     where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "SpawnPool"
-                     select e).ToList())
         {
-            item7.Remove();
+            foreach (var item7 in (from e in item6.Descendants("Value")
+                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "SpawnPool"
+                                   select e).ToList())
+            {
+                item7.Remove();
+            }
         }
     }
 

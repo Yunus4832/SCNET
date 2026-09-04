@@ -155,7 +155,7 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
                 _componentCreature.ComponentBody.Position, vector2,
                 false,
                 false,
-                delegate(int value, float _)
+                delegate (int value, float _)
                 {
                     var num = Terrain.ExtractContents(value);
                     return BlocksManager.Blocks[num] is not WaterBlock;

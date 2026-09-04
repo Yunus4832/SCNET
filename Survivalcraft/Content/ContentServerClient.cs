@@ -18,7 +18,7 @@ public sealed class ContentServerClient : IDisposable
     public async Task<IReadOnlyList<ContentCatalogItem>> ListAsync(CancellationToken cancellationToken = default)
     {
         var items = new List<ContentCatalogItem>();
-        for (var pageIndex = 1;; pageIndex++)
+        for (var pageIndex = 1; ; pageIndex++)
         {
             var response = await _httpClient
                 .GetFromJsonAsync<ContentServerResponse<ContentServerPage<ContentCatalogItem>>>(
@@ -52,7 +52,7 @@ public sealed class ContentServerClient : IDisposable
     private async Task<IReadOnlyList<ContentServerModPackage>> ListModsAsync(CancellationToken cancellationToken)
     {
         var items = new List<ContentServerModPackage>();
-        for (var pageIndex = 1;; pageIndex++)
+        for (var pageIndex = 1; ; pageIndex++)
         {
             var response = await _httpClient
                 .GetFromJsonAsync<ContentServerResponse<ContentServerPage<ContentServerModPackage>>>(

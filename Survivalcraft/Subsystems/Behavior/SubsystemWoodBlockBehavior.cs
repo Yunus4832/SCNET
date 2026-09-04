@@ -54,21 +54,23 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var num5 = MathUtils.Min(y + 3, 255);
         var num6 = z + 3;
         for (var i = num; i <= num4; i++)
-        for (var j = num3; j <= num6; j++)
         {
-            var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
-            if (chunkAtCell == null)
+            for (var j = num3; j <= num6; j++)
             {
-                continue;
-            }
-
-            var num7 = TerrainChunk.CalculateCellIndex(i & 0xF, 0, j & 0xF);
-            for (var k = num2; k <= num5; k++)
-            {
-                var num8 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num7 + k));
-                if (num8 != 0 && BlocksManager.Blocks[num8] is LeavesBlock)
+                var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
+                if (chunkAtCell == null)
                 {
-                    _leavesToCheck.Add(new Point3(i, k, j));
+                    continue;
+                }
+
+                var num7 = TerrainChunk.CalculateCellIndex(i & 0xF, 0, j & 0xF);
+                for (var k = num2; k <= num5; k++)
+                {
+                    var num8 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num7 + k));
+                    if (num8 != 0 && BlocksManager.Blocks[num8] is LeavesBlock)
+                    {
+                        _leavesToCheck.Add(new Point3(i, k, j));
+                    }
                 }
             }
         }
@@ -156,7 +158,7 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
             }
 
             continue;
-            IL_00e8:
+        IL_00e8:
             flag = true;
             break;
         }

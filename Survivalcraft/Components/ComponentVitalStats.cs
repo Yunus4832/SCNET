@@ -179,40 +179,40 @@ public class ComponentVitalStats : Component, IUpdateable
                         true);
                     break;
                 default:
-                {
-                    switch (value2)
                     {
-                        case > 2.5f:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 5),
-                                Color.White, true,
-                                true);
-                            break;
-                        case > 2f:
-                            _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 6),
-                                Color.White, true,
-                                true);
-                            break;
-                        default:
+                        switch (value2)
                         {
-                            if (Food > 0.85f)
-                            {
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 7),
+                            case > 2.5f:
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 5),
                                     Color.White, true,
                                     true);
-                            }
-                            else
-                            {
-                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 8),
+                                break;
+                            case > 2f:
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 6),
                                     Color.White, true,
-                                    false);
-                            }
+                                    true);
+                                break;
+                            default:
+                                {
+                                    if (Food > 0.85f)
+                                    {
+                                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 7),
+                                            Color.White, true,
+                                            true);
+                                    }
+                                    else
+                                    {
+                                        _componentPlayer.ComponentGui.DisplaySmallMessage(LanguageManager.Get(_typeName, 8),
+                                            Color.White, true,
+                                            false);
+                                    }
 
-                            break;
+                                    break;
+                                }
                         }
-                    }
 
-                    break;
-                }
+                        break;
+                    }
             }
         }
 
@@ -670,67 +670,67 @@ public class ComponentVitalStats : Component, IUpdateable
                 _componentPlayer.ComponentHealth.Injure(1f, null, false, LanguageManager.Get(_typeName, 25));
                 break;
             case < 3f:
-            {
-                if (_subsystemTime.PeriodicGameTimeEvent(10.0, 0.0))
                 {
-                    _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 26));
-                    string text;
+                    if (_subsystemTime.PeriodicGameTimeEvent(10.0, 0.0))
+                    {
+                        _componentPlayer.ComponentHealth.Injure(0.05f, null, false, LanguageManager.Get(_typeName, 26));
+                        string text;
 
-                    if (Wetness > 0f)
-                    {
-                        text = string.Format(LanguageManager.Get(_typeName, 27), arg); // 你的{0}冻僵了,弄干你的衣服,
-                    }
-                    else if (num >= 1f) // 有衣服，但依然受冻的时候
-                    {
-                        text = string.Format(LanguageManager.Get(_typeName, 28), arg); // 你的{0}冻僵了,寻找庇护所,
-                    }
-                    else
-                    {
-                        text = string.Format(LanguageManager.Get(_typeName, 29), arg); // 你的{0}冻僵了,快穿上衣服,
-                    }
-
-                    if (runGui)
-                    {
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(text, Color.White, true, false);
-                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
-                    }
-                }
-
-                break;
-            }
-            default:
-            {
-                switch (runGui)
-                {
-                    // 当体温低于 6 时
-                    case true when Temperature < 6f && (_lastTemperature >= 6f) | flag:
-                    {
-                        var text2 = Wetness switch
+                        if (Wetness > 0f)
                         {
-                            > 0f => string.Format(LanguageManager.Get(_typeName, 30), arg), // 你的{0}有点冷, 弄干你的衣服
-                            _ => string.Format(num >= 1f
-                                ? LanguageManager.Get(_typeName, 31) // 你的{0}有点冷,寻找庇护所
-                                : LanguageManager.Get(_typeName, 32), arg) // 你的{0}有点冷,快穿上衣服
-                        };
+                            text = string.Format(LanguageManager.Get(_typeName, 27), arg); // 你的{0}冻僵了,弄干你的衣服,
+                        }
+                        else if (num >= 1f) // 有衣服，但依然受冻的时候
+                        {
+                            text = string.Format(LanguageManager.Get(_typeName, 28), arg); // 你的{0}冻僵了,寻找庇护所,
+                        }
+                        else
+                        {
+                            text = string.Format(LanguageManager.Get(_typeName, 29), arg); // 你的{0}冻僵了,快穿上衣服,
+                        }
 
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(text2, Color.White, true, true);
-                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
-                        break;
+                        if (runGui)
+                        {
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(text, Color.White, true, false);
+                            _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                        }
                     }
-                    // 当体温低于 8 时： 你觉得有点冷
-                    case true when Temperature < 8f && (_lastTemperature >= 8f) | flag:
-                        _componentPlayer.ComponentGui.DisplaySmallMessage(
-                            LanguageManager.Get(_typeName, 33),
-                            Color.White,
-                            true,
-                            false
-                        );
-                        _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
-                        break;
-                }
 
-                break;
-            }
+                    break;
+                }
+            default:
+                {
+                    switch (runGui)
+                    {
+                        // 当体温低于 6 时
+                        case true when Temperature < 6f && (_lastTemperature >= 6f) | flag:
+                            {
+                                var text2 = Wetness switch
+                                {
+                                    > 0f => string.Format(LanguageManager.Get(_typeName, 30), arg), // 你的{0}有点冷, 弄干你的衣服
+                                    _ => string.Format(num >= 1f
+                                        ? LanguageManager.Get(_typeName, 31) // 你的{0}有点冷,寻找庇护所
+                                        : LanguageManager.Get(_typeName, 32), arg) // 你的{0}有点冷,快穿上衣服
+                                };
+
+                                _componentPlayer.ComponentGui.DisplaySmallMessage(text2, Color.White, true, true);
+                                _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                                break;
+                            }
+                        // 当体温低于 8 时： 你觉得有点冷
+                        case true when Temperature < 8f && (_lastTemperature >= 8f) | flag:
+                            _componentPlayer.ComponentGui.DisplaySmallMessage(
+                                LanguageManager.Get(_typeName, 33),
+                                Color.White,
+                                true,
+                                false
+                            );
+                            _componentPlayer.ComponentGui.TemperatureBarWidget.Flash(10);
+                            break;
+                    }
+
+                    break;
+                }
         }
 
         if (Temperature >= 24f) // 体温大于24

@@ -164,15 +164,15 @@ public class ComponentRandomFeedBehavior : ComponentBehavior, IUpdateable
                             stateMachine.TransitionTo("LookAround");
                             break;
                         case < 0.75f:
-                        {
-                            stateMachine.TransitionTo("Move");
-                            if (_random.Float(0f, 1f) < 0.1f * _subsystemTime.GameTimeDelta)
                             {
-                                _componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
-                            }
+                                stateMachine.TransitionTo("Move");
+                                if (_random.Float(0f, 1f) < 0.1f * _subsystemTime.GameTimeDelta)
+                                {
+                                    _componentCreature.ComponentCreatureSounds.PlayIdleSound(false);
+                                }
 
-                            break;
-                        }
+                                break;
+                            }
                         default:
                             stateMachine.TransitionTo("Feed");
                             break;

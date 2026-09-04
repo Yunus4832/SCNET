@@ -42,7 +42,7 @@ public class ViewGameLogDialog : Dialog
         _copyButton = Children.Find<ButtonWidget>("ViewGameLogDialog.CopyButton")!;
         _filterButton = Children.Find<ButtonWidget>("ViewGameLogDialog.FilterButton")!;
         _closeButton = Children.Find<ButtonWidget>("ViewGameLogDialog.CloseButton")!;
-        _listPanel.ItemClicked += delegate(object item)
+        _listPanel.ItemClicked += delegate (object item)
         {
             if (_listPanel.SelectedItem == item)
             {
@@ -95,7 +95,7 @@ public class ViewGameLogDialog : Dialog
 
     public void PopulateList()
     {
-        _listPanel.ItemWidgetFactory = delegate(object item)
+        _listPanel.ItemWidgetFactory = delegate (object item)
         {
             var text = item.ToString() ?? string.Empty;
             var color = Color.Gray;

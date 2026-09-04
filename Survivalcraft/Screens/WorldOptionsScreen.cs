@@ -186,7 +186,7 @@ public class WorldOptionsScreen : Screen
                 .ToArray();
             DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, 1), enumValues, 56f,
                 e => StringsManager.GetString("TerrainGenerationMode", (TerrainGenerationMode)e, "Name"),
-                delegate(object e)
+                delegate (object e)
                 {
                     if (_worldSettings.GameMode != 0 && TerrainGenerationModes.IsFlat((TerrainGenerationMode)e))
                     {
@@ -252,7 +252,7 @@ public class WorldOptionsScreen : Screen
                     LanguageManager.Get(_typeName, 2),
                     items,
                     72f,
-                    delegate(object index)
+                    delegate (object index)
                     {
                         var node2 = ContentManager.Get<XElement>("Widgets/SelectBlockItem");
                         var obj2 = (ContainerWidget)LoadWidget(null, node2, null);
@@ -261,7 +261,7 @@ public class WorldOptionsScreen : Screen
                             .GetDisplayName(null, Terrain.MakeBlockValue((int)index));
                         return obj2;
                     },
-                    delegate(object index) { _worldSettings.TerrainBlockIndex = (int)index; }
+                    delegate (object index) { _worldSettings.TerrainBlockIndex = (int)index; }
                 )
             );
         }
@@ -301,7 +301,7 @@ public class WorldOptionsScreen : Screen
         {
             BlocksTexturesManager.UpdateBlocksTexturesList();
             var dialog = new ListSelectionDialog(LanguageManager.Get(_typeName, 3),
-                BlocksTexturesManager.ReadOnlyBlockTexturesNames, 64f, delegate(object item)
+                BlocksTexturesManager.ReadOnlyBlockTexturesNames, 64f, delegate (object item)
                 {
                     var node = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
                     var obj = (ContainerWidget)LoadWidget(this, node, null);
@@ -313,7 +313,7 @@ public class WorldOptionsScreen : Screen
                     obj.Children.Find<RectangleWidget>("BlocksTextureItem.Icon")!.Subtexture =
                         new Subtexture(texture2, Vector2.Zero, Vector2.One);
                     return obj;
-                }, delegate(object item) { _worldSettings.BlocksTextureName = (string)item; });
+                }, delegate (object item) { _worldSettings.BlocksTextureName = (string)item; });
             DialogsManager.ShowDialog(null, dialog);
             _descriptionLabel.Text = StringsManager.GetString("BlocksTexture", "Description");
         }
@@ -352,7 +352,7 @@ public class WorldOptionsScreen : Screen
         {
             DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, "7"),
                 EnumUtils.GetEnumValues(typeof(TimeOfDayMode)), 56f,
-                e => LanguageManager.Get("TimeOfDayMode", ((TimeOfDayMode)e).ToString()), delegate(object e)
+                e => LanguageManager.Get("TimeOfDayMode", ((TimeOfDayMode)e).ToString()), delegate (object e)
                 {
                     _worldSettings.TimeOfDayMode = (TimeOfDayMode)e;
                     _descriptionLabel.Text =

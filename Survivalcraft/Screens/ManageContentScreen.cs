@@ -28,7 +28,7 @@ public class ManageContentScreen : Screen
         _deleteButton = Children.Find<ButtonWidget>("DeleteButton")!;
         _changeFilterButton = Children.Find<ButtonWidget>("ChangeFilter")!;
         _filterLabel = Children.Find<LabelWidget>("Filter")!;
-        _contentList.ItemWidgetFactory = delegate(object obj)
+        _contentList.ItemWidgetFactory = delegate (object obj)
         {
             var listItem = (ListItem)obj;
             ContainerWidget containerWidget;
@@ -149,7 +149,7 @@ public class ManageContentScreen : Screen
                 new ListSelectionDialog(
                     LanguageManager.Get(_typeName, 7),
                     list, 60f,
-                    item => GetFilterDisplayName((ContentType)item), delegate(object item)
+                    item => GetFilterDisplayName((ContentType)item), delegate (object item)
                     {
                         if ((ContentType)item == _filter)
                         {
@@ -200,7 +200,7 @@ public class ManageContentScreen : Screen
                 LanguageManager.Get(_typeName, 9),
                 smallMessage,
                 LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
-                delegate(MessageDialogButton button)
+                delegate (MessageDialogButton button)
                 {
                     if (button != MessageDialogButton.Button1)
                     {
@@ -264,7 +264,7 @@ public class ManageContentScreen : Screen
             }));
         }
 
-        list.Sort(delegate(ListItem o1, ListItem o2)
+        list.Sort(delegate (ListItem o1, ListItem o2)
         {
             if (o1.IsBuiltIn && !o2.IsBuiltIn)
             {

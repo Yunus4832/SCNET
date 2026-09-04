@@ -31,20 +31,27 @@ public class LoadingScreen : Screen
         ClearChildren();
         var rectangle1 = new RectangleWidget
         {
-            FillColor = Color.White, OutlineColor = Color.Transparent, Size = new Vector2(256f),
-            VerticalAlignment = WidgetAlignment.Center, HorizontalAlignment = WidgetAlignment.Center
+            FillColor = Color.White,
+            OutlineColor = Color.Transparent,
+            Size = new Vector2(256f),
+            VerticalAlignment = WidgetAlignment.Center,
+            HorizontalAlignment = WidgetAlignment.Center
         };
         rectangle1.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/CandyRufusLogo");
         var rectangle2 = new RectangleWidget
         {
-            FillColor = Color.White, OutlineColor = Color.Transparent, Size = new Vector2(80, 50),
-            VerticalAlignment = WidgetAlignment.Far, HorizontalAlignment = WidgetAlignment.Far,
+            FillColor = Color.White,
+            OutlineColor = Color.Transparent,
+            Size = new Vector2(80, 50),
+            VerticalAlignment = WidgetAlignment.Far,
+            HorizontalAlignment = WidgetAlignment.Far,
             Margin = new Vector2(10f)
         };
         rectangle2.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/EngineLogo");
         var busyBar = new BusyBarWidget
         {
-            VerticalAlignment = WidgetAlignment.Far, HorizontalAlignment = WidgetAlignment.Center,
+            VerticalAlignment = WidgetAlignment.Far,
+            HorizontalAlignment = WidgetAlignment.Center,
             Margin = new Vector2(0, 40)
         };
         _canvas.AddChildren(_background);

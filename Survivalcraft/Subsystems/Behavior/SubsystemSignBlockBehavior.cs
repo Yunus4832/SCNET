@@ -146,33 +146,33 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         switch (block)
         {
             case AttachedSignBlock:
-            {
-                var point = CellFace.FaceToPoint3(AttachedSignBlock.GetFace(data));
-                var x2 = x - point.X;
-                var y2 = y - point.Y;
-                var z2 = z - point.Z;
-                var cellValue = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
-                var cellContents = Terrain.ExtractContents(cellValue);
-                if (!BlocksManager.Blocks[cellContents].IsCollidable(cellValue))
                 {
-                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                }
+                    var point = CellFace.FaceToPoint3(AttachedSignBlock.GetFace(data));
+                    var x2 = x - point.X;
+                    var y2 = y - point.Y;
+                    var z2 = z - point.Z;
+                    var cellValue = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
+                    var cellContents = Terrain.ExtractContents(cellValue);
+                    if (!BlocksManager.Blocks[cellContents].IsCollidable(cellValue))
+                    {
+                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case PostedSignBlock:
-            {
-                var num2 = PostedSignBlock.GetHanging(data)
-                    ? SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z)
-                    : SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
-
-                if (!BlocksManager.Blocks[Terrain.ExtractContents(num2)].IsCollidable(num2))
                 {
-                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                }
+                    var num2 = PostedSignBlock.GetHanging(data)
+                        ? SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z)
+                        : SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
 
-                break;
-            }
+                    if (!BlocksManager.Blocks[Terrain.ExtractContents(num2)].IsCollidable(num2))
+                    {
+                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+                    }
+
+                    break;
+                }
         }
     }
 

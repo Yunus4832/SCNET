@@ -56,7 +56,7 @@ public static class GameEntry
         Window.Resized += OnWindowResized;
         Window.Closed += Closed;
         Display.DeviceReset += ContentManager.DisplayDeviceReset;
-        Window.UnhandledException += delegate(UnhandledExceptionInfo e)
+        Window.UnhandledException += delegate (UnhandledExceptionInfo e)
         {
             DialogsManager.Alert(
                 "未处理的异常" + e.Exception.Message,

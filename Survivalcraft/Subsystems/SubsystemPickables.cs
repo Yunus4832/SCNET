@@ -238,26 +238,30 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                                 var num13 = 0;
                                 int? num14 = null;
                                 for (var j = -3; j <= 3; j++)
-                                for (var k = -3; k <= 3; k++)
-                                for (var l = -3; l <= 3; l++)
                                 {
-                                    if (BlocksManager.Blocks[
-                                            _subsystemTerrain.Terrain.GetCellContents(j + num8, k + num9, l + num10)]
-                                        .Collidable)
+                                    for (var k = -3; k <= 3; k++)
                                     {
-                                        continue;
-                                    }
+                                        for (var l = -3; l <= 3; l++)
+                                        {
+                                            if (BlocksManager.Blocks[
+                                                    _subsystemTerrain.Terrain.GetCellContents(j + num8, k + num9, l + num10)]
+                                                .Collidable)
+                                            {
+                                                continue;
+                                            }
 
-                                    var num15 = j * j + k * k + l * l;
-                                    if (num15 >= num14)
-                                    {
-                                        continue;
-                                    }
+                                            var num15 = j * j + k * k + l * l;
+                                            if (num15 >= num14)
+                                            {
+                                                continue;
+                                            }
 
-                                    num11 = j + num8;
-                                    num12 = k + num9;
-                                    num13 = l + num10;
-                                    num14 = num15;
+                                            num11 = j + num8;
+                                            num12 = k + num9;
+                                            num13 = l + num10;
+                                            num14 = num15;
+                                        }
+                                    }
                                 }
 
                                 if (num14.HasValue)

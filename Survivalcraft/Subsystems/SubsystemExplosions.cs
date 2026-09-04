@@ -324,7 +324,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 var flag = false;
                 var probability = num6 > 5f ? 0.95f : 0.75f;
                 if (SharedRandom.Bool(probability))
-                    //爆炸方块
+                //爆炸方块
                 {
                     flag = TryNetExplodeBlock(x, y, z, cellValue);
                 }
@@ -654,21 +654,25 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         var num = 0f;
         var zero = Vector3.Zero;
         for (var i = -1; i <= 1; i++)
-        for (var j = -1; j <= 1; j++)
-        for (var k = -1; k <= 1; k++)
         {
-            var num2 = point.X + i;
-            var num3 = point.Y + j;
-            var num4 = point.Z + k;
-            var num5 = _subsystemTerrain.Terrain.GetCellContents(num2, num3, num4) != 0
-                ? obstaclePressure.Value
-                : _pressureByPoint.Get(num2, num3, num4);
-            if (i != 0 || j != 0 || k != 0)
+            for (var j = -1; j <= 1; j++)
             {
-                zero += num5 * Vector3.Normalize(new Vector3(point.X - num2, point.Y - num3, point.Z - num4));
-            }
+                for (var k = -1; k <= 1; k++)
+                {
+                    var num2 = point.X + i;
+                    var num3 = point.Y + j;
+                    var num4 = point.Z + k;
+                    var num5 = _subsystemTerrain.Terrain.GetCellContents(num2, num3, num4) != 0
+                        ? obstaclePressure.Value
+                        : _pressureByPoint.Get(num2, num3, num4);
+                    if (i != 0 || j != 0 || k != 0)
+                    {
+                        zero += num5 * Vector3.Normalize(new Vector3(point.X - num2, point.Y - num3, point.Z - num4));
+                    }
 
-            num += num5;
+                    num += num5;
+                }
+            }
         }
 
         var num6 = MathUtils.Max(MathUtils.Pow(mass, 0.5f), 1f);

@@ -93,7 +93,7 @@ public static partial class Touch
             if (_touchLocations[num].State == TouchLocationState.Moved)
             {
                 _touchLocations[num] = new TouchLocation
-                    { Id = id, Position = position, State = TouchLocationState.Moved };
+                { Id = id, Position = position, State = TouchLocationState.Moved };
             }
 
             TouchMoved?.Invoke(_touchLocations[num]);
@@ -101,7 +101,7 @@ public static partial class Touch
         else
         {
             _touchLocations.Add(new TouchLocation
-                { Id = id, Position = position, State = TouchLocationState.Pressed });
+            { Id = id, Position = position, State = TouchLocationState.Pressed });
             TouchPressed?.Invoke(_touchLocations[^1]);
         }
     }
@@ -132,7 +132,7 @@ public static partial class Touch
         else
         {
             _touchLocations[num] = new TouchLocation
-                { Id = id, Position = position, State = TouchLocationState.Released };
+            { Id = id, Position = position, State = TouchLocationState.Released };
         }
 
         TouchReleased?.Invoke(_touchLocations[num]);

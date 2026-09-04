@@ -63,7 +63,7 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
         if (RunMode.Value is RunModeType.Gui)
         {
             _subsystemPlayers.PlayerAdded += AddGameWidgetForPlayer;
-            _subsystemPlayers.PlayerRemoved += delegate(PlayerData playerData)
+            _subsystemPlayers.PlayerRemoved += delegate (PlayerData playerData)
             {
                 RemoveGameWidget(playerData.GameWidget);
             };

@@ -24,8 +24,8 @@ public class VersionConverter22To23 : VersionConverter
             ConvertChunks(directoryName);
             ConvertProject(directoryName);
             foreach (var item in from f in Storage.ListFileNames(directoryName)
-                     where Storage.GetExtension(f) == ".new"
-                     select f)
+                                 where Storage.GetExtension(f) == ".new"
+                                 select f)
             {
                 var sourcePath = Storage.CombinePaths(directoryName, item);
                 var destinationPath = Storage.CombinePaths(directoryName, Storage.GetFileNameWithoutExtension(item));
@@ -33,8 +33,8 @@ public class VersionConverter22To23 : VersionConverter
             }
 
             foreach (var item2 in from f in Storage.ListDirectoryNames(directoryName)
-                     where Storage.GetExtension(f) == ".new"
-                     select f)
+                                  where Storage.GetExtension(f) == ".new"
+                                  select f)
             {
                 var sourcePath2 = Storage.CombinePaths(directoryName, item2);
                 var destinationPath2 = Storage.CombinePaths(directoryName, Storage.GetFileNameWithoutExtension(item2));
@@ -42,15 +42,15 @@ public class VersionConverter22To23 : VersionConverter
             }
 
             foreach (var item3 in from f in Storage.ListFileNames(directoryName)
-                     where Storage.GetExtension(f) == ".old"
-                     select f)
+                                  where Storage.GetExtension(f) == ".old"
+                                  select f)
             {
                 Storage.DeleteFile(Storage.CombinePaths(directoryName, item3));
             }
 
             foreach (var item4 in from f in Storage.ListDirectoryNames(directoryName)
-                     where Storage.GetExtension(f) == ".old"
-                     select f)
+                                  where Storage.GetExtension(f) == ".old"
+                                  select f)
             {
                 Storage.DeleteDirectoryRecursive(Storage.CombinePaths(directoryName, item4));
             }
@@ -58,8 +58,8 @@ public class VersionConverter22To23 : VersionConverter
         catch (Exception)
         {
             foreach (var item5 in from f in Storage.ListFileNames(directoryName)
-                     where Storage.GetExtension(f) == ".old"
-                     select f)
+                                  where Storage.GetExtension(f) == ".old"
+                                  select f)
             {
                 var sourcePath3 = Storage.CombinePaths(directoryName, item5);
                 var destinationPath3 = Storage.CombinePaths(directoryName, Storage.GetFileNameWithoutExtension(item5));
@@ -67,8 +67,8 @@ public class VersionConverter22To23 : VersionConverter
             }
 
             foreach (var item6 in from f in Storage.ListDirectoryNames(directoryName)
-                     where Storage.GetExtension(f) == ".old"
-                     select f)
+                                  where Storage.GetExtension(f) == ".old"
+                                  select f)
             {
                 var sourcePath4 = Storage.CombinePaths(directoryName, item6);
                 var destinationPath4 = Storage.CombinePaths(directoryName, Storage.GetFileNameWithoutExtension(item6));
@@ -76,15 +76,15 @@ public class VersionConverter22To23 : VersionConverter
             }
 
             foreach (var item7 in from f in Storage.ListFileNames(directoryName)
-                     where Storage.GetExtension(f) == ".new"
-                     select f)
+                                  where Storage.GetExtension(f) == ".new"
+                                  select f)
             {
                 Storage.DeleteFile(Storage.CombinePaths(directoryName, item7));
             }
 
             foreach (var item8 in from f in Storage.ListDirectoryNames(directoryName)
-                     where Storage.GetExtension(f) == ".new"
-                     select f)
+                                  where Storage.GetExtension(f) == ".new"
+                                  select f)
             {
                 Storage.DeleteDirectoryRecursive(Storage.CombinePaths(directoryName, item8));
             }

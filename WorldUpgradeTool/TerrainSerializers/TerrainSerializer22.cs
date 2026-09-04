@@ -131,16 +131,18 @@ public class TerrainSerializer22 : IDisposable
                 Buffer.BlockCopy(_buffer, 0, intBufferForCell, 0, 262144);
                 var index = 0;
                 for (var i = 0; i < 16; i++)
-                for (var j = 0; j < 16; j++)
                 {
-                    var num3 = TerrainChunk.CalculateCellIndex(i, 0, j);
-                    var num4 = 0;
-                    while (num4 < 256)
+                    for (var j = 0; j < 16; j++)
                     {
-                        chunk.SetCellValueFast(num3, intBufferForCell[index]);
-                        num4++;
-                        num3++;
-                        index++;
+                        var num3 = TerrainChunk.CalculateCellIndex(i, 0, j);
+                        var num4 = 0;
+                        while (num4 < 256)
+                        {
+                            chunk.SetCellValueFast(num3, intBufferForCell[index]);
+                            num4++;
+                            num3++;
+                            index++;
+                        }
                     }
                 }
             }
@@ -150,10 +152,12 @@ public class TerrainSerializer22 : IDisposable
             Buffer.BlockCopy(_buffer, 0, intBufferForShafts, 0, 1024);
             var shaftIndex = 0;
             for (var k = 0; k < 16; k++)
-            for (var l = 0; l < 16; l++)
             {
-                chunk.SetShaftValueFast(k, l, intBufferForShafts[shaftIndex]);
-                shaftIndex++;
+                for (var l = 0; l < 16; l++)
+                {
+                    chunk.SetShaftValueFast(k, l, intBufferForShafts[shaftIndex]);
+                    shaftIndex++;
+                }
             }
 
             result = true;
@@ -191,16 +195,18 @@ public class TerrainSerializer22 : IDisposable
             var intBufferForCells = new int[262144 / sizeof(int)];
             var index = 0;
             for (var i = 0; i < 16; i++)
-            for (var j = 0; j < 16; j++)
             {
-                var num3 = TerrainChunk.CalculateCellIndex(i, 0, j);
-                var num4 = 0;
-                while (num4 < 256)
+                for (var j = 0; j < 16; j++)
                 {
-                    intBufferForCells[index] = chunk.GetCellValueFast(num3);
-                    num4++;
-                    num3++;
-                    index++;
+                    var num3 = TerrainChunk.CalculateCellIndex(i, 0, j);
+                    var num4 = 0;
+                    while (num4 < 256)
+                    {
+                        intBufferForCells[index] = chunk.GetCellValueFast(num3);
+                        num4++;
+                        num3++;
+                        index++;
+                    }
                 }
             }
 
@@ -210,10 +216,12 @@ public class TerrainSerializer22 : IDisposable
             var intBufferForShafts = new int[1024 / sizeof(int)];
             var shaftIndex = 0;
             for (var k = 0; k < 16; k++)
-            for (var l = 0; l < 16; l++)
             {
-                intBufferForShafts[shaftIndex] = (int)chunk.GetShaftValueFast(k, l);
-                shaftIndex++;
+                for (var l = 0; l < 16; l++)
+                {
+                    intBufferForShafts[shaftIndex] = (int)chunk.GetShaftValueFast(k, l);
+                    shaftIndex++;
+                }
             }
 
             Buffer.BlockCopy(intBufferForShafts, 0, _buffer, 0, 1024);

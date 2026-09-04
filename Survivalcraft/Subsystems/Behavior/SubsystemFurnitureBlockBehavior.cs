@@ -266,7 +266,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
         var dialog = new BuildFurnitureDialog(
             design,
-            furnitureDesign, delegate(bool result)
+            furnitureDesign, delegate (bool result)
             {
                 if (!result)
                 {
@@ -633,7 +633,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             }
 
             var value = HumanReadableConverter.ValuesListToString(';', (from d in GetFurnitureSetDesigns(furnitureSet)
-                select d.Index).ToArray());
+                                                                        select d.Index).ToArray());
             valuesDictionary4.SetValue("Indices", value);
             num++;
         }

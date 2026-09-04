@@ -6,8 +6,8 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
     {
         var list = new List<int>();
         list.AddRange(from b in BlocksManager.Blocks
-            where b is StairsBlock
-            select b.BlockIndex);
+                      where b is StairsBlock
+                      select b.BlockIndex);
         HandledBlocks = list.ToArray();
     }
 

@@ -23,7 +23,9 @@ public class ClickTextWidget : CanvasWidget
         Size = vector2;
         LabelWidget = new LabelWidget
         {
-            Text = text, FontScale = 0.8f, HorizontalAlignment = WidgetAlignment.Center,
+            Text = text,
+            FontScale = 0.8f,
+            HorizontalAlignment = WidgetAlignment.Center,
             VerticalAlignment = WidgetAlignment.Center
         };
         Children.Add(LabelWidget);

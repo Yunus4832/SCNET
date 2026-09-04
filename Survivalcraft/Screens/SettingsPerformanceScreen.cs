@@ -193,7 +193,7 @@ public class SettingsPerformanceScreen : Screen
         {
             DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(_typeName, 9),
                 LanguageManager.Get(_typeName, 10), LanguageManager.Ok, LanguageManager.Back,
-                delegate(MessageDialogButton button)
+                delegate (MessageDialogButton button)
                 {
                     if (button != MessageDialogButton.Button1)
                     {

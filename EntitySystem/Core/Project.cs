@@ -47,11 +47,11 @@ public class Project : IDisposable
             ProjectTemplate = projectData.ValuesDictionary.DatabaseObject;
             var dictionary = new Dictionary<string, Subsystem>();
             foreach (var item in from x in projectData.ValuesDictionary.Values
-                     select x as ValuesDictionary
+                                 select x as ValuesDictionary
                      into x
-                     where x?.DatabaseObject != null &&
-                           x.DatabaseObject.Type == gameDatabase.MemberSubsystemTemplateType
-                     select x)
+                                 where x?.DatabaseObject != null &&
+                                       x.DatabaseObject.Type == gameDatabase.MemberSubsystemTemplateType
+                                 select x)
             {
                 var value = item.GetValue<bool>("IsOptional");
                 var value2 = item.GetValue<string>("Class");

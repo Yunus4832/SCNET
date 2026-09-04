@@ -17,7 +17,7 @@ public class BestiaryScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/BestiaryScreen");
         LoadContents(this, node);
         _creaturesList = Children.Find<ListPanelWidget>("CreaturesList")!;
-        _creaturesList.ItemWidgetFactory = delegate(object item)
+        _creaturesList.ItemWidgetFactory = delegate (object item)
         {
             var bestiaryCreatureInfo2 = (BestiaryCreatureInfo)item;
             var node2 = ContentManager.Get<XElement>("Widgets/BestiaryItem");
@@ -30,7 +30,7 @@ public class BestiaryScreen : Screen
             obj.Children.Find<LabelWidget>("BestiaryItem.Details")!.Text = bestiaryCreatureInfo2.Description;
             return obj;
         };
-        _creaturesList.ItemClicked += delegate(object item)
+        _creaturesList.ItemClicked += delegate (object item)
         {
             ScreensManager.SwitchScreen("BestiaryDescription", item,
                 _creaturesList.Items.Cast<BestiaryCreatureInfo>().ToList());

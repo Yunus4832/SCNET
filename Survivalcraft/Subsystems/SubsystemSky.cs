@@ -753,44 +753,46 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         triangleVertices.Count += 49;
         triangleIndices.Count += 216;
         for (var i = 0; i < 7; i++)
-        for (var j = 0; j < 7; j++)
         {
-            var num2 = j - 3;
-            var num3 = i - 3;
-            var num4 = MathUtils.Max(MathUtils.Abs(num2), MathUtils.Abs(num3));
-            var num5 = _cloudsLayerRadii[num4];
-            var num6 = num4 > 0 ? num5 / MathUtils.Sqrt(num2 * num2 + num3 * num3) : 0f;
-            var num7 = num2 * num6;
-            var num8 = num3 * num6;
-            var y = MathUtils.Lerp(600f, 60f, num5 * num5);
-            var position = new Vector3(viewPosition.X + num7 * 1900f, y, viewPosition.Z + num8 * 1900f);
-            var texCoord = new Vector2(position.X, position.Z) / 1900f * 1.75f - v;
-            var color = _cloudsLayerColors[num4];
-            texturedBatch3D.TriangleVertices.Array[count2++] =
-                new VertexPositionColorTexture(position, color, texCoord);
-            if (j > 0 && i > 0)
+            for (var j = 0; j < 7; j++)
             {
-                var num9 = (ushort)(count + j + i * 7);
-                var num10 = (ushort)(count + (j - 1) + i * 7);
-                var num11 = (ushort)(count + (j - 1) + (i - 1) * 7);
-                var num12 = (ushort)(count + j + (i - 1) * 7);
-                if ((num2 <= 0 && num3 <= 0) || (num2 > 0 && num3 > 0))
+                var num2 = j - 3;
+                var num3 = i - 3;
+                var num4 = MathUtils.Max(MathUtils.Abs(num2), MathUtils.Abs(num3));
+                var num5 = _cloudsLayerRadii[num4];
+                var num6 = num4 > 0 ? num5 / MathUtils.Sqrt(num2 * num2 + num3 * num3) : 0f;
+                var num7 = num2 * num6;
+                var num8 = num3 * num6;
+                var y = MathUtils.Lerp(600f, 60f, num5 * num5);
+                var position = new Vector3(viewPosition.X + num7 * 1900f, y, viewPosition.Z + num8 * 1900f);
+                var texCoord = new Vector2(position.X, position.Z) / 1900f * 1.75f - v;
+                var color = _cloudsLayerColors[num4];
+                texturedBatch3D.TriangleVertices.Array[count2++] =
+                    new VertexPositionColorTexture(position, color, texCoord);
+                if (j > 0 && i > 0)
                 {
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num9;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num10;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num11;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num11;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num12;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num9;
-                }
-                else
-                {
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num9;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num10;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num12;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num10;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num11;
-                    texturedBatch3D.TriangleIndices.Array[count3++] = num12;
+                    var num9 = (ushort)(count + j + i * 7);
+                    var num10 = (ushort)(count + (j - 1) + i * 7);
+                    var num11 = (ushort)(count + (j - 1) + (i - 1) * 7);
+                    var num12 = (ushort)(count + j + (i - 1) * 7);
+                    if ((num2 <= 0 && num3 <= 0) || (num2 > 0 && num3 > 0))
+                    {
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num9;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num10;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num11;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num11;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num12;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num9;
+                    }
+                    else
+                    {
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num9;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num10;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num12;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num10;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num11;
+                        texturedBatch3D.TriangleIndices.Array[count3++] = num12;
+                    }
                 }
             }
         }
@@ -945,18 +947,20 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
     {
         var num = 0;
         for (var i = 0; i < 7; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num2 = j;
-            var num3 = (j + 1) % 16;
-            var num4 = i;
-            var num5 = i + 1;
-            skyDome.Indices[num++] = (ushort)(num2 + num4 * 16);
-            skyDome.Indices[num++] = (ushort)(num3 + num4 * 16);
-            skyDome.Indices[num++] = (ushort)(num3 + num5 * 16);
-            skyDome.Indices[num++] = (ushort)(num3 + num5 * 16);
-            skyDome.Indices[num++] = (ushort)(num2 + num5 * 16);
-            skyDome.Indices[num++] = (ushort)(num2 + num4 * 16);
+            for (var j = 0; j < 16; j++)
+            {
+                var num2 = j;
+                var num3 = (j + 1) % 16;
+                var num4 = i;
+                var num5 = i + 1;
+                skyDome.Indices[num++] = (ushort)(num2 + num4 * 16);
+                skyDome.Indices[num++] = (ushort)(num3 + num4 * 16);
+                skyDome.Indices[num++] = (ushort)(num3 + num5 * 16);
+                skyDome.Indices[num++] = (ushort)(num3 + num5 * 16);
+                skyDome.Indices[num++] = (ushort)(num2 + num5 * 16);
+                skyDome.Indices[num++] = (ushort)(num2 + num4 * 16);
+            }
         }
 
         for (var k = 2; k < 16; k++)

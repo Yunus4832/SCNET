@@ -24,8 +24,8 @@ public class EggBlock : Block
                 .Database
                 .Root
                 .GetExplicitNestingChildren(parameterSetType, false)
-            where o.EffectiveInheritanceRoot.Guid == eggParameterSetGuid
-            select o;
+                       where o.EffectiveInheritanceRoot.Guid == eggParameterSetGuid
+                       select o;
         foreach (var item in eggItems)
         {
             var nestedValue = item.GetNestedValue<int>("EggTypeIndex");

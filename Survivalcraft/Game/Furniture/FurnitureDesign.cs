@@ -355,13 +355,17 @@ public class FurnitureDesign
 
         var array = new int[resolution * resolution * resolution];
         for (var i = 0; i < resolution; i++)
-        for (var j = 0; j < resolution; j++)
-        for (var k = 0; k < resolution; k++)
         {
-            if (k >= 0 && k < Resolution && j >= 0 && j < Resolution && i >= 0 && i < Resolution)
+            for (var j = 0; j < resolution; j++)
             {
-                array[k + j * resolution + i * resolution * resolution] =
-                    _values[k + j * Resolution + i * Resolution * Resolution];
+                for (var k = 0; k < resolution; k++)
+                {
+                    if (k >= 0 && k < Resolution && j >= 0 && j < Resolution && i >= 0 && i < Resolution)
+                    {
+                        array[k + j * resolution + i * resolution * resolution] =
+                            _values[k + j * Resolution + i * Resolution * Resolution];
+                    }
+                }
             }
         }
 
@@ -377,16 +381,20 @@ public class FurnitureDesign
 
         var array = new int[Resolution * Resolution * Resolution];
         for (var i = 0; i < Resolution; i++)
-        for (var j = 0; j < Resolution; j++)
-        for (var k = 0; k < Resolution; k++)
         {
-            var num = k + delta.X;
-            var num2 = j + delta.Y;
-            var num3 = i + delta.Z;
-            if (num >= 0 && num < Resolution && num2 >= 0 && num2 < Resolution && num3 >= 0 && num3 < Resolution)
+            for (var j = 0; j < Resolution; j++)
             {
-                array[num + num2 * Resolution + num3 * Resolution * Resolution] =
-                    _values[k + j * Resolution + i * Resolution * Resolution];
+                for (var k = 0; k < Resolution; k++)
+                {
+                    var num = k + delta.X;
+                    var num2 = j + delta.Y;
+                    var num3 = i + delta.Z;
+                    if (num >= 0 && num < Resolution && num2 >= 0 && num2 < Resolution && num3 >= 0 && num3 < Resolution)
+                    {
+                        array[num + num2 * Resolution + num3 * Resolution * Resolution] =
+                            _values[k + j * Resolution + i * Resolution * Resolution];
+                    }
+                }
             }
         }
 
@@ -408,18 +416,22 @@ public class FurnitureDesign
 
         var array = new int[Resolution * Resolution * Resolution];
         for (var i = 0; i < Resolution; i++)
-        for (var j = 0; j < Resolution; j++)
-        for (var k = 0; k < Resolution; k++)
         {
-            var vector = RotatePoint(new Vector3(k, j, i) - new Vector3(Resolution / 2f - 0.5f), axis, steps) +
-                         new Vector3(Resolution / 2f - 0.5f);
-            var point = new Point3((int)MathUtils.Round(vector.X), (int)MathUtils.Round(vector.Y),
-                (int)MathUtils.Round(vector.Z));
-            if (point.X >= 0 && point.X < Resolution && point.Y >= 0 && point.Y < Resolution && point.Z >= 0 &&
-                point.Z < Resolution)
+            for (var j = 0; j < Resolution; j++)
             {
-                array[point.X + point.Y * Resolution + point.Z * Resolution * Resolution] =
-                    _values[k + j * Resolution + i * Resolution * Resolution];
+                for (var k = 0; k < Resolution; k++)
+                {
+                    var vector = RotatePoint(new Vector3(k, j, i) - new Vector3(Resolution / 2f - 0.5f), axis, steps) +
+                                 new Vector3(Resolution / 2f - 0.5f);
+                    var point = new Point3((int)MathUtils.Round(vector.X), (int)MathUtils.Round(vector.Y),
+                        (int)MathUtils.Round(vector.Z));
+                    if (point.X >= 0 && point.X < Resolution && point.Y >= 0 && point.Y < Resolution && point.Z >= 0 &&
+                        point.Z < Resolution)
+                    {
+                        array[point.X + point.Y * Resolution + point.Z * Resolution * Resolution] =
+                            _values[k + j * Resolution + i * Resolution * Resolution];
+                    }
+                }
             }
         }
 
@@ -430,18 +442,22 @@ public class FurnitureDesign
     {
         var array = new int[Resolution * Resolution * Resolution];
         for (var i = 0; i < Resolution; i++)
-        for (var j = 0; j < Resolution; j++)
-        for (var k = 0; k < Resolution; k++)
         {
-            var vector = MirrorPoint(new Vector3(k, j, i) - new Vector3(Resolution / 2f - 0.5f), axis) +
-                         new Vector3(Resolution / 2f - 0.5f);
-            var point = new Point3((int)MathUtils.Round(vector.X), (int)MathUtils.Round(vector.Y),
-                (int)MathUtils.Round(vector.Z));
-            if (point.X >= 0 && point.X < Resolution && point.Y >= 0 && point.Y < Resolution && point.Z >= 0 &&
-                point.Z < Resolution)
+            for (var j = 0; j < Resolution; j++)
             {
-                array[point.X + point.Y * Resolution + point.Z * Resolution * Resolution] =
-                    _values[k + j * Resolution + i * Resolution * Resolution];
+                for (var k = 0; k < Resolution; k++)
+                {
+                    var vector = MirrorPoint(new Vector3(k, j, i) - new Vector3(Resolution / 2f - 0.5f), axis) +
+                                 new Vector3(Resolution / 2f - 0.5f);
+                    var point = new Point3((int)MathUtils.Round(vector.X), (int)MathUtils.Round(vector.Y),
+                        (int)MathUtils.Round(vector.Z));
+                    if (point.X >= 0 && point.X < Resolution && point.Y >= 0 && point.Y < Resolution && point.Z >= 0 &&
+                        point.Z < Resolution)
+                    {
+                        array[point.X + point.Y * Resolution + point.Z * Resolution * Resolution] =
+                            _values[k + j * Resolution + i * Resolution * Resolution];
+                    }
+                }
             }
         }
 
@@ -603,16 +619,18 @@ public class FurnitureDesign
         var array = new byte[_values.Length];
         var num = 0;
         for (var i = 0; i < Resolution; i++)
-        for (var j = 0; j < Resolution; j++)
         {
-            var num2 = 0;
-            var num3 = 0;
-            while (num3 < Resolution)
+            for (var j = 0; j < Resolution; j++)
             {
-                num2 = _values[num] == 0 ? num2 + 1 : 0;
-                array[num] = (byte)num2;
-                num3++;
-                num++;
+                var num2 = 0;
+                var num3 = 0;
+                while (num3 < Resolution)
+                {
+                    num2 = _values[num] == 0 ? num2 + 1 : 0;
+                    array[num] = (byte)num2;
+                    num3++;
+                    num++;
+                }
             }
         }
 
@@ -667,14 +685,16 @@ public class FurnitureDesign
         var array = new float[Resolution * Resolution];
         var num = 0;
         for (var i = 0; i < Resolution; i++)
-        for (var j = 0; j < Resolution; j++)
         {
-            var x = (j + 1) / (float)Resolution;
-            for (var k = 0; k < Resolution; k++)
+            for (var j = 0; j < Resolution; j++)
             {
-                if (!IsValueTransparent(_values[num++]))
+                var x = (j + 1) / (float)Resolution;
+                for (var k = 0; k < Resolution; k++)
                 {
-                    array[k + i * Resolution] = MathUtils.Max(array[k + i * Resolution], x);
+                    if (!IsValueTransparent(_values[num++]))
+                    {
+                        array[k + i * Resolution] = MathUtils.Max(array[k + i * Resolution], x);
+                    }
                 }
             }
         }
@@ -753,145 +773,149 @@ public class FurnitureDesign
             {
                 var array = new Cell[Resolution * Resolution];
                 for (var k = 0; k < Resolution; k++)
-                for (var l = 0; l < Resolution; l++)
                 {
-                    var num2 = j * point.X + k * point3.X + l * point2.X + point5.X;
-                    var num3 = j * point.Y + k * point3.Y + l * point2.Y + point5.Y;
-                    var num4 = j * point.Z + k * point3.Z + l * point2.Z + point5.Z;
-                    var num5 = num2 + num3 * Resolution + num4 * Resolution * Resolution;
-                    var num6 = _values[num5];
-                    Cell cell = default;
-                    cell.Value = num6;
-                    var cell2 = cell;
-                    if (j > 0 && num6 != 0)
+                    for (var l = 0; l < Resolution; l++)
                     {
-                        var num7 = num2 - point.X + (num3 - point.Y) * Resolution +
-                                   (num4 - point.Z) * Resolution * Resolution;
-                        var value = _values[num7];
-                        if (!IsValueTransparent(value) ||
-                            Terrain.ExtractContents(num6) == Terrain.ExtractContents(value))
+                        var num2 = j * point.X + k * point3.X + l * point2.X + point5.X;
+                        var num3 = j * point.Y + k * point3.Y + l * point2.Y + point5.Y;
+                        var num4 = j * point.Z + k * point3.Z + l * point2.Z + point5.Z;
+                        var num5 = num2 + num3 * Resolution + num4 * Resolution * Resolution;
+                        var num6 = _values[num5];
+                        Cell cell = default;
+                        cell.Value = num6;
+                        var cell2 = cell;
+                        if (j > 0 && num6 != 0)
                         {
-                            cell2.Value = 0;
+                            var num7 = num2 - point.X + (num3 - point.Y) * Resolution +
+                                       (num4 - point.Z) * Resolution * Resolution;
+                            var value = _values[num7];
+                            if (!IsValueTransparent(value) ||
+                                Terrain.ExtractContents(num6) == Terrain.ExtractContents(value))
+                            {
+                                cell2.Value = 0;
+                            }
                         }
-                    }
 
-                    array[l + k * Resolution] = cell2;
+                        array[l + k * Resolution] = cell2;
+                    }
                 }
 
                 for (var m = 0; m < Resolution; m++)
-                for (var n = 0; n < Resolution; n++)
                 {
-                    var value2 = array[n + m * Resolution].Value;
-                    if (value2 == 0)
+                    for (var n = 0; n < Resolution; n++)
                     {
-                        continue;
-                    }
+                        var value2 = array[n + m * Resolution].Value;
+                        if (value2 == 0)
+                        {
+                            continue;
+                        }
 
-                    var point6 = FindLargestSize(array, new Point2(n, m), value2);
-                    if (point6 == Point2.Zero)
-                    {
-                        continue;
-                    }
+                        var point6 = FindLargestSize(array, new Point2(n, m), value2);
+                        if (point6 == Point2.Zero)
+                        {
+                            continue;
+                        }
 
-                    MarkUsed(array, new Point2(n, m), point6);
-                    var num8 = 0.0005f * Resolution;
-                    var num9 = n - num8;
-                    var num10 = n + point6.X + num8;
-                    var num11 = m - num8;
-                    var num12 = m + point6.Y + num8;
-                    var x = j * point.X + num11 * point3.X + num9 * point2.X + point4.X;
-                    var y = j * point.Y + num11 * point3.Y + num9 * point2.Y + point4.Y;
-                    var z = j * point.Z + num11 * point3.Z + num9 * point2.Z + point4.Z;
-                    var x2 = j * point.X + num11 * point3.X + num10 * point2.X + point4.X;
-                    var y2 = j * point.Y + num11 * point3.Y + num10 * point2.Y + point4.Y;
-                    var z2 = j * point.Z + num11 * point3.Z + num10 * point2.Z + point4.Z;
-                    var x3 = j * point.X + num12 * point3.X + num10 * point2.X + point4.X;
-                    var y3 = j * point.Y + num12 * point3.Y + num10 * point2.Y + point4.Y;
-                    var z3 = j * point.Z + num12 * point3.Z + num10 * point2.Z + point4.Z;
-                    var x4 = j * point.X + num12 * point3.X + num9 * point2.X + point4.X;
-                    var y4 = j * point.Y + num12 * point3.Y + num9 * point2.Y + point4.Y;
-                    var z4 = j * point.Z + num12 * point3.Z + num9 * point2.Z + point4.Z;
-                    var blockMesh3 = blockMesh;
-                    var num13 = Terrain.ExtractContents(value2);
-                    var block = BlocksManager.Blocks[num13];
-                    var num14 = block.GetFaceTextureSlot(i, value2);
-                    var isEmissive = false;
-                    var color = Color.White;
-                    if (block is IPaintableBlock paintableBlock)
-                    {
-                        var paintColor = paintableBlock.GetPaintColor(value2);
-                        color = SubsystemPalette.GetColor(_subsystemTerrain, paintColor);
-                    }
-                    else if (block is WaterBlock)
-                    {
-                        color = BlockColorsMap.WaterColorsMap.Lookup(12, 12);
-                        num14 = 189;
-                    }
-                    else if (block is CarpetBlock)
-                    {
-                        var color2 = CarpetBlock.GetColor(Terrain.ExtractData(value2));
-                        color = SubsystemPalette.GetFabricColor(_subsystemTerrain, color2);
-                    }
-                    else if (block is TorchBlock or WickerLampBlock)
-                    {
-                        isEmissive = true;
-                        num14 = 31;
-                    }
-                    else if (block is GlassBlock)
-                    {
-                        blockMesh3 = blockMesh2;
-                    }
+                        MarkUsed(array, new Point2(n, m), point6);
+                        var num8 = 0.0005f * Resolution;
+                        var num9 = n - num8;
+                        var num10 = n + point6.X + num8;
+                        var num11 = m - num8;
+                        var num12 = m + point6.Y + num8;
+                        var x = j * point.X + num11 * point3.X + num9 * point2.X + point4.X;
+                        var y = j * point.Y + num11 * point3.Y + num9 * point2.Y + point4.Y;
+                        var z = j * point.Z + num11 * point3.Z + num9 * point2.Z + point4.Z;
+                        var x2 = j * point.X + num11 * point3.X + num10 * point2.X + point4.X;
+                        var y2 = j * point.Y + num11 * point3.Y + num10 * point2.Y + point4.Y;
+                        var z2 = j * point.Z + num11 * point3.Z + num10 * point2.Z + point4.Z;
+                        var x3 = j * point.X + num12 * point3.X + num10 * point2.X + point4.X;
+                        var y3 = j * point.Y + num12 * point3.Y + num10 * point2.Y + point4.Y;
+                        var z3 = j * point.Z + num12 * point3.Z + num10 * point2.Z + point4.Z;
+                        var x4 = j * point.X + num12 * point3.X + num9 * point2.X + point4.X;
+                        var y4 = j * point.Y + num12 * point3.Y + num9 * point2.Y + point4.Y;
+                        var z4 = j * point.Z + num12 * point3.Z + num9 * point2.Z + point4.Z;
+                        var blockMesh3 = blockMesh;
+                        var num13 = Terrain.ExtractContents(value2);
+                        var block = BlocksManager.Blocks[num13];
+                        var num14 = block.GetFaceTextureSlot(i, value2);
+                        var isEmissive = false;
+                        var color = Color.White;
+                        if (block is IPaintableBlock paintableBlock)
+                        {
+                            var paintColor = paintableBlock.GetPaintColor(value2);
+                            color = SubsystemPalette.GetColor(_subsystemTerrain, paintColor);
+                        }
+                        else if (block is WaterBlock)
+                        {
+                            color = BlockColorsMap.WaterColorsMap.Lookup(12, 12);
+                            num14 = 189;
+                        }
+                        else if (block is CarpetBlock)
+                        {
+                            var color2 = CarpetBlock.GetColor(Terrain.ExtractData(value2));
+                            color = SubsystemPalette.GetFabricColor(_subsystemTerrain, color2);
+                        }
+                        else if (block is TorchBlock or WickerLampBlock)
+                        {
+                            isEmissive = true;
+                            num14 = 31;
+                        }
+                        else if (block is GlassBlock)
+                        {
+                            blockMesh3 = blockMesh2;
+                        }
 
-                    var num15 = num14 % 16;
-                    var num16 = num14 / 16;
-                    var count = blockMesh3.Vertices.Count;
-                    blockMesh3.Vertices.Count += 4;
-                    var array2 = blockMesh3.Vertices.Array;
-                    var x5 = ((n + 0.01f) / Resolution + num15) / 16f;
-                    var x6 = ((n + point6.X - 0.01f) / Resolution + num15) / 16f;
-                    var y5 = ((m + 0.01f) / Resolution + num16) / 16f;
-                    var y6 = ((m + point6.Y - 0.01f) / Resolution + num16) / 16f;
-                    array2[count] = new BlockMeshVertex
-                    {
-                        Position = new Vector3(x, y, z) / Resolution,
-                        Color = color,
-                        Face = (byte)num,
-                        TextureCoordinates = new Vector2(x5, y5),
-                        IsEmissive = isEmissive
-                    };
-                    array2[count + 1] = new BlockMeshVertex
-                    {
-                        Position = new Vector3(x2, y2, z2) / Resolution,
-                        Color = color,
-                        Face = (byte)num,
-                        TextureCoordinates = new Vector2(x6, y5),
-                        IsEmissive = isEmissive
-                    };
-                    array2[count + 2] = new BlockMeshVertex
-                    {
-                        Position = new Vector3(x3, y3, z3) / Resolution,
-                        Color = color,
-                        Face = (byte)num,
-                        TextureCoordinates = new Vector2(x6, y6),
-                        IsEmissive = isEmissive
-                    };
-                    array2[count + 3] = new BlockMeshVertex
-                    {
-                        Position = new Vector3(x4, y4, z4) / Resolution,
-                        Color = color,
-                        Face = (byte)num,
-                        TextureCoordinates = new Vector2(x5, y6),
-                        IsEmissive = isEmissive
-                    };
-                    var count2 = blockMesh3.Indices.Count;
-                    blockMesh3.Indices.Count += 6;
-                    var array3 = blockMesh3.Indices.Array;
-                    array3[count2] = (ushort)count;
-                    array3[count2 + 1] = (ushort)(count + 1);
-                    array3[count2 + 2] = (ushort)(count + 2);
-                    array3[count2 + 3] = (ushort)(count + 2);
-                    array3[count2 + 4] = (ushort)(count + 3);
-                    array3[count2 + 5] = (ushort)count;
+                        var num15 = num14 % 16;
+                        var num16 = num14 / 16;
+                        var count = blockMesh3.Vertices.Count;
+                        blockMesh3.Vertices.Count += 4;
+                        var array2 = blockMesh3.Vertices.Array;
+                        var x5 = ((n + 0.01f) / Resolution + num15) / 16f;
+                        var x6 = ((n + point6.X - 0.01f) / Resolution + num15) / 16f;
+                        var y5 = ((m + 0.01f) / Resolution + num16) / 16f;
+                        var y6 = ((m + point6.Y - 0.01f) / Resolution + num16) / 16f;
+                        array2[count] = new BlockMeshVertex
+                        {
+                            Position = new Vector3(x, y, z) / Resolution,
+                            Color = color,
+                            Face = (byte)num,
+                            TextureCoordinates = new Vector2(x5, y5),
+                            IsEmissive = isEmissive
+                        };
+                        array2[count + 1] = new BlockMeshVertex
+                        {
+                            Position = new Vector3(x2, y2, z2) / Resolution,
+                            Color = color,
+                            Face = (byte)num,
+                            TextureCoordinates = new Vector2(x6, y5),
+                            IsEmissive = isEmissive
+                        };
+                        array2[count + 2] = new BlockMeshVertex
+                        {
+                            Position = new Vector3(x3, y3, z3) / Resolution,
+                            Color = color,
+                            Face = (byte)num,
+                            TextureCoordinates = new Vector2(x6, y6),
+                            IsEmissive = isEmissive
+                        };
+                        array2[count + 3] = new BlockMeshVertex
+                        {
+                            Position = new Vector3(x4, y4, z4) / Resolution,
+                            Color = color,
+                            Face = (byte)num,
+                            TextureCoordinates = new Vector2(x5, y6),
+                            IsEmissive = isEmissive
+                        };
+                        var count2 = blockMesh3.Indices.Count;
+                        blockMesh3.Indices.Count += 6;
+                        var array3 = blockMesh3.Indices.Array;
+                        array3[count2] = (ushort)count;
+                        array3[count2 + 1] = (ushort)(count + 1);
+                        array3[count2 + 2] = (ushort)(count + 2);
+                        array3[count2 + 3] = (ushort)(count + 2);
+                        array3[count2 + 4] = (ushort)(count + 3);
+                        array3[count2 + 5] = (ushort)count;
+                    }
                 }
             }
 
@@ -1015,7 +1039,7 @@ public class FurnitureDesign
                 }
 
                 return collisionBoxesByRotation;
-                end_IL_0263:
+            end_IL_0263:
                 break;
             }
 
@@ -1029,42 +1053,46 @@ public class FurnitureDesign
     {
         var list = new List<BoundingBox>();
         for (var i = 0; i < Resolution; i++)
-        for (var j = 0; j < Resolution; j++)
-        for (var k = 0; k < Resolution; k++)
         {
-            var num = Terrain.ExtractContents(_values[k + j * Resolution + i * Resolution * Resolution]);
-            if (num != 31 && num != 17)
+            for (var j = 0; j < Resolution; j++)
             {
-                continue;
-            }
-
-            var boundingBox = new BoundingBox(new Vector3(k, j, i) / Resolution,
-                new Vector3(k + 1, j + 1, i + 1) / Resolution);
-            var num2 = -1;
-            for (var l = 0; l < list.Count; l++)
-            {
-                var boundingBox2 = list[l];
-                var vector = boundingBox2.Size();
-                var vector2 = boundingBox2.Center() - boundingBox.Center();
-                vector2.X = MathUtils.Max(MathUtils.Abs(vector2.X) - vector.X / 2f, 0f);
-                vector2.Y = MathUtils.Max(MathUtils.Abs(vector2.Y) - vector.Y / 2f, 0f);
-                vector2.Z = MathUtils.Max(MathUtils.Abs(vector2.Z) - vector.Z / 2f, 0f);
-                if (!(vector2.Length() < 0.15f))
+                for (var k = 0; k < Resolution; k++)
                 {
-                    continue;
+                    var num = Terrain.ExtractContents(_values[k + j * Resolution + i * Resolution * Resolution]);
+                    if (num != 31 && num != 17)
+                    {
+                        continue;
+                    }
+
+                    var boundingBox = new BoundingBox(new Vector3(k, j, i) / Resolution,
+                        new Vector3(k + 1, j + 1, i + 1) / Resolution);
+                    var num2 = -1;
+                    for (var l = 0; l < list.Count; l++)
+                    {
+                        var boundingBox2 = list[l];
+                        var vector = boundingBox2.Size();
+                        var vector2 = boundingBox2.Center() - boundingBox.Center();
+                        vector2.X = MathUtils.Max(MathUtils.Abs(vector2.X) - vector.X / 2f, 0f);
+                        vector2.Y = MathUtils.Max(MathUtils.Abs(vector2.Y) - vector.Y / 2f, 0f);
+                        vector2.Z = MathUtils.Max(MathUtils.Abs(vector2.Z) - vector.Z / 2f, 0f);
+                        if (!(vector2.Length() < 0.15f))
+                        {
+                            continue;
+                        }
+
+                        num2 = l;
+                        break;
+                    }
+
+                    if (num2 >= 0)
+                    {
+                        list[num2] = BoundingBox.Union(list[num2], boundingBox);
+                    }
+                    else if (list.Count < 4)
+                    {
+                        list.Add(boundingBox);
+                    }
                 }
-
-                num2 = l;
-                break;
-            }
-
-            if (num2 >= 0)
-            {
-                list[num2] = BoundingBox.Union(list[num2], boundingBox);
-            }
-            else if (list.Count < 4)
-            {
-                list.Add(boundingBox);
             }
         }
 
@@ -1089,15 +1117,19 @@ public class FurnitureDesign
     {
         var dictionary = new Dictionary<int, int>();
         for (var i = 0; i < Resolution; i++)
-        for (var j = 0; j < Resolution; j++)
-        for (var num = Resolution - 1; num >= 0; num--)
         {
-            var num2 = _values[j + num * Resolution + i * Resolution * Resolution];
-            if (num2 != 0)
+            for (var j = 0; j < Resolution; j++)
             {
-                dictionary.TryGetValue(num2, out var value);
-                dictionary[num2] = value + 1;
-                break;
+                for (var num = Resolution - 1; num >= 0; num--)
+                {
+                    var num2 = _values[j + num * Resolution + i * Resolution * Resolution];
+                    if (num2 != 0)
+                    {
+                        dictionary.TryGetValue(num2, out var value);
+                        dictionary[num2] = value + 1;
+                        break;
+                    }
+                }
             }
         }
 
@@ -1117,80 +1149,86 @@ public class FurnitureDesign
         _mountingFacesMask = 0;
         _transparentFacesMask = 0;
         for (var i = 0; i < Resolution; i++)
-        for (var j = 0; j < Resolution; j++)
         {
-            var values = _values;
-            var num = i + j * Resolution;
-            _ = Resolution;
-            var value = values[num + 0 * Resolution];
-            var value2 = _values[i + j * Resolution + (Resolution - 1) * Resolution * Resolution];
-            if (IsValueTransparent(value))
+            for (var j = 0; j < Resolution; j++)
             {
-                _transparentFacesMask |= 4;
-            }
-            else
-            {
-                _mountingFacesMask |= 4;
-            }
+                var values = _values;
+                var num = i + j * Resolution;
+                _ = Resolution;
+                var value = values[num + 0 * Resolution];
+                var value2 = _values[i + j * Resolution + (Resolution - 1) * Resolution * Resolution];
+                if (IsValueTransparent(value))
+                {
+                    _transparentFacesMask |= 4;
+                }
+                else
+                {
+                    _mountingFacesMask |= 4;
+                }
 
-            if (IsValueTransparent(value2))
-            {
-                _transparentFacesMask |= 1;
-            }
-            else
-            {
-                _mountingFacesMask |= 1;
+                if (IsValueTransparent(value2))
+                {
+                    _transparentFacesMask |= 1;
+                }
+                else
+                {
+                    _mountingFacesMask |= 1;
+                }
             }
         }
 
         for (var k = 0; k < Resolution; k++)
-        for (var l = 0; l < Resolution; l++)
         {
-            var value3 = _values[k * Resolution + l * Resolution * Resolution];
-            var value4 = _values[Resolution - 1 + k * Resolution + l * Resolution * Resolution];
-            if (IsValueTransparent(value3))
+            for (var l = 0; l < Resolution; l++)
             {
-                _transparentFacesMask |= 8;
-            }
-            else
-            {
-                _mountingFacesMask |= 8;
-            }
+                var value3 = _values[k * Resolution + l * Resolution * Resolution];
+                var value4 = _values[Resolution - 1 + k * Resolution + l * Resolution * Resolution];
+                if (IsValueTransparent(value3))
+                {
+                    _transparentFacesMask |= 8;
+                }
+                else
+                {
+                    _mountingFacesMask |= 8;
+                }
 
-            if (IsValueTransparent(value4))
-            {
-                _transparentFacesMask |= 2;
-            }
-            else
-            {
-                _mountingFacesMask |= 2;
+                if (IsValueTransparent(value4))
+                {
+                    _transparentFacesMask |= 2;
+                }
+                else
+                {
+                    _mountingFacesMask |= 2;
+                }
             }
         }
 
         for (var m = 0; m < Resolution; m++)
-        for (var n = 0; n < Resolution; n++)
         {
-            var values2 = _values;
-            var num2 = m;
-            _ = Resolution;
-            var value5 = values2[num2 + 0 + n * Resolution * Resolution];
-            var value6 = _values[m + (Resolution - 1) * Resolution + n * Resolution * Resolution];
-            if (IsValueTransparent(value5))
+            for (var n = 0; n < Resolution; n++)
             {
-                _transparentFacesMask |= 32;
-            }
-            else
-            {
-                _mountingFacesMask |= 32;
-            }
+                var values2 = _values;
+                var num2 = m;
+                _ = Resolution;
+                var value5 = values2[num2 + 0 + n * Resolution * Resolution];
+                var value6 = _values[m + (Resolution - 1) * Resolution + n * Resolution * Resolution];
+                if (IsValueTransparent(value5))
+                {
+                    _transparentFacesMask |= 32;
+                }
+                else
+                {
+                    _mountingFacesMask |= 32;
+                }
 
-            if (IsValueTransparent(value6))
-            {
-                _transparentFacesMask |= 16;
-            }
-            else
-            {
-                _mountingFacesMask |= 16;
+                if (IsValueTransparent(value6))
+                {
+                    _transparentFacesMask |= 16;
+                }
+                else
+                {
+                    _mountingFacesMask |= 16;
+                }
             }
         }
     }
@@ -1279,15 +1317,17 @@ public class FurnitureDesign
         var result = Point2.Zero;
         var num = Resolution;
         for (var i = start.Y; i < Resolution; i++)
-        for (var j = start.X; j <= num; j++)
         {
-            if (j == num || surface[j + i * Resolution].Value != value)
+            for (var j = start.X; j <= num; j++)
             {
-                num = j;
-                var point = new Point2(num - start.X, i - start.Y + 1);
-                if (point.X * point.Y > result.X * result.Y)
+                if (j == num || surface[j + i * Resolution].Value != value)
                 {
-                    result = point;
+                    num = j;
+                    var point = new Point2(num - start.X, i - start.Y + 1);
+                    if (point.X * point.Y > result.X * result.Y)
+                    {
+                        result = point;
+                    }
                 }
             }
         }
@@ -1298,9 +1338,11 @@ public class FurnitureDesign
     public void MarkUsed(Cell[] surface, Point2 start, Point2 size)
     {
         for (var i = start.Y; i < start.Y + size.Y; i++)
-        for (var j = start.X; j < start.X + size.X; j++)
         {
-            surface[j + i * Resolution].Value = 0;
+            for (var j = start.X; j < start.X + size.X; j++)
+            {
+                surface[j + i * Resolution].Value = 0;
+            }
         }
     }
 

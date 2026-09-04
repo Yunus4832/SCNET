@@ -173,19 +173,21 @@ public class ComponentSleep : Component, IUpdateable
         }
 
         for (var i = -1; i <= 1; i++)
-        for (var j = -1; j <= 1; j++)
         {
-            var start = _componentPlayer.ComponentBody.Position + new Vector3(i, 1f, j);
-            var end = new Vector3(start.X, 255f, start.Z);
-            if (_subsystemTerrain
-                .Raycast(start, end, false, true, (value, _) => Terrain.ExtractContents(value) != 0)
-                .HasValue)
+            for (var j = -1; j <= 1; j++)
             {
-                continue;
-            }
+                var start = _componentPlayer.ComponentBody.Position + new Vector3(i, 1f, j);
+                var end = new Vector3(start.X, 255f, start.Z);
+                if (_subsystemTerrain
+                    .Raycast(start, end, false, true, (value, _) => Terrain.ExtractContents(value) != 0)
+                    .HasValue)
+                {
+                    continue;
+                }
 
-            reason = LanguageManager.Get(_typeName, 5);
-            return false;
+                reason = LanguageManager.Get(_typeName, 5);
+                return false;
+            }
         }
 
         reason = string.Empty;

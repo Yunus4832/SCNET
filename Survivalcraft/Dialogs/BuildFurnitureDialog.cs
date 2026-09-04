@@ -126,7 +126,7 @@ public class BuildFurnitureDialog : Dialog
                             LanguageManager.Get(_typeName, 10),
                             _sourceDesign.Name,
                             20,
-                            delegate(string s)
+                            delegate (string s)
                             {
                                 try
                                 {
@@ -147,7 +147,7 @@ public class BuildFurnitureDialog : Dialog
                         new TextBoxDialog(LanguageManager.Get(_typeName, 11),
                             _design.Name,
                             20,
-                            delegate(string s)
+                            delegate (string s)
                             {
                                 try
                                 {
@@ -171,7 +171,7 @@ public class BuildFurnitureDialog : Dialog
                         new TextBoxDialog(LanguageManager.Get(_typeName, 11),
                             _design.Name,
                             20,
-                            delegate(string s)
+                            delegate (string s)
                             {
                                 try
                                 {
@@ -200,7 +200,7 @@ public class BuildFurnitureDialog : Dialog
                         list,
                         64f,
                         t => ((Tuple<string, Action>)t).Item1,
-                        delegate(object t) { ((Tuple<string, Action>)t).Item2(); }
+                        delegate (object t) { ((Tuple<string, Action>)t).Item2(); }
                     )
                 );
             }

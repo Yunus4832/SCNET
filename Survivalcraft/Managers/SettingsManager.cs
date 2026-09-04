@@ -101,12 +101,12 @@ public static class SettingsManager
                                 name = XmlUtils.GetAttributeValue<string>(item, "Name");
                                 var attributeValue = XmlUtils.GetAttributeValue<string>(item, "Value");
                                 var propertyInfo = (from pi in typeof(Settings).GetRuntimeProperties()
-                                    where pi.Name == name &&
-                                          pi.GetMethod != null &&
-                                          !pi.GetMethod.IsStatic && pi.GetMethod.IsPublic &&
-                                          pi.SetMethod != null &&
-                                          pi.SetMethod.IsPublic
-                                    select pi).FirstOrDefault();
+                                                    where pi.Name == name &&
+                                                          pi.GetMethod != null &&
+                                                          !pi.GetMethod.IsStatic && pi.GetMethod.IsPublic &&
+                                                          pi.SetMethod != null &&
+                                                          pi.SetMethod.IsPublic
+                                                    select pi).FirstOrDefault();
                                 if ((object?)propertyInfo != null)
                                 {
                                     var value = HumanReadableConverter.ConvertFromString(propertyInfo.PropertyType,
@@ -148,9 +148,9 @@ public static class SettingsManager
             var xElement = new XElement("Settings");
 
             foreach (var item in from pi in typeof(Settings).GetRuntimeProperties()
-                     where pi.GetMethod != null && !pi.GetMethod.IsStatic && pi.GetMethod.IsPublic &&
-                           pi.SetMethod != null && pi.SetMethod.IsPublic
-                     select pi)
+                                 where pi.GetMethod != null && !pi.GetMethod.IsStatic && pi.GetMethod.IsPublic &&
+                                       pi.SetMethod != null && pi.SetMethod.IsPublic
+                                 select pi)
             {
                 try
                 {

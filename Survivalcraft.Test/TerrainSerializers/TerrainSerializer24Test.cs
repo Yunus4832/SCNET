@@ -33,19 +33,25 @@ public sealed class TerrainSerializer24Test
         source.MainThreadState = TerrainChunkState.Valid;
 
         for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            var shaft = Terrain.ReplaceHumidity(0, (x + z) & 15);
-            shaft = Terrain.ReplaceTemperature(shaft, (x * 3 + z) & 15);
-            source.SetShaftValueFast(x, z, shaft);
+            for (var x = 0; x < 16; x++)
+            {
+                var shaft = Terrain.ReplaceHumidity(0, (x + z) & 15);
+                shaft = Terrain.ReplaceTemperature(shaft, (x * 3 + z) & 15);
+                source.SetShaftValueFast(x, z, shaft);
+            }
         }
 
         for (var y = 0; y < 256; y++)
-        for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            var contents = 1 + (x + 17 * z + 31 * y) % 200;
-            source.SetCellValueFast(x, y, z, Terrain.MakeBlockValue(contents, (x + y) & 15, z & 3));
+            for (var z = 0; z < 16; z++)
+            {
+                for (var x = 0; x < 16; x++)
+                {
+                    var contents = 1 + (x + 17 * z + 31 * y) % 200;
+                    source.SetCellValueFast(x, y, z, Terrain.MakeBlockValue(contents, (x + y) & 15, z & 3));
+                }
+            }
         }
 
         source.ModificationCounter = 1;
@@ -59,10 +65,12 @@ public sealed class TerrainSerializer24Test
         }
 
         for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            Assert.Equal(source.GetHumidityFast(x, z), target.GetHumidityFast(x, z));
-            Assert.Equal(source.GetTemperatureFast(x, z), target.GetTemperatureFast(x, z));
+            for (var x = 0; x < 16; x++)
+            {
+                Assert.Equal(source.GetHumidityFast(x, z), target.GetHumidityFast(x, z));
+                Assert.Equal(source.GetTemperatureFast(x, z), target.GetTemperatureFast(x, z));
+            }
         }
     }
 

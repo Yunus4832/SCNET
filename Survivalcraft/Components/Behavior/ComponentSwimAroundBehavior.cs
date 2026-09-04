@@ -113,7 +113,7 @@ public class ComponentSwimAroundBehavior : ComponentBehavior, IUpdateable
             var v = Vector3.Normalize(new Vector3(vector2.X, y, vector2.Y));
             var vector3 = vector + num2 * v;
             var terrainRaycastResult = _subsystemTerrain.Raycast(vector, vector3, false, false,
-                delegate(int value, float d)
+                delegate (int value, float d)
                 {
                     var num3 = Terrain.ExtractContents(value);
                     return !(BlocksManager.Blocks[num3] is WaterBlock);

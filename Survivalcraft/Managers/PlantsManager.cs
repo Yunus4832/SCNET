@@ -46,7 +46,7 @@ public static class PlantsManager
                 height4,
                 branchesCount,
                 3,
-                delegate(int y, int _)
+                delegate (int y, int _)
                 {
                     var num7 = 0.4f;
                     if (y < 0.2f * height4)
@@ -60,7 +60,7 @@ public static class PlantsManager
 
                     return num7;
                 },
-                delegate(int y)
+                delegate (int y)
                 {
                     if (y < height4 * 0.3f || y > height4 * 0.9f)
                     {
@@ -90,7 +90,7 @@ public static class PlantsManager
                 height3,
                 branchesCount2,
                 3,
-                delegate(int y, int _)
+                delegate (int y, int _)
                 {
                     var num5 = 0.66f;
                     if (y < height3 / 2 - 1)
@@ -125,7 +125,7 @@ public static class PlantsManager
                 height2,
                 branchesCount3,
                 3,
-                delegate(int y, int _)
+                delegate (int y, int _)
                 {
                     var num4 = MathUtils.Lerp(1.4f, 0.3f, y / (float)height2);
                     if (y < 3)
@@ -140,7 +140,7 @@ public static class PlantsManager
 
                     return num4;
                 },
-                delegate(int y)
+                delegate (int y)
                 {
                     if (y < 3 || y > height2 * 0.8f)
                     {
@@ -170,7 +170,7 @@ public static class PlantsManager
                 height,
                 branchesCount4,
                 3,
-                delegate(int y, int _)
+                delegate (int y, int _)
                 {
                     var num2 = MathUtils.Saturate(y / (float)height);
                     var num3 = MathUtils.Lerp(1.5f, 0f, MathUtils.Saturate((num2 - 0.6f) / 0.4f));
@@ -186,7 +186,7 @@ public static class PlantsManager
 
                     return num3;
                 },
-                delegate(int y)
+                delegate (int y)
                 {
                     var num = MathUtils.Saturate(y / (float)height);
                     if (y % 3 != 0)
@@ -224,7 +224,7 @@ public static class PlantsManager
                 height5,
                 branchesCount5,
                 2,
-                delegate(int y, int round)
+                delegate (int y, int round)
                 {
                     var num8 = height5 < 14 ? 1 : 2;
                     if (y < num8)
@@ -479,17 +479,21 @@ public static class PlantsManager
         {
             terrainBrush.CalculateBounds(out var min, out var max);
             for (var k = min.X - 1; k <= max.X + 1; k++)
-            for (var l = min.Z - 1; l <= max.Z + 1; l++)
-            for (var m = 1; m <= max.Y + 1; m++)
             {
-                var num2 = leavesProbability(m, j);
-                if (random.Float(0f, 1f) < num2 && !terrainBrush.GetValue(k, m, l).HasValue &&
-                    (terrainBrush.CountNonDiagonalNeighbors(k, m, l, leavesIndex) != 0 ||
-                     terrainBrush.CountNonDiagonalNeighbors(k, m, l,
-                         (Func<int?, int>)(v => v.HasValue && Terrain.ExtractContents(v.Value) == woodIndex ? 1 : 0)) !=
-                     0))
+                for (var l = min.Z - 1; l <= max.Z + 1; l++)
                 {
-                    terrainBrush.AddCell(k, m, l, 0);
+                    for (var m = 1; m <= max.Y + 1; m++)
+                    {
+                        var num2 = leavesProbability(m, j);
+                        if (random.Float(0f, 1f) < num2 && !terrainBrush.GetValue(k, m, l).HasValue &&
+                            (terrainBrush.CountNonDiagonalNeighbors(k, m, l, leavesIndex) != 0 ||
+                             terrainBrush.CountNonDiagonalNeighbors(k, m, l,
+                                 (Func<int?, int>)(v => v.HasValue && Terrain.ExtractContents(v.Value) == woodIndex ? 1 : 0)) !=
+                             0))
+                        {
+                            terrainBrush.AddCell(k, m, l, 0);
+                        }
+                    }
                 }
             }
 
@@ -526,15 +530,19 @@ public static class PlantsManager
             var num3 = random.Float(0.3f * size, 0.45f * size);
             var num4 = (int)MathUtils.Ceiling(num3);
             for (var j = item2.X - num4; j <= item2.X + num4; j++)
-            for (var k = item2.Y - num4; k <= item2.Y + num4; k++)
-            for (var l = item2.Z - num4; l <= item2.Z + num4; l++)
             {
-                var num5 = Math.Abs(j - item2.X) + Math.Abs(k - item2.Y) + Math.Abs(l - item2.Z);
-                var num6 = ((new Vector3(j, k, l) - new Vector3(item2)) * new Vector3(1f, 1.7f, 1f)).Length();
-                if (num6 <= num3 && (num3 - num6 > 1f || num5 <= 2 || random.Bool(0.7f)) &&
-                    !terrainBrush.GetValue(j, k, l).HasValue)
+                for (var k = item2.Y - num4; k <= item2.Y + num4; k++)
                 {
-                    terrainBrush.AddCell(j, k, l, value2);
+                    for (var l = item2.Z - num4; l <= item2.Z + num4; l++)
+                    {
+                        var num5 = Math.Abs(j - item2.X) + Math.Abs(k - item2.Y) + Math.Abs(l - item2.Z);
+                        var num6 = ((new Vector3(j, k, l) - new Vector3(item2)) * new Vector3(1f, 1.7f, 1f)).Length();
+                        if (num6 <= num3 && (num3 - num6 > 1f || num5 <= 2 || random.Bool(0.7f)) &&
+                            !terrainBrush.GetValue(j, k, l).HasValue)
+                        {
+                            terrainBrush.AddCell(j, k, l, value2);
+                        }
+                    }
                 }
             }
         }

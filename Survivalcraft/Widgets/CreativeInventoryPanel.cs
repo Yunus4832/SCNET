@@ -26,16 +26,18 @@ public class CreativeInventoryPanel : CanvasWidget
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)
-        for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
         {
-            var widget = new InventorySlotWidget
+            for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
             {
-                HideEditOverlay = true,
-                HideInteractiveOverlay = true,
-                HideFoodOverlay = true
-            };
-            _inventoryGrid.Children.Add(widget);
-            _inventoryGrid.SetWidgetCell(widget, new Point2(j, i));
+                var widget = new InventorySlotWidget
+                {
+                    HideEditOverlay = true,
+                    HideInteractiveOverlay = true,
+                    HideFoodOverlay = true
+                };
+                _inventoryGrid.Children.Add(widget);
+                _inventoryGrid.SetWidgetCell(widget, new Point2(j, i));
+            }
         }
     }
 

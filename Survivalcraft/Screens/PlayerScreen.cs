@@ -153,7 +153,7 @@ public class PlayerScreen : Screen
 
         if (Time.RealTime - EnterTime > 120 && CommonLib.WorkType == WorkType.Client &&
             CommonLib.Net.NetManager.IsRunning)
-            //客户端卡在新增玩家界面两分钟自动中断连接
+        //客户端卡在新增玩家界面两分钟自动中断连接
         {
             CommonLib.Net.Stop("客户端主动关闭连接");
         }
@@ -219,7 +219,7 @@ public class PlayerScreen : Screen
             var dialog = new ListSelectionDialog(
                 LanguageManager.Get(_typeName, 1),
                 items, 64f,
-                delegate(object item)
+                delegate (object item)
                 {
                     var node = ContentManager.Get<XElement>("Widgets/CharacterSkinItem");
                     var obj = (ContainerWidget)LoadWidget(this, node, null);
@@ -233,7 +233,7 @@ public class PlayerScreen : Screen
                     playerModelWidget.CharacterSkinTexture = texture;
                     return obj;
                 },
-                delegate(object item)
+                delegate (object item)
                 {
                     _playerData.CharacterSkinName = (string)item;
                     if (_playerData.IsDefaultName)
@@ -252,7 +252,7 @@ public class PlayerScreen : Screen
                 new ListSelectionDialog(LanguageManager.Get(_typeName, 2), _inputDevices,
                     56f,
                     d => GetDeviceDisplayName((WidgetInputDevice)d),
-                    delegate(object d)
+                    delegate (object d)
                     {
                         var widgetInputDevice = (WidgetInputDevice)d;
                         _playerData.InputDevice = widgetInputDevice;

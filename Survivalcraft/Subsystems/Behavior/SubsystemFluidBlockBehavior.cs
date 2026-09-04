@@ -353,45 +353,47 @@ public abstract class SubsystemFluidBlockBehavior(
         var num6 = Terrain.ToCell(p.Z) - radius;
         var num7 = Terrain.ToCell(p.Z) + radius;
         for (var i = num6; i <= num7; i++)
-        for (var j = num2; j <= num3; j++)
         {
-            var chunkAtCell = terrain.GetChunkAtCell(j, i, false);
-            if (chunkAtCell == null)
+            for (var j = num2; j <= num3; j++)
             {
-                continue;
-            }
-
-            var k = TerrainChunk.CalculateCellIndex(j & 0xF, num4, i & 0xF);
-            for (var l = num4; l <= num5; l++, k++)
-            {
-                var cellValueFast = chunkAtCell.GetCellValueFast(k);
-                var contents = Terrain.ExtractContents(cellValueFast);
-                if (!fluidBlock.IsTheSameFluid(contents))
+                var chunkAtCell = terrain.GetChunkAtCell(j, i, false);
+                if (chunkAtCell == null)
                 {
                     continue;
                 }
 
-                if (flowingFluidOnly)
+                var k = TerrainChunk.CalculateCellIndex(j & 0xF, num4, i & 0xF);
+                for (var l = num4; l <= num5; l++, k++)
                 {
-                    if (FluidBlock.GetLevel(Terrain.ExtractData(cellValueFast)) == 0)
+                    var cellValueFast = chunkAtCell.GetCellValueFast(k);
+                    var contents = Terrain.ExtractContents(cellValueFast);
+                    if (!fluidBlock.IsTheSameFluid(contents))
                     {
                         continue;
                     }
 
-                    var contents2 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(k + 1));
-                    if (fluidBlock.IsTheSameFluid(contents2))
+                    if (flowingFluidOnly)
                     {
-                        continue;
-                    }
-                }
+                        if (FluidBlock.GetLevel(Terrain.ExtractData(cellValueFast)) == 0)
+                        {
+                            continue;
+                        }
 
-                var num8 = p.X - (j + 0.5f);
-                var num9 = p.Y - (l + 1f);
-                var num10 = p.Z - (i + 0.5f);
-                var num11 = num8 * num8 + num9 * num9 + num10 * num10;
-                if (num11 < num)
-                {
-                    num = num11;
+                        var contents2 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(k + 1));
+                        if (fluidBlock.IsTheSameFluid(contents2))
+                        {
+                            continue;
+                        }
+                    }
+
+                    var num8 = p.X - (j + 0.5f);
+                    var num9 = p.Y - (l + 1f);
+                    var num10 = p.Z - (i + 0.5f);
+                    var num11 = num8 * num8 + num9 * num9 + num10 * num10;
+                    if (num11 < num)
+                    {
+                        num = num11;
+                    }
                 }
             }
         }

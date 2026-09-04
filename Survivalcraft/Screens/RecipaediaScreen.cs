@@ -36,7 +36,7 @@ public class RecipaediaScreen : Screen
         _recipesButton = Children.Find<ButtonWidget>("RecipesButton")!;
         _categories.Add(string.Empty);
         _categories.AddRange(BlocksManager.ReadOnlyCategories);
-        _blocksList.ItemWidgetFactory = delegate(object item)
+        _blocksList.ItemWidgetFactory = delegate (object item)
         {
             var value = (int)item;
             var num = Terrain.ExtractContents(value);
@@ -48,7 +48,7 @@ public class RecipaediaScreen : Screen
             obj.Children.Find<LabelWidget>("RecipaediaItem.Details")!.Text = block.GetDescription(value);
             return obj;
         };
-        _blocksList.ItemClicked += delegate(object item)
+        _blocksList.ItemClicked += delegate (object item)
         {
             if (_blocksList.SelectedItem == item && item is int)
             {
@@ -135,9 +135,9 @@ public class RecipaediaScreen : Screen
         _blocksList.ClearItems();
 
         var orders = (from item in BlocksManager.RegisteredBlocks
-            from creativeValue in item.GetCreativeValues()
-            where string.IsNullOrEmpty(text) || item.GetCategory(creativeValue) == text
-            select new Order(item, item.GetDisplayOrder(creativeValue), creativeValue)).ToList();
+                      from creativeValue in item.GetCreativeValues()
+                      where string.IsNullOrEmpty(text) || item.GetCategory(creativeValue) == text
+                      select new Order(item, item.GetDisplayOrder(creativeValue), creativeValue)).ToList();
 
         var orderList = orders.OrderBy(o => o.BlockOrder);
         foreach (var c in orderList)

@@ -769,15 +769,17 @@ public partial class PlayerData : IDisposable
         var vector = Vector2.Zero;
         var num = float.MinValue;
         for (var i = -30; i <= 30; i += 2)
-        for (var j = -30; j <= 30; j += 2)
         {
-            var num2 = Terrain.ToCell(desiredSpawnPosition.X) + i;
-            var num3 = Terrain.ToCell(desiredSpawnPosition.Y) + j;
-            var num4 = ScoreIntroSpawnPosition(desiredSpawnPosition, num2, num3);
-            if (num4 > num)
+            for (var j = -30; j <= 30; j += 2)
             {
-                num = num4;
-                vector = new Vector2(num2, num3);
+                var num2 = Terrain.ToCell(desiredSpawnPosition.X) + i;
+                var num3 = Terrain.ToCell(desiredSpawnPosition.Y) + j;
+                var num4 = ScoreIntroSpawnPosition(desiredSpawnPosition, num2, num3);
+                if (num4 > num)
+                {
+                    num = num4;
+                    vector = new Vector2(num2, num3);
+                }
             }
         }
 
@@ -792,17 +794,21 @@ public partial class PlayerData : IDisposable
         var vector = Vector3.Zero;
         var num = float.MinValue;
         for (var i = -8; i <= 8; i++)
-        for (var j = -8; j <= 8; j++)
-        for (var k = -8; k <= 8; k++)
         {
-            var num2 = Terrain.ToCell(desiredSpawnPosition.X) + i;
-            var num3 = Terrain.ToCell(desiredSpawnPosition.Y) + j;
-            var num4 = Terrain.ToCell(desiredSpawnPosition.Z) + k;
-            var num5 = ScoreNoIntroSpawnPosition(desiredSpawnPosition, num2, num3, num4);
-            if (num5 > num)
+            for (var j = -8; j <= 8; j++)
             {
-                num = num5;
-                vector = new Vector3(num2, num3, num4);
+                for (var k = -8; k <= 8; k++)
+                {
+                    var num2 = Terrain.ToCell(desiredSpawnPosition.X) + i;
+                    var num3 = Terrain.ToCell(desiredSpawnPosition.Y) + j;
+                    var num4 = Terrain.ToCell(desiredSpawnPosition.Z) + k;
+                    var num5 = ScoreNoIntroSpawnPosition(desiredSpawnPosition, num2, num3, num4);
+                    if (num5 > num)
+                    {
+                        num = num5;
+                        vector = new Vector3(num2, num3, num4);
+                    }
+                }
             }
         }
 
@@ -830,11 +836,13 @@ public partial class PlayerData : IDisposable
         }
 
         for (var i = x - 1; i <= x + 1; i++)
-        for (var j = z - 1; j <= z + 1; j++)
         {
-            if (_subsystemTerrain.Terrain.GetCellContents(i, num2 + 2, j) != 0)
+            for (var j = z - 1; j <= z + 1; j++)
             {
-                num -= 1f;
+                if (_subsystemTerrain.Terrain.GetCellContents(i, num2 + 2, j) != 0)
+                {
+                    num -= 1f;
+                }
             }
         }
 
@@ -908,19 +916,23 @@ public partial class PlayerData : IDisposable
     {
         var result = true;
         for (var i = p.X - 1; i < p.X + 1; i++)
-        for (var j = p.Z - 1; j < p.Z + 1; j++)
-        for (var num = p.Y; num > 0; num--)
         {
-            var cellContents = _subsystemTerrain.Terrain.GetCellContents(p.X, num, p.Z);
-            var block = BlocksManager.Blocks[cellContents];
-            if (block.Collidable)
+            for (var j = p.Z - 1; j < p.Z + 1; j++)
             {
-                return false;
-            }
+                for (var num = p.Y; num > 0; num--)
+                {
+                    var cellContents = _subsystemTerrain.Terrain.GetCellContents(p.X, num, p.Z);
+                    var block = BlocksManager.Blocks[cellContents];
+                    if (block.Collidable)
+                    {
+                        return false;
+                    }
 
-            if (block is WaterBlock)
-            {
-                break;
+                    if (block is WaterBlock)
+                    {
+                        break;
+                    }
+                }
             }
         }
 
@@ -1206,7 +1218,7 @@ public partial class PlayerData : IDisposable
                         1.5f);
                 }
                 else if (SubsystemGameInfo.WorldSettings is
-                         { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
+                { GameMode: GameMode.Adventure, IsAdventureRespawnAllowed: false })
                 {
                     ComponentPlayer.ComponentGui.DisplayLargeMessage(
                         LanguageManager.Get(TypeName, 6),

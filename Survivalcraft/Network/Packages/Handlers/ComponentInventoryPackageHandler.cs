@@ -98,7 +98,7 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                         targetInventoryObject =
                             subsystemInventories?.GetInventoryById(package.TargetInventorySlot.InventoryId);
                         if (sourceInventoryObject is not null)
-                            // 数据捕捉
+                        // 数据捕捉
                         {
                             if (targetInventoryObject != null)
                             {
@@ -123,7 +123,7 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                         targetInventoryObject =
                             subsystemInventories?.GetInventoryById(package.TargetInventorySlot.InventoryId);
                         if (sourceInventoryObject is not null)
-                            // 数据捕捉
+                        // 数据捕捉
                         {
                             if (targetInventoryObject != null)
                             {

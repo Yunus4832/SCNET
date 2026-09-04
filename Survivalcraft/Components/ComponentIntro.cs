@@ -84,16 +84,18 @@ public class ComponentIntro : Component, IUpdateable
         var vector3 = vector2;
         var num = float.MinValue;
         for (var i = Terrain.ToCell(vector2.Y) - 15; i < Terrain.ToCell(vector2.Y) + 15; i++)
-        for (var j = Terrain.ToCell(vector2.X) - 15; j < Terrain.ToCell(vector2.X) + 15; j++)
         {
-            var num2 = ScoreShipPosition(componentBody.Position.XZ, j, i);
-            if (!(num2 > num))
+            for (var j = Terrain.ToCell(vector2.X) - 15; j < Terrain.ToCell(vector2.X) + 15; j++)
             {
-                continue;
-            }
+                var num2 = ScoreShipPosition(componentBody.Position.XZ, j, i);
+                if (!(num2 > num))
+                {
+                    continue;
+                }
 
-            num = num2;
-            vector3 = new Vector2(j, i);
+                num = num2;
+                vector3 = new Vector2(j, i);
+            }
         }
 
         var databaseObject = Project.GameDatabase.Database.FindDatabaseObject(

@@ -113,9 +113,11 @@ public class SubsystemBodies : Subsystem, IUpdateable
 
                 // FlyOrderChange 是一次性标志，发送后重置；其它字段改为每轮全量发送，无需重置。
                 foreach (var item in _toSendList)
-                foreach (var body in item.Value)
                 {
-                    body.Locomotion?.FlyOrderChange = false;
+                    foreach (var body in item.Value)
+                    {
+                        body.Locomotion?.FlyOrderChange = false;
+                    }
                 }
             }
         }
@@ -135,16 +137,18 @@ public class SubsystemBodies : Subsystem, IUpdateable
         var num3 = (int)MathUtils.Floor((point.X + radius) / 8f);
         var num4 = (int)MathUtils.Floor((point.Y + radius) / 8f);
         for (var i = num; i <= num3; i++)
-        for (var j = num2; j <= num4; j++)
         {
-            if (!_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
+            for (var j = num2; j <= num4; j++)
             {
-                continue;
-            }
+                if (!_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
+                {
+                    continue;
+                }
 
-            for (var k = 0; k < value.Count; k++)
-            {
-                result.Add(value.Array[k]);
+                for (var k = 0; k < value.Count; k++)
+                {
+                    result.Add(value.Array[k]);
+                }
             }
         }
     }
@@ -158,16 +162,18 @@ public class SubsystemBodies : Subsystem, IUpdateable
         var num3 = MathUtils.Max(point.X, point2.X) + 1;
         var num4 = MathUtils.Max(point.Y, point2.Y) + 1;
         for (var i = num; i <= num3; i++)
-        for (var j = num2; j <= num4; j++)
         {
-            if (!_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
+            for (var j = num2; j <= num4; j++)
             {
-                continue;
-            }
+                if (!_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
+                {
+                    continue;
+                }
 
-            for (var k = 0; k < value.Count; k++)
-            {
-                result.Add(value.Array[k]);
+                for (var k = 0; k < value.Count; k++)
+                {
+                    result.Add(value.Array[k]);
+                }
             }
         }
     }

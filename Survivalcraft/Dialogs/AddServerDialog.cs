@@ -4,7 +4,9 @@ public class AddServerDialog : Dialog
 {
     private readonly BevelledButtonWidget _add = new()
     {
-        Text = "添加", Margin = new Vector2(180, 0), Size = new Vector2(120, 66),
+        Text = "添加",
+        Margin = new Vector2(180, 0),
+        Size = new Vector2(120, 66),
         HorizontalAlignment = WidgetAlignment.Near
     };
 
@@ -12,13 +14,17 @@ public class AddServerDialog : Dialog
 
     private readonly BevelledButtonWidget _cancel = new()
     {
-        Text = "取消", Margin = new Vector2(140, 0), Size = new Vector2(120, 66),
+        Text = "取消",
+        Margin = new Vector2(140, 0),
+        Size = new Vector2(120, 66),
         HorizontalAlignment = WidgetAlignment.Far
     };
 
     private readonly CanvasWidget _canvasWidget = new()
     {
-        ClampToBounds = true, HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center
+        ClampToBounds = true,
+        HorizontalAlignment = WidgetAlignment.Center,
+        VerticalAlignment = WidgetAlignment.Center
     };
 
     private TextBoxWidget _name1;
@@ -56,13 +62,13 @@ public class AddServerDialog : Dialog
     private Widget EditText(Vector2 size, string title, string name, Vector2 margin)
     {
         var canvasWidget = new CanvasWidget
-            { Size = size, HorizontalAlignment = WidgetAlignment.Center, Margin = margin };
+        { Size = size, HorizontalAlignment = WidgetAlignment.Center, Margin = margin };
         var canvasWidget2 = new CanvasWidget
-            { Size = size - new Vector2(160, 0), HorizontalAlignment = WidgetAlignment.Far };
+        { Size = size - new Vector2(160, 0), HorizontalAlignment = WidgetAlignment.Far };
         var rectangle = new RectangleWidget { OutlineColor = Color.White };
         var label = new LabelWidget { Text = title };
         var textBoxWidget = new TextBoxWidget
-            { Name = name, Size = size, HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(3f, 0f) };
+        { Name = name, Size = size, HorizontalAlignment = WidgetAlignment.Center, Margin = new Vector2(3f, 0f) };
         canvasWidget2.Children.Add(rectangle);
         canvasWidget2.Children.Add(textBoxWidget);
         canvasWidget.Children.Add(label);

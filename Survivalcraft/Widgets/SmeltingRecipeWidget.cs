@@ -59,11 +59,13 @@ public class SmeltingRecipeWidget : CanvasWidget
         _fireWidget = Children.Find<FireWidget>("SmeltingRecipeWidget.Fire")!;
         _resultWidget = Children.Find<CraftingRecipeSlotWidget>("SmeltingRecipeWidget.Result")!;
         for (var i = 0; i < _gridWidget.RowsCount; i++)
-        for (var j = 0; j < _gridWidget.ColumnsCount; j++)
         {
-            var widget = new CraftingRecipeSlotWidget();
-            _gridWidget.Children.Add(widget);
-            _gridWidget.SetWidgetCell(widget, new Point2(j, i));
+            for (var j = 0; j < _gridWidget.ColumnsCount; j++)
+            {
+                var widget = new CraftingRecipeSlotWidget();
+                _gridWidget.Children.Add(widget);
+                _gridWidget.SetWidgetCell(widget, new Point2(j, i));
+            }
         }
     }
 

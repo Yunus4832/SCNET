@@ -15,7 +15,7 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
         var data = Terrain.ExtractData(value);
         var voltageLevel = ButtonBlock.GetVoltageLevel(data);
         DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditVoltageLevelDialog(voltageLevel,
-            delegate(int newVoltageLevel)
+            delegate (int newVoltageLevel)
             {
                 var data2 = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
                 var num = Terrain.ReplaceData(value, data2);
@@ -42,7 +42,7 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
         DialogsManager.ShowDialog(
             componentPlayer.GuiWidget,
             new EditVoltageLevelDialog(voltageLevel,
-                delegate(int newVoltageLevel)
+                delegate (int newVoltageLevel)
                 {
                     var num = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
                     if (num == data)

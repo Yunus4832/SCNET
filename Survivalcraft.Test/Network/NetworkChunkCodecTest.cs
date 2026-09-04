@@ -13,22 +13,28 @@ public sealed class NetworkChunkCodecTest
         using var terrain = new Terrain();
         var source = new TerrainChunk(terrain, 3, -2);
         for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            var shaft = Terrain.ReplaceTemperature(0, (x + z) & 0xF);
-            shaft = Terrain.ReplaceHumidity(shaft, (x * 3 + z) & 0xF);
-            shaft = Terrain.ReplaceTopHeight(shaft, 200);
-            shaft = Terrain.ReplaceBottomHeight(shaft, 12);
-            shaft = Terrain.ReplaceSunlightHeight(shaft, 180);
-            source.SetShaftValueFast(x, z, shaft);
+            for (var x = 0; x < 16; x++)
+            {
+                var shaft = Terrain.ReplaceTemperature(0, (x + z) & 0xF);
+                shaft = Terrain.ReplaceHumidity(shaft, (x * 3 + z) & 0xF);
+                shaft = Terrain.ReplaceTopHeight(shaft, 200);
+                shaft = Terrain.ReplaceBottomHeight(shaft, 12);
+                shaft = Terrain.ReplaceSunlightHeight(shaft, 180);
+                source.SetShaftValueFast(x, z, shaft);
+            }
         }
 
         for (var y = 0; y < 256; y++)
-        for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            var contents = y < 60 ? 3 : 0;
-            source.SetCellValueFast(x, y, z, Terrain.MakeBlockValue(contents, (x + y + z) & 0xF, y & 7));
+            for (var z = 0; z < 16; z++)
+            {
+                for (var x = 0; x < 16; x++)
+                {
+                    var contents = y < 60 ? 3 : 0;
+                    source.SetCellValueFast(x, y, z, Terrain.MakeBlockValue(contents, (x + y + z) & 0xF, y & 7));
+                }
+            }
         }
 
         var encoded = NetworkChunkCodec.Encode(source);
@@ -41,13 +47,15 @@ public sealed class NetworkChunkCodecTest
         }
 
         for (var z = 0; z < 16; z++)
-        for (var x = 0; x < 16; x++)
         {
-            Assert.Equal(source.GetTemperatureFast(x, z), decoded.GetTemperatureFast(x, z));
-            Assert.Equal(source.GetHumidityFast(x, z), decoded.GetHumidityFast(x, z));
-            Assert.Equal(0, decoded.GetTopHeightFast(x, z));
-            Assert.Equal(0, decoded.GetBottomHeightFast(x, z));
-            Assert.Equal(0, decoded.GetSunlightHeightFast(x, z));
+            for (var x = 0; x < 16; x++)
+            {
+                Assert.Equal(source.GetTemperatureFast(x, z), decoded.GetTemperatureFast(x, z));
+                Assert.Equal(source.GetHumidityFast(x, z), decoded.GetHumidityFast(x, z));
+                Assert.Equal(0, decoded.GetTopHeightFast(x, z));
+                Assert.Equal(0, decoded.GetBottomHeightFast(x, z));
+                Assert.Equal(0, decoded.GetSunlightHeightFast(x, z));
+            }
         }
     }
 

@@ -141,15 +141,15 @@ public static class DialogsManager
                     value.Factor = MathUtils.Min(value.Factor + 6f * Time.FrameDuration, 1f);
                     break;
                 case < 0:
-                {
-                    value.Factor = MathUtils.Max(value.Factor - 6f * Time.FrameDuration, 0f);
-                    if (value.Factor <= 0f)
                     {
-                        _toRemove.Add(key);
-                    }
+                        value.Factor = MathUtils.Max(value.Factor - 6f * Time.FrameDuration, 0f);
+                        if (value.Factor <= 0f)
+                        {
+                            _toRemove.Add(key);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
 
             UpdateDialog(key, value);

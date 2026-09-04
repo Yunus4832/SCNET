@@ -79,20 +79,20 @@ public abstract class DeciduousLeavesBlock : LeavesBlock
         switch (GetSeason(data))
         {
             case Season.Spring:
-            {
-                var c3 = BlockColorsMap.Lookup(terrain, x, y, z);
-                var timeOfSeason = GetTimeOfSeason(data);
-                return Color.LerpNotSaturated(SpringColor, c3, timeOfSeason);
-            }
+                {
+                    var c3 = BlockColorsMap.Lookup(terrain, x, y, z);
+                    var timeOfSeason = GetTimeOfSeason(data);
+                    return Color.LerpNotSaturated(SpringColor, c3, timeOfSeason);
+                }
             case Season.Autumn:
-            {
-                var c = BlockColorsMap.Lookup(terrain, x, y, z);
-                var c2 = Color.LerpNotSaturated(f: MathUtils.Hash((uint)(x + 59 * y + 2497 * z)) / 4.2949673E+09f,
-                    c1: AutumnColor1, c2: AutumnColor2);
-                var f2 = MathUtils.Min(GetTimeOfSeason(data) * AutumnSpeedupFactor, 1f);
-                return Color.MultiplyColorOnly(s: MathUtils.Lerp(1f, AutumnTransitionLightening, Hat(f2)),
-                    c: Color.LerpNotSaturated(c, c2, f2));
-            }
+                {
+                    var c = BlockColorsMap.Lookup(terrain, x, y, z);
+                    var c2 = Color.LerpNotSaturated(f: MathUtils.Hash((uint)(x + 59 * y + 2497 * z)) / 4.2949673E+09f,
+                        c1: AutumnColor1, c2: AutumnColor2);
+                    var f2 = MathUtils.Min(GetTimeOfSeason(data) * AutumnSpeedupFactor, 1f);
+                    return Color.MultiplyColorOnly(s: MathUtils.Lerp(1f, AutumnTransitionLightening, Hat(f2)),
+                        c: Color.LerpNotSaturated(c, c2, f2));
+                }
             case Season.Winter:
                 return Color.White;
             case Season.Summer:
@@ -107,19 +107,19 @@ public abstract class DeciduousLeavesBlock : LeavesBlock
         switch (GetSeason(data))
         {
             case Season.Spring:
-            {
-                var c3 = BlockColorsMap.Lookup(environmentData);
-                var timeOfSeason = GetTimeOfSeason(data);
-                return Color.LerpNotSaturated(SpringColor, c3, timeOfSeason);
-            }
+                {
+                    var c3 = BlockColorsMap.Lookup(environmentData);
+                    var timeOfSeason = GetTimeOfSeason(data);
+                    return Color.LerpNotSaturated(SpringColor, c3, timeOfSeason);
+                }
             case Season.Autumn:
-            {
-                var c = BlockColorsMap.Lookup(environmentData);
-                var c2 = Color.Lerp(AutumnColor1, AutumnColor2, 0.5f);
-                var f = MathUtils.Min(GetTimeOfSeason(data) * AutumnSpeedupFactor, 1f);
-                return Color.MultiplyColorOnly(s: MathUtils.Lerp(1f, AutumnTransitionLightening, Hat(f)),
-                    c: Color.LerpNotSaturated(c, c2, f));
-            }
+                {
+                    var c = BlockColorsMap.Lookup(environmentData);
+                    var c2 = Color.Lerp(AutumnColor1, AutumnColor2, 0.5f);
+                    var f = MathUtils.Min(GetTimeOfSeason(data) * AutumnSpeedupFactor, 1f);
+                    return Color.MultiplyColorOnly(s: MathUtils.Lerp(1f, AutumnTransitionLightening, Hat(f)),
+                        c: Color.LerpNotSaturated(c, c2, f));
+                }
             case Season.Winter:
                 return Color.White;
             case Season.Summer:

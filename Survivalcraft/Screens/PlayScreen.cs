@@ -20,7 +20,7 @@ public class PlayScreen : Screen
         var worldsListWidget = _worldsListWidget;
         worldsListWidget.ItemWidgetFactory = (Func<object, Widget>)Delegate.Combine(
             worldsListWidget.ItemWidgetFactory,
-            (Func<object, Widget>)delegate(object item)
+            (Func<object, Widget>)delegate (object item)
             {
                 var worldInfo = (WorldInfo)item;
                 var node2 = ContentManager.Get<XElement>("Widgets/SavedWorldItem");
@@ -49,7 +49,7 @@ public class PlayScreen : Screen
 
         _worldsListWidget.ScrollPosition = 0f;
         _worldsListWidget.ScrollSpeed = 0f;
-        _worldsListWidget.ItemClicked += delegate(object item)
+        _worldsListWidget.ItemClicked += delegate (object item)
         {
             if (_worldsListWidget.SelectedItem == item)
             {

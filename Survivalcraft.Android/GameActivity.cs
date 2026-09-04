@@ -6,8 +6,8 @@ using Android.OS;
 using Game;
 
 using AndroidClipboardManager = Android.Content.ClipboardManager;
-using AndroidUri = Android.Net.Uri;
 using AndroidProviderSettings = Android.Provider.Settings;
+using AndroidUri = Android.Net.Uri;
 using EngineSdlTextInputBackend = Engine.Input.SdlTextInputBackend;
 using EngineTextInputManager = Engine.Input.TextInputManager;
 using GamePlatformManager = Game.Managers.PlatformManager;

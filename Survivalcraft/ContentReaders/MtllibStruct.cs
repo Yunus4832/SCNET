@@ -20,21 +20,21 @@ public class MtllibStruct
                     switch (spl[0])
                     {
                         case "newmtl":
-                        {
-                            tKey = spl[1];
-                            break;
-                        }
-
-                        case "map_Kd":
-                        {
-                            if (string.IsNullOrEmpty(tKey))
                             {
-                                throw new Exception("请先newmtl");
+                                tKey = spl[1];
+                                break;
                             }
 
-                            mtllibStruct.TexturePaths.Add(tKey, spl[1]);
-                            break;
-                        }
+                        case "map_Kd":
+                            {
+                                if (string.IsNullOrEmpty(tKey))
+                                {
+                                    throw new Exception("请先newmtl");
+                                }
+
+                                mtllibStruct.TexturePaths.Add(tKey, spl[1]);
+                                break;
+                            }
                     }
                 }
             }

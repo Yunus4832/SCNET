@@ -168,7 +168,7 @@ public static class ContentManager
             }
 
             if (contents.Count == 0)
-                //没有找到对应资源?
+            //没有找到对应资源?
             {
                 throw new Exception("未能找到资源[" + name + "][" + type.FullName + "]");
             }

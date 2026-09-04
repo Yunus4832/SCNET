@@ -27,14 +27,14 @@ public static class ScreenCaptureManager
             switch (SettingsManager.Current.ScreenshotSize)
             {
                 case ScreenshotSize.ScreenSize:
-                {
-                    num = MathUtils.Max(Window.ScreenSize.X, Window.ScreenSize.Y);
-                    height = MathUtils.Min(Window.ScreenSize.X, Window.ScreenSize.Y);
-                    var num2 = num / (float)height;
-                    num = MathUtils.Min(num, 2048);
-                    height = (int)MathUtils.Round(num / num2);
-                    break;
-                }
+                    {
+                        num = MathUtils.Max(Window.ScreenSize.X, Window.ScreenSize.Y);
+                        height = MathUtils.Min(Window.ScreenSize.X, Window.ScreenSize.Y);
+                        var num2 = num / (float)height;
+                        num = MathUtils.Min(num, 2048);
+                        height = (int)MathUtils.Round(num / num2);
+                        break;
+                    }
                 case ScreenshotSize.FullHD:
                     num = 1920;
                     height = 1080;

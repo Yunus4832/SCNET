@@ -43,28 +43,30 @@ public class StarfishBlock : BottomSuckerBlock
             throw new InvalidOperationException("Required BottomMesh.ParentBone is null")
         );
         for (var i = 0; i < 6; i++)
-        for (var j = 0; j < 4; j++)
         {
-            var zero = Vector2.Zero;
-            if (i < 4)
+            for (var j = 0; j < 4; j++)
             {
-                zero.Y = i * (float)Math.PI / 2f;
-            }
-            else
-            {
-                zero.X = i == 4 ? -(float)Math.PI / 2f : (float)Math.PI / 2f;
-            }
+                var zero = Vector2.Zero;
+                if (i < 4)
+                {
+                    zero.Y = i * (float)Math.PI / 2f;
+                }
+                else
+                {
+                    zero.X = i == 4 ? -(float)Math.PI / 2f : (float)Math.PI / 2f;
+                }
 
-            var m = Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateRotationZ(0.3f + 2f * j) *
-                    Matrix.CreateTranslation(Offsets[j].X, Offsets[j].Y, -0.49f) * Matrix.CreateRotationX(zero.X) *
-                    Matrix.CreateRotationY(zero.Y) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-            var num2 = 4 * i + j;
-            BlockMeshes[num2] = new BlockMesh();
-            BlockMeshes[num2].AppendModelMeshPart(starfishMesh.MeshParts[0], boneAbsoluteTransform * m,
-                false, false, false, false, Color.White);
-            BlockMeshes[num2]
-                .TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
-            CollisionBoxes[num2] = [BlockMeshes[num2].CalculateBoundingBox()];
+                var m = Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateRotationZ(0.3f + 2f * j) *
+                        Matrix.CreateTranslation(Offsets[j].X, Offsets[j].Y, -0.49f) * Matrix.CreateRotationX(zero.X) *
+                        Matrix.CreateRotationY(zero.Y) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                var num2 = 4 * i + j;
+                BlockMeshes[num2] = new BlockMesh();
+                BlockMeshes[num2].AppendModelMeshPart(starfishMesh.MeshParts[0], boneAbsoluteTransform * m,
+                    false, false, false, false, Color.White);
+                BlockMeshes[num2]
+                    .TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
+                CollisionBoxes[num2] = [BlockMeshes[num2].CalculateBoundingBox()];
+            }
         }
 
         StandaloneBlockMesh = new BlockMesh();

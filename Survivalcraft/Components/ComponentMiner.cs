@@ -159,10 +159,10 @@ public class ComponentMiner : Component, IUpdateable
         var cellFace = raycastResult.CellFace;
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
         if (TerritoryBlock.IsTerritoryValue(cellValue))
-            //不是管理员
+        //不是管理员
         {
             if (ComponentPlayer is { PlayerData.ServerManager: false } && territoriy != null)
-                //不是所有者
+            //不是所有者
             {
                 if (ComponentPlayer.PlayerData.PlayerGUID != territoriy.OwnerGuid)
                 {
@@ -641,7 +641,7 @@ public class ComponentMiner : Component, IUpdateable
             end,
             true,
             true,
-            delegate(int value, float distance)
+            delegate (int value, float distance)
             {
                 if (!(Vector3.DistanceSquared(start + distance * direction, creaturePosition) <= reach * reach))
                 {

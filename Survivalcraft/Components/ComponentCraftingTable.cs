@@ -97,23 +97,25 @@ public class ComponentCraftingTable : ComponentInventoryBase
     {
         var num = int.MaxValue;
         for (var i = 0; i < _craftingGridSize; i++)
-        for (var j = 0; j < _craftingGridSize; j++)
         {
-            var num2 = i + j * 3;
-            var slotIndex = i + j * _craftingGridSize;
-            var slotValue = GetSlotValue(slotIndex);
-            var num3 = Terrain.ExtractContents(slotValue);
-            var num4 = Terrain.ExtractData(slotValue);
-            var slotCount = GetSlotCount(slotIndex);
-            if (slotCount > 0)
+            for (var j = 0; j < _craftingGridSize; j++)
             {
-                var block = BlocksManager.Blocks[num3];
-                _matchedIngredients[num2] = block.CraftingId + ":" + num4.ToString(CultureInfo.InvariantCulture);
-                num = MathUtils.Min(num, slotCount);
-            }
-            else
-            {
-                _matchedIngredients[num2] = string.Empty;
+                var num2 = i + j * 3;
+                var slotIndex = i + j * _craftingGridSize;
+                var slotValue = GetSlotValue(slotIndex);
+                var num3 = Terrain.ExtractContents(slotValue);
+                var num4 = Terrain.ExtractData(slotValue);
+                var slotCount = GetSlotCount(slotIndex);
+                if (slotCount > 0)
+                {
+                    var block = BlocksManager.Blocks[num3];
+                    _matchedIngredients[num2] = block.CraftingId + ":" + num4.ToString(CultureInfo.InvariantCulture);
+                    num = MathUtils.Min(num, slotCount);
+                }
+                else
+                {
+                    _matchedIngredients[num2] = string.Empty;
+                }
             }
         }
 

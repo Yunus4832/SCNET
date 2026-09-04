@@ -18,68 +18,92 @@ public class VersionConverter128To129 : VersionConverter
     {
         XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
         foreach (var item in from e in projectNode.Element("Subsystems")?.Elements()
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
-                 select e)
-        foreach (var item2 in from e in item.Elements("Values")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
-                 select e)
-        foreach (var item3 in item2.Elements("Values"))
-        foreach (var item4 in from e in item3.Elements("Value")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                 select e)
+                             where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
+                             select e)
         {
-            var num = ConvertValue(XmlUtils.GetAttributeValue<int>(item4, "Value"));
-            XmlUtils.SetAttributeValue(item4, "Value", num);
+            foreach (var item2 in from e in item.Elements("Values")
+                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Pickables"
+                                  select e)
+            {
+                foreach (var item3 in item2.Elements("Values"))
+                {
+                    foreach (var item4 in from e in item3.Elements("Value")
+                                          where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                                          select e)
+                    {
+                        var num = ConvertValue(XmlUtils.GetAttributeValue<int>(item4, "Value"));
+                        XmlUtils.SetAttributeValue(item4, "Value", num);
+                    }
+                }
+            }
         }
 
         foreach (var item5 in from e in projectNode.Element("Subsystems")?.Elements()
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
-                 select e)
-        foreach (var item6 in from e in item5.Elements("Values")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
-                 select e)
-        foreach (var item7 in item6.Elements("Values"))
-        foreach (var item8 in from e in item7.Elements("Value")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                 select e)
+                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
+                              select e)
         {
-            var num2 = ConvertValue(XmlUtils.GetAttributeValue<int>(item8, "Value"));
-            XmlUtils.SetAttributeValue(item8, "Value", num2);
+            foreach (var item6 in from e in item5.Elements("Values")
+                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Projectiles"
+                                  select e)
+            {
+                foreach (var item7 in item6.Elements("Values"))
+                {
+                    foreach (var item8 in from e in item7.Elements("Value")
+                                          where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                                          select e)
+                    {
+                        var num2 = ConvertValue(XmlUtils.GetAttributeValue<int>(item8, "Value"));
+                        XmlUtils.SetAttributeValue(item8, "Value", num2);
+                    }
+                }
+            }
         }
 
         foreach (var item9 in from e in projectNode.Element("Subsystems")?.Elements()
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlockBehavior"
-                 select e)
-        foreach (var item10 in from e in item9.Elements("Values")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlocks"
-                 select e)
-        foreach (var item11 in item10.Elements("Values"))
-        foreach (var item12 in from e in item11.Elements("Value")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
-                 select e)
+                              where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlockBehavior"
+                              select e)
         {
-            var num3 = ConvertValue(XmlUtils.GetAttributeValue<int>(item12, "Value"));
-            XmlUtils.SetAttributeValue(item12, "Value", num3);
+            foreach (var item10 in from e in item9.Elements("Values")
+                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "CollapsingBlocks"
+                                   select e)
+            {
+                foreach (var item11 in item10.Elements("Values"))
+                {
+                    foreach (var item12 in from e in item11.Elements("Value")
+                                           where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Value"
+                                           select e)
+                    {
+                        var num3 = ConvertValue(XmlUtils.GetAttributeValue<int>(item12, "Value"));
+                        XmlUtils.SetAttributeValue(item12, "Value", num3);
+                    }
+                }
+            }
         }
 
         foreach (var item13 in projectNode.Element("Entities")?.Elements() ?? [])
-        foreach (var item14 in from e in item13.Elements("Values")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothing"
-                 select e)
-        foreach (var item15 in from e in item14.Elements("Values")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothes"
-                 select e)
-        foreach (var item16 in item15.Elements())
         {
-            var attributeValue = XmlUtils.GetAttributeValue<string>(item16, "Value");
-            var array = HumanReadableConverter.ValuesListFromString<int>(';', attributeValue);
-            for (var i = 0; i < array.Length; i++)
+            foreach (var item14 in from e in item13.Elements("Values")
+                                   where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothing"
+                                   select e)
             {
-                array[i] = ConvertValue(array[i]);
-            }
+                foreach (var item15 in from e in item14.Elements("Values")
+                                       where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Clothes"
+                                       select e)
+                {
+                    foreach (var item16 in item15.Elements())
+                    {
+                        var attributeValue = XmlUtils.GetAttributeValue<string>(item16, "Value");
+                        var array = HumanReadableConverter.ValuesListFromString<int>(';', attributeValue);
+                        for (var i = 0; i < array.Length; i++)
+                        {
+                            array[i] = ConvertValue(array[i]);
+                        }
 
-            var value = HumanReadableConverter.ValuesListToString(';', array);
-            XmlUtils.SetAttributeValue(item16, "Value", value);
+                        var value = HumanReadableConverter.ValuesListToString(';', array);
+                        XmlUtils.SetAttributeValue(item16, "Value", value);
+                    }
+                }
+            }
         }
 
         var inventoryNames = new string[6]
@@ -92,19 +116,27 @@ public class VersionConverter128To129 : VersionConverter
             "Dispenser"
         };
         foreach (var item17 in projectNode.Element("Entities")?.Elements() ?? [])
-        foreach (var item18 in from e in item17.Elements("Values")
-                 where inventoryNames.Contains(XmlUtils.GetAttributeValue(e, "Name", string.Empty))
-                 select e)
-        foreach (var item19 in from e in item18.Elements("Values")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Slots"
-                 select e)
-        foreach (var item20 in item19.Elements())
-        foreach (var item21 in from e in item20.Elements("Value")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Contents"
-                 select e)
         {
-            var num4 = ConvertValue(XmlUtils.GetAttributeValue<int>(item21, "Value"));
-            XmlUtils.SetAttributeValue(item21, "Value", num4);
+            foreach (var item18 in from e in item17.Elements("Values")
+                                   where inventoryNames.Contains(XmlUtils.GetAttributeValue(e, "Name", string.Empty))
+                                   select e)
+            {
+                foreach (var item19 in from e in item18.Elements("Values")
+                                       where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Slots"
+                                       select e)
+                {
+                    foreach (var item20 in item19.Elements())
+                    {
+                        foreach (var item21 in from e in item20.Elements("Value")
+                                               where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Contents"
+                                               select e)
+                        {
+                            var num4 = ConvertValue(XmlUtils.GetAttributeValue<int>(item21, "Value"));
+                            XmlUtils.SetAttributeValue(item21, "Value", num4);
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -164,29 +196,33 @@ public class VersionConverter128To129 : VersionConverter
                     stream2.ReadExactly(array, 0, 65536);
                     var num2 = 0;
                     for (var j = 0; j < 16; j++)
-                    for (var k = 0; k < 16; k++)
-                    for (var l = 0; l < 128; l++)
                     {
-                        var num3 = array[2 * num2] | (array[2 * num2 + 1] << 8);
-                        var num4 = ConvertValue(num3);
-                        if (l < 127)
+                        for (var k = 0; k < 16; k++)
                         {
-                            var num5 = num3 & 0xFF;
-                            if (num5 == 18 || num5 == 92)
+                            for (var l = 0; l < 128; l++)
                             {
-                                var num6 = (array[2 * num2 + 2] | (array[2 * num2 + 3] << 8)) & 0xFF;
-                                if (num5 != num6)
+                                var num3 = array[2 * num2] | (array[2 * num2 + 1] << 8);
+                                var num4 = ConvertValue(num3);
+                                if (l < 127)
                                 {
-                                    num4 |= 0x40000;
+                                    var num5 = num3 & 0xFF;
+                                    if (num5 == 18 || num5 == 92)
+                                    {
+                                        var num6 = (array[2 * num2 + 2] | (array[2 * num2 + 3] << 8)) & 0xFF;
+                                        if (num5 != num6)
+                                        {
+                                            num4 |= 0x40000;
+                                        }
+                                    }
                                 }
+
+                                array2[4 * num2] = (byte)num4;
+                                array2[4 * num2 + 1] = (byte)(num4 >> 8);
+                                array2[4 * num2 + 2] = (byte)(num4 >> 16);
+                                array2[4 * num2 + 3] = (byte)(num4 >> 24);
+                                num2++;
                             }
                         }
-
-                        array2[4 * num2] = (byte)num4;
-                        array2[4 * num2 + 1] = (byte)(num4 >> 8);
-                        array2[4 * num2 + 2] = (byte)(num4 >> 16);
-                        array2[4 * num2 + 3] = (byte)(num4 >> 24);
-                        num2++;
                     }
 
                     stream.Write(array2, 0, 131072);

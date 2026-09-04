@@ -244,9 +244,11 @@ public sealed class PackageStreamReader : BinaryReader
         var height = ReadInt32();
         var image = new Image(width, height);
         for (var i = 0; i < width; i++)
-        for (var j = 0; j < height; j++)
         {
-            image.SetPixel(i, j, ReadColor());
+            for (var j = 0; j < height; j++)
+            {
+                image.SetPixel(i, j, ReadColor());
+            }
         }
 
         return Texture2D.Load(image);

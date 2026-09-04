@@ -141,7 +141,7 @@ public class ComponentHealth : Component, IUpdateable
             var cause = LanguageManager.Get(Name, 2);
             var flagMainRider = _componentCreature.ComponentBody.ChildBodies.Count > 0 &&
                                 _componentCreature.ComponentBody.ChildBodies[0].Player is
-                                    { PlayerData.IsMainPlayer: true };
+                                { PlayerData.IsMainPlayer: true };
             var flagMainPlayer = _componentPlayer is { PlayerData.IsMainPlayer: true };
             var flagNoRider = _componentCreature.ComponentBody.ChildBodies.Count == 0;
             if (CommonLib.WorkType == WorkType.Local)
@@ -195,7 +195,7 @@ public class ComponentHealth : Component, IUpdateable
         {
             var flagMainRider = _componentCreature.ComponentBody.ChildBodies.Count > 0 &&
                                 _componentCreature.ComponentBody.ChildBodies[0].Player is
-                                    { PlayerData.IsMainPlayer: true };
+                                { PlayerData.IsMainPlayer: true };
             var flagMainPlayer = _componentPlayer is { PlayerData.IsMainPlayer: true };
             var flagNoRider = _componentCreature.ComponentBody.ChildBodies.Count == 0;
             var num7 = 1f / FireResilience;
@@ -231,7 +231,7 @@ public class ComponentHealth : Component, IUpdateable
         if (num5 && CanStrand && _componentCreature.ComponentBody.ImmersionFactor < 0.25f &&
             (_componentCreature.ComponentBody.StandingOnValue != 0 ||
              _componentCreature.ComponentBody.StandingOnBody != null))
-            //搁浅伤害
+        //搁浅伤害
         {
             Injure(0.05f, null, false, LanguageManager.Get(Name, 6));
         }
@@ -308,7 +308,7 @@ public class ComponentHealth : Component, IUpdateable
 
         //开服后，睡觉恢复速度加快5倍
         if (CommonLib.WorkType == WorkType.Server && _componentPlayer is
-                { ComponentSleep: { SubsystemUpdate.UpdatesPerFrame: 1, IsSleeping: true } })
+            { ComponentSleep: { SubsystemUpdate.UpdatesPerFrame: 1, IsSleeping: true } })
         {
             amount *= _subsystemGameInfo.WorldSettings.RecoverFactor;
         }

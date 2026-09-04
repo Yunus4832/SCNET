@@ -166,7 +166,7 @@ public class BasePrimitivesRenderer<T1, T2, T3>
         if (SortNeeded)
         {
             SortNeeded = false;
-            AllBatches.Sort(delegate(BaseBatch b1, BaseBatch b2)
+            AllBatches.Sort(delegate (BaseBatch b1, BaseBatch b2)
             {
                 if (b1.Layer < b2.Layer)
                 {

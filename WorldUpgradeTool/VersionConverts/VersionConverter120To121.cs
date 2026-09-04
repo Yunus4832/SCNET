@@ -14,33 +14,35 @@ public class VersionConverter120To121 : VersionConverter
     {
         XmlUtils.SetAttributeValue(projectNode, "Version", TargetVersion);
         foreach (var item in projectNode.Element("Entities")?.Elements() ?? [])
-        foreach (var item2 in from e in item.Elements("Values")
-                 where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Body" ||
-                       XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Frame"
-                 select e)
         {
-            using IEnumerator<XElement> enumerator3 = (from e in item2.Elements("Value")
-                where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "LocalMatrix"
-                select e).GetEnumerator();
-            if (!enumerator3.MoveNext())
+            foreach (var item2 in from e in item.Elements("Values")
+                                  where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Body" ||
+                                        XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "Frame"
+                                  select e)
             {
-                continue;
-            }
+                using var enumerator3 = (from e in item2.Elements("Value")
+                                         where XmlUtils.GetAttributeValue(e, "Name", string.Empty) == "LocalMatrix"
+                                         select e).GetEnumerator();
+                if (!enumerator3.MoveNext())
+                {
+                    continue;
+                }
 
-            var current2 = enumerator3.Current;
-            XmlUtils.GetAttributeValue<Matrix>(current2, "Value")
-                .Decompose(out _, out var rotation, out var translation);
-            var xElement = new XElement("Value");
-            var xElement2 = new XElement("Value");
-            XmlUtils.SetAttributeValue(xElement, "Name", "Position");
-            XmlUtils.SetAttributeValue(xElement, "Type", "Microsoft.Xna.Framework.Vector3");
-            XmlUtils.SetAttributeValue(xElement, "Value", translation);
-            XmlUtils.SetAttributeValue(xElement2, "Name", "Rotation");
-            XmlUtils.SetAttributeValue(xElement2, "Type", "Microsoft.Xna.Framework.Quaternion");
-            XmlUtils.SetAttributeValue(xElement2, "Value", rotation);
-            item2.Add(xElement);
-            item2.Add(xElement2);
-            current2.Remove();
+                var current2 = enumerator3.Current;
+                XmlUtils.GetAttributeValue<Matrix>(current2, "Value")
+                    .Decompose(out _, out var rotation, out var translation);
+                var xElement = new XElement("Value");
+                var xElement2 = new XElement("Value");
+                XmlUtils.SetAttributeValue(xElement, "Name", "Position");
+                XmlUtils.SetAttributeValue(xElement, "Type", "Microsoft.Xna.Framework.Vector3");
+                XmlUtils.SetAttributeValue(xElement, "Value", translation);
+                XmlUtils.SetAttributeValue(xElement2, "Name", "Rotation");
+                XmlUtils.SetAttributeValue(xElement2, "Type", "Microsoft.Xna.Framework.Quaternion");
+                XmlUtils.SetAttributeValue(xElement2, "Value", rotation);
+                item2.Add(xElement);
+                item2.Add(xElement2);
+                current2.Remove();
+            }
         }
     }
 

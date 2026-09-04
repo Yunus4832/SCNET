@@ -20,31 +20,33 @@ public class PistonHeadBlock : Block
                 throw new InvalidOperationException("Required ModelMesh.ParentBone is null")
             );
             for (var pistonMode = PistonMode.Pushing; pistonMode <= PistonMode.StrictPulling; pistonMode++)
-            for (var j = 0; j < 6; j++)
             {
-                var num = SetFace(SetMode(SetIsShaft(0, i != 0), pistonMode), j);
-                var m = j < 4
-                    ? Matrix.CreateTranslation(0f, -0.5f, 0f) *
-                      Matrix.CreateRotationY(j * (float)Math.PI / 2f + (float)Math.PI) *
-                      Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)
-                    : j != 4
-                        ? Matrix.CreateTranslation(0f, -0.5f, 0f) * Matrix.CreateRotationX(-(float)Math.PI / 2f) *
-                          Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)
-                        : Matrix.CreateTranslation(0f, -0.5f, 0f) * Matrix.CreateRotationX((float)Math.PI / 2f) *
-                          Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                BlockMeshesByData[num] = new BlockMesh();
-                BlockMeshesByData[num].AppendModelMeshPart(modelMesh.MeshParts[0],
-                    boneAbsoluteTransform * m, false, false, false, false, Color.White);
-                switch (pistonMode)
+                for (var j = 0; j < 6; j++)
                 {
-                    case PistonMode.Pulling:
-                        BlockMeshesByData[num]
-                            .TransformTextureCoordinates(Matrix.CreateTranslation(0f, 0.0625f, 0f), 1 << j);
-                        break;
-                    case PistonMode.StrictPulling:
-                        BlockMeshesByData[num]
-                            .TransformTextureCoordinates(Matrix.CreateTranslation(0f, 0.125f, 0f), 1 << j);
-                        break;
+                    var num = SetFace(SetMode(SetIsShaft(0, i != 0), pistonMode), j);
+                    var m = j < 4
+                        ? Matrix.CreateTranslation(0f, -0.5f, 0f) *
+                          Matrix.CreateRotationY(j * (float)Math.PI / 2f + (float)Math.PI) *
+                          Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)
+                        : j != 4
+                            ? Matrix.CreateTranslation(0f, -0.5f, 0f) * Matrix.CreateRotationX(-(float)Math.PI / 2f) *
+                              Matrix.CreateTranslation(0.5f, 0.5f, 0.5f)
+                            : Matrix.CreateTranslation(0f, -0.5f, 0f) * Matrix.CreateRotationX((float)Math.PI / 2f) *
+                              Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                    BlockMeshesByData[num] = new BlockMesh();
+                    BlockMeshesByData[num].AppendModelMeshPart(modelMesh.MeshParts[0],
+                        boneAbsoluteTransform * m, false, false, false, false, Color.White);
+                    switch (pistonMode)
+                    {
+                        case PistonMode.Pulling:
+                            BlockMeshesByData[num]
+                                .TransformTextureCoordinates(Matrix.CreateTranslation(0f, 0.0625f, 0f), 1 << j);
+                            break;
+                        case PistonMode.StrictPulling:
+                            BlockMeshesByData[num]
+                                .TransformTextureCoordinates(Matrix.CreateTranslation(0f, 0.125f, 0f), 1 << j);
+                            break;
+                    }
                 }
             }
         }

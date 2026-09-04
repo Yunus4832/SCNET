@@ -282,30 +282,34 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var num = float.MinValue;
         var random = new Random();
         for (var i = 0; i < 1000; i += 5)
-        for (var j = 0; j <= 12; j += 4)
-        for (var k = 0; k < 2; k++)
         {
-            float num2;
-            float x;
-            if (k == 0)
+            for (var j = 0; j <= 12; j += 4)
             {
-                num2 = _oceanCorner.Y + i;
-                x = CalculateOceanShoreX(num2) + j + random.Int(-100, 100);
-            }
-            else
-            {
-                x = _oceanCorner.X + i;
-                num2 = CalculateOceanShoreZ(x) + j + random.Int(-100, 100);
-            }
+                for (var k = 0; k < 2; k++)
+                {
+                    float num2;
+                    float x;
+                    if (k == 0)
+                    {
+                        num2 = _oceanCorner.Y + i;
+                        x = CalculateOceanShoreX(num2) + j + random.Int(-100, 100);
+                    }
+                    else
+                    {
+                        x = _oceanCorner.X + i;
+                        num2 = CalculateOceanShoreZ(x) + j + random.Int(-100, 100);
+                    }
 
-            var num3 = ScoreSpawnPosition(Terrain.ToCell(x), Terrain.ToCell(num2));
-            if (!(num3 > num))
-            {
-                continue;
-            }
+                    var num3 = ScoreSpawnPosition(Terrain.ToCell(x), Terrain.ToCell(num2));
+                    if (!(num3 > num))
+                    {
+                        continue;
+                    }
 
-            vector = new Vector2(x, num2);
-            num = num3;
+                    vector = new Vector2(x, num2);
+                    num = num3;
+                }
+            }
         }
 
         return new Vector3(vector.X, CalculateHeight(vector.X, vector.Y), vector.Y);
@@ -595,14 +599,16 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
     public void GenerateSurfaceParameters(TerrainChunk chunk, int x1, int z1, int x2, int z2)
     {
         for (var i = x1; i < x2; i++)
-        for (var j = z1; j < z2; j++)
         {
-            var num = i + chunk.Origin.X;
-            var num2 = j + chunk.Origin.Y;
-            var temperature = CalculateTemperature(num, num2);
-            var humidity = CalculateHumidity(num, num2);
-            chunk.SetTemperatureFast(i, j, temperature);
-            chunk.SetHumidityFast(i, j, humidity);
+            for (var j = z1; j < z2; j++)
+            {
+                var num = i + chunk.Origin.X;
+                var num2 = j + chunk.Origin.Y;
+                var temperature = CalculateTemperature(num, num2);
+                var humidity = CalculateHumidity(num, num2);
+                chunk.SetTemperatureFast(i, j, temperature);
+                chunk.SetHumidityFast(i, j, humidity);
+            }
         }
     }
 
@@ -615,102 +621,110 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var grid2D = new Grid2D(num, num2);
         var grid2D2 = new Grid2D(num, num2);
         for (var i = 0; i < num2; i++)
-        for (var j = 0; j < num; j++)
         {
-            grid2D.Set(j, i, CalculateOceanShoreDistance(j + num3, i + num4));
-            grid2D2.Set(j, i, CalculateMountainRangeFactor(j + num3, i + num4));
+            for (var j = 0; j < num; j++)
+            {
+                grid2D.Set(j, i, CalculateOceanShoreDistance(j + num3, i + num4));
+                grid2D2.Set(j, i, CalculateMountainRangeFactor(j + num3, i + num4));
+            }
         }
 
         var grid3D = new Grid3D(num / 4 + 1, 33, num2 / 4 + 1);
         for (var k = 0; k < grid3D.SizeX; k++)
-        for (var l = 0; l < grid3D.SizeZ; l++)
         {
-            var num5 = k * 4 + num3;
-            var num6 = l * 4 + num4;
-            var num7 = CalculateHeight(num5, num6);
-            var v = CalculateMountainRangeFactor(num5, num6);
-            var num8 = MathUtils.Lerp(_tgMinTurbulence, 1f, Squish(v, _tgTurbulenceZero, 1f));
-            for (var m = 0; m < grid3D.SizeY; m++)
+            for (var l = 0; l < grid3D.SizeZ; l++)
             {
-                var num9 = m * 8;
-                var num10 = _tgTurbulenceStrength * num8 * MathUtils.Saturate(num7 - num9) * (2f *
-                    SimplexNoise.OctavedNoise(num5, num9, num6, _tgTurbulenceFreq, _tgTurbulenceOctaves, 4f,
-                        _tgTurbulencePersistence) - 1f);
-                var num11 = num9 + num10;
-                var num12 = num7 - num11;
-                num12 += MathUtils.Max(4f * (_tgDensityBias - num9), 0f);
-                grid3D.Set(k, m, l, num12);
+                var num5 = k * 4 + num3;
+                var num6 = l * 4 + num4;
+                var num7 = CalculateHeight(num5, num6);
+                var v = CalculateMountainRangeFactor(num5, num6);
+                var num8 = MathUtils.Lerp(_tgMinTurbulence, 1f, Squish(v, _tgTurbulenceZero, 1f));
+                for (var m = 0; m < grid3D.SizeY; m++)
+                {
+                    var num9 = m * 8;
+                    var num10 = _tgTurbulenceStrength * num8 * MathUtils.Saturate(num7 - num9) * (2f *
+                        SimplexNoise.OctavedNoise(num5, num9, num6, _tgTurbulenceFreq, _tgTurbulenceOctaves, 4f,
+                            _tgTurbulencePersistence) - 1f);
+                    var num11 = num9 + num10;
+                    var num12 = num7 - num11;
+                    num12 += MathUtils.Max(4f * (_tgDensityBias - num9), 0f);
+                    grid3D.Set(k, m, l, num12);
+                }
             }
         }
 
         var oceanLevel = OceanLevel;
         for (var n = 0; n < grid3D.SizeX - 1; n++)
-        for (var num13 = 0; num13 < grid3D.SizeZ - 1; num13++)
-        for (var num14 = 0; num14 < grid3D.SizeY - 1; num14++)
         {
-            grid3D.Get8(n, num14, num13, out var v2, out var v3, out var v4, out var v5, out var v6, out var v7,
-                out var v8, out var v9);
-            var num15 = (v3 - v2) / 4f;
-            var num16 = (v5 - v4) / 4f;
-            var num17 = (v7 - v6) / 4f;
-            var num18 = (v9 - v8) / 4f;
-            var num19 = v2;
-            var num20 = v4;
-            var num21 = v6;
-            var num22 = v8;
-            for (var num23 = 0; num23 < 4; num23++)
+            for (var num13 = 0; num13 < grid3D.SizeZ - 1; num13++)
             {
-                var num24 = (num21 - num19) / 4f;
-                var num25 = (num22 - num20) / 4f;
-                var num26 = num19;
-                var num27 = num20;
-                for (var num28 = 0; num28 < 4; num28++)
+                for (var num14 = 0; num14 < grid3D.SizeY - 1; num14++)
                 {
-                    var num29 = (num27 - num26) / 8f;
-                    var num30 = num26;
-                    var num31 = num23 + n * 4;
-                    var num32 = num28 + num13 * 4;
-                    var x3 = x1 + num31;
-                    var z3 = z1 + num32;
-                    var x4 = grid2D.Get(num31, num32);
-                    var num33 = grid2D2.Get(num31, num32);
-                    var temperatureFast = chunk.GetTemperatureFast(x3, z3);
-                    var humidityFast = chunk.GetHumidityFast(x3, z3);
-                    var f = num33 - 0.01f * humidityFast;
-                    var num34 = MathUtils.Lerp(100f, 0f, f);
-                    var num35 = MathUtils.Lerp(300f, 30f, f);
-                    var flag = (temperatureFast > 8 && humidityFast < 8 && num33 < 0.97f) ||
-                               (MathUtils.Abs(x4) < 16f && num33 < 0.97f);
-                    var num36 = TerrainChunk.CalculateCellIndex(x3, 0, z3);
-                    for (var num37 = 0; num37 < 8; num37++)
+                    grid3D.Get8(n, num14, num13, out var v2, out var v3, out var v4, out var v5, out var v6, out var v7,
+                        out var v8, out var v9);
+                    var num15 = (v3 - v2) / 4f;
+                    var num16 = (v5 - v4) / 4f;
+                    var num17 = (v7 - v6) / 4f;
+                    var num18 = (v9 - v8) / 4f;
+                    var num19 = v2;
+                    var num20 = v4;
+                    var num21 = v6;
+                    var num22 = v8;
+                    for (var num23 = 0; num23 < 4; num23++)
                     {
-                        var num38 = num37 + num14 * 8;
-                        var value = 0;
-                        if (num30 < 0f)
+                        var num24 = (num21 - num19) / 4f;
+                        var num25 = (num22 - num20) / 4f;
+                        var num26 = num19;
+                        var num27 = num20;
+                        for (var num28 = 0; num28 < 4; num28++)
                         {
-                            if (num38 <= oceanLevel)
+                            var num29 = (num27 - num26) / 8f;
+                            var num30 = num26;
+                            var num31 = num23 + n * 4;
+                            var num32 = num28 + num13 * 4;
+                            var x3 = x1 + num31;
+                            var z3 = z1 + num32;
+                            var x4 = grid2D.Get(num31, num32);
+                            var num33 = grid2D2.Get(num31, num32);
+                            var temperatureFast = chunk.GetTemperatureFast(x3, z3);
+                            var humidityFast = chunk.GetHumidityFast(x3, z3);
+                            var f = num33 - 0.01f * humidityFast;
+                            var num34 = MathUtils.Lerp(100f, 0f, f);
+                            var num35 = MathUtils.Lerp(300f, 30f, f);
+                            var flag = (temperatureFast > 8 && humidityFast < 8 && num33 < 0.97f) ||
+                                       (MathUtils.Abs(x4) < 16f && num33 < 0.97f);
+                            var num36 = TerrainChunk.CalculateCellIndex(x3, 0, z3);
+                            for (var num37 = 0; num37 < 8; num37++)
                             {
-                                value = 18;
+                                var num38 = num37 + num14 * 8;
+                                var value = 0;
+                                if (num30 < 0f)
+                                {
+                                    if (num38 <= oceanLevel)
+                                    {
+                                        value = 18;
+                                    }
+                                }
+                                else
+                                {
+                                    value = !flag ? !(num30 < num35) ? 67 : 3 :
+                                        !(num30 < num34) ? !(num30 < num35) ? 67 : 3 : 4;
+                                }
+
+                                chunk.SetCellValueFast(num36 + num38, value);
+                                num30 += num29;
                             }
-                        }
-                        else
-                        {
-                            value = !flag ? !(num30 < num35) ? 67 : 3 :
-                                !(num30 < num34) ? !(num30 < num35) ? 67 : 3 : 4;
+
+                            num26 += num24;
+                            num27 += num25;
                         }
 
-                        chunk.SetCellValueFast(num36 + num38, value);
-                        num30 += num29;
+                        num19 += num15;
+                        num20 += num16;
+                        num21 += num17;
+                        num22 += num18;
                     }
-
-                    num26 += num24;
-                    num27 += num25;
                 }
-
-                num19 += num15;
-                num20 += num16;
-                num21 += num17;
-                num22 += num18;
             }
         }
     }
@@ -719,67 +733,69 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
     {
         var random = new Random(_seed + chunk.Coords.X + 101 * chunk.Coords.Y);
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = i + chunk.Origin.X;
-            var num2 = j + chunk.Origin.Y;
-            var num3 = TerrainChunk.CalculateCellIndex(i, 254, j);
-            var num4 = 254;
-            while (num4 >= 0)
+            for (var j = 0; j < 16; j++)
             {
-                var num5 = Terrain.ExtractContents(chunk.GetCellValueFast(num3));
-                if (!BlocksManager.Blocks[num5].Transparent)
+                var num = i + chunk.Origin.X;
+                var num2 = j + chunk.Origin.Y;
+                var num3 = TerrainChunk.CalculateCellIndex(i, 254, j);
+                var num4 = 254;
+                while (num4 >= 0)
                 {
-                    var num6 = CalculateMountainRangeFactor(num, num2);
-                    var temperature = chunk.GetTemperatureFast(i, j);
-                    var humidity = chunk.GetHumidityFast(i, j);
-                    int num7;
-                    if (num5 == 4)
+                    var num5 = Terrain.ExtractContents(chunk.GetCellValueFast(num3));
+                    if (!BlocksManager.Blocks[num5].Transparent)
                     {
-                        num7 = temperature > 4 && temperature < 7 ? 6 : 7;
-                    }
-                    else
-                    {
-                        var num8 = temperature / 4;
-                        var num9 = num4 + 1 < 255 ? chunk.GetCellContentsFast(i, num4 + 1, j) : 0;
-                        num7 = num4 > 120 && SubsystemWeather.IsPlaceFrozen(temperature, num4) ? 62 :
-                            (num4 < 66 || num4 == 84 + num8 || num4 == 103 + num8) && humidity == 9 &&
-                            temperature % 6 == 1 ? 66 :
-                            num9 != 18 || humidity <= 8 || humidity % 2 != 0 || temperature % 3 != 0 ? 2 : 72;
-                    }
-
-                    int num10;
-                    if (num7 == 62)
-                    {
-                        num10 = (int)MathUtils.Clamp(1f * -temperature, 1f, 7f);
-                    }
-                    else
-                    {
-                        var num11 = MathUtils.Saturate((num4 - 100f) * 0.05f);
-                        var f = MathUtils.Saturate(MathUtils.Saturate((num6 - 0.9f) / 0.1f) -
-                            MathUtils.Saturate((humidity - 3f) / 12f) + _tgSurfaceMultiplier * num11);
-                        var min = (int)MathUtils.Lerp(4f, 0f, f);
-                        var max = (int)MathUtils.Lerp(7f, 0f, f);
-                        num10 = MathUtils.Min(random.Int(min, max), num4);
-                    }
-
-                    var num12 = TerrainChunk.CalculateCellIndex(i, num4 + 1, j);
-                    for (var k = num12 - num10; k < num12; k++)
-                    {
-                        if (Terrain.ExtractContents(chunk.GetCellValueFast(k)) == 0)
+                        var num6 = CalculateMountainRangeFactor(num, num2);
+                        var temperature = chunk.GetTemperatureFast(i, j);
+                        var humidity = chunk.GetHumidityFast(i, j);
+                        int num7;
+                        if (num5 == 4)
                         {
-                            continue;
+                            num7 = temperature > 4 && temperature < 7 ? 6 : 7;
+                        }
+                        else
+                        {
+                            var num8 = temperature / 4;
+                            var num9 = num4 + 1 < 255 ? chunk.GetCellContentsFast(i, num4 + 1, j) : 0;
+                            num7 = num4 > 120 && SubsystemWeather.IsPlaceFrozen(temperature, num4) ? 62 :
+                                (num4 < 66 || num4 == 84 + num8 || num4 == 103 + num8) && humidity == 9 &&
+                                temperature % 6 == 1 ? 66 :
+                                num9 != 18 || humidity <= 8 || humidity % 2 != 0 || temperature % 3 != 0 ? 2 : 72;
                         }
 
-                        var value = Terrain.ReplaceContents(0, num7);
-                        chunk.SetCellValueFast(k, value);
+                        int num10;
+                        if (num7 == 62)
+                        {
+                            num10 = (int)MathUtils.Clamp(1f * -temperature, 1f, 7f);
+                        }
+                        else
+                        {
+                            var num11 = MathUtils.Saturate((num4 - 100f) * 0.05f);
+                            var f = MathUtils.Saturate(MathUtils.Saturate((num6 - 0.9f) / 0.1f) -
+                                MathUtils.Saturate((humidity - 3f) / 12f) + _tgSurfaceMultiplier * num11);
+                            var min = (int)MathUtils.Lerp(4f, 0f, f);
+                            var max = (int)MathUtils.Lerp(7f, 0f, f);
+                            num10 = MathUtils.Min(random.Int(min, max), num4);
+                        }
+
+                        var num12 = TerrainChunk.CalculateCellIndex(i, num4 + 1, j);
+                        for (var k = num12 - num10; k < num12; k++)
+                        {
+                            if (Terrain.ExtractContents(chunk.GetCellValueFast(k)) == 0)
+                            {
+                                continue;
+                            }
+
+                            var value = Terrain.ReplaceContents(0, num7);
+                            chunk.SetCellValueFast(k, value);
+                        }
+
+                        break;
                     }
 
-                    break;
+                    num4--;
+                    num3--;
                 }
-
-                num4--;
-                num3--;
             }
         }
     }
@@ -794,79 +810,81 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
         for (var i = x - 1; i <= x + 1; i++)
-        for (var j = y - 1; j <= y + 1; j++)
         {
-            var random = new Random(_seed + i + 119 * j);
-            var num = random.Int(0, 10);
-            for (var k = 0; k < num; k++)
+            for (var j = y - 1; j <= y + 1; j++)
             {
-                random.Int(0, 1);
-            }
+                var random = new Random(_seed + i + 119 * j);
+                var num = random.Int(0, 10);
+                for (var k = 0; k < num; k++)
+                {
+                    random.Int(0, 1);
+                }
 
-            var num2 = CalculateMountainRangeFactor(i * 16, j * 16);
-            var num3 = (int)(5f + 3f * num2 * SimplexNoise.OctavedNoise(i, j, 0.33f, 1, 1f, 1f));
-            for (var l = 0; l < num3; l++)
-            {
-                var x2 = i * 16 + random.Int(0, 15);
-                var y2 = random.Int(5, 200);
-                var z = j * 16 + random.Int(0, 15);
-                _coalBrushes[random.Int(0, _coalBrushes.Count - 1)].PaintFastSelective(chunk, x2, y2, z, 3);
-            }
+                var num2 = CalculateMountainRangeFactor(i * 16, j * 16);
+                var num3 = (int)(5f + 3f * num2 * SimplexNoise.OctavedNoise(i, j, 0.33f, 1, 1f, 1f));
+                for (var l = 0; l < num3; l++)
+                {
+                    var x2 = i * 16 + random.Int(0, 15);
+                    var y2 = random.Int(5, 200);
+                    var z = j * 16 + random.Int(0, 15);
+                    _coalBrushes[random.Int(0, _coalBrushes.Count - 1)].PaintFastSelective(chunk, x2, y2, z, 3);
+                }
 
-            var num4 = (int)(6f + 2f * num2 * SimplexNoise.OctavedNoise(i + 1211, j + 396, 0.33f, 1, 1f, 1f));
-            for (var m = 0; m < num4; m++)
-            {
-                var x3 = i * 16 + random.Int(0, 15);
-                var y3 = random.Int(20, 65);
-                var z2 = j * 16 + random.Int(0, 15);
-                _copperBrushes[random.Int(0, _copperBrushes.Count - 1)].PaintFastSelective(chunk, x3, y3, z2, 3);
-            }
+                var num4 = (int)(6f + 2f * num2 * SimplexNoise.OctavedNoise(i + 1211, j + 396, 0.33f, 1, 1f, 1f));
+                for (var m = 0; m < num4; m++)
+                {
+                    var x3 = i * 16 + random.Int(0, 15);
+                    var y3 = random.Int(20, 65);
+                    var z2 = j * 16 + random.Int(0, 15);
+                    _copperBrushes[random.Int(0, _copperBrushes.Count - 1)].PaintFastSelective(chunk, x3, y3, z2, 3);
+                }
 
-            var num5 = (int)(5f + 2f * num2 * SimplexNoise.OctavedNoise(i + 713, j + 211, 0.33f, 1, 1f, 1f));
-            for (var n = 0; n < num5; n++)
-            {
-                var x4 = i * 16 + random.Int(0, 15);
-                var y4 = random.Int(2, 40);
-                var z3 = j * 16 + random.Int(0, 15);
-                _ironBrushes[random.Int(0, _ironBrushes.Count - 1)].PaintFastSelective(chunk, x4, y4, z3, 67);
-            }
+                var num5 = (int)(5f + 2f * num2 * SimplexNoise.OctavedNoise(i + 713, j + 211, 0.33f, 1, 1f, 1f));
+                for (var n = 0; n < num5; n++)
+                {
+                    var x4 = i * 16 + random.Int(0, 15);
+                    var y4 = random.Int(2, 40);
+                    var z3 = j * 16 + random.Int(0, 15);
+                    _ironBrushes[random.Int(0, _ironBrushes.Count - 1)].PaintFastSelective(chunk, x4, y4, z3, 67);
+                }
 
-            var num6 = (int)(3f + 3f * num2 * SimplexNoise.OctavedNoise(i + 915, j + 272, 0.33f, 1, 1f, 1f));
-            for (var num7 = 0; num7 < num6; num7++)
-            {
-                var x5 = i * 16 + random.Int(0, 15);
-                var y5 = random.Int(50, 90);
-                var z4 = j * 16 + random.Int(0, 15);
-                _saltpeterBrushes[random.Int(0, _saltpeterBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x5, y5, z4, 4);
-            }
+                var num6 = (int)(3f + 3f * num2 * SimplexNoise.OctavedNoise(i + 915, j + 272, 0.33f, 1, 1f, 1f));
+                for (var num7 = 0; num7 < num6; num7++)
+                {
+                    var x5 = i * 16 + random.Int(0, 15);
+                    var y5 = random.Int(50, 90);
+                    var z4 = j * 16 + random.Int(0, 15);
+                    _saltpeterBrushes[random.Int(0, _saltpeterBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x5, y5, z4, 4);
+                }
 
-            var num8 = (int)(3f + 2f * num2 * SimplexNoise.OctavedNoise(i + 711, j + 1194, 0.33f, 1, 1f, 1f));
-            for (var num9 = 0; num9 < num8; num9++)
-            {
-                var x6 = i * 16 + random.Int(0, 15);
-                var y6 = random.Int(2, 40);
-                var z5 = j * 16 + random.Int(0, 15);
-                _sulphurBrushes[random.Int(0, _sulphurBrushes.Count - 1)].PaintFastSelective(chunk, x6, y6, z5, 67);
-            }
+                var num8 = (int)(3f + 2f * num2 * SimplexNoise.OctavedNoise(i + 711, j + 1194, 0.33f, 1, 1f, 1f));
+                for (var num9 = 0; num9 < num8; num9++)
+                {
+                    var x6 = i * 16 + random.Int(0, 15);
+                    var y6 = random.Int(2, 40);
+                    var z5 = j * 16 + random.Int(0, 15);
+                    _sulphurBrushes[random.Int(0, _sulphurBrushes.Count - 1)].PaintFastSelective(chunk, x6, y6, z5, 67);
+                }
 
-            var num10 = (int)(0.5f + 2f * num2 * SimplexNoise.OctavedNoise(i + 432, j + 907, 0.33f, 1, 1f, 1f));
-            for (var num11 = 0; num11 < num10; num11++)
-            {
-                var x7 = i * 16 + random.Int(0, 15);
-                var y7 = random.Int(2, 15);
-                var z6 = j * 16 + random.Int(0, 15);
-                _diamondBrushes[random.Int(0, _diamondBrushes.Count - 1)].PaintFastSelective(chunk, x7, y7, z6, 67);
-            }
+                var num10 = (int)(0.5f + 2f * num2 * SimplexNoise.OctavedNoise(i + 432, j + 907, 0.33f, 1, 1f, 1f));
+                for (var num11 = 0; num11 < num10; num11++)
+                {
+                    var x7 = i * 16 + random.Int(0, 15);
+                    var y7 = random.Int(2, 15);
+                    var z6 = j * 16 + random.Int(0, 15);
+                    _diamondBrushes[random.Int(0, _diamondBrushes.Count - 1)].PaintFastSelective(chunk, x7, y7, z6, 67);
+                }
 
-            var num12 = (int)(3f + 2f * num2 * SimplexNoise.OctavedNoise(i + 799, j + 131, 0.33f, 1, 1f, 1f));
-            for (var num13 = 0; num13 < num12; num13++)
-            {
-                var x8 = i * 16 + random.Int(0, 15);
-                var y8 = random.Int(2, 50);
-                var z7 = j * 16 + random.Int(0, 15);
-                _germaniumBrushes[random.Int(0, _germaniumBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x8, y8, z7, 67);
+                var num12 = (int)(3f + 2f * num2 * SimplexNoise.OctavedNoise(i + 799, j + 131, 0.33f, 1, 1f, 1f));
+                for (var num13 = 0; num13 < num12; num13++)
+                {
+                    var x8 = i * 16 + random.Int(0, 15);
+                    var y8 = random.Int(2, 50);
+                    var z7 = j * 16 + random.Int(0, 15);
+                    _germaniumBrushes[random.Int(0, _germaniumBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x8, y8, z7, 67);
+                }
             }
         }
     }
@@ -879,123 +897,125 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         }
 
         for (var i = -1; i <= 1; i++)
-        for (var j = -1; j <= 1; j++)
         {
-            var num = i + chunk.Coords.X;
-            var num2 = j + chunk.Coords.Y;
-            var random = new Random(_seed + num + 71 * num2);
-            var num3 = random.Int(0, 10);
-            for (var k = 0; k < num3; k++)
+            for (var j = -1; j <= 1; j++)
             {
-                random.Int(0, 1);
-            }
-
-            var num4 = CalculateMountainRangeFactor(num * 16, num2 * 16);
-            for (var l = 0; l < 3; l++)
-            {
-                var x = num * 16 + random.Int(0, 15);
-                var y = random.Int(50, 100);
-                var z = num2 * 16 + random.Int(0, 15);
-                _dirtPocketBrushes[random.Int(0, _dirtPocketBrushes.Count - 1)].PaintFastSelective(chunk, x, y, z, 3);
-            }
-
-            for (var m = 0; m < 10; m++)
-            {
-                var x2 = num * 16 + random.Int(0, 15);
-                var y2 = random.Int(20, 80);
-                var z2 = num2 * 16 + random.Int(0, 15);
-                _gravelPocketBrushes[random.Int(0, _gravelPocketBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x2, y2, z2, 3);
-            }
-
-            for (var n = 0; n < 2; n++)
-            {
-                var x3 = num * 16 + random.Int(0, 15);
-                var y3 = random.Int(20, 120);
-                var z3 = num2 * 16 + random.Int(0, 15);
-                _limestonePocketBrushes[random.Int(0, _limestonePocketBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x3, y3, z3, 3);
-            }
-
-            for (var num5 = 0; num5 < 1; num5++)
-            {
-                var x4 = num * 16 + random.Int(0, 15);
-                var y4 = random.Int(50, 70);
-                var z4 = num2 * 16 + random.Int(0, 15);
-                _clayPocketBrushes[random.Int(0, _clayPocketBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x4, y4, z4, 3);
-            }
-
-            for (var num6 = 0; num6 < 6; num6++)
-            {
-                var x5 = num * 16 + random.Int(0, 15);
-                var y5 = random.Int(40, 80);
-                var z5 = num2 * 16 + random.Int(0, 15);
-                _sandPocketBrushes[random.Int(0, _sandPocketBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x5, y5, z5, 4);
-            }
-
-            for (var num7 = 0; num7 < 4; num7++)
-            {
-                var x6 = num * 16 + random.Int(0, 15);
-                var y6 = random.Int(40, 60);
-                var z6 = num2 * 16 + random.Int(0, 15);
-                _basaltPocketBrushes[random.Int(0, _basaltPocketBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x6, y6, z6, 4);
-            }
-
-            for (var num8 = 0; num8 < 3; num8++)
-            {
-                var x7 = num * 16 + random.Int(0, 15);
-                var y7 = random.Int(20, 40);
-                var z7 = num2 * 16 + random.Int(0, 15);
-                _basaltPocketBrushes[random.Int(0, _basaltPocketBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x7, y7, z7, 3);
-            }
-
-            for (var num9 = 0; num9 < 6; num9++)
-            {
-                var x8 = num * 16 + random.Int(0, 15);
-                var y8 = random.Int(4, 50);
-                var z8 = num2 * 16 + random.Int(0, 15);
-                _granitePocketBrushes[random.Int(0, _granitePocketBrushes.Count - 1)]
-                    .PaintFastSelective(chunk, x8, y8, z8, 67);
-            }
-
-            if (random.Bool(0.02f + 0.01f * num4))
-            {
-                var num10 = num * 16;
-                var num11 = random.Int(40, 60);
-                var num12 = num2 * 16;
-                var num13 = random.Int(1, 3);
-                for (var num14 = 0; num14 < num13; num14++)
+                var num = i + chunk.Coords.X;
+                var num2 = j + chunk.Coords.Y;
+                var random = new Random(_seed + num + 71 * num2);
+                var num3 = random.Int(0, 10);
+                for (var k = 0; k < num3; k++)
                 {
-                    var vector = random.Vector2(7f);
-                    var num15 = 8 + (int)MathUtils.Round(vector.X);
-                    var num16 = 0;
-                    var num17 = 8 + (int)MathUtils.Round(vector.Y);
-                    _waterPocketBrushes[random.Int(0, _waterPocketBrushes.Count - 1)]
-                        .PaintFast(chunk, num10 + num15, num11 + num16, num12 + num17);
+                    random.Int(0, 1);
                 }
-            }
 
-            if (!random.Bool(0.06f + 0.05f * num4))
-            {
-                continue;
-            }
+                var num4 = CalculateMountainRangeFactor(num * 16, num2 * 16);
+                for (var l = 0; l < 3; l++)
+                {
+                    var x = num * 16 + random.Int(0, 15);
+                    var y = random.Int(50, 100);
+                    var z = num2 * 16 + random.Int(0, 15);
+                    _dirtPocketBrushes[random.Int(0, _dirtPocketBrushes.Count - 1)].PaintFastSelective(chunk, x, y, z, 3);
+                }
 
-            var num18 = num * 16;
-            var num19 = random.Int(15, 42);
-            var num20 = num2 * 16;
-            var num21 = random.Int(1, 2);
-            for (var num22 = 0; num22 < num21; num22++)
-            {
-                var vector2 = random.Vector2(7f);
-                var num23 = 8 + (int)MathUtils.Round(vector2.X);
-                var num24 = random.Int(0, 1);
-                var num25 = 8 + (int)MathUtils.Round(vector2.Y);
-                _magmaPocketBrushes[random.Int(0, _magmaPocketBrushes.Count - 1)]
-                    .PaintFast(chunk, num18 + num23, num19 + num24, num20 + num25);
+                for (var m = 0; m < 10; m++)
+                {
+                    var x2 = num * 16 + random.Int(0, 15);
+                    var y2 = random.Int(20, 80);
+                    var z2 = num2 * 16 + random.Int(0, 15);
+                    _gravelPocketBrushes[random.Int(0, _gravelPocketBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x2, y2, z2, 3);
+                }
+
+                for (var n = 0; n < 2; n++)
+                {
+                    var x3 = num * 16 + random.Int(0, 15);
+                    var y3 = random.Int(20, 120);
+                    var z3 = num2 * 16 + random.Int(0, 15);
+                    _limestonePocketBrushes[random.Int(0, _limestonePocketBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x3, y3, z3, 3);
+                }
+
+                for (var num5 = 0; num5 < 1; num5++)
+                {
+                    var x4 = num * 16 + random.Int(0, 15);
+                    var y4 = random.Int(50, 70);
+                    var z4 = num2 * 16 + random.Int(0, 15);
+                    _clayPocketBrushes[random.Int(0, _clayPocketBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x4, y4, z4, 3);
+                }
+
+                for (var num6 = 0; num6 < 6; num6++)
+                {
+                    var x5 = num * 16 + random.Int(0, 15);
+                    var y5 = random.Int(40, 80);
+                    var z5 = num2 * 16 + random.Int(0, 15);
+                    _sandPocketBrushes[random.Int(0, _sandPocketBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x5, y5, z5, 4);
+                }
+
+                for (var num7 = 0; num7 < 4; num7++)
+                {
+                    var x6 = num * 16 + random.Int(0, 15);
+                    var y6 = random.Int(40, 60);
+                    var z6 = num2 * 16 + random.Int(0, 15);
+                    _basaltPocketBrushes[random.Int(0, _basaltPocketBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x6, y6, z6, 4);
+                }
+
+                for (var num8 = 0; num8 < 3; num8++)
+                {
+                    var x7 = num * 16 + random.Int(0, 15);
+                    var y7 = random.Int(20, 40);
+                    var z7 = num2 * 16 + random.Int(0, 15);
+                    _basaltPocketBrushes[random.Int(0, _basaltPocketBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x7, y7, z7, 3);
+                }
+
+                for (var num9 = 0; num9 < 6; num9++)
+                {
+                    var x8 = num * 16 + random.Int(0, 15);
+                    var y8 = random.Int(4, 50);
+                    var z8 = num2 * 16 + random.Int(0, 15);
+                    _granitePocketBrushes[random.Int(0, _granitePocketBrushes.Count - 1)]
+                        .PaintFastSelective(chunk, x8, y8, z8, 67);
+                }
+
+                if (random.Bool(0.02f + 0.01f * num4))
+                {
+                    var num10 = num * 16;
+                    var num11 = random.Int(40, 60);
+                    var num12 = num2 * 16;
+                    var num13 = random.Int(1, 3);
+                    for (var num14 = 0; num14 < num13; num14++)
+                    {
+                        var vector = random.Vector2(7f);
+                        var num15 = 8 + (int)MathUtils.Round(vector.X);
+                        var num16 = 0;
+                        var num17 = 8 + (int)MathUtils.Round(vector.Y);
+                        _waterPocketBrushes[random.Int(0, _waterPocketBrushes.Count - 1)]
+                            .PaintFast(chunk, num10 + num15, num11 + num16, num12 + num17);
+                    }
+                }
+
+                if (!random.Bool(0.06f + 0.05f * num4))
+                {
+                    continue;
+                }
+
+                var num18 = num * 16;
+                var num19 = random.Int(15, 42);
+                var num20 = num2 * 16;
+                var num21 = random.Int(1, 2);
+                for (var num22 = 0; num22 < num21; num22++)
+                {
+                    var vector2 = random.Vector2(7f);
+                    var num23 = 8 + (int)MathUtils.Round(vector2.X);
+                    var num24 = random.Int(0, 1);
+                    var num25 = 8 + (int)MathUtils.Round(vector2.Y);
+                    _magmaPocketBrushes[random.Int(0, _magmaPocketBrushes.Count - 1)]
+                        .PaintFast(chunk, num18 + num23, num19 + num24, num20 + num25);
+                }
             }
         }
     }
@@ -1011,124 +1031,126 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
         for (var i = x - 2; i <= x + 2; i++)
-        for (var j = y - 2; j <= y + 2; j++)
         {
-            list.Clear();
-            var random = new Random(_seed + i + 9973 * j);
-            var num = i * 16 + random.Int(0, 15);
-            var num2 = j * 16 + random.Int(0, 15);
-            var probability = 0.5f;
-            if (!random.Bool(probability))
+            for (var j = y - 2; j <= y + 2; j++)
             {
-                continue;
-            }
-
-            var num3 = (int)CalculateHeight(num, num2);
-            var num4 = (int)CalculateHeight(num + 3, num2);
-            var num5 = (int)CalculateHeight(num, num2 + 3);
-            var position = new Vector3(num, num3 - 1, num2);
-            var v = new Vector3(3f, num4 - num3, 0f);
-            var v2 = new Vector3(0f, num5 - num3, 3f);
-            var direction = Vector3.Normalize(Vector3.Cross(v, v2));
-            if (direction.Y > -0.6f)
-            {
-                list.Add(new CavePoint
+                list.Clear();
+                var random = new Random(_seed + i + 9973 * j);
+                var num = i * 16 + random.Int(0, 15);
+                var num2 = j * 16 + random.Int(0, 15);
+                var probability = 0.5f;
+                if (!random.Bool(probability))
                 {
-                    Position = position,
-                    Direction = direction,
-                    BrushType = 0,
-                    Length = random.Int(80, 240)
-                });
-            }
-
-            var num6 = i * 16 + 8;
-            var num7 = j * 16 + 8;
-            var num8 = 0;
-            while (num8 < list.Count)
-            {
-                var cavePoint = list[num8];
-                var list2 = _caveBrushesByType[cavePoint.BrushType];
-                list2[random.Int(0, list2.Count - 1)].PaintFastAvoidWater(chunk, Terrain.ToCell(cavePoint.Position.X),
-                    Terrain.ToCell(cavePoint.Position.Y), Terrain.ToCell(cavePoint.Position.Z));
-                cavePoint.Position += 2f * cavePoint.Direction;
-                cavePoint.StepsTaken += 2;
-                var num9 = cavePoint.Position.X - num6;
-                var num10 = cavePoint.Position.Z - num7;
-                if (random.Bool(0.5f))
-                {
-                    var vector = Vector3.Normalize(random.Vector3(1f));
-                    if ((num9 < -25.5f && vector.X < 0f) || (num9 > 25.5f && vector.X > 0f))
-                    {
-                        vector.X = 0f - vector.X;
-                    }
-
-                    if ((num10 < -25.5f && vector.Z < 0f) || (num10 > 25.5f && vector.Z > 0f))
-                    {
-                        vector.Z = 0f - vector.Z;
-                    }
-
-                    if ((cavePoint.Direction.Y < -0.5f && vector.Y < -10f) ||
-                        (cavePoint.Direction.Y > 0.1f && vector.Y > 0f))
-                    {
-                        vector.Y = 0f - vector.Y;
-                    }
-
-                    cavePoint.Direction = Vector3.Normalize(cavePoint.Direction + 0.5f * vector);
+                    continue;
                 }
 
-                if (cavePoint.StepsTaken > 20 && random.Bool(0.06f))
-                {
-                    cavePoint.Direction = Vector3.Normalize(random.Vector3(1f) * new Vector3(1f, 0.33f, 1f));
-                }
-
-                if (cavePoint.StepsTaken > 20 && random.Bool(0.05f))
-                {
-                    cavePoint.Direction.Y = 0f;
-                    cavePoint.BrushType = MathUtils.Min(cavePoint.BrushType + 2, _caveBrushesByType.Count - 1);
-                }
-
-                if (cavePoint.StepsTaken > 30 && random.Bool(0.03f))
-                {
-                    cavePoint.Direction.X = 0f;
-                    cavePoint.Direction.Y = -1f;
-                    cavePoint.Direction.Z = 0f;
-                }
-
-                if (cavePoint.StepsTaken > 30 && cavePoint.Position.Y < 30f && random.Bool(0.02f))
-                {
-                    cavePoint.Direction.X = 0f;
-                    cavePoint.Direction.Y = 1f;
-                    cavePoint.Direction.Z = 0f;
-                }
-
-                if (random.Bool(0.33f))
-                {
-                    cavePoint.BrushType =
-                        (int)(MathUtils.Pow(random.Float(0f, 0.999f), 7f) * _caveBrushesByType.Count);
-                }
-
-                if (random.Bool(0.06f) && list.Count < 12 && cavePoint.StepsTaken > 20 && cavePoint.Position.Y < 58f)
+                var num3 = (int)CalculateHeight(num, num2);
+                var num4 = (int)CalculateHeight(num + 3, num2);
+                var num5 = (int)CalculateHeight(num, num2 + 3);
+                var position = new Vector3(num, num3 - 1, num2);
+                var v = new Vector3(3f, num4 - num3, 0f);
+                var v2 = new Vector3(0f, num5 - num3, 3f);
+                var direction = Vector3.Normalize(Vector3.Cross(v, v2));
+                if (direction.Y > -0.6f)
                 {
                     list.Add(new CavePoint
                     {
-                        Position = cavePoint.Position,
-                        Direction = Vector3.Normalize(random.Vector3(1f, 1f) * new Vector3(1f, 0.33f, 1f)),
-                        BrushType = (int)(MathUtils.Pow(random.Float(0f, 0.999f), 7f) * _caveBrushesByType.Count),
-                        Length = random.Int(40, 180)
+                        Position = position,
+                        Direction = direction,
+                        BrushType = 0,
+                        Length = random.Int(80, 240)
                     });
                 }
 
-                if (cavePoint.StepsTaken >= cavePoint.Length || MathUtils.Abs(num9) > 34f ||
-                    MathUtils.Abs(num10) > 34f || cavePoint.Position.Y < 5f || cavePoint.Position.Y > 246f)
+                var num6 = i * 16 + 8;
+                var num7 = j * 16 + 8;
+                var num8 = 0;
+                while (num8 < list.Count)
                 {
-                    num8++;
-                }
-                else if (cavePoint.StepsTaken % 20 == 0)
-                {
-                    var num11 = CalculateHeight(cavePoint.Position.X, cavePoint.Position.Z);
-                    if (cavePoint.Position.Y > num11 + 1f)
+                    var cavePoint = list[num8];
+                    var list2 = _caveBrushesByType[cavePoint.BrushType];
+                    list2[random.Int(0, list2.Count - 1)].PaintFastAvoidWater(chunk, Terrain.ToCell(cavePoint.Position.X),
+                        Terrain.ToCell(cavePoint.Position.Y), Terrain.ToCell(cavePoint.Position.Z));
+                    cavePoint.Position += 2f * cavePoint.Direction;
+                    cavePoint.StepsTaken += 2;
+                    var num9 = cavePoint.Position.X - num6;
+                    var num10 = cavePoint.Position.Z - num7;
+                    if (random.Bool(0.5f))
+                    {
+                        var vector = Vector3.Normalize(random.Vector3(1f));
+                        if ((num9 < -25.5f && vector.X < 0f) || (num9 > 25.5f && vector.X > 0f))
+                        {
+                            vector.X = 0f - vector.X;
+                        }
+
+                        if ((num10 < -25.5f && vector.Z < 0f) || (num10 > 25.5f && vector.Z > 0f))
+                        {
+                            vector.Z = 0f - vector.Z;
+                        }
+
+                        if ((cavePoint.Direction.Y < -0.5f && vector.Y < -10f) ||
+                            (cavePoint.Direction.Y > 0.1f && vector.Y > 0f))
+                        {
+                            vector.Y = 0f - vector.Y;
+                        }
+
+                        cavePoint.Direction = Vector3.Normalize(cavePoint.Direction + 0.5f * vector);
+                    }
+
+                    if (cavePoint.StepsTaken > 20 && random.Bool(0.06f))
+                    {
+                        cavePoint.Direction = Vector3.Normalize(random.Vector3(1f) * new Vector3(1f, 0.33f, 1f));
+                    }
+
+                    if (cavePoint.StepsTaken > 20 && random.Bool(0.05f))
+                    {
+                        cavePoint.Direction.Y = 0f;
+                        cavePoint.BrushType = MathUtils.Min(cavePoint.BrushType + 2, _caveBrushesByType.Count - 1);
+                    }
+
+                    if (cavePoint.StepsTaken > 30 && random.Bool(0.03f))
+                    {
+                        cavePoint.Direction.X = 0f;
+                        cavePoint.Direction.Y = -1f;
+                        cavePoint.Direction.Z = 0f;
+                    }
+
+                    if (cavePoint.StepsTaken > 30 && cavePoint.Position.Y < 30f && random.Bool(0.02f))
+                    {
+                        cavePoint.Direction.X = 0f;
+                        cavePoint.Direction.Y = 1f;
+                        cavePoint.Direction.Z = 0f;
+                    }
+
+                    if (random.Bool(0.33f))
+                    {
+                        cavePoint.BrushType =
+                            (int)(MathUtils.Pow(random.Float(0f, 0.999f), 7f) * _caveBrushesByType.Count);
+                    }
+
+                    if (random.Bool(0.06f) && list.Count < 12 && cavePoint.StepsTaken > 20 && cavePoint.Position.Y < 58f)
+                    {
+                        list.Add(new CavePoint
+                        {
+                            Position = cavePoint.Position,
+                            Direction = Vector3.Normalize(random.Vector3(1f, 1f) * new Vector3(1f, 0.33f, 1f)),
+                            BrushType = (int)(MathUtils.Pow(random.Float(0f, 0.999f), 7f) * _caveBrushesByType.Count),
+                            Length = random.Int(40, 180)
+                        });
+                    }
+
+                    if (cavePoint.StepsTaken >= cavePoint.Length || MathUtils.Abs(num9) > 34f ||
+                        MathUtils.Abs(num10) > 34f || cavePoint.Position.Y < 5f || cavePoint.Position.Y > 246f)
                     {
                         num8++;
+                    }
+                    else if (cavePoint.StepsTaken % 20 == 0)
+                    {
+                        var num11 = CalculateHeight(cavePoint.Position.X, cavePoint.Position.Z);
+                        if (cavePoint.Position.Y > num11 + 1f)
+                        {
+                            num8++;
+                        }
                     }
                 }
             }
@@ -1149,163 +1171,165 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var x2 = chunk.Coords.X;
         var y2 = chunk.Coords.Y;
         for (var i = x2; i <= x2; i++)
-        for (var j = y2; j <= y2; j++)
         {
-            var random = new Random(_seed + i + 3943 * j);
-            var humidity = CalculateHumidity(i * 16, j * 16);
-            var num3 = CalculateTemperature(i * 16, j * 16);
-            var num4 = MathUtils.Saturate((SimplexNoise.OctavedNoise(i, j, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
-                                          (random.Bool(0.25f) ? 0.5f : 0f));
-            var num5 = 0;
-            if (num4 > 0.9f)
+            for (var j = y2; j <= y2; j++)
             {
-                num5 = random.Int(1, 2);
-            }
-            else if (num4 > 0.5f)
-            {
-                num5 = random.Int(0, 1);
-            }
-
-            var num6 = 0;
-            for (var k = 0; k < 12; k++)
-            {
-                if (num6 >= num5)
+                var random = new Random(_seed + i + 3943 * j);
+                var humidity = CalculateHumidity(i * 16, j * 16);
+                var num3 = CalculateTemperature(i * 16, j * 16);
+                var num4 = MathUtils.Saturate((SimplexNoise.OctavedNoise(i, j, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
+                                              (random.Bool(0.25f) ? 0.5f : 0f));
+                var num5 = 0;
+                if (num4 > 0.9f)
                 {
-                    break;
+                    num5 = random.Int(1, 2);
+                }
+                else if (num4 > 0.5f)
+                {
+                    num5 = random.Int(0, 1);
                 }
 
-                var num7 = i * 16 + random.Int(0, 15);
-                var num8 = j * 16 + random.Int(0, 15);
-                var num9 = _terrain.CalculateTopmostCellHeight(num7, num8);
-                if (num9 < 66)
+                var num6 = 0;
+                for (var k = 0; k < 12; k++)
                 {
-                    continue;
-                }
-
-                var cellContentsFast = _terrain.GetCellContentsFast(num7, num9, num8);
-                if (cellContentsFast != 2 && cellContentsFast != 8)
-                {
-                    continue;
-                }
-
-                num9++;
-                var num10 = random.Int(3, 7);
-                var point = CellFace.FaceToPoint3(random.Int(0, 3));
-                if (point.X < 0 && num7 - num10 + 1 < 0)
-                {
-                    point.X *= -1;
-                }
-
-                if (point.X > 0 && num7 + num10 - 1 > 15)
-                {
-                    point.X *= -1;
-                }
-
-                if (point.Z < 0 && num8 - num10 + 1 < 0)
-                {
-                    point.Z *= -1;
-                }
-
-                if (point.Z > 0 && num8 + num10 - 1 > 15)
-                {
-                    point.Z *= -1;
-                }
-
-                var flag = true;
-                var flag2 = false;
-                var flag3 = false;
-                for (var l = 0; l < num10; l++)
-                {
-                    var num11 = num7 + point.X * l;
-                    var num12 = num8 + point.Z * l;
-                    if (num11 < x + 1 ||
-                        num11 >= num - 1 ||
-                        num12 < y + 1 ||
-                        num12 >= num2 - 1 ||
-                        BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
+                    if (num6 >= num5)
                     {
-                        flag = false;
                         break;
                     }
 
-                    if (!BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
+                    var num7 = i * 16 + random.Int(0, 15);
+                    var num8 = j * 16 + random.Int(0, 15);
+                    var num9 = _terrain.CalculateTopmostCellHeight(num7, num8);
+                    if (num9 < 66)
                     {
                         continue;
                     }
 
-                    if (l <= MathUtils.Max(num10 / 2, 0))
+                    var cellContentsFast = _terrain.GetCellContentsFast(num7, num9, num8);
+                    if (cellContentsFast != 2 && cellContentsFast != 8)
                     {
-                        flag2 = true;
+                        continue;
                     }
 
-                    if (l >= MathUtils.Min(num10 / 2 + 1, num10 - 1))
+                    num9++;
+                    var num10 = random.Int(3, 7);
+                    var point = CellFace.FaceToPoint3(random.Int(0, 3));
+                    if (point.X < 0 && num7 - num10 + 1 < 0)
                     {
-                        flag3 = true;
+                        point.X *= -1;
                     }
-                }
 
-                if (!(flag && flag2 && flag3))
-                {
-                    continue;
-                }
-
-                var point2 = point.X != 0 ? new Point3(0, 0, 1) : new Point3(1, 0, 0);
-                var treeType = PlantsManager.GenerateRandomTreeType(random,
-                    num3 + SubsystemWeather.GetTemperatureAdjustmentAtHeight(num9), humidity, num9, 2f);
-                if (treeType.HasValue)
-                {
-                    var treeTrunkValue = PlantsManager.GetTreeTrunkValue(treeType.Value);
-                    treeTrunkValue = Terrain.ReplaceData(treeTrunkValue,
-                        WoodBlock.SetCutFace(Terrain.ExtractData(treeTrunkValue), point.X != 0 ? 1 : 0));
-                    var treeLeavesValue = PlantsManager.GetTreeLeavesValue(treeType.Value);
-                    for (var m = 0; m < num10; m++)
+                    if (point.X > 0 && num7 + num10 - 1 > 15)
                     {
-                        var num13 = num7 + point.X * m;
-                        var num14 = num8 + point.Z * m;
-                        _terrain.SetCellValueFast(num13, num9, num14, treeTrunkValue);
-                        if (m <= num10 / 2)
+                        point.X *= -1;
+                    }
+
+                    if (point.Z < 0 && num8 - num10 + 1 < 0)
+                    {
+                        point.Z *= -1;
+                    }
+
+                    if (point.Z > 0 && num8 + num10 - 1 > 15)
+                    {
+                        point.Z *= -1;
+                    }
+
+                    var flag = true;
+                    var flag2 = false;
+                    var flag3 = false;
+                    for (var l = 0; l < num10; l++)
+                    {
+                        var num11 = num7 + point.X * l;
+                        var num12 = num8 + point.Z * l;
+                        if (num11 < x + 1 ||
+                            num11 >= num - 1 ||
+                            num12 < y + 1 ||
+                            num12 >= num2 - 1 ||
+                            BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
+                        {
+                            flag = false;
+                            break;
+                        }
+
+                        if (!BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
                         {
                             continue;
                         }
 
-                        if (random.Bool(0.5f) && !BlocksManager
-                                .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
-                                .Collidable)
+                        if (l <= MathUtils.Max(num10 / 2, 0))
                         {
-                            _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeLeavesValue);
+                            flag2 = true;
                         }
 
-                        if (random.Bool(0.05f) && !BlocksManager
-                                .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
-                                .Collidable)
+                        if (l >= MathUtils.Min(num10 / 2 + 1, num10 - 1))
                         {
-                            _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeTrunkValue);
-                        }
-
-                        if (random.Bool(0.5f) && !BlocksManager
-                                .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
-                                .Collidable)
-                        {
-                            _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeLeavesValue);
-                        }
-
-                        if (random.Bool(0.05f) && !BlocksManager
-                                .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
-                                .Collidable)
-                        {
-                            _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeTrunkValue);
-                        }
-
-                        if (random.Bool(0.5f) && !BlocksManager
-                                .Blocks[_terrain.GetCellContentsFast(num13, num9 + 1, num14)]
-                                .Collidable)
-                        {
-                            _terrain.SetCellValueFast(num13, num9 + 1, num14, treeLeavesValue);
+                            flag3 = true;
                         }
                     }
-                }
 
-                num6++;
+                    if (!(flag && flag2 && flag3))
+                    {
+                        continue;
+                    }
+
+                    var point2 = point.X != 0 ? new Point3(0, 0, 1) : new Point3(1, 0, 0);
+                    var treeType = PlantsManager.GenerateRandomTreeType(random,
+                        num3 + SubsystemWeather.GetTemperatureAdjustmentAtHeight(num9), humidity, num9, 2f);
+                    if (treeType.HasValue)
+                    {
+                        var treeTrunkValue = PlantsManager.GetTreeTrunkValue(treeType.Value);
+                        treeTrunkValue = Terrain.ReplaceData(treeTrunkValue,
+                            WoodBlock.SetCutFace(Terrain.ExtractData(treeTrunkValue), point.X != 0 ? 1 : 0));
+                        var treeLeavesValue = PlantsManager.GetTreeLeavesValue(treeType.Value);
+                        for (var m = 0; m < num10; m++)
+                        {
+                            var num13 = num7 + point.X * m;
+                            var num14 = num8 + point.Z * m;
+                            _terrain.SetCellValueFast(num13, num9, num14, treeTrunkValue);
+                            if (m <= num10 / 2)
+                            {
+                                continue;
+                            }
+
+                            if (random.Bool(0.5f) && !BlocksManager
+                                    .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                                    .Collidable)
+                            {
+                                _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeLeavesValue);
+                            }
+
+                            if (random.Bool(0.05f) && !BlocksManager
+                                    .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                                    .Collidable)
+                            {
+                                _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeTrunkValue);
+                            }
+
+                            if (random.Bool(0.5f) && !BlocksManager
+                                    .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                                    .Collidable)
+                            {
+                                _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeLeavesValue);
+                            }
+
+                            if (random.Bool(0.05f) && !BlocksManager
+                                    .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                                    .Collidable)
+                            {
+                                _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeTrunkValue);
+                            }
+
+                            if (random.Bool(0.5f) && !BlocksManager
+                                    .Blocks[_terrain.GetCellContentsFast(num13, num9 + 1, num14)]
+                                    .Collidable)
+                            {
+                                _terrain.SetCellValueFast(num13, num9 + 1, num14, treeLeavesValue);
+                            }
+                        }
+                    }
+
+                    num6++;
+                }
             }
         }
     }
@@ -1323,9 +1347,11 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var sourceCoords = new Point2[9];
         var sourceIndex = 0;
         for (var i = x - 1; i < x + 2; i++)
-        for (var j = y - 1; j < y + 2; j++)
         {
-            sourceCoords[sourceIndex++] = new Point2(i, j);
+            for (var j = y - 1; j < y + 2; j++)
+            {
+                sourceCoords[sourceIndex++] = new Point2(i, j);
+            }
         }
 
         WarmCleanTreeBrushCache(sourceCoords);
@@ -1401,64 +1427,66 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
         for (var i = x; i <= x; i++)
-        for (var j = y; j <= y; j++)
         {
-            var random = new Random(_seed + i + 3943 * j);
-            var humidity = CalculateHumidity(i * 16, j * 16);
-            var temperature = CalculateTemperature(i * 16, j * 16);
-            var forestDensity = MathUtils.Saturate((SimplexNoise.OctavedNoise(i, j, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
-                                                   (random.Bool(0.25f) ? 0.5f : 0f));
-            var treeLimit = (int)(5f * forestDensity);
-            var treeCount = 0;
-            for (var k = 0; k < 32; k++)
+            for (var j = y; j <= y; j++)
             {
-                if (treeCount >= treeLimit)
+                var random = new Random(_seed + i + 3943 * j);
+                var humidity = CalculateHumidity(i * 16, j * 16);
+                var temperature = CalculateTemperature(i * 16, j * 16);
+                var forestDensity = MathUtils.Saturate((SimplexNoise.OctavedNoise(i, j, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
+                                                       (random.Bool(0.25f) ? 0.5f : 0f));
+                var treeLimit = (int)(5f * forestDensity);
+                var treeCount = 0;
+                for (var k = 0; k < 32; k++)
                 {
-                    break;
-                }
+                    if (treeCount >= treeLimit)
+                    {
+                        break;
+                    }
 
-                var randomX = i * 16 + random.Int(2, 13);
-                var randomZ = j * 16 + random.Int(2, 13);
-                var localX = randomX & 0xF;
-                var localZ = randomZ & 0xF;
-                var heightLimit = chunk.CalculateTopmostCellHeight(localX, localZ);
-                if (heightLimit < 66)
-                {
-                    continue;
-                }
+                    var randomX = i * 16 + random.Int(2, 13);
+                    var randomZ = j * 16 + random.Int(2, 13);
+                    var localX = randomX & 0xF;
+                    var localZ = randomZ & 0xF;
+                    var heightLimit = chunk.CalculateTopmostCellHeight(localX, localZ);
+                    if (heightLimit < 66)
+                    {
+                        continue;
+                    }
 
-                var cellContentsFast = chunk.GetCellContentsFast(localX, heightLimit, localZ);
-                if (cellContentsFast != 2 && cellContentsFast != 8)
-                {
-                    continue;
-                }
+                    var cellContentsFast = chunk.GetCellContentsFast(localX, heightLimit, localZ);
+                    if (cellContentsFast != 2 && cellContentsFast != 8)
+                    {
+                        continue;
+                    }
 
-                heightLimit++;
+                    heightLimit++;
 
-                if (BlocksManager.Blocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
-                    BlocksManager.Blocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
-                    BlocksManager.Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
-                    BlocksManager.Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
-                {
-                    continue;
-                }
+                    if (BlocksManager.Blocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
+                        BlocksManager.Blocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
+                        BlocksManager.Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
+                        BlocksManager.Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
+                    {
+                        continue;
+                    }
 
-                var treeType = PlantsManager.GenerateRandomTreeType(random,
-                    temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight(heightLimit), humidity,
-                    heightLimit);
-                if (treeType.HasValue)
-                {
-                    var treeBrushes = PlantsManager.GetTreeBrushes(treeType.Value);
-                    var treeBrush = treeBrushes[random.Int(treeBrushes.Count)];
-                    result.Add(new BrushPaint
+                    var treeType = PlantsManager.GenerateRandomTreeType(random,
+                        temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight(heightLimit), humidity,
+                        heightLimit);
+                    if (treeType.HasValue)
+                    {
+                        var treeBrushes = PlantsManager.GetTreeBrushes(treeType.Value);
+                        var treeBrush = treeBrushes[random.Int(treeBrushes.Count)];
+                        result.Add(new BrushPaint
                         {
                             Position = new Point3(randomX, heightLimit, randomZ),
                             Brush = treeBrush
                         }
-                    );
-                }
+                        );
+                    }
 
-                treeCount++;
+                    treeCount++;
+                }
             }
         }
 
@@ -1526,17 +1554,19 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
     {
         var value = Terrain.MakeBlockValue(1);
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = i + chunk.Origin.X;
-            var num2 = j + chunk.Origin.Y;
-            float num3 = 2 + (int)(4f * SimplexNoise.OctavedNoise(num, num2, 0.1f, 1, 1f, 1f));
-            for (var k = 0; k < num3; k++)
+            for (var j = 0; j < 16; j++)
             {
-                chunk.SetCellValueFast(i, k, j, value);
-            }
+                var num = i + chunk.Origin.X;
+                var num2 = j + chunk.Origin.Y;
+                float num3 = 2 + (int)(4f * SimplexNoise.OctavedNoise(num, num2, 0.1f, 1, 1f, 1f));
+                for (var k = 0; k < num3; k++)
+                {
+                    chunk.SetCellValueFast(i, k, j, value);
+                }
 
-            chunk.SetCellValueFast(i, 255, j, 0);
+                chunk.SetCellValueFast(i, 255, j, 0);
+            }
         }
     }
 
@@ -1549,34 +1579,38 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
 
         var random = new Random(_seed + chunk.Coords.X + 3943 * chunk.Coords.Y);
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
-        for (var num = 254; num >= 0; num--)
         {
-            var cellValueFast = chunk.GetCellValueFast(i, num, j);
-            var num2 = Terrain.ExtractContents(cellValueFast);
-            if (num2 == 0)
+            for (var j = 0; j < 16; j++)
             {
-                continue;
-            }
-
-            if (!(BlocksManager.Blocks[num2] is FluidBlock))
-            {
-                var temperatureFast = chunk.GetTemperatureFast(i, j);
-                var humidityFast = chunk.GetHumidityFast(i, j);
-                var num3 = PlantsManager.GenerateRandomPlantValue(random, cellValueFast, temperatureFast,
-                    humidityFast, num + 1);
-                if (num3 != 0)
+                for (var num = 254; num >= 0; num--)
                 {
-                    chunk.SetCellValueFast(i, num + 1, j, num3);
-                }
+                    var cellValueFast = chunk.GetCellValueFast(i, num, j);
+                    var num2 = Terrain.ExtractContents(cellValueFast);
+                    if (num2 == 0)
+                    {
+                        continue;
+                    }
 
-                if (num2 == 2)
-                {
-                    chunk.SetCellValueFast(i, num, j, Terrain.MakeBlockValue(8, 0, 0));
+                    if (!(BlocksManager.Blocks[num2] is FluidBlock))
+                    {
+                        var temperatureFast = chunk.GetTemperatureFast(i, j);
+                        var humidityFast = chunk.GetHumidityFast(i, j);
+                        var num3 = PlantsManager.GenerateRandomPlantValue(random, cellValueFast, temperatureFast,
+                            humidityFast, num + 1);
+                        if (num3 != 0)
+                        {
+                            chunk.SetCellValueFast(i, num + 1, j, num3);
+                        }
+
+                        if (num2 == 2)
+                        {
+                            chunk.SetCellValueFast(i, num, j, Terrain.MakeBlockValue(8, 0, 0));
+                        }
+                    }
+
+                    break;
                 }
             }
-
-            break;
         }
     }
 
@@ -1589,98 +1623,100 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
 
         var random = new Random(_seed + chunk.Coords.X + 2210 * chunk.Coords.Y);
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            if (!random.Bool(0.2f))
+            for (var j = 0; j < 16; j++)
             {
-                continue;
-            }
-
-            var num = chunk.Origin.X + i;
-            var num2 = chunk.Origin.Y + j;
-            var temperatureFast = chunk.GetTemperatureFast(i, j);
-            if (CalculateOceanShoreDistance(num, num2) > 10f)
-            {
-                continue;
-            }
-
-            var num3 = 0;
-            for (var num4 = 254; num4 >= 0; num4--)
-            {
-                if (Terrain.ExtractContents(chunk.GetCellValueFast(i, num4, j)) == 18)
+                if (!random.Bool(0.2f))
                 {
-                    num3++;
-                    var face = random.Int(0, 5);
-                    var point = CellFace.FaceToPoint3(face);
-                    if (i + point.X < 0 || i + point.X >= 16 || num4 + point.Y < 0 || num4 + point.Y >= 254 ||
-                        j + point.Z < 0 || j + point.Z >= 16)
-                    {
-                        continue;
-                    }
-
-                    var cellValueFast = chunk.GetCellValueFast(i + point.X, num4 + point.Y, j + point.Z);
-                    if (!_subsystemBottomSuckerBlockBehavior.IsSupport(cellValueFast, CellFace.OppositeFace(face)))
-                    {
-                        continue;
-                    }
-
-                    var num5 = 0;
-                    var num6 = 0.6f;
-                    var num7 = 0.4f;
-                    if (temperatureFast < 8)
-                    {
-                        num6 = 0.9f;
-                        num7 = 0.1f;
-                    }
-
-                    if (num3 > 6)
-                    {
-                        num6 *= 0.25f;
-                    }
-
-                    if (num3 > 12)
-                    {
-                        num7 *= 0.5f;
-                    }
-
-                    if (num3 < 4)
-                    {
-                        num7 *= 0.5f;
-                    }
-
-                    if (num4 < 45)
-                    {
-                        num6 *= 0.1f;
-                        num7 *= 0.1f;
-                    }
-
-                    var num8 = random.Float(0f, 1f);
-                    num8 -= num6;
-                    if (num5 == 0 && num8 < 0f)
-                    {
-                        num5 = 226;
-                    }
-
-                    num8 -= num7;
-                    if (num5 == 0 && num8 < 0f)
-                    {
-                        num5 = 229;
-                    }
-
-                    if (num5 == 0)
-                    {
-                        continue;
-                    }
-
-                    var face2 = random.Int(0, 3);
-                    var data = BottomSuckerBlock.SetFace(BottomSuckerBlock.SetSubvariant(0, face2),
-                        CellFace.OppositeFace(face));
-                    var value = Terrain.MakeBlockValue(num5, 0, data);
-                    chunk.SetCellValueFast(i, num4, j, value);
+                    continue;
                 }
-                else
+
+                var num = chunk.Origin.X + i;
+                var num2 = chunk.Origin.Y + j;
+                var temperatureFast = chunk.GetTemperatureFast(i, j);
+                if (CalculateOceanShoreDistance(num, num2) > 10f)
                 {
-                    num3 = 0;
+                    continue;
+                }
+
+                var num3 = 0;
+                for (var num4 = 254; num4 >= 0; num4--)
+                {
+                    if (Terrain.ExtractContents(chunk.GetCellValueFast(i, num4, j)) == 18)
+                    {
+                        num3++;
+                        var face = random.Int(0, 5);
+                        var point = CellFace.FaceToPoint3(face);
+                        if (i + point.X < 0 || i + point.X >= 16 || num4 + point.Y < 0 || num4 + point.Y >= 254 ||
+                            j + point.Z < 0 || j + point.Z >= 16)
+                        {
+                            continue;
+                        }
+
+                        var cellValueFast = chunk.GetCellValueFast(i + point.X, num4 + point.Y, j + point.Z);
+                        if (!_subsystemBottomSuckerBlockBehavior.IsSupport(cellValueFast, CellFace.OppositeFace(face)))
+                        {
+                            continue;
+                        }
+
+                        var num5 = 0;
+                        var num6 = 0.6f;
+                        var num7 = 0.4f;
+                        if (temperatureFast < 8)
+                        {
+                            num6 = 0.9f;
+                            num7 = 0.1f;
+                        }
+
+                        if (num3 > 6)
+                        {
+                            num6 *= 0.25f;
+                        }
+
+                        if (num3 > 12)
+                        {
+                            num7 *= 0.5f;
+                        }
+
+                        if (num3 < 4)
+                        {
+                            num7 *= 0.5f;
+                        }
+
+                        if (num4 < 45)
+                        {
+                            num6 *= 0.1f;
+                            num7 *= 0.1f;
+                        }
+
+                        var num8 = random.Float(0f, 1f);
+                        num8 -= num6;
+                        if (num5 == 0 && num8 < 0f)
+                        {
+                            num5 = 226;
+                        }
+
+                        num8 -= num7;
+                        if (num5 == 0 && num8 < 0f)
+                        {
+                            num5 = 229;
+                        }
+
+                        if (num5 == 0)
+                        {
+                            continue;
+                        }
+
+                        var face2 = random.Int(0, 3);
+                        var data = BottomSuckerBlock.SetFace(BottomSuckerBlock.SetSubvariant(0, face2),
+                            CellFace.OppositeFace(face));
+                        var value = Terrain.MakeBlockValue(num5, 0, data);
+                        chunk.SetCellValueFast(i, num4, j, value);
+                    }
+                    else
+                    {
+                        num3 = 0;
+                    }
                 }
             }
         }
@@ -1722,19 +1758,19 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
                     switch (Terrain.ExtractContents(chunk.GetCellValueFast(num4, num6, num5)))
                     {
                         case 7:
-                        {
-                            for (var k = num6 + 1;
-                                 k <= num6 + 3 && chunk.GetCellContentsFast(num4 + 1, k, num5) == 0 &&
-                                 chunk.GetCellContentsFast(num4 - 1, k, num5) == 0 &&
-                                 chunk.GetCellContentsFast(num4, k, num5 + 1) == 0 &&
-                                 chunk.GetCellContentsFast(num4, k, num5 - 1) == 0;
-                                 k++)
                             {
-                                chunk.SetCellValueFast(num4, k, num5, Terrain.MakeBlockValue(127));
-                            }
+                                for (var k = num6 + 1;
+                                     k <= num6 + 3 && chunk.GetCellContentsFast(num4 + 1, k, num5) == 0 &&
+                                     chunk.GetCellContentsFast(num4 - 1, k, num5) == 0 &&
+                                     chunk.GetCellContentsFast(num4, k, num5 + 1) == 0 &&
+                                     chunk.GetCellContentsFast(num4, k, num5 - 1) == 0;
+                                     k++)
+                                {
+                                    chunk.SetCellValueFast(num4, k, num5, Terrain.MakeBlockValue(127));
+                                }
 
-                            break;
-                        }
+                                break;
+                            }
                         case 0:
                             continue;
                     }
@@ -1980,48 +2016,48 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
                     case 12:
                     case 66:
                     case 67:
-                    {
-                        var num8 = random.Int(0, 3);
-                        for (var k = 0; k < 4; k++)
                         {
-                            var face = (k + num8) % 4;
-                            var point = CellFace.FaceToPoint3(face);
-                            if (chunk.GetCellContentsFast(num5 + point.X, num6, num7 + point.Z) != 0)
+                            var num8 = random.Int(0, 3);
+                            for (var k = 0; k < 4; k++)
                             {
-                                continue;
-                            }
+                                var face = (k + num8) % 4;
+                                var point = CellFace.FaceToPoint3(face);
+                                if (chunk.GetCellContentsFast(num5 + point.X, num6, num7 + point.Z) != 0)
+                                {
+                                    continue;
+                                }
 
-                            var num9 = num6 - 1;
-                            while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0 &&
-                                   chunk.GetCellContentsFast(num5, num9, num7) != 0)
-                            {
-                                num9--;
-                            }
+                                var num9 = num6 - 1;
+                                while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0 &&
+                                       chunk.GetCellContentsFast(num5, num9, num7) != 0)
+                                {
+                                    num9--;
+                                }
 
-                            if (chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) != 0)
-                            {
-                                break;
-                            }
-
-                            num9++;
-                            var value = Terrain.MakeBlockValue(197, 0,
-                                IvyBlock.SetFace(0, CellFace.OppositeFace(face)));
-                            while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0)
-                            {
-                                chunk.SetCellValueFast(num5 + point.X, num9, num7 + point.Z, value);
-                                if (IvyBlock.IsGrowthStopCell(num5 + point.X, num9, num7 + point.Z))
+                                if (chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) != 0)
                                 {
                                     break;
                                 }
 
-                                num9--;
+                                num9++;
+                                var value = Terrain.MakeBlockValue(197, 0,
+                                    IvyBlock.SetFace(0, CellFace.OppositeFace(face)));
+                                while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0)
+                                {
+                                    chunk.SetCellValueFast(num5 + point.X, num9, num7 + point.Z, value);
+                                    if (IvyBlock.IsGrowthStopCell(num5 + point.X, num9, num7 + point.Z))
+                                    {
+                                        break;
+                                    }
+
+                                    num9--;
+                                }
+
+                                break;
                             }
 
                             break;
                         }
-
-                        break;
-                    }
                 }
             }
         }
@@ -2088,25 +2124,27 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
                 }
 
                 for (var k = num4; k < num4 + num2; k++)
-                for (var l = num5; l < num5 + num3; l++)
                 {
-                    for (var num11 = num7.Value - 1; num11 >= num7 - num6 + 1; num11--)
+                    for (var l = num5; l < num5 + num3; l++)
                     {
-                        chunk.SetCellValueFast(k, num11, l, Terrain.MakeBlockValue(0));
-                    }
+                        for (var num11 = num7.Value - 1; num11 >= num7 - num6 + 1; num11--)
+                        {
+                            chunk.SetCellValueFast(k, num11, l, Terrain.MakeBlockValue(0));
+                        }
 
-                    chunk.SetCellValueFast(k, num7.Value, l, Terrain.MakeBlockValue(87));
-                    if (!flag)
-                    {
-                        continue;
-                    }
+                        chunk.SetCellValueFast(k, num7.Value, l, Terrain.MakeBlockValue(87));
+                        if (!flag)
+                        {
+                            continue;
+                        }
 
-                    var data = SpikedPlankBlock.SetSpikesState(0, random.Float(0f, 1f) < 0.33f);
-                    chunk.SetCellValueFast(k, num7.Value - num6 + 1, l, Terrain.MakeBlockValue(86, 0, data));
+                        var data = SpikedPlankBlock.SetSpikesState(0, random.Float(0f, 1f) < 0.33f);
+                        chunk.SetCellValueFast(k, num7.Value - num6 + 1, l, Terrain.MakeBlockValue(86, 0, data));
+                    }
                 }
 
                 break;
-                end_IL_019b:
+            end_IL_019b:
                 break;
             }
         }
@@ -2156,24 +2194,28 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
                     var num12 = p.Z < 0 ? num6 - 2 : num6 - 1;
                     var num13 = p.Z > 0 ? num6 + 2 : num6 + 1;
                     for (var l = num10; l <= num11; l++)
-                    for (var m = num7 - 2; m <= num7 + 2; m++)
-                    for (var n = num12; n <= num13; n++)
                     {
-                        var num14 = Terrain.ExtractContents(chunk.GetCellValueFast(l, m, n));
-                        var block = BlocksManager.Blocks[num14];
-                        if (m > num7)
+                        for (var m = num7 - 2; m <= num7 + 2; m++)
                         {
-                            if (!block.Collidable)
+                            for (var n = num12; n <= num13; n++)
                             {
-                                continue;
+                                var num14 = Terrain.ExtractContents(chunk.GetCellValueFast(l, m, n));
+                                var block = BlocksManager.Blocks[num14];
+                                if (m > num7)
+                                {
+                                    if (!block.Collidable)
+                                    {
+                                        continue;
+                                    }
+                                }
+                                else if (num14 is 8 or 2 or 7 or 3 or 4)
+                                {
+                                    continue;
+                                }
+
+                                goto IL_06ac;
                             }
                         }
-                        else if (num14 is 8 or 2 or 7 or 3 or 4)
-                        {
-                            continue;
-                        }
-
-                        goto IL_06ac;
                     }
 
                     var num15 = random.Int(0, 7);
@@ -2320,7 +2362,7 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
                     }
 
                     break;
-                    IL_06ac: ;
+                IL_06ac:;
                 }
             }
         }
@@ -2331,23 +2373,25 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
         var num = 190;
         var point = default(Point2);
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            if (Terrain.ExtractContents(chunk.GetCellValueFast(i, num, j)) == 0)
+            for (var j = 0; j < 16; j++)
             {
-                continue;
-            }
-
-            for (var k = num + 1; k < 256; k++)
-            {
-                if (Terrain.ExtractContents(chunk.GetCellValueFast(i, k, j)) != 0)
+                if (Terrain.ExtractContents(chunk.GetCellValueFast(i, num, j)) == 0)
                 {
                     continue;
                 }
 
-                num = k;
-                point = new Point2(i, j);
-                break;
+                for (var k = num + 1; k < 256; k++)
+                {
+                    if (Terrain.ExtractContents(chunk.GetCellValueFast(i, k, j)) != 0)
+                    {
+                        continue;
+                    }
+
+                    num = k;
+                    point = new Point2(i, j);
+                    break;
+                }
             }
         }
 
@@ -2363,64 +2407,66 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
     public void GenerateSnowAndIce(TerrainChunk chunk)
     {
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = i + chunk.Origin.X;
-            var num2 = j + chunk.Origin.Y;
-            for (var num3 = 254; num3 >= 0; num3--)
+            for (var j = 0; j < 16; j++)
             {
-                var cellValueFast = chunk.GetCellValueFast(i, num3, j);
-                var num4 = Terrain.ExtractContents(cellValueFast);
-                if (num4 == 0)
+                var num = i + chunk.Origin.X;
+                var num2 = j + chunk.Origin.Y;
+                for (var num3 = 254; num3 >= 0; num3--)
                 {
-                    continue;
-                }
-
-                if (!SubsystemWeather.IsPlaceFrozen(chunk.GetTemperatureFast(i, j), num3))
-                {
-                    break;
-                }
-
-                if (BlocksManager.Blocks[num4] is WaterBlock)
-                {
-                    if (CalculateOceanShoreDistance(num, num2) > -20f)
+                    var cellValueFast = chunk.GetCellValueFast(i, num3, j);
+                    var num4 = Terrain.ExtractContents(cellValueFast);
+                    if (num4 == 0)
                     {
-                        float num5 = 1 +
-                                     (int)(2f * MathUtils.Sqr(SimplexNoise.OctavedNoise(num, num2, 0.2f, 1, 2f,
-                                         1f)));
-                        for (var k = 0; k < num5; k++)
+                        continue;
+                    }
+
+                    if (!SubsystemWeather.IsPlaceFrozen(chunk.GetTemperatureFast(i, j), num3))
+                    {
+                        break;
+                    }
+
+                    if (BlocksManager.Blocks[num4] is WaterBlock)
+                    {
+                        if (CalculateOceanShoreDistance(num, num2) > -20f)
                         {
-                            if (num3 - k <= 0)
+                            float num5 = 1 +
+                                         (int)(2f * MathUtils.Sqr(SimplexNoise.OctavedNoise(num, num2, 0.2f, 1, 2f,
+                                             1f)));
+                            for (var k = 0; k < num5; k++)
                             {
-                                continue;
+                                if (num3 - k <= 0)
+                                {
+                                    continue;
+                                }
+
+                                if (!(BlocksManager.Blocks[
+                                        chunk.GetCellContentsFast(i, num3 - k, j)] is WaterBlock))
+                                {
+                                    break;
+                                }
+
+                                chunk.SetCellValueFast(i, num3 - k, j, 62);
                             }
 
-                            if (!(BlocksManager.Blocks[
-                                    chunk.GetCellContentsFast(i, num3 - k, j)] is WaterBlock))
+                            if (SubsystemWeather.ShaftHasSnowOnIce(num, num2))
                             {
-                                break;
+                                chunk.SetCellValueFast(i, num3 + 1, j, 61);
                             }
-
-                            chunk.SetCellValueFast(i, num3 - k, j, 62);
-                        }
-
-                        if (SubsystemWeather.ShaftHasSnowOnIce(num, num2))
-                        {
-                            chunk.SetCellValueFast(i, num3 + 1, j, 61);
                         }
                     }
-                }
-                else if (SubsystemSnowBlockBehavior.CanSupportSnow(cellValueFast))
-                {
-                    chunk.SetCellValueFast(i, num3 + 1, j, 61);
-                }
+                    else if (SubsystemSnowBlockBehavior.CanSupportSnow(cellValueFast))
+                    {
+                        chunk.SetCellValueFast(i, num3 + 1, j, 61);
+                    }
 
-                if (num4 == 8)
-                {
-                    chunk.SetCellValueFast(i, num3, j, Terrain.MakeBlockValue(8, 0, 1));
-                }
+                    if (num4 == 8)
+                    {
+                        chunk.SetCellValueFast(i, num3, j, Terrain.MakeBlockValue(8, 0, 1));
+                    }
 
-                break;
+                    break;
+                }
             }
         }
     }
@@ -2428,23 +2474,25 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
     public void PropagateFluidsDownwards(TerrainChunk chunk)
     {
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = TerrainChunk.CalculateCellIndex(i, 255, j);
-            var num2 = 0;
-            var num3 = 255;
-            while (num3 >= 0)
+            for (var j = 0; j < 16; j++)
             {
-                var num4 = Terrain.ExtractContents(chunk.GetCellValueFast(num));
-                if (num4 == 0 && num2 != 0 && BlocksManager.FluidBlocks[num2] != null)
+                var num = TerrainChunk.CalculateCellIndex(i, 255, j);
+                var num2 = 0;
+                var num3 = 255;
+                while (num3 >= 0)
                 {
-                    chunk.SetCellValueFast(num, num2);
-                    num4 = num2;
-                }
+                    var num4 = Terrain.ExtractContents(chunk.GetCellValueFast(num));
+                    if (num4 == 0 && num2 != 0 && BlocksManager.FluidBlocks[num2] != null)
+                    {
+                        chunk.SetCellValueFast(num, num2);
+                        num4 = num2;
+                    }
 
-                num2 = num4;
-                num3--;
-                num--;
+                    num2 = num4;
+                    num3--;
+                    num--;
+                }
             }
         }
     }
@@ -2452,24 +2500,26 @@ public class TerrainContentsGenerator23 : ITerrainContentsGenerator
     public void UpdateFluidIsTop(TerrainChunk chunk)
     {
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = TerrainChunk.CalculateCellIndex(i, 255, j);
-            var num2 = 0;
-            var num3 = 255;
-            while (num3 >= 0)
+            for (var j = 0; j < 16; j++)
             {
-                var cellValueFast = chunk.GetCellValueFast(num);
-                var num4 = Terrain.ExtractContents(cellValueFast);
-                if (num4 != num2 && BlocksManager.FluidBlocks[num4] != null && BlocksManager.FluidBlocks[num2] == null)
+                var num = TerrainChunk.CalculateCellIndex(i, 255, j);
+                var num2 = 0;
+                var num3 = 255;
+                while (num3 >= 0)
                 {
-                    var data = Terrain.ExtractData(cellValueFast);
-                    chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));
-                }
+                    var cellValueFast = chunk.GetCellValueFast(num);
+                    var num4 = Terrain.ExtractContents(cellValueFast);
+                    if (num4 != num2 && BlocksManager.FluidBlocks[num4] != null && BlocksManager.FluidBlocks[num2] == null)
+                    {
+                        var data = Terrain.ExtractData(cellValueFast);
+                        chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));
+                    }
 
-                num2 = num4;
-                num3--;
-                num--;
+                    num2 = num4;
+                    num3--;
+                    num--;
+                }
             }
         }
     }

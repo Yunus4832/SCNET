@@ -88,7 +88,7 @@ public class ModifyWorldScreen : Screen
         {
             DialogsManager.ShowDialog(null,
                 new SelectGameModeDialog(string.Empty, _cruelAllowed,
-                    delegate(GameMode gameMode) { WorldSettings.GameMode = gameMode; }));
+                    delegate (GameMode gameMode) { WorldSettings.GameMode = gameMode; }));
         }
 
         _currentWorldSettingsData.Clear();
@@ -153,7 +153,7 @@ public class ModifyWorldScreen : Screen
             {
                 DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.Get(_typeName, 3),
                     LanguageManager.Get(_typeName, 4), LanguageManager.Get("Usual", "yes"),
-                    LanguageManager.Get("Usual", "no"), delegate(MessageDialogButton button)
+                    LanguageManager.Get("Usual", "no"), delegate (MessageDialogButton button)
                     {
                         if (button == MessageDialogButton.Button1)
                         {

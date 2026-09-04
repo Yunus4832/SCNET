@@ -189,7 +189,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
         _chaseNonPlayerProbability = valuesDictionary.GetValue<float>("ChaseNonPlayerProbability");
         _chaseWhenAttackedProbability = valuesDictionary.GetValue<float>("ChaseWhenAttackedProbability");
         _chaseOnTouchProbability = valuesDictionary.GetValue<float>("ChaseOnTouchProbability");
-        _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
+        _componentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
         {
             if (!(_random.Float(0f, 1f) < _chaseWhenAttackedProbability))
             {
@@ -205,7 +205,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 Attack(attacker, 7f, 7f, false);
             }
         };
-        _componentCreature.ComponentBody.CollidedWithBody += delegate(ComponentBody body)
+        _componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody body)
         {
             if (_target == null && _autoChaseSuppressionTime <= 0f &&
                 _random.Float(0f, 1f) < _chaseOnTouchProbability)

@@ -26,22 +26,24 @@ public class SwitchBlock : MountedElectricElementBlock
             throw new InvalidOperationException("Required LeverMesh.ParentBone is null")
         );
         for (var i = 0; i < 6; i++)
-        for (var j = 0; j < 2; j++)
         {
-            var num = (i << 1) | j;
-            var matrix = i >= 4
-                ? i != 4
-                    ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
-                    : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
-                : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                  Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-            var matrix2 = Matrix.CreateRotationX(j == 0 ? MathUtils.DegToRad(30f) : MathUtils.DegToRad(-30f));
-            BlockMeshesByIndex[num] = new BlockMesh();
-            BlockMeshesByIndex[num].AppendModelMeshPart(bodyMesh.MeshParts[0],
-                boneAbsoluteTransform * matrix, false, false, false, false, Color.White);
-            BlockMeshesByIndex[num].AppendModelMeshPart(leverMesh.MeshParts[0],
-                boneAbsoluteTransform2 * matrix2 * matrix, false, false, false, false, Color.White);
-            CollisionBoxesByIndex[num] = [BlockMeshesByIndex[num].CalculateBoundingBox()];
+            for (var j = 0; j < 2; j++)
+            {
+                var num = (i << 1) | j;
+                var matrix = i >= 4
+                    ? i != 4
+                        ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
+                        : Matrix.CreateTranslation(0.5f, 0f, 0.5f)
+                    : Matrix.CreateRotationX((float)Math.PI / 2f) * Matrix.CreateTranslation(0f, 0f, -0.5f) *
+                      Matrix.CreateRotationY(i * (float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
+                var matrix2 = Matrix.CreateRotationX(j == 0 ? MathUtils.DegToRad(30f) : MathUtils.DegToRad(-30f));
+                BlockMeshesByIndex[num] = new BlockMesh();
+                BlockMeshesByIndex[num].AppendModelMeshPart(bodyMesh.MeshParts[0],
+                    boneAbsoluteTransform * matrix, false, false, false, false, Color.White);
+                BlockMeshesByIndex[num].AppendModelMeshPart(leverMesh.MeshParts[0],
+                    boneAbsoluteTransform2 * matrix2 * matrix, false, false, false, false, Color.White);
+                CollisionBoxesByIndex[num] = [BlockMeshesByIndex[num].CalculateBoundingBox()];
+            }
         }
 
         var matrix3 = Matrix.CreateRotationY(-(float)Math.PI / 2f) * Matrix.CreateRotationZ((float)Math.PI / 2f);

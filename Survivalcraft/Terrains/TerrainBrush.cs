@@ -35,10 +35,14 @@ public class TerrainBrush
     {
         var num = 0;
         for (var i = x; i < x + sizeX; i++)
-        for (var j = y; j < y + sizeY; j++)
-        for (var k = z; k < z + sizeZ; k++)
         {
-            num += counter.Count(this, new Point3(i, j, k));
+            for (var j = y; j < y + sizeY; j++)
+            {
+                for (var k = z; k < z + sizeZ; k++)
+                {
+                    num += counter.Count(this, new Point3(i, j, k));
+                }
+            }
         }
 
         return num;
@@ -126,10 +130,14 @@ public class TerrainBrush
     public void AddBox(int x, int y, int z, int sizeX, int sizeY, int sizeZ, Brush brush)
     {
         for (var i = x; i < x + sizeX; i++)
-        for (var j = y; j < y + sizeY; j++)
-        for (var k = z; k < z + sizeZ; k++)
         {
-            AddCell(i, j, k, brush);
+            for (var j = y; j < y + sizeY; j++)
+            {
+                for (var k = z; k < z + sizeZ; k++)
+                {
+                    AddCell(i, j, k, brush);
+                }
+            }
         }
     }
 

@@ -197,51 +197,51 @@ public class Image
         switch (format)
         {
             case ImageFileFormat.Bmp:
-            {
-                BmpEncoder encoder = new()
+                {
+                    BmpEncoder encoder = new()
                     { BitsPerPixel = saveAlpha ? BmpBitsPerPixel.Pixel32 : BmpBitsPerPixel.Pixel24 };
-                if (sync)
-                {
-                    image.TrueImage.SaveAsBmp(stream, encoder);
-                }
-                else
-                {
-                    image.TrueImage.SaveAsBmpAsync(stream, encoder);
-                }
+                    if (sync)
+                    {
+                        image.TrueImage.SaveAsBmp(stream, encoder);
+                    }
+                    else
+                    {
+                        image.TrueImage.SaveAsBmpAsync(stream, encoder);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case ImageFileFormat.Png:
-            {
-                PngEncoder encoder = new()
                 {
-                    ColorType = saveAlpha ? PngColorType.RgbWithAlpha : PngColorType.Rgb,
-                    TransparentColorMode = PngTransparentColorMode.Clear
-                };
-                if (sync)
-                {
-                    image.TrueImage.SaveAsPng(stream, encoder);
-                }
-                else
-                {
-                    image.TrueImage.SaveAsPngAsync(stream, encoder);
-                }
+                    PngEncoder encoder = new()
+                    {
+                        ColorType = saveAlpha ? PngColorType.RgbWithAlpha : PngColorType.Rgb,
+                        TransparentColorMode = PngTransparentColorMode.Clear
+                    };
+                    if (sync)
+                    {
+                        image.TrueImage.SaveAsPng(stream, encoder);
+                    }
+                    else
+                    {
+                        image.TrueImage.SaveAsPngAsync(stream, encoder);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case ImageFileFormat.Jpg:
-            {
-                if (sync)
                 {
-                    image.TrueImage.SaveAsJpeg(stream, DefaultJpegEncoder);
-                }
-                else
-                {
-                    image.TrueImage.SaveAsJpegAsync(stream, DefaultJpegEncoder);
-                }
+                    if (sync)
+                    {
+                        image.TrueImage.SaveAsJpeg(stream, DefaultJpegEncoder);
+                    }
+                    else
+                    {
+                        image.TrueImage.SaveAsJpegAsync(stream, DefaultJpegEncoder);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case ImageFileFormat.Gif:
                 if (sync)
                 {
@@ -265,75 +265,75 @@ public class Image
 
                 break;
             case ImageFileFormat.Qoi:
-            {
-                QoiEncoder encoder = new()
                 {
-                    ColorSpace = QoiColorSpace.SrgbWithLinearAlpha,
-                    Channels = saveAlpha ? QoiChannels.Rgba : QoiChannels.Rgb
-                };
-                if (sync)
-                {
-                    image.TrueImage.SaveAsQoi(stream, encoder);
-                }
-                else
-                {
-                    image.TrueImage.SaveAsQoiAsync(stream, encoder);
-                }
+                    QoiEncoder encoder = new()
+                    {
+                        ColorSpace = QoiColorSpace.SrgbWithLinearAlpha,
+                        Channels = saveAlpha ? QoiChannels.Rgba : QoiChannels.Rgb
+                    };
+                    if (sync)
+                    {
+                        image.TrueImage.SaveAsQoi(stream, encoder);
+                    }
+                    else
+                    {
+                        image.TrueImage.SaveAsQoiAsync(stream, encoder);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case ImageFileFormat.Tiff:
-            {
-                TiffEncoder encoder = new()
+                {
+                    TiffEncoder encoder = new()
                     { BitsPerPixel = saveAlpha ? TiffBitsPerPixel.Bit32 : TiffBitsPerPixel.Bit24 };
-                if (sync)
-                {
-                    image.TrueImage.SaveAsTiff(stream, encoder);
-                }
-                else
-                {
-                    image.TrueImage.SaveAsTiffAsync(stream, encoder);
-                }
+                    if (sync)
+                    {
+                        image.TrueImage.SaveAsTiff(stream, encoder);
+                    }
+                    else
+                    {
+                        image.TrueImage.SaveAsTiffAsync(stream, encoder);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case ImageFileFormat.Tga:
-            {
-                TgaEncoder encoder = new()
                 {
-                    BitsPerPixel = saveAlpha ? TgaBitsPerPixel.Pixel32 : TgaBitsPerPixel.Pixel24,
-                    Compression = TgaCompression.RunLength
-                };
-                if (sync)
-                {
-                    image.TrueImage.SaveAsTga(stream, encoder);
-                }
-                else
-                {
-                    image.TrueImage.SaveAsTgaAsync(stream, encoder);
-                }
+                    TgaEncoder encoder = new()
+                    {
+                        BitsPerPixel = saveAlpha ? TgaBitsPerPixel.Pixel32 : TgaBitsPerPixel.Pixel24,
+                        Compression = TgaCompression.RunLength
+                    };
+                    if (sync)
+                    {
+                        image.TrueImage.SaveAsTga(stream, encoder);
+                    }
+                    else
+                    {
+                        image.TrueImage.SaveAsTgaAsync(stream, encoder);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case ImageFileFormat.WebP:
-            {
-                WebpEncoder encoder = new()
                 {
-                    TransparentColorMode =
-                        saveAlpha ? WebpTransparentColorMode.Preserve : WebpTransparentColorMode.Clear,
-                    FileFormat = WebpFileFormatType.Lossless
-                };
-                if (sync)
-                {
-                    image.TrueImage.SaveAsWebp(stream, encoder);
-                }
-                else
-                {
-                    image.TrueImage.SaveAsWebpAsync(stream, encoder);
-                }
+                    WebpEncoder encoder = new()
+                    {
+                        TransparentColorMode =
+                            saveAlpha ? WebpTransparentColorMode.Preserve : WebpTransparentColorMode.Clear,
+                        FileFormat = WebpFileFormatType.Lossless
+                    };
+                    if (sync)
+                    {
+                        image.TrueImage.SaveAsWebp(stream, encoder);
+                    }
+                    else
+                    {
+                        image.TrueImage.SaveAsWebpAsync(stream, encoder);
+                    }
 
-                break;
-            }
+                    break;
+                }
             default: throw new InvalidOperationException("Unsupported image file format.");
         }
     }

@@ -141,7 +141,7 @@ public static partial class GamePad
         }
 
         if (IsModifierKey(button))
-            //如果是修饰键，松开那一刻才算按下一次，避免影响组合键
+        //如果是修饰键，松开那一刻才算按下一次，避免影响组合键
         {
             return !states[gamePadIndex].Buttons[(int)button] && states[gamePadIndex].LastButtons[(int)button];
         }

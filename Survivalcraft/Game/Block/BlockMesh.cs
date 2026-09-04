@@ -668,14 +668,16 @@ public class BlockMesh
         var num3 = int.MinValue;
         var num4 = int.MinValue;
         for (var i = bounds.Top; i < bounds.Bottom; i++)
-        for (var j = bounds.Left; j < bounds.Right; j++)
         {
-            if (slice.Pixels[j + i * slice.Width].A > alphaThreshold)
+            for (var j = bounds.Left; j < bounds.Right; j++)
             {
-                num = MathUtils.Min(num, j);
-                num2 = MathUtils.Min(num2, i);
-                num3 = MathUtils.Max(num3, j);
-                num4 = MathUtils.Max(num4, i);
+                if (slice.Pixels[j + i * slice.Width].A > alphaThreshold)
+                {
+                    num = MathUtils.Min(num, j);
+                    num2 = MathUtils.Min(num2, i);
+                    num3 = MathUtils.Max(num3, j);
+                    num4 = MathUtils.Max(num4, i);
+                }
             }
         }
 

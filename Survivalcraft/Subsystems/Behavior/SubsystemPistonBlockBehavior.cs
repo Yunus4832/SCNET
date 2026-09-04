@@ -62,7 +62,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var value = inventory.GetSlotValue(slotIndex);
         inventory.GetSlotCount(slotIndex);
         var data = Terrain.ExtractData(value);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditPistonDialog(data, delegate(int newData)
+        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditPistonDialog(data, delegate (int newData)
         {
             var num = Terrain.ReplaceData(value, newData);
             if (num == value)
@@ -85,7 +85,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         var contents = Terrain.ExtractContents(value);
         var data = Terrain.ExtractData(value);
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditPistonDialog(data, delegate(int newData)
+        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditPistonDialog(data, delegate (int newData)
         {
             if (newData == data || SubsystemTerrain.Terrain.GetCellContents(x, y, z) != contents)
             {
@@ -115,20 +115,20 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         switch (num)
         {
             case PistonBlock.Index:
-            {
-                StopPiston(new Point3(x, y, z));
-                var face2 = PistonBlock.GetFace(data);
-                var point2 = CellFace.FaceToPoint3(face2);
-                var cellValue3 = _subsystemTerrain.Terrain.GetCellValue(x + point2.X, y + point2.Y, z + point2.Z);
-                var num4 = Terrain.ExtractContents(cellValue3);
-                var data4 = Terrain.ExtractData(cellValue3);
-                if (num4 == PistonHeadBlock.Index && PistonHeadBlock.GetFace(data4) == face2)
                 {
-                    _subsystemTerrain.DestroyCell(0, x + point2.X, y + point2.Y, z + point2.Z, 0, false, false);
-                }
+                    StopPiston(new Point3(x, y, z));
+                    var face2 = PistonBlock.GetFace(data);
+                    var point2 = CellFace.FaceToPoint3(face2);
+                    var cellValue3 = _subsystemTerrain.Terrain.GetCellValue(x + point2.X, y + point2.Y, z + point2.Z);
+                    var num4 = Terrain.ExtractContents(cellValue3);
+                    var data4 = Terrain.ExtractData(cellValue3);
+                    if (num4 == PistonHeadBlock.Index && PistonHeadBlock.GetFace(data4) == face2)
+                    {
+                        _subsystemTerrain.DestroyCell(0, x + point2.X, y + point2.Y, z + point2.Z, 0, false, false);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case PistonHeadBlock.Index:
                 if (!_allowPistonHeadRemove)
                 {
@@ -211,12 +211,14 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
             var flag = true;
             for (var i = -1; i <= 1; i++)
-            for (var j = -1; j <= 1; j++)
             {
-                var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(key2.X + i * 16, key2.Z + j * 16, false);
-                if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                for (var j = -1; j <= 1; j++)
                 {
-                    flag = false;
+                    var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(key2.X + i * 16, key2.Z + j * 16, false);
+                    if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                    {
+                        flag = false;
+                    }
                 }
             }
 
@@ -644,30 +646,30 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             case TerritoryBlock.Index:
                 return false;
             default:
-            {
-                var block = BlocksManager.Blocks[num];
-                switch (block)
                 {
-                    case BottomSuckerBlock:
-                        return false;
-                    case MountedElectricElementBlock elementBlock:
-                        isEnd = true;
-                        return elementBlock.GetFace(value) == pistonFace;
-                    case DoorBlock or TrapdoorBlock:
-                        return false;
-                    case LadderBlock:
-                        isEnd = true;
-                        return pistonFace == LadderBlock.GetFace(data);
-                }
+                    var block = BlocksManager.Blocks[num];
+                    switch (block)
+                    {
+                        case BottomSuckerBlock:
+                            return false;
+                        case MountedElectricElementBlock elementBlock:
+                            isEnd = true;
+                            return elementBlock.GetFace(value) == pistonFace;
+                        case DoorBlock or TrapdoorBlock:
+                            return false;
+                        case LadderBlock:
+                            isEnd = true;
+                            return pistonFace == LadderBlock.GetFace(data);
+                    }
 
-                if (block is not AttachedSignBlock)
-                {
-                    return block is { NonDuplicable: false, Collidable: true };
-                }
+                    if (block is not AttachedSignBlock)
+                    {
+                        return block is { NonDuplicable: false, Collidable: true };
+                    }
 
-                isEnd = true;
-                return pistonFace == AttachedSignBlock.GetFace(data);
-            }
+                    isEnd = true;
+                    return pistonFace == AttachedSignBlock.GetFace(data);
+                }
         }
     }
 

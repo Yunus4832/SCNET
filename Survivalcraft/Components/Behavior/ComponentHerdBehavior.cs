@@ -117,7 +117,7 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
         HerdName = valuesDictionary.GetValue<string>("HerdName");
         _herdingRange = valuesDictionary.GetValue<float>("HerdingRange");
         _autoNearbyCreaturesHelp = valuesDictionary.GetValue<bool>("AutoNearbyCreaturesHelp");
-        _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
+        _componentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
         {
             CallNearbyCreaturesHelp(attacker, 20f, 30f, false);
         };

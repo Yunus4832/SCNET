@@ -266,7 +266,7 @@ public class ComponentInventoryPackage : IPackage
                         if (slot.Type == 0)
                         {
                             slot.SlotItem = new ComponentInventoryBase.Slot
-                                { Count = reader.ReadInt32(), Value = reader.ReadInt32() };
+                            { Count = reader.ReadInt32(), Value = reader.ReadInt32() };
                         }
                         else
                         {
@@ -315,15 +315,15 @@ public class ComponentInventoryPackage : IPackage
                 ProcessingOnly = reader.ReadBoolean();
                 break;
             case EventType.SetSlotsItem:
-            {
-                SourceInventorySlot = new InventorySlot
                 {
-                    InventoryId = reader.ReadInt32(),
-                    SlotIndex = reader.ReadInt32(),
-                    Value = reader.ReadInt32(),
-                    Count = reader.ReadInt32()
-                };
-            }
+                    SourceInventorySlot = new InventorySlot
+                    {
+                        InventoryId = reader.ReadInt32(),
+                        SlotIndex = reader.ReadInt32(),
+                        Value = reader.ReadInt32(),
+                        Count = reader.ReadInt32()
+                    };
+                }
                 break;
         }
     }

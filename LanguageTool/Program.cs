@@ -1403,7 +1403,7 @@ internal static class JsonFormatter
                 break;
             default:
                 builder.Append(node.ToJsonString(new JsonSerializerOptions
-                    { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
+                { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
                 break;
         }
     }

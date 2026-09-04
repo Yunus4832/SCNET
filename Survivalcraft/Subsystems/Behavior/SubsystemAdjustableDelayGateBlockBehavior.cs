@@ -15,7 +15,7 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
         var data = Terrain.ExtractData(value);
         var delay = AdjustableDelayGateBlock.GetDelay(data);
         DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditAdjustableDelayGateDialog(delay,
-            delegate(int newDelay)
+            delegate (int newDelay)
             {
                 var data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                 var num = Terrain.ReplaceData(value, data2);
@@ -41,7 +41,7 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
             componentPlayer.GuiWidget,
             new EditAdjustableDelayGateDialog(
                 delay,
-                delegate(int newDelay)
+                delegate (int newDelay)
                 {
                     var num = AdjustableDelayGateBlock.SetDelay(data, newDelay);
                     if (num == data)

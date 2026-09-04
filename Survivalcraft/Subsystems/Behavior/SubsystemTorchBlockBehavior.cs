@@ -21,29 +21,29 @@ public class SubsystemTorchBlockBehavior : SubsystemBlockBehavior
         switch (Terrain.ExtractContents(cellValueFast))
         {
             case TorchBlock.Index:
-            {
-                var point = CellFace.FaceToPoint3(Terrain.ExtractData(cellValueFast));
-                var x2 = x - point.X;
-                var y2 = y - point.Y;
-                var z2 = z - point.Z;
-                var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x2, y2, z2);
-                if (!BlocksManager.Blocks[cellContents2].Collidable)
                 {
-                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                }
+                    var point = CellFace.FaceToPoint3(Terrain.ExtractData(cellValueFast));
+                    var x2 = x - point.X;
+                    var y2 = y - point.Y;
+                    var z2 = z - point.Z;
+                    var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x2, y2, z2);
+                    if (!BlocksManager.Blocks[cellContents2].Collidable)
+                    {
+                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+                    }
 
-                break;
-            }
+                    break;
+                }
             case JackOLanternBlock.Index:
-            {
-                var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-                if (!BlocksManager.Blocks[cellContents].Collidable)
                 {
-                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                }
+                    var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
+                    if (!BlocksManager.Blocks[cellContents].Collidable)
+                    {
+                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+                    }
 
-                break;
-            }
+                    break;
+                }
         }
     }
 

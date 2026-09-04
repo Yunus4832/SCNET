@@ -39,7 +39,7 @@ public partial struct ProceduralValue
                 : $"%'{referencePath}' not found%";
         }
 
-        return _referenceRegex.Replace(Procedure, delegate(Match m)
+        return _referenceRegex.Replace(Procedure, delegate (Match m)
         {
             var referencePath = m.Groups[1].Value;
             var targetObject = ResolveReference(context, referencePath);

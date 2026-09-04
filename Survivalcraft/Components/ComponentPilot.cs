@@ -274,26 +274,28 @@ public class ComponentPilot : Component, IUpdateable
             ? new Vector3(direction.X, 0f, direction.Z)
             : 1.2f * Vector3.Normalize(new Vector3(direction.X, 0f, direction.Z)));
         for (var i = -1; i <= 1; i++)
-        for (var j = -1; j <= 1; j++)
         {
-            if (!(Vector3.Dot(direction, new Vector3(i, 0f, j)) > 0f))
+            for (var j = -1; j <= 1; j++)
             {
-                continue;
-            }
-
-            for (var num = 0; num >= -2; num--)
-            {
-                var cellValue = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(vector.X) + i,
-                    Terrain.ToCell(vector.Y) + num, Terrain.ToCell(vector.Z) + j);
-                var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
-                if (block.ShouldAvoid(cellValue))
+                if (!(Vector3.Dot(direction, new Vector3(i, 0f, j)) > 0f))
                 {
-                    return false;
+                    continue;
                 }
 
-                if (block.Collidable)
+                for (var num = 0; num >= -2; num--)
                 {
-                    break;
+                    var cellValue = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(vector.X) + i,
+                        Terrain.ToCell(vector.Y) + num, Terrain.ToCell(vector.Z) + j);
+                    var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
+                    if (block.ShouldAvoid(cellValue))
+                    {
+                        return false;
+                    }
+
+                    if (block.Collidable)
+                    {
+                        break;
+                    }
                 }
             }
         }

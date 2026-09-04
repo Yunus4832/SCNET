@@ -23,13 +23,15 @@ public static class ClientDerivedTerrainPolicy
         }
 
         for (var x = -LightingDependencyRadius; x <= LightingDependencyRadius; x++)
-        for (var z = -LightingDependencyRadius; z <= LightingDependencyRadius; z++)
         {
-            var neighbor = terrain.GetChunkAtCoords(target.Coords.X + x, target.Coords.Y + z);
-            if (neighbor is { WorkerState: < TerrainChunkState.InvalidPropagatedLight } &&
-                CanAdvanceLightingDependency(role, neighbor))
+            for (var z = -LightingDependencyRadius; z <= LightingDependencyRadius; z++)
             {
-                return neighbor;
+                var neighbor = terrain.GetChunkAtCoords(target.Coords.X + x, target.Coords.Y + z);
+                if (neighbor is { WorkerState: < TerrainChunkState.InvalidPropagatedLight } &&
+                    CanAdvanceLightingDependency(role, neighbor))
+                {
+                    return neighbor;
+                }
             }
         }
 

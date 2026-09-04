@@ -15,7 +15,7 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
         var data = Terrain.ExtractData(value);
         var voltageLevel = SwitchBlock.GetVoltageLevel(data);
         DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditVoltageLevelDialog(voltageLevel,
-            delegate(int newVoltageLevel)
+            delegate (int newVoltageLevel)
             {
                 var data2 = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
                 var num = Terrain.ReplaceData(value, data2);
@@ -40,7 +40,7 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
         DialogsManager.ShowDialog(
             componentPlayer.GuiWidget,
             new EditVoltageLevelDialog(voltageLevel,
-                delegate(int newVoltageLevel)
+                delegate (int newVoltageLevel)
                 {
                     var num = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
                     if (num == data)

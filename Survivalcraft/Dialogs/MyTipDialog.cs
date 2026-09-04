@@ -13,7 +13,8 @@ public class MyTipDialog : Dialog
         Children.Add(_canvasWidget);
         var stackPanel = new StackPanelWidget
         {
-            HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Center,
+            HorizontalAlignment = WidgetAlignment.Center,
+            VerticalAlignment = WidgetAlignment.Center,
             Direction = LayoutDirection.Vertical
         };
         _bevelledButtonWidget.Text = cancel;

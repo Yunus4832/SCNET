@@ -58,7 +58,7 @@ public static class ContentPackageCreationManager
                 new ContentPackagePayload(isTexture ? "scnet.blocks-texture.png-v1" : "scnet.character-skin.png-v1",
                     entry, "image/png"),
                 JsonSerializer.SerializeToElement(new Dictionary<string, object>
-                    { ["width"] = width, ["height"] = height }));
+                { ["width"] = width, ["height"] = height }));
             return Write(manifest,
             [
                 new ContentPackageWriteEntry(entry, Storage.GetFileSize(sourcePath),

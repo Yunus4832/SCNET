@@ -19,22 +19,26 @@ public class ChestWidget : CanvasWidget
         _chestGrid = Children.Find<GridPanelWidget>("ChestGrid")!;
         var num = 0;
         for (var i = 0; i < _chestGrid.RowsCount; i++)
-        for (var j = 0; j < _chestGrid.ColumnsCount; j++)
         {
-            var inventorySlotWidget = new InventorySlotWidget();
-            inventorySlotWidget.AssignInventorySlot(componentChest, num++);
-            _chestGrid.Children.Add(inventorySlotWidget);
-            _chestGrid.SetWidgetCell(inventorySlotWidget, new Point2(j, i));
+            for (var j = 0; j < _chestGrid.ColumnsCount; j++)
+            {
+                var inventorySlotWidget = new InventorySlotWidget();
+                inventorySlotWidget.AssignInventorySlot(componentChest, num++);
+                _chestGrid.Children.Add(inventorySlotWidget);
+                _chestGrid.SetWidgetCell(inventorySlotWidget, new Point2(j, i));
+            }
         }
 
         num = 10;
         for (var k = 0; k < _inventoryGrid.RowsCount; k++)
-        for (var l = 0; l < _inventoryGrid.ColumnsCount; l++)
         {
-            var inventorySlotWidget2 = new InventorySlotWidget();
-            inventorySlotWidget2.AssignInventorySlot(inventory, num++);
-            _inventoryGrid.Children.Add(inventorySlotWidget2);
-            _inventoryGrid.SetWidgetCell(inventorySlotWidget2, new Point2(l, k));
+            for (var l = 0; l < _inventoryGrid.ColumnsCount; l++)
+            {
+                var inventorySlotWidget2 = new InventorySlotWidget();
+                inventorySlotWidget2.AssignInventorySlot(inventory, num++);
+                _inventoryGrid.Children.Add(inventorySlotWidget2);
+                _inventoryGrid.SetWidgetCell(inventorySlotWidget2, new Point2(l, k));
+            }
         }
     }
 

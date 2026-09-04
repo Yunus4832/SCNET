@@ -162,7 +162,7 @@ public class ComponentFurnitureInventory : Component, IInventory
             }
 
             var num = (from f in design.ListChain()
-                select f.Index).Min();
+                       select f.Index).Min();
             if (design.Index != num)
             {
                 continue;

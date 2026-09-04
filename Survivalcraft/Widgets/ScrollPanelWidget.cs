@@ -218,7 +218,7 @@ public class ScrollPanelWidget : ContainerWidget
     public bool HitTestPanel(Vector2 position)
     {
         var found = false;
-        HitTestGlobal(position, delegate(Widget widget)
+        HitTestGlobal(position, delegate (Widget widget)
         {
             found = widget.IsChildWidgetOf(this) || widget == this;
             return true;

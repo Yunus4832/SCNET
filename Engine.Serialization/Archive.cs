@@ -129,28 +129,30 @@ public class Archive
             if (!_scannedAssemblies.Contains(item))
             {
                 foreach (var definedType in item.DefinedTypes)
-                foreach (var implementedInterface in definedType.ImplementedInterfaces)
                 {
-                    if (implementedInterface.IsConstructedGenericType &&
-                        implementedInterface.GetGenericTypeDefinition() == typeof(ISerializer<>))
+                    foreach (var implementedInterface in definedType.ImplementedInterfaces)
                     {
-                        if (!definedType.IsGenericType || !definedType.IsGenericTypeDefinition)
+                        if (implementedInterface.IsConstructedGenericType &&
+                            implementedInterface.GetGenericTypeDefinition() == typeof(ISerializer<>))
                         {
-                            var type = implementedInterface.GenericTypeArguments[0];
-                            if (!_serializeDataByType.ContainsKey(type))
+                            if (!definedType.IsGenericType || !definedType.IsGenericTypeDefinition)
                             {
-                                var serializeData = CreateSerializeDataForSerializer(definedType, type, type);
-                                if (serializeData != null)
+                                var type = implementedInterface.GenericTypeArguments[0];
+                                if (!_serializeDataByType.ContainsKey(type))
                                 {
-                                    AddSerializeData(serializeData);
+                                    var serializeData = CreateSerializeDataForSerializer(definedType, type, type);
+                                    if (serializeData != null)
+                                    {
+                                        AddSerializeData(serializeData);
+                                    }
                                 }
                             }
-                        }
-                        else
-                        {
-                            var type2 = implementedInterface.GenericTypeArguments[0];
-                            var key = type2 == typeof(Array) ? type2 : type2.GetGenericTypeDefinition();
-                            _genericSerializersByType.Add(key, definedType);
+                            else
+                            {
+                                var type2 = implementedInterface.GenericTypeArguments[0];
+                                var key = type2 == typeof(Array) ? type2 : type2.GetGenericTypeDefinition();
+                                _genericSerializersByType.Add(key, definedType);
+                            }
                         }
                     }
                 }
@@ -173,13 +175,13 @@ public class Archive
         Type parameterType
     )
     {
-        var methodInfo = serializerType.GetDeclaredMethods("Serialize").FirstOrDefault(delegate(MethodInfo m)
+        var methodInfo = serializerType.GetDeclaredMethods("Serialize").FirstOrDefault(delegate (MethodInfo m)
         {
             var parameters2 = m.GetParameters();
             return parameters2.Length == 2 && parameters2[0].ParameterType == typeof(InputArchive) &&
                    parameters2[1].ParameterType == parameterType.MakeByRefType();
         });
-        var methodInfo2 = serializerType.GetDeclaredMethods("Serialize").FirstOrDefault(delegate(MethodInfo m)
+        var methodInfo2 = serializerType.GetDeclaredMethods("Serialize").FirstOrDefault(delegate (MethodInfo m)
         {
             var parameters = m.GetParameters();
             return parameters.Length == 2 && parameters[0].ParameterType == typeof(OutputArchive) &&
@@ -208,7 +210,7 @@ public class Archive
         var serializeData = CreateEmptySerializeData(typeof(T));
         if (typeof(T).GetTypeInfo().IsValueType)
         {
-            serializeData.Read = delegate(InputArchive archive, ref object? value)
+            serializeData.Read = delegate (InputArchive archive, ref object? value)
             {
                 var val = (T?)value;
                 val?.Serialize(archive);
@@ -217,10 +219,10 @@ public class Archive
         }
         else
         {
-            serializeData.Read = delegate(InputArchive archive, ref object? value) { ((T?)value)?.Serialize(archive); };
+            serializeData.Read = delegate (InputArchive archive, ref object? value) { ((T?)value)?.Serialize(archive); };
         }
 
-        serializeData.Write = delegate(OutputArchive archive, object? value) { ((T?)value)?.Serialize(archive); };
+        serializeData.Write = delegate (OutputArchive archive, object? value) { ((T?)value)?.Serialize(archive); };
         serializeData.AutoConstructObject = true;
         return serializeData;
     }
@@ -231,13 +233,13 @@ public class Archive
         var readDelegateGeneric = (ReadDelegateGeneric<TParam?>)readDelegate;
         var writeDelegateGeneric = (WriteDelegateGeneric<TParam?>)writeDelegate;
         var serializeData = CreateEmptySerializeData(typeof(T));
-        serializeData.Read = delegate(InputArchive archive, ref object? value)
+        serializeData.Read = delegate (InputArchive archive, ref object? value)
         {
             var value2 = value != null ? (TParam)value : default;
             readDelegateGeneric(archive, ref value2);
             value = value2;
         };
-        serializeData.Write = delegate(OutputArchive archive, object? value)
+        serializeData.Write = delegate (OutputArchive archive, object? value)
         {
             writeDelegateGeneric(archive, (TParam?)value);
         };

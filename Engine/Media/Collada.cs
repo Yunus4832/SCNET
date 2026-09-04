@@ -525,7 +525,7 @@ public static class Collada
                 if (item.Name == ColladaRoot.Namespace + "matrix")
                 {
                     var array = (from s in item.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                        select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                                 select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
                     Transform = Matrix.Transpose(new Matrix(array[0], array[1], array[2], array[3], array[4], array[5],
                         array[6], array[7], array[8], array[9], array[10], array[11], array[12], array[13], array[14],
                         array[15])) * Transform;
@@ -533,20 +533,20 @@ public static class Collada
                 else if (item.Name == ColladaRoot.Namespace + "translate")
                 {
                     var array2 = (from s in item.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                        select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                                  select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
                     Transform = Matrix.CreateTranslation(array2[0], array2[1], array2[2]) * Transform;
                 }
                 else if (item.Name == ColladaRoot.Namespace + "rotate")
                 {
                     var array3 = (from s in item.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                        select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                                  select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
                     Transform = Matrix.CreateFromAxisAngle(new Vector3(array3[0], array3[1], array3[2]),
                         MathUtils.DegToRad(array3[3])) * Transform;
                 }
                 else if (item.Name == ColladaRoot.Namespace + "scale")
                 {
                     var array4 = (from s in item.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                        select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                                  select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
                     Transform = Matrix.CreateScale(array4[0], array4[1], array4[2]) * Transform;
                 }
             }
@@ -631,7 +631,7 @@ public static class Collada
             : base(collada, node)
         {
             Array = (from s in node.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
+                     select float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
         }
     }
 
@@ -696,13 +696,13 @@ public static class Collada
             foreach (var item2 in node.Elements(ColladaRoot.Namespace + "vcount"))
             {
                 VCount.AddRange(from s in item2.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                    select int.Parse(s, CultureInfo.InvariantCulture));
+                                select int.Parse(s, CultureInfo.InvariantCulture));
             }
 
             foreach (var item3 in node.Elements(ColladaRoot.Namespace + "p"))
             {
                 P.AddRange(from s in item3.Value.Split((char[])null!, StringSplitOptions.RemoveEmptyEntries)
-                    select int.Parse(s, CultureInfo.InvariantCulture));
+                           select int.Parse(s, CultureInfo.InvariantCulture));
             }
         }
     }

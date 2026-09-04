@@ -74,7 +74,7 @@ public class MessageDialog : Dialog
         Action<MessageDialogButton, MessageDialog> selfContainedHandler
     ) : this(largeMessage, smallMessage, button1Text, button2Text, size, _ => { })
     {
-        _handler = delegate(MessageDialogButton button) { selfContainedHandler(button, this); };
+        _handler = delegate (MessageDialogButton button) { selfContainedHandler(button, this); };
     }
 
     public bool AutoHide { get; set; }

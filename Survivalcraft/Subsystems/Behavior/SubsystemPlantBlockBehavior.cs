@@ -50,15 +50,15 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
                 break;
             case 132:
-            {
-                var block = BlocksManager.Blocks[num2];
-                if (block.IsFaceTransparent(SubsystemTerrain, 4, cellValue) && !(block is FenceBlock))
                 {
-                    SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
-                }
+                    var block = BlocksManager.Blocks[num2];
+                    if (block.IsFaceTransparent(SubsystemTerrain, 4, cellValue) && !(block is FenceBlock))
+                    {
+                        SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
+                    }
 
-                break;
-            }
+                    break;
+                }
             default:
                 if (num2 != 8 && num2 != 2 && num2 != 7 && num2 != 168)
                 {

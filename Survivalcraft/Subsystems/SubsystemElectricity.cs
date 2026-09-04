@@ -413,42 +413,44 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         for (var electricConnectorDirection = ElectricConnectorDirection.Top;
              electricConnectorDirection < (ElectricConnectorDirection)5;
              electricConnectorDirection++)
-        for (var i = 0; i < 4; i++)
         {
-            var electricConnectionPath =
-                _connectionPathsTable[20 * mountingFace + 4 * (int)electricConnectorDirection + i];
-            if (electricConnectionPath == null)
+            for (var i = 0; i < 4; i++)
             {
-                break;
-            }
+                var electricConnectionPath =
+                    _connectionPathsTable[20 * mountingFace + 4 * (int)electricConnectorDirection + i];
+                if (electricConnectionPath == null)
+                {
+                    break;
+                }
 
-            var connectorType = electricElementBlock.GetConnectorType(SubsystemTerrain, cellValue, mountingFace,
-                electricConnectionPath.ConnectorFace, x, y, z);
-            if (!connectorType.HasValue)
-            {
-                break;
-            }
+                var connectorType = electricElementBlock.GetConnectorType(SubsystemTerrain, cellValue, mountingFace,
+                    electricConnectionPath.ConnectorFace, x, y, z);
+                if (!connectorType.HasValue)
+                {
+                    break;
+                }
 
-            var x2 = x + electricConnectionPath.NeighborOffsetX;
-            var y2 = y + electricConnectionPath.NeighborOffsetY;
-            var z2 = z + electricConnectionPath.NeighborOffsetZ;
-            var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
-            var electricElementBlock2 =
-                BlocksManager.Blocks[Terrain.ExtractContents(cellValue2)] as IElectricElementBlock;
-            var connectorType2 = electricElementBlock2?.GetConnectorType(SubsystemTerrain, cellValue2,
-                electricConnectionPath.NeighborFace, electricConnectionPath.NeighborConnectorFace, x2, y2, z2);
-            if (!connectorType2.HasValue ||
-                ((connectorType.Value == 0 || connectorType2.Value == ElectricConnectorType.Output) &&
-                 (connectorType.Value == ElectricConnectorType.Output || connectorType2.Value == 0)))
-            {
-                continue;
-            }
+                var x2 = x + electricConnectionPath.NeighborOffsetX;
+                var y2 = y + electricConnectionPath.NeighborOffsetY;
+                var z2 = z + electricConnectionPath.NeighborOffsetZ;
+                var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
+                var electricElementBlock2 =
+                    BlocksManager.Blocks[Terrain.ExtractContents(cellValue2)] as IElectricElementBlock;
+                var connectorType2 = electricElementBlock2?.GetConnectorType(SubsystemTerrain, cellValue2,
+                    electricConnectionPath.NeighborFace, electricConnectionPath.NeighborConnectorFace, x2, y2, z2);
+                if (!connectorType2.HasValue ||
+                    ((connectorType.Value == 0 || connectorType2.Value == ElectricConnectorType.Output) &&
+                     (connectorType.Value == ElectricConnectorType.Output || connectorType2.Value == 0)))
+                {
+                    continue;
+                }
 
-            var connectionMask = electricElementBlock.GetConnectionMask(cellValue);
-            var connectionMask2 = electricElementBlock2?.GetConnectionMask(cellValue2);
-            if ((connectionMask & connectionMask2) != 0)
-            {
-                list.Add(electricConnectionPath);
+                var connectionMask = electricElementBlock.GetConnectionMask(cellValue);
+                var connectionMask2 = electricElementBlock2?.GetConnectionMask(cellValue2);
+                if ((connectionMask & connectionMask2) != 0)
+                {
+                    list.Add(electricConnectionPath);
+                }
             }
         }
     }
@@ -751,16 +753,22 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         foreach (var key in _wiresToUpdate.Keys)
         {
             for (var i = key.X - 1; i <= key.X + 1; i++)
-            for (var j = key.Y - 1; j <= key.Y + 1; j++)
-            for (var k = key.Z - 1; k <= key.Z + 1; k++)
-            for (var l = 0; l < 6; l++)
             {
-                _tmpResult.Clear();
-                ScanWireDomain(new CellFace(i, j, k, l), _tmpVisited, _tmpResult);
-                if (_tmpResult.Count > 0)
+                for (var j = key.Y - 1; j <= key.Y + 1; j++)
                 {
-                    var electricElement = new WireDomainElectricElement(this, _tmpResult.Keys);
-                    AddElectricElement(electricElement);
+                    for (var k = key.Z - 1; k <= key.Z + 1; k++)
+                    {
+                        for (var l = 0; l < 6; l++)
+                        {
+                            _tmpResult.Clear();
+                            ScanWireDomain(new CellFace(i, j, k, l), _tmpVisited, _tmpResult);
+                            if (_tmpResult.Count > 0)
+                            {
+                                var electricElement = new WireDomainElectricElement(this, _tmpResult.Keys);
+                                AddElectricElement(electricElement);
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -771,14 +779,20 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         foreach (var key in _wiresToUpdate.Keys)
         {
             for (var i = key.X - 1; i <= key.X + 1; i++)
-            for (var j = key.Y - 1; j <= key.Y + 1; j++)
-            for (var k = key.Z - 1; k <= key.Z + 1; k++)
-            for (var l = 0; l < 6; l++)
             {
-                if (_electricElementsByCellFace.TryGetValue(new CellFace(i, j, k, l), out var value) &&
-                    value is WireDomainElectricElement)
+                for (var j = key.Y - 1; j <= key.Y + 1; j++)
                 {
-                    RemoveElectricElement(value);
+                    for (var k = key.Z - 1; k <= key.Z + 1; k++)
+                    {
+                        for (var l = 0; l < 6; l++)
+                        {
+                            if (_electricElementsByCellFace.TryGetValue(new CellFace(i, j, k, l), out var value) &&
+                                value is WireDomainElectricElement)
+                            {
+                                RemoveElectricElement(value);
+                            }
+                        }
+                    }
                 }
             }
         }

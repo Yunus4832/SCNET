@@ -132,7 +132,7 @@ public class PlayersScreen : Screen
                         "Select Screen Layout",
                         array,
                         80f,
-                        delegate(object o)
+                        delegate (object o)
                         {
                             var str = o.ToString();
                             var name = "Textures/Atlas/ScreenLayout" + str;
@@ -173,7 +173,7 @@ public class PlayersScreen : Screen
                                 }
                             };
                         },
-                        delegate(object o)
+                        delegate (object o)
                         {
                             if (_subsystemPlayers.PlayersData.Count == 1)
                             {

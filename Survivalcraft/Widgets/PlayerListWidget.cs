@@ -188,8 +188,8 @@ public class PlayerListWidget : CanvasWidget
         return from entry in _mainPlayer.SubsystemPlayers.PlayerList.Values
                 .OrderByDescending(player => player.IsOnline)
                 .ThenBy(player => player.Name, StringComparer.OrdinalIgnoreCase)
-            let activePlayer = _mainPlayer.SubsystemPlayers.PlayersData
-                .Find(player => player.PlayerGUID == entry.PlayerGuid)
-            select ((PlayerListEntry Entry, object Item))(entry, activePlayer is not null ? activePlayer : entry);
+               let activePlayer = _mainPlayer.SubsystemPlayers.PlayersData
+                   .Find(player => player.PlayerGUID == entry.PlayerGuid)
+               select ((PlayerListEntry Entry, object Item))(entry, activePlayer is not null ? activePlayer : entry);
     }
 }

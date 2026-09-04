@@ -96,17 +96,21 @@ internal static class BlockEntityConsistencyRepair
             }
 
             for (var x = 0; x < 16; x++)
-            for (var z = 0; z < 16; z++)
-            for (var y = 0; y < 256; y++)
             {
-                var contents = Terrain.ExtractContents(chunk.GetCellValueFast(x, y, z));
-                if (!_templatesByBlockIndex.TryGetValue(contents, out var template))
+                for (var z = 0; z < 16; z++)
                 {
-                    continue;
-                }
+                    for (var y = 0; y < 256; y++)
+                    {
+                        var contents = Terrain.ExtractContents(chunk.GetCellValueFast(x, y, z));
+                        if (!_templatesByBlockIndex.TryGetValue(contents, out var template))
+                        {
+                            continue;
+                        }
 
-                var coordinates = new Point3(chunk.Origin.X + x, y, chunk.Origin.Y + z);
-                result.TryAdd(coordinates, template);
+                        var coordinates = new Point3(chunk.Origin.X + x, y, chunk.Origin.Y + z);
+                        result.TryAdd(coordinates, template);
+                    }
+                }
             }
         }
 

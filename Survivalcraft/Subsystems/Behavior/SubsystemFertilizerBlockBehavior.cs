@@ -22,17 +22,19 @@ public class SubsystemFertilizerBlockBehavior : SubsystemBlockBehavior
 
         var y = terrainRaycastResult.Value.CellFace.Y;
         for (var i = terrainRaycastResult.Value.CellFace.X - 1; i <= terrainRaycastResult.Value.CellFace.X + 1; i++)
-        for (var j = terrainRaycastResult.Value.CellFace.Z - 1; j <= terrainRaycastResult.Value.CellFace.Z + 1; j++)
         {
-            var cellValue = _subsystemTerrain.Terrain.GetCellValue(i, y, j);
-            if (Terrain.ExtractContents(cellValue) != 168)
+            for (var j = terrainRaycastResult.Value.CellFace.Z - 1; j <= terrainRaycastResult.Value.CellFace.Z + 1; j++)
             {
-                continue;
-            }
+                var cellValue = _subsystemTerrain.Terrain.GetCellValue(i, y, j);
+                if (Terrain.ExtractContents(cellValue) != 168)
+                {
+                    continue;
+                }
 
-            var data = SoilBlock.SetNitrogen(Terrain.ExtractData(cellValue), 3);
-            var value = Terrain.ReplaceData(cellValue, data);
-            _subsystemTerrain.ChangeCell(i, y, j, value);
+                var data = SoilBlock.SetNitrogen(Terrain.ExtractData(cellValue), 3);
+                var value = Terrain.ReplaceData(cellValue, data);
+                _subsystemTerrain.ChangeCell(i, y, j, value);
+            }
         }
 
         _subsystemAudio.PlayRandomSound("Audio/Impacts/Dirt", 0.5f, 0f,

@@ -388,7 +388,7 @@ public static class GameManager
 
         client.ConnectionPhase = ConnectionPhase.BootstrapSent;
         net.QueuePackage(new BootstrapPackage(client.ConnectionEpoch, net.Clients.Values, textureData, data)
-            { To = client });
+        { To = client });
     }
 
     private static void SendInitialWorldSnapshot(Project project, NetNode net, Client client)
@@ -397,7 +397,8 @@ public static class GameManager
         var sendList = project.EntityKeys.Where(ShouldSendEntityToClients).ToList();
         client.ConnectionPhase = ConnectionPhase.WorldSnapshotSent;
         net.QueuePackage(new InitialWorldSnapshotPackage(client.ConnectionEpoch, project, net.Clients.Values,
-            subsystemPlayers.PlayersData, sendList) { To = client });
+            subsystemPlayers.PlayersData, sendList)
+        { To = client });
     }
 
     private static void CompleteClientJoin(Project project, Client client)

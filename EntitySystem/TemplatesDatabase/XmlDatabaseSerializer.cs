@@ -201,8 +201,8 @@ public static class XmlDatabaseSerializer
         foreach (var databaseObject in databaseObjectArray)
         {
             list.AddRange(from x in databaseObject.GetExplicitNestingChildren(null, false)
-                where x.Type.SaveStandalone
-                select x);
+                          where x.Type.SaveStandalone
+                          select x);
         }
 
         InternalSaveDatabaseObjectsList(node, list, true);
@@ -323,7 +323,7 @@ public static class XmlDatabaseSerializer
         }
 
         InternalSaveDatabaseObjectsList(node, from x in databaseObject.GetExplicitNestingChildren(null, true)
-            where !x.Type.SaveStandalone
-            select x, false);
+                                              where !x.Type.SaveStandalone
+                                              select x, false);
     }
 }

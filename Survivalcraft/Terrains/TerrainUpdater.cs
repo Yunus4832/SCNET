@@ -347,32 +347,34 @@ public class TerrainUpdater
         var chunkLocationMax = Terrain.ToChunk(location.Center + new Vector2(distanceMax));
 
         for (var i = chunkLocationMin.X; i <= chunkLocationMax.X; i++)
-        for (var j = chunkLocationMin.Y; j <= chunkLocationMax.Y; j++)
         {
-            var chunk = _terrain.GetChunkAtCoords(i, j);
-            var distanceSqrFromChunkToLocation = Vector2.DistanceSquared(
-                v2: new Vector2((i + 0.5f) * 16f, (j + 0.5f) * 16f),
-                v1: location.Center);
-            if (distanceSqrFromChunkToLocation <= visibilityDistanceSqr)
+            for (var j = chunkLocationMin.Y; j <= chunkLocationMax.Y; j++)
             {
-                if (chunk == null || chunk.MainThreadState < TerrainChunkState.Valid)
+                var chunk = _terrain.GetChunkAtCoords(i, j);
+                var distanceSqrFromChunkToLocation = Vector2.DistanceSquared(
+                    v2: new Vector2((i + 0.5f) * 16f, (j + 0.5f) * 16f),
+                    v1: location.Center);
+                if (distanceSqrFromChunkToLocation <= visibilityDistanceSqr)
                 {
-                    invalidChunkCount++;
+                    if (chunk == null || chunk.MainThreadState < TerrainChunkState.Valid)
+                    {
+                        invalidChunkCount++;
+                    }
+                    else
+                    {
+                        validChunkCount++;
+                    }
                 }
-                else
+                else if (distanceSqrFromChunkToLocation <= contentDistanceSqr)
                 {
-                    validChunkCount++;
-                }
-            }
-            else if (distanceSqrFromChunkToLocation <= contentDistanceSqr)
-            {
-                if (chunk == null || chunk.MainThreadState < TerrainChunkState.InvalidLight)
-                {
-                    invalidChunkCount++;
-                }
-                else
-                {
-                    validChunkCount++;
+                    if (chunk == null || chunk.MainThreadState < TerrainChunkState.InvalidLight)
+                    {
+                        invalidChunkCount++;
+                    }
+                    else
+                    {
+                        validChunkCount++;
+                    }
                 }
             }
         }
@@ -724,24 +726,26 @@ public class TerrainUpdater
         bool forceGeometryRegeneration)
     {
         for (var i = -radius; i <= radius; i++)
-        for (var j = -radius; j <= radius; j++)
         {
-            var chunkAtCoords = _terrain.GetChunkAtCoords(coordinates.X + i, coordinates.Y + j);
-            if (chunkAtCoords == null)
+            for (var j = -radius; j <= radius; j++)
             {
-                continue;
-            }
-
-            if (chunkAtCoords.MainThreadState > state)
-            {
-                chunkAtCoords.MainThreadState = state;
-                if (forceGeometryRegeneration)
+                var chunkAtCoords = _terrain.GetChunkAtCoords(coordinates.X + i, coordinates.Y + j);
+                if (chunkAtCoords == null)
                 {
-                    chunkAtCoords.InvalidateSliceContentsHashes();
+                    continue;
                 }
-            }
 
-            TerrainChunkStateExchange.RequestDowngrade(chunkAtCoords, state);
+                if (chunkAtCoords.MainThreadState > state)
+                {
+                    chunkAtCoords.MainThreadState = state;
+                    if (forceGeometryRegeneration)
+                    {
+                        chunkAtCoords.InvalidateSliceContentsHashes();
+                    }
+                }
+
+                TerrainChunkStateExchange.RequestDowngrade(chunkAtCoords, state);
+            }
         }
     }
 
@@ -901,30 +905,32 @@ public class TerrainUpdater
             var point = Terrain.ToChunk(locations[j].Center - new Vector2(locations[j].ContentDistance));
             var point2 = Terrain.ToChunk(locations[j].Center + new Vector2(locations[j].ContentDistance));
             for (var k = point.X; k <= point2.X; k++)
-            for (var l = point.Y; l <= point2.Y; l++)
             {
-                var chunkCenter = new Vector2((k + 0.5f) * 16f, (l + 0.5f) * 16f);
-                var chunkAtCoords = _terrain.GetChunkAtCoords(k, l);
-                if (chunkAtCoords == null)
+                for (var l = point.Y; l <= point2.Y; l++)
                 {
-                    if (!IsChunkInRange(chunkCenter, locations))
+                    var chunkCenter = new Vector2((k + 0.5f) * 16f, (l + 0.5f) * 16f);
+                    var chunkAtCoords = _terrain.GetChunkAtCoords(k, l);
+                    if (chunkAtCoords == null)
                     {
-                        continue;
-                    }
+                        if (!IsChunkInRange(chunkCenter, locations))
+                        {
+                            continue;
+                        }
 
-                    result = true;
-                    _terrain.AllocateChunk(k, l);
-                    if (_subsystemTerrain.UsesRemoteChunkTransport)
+                        result = true;
+                        _terrain.AllocateChunk(k, l);
+                        if (_subsystemTerrain.UsesRemoteChunkTransport)
+                        {
+                            _remoteChunkLastAccess[new Point2(k, l)] = _remoteChunkAccessClock;
+                        }
+
+                        DowngradeChunkNeighborhoodState(new Point2(k, l), 0, TerrainChunkState.NotLoaded, false);
+                        DowngradeChunkNeighborhoodState(new Point2(k, l), 1, TerrainChunkState.InvalidLight, false);
+                    }
+                    else if (chunkAtCoords.Coords.X != k || chunkAtCoords.Coords.Y != l)
                     {
-                        _remoteChunkLastAccess[new Point2(k, l)] = _remoteChunkAccessClock;
+                        Log.Error("Chunk wraparound detected at {0}", chunkAtCoords.Coords);
                     }
-
-                    DowngradeChunkNeighborhoodState(new Point2(k, l), 0, TerrainChunkState.NotLoaded, false);
-                    DowngradeChunkNeighborhoodState(new Point2(k, l), 1, TerrainChunkState.InvalidLight, false);
-                }
-                else if (chunkAtCoords.Coords.X != k || chunkAtCoords.Coords.Y != l)
-                {
-                    Log.Error("Chunk wraparound detected at {0}", chunkAtCoords.Coords);
                 }
             }
         }
@@ -1222,85 +1228,87 @@ public class TerrainUpdater
         switch (chunk.WorkerState)
         {
             case TerrainChunkState.InvalidLight:
-            {
-                GenerateChunkSunLightAndHeight(chunk, skylightValue);
-                chunk.WorkerState = TerrainChunkState.InvalidPropagatedLight;
-                chunk.LightPropagationMask = 0;
-                break;
-            }
+                {
+                    GenerateChunkSunLightAndHeight(chunk, skylightValue);
+                    chunk.WorkerState = TerrainChunkState.InvalidPropagatedLight;
+                    chunk.LightPropagationMask = 0;
+                    break;
+                }
             case TerrainChunkState.InvalidPropagatedLight:
-            {
-                _lightSources.Clear();
-                for (var k = -1; k <= 1; k++)
-                for (var l = -1; l <= 1; l++)
                 {
-                    var num = CalculateLightPropagationBitIndex(k, l);
-                    if (((chunk.LightPropagationMask >> num) & 1) != 0)
+                    _lightSources.Clear();
+                    for (var k = -1; k <= 1; k++)
                     {
-                        continue;
+                        for (var l = -1; l <= 1; l++)
+                        {
+                            var num = CalculateLightPropagationBitIndex(k, l);
+                            if (((chunk.LightPropagationMask >> num) & 1) != 0)
+                            {
+                                continue;
+                            }
+
+                            var chunkAtCell2 = _terrain.GetChunkAtCell(chunk.Origin.X + k * 16, chunk.Origin.Y + l * 16, false);
+                            if (chunkAtCell2 == null ||
+                                !ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
+                                    _subsystemTerrain.ContentRole,
+                                    chunkAtCell2))
+                            {
+                                continue;
+                            }
+
+                            GenerateChunkLightSources(chunkAtCell2);
+                            UpdateNeighborsLightPropagationBitmasks(chunkAtCell2);
+                        }
                     }
 
-                    var chunkAtCell2 = _terrain.GetChunkAtCell(chunk.Origin.X + k * 16, chunk.Origin.Y + l * 16, false);
-                    if (chunkAtCell2 == null ||
-                        !ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
-                            _subsystemTerrain.ContentRole,
-                            chunkAtCell2))
-                    {
-                        continue;
-                    }
-
-                    GenerateChunkLightSources(chunkAtCell2);
-                    UpdateNeighborsLightPropagationBitmasks(chunkAtCell2);
+                    PropagateLight();
+                    chunk.WorkerState = TerrainChunkState.InvalidVertices1;
+                    break;
                 }
-
-                PropagateLight();
-                chunk.WorkerState = TerrainChunkState.InvalidVertices1;
-                break;
-            }
             case TerrainChunkState.InvalidVertices1:
-            {
-                if (RunMode.Value is RunModeType.HeadlessServer)
                 {
-                    chunk.WorkerState = TerrainChunkState.Valid;
-                    break;
-                }
-
-                CalculateChunkSliceContentsHash(chunk);
-                lock (chunk.Geometry)
-                {
-                    chunk.NewGeometryData = false;
-                    GenerateChunkVertices(chunk, true);
-                }
-
-                chunk.WorkerState = TerrainChunkState.InvalidVertices2;
-                break;
-            }
-            case TerrainChunkState.InvalidVertices2:
-            {
-                if (RunMode.Value is RunModeType.HeadlessServer)
-                {
-                    chunk.WorkerState = TerrainChunkState.Valid;
-                    break;
-                }
-
-                lock (chunk.Geometry)
-                {
-                    GenerateChunkVertices(chunk, false);
-                    if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
-                        chunk.NetworkContentReceiveTime > 0.0)
+                    if (RunMode.Value is RunModeType.HeadlessServer)
                     {
-                        ClientChunkDerivationPipeline.CompleteGeometry(chunk);
-                        chunk.NetworkGeometryReadyTime = Time.RealTime;
+                        chunk.WorkerState = TerrainChunkState.Valid;
+                        break;
                     }
 
-                    // Publish only after the geometry version and timing metadata describe
-                    // the buffers that the renderer is about to upload.
-                    chunk.NewGeometryData = true;
-                }
+                    CalculateChunkSliceContentsHash(chunk);
+                    lock (chunk.Geometry)
+                    {
+                        chunk.NewGeometryData = false;
+                        GenerateChunkVertices(chunk, true);
+                    }
 
-                chunk.WorkerState = TerrainChunkState.Valid;
-                break;
-            }
+                    chunk.WorkerState = TerrainChunkState.InvalidVertices2;
+                    break;
+                }
+            case TerrainChunkState.InvalidVertices2:
+                {
+                    if (RunMode.Value is RunModeType.HeadlessServer)
+                    {
+                        chunk.WorkerState = TerrainChunkState.Valid;
+                        break;
+                    }
+
+                    lock (chunk.Geometry)
+                    {
+                        GenerateChunkVertices(chunk, false);
+                        if (_subsystemTerrain.ContentRole == TerrainContentRole.Replica &&
+                            chunk.NetworkContentReceiveTime > 0.0)
+                        {
+                            ClientChunkDerivationPipeline.CompleteGeometry(chunk);
+                            chunk.NetworkGeometryReadyTime = Time.RealTime;
+                        }
+
+                        // Publish only after the geometry version and timing metadata describe
+                        // the buffers that the renderer is about to upload.
+                        chunk.NewGeometryData = true;
+                    }
+
+                    chunk.WorkerState = TerrainChunkState.Valid;
+                    break;
+                }
         }
     }
 
@@ -1315,85 +1323,87 @@ public class TerrainUpdater
     private void GenerateChunkSunLightAndHeight(TerrainChunk chunk, int skylightValue)
     {
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = 0;
-            var num2 = 256;
-            var num4 = 255;
-            var num5 = TerrainChunk.CalculateCellIndex(i, 255, j);
-            while (num4 >= 0)
+            for (var j = 0; j < 16; j++)
             {
-                var cellValueFast = chunk.GetCellValueFast(num5);
-                if (Terrain.ExtractContents(cellValueFast) != 0)
+                var num = 0;
+                var num2 = 256;
+                var num4 = 255;
+                var num5 = TerrainChunk.CalculateCellIndex(i, 255, j);
+                while (num4 >= 0)
                 {
-                    num = num4;
-                    break;
-                }
-
-                cellValueFast = Terrain.ReplaceLight(cellValueFast, skylightValue);
-                chunk.SetCellValueFast(num5, cellValueFast);
-                num4--;
-                num5--;
-            }
-
-            num4 = 0;
-            num5 = TerrainChunk.CalculateCellIndex(i, 0, j);
-            while (num4 <= num + 1)
-            {
-                var cellValueFast2 = chunk.GetCellValueFast(num5);
-                var num6 = Terrain.ExtractContents(cellValueFast2);
-                if (BlocksManager.Blocks[num6].Transparent)
-                {
-                    num2 = num4;
-                    break;
-                }
-
-                cellValueFast2 = Terrain.ReplaceLight(cellValueFast2, 0);
-                chunk.SetCellValueFast(num5, cellValueFast2);
-                num4++;
-                num5++;
-            }
-
-            var num7 = skylightValue;
-            num4 = num;
-            num5 = TerrainChunk.CalculateCellIndex(i, num, j);
-            if (num7 > 0)
-            {
-                while (num4 >= num2)
-                {
-                    var cellValueFast3 = chunk.GetCellValueFast(num5);
-                    var num8 = Terrain.ExtractContents(cellValueFast3);
-                    if (num8 != 0)
+                    var cellValueFast = chunk.GetCellValueFast(num5);
+                    if (Terrain.ExtractContents(cellValueFast) != 0)
                     {
-                        var block = BlocksManager.Blocks[num8];
-                        if (!block.Transparent || block.LightAttenuation >= num7)
-                        {
-                            break;
-                        }
-
-                        num7 -= block.LightAttenuation;
+                        num = num4;
+                        break;
                     }
 
-                    cellValueFast3 = Terrain.ReplaceLight(cellValueFast3, num7);
-                    chunk.SetCellValueFast(num5, cellValueFast3);
+                    cellValueFast = Terrain.ReplaceLight(cellValueFast, skylightValue);
+                    chunk.SetCellValueFast(num5, cellValueFast);
                     num4--;
                     num5--;
                 }
-            }
 
-            var num3 = num4 + 1;
-            while (num4 >= num2)
-            {
-                var cellValueFast4 = chunk.GetCellValueFast(num5);
-                cellValueFast4 = Terrain.ReplaceLight(cellValueFast4, 0);
-                chunk.SetCellValueFast(num5, cellValueFast4);
-                num4--;
-                num5--;
-            }
+                num4 = 0;
+                num5 = TerrainChunk.CalculateCellIndex(i, 0, j);
+                while (num4 <= num + 1)
+                {
+                    var cellValueFast2 = chunk.GetCellValueFast(num5);
+                    var num6 = Terrain.ExtractContents(cellValueFast2);
+                    if (BlocksManager.Blocks[num6].Transparent)
+                    {
+                        num2 = num4;
+                        break;
+                    }
 
-            chunk.SetTopHeightFast(i, j, num);
-            chunk.SetBottomHeightFast(i, j, num2);
-            chunk.SetSunlightHeightFast(i, j, num3);
+                    cellValueFast2 = Terrain.ReplaceLight(cellValueFast2, 0);
+                    chunk.SetCellValueFast(num5, cellValueFast2);
+                    num4++;
+                    num5++;
+                }
+
+                var num7 = skylightValue;
+                num4 = num;
+                num5 = TerrainChunk.CalculateCellIndex(i, num, j);
+                if (num7 > 0)
+                {
+                    while (num4 >= num2)
+                    {
+                        var cellValueFast3 = chunk.GetCellValueFast(num5);
+                        var num8 = Terrain.ExtractContents(cellValueFast3);
+                        if (num8 != 0)
+                        {
+                            var block = BlocksManager.Blocks[num8];
+                            if (!block.Transparent || block.LightAttenuation >= num7)
+                            {
+                                break;
+                            }
+
+                            num7 -= block.LightAttenuation;
+                        }
+
+                        cellValueFast3 = Terrain.ReplaceLight(cellValueFast3, num7);
+                        chunk.SetCellValueFast(num5, cellValueFast3);
+                        num4--;
+                        num5--;
+                    }
+                }
+
+                var num3 = num4 + 1;
+                while (num4 >= num2)
+                {
+                    var cellValueFast4 = chunk.GetCellValueFast(num5);
+                    cellValueFast4 = Terrain.ReplaceLight(cellValueFast4, 0);
+                    chunk.SetCellValueFast(num5, cellValueFast4);
+                    num4--;
+                    num5--;
+                }
+
+                chunk.SetTopHeightFast(i, j, num);
+                chunk.SetBottomHeightFast(i, j, num2);
+                chunk.SetSunlightHeightFast(i, j, num3);
+            }
         }
     }
 
@@ -1408,74 +1418,76 @@ public class TerrainUpdater
     {
         var blocks = BlocksManager.Blocks;
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var num = i + chunk.Origin.X;
-            var num2 = j + chunk.Origin.Y;
-            var chunkAtCell = _terrain.GetChunkAtCell(num - 1, num2, false);
-            var chunkAtCell2 = _terrain.GetChunkAtCell(num + 1, num2, false);
-            var chunkAtCell3 = _terrain.GetChunkAtCell(num, num2 - 1, false);
-            var chunkAtCell4 = _terrain.GetChunkAtCell(num, num2 + 1, false);
-            if (chunkAtCell == null || chunkAtCell2 == null || chunkAtCell3 == null || chunkAtCell4 == null)
+            for (var j = 0; j < 16; j++)
             {
-                continue;
-            }
-
-            var topHeightFast = chunk.GetTopHeightFast(i, j);
-            var bottomHeightFast = chunk.GetBottomHeightFast(i, j);
-            var x = num - 1 - chunkAtCell.Origin.X;
-            var z = num2 - chunkAtCell.Origin.Y;
-            var x2 = num + 1 - chunkAtCell2.Origin.X;
-            var z2 = num2 - chunkAtCell2.Origin.Y;
-            var x3 = num - chunkAtCell3.Origin.X;
-            var z3 = num2 - 1 - chunkAtCell3.Origin.Y;
-            var x4 = num - chunkAtCell4.Origin.X;
-            var z4 = num2 + 1 - chunkAtCell4.Origin.Y;
-            var shaftValueFast = chunkAtCell.GetShaftValueFast(x, z);
-            var shaftValueFast2 = chunkAtCell2.GetShaftValueFast(x2, z2);
-            var shaftValueFast3 = chunkAtCell3.GetShaftValueFast(x3, z3);
-            var shaftValueFast4 = chunkAtCell4.GetShaftValueFast(x4, z4);
-            var x5 = Terrain.ExtractSunlightHeight(shaftValueFast);
-            var x6 = Terrain.ExtractSunlightHeight(shaftValueFast2);
-            var x7 = Terrain.ExtractSunlightHeight(shaftValueFast3);
-            var x8 = Terrain.ExtractSunlightHeight(shaftValueFast4);
-            var num3 = MathUtils.Min(x5, x6, x7, x8);
-            var num4 = bottomHeightFast;
-            var num5 = TerrainChunk.CalculateCellIndex(i, bottomHeightFast, j);
-            while (num4 <= topHeightFast)
-            {
-                var cellValueFast = chunk.GetCellValueFast(num5);
-                var num6 = 0;
-                var block = blocks[Terrain.ExtractContents(cellValueFast)];
-                if (num4 >= num3 && block.Transparent)
+                var num = i + chunk.Origin.X;
+                var num2 = j + chunk.Origin.Y;
+                var chunkAtCell = _terrain.GetChunkAtCell(num - 1, num2, false);
+                var chunkAtCell2 = _terrain.GetChunkAtCell(num + 1, num2, false);
+                var chunkAtCell3 = _terrain.GetChunkAtCell(num, num2 - 1, false);
+                var chunkAtCell4 = _terrain.GetChunkAtCell(num, num2 + 1, false);
+                if (chunkAtCell == null || chunkAtCell2 == null || chunkAtCell3 == null || chunkAtCell4 == null)
                 {
-                    var cellLightFast = chunkAtCell.GetCellLightFast(x, num4, z);
-                    var cellLightFast2 = chunkAtCell2.GetCellLightFast(x2, num4, z2);
-                    var cellLightFast3 = chunkAtCell3.GetCellLightFast(x3, num4, z3);
-                    var cellLightFast4 = chunkAtCell4.GetCellLightFast(x4, num4, z4);
-                    num6 = MathUtils.Max(cellLightFast, cellLightFast2, cellLightFast3, cellLightFast4) - 1 -
-                           block.LightAttenuation;
+                    continue;
                 }
 
-                if (block.EmittedLightAmount > 0)
+                var topHeightFast = chunk.GetTopHeightFast(i, j);
+                var bottomHeightFast = chunk.GetBottomHeightFast(i, j);
+                var x = num - 1 - chunkAtCell.Origin.X;
+                var z = num2 - chunkAtCell.Origin.Y;
+                var x2 = num + 1 - chunkAtCell2.Origin.X;
+                var z2 = num2 - chunkAtCell2.Origin.Y;
+                var x3 = num - chunkAtCell3.Origin.X;
+                var z3 = num2 - 1 - chunkAtCell3.Origin.Y;
+                var x4 = num - chunkAtCell4.Origin.X;
+                var z4 = num2 + 1 - chunkAtCell4.Origin.Y;
+                var shaftValueFast = chunkAtCell.GetShaftValueFast(x, z);
+                var shaftValueFast2 = chunkAtCell2.GetShaftValueFast(x2, z2);
+                var shaftValueFast3 = chunkAtCell3.GetShaftValueFast(x3, z3);
+                var shaftValueFast4 = chunkAtCell4.GetShaftValueFast(x4, z4);
+                var x5 = Terrain.ExtractSunlightHeight(shaftValueFast);
+                var x6 = Terrain.ExtractSunlightHeight(shaftValueFast2);
+                var x7 = Terrain.ExtractSunlightHeight(shaftValueFast3);
+                var x8 = Terrain.ExtractSunlightHeight(shaftValueFast4);
+                var num3 = MathUtils.Min(x5, x6, x7, x8);
+                var num4 = bottomHeightFast;
+                var num5 = TerrainChunk.CalculateCellIndex(i, bottomHeightFast, j);
+                while (num4 <= topHeightFast)
                 {
-                    num6 = MathUtils.Max(num6, block.GetEmittedLightAmount(cellValueFast));
-                }
-
-                if (num6 > Terrain.ExtractLight(cellValueFast))
-                {
-                    chunk.SetCellValueFast(num5, Terrain.ReplaceLight(cellValueFast, num6));
-                    _lightSources.Add(new LightSource
+                    var cellValueFast = chunk.GetCellValueFast(num5);
+                    var num6 = 0;
+                    var block = blocks[Terrain.ExtractContents(cellValueFast)];
+                    if (num4 >= num3 && block.Transparent)
                     {
-                        X = num,
-                        Y = num4,
-                        Z = num2,
-                        Light = num6
-                    });
-                }
+                        var cellLightFast = chunkAtCell.GetCellLightFast(x, num4, z);
+                        var cellLightFast2 = chunkAtCell2.GetCellLightFast(x2, num4, z2);
+                        var cellLightFast3 = chunkAtCell3.GetCellLightFast(x3, num4, z3);
+                        var cellLightFast4 = chunkAtCell4.GetCellLightFast(x4, num4, z4);
+                        num6 = MathUtils.Max(cellLightFast, cellLightFast2, cellLightFast3, cellLightFast4) - 1 -
+                               block.LightAttenuation;
+                    }
 
-                num4++;
-                num5++;
+                    if (block.EmittedLightAmount > 0)
+                    {
+                        num6 = MathUtils.Max(num6, block.GetEmittedLightAmount(cellValueFast));
+                    }
+
+                    if (num6 > Terrain.ExtractLight(cellValueFast))
+                    {
+                        chunk.SetCellValueFast(num5, Terrain.ReplaceLight(cellValueFast, num6));
+                        _lightSources.Add(new LightSource
+                        {
+                            X = num,
+                            Y = num4,
+                            Z = num2,
+                            Light = num6
+                        });
+                    }
+
+                    num4++;
+                    num5++;
+                }
             }
         }
     }
@@ -1638,47 +1650,49 @@ public class TerrainUpdater
             }
 
             for (var k = num; k < num3; k++)
-            for (var l = num2; l < num4; l++)
             {
-                switch (k)
+                for (var l = num2; l < num4; l++)
                 {
-                    case 0:
-                        if ((l == 0 && chunkAtCoords == null) || (l == 15 && chunkAtCoords6 == null))
-                        {
-                            continue;
-                        }
-
-                        break;
-                    case 15:
-                        if ((l == 0 && chunkAtCoords3 == null) || (l == 15 && chunkAtCoords8 == null))
-                        {
-                            continue;
-                        }
-
-                        break;
-                }
-
-                var num5 = k + chunk.Origin.X;
-                var num6 = l + chunk.Origin.Y;
-                var bottomHeightFast = chunk.GetBottomHeightFast(k, l);
-                var bottomHeight = _terrain.GetBottomHeight(num5 - 1, num6);
-                var bottomHeight2 = _terrain.GetBottomHeight(num5 + 1, num6);
-                var bottomHeight3 = _terrain.GetBottomHeight(num5, num6 - 1);
-                var bottomHeight4 = _terrain.GetBottomHeight(num5, num6 + 1);
-                var x = MathUtils.Min(bottomHeightFast - 1,
-                    MathUtils.Min(bottomHeight, bottomHeight2, bottomHeight3, bottomHeight4));
-                var x2 = chunk.GetTopHeightFast(k, l) + 1;
-                var num7 = MathUtils.Max(16 * i, x, 1);
-                var num8 = MathUtils.Min(16 * (i + 1), x2, 256);
-                var num9 = TerrainChunk.CalculateCellIndex(k, 0, l);
-                for (var m = num7; m < num8; m++)
-                {
-                    var cellValueFast = chunk.GetCellValueFast(num9 + m);
-                    var num10 = Terrain.ExtractContents(cellValueFast);
-                    if (num10 != 0)
+                    switch (k)
                     {
-                        BlocksManager.Blocks[num10].GenerateTerrainVertices(_subsystemTerrain.BlockGeometryGenerator,
-                            terrainGeometry[i], cellValueFast, num5, m, num6);
+                        case 0:
+                            if ((l == 0 && chunkAtCoords == null) || (l == 15 && chunkAtCoords6 == null))
+                            {
+                                continue;
+                            }
+
+                            break;
+                        case 15:
+                            if ((l == 0 && chunkAtCoords3 == null) || (l == 15 && chunkAtCoords8 == null))
+                            {
+                                continue;
+                            }
+
+                            break;
+                    }
+
+                    var num5 = k + chunk.Origin.X;
+                    var num6 = l + chunk.Origin.Y;
+                    var bottomHeightFast = chunk.GetBottomHeightFast(k, l);
+                    var bottomHeight = _terrain.GetBottomHeight(num5 - 1, num6);
+                    var bottomHeight2 = _terrain.GetBottomHeight(num5 + 1, num6);
+                    var bottomHeight3 = _terrain.GetBottomHeight(num5, num6 - 1);
+                    var bottomHeight4 = _terrain.GetBottomHeight(num5, num6 + 1);
+                    var x = MathUtils.Min(bottomHeightFast - 1,
+                        MathUtils.Min(bottomHeight, bottomHeight2, bottomHeight3, bottomHeight4));
+                    var x2 = chunk.GetTopHeightFast(k, l) + 1;
+                    var num7 = MathUtils.Max(16 * i, x, 1);
+                    var num8 = MathUtils.Min(16 * (i + 1), x2, 256);
+                    var num9 = TerrainChunk.CalculateCellIndex(k, 0, l);
+                    for (var m = num7; m < num8; m++)
+                    {
+                        var cellValueFast = chunk.GetCellValueFast(num9 + m);
+                        var num10 = Terrain.ExtractContents(cellValueFast);
+                        if (num10 != 0)
+                        {
+                            BlocksManager.Blocks[num10].GenerateTerrainVertices(_subsystemTerrain.BlockGeometryGenerator,
+                                terrainGeometry[i], cellValueFast, num5, m, num6);
+                        }
                     }
                 }
             }
@@ -1706,16 +1720,18 @@ public class TerrainUpdater
     private void UpdateNeighborsLightPropagationBitmasks(TerrainChunk chunk)
     {
         for (var i = -1; i <= 1; i++)
-        for (var j = -1; j <= 1; j++)
         {
-            var chunkAtCoords = _terrain.GetChunkAtCoords(chunk.Coords.X + i, chunk.Coords.Y + j);
-            if (chunkAtCoords == null)
+            for (var j = -1; j <= 1; j++)
             {
-                continue;
-            }
+                var chunkAtCoords = _terrain.GetChunkAtCoords(chunk.Coords.X + i, chunk.Coords.Y + j);
+                if (chunkAtCoords == null)
+                {
+                    continue;
+                }
 
-            var num = CalculateLightPropagationBitIndex(-i, -j);
-            chunkAtCoords.LightPropagationMask |= 1 << num;
+                var num = CalculateLightPropagationBitIndex(-i, -j);
+                chunkAtCoords.LightPropagationMask |= 1 << num;
+            }
         }
     }
 
@@ -1735,35 +1751,37 @@ public class TerrainUpdater
         var x = MathUtils.Max(16 * sliceIndex - 1, 0);
         var x2 = MathUtils.Min(16 * (sliceIndex + 1) + 1, 256);
         for (var i = num2; i < num3; i++)
-        for (var j = num4; j < num5; j++)
         {
-            var chunkAtCell = _terrain.GetChunkAtCell(i, j, false);
-            if (chunkAtCell == null)
+            for (var j = num4; j < num5; j++)
             {
-                continue;
-            }
+                var chunkAtCell = _terrain.GetChunkAtCell(i, j, false);
+                if (chunkAtCell == null)
+                {
+                    continue;
+                }
 
-            var x3 = i & 0xF;
-            var z = j & 0xF;
-            var shaftValueFast = chunkAtCell.GetShaftValueFast(x3, z);
-            var num6 = Terrain.ExtractBottomHeight(shaftValueFast);
-            var num7 = Terrain.ExtractTopHeight(shaftValueFast);
-            var num8 = MathUtils.Max(x, num6 - 1);
-            var num9 = MathUtils.Min(x2, num7 + 2);
-            var num10 = TerrainChunk.CalculateCellIndex(x3, num8, z);
-            var num11 = num10 + num9 - num8;
-            while (num10 < num11)
-            {
-                num += chunkAtCell.GetCellValueFast(num10++);
+                var x3 = i & 0xF;
+                var z = j & 0xF;
+                var shaftValueFast = chunkAtCell.GetShaftValueFast(x3, z);
+                var num6 = Terrain.ExtractBottomHeight(shaftValueFast);
+                var num7 = Terrain.ExtractTopHeight(shaftValueFast);
+                var num8 = MathUtils.Max(x, num6 - 1);
+                var num9 = MathUtils.Min(x2, num7 + 2);
+                var num10 = TerrainChunk.CalculateCellIndex(x3, num8, z);
+                var num11 = num10 + num9 - num8;
+                while (num10 < num11)
+                {
+                    num += chunkAtCell.GetCellValueFast(num10++);
+                    num *= 31;
+                }
+
+                num += Terrain.ExtractTemperature(shaftValueFast);
+                num *= 31;
+                num += Terrain.ExtractHumidity(shaftValueFast);
+                num *= 31;
+                num += num8;
                 num *= 31;
             }
-
-            num += Terrain.ExtractTemperature(shaftValueFast);
-            num *= 31;
-            num += Terrain.ExtractHumidity(shaftValueFast);
-            num *= 31;
-            num += num8;
-            num *= 31;
         }
 
         num += _terrain.SeasonTemperature;
@@ -1794,58 +1812,60 @@ public class TerrainUpdater
         var num4 = chunk.Origin.Y - 1;
         var num5 = chunk.Origin.Y + 16 + 1;
         for (var j = num2; j < num3; j++)
-        for (var k = num4; k < num5; k++)
         {
-            var chunkAtCell = _terrain.GetChunkAtCell(j, k, false);
-            if (chunkAtCell == null)
+            for (var k = num4; k < num5; k++)
             {
-                continue;
-            }
-
-            var num6 = j & 15;
-            var num7 = k & 15;
-            var shaftValueFast = chunkAtCell.GetShaftValueFast(num6, num7);
-            var num8 = Terrain.ExtractTopHeight(shaftValueFast);
-            var num9 = Terrain.ExtractBottomHeight(shaftValueFast);
-            var num10 = num6 > 0
-                ? chunkAtCell.GetBottomHeightFast(num6 - 1, num7)
-                : _terrain.GetBottomHeight(j - 1, k);
-            var num11 = num7 > 0
-                ? chunkAtCell.GetBottomHeightFast(num6, num7 - 1)
-                : _terrain.GetBottomHeight(j, k - 1);
-            var num12 = num6 < 15
-                ? chunkAtCell.GetBottomHeightFast(num6 + 1, num7)
-                : _terrain.GetBottomHeight(j + 1, k);
-            var num13 = num7 < 15
-                ? chunkAtCell.GetBottomHeightFast(num6, num7 + 1)
-                : _terrain.GetBottomHeight(j, k + 1);
-            var num14 = MathUtils.Min(MathUtils.Min(num10, num11, num12, num13), num9 - 1);
-            var num15 = num8 + 2;
-            num14 = MathUtils.Max(num14, 0);
-            num15 = MathUtils.Min(num15, 256);
-            var num16 = MathUtils.Max((num14 - 1) / 16, 0);
-            var num17 = MathUtils.Min((num15 + 1) / 16, TerrainChunk.SlicesCount - 1);
-            var num18 = 1;
-            num18 += Terrain.ExtractTemperature(shaftValueFast);
-            num18 *= 31;
-            num18 += Terrain.ExtractHumidity(shaftValueFast);
-            num18 *= 31;
-            for (var l = num16; l <= num17; l++)
-            {
-                var num19 = num18;
-                var num20 = MathUtils.Max(l * 16 - 1, num14);
-                var num21 = MathUtils.Min(l * 16 + 16 + 1, num15);
-                var m = TerrainChunk.CalculateCellIndex(num6, num20, num7);
-                var num22 = m + num21 - num20;
-                while (m < num22)
+                var chunkAtCell = _terrain.GetChunkAtCell(j, k, false);
+                if (chunkAtCell == null)
                 {
-                    num19 += chunkAtCell.GetCellValueFast(m++);
-                    num19 *= 31;
+                    continue;
                 }
 
-                num19 += num20;
-                num19 *= 31;
-                chunk.SliceContentsHashes[l] += num19;
+                var num6 = j & 15;
+                var num7 = k & 15;
+                var shaftValueFast = chunkAtCell.GetShaftValueFast(num6, num7);
+                var num8 = Terrain.ExtractTopHeight(shaftValueFast);
+                var num9 = Terrain.ExtractBottomHeight(shaftValueFast);
+                var num10 = num6 > 0
+                    ? chunkAtCell.GetBottomHeightFast(num6 - 1, num7)
+                    : _terrain.GetBottomHeight(j - 1, k);
+                var num11 = num7 > 0
+                    ? chunkAtCell.GetBottomHeightFast(num6, num7 - 1)
+                    : _terrain.GetBottomHeight(j, k - 1);
+                var num12 = num6 < 15
+                    ? chunkAtCell.GetBottomHeightFast(num6 + 1, num7)
+                    : _terrain.GetBottomHeight(j + 1, k);
+                var num13 = num7 < 15
+                    ? chunkAtCell.GetBottomHeightFast(num6, num7 + 1)
+                    : _terrain.GetBottomHeight(j, k + 1);
+                var num14 = MathUtils.Min(MathUtils.Min(num10, num11, num12, num13), num9 - 1);
+                var num15 = num8 + 2;
+                num14 = MathUtils.Max(num14, 0);
+                num15 = MathUtils.Min(num15, 256);
+                var num16 = MathUtils.Max((num14 - 1) / 16, 0);
+                var num17 = MathUtils.Min((num15 + 1) / 16, TerrainChunk.SlicesCount - 1);
+                var num18 = 1;
+                num18 += Terrain.ExtractTemperature(shaftValueFast);
+                num18 *= 31;
+                num18 += Terrain.ExtractHumidity(shaftValueFast);
+                num18 *= 31;
+                for (var l = num16; l <= num17; l++)
+                {
+                    var num19 = num18;
+                    var num20 = MathUtils.Max(l * 16 - 1, num14);
+                    var num21 = MathUtils.Min(l * 16 + 16 + 1, num15);
+                    var m = TerrainChunk.CalculateCellIndex(num6, num20, num7);
+                    var num22 = m + num21 - num20;
+                    while (m < num22)
+                    {
+                        num19 += chunkAtCell.GetCellValueFast(m++);
+                        num19 *= 31;
+                    }
+
+                    num19 += num20;
+                    num19 *= 31;
+                    chunk.SliceContentsHashes[l] += num19;
+                }
             }
         }
     }
@@ -1867,27 +1887,29 @@ public class TerrainUpdater
 
         var isLoaded = chunk.IsLoaded;
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var x = i + chunk.Origin.X;
-            var z = j + chunk.Origin.Y;
-            var num = TerrainChunk.CalculateCellIndex(i, 0, j);
-            var num2 = 0;
-            while (num2 < 255)
+            for (var j = 0; j < 16; j++)
             {
-                var cellValueFast = chunk.GetCellValueFast(num);
-                var num3 = Terrain.ExtractContents(cellValueFast);
-                if (num3 != 0)
+                var x = i + chunk.Origin.X;
+                var z = j + chunk.Origin.Y;
+                var num = TerrainChunk.CalculateCellIndex(i, 0, j);
+                var num2 = 0;
+                while (num2 < 255)
                 {
-                    var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num3);
-                    foreach (var blockBehavior in blockBehaviors)
+                    var cellValueFast = chunk.GetCellValueFast(num);
+                    var num3 = Terrain.ExtractContents(cellValueFast);
+                    if (num3 != 0)
                     {
-                        blockBehavior.OnBlockGenerated(cellValueFast, x, num2, z, isLoaded);
+                        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num3);
+                        foreach (var blockBehavior in blockBehaviors)
+                        {
+                            blockBehavior.OnBlockGenerated(cellValueFast, x, num2, z, isLoaded);
+                        }
                     }
-                }
 
-                num2++;
-                num++;
+                    num2++;
+                    num++;
+                }
             }
         }
 

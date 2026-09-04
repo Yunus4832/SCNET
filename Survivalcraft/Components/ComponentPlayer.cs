@@ -204,14 +204,14 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         if (_subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1f, 0.0))
         {
             if (CommonLib.WorkType != WorkType.Client)
-                //服务器广播玩家数据
+            //服务器广播玩家数据
             {
                 CommonLib.Net.QueuePackage(
                     new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate)
-                        { Except = PlayerData.Client });
+                    { Except = PlayerData.Client });
             }
             else if (PlayerData.IsMainPlayer)
-                //客户端广播自己的数据
+            //客户端广播自己的数据
             {
                 CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this,
                     ComponentPlayerPackage.PlayerAction.BodyUpdate));
@@ -627,7 +627,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
     public void AddDigEvent(DigEvent digEvent, Ray3? digRay, TerrainRaycastResult? raycastResult)
     {
         _digEvents.Add(new DigEventItem
-            { DigEvent = digEvent, NetDigRay = digRay, NetDigRaycast = raycastResult });
+        { DigEvent = digEvent, NetDigRay = digRay, NetDigRaycast = raycastResult });
     }
 
     public void AddAimEvent(AimEvent aimEvent, Ray3? aimRay)
@@ -638,7 +638,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
     public void AddInteractEvent(InteractEvent interactEvent, Ray3 digRay, TerrainRaycastResult? raycastResult)
     {
         _interactEvents.Add(new InteractEventItem
-            { InteractEvent = interactEvent, NetInteractRay = digRay, NetPlaceRaycast = raycastResult });
+        { InteractEvent = interactEvent, NetInteractRay = digRay, NetPlaceRaycast = raycastResult });
     }
 
     public void DoDrop()

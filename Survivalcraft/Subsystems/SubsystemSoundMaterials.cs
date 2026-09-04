@@ -59,9 +59,9 @@ public class SubsystemSoundMaterials : Subsystem
         _subsystemAudio.PlayRandomSound(value, 0.75f * loudnessMultiplier, pitch,
             componentCreature.ComponentBody.Position, 2f * loudnessMultiplier, true);
         if (componentCreature is not ComponentPlayer
-                {
-                    ComponentVitalStats.Wetness: > 0f
-                }
+            {
+                ComponentVitalStats.Wetness: > 0f
+            }
                 componentPlayer)
         {
             return true;

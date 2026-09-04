@@ -64,7 +64,7 @@ public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
         _componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true)!;
         _componentHerdBehavior = Entity.FindComponent<ComponentHerdBehavior>();
-        _componentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
+        _componentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
         {
             RunAwayFrom(attacker.ComponentBody);
         };

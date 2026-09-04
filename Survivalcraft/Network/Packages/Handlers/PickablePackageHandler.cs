@@ -72,7 +72,7 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                     pick =>
                     {
                         netNode.QueuePackage(new PickablePackage(pick, PickablePackage.PickType.Create)
-                            { To = package.From });
+                        { To = package.From });
                     }
                 );
                 if (!flag)

@@ -16,7 +16,9 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     private readonly LabelWidget _closeTimeLabel = new()
     {
-        Name = "CloseTime", HorizontalAlignment = WidgetAlignment.Center, VerticalAlignment = WidgetAlignment.Near,
+        Name = "CloseTime",
+        HorizontalAlignment = WidgetAlignment.Center,
+        VerticalAlignment = WidgetAlignment.Near,
         IsVisible = false
     };
 

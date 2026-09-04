@@ -253,7 +253,7 @@ public class EditColorDialog : Dialog
                     "Enter Color",
                     GetColorString(),
                     20,
-                    delegate(string s)
+                    delegate (string s)
                     {
                         try
                         {

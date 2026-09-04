@@ -180,75 +180,79 @@ public class ComponentOnFire : Component, IUpdateable
         var num5 = Terrain.ToCell(boundingBox.Max.Y);
         var num6 = Terrain.ToCell(boundingBox.Max.Z);
         for (var i = num; i <= num4; i++)
-        for (var j = num2; j <= num5; j++)
-        for (var k = num3; k <= num6; k++)
         {
-            var cellValue = _subsystemTerrain.Terrain.GetCellValue(i, j, k);
-            var num7 = Terrain.ExtractContents(cellValue);
-            var num8 = Terrain.ExtractData(cellValue);
-            switch (num7)
+            for (var j = num2; j <= num5; j++)
             {
-                case 104:
-                    if (num8 == 0)
+                for (var k = num3; k <= num6; k++)
+                {
+                    var cellValue = _subsystemTerrain.Terrain.GetCellValue(i, j, k);
+                    var num7 = Terrain.ExtractContents(cellValue);
+                    var num8 = Terrain.ExtractData(cellValue);
+                    switch (num7)
                     {
-                        var box2 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 1, j + 1, k + 1));
-                        if (boundingBox.Intersection(box2))
-                        {
-                            return true;
-                        }
+                        case 104:
+                            if (num8 == 0)
+                            {
+                                var box2 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 1, j + 1, k + 1));
+                                if (boundingBox.Intersection(box2))
+                                {
+                                    return true;
+                                }
 
-                        break;
+                                break;
+                            }
+
+                            if ((num8 & 1) != 0)
+                            {
+                                var box3 = new BoundingBox(new Vector3(i, j, k + 0.5f), new Vector3(i + 1, j + 1, k + 1));
+                                if (boundingBox.Intersection(box3))
+                                {
+                                    return true;
+                                }
+                            }
+
+                            if ((num8 & 2) != 0)
+                            {
+                                var box4 = new BoundingBox(new Vector3(i + 0.5f, j, k), new Vector3(i + 1, j + 1, k + 1));
+                                if (boundingBox.Intersection(box4))
+                                {
+                                    return true;
+                                }
+                            }
+
+                            if ((num8 & 4) != 0)
+                            {
+                                var box5 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 1, j + 1, k + 0.5f));
+                                if (boundingBox.Intersection(box5))
+                                {
+                                    return true;
+                                }
+                            }
+
+                            if ((num8 & 8) != 0)
+                            {
+                                var box6 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 0.5f, j + 1, k + 1));
+                                if (boundingBox.Intersection(box6))
+                                {
+                                    return true;
+                                }
+                            }
+
+                            break;
+                        case 209:
+                            if (num8 > 0)
+                            {
+                                var box = new BoundingBox(new Vector3(i, j, k) + new Vector3(0.2f),
+                                    new Vector3(i + 1, j + 1, k + 1) - new Vector3(0.2f));
+                                if (boundingBox.Intersection(box))
+                                {
+                                    return true;
+                                }
+                            }
+
+                            break;
                     }
-
-                    if ((num8 & 1) != 0)
-                    {
-                        var box3 = new BoundingBox(new Vector3(i, j, k + 0.5f), new Vector3(i + 1, j + 1, k + 1));
-                        if (boundingBox.Intersection(box3))
-                        {
-                            return true;
-                        }
-                    }
-
-                    if ((num8 & 2) != 0)
-                    {
-                        var box4 = new BoundingBox(new Vector3(i + 0.5f, j, k), new Vector3(i + 1, j + 1, k + 1));
-                        if (boundingBox.Intersection(box4))
-                        {
-                            return true;
-                        }
-                    }
-
-                    if ((num8 & 4) != 0)
-                    {
-                        var box5 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 1, j + 1, k + 0.5f));
-                        if (boundingBox.Intersection(box5))
-                        {
-                            return true;
-                        }
-                    }
-
-                    if ((num8 & 8) != 0)
-                    {
-                        var box6 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 0.5f, j + 1, k + 1));
-                        if (boundingBox.Intersection(box6))
-                        {
-                            return true;
-                        }
-                    }
-
-                    break;
-                case 209:
-                    if (num8 > 0)
-                    {
-                        var box = new BoundingBox(new Vector3(i, j, k) + new Vector3(0.2f),
-                            new Vector3(i + 1, j + 1, k + 1) - new Vector3(0.2f));
-                        if (boundingBox.Intersection(box))
-                        {
-                            return true;
-                        }
-                    }
-
-                    break;
+                }
             }
         }
 

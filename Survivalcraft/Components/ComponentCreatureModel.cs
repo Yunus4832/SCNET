@@ -181,7 +181,7 @@ public class ComponentCreatureModel : ComponentModel, IUpdateable
         subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         ComponentCreature = Entity.FindComponent<ComponentCreature>(true)!;
-        ComponentCreature.ComponentHealth.Attacked += delegate(ComponentCreature attacker)
+        ComponentCreature.ComponentHealth.Attacked += delegate (ComponentCreature attacker)
         {
             if (DeathPhase == 0f && ComponentCreature.ComponentHealth.Health == 0f)
             {

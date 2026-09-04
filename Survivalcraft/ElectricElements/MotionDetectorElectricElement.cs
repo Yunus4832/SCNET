@@ -120,7 +120,7 @@ public class MotionDetectorElectricElement : MountedElectricElement
     {
         var num = Vector3.DistanceSquared(p, _center);
         if (num < 64f && Vector3.Dot(Vector3.Normalize(p - (_center - 0.75f * _direction)), _direction) > 0.5f &&
-            !SubsystemElectricity.SubsystemTerrain.Raycast(_center, p, false, true, delegate(int value, float _)
+            !SubsystemElectricity.SubsystemTerrain.Raycast(_center, p, false, true, delegate (int value, float _)
             {
                 var block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
                 return block.Collidable && block.BlockIndex != 15 && block.BlockIndex != 60 &&

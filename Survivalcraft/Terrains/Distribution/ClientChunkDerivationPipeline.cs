@@ -50,26 +50,28 @@ public sealed class ClientChunkDerivationPipeline(Terrain terrain)
     {
         const int radius = ClientDerivedTerrainPolicy.LightingDependencyRadius;
         for (var x = -radius; x <= radius; x++)
-        for (var y = -radius; y <= radius; y++)
         {
-            if (x == 0 && y == 0)
+            for (var y = -radius; y <= radius; y++)
             {
-                continue;
-            }
+                if (x == 0 && y == 0)
+                {
+                    continue;
+                }
 
-            var neighbor = _terrain.GetChunkAtCoords(target.Coords.X + x, target.Coords.Y + y);
-            if (neighbor is not { IsLoaded: true })
-            {
-                continue;
-            }
+                var neighbor = _terrain.GetChunkAtCoords(target.Coords.X + x, target.Coords.Y + y);
+                if (neighbor is not { IsLoaded: true })
+                {
+                    continue;
+                }
 
-            if (neighbor.MainThreadState > TerrainChunkState.InvalidLight)
-            {
-                neighbor.MainThreadState = TerrainChunkState.InvalidLight;
-                neighbor.InvalidateSliceContentsHashes();
-            }
+                if (neighbor.MainThreadState > TerrainChunkState.InvalidLight)
+                {
+                    neighbor.MainThreadState = TerrainChunkState.InvalidLight;
+                    neighbor.InvalidateSliceContentsHashes();
+                }
 
-            TerrainChunkStateExchange.RequestDowngrade(neighbor, TerrainChunkState.InvalidLight);
+                TerrainChunkStateExchange.RequestDowngrade(neighbor, TerrainChunkState.InvalidLight);
+            }
         }
     }
 }

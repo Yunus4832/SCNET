@@ -26,11 +26,13 @@ public class MusketWidget : CanvasWidget
         _inventorySlotWidget = Children.Find<InventorySlotWidget>("InventorySlot")!;
         _instructionsLabel = Children.Find<LabelWidget>("InstructionsLabel")!;
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)
-        for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
         {
-            var widget = new InventorySlotWidget();
-            _inventoryGrid.Children.Add(widget);
-            _inventoryGrid.SetWidgetCell(widget, new Point2(j, i));
+            for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
+            {
+                var widget = new InventorySlotWidget();
+                _inventoryGrid.Children.Add(widget);
+                _inventoryGrid.SetWidgetCell(widget, new Point2(j, i));
+            }
         }
 
         var num = 10;

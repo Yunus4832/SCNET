@@ -40,15 +40,17 @@ public class BlockColorsMap
     public BlockColorsMap(Color th11, Color th21, Color th12, Color th22)
     {
         for (var i = 0; i < 16; i++)
-        for (var j = 0; j < 16; j++)
         {
-            var f = MathUtils.Saturate(i / 8f);
-            var f2 = MathUtils.Saturate((j - 4) / 10f);
-            var c = Color.Lerp(th11, th21, f);
-            var c2 = Color.Lerp(th12, th22, f);
-            var color = Color.Lerp(c, c2, f2);
-            var num = i + j * 16;
-            _map[num] = color;
+            for (var j = 0; j < 16; j++)
+            {
+                var f = MathUtils.Saturate(i / 8f);
+                var f2 = MathUtils.Saturate((j - 4) / 10f);
+                var c = Color.Lerp(th11, th21, f);
+                var c2 = Color.Lerp(th12, th22, f);
+                var color = Color.Lerp(c, c2, f2);
+                var num = i + j * 16;
+                _map[num] = color;
+            }
         }
     }
 
