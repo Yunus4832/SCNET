@@ -26,7 +26,10 @@ namespace Survivalcraft.Android;
                            ConfigChanges.Orientation |
                            ConfigChanges.UiMode |
                            ConfigChanges.ScreenLayout |
-                           ConfigChanges.SmallestScreenSize
+                           ConfigChanges.SmallestScreenSize |
+                           ConfigChanges.Keyboard |
+                           ConfigChanges.KeyboardHidden |
+                           ConfigChanges.Navigation
 )]
 [Register("com.candy.scnet.MainActivity")]
 [IntentFilter(

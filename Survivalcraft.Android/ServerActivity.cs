@@ -25,7 +25,10 @@ namespace Survivalcraft.Android;
                            ConfigChanges.Orientation |
                            ConfigChanges.UiMode |
                            ConfigChanges.ScreenLayout |
-                           ConfigChanges.SmallestScreenSize
+                           ConfigChanges.SmallestScreenSize |
+                           ConfigChanges.Keyboard |
+                           ConfigChanges.KeyboardHidden |
+                           ConfigChanges.Navigation
 )]
 public class ServerActivity : BlackActivity
 {
