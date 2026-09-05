@@ -5,6 +5,8 @@ using Android.OS;
 
 using Game;
 
+using AndroidLog = Android.Util.Log;
+using AndroidProcess = Android.OS.Process;
 using AndroidProviderSettings = Android.Provider.Settings;
 using AndroidUri = Android.Net.Uri;
 using EngineSdlTextInputBackend = Engine.Input.SdlTextInputBackend;
@@ -26,11 +28,20 @@ namespace Survivalcraft.Android;
 )]
 public class GameActivity : EngineActivity
 {
+    private static int _gameRuntimeStarted;
+
     private AndroidFilePicker? _filePicker;
 
     protected override void OnRun()
     {
         base.OnRun();
+        if (Interlocked.Exchange(ref _gameRuntimeStarted, 1) != 0)
+        {
+            AndroidLog.Error("SCNET", "Rejected a second game runtime in the same Android process.");
+            AndroidProcess.KillProcess(AndroidProcess.MyPid());
+            return;
+        }
+
         GamePlatformManager.RegisterPlatform(Platform.Android);
         RunMode.Value = RunModeType.Gui;
         GamePlatformManager.RegisterWebBrowserLauncher(OpenLink);
