@@ -5,11 +5,9 @@ using Android.OS;
 
 using Game;
 
-using AndroidClipboardManager = Android.Content.ClipboardManager;
 using AndroidProviderSettings = Android.Provider.Settings;
 using AndroidUri = Android.Net.Uri;
 using EngineSdlTextInputBackend = Engine.Input.SdlTextInputBackend;
-using EngineTextInputManager = Engine.Input.TextInputManager;
 using GamePlatformManager = Game.Managers.PlatformManager;
 
 namespace Survivalcraft.Android;
@@ -37,10 +35,10 @@ public class GameActivity : EngineActivity
         RunMode.Value = RunModeType.Gui;
         GamePlatformManager.RegisterWebBrowserLauncher(OpenLink);
         GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
-        GamePlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
-        EngineTextInputManager.RegisterBackend(new EngineSdlTextInputBackend(processEditingKeyEvents: true));
+        GamePlatformManager.RegisterTextInput(new EngineSdlTextInputBackend(processEditingKeyEvents: true));
+        GamePlatformManager.RegisterClipboard(new SdlClipboardBackend());
         _filePicker = new AndroidFilePicker(this);
-        FilePicker.Register(_filePicker);
+        GamePlatformManager.RegisterFilePicker(_filePicker);
         InitializeAndroidId();
         LoadAssetAssemblies();
 
@@ -114,21 +112,6 @@ public class GameActivity : EngineActivity
         return Build.VERSION.SdkInt >= (BuildVersionCodes)21
             ? (ConnectivityManager?)GetSystemService(ConnectivityService)
             : null;
-    }
-
-    private string ReadClipboardText()
-    {
-        return GetSystemService(ClipboardService) is AndroidClipboardManager clipboardManager
-            ? clipboardManager.Text ?? string.Empty
-            : string.Empty;
-    }
-
-    private void WriteClipboardText(string text)
-    {
-        if (GetSystemService(ClipboardService) is AndroidClipboardManager clipboardManager)
-        {
-            clipboardManager.Text = text;
-        }
     }
 
     private void LoadAssetAssemblies()

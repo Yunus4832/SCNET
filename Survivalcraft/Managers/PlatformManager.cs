@@ -1,3 +1,5 @@
+using Engine.Input;
+
 namespace Game.Managers;
 
 public static class PlatformManager
@@ -57,8 +59,18 @@ public static class PlatformManager
         WebBrowserManager.RegisterLauncher(launcher);
     }
 
-    public static void RegisterClipboard(Func<string> reader, Action<string> writer)
+    public static void RegisterClipboard(IClipboardBackend backend)
     {
-        ClipboardManager.RegisterClipboard(reader, writer);
+        ClipboardManager.RegisterBackend(backend);
+    }
+
+    public static void RegisterTextInput(ITextInputBackend backend)
+    {
+        TextInputManager.RegisterBackend(backend);
+    }
+
+    public static void RegisterFilePicker(IFilePicker filePicker)
+    {
+        FilePicker.Register(filePicker);
     }
 }

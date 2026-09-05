@@ -2,8 +2,7 @@ namespace Game.Managers;
 
 public static class ClipboardManager
 {
-    private static Func<string>? _reader;
-    private static Action<string>? _writer;
+    private static IClipboardBackend? _backend;
 
     public static string ClipboardString
     {
@@ -11,9 +10,9 @@ public static class ClipboardManager
         {
             try
             {
-                if (_reader is not null)
+                if (_backend is not null)
                 {
-                    return _reader();
+                    return _backend.ReadText();
                 }
 
                 Log.Warning("No clipboard reader registered.");
@@ -29,13 +28,13 @@ public static class ClipboardManager
         {
             try
             {
-                if (_writer is null)
+                if (_backend is null)
                 {
                     Log.Warning("No clipboard writer registered.");
                     return;
                 }
 
-                _writer(value);
+                _backend.WriteText(value);
             }
             catch (Exception ex)
             {
@@ -44,9 +43,8 @@ public static class ClipboardManager
         }
     }
 
-    public static void RegisterClipboard(Func<string> reader, Action<string> writer)
+    public static void RegisterBackend(IClipboardBackend backend)
     {
-        _reader = reader ?? throw new ArgumentNullException(nameof(reader));
-        _writer = writer ?? throw new ArgumentNullException(nameof(writer));
+        _backend = backend ?? throw new ArgumentNullException(nameof(backend));
     }
 }

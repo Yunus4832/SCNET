@@ -20,11 +20,9 @@ public class Starter
     public static void Main(string[] args)
     {
         var instance = RegisterStorageRoots(args);
-        TextInputManager.RegisterBackend(new SdlTextInputBackend());
         PlatformManager.RegisterPlatform(Platform.Desktop);
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
         PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
-        PlatformManager.RegisterClipboard(ReadClipboardText, WriteClipboardText);
         var startup = StartupManager.Load(instance.GameArguments);
         var runningSetting = startup.Settings;
         InstallDesktopEntries();
@@ -37,7 +35,9 @@ public class Starter
         else
         {
             RunMode.Value = RunModeType.Gui;
-            FilePicker.Register(new LinuxFilePicker());
+            PlatformManager.RegisterTextInput(new SdlTextInputBackend());
+            PlatformManager.RegisterClipboard(new SdlClipboardBackend());
+            PlatformManager.RegisterFilePicker(new LinuxFilePicker());
 
             Window.IconStream = LoadWindowIcon();
             PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
@@ -128,79 +128,6 @@ public class Starter
     {
         RunMode.Value = RunModeType.HeadlessServer;
         HeadlessEntry.Main(startup);
-    }
-
-    private static string ReadClipboardText()
-    {
-        if (TryReadProcessOutput("wl-paste", ["--no-newline"], out var text) ||
-            TryReadProcessOutput("xclip", ["-selection", "clipboard", "-out"], out text) ||
-            TryReadProcessOutput("xsel", ["--clipboard", "--output"], out text))
-        {
-            return text;
-        }
-
-        Log.Warning("No supported Linux clipboard command found.");
-        return string.Empty;
-    }
-
-    private static void WriteClipboardText(string text)
-    {
-        if (TryWriteProcessInput("wl-copy", [], text) ||
-            TryWriteProcessInput("xclip", ["-selection", "clipboard"], text) ||
-            TryWriteProcessInput("xsel", ["--clipboard", "--input"], text))
-        {
-            return;
-        }
-
-        throw new InvalidOperationException("No supported Linux clipboard command found.");
-    }
-
-    private static bool TryReadProcessOutput(string fileName, string[] arguments, out string output)
-    {
-        output = string.Empty;
-        try
-        {
-            using var process = StartClipboardProcess(fileName, arguments, redirectInput: false);
-            output = process.StandardOutput.ReadToEnd();
-            return process.WaitForExit(1000) && process.ExitCode == 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static bool TryWriteProcessInput(string fileName, string[] arguments, string text)
-    {
-        try
-        {
-            using var process = StartClipboardProcess(fileName, arguments, redirectInput: true);
-            process.StandardInput.Write(text);
-            process.StandardInput.Close();
-            return process.WaitForExit(1000) && process.ExitCode == 0;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static Process StartClipboardProcess(string fileName, string[] arguments, bool redirectInput)
-    {
-        var startInfo = new ProcessStartInfo(fileName)
-        {
-            RedirectStandardInput = redirectInput,
-            RedirectStandardOutput = !redirectInput,
-            RedirectStandardError = true,
-            UseShellExecute = false
-        };
-
-        foreach (var argument in arguments)
-        {
-            startInfo.ArgumentList.Add(argument);
-        }
-
-        return Process.Start(startInfo) ?? throw new InvalidOperationException($"Could not start {fileName}.");
     }
 
     private static void WriteDesktopEntry(

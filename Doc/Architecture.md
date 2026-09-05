@@ -45,6 +45,8 @@
 
 Windows GUI Starter 在 Windows 项目内直接使用 WinForms `OpenFileDialog`/`SaveFileDialog`，对话框在专用 STA 线程运行，不启动 PowerShell 子进程；Linux GUI Starter 通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，具体对话框由桌面 portal backend 提供；Android GameActivity 使用 Storage Access Framework 的 `ACTION_OPEN_DOCUMENT` 与 `ACTION_CREATE_DOCUMENT`，并持久化授权后的 URI 访问。Headless 分支均在注册之前返回或进入独立 Activity，因此不会暴露交互式 picker。Linux GUI 不依赖 `zenity` 可执行文件；会话总线、portal 服务或桌面 backend 不可用时，实际选择请求失败并返回明确错误。
 
+Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作各子系统的全局入口。GUI 的文本输入和文本剪贴板均由 SDL2 backend 提供，FilePicker 仍使用上述平台原生实现；Headless 不注册这些交互能力。
+
 对于已有世界，session 游戏模式的优先级高于存档，但只改变本次运行时状态；世界保存仍写回原模式。这样调试实例可以切换 Creative、Survival 等模式，而不会污染测试存档。
 
 详见 [StartupSessions.md](./StartupSessions.md)。

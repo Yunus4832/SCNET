@@ -97,6 +97,8 @@ Starter 还负责注册平台能力。交互式文件打开与保存统一通过
 
 Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 实现通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，不依赖 `zenity`，portal 或桌面 backend 不可用时在发起选择请求时报错。Android 仅由 GameActivity 注册 Storage Access Framework 实现，ServerActivity 不注册。
 
+所有平台能力通过 `PlatformManager` 这一入口注册。GUI 同时注册 SDL2 文本输入、SDL2 文本剪贴板和平台 FilePicker；Windows/Linux Headless 与 Android ServerActivity 不注册这些交互能力。
+
 ## SessionInfo
 
 路径：`config:SessionInfo.xml`
