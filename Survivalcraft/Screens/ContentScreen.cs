@@ -41,7 +41,7 @@ public class ContentScreen : Screen
 
         if (_remoteButton.IsClicked)
         {
-            ScreensManager.SwitchScreen("ContentServer");
+            ScreensManager.SwitchScreen("OnlineContent");
         }
 
         if (_packagesButton.IsClicked)

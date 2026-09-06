@@ -16,6 +16,7 @@ public sealed class ContentRepositoryScreen : Screen
     private readonly ButtonWidget _toggleButton;
     private readonly ListPanelWidget _repositoryList;
     private bool _busy;
+    private string _returnScreenName = "Content";
     private BusyDialog? _testDialog;
     private CancellationTokenSource? _testCancellation;
 
@@ -36,6 +37,7 @@ public sealed class ContentRepositoryScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _returnScreenName = parameters.FirstOrDefault() as string ?? "Content";
         Refresh();
     }
 
@@ -109,7 +111,7 @@ public sealed class ContentRepositoryScreen : Screen
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            ScreensManager.SwitchScreen("Content");
+            ScreensManager.SwitchScreen(_returnScreenName);
         }
     }
 

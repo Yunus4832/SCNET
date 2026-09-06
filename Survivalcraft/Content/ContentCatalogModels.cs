@@ -33,3 +33,7 @@ public sealed record AggregatedContentPage(
     IReadOnlyList<AggregatedContentEntry> Entries,
     IReadOnlyList<ContentCatalogRepositoryFailure> Failures,
     bool HasMore);
+
+public sealed record AggregatedContentDetails(
+    AggregatedContentEntry Entry,
+    IReadOnlyList<ContentCatalogRepositoryFailure> Failures);

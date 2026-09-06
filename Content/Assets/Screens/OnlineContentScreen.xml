@@ -1,0 +1,31 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}">
+            <LabelWidget Name="TopBar.Label" Text="[OnlineContentScreen:Title]"/>
+        </CanvasWidget>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
+                <BevelledButtonWidget Name="Search" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
+                <BevelledButtonWidget Name="TypeFilter" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
+                <BevelledButtonWidget Name="RepositoryFilter" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
+                <BevelledButtonWidget Name="StatusFilter" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
+            </StackPanelWidget>
+            <CanvasWidget Margin="15, 0">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="82"
+                                 SelectionColor="10, 70, 0, 90"/>
+                <LabelWidget Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Color="180, 180, 180"/>
+            </CanvasWidget>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
+                <BevelledButtonWidget Name="Repositories" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[OnlineContentScreen:Repositories]" Margin="4, 0"/>
+                <BevelledButtonWidget Name="Refresh" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[OnlineContentScreen:Refresh]" Margin="4, 0"/>
+                <BevelledButtonWidget Name="LoadMore" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[OnlineContentScreen:LoadMore]" Margin="4, 0"/>
+            </StackPanelWidget>
+        </StackPanelWidget>
+    </StackPanelWidget>
+</Screen>

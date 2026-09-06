@@ -94,6 +94,24 @@ public sealed class ContentServerClient : IDisposable
         return GetPageAsync<ContentCatalogItem>(path, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<ContentCatalogItem>> ListVersionsAsync(string contentId,
+        CancellationToken cancellationToken = default)
+    {
+        var items = new List<ContentCatalogItem>();
+        for (var pageIndex = 1; pageIndex <= _maximumCatalogPages; pageIndex++)
+        {
+            var page = await ListVersionsPageAsync(contentId, pageIndex, ContentCatalogQuery.MaximumPageSize,
+                cancellationToken).ConfigureAwait(false);
+            items.AddRange(page.Items);
+            if (page.Items.Count == 0 || items.Count >= page.Total)
+            {
+                return items;
+            }
+        }
+
+        throw new InvalidDataException("ContentServer version history exceeds the client paging limit.");
+    }
+
     public async Task<ContentCatalogItem?> FindVersionAsync(string contentId, string version,
         string packageHash, CancellationToken cancellationToken = default)
     {

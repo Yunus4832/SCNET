@@ -2,6 +2,19 @@ namespace Game.Modding;
 
 public static class ModPackageReferenceTracker
 {
+    public static IReadOnlyList<ModPackageRequirement> GetReferencedRequirements()
+    {
+        return EnumerateProfiles().SelectMany(profile => profile.Packages)
+            .DistinctBy(requirement => requirement.PackageHash, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    public static IReadOnlyList<ModPackageRequirement> GetCurrentRuntimeRequirements()
+    {
+        return (CurrentModRuntime.Value?.EffectiveProfile.Packages ?? [])
+            .ToArray();
+    }
+
     public static bool IsReferenced(LocalModPackageEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);

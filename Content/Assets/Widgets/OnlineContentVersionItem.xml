@@ -1,0 +1,8 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 104">
+    <StackPanelWidget Direction="Vertical" Margin="12, 4">
+        <LabelWidget Name="OnlineContentVersionItem.Version" Color="255, 255, 255" FontScale="0.8"/>
+        <LabelWidget Name="OnlineContentVersionItem.Hash" Color="150, 150, 150" FontScale="0.48"/>
+        <LabelWidget Name="OnlineContentVersionItem.Details" Color="170, 170, 170" FontScale="0.52"/>
+        <LabelWidget Name="OnlineContentVersionItem.State" Color="120, 190, 120" FontScale="0.52"/>
+    </StackPanelWidget>
+</CanvasWidget>

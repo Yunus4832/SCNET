@@ -83,6 +83,39 @@ public sealed class ContentCatalogServiceTest
         Assert.Equal(2, concurrency.Maximum);
     }
 
+    [Fact]
+    public async Task AggregatesCompleteVersionHistoryAndIsolatesRepositoryFailure()
+    {
+        var hashA = new string('a', 64);
+        var hashB = new string('b', 64);
+        var first = Repository("A", "https://a.example", 0);
+        var second = Repository("B", "https://b.example", 1);
+        using var pool = new ContentServerClientPool(new RoutingFactory((repository, request) =>
+        {
+            if (!request.RequestUri!.AbsolutePath.EndsWith("/versions", StringComparison.Ordinal))
+            {
+                return Page(Item(repository.Id == first.Id ? "content-a" : "content-b",
+                    "latest", "2.0.0", hashB), 1);
+            }
+
+            return repository.Id == first.Id
+                ? Page([
+                    Item("content-a", "v2", "2.0.0", hashB),
+                    Item("content-a", "v1", "1.0.0", hashA)
+                ], 2)
+                : new HttpResponseMessage(HttpStatusCode.ServiceUnavailable);
+        }));
+        var service = new ContentCatalogService(pool);
+        var context = ContentSourceContext.Persistent([first, second]);
+        var content = Assert.Single((await service.QueryAsync(context, new ContentCatalogQuery())).Entries);
+
+        var details = await service.QueryVersionsAsync(context, content);
+
+        Assert.Equal(["2.0.0", "1.0.0"], details.Entry.Versions.Select(version => version.Version));
+        Assert.Equal([first.Id, second.Id], details.Entry.Versions[0].Sources.Select(source => source.RepositoryId));
+        Assert.Equal(second.Id, Assert.Single(details.Failures).RepositoryId);
+    }
+
     private static ContentRepository Repository(string name, string address, int priority)
     {
         return new ContentRepository { Name = name, BaseUrl = address, Priority = priority };
@@ -136,12 +169,32 @@ public sealed class ContentCatalogServiceTest
         }
     }
 
+    private sealed class RoutingFactory(
+        Func<ContentRepository, HttpRequestMessage, HttpResponseMessage> response) : ContentServerClientFactory
+    {
+        public override ContentServerClient Create(ContentRepository repository)
+        {
+            var handler = new RequestStubHttpMessageHandler(request => response(repository, request));
+            return new ContentServerClient(repository.BaseUrl, new HttpClient(handler), true);
+        }
+    }
+
     private sealed class StubHttpMessageHandler(Func<HttpResponseMessage> response) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             return Task.FromResult(response());
+        }
+    }
+
+    private sealed class RequestStubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> response)
+        : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            return Task.FromResult(response(request));
         }
     }
 

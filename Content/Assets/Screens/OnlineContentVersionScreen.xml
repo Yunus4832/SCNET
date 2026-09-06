@@ -1,0 +1,25 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}">
+            <LabelWidget Name="TopBar.Label" Text="[OnlineContentVersionScreen:Title]"/>
+        </CanvasWidget>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+            <LabelWidget Name="Header" HorizontalAlignment="Center" Margin="0, 8" FontScale="0.8"/>
+            <CanvasWidget Margin="15, 0">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <ListPanelWidget Name="VersionList" Direction="Vertical" Margin="3, 3" ItemSize="104"
+                                 SelectionColor="10, 70, 0, 90"/>
+                <LabelWidget Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Color="180, 180, 180"/>
+            </CanvasWidget>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
+                <BevelledButtonWidget Name="Source" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
+                <BevelledButtonWidget Name="Download" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[OnlineContentVersionScreen:Download]" Margin="4, 0"/>
+                <BevelledButtonWidget Name="Refresh" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[OnlineContentVersionScreen:Retry]" Margin="4, 0"/>
+            </StackPanelWidget>
+        </StackPanelWidget>
+    </StackPanelWidget>
+</Screen>
