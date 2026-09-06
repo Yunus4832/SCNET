@@ -24,6 +24,8 @@ public sealed class ModManagementScreen : Screen
     private readonly ButtonWidget _worldModButton;
     private bool _busy;
     private ModProfile _globalProfile = new();
+    private int _operationGeneration;
+    private BusyDialog? _operationDialog;
 
     public ModManagementScreen()
     {
@@ -44,7 +46,21 @@ public sealed class ModManagementScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _operationGeneration++;
         RefreshState();
+    }
+
+    public override void Leave()
+    {
+        _operationGeneration++;
+        _busy = false;
+        if (_operationDialog is not null)
+        {
+            DialogsManager.HideDialog(_operationDialog);
+            _operationDialog = null;
+        }
+
+        _modsList.SelectedItem = null;
     }
 
     public override void Update()
@@ -202,6 +218,7 @@ public sealed class ModManagementScreen : Screen
 
     private async void ImportPackages()
     {
+        var generation = _operationGeneration;
         _busy = true;
         try
         {
@@ -212,8 +229,20 @@ public sealed class ModManagementScreen : Screen
                 return;
             }
 
+            if (!IsCurrentOperation(generation))
+            {
+                return;
+            }
+
             var busyDialog = new BusyDialog(LanguageManager.Get(_typeName, "Importing"), string.Empty);
-            Dispatcher.Dispatch(() => DialogsManager.ShowDialog(null, busyDialog));
+            _operationDialog = busyDialog;
+            Dispatcher.Dispatch(() =>
+            {
+                if (IsCurrentOperation(generation))
+                {
+                    DialogsManager.ShowDialog(null, busyDialog);
+                }
+            });
             var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
             var imported = 0;
             try
@@ -227,11 +256,23 @@ public sealed class ModManagementScreen : Screen
             }
             finally
             {
-                Dispatcher.Dispatch(() => DialogsManager.HideDialog(busyDialog));
+                Dispatcher.Dispatch(() =>
+                {
+                    if (ReferenceEquals(_operationDialog, busyDialog))
+                    {
+                        DialogsManager.HideDialog(busyDialog);
+                        _operationDialog = null;
+                    }
+                });
             }
 
             Dispatcher.Dispatch(() =>
             {
+                if (!IsCurrentOperation(generation))
+                {
+                    return;
+                }
+
                 RefreshState();
                 DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
             });
@@ -239,11 +280,19 @@ public sealed class ModManagementScreen : Screen
         catch (Exception exception)
         {
             Dispatcher.Dispatch(() =>
-                DialogsManager.Alert(LanguageManager.Get(_typeName, "ImportModFailed"), exception.Message));
+            {
+                if (IsCurrentOperation(generation))
+                {
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ImportModFailed"), exception.Message);
+                }
+            });
         }
         finally
         {
-            _busy = false;
+            if (generation == _operationGeneration)
+            {
+                _busy = false;
+            }
         }
     }
 
@@ -254,6 +303,7 @@ public sealed class ModManagementScreen : Screen
             return;
         }
 
+        var generation = _operationGeneration;
         _busy = true;
         try
         {
@@ -265,19 +315,37 @@ public sealed class ModManagementScreen : Screen
                 return;
             }
 
+            if (!IsCurrentOperation(generation))
+            {
+                return;
+            }
+
             await using var destination = await target.OpenWriteAsync(CancellationToken.None);
             CreateRepository().ExportPackage(item.LocalEntry, destination);
             Dispatcher.Dispatch(() =>
-                DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name));
+            {
+                if (IsCurrentOperation(generation))
+                {
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name);
+                }
+            });
         }
         catch (Exception exception)
         {
             Dispatcher.Dispatch(() =>
-                DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), exception.Message));
+            {
+                if (IsCurrentOperation(generation))
+                {
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportModFailed"), exception.Message);
+                }
+            });
         }
         finally
         {
-            _busy = false;
+            if (generation == _operationGeneration)
+            {
+                _busy = false;
+            }
         }
     }
 
@@ -334,6 +402,11 @@ public sealed class ModManagementScreen : Screen
     private static LocalModRepository CreateRepository()
     {
         return new LocalModRepository(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+    }
+
+    private bool IsCurrentOperation(int generation)
+    {
+        return generation == _operationGeneration && ReferenceEquals(ScreensManager.CurrentScreen, this);
     }
 
     private static bool IsSamePackage(ManagedModItem first, ManagedModItem second)

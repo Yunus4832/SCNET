@@ -4054,10 +4054,6 @@
         "Character Skin": "Character Skin",
         "Furniture Pack": "Furniture Pack"
     },
-    "ContentServerScreen": {
-        "ServerNotConfigured": "The content server address is not configured.",
-        "Installed": "Content installed."
-    },
     "ContentPackageScreen": {
         "SelectPackages": "Select content packages",
         "ImportComplete": "Imported {0} content package(s).",

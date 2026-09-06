@@ -4054,10 +4054,6 @@
         "Character Skin": "Pelas do personagem",
         "Furniture Pack": "Bolsa de móveis"
     },
-    "ContentServerScreen": {
-        "ServerNotConfigured": "O endereço do servidor de conteúdos não está configurado.",
-        "Installed": "Conteúdo instalado."
-    },
     "ContentPackageScreen": {
         "SelectPackages": "Selecionar pacotes de conteúdo",
         "ImportComplete": "Foram importados {0} pacote(s) de conteúdo.",

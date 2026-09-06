@@ -26,6 +26,7 @@ public sealed class ContentPackageScreen : Screen
     private readonly ButtonWidget _createButton;
     private readonly LabelWidget _pickerUnavailableLabel;
     private bool _busy;
+    private int _operationGeneration;
 
     public ContentPackageScreen()
     {
@@ -53,7 +54,15 @@ public sealed class ContentPackageScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _operationGeneration++;
         Refresh();
+    }
+
+    public override void Leave()
+    {
+        _operationGeneration++;
+        _busy = false;
+        _packageList.SelectedItem = null;
     }
 
     public override void Update()
@@ -74,8 +83,15 @@ public sealed class ContentPackageScreen : Screen
 
         if (_createButton.IsClicked)
         {
-            ContentPackageCreationDialogs.Show(busy => _busy = busy,
-                () => DialogsManager.Alert(LanguageManager.Get(_typeName, "CreationSaved")), ShowError);
+            var generation = _operationGeneration;
+            ContentPackageCreationDialogs.Show(busy => SetBusy(generation, busy),
+                () =>
+                {
+                    if (IsCurrentOperation(generation))
+                    {
+                        DialogsManager.Alert(LanguageManager.Get(_typeName, "CreationSaved"));
+                    }
+                }, exception => ShowError(generation, exception));
         }
 
         if (_exportButton.IsClicked && selected is not null)
@@ -85,8 +101,15 @@ public sealed class ContentPackageScreen : Screen
 
         if (_installButton.IsClicked && selected is not null)
         {
-            ContentPackageInstallDialogs.Show(selected, busy => _busy = busy,
-                () => DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed")), ShowError);
+            var generation = _operationGeneration;
+            ContentPackageInstallDialogs.Show(selected, busy => SetBusy(generation, busy),
+                () =>
+                {
+                    if (IsCurrentOperation(generation))
+                    {
+                        DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed"));
+                    }
+                }, exception => ShowError(generation, exception));
         }
 
         if (_deleteButton.IsClicked && selected is not null)
@@ -119,12 +142,18 @@ public sealed class ContentPackageScreen : Screen
 
     private async void ImportPackages()
     {
+        var generation = _operationGeneration;
         _busy = true;
         try
         {
             var files = await FilePicker.PickFilesAsync(new FilePickerRequest(
                 [ContentPackageReader.FileExtension], true, LanguageManager.Get(_typeName, "SelectPackages")));
             if (files.Count == 0)
+            {
+                return;
+            }
+
+            if (!IsCurrentOperation(generation))
             {
                 return;
             }
@@ -140,6 +169,11 @@ public sealed class ContentPackageScreen : Screen
 
             Dispatcher.Dispatch(() =>
             {
+                if (!IsCurrentOperation(generation))
+                {
+                    return;
+                }
+
                 Refresh();
                 DialogsManager.Alert(string.Format(LanguageManager.Get(_typeName, "ImportComplete"), imported));
             });
@@ -148,18 +182,22 @@ public sealed class ContentPackageScreen : Screen
         {
             Dispatcher.Dispatch(() =>
             {
-                Refresh();
-                ShowError(exception);
+                if (IsCurrentOperation(generation))
+                {
+                    Refresh();
+                    ShowError(exception);
+                }
             });
         }
         finally
         {
-            _busy = false;
+            SetBusy(generation, false);
         }
     }
 
     private async void ExportPackage(ContentPackageCacheEntry package)
     {
+        var generation = _operationGeneration;
         _busy = true;
         try
         {
@@ -171,30 +209,41 @@ public sealed class ContentPackageScreen : Screen
                 return;
             }
 
+            if (!IsCurrentOperation(generation))
+            {
+                return;
+            }
+
             await using var destination = await target.OpenWriteAsync(CancellationToken.None);
             await CreateCache().ExportAsync(package.PackageHash, destination);
             Dispatcher.Dispatch(() =>
-                DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name));
+            {
+                if (IsCurrentOperation(generation))
+                {
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "ExportComplete"), target.Name);
+                }
+            });
         }
         catch (Exception exception)
         {
-            Dispatcher.Dispatch(() => ShowError(exception));
+            Dispatcher.Dispatch(() => ShowError(generation, exception));
         }
         finally
         {
-            _busy = false;
+            SetBusy(generation, false);
         }
     }
 
     private void ConfirmDelete(ContentPackageCacheEntry package)
     {
+        var generation = _operationGeneration;
         DialogsManager.ShowDialog(null, new MessageDialog(
             LanguageManager.Get(_typeName, "DeleteTitle"),
             string.Format(LanguageManager.Get(_typeName, "DeleteQuestion"), package.Name, package.Version),
             LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"),
             button =>
             {
-                if (button != MessageDialogButton.Button1)
+                if (button != MessageDialogButton.Button1 || !IsCurrentOperation(generation))
                 {
                     return;
                 }
@@ -212,6 +261,27 @@ public sealed class ContentPackageScreen : Screen
 
     private static ContentPackageCache CreateCache() =>
         new(Storage.GetSystemPath(GamePaths.ContentPackageCache));
+
+    private bool IsCurrentOperation(int generation)
+    {
+        return generation == _operationGeneration && ReferenceEquals(ScreensManager.CurrentScreen, this);
+    }
+
+    private void SetBusy(int generation, bool busy)
+    {
+        if (generation == _operationGeneration)
+        {
+            _busy = busy;
+        }
+    }
+
+    private void ShowError(int generation, Exception exception)
+    {
+        if (IsCurrentOperation(generation))
+        {
+            ShowError(exception);
+        }
+    }
 
     private static void ShowError(Exception exception)
     {

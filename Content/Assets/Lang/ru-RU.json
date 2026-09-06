@@ -4054,10 +4054,6 @@
         "Character Skin": "Скин персонажа",
         "Furniture Pack": "Набор мебели"
     },
-    "ContentServerScreen": {
-        "ServerNotConfigured": "Адрес сервера контента не настроен.",
-        "Installed": "Контент установлен."
-    },
     "ContentPackageScreen": {
         "SelectPackages": "Выберите пакеты содержимого",
         "ImportComplete": "Импортировано пакетов содержимого: {0}.",

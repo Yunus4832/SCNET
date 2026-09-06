@@ -120,6 +120,32 @@ public sealed class ContentDownloadServiceTest : IDisposable
         Assert.Equal(0, persistentHandler.RequestCount);
     }
 
+    [Fact]
+    public async Task SingleRepositoryUsesTheSameDefaultDownloadPath()
+    {
+        var package = CreatePackage("example.mod", "1.0.0");
+        var hash = InspectHash(package);
+        var repository = new ContentRepository { Name = "Only", BaseUrl = "https://only.example" };
+        var handler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(package)
+        });
+        using var pool = CreatePool((repository, handler));
+        var source = new ContentCatalogSource(Guid.Empty, repository.Id, repository.Name, 0, false,
+            "content", "version", $"api/v1/packages/{hash}");
+        var version = new AggregatedContentVersion("1.0.0", hash, package.Length,
+            "example.scpkg", false, [source]);
+        var content = new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", null,
+            [version]);
+        var service = new ContentDownloadService(pool, new ContentPackageCache(_root));
+
+        var result = await service.DownloadAsync(ContentSourceContext.Persistent([repository]), content, version);
+
+        Assert.False(result.WasCached);
+        Assert.Equal(repository.Id, result.Source?.RepositoryId);
+        Assert.Equal(1, handler.RequestCount);
+    }
+
     public void Dispose()
     {
         if (Directory.Exists(_root))

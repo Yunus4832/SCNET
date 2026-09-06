@@ -4054,10 +4054,6 @@
         "Character Skin": "人物皮肤",
         "Furniture Pack": "家具包"
     },
-    "ContentServerScreen": {
-        "ServerNotConfigured": "尚未配置内容服务器地址。",
-        "Installed": "内容已安装。"
-    },
     "ContentPackageScreen": {
         "SelectPackages": "选择内容包",
         "ImportComplete": "已导入 {0} 个内容包。",

@@ -34,7 +34,7 @@ public static class ModRestartHelper
         {
             SettingsManager.ContentClients.RemoveScope(scopeId);
         }
-        if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
+        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
         {
             return RemoteModSessionPreparation.Ready();
         }
@@ -63,7 +63,7 @@ public static class ModRestartHelper
                                 desiredProfile,
                                 Storage.GetSystemPath(GamePaths.ContentPackageCache),
                                 log);
-        if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, desiredProfile))
+        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, desiredProfile))
         {
             return RemoteModSessionPreparation.Ready();
         }
@@ -72,19 +72,6 @@ public static class ModRestartHelper
             worldSession,
             sessionProfile,
             CreateWorldRestartReason(desiredProfile, downloadedAny));
-    }
-
-    private static bool AreEquivalent(ModProfile? left, ModProfile right)
-    {
-        var leftPackages = (left?.Packages ?? [])
-            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}#{package.PackageHash.Trim()}")
-            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        var rightPackages = (right.Packages ?? [])
-            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}#{package.PackageHash.Trim()}")
-            .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-        return leftPackages.SequenceEqual(rightPackages, StringComparer.OrdinalIgnoreCase);
     }
 
     private static string CreateRestartReason(ModProfile profile, bool downloadedAny)
