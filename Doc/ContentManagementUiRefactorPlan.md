@@ -464,11 +464,17 @@ ContentServer 1 项和游戏 343 项测试通过；其中 Profile 等价比较�
 Android 16 16 KB page-size 警告。Linux Headless 已实际到达 readiness，执行 help/permission/time/stop 并正常保存退出，
 临时实例已清理。
 
-待人工设备验收：当前 Linux 执行环境没有视频设备，GUI 在页面加载前由 SDL 报告 `No available video device`；ADB 当前没有
-连接设备，且此环境不能运行 Windows GUI。因此 Windows、Linux、Android 上的仓库增删改/测试、在线筛选与版本详情、下载与
-返回刷新、Mod 缺失定位，以及 GUI 联机/本地启动补全仍保持未验收。三个平台还需分别复核 FilePicker 的打开、保存和取消；
-Android 需同时观察 SAF、触控和生命周期，Windows/Linux 需观察原生对话框或 portal。完成这些人工项前不删除两份临时计划，
-README 继续保留其入口。
+设备验收进展：Android 7.1.1 x86 AVD 使用嵌入程序集的完整 APK 启动并稳定进入主菜单。实际触控已验证仓库新增及设置持久化、
+启停、失败健康检查，在线页的单仓库失败提示和类型筛选，精确缓存 Mod 与版本详情展示；SAF 已验证打开、取消、
+`ACTION_CREATE_DOCUMENT` 保存目标和缓存原包导出完成，页面返回后进程保持存活。测试 AVD 需要先授予旧版外部存储运行时权限；
+直接 `adb install` 普通 Debug APK 会受 Fast Deployment 覆盖目录影响，因此本次使用
+`Survivalcraft.Android.X86` 配合 `EmbedAssembliesIntoApk=true` 构建验证。
+
+待人工设备验收：当前 Linux 执行环境没有视频设备，GUI 在页面加载前由 SDL 报告 `No available video device`，dummy 后端也不
+提供 OpenGL；此环境不能运行 Windows GUI。Android 仍缺少真实 ContentServer 下的目录、下载和返回刷新，以及联机/本地启动
+补全场景。因此跨 Windows、Linux、Android 的完整矩阵仍保持未验收。Windows/Linux 还需复核原生对话框或 portal 的打开、
+保存和取消；Android 的真实设备、文件导入选择及连接生命周期仍需复核。完成这些人工项前不删除两份临时计划，README 继续
+保留其入口。
 
 - [ ] 验证 Windows、Linux、Android 的仓库管理、在线目录、版本详情、下载、返回刷新和 Mod 缺失定位。
 - [ ] 验证 GUI 与 Headless 启动自动补全，多仓库回退和完全离线本地命中。
