@@ -35,15 +35,17 @@ public sealed class ContentServerClientPoolTest
     {
         using var pool = new ContentServerClientPool(new ContentServerClientFactory());
         var repository = new ContentRepository { Name = "A", BaseUrl = "https://a.example" };
-        pool.Update(Guid.Empty, [repository]);
-        using var first = pool.Acquire(Guid.Empty, repository.Id);
-        using var second = pool.Acquire(Guid.Empty, repository.Id);
+        var scope = Guid.NewGuid();
+        pool.Update(scope, [repository]);
+        using var first = pool.Acquire(scope, repository.Id);
+        using var second = pool.Acquire(scope, repository.Id);
         Assert.Same(first.Client, second.Client);
-        pool.Update(Guid.Empty, [repository with { BaseUrl = "https://b.example" }]);
-        using var replacement = pool.Acquire(Guid.Empty, repository.Id);
+        pool.Update(scope, [repository with { BaseUrl = "https://b.example" }]);
+        using var replacement = pool.Acquire(scope, repository.Id);
         Assert.NotSame(first.Client, replacement.Client);
-        pool.RemoveScope(Guid.Empty);
-        Assert.Throws<KeyNotFoundException>(() => pool.Acquire(Guid.Empty, repository.Id));
+        pool.RemoveScope(scope);
+        Assert.Throws<KeyNotFoundException>(() => pool.Acquire(scope, repository.Id));
+        Assert.Throws<InvalidOperationException>(() => pool.Update(scope, [repository]));
         first.Dispose();
         first.Dispose();
     }
@@ -106,7 +108,8 @@ public sealed class ContentServerClientPoolTest
         {
             _response.SetResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("{\"success\":true,\"data\":{\"items\":[],\"total\":0}}")
+                Content = new StringContent(
+                    "{\"success\":true,\"data\":{\"items\":[],\"total\":0,\"pageIndex\":1,\"pageSize\":20}}")
             });
         }
 

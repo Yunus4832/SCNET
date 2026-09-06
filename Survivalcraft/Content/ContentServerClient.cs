@@ -6,6 +6,7 @@ namespace Game.Content;
 
 public sealed class ContentServerClient : IDisposable
 {
+    private const int _maximumCatalogPages = 100;
     private readonly HttpClient _httpClient;
     private readonly bool _disposeClient;
 
@@ -40,23 +41,23 @@ public sealed class ContentServerClient : IDisposable
     public async Task<IReadOnlyList<ContentCatalogItem>> ListAsync(CancellationToken cancellationToken = default)
     {
         var items = new List<ContentCatalogItem>();
-        for (var pageIndex = 1; ; pageIndex++)
+        for (var pageIndex = 1; pageIndex <= _maximumCatalogPages; pageIndex++)
         {
             var page = await ListPageAsync(new ContentCatalogQuery(PageIndex: pageIndex), cancellationToken)
                 .ConfigureAwait(false);
             if (page.Items.Count == 0)
             {
-                break;
+                return items;
             }
 
             items.AddRange(page.Items);
             if (items.Count >= page.Total)
             {
-                break;
+                return items;
             }
         }
 
-        return items;
+        throw new InvalidDataException("ContentServer catalog exceeds the client paging limit.");
     }
 
     public Task<ContentServerPageResult<ContentCatalogItem>> ListPageAsync(ContentCatalogQuery query,
@@ -87,6 +88,32 @@ public sealed class ContentServerClient : IDisposable
         var path = $"api/v1/content/{Uri.EscapeDataString(contentId)}/versions" +
                    $"?pageIndex={pageIndex}&pageSize={pageSize}";
         return GetPageAsync<ContentCatalogItem>(path, cancellationToken);
+    }
+
+    public async Task<ContentCatalogItem?> FindVersionAsync(string contentId, string version,
+        string packageHash, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(version);
+        ArgumentException.ThrowIfNullOrWhiteSpace(packageHash);
+        for (var pageIndex = 1; pageIndex <= _maximumCatalogPages; pageIndex++)
+        {
+            var page = await ListVersionsPageAsync(contentId, pageIndex, ContentCatalogQuery.MaximumPageSize,
+                cancellationToken).ConfigureAwait(false);
+            var match = page.Items.FirstOrDefault(item =>
+                string.Equals(item.Version, version, StringComparison.Ordinal) &&
+                string.Equals(item.PackageHash, packageHash, StringComparison.Ordinal));
+            if (match is not null)
+            {
+                return match;
+            }
+
+            if (page.Items.Count == 0 || page.PageIndex * page.PageSize >= page.Total)
+            {
+                return null;
+            }
+        }
+
+        throw new InvalidDataException("ContentServer version history exceeds the client paging limit.");
     }
 
     public IReadOnlyList<ContentServerModPackage> ListMods() => RunSync(ListModsAsync);
@@ -122,8 +149,8 @@ public sealed class ContentServerClient : IDisposable
         return items;
     }
 
-    private async Task<ContentServerModPackage?> FindModAsync(string modId, string version,
-        CancellationToken cancellationToken)
+    public async Task<ContentServerModPackage?> FindModAsync(string modId, string version,
+        CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(modId);
         ArgumentException.ThrowIfNullOrWhiteSpace(version);

@@ -2,44 +2,56 @@ using Content.Packaging;
 
 namespace Game.Content;
 
-public sealed class ContentCatalogService(ContentServerClientPool pool)
+public sealed class ContentCatalogService
 {
-    public async Task<AggregatedContentPage> QueryAsync(Guid scopeId,
-        IReadOnlyList<ContentRepository> repositories, ContentCatalogQuery query,
+    private readonly int _maximumConcurrency;
+    private readonly ContentServerClientPool _pool;
+
+    public ContentCatalogService(ContentServerClientPool pool, int maximumConcurrency = 4)
+    {
+        ArgumentNullException.ThrowIfNull(pool);
+        if (maximumConcurrency < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(maximumConcurrency));
+        }
+
+        _pool = pool;
+        _maximumConcurrency = maximumConcurrency;
+    }
+
+    public async Task<AggregatedContentPage> QueryAsync(ContentSourceContext context, ContentCatalogQuery query,
         CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(repositories);
+        ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(query);
         query.Validate();
-        var enabled = ContentRepository.NormalizeAll(repositories).Where(repository => repository.IsEnabled).ToArray();
-        pool.Update(scopeId, enabled);
-        var results = await Task.WhenAll(enabled.Select(repository =>
-            QueryRepositoryAsync(scopeId, repository, query, cancellationToken))).ConfigureAwait(false);
+        context.Configure(_pool);
+        using var concurrency = new SemaphoreSlim(_maximumConcurrency, _maximumConcurrency);
+        var results = await Task.WhenAll(context.Candidates.Select(source =>
+            QueryRepositoryAsync(source, query, concurrency, cancellationToken))).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
 
         var failures = results.Where(result => result.Failure is not null)
             .Select(result => result.Failure!)
-            .OrderBy(failure => enabled.First(repository => repository.Id == failure.RepositoryId).Priority)
-            .ThenBy(failure => failure.RepositoryId)
             .ToArray();
-        var items = results.SelectMany(result => result.Items.Select(item => (result.Repository, Item: item)));
-        return new AggregatedContentPage(Aggregate(scopeId, items), failures,
-            results.Any(result => result.HasMore));
+        var items = results.SelectMany(result => result.Items.Select(item => (result.Source, Item: item)));
+        return new AggregatedContentPage(Aggregate(items), failures, results.Any(result => result.HasMore));
     }
 
-    private async Task<RepositoryResult> QueryRepositoryAsync(Guid scopeId, ContentRepository repository,
-        ContentCatalogQuery query, CancellationToken cancellationToken)
+    private async Task<RepositoryResult> QueryRepositoryAsync(ContentSourceContext.ScopedRepository source,
+        ContentCatalogQuery query, SemaphoreSlim concurrency, CancellationToken cancellationToken)
     {
+        await concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            using var lease = pool.Acquire(scopeId, repository.Id);
+            using var lease = _pool.Acquire(source.ScopeId, source.Repository.Id);
             var page = await lease.Client.ListPageAsync(query, cancellationToken).ConfigureAwait(false);
             foreach (var item in page.Items)
             {
-                _ = Validate(repository, item);
+                _ = Validate(source, item);
             }
 
-            return new RepositoryResult(repository, page.Items, page.PageIndex * page.PageSize < page.Total, null);
+            return new RepositoryResult(source, page.Items, page.PageIndex * page.PageSize < page.Total, null);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -47,39 +59,47 @@ public sealed class ContentCatalogService(ContentServerClientPool pool)
         }
         catch (Exception exception)
         {
-            return new RepositoryResult(repository, [], false,
-                new ContentCatalogRepositoryFailure(repository.Id, repository.Name, exception.Message));
+            return new RepositoryResult(source, [], false,
+                new ContentCatalogRepositoryFailure(source.Repository.Id, source.Repository.Name,
+                    exception.Message));
+        }
+        finally
+        {
+            concurrency.Release();
         }
     }
 
-    private static IReadOnlyList<AggregatedContentEntry> Aggregate(Guid scopeId,
-        IEnumerable<(ContentRepository Repository, ContentCatalogItem Item)> items)
+    private static IReadOnlyList<AggregatedContentEntry> Aggregate(
+        IEnumerable<(ContentSourceContext.ScopedRepository Source, ContentCatalogItem Item)> items)
     {
-        return items.Select(item => Validate(item.Repository, item.Item))
+        return items.Select(item => Validate(item.Source, item.Item))
             .GroupBy(item => (item.Type, item.Identifier))
             .OrderBy(group => group.Key.Type)
             .ThenBy(group => group.Key.Identifier, StringComparer.Ordinal)
             .Select(group =>
             {
                 var versions = group.GroupBy(item => (item.Item.Version, item.Item.PackageHash))
-                    .Select(versionGroup => CreateVersion(scopeId, group, versionGroup))
+                    .Select(versionGroup => CreateVersion(group, versionGroup))
                     .OrderByDescending(version => SemanticVersion.Parse(version.Version))
                     .ThenBy(version => version.PackageHash, StringComparer.Ordinal)
                     .ToArray();
-                var metadata = group.OrderBy(item => item.Repository.Priority)
-                    .ThenBy(item => item.Repository.Id).First();
+                var metadata = group.OrderByDescending(item => item.Source.IsSession)
+                    .ThenBy(item => item.Source.Repository.Priority)
+                    .ThenBy(item => item.Source.Repository.Id).First();
                 return new AggregatedContentEntry(group.Key.Type, group.Key.Identifier, metadata.Item.Name,
                     metadata.Item.Summary, versions);
             })
             .ToArray();
     }
 
-    private static AggregatedContentVersion CreateVersion(Guid scopeId,
+    private static AggregatedContentVersion CreateVersion(
         IEnumerable<ValidatedItem> contentGroup, IGrouping<(string Version, string PackageHash), ValidatedItem> group)
     {
-        var sources = group.OrderBy(item => item.Repository.Priority).ThenBy(item => item.Repository.Id)
-            .Select(item => new ContentCatalogSource(scopeId, item.Repository.Id, item.Repository.Name,
-                item.Repository.Priority, item.Item.ContentId, item.Item.VersionId, item.Item.DownloadUrl))
+        var sources = group.OrderByDescending(item => item.Source.IsSession)
+            .ThenBy(item => item.Source.Repository.Priority).ThenBy(item => item.Source.Repository.Id)
+            .Select(item => new ContentCatalogSource(item.Source.ScopeId, item.Source.Repository.Id,
+                item.Source.Repository.Name, item.Source.Repository.Priority, item.Source.IsSession,
+                item.Item.ContentId, item.Item.VersionId, item.Item.DownloadUrl))
             .ToArray();
         var item = group.First().Item;
         var hasConflict = contentGroup.Where(candidate => candidate.Item.Version == item.Version)
@@ -88,7 +108,7 @@ public sealed class ContentCatalogService(ContentServerClientPool pool)
             hasConflict, sources);
     }
 
-    private static ValidatedItem Validate(ContentRepository repository, ContentCatalogItem item)
+    private static ValidatedItem Validate(ContentSourceContext.ScopedRepository source, ContentCatalogItem item)
     {
         if (!Enum.TryParse<ContentPackageType>(item.Type, false, out var type) || type.ToString() != item.Type ||
             string.IsNullOrWhiteSpace(item.Identifier) || item.Identifier != item.Identifier.Trim() ||
@@ -97,10 +117,10 @@ public sealed class ContentCatalogService(ContentServerClientPool pool)
             string.IsNullOrWhiteSpace(item.DownloadUrl) || item.PackageSize < 0 ||
             !SemanticVersion.TryParse(item.Version, out _) || !IsPackageHash(item.PackageHash))
         {
-            throw new InvalidDataException($"Repository '{repository.Name}' returned an invalid catalog item.");
+            throw new InvalidDataException($"Repository '{source.Repository.Name}' returned an invalid catalog item.");
         }
 
-        return new ValidatedItem(repository, item, type, item.Identifier);
+        return new ValidatedItem(source, item, type, item.Identifier);
     }
 
     private static bool IsPackageHash(string value)
@@ -108,9 +128,10 @@ public sealed class ContentCatalogService(ContentServerClientPool pool)
         return value.Length == 64 && value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f');
     }
 
-    private sealed record ValidatedItem(ContentRepository Repository, ContentCatalogItem Item,
+    private sealed record ValidatedItem(ContentSourceContext.ScopedRepository Source, ContentCatalogItem Item,
         ContentPackageType Type, string Identifier);
 
-    private sealed record RepositoryResult(ContentRepository Repository, IReadOnlyList<ContentCatalogItem> Items,
+    private sealed record RepositoryResult(ContentSourceContext.ScopedRepository Source,
+        IReadOnlyList<ContentCatalogItem> Items,
         bool HasMore, ContentCatalogRepositoryFailure? Failure);
 }

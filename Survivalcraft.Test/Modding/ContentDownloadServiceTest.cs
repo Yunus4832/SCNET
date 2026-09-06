@@ -27,8 +27,9 @@ public sealed class ContentDownloadServiceTest : IDisposable
         var service = new ContentDownloadService(pool, cache);
         var (content, version) = CreateCatalog(first, second, hash);
 
-        var downloaded = await service.DownloadAsync(content, version);
-        var cached = await service.DownloadAsync(content, version);
+        var context = ContentSourceContext.Persistent([first, second]);
+        var downloaded = await service.DownloadAsync(context, content, version);
+        var cached = await service.DownloadAsync(context, content, version);
 
         Assert.Equal(second.Id, downloaded.Source?.RepositoryId);
         Assert.Single(downloaded.PriorFailures);
@@ -60,14 +61,63 @@ public sealed class ContentDownloadServiceTest : IDisposable
         var service = new ContentDownloadService(pool, cache);
         var (content, version) = CreateCatalog(first, second, hash);
 
+        var context = ContentSourceContext.Persistent([first, second]);
         var exception = await Assert.ThrowsAsync<ContentDownloadException>(() => service.DownloadAsync(
-            content, version, new ContentSourceId(Guid.Empty, first.Id)));
+            context, content, version, new ContentSourceId(Guid.Empty, first.Id)));
 
         Assert.Single(exception.Failures);
         Assert.Null(cache.Find(hash));
         Assert.Empty(cache.List());
         Assert.Equal(1, firstHandler.RequestCount);
         Assert.Equal(0, secondHandler.RequestCount);
+    }
+
+    [Fact]
+    public async Task SessionSourcePrecedesHigherPriorityPersistentSource()
+    {
+        var package = CreatePackage("example.mod", "1.0.0");
+        var hash = InspectHash(package);
+        var persistent = new ContentRepository { Name = "Persistent", BaseUrl = "https://a.example" };
+        var session = new ContentRepository
+        {
+            Name = "Session",
+            BaseUrl = "https://s.example",
+            Priority = 10
+        };
+        var persistentHandler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(package)
+        });
+        var sessionHandler = new CountingHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new ByteArrayContent(package)
+        });
+        var handlers = new Dictionary<Guid, CountingHandler>
+        {
+            [persistent.Id] = persistentHandler,
+            [session.Id] = sessionHandler
+        };
+        using var pool = new ContentServerClientPool(new HandlerFactory(handlers));
+        var sessionScope = Guid.NewGuid();
+        pool.Update(Guid.Empty, [persistent]);
+        pool.Update(sessionScope, [session]);
+        var version = new AggregatedContentVersion("1.0.0", hash, package.Length, "example.scpkg", false,
+        [
+            new ContentCatalogSource(Guid.Empty, persistent.Id, persistent.Name, persistent.Priority, false,
+                "a", "v1", $"api/v1/packages/{hash}"),
+            new ContentCatalogSource(sessionScope, session.Id, session.Name, session.Priority, true,
+                "s", "v1", $"api/v1/packages/{hash}")
+        ]);
+        var content = new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", null,
+            [version]);
+        var service = new ContentDownloadService(pool, new ContentPackageCache(_root));
+
+        var context = ContentSourceContext.Session(sessionScope, [session], [persistent]);
+        var result = await service.DownloadAsync(context, content, version);
+
+        Assert.Equal(new ContentSourceId(sessionScope, session.Id), result.Source);
+        Assert.Equal(1, sessionHandler.RequestCount);
+        Assert.Equal(0, persistentHandler.RequestCount);
     }
 
     public void Dispose()
@@ -92,9 +142,9 @@ public sealed class ContentDownloadServiceTest : IDisposable
     {
         var sources = new[]
         {
-            new ContentCatalogSource(Guid.Empty, first.Id, first.Name, first.Priority, "a", "v1",
+            new ContentCatalogSource(Guid.Empty, first.Id, first.Name, first.Priority, false, "a", "v1",
                 $"api/v1/packages/{hash}"),
-            new ContentCatalogSource(Guid.Empty, second.Id, second.Name, second.Priority, "b", "v2",
+            new ContentCatalogSource(Guid.Empty, second.Id, second.Name, second.Priority, false, "b", "v2",
                 $"api/v1/packages/{hash}")
         };
         var version = new AggregatedContentVersion("1.0.0", hash, 100, "example.scpkg", false, sources);

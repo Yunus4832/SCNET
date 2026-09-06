@@ -20,10 +20,11 @@ public sealed class ContentDownloadException(IReadOnlyList<ContentDownloadFailur
 
 public sealed class ContentDownloadService(ContentServerClientPool pool, IContentPackageCache cache)
 {
-    public async Task<ContentDownloadResult> DownloadAsync(AggregatedContentEntry content,
-        AggregatedContentVersion version, ContentSourceId? explicitSource = null,
+    public async Task<ContentDownloadResult> DownloadAsync(ContentSourceContext context,
+        AggregatedContentEntry content, AggregatedContentVersion version, ContentSourceId? explicitSource = null,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(content);
         ArgumentNullException.ThrowIfNull(version);
         var existing = cache.Find(version.PackageHash);
@@ -33,13 +34,18 @@ public sealed class ContentDownloadService(ContentServerClientPool pool, IConten
             return new ContentDownloadResult(existing, null, true, []);
         }
 
+        context.Configure(pool);
+        var candidateOrder = context.Candidates.Select((source, index) => new
+        {
+            Id = new ContentSourceId(source.ScopeId, source.Repository.Id),
+            Index = index
+        }).ToDictionary(item => item.Id, item => item.Index);
         var sources = version.Sources
+            .Where(source => candidateOrder.ContainsKey(new ContentSourceId(source.ScopeId, source.RepositoryId)))
             .Where(source => explicitSource is null ||
                              source.ScopeId == explicitSource.ScopeId &&
                              source.RepositoryId == explicitSource.RepositoryId)
-            .OrderBy(source => source.RepositoryPriority)
-            .ThenBy(source => source.ScopeId)
-            .ThenBy(source => source.RepositoryId)
+            .OrderBy(source => candidateOrder[new ContentSourceId(source.ScopeId, source.RepositoryId)])
             .DistinctBy(source => new ContentSourceId(source.ScopeId, source.RepositoryId))
             .ToArray();
         if (sources.Length == 0)

@@ -4,6 +4,7 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
 {
     private readonly object _gate = new();
     private readonly Dictionary<(Guid Scope, Guid Repository), Entry> _entries = [];
+    private readonly HashSet<Guid> _closedScopes = [];
     private bool _disposed;
 
     public void Update(Guid scope, IEnumerable<ContentRepository> repositories)
@@ -13,6 +14,11 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_closedScopes.Contains(scope))
+            {
+                throw new InvalidOperationException("The content repository scope has ended.");
+            }
+
             foreach (var key in _entries.Keys.Where(key => key.Scope == scope).ToArray())
             {
                 var entry = _entries[key];
@@ -56,8 +62,15 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
 
     public void RemoveScope(Guid scope)
     {
+        if (scope == Guid.Empty)
+        {
+            throw new ArgumentException("The persistent repository scope cannot be ended.", nameof(scope));
+        }
+
         lock (_gate)
         {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            _closedScopes.Add(scope);
             foreach (var key in _entries.Keys.Where(key => key.Scope == scope).ToArray())
             {
                 var entry = _entries[key];

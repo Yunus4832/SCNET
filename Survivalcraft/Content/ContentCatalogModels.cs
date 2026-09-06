@@ -7,6 +7,7 @@ public sealed record ContentCatalogSource(
     Guid RepositoryId,
     string RepositoryName,
     int RepositoryPriority,
+    bool IsSession,
     string ContentId,
     string VersionId,
     string DownloadUrl);

@@ -28,7 +28,7 @@ public sealed class ContentCatalogServiceTest
         using var pool = new ContentServerClientPool(new ResponseFactory(responses));
         var service = new ContentCatalogService(pool);
 
-        var result = await service.QueryAsync(Guid.Empty, [first, second, broken],
+        var result = await service.QueryAsync(ContentSourceContext.Persistent([first, second, broken]),
             new ContentCatalogQuery(PageSize: 2));
 
         var entry = Assert.Single(result.Entries);
@@ -58,13 +58,29 @@ public sealed class ContentCatalogServiceTest
         using var pool = new ContentServerClientPool(new ResponseFactory(responses));
         var service = new ContentCatalogService(pool);
 
-        var result = await service.QueryAsync(Guid.NewGuid(), [first, invalid],
+        var result = await service.QueryAsync(ContentSourceContext.Persistent([first, invalid]),
             new ContentCatalogQuery(Type: "Mod", Search: "example value", PageSize: 3));
 
         Assert.Equal(["2.0.0", "2.0.0-beta.1", "1.0.0"],
             Assert.Single(result.Entries).Versions.Select(version => version.Version));
         Assert.Equal(invalid.Id, Assert.Single(result.Failures).RepositoryId);
         Assert.True(result.HasMore);
+    }
+
+    [Fact]
+    public async Task BoundsConcurrentRepositoryRequests()
+    {
+        var repositories = Enumerable.Range(0, 6)
+            .Select(index => Repository(index.ToString(), $"https://{index}.example", index)).ToArray();
+        var concurrency = new ConcurrencyCounter();
+        using var pool = new ContentServerClientPool(new DelayedFactory(concurrency));
+        var service = new ContentCatalogService(pool, maximumConcurrency: 2);
+
+        var result = await service.QueryAsync(ContentSourceContext.Persistent(repositories),
+            new ContentCatalogQuery());
+
+        Assert.Empty(result.Failures);
+        Assert.Equal(2, concurrency.Maximum);
     }
 
     private static ContentRepository Repository(string name, string address, int priority)
@@ -102,7 +118,7 @@ public sealed class ContentCatalogServiceTest
             success = true,
             message = string.Empty,
             code = 200,
-            data = new { items, total, pageIndex = 1, pageSize = items.Count }
+            data = new { items, total, pageIndex = 1, pageSize = Math.Max(items.Count, 1) }
         };
         return new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -126,6 +142,57 @@ public sealed class ContentCatalogServiceTest
             CancellationToken cancellationToken)
         {
             return Task.FromResult(response());
+        }
+    }
+
+    private sealed class DelayedFactory(ConcurrencyCounter counter) : ContentServerClientFactory
+    {
+        public override ContentServerClient Create(ContentRepository repository)
+        {
+            return new ContentServerClient(repository.BaseUrl,
+                new HttpClient(new DelayedHandler(counter)), true);
+        }
+    }
+
+    private sealed class DelayedHandler(ConcurrencyCounter counter) : HttpMessageHandler
+    {
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            counter.Enter();
+            try
+            {
+                await Task.Delay(30, cancellationToken);
+                return Page(Array.Empty<ContentCatalogItem>(), 0);
+            }
+            finally
+            {
+                counter.Exit();
+            }
+        }
+    }
+
+    private sealed class ConcurrencyCounter
+    {
+        private int _current;
+        private int _maximum;
+
+        public int Maximum => _maximum;
+
+        public void Enter()
+        {
+            var current = Interlocked.Increment(ref _current);
+            var maximum = _maximum;
+            while (current > maximum)
+            {
+                Interlocked.CompareExchange(ref _maximum, current, maximum);
+                maximum = _maximum;
+            }
+        }
+
+        public void Exit()
+        {
+            Interlocked.Decrement(ref _current);
         }
     }
 }
