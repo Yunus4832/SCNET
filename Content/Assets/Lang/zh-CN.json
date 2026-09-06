@@ -3165,7 +3165,9 @@
             "RemoteDescription": "浏览内容服务器中已审核的资源",
             "Remote": "在线内容",
             "PackagesDescription": "管理已下载或从文件导入的内容包",
-            "Packages": "内容包"
+            "Packages": "内容包",
+            "Repositories": "内容仓库",
+            "RepositoriesDescription": "管理用于浏览和下载内容的仓库来源。"
         },
         "GameLoadingScreen": {
             "1": "正在加载世界"
@@ -3489,6 +3491,31 @@
             "Install": "安装",
             "Delete": "删除缓存",
             "Create": "制造新包"
+        },
+        "ContentRepositoryScreen": {
+            "Title": "内容仓库",
+            "Add": "添加",
+            "Edit": "编辑",
+            "Delete": "删除",
+            "Enable": "启用",
+            "Disable": "停用",
+            "MoveUp": "上移",
+            "MoveDown": "下移",
+            "Test": "测试连接",
+            "Enabled": "已启用",
+            "Disabled": "已停用",
+            "NoRepositories": "尚未配置内容仓库。",
+            "AddTitle": "输入仓库名称",
+            "EditNameTitle": "编辑仓库名称",
+            "AddressTitle": "输入仓库地址",
+            "NameRequired": "仓库名称不能为空。",
+            "DuplicateAddress": "该仓库地址已经存在。",
+            "InvalidAddress": "请输入不含凭据、查询或片段的有效 HTTP(S) 地址。",
+            "SaveFailed": "无法保存内容仓库设置。",
+            "ConfirmDelete": "确定删除内容仓库“{0}”吗？缓存包和 Profile 不会被删除。",
+            "Testing": "正在测试仓库",
+            "TestSucceeded": "连接成功：{0} {1}",
+            "TestFailed": "无法连接或仓库协议响应无效。"
         }
     },
     "FireworksBlock": {

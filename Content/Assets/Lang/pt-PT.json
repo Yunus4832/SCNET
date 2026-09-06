@@ -3165,7 +3165,9 @@
             "RemoteDescription": "Explorar recursos aprovados do servidor de conteúdos",
             "Remote": "Conteúdo online",
             "PackagesDescription": "Gerir pacotes de conteúdo transferidos ou importados de ficheiros",
-            "Packages": "Pacotes"
+            "Packages": "Pacotes",
+            "Repositories": "Repositórios",
+            "RepositoriesDescription": "Gerir fontes de repositórios usadas para procurar e transferir conteúdo."
         },
         "GameLoadingScreen": {
             "1": "Carregando o mundo"
@@ -3489,6 +3491,31 @@
             "Install": "Instalar",
             "Delete": "Eliminar",
             "Create": "Criar"
+        },
+        "ContentRepositoryScreen": {
+            "Title": "Repositórios de conteúdo",
+            "Add": "Adicionar",
+            "Edit": "Editar",
+            "Delete": "Eliminar",
+            "Enable": "Ativar",
+            "Disable": "Desativar",
+            "MoveUp": "Mover para cima",
+            "MoveDown": "Mover para baixo",
+            "Test": "Testar",
+            "Enabled": "Ativo",
+            "Disabled": "Desativado",
+            "NoRepositories": "Não existem repositórios de conteúdo configurados.",
+            "AddTitle": "Introduza o nome do repositório",
+            "EditNameTitle": "Editar nome do repositório",
+            "AddressTitle": "Introduza o endereço do repositório",
+            "NameRequired": "O nome do repositório é obrigatório.",
+            "DuplicateAddress": "Esse endereço de repositório já está configurado.",
+            "InvalidAddress": "Introduza um endereço HTTP(S) válido sem credenciais, consulta ou fragmento.",
+            "SaveFailed": "Não foi possível guardar as definições do repositório.",
+            "ConfirmDelete": "Eliminar o repositório de conteúdo «{0}»? Os pacotes em cache e os perfis não serão eliminados.",
+            "Testing": "A testar repositório",
+            "TestSucceeded": "Ligação bem-sucedida: {0} {1}",
+            "TestFailed": "Não foi possível ligar ou a resposta do protocolo do repositório era inválida."
         }
     },
     "FireworksBlock": {

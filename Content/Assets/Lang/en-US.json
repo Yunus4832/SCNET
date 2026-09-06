@@ -3165,7 +3165,9 @@
             "RemoteDescription": "Browse approved resources from the content server",
             "Remote": "Online Content",
             "PackagesDescription": "Manage downloaded or file-imported content packages",
-            "Packages": "Packages"
+            "Packages": "Packages",
+            "Repositories": "Repositories",
+            "RepositoriesDescription": "Manage repository sources used to browse and download content."
         },
         "GameLoadingScreen": {
             "1": "Loading World"
@@ -3489,6 +3491,31 @@
             "Install": "Install",
             "Delete": "Delete",
             "Create": "Create"
+        },
+        "ContentRepositoryScreen": {
+            "Title": "Content Repositories",
+            "Add": "Add",
+            "Edit": "Edit",
+            "Delete": "Delete",
+            "Enable": "Enable",
+            "Disable": "Disable",
+            "MoveUp": "Move Up",
+            "MoveDown": "Move Down",
+            "Test": "Test",
+            "Enabled": "Enabled",
+            "Disabled": "Disabled",
+            "NoRepositories": "No content repositories are configured.",
+            "AddTitle": "Enter repository name",
+            "EditNameTitle": "Edit repository name",
+            "AddressTitle": "Enter repository address",
+            "NameRequired": "Repository name is required.",
+            "DuplicateAddress": "That repository address is already configured.",
+            "InvalidAddress": "Enter a valid HTTP(S) address without credentials, a query, or a fragment.",
+            "SaveFailed": "Could not save the content repository settings.",
+            "ConfirmDelete": "Delete content repository “{0}”? Cached packages and profiles will not be deleted.",
+            "Testing": "Testing repository",
+            "TestSucceeded": "Connection succeeded: {0} {1}",
+            "TestFailed": "Could not connect or the repository protocol response was invalid."
         }
     },
     "FireworksBlock": {

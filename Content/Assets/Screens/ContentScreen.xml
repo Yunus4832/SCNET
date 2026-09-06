@@ -14,6 +14,17 @@
 
             <StackPanelWidget Direction="Horizontal">
                 <CanvasWidget Size="350, 90">
+                    <LabelWidget Text="[ContentScreen:RepositoriesDescription]" Color="128, 128, 128"
+                                 WordWrap="true" HorizontalAlignment="Far" VerticalAlignment="Center"
+                                 TextAnchor="VerticalCenter, HorizontalCenter"/>
+                </CanvasWidget>
+                <CanvasWidget Size="10, 0"/>
+                <BevelledButtonWidget Name="Repositories" Text="[ContentScreen:Repositories]"
+                                      Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>
+            </StackPanelWidget>
+
+            <StackPanelWidget Direction="Horizontal">
+                <CanvasWidget Size="350, 90">
                     <LabelWidget Text="[ContentScreen:RemoteDescription]" Color="128, 128, 128" WordWrap="true"
                                  HorizontalAlignment="Far" VerticalAlignment="Center"
                                  TextAnchor="VerticalCenter, HorizontalCenter"/>
