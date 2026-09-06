@@ -8,11 +8,31 @@ public sealed class ContentServerClient : IDisposable
     private readonly bool _disposeClient;
 
     public ContentServerClient(string serverUrl, HttpClient? httpClient = null)
+        : this(serverUrl, httpClient ?? new HttpClient(), httpClient is null)
+    {
+    }
+
+    internal ContentServerClient(string serverUrl, HttpClient httpClient, bool disposeClient)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(serverUrl);
-        _disposeClient = httpClient is null;
-        _httpClient = httpClient ?? new HttpClient();
+        ArgumentNullException.ThrowIfNull(httpClient);
+        _disposeClient = disposeClient;
+        _httpClient = httpClient;
         _httpClient.BaseAddress = new Uri($"{serverUrl.Trim().TrimEnd('/')}/");
+    }
+
+    public async Task<ContentServerHealth> CheckHealthAsync(CancellationToken cancellationToken = default)
+    {
+        var response = await _httpClient
+            .GetFromJsonAsync<ContentServerResponse<ContentServerHealth>>("api/v1/health", cancellationToken)
+            .ConfigureAwait(false);
+        if (response?.Success != true || response.Data is null ||
+            string.IsNullOrWhiteSpace(response.Data.Name) || string.IsNullOrWhiteSpace(response.Data.Version))
+        {
+            throw new InvalidDataException("ContentServer returned an invalid health response.");
+        }
+
+        return response.Data;
     }
 
     public async Task<IReadOnlyList<ContentCatalogItem>> ListAsync(CancellationToken cancellationToken = default)
@@ -155,6 +175,8 @@ public sealed class ContentServerClient : IDisposable
     private static T RunSync<T>(Func<CancellationToken, Task<T>> action) =>
         action(CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
 }
+
+public sealed record ContentServerHealth(string Name, string Version);
 
 public sealed class ContentCatalogItem
 {

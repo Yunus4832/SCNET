@@ -331,26 +331,31 @@ Mod 缺失导航携带完整精确身份，返回后读取缓存；本地包安�
 
 ### 阶段 0：固化补充方案与验收样例
 
-- [ ] 将本计划与上一期计划、`Doc/ContentServer.md`、`Doc/Mods.md`、`Doc/StartupSessions.md` 的现状逐项对齐。
-- [ ] 固定仓库配置、ContentServerClientFactory、ContentServerClientPool、ContentSourceContext、统一下载入口、内容聚合、
+- [x] 将本计划与上一期计划、`Doc/ContentServer.md`、`Doc/Mods.md`、`Doc/StartupSessions.md` 的现状逐项对齐。
+- [x] 固定仓库配置、ContentServerClientFactory、ContentServerClientPool、ContentSourceContext、统一下载入口、内容聚合、
       版本合并、hash 冲突、匿名会话仓库和精确 RequiredModProfile 的术语与数据示例。
-- [ ] 固定联机握手协议样例及非法输入：空 hash、非规范 SHA-256、重复同包、同 ModId/Version 异 hash、仓库不可达。
-- [ ] 固定五类 UI 职责矩阵和页面导航参数，不在实现阶段临时移动职责。
-- [ ] 固定多版本展示样例：最新版本、旧 Profile 版本、仅缓存版本、缺失版本和冲突版本。
-- [ ] 明确本期不改变 `.scpkg`、PackageHash、非 Mod 安装结果和 FilePicker 协议。
-- [ ] 确认 `Content.Packaging`、ContentServer HTTP 契约和联机 Package 的现有项目边界，本期不提前实施协议项目重构。
-- [ ] 固定 RequiredModProfile 只包含 Mod；确认其他可安装内容和动态世界状态不会进入联机仓库预下载。
+- [x] 固定联机握手协议样例及非法输入：空 hash、非规范 SHA-256、重复同包、同 ModId/Version 异 hash、仓库不可达。
+- [x] 固定五类 UI 职责矩阵和页面导航参数，不在实现阶段临时移动职责。
+- [x] 固定多版本展示样例：最新版本、旧 Profile 版本、仅缓存版本、缺失版本和冲突版本。
+- [x] 明确本期不改变 `.scpkg`、PackageHash、非 Mod 安装结果和 FilePicker 协议。
+- [x] 确认 `Content.Packaging`、ContentServer HTTP 契约和联机 Package 的现有项目边界，本期不提前实施协议项目重构。
+- [x] 固定 RequiredModProfile 只包含 Mod；确认其他可安装内容和动态世界状态不会进入联机仓库预下载。
 
 门禁：评审确认仓库、下载、缓存、Profile、联机握手和安装资产的生命周期边界；所有后续阶段只实现已确认模型。
 
 ### 阶段 1：建立多仓库配置内核
 
-- [ ] 建立仓库配置实体、集合、规范化、唯一性、启用状态和确定性排序规则。
-- [ ] 增加仓库集合的设置持久化及应用入口；旧单地址调用按阶段 3–6 的职责迁移，最终在阶段 6 删除旧设置字段，不增加兼容读取。
-- [ ] 建立仓库配置的读取、保存、添加、编辑、删除、排序和连接测试服务。
-- [ ] 建立 `ContentServerClientFactory` 和按仓库作用域/稳定 ID 管理生命周期的 `ContentServerClientPool`，同时容纳持久和会话仓库。
-- [ ] 为 URL 规范化、重复地址、稳定 ID、排序、设置往返、客户端复用/替换/释放增加单元测试。
-- [ ] 增加配置刷新、仓库禁用和会话结束与进行中请求并发时的客户端租约/延迟释放测试。
+实施记录：已接入 Settings 初始化和仓库配置保存回调；保存失败回滚内存仓库集合并向调用方报告失败，
+设置通过同目录临时文件写完后替换。Factory/Pool 的延迟创建会使用最新仓库元数据。
+仓库模型、XML 往返、配置服务、健康检查及 Pool 的 20 项定向测试通过；测试覆盖配置保存失败不改变服务和客户端状态、
+禁用仓库不发起健康检查，以及仓库刷新或会话结束时旧客户端在进行中租约释放后才销毁。阶段门禁通过。
+
+- [x] 建立仓库配置实体、集合、规范化、唯一性、启用状态和确定性排序规则。
+- [x] 增加仓库集合的设置持久化及应用入口；旧单地址调用按阶段 3–6 的职责迁移，最终在阶段 6 删除旧设置字段，不增加兼容读取。
+- [x] 建立仓库配置的读取、保存、添加、编辑、删除、排序和连接测试服务。
+- [x] 建立 `ContentServerClientFactory` 和按仓库作用域/稳定 ID 管理生命周期的 `ContentServerClientPool`，同时容纳持久和会话仓库。
+- [x] 为 URL 规范化、重复地址、稳定 ID、排序、设置往返、客户端复用/替换/释放增加单元测试。
+- [x] 增加配置刷新、仓库禁用和会话结束与进行中请求并发时的客户端租约/延迟释放测试。
 
 门禁：无 UI 条件下可以可靠维护多个仓库及其客户端生命周期；新服务不依赖 `Settings.ContentServerUrl`，
 并且只通过 Factory/Pool 获取仓库客户端。现有 UI 和启动调用的迁移分别在后续所属阶段验收。

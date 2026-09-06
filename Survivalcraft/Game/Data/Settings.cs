@@ -4,6 +4,8 @@ namespace Game;
 
 public class Settings
 {
+    public IReadOnlyList<Game.Content.ContentRepository> ContentRepositories { get; internal set; } = [];
+
     public int ServerPort { get; set; } = 28887;
 
     public int BroadcastPort { get; set; } = 28888;

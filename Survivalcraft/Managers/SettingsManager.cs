@@ -13,6 +13,11 @@ public static class SettingsManager
 {
     public static Settings Current { get; } = new();
 
+    public static Game.Content.ContentServerClientPool ContentClients { get; } =
+        new(new Game.Content.ContentServerClientFactory());
+
+    public static Game.Content.ContentRepositoryService ContentRepositories { get; private set; } = null!;
+
     public static event Action? BrightnessChanged;
 
     internal static void NotifyBrightnessChanged()
@@ -34,6 +39,8 @@ public static class SettingsManager
         }
 
         LoadSettings();
+        ContentRepositories = new Game.Content.ContentRepositoryService(Current.ContentRepositories,
+            ContentClients, SaveContentRepositories);
         var settingsChanged = false;
         if (EnsureMultiplayerClientId(Current))
         {
@@ -51,6 +58,7 @@ public static class SettingsManager
         }
 
         Window.Deactivated += SaveSettings;
+        Window.Closed += ContentClients.Dispose;
     }
 
     internal static bool EnsureMultiplayerClientId(Settings settings)
@@ -90,6 +98,7 @@ public static class SettingsManager
                     var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
                     AppConfigStore.ReadFromXml(xElement);
                     ConnectionDirectory.ReadFromXml(xElement);
+                    Current.ContentRepositories = Game.Content.ContentRepositorySettings.Read(xElement);
 
                     foreach (var item in xElement.Elements())
                     {
@@ -145,43 +154,77 @@ public static class SettingsManager
     {
         try
         {
-            var xElement = new XElement("Settings");
-
-            foreach (var item in from pi in typeof(Settings).GetRuntimeProperties()
-                                 where pi.GetMethod != null && !pi.GetMethod.IsStatic && pi.GetMethod.IsPublic &&
-                                       pi.SetMethod != null && pi.SetMethod.IsPublic
-                                 select pi)
-            {
-                try
-                {
-                    var value = HumanReadableConverter.ConvertToString(item.GetValue(Current, null) ?? string.Empty);
-                    var node = XmlUtils.AddElement(xElement, "Setting");
-                    XmlUtils.SetAttributeValue(node, "Name", item.Name);
-                    XmlUtils.SetAttributeValue(node, "Value", value);
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning(string.Format("Setting \"{0}\" could not be saved. Reason: {1}", new object[]
-                    {
-                        item.Name,
-                        ex.Message
-                    }));
-                }
-            }
-
-            AppConfigStore.WriteToXml(xElement);
-            ConnectionDirectory.WriteToXml(xElement);
-
-            using (var stream = Storage.OpenFile(GamePaths.SettingsFile, OpenFileMode.Create))
-            {
-                XmlUtils.SaveXmlToStream(xElement, stream, null, true);
-            }
-
-            Log.Information("Saved settings");
+            SaveSettingsCore();
         }
         catch (Exception e)
         {
             ExceptionManager.ReportExceptionToUser("Saving settings failed.", e);
         }
+    }
+
+    private static void SaveContentRepositories(IReadOnlyList<Game.Content.ContentRepository> repositories)
+    {
+        var previous = Current.ContentRepositories;
+        Current.ContentRepositories = repositories;
+        try
+        {
+            SaveSettingsCore();
+        }
+        catch
+        {
+            Current.ContentRepositories = previous;
+            throw;
+        }
+    }
+
+    private static void SaveSettingsCore()
+    {
+        var xElement = new XElement("Settings");
+
+        foreach (var item in from pi in typeof(Settings).GetRuntimeProperties()
+                             where pi.GetMethod != null && !pi.GetMethod.IsStatic && pi.GetMethod.IsPublic &&
+                                   pi.SetMethod != null && pi.SetMethod.IsPublic
+                             select pi)
+        {
+            try
+            {
+                var value = HumanReadableConverter.ConvertToString(item.GetValue(Current, null) ?? string.Empty);
+                var node = XmlUtils.AddElement(xElement, "Setting");
+                XmlUtils.SetAttributeValue(node, "Name", item.Name);
+                XmlUtils.SetAttributeValue(node, "Value", value);
+            }
+            catch (Exception ex)
+            {
+                Log.Warning(string.Format("Setting \"{0}\" could not be saved. Reason: {1}", new object[]
+                {
+                        item.Name,
+                        ex.Message
+                }));
+            }
+        }
+
+        AppConfigStore.WriteToXml(xElement);
+        ConnectionDirectory.WriteToXml(xElement);
+        Game.Content.ContentRepositorySettings.Write(xElement, Current.ContentRepositories);
+
+        var temporaryPath = GamePaths.SettingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            using (var stream = Storage.OpenFile(temporaryPath, OpenFileMode.Create))
+            {
+                XmlUtils.SaveXmlToStream(xElement, stream, null, true);
+            }
+
+            Storage.MoveFile(temporaryPath, GamePaths.SettingsFile);
+        }
+        finally
+        {
+            if (Storage.FileExists(temporaryPath))
+            {
+                Storage.DeleteFile(temporaryPath);
+            }
+        }
+
+        Log.Information("Saved settings");
     }
 }
