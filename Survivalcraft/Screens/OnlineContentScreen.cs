@@ -23,6 +23,7 @@ public sealed class OnlineContentScreen : Screen
     private CancellationTokenSource? _cancellation;
     private OnlineContentNavigation? _pendingNavigation;
     private Guid? _repositoryId;
+    private string _returnScreenName = "Content";
     private string? _search;
     private OnlineContentStatusFilter _statusFilter;
     private ContentPackageType? _typeFilter;
@@ -45,7 +46,11 @@ public sealed class OnlineContentScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        _pendingNavigation = parameters.FirstOrDefault() as OnlineContentNavigation;
+        var navigation = parameters.FirstOrDefault() as OnlineContentNavigation;
+        _returnScreenName = navigation?.Normalize().ReturnScreen ?? "Content";
+        _pendingNavigation = navigation is { Type: not null, Identifier: not null }
+            ? navigation.Normalize()
+            : null;
         if (_pendingNavigation is not null)
         {
             _pendingNavigation = _pendingNavigation.Normalize();
@@ -97,7 +102,8 @@ public sealed class OnlineContentScreen : Screen
 
         if (_repositoriesButton.IsClicked)
         {
-            ScreensManager.SwitchScreen("ContentRepositories", "OnlineContent");
+            ScreensManager.SwitchScreen("ContentRepositories", "OnlineContent",
+                new OnlineContentNavigation(ReturnScreen: _returnScreenName));
         }
 
         if (_refreshButton.IsClicked)
@@ -112,7 +118,7 @@ public sealed class OnlineContentScreen : Screen
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            ScreensManager.SwitchScreen("Content");
+            ScreensManager.SwitchScreen(_returnScreenName);
         }
     }
 
@@ -243,7 +249,8 @@ public sealed class OnlineContentScreen : Screen
 
     private void OpenDetails(AggregatedContentEntry entry, OnlineContentNavigation? navigation = null)
     {
-        ScreensManager.SwitchScreen("OnlineContentVersions", entry, navigation ?? new OnlineContentNavigation());
+        ScreensManager.SwitchScreen("OnlineContentVersions", entry,
+            navigation ?? new OnlineContentNavigation(ReturnScreen: _returnScreenName));
     }
 
     private void ShowSearch()

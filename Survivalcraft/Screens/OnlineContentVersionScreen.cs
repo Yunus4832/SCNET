@@ -19,6 +19,7 @@ public sealed class OnlineContentVersionScreen : Screen
     private bool _busy;
     private CancellationTokenSource? _cancellation;
     private OnlineContentNavigation? _navigation;
+    private string _returnScreenName = "Content";
     private string? _selectedHash;
     private ContentSourceId? _selectedSource;
     private OnlineContentCatalogState _state = new();
@@ -40,6 +41,7 @@ public sealed class OnlineContentVersionScreen : Screen
         _entry = parameters.FirstOrDefault() as AggregatedContentEntry ??
                  throw new ArgumentException("Online content details require a catalog entry.", nameof(parameters));
         _navigation = parameters.Skip(1).FirstOrDefault() as OnlineContentNavigation;
+        _returnScreenName = _navigation?.Normalize().ReturnScreen ?? "Content";
         _headerLabel.Text = $"{_entry.Name} ({_entry.Identifier})";
         _selectedSource = null;
         Refresh();
@@ -84,7 +86,8 @@ public sealed class OnlineContentVersionScreen : Screen
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            ScreensManager.SwitchScreen("OnlineContent");
+            ScreensManager.SwitchScreen("OnlineContent",
+                new OnlineContentNavigation(ReturnScreen: _returnScreenName));
         }
     }
 

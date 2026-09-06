@@ -437,13 +437,20 @@ Mod 管理中待删除的旧下载入口在阶段 6 收口，最终只保留在�
 
 ### 阶段 6：收口 Mod 管理与本地包 UI
 
-- [ ] 从 ModManagementScreen 删除服务器地址、保存默认地址、远程刷新、远程条目和直接下载代码。
-- [ ] 以 Profile requirements 与本地缓存 Mod 的并集重建列表，明确显示已缓存、缺失、全局、世界和当前 Runtime 状态。
-- [ ] 为缺失 requirement 实现“在仓库中查找”，只导航到统一在线内容的精确版本筛选。
-- [ ] 保留并验证 Profile 编辑、FilePicker 导入/导出和受引用保护的缓存移除。
-- [ ] 审查本地内容包 Screen，使远程目录和版本获取不泄漏到缓存管理职责中。
-- [ ] 删除失去用途的 Mod 管理 UI 专用远程条目模型、UI 文案和重复下载路径，不触及后续协议层 DTO 重构。
-- [ ] 确认现有调用均已迁移后，删除 `Settings.ContentServerUrl` 及其剩余序列化和配置说明，不保留兼容读取。
+实施记录：Mod 管理页已删除服务器地址、保存默认地址、远程刷新、远程条目、分页和直接下载实现，不再引用
+`ContentServerClient` 或仓库模型。新本地目录按 `ModId + Version + PackageHash` 精确合并缓存、全局 Profile、全部世界 Profile
+和当前 Runtime，保留同版本异 hash 独立条目并显示缓存、缺失及各引用作用域。缺失项只携带完整精确身份导航到统一在线页，
+在线页与仓库页往返会保留返回目标，下载后返回 Mod 页重新读取缓存。Profile 编辑、FilePicker 导入/导出和引用保护删除路径保留；
+本地内容包页静态审查确认不引用远程目录、版本或仓库服务。旧远程 UI 模型和语言键已删除，`Settings.ContentServerUrl` 也从
+反射设置模型移除，不提供旧字段读取。精确并集新增 3 项测试，全量 339 项测试通过；设备交互仍归阶段 7 验收。
+
+- [x] 从 ModManagementScreen 删除服务器地址、保存默认地址、远程刷新、远程条目和直接下载代码。
+- [x] 以 Profile requirements 与本地缓存 Mod 的并集重建列表，明确显示已缓存、缺失、全局、世界和当前 Runtime 状态。
+- [x] 为缺失 requirement 实现“在仓库中查找”，只导航到统一在线内容的精确版本筛选。
+- [x] 保留并验证 Profile 编辑、FilePicker 导入/导出和受引用保护的缓存移除。
+- [x] 审查本地内容包 Screen，使远程目录和版本获取不泄漏到缓存管理职责中。
+- [x] 删除失去用途的 Mod 管理 UI 专用远程条目模型、UI 文案和重复下载路径，不触及后续协议层 DTO 重构。
+- [x] 确认现有调用均已迁移后，删除 `Settings.ContentServerUrl` 及其剩余序列化和配置说明，不保留兼容读取。
 
 门禁：Mod 管理页断网可完整管理已有 Profile 与缓存；代码中不引用 ContentServerClient 或仓库地址；下载不会隐式启用 Mod。
 

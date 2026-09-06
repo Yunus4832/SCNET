@@ -16,7 +16,8 @@ public sealed record OnlineContentNavigation(
     ContentPackageType? Type = null,
     string? Identifier = null,
     string? Version = null,
-    string? PackageHash = null)
+    string? PackageHash = null,
+    string ReturnScreen = "Content")
 {
     public OnlineContentNavigation Normalize()
     {
@@ -38,7 +39,8 @@ public sealed record OnlineContentNavigation(
             packageHash = null;
         }
 
-        if ((version is null) != (packageHash is null) ||
+        if (string.IsNullOrWhiteSpace(ReturnScreen) ||
+            (version is null) != (packageHash is null) ||
             version is not null && (Type is null || identifier is null) ||
             packageHash is not null &&
             (packageHash.Length != 64 || packageHash.Any(character =>
@@ -48,7 +50,13 @@ public sealed record OnlineContentNavigation(
                 "Exact online content navigation requires type, identifier, version and canonical SHA-256 hash.");
         }
 
-        return this with { Identifier = identifier, Version = version, PackageHash = packageHash };
+        return this with
+        {
+            Identifier = identifier,
+            Version = version,
+            PackageHash = packageHash,
+            ReturnScreen = ReturnScreen.Trim()
+        };
     }
 }
 

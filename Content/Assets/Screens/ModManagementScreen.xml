@@ -1,75 +1,39 @@
 <Screen xmlns="runtime-namespace:Game.Widgets">
-
     <PanoramaWidget/>
-
     <StackPanelWidget Direction="Horizontal">
-
         <CanvasWidget Style="{Widgets/TopBarContents}">
             <LabelWidget Name="TopBar.Label" Text="[ModManagementScreen:Title]"/>
         </CanvasWidget>
-
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-
-            <CanvasWidget Size="Infinity, 4"/>
-
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4"
-                              VerticalAlignment="Center">
-                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Near" VerticalAlignment="Center">
-                    <CanvasWidget Size="112, 60">
-                        <LabelWidget Text="[ModManagementScreen:ContentServerAddress]" FontScale="0.9" Color="255, 255, 255"
-                                     HorizontalAlignment="Far" VerticalAlignment="Center"
-                                     TextAnchor="VerticalCenter, HorizontalCenter"/>
-                    </CanvasWidget>
-                    <CanvasWidget Size="300, 50" VerticalAlignment="Center" Margin="14, 0">
-                        <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 160"/>
-                        <TextBoxWidget Name="ContentServerTextBox" Size="284, 40" HorizontalAlignment="Center"
-                                       VerticalAlignment="Center" MaximumLength="512"/>
-                    </CanvasWidget>
-                </StackPanelWidget>
-                <CanvasWidget Size="Infinity, 0"/>
-                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Far" VerticalAlignment="Center">
-                    <BevelledButtonWidget Name="RefreshButton" Size="120, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:Refresh]" VerticalAlignment="Center" Margin="4, 0"/>
-                    <BevelledButtonWidget Name="SaveDefaultContentServerButton" Size="120, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:SaveDefault]" VerticalAlignment="Center" Margin="4, 0"/>
-                </StackPanelWidget>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
+                <BevelledButtonWidget Name="OnlineButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[ModManagementScreen:Online]" Margin="4, 0"/>
+                <BevelledButtonWidget Name="RefreshButton" Style="{Styles/ButtonStyle_160x60}"
+                                      Text="[ModManagementScreen:RefreshLocal]" Margin="4, 0"/>
             </StackPanelWidget>
-
-            <CanvasWidget Size="0, 4"/>
-
             <CanvasWidget Margin="10, 0">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
-                <ListPanelWidget Name="ModsList" Direction="Vertical" Margin="3, 3" ItemSize="56"
+                <ListPanelWidget Name="ModsList" Direction="Vertical" Margin="3, 3" ItemSize="64"
                                  SelectionColor="10, 70, 0, 90"/>
+                <LabelWidget Name="Empty" Text="[ModManagementScreen:Empty]" HorizontalAlignment="Center"
+                             VerticalAlignment="Center" Color="160, 160, 160"/>
             </CanvasWidget>
-
             <LabelWidget Name="PickerUnavailable" Text="[ModManagementScreen:PickerUnavailable]"
                          Color="255, 180, 80" Margin="0, 3"/>
-
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Stretch" Margin="10, 4">
-                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Near">
-                    <BevelledButtonWidget Name="ImportButton" Size="112, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:Import]" Margin="0, 0"/>
-                    <BevelledButtonWidget Name="CacheButton" Size="112, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:Download]" Margin="6, 0"/>
-                    <BevelledButtonWidget Name="ExportButton" Size="112, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:Export]" Margin="6, 0"/>
-                    <BevelledButtonWidget Name="GlobalModButton" Size="112, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:AddGlobal]" Margin="6, 0"/>
-                    <BevelledButtonWidget Name="AddWorldModButton" Size="112, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:World]" Margin="6, 0"/>
-                </StackPanelWidget>
-                <CanvasWidget Size="Infinity, 0"/>
-                <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Far">
-                    <BevelledButtonWidget Name="PreviousPageButton" Size="112, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:PreviousPage]" Margin="6, 0"/>
-                    <BevelledButtonWidget Name="NextPageButton" Size="112, 60" FontScale="0.9"
-                                          Text="[ModManagementScreen:NextPage]" Margin="6, 0"/>
-                </StackPanelWidget>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 4">
+                <BevelledButtonWidget Name="ImportButton" Size="112, 60" FontScale="0.9"
+                                      Text="[ModManagementScreen:Import]" Margin="3, 0"/>
+                <BevelledButtonWidget Name="CacheButton" Size="112, 60" FontScale="0.9"
+                                      Text="[ModManagementScreen:DeleteCacheShort]" Margin="3, 0"/>
+                <BevelledButtonWidget Name="FindButton" Size="150, 60" FontScale="0.8"
+                                      Text="[ModManagementScreen:FindInRepositories]" Margin="3, 0"/>
+                <BevelledButtonWidget Name="ExportButton" Size="112, 60" FontScale="0.9"
+                                      Text="[ModManagementScreen:Export]" Margin="3, 0"/>
+                <BevelledButtonWidget Name="GlobalModButton" Size="112, 60" FontScale="0.9"
+                                      Text="[ModManagementScreen:AddGlobal]" Margin="3, 0"/>
+                <BevelledButtonWidget Name="WorldModButton" Size="112, 60" FontScale="0.9"
+                                      Text="[ModManagementScreen:World]" Margin="3, 0"/>
             </StackPanelWidget>
-
         </StackPanelWidget>
-
     </StackPanelWidget>
-
 </Screen>

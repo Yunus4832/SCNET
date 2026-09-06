@@ -130,8 +130,6 @@ public class Settings
     /// </summary>
     public Guid MultiplayerClientId { get; set; }
 
-    public string ContentServerUrl { get; set; } = string.Empty;
-
     public bool UseReducedZRange
     {
         get;
