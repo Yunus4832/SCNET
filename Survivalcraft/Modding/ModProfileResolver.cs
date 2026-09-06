@@ -80,6 +80,7 @@ public static class ModProfileResolver
                 log?.Invoke($"仓库 {failure.RepositoryName} 失败: {failure.Message}");
             }
 
+            repository.Invalidate();
             localEntry = repository.Find(requirement)
                          ?? throw new InvalidDataException("Downloaded package was not found in the local cache.");
             log?.Invoke($"已下载模组 {requirement.ModId}@{requirement.Version}");

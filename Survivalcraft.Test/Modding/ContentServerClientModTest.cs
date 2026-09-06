@@ -2,6 +2,8 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 
+using Content.Packaging;
+
 using Game.Content;
 using Game.Modding;
 
@@ -95,6 +97,32 @@ public sealed class ContentServerClientModTest : IDisposable
         var versions = repository.ListAll().Where(entry => entry.ModId == "example.multi")
             .Select(entry => entry.Version).OrderBy(version => version, StringComparer.Ordinal).ToArray();
         Assert.Equal(["1.0.0", "2.0.0"], versions);
+    }
+
+    [Fact]
+    public async Task LocalModRepositoryRefreshesAfterExternalCacheWrite()
+    {
+        Directory.CreateDirectory(_root);
+        var packageBytes = CreatePackageBytes("example.downloaded", "1.0.0");
+        using var inspectionStream = new MemoryStream(packageBytes, writable: false);
+        var packageHash = LocalModRepository.ComputePackageHash(inspectionStream, "example.downloaded.scpkg");
+        var requirement = new ModPackageRequirement
+        {
+            ModId = "example.downloaded",
+            Version = "1.0.0",
+            PackageHash = packageHash
+        };
+        var repository = new LocalModRepository(_root);
+        Assert.Null(repository.Find(requirement));
+
+        var cache = new ContentPackageCache(_root);
+        using var packageStream = new MemoryStream(packageBytes, writable: false);
+        await cache.ImportExactAsync(packageStream, ContentPackageType.Mod,
+            requirement.ModId, requirement.Version, requirement.PackageHash);
+
+        Assert.Null(repository.Find(requirement));
+        repository.Invalidate();
+        Assert.NotNull(repository.Find(requirement));
     }
 
     [Fact]
