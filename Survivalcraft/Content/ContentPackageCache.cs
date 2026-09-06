@@ -23,6 +23,10 @@ public interface IContentPackageCache
     Task<ContentPackageCacheEntry> ImportAllowedAsync(Stream source,
         IReadOnlyCollection<ContentPackageType> allowedTypes, CancellationToken cancellationToken = default);
 
+    Task<ContentPackageCacheEntry> ImportExactAsync(Stream source, ContentPackageType expectedType,
+        string expectedIdentifier, string expectedVersion, string expectedPackageHash,
+        CancellationToken cancellationToken = default);
+
     Stream OpenValidated(string packageHash);
     Task ExportAsync(string packageHash, Stream destination, CancellationToken cancellationToken = default);
     bool Delete(string packageHash);
@@ -52,13 +56,13 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         Stream source,
         CancellationToken cancellationToken = default)
     {
-        return await ImportCoreAsync(source, null, cancellationToken);
+        return await ImportCoreAsync(source, null, null, null, null, cancellationToken);
     }
 
     public async Task<ContentPackageCacheEntry> ImportExpectedAsync(Stream source, ContentPackageType expectedType,
         CancellationToken cancellationToken = default)
     {
-        return await ImportCoreAsync(source, [expectedType], cancellationToken);
+        return await ImportCoreAsync(source, [expectedType], null, null, null, cancellationToken);
     }
 
     public async Task<ContentPackageCacheEntry> ImportAllowedAsync(Stream source,
@@ -70,11 +74,25 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
             throw new ArgumentException("At least one package type must be allowed.", nameof(allowedTypes));
         }
 
-        return await ImportCoreAsync(source, allowedTypes, cancellationToken);
+        return await ImportCoreAsync(source, allowedTypes, null, null, null, cancellationToken);
+    }
+
+    public async Task<ContentPackageCacheEntry> ImportExactAsync(Stream source, ContentPackageType expectedType,
+        string expectedIdentifier, string expectedVersion, string expectedPackageHash,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(expectedIdentifier);
+        ArgumentException.ThrowIfNullOrWhiteSpace(expectedVersion);
+        ArgumentException.ThrowIfNullOrWhiteSpace(expectedPackageHash);
+        return await ImportCoreAsync(source, [expectedType], expectedIdentifier, expectedVersion,
+            expectedPackageHash, cancellationToken);
     }
 
     private async Task<ContentPackageCacheEntry> ImportCoreAsync(Stream source,
         IReadOnlyCollection<ContentPackageType>? allowedTypes,
+        string? expectedIdentifier,
+        string? expectedVersion,
+        string? expectedPackageHash,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(source);
@@ -112,6 +130,14 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
             if (allowedTypes is not null && !allowedTypes.Contains(inspection.Manifest.Type))
             {
                 throw new ContentPackageException($"Package type {inspection.Manifest.Type} is not allowed here.");
+            }
+
+            if (expectedIdentifier is not null &&
+                (!string.Equals(inspection.Manifest.Identifier, expectedIdentifier, StringComparison.Ordinal) ||
+                 !string.Equals(inspection.Manifest.Version, expectedVersion, StringComparison.Ordinal) ||
+                 !string.Equals(inspection.PackageHash, expectedPackageHash, StringComparison.Ordinal)))
+            {
+                throw new ContentPackageException("Package does not match the expected content identity.");
             }
 
             var targetPath = GetPath(inspection.PackageHash);

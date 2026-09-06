@@ -1,5 +1,7 @@
 using System.Net.Http.Json;
 
+using Content.Packaging;
+
 namespace Game.Content;
 
 public sealed class ContentServerClient : IDisposable
@@ -40,13 +42,9 @@ public sealed class ContentServerClient : IDisposable
         var items = new List<ContentCatalogItem>();
         for (var pageIndex = 1; ; pageIndex++)
         {
-            var response = await _httpClient
-                .GetFromJsonAsync<ContentServerResponse<ContentServerPage<ContentCatalogItem>>>(
-                    $"api/v1/content?pageIndex={pageIndex}&pageSize=10",
-                    cancellationToken)
+            var page = await ListPageAsync(new ContentCatalogQuery(PageIndex: pageIndex), cancellationToken)
                 .ConfigureAwait(false);
-            var page = response?.Data;
-            if (page is null || page.Items.Count == 0)
+            if (page.Items.Count == 0)
             {
                 break;
             }
@@ -59,6 +57,36 @@ public sealed class ContentServerClient : IDisposable
         }
 
         return items;
+    }
+
+    public Task<ContentServerPageResult<ContentCatalogItem>> ListPageAsync(ContentCatalogQuery query,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        query.Validate();
+        var path = $"api/v1/content?pageIndex={query.PageIndex}&pageSize={query.PageSize}";
+        if (query.Type is not null)
+        {
+            path += $"&type={Uri.EscapeDataString(query.Type)}";
+        }
+
+        if (query.Search is not null)
+        {
+            path += $"&query={Uri.EscapeDataString(query.Search)}";
+        }
+
+        return GetPageAsync<ContentCatalogItem>(path, cancellationToken);
+    }
+
+    public Task<ContentServerPageResult<ContentCatalogItem>> ListVersionsPageAsync(string contentId,
+        int pageIndex = 1, int pageSize = ContentCatalogQuery.DefaultPageSize,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(contentId);
+        ContentCatalogQuery.ValidatePage(pageIndex, pageSize);
+        var path = $"api/v1/content/{Uri.EscapeDataString(contentId)}/versions" +
+                   $"?pageIndex={pageIndex}&pageSize={pageSize}";
+        return GetPageAsync<ContentCatalogItem>(path, cancellationToken);
     }
 
     public IReadOnlyList<ContentServerModPackage> ListMods() => RunSync(ListModsAsync);
@@ -155,13 +183,14 @@ public sealed class ContentServerClient : IDisposable
             HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        var imported = await cache.ImportAsync(stream, cancellationToken).ConfigureAwait(false);
-        if (!string.Equals(imported.PackageHash, item.PackageHash, StringComparison.OrdinalIgnoreCase))
+        if (!Enum.TryParse<ContentPackageType>(item.Type, false, out var expectedType) ||
+            expectedType.ToString() != item.Type)
         {
-            throw new InvalidDataException("Downloaded package hash does not match ContentServer metadata.");
+            throw new InvalidDataException("ContentServer metadata contains an invalid package type.");
         }
 
-        return imported;
+        return await cache.ImportExactAsync(stream, expectedType, item.Identifier, item.Version,
+            item.PackageHash, cancellationToken).ConfigureAwait(false);
     }
 
     public void Dispose()
@@ -172,11 +201,63 @@ public sealed class ContentServerClient : IDisposable
         }
     }
 
+    private async Task<ContentServerPageResult<T>> GetPageAsync<T>(string path,
+        CancellationToken cancellationToken)
+    {
+        var response = await _httpClient
+            .GetFromJsonAsync<ContentServerResponse<ContentServerPage<T>>>(path, cancellationToken)
+            .ConfigureAwait(false);
+        if (response?.Success != true || response.Data is null || response.Data.Items is null ||
+            response.Data.Total < 0 || response.Data.PageIndex < 1 || response.Data.PageSize < 1)
+        {
+            throw new InvalidDataException("ContentServer returned an invalid paged response.");
+        }
+
+        return new ContentServerPageResult<T>(response.Data.Items, response.Data.Total,
+            response.Data.PageIndex, response.Data.PageSize);
+    }
+
     private static T RunSync<T>(Func<CancellationToken, Task<T>> action) =>
         action(CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
 }
 
 public sealed record ContentServerHealth(string Name, string Version);
+
+public sealed record ContentCatalogQuery(string? Type = null, string? Search = null, int PageIndex = 1,
+    int PageSize = ContentCatalogQuery.DefaultPageSize)
+{
+    public const int DefaultPageSize = 20;
+    public const int MaximumPageSize = 100;
+
+    internal void Validate()
+    {
+        ValidatePage(PageIndex, PageSize);
+        if (Type is not null && string.IsNullOrWhiteSpace(Type))
+        {
+            throw new ArgumentException("Content type filters cannot be blank.", nameof(Type));
+        }
+
+        if (Search is not null && string.IsNullOrWhiteSpace(Search))
+        {
+            throw new ArgumentException("Content search filters cannot be blank.", nameof(Search));
+        }
+    }
+
+    internal static void ValidatePage(int pageIndex, int pageSize)
+    {
+        if (pageIndex < 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pageIndex));
+        }
+
+        if (pageSize is < 1 or > MaximumPageSize)
+        {
+            throw new ArgumentOutOfRangeException(nameof(pageSize));
+        }
+    }
+}
+
+public sealed record ContentServerPageResult<T>(IReadOnlyList<T> Items, int Total, int PageIndex, int PageSize);
 
 public sealed class ContentCatalogItem
 {
