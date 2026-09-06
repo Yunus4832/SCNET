@@ -10,6 +10,11 @@ public static class ModProfileManager
 
     public static string ComputeDataHash(ModProfile? profile)
     {
+        if (profile is not null)
+        {
+            ModProfileValidation.Validate(profile);
+        }
+
         var lines = (profile?.Packages ?? [])
             .Select(CreateDataHashLine)
             .OrderBy(line => line, StringComparer.OrdinalIgnoreCase);
@@ -119,7 +124,6 @@ public static class ModProfileManager
         return Normalize(new ModProfile
         {
             Id = NormalizeSessionId(sessionId),
-            ContentServerUrl = profile.ContentServerUrl,
             Packages = profile.Packages
                 .Select(package => new ModPackageRequirement
                 {
@@ -221,13 +225,13 @@ public static class ModProfileManager
         var profile = new ModProfile
         {
             Id = root.Attribute(nameof(ModProfile.Id))?.Value ?? "default",
-            ContentServerUrl = root.Attribute(nameof(ModProfile.ContentServerUrl))?.Value,
             Packages = root.Element(nameof(ModProfile.Packages))?
                 .Elements("Package")
                 .Select(element => new ModPackageRequirement
                 {
                     ModId = element.Attribute(nameof(ModPackageRequirement.ModId))?.Value ?? string.Empty,
-                    Version = element.Attribute(nameof(ModPackageRequirement.Version))?.Value ?? string.Empty
+                    Version = element.Attribute(nameof(ModPackageRequirement.Version))?.Value ?? string.Empty,
+                    PackageHash = element.Attribute(nameof(ModPackageRequirement.PackageHash))?.Value ?? string.Empty
                 })
                 .ToList() ?? []
         };
@@ -238,27 +242,26 @@ public static class ModProfileManager
     {
         return new XElement("ModProfile",
             new XAttribute(nameof(ModProfile.Id), profile.Id),
-            CreateOptionalAttribute(nameof(ModProfile.ContentServerUrl), profile.ContentServerUrl),
             new XElement(nameof(ModProfile.Packages),
                 profile.Packages.Select(package => new XElement("Package",
                     new XAttribute(nameof(ModPackageRequirement.ModId), package.ModId),
-                    new XAttribute(nameof(ModPackageRequirement.Version), package.Version)))));
+                    new XAttribute(nameof(ModPackageRequirement.Version), package.Version),
+                    new XAttribute(nameof(ModPackageRequirement.PackageHash), package.PackageHash)))));
     }
 
     private static ModProfile Normalize(ModProfile profile)
     {
         profile.Id = string.IsNullOrWhiteSpace(profile.Id) ? "default" : profile.Id.Trim();
-        profile.ContentServerUrl = NormalizeContentServerUrl(profile.ContentServerUrl);
         profile.Packages ??= [];
         profile.Packages = profile.Packages
-            .Where(package => !string.IsNullOrWhiteSpace(package.ModId) && !string.IsNullOrWhiteSpace(package.Version))
             .Select(package => new ModPackageRequirement
             {
                 ModId = package.ModId.Trim(),
                 Version = package.Version.Trim(),
-                PackageHash = string.IsNullOrWhiteSpace(package.PackageHash) ? null : package.PackageHash.Trim()
+                PackageHash = package.PackageHash.Trim()
             })
             .ToList();
+        ModProfileValidation.Validate(profile);
         return profile;
     }
 
@@ -325,7 +328,6 @@ public static class ModProfileManager
                     globalProfile,
                     worldProfile!,
                     worldName,
-                    contentServerUrl: worldProfile!.ContentServerUrl ?? globalProfile.ContentServerUrl,
                     worldOverrides: true)
                 : CloneProfile(globalProfile, worldName),
             ModProfileResolutionStrategy.WorldPlusGlobal => hasWorldProfile
@@ -333,7 +335,6 @@ public static class ModProfileManager
                     worldProfile!,
                     globalProfile,
                     worldName,
-                    contentServerUrl: worldProfile!.ContentServerUrl ?? globalProfile.ContentServerUrl,
                     worldOverrides: false)
                 : CloneProfile(globalProfile, worldName),
             _ => CloneProfile(globalProfile, worldName)
@@ -344,7 +345,6 @@ public static class ModProfileManager
         ModProfile primary,
         ModProfile secondary,
         string resultId,
-        string? contentServerUrl,
         bool worldOverrides)
     {
         var packages = new Dictionary<string, ModPackageRequirement>(StringComparer.OrdinalIgnoreCase);
@@ -364,7 +364,6 @@ public static class ModProfileManager
         return Normalize(new ModProfile
         {
             Id = string.IsNullOrWhiteSpace(resultId) ? "default" : resultId.Trim(),
-            ContentServerUrl = contentServerUrl,
             Packages = packages.Values
                 .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
                 .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
@@ -378,7 +377,6 @@ public static class ModProfileManager
         return new ModProfile
         {
             Id = string.IsNullOrWhiteSpace(id) ? profile.Id : id.Trim(),
-            ContentServerUrl = profile.ContentServerUrl,
             Packages = profile.Packages.Select(CloneRequirement).ToList()
         };
     }
@@ -395,7 +393,7 @@ public static class ModProfileManager
 
     private static string CreateDataHashLine(ModPackageRequirement package)
     {
-        return $"{package.ModId.Trim()}|{package.Version.Trim()}|{package.PackageHash?.Trim() ?? string.Empty}";
+        return $"{package.ModId.Trim()}|{package.Version.Trim()}|{package.PackageHash.Trim()}";
     }
 
     private static string GetWorldProfileId(string worldDirectoryName)
@@ -407,23 +405,6 @@ public static class ModProfileManager
     {
         return string.IsNullOrWhiteSpace(sessionId) ? "default" : sessionId.Trim();
     }
-
-    private static string? NormalizeContentServerUrl(string? value)
-    {
-        var normalized = value?.Trim();
-        if (string.IsNullOrWhiteSpace(normalized))
-        {
-            return null;
-        }
-
-        return normalized.TrimEnd('/');
-    }
-
-    private static object? CreateOptionalAttribute(string name, string? value)
-    {
-        return string.IsNullOrWhiteSpace(value) ? null : new XAttribute(name, value);
-    }
-
     private readonly record struct WorldProfileContext(
         string WorldDirectoryName,
         string WorldName,

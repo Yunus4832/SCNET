@@ -15,6 +15,8 @@ namespace Survivalcraft.Test.Modding;
 [Collection(ConfigFileCollection.Name)]
 public sealed class ModProfileManagerTest : IDisposable
 {
+    private const string _packageHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+
     private readonly FileBackup _globalProfileBackup = FileBackup.Create(ModProfileManager.GlobalProfilePath);
 
     private readonly DirectoryBackup _sessionProfilesBackup =
@@ -27,23 +29,22 @@ public sealed class ModProfileManagerTest : IDisposable
     public void LoadEffectiveProfilePrefersSessionProfile()
     {
         SaveGlobalProfile("""
-                          <ModProfile Id="global" ContentServerUrl="https://global.example">
+                          <ModProfile Id="global">
                             <Packages>
-                              <Package ModId="global.mod" Version="1.0.0" />
+                              <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
                             </Packages>
                           </ModProfile>
                           """);
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "session-a",
-            ContentServerUrl = "https://session.example/",
             Packages =
             [
                 new ModPackageRequirement
                 {
                     ModId = "session.mod",
                     Version = "2.0.0",
-                    PackageHash = "abc"
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -51,34 +52,32 @@ public sealed class ModProfileManagerTest : IDisposable
         var profile = ModProfileManager.LoadEffectiveProfile("session-a");
 
         Assert.Equal("session-a", profile.Id);
-        Assert.Equal("https://session.example", profile.ContentServerUrl);
         var package = Assert.Single(profile.Packages);
         Assert.Equal("session.mod", package.ModId);
         Assert.Equal("2.0.0", package.Version);
-        Assert.Null(package.PackageHash);
+        Assert.Equal(_packageHash, package.PackageHash);
     }
 
     [Fact]
     public void RemoteServerSessionProfileDoesNotMergeGlobalProfile()
     {
         SaveGlobalProfile("""
-                          <ModProfile Id="global" ContentServerUrl="https://global.example">
+                          <ModProfile Id="global">
                             <Packages>
-                              <Package ModId="global.mod" Version="1.0.0" />
+                              <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
                             </Packages>
                           </ModProfile>
                           """);
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "remote-session",
-            ContentServerUrl = "https://server.example",
             Packages =
             [
                 new ModPackageRequirement
                 {
                     ModId = "server.mod",
                     Version = "2.0.0",
-                    PackageHash = "server-hash"
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -91,11 +90,10 @@ public sealed class ModProfileManagerTest : IDisposable
         });
 
         Assert.Equal("remote-session", profile.Id);
-        Assert.Equal("https://server.example", profile.ContentServerUrl);
         var package = Assert.Single(profile.Packages);
         Assert.Equal("server.mod", package.ModId);
         Assert.Equal("2.0.0", package.Version);
-        Assert.Null(package.PackageHash);
+        Assert.Equal(_packageHash, package.PackageHash);
     }
 
     [Fact]
@@ -104,14 +102,13 @@ public sealed class ModProfileManagerTest : IDisposable
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
             Id = "session-b",
-            ContentServerUrl = "https://session.example/",
             Packages =
             [
                 new ModPackageRequirement
                 {
                     ModId = "session.mod",
                     Version = "2.0.0",
-                    PackageHash = "abc"
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -120,7 +117,6 @@ public sealed class ModProfileManagerTest : IDisposable
 
         Assert.NotNull(profile);
         Assert.Equal("session-b", profile!.Id);
-        Assert.Equal("https://session.example", profile.ContentServerUrl);
         Assert.Equal("session.mod", Assert.Single(profile.Packages).ModId);
     }
 
@@ -133,7 +129,6 @@ public sealed class ModProfileManagerTest : IDisposable
         var profile = ModProfileManager.LoadEffectiveProfile("missing");
 
         Assert.Equal("default", profile.Id);
-        Assert.Null(profile.ContentServerUrl);
         Assert.Empty(profile.Packages);
     }
 
@@ -149,7 +144,8 @@ public sealed class ModProfileManagerTest : IDisposable
                 new ModPackageRequirement
                 {
                     ModId = "world.mod",
-                    Version = "1.0.0"
+                    Version = "1.0.0",
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -174,7 +170,8 @@ public sealed class ModProfileManagerTest : IDisposable
                 new ModPackageRequirement
                 {
                     ModId = "world.mod",
-                    Version = "2.0.0"
+                    Version = "2.0.0",
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -213,7 +210,8 @@ public sealed class ModProfileManagerTest : IDisposable
                 new ModPackageRequirement
                 {
                     ModId = "world.mod",
-                    Version = "5.0.0"
+                    Version = "5.0.0",
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -233,28 +231,29 @@ public sealed class ModProfileManagerTest : IDisposable
     public void LoadEffectiveProfileMergesGlobalAndWorldProfileAccordingToStrategy()
     {
         SaveGlobalProfile("""
-                          <ModProfile Id="global" ContentServerUrl="https://global.example">
+                          <ModProfile Id="global">
                             <Packages>
-                              <Package ModId="shared.mod" Version="1.0.0" />
-                              <Package ModId="global.mod" Version="1.0.0" />
+                              <Package ModId="shared.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
+                              <Package ModId="global.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
                             </Packages>
                           </ModProfile>
                           """);
         var worldDirectoryName = CreateWorldDirectory("WorldMerge", ModProfileResolutionStrategy.GlobalPlusWorld);
         ModProfileManager.SaveWorldProfile(worldDirectoryName, new ModProfile
         {
-            ContentServerUrl = "https://world.example/",
             Packages =
             [
                 new ModPackageRequirement
                 {
                     ModId = "shared.mod",
-                    Version = "2.0.0"
+                    Version = "2.0.0",
+                    PackageHash = _packageHash
                 },
                 new ModPackageRequirement
                 {
                     ModId = "world.mod",
-                    Version = "1.0.0"
+                    Version = "1.0.0",
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -265,7 +264,6 @@ public sealed class ModProfileManagerTest : IDisposable
             World = "WorldMerge"
         });
 
-        Assert.Equal("https://world.example", profile.ContentServerUrl);
         Assert.Equal(
             ["global.mod:1.0.0", "shared.mod:2.0.0", "world.mod:1.0.0"],
             profile.Packages.Select(package => $"{package.ModId}:{package.Version}").OrderBy(x => x));
@@ -282,7 +280,8 @@ public sealed class ModProfileManagerTest : IDisposable
                 new ModPackageRequirement
                 {
                     ModId = "session.mod",
-                    Version = "3.0.0"
+                    Version = "3.0.0",
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -296,7 +295,7 @@ public sealed class ModProfileManagerTest : IDisposable
     }
 
     [Fact]
-    public void SaveSessionProfileDoesNotWritePackageHash()
+    public void SaveSessionProfileWritesPackageHash()
     {
         ModProfileManager.SaveSessionProfile(new ModProfile
         {
@@ -307,7 +306,7 @@ public sealed class ModProfileManagerTest : IDisposable
                 {
                     ModId = "session.mod",
                     Version = "3.0.0",
-                    PackageHash = "abc"
+                    PackageHash = _packageHash
                 }
             ]
         });
@@ -319,23 +318,23 @@ public sealed class ModProfileManagerTest : IDisposable
         var package = Assert.Single(root.Element(nameof(ModProfile.Packages))!.Elements("Package"));
         Assert.Equal("session.mod", package.Attribute(nameof(ModPackageRequirement.ModId))?.Value);
         Assert.Equal("3.0.0", package.Attribute(nameof(ModPackageRequirement.Version))?.Value);
-        Assert.Null(package.Attribute(nameof(ModPackageRequirement.PackageHash)));
+        Assert.Equal(_packageHash, package.Attribute(nameof(ModPackageRequirement.PackageHash))?.Value);
     }
 
     [Fact]
-    public void LoadGlobalProfileIgnoresPackageHashAttribute()
+    public void LoadGlobalProfileRequiresPackageHashAttribute()
     {
         SaveGlobalProfile("""
-                          <ModProfile Id="global" ContentServerUrl="https://global.example">
+                          <ModProfile Id="global">
                             <Packages>
-                              <Package ModId="legacy.mod" Version="1.0.0" PackageHash="legacy-hash" />
+                              <Package ModId="legacy.mod" Version="1.0.0" PackageHash="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" />
                             </Packages>
                           </ModProfile>
                           """);
 
         var profile = ModProfileManager.LoadGlobalProfile();
 
-        Assert.Null(Assert.Single(profile.Packages).PackageHash);
+        Assert.Equal(_packageHash, Assert.Single(profile.Packages).PackageHash);
     }
 
     public void Dispose()

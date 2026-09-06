@@ -525,9 +525,11 @@ public class NetNode
 
             if (flag)
             {
-                if (!string.IsNullOrEmpty(SettingsManager.Current.ContentServerUrl))
+                var repositoryCount = SettingsManager.Current.ContentRepositories.Count(repository =>
+                    repository.IsEnabled);
+                if (repositoryCount > 0)
                 {
-                    Log.Information($"内容服务器已被指定为: {SettingsManager.Current.ContentServerUrl}");
+                    Log.Information($"已配置 {repositoryCount} 个可分发内容的仓库");
                 }
 
                 Log.Information($"开启服务器成功，端口 {NetManager.LocalPort}");

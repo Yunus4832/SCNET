@@ -13,8 +13,7 @@ public static class ModPackageReferenceTracker
         return profiles.Any(profile => profile.Packages.Any(requirement =>
             string.Equals(requirement.ModId, entry.ModId, StringComparison.OrdinalIgnoreCase) &&
             string.Equals(requirement.Version, entry.Version, StringComparison.OrdinalIgnoreCase) &&
-            (string.IsNullOrWhiteSpace(requirement.PackageHash) ||
-             string.Equals(requirement.PackageHash, entry.PackageHash, StringComparison.OrdinalIgnoreCase))));
+            string.Equals(requirement.PackageHash, entry.PackageHash, StringComparison.Ordinal)));
     }
 
     private static IEnumerable<ModProfile> EnumerateProfiles()

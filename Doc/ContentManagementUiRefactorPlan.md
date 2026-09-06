@@ -378,17 +378,24 @@ Mod 缺失导航携带完整精确身份，返回后读取缓存；本地包安�
 
 ### 阶段 3：迁移 Profile 与启动补全
 
-- [ ] 从 ModProfile、合并逻辑和序列化中删除单一 `ContentServerUrl`；继续复用共享
+实施记录：本地、session、运行期及服务端 Required Profile 已移除仓库地址字段，并统一要求规范的非空 SHA-256
+`PackageHash`；Profile XML 读写、复制、合并、数据 hash、Runtime requirement 和缓存引用保护均保留精确 hash。
+持久仓库启动补全已迁移到 `ContentSourceContext` 和统一下载服务，缓存命中不访问网络，远程解析只接受同 ModId、Version、hash
+的包。`ServerInfoPackage` 将临时仓库与 Required Profile 并列传输，协议版本提升至 `0.0.0.2`；GUI 在当前连接作用域完成
+缓存准备后才创建重启 session，并在准备结束时关闭临时客户端作用域。临时仓库、Profile 字段长度/数量/URI/重复/Priority、
+HTTP 重定向、响应头、JSON 响应和包体积均有明确上限。全量 331 项测试通过，阶段 3 门禁通过。
+
+- [x] 从 ModProfile、合并逻辑和序列化中删除单一 `ContentServerUrl`；继续复用共享
       `ModProfile`/`ModPackageRequirement`，要求本地持久化、运行期和联机 requirement 都包含规范 PackageHash，
       删除缺失 hash 的读取和解析路径，本期不拆分协议 DTO。
-- [ ] 把 GUI 与 Headless 的 Mod 缺失补全迁移到统一下载入口，只传精确包身份并使用未指定仓库的默认策略。
-- [ ] 调整 `ServerInfoPackage` 序列化、协议版本、服务端构造和客户端解析，使临时候选仓库集合与 RequiredModProfile 分离。
-- [ ] 服务端发送前和客户端接收时验证完整 requirement；删除空 hash、单 `ContentServerUrl` 和旧握手格式的兼容路径。
-- [ ] 为临时仓库集合增加数量、长度、URI、重复项、Priority、重定向和响应大小限制，并覆盖恶意握手输入测试。
-- [ ] 调整 GUI 联机编排，确保连接准备阶段通过统一下载入口完成精确包准备，再创建 pending session 或重启；缓存优先，临时来源失败可向持久来源回退。
-- [ ] 更新启动日志，使其区分本地命中、候选仓库查询、来源回退和最终缺失，不记录敏感查询信息。
-- [ ] 覆盖空缓存、本地命中、首选仓库命中、备用仓库回退、全部离线、hash 冲突和联机临时源测试。
-- [ ] 验证 RequiredModProfile 只接受 Mod requirement，其他 ContentType 不触发联机下载或安装。
+- [x] 把 GUI 与 Headless 的 Mod 缺失补全迁移到统一下载入口，只传精确包身份并使用未指定仓库的默认策略。
+- [x] 调整 `ServerInfoPackage` 序列化、协议版本、服务端构造和客户端解析，使临时候选仓库集合与 RequiredModProfile 分离。
+- [x] 服务端发送前和客户端接收时验证完整 requirement；删除空 hash、单 `ContentServerUrl` 和旧握手格式的兼容路径。
+- [x] 为临时仓库集合增加数量、长度、URI、重复项、Priority、重定向和响应大小限制，并覆盖恶意握手输入测试。
+- [x] 调整 GUI 联机编排，确保连接准备阶段通过统一下载入口完成精确包准备，再创建 pending session 或重启；缓存优先，临时来源失败可向持久来源回退。
+- [x] 更新启动日志，使其区分本地命中、候选仓库查询、来源回退和最终缺失，不记录敏感查询信息。
+- [x] 覆盖空缓存、本地命中、首选仓库命中、备用仓库回退、全部离线、hash 冲突和联机临时源测试。
+- [x] 验证 RequiredModProfile 只接受 Mod requirement，其他 ContentType 不触发联机下载或安装。
 
 门禁：GUI 与 Headless 对相同 Profile 和仓库集合解析出相同包；本地命中可在全部仓库离线时启动；抓取握手可确认每个
 requirement 都携带非空规范 PackageHash，临时仓库不嵌入 Profile，任一非法 requirement 在下载或重启之前被拒绝。

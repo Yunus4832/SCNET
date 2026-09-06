@@ -52,6 +52,20 @@ public sealed class ContentServerClientCatalogTest
             requested?.AbsoluteUri);
     }
 
+    [Fact]
+    public async Task RejectsJsonResponseDeclaredAboveSizeLimit()
+    {
+        using var httpClient = new HttpClient(new StubHandler(_ =>
+        {
+            var content = new StringContent("{}", Encoding.UTF8, "application/json");
+            content.Headers.ContentLength = ContentServerClient.MaximumJsonResponseBytes + 1;
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = content };
+        }));
+        using var client = new ContentServerClient("https://content.example", httpClient);
+
+        await Assert.ThrowsAsync<InvalidDataException>(() => client.CheckHealthAsync());
+    }
+
     private static ContentCatalogItem Item(string version, string hash)
     {
         return new ContentCatalogItem { Version = version, PackageHash = hash };

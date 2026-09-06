@@ -1,3 +1,4 @@
+using Game.Content;
 using Game.Network.Enums;
 using Game.Network.Serialization;
 
@@ -14,7 +15,7 @@ public class ServerInfoPackage : IPackage
 
     public ushort MaxPlayerCount;
 
-    public string ContentServerUrl = string.Empty;
+    public IReadOnlyList<ContentRepository> TemporaryRepositories = [];
 
     public ModProfile? RequiredModProfile;
 
@@ -76,7 +77,8 @@ public class ServerInfoPackage : IPackage
         GameMode = subsystemGameInfo.WorldSettings.GameMode;
         TimeOfDay = subsystemTimeOfDay.CalculateTimeOfDay();
         RequiredModProfile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
-        ContentServerUrl = RequiredModProfile?.ContentServerUrl ?? SettingsManager.Current.ContentServerUrl;
+        TemporaryRepositories = SettingsManager.Current.ContentRepositories
+            .Where(repository => repository.IsEnabled).ToArray();
         Season = subsystemSeasons.Season;
         TimeOfSeason = subsystemSeasons.TimeOfSeason;
     }
@@ -95,7 +97,7 @@ public class ServerInfoPackage : IPackage
         MaxPlayerCount = reader.ReadUInt16();
         GameMode = reader.ReadEnum<GameMode>();
         TimeOfDay = reader.ReadSingle();
-        ContentServerUrl = reader.ReadString();
+        TemporaryRepositories = ReadTemporaryRepositories(reader);
         RequiredModProfile = ReadProfile(reader);
 
         Season = (Season)reader.ReadInt32();
@@ -115,7 +117,7 @@ public class ServerInfoPackage : IPackage
         writer.Write(MaxPlayerCount);
         writer.WriteEnum(GameMode);
         writer.Write(TimeOfDay);
-        writer.Write(ContentServerUrl);
+        WriteTemporaryRepositories(writer, TemporaryRepositories);
         WriteProfile(writer, RequiredModProfile);
         writer.Write((int)Season);
         writer.Write(TimeOfSeason);
@@ -131,10 +133,14 @@ public class ServerInfoPackage : IPackage
         var profile = new ModProfile
         {
             Id = reader.ReadString(),
-            ContentServerUrl = reader.ReadString(),
             Packages = []
         };
         var count = reader.ReadUInt16();
+        if (count > ModProfileValidation.MaximumRequirements)
+        {
+            throw new InvalidDataException("Too many required mods were declared.");
+        }
+
         for (var i = 0; i < count; i++)
         {
             profile.Packages.Add(new ModPackageRequirement
@@ -143,6 +149,15 @@ public class ServerInfoPackage : IPackage
                 Version = reader.ReadString(),
                 PackageHash = reader.ReadString()
             });
+        }
+
+        try
+        {
+            ModProfileValidation.Validate(profile);
+        }
+        catch (ArgumentException exception)
+        {
+            throw new InvalidDataException("The server declared an invalid required mod profile.", exception);
         }
 
         return profile;
@@ -156,14 +171,58 @@ public class ServerInfoPackage : IPackage
             return;
         }
 
+        ModProfileValidation.Validate(profile);
         writer.Write(profile.Id);
-        writer.Write(profile.ContentServerUrl ?? string.Empty);
         writer.Write((ushort)profile.Packages.Count);
         foreach (var package in profile.Packages)
         {
             writer.Write(package.ModId);
             writer.Write(package.Version);
-            writer.Write(package.PackageHash ?? string.Empty);
+            writer.Write(package.PackageHash);
+        }
+    }
+
+    private static IReadOnlyList<ContentRepository> ReadTemporaryRepositories(PackageStreamReader reader)
+    {
+        var count = reader.ReadUInt16();
+        if (count > TemporaryContentRepositories.MaximumCount)
+        {
+            throw new InvalidDataException("Too many temporary content repositories were declared.");
+        }
+
+        var repositories = new List<ContentRepository>(count);
+        for (var index = 0; index < count; index++)
+        {
+            var idText = reader.ReadString();
+            var baseUrl = reader.ReadString();
+            var priority = reader.ReadInt32();
+            if (!Guid.TryParseExact(idText, "D", out var id) || baseUrl.Length > TemporaryContentRepositories.MaximumUrlLength)
+            {
+                throw new InvalidDataException("A temporary content repository descriptor is invalid.");
+            }
+
+            repositories.Add(new ContentRepository
+            {
+                Id = id,
+                Name = $"Server Repository {index + 1}",
+                BaseUrl = baseUrl,
+                Priority = priority
+            });
+        }
+
+        return TemporaryContentRepositories.Validate(repositories);
+    }
+
+    private static void WriteTemporaryRepositories(PackageStreamWriter writer,
+        IEnumerable<ContentRepository> repositories)
+    {
+        var normalized = TemporaryContentRepositories.Validate(repositories);
+        writer.Write((ushort)normalized.Count);
+        foreach (var repository in normalized)
+        {
+            writer.Write(repository.Id.ToString("D"));
+            writer.Write(repository.BaseUrl);
+            writer.Write(repository.Priority);
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Xml.Linq;
 
+using Game.Content;
 using Game.Network;
 using Game.Network.Packages;
 using Game.Network.Serialization;
@@ -265,12 +266,12 @@ public class NetPlayScreen : Screen
 
         if (CommonLib.Resolve(found.IP, out var ep))
         {
-            if (!string.IsNullOrWhiteSpace(connect.ContentServerUrl))
+            if (connect.TemporaryRepositories.Count > 0)
             {
-                Log.Information($"远程内容服务已声明为: {connect.ContentServerUrl}");
+                Log.Information($"服务器声明了 {connect.TemporaryRepositories.Count} 个临时内容仓库");
             }
 
-            PrepareRemoteSessionAndConnect(ep!, connect.RequiredModProfile);
+            PrepareRemoteSessionAndConnect(ep!, connect.RequiredModProfile, connect.TemporaryRepositories);
         }
         else
         {
@@ -280,7 +281,8 @@ public class NetPlayScreen : Screen
 
     private void PrepareRemoteSessionAndConnect(
         IPEndPoint endPoint,
-        ModProfile? requiredProfile)
+        ModProfile? requiredProfile,
+        IReadOnlyList<ContentRepository> temporaryRepositories)
     {
         if (requiredProfile is not { Packages.Count: > 0 })
         {
@@ -297,6 +299,7 @@ public class NetPlayScreen : Screen
                 var result = ModRestartHelper.PrepareRemoteSession(
                     SessionInfoManager.CreateRemoteClientSession(endPoint),
                     requiredProfile,
+                    temporaryRepositories,
                     message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
                 Dispatcher.Dispatch(() =>
                 {
@@ -770,7 +773,7 @@ public class NetPlayScreen : Screen
 
         public ushort MaxCount;
 
-        public string ContentServerUrl = string.Empty;
+        public IReadOnlyList<ContentRepository> TemporaryRepositories = [];
 
         public string Name = string.Empty;
 

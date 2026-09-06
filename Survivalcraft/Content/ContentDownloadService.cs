@@ -20,6 +20,80 @@ public sealed class ContentDownloadException(IReadOnlyList<ContentDownloadFailur
 
 public sealed class ContentDownloadService(ContentServerClientPool pool, IContentPackageCache cache)
 {
+    public async Task<ContentDownloadResult> DownloadExactModAsync(ContentSourceContext context,
+        string modId, string version, string packageHash, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        var cached = cache.Find(packageHash);
+        if (cached is not null)
+        {
+            ValidateCachedIdentity(cached, ContentPackageType.Mod, modId, version, packageHash);
+            return new ContentDownloadResult(cached, null, true, []);
+        }
+
+        context.Configure(pool);
+        var failures = new List<ContentDownloadFailure>();
+        var sources = new List<ContentCatalogSource>();
+        ContentServerModPackage? selectedMetadata = null;
+        foreach (var candidate in context.Candidates)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var sourceId = new ContentSourceId(candidate.ScopeId, candidate.Repository.Id);
+            try
+            {
+                using var lease = pool.Acquire(candidate.ScopeId, candidate.Repository.Id);
+                var metadata = await lease.Client.FindModAsync(modId, version, cancellationToken)
+                    .ConfigureAwait(false);
+                if (metadata is null)
+                {
+                    failures.Add(new ContentDownloadFailure(sourceId, candidate.Repository.Name,
+                        "The repository does not contain the required mod version."));
+                    continue;
+                }
+
+                if (!string.Equals(metadata.PackageHash, packageHash, StringComparison.Ordinal))
+                {
+                    failures.Add(new ContentDownloadFailure(sourceId, candidate.Repository.Name,
+                        "The repository version has a different PackageHash."));
+                    continue;
+                }
+
+                selectedMetadata ??= metadata;
+                sources.Add(new ContentCatalogSource(candidate.ScopeId, candidate.Repository.Id,
+                    candidate.Repository.Name, candidate.Repository.Priority, candidate.IsSession,
+                    modId, version, metadata.DownloadUrl));
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                failures.Add(new ContentDownloadFailure(sourceId, candidate.Repository.Name, exception.Message));
+            }
+        }
+
+        if (sources.Count == 0 || selectedMetadata is null)
+        {
+            throw new ContentDownloadException(failures);
+        }
+
+        var aggregatedVersion = new AggregatedContentVersion(version, packageHash,
+            selectedMetadata.PackageSize, selectedMetadata.FileName, false, sources);
+        var content = new AggregatedContentEntry(ContentPackageType.Mod, modId, modId, null,
+            [aggregatedVersion]);
+        try
+        {
+            var result = await DownloadAsync(context, content, aggregatedVersion, cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
+            return result with { PriorFailures = failures.Concat(result.PriorFailures).ToArray() };
+        }
+        catch (ContentDownloadException exception)
+        {
+            throw new ContentDownloadException(failures.Concat(exception.Failures).ToArray());
+        }
+    }
+
     public async Task<ContentDownloadResult> DownloadAsync(ContentSourceContext context,
         AggregatedContentEntry content, AggregatedContentVersion version, ContentSourceId? explicitSource = null,
         CancellationToken cancellationToken = default)
@@ -95,10 +169,16 @@ public sealed class ContentDownloadService(ContentServerClientPool pool, IConten
     private static void ValidateCachedIdentity(ContentPackageCacheEntry entry, AggregatedContentEntry content,
         AggregatedContentVersion version)
     {
-        if (entry.Type != content.Type ||
-            !string.Equals(entry.Identifier, content.Identifier, StringComparison.Ordinal) ||
-            !string.Equals(entry.Version, version.Version, StringComparison.Ordinal) ||
-            !string.Equals(entry.PackageHash, version.PackageHash, StringComparison.Ordinal))
+        ValidateCachedIdentity(entry, content.Type, content.Identifier, version.Version, version.PackageHash);
+    }
+
+    private static void ValidateCachedIdentity(ContentPackageCacheEntry entry, ContentPackageType type,
+        string identifier, string version, string packageHash)
+    {
+        if (entry.Type != type ||
+            !string.Equals(entry.Identifier, identifier, StringComparison.Ordinal) ||
+            !string.Equals(entry.Version, version, StringComparison.Ordinal) ||
+            !string.Equals(entry.PackageHash, packageHash, StringComparison.Ordinal))
         {
             throw new InvalidDataException("Cached package does not match the requested content identity.");
         }

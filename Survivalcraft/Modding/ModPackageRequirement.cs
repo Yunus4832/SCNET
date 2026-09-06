@@ -6,5 +6,5 @@ public sealed class ModPackageRequirement
 
     public string Version { get; set; } = string.Empty;
 
-    public string? PackageHash { get; set; }
+    public string PackageHash { get; set; } = string.Empty;
 }

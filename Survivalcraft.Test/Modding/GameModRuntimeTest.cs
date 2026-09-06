@@ -225,15 +225,13 @@ public class GameModRuntimeTest
     }
 
     [Fact]
-    public void RuntimeUsesContentServerUrlWhenProfileDoesNotSpecifyRepository()
+    public void RuntimeRequiredProfilePreservesExactHashWithoutRepositoryBinding()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"scnet-runtime-test-{Guid.NewGuid():N}");
-        var previousContentServerUrl = SettingsManager.Current.ContentServerUrl;
         Directory.CreateDirectory(directory);
         try
         {
-            SettingsManager.Current.ContentServerUrl = "https://mods.example/";
-            ImportPackage(directory, """
+            var package = ImportPackage(directory, """
                                      {
                                        "id": "example.addon",
                                        "name": "Addon",
@@ -253,19 +251,19 @@ public class GameModRuntimeTest
                         new ModPackageRequirement
                         {
                             ModId = "example.addon",
-                            Version = "1.0.0"
+                            Version = "1.0.0",
+                            PackageHash = package.PackageHash
                         }
                     ]
                 },
                 directory,
                 ModSide.Server);
 
-            Assert.Equal("https://mods.example", runtime.EffectiveProfile.ContentServerUrl);
-            Assert.Equal("https://mods.example", runtime.CreateServerRequiredProfile()?.ContentServerUrl);
+            var requirement = Assert.Single(runtime.CreateServerRequiredProfile()!.Packages);
+            Assert.Equal(package.PackageHash, requirement.PackageHash);
         }
         finally
         {
-            SettingsManager.Current.ContentServerUrl = previousContentServerUrl;
             Directory.Delete(directory, true);
         }
     }
@@ -307,13 +305,13 @@ public class GameModRuntimeTest
         }
     }
 
-    private static void ImportPackage(
+    private static ContentPackageCacheEntry ImportPackage(
         string directory,
         string manifest,
         IReadOnlyDictionary<string, string>? dataFiles = null)
     {
         using var package = ScpkgTestPackage.Create(manifest, dataFiles);
         var cache = new ContentPackageCache(directory);
-        cache.ImportAsync(package).GetAwaiter().GetResult();
+        return cache.ImportAsync(package).GetAwaiter().GetResult();
     }
 }

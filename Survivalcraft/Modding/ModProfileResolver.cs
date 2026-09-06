@@ -9,28 +9,16 @@ public static class ModProfileResolver
         string localRepositoryPath,
         Action<string>? log = null)
     {
-        profile = profile ?? throw new ArgumentNullException(nameof(profile));
+        ArgumentNullException.ThrowIfNull(profile);
+        ModProfileValidation.Validate(profile);
         Directory.CreateDirectory(localRepositoryPath);
         var repository = new LocalModRepository(localRepositoryPath);
+        var download = CreateDownloadService(localRepositoryPath);
+        var context = ContentSourceContext.Persistent(SettingsManager.Current.ContentRepositories);
         var resolvedSources = new List<ModPackageSource>();
-        using var client = CreateClient(GetContentServerUrl(profile));
-
         foreach (var requirement in profile.Packages)
         {
-            log?.Invoke($"解析模组 {requirement.ModId}@{requirement.Version}");
-            var localEntry = repository.Find(requirement);
-            if (localEntry == null && client != null)
-            {
-                log?.Invoke($"本地缺失 {requirement.ModId}@{requirement.Version}，尝试远程下载");
-                localEntry = DownloadPackage(client, requirement, repository, log);
-            }
-
-            if (localEntry == null)
-            {
-                throw new InvalidOperationException(
-                    $"Required mod '{requirement.ModId}' version '{requirement.Version}' is missing and could not be resolved.");
-            }
-
+            var localEntry = ResolveEntry(requirement, repository, download, context, log, out _);
             resolvedSources.Add(new ModPackageSource(localEntry.FileName, () => File.OpenRead(localEntry.Path)));
         }
 
@@ -42,79 +30,78 @@ public static class ModProfileResolver
         string localRepositoryPath,
         Action<string>? log = null)
     {
-        profile = profile ?? throw new ArgumentNullException(nameof(profile));
+        return EnsurePackagesAvailable(profile, localRepositoryPath,
+            ContentSourceContext.Persistent(SettingsManager.Current.ContentRepositories), log);
+    }
+
+    public static bool EnsurePackagesAvailable(
+        ModProfile profile,
+        string localRepositoryPath,
+        ContentSourceContext context,
+        Action<string>? log = null)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentNullException.ThrowIfNull(context);
+        ModProfileValidation.Validate(profile);
         Directory.CreateDirectory(localRepositoryPath);
         var repository = new LocalModRepository(localRepositoryPath);
-        using var client = CreateClient(GetContentServerUrl(profile));
+        var download = CreateDownloadService(localRepositoryPath);
         var downloadedAny = false;
-
         foreach (var requirement in profile.Packages)
         {
-            log?.Invoke($"检查模组 {requirement.ModId}@{requirement.Version}");
-            var localEntry = repository.Find(requirement);
-            if (localEntry == null && client != null)
-            {
-                log?.Invoke($"本地缺失 {requirement.ModId}@{requirement.Version}，尝试远程下载");
-                localEntry = DownloadPackage(client, requirement, repository, log);
-                downloadedAny |= localEntry != null;
-            }
-
-            if (localEntry == null)
-            {
-                throw new InvalidOperationException(
-                    $"Required mod '{requirement.ModId}' version '{requirement.Version}' is missing and could not be resolved.");
-            }
+            _ = ResolveEntry(requirement, repository, download, context, log, out var downloaded);
+            downloadedAny |= downloaded;
         }
 
         return downloadedAny;
     }
 
-    private static LocalModPackageEntry? DownloadPackage(
-        ContentServerClient client,
-        ModPackageRequirement requirement,
-        LocalModRepository repository,
-        Action<string>? log)
+    private static LocalModPackageEntry ResolveEntry(ModPackageRequirement requirement,
+        LocalModRepository repository, ContentDownloadService download, ContentSourceContext context,
+        Action<string>? log, out bool downloaded)
     {
-        ContentServerModPackage? metadata;
-        try
+        log?.Invoke($"检查模组 {requirement.ModId}@{requirement.Version} ({requirement.PackageHash})");
+        var localEntry = repository.Find(requirement);
+        if (localEntry is not null)
         {
-            metadata = client.FindMod(requirement.ModId, requirement.Version);
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException(
-                $"Failed to query remote repository for '{requirement.ModId}' version '{requirement.Version}': {ex.Message}",
-                ex);
-        }
-
-        if (metadata == null || string.IsNullOrWhiteSpace(metadata.DownloadUrl))
-        {
-            return null;
-        }
-
-        try
-        {
-            var localEntry = client.DownloadMod(metadata, repository);
-            log?.Invoke($"已下载模组 {requirement.ModId}@{requirement.Version}");
+            log?.Invoke($"本地缓存命中 {requirement.ModId}@{requirement.Version}");
+            downloaded = false;
             return localEntry;
         }
-        catch (Exception ex)
+
+        log?.Invoke($"本地缺失 {requirement.ModId}@{requirement.Version}，查询候选内容仓库");
+        try
         {
+            var result = download.DownloadExactModAsync(context, requirement.ModId, requirement.Version,
+                    requirement.PackageHash)
+                .ConfigureAwait(false).GetAwaiter().GetResult();
+            foreach (var failure in result.PriorFailures)
+            {
+                log?.Invoke($"仓库 {failure.RepositoryName} 失败: {failure.Message}");
+            }
+
+            localEntry = repository.Find(requirement)
+                         ?? throw new InvalidDataException("Downloaded package was not found in the local cache.");
+            log?.Invoke($"已下载模组 {requirement.ModId}@{requirement.Version}");
+            downloaded = !result.WasCached;
+            return localEntry;
+        }
+        catch (ContentDownloadException exception)
+        {
+            foreach (var failure in exception.Failures)
+            {
+                log?.Invoke($"仓库 {failure.RepositoryName} 失败: {failure.Message}");
+            }
+
             throw new InvalidOperationException(
-                $"Failed to download '{requirement.ModId}' version '{requirement.Version}': {ex.Message}",
-                ex);
+                $"Required mod '{requirement.ModId}' version '{requirement.Version}' with hash " +
+                $"'{requirement.PackageHash}' is missing from all candidate repositories.", exception);
         }
     }
 
-    private static ContentServerClient? CreateClient(string? serverUrl)
+    private static ContentDownloadService CreateDownloadService(string localRepositoryPath)
     {
-        return string.IsNullOrWhiteSpace(serverUrl) ? null : new ContentServerClient(serverUrl);
-    }
-
-    private static string? GetContentServerUrl(ModProfile profile)
-    {
-        return string.IsNullOrWhiteSpace(profile.ContentServerUrl)
-            ? SettingsManager.Current.ContentServerUrl
-            : profile.ContentServerUrl;
+        return new ContentDownloadService(SettingsManager.ContentClients,
+            new ContentPackageCache(localRepositoryPath));
     }
 }

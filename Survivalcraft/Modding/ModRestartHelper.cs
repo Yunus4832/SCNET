@@ -1,3 +1,5 @@
+using Game.Content;
+
 namespace Game.Modding;
 
 public static class ModRestartHelper
@@ -5,6 +7,7 @@ public static class ModRestartHelper
     public static RemoteModSessionPreparation PrepareRemoteSession(
         SessionInfo remoteSession,
         ModProfile? requiredProfile,
+        IReadOnlyList<ContentRepository> temporaryRepositories,
         Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(remoteSession);
@@ -15,10 +18,22 @@ public static class ModRestartHelper
         }
 
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, requiredProfile);
-        var downloadedAny = ModProfileResolver.EnsurePackagesAvailable(
-            sessionProfile,
-            Storage.GetSystemPath(GamePaths.ContentPackageCache),
-            log);
+        var scopeId = Guid.NewGuid();
+        var context = ContentSourceContext.Session(scopeId, temporaryRepositories,
+            SettingsManager.Current.ContentRepositories);
+        bool downloadedAny;
+        try
+        {
+            downloadedAny = ModProfileResolver.EnsurePackagesAvailable(
+                sessionProfile,
+                Storage.GetSystemPath(GamePaths.ContentPackageCache),
+                context,
+                log);
+        }
+        finally
+        {
+            SettingsManager.ContentClients.RemoveScope(scopeId);
+        }
         if (AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
         {
             return RemoteModSessionPreparation.Ready();
@@ -62,11 +77,11 @@ public static class ModRestartHelper
     private static bool AreEquivalent(ModProfile? left, ModProfile right)
     {
         var leftPackages = (left?.Packages ?? [])
-            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}")
+            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}#{package.PackageHash.Trim()}")
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         var rightPackages = (right.Packages ?? [])
-            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}")
+            .Select(package => $"{package.ModId.Trim()}@{package.Version.Trim()}#{package.PackageHash.Trim()}")
             .OrderBy(value => value, StringComparer.OrdinalIgnoreCase)
             .ToArray();
         return leftPackages.SequenceEqual(rightPackages, StringComparer.OrdinalIgnoreCase);

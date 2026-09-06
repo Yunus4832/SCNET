@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+using System.Text.Json;
 
 using Content.Packaging;
 
@@ -6,6 +6,8 @@ namespace Game.Content;
 
 public sealed class ContentServerClient : IDisposable
 {
+    public const int MaximumJsonResponseBytes = 4 * 1024 * 1024;
+
     private const int _maximumCatalogPages = 100;
     private readonly HttpClient _httpClient;
     private readonly bool _disposeClient;
@@ -26,9 +28,11 @@ public sealed class ContentServerClient : IDisposable
 
     public async Task<ContentServerHealth> CheckHealthAsync(CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient
-            .GetFromJsonAsync<ContentServerResponse<ContentServerHealth>>("api/v1/health", cancellationToken)
-            .ConfigureAwait(false);
+        using var httpResponse = await _httpClient.GetAsync("api/v1/health", HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken).ConfigureAwait(false);
+        httpResponse.EnsureSuccessStatusCode();
+        var response = await ReadJsonAsync<ContentServerResponse<ContentServerHealth>>(httpResponse,
+            cancellationToken).ConfigureAwait(false);
         if (response?.Success != true || response.Data is null ||
             string.IsNullOrWhiteSpace(response.Data.Name) || string.IsNullOrWhiteSpace(response.Data.Version))
         {
@@ -127,26 +131,23 @@ public sealed class ContentServerClient : IDisposable
     private async Task<IReadOnlyList<ContentServerModPackage>> ListModsAsync(CancellationToken cancellationToken)
     {
         var items = new List<ContentServerModPackage>();
-        for (var pageIndex = 1; ; pageIndex++)
+        for (var pageIndex = 1; pageIndex <= _maximumCatalogPages; pageIndex++)
         {
-            var response = await _httpClient
-                .GetFromJsonAsync<ContentServerResponse<ContentServerPage<ContentServerModPackage>>>(
-                    $"api/v1/mods?pageIndex={pageIndex}&pageSize=10", cancellationToken)
-                .ConfigureAwait(false);
-            var page = response?.Data;
-            if (page is null || page.Items.Count == 0)
+            var page = await GetPageAsync<ContentServerModPackage>(
+                $"api/v1/mods?pageIndex={pageIndex}&pageSize=10", cancellationToken).ConfigureAwait(false);
+            if (page.Items.Count == 0)
             {
-                break;
+                return items;
             }
 
             items.AddRange(page.Items);
             if (items.Count >= page.Total)
             {
-                break;
+                return items;
             }
         }
 
-        return items;
+        throw new InvalidDataException("ContentServer mod catalog exceeds the client paging limit.");
     }
 
     public async Task<ContentServerModPackage?> FindModAsync(string modId, string version,
@@ -163,9 +164,8 @@ public sealed class ContentServerClient : IDisposable
         }
 
         response.EnsureSuccessStatusCode();
-        var result = await response.Content
-            .ReadFromJsonAsync<ContentServerResponse<ContentServerModPackage>>(
-                cancellationToken: cancellationToken).ConfigureAwait(false);
+        var result = await ReadJsonAsync<ContentServerResponse<ContentServerModPackage>>(response,
+            cancellationToken).ConfigureAwait(false);
         return result?.Data;
     }
 
@@ -183,14 +183,9 @@ public sealed class ContentServerClient : IDisposable
         using var response = await _httpClient.GetAsync(package.DownloadUrl,
             HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
+        EnsurePackageSize(response);
         await using var content = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        var entry = repository.AddPackage(content);
-        if (!string.Equals(entry.PackageHash, package.PackageHash, StringComparison.OrdinalIgnoreCase))
-        {
-            throw new InvalidDataException("Downloaded package hash does not match ContentServer metadata.");
-        }
-
-        return entry;
+        return repository.AddPackageExact(content, package.ModId, package.Version, package.PackageHash);
     }
 
     public async Task<ContentPackageCacheEntry> DownloadToCacheAsync(
@@ -209,6 +204,7 @@ public sealed class ContentServerClient : IDisposable
         using var response = await _httpClient.GetAsync(item.DownloadUrl,
             HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
         response.EnsureSuccessStatusCode();
+        EnsurePackageSize(response);
         await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
         if (!Enum.TryParse<ContentPackageType>(item.Type, false, out var expectedType) ||
             expectedType.ToString() != item.Type)
@@ -218,6 +214,14 @@ public sealed class ContentServerClient : IDisposable
 
         return await cache.ImportExactAsync(stream, expectedType, item.Identifier, item.Version,
             item.PackageHash, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void EnsurePackageSize(HttpResponseMessage response)
+    {
+        if (response.Content.Headers.ContentLength > ContentPackageCache.MaximumPhysicalBytes)
+        {
+            throw new InvalidDataException("Content package exceeds the client size limit.");
+        }
     }
 
     public void Dispose()
@@ -231,9 +235,11 @@ public sealed class ContentServerClient : IDisposable
     private async Task<ContentServerPageResult<T>> GetPageAsync<T>(string path,
         CancellationToken cancellationToken)
     {
-        var response = await _httpClient
-            .GetFromJsonAsync<ContentServerResponse<ContentServerPage<T>>>(path, cancellationToken)
-            .ConfigureAwait(false);
+        using var httpResponse = await _httpClient.GetAsync(path, HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken).ConfigureAwait(false);
+        httpResponse.EnsureSuccessStatusCode();
+        var response = await ReadJsonAsync<ContentServerResponse<ContentServerPage<T>>>(httpResponse,
+            cancellationToken).ConfigureAwait(false);
         if (response?.Success != true || response.Data is null || response.Data.Items is null ||
             response.Data.Total < 0 || response.Data.PageIndex < 1 || response.Data.PageSize < 1)
         {
@@ -242,6 +248,38 @@ public sealed class ContentServerClient : IDisposable
 
         return new ContentServerPageResult<T>(response.Data.Items, response.Data.Total,
             response.Data.PageIndex, response.Data.PageSize);
+    }
+
+    private static async Task<T?> ReadJsonAsync<T>(HttpResponseMessage response,
+        CancellationToken cancellationToken)
+    {
+        if (response.Content.Headers.ContentLength > MaximumJsonResponseBytes)
+        {
+            throw new InvalidDataException("ContentServer JSON response exceeds the client size limit.");
+        }
+
+        await using var input = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        using var buffer = new MemoryStream();
+        var bytes = new byte[64 * 1024];
+        while (true)
+        {
+            var count = await input.ReadAsync(bytes, cancellationToken).ConfigureAwait(false);
+            if (count == 0)
+            {
+                break;
+            }
+
+            if (buffer.Length + count > MaximumJsonResponseBytes)
+            {
+                throw new InvalidDataException("ContentServer JSON response exceeds the client size limit.");
+            }
+
+            await buffer.WriteAsync(bytes.AsMemory(0, count), cancellationToken).ConfigureAwait(false);
+        }
+
+        buffer.Position = 0;
+        return await JsonSerializer.DeserializeAsync<T>(buffer, JsonSerializerOptions.Web, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private static T RunSync<T>(Func<CancellationToken, Task<T>> action) =>

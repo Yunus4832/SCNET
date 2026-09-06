@@ -403,16 +403,12 @@ public class ModManagementScreen : Screen
 
     private static void AddPackage(ModProfile profile, ModItem mod)
     {
-        if (!string.IsNullOrWhiteSpace(mod.ContentServerUrl))
-        {
-            profile.ContentServerUrl = mod.ContentServerUrl;
-        }
-
         RemovePackage(profile, mod.ModId);
         profile.Packages.Add(new ModPackageRequirement
         {
             ModId = mod.ModId,
-            Version = mod.Version
+            Version = mod.Version,
+            PackageHash = mod.LocalEntry?.PackageHash ?? mod.RemotePackage?.PackageHash ?? string.Empty
         });
     }
 

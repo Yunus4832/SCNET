@@ -35,7 +35,7 @@ public interface IContentPackageCache
 
 public sealed class ContentPackageCache(string directoryPath) : IContentPackageCache
 {
-    private const long _maximumPhysicalBytes = 256L * 1024 * 1024;
+    public const long MaximumPhysicalBytes = 256L * 1024 * 1024;
     private IReadOnlyList<ContentPackageCacheEntry>? _index;
     private string TemporaryDirectory => Path.Combine(directoryPath, ".temp");
 
@@ -110,7 +110,7 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
                 while ((read = await source.ReadAsync(buffer, cancellationToken)) > 0)
                 {
                     total += read;
-                    if (total > _maximumPhysicalBytes)
+                    if (total > MaximumPhysicalBytes)
                     {
                         throw new ContentPackageException("Content package exceeds the cache size limit.");
                     }

@@ -61,19 +61,18 @@ public sealed class GameModRuntime : IDisposable
                 PackageHash = package.PackageHash
             })
             .ToList();
-        var contentServerUrl = ResolveContentServerUrl(EffectiveProfile.ContentServerUrl);
-
-        if (packages.Count == 0 || string.IsNullOrWhiteSpace(contentServerUrl))
+        if (packages.Count == 0)
         {
             return null;
         }
 
-        return new ModProfile
+        var profile = new ModProfile
         {
             Id = "server",
-            ContentServerUrl = contentServerUrl,
             Packages = packages
         };
+        ModProfileValidation.Validate(profile);
+        return profile;
     }
 
     public static GameModRuntime Start(IEnumerable<ModDescriptor>? externalMods = null)
@@ -276,7 +275,6 @@ public sealed class GameModRuntime : IDisposable
             return new ModProfile
             {
                 Id = profile.Id,
-                ContentServerUrl = ResolveContentServerUrl(profile.ContentServerUrl),
                 Packages = profile.Packages
                     .Select(package => new ModPackageRequirement
                     {
@@ -291,29 +289,16 @@ public sealed class GameModRuntime : IDisposable
         return new ModProfile
         {
             Id = "runtime",
-            ContentServerUrl = ResolveContentServerUrl(null),
             Packages = loadedMods
                 .Where(mod => !string.IsNullOrWhiteSpace(mod.PackageHash))
                 .Select(mod => new ModPackageRequirement
                 {
                     ModId = mod.PackageName,
                     Version = mod.Version,
-                    PackageHash = mod.PackageHash
+                    PackageHash = mod.PackageHash!
                 })
                 .ToList()
         };
-    }
-
-    private static string? ResolveContentServerUrl(string? contentServerUrl)
-    {
-        return string.IsNullOrWhiteSpace(contentServerUrl)
-            ? NormalizeContentServerUrlOrNull(SettingsManager.Current.ContentServerUrl)
-            : NormalizeContentServerUrlOrNull(contentServerUrl);
-    }
-
-    private static string? NormalizeContentServerUrlOrNull(string? contentServerUrl)
-    {
-        return string.IsNullOrWhiteSpace(contentServerUrl) ? null : contentServerUrl.Trim().TrimEnd('/');
     }
 
     private static string BuildFingerprint(
