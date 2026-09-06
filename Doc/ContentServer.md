@@ -1,13 +1,13 @@
 # ContentServer
 
 ContentServer 是 SCNET 的独立 ASP.NET Core 内容服务，项目位于 `ContentServer/`，并注册在
-`SCNET.slnx` 的 `06 Content` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询和包下载；
+`SCNET.slnx` 的 `08 Content` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询和包下载；
 玩家身份、联机身份和平台 FilePicker 不属于该服务。
 
-ContentServer 也是游戏客户端唯一的远程内容地址。`ModProfile.ContentServerUrl` 和联机服务器信息可以为
-特定会话声明该地址；未声明时使用 `Settings.ContentServerUrl`。模组解析通过 `/api/v1/mods` 查询精确版本，
-所有类型最终都从 `/api/v1/packages/{sha256}` 流式下载并进入统一 ContentPackageCache。仓库中不再包含独立的
-模组服务或另一套模组存储协议。
+ContentServer 是统一的远程内容协议和部署单元，但一个客户端可以配置多个独立部署作为内容仓库。持久仓库集合保存在客户端
+Settings 中；ModProfile 不保存来源。联机服务器还可以在握手中声明只对本次连接有效的匿名临时候选仓库。所有部署使用相同的
+公共目录、版本历史、精确 Mod 查询和 `/api/v1/packages/{sha256}` 流式下载协议，下载结果进入统一
+ContentPackageCache。仓库中不再包含独立的模组服务或另一套模组存储协议。
 
 ## 分层与依赖方向
 
@@ -160,7 +160,7 @@ ContentServer__DatabasePath
 
 ## 独立 WebUI
 
-`ContentWebUI/` 是注册在 `SCNET.slnx` 的 `06 Content` 逻辑文件夹中的 Vue 3 单页应用。它可以与
+`ContentWebUI/` 是注册在 `SCNET.slnx` 的 `08 Content` 逻辑文件夹中的 Vue 3 单页应用。它可以与
 ContentServer 分别部署，生产构建后的 `runtime-config.json` 配置 API 地址，静态服务器需将未知路由回退到
 `index.html`。WebUI 负责 API Key 的临时缓存和角色导航，不改变 ContentServer 的无账户、无 Cookie 会话模型。
 
@@ -355,9 +355,19 @@ cd Publish/ContentServer && ./ContentServer
 
 ## 游戏客户端
 
-游戏从 `Settings.ContentServerUrl` 读取服务器地址。“在线内容”页面匿名读取目录并下载内容包：
+游戏在 `Settings.xml` 中保存有序的内容仓库集合，每个仓库包含稳定 ID、名称、规范 HTTP(S) 基础地址、启用状态和优先级。
+“内容仓库”页负责增删改、启停、排序和健康检查，不浏览包；删除或禁用仓库不会删除缓存、Profile 或安装资产。
+
+“在线内容”页通过共享 ClientPool 并发读取所有选定仓库，按 `ContentType + Identifier` 聚合目录，提供搜索、类型、仓库和状态
+筛选以及真实分页。相同版本和 PackageHash 合并来源，同版本不同 hash 保持为可见冲突；版本详情读取完整历史并显示最新、
+Profile/当前会话引用、缓存、缺失、大小、来源和部分仓库失败。完全离线时仍以本地缓存作为无来源目录浏览。
 
 - 所有下载先进入 `GamePaths.ContentPackageCache`；Mod 再由现有 profile 和按需加载流程管理；
-- 世界、材质、皮肤和家具包通过 `ContentPackageManager` 安装到相应 `GamePaths`；
+- 默认下载按仓库顺序选择并只在同 hash 来源间回退；用户也可以显式限定一个仓库；
+- Mod 下载只更新缓存，不修改 Profile；世界、材质、皮肤和家具包下载后可显式进入现有安装流程；
 - ContentServer 下载只把原包写入统一缓存；非 Mod 安装后成为与来源脱离的本地资产，不维护来源安装记录；
 - 下架只阻止后续查询和下载，不处理客户端已经下载的内容。
+
+Mod 管理页不访问 ContentServer。它只合并缓存和 Profile/Runtime requirement，缺失项通过完整
+`ModId + Version + PackageHash` 导航到在线内容页。启动补全使用同一个缓存优先下载服务；联机临时仓库优先于持久仓库但不被
+持久化。单仓库部署只是集合中只有一项的普通配置，不存在单地址专用客户端路径。

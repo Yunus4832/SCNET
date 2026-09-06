@@ -23,7 +23,9 @@
 | 项目 | 说明 |
 |------|------|
 | `Survivalcraft/` | 核心游戏逻辑，联机规则、世界、网络、模组都在这里 |
+| `Content.Packaging/` | 位于 Protocol 层的统一 `.scpkg` 协议、校验和 payload codec |
 | `ContentServer/` | 统一 `.scpkg` 内容发布、审核、目录与下载服务 |
+| `ContentWebUI/` | ContentServer 的发布者和管理员 Web 工作台 |
 | `VerificationBlockMod/` | 当前模组运行时的端到端示例模组 |
 | `Survivalcraft.ModTemplates/` | `dotnet new` 模组模板 |
 | `Engine/` | 平台能力层，负责窗口、渲染、音频和输入 |
@@ -60,7 +62,8 @@ dotnet run --project Survivalcraft.Linux/Survivalcraft.Linux.csproj -- --server
 
 ### 模组
 
-当前模组运行时使用统一 `.scpkg` 内容包和 `ModProfile` 控制加载范围。迁移期间包可以来自本地 `Mods` 目录；远程仓库正在按内容管理迁移计划收口到 ContentServer。
+当前模组运行时使用统一 `.scpkg` 内容包和带精确 PackageHash 的 `ModProfile` 控制加载范围。包统一进入内容寻址缓存；
+客户端可以配置多个匿名 ContentServer 仓库，启动补全和在线内容页共用缓存优先、同 hash 来源回退的下载服务。
 
 示例模组构建：
 

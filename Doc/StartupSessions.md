@@ -174,18 +174,19 @@ Starter 会在实例的 `.runtime` 目录登记当前进程的 PID 和启动时�
 - 世界：`<world>/WorldModProfile.xml`
 - 会话：`config:SessionProfiles/<sessionId>.xml`
 
-`ModProfile.xml` 中的 `Package` 只保存：
+`ModProfile.xml` 中的每个 `Package` 保存：
 
 - `ModId`
 - `Version`
+- `PackageHash`（规范的小写 64 位 SHA-256）
 
-`PackageHash` 不进入用户可编辑的 profile 文件。实际加载和联机校验仍会在运行时使用包 hash。
+这三个字段共同构成精确 requirement。Profile 不保存 ContentServer 地址，缺失或非法 hash 不会退化为按版本模糊匹配。
 
 启动完成后，代码应当以 `CurrentModRuntime.Value.EffectiveProfile` 作为当前有效 profile。`SessionProfiles/<sessionId>.xml` 只是启动前的恢复输入，不能在运行期当作“当前已生效模组”的判断依据。
 
-仓库地址解析：
+持久内容仓库保存在实例的 `Settings.xml` 中，由仓库集合统一维护稳定 ID、名称、基础地址、启用状态和顺序。GUI 与 Headless
+启动都先按精确 PackageHash 查询 ContentPackageCache，本地缺失时再使用启用的持久仓库；调用方不区分一个或多个仓库。
 
-1. `ModProfile.ContentServerUrl`
-2. `Settings.ContentServerUrl`
-
-远程服务器下发的 `RequiredModProfile.ContentServerUrl` 优先级最高，客户端不会用本地默认内容服务覆盖它。
+远程联机握手中的 `RequiredModProfile` 只包含 Mod requirement；匿名临时候选仓库作为 `ServerInfoPackage` 的独立字段传输。
+连接准备时临时仓库优先，持久仓库随后回退；临时集合不会写入 Settings、Profile、缓存索引或 pending session。GUI 只有在精确包
+全部准备完成后才创建 pending session 并重启，非法 requirement 或全部来源失败不会留下待恢复状态。

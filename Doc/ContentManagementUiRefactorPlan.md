@@ -456,12 +456,26 @@ Mod 管理中待删除的旧下载入口在阶段 6 收口，最终只保留在�
 
 ### 阶段 7：集成验收、正式文档与清理
 
+实施记录（自动化部分）：正式的 Architecture、ContentServer、Mods、StartupSessions、Headless 和 README 已更新为最终多仓库、
+精确 PackageHash 与 UI 职责模型。全仓非临时计划搜索确认生产代码、语言和正式文档不再包含 `ContentServerUrl`、
+`ContentServerScreen` 或 Mod 管理远程下载路径。单仓库配置新增测试，证明仍通过相同默认下载服务工作。协议 39 项、
+ContentServer 1 项和游戏 343 项测试通过；其中 Profile 等价比较已统一纳入 PackageHash，防止同版本不同包被误判为无需
+重启。Linux、Windows 构建零警告，Android 构建成功并保留 Silk.NET SDL 的两条既有
+Android 16 16 KB page-size 警告。Linux Headless 已实际到达 readiness，执行 help/permission/time/stop 并正常保存退出，
+临时实例已清理。
+
+待人工设备验收：当前 Linux 执行环境没有视频设备，GUI 在页面加载前由 SDL 报告 `No available video device`；ADB 当前没有
+连接设备，且此环境不能运行 Windows GUI。因此 Windows、Linux、Android 上的仓库增删改/测试、在线筛选与版本详情、下载与
+返回刷新、Mod 缺失定位，以及 GUI 联机/本地启动补全仍保持未验收。三个平台还需分别复核 FilePicker 的打开、保存和取消；
+Android 需同时观察 SAF、触控和生命周期，Windows/Linux 需观察原生对话框或 portal。完成这些人工项前不删除两份临时计划，
+README 继续保留其入口。
+
 - [ ] 验证 Windows、Linux、Android 的仓库管理、在线目录、版本详情、下载、返回刷新和 Mod 缺失定位。
 - [ ] 验证 GUI 与 Headless 启动自动补全，多仓库回退和完全离线本地命中。
-- [ ] 验证 ContentServer 单仓库部署仍可作为只有一个仓库的普通配置工作，但不保留单地址专用代码路径。
-- [ ] 更新 `Doc/Architecture.md`、`Doc/ContentServer.md`、`Doc/Mods.md`、`Doc/StartupSessions.md` 和相关 UI 文档。
-- [ ] 全仓搜索并清理单服务器 UI、`ContentServerUrl`、Mod 远程下载按钮和旧职责描述。
-- [ ] 对照上一期计划复核全部门禁；记录必须由人工设备验证的项目。
+- [x] 验证 ContentServer 单仓库部署仍可作为只有一个仓库的普通配置工作，但不保留单地址专用代码路径。
+- [x] 更新 `Doc/Architecture.md`、`Doc/ContentServer.md`、`Doc/Mods.md`、`Doc/StartupSessions.md` 和相关 UI 文档。
+- [x] 全仓搜索并清理单服务器 UI、`ContentServerUrl`、Mod 远程下载按钮和旧职责描述。
+- [x] 对照上一期计划复核全部门禁；记录必须由人工设备验证的项目。
 
 门禁：本计划与上一期计划全部验收项完成，正式文档准确描述最终行为，才允许删除两份临时计划和 README 入口。
 

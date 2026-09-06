@@ -565,6 +565,11 @@ Data/
 
 ## 最终验收与计划删除条件
 
+2026-09-07 复核：协议、缓存、安装、ContentServer、UI 迁移、旧实现删除、正式文档、跨平台构建和 Linux Headless smoke
+均已有自动化证据；Windows、Linux、Android 三个平台的 FilePicker 真实打开/保存/取消，以及补充计划所列内容管理 GUI 流程仍需
+人工设备验收。当前 Linux 执行环境没有视频设备，ADB 没有连接设备，也不能运行 Windows GUI。因此下列第 2、12 项尚未满足，
+本计划与 UI 补充计划及其 README 入口继续保留。
+
 本文档只有在以下条件全部满足并经人工确认后才能删除：
 
 1. 统一内容包格式、公共/类型元数据、PackageHash 算法以及五类 payload 已形成正式协议和测试向量。

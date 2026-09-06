@@ -183,18 +183,18 @@ Headless 启动时：
 
 ## 内容服务
 
-模组下载地址按以下顺序解析：
+Headless 与 GUI 使用相同的 `ContentSourceContext` 和统一下载服务。每个实例在 `Settings.xml` 中维护有序的持久内容仓库集合；
+启动先按 Profile 的 `ModId + Version + PackageHash` 查询 ContentPackageCache，只有精确包缺失时才按启用仓库顺序查询和下载。
+首选来源失败后，只会回退到声明同一 PackageHash 的其他来源。
 
-1. 当前有效 `ModProfile.ContentServerUrl`
-2. `Settings.ContentServerUrl`
-
-如果两者都为空，只能使用本地已经存在的模组包。
+Profile 不保存仓库地址。未配置可用仓库时，只要所有 requirement 已在本地缓存，Headless 仍可完全离线启动；否则启动会返回
+包含缺失精确身份和来源失败的诊断错误。Headless 不持有联机客户端接收的临时仓库作用域。
 
 ## 运行时行为
 
 Headless 启动后会：
 
-- 初始化设置、内容、包管理和本地模组导入
+- 初始化设置、内容和统一包缓存
 - 解析启动会话和有效模组 profile
 - 下载缺失的 required mods
 - 启动服务端侧模组 runtime

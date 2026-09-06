@@ -39,9 +39,13 @@ payload/assets/<mod-id>/**
 
 路径：`GamePaths.ContentPackageCache`
 
-统一缓存按 PackageHash 存储所有类型的 `.scpkg`。Mod 运行时通过 `LocalModRepository` 查询适配器筛选 `type = Mod`，再查找匹配的 `ModId + Version`。
+统一缓存按 PackageHash 存储所有类型的 `.scpkg`。Mod 运行时通过 `LocalModRepository` 查询适配器筛选
+`type = Mod`，再查找匹配的 `ModId + Version + PackageHash`。
 
-Mod 管理界面的导入只刷新缓存列表，不自动加入全局或世界 Profile；启用仍是独立操作。导出通过 FilePicker 保存目标流原样复制缓存 `.scpkg`，不会重新封装、改变 PackageHash 或登记外部源路径。
+Mod 管理界面以缓存、全局 Profile、全部世界 Profile 和当前 Runtime 的精确并集显示条目，因此 Profile 已引用但尚未缓存的
+版本也会显示为缺失。同版本不同 hash 是两个独立条目。导入只刷新缓存，不自动修改 Profile；导出通过 FilePicker 原样复制
+缓存 `.scpkg`，不会重新封装、改变 PackageHash 或登记外部源路径。缺失条目的“在仓库中查找”只导航到统一在线内容页的精确
+版本筛选，实际下载仍由在线内容页完成。
 
 ### ModProfile
 
@@ -50,14 +54,16 @@ Mod 管理界面的导入只刷新缓存列表，不自动加入全局或世界 
 用户可编辑的 XML 只保存：
 
 ```xml
-<ModProfile Id="default" ContentServerUrl="http://example.com:9527">
+<ModProfile Id="default">
   <Packages>
-    <Package ModId="verification.block" Version="1.0.0" />
+    <Package ModId="verification.block" Version="1.0.0"
+             PackageHash="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" />
   </Packages>
 </ModProfile>
 ```
 
-`PackageHash` 不写入用户配置。hash 仍然会在运行时用于缓存定位、联机校验和服务器 required profile。
+每个 requirement 必须同时包含 `ModId`、规范 SemVer `Version` 和小写 64 位 SHA-256 `PackageHash`。Profile 不保存仓库地址；
+缺少 hash、hash 非规范或同一 ModId 出现互相冲突的 requirement 都会在加载前被拒绝。
 
 ## Profile 位置
 
@@ -73,16 +79,16 @@ Mod 管理界面的导入只刷新缓存列表，不自动加入全局或世界 
 
 会话 profile 优先级最高，通常由进入 world 或远程联机前的重启流程生成。启动完成后，当前已生效的模组组合保存在 `CurrentModRuntime.Value.EffectiveProfile` 中。
 
-## 内容服务地址
+## 内容仓库
 
-ContentServer 用于按 `ModId + Version` 查询和下载缺失包。
+ContentServer 是匿名目录和包分发服务。客户端可以在“内容 → 内容仓库”中维护多个持久仓库；每项具有稳定 ID、名称、
+HTTP(S) 基础地址、启用状态和顺序。Profile 不关心仓库数量或地址。
 
-解析顺序：
+统一下载流程先按 PackageHash 查询本地缓存。本地缺失时，默认按仓库顺序选择声明同一 hash 的来源；某个来源失败后只会回退到
+同样声明该 hash 的其他来源。在线内容页也可以显式限定一个来源，此时失败不会隐式切换仓库。
 
-1. 当前有效 `ModProfile.ContentServerUrl`
-2. `Settings.ContentServerUrl`
-
-远程服务器下发的 `RequiredModProfile.ContentServerUrl` 优先级最高。客户端连接远程服务器时，不会用本地默认内容服务覆盖服务器声明的地址。
+联机服务器可在握手中下发匿名临时候选仓库。它们只在本次连接准备作用域内优先使用，失败后可以回退到持久仓库；不会写入
+Settings、Profile、缓存索引或 pending session。公开与私有部署仓库使用相同匿名查询和下载协议，不存在认证分叉。
 
 ## 本地世界加载流程
 
@@ -90,13 +96,13 @@ GUI 启动时：
 
 1. 解析当前启动会话对应的有效 `ModProfile`
 2. 从统一 ContentPackageCache 查询所需包
-3. 如果 profile 中的包本地缺失，尝试从仓库下载到统一缓存
+3. 如果 profile 中的精确包本地缺失，按持久仓库集合下载到统一缓存
 4. 使用解析到的包启动模组 runtime
 
 之后玩家进入本地 world 时：
 
 1. 按目标 world 解析有效 `ModProfile`
-2. 下载缺失的 required mods
+2. 按完整 requirement 从缓存或持久仓库补全缺失 Mod
 3. 比较目标 profile 和 `CurrentModRuntime.Value.EffectiveProfile`
 4. 如果相同，直接进入 world
 5. 如果不同，创建临时 session profile 并请求重启
@@ -107,23 +113,20 @@ Headless 启动时没有 GUI 中途切换流程。它会直接解析启动 sessi
 
 ## 联机加载流程
 
-服务器启动 runtime 后，会根据当前有效 profile 生成 `RequiredModProfile` 并放入服务器信息包。
+服务器启动 runtime 后，会根据实际有效 Profile 和已加载包生成 `RequiredModProfile`，其中每项都包含
+`ModId + Version + PackageHash`。服务器信息包把临时候选仓库集合放在 Profile 之外。
 
 客户端连接时：
 
 1. 读取服务器下发的 required profile
 2. 检查本地缓存是否已有 required mods
-3. 缺失时从服务器声明的仓库下载
-4. 如果 `CurrentModRuntime.Value.EffectiveProfile` 已经是同一组 `ModId + Version`，直接继续连接
+3. 缺失时依次使用临时候选仓库和持久仓库补全同一 PackageHash
+4. 如果 `CurrentModRuntime.Value.EffectiveProfile` 已经是同一组精确 requirement，直接继续连接
 5. 否则创建临时 session profile 并请求重启
 
-联机校验使用运行时计算的 mod data hash。客户端和服务端有效模组不同会被拒绝。
-
-## 默认内容服务器
-
-`Settings.ContentServerUrl` 是可部署内容服务的基础地址。模组管理界面和没有显式内容服务地址的 profile 使用它查询并下载模组包；模组只是统一内容 API 的一种资源类型。
-
-它不是“当前联机服务器地址”。服务器对客户端声明的仓库地址来自当前有效 profile，profile 为空时才 fallback 到默认仓库。
+非法、重复或互相冲突的 requirement 会在下载、创建 pending session 或重启前被拒绝。缓存准备完成后才会创建远程 pending
+session；重启后即使仓库离线，也能从内容寻址缓存恢复。联机校验还会比较运行时计算的 mod data hash，客户端和服务端有效模组
+不同会被拒绝。World、材质、皮肤和家具包不进入 RequiredModProfile，也不会在联机准备阶段自动安装。
 
 ## 示例模组
 
