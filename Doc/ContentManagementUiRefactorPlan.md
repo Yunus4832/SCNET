@@ -459,7 +459,7 @@ Mod 管理中待删除的旧下载入口在阶段 6 收口，最终只保留在�
 实施记录（自动化部分）：正式的 Architecture、ContentServer、Mods、StartupSessions、Headless 和 README 已更新为最终多仓库、
 精确 PackageHash 与 UI 职责模型。全仓非临时计划搜索确认生产代码、语言和正式文档不再包含 `ContentServerUrl`、
 `ContentServerScreen` 或 Mod 管理远程下载路径。单仓库配置新增测试，证明仍通过相同默认下载服务工作。协议 39 项、
-ContentServer 1 项和游戏 343 项测试通过；其中 Profile 等价比较已统一纳入 PackageHash，防止同版本不同包被误判为无需
+ContentServer 1 项和游戏 344 项测试通过；其中 Profile 等价比较已统一纳入 PackageHash，防止同版本不同包被误判为无需
 重启。Linux、Windows 构建零警告，Android 构建成功并保留 Silk.NET SDL 的两条既有
 Android 16 16 KB page-size 警告。Linux Headless 已实际到达 readiness，执行 help/permission/time/stop 并正常保存退出，
 临时实例已清理。
@@ -470,11 +470,16 @@ Android 16 16 KB page-size 警告。Linux Headless 已实际到达 readiness，�
 直接 `adb install` 普通 Debug APK 会受 Fast Deployment 覆盖目录影响，因此本次使用
 `Survivalcraft.Android.X86` 配合 `EmbedAssembliesIntoApk=true` 构建验证。
 
+进一步使用隔离的真实 ContentServer 发布 `example.golden@1.0.0`，AVD 已实际完成匿名目录读取、版本详情、精确 hash 下载、
+下载后返回 Mod 管理页刷新，以及服务器关闭后的离线目录缓存浏览。空缓存 Profile 启动首次暴露出下载服务与
+`LocalModRepository` 使用不同缓存实例时索引未刷新的偏差；解析器在下载后显式失效索引，并增加“外部缓存写入后刷新”回归
+测试。修复后的空缓存在线启动会自动补全精确包并进入主菜单，随后关闭 ContentServer 再次启动仍能完全从缓存命中。
+
 待人工设备验收：当前 Linux 执行环境没有视频设备，GUI 在页面加载前由 SDL 报告 `No available video device`，dummy 后端也不
-提供 OpenGL；此环境不能运行 Windows GUI。Android 仍缺少真实 ContentServer 下的目录、下载和返回刷新，以及联机/本地启动
-补全场景。因此跨 Windows、Linux、Android 的完整矩阵仍保持未验收。Windows/Linux 还需复核原生对话框或 portal 的打开、
-保存和取消；Android 的真实设备、文件导入选择及连接生命周期仍需复核。完成这些人工项前不删除两份临时计划，README 继续
-保留其入口。
+提供 OpenGL；此环境不能运行 Windows GUI。因此跨 Windows、Linux、Android 的完整矩阵仍保持未验收。Windows/Linux 还需
+复核原生对话框或 portal 的打开、保存和取消，并完成内容 UI 流程；Android 还需在真实设备复核文件导入选择、连接生命周期、
+多仓库回退和联机启动补全。Headless 的实际多仓库回退及离线启动也尚需完成运行验收。完成这些人工项前不删除两份临时计划，
+README 继续保留其入口。
 
 - [ ] 验证 Windows、Linux、Android 的仓库管理、在线目录、版本详情、下载、返回刷新和 Mod 缺失定位。
 - [ ] 验证 GUI 与 Headless 启动自动补全，多仓库回退和完全离线本地命中。
