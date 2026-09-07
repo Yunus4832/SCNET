@@ -84,18 +84,32 @@ For evidence contents and reporting, read [references/evidence.md](references/ev
 
 ## GUI automation
 
-When a GUI instance enables the HTTP command service, discover `game:automation/ui/*` with
-`GET /commands`. Call `context/get`, select an exact returned widget selector, invoke `tap`, then
-poll `context/get` until the expected Screen appears. Use `screenshot` to preserve rendered UI
-evidence. These commands simulate Engine input; do not replace them with direct Screen switches or
-Widget state mutation. For targets whose returned `actions` include `scroll` or `swipe`, use
-`scroll` to inject a mouse-wheel delta, or `swipe` to inject a multi-frame touch gesture. Swipe
-`deltaX` and `deltaY` describe finger movement from the target center (negative `deltaY` swipes up),
-and `durationFrames` is optional. They do not provide 3D player control.
+For an automated GUI run, use a dedicated `--instance`, start the game in the user's existing
+desktop session when one is available, and enable the HTTP command service. `--instance` provides
+game-data and process isolation; a separate desktop or display server is not an isolation mechanism
+for SCNET test data. Keeping the normal desktop visible also allows the user to observe or take over
+an interactive debugging session.
+
+Discover `game:automation/ui/*` with `GET /commands`. Call `context/get`, select an exact returned
+widget selector, invoke `tap`, then poll `context/get` until the expected Screen appears. Use
+`screenshot` to preserve rendered UI evidence. These commands simulate Engine input; do not replace
+them with direct Screen switches, Widget state mutation, or operating-system input injection. For
+targets whose returned `actions` include `scroll` or `swipe`, use `scroll` to inject a mouse-wheel
+delta, or `swipe` to inject a multi-frame touch gesture. Swipe `deltaX` and `deltaY` describe finger
+movement from the target center (negative `deltaY` swipes up), and `durationFrames` is optional.
+They do not provide 3D player control.
 
 Use `game:automation/input/mouse/move` for relative mouse movement such as changing the in-game
 view direction. Its signed `deltaX` and `deltaY` are merged with physical mouse movement for one
 Engine frame. This is raw input simulation, not a direct camera-state mutation.
+
+Do not create Xvfb, a nested or virtual desktop, or use tools such as `wtype`, `xdotool`, or XTest
+when the existing desktop and built-in automation commands can perform the test. Such tools are a
+fallback only when no usable desktop session exists or a required interaction is absent from the
+built-in command surface. Before using a fallback, identify the missing capability and confirm that
+the fallback still satisfies the test's observation and interaction requirements. Do not use a
+hidden or virtual display for a session the user expects to watch or control unless the user
+explicitly requests that environment.
 
 ## HTTP command host
 
