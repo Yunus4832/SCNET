@@ -475,11 +475,15 @@ Android 16 16 KB page-size 警告。Linux Headless 已实际到达 readiness，�
 `LocalModRepository` 使用不同缓存实例时索引未刷新的偏差；解析器在下载后显式失效索引，并增加“外部缓存写入后刷新”回归
 测试。修复后的空缓存在线启动会自动补全精确包并进入主菜单，随后关闭 ContentServer 再次启动仍能完全从缓存命中。
 
+Linux Headless 使用独立实例补充了相同运行矩阵：设置中优先仓库指向不可达端口、备用仓库指向隔离 ContentServer，空缓存启动
+先记录首仓连接失败，再从备用仓库下载精确包并到达 readiness；正常停止 ContentServer 后，以相同 Profile 重启会直接两次命中
+本地缓存并再次到达 readiness，全程不访问仓库。该验证也确认 GUI 与 Headless 都使用修复后的共享 Profile 补全路径。
+
 待人工设备验收：当前 Linux 执行环境没有视频设备，GUI 在页面加载前由 SDL 报告 `No available video device`，dummy 后端也不
 提供 OpenGL；此环境不能运行 Windows GUI。因此跨 Windows、Linux、Android 的完整矩阵仍保持未验收。Windows/Linux 还需
 复核原生对话框或 portal 的打开、保存和取消，并完成内容 UI 流程；Android 还需在真实设备复核文件导入选择、连接生命周期、
-多仓库回退和联机启动补全。Headless 的实际多仓库回退及离线启动也尚需完成运行验收。完成这些人工项前不删除两份临时计划，
-README 继续保留其入口。
+多仓库回退和联机启动补全。Headless 在 Linux 的持久多仓库回退及离线启动已完成，其他目标平台与联机临时来源矩阵仍需复核。
+完成这些人工项前不删除两份临时计划，README 继续保留其入口。
 
 - [ ] 验证 Windows、Linux、Android 的仓库管理、在线目录、版本详情、下载、返回刷新和 Mod 缺失定位。
 - [ ] 验证 GUI 与 Headless 启动自动补全，多仓库回退和完全离线本地命中。

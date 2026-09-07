@@ -569,7 +569,8 @@ Data/
 均已有自动化证据。Android x86 AVD 已实际验证 SAF 打开、取消、创建保存目标和缓存包导出，并使用隔离的真实 ContentServer
 完成匿名目录、版本、下载、返回刷新、空缓存 Profile 启动补全和服务器关闭后的完全离线缓存启动；该流程暴露并修复了下载后
 `LocalModRepository` 索引未刷新的偏差。真实设备的文件导入选择与连接生命周期仍未覆盖。Linux 当前没有视频/OpenGL 后端，
-也不能运行 Windows GUI，两个桌面平台的 FilePicker 和内容管理流程仍需人工验收，多仓库及 Headless 运行矩阵也未全部完成。
+也不能运行 Windows GUI，两个桌面平台的 FilePicker 和内容管理流程仍需人工验收。Linux Headless 已实际验证首仓失败后从备用
+ContentServer 下载，以及停服后的精确缓存启动；其他平台与联机临时来源运行矩阵尚未全部完成。
 因此下列第 2、12 项尚未满足，本计划与 UI 补充计划及其 README 入口继续保留。
 
 本文档只有在以下条件全部满足并经人工确认后才能删除：
