@@ -69,7 +69,7 @@
 
 `--window-mode` 和 `--window-size` 只在 GUI 模式生效；Headless 会忽略它们，也不会因 `--save` 将其覆盖值持久化。
 
-`--connect`、`--host`、`--player`、`--game-mode` 和端口覆盖不写入 `RunningSetting.xml`。HTTP 命令宿主的实例默认开关、端口和 access token 保存在 `Settings.xml`，其中开关默认关闭；对应启动参数由 `StartupRequest` 解析后合并进本次有效 `SessionInfo`，具有更高优先级，并在使用 `--save` 时随命名 session 写入 `SessionInfo.xml`。`.runtime` 目录只用于 Starter 的实例进程存活登记，不承载 HTTP 配置或凭证。`--host` 是强制调试参数：新世界直接创建为联机世界，已有非联机世界则更新并持久化其 `WorldSettings.RunServer=true`，之后统一走正常联机世界启动流程。未传 `--player` 时保持现有角色界面流程。`--connect` 与 `--host` 同时出现时按远程连接处理并忽略 `--host`。
+`--connect`、`--host`、`--player`、`--game-mode` 和端口覆盖不写入 `RunningSetting.xml`。玩家名和 HTTP 命令覆盖由 `StartupRequest` 解析后合并进本次有效 `SessionInfo`，以便模组准备触发进程重启时完整恢复；使用 `--save` 时也会随命名 session 写入 `SessionInfo.xml`。HTTP 命令宿主的实例默认开关、端口和 access token 保存在 `Settings.xml`，其中开关默认关闭；session 覆盖具有更高优先级。`.runtime` 目录只用于 Starter 的实例进程存活登记，不承载 HTTP 配置或凭证。`--host` 是强制调试参数：新世界直接创建为联机世界，已有非联机世界则更新并持久化其 `WorldSettings.RunServer=true`，之后统一走正常联机世界启动流程。未传 `--player` 时保持现有角色界面流程。`--connect` 与 `--host` 同时出现时按远程连接处理并忽略 `--host`。
 
 `--save` 会保存 `RunningSetting` 中适用的入口设置，并把 `StartupContext.Session` 保存到 `SessionInfo.xml`。因此 `--connect`、端口和 `--game-mode` 默认只存在于 `StartupRequest` 和本次有效 session 中，与 `--save` 同用时才成为具名 session 的后续默认值。
 
@@ -116,6 +116,7 @@ Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 实现通过会话 D
 - `ServerHost`
 - `ServerPort`
 - `BroadcastPort`
+- `PlayerName`（可选的自动进入角色名）
 
 `HttpCommandEnabled`、`HttpCommandPort` 和 `HttpCommandAccessToken` 是可选的 session 覆盖。未设置时回退到当前实例的 `Settings.xml`；使用 `--save` 保存后，可以通过同名 session 恢复。
 
@@ -148,7 +149,8 @@ Headless 使用 `World` session。远程联机重启使用 `RemoteServer` sessio
 1. `PendingSessionId` 被解析为 `StartupContext.Session`
 2. 启动流程读取对应 session 和 session profile
 3. session profile 被解析成运行时有效 profile，并用于初始化 `GameModRuntime`
-4. session 被消费后清理 pending 状态
+4. session 中的玩家名和 HTTP 命令覆盖随远程目标一起恢复
+5. session 被消费后清理 pending 状态
 
 Headless 不使用这个机制准备模组。它在启动阶段直接解析 profile、下载缺失包并启动 runtime。
 

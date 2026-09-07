@@ -266,17 +266,44 @@ public class NetPlayScreen : Screen
 
         if (CommonLib.Resolve(found.IP, out var ep))
         {
-            if (connect.TemporaryRepositories.Count > 0)
+            if (found.TemporaryRepositories.Count > 0)
             {
-                Log.Information($"服务器声明了 {connect.TemporaryRepositories.Count} 个临时内容仓库");
+                Log.Information($"服务器声明了 {found.TemporaryRepositories.Count} 个临时内容仓库");
             }
 
-            PrepareRemoteSessionAndConnect(ep!, connect.RequiredModProfile, connect.TemporaryRepositories);
+            PrepareRemoteSessionAndConnect(ep!, found.RequiredModProfile, found.TemporaryRepositories);
         }
         else
         {
             DialogsManager.Alert("连接服务器失败");
         }
+    }
+
+    public void ConnectToRemoteSession(IPEndPoint endPoint)
+    {
+        var connect = new Connect
+        {
+            IP = endPoint.ToString(),
+            Name = endPoint.ToString(),
+            State = ConnectState.Checking
+        };
+        var busyDialog = new BusyDialog("连接服务器", "正在获取服务器信息...");
+        DialogsManager.ShowDialog(null, busyDialog);
+        Task.Run(() =>
+        {
+            CheckConnect(connect, 2000);
+            Dispatcher.Dispatch(() =>
+            {
+                DialogsManager.HideDialog(busyDialog);
+                if (connect.State is not ConnectState.Available)
+                {
+                    DialogsManager.Alert("连接服务器失败");
+                    return;
+                }
+
+                ConnectTo(connect);
+            });
+        });
     }
 
     private void PrepareRemoteSessionAndConnect(
@@ -467,7 +494,7 @@ public class NetPlayScreen : Screen
         }
     }
 
-    private static void CheckConnect(Connect c)
+    private static void CheckConnect(Connect c, int timeoutMilliseconds = 500)
     {
         var listener = new EventBasedNetListener();
         var net = new NetManager(listener) { ReuseAddress = true };
@@ -483,19 +510,18 @@ public class NetPlayScreen : Screen
                 var s = Stopwatch.StartNew();
                 listener.NetworkReceiveUnconnectedEvent += (ep, r, _) =>
                 {
-                    if (!ep.Address.Equals(cep.Address))
+                    if (!ep.Equals(cep))
                     {
                         return;
                     }
 
                     var serverInfoPackage =
                         PackageManager.DecodePackage<ServerInfoPackage>(null, r, null, null, ep);
-                    serverInfoPackage.Ping = (int)s.ElapsedMilliseconds;
-                    PackageDispatcher.Handle(serverInfoPackage, null, false);
+                    ApplyServerInfo(c, serverInfoPackage, s.ElapsedMilliseconds);
                     received = true;
                 };
                 NetNode.SendWriterFromPackage(net, [new ServerInfoPackage(true)], cep);
-                while (s.ElapsedMilliseconds < 500 && !received)
+                while (s.ElapsedMilliseconds < timeoutMilliseconds && !received)
                 {
                     net.PollEvents();
                     Thread.Sleep(1);
@@ -518,6 +544,21 @@ public class NetPlayScreen : Screen
         {
             net.Stop();
         }
+    }
+
+    private static void ApplyServerInfo(Connect connect, ServerInfoPackage package, long elapsedMilliseconds)
+    {
+        connect.State = ConnectState.Available;
+        connect.GameMode = package.GameMode;
+        connect.MaxCount = package.MaxPlayerCount;
+        connect.PlayerCount = package.ClientCount;
+        connect.UsedTime = elapsedMilliseconds;
+        connect.Version = package.Version;
+        connect.TimeOfDay = package.TimeOfDay;
+        connect.TemporaryRepositories = package.TemporaryRepositories;
+        connect.RequiredModProfile = package.RequiredModProfile;
+        connect.Season = package.Season;
+        connect.TimeOfSeason = package.TimeOfSeason;
     }
 
     private void AddIntoCheckList(Connect connect)

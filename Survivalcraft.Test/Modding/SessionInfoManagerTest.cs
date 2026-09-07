@@ -78,6 +78,53 @@ public sealed class SessionInfoManagerTest : IDisposable
     }
 
     [Fact]
+    public void SaveRoundTripsRecoverableStartupOverrides()
+    {
+        var sessionInfo = new SessionInfo
+        {
+            SessionId = Guid.NewGuid().ToString("N"),
+            Name = "client",
+            PlayerName = " DebugPlayer ",
+            HttpCommandEnabled = true,
+            HttpCommandPort = 30989,
+            HttpCommandAccessToken = "access-token"
+        };
+
+        SessionInfoManager.Save(sessionInfo);
+
+        var reloaded = SessionInfoManager.Load(sessionInfo.SessionId);
+        Assert.Equal("DebugPlayer", reloaded.PlayerName);
+        Assert.True(reloaded.HttpCommandEnabled);
+        Assert.Equal(30989, reloaded.HttpCommandPort);
+        Assert.Equal("access-token", reloaded.HttpCommandAccessToken);
+    }
+
+    [Fact]
+    public void CreateRemoteClientSessionPreservesEffectiveTransientOverrides()
+    {
+        var startup = StartupManager.Load([
+            "--gui",
+            "--session", "client",
+            "--player", "DebugPlayer",
+            "--http-command",
+            "--http-command-port", "30989",
+            "--http-command-access-token", "access-token"
+        ]);
+
+        var restartSession = SessionInfoManager.CreateRemoteClientSession(
+            new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 30987));
+
+        Assert.Equal(startup.Session.SessionId, restartSession.SessionId);
+        Assert.Equal(SessionTarget.RemoteServer, restartSession.Target);
+        Assert.Equal("127.0.0.1", restartSession.ServerHost);
+        Assert.Equal(30987, restartSession.ServerPort);
+        Assert.Equal("DebugPlayer", restartSession.PlayerName);
+        Assert.True(restartSession.HttpCommandEnabled);
+        Assert.Equal(30989, restartSession.HttpCommandPort);
+        Assert.Equal("access-token", restartSession.HttpCommandAccessToken);
+    }
+
+    [Fact]
     public void LoadByNameFindsNamedSession()
     {
         SessionInfoManager.Save(new SessionInfo

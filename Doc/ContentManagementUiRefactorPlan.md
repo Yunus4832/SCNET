@@ -479,10 +479,17 @@ Linux Headless 使用独立实例补充了相同运行矩阵：设置中优先�
 先记录首仓连接失败，再从备用仓库下载精确包并到达 readiness；正常停止 ContentServer 后，以相同 Profile 重启会直接两次命中
 本地缓存并再次到达 readiness，全程不访问仓库。该验证也确认 GUI 与 Headless 都使用修复后的共享 Profile 补全路径。
 
-待人工设备验收：当前 Linux 执行环境没有视频设备，GUI 在页面加载前由 SDL 报告 `No available video device`，dummy 后端也不
-提供 OpenGL；此环境不能运行 Windows GUI。因此跨 Windows、Linux、Android 的完整矩阵仍保持未验收。Windows/Linux 还需
-复核原生对话框或 portal 的打开、保存和取消，并完成内容 UI 流程；Android 还需在真实设备复核文件导入选择、连接生命周期、
-多仓库回退和联机启动补全。Headless 在 Linux 的持久多仓库回退及离线启动已完成，其他目标平台与联机临时来源矩阵仍需复核。
+Linux 真实 GUI 客户端与 Headless 服务端进一步完成了联机协议端到端验证：服务端声明精确
+`verification.block@1.0.0` PackageHash 和匿名临时仓库，空缓存客户端先获取 ServerInfo、下载匹配包并创建 pending session。
+下载完成后关闭 ContentServer，客户端仍从本地缓存命中并完成进程重启；重启后的玩家名和 HTTP 自动化 session 覆盖均恢复。
+服务端接受匹配 Mod hash，连接依次完成 Bootstrap、初始世界快照和 Live，客户端进入 Game 且 `ProtocolClient` 实际加入世界。
+同一测试前置运行也确认缺少 Mod hash 的连接会被服务端拒绝。该验证修正了远程 startup 直接跳过 ServerInfo，以及 pending session
+从持久文件重建导致瞬时玩家名和 HTTP 覆盖丢失的两处偏差，并增加 session 序列化与恢复测试。
+
+待人工设备验收：Linux GUI 已在实际桌面通过内置 HTTP UI 自动化完成上述联机流程，但页面布局和 FilePicker 由人工验收；当前
+环境不能运行 Windows GUI。因此跨 Windows、Linux、Android 的完整矩阵仍保持未验收。Windows/Linux 还需复核原生对话框或
+portal 的打开、保存和取消，并完成人工内容 UI 流程；Android 还需在真实设备复核文件导入选择、连接生命周期、多仓库回退和
+联机启动补全。Headless 在 Linux 的持久多仓库回退、离线启动以及真实 GUI 联机临时来源补全已完成，其他目标平台仍需复核。
 完成这些人工项前不删除两份临时计划，README 继续保留其入口。
 
 - [ ] 验证 Windows、Linux、Android 的仓库管理、在线目录、版本详情、下载、返回刷新和 Mod 缺失定位。

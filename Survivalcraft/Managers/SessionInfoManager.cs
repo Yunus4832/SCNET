@@ -156,8 +156,7 @@ public static class SessionInfoManager
 
     public static SessionInfo CreateRemoteClientSession(IPEndPoint endPoint)
     {
-        var sessionInfo = Load(StartupManager.Current.Session.SessionId);
-        sessionInfo.SessionId = NormalizeSessionId(StartupManager.Current.Session.SessionId);
+        var sessionInfo = Clone(StartupManager.Current.Session);
         sessionInfo.Target = SessionTarget.RemoteServer;
         sessionInfo.ServerHost = endPoint.Address.ToString();
         sessionInfo.ServerPort = endPoint.Port;
@@ -423,7 +422,9 @@ public static class SessionInfoManager
             return true;
         }
 
-        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, endPoint);
+        var netPlayScreen = ScreensManager.FindScreen<NetPlayScreen>("NetPlay", true)!;
+        ScreensManager.SwitchScreen("NetPlay");
+        netPlayScreen.ConnectToRemoteSession(endPoint);
         return true;
     }
 
@@ -604,6 +605,11 @@ public static class SessionInfoManager
             element.Add(new XAttribute(nameof(SessionInfo.HttpCommandPort), httpCommandPort));
         }
 
+        if (!string.IsNullOrWhiteSpace(sessionInfo.PlayerName))
+        {
+            element.Add(new XAttribute(nameof(SessionInfo.PlayerName), sessionInfo.PlayerName));
+        }
+
         if (!string.IsNullOrWhiteSpace(sessionInfo.HttpCommandAccessToken))
         {
             element.Add(new XAttribute(
@@ -630,6 +636,8 @@ public static class SessionInfoManager
             element.Attribute(nameof(SessionInfo.HttpCommandEnabled))?.Value);
         sessionInfo.HttpCommandPort = ParseOptionalPort(
             element.Attribute(nameof(SessionInfo.HttpCommandPort))?.Value);
+        sessionInfo.PlayerName = NormalizeOptionalText(
+            element.Attribute(nameof(SessionInfo.PlayerName))?.Value);
         sessionInfo.HttpCommandAccessToken =
             element.Attribute(nameof(SessionInfo.HttpCommandAccessToken))?.Value;
     }
@@ -714,6 +722,11 @@ public static class SessionInfoManager
             sessionInfo.BroadcastPort = broadcastPort;
         }
 
+        if (request.PlayerName is not null)
+        {
+            sessionInfo.PlayerName = request.PlayerName;
+        }
+
         if (request.HttpCommandEnabled is { } httpCommandEnabled)
         {
             sessionInfo.HttpCommandEnabled = httpCommandEnabled;
@@ -755,6 +768,7 @@ public static class SessionInfoManager
             : NormalizeSessionId(sessionInfo.SessionId);
         sessionInfo.Name = NormalizeSessionName(sessionInfo.Name);
         sessionInfo.World = NormalizeWorld(sessionInfo.World);
+        sessionInfo.PlayerName = NormalizeOptionalText(sessionInfo.PlayerName);
         if (sessionInfo.ServerPort < 0)
         {
             sessionInfo.ServerPort = 0;
@@ -810,6 +824,31 @@ public static class SessionInfoManager
     private static string NormalizeSessionName(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+    }
+
+    private static string? NormalizeOptionalText(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+    }
+
+    private static SessionInfo Clone(SessionInfo source)
+    {
+        return new SessionInfo
+        {
+            SessionId = NormalizeSessionId(source.SessionId),
+            Name = source.Name,
+            Target = source.Target,
+            World = source.World,
+            Seed = source.Seed,
+            GameMode = source.GameMode,
+            ServerHost = source.ServerHost,
+            ServerPort = source.ServerPort,
+            BroadcastPort = source.BroadcastPort,
+            PlayerName = source.PlayerName,
+            HttpCommandEnabled = source.HttpCommandEnabled,
+            HttpCommandPort = source.HttpCommandPort,
+            HttpCommandAccessToken = source.HttpCommandAccessToken
+        };
     }
 
     private static void ConsumePendingSessionIfNeeded(

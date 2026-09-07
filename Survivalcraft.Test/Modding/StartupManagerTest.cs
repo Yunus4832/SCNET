@@ -78,6 +78,7 @@ public sealed class StartupManagerTest : IDisposable
         Assert.Equal("127.0.0.1", startup.Session.ServerHost);
         Assert.Equal(28987, startup.Session.ServerPort);
         Assert.Equal("DebugPlayer", startup.Request.PlayerName);
+        Assert.Equal("DebugPlayer", startup.Session.PlayerName);
         Assert.Equal(28988, startup.Session.BroadcastPort);
         Assert.False(startup.Request.Save);
         Assert.Null(SessionInfoManager.LoadByName("client-smoke"));
@@ -138,6 +139,7 @@ public sealed class StartupManagerTest : IDisposable
         Assert.Equal(RunModeType.Gui, startup.Settings.RunMode);
         Assert.True(startup.Request.ForceWorldRunServer);
         Assert.Equal("HostPlayer", startup.Request.PlayerName);
+        Assert.Equal("HostPlayer", startup.Session.PlayerName);
         Assert.Equal(SessionTarget.World, startup.Session.Target);
         Assert.Equal("GuiServerWorld", startup.Session.World);
         Assert.Equal(30987, startup.Session.ServerPort);
