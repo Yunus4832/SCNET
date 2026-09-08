@@ -60,6 +60,7 @@ const contents = useQuery({
 });
 const error = ref('');
 const showForm = ref(false);
+const submissionTarget = ref<ContentItem>();
 const view = ref<'content' | 'versions'>('content');
 const copiedVersionId = ref('');
 function removeKey() {
@@ -68,6 +69,7 @@ function removeKey() {
 }
 async function submissionCompleted() {
   showForm.value = false;
+  submissionTarget.value = undefined;
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: ['publisher-submissions'] }),
     queryClient.invalidateQueries({ queryKey: ['publisher-content'] }),
@@ -101,7 +103,14 @@ async function copyDownloadLink(item: ContentVersion) {
     error.value = '无法写入剪贴板，请检查浏览器权限';
   }
 }
-function openForm() { showForm.value = true; }
+function openForm(target?: ContentItem) {
+  submissionTarget.value = target;
+  showForm.value = true;
+}
+function closeForm() {
+  showForm.value = false;
+  submissionTarget.value = undefined;
+}
 </script>
 
 <template>
@@ -129,14 +138,15 @@ function openForm() { showForm.value = true; }
         <button
           class="button primary"
           :disabled="self.data.value?.status !== 'active'"
-          @click="openForm"
+          @click="openForm()"
         >
-          <UploadCloud :size="17" />提交内容
+          <UploadCloud :size="17" />提交新内容
         </button>
       </div>
       <ContentSubmissionDialog
         :open="showForm"
-        @close="showForm = false"
+        :target="submissionTarget"
+        @close="closeForm"
         @submitted="submissionCompleted"
       />
       <div class="workspace-tabs publisher-tabs">
@@ -171,16 +181,25 @@ function openForm() { showForm.value = true; }
               <p>{{ item.summary || '暂无简介。' }}</p>
             </div>
             <div class="card-bottom">
-              <span>{{ new Date(item.updatedAt).toLocaleDateString() }}</span
-              ><button
-                class="button ghost content-status-button"
-                :disabled="self.data.value?.status !== 'active'"
-                @click="setContentStatus(item)"
-              >
-                <EyeOff v-if="item.status === 'active'" :size="15" /><Eye v-else :size="15" />{{
-                  item.status === 'active' ? '下架' : '恢复上架'
-                }}
-              </button>
+              <span>{{ new Date(item.updatedAt).toLocaleDateString() }}</span>
+              <div class="card-links">
+                <button
+                  class="button ghost content-status-button"
+                  :disabled="self.data.value?.status !== 'active'"
+                  @click="openForm(item)"
+                >
+                  <UploadCloud :size="15" />提交新版本
+                </button>
+                <button
+                  class="button ghost content-status-button"
+                  :disabled="self.data.value?.status !== 'active'"
+                  @click="setContentStatus(item)"
+                >
+                  <EyeOff v-if="item.status === 'active'" :size="15" /><Eye v-else :size="15" />{{
+                    item.status === 'active' ? '下架' : '恢复上架'
+                  }}
+                </button>
+              </div>
             </div>
           </article>
         </div>

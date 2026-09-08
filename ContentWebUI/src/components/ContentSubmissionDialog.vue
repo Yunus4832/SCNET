@@ -30,8 +30,15 @@ interface SourceInspection {
   sha256: string;
   mediaType: string;
 }
+interface ExistingContentTarget {
+  contentId: string;
+  type: string;
+  identifier: string;
+  name: string;
+  summary?: string;
+}
 
-const props = defineProps<{ open: boolean }>();
+const props = defineProps<{ open: boolean; target?: ExistingContentTarget }>();
 const emit = defineEmits<{ close: []; submitted: [] }>();
 const mode = ref<'package' | 'image'>('package');
 const busy = ref(false);
@@ -53,6 +60,9 @@ const form = reactive({
   description: '',
   createdAt: new Date().toISOString(),
 });
+const imageModeAvailable = computed(
+  () => !props.target || props.target.type === 'CharacterSkin' || props.target.type === 'BlocksTexture',
+);
 const canCreate = computed(
   () =>
     !!sourceFile.value &&
@@ -66,10 +76,13 @@ function resetImageIdentity() {
   Object.assign(form, {
     draftId: createUuid(),
     sourceBlobId: createUuid(),
-    identifier: createUuid(),
-    name: '',
+    type: imageModeAvailable.value && props.target
+      ? props.target.type as ImageContentType
+      : 'CharacterSkin',
+    identifier: props.target?.identifier ?? createUuid(),
+    name: props.target?.name ?? '',
     version: '1.0.0',
-    description: '',
+    description: props.target?.summary ?? '',
     createdAt: new Date().toISOString(),
   });
   sourceFile.value = undefined;
@@ -188,6 +201,9 @@ async function persistDraft() {
 async function restoreDraft(id: string) {
   await run(async () => {
     const { draft, source } = await loadDraft(id);
+    if (props.target && draft.identifier !== props.target.identifier) {
+      throw new Error('该草稿不属于当前内容，无法作为新版本恢复');
+    }
     Object.assign(form, draft);
     sourceFile.value = new File([source], draft.sourceFileName, { type: 'image/png' });
     setPreviewUrl(source);
@@ -226,6 +242,15 @@ watch(
     if (sourceFile.value) void validateSource();
   },
 );
+watch(
+  () => [props.open, props.target?.contentId] as const,
+  ([open]) => {
+    if (!open) return;
+    mode.value = 'package';
+    resetImageIdentity();
+  },
+  { immediate: true },
+);
 onMounted(async () => {
   window.addEventListener('keydown', onEscape);
   drafts.value = await listDrafts().catch(() => []);
@@ -242,8 +267,9 @@ onUnmounted(() => {
       <section class="modal-panel upload-form content-submission-dialog">
         <div class="modal-head">
           <div>
-            <span class="modal-title">提交内容</span>
-            <p>上传完整内容包，或制造皮肤与方块材质。</p>
+            <span class="modal-title">{{ props.target ? '提交新版本' : '提交新内容' }}</span>
+            <p v-if="props.target">为 {{ props.target.name }} 提交一个版本号不同的新内容包。</p>
+            <p v-else>上传完整内容包，或从 PNG 图片创建皮肤与方块材质包。</p>
           </div>
           <button class="button ghost" :disabled="busy" @click="close"><X :size="16" />关闭</button>
         </div>
@@ -251,8 +277,12 @@ onUnmounted(() => {
           <button :class="{ active: mode === 'package' }" @click="mode = 'package'">
             <strong>完整 .scpkg</strong><small>游戏、CLI 或 MSBuild 生成</small>
           </button>
-          <button :class="{ active: mode === 'image' }" @click="mode = 'image'">
-            <strong>图片制造</strong><small>仅皮肤与方块材质</small>
+          <button
+            :class="{ active: mode === 'image' }"
+            :disabled="!imageModeAvailable"
+            @click="mode = 'image'"
+          >
+            <strong>从图片创建</strong><small>上传 PNG 皮肤或方块材质</small>
           </button>
         </div>
 
@@ -266,7 +296,10 @@ onUnmounted(() => {
             <span>{{ packagePreview.type }} · {{ packagePreview.packageSize }} bytes</span>
             <code>{{ packagePreview.packageHash }}</code>
           </div>
-          <p>包内类型、Identifier、名称和版本由 ContentServer 权威解析，提交时不会重新打包。</p>
+          <div class="submission-notes">
+            <p>包内类型、Identifier、名称和版本由 ContentServer 权威解析，提交时不会重新打包。</p>
+            <p v-if="props.target">包内 Identifier 必须为 <code>{{ props.target.identifier }}</code>，且版本号不能重复。</p>
+          </div>
           <div class="modal-actions">
             <button
               class="button primary"
