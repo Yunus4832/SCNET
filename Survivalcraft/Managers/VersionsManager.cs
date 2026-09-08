@@ -8,11 +8,6 @@ public static class VersionsManager
     public const string GameName = "SCNET";
 
     /// <summary>
-    ///     构建配置
-    /// </summary>
-    public static BuildConfiguration BuildConfiguration => BuildConfiguration.Release;
-
-    /// <summary>
     ///     标题
     /// </summary>
     public static string Title { get; }
