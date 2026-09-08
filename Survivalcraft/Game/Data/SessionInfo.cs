@@ -30,7 +30,7 @@ public sealed class SessionInfo
     public int BroadcastPort { get; set; }
 
     /// <summary>Optional player name used to automatically enter a world after startup.</summary>
-    public string? PlayerName { get; set; }
+    public string? AutoJoinPlayerName { get; set; }
 
     /// <summary>Optional HTTP command host enablement override restored with this startup session.</summary>
     public bool? HttpCommandEnabled { get; set; }

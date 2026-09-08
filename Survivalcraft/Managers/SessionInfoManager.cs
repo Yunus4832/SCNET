@@ -605,9 +605,11 @@ public static class SessionInfoManager
             element.Add(new XAttribute(nameof(SessionInfo.HttpCommandPort), httpCommandPort));
         }
 
-        if (!string.IsNullOrWhiteSpace(sessionInfo.PlayerName))
+        if (!string.IsNullOrWhiteSpace(sessionInfo.AutoJoinPlayerName))
         {
-            element.Add(new XAttribute(nameof(SessionInfo.PlayerName), sessionInfo.PlayerName));
+            element.Add(new XAttribute(
+                nameof(SessionInfo.AutoJoinPlayerName),
+                sessionInfo.AutoJoinPlayerName));
         }
 
         if (!string.IsNullOrWhiteSpace(sessionInfo.HttpCommandAccessToken))
@@ -636,8 +638,8 @@ public static class SessionInfoManager
             element.Attribute(nameof(SessionInfo.HttpCommandEnabled))?.Value);
         sessionInfo.HttpCommandPort = ParseOptionalPort(
             element.Attribute(nameof(SessionInfo.HttpCommandPort))?.Value);
-        sessionInfo.PlayerName = NormalizeOptionalText(
-            element.Attribute(nameof(SessionInfo.PlayerName))?.Value);
+        sessionInfo.AutoJoinPlayerName = NormalizeOptionalText(
+            element.Attribute(nameof(SessionInfo.AutoJoinPlayerName))?.Value);
         sessionInfo.HttpCommandAccessToken =
             element.Attribute(nameof(SessionInfo.HttpCommandAccessToken))?.Value;
     }
@@ -722,9 +724,9 @@ public static class SessionInfoManager
             sessionInfo.BroadcastPort = broadcastPort;
         }
 
-        if (request.PlayerName is not null)
+        if (request.AutoJoinPlayerName is not null)
         {
-            sessionInfo.PlayerName = request.PlayerName;
+            sessionInfo.AutoJoinPlayerName = request.AutoJoinPlayerName;
         }
 
         if (request.HttpCommandEnabled is { } httpCommandEnabled)
@@ -768,7 +770,7 @@ public static class SessionInfoManager
             : NormalizeSessionId(sessionInfo.SessionId);
         sessionInfo.Name = NormalizeSessionName(sessionInfo.Name);
         sessionInfo.World = NormalizeWorld(sessionInfo.World);
-        sessionInfo.PlayerName = NormalizeOptionalText(sessionInfo.PlayerName);
+        sessionInfo.AutoJoinPlayerName = NormalizeOptionalText(sessionInfo.AutoJoinPlayerName);
         if (sessionInfo.ServerPort < 0)
         {
             sessionInfo.ServerPort = 0;
@@ -844,7 +846,7 @@ public static class SessionInfoManager
             ServerHost = source.ServerHost,
             ServerPort = source.ServerPort,
             BroadcastPort = source.BroadcastPort,
-            PlayerName = source.PlayerName,
+            AutoJoinPlayerName = source.AutoJoinPlayerName,
             HttpCommandEnabled = source.HttpCommandEnabled,
             HttpCommandPort = source.HttpCommandPort,
             HttpCommandAccessToken = source.HttpCommandAccessToken

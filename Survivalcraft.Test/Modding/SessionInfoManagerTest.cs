@@ -84,7 +84,7 @@ public sealed class SessionInfoManagerTest : IDisposable
         {
             SessionId = Guid.NewGuid().ToString("N"),
             Name = "client",
-            PlayerName = " DebugPlayer ",
+            AutoJoinPlayerName = " DebugPlayer ",
             HttpCommandEnabled = true,
             HttpCommandPort = 30989,
             HttpCommandAccessToken = "access-token"
@@ -93,7 +93,7 @@ public sealed class SessionInfoManagerTest : IDisposable
         SessionInfoManager.Save(sessionInfo);
 
         var reloaded = SessionInfoManager.Load(sessionInfo.SessionId);
-        Assert.Equal("DebugPlayer", reloaded.PlayerName);
+        Assert.Equal("DebugPlayer", reloaded.AutoJoinPlayerName);
         Assert.True(reloaded.HttpCommandEnabled);
         Assert.Equal(30989, reloaded.HttpCommandPort);
         Assert.Equal("access-token", reloaded.HttpCommandAccessToken);
@@ -118,7 +118,7 @@ public sealed class SessionInfoManagerTest : IDisposable
         Assert.Equal(SessionTarget.RemoteServer, restartSession.Target);
         Assert.Equal("127.0.0.1", restartSession.ServerHost);
         Assert.Equal(30987, restartSession.ServerPort);
-        Assert.Equal("DebugPlayer", restartSession.PlayerName);
+        Assert.Equal("DebugPlayer", restartSession.AutoJoinPlayerName);
         Assert.True(restartSession.HttpCommandEnabled);
         Assert.Equal(30989, restartSession.HttpCommandPort);
         Assert.Equal("access-token", restartSession.HttpCommandAccessToken);

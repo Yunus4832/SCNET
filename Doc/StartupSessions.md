@@ -116,7 +116,7 @@ Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 实现通过会话 D
 - `ServerHost`
 - `ServerPort`
 - `BroadcastPort`
-- `PlayerName`（可选的自动进入角色名）
+- `AutoJoinPlayerName`（可选的自动进入角色名）
 
 `HttpCommandEnabled`、`HttpCommandPort` 和 `HttpCommandAccessToken` 是可选的 session 覆盖。未设置时回退到当前实例的 `Settings.xml`；使用 `--save` 保存后，可以通过同名 session 恢复。
 

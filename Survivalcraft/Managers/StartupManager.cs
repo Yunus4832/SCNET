@@ -100,7 +100,7 @@ public static class StartupManager
 
             if (string.Equals(arg, "--player", StringComparison.OrdinalIgnoreCase))
             {
-                request.PlayerName = ReadOptionValue(args, ref i, "--player")?.Trim();
+                request.AutoJoinPlayerName = ReadOptionValue(args, ref i, "--player")?.Trim();
                 continue;
             }
 
@@ -191,9 +191,9 @@ public static class StartupManager
             request.ForceWorldRunServer = false;
         }
 
-        request.PlayerName = string.IsNullOrWhiteSpace(request.PlayerName)
+        request.AutoJoinPlayerName = string.IsNullOrWhiteSpace(request.AutoJoinPlayerName)
             ? null
-            : request.PlayerName;
+            : request.AutoJoinPlayerName;
         settings.RemainingArgs = remainingArgs.ToArray();
         return request;
     }

@@ -16,7 +16,7 @@ public sealed class StartupRequest
 
     public int? ConnectPort { get; set; }
 
-    public string? PlayerName { get; set; }
+    public string? AutoJoinPlayerName { get; set; }
 
     public bool ForceWorldRunServer { get; set; }
 
