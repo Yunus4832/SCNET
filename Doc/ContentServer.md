@@ -370,7 +370,7 @@ Linux 镜像流程把镜像和部署文件组合成一个适合分发的压缩�
 content-server-<tag>-linux-amd64.tar.gz
 ```
 
-压缩包解压后包含 Docker archive、镜像归档的 SHA-256、`compose.yaml` 和 `deploy.sh`。镜像归档在外层 bundle
+压缩包解压后包含 Docker archive、镜像归档的 SHA-256、`compose.yaml`、`Caddyfile` 和 `deploy.sh`。镜像归档在外层 bundle
 压缩时统一压缩，避免重复压缩。输出的 `compose.yaml` 会硬编码本次构建的精确镜像引用，而仓库中的
 `ContentServer/Deployment/compose.yaml` 是构建模板。这样部署包不依赖外部镜像变量，也不会意外使用其他标签。
 
@@ -384,26 +384,56 @@ tar -xzf content-server-<tag>-linux-amd64.tar.gz
 ./deploy.sh
 ```
 
-`deploy.sh` 自动探测 Podman 或 Docker，也可以通过 `CONTAINER_ENGINE` 显式指定。脚本会先询问是否校验并导入
-镜像，再询问是否创建数据目录并启动 Compose。若需要绕过交互手动操作：
+`deploy.sh` 自动探测 Podman 或 Docker，也可以通过 `CONTAINER_ENGINE` 显式指定。无参数运行时会等待用户选择
+是否校验并导入镜像、是否启动以及使用 HTTP 或 HTTPS，不对人工操作设置超时。`--default` 跳过全部问题，
+采用“导入镜像、HTTP、启动容器”的完整默认方案：
+
+```bash
+./deploy.sh --default
+```
+
+需要覆盖默认项时可以组合 `--default` 与 `--skip-import`、`--https` 或 `--no-start`；也可以不使用默认方案，
+通过 `--import`、`--skip-import`、`--http`、`--https`、`--no-start` 明确指定所需操作。stdin 不可用且参数不足
+会明确失败，不会等待或悄悄选择。HTTP 模式手动启动：
 
 ```bash
 mkdir -p Data
-docker compose -f compose.yaml up -d
+docker compose -f compose.yaml up -d content-server
 curl http://127.0.0.1:5000/api/v1/health
 ```
 
-Compose 默认映射宿主 `5000` 到容器 `8080`，并把 `./Data` 挂载为 `/data`。可以通过
-`CONTENTSERVER_PORT` 和 `CONTENTSERVER_DATA_DIR` 覆盖。当前镜像不限制运行 UID，以避免为宿主挂载目录引入额外的
-所有权配置；需要强化容器隔离时，再由部署环境统一配置非 root 用户和匹配的数据目录权限。容器内固定使用：
+HTTPS 模式启用 Caddy profile：
+
+```bash
+mkdir -p Data CaddyData CaddyConfig
+CONTENTSERVER_BIND_ADDRESS=127.0.0.1 docker compose -f compose.yaml --profile https up -d
+curl --cacert caddy-root.crt https://content.dev.scnet/api/v1/health
+```
+
+HTTP 模式默认把宿主 `5000` 映射到 ContentServer 的 `8080`，无需域名和客户端证书配置；可以通过
+`CONTENTSERVER_PORT` 和 `CONTENTSERVER_BIND_ADDRESS` 覆盖。WebUI 会明确提示 HTTP 通信未加密。匿名浏览与下载
+可以使用 HTTP，但发布者或管理员 Key 不应通过不可信网络传输，部署者需要根据网络边界承担相应风险。
+
+HTTPS 模式的 Caddy 默认在宿主 `80` 和 `443` 端口提供入口，使用内部 CA 为 `content.dev.scnet` 自动签发证书，
+再通过容器网络代理到 ContentServer。脚本默认把 ContentServer 的 HTTP 端口限制在宿主回环地址。可以通过
+`CONTENTSERVER_HTTP_PORT`、`CONTENTSERVER_HTTPS_PORT` 和 `CONTENTSERVER_HOSTNAME` 覆盖 Caddy 入口配置。
+ContentServer 数据仍由 `./Data` 挂载为 `/data`，也可以通过 `CONTENTSERVER_DATA_DIR` 覆盖。当前镜像不限制运行 UID，以避免
+为宿主挂载目录引入额外的所有权配置；需要强化容器隔离时，再由部署环境统一配置非 root 用户和匹配的数据目录权限。
+容器内固定使用：
 
 ```text
 ContentServer__DatabasePath=/data/content-server.db
 ContentServer__PackageStoragePath=/data
 ```
 
-Chiseled 镜像没有 shell、curl 或包管理器；健康检查由宿主、反向代理或集群直接请求 `/api/v1/health`。
-TLS 应在外部反向代理终止。
+dev 主机不需要修改自身 hostname。客户端需要将部署服务器 IP 映射到配置的域名，例如在 hosts 中加入
+`192.168.160.164 content.dev.scnet`。首次启动后，`deploy.sh` 会把 Caddy 内部 CA 根证书复制为
+`caddy-root.crt`；每台访问设备需要将该根证书安装到系统信任库。`CaddyData` 和 `CaddyConfig` 必须持久化，
+否则重建 Caddy 时会生成新的 CA，客户端需要重新建立信任。公网部署时将 Caddyfile 中的 `tls internal` 移除并使用
+可公开解析的域名，由 Caddy 申请公开可信证书。
+
+Chiseled 镜像没有 shell、curl 或包管理器；健康检查由宿主、反向代理或集群通过所选 HTTP(S) 入口请求
+`/api/v1/health`。启用 HTTPS 时 TLS 在 Caddy 终止，ContentServer 应用和镜像不管理证书。
 
 SQLite 数据库与 `Data/packages/` 必须作为同一个持久化单元备份和恢复。当前存储模型只支持单副本部署；
 在迁移到外部数据库和对象存储前，不得让多个容器或 Pod 并发写入同一份数据。集群可以使用单副本工作负载和

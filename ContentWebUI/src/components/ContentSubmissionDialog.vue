@@ -12,6 +12,7 @@ import {
   type ContentDraft,
   type ImageContentType,
 } from '../contentDraftStore';
+import { createUuid } from '../uuid';
 
 interface PackagePreview {
   type: string;
@@ -43,24 +44,29 @@ const previewUrl = ref('');
 const drafts = ref<ContentDraft[]>([]);
 const draftWarning = ref('');
 const form = reactive({
-  draftId: crypto.randomUUID(),
-  sourceBlobId: crypto.randomUUID(),
+  draftId: createUuid(),
+  sourceBlobId: createUuid(),
   type: 'CharacterSkin' as ImageContentType,
-  identifier: crypto.randomUUID(),
+  identifier: createUuid(),
   name: '',
   version: '1.0.0',
   description: '',
   createdAt: new Date().toISOString(),
 });
-const canCreate = computed(() =>
-  !!sourceFile.value && !!sourceInspection.value && !!form.identifier && !!form.name && !!form.version,
+const canCreate = computed(
+  () =>
+    !!sourceFile.value &&
+    !!sourceInspection.value &&
+    !!form.identifier &&
+    !!form.name &&
+    !!form.version,
 );
 
 function resetImageIdentity() {
   Object.assign(form, {
-    draftId: crypto.randomUUID(),
-    sourceBlobId: crypto.randomUUID(),
-    identifier: crypto.randomUUID(),
+    draftId: createUuid(),
+    sourceBlobId: createUuid(),
+    identifier: createUuid(),
     name: '',
     version: '1.0.0',
     description: '',
@@ -82,7 +88,8 @@ async function selectPackage(event: Event) {
     const body = new FormData();
     body.set('package', packageFile.value!);
     packagePreview.value = await api<PackagePreview>('/api/v1/publisher/packages/inspect', {
-      method: 'POST', body,
+      method: 'POST',
+      body,
     });
   });
 }
@@ -109,7 +116,8 @@ async function validateSource() {
     body.set('type', form.type);
     body.set('source', sourceFile.value!);
     sourceInspection.value = await api<SourceInspection>(
-      '/api/v1/publisher/packages/image/validate-source', { method: 'POST', body },
+      '/api/v1/publisher/packages/image/validate-source',
+      { method: 'POST', body },
     );
   });
 }
@@ -126,11 +134,14 @@ function imageBody() {
 async function buildImagePackage() {
   if (!canCreate.value) return;
   await run(async () => {
-    const response = await fetch(`${getRuntimeConfig().apiBaseUrl}/api/v1/publisher/packages/image/build`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${getAccess('publisher')?.apiKey ?? ''}` },
-      body: imageBody(),
-    });
+    const response = await fetch(
+      `${getRuntimeConfig().apiBaseUrl}/api/v1/publisher/packages/image/build`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${getAccess('publisher')?.apiKey ?? ''}` },
+        body: imageBody(),
+      },
+    );
     if (!response.ok) throw new Error('内容包生成失败');
     const url = URL.createObjectURL(await response.blob());
     const anchor = document.createElement('a');
@@ -195,13 +206,26 @@ async function removeAllDrafts() {
 async function run(action: () => Promise<void>) {
   error.value = '';
   busy.value = true;
-  try { await action(); }
-  catch (value) { error.value = value instanceof Error ? value.message : '操作失败'; }
-  finally { busy.value = false; }
+  try {
+    await action();
+  } catch (value) {
+    error.value = value instanceof Error ? value.message : '操作失败';
+  } finally {
+    busy.value = false;
+  }
 }
-function close() { if (!busy.value) emit('close'); }
-function onEscape(event: KeyboardEvent) { if (event.key === 'Escape') close(); }
-watch(() => form.type, () => { if (sourceFile.value) void validateSource(); });
+function close() {
+  if (!busy.value) emit('close');
+}
+function onEscape(event: KeyboardEvent) {
+  if (event.key === 'Escape') close();
+}
+watch(
+  () => form.type,
+  () => {
+    if (sourceFile.value) void validateSource();
+  },
+);
 onMounted(async () => {
   window.addEventListener('keydown', onEscape);
   drafts.value = await listDrafts().catch(() => []);
@@ -217,7 +241,10 @@ onUnmounted(() => {
     <div v-if="props.open" class="modal-overlay" @click.self="close">
       <section class="modal-panel upload-form content-submission-dialog">
         <div class="modal-head">
-          <div><span class="modal-title">提交内容</span><p>上传完整内容包，或制造皮肤与方块材质。</p></div>
+          <div>
+            <span class="modal-title">提交内容</span>
+            <p>上传完整内容包，或制造皮肤与方块材质。</p>
+          </div>
           <button class="button ghost" :disabled="busy" @click="close"><X :size="16" />关闭</button>
         </div>
         <div class="role-picker submission-picker">
@@ -230,7 +257,9 @@ onUnmounted(() => {
         </div>
 
         <template v-if="mode === 'package'">
-          <label class="file-field">选择内容包<input type="file" accept=".scpkg" @change="selectPackage" /></label>
+          <label class="file-field"
+            >选择内容包<input type="file" accept=".scpkg" @change="selectPackage"
+          /></label>
           <div v-if="packagePreview" class="state package-preview">
             <strong>{{ packagePreview.name }} · {{ packagePreview.version }}</strong>
             <code>{{ packagePreview.identifier }}</code>
@@ -238,39 +267,75 @@ onUnmounted(() => {
             <code>{{ packagePreview.packageHash }}</code>
           </div>
           <p>包内类型、Identifier、名称和版本由 ContentServer 权威解析，提交时不会重新打包。</p>
-          <div class="modal-actions"><button class="button primary" :disabled="busy || !packagePreview" @click="submitPackage"><Send :size="17" />提交审核</button></div>
+          <div class="modal-actions">
+            <button
+              class="button primary"
+              :disabled="busy || !packagePreview"
+              @click="submitPackage"
+            >
+              <Send :size="17" />提交审核
+            </button>
+          </div>
         </template>
 
         <template v-else>
           <div class="form-grid">
-            <label>类型<select v-model="form.type"><option value="CharacterSkin">角色皮肤</option><option value="BlocksTexture">方块材质</option></select></label>
+            <label
+              >类型<select v-model="form.type">
+                <option value="CharacterSkin">角色皮肤</option>
+                <option value="BlocksTexture">方块材质</option>
+              </select></label
+            >
             <label>Identifier<input v-model="form.identifier" readonly /></label>
             <label>名称<input v-model="form.name" /></label>
             <label>版本<input v-model="form.version" placeholder="1.0.0" /></label>
           </div>
           <label>简介<textarea v-model="form.description" rows="2" /></label>
-          <label class="file-field">PNG 源文件<input type="file" accept="image/png,.png" @change="selectSource" /></label>
+          <label class="file-field"
+            >PNG 源文件<input type="file" accept="image/png,.png" @change="selectSource"
+          /></label>
           <div v-if="sourceInspection" class="state package-preview">
             <img v-if="previewUrl" :src="previewUrl" alt="源图片预览" />
-            <span>{{ sourceInspection.width }} × {{ sourceInspection.height }} · {{ sourceInspection.size }} bytes</span>
+            <span
+              >{{ sourceInspection.width }} × {{ sourceInspection.height }} ·
+              {{ sourceInspection.size }} bytes</span
+            >
             <code>{{ sourceInspection.sha256 }}</code>
           </div>
           <div class="modal-actions">
-            <button class="button ghost" :disabled="busy || !canCreate" @click="persistDraft"><Save :size="16" />保存草稿</button>
-            <button class="button ghost" :disabled="busy || !canCreate" @click="buildImagePackage"><Download :size="16" />下载包</button>
-            <button class="button primary" :disabled="busy || !canCreate" @click="submitImagePackage"><Send :size="16" />直接提交</button>
+            <button class="button ghost" :disabled="busy || !canCreate" @click="persistDraft">
+              <Save :size="16" />保存草稿
+            </button>
+            <button class="button ghost" :disabled="busy || !canCreate" @click="buildImagePackage">
+              <Download :size="16" />下载包
+            </button>
+            <button
+              class="button primary"
+              :disabled="busy || !canCreate"
+              @click="submitImagePackage"
+            >
+              <Send :size="16" />直接提交
+            </button>
           </div>
-          <p class="draft-risk">草稿仅保存在当前浏览器。清理站点数据、隐私模式回收或浏览器策略可能永久删除草稿。</p>
+          <p class="draft-risk">
+            草稿仅保存在当前浏览器。清理站点数据、隐私模式回收或浏览器策略可能永久删除草稿。
+          </p>
           <p v-if="draftWarning" class="form-error">{{ draftWarning }}</p>
           <div v-if="drafts.length" class="draft-list">
             <div v-for="draft in drafts" :key="draft.draftId">
-              <button class="button ghost" @click="restoreDraft(draft.draftId)">{{ draft.name || '未命名草稿' }} · {{ draft.version }}</button>
-              <button class="button ghost" title="删除草稿" @click="removeDraft(draft.draftId)"><Trash2 :size="15" /></button>
+              <button class="button ghost" @click="restoreDraft(draft.draftId)">
+                {{ draft.name || '未命名草稿' }} · {{ draft.version }}
+              </button>
+              <button class="button ghost" title="删除草稿" @click="removeDraft(draft.draftId)">
+                <Trash2 :size="15" />
+              </button>
             </div>
           </div>
           <div class="modal-actions">
             <button class="button ghost" @click="resetImageIdentity">创建新内容</button>
-            <button v-if="drafts.length" class="button ghost" @click="removeAllDrafts"><Trash2 :size="15" />清理全部草稿</button>
+            <button v-if="drafts.length" class="button ghost" @click="removeAllDrafts">
+              <Trash2 :size="15" />清理全部草稿
+            </button>
           </div>
         </template>
         <p v-if="error" class="form-error">{{ error }}</p>

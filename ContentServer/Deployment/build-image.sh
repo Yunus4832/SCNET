@@ -152,7 +152,9 @@ awk -v image_reference="$image_reference" \
 awk -v archive_name="$image_archive_name" -v image_reference="$image_reference" \
   '{gsub(/__CONTENTSERVER_ARCHIVE__/, archive_name); gsub(/__CONTENTSERVER_IMAGE__/, image_reference); print}' \
   "$ROOT/ContentServer/Deployment/deploy.sh" > "$deployment_directory/deploy.sh"
-chmod 644 "$image_archive_path" "$image_archive_path.sha256" "$deployment_directory/compose.yaml"
+cp "$ROOT/ContentServer/Deployment/Caddyfile" "$deployment_directory/Caddyfile"
+chmod 644 "$image_archive_path" "$image_archive_path.sha256" \
+  "$deployment_directory/compose.yaml" "$deployment_directory/Caddyfile"
 chmod 755 "$deployment_directory/deploy.sh"
 
 echo "[ContentServer] Creating bundle: $bundle_path"

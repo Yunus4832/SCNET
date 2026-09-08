@@ -6,6 +6,7 @@ import { api, getSavedAccesses, getSavedRoles, updateAccessLabel } from './api';
 
 const route = useRoute();
 const accessRevision = ref(0);
+const insecureTransport = window.location.protocol === 'http:';
 const publisherAccesses = computed(() => {
   route.fullPath;
   accessRevision.value;
@@ -65,6 +66,12 @@ onMounted(async () => {
       >
     </nav>
   </header>
-  <main><RouterView /></main>
+  <main>
+    <div v-if="insecureTransport" class="transport-warning" role="alert">
+      当前使用
+      HTTP，通信内容未加密。匿名浏览和下载可以继续使用；请勿在不可信网络中输入管理员或发布者 Key。
+    </div>
+    <RouterView />
+  </main>
   <footer>SCNET Content</footer>
 </template>

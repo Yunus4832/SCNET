@@ -65,6 +65,15 @@ main {
   scrollbar-gutter: stable;
   overscroll-behavior: contain;
 }
+.transport-warning {
+  padding: 9px 20px;
+  border-bottom: 1px solid #705c2e;
+  color: #ffe4a3;
+  background: #302711;
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+}
 .shell {
   width: min(1160px, calc(100% - 40px));
   margin-inline: auto;
@@ -207,6 +216,13 @@ footer {
 }
 .wide {
   width: 100%;
+}
+.key-file-import input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 .icon-button {
   display: grid;

@@ -1,0 +1,4 @@
+{$CONTENTSERVER_HOSTNAME:content.dev.scnet} {
+	tls internal
+	reverse_proxy content-server:8080
+}

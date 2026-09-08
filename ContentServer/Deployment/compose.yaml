@@ -3,10 +3,27 @@ services:
     image: __CONTENTSERVER_IMAGE__
     restart: unless-stopped
     ports:
-      - "${CONTENTSERVER_PORT:-5000}:8080"
+      - "${CONTENTSERVER_BIND_ADDRESS:-0.0.0.0}:${CONTENTSERVER_PORT:-5000}:8080"
     environment:
       ASPNETCORE_URLS: http://+:8080
       ContentServer__DatabasePath: /data/content-server.db
       ContentServer__PackageStoragePath: /data
     volumes:
       - "${CONTENTSERVER_DATA_DIR:-./Data}:/data"
+
+  caddy:
+    image: caddy:2-alpine
+    profiles:
+      - https
+    restart: unless-stopped
+    depends_on:
+      - content-server
+    ports:
+      - "${CONTENTSERVER_HTTP_PORT:-80}:80"
+      - "${CONTENTSERVER_HTTPS_PORT:-443}:443"
+    environment:
+      CONTENTSERVER_HOSTNAME: "${CONTENTSERVER_HOSTNAME:-content.dev.scnet}"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./CaddyData:/data
+      - ./CaddyConfig:/config

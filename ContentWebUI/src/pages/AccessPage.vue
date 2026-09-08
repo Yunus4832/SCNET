@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowRight, KeyRound } from 'lucide-vue-next';
+import { ArrowRight, FileUp, KeyRound } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import {
@@ -11,6 +11,7 @@ import {
   type AccessRole,
   type StoredAccess,
 } from '../api';
+import { findApiKeyInText } from '../apiKeyFile';
 
 const router = useRouter();
 const route = useRoute();
@@ -33,6 +34,23 @@ const savedAccesses = computed(() => {
 const selectedAccesses = computed(() =>
   savedAccesses.value.filter((access) => selectedKeys.value.includes(access.apiKey)),
 );
+
+async function importKeyFile(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  input.value = '';
+  if (!file) return;
+  error.value = '';
+  if (file.size > 64 * 1024) {
+    error.value = 'Key 文件不能超过 64 KiB';
+    return;
+  }
+  try {
+    apiKey.value = findApiKeyInText(await file.text(), role.value);
+  } catch (value) {
+    error.value = value instanceof Error ? value.message : '无法读取 Key 文件';
+  }
+}
 
 function destination(accessRole: AccessRole) {
   const next = route.query.next;
@@ -128,6 +146,10 @@ async function enter() {
             placeholder="粘贴申请时获得的密钥"
           />
         </div>
+        <label class="button ghost wide key-file-import">
+          <FileUp :size="17" />从文件导入 {{ roleLabel }} Key
+          <input type="file" accept="text/plain,.txt" @change="importKeyFile" />
+        </label>
         <p v-if="error" class="form-error">{{ error }}</p>
         <button class="button primary wide" :disabled="!apiKey.trim() || busy">
           {{ busy ? '正在验证…' : '验证并进入工作台' }}
