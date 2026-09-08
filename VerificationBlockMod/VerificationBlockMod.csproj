@@ -4,8 +4,14 @@
         <AssemblyName>VerificationBlockMod</AssemblyName>
         <RootNamespace>VerificationBlockMod</RootNamespace>
         <SurvivalcraftModId>verification.block</SurvivalcraftModId>
-        <SurvivalcraftUseLocalReferences>true</SurvivalcraftUseLocalReferences>
     </PropertyGroup>
 
-    <Import Project="../Survivalcraft/Modding/Survivalcraft.Mod.targets"/>
+    <ItemGroup>
+        <PackageReference Include="SCNET.Survivalcraft"
+                          Version="0.0.0.1"
+                          ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.ContentTool"
+                          Version="0.0.0.1"
+                          PrivateAssets="all"/>
+    </ItemGroup>
 </Project>

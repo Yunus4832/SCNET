@@ -6,33 +6,8 @@
         <SurvivalcraftModPackageExtension>.scpkg</SurvivalcraftModPackageExtension>
         <BuildSurvivalcraftModPackage Condition="'$(BuildSurvivalcraftModPackage)' == ''">true</BuildSurvivalcraftModPackage>
         <IncludeSourceRevisionInInformationalVersion Condition="'$(IncludeSourceRevisionInInformationalVersion)' == ''">false</IncludeSourceRevisionInInformationalVersion>
-        <SurvivalcraftAssembly Condition="'$(SurvivalcraftAssembly)' == ''">$(MSBuildThisFileDirectory)../bin/$(Configuration)/$(TargetFramework)/Survivalcraft.dll</SurvivalcraftAssembly>
-        <SurvivalcraftContentTool Condition="'$(SurvivalcraftContentTool)' == '' and Exists('$(MSBuildThisFileDirectory)../../ContentTool/bin/$(Configuration)/$(TargetFramework)/SCNET.ContentTool.dll')">$(MSBuildThisFileDirectory)../../ContentTool/bin/$(Configuration)/$(TargetFramework)/SCNET.ContentTool.dll</SurvivalcraftContentTool>
         <SurvivalcraftContentTool Condition="'$(SurvivalcraftContentTool)' == ''">$(MSBuildThisFileDirectory)../tools/net10.0/any/SCNET.ContentTool.dll</SurvivalcraftContentTool>
     </PropertyGroup>
-
-    <ItemGroup Condition="'$(SurvivalcraftUseLocalReferences)' == 'true'">
-        <Reference Include="Survivalcraft">
-            <HintPath>$(SurvivalcraftAssembly)</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Engine">
-            <HintPath>$(MSBuildThisFileDirectory)../../Engine/bin/$(Configuration)/$(TargetFramework)/Engine.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Engine.Core">
-            <HintPath>$(MSBuildThisFileDirectory)../../Engine.Core/bin/$(Configuration)/$(TargetFramework)/Engine.Core.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="Engine.Serialization">
-            <HintPath>$(MSBuildThisFileDirectory)../../Engine.Serialization/bin/$(Configuration)/$(TargetFramework)/Engine.Serialization.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <Reference Include="EngineSystem">
-            <HintPath>$(MSBuildThisFileDirectory)../../EntitySystem/bin/$(Configuration)/$(TargetFramework)/EngineSystem.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-    </ItemGroup>
 
     <Target Name="PackSurvivalcraftMod" AfterTargets="Build" Condition="'$(BuildSurvivalcraftModPackage)' == 'true'">
         <PropertyGroup>

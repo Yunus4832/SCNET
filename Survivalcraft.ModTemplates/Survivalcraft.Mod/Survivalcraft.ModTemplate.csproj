@@ -4,15 +4,14 @@
         <AssemblyName>Survivalcraft.ModTemplate</AssemblyName>
         <RootNamespace>Survivalcraft.ModTemplate</RootNamespace>
         <SurvivalcraftModId>example.mod</SurvivalcraftModId>
-        <SurvivalcraftUseLocalReferences Condition="Exists('..\Survivalcraft\Survivalcraft.csproj')">true</SurvivalcraftUseLocalReferences>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(SurvivalcraftUseLocalReferences)' != 'true'">
+    <ItemGroup>
         <PackageReference Include="SCNET.Survivalcraft"
                           Version="0.0.0.1"
                           ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.ContentTool"
+                          Version="0.0.0.1"
+                          PrivateAssets="all"/>
     </ItemGroup>
-
-    <Import Project="..\Survivalcraft\Modding\Survivalcraft.Mod.targets"
-            Condition="'$(SurvivalcraftUseLocalReferences)' == 'true'"/>
 </Project>

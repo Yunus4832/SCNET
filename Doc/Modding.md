@@ -35,9 +35,11 @@ payload/data/**
 payload/assets/<mod-id>/**
 ```
 
-模板项目引用 `SCNET.Survivalcraft`。它的构建目标会加入匹配的编译期 API，并在构建后通过共享 ContentTool 创建和验证 `.scpkg`。宿主运行时程序集不会复制进包。
+模板项目引用 `SCNET.Survivalcraft` 作为编译期 API，并私有引用 `SCNET.ContentTool`。
+工具包携带的构建目标会在构建后创建和验证 `.scpkg`，宿主运行时程序集不会复制进包。
 
-在本仓库内部，模板和验证模组直接使用 `Survivalcraft/Modding/Survivalcraft.Mod.targets`，这样核心代码和模组代码可以一起开发，不需要先发布中间 NuGet 包。
+仓库内的 `VerificationBlockMod` 也只通过相同的 NuGet 包引用构建，不使用项目引用或
+相对路径导入 Target。本地开发时先将当前版本包生成到仓库的 `Publish/NuGet` 文件源。
 
 模板资源位于 `Survivalcraft.ModTemplates/Survivalcraft.Mod/`。解决方案里唯一与模板打包直接相关的项目是 `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`，它会把这些资源打包成可发布的 `dotnet new` 模板包。
 
@@ -54,6 +56,13 @@ payload/assets/<mod-id>/**
 构建：
 
 ```bash
+dotnet pack Engine.Core/Engine.Core.csproj -c Release
+dotnet pack Engine.Serialization/Engine.Serialization.csproj -c Release
+dotnet pack Engine/Engine.csproj -c Release
+dotnet pack EntitySystem/EntitySystem.csproj -c Release
+dotnet pack Content.Packaging/Content.Packaging.csproj -c Release
+dotnet pack Survivalcraft/Survivalcraft.csproj -c Release
+dotnet pack ContentTool/ContentTool.csproj -c Release
 dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
 ```
 

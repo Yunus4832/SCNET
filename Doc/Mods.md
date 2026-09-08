@@ -142,6 +142,8 @@ session；重启后即使仓库离线，也能从内容寻址缓存恢复。联�
 dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
 ```
 
+首次构建或更新 Mod SDK 后，先按 [NuGet 包](./NuGet.md#本地打包) 生成仓库本地包源。
+
 输出：
 
 ```text

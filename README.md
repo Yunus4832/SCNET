@@ -71,6 +71,9 @@ dotnet run --project Survivalcraft.Linux/Survivalcraft.Linux.csproj -- --server
 dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
 ```
 
+首次构建或更新 Mod SDK 后，需要先按 [NuGet 包](Doc/NuGet.md#本地打包) 将当前版本
+生成到仓库本地包源。
+
 使用和配置说明见 [模组使用说明](Doc/Mods.md)，开发说明见 [模组开发](Doc/Modding.md)。
 
 ### 构建

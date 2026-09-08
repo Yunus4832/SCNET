@@ -4,9 +4,25 @@
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <AssemblyName>SCNET.ContentTool</AssemblyName>
         <RootNamespace>Scnet.ContentTool</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.ContentTool</PackageId>
+        <Description>SCNET content package command-line and Mod build tooling.</Description>
+        <PackageTags>scnet;content;modding;build</PackageTags>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="SCNET.ContentTool.targets" Pack="true" PackagePath="build\SCNET.ContentTool.targets"/>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+        <None Include="$(TargetDir)SCNET.ContentTool.dll" Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.dll"/>
+        <None Include="$(TargetDir)SCNET.ContentTool.deps.json" Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.deps.json"/>
+        <None Include="$(TargetDir)SCNET.ContentTool.runtimeconfig.json" Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.runtimeconfig.json"/>
+        <None Include="$(TargetDir)SCNET.Content.Packaging.dll" Pack="true" PackagePath="tools\net10.0\any\SCNET.Content.Packaging.dll"/>
+        <None Include="$(TargetDir)SixLabors.ImageSharp.dll" Pack="true" PackagePath="tools\net10.0\any\SixLabors.ImageSharp.dll"/>
     </ItemGroup>
 </Project>
