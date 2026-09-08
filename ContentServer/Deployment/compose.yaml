@@ -1,0 +1,12 @@
+services:
+  content-server:
+    image: __CONTENTSERVER_IMAGE__
+    restart: unless-stopped
+    ports:
+      - "${CONTENTSERVER_PORT:-5000}:8080"
+    environment:
+      ASPNETCORE_URLS: http://+:8080
+      ContentServer__DatabasePath: /data/content-server.db
+      ContentServer__PackageStoragePath: /data
+    volumes:
+      - "${CONTENTSERVER_DATA_DIR:-./Data}:/data"

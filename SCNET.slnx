@@ -114,9 +114,12 @@
         </Project>
     </Folder>
 
-    <Folder Name="/08 Content/">
+    <Folder Name="/08 ContentServer/">
         <Project Path="ContentWebUI\ContentWebUI.esproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
             <Build Solution="ANDROID|*" Project="false"/>
+            <Build Solution="Debug|*" Project="false"/>
             <Build Solution="DESKTOP|*" Project="false"/>
             <Build Solution="Release|*" Project="false"/>
         </Project>

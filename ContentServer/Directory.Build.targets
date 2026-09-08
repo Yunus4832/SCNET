@@ -1,0 +1,69 @@
+<Project>
+    <PropertyGroup>
+        <BuildContentWebUIEnabled Condition="'$(BuildContentWebUIEnabled)' == ''">true</BuildContentWebUIEnabled>
+        <BuildContentServerArtifacts Condition="'$(BuildContentServerArtifacts)' == ''">true</BuildContentServerArtifacts>
+        <ContentWebUIDist>$(MSBuildThisFileDirectory)..\ContentWebUI\dist</ContentWebUIDist>
+        <ContentWebUIOutDir>$(MSBuildThisFileDirectory)wwwroot</ContentWebUIOutDir>
+        <ContentWebUIProjectDir>$(MSBuildThisFileDirectory)..\ContentWebUI</ContentWebUIProjectDir>
+        <ContentServerRepositoryRoot>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..'))</ContentServerRepositoryRoot>
+        <ContentServerArtifactRoot>$(BaseIntermediateOutputPath)artifacts\$(Configuration)\</ContentServerArtifactRoot>
+        <ContentServerPortablePublishDir>$(ContentServerArtifactRoot)portable\</ContentServerPortablePublishDir>
+        <ContentServerLinuxPublishDir>$(ContentServerArtifactRoot)linux-x64\</ContentServerLinuxPublishDir>
+        <ContentServerPublishRoot>$(ContentServerRepositoryRoot)\Publish</ContentServerPublishRoot>
+        <ContentServerPortableArchive>$(ContentServerPublishRoot)\content-server-$(Version)-portable.zip</ContentServerPortableArchive>
+    </PropertyGroup>
+
+    <Target Name="BuildContentWebUI"
+            BeforeTargets="Build"
+            Condition="'$(BuildContentWebUIEnabled)' == 'true' AND '$(DesignTimeBuild)' != 'true' AND Exists('$(ContentWebUIProjectDir)\package.json')">
+        <Exec Command="npm run build" WorkingDirectory="$(ContentWebUIProjectDir)"/>
+    </Target>
+
+    <Target Name="CopyContentWebUI"
+            BeforeTargets="Build"
+            DependsOnTargets="BuildContentWebUI"
+            Condition="'$(BuildContentWebUIEnabled)' == 'true' AND Exists('$(ContentWebUIDist)\index.html')">
+        <ItemGroup>
+            <_OldWebFiles Include="$(ContentWebUIOutDir)\*.html;$(ContentWebUIOutDir)\site.css;$(ContentWebUIOutDir)\site.js"/>
+            <_OldWebAssetDir Include="$(ContentWebUIOutDir)\assets"/>
+        </ItemGroup>
+        <Delete Files="@(_OldWebFiles)"/>
+        <RemoveDir Directories="@(_OldWebAssetDir)"/>
+        <ItemGroup>
+            <_WebFiles Include="$(ContentWebUIDist)\**\*.*"/>
+        </ItemGroup>
+        <Copy SourceFiles="@(_WebFiles)"
+              DestinationFiles="@(_WebFiles->'$(ContentWebUIOutDir)\%(RecursiveDir)%(Filename)%(Extension)')"
+              SkipUnchangedFiles="true"/>
+        <Message Importance="high" Text="[ContentServer] 已发布前端产物到 wwwroot"/>
+    </Target>
+
+    <Target Name="BuildContentServerArtifacts"
+            AfterTargets="Build"
+            Condition="'$(Configuration)' == 'Release' AND '$(BuildContentServerArtifacts)' == 'true' AND '$(DesignTimeBuild)' != 'true'">
+        <RemoveDir Directories="$(ContentServerPortablePublishDir)"/>
+        <MakeDir Directories="$(ContentServerPortablePublishDir);$(ContentServerPublishRoot)"/>
+        <MSBuild Projects="$(MSBuildProjectFullPath)"
+                 Targets="Publish"
+                 BuildInParallel="false"
+                 Properties="Configuration=Release;NoBuild=true;SelfContained=false;UseAppHost=false;PublishDir=$(ContentServerPortablePublishDir);BuildContentServerArtifacts=false"/>
+        <ZipDirectory SourceDirectory="$(ContentServerPortablePublishDir)"
+                      DestinationFile="$(ContentServerPortableArchive)"
+                      Overwrite="true"/>
+        <Message Text="[ContentServer] Portable bundle: $(ContentServerPortableArchive)" Importance="high"/>
+
+        <CallTarget Targets="BuildContentServerLinuxContainer" Condition="$([MSBuild]::IsOSPlatform('Linux'))"/>
+        <Message Text="[ContentServer] 当前系统不是 Linux，已跳过容器镜像打包。"
+                 Importance="high"
+                 Condition="!$([MSBuild]::IsOSPlatform('Linux'))"/>
+    </Target>
+
+    <Target Name="BuildContentServerLinuxContainer">
+        <Exec Command="dotnet build &quot;$(MSBuildProjectFullPath)&quot; -c Release -r linux-x64 -p:SelfContained=false -p:BuildContentServerArtifacts=false -p:BuildContentWebUIEnabled=false"/>
+        <RemoveDir Directories="$(ContentServerLinuxPublishDir)"/>
+        <MakeDir Directories="$(ContentServerLinuxPublishDir)"/>
+        <Exec Command="dotnet publish &quot;$(MSBuildProjectFullPath)&quot; -c Release -r linux-x64 --no-build --no-restore --self-contained false -p:BuildContentServerArtifacts=false -p:BuildContentWebUIEnabled=false -o &quot;$(ContentServerLinuxPublishDir)&quot;"/>
+        <Exec Command="bash &quot;$(MSBuildProjectDirectory)/Deployment/build-image.sh&quot;"
+              EnvironmentVariables="CONTENTSERVER_PUBLISH_DIR=$(ContentServerLinuxPublishDir);CONTENT_SERVER_VERSION=$(Version);SCNET_VERSION=$(ScNetworkVersion);DOTNET_SDK_VERSION=$(NETCoreSdkVersion);PLATFORM=linux/amd64;OUTPUT_DIR=$(ContentServerPublishRoot)"/>
+    </Target>
+</Project>

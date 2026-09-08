@@ -326,32 +326,91 @@ dotnet run --project ContentServer/ContentServer.csproj
 `ContentServer.csproj` 的 build target 自动执行前端构建，并把 `ContentWebUI/dist` 复制到 `wwwroot`，
 因此调试时用 `npm run dev`，部署时只需发布 ContentServer。
 
-## 发布与部署（linux-x64 单文件，方案 A）
+## 容器镜像（推荐）
+
+MSBuild 是后端、WebUI 和发行包的统一入口。只有配置名称严格为 `Release` 时才打包；`Debug` 和其他自定义配置
+只编译项目。所有系统生成不带 RID、以 `dotnet ContentServer.dll` 启动的 framework-dependent portable ZIP；
+Linux 额外执行隔离的 `linux-x64` build/publish，并把该目录封装进 .NET 10 Chiseled 运行镜像：
 
 ```bash
-./Publish/content-server.sh
+dotnet build -c Release
 ```
 
-该脚本执行 `dotnet publish -r linux-x64 --self-contained true -p:PublishSingleFile=true`，默认输出到
-`Publish/ContentServer/`。产物为自包含单文件，可整体搬运：
+产物默认直接写入 `Publish/`：
 
 ```text
-ContentServer            linux-x64 单文件可执行（含 .NET 运行时）
-wwwroot/                 前端 SPA 产物（编译后的 HTML/CSS/JS）
-appsettings.json         配置
-Data/content-server.db   SQLite 元数据数据库（首次运行时在内容根旁创建）
-Data/packages/           按 PackageHash 寻址的原始 .scpkg 制品
+content-server-0.0.1-portable.zip
+content-server-0.0.1-linux-amd64.tar.gz    # 仅 Linux
 ```
 
-部署时拷贝上述四项即可，运行：
+portable 包不携带 .NET，目标机器需要 ASP.NET Core Runtime 10。非 Linux 系统不会执行 Bash，也不要求安装容器
+工具链。Linux 构建机需要 Podman 或 Docker；镜像组装自动优先选择 Podman，其次选择 Docker。可以明确指定：
 
 ```bash
-cd Publish/ContentServer && ./ContentServer
+CONTAINER_ENGINE=docker dotnet build -c Release
 ```
 
-数据库 `Data/content-server.db` 只保存包元数据、内容、版本与审核记录，不保存包 BLOB。备份或迁移时必须同时保留 `Data/packages/`；
-不启用裁剪以保持 ASP.NET Core / EF Core / MediatR 运行可靠性。发布机需具备 Node 与 npm 以自动构建前端，
-若纯 .NET 环境可预先在 `ContentWebUI` 执行 `npm run build` 生成 `dist`。
+默认读取 `ContentServer.csproj` 的 `Version` 作为标签，当前生成 `linux/amd64` 镜像
+`localhost/scnet/content-server:0.0.1`。`localhost` 明确表示当前是通过归档传输的本地镜像，而不是远程镜像仓库。
+Git revision 单独记录在 OCI Label 中；工作区不干净时 revision 会带 `-dirty` 并输出警告，但不会改变发布版本标签。
+可以覆盖镜像名称、标签、平台和输出目录：
+
+```bash
+IMAGE_NAME=example/content-server IMAGE_TAG=0.1.0 \
+  dotnet build -c Release
+```
+
+portable 与 `linux-x64` 发布使用 `obj` 下的独立目录，嵌套的 Linux 构建显式关闭发行 Target，避免递归和输出冲突。
+`ContentServer/Deployment/build-image.sh` 只校验并组装 MSBuild 提供的 Linux publish 目录，不再执行 `dotnet build`
+或 `dotnet publish`，也不作为日常发行入口直接调用。
+
+Linux 镜像流程把镜像和部署文件组合成一个适合分发的压缩包，架构是文件名的一部分：
+
+```text
+content-server-<tag>-linux-amd64.tar.gz
+```
+
+压缩包解压后包含 Docker archive、镜像归档的 SHA-256、`compose.yaml` 和 `deploy.sh`。镜像归档在外层 bundle
+压缩时统一压缩，避免重复压缩。输出的 `compose.yaml` 会硬编码本次构建的精确镜像引用，而仓库中的
+`ContentServer/Deployment/compose.yaml` 是构建模板。这样部署包不依赖外部镜像变量，也不会意外使用其他标签。
+
+没有镜像仓库时，通过 SSH 复制并导入到 Docker 主机，无需把源码复制到服务器：
+
+```bash
+scp Publish/content-server-<tag>-linux-amd64.tar.gz dev:content-server/
+ssh dev
+cd content-server
+tar -xzf content-server-<tag>-linux-amd64.tar.gz
+./deploy.sh
+```
+
+`deploy.sh` 自动探测 Podman 或 Docker，也可以通过 `CONTAINER_ENGINE` 显式指定。脚本会先询问是否校验并导入
+镜像，再询问是否创建数据目录并启动 Compose。若需要绕过交互手动操作：
+
+```bash
+mkdir -p Data
+docker compose -f compose.yaml up -d
+curl http://127.0.0.1:5000/api/v1/health
+```
+
+Compose 默认映射宿主 `5000` 到容器 `8080`，并把 `./Data` 挂载为 `/data`。可以通过
+`CONTENTSERVER_PORT` 和 `CONTENTSERVER_DATA_DIR` 覆盖。当前镜像不限制运行 UID，以避免为宿主挂载目录引入额外的
+所有权配置；需要强化容器隔离时，再由部署环境统一配置非 root 用户和匹配的数据目录权限。容器内固定使用：
+
+```text
+ContentServer__DatabasePath=/data/content-server.db
+ContentServer__PackageStoragePath=/data
+```
+
+Chiseled 镜像没有 shell、curl 或包管理器；健康检查由宿主、反向代理或集群直接请求 `/api/v1/health`。
+TLS 应在外部反向代理终止。
+
+SQLite 数据库与 `Data/packages/` 必须作为同一个持久化单元备份和恢复。当前存储模型只支持单副本部署；
+在迁移到外部数据库和对象存储前，不得让多个容器或 Pod 并发写入同一份数据。集群可以使用单副本工作负载和
+RWO 持久卷，但仓库暂不维护 Kubernetes 清单。
+
+升级时传输并解压新版本 bundle，然后执行其中的 `deploy.sh`。不要依赖隐式 `latest` 标签。未来接入镜像仓库时，
+只需用 `podman push` / `docker pull` 替代归档传输，运行配置不变。
 
 ## 游戏客户端
 
