@@ -12,6 +12,8 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 {
     private const float _listPadding = 4f;
 
+    private const float _headerMargin = 6f;
+
     private const float _separatorThickness = 2f;
 
     private readonly BevelledRectangleWidget _background;
@@ -207,6 +209,12 @@ public sealed class SelectionDrawerWidget : CanvasWidget
         UpdateVisualState();
     }
 
+    public void RefreshItems()
+    {
+        RebuildList();
+        UpdateHeaderText();
+    }
+
     public void Open()
     {
         if (_items.Count == 0)
@@ -215,11 +223,7 @@ public sealed class SelectionDrawerWidget : CanvasWidget
         }
 
         IsOpen = true;
-        if (SelectedItem is { } selectedItem)
-        {
-            _list.ScrollToItem(selectedItem);
-        }
-
+        _list.ScrollPosition = 0f;
         UpdateVisualState();
     }
 
@@ -272,9 +276,10 @@ public sealed class SelectionDrawerWidget : CanvasWidget
     public override void ArrangeOverride()
     {
         var listHeight = CalculateListHeight();
+        var headerSize = CalculateHeaderSize();
         var surfacePosition = IsOpen && ExpansionDirection is SelectionDrawerDirection.Up
-            ? new Vector2(0f, -listHeight)
-            : Vector2.Zero;
+            ? new Vector2(_headerMargin, _headerMargin - listHeight)
+            : new Vector2(_headerMargin);
         SetWidgetPosition(_surface, surfacePosition);
 
         var headerPosition = IsOpen && ExpansionDirection is SelectionDrawerDirection.Up
@@ -283,12 +288,12 @@ public sealed class SelectionDrawerWidget : CanvasWidget
         _surface.SetWidgetPosition(_header, headerPosition);
 
         var listPosition = ExpansionDirection is SelectionDrawerDirection.Down
-            ? new Vector2(_listPadding, Size.Y + _listPadding)
+            ? new Vector2(_listPadding, headerSize.Y + _listPadding)
             : new Vector2(_listPadding);
         _surface.SetWidgetPosition(_listViewport, listPosition);
 
         var separatorY = ExpansionDirection is SelectionDrawerDirection.Down
-            ? Size.Y
+            ? headerSize.Y
             : listHeight;
         _surface.SetWidgetPosition(_separator, new Vector2(0f, separatorY));
         base.ArrangeOverride();
@@ -331,16 +336,23 @@ public sealed class SelectionDrawerWidget : CanvasWidget
     private void UpdateVisualState()
     {
         var listHeight = CalculateListHeight();
-        var surfaceSize = new Vector2(Size.X, Size.Y + (IsOpen ? listHeight : 0f));
+        var headerSize = CalculateHeaderSize();
+        var surfaceSize = new Vector2(headerSize.X, headerSize.Y + (IsOpen ? listHeight : 0f));
         _surface.Size = surfaceSize;
         _background.Size = surfaceSize;
-        _header.Size = Size;
+        _background.BevelSize = _headerClickable.IsPressed ? -1f : 2f;
+        _header.Size = headerSize;
         _listViewport.Size = new Vector2(
-            Math.Max(Size.X - 2f * _listPadding, 0f),
+            Math.Max(headerSize.X - 2f * _listPadding, 0f),
             Math.Max(listHeight - 2f * _listPadding, 0f));
         _listViewport.IsVisible = IsOpen;
         _separator.Size = new Vector2(Size.X, _separatorThickness);
         _separator.IsVisible = IsOpen;
+    }
+
+    private Vector2 CalculateHeaderSize()
+    {
+        return Vector2.Max(Size - new Vector2(2f * _headerMargin), Vector2.Zero);
     }
 
     private float CalculateListHeight()
