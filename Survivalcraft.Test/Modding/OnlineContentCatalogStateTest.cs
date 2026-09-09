@@ -61,23 +61,17 @@ public sealed class OnlineContentCatalogStateTest
     }
 
     [Fact]
-    public void SeedsOfflineCacheAndMergesRemoteSourceByExactHash()
+    public void CachedReferencesDoNotCreateCatalogEntries()
     {
         var hash = new string('a', 64);
         var state = new OnlineContentCatalogState();
         state.SetReferences([hash], [], []);
-        state.SeedCache([
-            new ContentPackageCacheEntry("/cache/a.scpkg", hash, ContentPackageType.Mod,
-                "example.mod", "Example", "1.0.0", 100)
-        ]);
 
-        var offline = Assert.Single(state.Filter(null, null, null, OnlineContentStatusFilter.Cached));
-        Assert.Empty(Assert.Single(offline.Versions).Sources);
+        Assert.Empty(state.Filter(null, null, null, OnlineContentStatusFilter.All));
 
         state.Append(Page(Entry(Version("1.0.0", hash, Source("A", 0))), false), 1);
 
-        Assert.Single(Assert.Single(state.Filter(null, null, null, OnlineContentStatusFilter.All))
-            .Versions.Single().Sources);
+        Assert.Single(state.Filter(null, null, null, OnlineContentStatusFilter.Cached));
     }
 
     private static AggregatedContentPage Page(AggregatedContentEntry entry, bool hasMore)

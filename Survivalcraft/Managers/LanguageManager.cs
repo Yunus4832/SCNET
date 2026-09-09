@@ -27,6 +27,8 @@ public static class LanguageManager
 
     public static string Warning = string.Empty;
 
+    public static string Info = string.Empty;
+
     public static string Back = string.Empty;
 
     public static string Allowed = string.Empty;
@@ -123,6 +125,7 @@ public static class LanguageManager
         Disable = Get("Usual", "disable");
         Enable = Get("Usual", "enable");
         Warning = Get("Usual", "warning");
+        Info = Get("Usual", "info");
         Back = Get("Usual", "back");
         Allowed = Get("Usual", "allowed");
         NAllowed = Get("Usual", "not allowed");

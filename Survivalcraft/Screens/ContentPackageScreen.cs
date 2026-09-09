@@ -10,6 +10,15 @@ public sealed class ContentPackageScreen : Screen
 {
     private const string _typeName = nameof(ContentPackageScreen);
 
+    private enum PackageAction
+    {
+        Create,
+        Import,
+        Export,
+        Install,
+        Delete
+    }
+
     private static readonly ContentPackageType[] _allowedTypes =
     [
         ContentPackageType.World,
@@ -18,12 +27,8 @@ public sealed class ContentPackageScreen : Screen
         ContentPackageType.FurniturePack
     ];
 
+    private readonly ActionPanelWidget _actionPanel;
     private readonly ListPanelWidget _packageList;
-    private readonly ButtonWidget _importButton;
-    private readonly ButtonWidget _exportButton;
-    private readonly ButtonWidget _installButton;
-    private readonly ButtonWidget _deleteButton;
-    private readonly ButtonWidget _createButton;
     private readonly LabelWidget _pickerUnavailableLabel;
     private bool _busy;
     private int _operationGeneration;
@@ -33,12 +38,20 @@ public sealed class ContentPackageScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/ContentPackageScreen");
         LoadContents(this, node);
         _packageList = Children.Find<ListPanelWidget>("PackageList")!;
-        _importButton = Children.Find<ButtonWidget>("Import")!;
-        _exportButton = Children.Find<ButtonWidget>("Export")!;
-        _installButton = Children.Find<ButtonWidget>("Install")!;
-        _deleteButton = Children.Find<ButtonWidget>("Delete")!;
-        _createButton = Children.Find<ButtonWidget>("Create")!;
+        _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _pickerUnavailableLabel = Children.Find<LabelWidget>("PickerUnavailable")!;
+        _actionPanel.ItemTextProvider = item =>
+            LanguageManager.GetContentWidgets(_typeName, item.ToString()!);
+        _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemClicked += ExecuteAction;
+        _actionPanel.SetPrimaryItems(
+        [
+            PackageAction.Create,
+            PackageAction.Import,
+            PackageAction.Export,
+            PackageAction.Install
+        ]);
+        _actionPanel.SetSecondaryItems([PackageAction.Delete]);
         _packageList.ItemWidgetFactory = item =>
         {
             var package = (ContentPackageCacheEntry)item;
@@ -62,65 +75,92 @@ public sealed class ContentPackageScreen : Screen
     {
         _operationGeneration++;
         _busy = false;
+        _actionPanel.ShowPrimaryItems();
         _packageList.SelectedItem = null;
     }
 
     public override void Update()
     {
-        var selected = _packageList.SelectedItem as ContentPackageCacheEntry;
         var pickerAvailable = FilePicker.IsAvailable;
         _pickerUnavailableLabel.IsVisible = !pickerAvailable;
-        _importButton.IsEnabled = !_busy && pickerAvailable;
-        _createButton.IsEnabled = !_busy && pickerAvailable;
-        _exportButton.IsEnabled = !_busy && pickerAvailable && selected is not null;
-        _installButton.IsEnabled = !_busy && selected is not null;
-        _deleteButton.IsEnabled = !_busy && selected is not null;
-
-        if (_importButton.IsClicked)
-        {
-            ImportPackages();
-        }
-
-        if (_createButton.IsClicked)
-        {
-            var generation = _operationGeneration;
-            ContentPackageCreationDialogs.Show(busy => SetBusy(generation, busy),
-                () =>
-                {
-                    if (IsCurrentOperation(generation))
-                    {
-                        DialogsManager.Alert(LanguageManager.Get(_typeName, "CreationSaved"));
-                    }
-                }, exception => ShowError(generation, exception));
-        }
-
-        if (_exportButton.IsClicked && selected is not null)
-        {
-            ExportPackage(selected);
-        }
-
-        if (_installButton.IsClicked && selected is not null)
-        {
-            var generation = _operationGeneration;
-            ContentPackageInstallDialogs.Show(selected, busy => SetBusy(generation, busy),
-                () =>
-                {
-                    if (IsCurrentOperation(generation))
-                    {
-                        DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed"));
-                    }
-                }, exception => ShowError(generation, exception));
-        }
-
-        if (_deleteButton.IsClicked && selected is not null)
-        {
-            ConfirmDelete(selected);
-        }
+        _actionPanel.IsEnabled = !_busy;
+        _actionPanel.Refresh();
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen("Content");
         }
+    }
+
+    private bool IsActionEnabled(object item)
+    {
+        if (_busy || item is not PackageAction action)
+        {
+            return false;
+        }
+
+        var hasSelection = _packageList.SelectedItem is ContentPackageCacheEntry;
+        return action switch
+        {
+            PackageAction.Create or PackageAction.Import => FilePicker.IsAvailable,
+            PackageAction.Export => FilePicker.IsAvailable && hasSelection,
+            PackageAction.Install or PackageAction.Delete => hasSelection,
+            _ => false
+        };
+    }
+
+    private void ExecuteAction(object item)
+    {
+        if (item is not PackageAction action || !IsActionEnabled(action))
+        {
+            return;
+        }
+
+        var selected = _packageList.SelectedItem as ContentPackageCacheEntry;
+        switch (action)
+        {
+            case PackageAction.Create:
+                CreatePackage();
+                break;
+            case PackageAction.Import:
+                ImportPackages();
+                break;
+            case PackageAction.Export when selected is not null:
+                ExportPackage(selected);
+                break;
+            case PackageAction.Install when selected is not null:
+                InstallPackage(selected);
+                break;
+            case PackageAction.Delete when selected is not null:
+                ConfirmDelete(selected);
+                break;
+        }
+    }
+
+    private void CreatePackage()
+    {
+        var generation = _operationGeneration;
+        ContentPackageCreationDialogs.Show(busy => SetBusy(generation, busy),
+            () =>
+            {
+                if (IsCurrentOperation(generation))
+                {
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "CreationSaved"));
+                }
+            }, exception => ShowError(generation, exception));
+    }
+
+    private void InstallPackage(ContentPackageCacheEntry package)
+    {
+        var generation = _operationGeneration;
+        ContentPackageInstallDialogs.Show(package, busy => SetBusy(generation, busy),
+            () =>
+            {
+                if (IsCurrentOperation(generation))
+                {
+                    DialogsManager.Alert(LanguageManager.Get(_typeName, "Installed"));
+                }
+            }, exception => ShowError(generation, exception));
     }
 
     private void Refresh()

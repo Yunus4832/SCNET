@@ -100,23 +100,6 @@ public sealed class OnlineContentCatalogState
         _currentSessionReferences = currentSessionReferences.Distinct().ToArray();
     }
 
-    public void SeedCache(IEnumerable<ContentPackageCacheEntry> entries)
-    {
-        ArgumentNullException.ThrowIfNull(entries);
-        foreach (var cached in entries)
-        {
-            var entry = new AggregatedContentEntry(cached.Type, cached.Identifier, cached.Name, null,
-            [
-                new AggregatedContentVersion(cached.Version, cached.PackageHash, cached.Size,
-                    Path.GetFileName(cached.Path), false, [])
-            ]);
-            var key = (entry.Type, entry.Identifier);
-            _entries[key] = _entries.TryGetValue(key, out var existing)
-                ? ContentCatalogMerger.Merge(existing, entry)
-                : entry;
-        }
-    }
-
     public void Append(AggregatedContentPage page, int pageIndex)
     {
         ArgumentNullException.ThrowIfNull(page);

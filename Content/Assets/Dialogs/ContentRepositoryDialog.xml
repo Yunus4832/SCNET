@@ -1,0 +1,38 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets">
+    <CanvasWidget Size="680, 285" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="20, 10">
+            <LabelWidget Name="ContentRepositoryDialog.Title" Color="255, 255, 255"
+                         HorizontalAlignment="Center" Margin="0, 5"/>
+            <CanvasWidget Size="0, 8"/>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+                <LabelWidget Name="ContentRepositoryDialog.NameLabel" Size="90, 50"
+                             VerticalAlignment="Center" TextAnchor="Right, VerticalCenter" Color="180, 180, 180"/>
+                <CanvasWidget Size="12, 0"/>
+                <CanvasWidget Size="500, 50">
+                    <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                    <TextBoxWidget Name="ContentRepositoryDialog.Name" Margin="10, 0"
+                                   VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                </CanvasWidget>
+            </StackPanelWidget>
+            <CanvasWidget Size="0, 8"/>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+                <LabelWidget Name="ContentRepositoryDialog.AddressLabel" Size="90, 50"
+                             VerticalAlignment="Center" TextAnchor="Right, VerticalCenter" Color="180, 180, 180"/>
+                <CanvasWidget Size="12, 0"/>
+                <CanvasWidget Size="500, 50">
+                    <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                    <TextBoxWidget Name="ContentRepositoryDialog.Address" Margin="10, 0"
+                                   VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                </CanvasWidget>
+            </StackPanelWidget>
+            <CanvasWidget Size="0, 18"/>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+                <BevelledButtonWidget Name="ContentRepositoryDialog.Save" Style="{Styles/ButtonStyle_160x60}"/>
+                <CanvasWidget Size="40, 0"/>
+                <BevelledButtonWidget Name="ContentRepositoryDialog.Cancel" Text="[TextBoxDialog:2]"
+                                      Style="{Styles/ButtonStyle_160x60}"/>
+            </StackPanelWidget>
+        </StackPanelWidget>
+    </CanvasWidget>
+</CanvasWidget>

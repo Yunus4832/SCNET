@@ -27,7 +27,6 @@
         "4": "皮肤 | {0}x{1}",
         "5": "[{0}]将会被删除",
         "6": "[{0}]将会被删除\n(它在{1}个世界中使用,删除后他们将会变为默认值)",
-        "7": "筛选",
         "8": "全部",
         "9": "你确定吗?",
         "10": "无效的类型",
@@ -39,7 +38,7 @@
     },
     "ModManagementScreen": {
         "Title": "模组管理",
-        "DeleteCacheShort": "删缓存",
+        "DeleteCacheShort": "删除",
         "Export": "导出",
         "AddGlobal": "加入全局",
         "RemoveGlobal": "移出全局",
@@ -60,10 +59,8 @@
         "ImportComplete": "已导入 {0} 个模组内容包。",
         "ImportModFailed": "导入模组失败",
         "ExportTitle": "导出模组内容包",
-        "Online": "在线内容",
-        "RefreshLocal": "刷新本地状态",
+        "RefreshLocal": "刷新",
         "Empty": "没有缓存或 Profile 引用的 Mod。",
-        "FindInRepositories": "在仓库中查找",
         "StatusMissing": "缺失",
         "StatusRuntime": "当前运行",
         "ReferencedCannotDelete": "该缓存包仍被 Profile 或当前 Runtime 引用，不能删除。",
@@ -807,7 +804,8 @@
         "delete": "删除",
         "gameName": "生存战争",
         "debug": "调试",
-        "api": "API插件版"
+        "api": "API插件版",
+        "info": "提示"
     },
     "CRMessage": {
         "0": "请制作石斧来代替",
@@ -3200,21 +3198,12 @@
         },
         "ModManagementScreen": {
             "Title": "模组管理",
-            "Export": "导出",
-            "AddGlobal": "加入全局",
-            "World": "世界",
-            "Import": "导入",
             "PickerUnavailable": "当前平台未提供文件选择功能，无法导入或导出。",
-            "Online": "在线内容",
-            "RefreshLocal": "刷新本地状态",
-            "Empty": "没有缓存或 Profile 引用的 Mod。",
-            "FindInRepositories": "在仓库中查找",
-            "DeleteCacheShort": "删缓存"
+            "Empty": "没有缓存或 Profile 引用的 Mod。"
         },
         "ManageContentScreen": {
             "1": "管理内容",
-            "3": "删除",
-            "5": "..."
+            "3": "删除"
         },
         "ModifyWorldScreen": [
             "更改世界",
@@ -3475,8 +3464,8 @@
             "Import": "导入",
             "Export": "导出",
             "Install": "安装",
-            "Delete": "删除缓存",
-            "Create": "制造新包"
+            "Delete": "删除",
+            "Create": "创建"
         },
         "ContentRepositoryScreen": {
             "Title": "内容仓库",
@@ -3491,9 +3480,7 @@
             "Enabled": "已启用",
             "Disabled": "已停用",
             "NoRepositories": "尚未配置内容仓库。",
-            "AddTitle": "输入仓库名称",
-            "EditNameTitle": "编辑仓库名称",
-            "AddressTitle": "输入仓库地址",
+            "AddTitle": "添加内容仓库",
             "NameRequired": "仓库名称不能为空。",
             "DuplicateAddress": "该仓库地址已经存在。",
             "InvalidAddress": "请输入不含凭据、查询或片段的有效 HTTP(S) 地址。",
@@ -3501,58 +3488,41 @@
             "ConfirmDelete": "确定删除内容仓库“{0}”吗？缓存包和 Profile 不会被删除。",
             "Testing": "正在测试仓库",
             "TestSucceeded": "连接成功：{0} {1}",
-            "TestFailed": "无法连接或仓库协议响应无效。"
+            "TestFailed": "无法连接或仓库协议响应无效。",
+            "EditTitle": "编辑内容仓库",
+            "AddressLabel": "地址",
+            "NameLabel": "名称"
         },
         "OnlineContentScreen": {
             "Title": "在线内容",
-            "Search": "搜索",
-            "SearchValue": "搜索：{0}",
             "AllTypes": "全部类型",
             "AllRepositories": "全部仓库",
-            "Repositories": "管理仓库",
             "Refresh": "刷新",
-            "LoadMore": "加载更多",
             "NoRepositories": "没有已启用的内容仓库。",
             "Loading": "正在加载目录…",
             "LoadFailed": "目录加载失败，请重试。",
             "PartialFailure": "有 {0} 个仓库加载失败；已显示其他仓库的结果。",
             "NoResults": "没有符合筛选条件的内容。",
             "ExactNotFound": "仓库中未找到要求的精确版本和 hash。",
-            "SearchTitle": "搜索名称、标识符或简介",
-            "TypeFilterTitle": "选择内容类型",
-            "RepositoryFilterTitle": "选择内容仓库",
-            "StatusFilterTitle": "选择内容状态",
-            "All": "全部",
             "StatusAll": "全部状态",
             "StatusCached": "已缓存",
             "StatusProfile": "Profile 引用",
             "StatusCurrentSession": "当前会话",
             "StatusConflict": "版本冲突",
             "StatusMissing": "引用但缺失",
-            "OfflineCacheOnly": "没有可用仓库；当前仅显示本地缓存。"
-        },
-        "OnlineContentVersionScreen": {
-            "Title": "内容版本",
+            "SearchPlaceholder": "输入以搜索",
+            "PreviousPage": "上一页",
+            "NextPage": "下一页",
+            "Version": "版本",
             "Download": "下载",
-            "Retry": "刷新/重试",
-            "Loading": "正在加载完整版本历史…",
-            "LoadFailed": "版本历史加载失败，可重试或使用已显示的目录信息。",
-            "PartialFailure": "有 {0} 个仓库的版本历史加载失败。",
+            "LoadingVersions": "正在加载完整版本历史…",
+            "VersionLoadFailed": "版本历史加载失败，可使用已显示的目录信息。",
             "NoVersions": "没有可用版本。",
-            "ExactNotFound": "未找到要求的精确版本和 hash。",
-            "Cached": "已缓存",
-            "Profile": "Profile 引用",
-            "CurrentSession": "当前会话",
-            "Conflict": "同版本 hash 冲突",
-            "Missing": "缺失",
             "Downloading": "正在下载并校验内容包…",
             "DownloadFailed": "所有符合条件的来源均下载失败。",
             "ModDownloaded": "Mod 已下载到缓存；Profile 未被修改。",
             "Installed": "内容已安装。",
-            "InstallFailed": "内容包已缓存，但安装失败。",
-            "AutomaticSource": "自动选择来源",
-            "SourceTitle": "选择下载来源",
-            "Latest": "最新"
+            "InstallFailed": "内容包已缓存，但安装失败。"
         }
     },
     "FireworksBlock": {

@@ -6,14 +6,18 @@ namespace Game.Screens;
 
 public sealed class ContentRepositoryScreen : Screen
 {
-    private readonly ButtonWidget _addButton;
-    private readonly ButtonWidget _deleteButton;
-    private readonly ButtonWidget _editButton;
-    private readonly ButtonWidget _moveDownButton;
-    private readonly ButtonWidget _moveUpButton;
+    private enum RepositoryAction
+    {
+        AddOrEdit,
+        Delete,
+        Toggle,
+        MoveUp,
+        MoveDown,
+        Test
+    }
+
+    private readonly ActionPanelWidget _actionPanel;
     private readonly LabelWidget _statusLabel;
-    private readonly ButtonWidget _testButton;
-    private readonly ButtonWidget _toggleButton;
     private readonly ListPanelWidget _repositoryList;
     private bool _busy;
     private object[] _returnParameters = [];
@@ -25,15 +29,24 @@ public sealed class ContentRepositoryScreen : Screen
     {
         LoadContents(this, ContentManager.Get<XElement>("Screens/ContentRepositoryScreen"));
         _repositoryList = Children.Find<ListPanelWidget>("RepositoryList")!;
-        _addButton = Children.Find<ButtonWidget>("Add")!;
-        _editButton = Children.Find<ButtonWidget>("Edit")!;
-        _deleteButton = Children.Find<ButtonWidget>("Delete")!;
-        _toggleButton = Children.Find<ButtonWidget>("Toggle")!;
-        _moveUpButton = Children.Find<ButtonWidget>("MoveUp")!;
-        _moveDownButton = Children.Find<ButtonWidget>("MoveDown")!;
-        _testButton = Children.Find<ButtonWidget>("Test")!;
+        _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _statusLabel = Children.Find<LabelWidget>("Status")!;
         _repositoryList.ItemWidgetFactory = CreateRepositoryWidget;
+        _actionPanel.ItemTextProvider = GetActionText;
+        _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemClicked += ExecuteAction;
+        _actionPanel.SetPrimaryItems(
+        [
+            RepositoryAction.AddOrEdit,
+            RepositoryAction.MoveUp,
+            RepositoryAction.MoveDown,
+            RepositoryAction.Test
+        ]);
+        _actionPanel.SetSecondaryItems(
+        [
+            RepositoryAction.Delete,
+            RepositoryAction.Toggle
+        ]);
     }
 
     public override void Enter(object[] parameters)
@@ -54,62 +67,14 @@ public sealed class ContentRepositoryScreen : Screen
         }
 
         _busy = false;
+        _actionPanel.ShowPrimaryItems();
         _repositoryList.SelectedItem = null;
     }
 
     public override void Update()
     {
-        var repositories = SettingsManager.ContentRepositories.Snapshot();
-        var selected = _repositoryList.SelectedItem as ContentRepository;
-        var selectedIndex = selected is null
-            ? -1
-            : repositories.ToList().FindIndex(repository => repository.Id == selected.Id);
-        _addButton.IsEnabled = !_busy;
-        _editButton.IsEnabled = !_busy && selected is not null;
-        _deleteButton.IsEnabled = !_busy && selected is not null;
-        _toggleButton.IsEnabled = !_busy && selected is not null;
-        _moveUpButton.IsEnabled = !_busy && selectedIndex > 0;
-        _moveDownButton.IsEnabled = !_busy && selectedIndex >= 0 && selectedIndex < repositories.Count - 1;
-        _testButton.IsEnabled = !_busy && selected?.IsEnabled == true;
-        _toggleButton.Text = selected?.IsEnabled == false ? Text("Enable") : Text("Disable");
-
-        if (_addButton.IsClicked)
-        {
-            ShowEditor(null);
-        }
-
-        if (_editButton.IsClicked && selected is not null)
-        {
-            ShowEditor(selected);
-        }
-
-        if (_deleteButton.IsClicked && selected is not null)
-        {
-            ConfirmDelete(selected);
-        }
-
-        if (_toggleButton.IsClicked && selected is not null)
-        {
-            Execute(() => SettingsManager.ContentRepositories.Edit(selected with
-            {
-                IsEnabled = !selected.IsEnabled
-            }), selected.Id);
-        }
-
-        if (_moveUpButton.IsClicked && selectedIndex > 0)
-        {
-            Move(repositories, selectedIndex, selectedIndex - 1);
-        }
-
-        if (_moveDownButton.IsClicked && selectedIndex >= 0 && selectedIndex < repositories.Count - 1)
-        {
-            Move(repositories, selectedIndex, selectedIndex + 1);
-        }
-
-        if (_testButton.IsClicked && selected is not null)
-        {
-            TestConnection(selected);
-        }
+        _actionPanel.IsEnabled = !_busy;
+        _actionPanel.Refresh();
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
@@ -147,33 +112,24 @@ public sealed class ContentRepositoryScreen : Screen
 
     private void ShowEditor(ContentRepository? repository)
     {
-        DialogsManager.ShowDialog(null, new TextBoxDialog(
-            repository is null ? Text("AddTitle") : Text("EditNameTitle"),
+        DialogsManager.ShowDialog(null, new ContentRepositoryDialog(
+            repository is null ? Text("AddTitle") : Text("EditTitle"),
+            Text("NameLabel"),
+            Text("AddressLabel"),
+            repository is null ? Text("Add") : Text("Edit"),
             repository?.Name ?? string.Empty,
-            64,
-            name =>
-            {
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    ShowError(Text("NameRequired"));
-                    return;
-                }
-
-                ShowAddressEditor(repository, name.Trim());
-            }, false));
+            repository?.BaseUrl ?? string.Empty,
+            (name, address) => SaveEditor(repository, name, address)));
     }
 
-    private void ShowAddressEditor(ContentRepository? repository, string name)
+    private bool SaveEditor(ContentRepository? repository, string name, string address)
     {
-        DialogsManager.ShowDialog(null, new TextBoxDialog(
-            Text("AddressTitle"),
-            repository?.BaseUrl ?? "https://",
-            TemporaryContentRepositories.MaximumUrlLength,
-            address => SaveEditor(repository, name, address), false));
-    }
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ShowError(Text("NameRequired"));
+            return false;
+        }
 
-    private void SaveEditor(ContentRepository? repository, string name, string address)
-    {
         try
         {
             var current = SettingsManager.ContentRepositories.Snapshot();
@@ -189,7 +145,7 @@ public sealed class ContentRepositoryScreen : Screen
             if (current.Any(item => item.Id != normalized.Id && item.BaseUrl == normalized.BaseUrl))
             {
                 ShowError(Text("DuplicateAddress"));
-                return;
+                return false;
             }
 
             if (repository is null)
@@ -202,15 +158,18 @@ public sealed class ContentRepositoryScreen : Screen
             }
 
             Refresh(normalized.Id);
+            return true;
         }
         catch (ArgumentException)
         {
             ShowError(Text("InvalidAddress"));
+            return false;
         }
         catch (Exception exception)
         {
             Log.Error($"Content repository update failed: {exception}");
             ShowError(Text("SaveFailed"));
+            return false;
         }
     }
 
@@ -231,6 +190,83 @@ public sealed class ContentRepositoryScreen : Screen
         (ids[sourceIndex], ids[targetIndex]) = (ids[targetIndex], ids[sourceIndex]);
         var selectedId = ids[targetIndex];
         Execute(() => SettingsManager.ContentRepositories.SetOrder(ids), selectedId);
+    }
+
+    private bool IsActionEnabled(object item)
+    {
+        if (_busy || item is not RepositoryAction action)
+        {
+            return false;
+        }
+
+        var repositories = SettingsManager.ContentRepositories.Snapshot();
+        var selected = _repositoryList.SelectedItem as ContentRepository;
+        var selectedIndex = selected is null
+            ? -1
+            : repositories.ToList().FindIndex(repository => repository.Id == selected.Id);
+        return action switch
+        {
+            RepositoryAction.AddOrEdit => true,
+            RepositoryAction.Delete or RepositoryAction.Toggle => selected is not null,
+            RepositoryAction.MoveUp => selectedIndex > 0,
+            RepositoryAction.MoveDown => selectedIndex >= 0 && selectedIndex < repositories.Count - 1,
+            RepositoryAction.Test => selected?.IsEnabled == true,
+            _ => false
+        };
+    }
+
+    private void ExecuteAction(object item)
+    {
+        if (item is not RepositoryAction action || !IsActionEnabled(action))
+        {
+            return;
+        }
+
+        var repositories = SettingsManager.ContentRepositories.Snapshot();
+        var selected = _repositoryList.SelectedItem as ContentRepository;
+        var selectedIndex = selected is null
+            ? -1
+            : repositories.ToList().FindIndex(repository => repository.Id == selected.Id);
+        switch (action)
+        {
+            case RepositoryAction.AddOrEdit:
+                ShowEditor(selected);
+                break;
+            case RepositoryAction.Delete when selected is not null:
+                ConfirmDelete(selected);
+                break;
+            case RepositoryAction.Toggle when selected is not null:
+                Execute(() => SettingsManager.ContentRepositories.Edit(selected with
+                {
+                    IsEnabled = !selected.IsEnabled
+                }), selected.Id);
+                break;
+            case RepositoryAction.MoveUp:
+                Move(repositories, selectedIndex, selectedIndex - 1);
+                break;
+            case RepositoryAction.MoveDown:
+                Move(repositories, selectedIndex, selectedIndex + 1);
+                break;
+            case RepositoryAction.Test when selected is not null:
+                TestConnection(selected);
+                break;
+        }
+    }
+
+    private string GetActionText(object item)
+    {
+        if (item is not RepositoryAction action)
+        {
+            return string.Empty;
+        }
+
+        var selected = _repositoryList.SelectedItem as ContentRepository;
+        return action switch
+        {
+            RepositoryAction.AddOrEdit => selected is null ? Text("Add") : Text("Edit"),
+            RepositoryAction.Toggle => selected?.IsEnabled == false ? Text("Enable") : Text("Disable"),
+            _ => Text(action.ToString())
+        };
     }
 
     private void TestConnection(ContentRepository repository)

@@ -4,28 +4,34 @@
         <CanvasWidget Style="{Widgets/TopBarContents}">
             <LabelWidget Name="TopBar.Label" Text="[OnlineContentScreen:Title]"/>
         </CanvasWidget>
-        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
-                <BevelledButtonWidget Name="Search" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
-                <BevelledButtonWidget Name="TypeFilter" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
-                <BevelledButtonWidget Name="RepositoryFilter" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
-                <BevelledButtonWidget Name="StatusFilter" Style="{Styles/ButtonStyle_160x60}" Margin="4, 0"/>
-            </StackPanelWidget>
-            <CanvasWidget Margin="15, 0">
+        <CanvasWidget>
+            <CanvasWidget Margin="15, 76">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="82"
                                  SelectionColor="10, 70, 0, 90"/>
                 <LabelWidget Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center"
                              Color="180, 180, 180"/>
             </CanvasWidget>
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
-                <BevelledButtonWidget Name="Repositories" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[OnlineContentScreen:Repositories]" Margin="4, 0"/>
-                <BevelledButtonWidget Name="Refresh" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[OnlineContentScreen:Refresh]" Margin="4, 0"/>
-                <BevelledButtonWidget Name="LoadMore" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[OnlineContentScreen:LoadMore]" Margin="4, 0"/>
-            </StackPanelWidget>
-        </StackPanelWidget>
+            <ActionPanelWidget Name="Actions" VerticalAlignment="Far" Margin="15, 8"/>
+            <CanvasWidget Size="Infinity, 60" VerticalAlignment="Near" Margin="4, 8">
+                <StackPanelWidget Direction="Horizontal">
+                    <CanvasWidget Size="Infinity, 60" Margin="5, 0">
+                        <CanvasWidget Margin="6, 6">
+                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128"
+                                             OutlineThickness="1"/>
+                            <LabelWidget Name="SearchPlaceholder" Margin="10, 0" Color="128, 128, 128"
+                                         VerticalAlignment="Center" IsHitTestVisible="false"/>
+                            <TextBoxWidget Name="Search" Size="Infinity, 48" Margin="10, 0"
+                                           VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                        </CanvasWidget>
+                    </CanvasWidget>
+                    <SelectionDrawerWidget Name="TypeFilter" Size="160, 60" Margin="4, 0" MaxVisibleItems="5"/>
+                    <SelectionDrawerWidget Name="RepositoryFilter" Size="160, 60" Margin="4, 0"
+                                           MaxVisibleItems="5"/>
+                    <SelectionDrawerWidget Name="StatusFilter" Size="160, 60" Margin="4, 0"
+                                           MaxVisibleItems="5"/>
+                </StackPanelWidget>
+            </CanvasWidget>
+        </CanvasWidget>
     </StackPanelWidget>
 </Screen>

@@ -14,29 +14,7 @@
                              Color="160, 160, 160"/>
             </CanvasWidget>
             <CanvasWidget Size="0, 10"/>
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
-                <BevelledButtonWidget Name="Add" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[ContentRepositoryScreen:Add]"/>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="Edit" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[ContentRepositoryScreen:Edit]"/>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="Delete" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[ContentRepositoryScreen:Delete]"/>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="Toggle" Style="{Styles/ButtonStyle_160x60}"/>
-            </StackPanelWidget>
-            <CanvasWidget Size="0, 8"/>
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
-                <BevelledButtonWidget Name="MoveUp" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[ContentRepositoryScreen:MoveUp]"/>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="MoveDown" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[ContentRepositoryScreen:MoveDown]"/>
-                <CanvasWidget Size="10, 0"/>
-                <BevelledButtonWidget Name="Test" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[ContentRepositoryScreen:Test]"/>
-            </StackPanelWidget>
+            <ActionPanelWidget Name="Actions" Margin="20, 0"/>
             <CanvasWidget Size="0, 10"/>
         </StackPanelWidget>
     </StackPanelWidget>

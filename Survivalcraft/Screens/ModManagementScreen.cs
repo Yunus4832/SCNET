@@ -11,17 +11,20 @@ public sealed class ModManagementScreen : Screen
 {
     private const string _typeName = nameof(ModManagementScreen);
 
-    private readonly ButtonWidget _cacheButton;
+    private enum ModAction
+    {
+        Import,
+        Export,
+        Global,
+        World,
+        DeleteCache,
+        Refresh
+    }
+
+    private readonly ActionPanelWidget _actionPanel;
     private readonly LabelWidget _emptyLabel;
-    private readonly ButtonWidget _exportButton;
-    private readonly ButtonWidget _findButton;
-    private readonly ButtonWidget _globalModButton;
-    private readonly ButtonWidget _importButton;
     private readonly ListPanelWidget _modsList;
-    private readonly ButtonWidget _onlineButton;
     private readonly LabelWidget _pickerUnavailableLabel;
-    private readonly ButtonWidget _refreshButton;
-    private readonly ButtonWidget _worldModButton;
     private bool _busy;
     private ModProfile _globalProfile = new();
     private int _operationGeneration;
@@ -30,17 +33,25 @@ public sealed class ModManagementScreen : Screen
     public ModManagementScreen()
     {
         LoadContents(this, ContentManager.Get<XElement>("Screens/ModManagementScreen"));
-        _cacheButton = Children.Find<ButtonWidget>("CacheButton")!;
+        _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _emptyLabel = Children.Find<LabelWidget>("Empty")!;
-        _exportButton = Children.Find<ButtonWidget>("ExportButton")!;
-        _findButton = Children.Find<ButtonWidget>("FindButton")!;
-        _globalModButton = Children.Find<ButtonWidget>("GlobalModButton")!;
-        _importButton = Children.Find<ButtonWidget>("ImportButton")!;
         _modsList = Children.Find<ListPanelWidget>("ModsList")!;
-        _onlineButton = Children.Find<ButtonWidget>("OnlineButton")!;
         _pickerUnavailableLabel = Children.Find<LabelWidget>("PickerUnavailable")!;
-        _refreshButton = Children.Find<ButtonWidget>("RefreshButton")!;
-        _worldModButton = Children.Find<ButtonWidget>("WorldModButton")!;
+        _actionPanel.ItemTextProvider = GetActionText;
+        _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemClicked += ExecuteAction;
+        _actionPanel.SetPrimaryItems(
+        [
+            ModAction.Import,
+            ModAction.Export,
+            ModAction.Global,
+            ModAction.World
+        ]);
+        _actionPanel.SetSecondaryItems(
+        [
+            ModAction.DeleteCache,
+            ModAction.Refresh
+        ]);
         _modsList.ItemWidgetFactory = CreateModItemWidget;
     }
 
@@ -60,87 +71,104 @@ public sealed class ModManagementScreen : Screen
             _operationDialog = null;
         }
 
+        _actionPanel.ShowPrimaryItems();
         _modsList.SelectedItem = null;
     }
 
     public override void Update()
     {
-        var selected = _modsList.SelectedItem as ManagedModItem;
         var pickerAvailable = FilePicker.IsAvailable;
-        _globalModButton.IsEnabled = !_busy && selected is not null;
-        _globalModButton.Text = selected?.IsGlobal == true
-            ? LanguageManager.Get(_typeName, "RemoveGlobal")
-            : LanguageManager.Get(_typeName, "AddGlobal");
-        _worldModButton.IsEnabled = !_busy && selected is not null;
-        _cacheButton.IsEnabled = !_busy && selected?.LocalEntry is not null;
-        _findButton.IsEnabled = !_busy && selected?.IsMissing == true;
-        _exportButton.IsEnabled = !_busy && pickerAvailable && selected?.LocalEntry is not null;
-        _importButton.IsEnabled = !_busy && pickerAvailable;
-        _onlineButton.IsEnabled = !_busy;
-        _refreshButton.IsEnabled = !_busy;
         _pickerUnavailableLabel.IsVisible = !pickerAvailable;
-
-        if (_importButton.IsClicked)
-        {
-            ImportPackages();
-        }
-
-        if (_cacheButton.IsClicked && selected?.LocalEntry is not null)
-        {
-            ConfirmDeleteCache(selected);
-        }
-
-        if (_findButton.IsClicked && selected is not null)
-        {
-            OpenOnlineContent(selected);
-        }
-
-        if (_exportButton.IsClicked && selected?.LocalEntry is not null)
-        {
-            ExportPackage(selected);
-        }
-
-        if (_globalModButton.IsClicked && selected is not null)
-        {
-            if (selected.IsGlobal)
-            {
-                RemovePackage(_globalProfile, selected.ModId);
-            }
-            else
-            {
-                AddPackage(_globalProfile, selected);
-            }
-
-            ModProfileManager.SaveGlobalProfile(_globalProfile);
-            RefreshState();
-        }
-
-        if (_worldModButton.IsClicked && selected is not null)
-        {
-            SelectWorldsForPackage(selected);
-        }
-
-        if (_onlineButton.IsClicked)
-        {
-            if (selected is null)
-            {
-                ScreensManager.SwitchScreen("OnlineContent");
-            }
-            else
-            {
-                OpenOnlineContent(selected);
-            }
-        }
-
-        if (_refreshButton.IsClicked)
-        {
-            RefreshState();
-        }
+        _actionPanel.IsEnabled = !_busy;
+        _actionPanel.Refresh();
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen("Content");
         }
+    }
+
+    private bool IsActionEnabled(object item)
+    {
+        if (_busy || item is not ModAction action)
+        {
+            return false;
+        }
+
+        var selected = _modsList.SelectedItem as ManagedModItem;
+        return action switch
+        {
+            ModAction.Import => FilePicker.IsAvailable,
+            ModAction.Export => FilePicker.IsAvailable && selected?.LocalEntry is not null,
+            ModAction.Global or ModAction.World => selected is not null,
+            ModAction.DeleteCache => selected?.LocalEntry is not null,
+            ModAction.Refresh => true,
+            _ => false
+        };
+    }
+
+    private void ExecuteAction(object item)
+    {
+        if (item is not ModAction action || !IsActionEnabled(action))
+        {
+            return;
+        }
+
+        var selected = _modsList.SelectedItem as ManagedModItem;
+        switch (action)
+        {
+            case ModAction.Import:
+                ImportPackages();
+                break;
+            case ModAction.Export when selected is not null:
+                ExportPackage(selected);
+                break;
+            case ModAction.Global when selected is not null:
+                ToggleGlobal(selected);
+                break;
+            case ModAction.World when selected is not null:
+                SelectWorldsForPackage(selected);
+                break;
+            case ModAction.DeleteCache when selected is not null:
+                ConfirmDeleteCache(selected);
+                break;
+            case ModAction.Refresh:
+                RefreshState();
+                break;
+        }
+    }
+
+    private string GetActionText(object item)
+    {
+        if (item is not ModAction action)
+        {
+            return string.Empty;
+        }
+
+        var selected = _modsList.SelectedItem as ManagedModItem;
+        return action switch
+        {
+            ModAction.Global => LanguageManager.Get(_typeName,
+                selected?.IsGlobal == true ? "RemoveGlobal" : "AddGlobal"),
+            ModAction.DeleteCache => LanguageManager.Get(_typeName, "DeleteCacheShort"),
+            ModAction.Refresh => LanguageManager.Get(_typeName, "RefreshLocal"),
+            _ => LanguageManager.Get(_typeName, action.ToString())
+        };
+    }
+
+    private void ToggleGlobal(ManagedModItem item)
+    {
+        if (item.IsGlobal)
+        {
+            RemovePackage(_globalProfile, item.ModId);
+        }
+        else
+        {
+            AddPackage(_globalProfile, item);
+        }
+
+        ModProfileManager.SaveGlobalProfile(_globalProfile);
+        RefreshState();
     }
 
     private void RefreshState()
@@ -166,12 +194,6 @@ public sealed class ModManagementScreen : Screen
         }
 
         _emptyLabel.IsVisible = items.Count == 0;
-    }
-
-    private static void OpenOnlineContent(ManagedModItem item)
-    {
-        ScreensManager.SwitchScreen("OnlineContent", new OnlineContentNavigation(
-            ContentPackageType.Mod, item.ModId, item.Version, item.PackageHash, "ModManagement"));
     }
 
     private void ConfirmDeleteCache(ManagedModItem item)

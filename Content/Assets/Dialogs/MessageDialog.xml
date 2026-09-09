@@ -1,18 +1,23 @@
-<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="600, 250" ClampToBounds="true" HorizontalAlignment="Center"
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="600, 240" ClampToBounds="true" HorizontalAlignment="Center"
               VerticalAlignment="Center">
-
     <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
-    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="10, 10">
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="20, 14">
         <LabelWidget Name="MessageDialog.LargeLabel" Color="255, 255, 255" HorizontalAlignment="Center"
-                     VerticalAlignment="Near" Margin="0, 5"/>
-        <ScrollPanelWidget Direction="Vertical" Margin="20, 5">
-            <LabelWidget Name="MessageDialog.SmallLabel" Color="128, 128, 128" HorizontalAlignment="Center"
-                         VerticalAlignment="Near" TextAnchor="HorizontalCenter" WordWrap="true"/>
-        </ScrollPanelWidget>
-        <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Far" Margin="0, 5">
-            <BevelledButtonWidget Name="MessageDialog.Button1" Style="{Styles/ButtonStyle_160x60}" Margin="40, 0"/>
-            <BevelledButtonWidget Name="MessageDialog.Button2" Style="{Styles/ButtonStyle_160x60}" Margin="40, 0"/>
+                     VerticalAlignment="Near"/>
+        <CanvasWidget Size="0, 24"/>
+        <CanvasWidget Size="540, 80">
+            <ScrollPanelWidget Direction="Vertical">
+                <LabelWidget Name="MessageDialog.SmallLabel" Color="230, 230, 230" FontScale="1.2"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" TextAnchor="HorizontalCenter"
+                             WordWrap="true"/>
+            </ScrollPanelWidget>
+        </CanvasWidget>
+        <CanvasWidget Size="0, 8"/>
+        <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Far">
+            <BevelledButtonWidget Name="MessageDialog.Button1" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"
+                                   Margin="18, 0"/>
+            <BevelledButtonWidget Name="MessageDialog.Button2" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"
+                                   Margin="18, 0"/>
         </StackPanelWidget>
     </StackPanelWidget>
-
 </CanvasWidget>

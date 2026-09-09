@@ -6,28 +6,50 @@ public class ManageContentScreen : Screen
 {
     private const string _typeName = nameof(ManageContentScreen);
 
-    private readonly BlocksTexturesCache _blocksTexturesCache = new();
+    private enum ManageContentAction
+    {
+        Delete
+    }
 
-    private readonly ButtonWidget _changeFilterButton;
+    private readonly ActionPanelWidget _actionPanel;
+
+    private readonly BlocksTexturesCache _blocksTexturesCache = new();
 
     private readonly CharacterSkinsCache _characterSkinsCache = new();
 
     private readonly ListPanelWidget _contentList;
 
-    private readonly ButtonWidget _deleteButton;
-
     private ContentType _filter;
 
-    private readonly LabelWidget _filterLabel;
+    private readonly SelectionDrawerWidget _filterDrawer;
 
     public ManageContentScreen()
     {
         var node = ContentManager.Get<XElement>("Screens/ManageContentScreen");
         LoadContents(this, node);
+        _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _contentList = Children.Find<ListPanelWidget>("ContentList")!;
-        _deleteButton = Children.Find<ButtonWidget>("DeleteButton")!;
-        _changeFilterButton = Children.Find<ButtonWidget>("ChangeFilter")!;
-        _filterLabel = Children.Find<LabelWidget>("Filter")!;
+        _filterDrawer = new SelectionDrawerWidget
+        {
+            Size = new Vector2(160f, 60f),
+            ExpansionDirection = SelectionDrawerDirection.Up,
+            MaxVisibleItems = 4
+        };
+        _filterDrawer.ItemTextProvider = item => GetFilterDisplayName((ContentType)item);
+        _filterDrawer.SetItems(
+        [
+            ContentType.Unknown,
+            ContentType.BlocksTexture,
+            ContentType.CharacterSkin,
+            ContentType.FurniturePack
+        ]);
+        _filterDrawer.SelectedItem = _filter;
+        _filterDrawer.SelectionChanged += FilterChanged;
+        _actionPanel.PrimaryTrailingAction = _filterDrawer;
+        _actionPanel.ItemTextProvider = _ => LanguageManager.GetContentWidgets(_typeName, "3");
+        _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemClicked += ExecuteAction;
+        _actionPanel.SetPrimaryItems([ManageContentAction.Delete]);
         _contentList.ItemWidgetFactory = delegate (object obj)
         {
             var listItem = (ListItem)obj;
@@ -117,6 +139,7 @@ public class ManageContentScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _filterDrawer.RefreshItems();
         UpdateList();
     }
 
@@ -124,6 +147,8 @@ public class ManageContentScreen : Screen
     {
         _blocksTexturesCache.Clear();
         _characterSkinsCache.Clear();
+        _actionPanel.ShowPrimaryItems();
+        _filterDrawer.Close();
     }
 
     public override void Update()
@@ -134,59 +159,47 @@ public class ManageContentScreen : Screen
             return;
         }
 
-        _filterLabel.Text = GetFilterDisplayName(_filter);
-        if (_changeFilterButton.IsClicked)
-        {
-            var list = new List<ContentType>
-            {
-                ContentType.Unknown,
-                ContentType.BlocksTexture,
-                ContentType.CharacterSkin,
-                ContentType.FurniturePack
-            };
-            DialogsManager.ShowDialog(
-                null,
-                new ListSelectionDialog(
-                    LanguageManager.Get(_typeName, 7),
-                    list, 60f,
-                    item => GetFilterDisplayName((ContentType)item), delegate (object item)
-                    {
-                        if ((ContentType)item == _filter)
-                        {
-                            return;
-                        }
+        _actionPanel.Refresh();
+    }
 
-                        _filter = (ContentType)item;
-                        UpdateList();
-                    }
-                )
-            );
-        }
+    private bool IsActionEnabled(object item)
+    {
+        return item is ManageContentAction.Delete &&
+               _contentList.SelectedItem is ListItem { IsBuiltIn: false };
+    }
 
-        var selectedItem = (ListItem?)_contentList.SelectedItem;
-        if (selectedItem == null)
+    private void ExecuteAction(object item)
+    {
+        if (item is not ManageContentAction.Delete || !IsActionEnabled(item) ||
+            _contentList.SelectedItem is not ListItem selectedItem)
         {
-            _deleteButton.IsEnabled = false;
             return;
         }
 
-        _deleteButton.IsEnabled = selectedItem is { IsBuiltIn: false };
-        if (_deleteButton.IsClicked)
+        if (selectedItem.UseCount > 0 &&
+            selectedItem.Type is ContentType.BlocksTexture or ContentType.CharacterSkin)
         {
-            if (selectedItem.UseCount > 0 &&
-                selectedItem.Type is ContentType.BlocksTexture or ContentType.CharacterSkin)
-            {
-                var replacements = _contentList.Items.Cast<ListItem>().Where(item =>
-                    item.Type == selectedItem.Type && item.Name != selectedItem.Name).ToList();
-                DialogsManager.ShowDialog(null, new ListSelectionDialog(
-                    LanguageManager.Get(_typeName, 9), replacements, 60f,
-                    item => ((ListItem)item).DisplayName,
-                    item => ConfirmDelete(selectedItem, (ListItem)item)));
-                return;
-            }
-
-            ConfirmDelete(selectedItem, null);
+            var replacements = _contentList.Items.Cast<ListItem>().Where(candidate =>
+                candidate.Type == selectedItem.Type && candidate.Name != selectedItem.Name).ToList();
+            DialogsManager.ShowDialog(null, new ListSelectionDialog(
+                LanguageManager.Get(_typeName, 9), replacements, 60f,
+                replacement => ((ListItem)replacement).DisplayName,
+                replacement => ConfirmDelete(selectedItem, (ListItem)replacement)));
+            return;
         }
+
+        ConfirmDelete(selectedItem, null);
+    }
+
+    private void FilterChanged()
+    {
+        if (_filterDrawer.SelectedItem is not ContentType filter || filter == _filter)
+        {
+            return;
+        }
+
+        _filter = filter;
+        UpdateList();
     }
 
     private void ConfirmDelete(ListItem selectedItem, ListItem? replacement)
