@@ -1,0 +1,16 @@
+<SelectionDrawerWidget xmlns="runtime-namespace:Game.Widgets" Size="310, 60" IsHitTestVisible="false">
+    <CanvasWidget Name="SelectionDrawer.Surface">
+        <BevelledRectangleWidget Name="SelectionDrawer.Background"/>
+        <CanvasWidget Name="SelectionDrawer.Header">
+            <LabelWidget Name="SelectionDrawer.HeaderLabel" FontScale="0.9" Color="255, 255, 255"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <ClickableWidget Name="SelectionDrawer.HeaderClickable" SoundName="Audio/UI/ButtonClick"/>
+        </CanvasWidget>
+        <CanvasWidget Name="SelectionDrawer.ListViewport" IsVisible="false" ClampToBounds="true">
+            <ListPanelWidget Name="SelectionDrawer.List" Direction="Vertical" ItemSize="52"
+                             SelectionColor="10, 70, 0, 90"/>
+        </CanvasWidget>
+        <RectangleWidget Name="SelectionDrawer.Separator" IsVisible="false" FillColor="82, 79, 71, 255"
+                         OutlineColor="0, 0, 0, 0"/>
+    </CanvasWidget>
+</SelectionDrawerWidget>
