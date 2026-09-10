@@ -13,21 +13,7 @@
                                      SelectionColor="10, 70, 0, 90"/>
                 </CanvasWidget>
             </StackPanelWidget>
-            <CanvasWidget Size="0, 10"/>
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
-                <BevelledButtonWidget Name="CreateButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[InstanceManagementScreen:Create]"/>
-                <CanvasWidget Size="20, 0"/>
-                <BevelledButtonWidget Name="CloneButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[InstanceManagementScreen:Clone]"/>
-                <CanvasWidget Size="20, 0"/>
-                <BevelledButtonWidget Name="DeleteButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[InstanceManagementScreen:Delete]"/>
-                <CanvasWidget Size="20, 0"/>
-                <BevelledButtonWidget Name="SwitchButton" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[InstanceManagementScreen:Switch]"/>
-            </StackPanelWidget>
-            <CanvasWidget Size="0, 10"/>
+            <ActionPanelWidget Name="Actions" Margin="20, 10"/>
         </StackPanelWidget>
     </StackPanelWidget>
 </Screen>

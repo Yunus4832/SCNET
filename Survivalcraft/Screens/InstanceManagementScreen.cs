@@ -6,26 +6,34 @@ namespace Game.Screens;
 
 public class InstanceManagementScreen : Screen
 {
-    private readonly ButtonWidget _createButton;
+    private enum InstanceAction
+    {
+        Create,
+        Clone,
+        Delete,
+        Switch
+    }
 
-    private readonly ButtonWidget _cloneButton;
-
-    private readonly ButtonWidget _deleteButton;
-
+    private readonly ActionPanelWidget _actionPanel;
     private readonly ListPanelWidget _instancesList;
 
     private Screen? _previousScreen;
 
-    private readonly ButtonWidget _switchButton;
-
     public InstanceManagementScreen()
     {
         LoadContents(this, ContentManager.Get<XElement>("Screens/InstanceManagementScreen"));
+        _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _instancesList = Children.Find<ListPanelWidget>("InstancesList")!;
-        _createButton = Children.Find<ButtonWidget>("CreateButton")!;
-        _cloneButton = Children.Find<ButtonWidget>("CloneButton")!;
-        _deleteButton = Children.Find<ButtonWidget>("DeleteButton")!;
-        _switchButton = Children.Find<ButtonWidget>("SwitchButton")!;
+        _actionPanel.ItemTextProvider = item => Text(item.ToString()!);
+        _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemClicked += ExecuteAction;
+        _actionPanel.SetPrimaryItems(
+        [
+            InstanceAction.Create,
+            InstanceAction.Clone,
+            InstanceAction.Delete,
+            InstanceAction.Switch
+        ]);
         _instancesList.ItemWidgetFactory = CreateInstanceItemWidget;
     }
 
@@ -42,35 +50,42 @@ public class InstanceManagementScreen : Screen
 
     public override void Update()
     {
-        var selected = _instancesList.SelectedItem as InstanceItem;
-        var isCurrent = selected?.IsCurrent == true;
-        _deleteButton.IsEnabled = selected != null && !isCurrent && !selected.IsRunning;
-        _switchButton.IsEnabled = selected != null && !isCurrent;
-        _cloneButton.IsEnabled = selected?.CanClone == true;
-
-        if (_createButton.IsClicked)
-        {
-            ShowCreateDialog();
-        }
-
-        if (_deleteButton.IsClicked && selected != null && !isCurrent)
-        {
-            ConfirmDelete(selected);
-        }
-
-        if (_cloneButton.IsClicked && selected?.CanClone == true)
-        {
-            ShowCloneDialog(selected);
-        }
-
-        if (_switchButton.IsClicked && selected != null && !isCurrent)
-        {
-            ConfirmSwitch(selected);
-        }
-
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen(_previousScreen ?? ScreensManager.FindScreen<Screen>("MainMenu"));
+        }
+    }
+
+    private bool IsActionEnabled(object item)
+    {
+        var selected = _instancesList.SelectedItem as InstanceItem;
+        return (InstanceAction)item switch
+        {
+            InstanceAction.Create => true,
+            InstanceAction.Clone => selected?.CanClone == true,
+            InstanceAction.Delete => selected is { IsCurrent: false, IsRunning: false },
+            InstanceAction.Switch => selected is { IsCurrent: false },
+            _ => false
+        };
+    }
+
+    private void ExecuteAction(object item)
+    {
+        var selected = _instancesList.SelectedItem as InstanceItem;
+        switch ((InstanceAction)item)
+        {
+            case InstanceAction.Create:
+                ShowCreateDialog();
+                break;
+            case InstanceAction.Clone when selected?.CanClone == true:
+                ShowCloneDialog(selected);
+                break;
+            case InstanceAction.Delete when selected is { IsCurrent: false, IsRunning: false }:
+                ConfirmDelete(selected);
+                break;
+            case InstanceAction.Switch when selected is { IsCurrent: false }:
+                ConfirmSwitch(selected);
+                break;
         }
     }
 
