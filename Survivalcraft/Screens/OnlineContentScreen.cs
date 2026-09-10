@@ -3,7 +3,6 @@ using System.Xml.Linq;
 using Content.Packaging;
 
 using Game.Content;
-using Game.Modding;
 
 namespace Game.Screens;
 
@@ -127,6 +126,7 @@ public sealed class OnlineContentScreen : Screen
         _typeFilterDrawer.Close();
         _repositoryFilterDrawer.Close();
         _statusFilterDrawer.Close();
+        _versionDrawer.Close();
     }
 
     public override void Update()
@@ -204,7 +204,7 @@ public sealed class OnlineContentScreen : Screen
         var query = new ContentCatalogQuery(_typeFilter?.ToString(), _search, pageIndex);
         var service = new ContentCatalogService(SettingsManager.ContentClients);
         Task.Run(() => service.QueryAsync(context, query, cancellation.Token), cancellation.Token)
-            .ContinueWith(task => Dispatcher.Dispatch(() => CompletePage(task, cancellation, pageIndex)));
+            .ContinueWith(task => Dispatcher.Dispatch(() => CompletePage(task, cancellation, pageIndex)), cancellation.Token);
     }
 
     private void CompletePage(Task<AggregatedContentPage> task, CancellationTokenSource cancellation, int pageIndex)

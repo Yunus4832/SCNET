@@ -34,6 +34,8 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 
     private readonly CanvasWidget _surface;
 
+    private Screen? _popupHost;
+
     private Func<object, string> _itemTextProvider = item => item.ToString() ?? string.Empty;
 
     public SelectionDrawerWidget()
@@ -225,10 +227,12 @@ public sealed class SelectionDrawerWidget : CanvasWidget
         IsOpen = true;
         _list.ScrollPosition = 0f;
         UpdateVisualState();
+        AttachPopup();
     }
 
     public void Close()
     {
+        DetachPopup();
         IsOpen = false;
         UpdateVisualState();
     }
@@ -277,10 +281,18 @@ public sealed class SelectionDrawerWidget : CanvasWidget
     {
         var listHeight = CalculateListHeight();
         var headerSize = CalculateHeaderSize();
-        var surfacePosition = IsOpen && ExpansionDirection is SelectionDrawerDirection.Up
-            ? new Vector2(_headerMargin, _headerMargin - listHeight)
-            : new Vector2(_headerMargin);
-        SetWidgetPosition(_surface, surfacePosition);
+        var surfacePosition = CalculateSurfacePosition(listHeight);
+        if (_popupHost is not null)
+        {
+            var globalPosition = Vector2.Transform(surfacePosition, GlobalTransform);
+            _popupHost.SetWidgetPosition(
+                _surface,
+                Vector2.Transform(globalPosition, _popupHost.InvertedGlobalTransform));
+        }
+        else
+        {
+            SetWidgetPosition(_surface, surfacePosition);
+        }
 
         var headerPosition = IsOpen && ExpansionDirection is SelectionDrawerDirection.Up
             ? new Vector2(0f, listHeight)
@@ -297,6 +309,57 @@ public sealed class SelectionDrawerWidget : CanvasWidget
             : listHeight;
         _surface.SetWidgetPosition(_separator, new Vector2(0f, separatorY));
         base.ArrangeOverride();
+    }
+
+    public override void Dispose()
+    {
+        Close();
+        base.Dispose();
+    }
+
+    private void AttachPopup()
+    {
+        if (_popupHost is not null)
+        {
+            return;
+        }
+
+        for (var parent = ParentWidget; parent is not null; parent = parent.ParentWidget)
+        {
+            if (parent is not Screen screen)
+            {
+                continue;
+            }
+
+            var surfacePosition = CalculateSurfacePosition(CalculateListHeight());
+            var globalPosition = Vector2.Transform(surfacePosition, GlobalTransform);
+            Children.Remove(_surface);
+            screen.Children.Add(_surface);
+            screen.SetWidgetPosition(
+                _surface,
+                Vector2.Transform(globalPosition, screen.InvertedGlobalTransform));
+            _popupHost = screen;
+            return;
+        }
+    }
+
+    private Vector2 CalculateSurfacePosition(float listHeight)
+    {
+        return IsOpen && ExpansionDirection is SelectionDrawerDirection.Up
+            ? new Vector2(_headerMargin, _headerMargin - listHeight)
+            : new Vector2(_headerMargin);
+    }
+
+    private void DetachPopup()
+    {
+        if (_popupHost is null)
+        {
+            return;
+        }
+
+        _popupHost.Children.Remove(_surface);
+        Children.Add(_surface);
+        _popupHost = null;
     }
 
     private Widget CreateItemWidget(object item)

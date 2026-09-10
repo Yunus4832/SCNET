@@ -39,7 +39,7 @@ public class WorldOptionsScreen : Screen
 
     private readonly SliderWidget _biomeSizeSlider;
 
-    private readonly ButtonWidget _blocksTextureButton;
+    private readonly ClickableWidget _blocksTextureSelector;
 
     private readonly LabelWidget _blocksTextureDetails;
 
@@ -59,7 +59,7 @@ public class WorldOptionsScreen : Screen
 
     private readonly BlockIconWidget _flatTerrainBlock;
 
-    private readonly ButtonWidget _flatTerrainBlockButton;
+    private readonly ClickableWidget _flatTerrainBlockSelector;
 
     private readonly LabelWidget _flatTerrainBlockLabel;
 
@@ -92,7 +92,9 @@ public class WorldOptionsScreen : Screen
 
     private readonly SliderWidget _temperatureOffsetSlider;
 
-    private readonly ButtonWidget _terrainGenerationButton;
+    private readonly SelectionDrawerWidget _terrainGenerationDrawer;
+
+    private bool _updatingTerrainGeneration;
 
     private readonly ButtonWidget _timeOfDayButton;
 
@@ -116,7 +118,7 @@ public class WorldOptionsScreen : Screen
         _blocksTextureIcon = Children.Find<RectangleWidget>("BlocksTextureIcon")!;
         _blocksTextureLabel = Children.Find<LabelWidget>("BlocksTextureLabel")!;
         _blocksTextureDetails = Children.Find<LabelWidget>("BlocksTextureDetails")!;
-        _blocksTextureButton = Children.Find<ButtonWidget>("BlocksTextureButton")!;
+        _blocksTextureSelector = Children.Find<ClickableWidget>("BlocksTextureSelector")!;
         _seaLevelOffsetSlider = Children.Find<SliderWidget>("SeaLevelOffset")!;
         _temperatureOffsetSlider = Children.Find<SliderWidget>("TemperatureOffset")!;
         _humidityOffsetSlider = Children.Find<SliderWidget>("HumidityOffset")!;
@@ -132,12 +134,17 @@ public class WorldOptionsScreen : Screen
         _weatherEffectsButton = Children.Find<ButtonWidget>("WeatherEffects")!;
         _adventureRespawnButton = Children.Find<ButtonWidget>("AdventureRespawn")!;
         _adventureSurvivalMechanicsButton = Children.Find<ButtonWidget>("AdventureSurvivalMechanics")!;
-        _terrainGenerationButton = Children.Find<ButtonWidget>("TerrainGeneration")!;
+        _terrainGenerationDrawer = Children.Find<SelectionDrawerWidget>("TerrainGeneration")!;
+        _terrainGenerationDrawer.ItemTextProvider = item => StringsManager.GetString(
+            "TerrainGenerationMode",
+            (TerrainGenerationMode)item,
+            "Name");
+        _terrainGenerationDrawer.SelectionChanged += TerrainGenerationChanged;
         _flatTerrainLevelSlider = Children.Find<SliderWidget>("FlatTerrainLevel")!;
         _flatTerrainShoreRoughnessSlider = Children.Find<SliderWidget>("FlatTerrainShoreRoughness")!;
         _flatTerrainBlock = Children.Find<BlockIconWidget>("FlatTerrainBlock")!;
         _flatTerrainBlockLabel = Children.Find<LabelWidget>("FlatTerrainBlockLabel")!;
-        _flatTerrainBlockButton = Children.Find<ButtonWidget>("FlatTerrainBlockButton")!;
+        _flatTerrainBlockSelector = Children.Find<ClickableWidget>("FlatTerrainBlockSelector")!;
         _flatTerrainMagmaOceanCheckbox = Children.Find<CheckboxWidget>("MagmaOcean")!;
         _descriptionLabel = Children.Find<LabelWidget>("Description")!;
         _islandSizeEw.MinValue = 0f;
@@ -154,6 +161,31 @@ public class WorldOptionsScreen : Screen
         _yearDaysSlider.Granularity = 1f;
     }
 
+    private void RefreshTerrainGenerationDrawer()
+    {
+        var modes = Enum.GetValues<TerrainGenerationMode>()
+            .Where(mode => !TerrainGenerationModes.IsLegacy(mode) &&
+                           (_worldSettings.GameMode == GameMode.Creative || !TerrainGenerationModes.IsFlat(mode)))
+            .ToArray();
+        _updatingTerrainGeneration = true;
+        _terrainGenerationDrawer.SetItems(modes.Cast<object>());
+        var displayMode = TerrainGenerationModes.ToDisplayMode(_worldSettings.TerrainGenerationMode);
+        _terrainGenerationDrawer.SelectedItem = modes.Contains(displayMode) ? displayMode : modes[0];
+        _updatingTerrainGeneration = false;
+    }
+
+    private void TerrainGenerationChanged()
+    {
+        if (_updatingTerrainGeneration || _isExistingWorld ||
+            _terrainGenerationDrawer.SelectedItem is not TerrainGenerationMode mode)
+        {
+            return;
+        }
+
+        _worldSettings.TerrainGenerationMode = mode;
+        _descriptionLabel.Text = StringsManager.GetString("TerrainGenerationMode", mode, "Description");
+    }
+
     public static string FormatOffset(float value)
     {
         if (value != 0f)
@@ -168,48 +200,19 @@ public class WorldOptionsScreen : Screen
     {
         _worldSettings = (WorldSettings)parameters[0];
         _isExistingWorld = (bool)parameters[1];
+        RefreshTerrainGenerationDrawer();
         _descriptionLabel.Text =
             StringsManager.GetString("EnvironmentBehaviorMode", _worldSettings.EnvironmentBehaviorMode, "Description");
     }
 
     public override void Leave()
     {
+        _terrainGenerationDrawer.Close();
         _blockTexturesCache.Clear();
     }
 
     public override void Update()
     {
-        if (_terrainGenerationButton.IsClicked && !_isExistingWorld)
-        {
-            var enumValues = EnumUtils.GetEnumValues(typeof(TerrainGenerationMode))
-                .Where(e => !TerrainGenerationModes.IsLegacy((TerrainGenerationMode)e))
-                .ToArray();
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, 1), enumValues, 56f,
-                e => StringsManager.GetString("TerrainGenerationMode", (TerrainGenerationMode)e, "Name"),
-                delegate (object e)
-                {
-                    if (_worldSettings.GameMode != 0 && TerrainGenerationModes.IsFlat((TerrainGenerationMode)e))
-                    {
-                        DialogsManager.ShowDialog(
-                            null,
-                            new MessageDialog(
-                                LanguageManager.Get(_typeName, 4),
-                                LanguageManager.Get(_typeName, 5),
-                                LanguageManager.Get("Usual", "ok")
-                            )
-                        );
-                    }
-                    else
-                    {
-                        _worldSettings.TerrainGenerationMode = (TerrainGenerationMode)e;
-                        _descriptionLabel.Text = StringsManager.GetString(
-                            "TerrainGenerationMode",
-                            _worldSettings.TerrainGenerationMode,
-                            "Description");
-                    }
-                }));
-        }
-
         if (_islandSizeEw.IsSliding && !_isExistingWorld)
         {
             _worldSettings.IslandSize.X =
@@ -237,7 +240,7 @@ public class WorldOptionsScreen : Screen
             _descriptionLabel.Text = StringsManager.GetString("FlatTerrainShoreRoughness", "Description");
         }
 
-        if (_flatTerrainBlockButton.IsClicked && !_isExistingWorld)
+        if (_flatTerrainBlockSelector.IsClicked && !_isExistingWorld)
         {
             var items = new[]
             {
@@ -297,7 +300,7 @@ public class WorldOptionsScreen : Screen
             _descriptionLabel.Text = StringsManager.GetString("BiomeSize", "Description");
         }
 
-        if (_blocksTextureButton.IsClicked)
+        if (_blocksTextureSelector.IsClicked)
         {
             BlocksTexturesManager.UpdateBlocksTexturesList();
             var dialog = new ListSelectionDialog(LanguageManager.Get(_typeName, 3),
@@ -410,9 +413,6 @@ public class WorldOptionsScreen : Screen
         _islandTerrainPanel.IsVisible = TerrainGenerationModes.IsIsland(_worldSettings.TerrainGenerationMode);
         _flatTerrainPanel.IsVisible = TerrainGenerationModes.IsFlat(_worldSettings.TerrainGenerationMode);
         _yearDaysPanel.IsVisible = _worldSettings.AreSeasonsChanging;
-        var displayTerrainGenerationMode = TerrainGenerationModes.ToDisplayMode(_worldSettings.TerrainGenerationMode);
-        _terrainGenerationButton.Text =
-            StringsManager.GetString("TerrainGenerationMode", displayTerrainGenerationMode, "Name");
         _islandSizeEw.Value = FindNearestIndex(_islandSizes, _worldSettings.IslandSize.X);
         _islandSizeEw.Text = _worldSettings.IslandSize.X.ToString(CultureInfo.InvariantCulture);
         _islandSizeNs.Value = FindNearestIndex(_islandSizes, _worldSettings.IslandSize.Y);
