@@ -2951,7 +2951,10 @@
             "1": "Edit Palette",
             "2": "Define custom colors for the world",
             "3": "OK",
-            "4": "Cancel"
+            "4": "Cancel",
+            "Reset": "Reset",
+            "EditColorName": "Edit Color Name",
+            "InvalidName": "Invalid Color Name"
         },
         "EditPistonDialog": {
             "1": "Max Extension",

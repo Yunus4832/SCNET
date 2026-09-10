@@ -9,7 +9,7 @@
             <CanvasWidget Size="0, 5"/>
 
             <LabelWidget Color="128, 128, 128" Text="[EditPaletteDialog:2]" HorizontalAlignment="Center"
-                         TextAnchor="HorizontalCenter" WordWrap="true" Margin="30, 0"/>
+                         TextAnchor="HorizontalCenter"/>
 
             <CanvasWidget Size="0, 15"/>
 

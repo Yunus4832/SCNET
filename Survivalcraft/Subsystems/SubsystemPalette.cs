@@ -26,7 +26,7 @@ public class SubsystemPalette : Subsystem
 
     public string GetName(int index)
     {
-        return _names[index];
+        return !string.IsNullOrEmpty(_names[index]) ? _names[index] : LanguageManager.GetWorldPalette(index);
     }
 
     private Color GetFabricColor(int index)

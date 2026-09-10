@@ -83,7 +83,7 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
     {
         var data = Terrain.ExtractData(value);
         var color = GetColor(data);
-        return LanguageManager.Get("WorldPalette", color) +
+        return LanguageManager.GetWorldPalette(color) +
                LanguageManager.GetBlock($"{GetType().Name}:{data.ToString()}", "DisplayName");
     }
 

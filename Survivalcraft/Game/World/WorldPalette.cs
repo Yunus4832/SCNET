@@ -1,5 +1,3 @@
-using System.Text.Json.Nodes;
-
 using Engine.Serialization;
 
 using EntitySystem.TemplatesDatabase;
@@ -34,24 +32,11 @@ public class WorldPalette
 
     public Color[] Colors;
 
-    public string[] Names = [];
+    public string[] Names = Enumerable.Repeat(string.Empty, MaxColors).ToArray();
 
     public WorldPalette()
     {
         Colors = DefaultColors.ToArray();
-        if (LanguageManager.KeyWords[GetType().Name] is not JsonObject obj ||
-            !obj.TryGetPropertyValue("Colors", out var colorsNode) ||
-            colorsNode is not JsonArray colorsArray)
-        {
-            return;
-        }
-
-        Names = new string[colorsArray.Count];
-        var i = 0;
-        foreach (var color in colorsArray)
-        {
-            Names[i++] = color?.ToString() ?? string.Empty;
-        }
     }
 
     public WorldPalette(ValuesDictionary valuesDictionary)
@@ -70,7 +55,7 @@ public class WorldPalette
             throw new InvalidOperationException(LanguageManager.Get(GetType().Name, 1));
         }
 
-        Names = array2.Select((s, i) => !string.IsNullOrEmpty(s) ? s : LanguageManager.GetWorldPalette(i)).ToArray();
+        Names = array2;
         var names = Names;
         var num = 0;
         while (true)
@@ -80,7 +65,7 @@ public class WorldPalette
                 return;
             }
 
-            if (!VerifyColorName(names[num]))
+            if (!string.IsNullOrEmpty(names[num]) && !VerifyColorName(names[num]))
             {
                 break;
             }
@@ -97,8 +82,7 @@ public class WorldPalette
         var value = string.Join(";",
             Colors.Select((c, i) =>
                 !(c == DefaultColors[i]) ? HumanReadableConverter.ConvertToString(c) : string.Empty));
-        var value2 = string.Join(";",
-            Names.Select((n, i) => n != LanguageManager.Get(GetType().Name, i) ? n : string.Empty));
+        var value2 = string.Join(";", Names);
         valuesDictionary.SetValue("Colors", value);
         valuesDictionary.SetValue("Names", value2);
         return valuesDictionary;
@@ -108,6 +92,11 @@ public class WorldPalette
     {
         palette.Colors = Colors.ToArray();
         palette.Names = Names.ToArray();
+    }
+
+    public string GetName(int index)
+    {
+        return !string.IsNullOrEmpty(Names[index]) ? Names[index] : LanguageManager.GetWorldPalette(index);
     }
 
     public static bool VerifyColorName(string name)

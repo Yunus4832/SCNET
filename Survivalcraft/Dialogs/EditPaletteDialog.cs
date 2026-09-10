@@ -6,6 +6,8 @@ namespace Game.Dialogs;
 
 public class EditPaletteDialog : Dialog
 {
+    private const string _typeName = nameof(EditPaletteDialog);
+
     private readonly ButtonWidget _cancelButton;
 
     private readonly LinkWidget[] _labels = new LinkWidget[16];
@@ -83,7 +85,7 @@ public class EditPaletteDialog : Dialog
             {
                 Size = new Vector2(160f, 60f),
                 VerticalAlignment = WidgetAlignment.Center,
-                Text = "Reset"
+                Text = LanguageManager.GetContentWidgets(_typeName, "Reset")
             });
             obj.Children.Add(new CanvasWidget
             {
@@ -102,10 +104,10 @@ public class EditPaletteDialog : Dialog
     {
         for (var j = 0; j < 16; j++)
         {
-            _labels[j].Text = _tmpPalette.Names[j];
+            _labels[j].Text = _tmpPalette.GetName(j);
             _rectangles[j].CenterColor = _tmpPalette.Colors[j];
             _resetButtons[j].IsEnabled = _tmpPalette.Colors[j] != WorldPalette.DefaultColors[j] ||
-                                         _tmpPalette.Names[j] != LanguageManager.Get("WorldPalette", j);
+                                         !string.IsNullOrEmpty(_tmpPalette.Names[j]);
         }
 
         for (var k = 0; k < 16; k++)
@@ -116,7 +118,7 @@ public class EditPaletteDialog : Dialog
                 DialogsManager.ShowDialog(
                     this,
                     new TextBoxDialog(
-                        "Edit Color Name",
+                        LanguageManager.GetContentWidgets(_typeName, "EditColorName"),
                         _labels[k].Text,
                         16,
                         delegate (string s)
@@ -130,7 +132,7 @@ public class EditPaletteDialog : Dialog
                                 DialogsManager.ShowDialog(
                                     this,
                                     new MessageDialog(
-                                        "Invalid name",
+                                        LanguageManager.GetContentWidgets(_typeName, "InvalidName"),
                                         string.Empty,
                                         LanguageManager.Ok
                                     )
@@ -160,7 +162,7 @@ public class EditPaletteDialog : Dialog
             }
 
             _tmpPalette.Colors[k] = WorldPalette.DefaultColors[k];
-            _tmpPalette.Names[k] = LanguageManager.Get("WorldPalette", k);
+            _tmpPalette.Names[k] = string.Empty;
         }
 
         if (_okButton.IsClicked)

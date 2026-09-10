@@ -2951,7 +2951,10 @@
             "1": "Edição Palette",
             "2": "Custom World Color (em inglês)",
             "3": "Determinação",
-            "4": "Cancelamento"
+            "4": "Cancelamento",
+            "Reset": "Repor",
+            "EditColorName": "Editar nome da cor",
+            "InvalidName": "Nome de cor inválido"
         },
         "EditPistonDialog": {
             "1": "Extensão máxima",
