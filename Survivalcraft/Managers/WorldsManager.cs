@@ -413,33 +413,12 @@ public static class WorldsManager
             throw new InvalidOperationException($"World name \"{worldSettings.Name}\" is invalid.");
         }
 
-        int num;
         if (string.IsNullOrEmpty(worldSettings.Seed))
         {
-            num = (int)(long)(Time.RealTime * 1000.0);
+            worldSettings.Seed = WorldSeedConverter.CreateRandomTextSeed();
         }
-        else if (worldSettings.Seed == "0")
-        {
-            num = 0;
-        }
-        else
-        {
-            if (int.TryParse(worldSettings.Seed, out num))
-            {
-                // 输入是一个合法的整数字符串，直接使用
-            }
-            else
-            {
-                // 输入是字符串，使用现有的逐字符计算逻辑
-                num = 0;
-                var num2 = 1;
-                foreach (var c in worldSettings.Seed)
-                {
-                    num += c * num2;
-                    num2 += 29;
-                }
-            }
-        }
+
+        var worldSeed = WorldSeedConverter.FromText(worldSettings.Seed);
 
         var databaseObject = DatabaseManager.GameDatabase.Database
             .FindDatabaseObject("GameProject", DatabaseManager.GameDatabase.ProjectTemplateType, true)!;
@@ -448,7 +427,7 @@ public static class WorldsManager
         overrides.SetValue("GameInfo", gameInfoValues);
         worldSettings.Save(gameInfoValues, false);
         gameInfoValues.SetValue("WorldDirectoryName", unusedWorldDirectoryName);
-        gameInfoValues.SetValue("WorldSeed", num);
+        gameInfoValues.SetValue("WorldSeed", worldSeed);
         var projectData = new ProjectData(DatabaseManager.GameDatabase, databaseObject, overrides);
         var projectNode = new XElement("Project");
         XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);

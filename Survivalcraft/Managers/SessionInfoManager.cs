@@ -1,5 +1,4 @@
 using System.Net;
-using System.Security.Cryptography;
 using System.Xml.Linq;
 
 using Game.Network;
@@ -907,7 +906,6 @@ public static class SessionInfoManager
 
     private static string GenerateRandomSeed()
     {
-        var seed = RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
-        return seed.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return WorldSeedConverter.CreateRandomTextSeed();
     }
 }
