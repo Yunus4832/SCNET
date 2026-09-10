@@ -20,8 +20,8 @@
                 <StackPanelWidget Direction="Vertical" ClampToBounds="true">
 
                     <StackPanelWidget Direction="Horizontal">
-                        <LabelWidget Size="170, -1" Text="[PlayerScreen:2]" TextAnchor="Right"
-                                     VerticalAlignment="Center"/>
+                        <ClickableTextRowWidget Name="PlayerClassLabel" Size="170, 60" Text="[PlayerScreen:2]"
+                                                TextHorizontalAlignment="Far" VerticalAlignment="Center"/>
                         <CanvasWidget Size="24, 0"/>
                         <BevelledButtonWidget Name="PlayerClassButton" Style="{Styles/ButtonStyle_310x60}"
                                               VerticalAlignment="Center"/>

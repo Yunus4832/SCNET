@@ -12,7 +12,7 @@ public class CheckboxWidget : CanvasWidget
 
     private readonly LabelWidget _labelWidget;
 
-    private readonly RectangleWidget _rectangleWidget;
+    private readonly BevelledRectangleWidget _rectangleWidget;
 
     private readonly RectangleWidget _tickWidget;
 
@@ -59,7 +59,7 @@ public class CheckboxWidget : CanvasWidget
         var node = ContentManager.Get<XElement>("Widgets/CheckboxContents");
         LoadChildren(this, node);
         _canvasWidget = Children.Find<CanvasWidget>("Checkbox.Canvas")!;
-        _rectangleWidget = Children.Find<RectangleWidget>("Checkbox.Rectangle")!;
+        _rectangleWidget = Children.Find<BevelledRectangleWidget>("Checkbox.Rectangle")!;
         _tickWidget = Children.Find<RectangleWidget>("Checkbox.Tick")!;
         _labelWidget = Children.Find<LabelWidget>("Checkbox.Label")!;
         _clickableWidget = Children.Find<ClickableWidget>("Checkbox.Clickable")!;
@@ -80,8 +80,8 @@ public class CheckboxWidget : CanvasWidget
     {
         var isEnabledGlobal = IsEnabledGlobal;
         _labelWidget.Color = isEnabledGlobal ? Color : new Color(112, 112, 112);
-        _rectangleWidget.FillColor = new Color(0, 0, 0, 128);
-        _rectangleWidget.OutlineColor = isEnabledGlobal ? new Color(128, 128, 128) : new Color(112, 112, 112);
+        _rectangleWidget.CenterColor = new Color(0, 0, 0, 128);
+        _rectangleWidget.BevelColor = isEnabledGlobal ? new Color(128, 128, 128) : new Color(112, 112, 112);
         _tickWidget.IsVisible = IsChecked;
         _tickWidget.FillColor = isEnabledGlobal ? Color : new Color(112, 112, 112);
         _tickWidget.OutlineColor = Color.Transparent;

@@ -63,6 +63,8 @@ public class PlayerScreen : Screen
 
     private readonly ButtonWidget _playerClassButton;
 
+    private readonly ClickableTextRowWidget _playerClassLabel;
+
     private PlayerData _playerData = null!;
 
     private readonly PlayerModelWidget _playerModel;
@@ -73,6 +75,7 @@ public class PlayerScreen : Screen
         LoadContents(this, node);
         _playerModel = Children.Find<PlayerModelWidget>("Model")!;
         _playerClassButton = Children.Find<ButtonWidget>("PlayerClassButton")!;
+        _playerClassLabel = Children.Find<ClickableTextRowWidget>("PlayerClassLabel")!;
         _nameTextBox = Children.Find<TextBoxWidget>("Name")!;
         _characterSkinLabel = Children.Find<LabelWidget>("CharacterSkinLabel")!;
         _characterSkinButton = Children.Find<ButtonWidget>("CharacterSkinButton")!;
@@ -103,6 +106,7 @@ public class PlayerScreen : Screen
         EnterTime = Time.RealTime;
         _mode = (Mode)parameters[0];
         _playerData = _mode == Mode.Edit ? (PlayerData)parameters[1] : new PlayerData((Project)parameters[1]);
+        _descriptionLabel.Text = string.Empty;
 
         if (_mode == Mode.Initial)
         {
@@ -183,20 +187,9 @@ public class PlayerScreen : Screen
         _characterSkinLabel.Text = CharacterSkinsManager.GetDisplayName(_playerData.CharacterSkinName);
         _controlsLabel.Text =
             GetDeviceDisplayName(_inputDevices.FirstOrDefault(id => (id & _playerData.InputDevice) != 0));
-        var valuesDictionary = DatabaseManager.FindValuesDictionaryForComponent(
-            DatabaseManager.FindEntityValuesDictionary(_playerData.GetEntityTemplateName(), true)!,
-            typeof(ComponentCreature)
-        );
-        if (valuesDictionary != null)
+        if (_playerClassLabel.IsClicked)
         {
-            var dy = valuesDictionary.GetValue<string>("Description");
-            if (dy.StartsWith('[') && dy.EndsWith(']'))
-            {
-                var lp = dy.Substring(1, dy.Length - 2).Split([":"], StringSplitOptions.RemoveEmptyEntries);
-                dy = LanguageManager.GetDatabase("Description", lp[1]);
-            }
-
-            _descriptionLabel.Text = dy;
+            UpdatePlayerClassDescription();
         }
 
         if (_playerClassButton.IsClicked)
@@ -384,6 +377,27 @@ public class PlayerScreen : Screen
         }
 
         _nameWasInvalid = false;
+    }
+
+    private void UpdatePlayerClassDescription()
+    {
+        var valuesDictionary = DatabaseManager.FindValuesDictionaryForComponent(
+            DatabaseManager.FindEntityValuesDictionary(_playerData.GetEntityTemplateName(), true)!,
+            typeof(ComponentCreature)
+        );
+        if (valuesDictionary == null)
+        {
+            return;
+        }
+
+        var description = valuesDictionary.GetValue<string>("Description");
+        if (description.StartsWith('[') && description.EndsWith(']'))
+        {
+            var parts = description[1..^1].Split([":"], StringSplitOptions.RemoveEmptyEntries);
+            description = LanguageManager.GetDatabase("Description", parts[1]);
+        }
+
+        _descriptionLabel.Text = description;
     }
 
     public static string GetDeviceDisplayName(WidgetInputDevice device)

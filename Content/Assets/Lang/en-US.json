@@ -2751,7 +2751,9 @@
         "InstanceClone_Description": "Clone a data instance",
         "InstanceRunningCloneForbidden_Message": "An instance used by another process cannot be cloned: {0}.",
         "InstanceCloneFailed_Message": "Failed to clone the instance.",
-        "InstanceCloned_Message": "Cloned instance {0} as {1}."
+        "InstanceCloned_Message": "Cloned instance {0} as {1}.",
+        "FlatTerrainBlock_Description": "Choose the block used to fill flat terrain.",
+        "Palette_Description": "Customize colors used by paintable blocks in this world."
     },
     "ContentWidgets": {
         "BestiaryItem": {

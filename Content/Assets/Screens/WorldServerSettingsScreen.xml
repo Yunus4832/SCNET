@@ -18,16 +18,20 @@
                                       Margin="10, 10">
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:RunServer]" Color="128, 128, 128"
-                                         Margin="20, 0"/>
+                            <ClickableTextRowWidget Name="RunServerLabel" HorizontalAlignment="Far"
+                                                    VerticalAlignment="Center"
+                                                    Text="[WorldServerSettingsScreen:RunServer]"
+                                                    TextHorizontalAlignment="Far" Color="255, 255, 255"
+                                                    Margin="20, 0"/>
                             <CheckboxWidget Name="RunServer" VerticalAlignment="Center" Margin="20, 14"/>
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:MaxPlayers]" Color="128, 128, 128"
-                                         Margin="20, 0"/>
+                            <ClickableTextRowWidget Name="MaxPlayersLabel" HorizontalAlignment="Far"
+                                                    VerticalAlignment="Center"
+                                                    Text="[WorldServerSettingsScreen:MaxPlayers]"
+                                                    TextHorizontalAlignment="Far" Color="255, 255, 255"
+                                                    Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="MaxPlayers" Size="380, 50" Text="20" VerticalAlignment="Center"
@@ -36,9 +40,11 @@
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:DaySpeed]" Color="128, 128, 128"
-                                         Margin="20, 0"/>
+                            <ClickableTextRowWidget Name="DaySpeedLabel" HorizontalAlignment="Far"
+                                                    VerticalAlignment="Center"
+                                                    Text="[WorldServerSettingsScreen:DaySpeed]"
+                                                    TextHorizontalAlignment="Far" Color="255, 255, 255"
+                                                    Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="DaySpeed" Size="380, 50" VerticalAlignment="Center"
@@ -47,9 +53,11 @@
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:RecoverySpeed]" Color="128, 128, 128"
-                                         Margin="20, 0"/>
+                            <ClickableTextRowWidget Name="RecoverySpeedLabel" HorizontalAlignment="Far"
+                                                    VerticalAlignment="Center"
+                                                    Text="[WorldServerSettingsScreen:RecoverySpeed]"
+                                                    TextHorizontalAlignment="Far" Color="255, 255, 255"
+                                                    Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="RecoverySpeed" Size="380, 50" VerticalAlignment="Center"
@@ -58,9 +66,11 @@
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:DisableBlocks]" Color="128, 128, 128"
-                                         Margin="20, 0"/>
+                            <ClickableTextRowWidget Name="DisableBlocksLabel" HorizontalAlignment="Far"
+                                                    VerticalAlignment="Center"
+                                                    Text="[WorldServerSettingsScreen:DisableBlocks]"
+                                                    TextHorizontalAlignment="Far" Color="255, 255, 255"
+                                                    Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="DisableBlocks" Size="380, 50" VerticalAlignment="Center"
@@ -69,16 +79,20 @@
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:RandomSpawnPosition]"
-                                         Color="128, 128, 128" Margin="20, 0"/>
+                            <ClickableTextRowWidget Name="RandomSpawnPositionLabel" HorizontalAlignment="Far"
+                                                    VerticalAlignment="Center"
+                                                    Text="[WorldServerSettingsScreen:RandomSpawnPosition]"
+                                                    TextHorizontalAlignment="Far" Color="255, 255, 255"
+                                                    Margin="20, 0"/>
                             <CheckboxWidget Name="RandomSpawnPosition" VerticalAlignment="Center" Margin="20, 14"/>
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                            <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center"
-                                         Text="[WorldServerSettingsScreen:KeywordBlocking]" Color="128, 128, 128"
-                                         Margin="20, 0"/>
+                            <ClickableTextRowWidget Name="KeywordBlockingLabel" HorizontalAlignment="Far"
+                                                    VerticalAlignment="Center"
+                                                    Text="[WorldServerSettingsScreen:KeywordBlocking]"
+                                                    TextHorizontalAlignment="Far" Color="255, 255, 255"
+                                                    Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="KeywordBlocking" Size="380, 50" VerticalAlignment="Center"

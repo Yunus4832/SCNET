@@ -9,7 +9,7 @@ public class ClickableTextRowWidget : CanvasWidget
 
     private readonly LabelWidget _labelWidget = new()
     {
-        FontScale = 0.8f,
+        FontScale = 1f,
         HorizontalAlignment = WidgetAlignment.Center,
         VerticalAlignment = WidgetAlignment.Center,
         Color = Color.White
@@ -33,6 +33,18 @@ public class ClickableTextRowWidget : CanvasWidget
     {
         get => _labelWidget.Color;
         set => _labelWidget.Color = value;
+    }
+
+    public WidgetAlignment TextHorizontalAlignment
+    {
+        get => _labelWidget.HorizontalAlignment;
+        set => _labelWidget.HorizontalAlignment = value;
+    }
+
+    public WidgetAlignment TextVerticalAlignment
+    {
+        get => _labelWidget.VerticalAlignment;
+        set => _labelWidget.VerticalAlignment = value;
     }
 
     public string? SoundName

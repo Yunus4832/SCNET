@@ -2751,7 +2751,9 @@
         "InstanceClone_Description": "克隆数据实例",
         "InstanceRunningCloneForbidden_Message": "不能克隆其他进程正在使用的实例：{0}。",
         "InstanceCloneFailed_Message": "克隆实例失败。",
-        "InstanceCloned_Message": "已将实例 {0} 克隆为 {1}。"
+        "InstanceCloned_Message": "已将实例 {0} 克隆为 {1}。",
+        "FlatTerrainBlock_Description": "选择平坦地形的填充方块。",
+        "Palette_Description": "自定义世界中可调色方块使用的颜色。"
     },
     "ContentWidgets": {
         "BestiaryItem": {

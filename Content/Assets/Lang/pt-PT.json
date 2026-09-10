@@ -2751,7 +2751,9 @@
         "InstanceClone_Description": "Clonar uma instância de dados",
         "InstanceRunningCloneForbidden_Message": "Não é possível clonar uma instância utilizada por outro processo: {0}.",
         "InstanceCloneFailed_Message": "Falha ao clonar a instância.",
-        "InstanceCloned_Message": "A instância {0} foi clonada como {1}."
+        "InstanceCloned_Message": "A instância {0} foi clonada como {1}.",
+        "FlatTerrainBlock_Description": "Escolha o bloco usado para preencher o terreno plano.",
+        "Palette_Description": "Personalize as cores usadas por blocos pintáveis neste mundo."
     },
     "ContentWidgets": {
         "BestiaryItem": {

@@ -15,6 +15,8 @@ public class WorldServerSettingsScreen : Screen
 
     private readonly LabelWidget _descriptionLabel;
 
+    private readonly (ClickableTextRowWidget Label, string DescriptionName)[] _descriptionBindings;
+
     private readonly TextBoxWidget _maxPlayer;
 
     private readonly CheckboxWidget _randomSpawnPosition;
@@ -41,6 +43,16 @@ public class WorldServerSettingsScreen : Screen
         _disableBlocks = Children.Find<TextBoxWidget>("DisableBlocks")!;
         _keywordBlocking = Children.Find<TextBoxWidget>("KeywordBlocking")!;
         _descriptionLabel = Children.Find<LabelWidget>("Description")!;
+        _descriptionBindings =
+        [
+            CreateDescriptionBinding("RunServerLabel", "RunServer"),
+            CreateDescriptionBinding("MaxPlayersLabel", "MaxPlayers"),
+            CreateDescriptionBinding("DaySpeedLabel", "DaySpeed"),
+            CreateDescriptionBinding("RecoverySpeedLabel", "RecoverySpeed"),
+            CreateDescriptionBinding("DisableBlocksLabel", "DisableBlocks"),
+            CreateDescriptionBinding("RandomSpawnPositionLabel", "RandomSpawnPosition"),
+            CreateDescriptionBinding("KeywordBlockingLabel", "KeywordBlocking")
+        ];
 
         _disableBlocks.MaximumLength = int.MaxValue;
     }
@@ -67,13 +79,13 @@ public class WorldServerSettingsScreen : Screen
             NormalizeRecoverySpeed(_worldSettings.RecoverFactor).ToString(CultureInfo.InvariantCulture);
         _disableBlocks.Text = _worldSettings.DisableBlocks;
         _keywordBlocking.Text = _worldSettings.KeywordBlocking;
-        SetDescription("RunServer");
+        _descriptionLabel.Text = string.Empty;
     }
 
     public override void Update()
     {
         SaveSettings();
-        UpdateDescription();
+        UpdateSelectedDescription();
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
@@ -96,35 +108,22 @@ public class WorldServerSettingsScreen : Screen
         _worldSettings.RecoverFactor = NormalizeRecoverySpeed(recoverySpeed);
     }
 
-    private void UpdateDescription()
+    private (ClickableTextRowWidget Label, string DescriptionName) CreateDescriptionBinding(
+        string labelName,
+        string descriptionName)
     {
-        if (_runServer.IsClicked)
+        return (Children.Find<ClickableTextRowWidget>(labelName)!, descriptionName);
+    }
+
+    private void UpdateSelectedDescription()
+    {
+        foreach (var (label, descriptionName) in _descriptionBindings)
         {
-            SetDescription("RunServer");
-        }
-        else if (_randomSpawnPosition.IsClicked)
-        {
-            SetDescription("RandomSpawnPosition");
-        }
-        else if (_maxPlayer.HasFocus)
-        {
-            SetDescription("MaxPlayers");
-        }
-        else if (_daySpeedTextBox.HasFocus)
-        {
-            SetDescription("DaySpeed");
-        }
-        else if (_recoverySpeed.HasFocus)
-        {
-            SetDescription("RecoverySpeed");
-        }
-        else if (_disableBlocks.HasFocus)
-        {
-            SetDescription("DisableBlocks");
-        }
-        else if (_keywordBlocking.HasFocus)
-        {
-            SetDescription("KeywordBlocking");
+            if (label.IsClicked)
+            {
+                SetDescription(descriptionName);
+                break;
+            }
         }
     }
 

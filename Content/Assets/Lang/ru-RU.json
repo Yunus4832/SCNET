@@ -2751,7 +2751,9 @@
         "InstanceClone_Description": "Клонировать экземпляр данных",
         "InstanceRunningCloneForbidden_Message": "Нельзя клонировать экземпляр, используемый другим процессом: {0}.",
         "InstanceCloneFailed_Message": "Не удалось клонировать экземпляр.",
-        "InstanceCloned_Message": "Экземпляр {0} клонирован как {1}."
+        "InstanceCloned_Message": "Экземпляр {0} клонирован как {1}.",
+        "FlatTerrainBlock_Description": "Выберите блок, которым заполняется плоский мир.",
+        "Palette_Description": "Настройте цвета окрашиваемых блоков в этом мире."
     },
     "ContentWidgets": {
         "BestiaryItem": {
