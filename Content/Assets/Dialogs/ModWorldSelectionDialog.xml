@@ -1,0 +1,25 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets">
+    <CanvasWidget Size="640, 440" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="20, 15">
+            <LabelWidget Name="ModWorldSelectionDialog.Title" HorizontalAlignment="Center" DropShadow="true"/>
+            <LabelWidget Name="ModWorldSelectionDialog.ModName" Color="160, 160, 160"
+                         HorizontalAlignment="Center"/>
+            <CanvasWidget Size="0, 10"/>
+            <CanvasWidget Size="580, 250" ClampToBounds="true">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <ScrollPanelWidget Direction="Vertical" Margin="5, 5">
+                    <StackPanelWidget Name="ModWorldSelectionDialog.List" Direction="Vertical"
+                                      HorizontalAlignment="Stretch" Margin="8, 4"/>
+                </ScrollPanelWidget>
+            </CanvasWidget>
+            <CanvasWidget Size="0, 12"/>
+            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+                <BevelledButtonWidget Name="ModWorldSelectionDialog.OK" Style="{Styles/ButtonStyle_160x60}"
+                                      Margin="18, 0"/>
+                <BevelledButtonWidget Name="ModWorldSelectionDialog.Cancel" Style="{Styles/ButtonStyle_160x60}"
+                                      Margin="18, 0"/>
+            </StackPanelWidget>
+        </StackPanelWidget>
+    </CanvasWidget>
+</CanvasWidget>

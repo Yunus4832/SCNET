@@ -1,3 +1,5 @@
+using System.Xml.Linq;
+
 namespace Game.Dialogs;
 
 public class ModWorldSelectionDialog : Dialog
@@ -16,73 +18,14 @@ public class ModWorldSelectionDialog : Dialog
         Action<IReadOnlyList<WorldSelection>> selectionHandler)
     {
         _selectionHandler = selectionHandler;
-
-        var panel = new CanvasWidget
-        {
-            Size = new Vector2(640, 460),
-            ClampToBounds = true,
-            HorizontalAlignment = WidgetAlignment.Center,
-            VerticalAlignment = WidgetAlignment.Center
-        };
-        panel.Children.Add(new RectangleWidget
-        {
-            FillColor = Color.Black,
-            OutlineColor = new Color(128, 128, 128),
-            OutlineThickness = 2f
-        });
-        Children.Add(panel);
-
-        var stack = new StackPanelWidget
-        {
-            Direction = LayoutDirection.Vertical,
-            HorizontalAlignment = WidgetAlignment.Center,
-            VerticalAlignment = WidgetAlignment.Center,
-            Margin = new Vector2(0, 12)
-        };
-        panel.Children.Add(stack);
-
-        stack.Children.Add(new LabelWidget
-        {
-            Text = LanguageManager.GetContentWidgets(_typeName, "Title"),
-            Color = Color.White,
-            HorizontalAlignment = WidgetAlignment.Center,
-            DropShadow = true
-        });
-        stack.Children.Add(new LabelWidget
-        {
-            Text = modName,
-            Color = Color.Gray,
-            HorizontalAlignment = WidgetAlignment.Center
-        });
-        stack.Children.Add(new CanvasWidget { Size = new Vector2(0, 12) });
-
-        var listCanvas = new CanvasWidget
-        {
-            Size = new Vector2(560, 280),
-            ClampToBounds = true,
-            HorizontalAlignment = WidgetAlignment.Center
-        };
-        listCanvas.Children.Add(new RectangleWidget
-        {
-            FillColor = new Color(0, 0, 0, 0),
-            OutlineColor = new Color(128, 128, 128),
-            OutlineThickness = 1f
-        });
-        stack.Children.Add(listCanvas);
-
-        var scrollPanel = new ScrollPanelWidget
-        {
-            Direction = LayoutDirection.Vertical,
-            Margin = new Vector2(8, 6)
-        };
-        listCanvas.Children.Add(scrollPanel);
-
-        var listStack = new StackPanelWidget
-        {
-            Direction = LayoutDirection.Vertical,
-            HorizontalAlignment = WidgetAlignment.Stretch
-        };
-        scrollPanel.Children.Add(listStack);
+        var node = ContentManager.Get<XElement>("Dialogs/ModWorldSelectionDialog");
+        LoadContents(this, node);
+        Children.Find<LabelWidget>("ModWorldSelectionDialog.Title")!.Text =
+            LanguageManager.GetContentWidgets(_typeName, "Title");
+        Children.Find<LabelWidget>("ModWorldSelectionDialog.ModName")!.Text = modName;
+        var listStack = Children.Find<StackPanelWidget>("ModWorldSelectionDialog.List")!;
+        _okButton = Children.Find<ButtonWidget>("ModWorldSelectionDialog.OK")!;
+        _cancelButton = Children.Find<ButtonWidget>("ModWorldSelectionDialog.Cancel")!;
 
         foreach (var world in worlds)
         {
@@ -97,29 +40,8 @@ public class ModWorldSelectionDialog : Dialog
             listStack.Children.Add(checkbox);
         }
 
-        stack.Children.Add(new CanvasWidget { Size = new Vector2(0, 18) });
-
-        var buttons = new StackPanelWidget
-        {
-            Direction = LayoutDirection.Horizontal,
-            HorizontalAlignment = WidgetAlignment.Center
-        };
-        stack.Children.Add(buttons);
-
-        _okButton = new BevelledButtonWidget
-        {
-            Text = LanguageManager.Ok,
-            Size = new Vector2(160, 60),
-            Margin = new Vector2(20, 0)
-        };
-        _cancelButton = new BevelledButtonWidget
-        {
-            Text = LanguageManager.Cancel,
-            Size = new Vector2(160, 60),
-            Margin = new Vector2(20, 0)
-        };
-        buttons.Children.Add(_okButton);
-        buttons.Children.Add(_cancelButton);
+        _okButton.Text = LanguageManager.Ok;
+        _cancelButton.Text = LanguageManager.Cancel;
     }
 
     public override void Update()
