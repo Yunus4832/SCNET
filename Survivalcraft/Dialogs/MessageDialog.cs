@@ -26,7 +26,12 @@ public class MessageDialog : Dialog
         _handler = handler;
         var node = ContentManager.Get<XElement>("Dialogs/MessageDialog");
         LoadContents(this, node);
-        Size = new Vector2(size.X >= 0f ? size.X : Size.X, size.Y >= 0f ? size.Y : Size.Y);
+        var defaultSize = Size;
+        Size = new Vector2(size.X >= 0f ? size.X : defaultSize.X, size.Y >= 0f ? size.Y : defaultSize.Y);
+        var bodyWidget = Children.Find<CanvasWidget>("MessageDialog.Body")!;
+        bodyWidget.Size = new Vector2(
+            MathUtils.Max(bodyWidget.Size.X + Size.X - defaultSize.X, 0f),
+            MathUtils.Max(bodyWidget.Size.Y + Size.Y - defaultSize.Y, 0f));
         _largeLabelWidget = Children.Find<LabelWidget>("MessageDialog.LargeLabel")!;
         _smallLabelWidget = Children.Find<LabelWidget>("MessageDialog.SmallLabel")!;
         _button1Widget = Children.Find<ButtonWidget>("MessageDialog.Button1")!;

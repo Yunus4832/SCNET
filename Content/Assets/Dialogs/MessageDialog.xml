@@ -5,7 +5,7 @@
         <LabelWidget Name="MessageDialog.LargeLabel" Color="255, 255, 255" HorizontalAlignment="Center"
                      VerticalAlignment="Near"/>
         <CanvasWidget Size="0, 24"/>
-        <CanvasWidget Size="540, 80">
+        <CanvasWidget Name="MessageDialog.Body" Size="540, 80">
             <ScrollPanelWidget Direction="Vertical">
                 <LabelWidget Name="MessageDialog.SmallLabel" Color="230, 230, 230" FontScale="1.2"
                              HorizontalAlignment="Center" VerticalAlignment="Center" TextAnchor="HorizontalCenter"

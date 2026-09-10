@@ -110,10 +110,11 @@ public class GameScreen : Screen
                     code),
                 CommandText.Get(
                     "AuthDialogClaim",
-                    "以当前玩家认领"),
+                    "立即认领"),
                 CommandText.Get(
                     "AuthDialogCopy",
-                    "复制并稍后处理"),
+                    "复制命令"),
+                new Vector2(680f, 320f),
                 button =>
                 {
                     if (button is MessageDialogButton.Button2)
