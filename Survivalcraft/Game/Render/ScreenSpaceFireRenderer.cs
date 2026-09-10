@@ -1,6 +1,6 @@
 using Engine.Graphics;
 
-namespace Game.Screens;
+namespace Game;
 
 public class ScreenSpaceFireRenderer
 {
