@@ -1,4 +1,4 @@
 interface:
   display_name: "SCNET Debugging"
   short_description: "Run repeatable SCNET diagnostics and smoke tests."
-  default_prompt: "Use $scnet-debugging to start an SCNET test session, inspect failures, preserve diagnostic evidence, and clean up temporary instances."
+  default_prompt: "Use $scnet-debugging to start an SCNET test session, skip player setup unless it is under test, inspect failures, preserve diagnostic evidence, and clean up temporary instances."

@@ -9,6 +9,9 @@
 - Treat a dedicated debug instance as temporary unless it existed before the task or is explicitly
   retained for reproduction. Copy evidence first, then delete it after all associated processes stop.
 - `--world`, `--seed`, and `--game-mode` are ignored unless `--session` is also supplied.
+- GUI gameplay tests should pass `--player Codex` (or another stable explicit name) to skip first-player
+  setup and enter the world directly. Omit it only when player creation or selection is the behavior
+  under test.
 - Read `Doc/Headless.md` and `Doc/StartupSessions.md` when changing startup behavior.
 
 ## Development commands
@@ -17,6 +20,21 @@ Build Linux:
 
 ```bash
 dotnet build Survivalcraft.Linux/Survivalcraft.Linux.csproj
+```
+
+Start an isolated GUI gameplay session without stopping at player creation:
+
+```bash
+Survivalcraft.Linux/bin/Debug/net10.0/linux-x64/SurvivalcraftStarter \
+  --instance codex-gui \
+  --gui \
+  --session codex-gui \
+  --world TestWorld \
+  --game-mode Creative \
+  --player Codex \
+  --http-command \
+  --http-command-port 8787 \
+  --log-level Debug
 ```
 
 Start Headless:

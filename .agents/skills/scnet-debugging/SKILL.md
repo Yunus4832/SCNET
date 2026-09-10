@@ -11,8 +11,9 @@ Run from the repository root. Treat runtime logs, exit status, command results, 
 
 1. Check `git status --short` and preserve unrelated changes.
 2. Read [references/runtime.md](references/runtime.md) before starting GUI or Headless sessions. On Windows, also read [references/windows.md](references/windows.md) and use its PowerShell commands instead of Bash scripts. For an Android client, read [references/android.md](references/android.md) before using ADB.
-3. Build the narrowest affected project and run focused tests.
-4. On Linux, run the repeatable Headless helper:
+3. For GUI runtime tests that do not specifically exercise player creation, pass an explicit stable player name such as `--player Codex`. This skips the first-player screen and enters the world directly. Omit `--player` only when the player creation or selection UI is itself under test. Treat this as the default for gameplay, terrain, rendering, input, and world-loading diagnostics.
+4. Build the narrowest affected project and run focused tests.
+5. On Linux, run the repeatable Headless helper:
 
 ```bash
 .agents/skills/scnet-debugging/scripts/smoke-headless.sh \
@@ -27,15 +28,15 @@ instance after a successful run. It preserves failed runs for diagnosis. Pass `-
 only when a successful run must remain reproducible. Never run automated checks against the default instance.
 On Windows, follow the equivalent log-driven procedure in [references/windows.md](references/windows.md).
 
-5. Inspect the reported artifact directory and complete instance runtime logs. Treat the files under
+6. Inspect the reported artifact directory and complete instance runtime logs. Treat the files under
    `Instances/<instance>/Logs` as the authoritative runtime record on both platforms.
-6. Search for `ERROR:`, unhandled exceptions, command failures, disconnects, and missing readiness markers.
-7. Correlate a failure with the operation immediately before it. Preserve the complete exception and relevant preceding log context.
-8. Stop all started processes cleanly. Never leave a Headless server running after validation unless the user explicitly asks for an interactive session.
-9. Review every instance created during the task. Delete it after evidence has been copied unless it
+7. Search for `ERROR:`, unhandled exceptions, command failures, disconnects, and missing readiness markers.
+8. Correlate a failure with the operation immediately before it. Preserve the complete exception and relevant preceding log context.
+9. Stop all started processes cleanly. Never leave a Headless server running after validation unless the user explicitly asks for an interactive session.
+10. Review every instance created during the task. Delete it after evidence has been copied unless it
    is still required for reproduction, comparison, or explicit user inspection. Report the path and
    reason for every retained instance. Never delete an instance that existed before the task.
-10. Run the focused tests again after a fix, then a broader build/test proportional to the risk.
+11. Run the focused tests again after a fix, then a broader build/test proportional to the risk.
 
 ## Choose the test surface
 
@@ -52,7 +53,7 @@ argument before loading game settings and maps each process to `Instances/<name>
 
 ```bash
 SurvivalcraftStarter --instance debug-server --server --session debug-server --world DebugWorld --game-mode Creative
-SurvivalcraftStarter --instance debug-client --gui
+SurvivalcraftStarter --instance debug-client --gui --player Codex
 ```
 
 Read [references/multiplayer.md](references/multiplayer.md) before starting a GUI + Headless lab.
@@ -89,6 +90,11 @@ desktop session when one is available, and enable the HTTP command service. `--i
 game-data and process isolation; a separate desktop or display server is not an isolation mechanism
 for SCNET test data. Keeping the normal desktop visible also allows the user to observe or take over
 an interactive debugging session.
+
+Unless the test targets player creation or selection, also pass `--player Codex` (or another explicit
+stable name). Without it, a new instance stops at the player setup screen and adds unrelated UI work
+to every gameplay test. Do not automate through that screen merely to reach terrain, rendering,
+world-loading, or in-game input behavior.
 
 Discover `game:automation/ui/*` with `GET /commands`. Call `context/get`, select an exact returned
 widget selector, invoke `tap`, then poll `context/get` until the expected Screen appears. Use
