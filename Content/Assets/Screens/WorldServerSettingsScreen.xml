@@ -29,7 +29,7 @@
                                          Text="[WorldServerSettingsScreen:MaxPlayers]" Color="128, 128, 128"
                                          Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
-                                <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="MaxPlayers" Size="380, 50" Text="20" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
@@ -40,7 +40,7 @@
                                          Text="[WorldServerSettingsScreen:DaySpeed]" Color="128, 128, 128"
                                          Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
-                                <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="DaySpeed" Size="380, 50" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
@@ -51,7 +51,7 @@
                                          Text="[WorldServerSettingsScreen:RecoverySpeed]" Color="128, 128, 128"
                                          Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
-                                <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="RecoverySpeed" Size="380, 50" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
@@ -62,7 +62,7 @@
                                          Text="[WorldServerSettingsScreen:DisableBlocks]" Color="128, 128, 128"
                                          Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
-                                <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="DisableBlocks" Size="380, 50" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
@@ -80,7 +80,7 @@
                                          Text="[WorldServerSettingsScreen:KeywordBlocking]" Color="128, 128, 128"
                                          Margin="20, 0"/>
                             <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
-                                <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                 <TextBoxWidget Name="KeywordBlocking" Size="380, 50" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>

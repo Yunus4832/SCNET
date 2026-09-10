@@ -15,7 +15,7 @@
                         <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[ModifyWorldScreen:1]"
                                      Margin="10, 0"/>
                         <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                            <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                             <TextBoxWidget Name="Name" Size="320, 50" VerticalAlignment="Center"
                                            MaximumLength="14" Margin="10, 0"/>
                         </CanvasWidget>
@@ -24,7 +24,7 @@
                         <LabelWidget HorizontalAlignment="Far" VerticalAlignment="Center" Text="[ModifyWorldScreen:2]"
                                      Margin="10, 0"/>
                         <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="9, 5">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
+                            <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                             <LabelWidget Name="Seed" VerticalAlignment="Center" Margin="10, 0" Color="128, 128, 128"/>
                         </CanvasWidget>
                     </UniformSpacingPanelWidget>

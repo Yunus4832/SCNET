@@ -17,8 +17,7 @@
                 <StackPanelWidget Direction="Horizontal">
                     <CanvasWidget Size="Infinity, 60" Margin="5, 0">
                         <CanvasWidget Margin="6, 6">
-                            <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128"
-                                             OutlineThickness="1"/>
+                            <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                             <LabelWidget Name="SearchPlaceholder" Margin="10, 0" Color="128, 128, 128"
                                          VerticalAlignment="Center" IsHitTestVisible="false"/>
                             <TextBoxWidget Name="Search" Size="Infinity, 48" Margin="10, 0"

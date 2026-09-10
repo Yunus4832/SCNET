@@ -165,7 +165,7 @@
                              TextAnchor="HorizontalCenter" WordWrap="true"/>
                 <CanvasWidget Size="0, 10"/>
                 <CanvasWidget Size="504, 54" HorizontalAlignment="Center">
-                    <RectangleWidget FillColor="0, 0, 0, 0" OutlineColor="128, 128, 128, 128" OutlineThickness="1"/>
+                    <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                     <TextBoxWidget Name="EditTruthTableDialog.LinearText" Size="500, 50" MaximumLength="16"
                                    FontScale="3" TextureLinearFilter="false" Margin="2, 2"/>
                 </CanvasWidget>
