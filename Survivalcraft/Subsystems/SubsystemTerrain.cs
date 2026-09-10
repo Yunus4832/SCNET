@@ -84,6 +84,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public bool UsesRemoteChunkTransport => ChunkContentTransport is NetworkChunkContentTransport;
 
+    public bool UsesChunkContentTransport => ChunkContentTransport != null;
+
     public TerrainRenderer TerrainRenderer { get; set; } = null!;
 
     public TerrainSerializer24 TerrainSerializer { get; set; } = null!;

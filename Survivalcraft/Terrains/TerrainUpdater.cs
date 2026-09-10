@@ -485,7 +485,7 @@ public class TerrainUpdater
         var activeLocations = _updateParameters.Locations.Values.ToArray();
         foreach (var terrainChunk in _terrain.AllocatedChunks)
         {
-            if (_subsystemTerrain.UsesRemoteChunkTransport)
+            if (_subsystemTerrain.UsesChunkContentTransport)
             {
                 var now = Time.RealTime;
                 if (terrainChunk.WorkerState == TerrainChunkState.NotLoaded &&
