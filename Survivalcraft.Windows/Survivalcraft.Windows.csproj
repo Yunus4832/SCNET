@@ -16,7 +16,7 @@
     <!-- Release 配置 -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <PublishSingleFile>true</PublishSingleFile>
-        <OutputFileName>SCNET_Windows-$(Version).zip</OutputFileName>
+        <OutputFileName>SCNET_Windows-$(ScnetVersion).zip</OutputFileName>
         <UsePackOutputTarget>true</UsePackOutputTarget>
     </PropertyGroup>
 

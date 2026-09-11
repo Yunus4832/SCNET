@@ -12,7 +12,7 @@
     <!-- Release 配置 -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <PublishSingleFile>true</PublishSingleFile>
-        <OutputFileName>SCNET_Linux-$(Version).zip</OutputFileName>
+        <OutputFileName>SCNET_Linux-$(ScnetVersion).zip</OutputFileName>
         <UsePackOutputTarget>true</UsePackOutputTarget>
     </PropertyGroup>
 

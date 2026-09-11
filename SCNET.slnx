@@ -118,10 +118,6 @@
         <Project Path="ContentWebUI\ContentWebUI.esproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
-            <Build Solution="ANDROID|*" Project="false"/>
-            <Build Solution="Debug|*" Project="false"/>
-            <Build Solution="DESKTOP|*" Project="false"/>
-            <Build Solution="Release|*" Project="false"/>
         </Project>
         <Project Path="ContentServer\ContentServer.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
@@ -177,6 +173,13 @@
         <File Path=".gitignore"/>
         <File Path="Directory.Build.props"/>
         <File Path="Directory.Build.targets"/>
+    </Folder>
+
+    <Folder Name="/11 Scripts/">
+        <File Path="Scripts/pack-nuget.ps1"/>
+        <File Path="Scripts/pack-nuget.sh"/>
+        <File Path="Scripts/publish.ps1"/>
+        <File Path="Scripts/publish.sh"/>
     </Folder>
 
 </Solution>

@@ -328,12 +328,12 @@ dotnet run --project ContentServer/ContentServer.csproj
 
 ## 容器镜像（推荐）
 
-MSBuild 是后端、WebUI 和发行包的统一入口。只有配置名称严格为 `Release` 时才打包；`Debug` 和其他自定义配置
-只编译项目。所有系统生成不带 RID、以 `dotnet ContentServer.dll` 启动的 framework-dependent portable ZIP；
+MSBuild 是后端、WebUI 和发行包的统一入口。只有显式执行 `Publish` 且配置名称严格为 `Release` 时才打包；普通
+`Build`、`Debug` 和其他自定义配置只编译项目。所有系统生成不带 RID、以 `dotnet ContentServer.dll` 启动的 framework-dependent portable ZIP；
 Linux 额外执行隔离的 `linux-x64` build/publish，并把该目录封装进 .NET 10 Chiseled 运行镜像：
 
 ```bash
-dotnet build -c Release
+dotnet publish ContentServer/ContentServer.csproj -c Release
 ```
 
 产物默认直接写入 `Publish/`：
@@ -347,7 +347,7 @@ portable 包不携带 .NET，目标机器需要 ASP.NET Core Runtime 10。非 Li
 工具链。Linux 构建机需要 Podman 或 Docker；镜像组装自动优先选择 Podman，其次选择 Docker。可以明确指定：
 
 ```bash
-CONTAINER_ENGINE=docker dotnet build -c Release
+CONTAINER_ENGINE=docker dotnet publish ContentServer/ContentServer.csproj -c Release
 ```
 
 默认读取 `ContentServer.csproj` 的 `Version` 作为标签，当前生成 `linux/amd64` 镜像
@@ -357,7 +357,7 @@ Git revision 单独记录在 OCI Label 中；工作区不干净时 revision 会�
 
 ```bash
 IMAGE_NAME=example/content-server IMAGE_TAG=0.1.0 \
-  dotnet build -c Release
+  dotnet publish ContentServer/ContentServer.csproj -c Release
 ```
 
 镜像基础层取自 `ContentServer/Deployment/Dockerfile` 的 `mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled`。
@@ -371,7 +371,7 @@ podman pull mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
 需要允许构建时拉取时，把 `IMAGE_PULL_POLICY` 设为 `missing` 或 `always`：
 
 ```bash
-IMAGE_PULL_POLICY=missing dotnet build -c Release
+IMAGE_PULL_POLICY=missing dotnet publish ContentServer/ContentServer.csproj -c Release
 ```
 
 portable 与 `linux-x64` 发布使用 `obj` 下的独立目录，嵌套的 Linux 构建显式关闭发行 Target，避免递归和输出冲突。

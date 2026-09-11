@@ -2,7 +2,7 @@
     <!-- 项目全局的配置-->
     <PropertyGroup>
         <!-- 项目版本号 -->
-        <ScNetworkVersion>0.0.0.1</ScNetworkVersion>
+        <ScnetVersion>0.0.0.1</ScnetVersion>
         <!-- 全局的 TargetFramewor -->
         <GlobalTargetFramework>net10.0</GlobalTargetFramework>
         <!-- 安卓项目的 TargetFramework -->
@@ -29,7 +29,7 @@
         <Platforms>AnyCPU</Platforms>
         <Configurations>Debug;Release</Configurations>
         <IsPackable>false</IsPackable>
-        <PackageVersion>$(ScNetworkVersion)</PackageVersion>
+        <PackageVersion>$(ScnetVersion)</PackageVersion>
         <Authors>SCNET</Authors>
         <Company>SCNET</Company>
         <RepositoryType>git</RepositoryType>

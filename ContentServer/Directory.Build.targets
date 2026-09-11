@@ -39,7 +39,7 @@
     </Target>
 
     <Target Name="BuildContentServerArtifacts"
-            AfterTargets="Build"
+            AfterTargets="Publish"
             Condition="'$(Configuration)' == 'Release' AND '$(BuildContentServerArtifacts)' == 'true' AND '$(DesignTimeBuild)' != 'true'">
         <RemoveDir Directories="$(ContentServerPortablePublishDir)"/>
         <MakeDir Directories="$(ContentServerPortablePublishDir);$(ContentServerPublishRoot)"/>
@@ -64,6 +64,6 @@
         <MakeDir Directories="$(ContentServerLinuxPublishDir)"/>
         <Exec Command="dotnet publish &quot;$(MSBuildProjectFullPath)&quot; -c Release -r linux-x64 --no-build --no-restore --self-contained false -p:BuildContentServerArtifacts=false -p:BuildContentWebUIEnabled=false -o &quot;$(ContentServerLinuxPublishDir)&quot;"/>
         <Exec Command="bash &quot;$(MSBuildProjectDirectory)/Deployment/build-image.sh&quot;"
-              EnvironmentVariables="CONTENTSERVER_PUBLISH_DIR=$(ContentServerLinuxPublishDir);CONTENT_SERVER_VERSION=$(Version);SCNET_VERSION=$(ScNetworkVersion);DOTNET_SDK_VERSION=$(NETCoreSdkVersion);PLATFORM=linux/amd64;OUTPUT_DIR=$(ContentServerPublishRoot)"/>
+              EnvironmentVariables="CONTENTSERVER_PUBLISH_DIR=$(ContentServerLinuxPublishDir);CONTENT_SERVER_VERSION=$(Version);SCNET_VERSION=$(ScnetVersion);DOTNET_SDK_VERSION=$(NETCoreSdkVersion);PLATFORM=linux/amd64;OUTPUT_DIR=$(ContentServerPublishRoot)"/>
     </Target>
 </Project>

@@ -20,4 +20,8 @@
         <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
 </Project>

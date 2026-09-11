@@ -87,9 +87,15 @@ dotnet build SCNET.slnx
 
 # Release 构建
 dotnet build SCNET.slnx --configuration Release
+
+# 顺序生成应用和服务发行产物
+./Scripts/publish.sh
+
+# 生成 Mod SDK 和模板 NuGet 包
+./Scripts/pack-nuget.sh
 ```
 
-可选构建配置：`Debug`、`Release`、`ANDROID`、`DESKTOP`。详细说明见 [构建与共享配置](Doc/BuildAndConfig.md)。
+PowerShell 分别使用 `./Scripts/publish.ps1` 和 `./Scripts/pack-nuget.ps1`。可选构建配置：`Debug`、`Release`、`ANDROID`、`DESKTOP`。详细说明见 [构建与共享配置](Doc/BuildAndConfig.md) 和 [NuGet 包](Doc/NuGet.md)。
 
 ### 测试
 

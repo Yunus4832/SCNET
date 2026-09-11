@@ -17,7 +17,7 @@
 
     <!-- Release 配置 -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-        <OutputApkName>SCNET_Arm32-$(Version).apk</OutputApkName>
+        <OutputApkName>SCNET_Arm32-$(ScnetVersion).apk</OutputApkName>
         <UseRenameApkTarget>true</UseRenameApkTarget>
     </PropertyGroup>
 

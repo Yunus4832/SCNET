@@ -16,4 +16,8 @@
         <ProjectReference Include="..\Engine.Core\Engine.Core.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+
 </Project>

@@ -54,7 +54,7 @@
     </PropertyGroup>
 
     <!-- 只有当 UseRenameApkTarget 为 true 时才导入目标 -->
-    <Target Name="RenameApk" AfterTargets="Build" Condition="'$(UseRenameApkTarget)' == 'true'">
+    <Target Name="RenameApk" AfterTargets="Publish" Condition="'$(UseRenameApkTarget)' == 'true'">
         <!-- 重命名 Apk -->
         <Copy SourceFiles="$([System.IO.Path]::GetFullPath('$(OutputPath)$(ApplicationId)-Signed.apk'))"
               DestinationFiles="$(SolutionRoot)/Publish/$(OutputApkName)"/>

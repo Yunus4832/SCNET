@@ -45,15 +45,16 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 ## 本地打包
 
+从仓库根目录运行统一脚本。脚本按依赖顺序逐个执行可打包项目，任一项目失败时立即停止：
+
 ```bash
-dotnet pack Engine.Core/Engine.Core.csproj -c Release
-dotnet pack Engine.Serialization/Engine.Serialization.csproj -c Release
-dotnet pack Engine/Engine.csproj -c Release
-dotnet pack EntitySystem/EntitySystem.csproj -c Release
-dotnet pack Content.Packaging/Content.Packaging.csproj -c Release
-dotnet pack ContentTool/ContentTool.csproj -c Release
-dotnet pack Survivalcraft/Survivalcraft.csproj -c Release
-dotnet pack Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj -c Release
+./Scripts/pack-nuget.sh
+```
+
+PowerShell：
+
+```powershell
+./Scripts/pack-nuget.ps1
 ```
 
 包会输出到 `Publish/NuGet`。仓库根目录的 `NuGet.Config` 已将该目录注册为
@@ -63,3 +64,5 @@ dotnet pack Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj -c Rele
 如需在干净环境中验证使用方流程，请从该目录安装模板，在仓库外创建项目，并将
 `Publish/NuGet` 作为包源执行还原。最终生成的 `.scpkg` 应包含 Mod 程序集及其自身
 内容，不应包含 Survivalcraft 或引擎运行时程序集。
+
+不要通过解决方案级 `dotnet pack SCNET.slnx` 生成发行包。包集合采用显式白名单，并包含多目标项目和构建工具之间的顺序依赖；新增或移除可发布包时，应同时更新两个 `pack-nuget` 脚本、本页包清单及相关模板版本约束。

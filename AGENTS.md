@@ -29,3 +29,21 @@ Treat `.editorconfig` as authoritative for C# style. Before completing any chang
 use the repository `scnet-code-style` Skill and run
 `.agents/skills/scnet-code-style/scripts/validate_changed_csharp.sh`. A successful build does not
 replace this changed-file style check. Keep unrelated legacy formatting out of functional changes.
+
+## Build and release workflows
+
+Keep ordinary compilation separate from creation of distributable artifacts:
+
+- use `dotnet build` for development and validation; a build must not copy release artifacts into
+  the repository `Publish/` directory;
+- use `Scripts/publish.sh` on Bash hosts or `Scripts/publish.ps1` on PowerShell hosts to create
+  application and service release artifacts;
+- use `Scripts/pack-nuget.sh` or `Scripts/pack-nuget.ps1` to create the explicitly allow-listed
+  NuGet packages under `Publish/NuGet`;
+- do not replace these scripts with solution-level `dotnet publish` or `dotnet pack`: shared
+  multi-target projects are intentionally published or packed through sequential project-specific
+  commands, and individual entries may require different parameters.
+
+When adding, removing, or changing a release entry, update both platform variants of the relevant
+script and the corresponding documentation in `Doc/BuildAndConfig.md`, `Doc/NuGet.md`, or
+`Doc/ContentServer.md` in the same change.

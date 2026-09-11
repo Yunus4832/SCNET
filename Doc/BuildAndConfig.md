@@ -72,6 +72,12 @@ dotnet build SCNET.slnx
 
 # Release 构建
 dotnet build SCNET.slnx --configuration Release
+
+# Linux/macOS：顺序生成应用和服务发行产物
+./Scripts/publish.sh
+
+# PowerShell：顺序生成应用和服务发行产物
+./Scripts/publish.ps1
 ```
 
 ### 可选构建配置
@@ -89,12 +95,18 @@ dotnet build SCNET.slnx --configuration Release
 - 测试工程在 `Release` 下会被排除，部分 Android 变体也会在 `Release` 下被排除
 - 当前代码库大量使用反射，因此不启用 `trim`，也不支持通过裁剪方式进行发布优化
 
+`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、Android Arm64、Android Arm32 和 ContentServer，Windows 暂停发布。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
+
+NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scripts/pack-nuget.sh` 或 `Scripts/pack-nuget.ps1`，具体包边界和使用方式见 [NuGet 包](./NuGet.md)。不要使用解决方案级 `dotnet publish` 或 `dotnet pack` 代替这些脚本；多目标共享项目应由下游入口按顺序独立处理。
+
+根目录 `Publish` 中的桌面压缩包、重命名后的 Android APK，以及 ContentServer 的 portable 和容器镜像包只在 `Publish` 阶段生成；普通 `Build` 不会更新这些发行产物。
+
 ### 打包行为
 
 仓库使用 `Directory.Build.targets` 统一处理资源和发布结果：
 
 - 构建前会把 `Content/` 打成 `Content.zip`
 - 桌面发布会将 `$(PublishDir)` 生成的发布输出压缩到仓库根目录下的 `Publish/` 目录
-- Android 构建会生成并重命名 APK 到 `Publish/`
+- Android 发布会生成并重命名 APK 到 `Publish/`
 
 这也是为什么不同平台项目里会看到 `UsePackResourceTarget`、`UsePackOutputTarget` 和 `UseRenameApkTarget` 之类的属性。这些属性用于集中处理资源和发布产物。
