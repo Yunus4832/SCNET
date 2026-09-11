@@ -39,6 +39,7 @@ public sealed class ModManagementScreen : Screen
         _pickerUnavailableLabel = Children.Find<LabelWidget>("PickerUnavailable")!;
         _actionPanel.ItemTextProvider = GetActionText;
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemColorProvider = item => item is ModAction.DeleteCache ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
         [

@@ -18,8 +18,6 @@ public class NewWorldScreen : Screen
 
     private readonly ButtonWidget _playButton;
 
-    private readonly Random _random = new();
-
     private readonly TextBoxWidget _seedTextBox;
 
     private readonly ButtonWidget _serverSettingsButton;
@@ -58,7 +56,7 @@ public class NewWorldScreen : Screen
         {
             _worldSettings = new WorldSettings
             {
-                Name = WorldsManager.NewWorldNames[_random.Int(0, WorldsManager.NewWorldNames.Count - 1)]
+                Name = WorldsManager.GetUnusedWorldName()
             };
         }
     }

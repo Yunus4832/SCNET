@@ -60,12 +60,6 @@
             <LabelWidget Name="Error" HorizontalAlignment="Center" VerticalAlignment="Center"
                          Text="[ModifyWorldScreen:6]" Color="255, 0, 0" Margin="0, 4"/>
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 8">
-                <BevelledButtonWidget Name="Delete" Style="{Styles/ButtonStyle_160x60}"
-                                      Text="[ModifyWorldScreen:7]" Margin="6, 0">
-                    <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="150, 50, 35"
-                                             BevelColor="150, 50, 35"/>
-                </BevelledButtonWidget>
-                <CanvasWidget Size="Infinity, 0"/>
                 <BevelledButtonWidget Name="Apply" Style="{Styles/ButtonStyle_310x60}"
                                       Text="[ModifyWorldScreen:8]" Margin="6, 0">
                     <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="50, 150, 35"

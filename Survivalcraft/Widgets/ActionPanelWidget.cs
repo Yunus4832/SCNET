@@ -15,8 +15,12 @@ public sealed class ActionPanelWidget : CanvasWidget
     private readonly object?[] _secondaryItems = new object?[_maximumItemsPerGroup];
     private readonly ContainerWidget _secondaryPanel;
     private readonly ButtonWidget _toggleButton;
+    private readonly Dictionary<BevelledButtonWidget, (Color Center, Color Bevel)> _defaultButtonColors = [];
+    private readonly Dictionary<ButtonWidget, float> _defaultButtonWidths = [];
     private Func<object, bool> _itemEnabledProvider = _ => true;
+    private Func<object, Color?> _itemColorProvider = _ => null;
     private Func<object, string> _itemTextProvider = item => item.ToString() ?? string.Empty;
+    private Func<object, float?> _itemWidthProvider = _ => null;
 
     public ActionPanelWidget()
     {
@@ -28,6 +32,16 @@ public sealed class ActionPanelWidget : CanvasWidget
         _toggleButton = Children.Find<ButtonWidget>("ActionPanel.Toggle")!;
         _primaryButtons = FindButtons("ActionPanel.Primary", _primaryPanel);
         _secondaryButtons = FindButtons("ActionPanel.Secondary", _secondaryPanel);
+        foreach (var button in _primaryButtons.Concat(_secondaryButtons))
+        {
+            _defaultButtonWidths.Add(button, button.Size.X);
+        }
+
+        foreach (var button in _primaryButtons.Concat(_secondaryButtons).OfType<BevelledButtonWidget>())
+        {
+            _defaultButtonColors.Add(button, (button.CenterColor, button.BevelColor));
+        }
+
         Refresh();
     }
 
@@ -99,6 +113,28 @@ public sealed class ActionPanelWidget : CanvasWidget
         {
             ArgumentNullException.ThrowIfNull(value);
             _itemEnabledProvider = value;
+            Refresh();
+        }
+    }
+
+    public Func<object, Color?> ItemColorProvider
+    {
+        get => _itemColorProvider;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _itemColorProvider = value;
+            Refresh();
+        }
+    }
+
+    public Func<object, float?> ItemWidthProvider
+    {
+        get => _itemWidthProvider;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            _itemWidthProvider = value;
             Refresh();
         }
     }
@@ -185,6 +221,18 @@ public sealed class ActionPanelWidget : CanvasWidget
         {
             var item = items[i];
             buttons[i].IsVisible = item is not null;
+            buttons[i].Size = new Vector2(
+                item is null ? _defaultButtonWidths[buttons[i]] : _itemWidthProvider(item) ??
+                _defaultButtonWidths[buttons[i]],
+                buttons[i].Size.Y);
+            if (buttons[i] is BevelledButtonWidget bevelledButton)
+            {
+                var defaultColors = _defaultButtonColors[bevelledButton];
+                var color = item is null ? null : _itemColorProvider(item);
+                bevelledButton.CenterColor = color ?? defaultColors.Center;
+                bevelledButton.BevelColor = color ?? defaultColors.Bevel;
+            }
+
             if (item is not null)
             {
                 buttons[i].Text = _itemTextProvider(item);

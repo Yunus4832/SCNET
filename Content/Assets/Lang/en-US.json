@@ -3285,7 +3285,18 @@
             "16": "Restart Required",
             "17": "{0}\n\nRestart now?",
             "18": "Restart",
-            "19": "Failed to create server: port is already in use"
+            "19": "Failed to create server: port is already in use",
+            "Play": "Play",
+            "Create": "Create",
+            "Settings": "Settings",
+            "Clone": "Clone",
+            "Delete": "Delete",
+            "CloneTitle": "Clone World",
+            "InvalidName": "The world name is invalid.",
+            "Cloning": "Cloning World",
+            "CloneFailed": "Failed to Clone World",
+            "DeleteTitle": "Delete World",
+            "DeleteQuestion": "Delete world “{0}”? This cannot be undone."
         },
         "PlayerScreen": {
             "1": "Setup Player",

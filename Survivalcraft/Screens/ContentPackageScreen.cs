@@ -43,6 +43,7 @@ public sealed class ContentPackageScreen : Screen
         _actionPanel.ItemTextProvider = item =>
             LanguageManager.GetContentWidgets(_typeName, item.ToString()!);
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemColorProvider = item => item is PackageAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
         [

@@ -10,6 +10,16 @@ public class PlayScreen : Screen
 
     private const string _typeName = nameof(PlayScreen);
 
+    private enum WorldAction
+    {
+        Play,
+        Create,
+        Settings,
+        Clone,
+        Delete
+    }
+
+    private readonly ActionPanelWidget _actionPanel;
     private readonly ListPanelWidget _worldsListWidget;
 
     public PlayScreen()
@@ -17,6 +27,24 @@ public class PlayScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/PlayScreen");
         LoadContents(this, node);
         _worldsListWidget = Children.Find<ListPanelWidget>("WorldsList")!;
+        _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
+        _actionPanel.ItemTextProvider = GetActionText;
+        _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemColorProvider = item => item switch
+        {
+            WorldAction.Play => new Color(50, 150, 35),
+            WorldAction.Delete => new Color(150, 50, 35),
+            _ => null
+        };
+        _actionPanel.ItemWidthProvider = item => item switch
+        {
+            WorldAction.Play => 240f,
+            WorldAction.Create or WorldAction.Settings => 190f,
+            _ => null
+        };
+        _actionPanel.ItemClicked += ExecuteAction;
+        _actionPanel.SetPrimaryItems([WorldAction.Play, WorldAction.Create, WorldAction.Settings]);
+        _actionPanel.SetSecondaryItems([WorldAction.Clone, WorldAction.Delete]);
         var worldsListWidget = _worldsListWidget;
         worldsListWidget.ItemWidgetFactory = (Func<object, Widget>)Delegate.Combine(
             worldsListWidget.ItemWidgetFactory,
@@ -87,6 +115,11 @@ public class PlayScreen : Screen
         });
     }
 
+    public override void Leave()
+    {
+        _actionPanel.ShowPrimaryItems();
+    }
+
     public override void Update()
     {
         if (_worldsListWidget.SelectedItem != null &&
@@ -98,39 +131,7 @@ public class PlayScreen : Screen
         Children.Find<LabelWidget>("TopBar.Label")!.Text = string.Format(
             LanguageManager.GetContentWidgets(_typeName, 6),
             _worldsListWidget.Items.Count);
-        Children.Find("Play")!.IsEnabled = _worldsListWidget.SelectedItem != null;
-        Children.Find("Properties")!.IsEnabled = _worldsListWidget.SelectedItem != null;
-        if (Children.Find<ButtonWidget>("Play")!.IsClicked && _worldsListWidget.SelectedItem != null)
-        {
-            Play(_worldsListWidget.SelectedItem);
-        }
-
-        if (Children.Find<ButtonWidget>("NewWorld")!.IsClicked)
-        {
-            if (WorldsManager.WorldInfos.Count >= _maxWorlds)
-            {
-                DialogsManager.ShowDialog(
-                    null,
-                    new MessageDialog(
-                        LanguageManager.GetContentWidgets(_typeName, 7),
-                        string.Format(LanguageManager.GetContentWidgets(_typeName, 8), _maxWorlds),
-                        LanguageManager.Get("Usual", "ok")
-                    )
-                );
-            }
-            else
-            {
-                ScreensManager.SwitchScreen("NewWorld");
-                _worldsListWidget.SelectedItem = null;
-            }
-        }
-
-        if (Children.Find<ButtonWidget>("Properties")!.IsClicked && _worldsListWidget.SelectedItem != null)
-        {
-            var worldInfo = (WorldInfo)_worldsListWidget.SelectedItem;
-            ScreensManager.SwitchScreen("ModifyWorld", worldInfo.DirectoryName, worldInfo.WorldSettings);
-        }
-
+        _actionPanel.Refresh();
         if (Input is { Back: false, Cancel: false } && !Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             return;
@@ -138,6 +139,151 @@ public class PlayScreen : Screen
 
         ScreensManager.SwitchScreen("MainMenu");
         _worldsListWidget.SelectedItem = null;
+    }
+
+    private string GetActionText(object item)
+    {
+        return item is WorldAction action
+            ? LanguageManager.GetContentWidgets(_typeName, action.ToString())
+            : string.Empty;
+    }
+
+    private bool IsActionEnabled(object item)
+    {
+        if (item is not WorldAction action)
+        {
+            return false;
+        }
+
+        return action == WorldAction.Create || _worldsListWidget.SelectedItem is WorldInfo;
+    }
+
+    private void ExecuteAction(object item)
+    {
+        if (item is not WorldAction action || !IsActionEnabled(action))
+        {
+            return;
+        }
+
+        var worldInfo = _worldsListWidget.SelectedItem as WorldInfo;
+        switch (action)
+        {
+            case WorldAction.Play when worldInfo is not null:
+                Play(worldInfo);
+                break;
+            case WorldAction.Create:
+                CreateWorld();
+                break;
+            case WorldAction.Settings when worldInfo is not null:
+                ScreensManager.SwitchScreen("ModifyWorld", worldInfo.DirectoryName, worldInfo.WorldSettings);
+                break;
+            case WorldAction.Clone when worldInfo is not null:
+                ShowCloneDialog(worldInfo);
+                break;
+            case WorldAction.Delete when worldInfo is not null:
+                ConfirmDelete(worldInfo);
+                break;
+        }
+    }
+
+    private void CreateWorld()
+    {
+        if (WorldsManager.WorldInfos.Count >= _maxWorlds)
+        {
+            DialogsManager.ShowDialog(
+                null,
+                new MessageDialog(
+                    LanguageManager.GetContentWidgets(_typeName, 7),
+                    string.Format(LanguageManager.GetContentWidgets(_typeName, 8), _maxWorlds),
+                    LanguageManager.Get("Usual", "ok")
+                )
+            );
+            return;
+        }
+
+        ScreensManager.SwitchScreen("NewWorld");
+        _worldsListWidget.SelectedItem = null;
+    }
+
+    private void ShowCloneDialog(WorldInfo worldInfo)
+    {
+        var defaultName = WorldsManager.GetUnusedWorldName();
+        DialogsManager.ShowDialog(null, new TextBoxDialog(
+            LanguageManager.GetContentWidgets(_typeName, "CloneTitle"),
+            defaultName,
+            128,
+            name => CloneWorld(worldInfo, string.IsNullOrWhiteSpace(name) ? defaultName : name.Trim()),
+            false));
+    }
+
+    private void CloneWorld(WorldInfo source, string name)
+    {
+        if (!WorldsManager.ValidateWorldName(name))
+        {
+            DialogsManager.Alert(LanguageManager.GetContentWidgets(_typeName, "InvalidName"));
+            return;
+        }
+
+        var busyDialog = new BusyDialog(LanguageManager.GetContentWidgets(_typeName, "Cloning"), name);
+        DialogsManager.ShowDialog(null, busyDialog);
+        Task.Run(() =>
+        {
+            try
+            {
+                var clone = WorldsManager.CloneWorld(source.DirectoryName, name);
+                WorldsManager.UpdateWorldsList();
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    PopulateWorldsList(clone.DirectoryName);
+                });
+            }
+            catch (Exception exception)
+            {
+                Dispatcher.Dispatch(() =>
+                {
+                    DialogsManager.HideDialog(busyDialog);
+                    DialogsManager.Alert(
+                        LanguageManager.GetContentWidgets(_typeName, "CloneFailed"), exception.Message);
+                });
+            }
+        });
+    }
+
+    private void ConfirmDelete(WorldInfo worldInfo)
+    {
+        DialogsManager.ShowDialog(null, new MessageDialog(
+            LanguageManager.GetContentWidgets(_typeName, "DeleteTitle"),
+            string.Format(LanguageManager.GetContentWidgets(_typeName, "DeleteQuestion"),
+                worldInfo.WorldSettings.Name),
+            LanguageManager.Get("Usual", "yes"),
+            LanguageManager.Get("Usual", "no"),
+            button =>
+            {
+                if (button != MessageDialogButton.Button1)
+                {
+                    return;
+                }
+
+                WorldsManager.DeleteWorld(worldInfo.DirectoryName);
+                WorldsManager.UpdateWorldsList();
+                PopulateWorldsList(null);
+            }));
+    }
+
+    private void PopulateWorldsList(string? selectedDirectoryName)
+    {
+        var worldInfos = new List<WorldInfo>(WorldsManager.WorldInfos);
+        worldInfos.Sort((w1, w2) => DateTime.Compare(w2.LastSaveTime, w1.LastSaveTime));
+        _worldsListWidget.ClearItems();
+        foreach (var worldInfo in worldInfos)
+        {
+            _worldsListWidget.AddItem(worldInfo);
+        }
+
+        _worldsListWidget.SelectedItem = selectedDirectoryName is null
+            ? null
+            : worldInfos.FirstOrDefault(world => world.DirectoryName == selectedDirectoryName);
     }
 
     private void Play(object item)

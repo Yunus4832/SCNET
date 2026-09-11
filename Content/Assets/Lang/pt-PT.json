@@ -3285,7 +3285,18 @@
             "16": "Reinício necessário",
             "17": "{0}\n\nReiniciar agora?",
             "18": "Reiniciar",
-            "19": "Falha ao criar servidor: a porta já está em uso"
+            "19": "Falha ao criar servidor: a porta já está em uso",
+            "Play": "Iniciar jogo",
+            "Create": "Criar",
+            "Settings": "Definições",
+            "Clone": "Clonar",
+            "Delete": "Eliminar",
+            "CloneTitle": "Clonar mundo",
+            "InvalidName": "O nome do mundo é inválido.",
+            "Cloning": "A clonar mundo",
+            "CloneFailed": "Falha ao clonar mundo",
+            "DeleteTitle": "Eliminar mundo",
+            "DeleteQuestion": "Eliminar o mundo “{0}”? Esta ação não pode ser anulada."
         },
         "PlayerScreen": {
             "1": "Criar jogadores",

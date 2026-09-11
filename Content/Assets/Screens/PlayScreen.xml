@@ -20,18 +20,7 @@
                 </CanvasWidget>
             </StackPanelWidget>
 
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="4, 10">
-                <BevelledButtonWidget Name="Play" Style="{Styles/ButtonStyle_310x60}" Text="[PlayScreen:2]"
-                                      VerticalAlignment="Center">
-                    <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="50, 150, 35"
-                                             BevelColor="50, 150, 35"/>
-                </BevelledButtonWidget>
-                <BevelledButtonWidget Name="NewWorld" Style="{Styles/ButtonStyle_310x60}" Text="[PlayScreen:3]"
-                                      VerticalAlignment="Center"/>
-                <CanvasWidget Size="Infinity, 0"/>
-                <BevelledButtonWidget Name="Properties" Style="{Styles/ButtonStyle_160x60}" Text="[PlayScreen:4]"
-                                      VerticalAlignment="Center"/>
-            </StackPanelWidget>
+            <ActionPanelWidget Name="Actions" Margin="10, 10"/>
 
         </StackPanelWidget>
 

@@ -20,8 +20,6 @@ public class ModifyWorldScreen : Screen
 
     private readonly ValuesDictionary _currentWorldSettingsData = new();
 
-    private readonly ButtonWidget _deleteButton;
-
     private string _directoryName = string.Empty;
 
     private readonly LabelWidget _errorLabel;
@@ -55,8 +53,6 @@ public class ModifyWorldScreen : Screen
         _serverSettingsButton = Children.Find<ButtonWidget>("ServerSettings")!;
         _errorLabel = Children.Find<LabelWidget>("Error")!;
         _applyButton = Children.Find<ButtonWidget>("Apply")!;
-        _deleteButton = Children.Find<ButtonWidget>("Delete")!;
-
         _nameTextBox.TextChanged += delegate { WorldSettings.Name = _nameTextBox.Text; };
     }
 
@@ -110,30 +106,6 @@ public class ModifyWorldScreen : Screen
         {
             ScreensManager.SwitchScreen("WorldServerSettings", WorldSettings, "ModifyWorld", _directoryName,
                 WorldSettings);
-        }
-
-        if (_deleteButton.IsClicked)
-        {
-            var dialog = new MessageDialog(
-                LanguageManager.Get(_typeName, 1),
-                LanguageManager.Get(_typeName, 2),
-                LanguageManager.Get("Usual", "yes"),
-                LanguageManager.Get("Usual", "no"),
-                new Vector2(-1f),
-                (button, self) =>
-                {
-                    if (button == MessageDialogButton.Button1)
-                    {
-                        WorldsManager.DeleteWorld(_directoryName);
-                        ScreensManager.SwitchScreen("Play");
-                    }
-
-                    DialogsManager.HideDialog(self);
-                })
-            {
-                AutoHide = false
-            };
-            DialogsManager.ShowDialog(null, dialog);
         }
 
         if ((_applyButton.IsClicked && flag2) & flag)

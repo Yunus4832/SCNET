@@ -13,6 +13,8 @@ public static class WorldsManager
 
     private static readonly List<WorldInfo> _worldInfos = [];
 
+    private static readonly Random _random = new();
+
     private static readonly string _worldsDirectoryName = GamePaths.Worlds;
 
     private static bool _loaded;
@@ -198,6 +200,27 @@ public static class WorldsManager
     public static bool ValidateWorldName(string name)
     {
         return !name.Contains('\\') && name.Length <= 128;
+    }
+
+    public static string GetUnusedWorldName()
+    {
+        var usedNames = _worldInfos.Select(world => world.WorldSettings.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var availableNames = NewWorldNames.Where(name => !usedNames.Contains(name)).ToArray();
+        if (availableNames.Length > 0)
+        {
+            return availableNames[_random.Int(0, availableNames.Length - 1)];
+        }
+
+        var baseName = NewWorldNames[_random.Int(0, NewWorldNames.Count - 1)];
+        for (var index = 2; ; index++)
+        {
+            var name = $"{baseName} {index}";
+            if (!usedNames.Contains(name))
+            {
+                return name;
+            }
+        }
     }
 
     public static int ReplaceAssetReferences(ContentType type, string oldAssetKey, string newAssetKey)
@@ -442,6 +465,58 @@ public static class WorldsManager
                ?? throw new ArgumentException("Create world failed");
     }
 
+    public static WorldInfo CloneWorld(string sourceDirectoryName, string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceDirectoryName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        if (!ValidateWorldName(name))
+        {
+            throw new InvalidOperationException($"World name \"{name}\" is invalid.");
+        }
+
+        var sourceWorld = GetWorldInfo(sourceDirectoryName)
+                          ?? throw new InvalidOperationException("Source directory does not contain a world.");
+        if (!Storage.FileExists(Storage.CombinePaths(sourceDirectoryName, "Project.xml")))
+        {
+            throw new InvalidOperationException("Source directory does not contain a valid world project.");
+        }
+
+        var targetDirectoryName = GetUnusedWorldDirectoryName();
+        Storage.CreateDirectory(targetDirectoryName);
+        try
+        {
+            CopyDirectory(sourceDirectoryName, targetDirectoryName);
+            sourceWorld.WorldSettings.Name = name;
+            ChangeWorld(targetDirectoryName, sourceWorld.WorldSettings);
+            var clonedWorld = GetWorldInfo(targetDirectoryName);
+            if (clonedWorld is null ||
+                !Storage.FileExists(Storage.CombinePaths(targetDirectoryName, "Project.xml")))
+            {
+                throw new InvalidOperationException("Cloned directory does not contain a valid world project.");
+            }
+
+            return clonedWorld;
+        }
+        catch
+        {
+            if (Storage.DirectoryExists(targetDirectoryName))
+            {
+                try
+                {
+                    DeleteWorldContents(targetDirectoryName, null);
+                    Storage.DeleteDirectory(targetDirectoryName);
+                }
+                catch (Exception exception)
+                {
+                    Log.Error(ExceptionManager.MakeFullErrorMessage(
+                        $"Failed to clean up incomplete world clone \"{targetDirectoryName}\".", exception));
+                }
+            }
+
+            throw;
+        }
+    }
+
     public static void ChangeWorld(string directoryName, WorldSettings worldSettings)
     {
         var xmlFile = Storage.CombinePaths(directoryName, "Project.xml");
@@ -529,6 +604,23 @@ public static class WorldsManager
         catch (Exception ex)
         {
             Log.Error($"Error enumerating files/directories. Reason: {ex.Message}");
+        }
+    }
+
+    private static void CopyDirectory(string sourceDirectoryName, string targetDirectoryName)
+    {
+        foreach (var directory in Storage.ListDirectoryNames(sourceDirectoryName))
+        {
+            var source = Storage.CombinePaths(sourceDirectoryName, directory);
+            var target = Storage.CombinePaths(targetDirectoryName, directory);
+            Storage.CreateDirectory(target);
+            CopyDirectory(source, target);
+        }
+
+        foreach (var file in Storage.ListFileNames(sourceDirectoryName))
+        {
+            Storage.CopyFile(Storage.CombinePaths(sourceDirectoryName, file),
+                Storage.CombinePaths(targetDirectoryName, file));
         }
     }
 
