@@ -69,6 +69,18 @@ if [[ ! "$image_tag" =~ ^[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}$ ]]; then
   exit 1
 fi
 
+# 默认只使用本地基础镜像。让引擎自行解析基础镜像会触发 registry 查询，即使本地已存在同一标签的镜像，
+# 也会在离线或受限网络下长时间阻塞发行构建。
+image_pull_policy="${IMAGE_PULL_POLICY:-never}"
+case "$image_pull_policy" in
+  never|missing|always)
+    ;;
+  *)
+    echo "[ContentServer] IMAGE_PULL_POLICY 仅支持 never、missing 或 always: $image_pull_policy" >&2
+    exit 1
+    ;;
+esac
+
 build_date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 image_reference="$IMAGE_NAME:$image_tag"
 temporary_root="$(mktemp -d "$ROOT/Publish/.content-server-image.XXXXXX")"
@@ -88,6 +100,7 @@ echo "[ContentServer] ContentServer version: $CONTENT_SERVER_VERSION"
 echo "[ContentServer] SCNET version: $SCNET_VERSION"
 echo "[ContentServer] .NET SDK version: $DOTNET_SDK_VERSION"
 echo "[ContentServer] Container engine: $container_engine"
+echo "[ContentServer] Base image pull policy: $image_pull_policy"
 echo "[ContentServer] Publish directory: $PUBLISH_DIR"
 
 for required_path in ContentServer.dll appsettings.json wwwroot/index.html; do
@@ -107,6 +120,7 @@ chmod -R u=rwX,go=rX "$PUBLISH_DIR"
 
 echo "[ContentServer] Building image: $image_reference"
 "${container_command[@]}" build \
+  --pull="$image_pull_policy" \
   --platform "$PLATFORM" \
   --build-arg "BUILD_DATE=$build_date" \
   --build-arg "CONTENT_SERVER_VERSION=$CONTENT_SERVER_VERSION" \

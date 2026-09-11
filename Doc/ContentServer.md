@@ -360,6 +360,20 @@ IMAGE_NAME=example/content-server IMAGE_TAG=0.1.0 \
   dotnet build -c Release
 ```
 
+镜像基础层取自 `ContentServer/Deployment/Dockerfile` 的 `mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled`。
+发行构建默认只使用本地已有的基础镜像（`IMAGE_PULL_POLICY=never`），不会为解析基础镜像回源 registry，因此离线或
+受限网络下不会阻塞；本地缺少该镜像时构建会立即失败而不会隐式拉取。构建机首次使用前先手动拉取：
+
+```bash
+podman pull mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
+```
+
+需要允许构建时拉取时，把 `IMAGE_PULL_POLICY` 设为 `missing` 或 `always`：
+
+```bash
+IMAGE_PULL_POLICY=missing dotnet build -c Release
+```
+
 portable 与 `linux-x64` 发布使用 `obj` 下的独立目录，嵌套的 Linux 构建显式关闭发行 Target，避免递归和输出冲突。
 `ContentServer/Deployment/build-image.sh` 只校验并组装 MSBuild 提供的 Linux publish 目录，不再执行 `dotnet build`
 或 `dotnet publish`，也不作为日常发行入口直接调用。
