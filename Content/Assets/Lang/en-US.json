@@ -3263,7 +3263,8 @@
             "RecoverySpeedDescription": "Controls the recovery multiplier while players sleep. The value must be above 0.",
             "DisableBlocksDescription": "Enter block ids to disable. Separate multiple ids with semicolons.",
             "RandomSpawnPositionDescription": "When enabled, new players join at a random spawn position.",
-            "KeywordBlockingDescription": "Enter chat keywords to block. Separate multiple keywords with semicolons."
+            "KeywordBlockingDescription": "Enter chat keywords to block. Separate multiple keywords with semicolons.",
+            "DefaultDescription": "Configure server operation, player limits, and content rules."
         },
         "PlayScreen": {
             "1": "Existing Worlds",
@@ -3440,7 +3441,8 @@
             "25": "Player-on-Player Attacks:",
             "26": "Changing Seasons:",
             "27": "Length Of Year:",
-            "28": "Season:"
+            "28": "Season:",
+            "DefaultDescription": "Configure terrain, environment, seasons, and gameplay rules for this world."
         },
         "ModWorldSelectionDialog": {
             "Title": "Select Worlds"

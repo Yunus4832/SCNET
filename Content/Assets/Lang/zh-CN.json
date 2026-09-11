@@ -3263,7 +3263,8 @@
             "RecoverySpeedDescription": "控制玩家睡觉时恢复属性的倍率，必须大于 0。",
             "DisableBlocksDescription": "填写需要禁用的方块编号，多个编号使用英文分号分隔。",
             "RandomSpawnPositionDescription": "开启后，新玩家加入时会在随机出生点出现。",
-            "KeywordBlockingDescription": "填写聊天中需要屏蔽的关键词，多个关键词使用英文分号分隔。"
+            "KeywordBlockingDescription": "填写聊天中需要屏蔽的关键词，多个关键词使用英文分号分隔。",
+            "DefaultDescription": "配置联机服务器的运行方式、人数限制和内容规则。"
         },
         "PlayScreen": {
             "1": "世界列表",
@@ -3440,7 +3441,8 @@
             "25": "PVP模式",
             "26": "季节变化",
             "27": "一年的长度",
-            "28": "季节"
+            "28": "季节",
+            "DefaultDescription": "调整地形、环境、季节和游戏规则等世界选项。"
         },
         "ModWorldSelectionDialog": {
             "Title": "选择世界"

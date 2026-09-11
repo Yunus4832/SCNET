@@ -3263,7 +3263,8 @@
             "RecoverySpeedDescription": "Controla o multiplicador de recuperação enquanto os jogadores dormem. Deve ser maior que 0.",
             "DisableBlocksDescription": "Introduza ids de blocos para desativar. Separe vários ids com ponto e vírgula.",
             "RandomSpawnPositionDescription": "Quando ativado, novos jogadores entram em uma posição de nascimento aleatória.",
-            "KeywordBlockingDescription": "Introduza palavras do chat para bloquear. Separe várias palavras com ponto e vírgula."
+            "KeywordBlockingDescription": "Introduza palavras do chat para bloquear. Separe várias palavras com ponto e vírgula.",
+            "DefaultDescription": "Configure o funcionamento do servidor, o limite de jogadores e as regras de conteúdo."
         },
         "PlayScreen": {
             "1": "Lista do mundo",
@@ -3440,7 +3441,8 @@
             "25": "Modo PVP",
             "26": "Mudança sazonal",
             "27": "A duração de um ano",
-            "28": "Temporada"
+            "28": "Temporada",
+            "DefaultDescription": "Configure o terreno, o ambiente, as estações e as regras de jogo deste mundo."
         },
         "ModWorldSelectionDialog": {
             "Title": "Selecionar mundos"

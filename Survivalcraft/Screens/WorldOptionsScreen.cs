@@ -98,7 +98,9 @@ public class WorldOptionsScreen : Screen
 
     private bool _updatingTerrainGeneration;
 
-    private readonly ButtonWidget _timeOfDayButton;
+    private readonly SelectionDrawerWidget _timeOfDayDrawer;
+
+    private bool _updatingTimeOfDay;
 
     private readonly ButtonWidget _weatherEffectsButton;
 
@@ -129,7 +131,10 @@ public class WorldOptionsScreen : Screen
         _supernaturalCreaturesButton = Children.Find<ButtonWidget>("SupernaturalCreatures")!;
         _friendlyFireButton = Children.Find<ButtonWidget>("FriendlyFire")!;
         _environmentBehaviorButton = Children.Find<ButtonWidget>("EnvironmentBehavior")!;
-        _timeOfDayButton = Children.Find<ButtonWidget>("TimeOfDay")!;
+        _timeOfDayDrawer = Children.Find<SelectionDrawerWidget>("TimeOfDay")!;
+        _timeOfDayDrawer.ItemTextProvider = item =>
+            LanguageManager.Get("TimeOfDayMode", ((TimeOfDayMode)item).ToString());
+        _timeOfDayDrawer.SelectionChanged += TimeOfDayChanged;
         _areSeasonsChangingCheckBox = Children.Find<CheckboxWidget>("AreSeasonsChanging")!;
         _yearDaysSlider = Children.Find<SliderWidget>("YearDays")!;
         _timeOfYearSlider = Children.Find<SliderWidget>("TimeOfYear")!;
@@ -249,6 +254,22 @@ public class WorldOptionsScreen : Screen
         _worldSettings.TerrainGenerationMode = mode;
     }
 
+    private void RefreshTimeOfDayDrawer()
+    {
+        _updatingTimeOfDay = true;
+        _timeOfDayDrawer.SetItems(Enum.GetValues<TimeOfDayMode>().Cast<object>());
+        _timeOfDayDrawer.SelectedItem = _worldSettings.TimeOfDayMode;
+        _updatingTimeOfDay = false;
+    }
+
+    private void TimeOfDayChanged()
+    {
+        if (!_updatingTimeOfDay && _timeOfDayDrawer.SelectedItem is TimeOfDayMode mode)
+        {
+            _worldSettings.TimeOfDayMode = mode;
+        }
+    }
+
     public static string FormatOffset(float value)
     {
         if (value != 0f)
@@ -264,12 +285,14 @@ public class WorldOptionsScreen : Screen
         _worldSettings = (WorldSettings)parameters[0];
         _isExistingWorld = (bool)parameters[1];
         RefreshTerrainGenerationDrawer();
-        _descriptionLabel.Text = string.Empty;
+        RefreshTimeOfDayDrawer();
+        _descriptionLabel.Text = LanguageManager.GetContentWidgets(_typeName, "DefaultDescription");
     }
 
     public override void Leave()
     {
         _terrainGenerationDrawer.Close();
+        _timeOfDayDrawer.Close();
         _blockTexturesCache.Clear();
     }
 
@@ -400,16 +423,6 @@ public class WorldOptionsScreen : Screen
                                           enumValues2.Count);
         }
 
-        if (_timeOfDayButton.IsClicked)
-        {
-            DialogsManager.ShowDialog(null, new ListSelectionDialog(LanguageManager.Get(_typeName, "7"),
-                EnumUtils.GetEnumValues(typeof(TimeOfDayMode)), 56f,
-                e => LanguageManager.Get("TimeOfDayMode", ((TimeOfDayMode)e).ToString()), delegate (object e)
-                {
-                    _worldSettings.TimeOfDayMode = (TimeOfDayMode)e;
-                }));
-        }
-
         if (_areSeasonsChangingCheckBox.IsClicked)
         {
             _worldSettings.AreSeasonsChanging = !_worldSettings.AreSeasonsChanging;
@@ -476,7 +489,6 @@ public class WorldOptionsScreen : Screen
         _biomeSizeSlider.Text = _worldSettings.BiomeSize + "x";
         _environmentBehaviorButton.Text = LanguageManager.Get("EnvironmentBehaviorMode",
             _worldSettings.EnvironmentBehaviorMode.ToString());
-        _timeOfDayButton.Text = LanguageManager.Get("TimeOfDayMode", _worldSettings.TimeOfDayMode.ToString());
         _areSeasonsChangingCheckBox.IsChecked = _worldSettings.AreSeasonsChanging;
         _yearDaysSlider.Value = FindNearestIndex(_yearDays, _worldSettings.YearDays);
         _yearDaysSlider.Text = $"{_worldSettings.YearDays} days";

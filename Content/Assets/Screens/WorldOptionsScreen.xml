@@ -236,8 +236,9 @@
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
                                                         VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
-                                <BevelledButtonWidget Name="TimeOfDay" Style="{Styles/ButtonStyle_310x60}"
-                                                      VerticalAlignment="Center" Margin="20, 0"/>
+                                <SelectionDrawerWidget Name="TimeOfDay" Size="310, 60"
+                                                       VerticalAlignment="Center" Margin="20, 0"
+                                                       MaxVisibleItems="5"/>
                             </UniformSpacingPanelWidget>
 
                             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">

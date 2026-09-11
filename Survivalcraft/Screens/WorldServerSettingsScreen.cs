@@ -79,7 +79,7 @@ public class WorldServerSettingsScreen : Screen
             NormalizeRecoverySpeed(_worldSettings.RecoverFactor).ToString(CultureInfo.InvariantCulture);
         _disableBlocks.Text = _worldSettings.DisableBlocks;
         _keywordBlocking.Text = _worldSettings.KeywordBlocking;
-        _descriptionLabel.Text = string.Empty;
+        _descriptionLabel.Text = GetText("DefaultDescription");
     }
 
     public override void Update()
