@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET Release Publishing"
+  short_description: "Publish and verify SCNET distributable release artifacts."
+  default_prompt: "Use $scnet-release-publishing to publish the requested SCNET release artifacts and verify the generated files."

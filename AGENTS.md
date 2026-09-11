@@ -34,6 +34,8 @@ replace this changed-file style check. Keep unrelated legacy formatting out of f
 
 Keep ordinary compilation separate from creation of distributable artifacts:
 
+- when the user explicitly requests distributable artifacts, load and follow the repository
+  `scnet-release-publishing` Skill; do not use it for ordinary builds or validation;
 - use `dotnet build` for development and validation; a build must not copy release artifacts into
   the repository `Publish/` directory;
 - use `Scripts/publish.sh` on Bash hosts or `Scripts/publish.ps1` on PowerShell hosts to create

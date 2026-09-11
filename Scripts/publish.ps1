@@ -15,12 +15,11 @@ try {
         throw "Publishing Survivalcraft.Linux failed with exit code $LASTEXITCODE."
     }
 
-    # Windows publishing is temporarily disabled.
-    # Write-Host "[SCNET Publish] Publishing Survivalcraft.Windows"
-    # & dotnet publish "Survivalcraft.Windows/Survivalcraft.Windows.csproj" --configuration $Configuration @AdditionalArguments
-    # if ($LASTEXITCODE -ne 0) {
-    #     throw "Publishing Survivalcraft.Windows failed with exit code $LASTEXITCODE."
-    # }
+    Write-Host "[SCNET Publish] Publishing Survivalcraft.Windows"
+    & dotnet publish "Survivalcraft.Windows/Survivalcraft.Windows.csproj" --configuration $Configuration @AdditionalArguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "Publishing Survivalcraft.Windows failed with exit code $LASTEXITCODE."
+    }
 
     Write-Host "[SCNET Publish] Publishing Survivalcraft.Android (Arm64)"
     & dotnet publish "Survivalcraft.Android/Survivalcraft.Android.csproj" --configuration $Configuration @AdditionalArguments
