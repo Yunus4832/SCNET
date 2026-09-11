@@ -121,8 +121,6 @@ dotnet test Survivalcraft.Test/
 - [网络稳定性与容量测试](Doc/NetworkTesting.md) — UDP 损伤代理、弱网实验与并发容量测试边界
 - [地形内容分发架构](Doc/TerrainDistribution.md) — 权威内容、客户端派生、版本门禁与线程所有权
 - [ContentServer](Doc/ContentServer.md) — 发布者申请、SQLite 存储、内容审核、匿名下载与游戏端安装
-- [内容管理迁移临时实施计划](Doc/ContentManagementMigrationPlan.md) — FilePicker、统一内容安装和旧内容服务退役的阶段门禁；与 UI 补充计划联合验收后删除
-- [内容管理 UI 重构临时实施计划](Doc/ContentManagementUiRefactorPlan.md) — 多内容仓库、版本获取与管理 UI 解耦的补充阶段门禁；与上一份计划联合验收后删除
 
 ## 版权与法律
 

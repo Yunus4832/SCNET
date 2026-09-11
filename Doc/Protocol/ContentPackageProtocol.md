@@ -1,9 +1,7 @@
 # SCNET 统一内容包协议（`.scpkg` v1）
 
-> 状态：**已批准；实现进行中。** 本文将
-> [内容管理迁移临时实施计划](../ContentManagementMigrationPlan.md) 中的阶段 0 约束细化为
-> `Content.Packaging`、ContentServer 和游戏端的共同契约。Mod 构建与 Runtime 已迁移到 `.scpkg`；尚未替代的
-> `.scpkg` 安装器直接读取展开后的 payload。旧交换格式不属于本协议，其剩余入口将在阶段 6 清理。
+> 状态：**当前正式协议。** 本文是 `Content.Packaging`、ContentServer 和游戏端共同遵循的
+> `.scpkg` v1 契约。Mod 构建、运行时、内容缓存、安装和远程分发统一使用该格式；旧交换格式不属于本协议。
 
 ## 1. 范围和术语
 
