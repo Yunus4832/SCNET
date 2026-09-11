@@ -54,12 +54,13 @@ public class MainActivity : BlackActivity
 
     private StarterInstanceContext? _instance;
     private string? _commandLine;
+    private string? _instanceId;
 
     protected override void OnCreate(Bundle? savedInstanceState)
     {
         base.OnCreate(savedInstanceState);
         _commandLine = Intent?.GetStringExtra(commandLineExtra);
-        _instance = RegisterStorageRoots(Intent?.GetStringExtra(instanceIdExtra), _commandLine);
+        _instanceId = Intent?.GetStringExtra(instanceIdExtra);
         GamePlatformManager.RegisterPlatform(Platform.Android);
         RouteWhenReady();
     }
@@ -102,7 +103,7 @@ public class MainActivity : BlackActivity
         }
 
         _waitingForStoragePermission = false;
-        Route();
+        InitializeAndRoute();
     }
 
     public override void OnRequestPermissionsResult(int requestCode, string[] permissions,
@@ -111,7 +112,7 @@ public class MainActivity : BlackActivity
         base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == _permissionRequestCode && grantResults.All(result => result == Permission.Granted))
         {
-            Route();
+            InitializeAndRoute();
         }
     }
 
@@ -166,11 +167,17 @@ public class MainActivity : BlackActivity
     {
         if (HasStoragePermission())
         {
-            Route();
+            InitializeAndRoute();
             return;
         }
 
         RequestStoragePermission();
+    }
+
+    private void InitializeAndRoute()
+    {
+        _instance ??= RegisterStorageRoots(_instanceId, _commandLine);
+        Route();
     }
 
     private void Route()

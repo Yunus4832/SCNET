@@ -8,6 +8,7 @@
         <AndroidSigningKeyStore>sign.keystore</AndroidSigningKeyStore>
         <AndroidSigningStorePass>survivalcraftnet</AndroidSigningStorePass>
         <AndroidDexTool>d8</AndroidDexTool>
+        <AndroidEnableMarshalMethods>false</AndroidEnableMarshalMethods>
         <AndroidEnableSGenConcurrent>false</AndroidEnableSGenConcurrent>
         <AndroidPackageFormat>apk</AndroidPackageFormat>
         <AndroidStripILAfterAOT>true</AndroidStripILAfterAOT>
