@@ -12,8 +12,6 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 {
     private const float _listPadding = 4f;
 
-    private const float _headerMargin = 6f;
-
     private const float _separatorThickness = 2f;
 
     private readonly BevelledRectangleWidget _background;
@@ -91,6 +89,29 @@ public sealed class SelectionDrawerWidget : CanvasWidget
             UpdateVisualState();
         }
     } = 52f;
+
+    public float SurfaceMargin
+    {
+        get;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            field = value;
+            UpdateVisualState();
+        }
+    } = 6f;
+
+    public WidgetAlignment HeaderHorizontalAlignment
+    {
+        get => _headerLabel.HorizontalAlignment;
+        set => _headerLabel.HorizontalAlignment = value;
+    }
+
+    public Vector2 HeaderContentMargin
+    {
+        get => _headerLabel.Margin;
+        set => _headerLabel.Margin = value;
+    }
 
     public float FontScale
     {
@@ -346,8 +367,8 @@ public sealed class SelectionDrawerWidget : CanvasWidget
     private Vector2 CalculateSurfacePosition(float listHeight)
     {
         return IsOpen && ExpansionDirection is SelectionDrawerDirection.Up
-            ? new Vector2(_headerMargin, _headerMargin - listHeight)
-            : new Vector2(_headerMargin);
+            ? new Vector2(SurfaceMargin, SurfaceMargin - listHeight)
+            : new Vector2(SurfaceMargin);
     }
 
     private void DetachPopup()
@@ -415,7 +436,7 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 
     private Vector2 CalculateHeaderSize()
     {
-        return Vector2.Max(Size - new Vector2(2f * _headerMargin), Vector2.Zero);
+        return Vector2.Max(Size - new Vector2(2f * SurfaceMargin), Vector2.Zero);
     }
 
     private float CalculateListHeight()

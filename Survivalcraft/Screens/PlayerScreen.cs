@@ -30,15 +30,13 @@ public class PlayerScreen : Screen
 
     private readonly ButtonWidget _addButton;
 
-    private readonly ButtonWidget _characterSkinButton;
+    private readonly ClickableWidget _characterSkinSelector;
 
     private readonly LabelWidget _characterSkinLabel;
 
     private readonly CharacterSkinsCache _characterSkinsCache;
 
-    private readonly ButtonWidget _controlsButton;
-
-    private readonly LabelWidget _controlsLabel;
+    private readonly SelectionDrawerWidget _controlsDrawer;
 
     private readonly ButtonWidget _deleteButton;
 
@@ -78,9 +76,11 @@ public class PlayerScreen : Screen
         _playerClassLabel = Children.Find<ClickableTextRowWidget>("PlayerClassLabel")!;
         _nameTextBox = Children.Find<TextBoxWidget>("Name")!;
         _characterSkinLabel = Children.Find<LabelWidget>("CharacterSkinLabel")!;
-        _characterSkinButton = Children.Find<ButtonWidget>("CharacterSkinButton")!;
-        _controlsLabel = Children.Find<LabelWidget>("ControlsLabel")!;
-        _controlsButton = Children.Find<ButtonWidget>("ControlsButton")!;
+        _characterSkinSelector = Children.Find<ClickableWidget>("CharacterSkinSelector")!;
+        _controlsDrawer = Children.Find<SelectionDrawerWidget>("Controls")!;
+        _controlsDrawer.ItemTextProvider = item => GetDeviceDisplayName((WidgetInputDevice)item);
+        _controlsDrawer.SetItems(_inputDevices.Cast<object>());
+        _controlsDrawer.SelectionChanged += UpdateInputDevice;
         _descriptionLabel = Children.Find<LabelWidget>("DescriptionLabel")!;
         _addButton = Children.Find<ButtonWidget>("AddButton")!;
         _addAnotherButton = Children.Find<ButtonWidget>("AddAnotherButton")!;
@@ -107,6 +107,7 @@ public class PlayerScreen : Screen
         _mode = (Mode)parameters[0];
         _playerData = _mode == Mode.Edit ? (PlayerData)parameters[1] : new PlayerData((Project)parameters[1]);
         _descriptionLabel.Text = string.Empty;
+        _controlsDrawer.RefreshItems();
 
         if (_mode == Mode.Initial)
         {
@@ -185,8 +186,12 @@ public class PlayerScreen : Screen
         }
 
         _characterSkinLabel.Text = CharacterSkinsManager.GetDisplayName(_playerData.CharacterSkinName);
-        _controlsLabel.Text =
-            GetDeviceDisplayName(_inputDevices.FirstOrDefault(id => (id & _playerData.InputDevice) != 0));
+        var inputDevice = _inputDevices.FirstOrDefault(id => (id & _playerData.InputDevice) != 0);
+        if (!Equals(_controlsDrawer.SelectedItem, inputDevice))
+        {
+            _controlsDrawer.SelectedItem = inputDevice;
+        }
+
         if (_playerClassLabel.IsClicked)
         {
             UpdatePlayerClassDescription();
@@ -203,7 +208,7 @@ public class PlayerScreen : Screen
             }
         }
 
-        if (_characterSkinButton.IsClicked)
+        if (_characterSkinSelector.IsClicked)
         {
             CharacterSkinsManager.UpdateCharacterSkinsList();
             var items = CharacterSkinsManager.ReadOnlyCharacterSkinsNames.Where(n =>
@@ -236,29 +241,6 @@ public class PlayerScreen : Screen
                 }
             );
             DialogsManager.ShowDialog(null, dialog);
-        }
-
-        if (_controlsButton.IsClicked)
-        {
-            DialogsManager.ShowDialog(
-                null,
-                new ListSelectionDialog(LanguageManager.Get(_typeName, 2), _inputDevices,
-                    56f,
-                    d => GetDeviceDisplayName((WidgetInputDevice)d),
-                    delegate (object d)
-                    {
-                        var widgetInputDevice = (WidgetInputDevice)d;
-                        _playerData.InputDevice = widgetInputDevice;
-                        foreach (var playersDatum in _playerData.SubsystemPlayers.PlayersData)
-                        {
-                            if (playersDatum != _playerData && (playersDatum.InputDevice & widgetInputDevice) != 0)
-                            {
-                                playersDatum.InputDevice &= ~widgetInputDevice;
-                            }
-                        }
-                    }
-                )
-            );
         }
 
         if (_addButton.IsClicked && VerifyName())
@@ -344,7 +326,7 @@ public class PlayerScreen : Screen
                 GameManager.SaveProject(true, true);
                 GameManager.DisposeProject();
                 CommonLib.Net.Stop();
-                ScreensManager.SwitchScreen("MainMenu");
+                ScreensManager.SwitchScreen("Play");
             }
             else if (_mode is Mode.Add or Mode.Edit)
             {
@@ -377,6 +359,23 @@ public class PlayerScreen : Screen
         }
 
         _nameWasInvalid = false;
+    }
+
+    private void UpdateInputDevice()
+    {
+        if (_controlsDrawer.SelectedItem is not WidgetInputDevice inputDevice || _playerData is null)
+        {
+            return;
+        }
+
+        _playerData.InputDevice = inputDevice;
+        foreach (var playersDatum in _playerData.SubsystemPlayers.PlayersData)
+        {
+            if (playersDatum != _playerData && (playersDatum.InputDevice & inputDevice) != 0)
+            {
+                playersDatum.InputDevice &= ~inputDevice;
+            }
+        }
     }
 
     private void UpdatePlayerClassDescription()
