@@ -36,13 +36,10 @@ public class PlayScreen : Screen
             WorldAction.Delete => new Color(150, 50, 35),
             _ => null
         };
-        _actionPanel.ItemWeightProvider = item => item switch
-        {
-            WorldAction.Play => 2f,
-            _ => 1f
-        };
         _actionPanel.ItemClicked += ExecuteAction;
-        _actionPanel.SetPrimaryItems([WorldAction.Play, WorldAction.Create, WorldAction.Settings]);
+        _actionPanel.SetPrimaryItems(
+            [WorldAction.Play, WorldAction.Create, WorldAction.Settings],
+            [3f, 2f, 2f, 0f]);
         _actionPanel.SetSecondaryItems([WorldAction.Clone, WorldAction.Delete]);
         var worldsListWidget = _worldsListWidget;
         worldsListWidget.ItemWidgetFactory = (Func<object, Widget>)Delegate.Combine(
