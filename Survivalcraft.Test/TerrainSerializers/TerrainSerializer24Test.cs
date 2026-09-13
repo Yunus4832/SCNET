@@ -30,6 +30,7 @@ public sealed class TerrainSerializer24Test
         using var serializer = new TestTerrainSerializer24(storage);
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 2, 3);
+        source.IsLoaded = true;
         source.MainThreadState = TerrainChunkState.Valid;
 
         for (var z = 0; z < 16; z++)
@@ -104,6 +105,7 @@ public sealed class TerrainSerializer24Test
         using var terrain = new Terrain();
         using var chunk = new TerrainChunk(terrain, 0, 0)
         {
+            IsLoaded = true,
             MainThreadState = TerrainChunkState.Valid,
             ModificationCounter = 1
         };
@@ -122,6 +124,7 @@ public sealed class TerrainSerializer24Test
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 3, 4)
         {
+            IsLoaded = true,
             MainThreadState = TerrainChunkState.Valid,
             ModificationCounter = 1
         };
@@ -147,6 +150,7 @@ public sealed class TerrainSerializer24Test
         using var terrain = new Terrain();
         using var source = new TerrainChunk(terrain, 1, 2)
         {
+            IsLoaded = true,
             MainThreadState = TerrainChunkState.Valid,
             ModificationCounter = 1
         };

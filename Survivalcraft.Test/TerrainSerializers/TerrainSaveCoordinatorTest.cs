@@ -9,6 +9,20 @@ namespace Survivalcraft.Test.TerrainSerializers;
 public sealed class TerrainSaveCoordinatorTest
 {
     [Fact]
+    public void LoadedAuthorityChunkDoesNotRequireMainThreadStateToBeSaved()
+    {
+        using var terrain = new Terrain();
+        using var chunk = new TerrainChunk(terrain, 0, 0)
+        {
+            IsLoaded = true,
+            WorkerState = TerrainChunkState.InvalidLight,
+            ModificationCounter = 1
+        };
+
+        Assert.True(TerrainSaveCoordinator.RequiresSave(chunk));
+    }
+
+    [Fact]
     public void QueuedSaveRunsInBackgroundAndFlushWaitsForCompletion()
     {
         using var writerStarted = new ManualResetEventSlim();
@@ -139,6 +153,7 @@ public sealed class TerrainSaveCoordinatorTest
     {
         var chunk = new TerrainChunk(terrain, x, z)
         {
+            IsLoaded = true,
             MainThreadState = TerrainChunkState.Valid,
             ModificationCounter = 1
         };

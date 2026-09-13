@@ -70,7 +70,7 @@ internal sealed class TerrainSaveCoordinator : IDisposable
 
     public static bool RequiresSave(TerrainChunk chunk)
     {
-        return chunk is { MainThreadState: > TerrainChunkState.InvalidContents4, ModificationCounter: > 0 };
+        return chunk is { IsLoaded: true, ModificationCounter: > 0 };
     }
 
     public bool TryQueueChunkForUnload(TerrainChunk chunk)

@@ -63,7 +63,7 @@ public class TerrainSerializer24 : IDisposable
     /// <returns> 是否加载成功 </returns>
     public void SaveChunk(TerrainChunk chunk)
     {
-        if (chunk is not { MainThreadState: > TerrainChunkState.InvalidContents4, ModificationCounter: > 0 })
+        if (!TerrainSaveCoordinator.RequiresSave(chunk))
         {
             return;
         }
