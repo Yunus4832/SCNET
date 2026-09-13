@@ -63,7 +63,7 @@
                     </StackPanelWidget>
 
                     <CanvasWidget Size="550, -1" HorizontalAlignment="Center">
-                        <LabelWidget Name="DescriptionLabel" Color="128, 128, 128"
+                        <LabelWidget Name="DescriptionLabel" Color="128, 128, 128" FontScale="0.8"
                                      HorizontalAlignment="Center" TextAnchor="HorizontalCenter" WordWrap="true"
                                      Margin="10, 20"/>
                     </CanvasWidget>

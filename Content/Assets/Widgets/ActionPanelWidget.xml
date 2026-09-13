@@ -1,27 +1,27 @@
-<ActionPanelWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 60">
-    <CanvasWidget Size="Infinity, 60">
+<ActionPanelWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 56">
+    <CanvasWidget Size="Infinity, 56">
         <StackPanelWidget Name="ActionPanel.Primary" Direction="Horizontal" HorizontalAlignment="Near">
-            <CanvasWidget Name="ActionPanel.PrimaryAccessory" Size="148, 60" IsVisible="false"/>
-            <BevelledButtonWidget Name="ActionPanel.Primary.1" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>
+            <CanvasWidget Name="ActionPanel.PrimaryAccessory" Size="148, 56" IsVisible="false"/>
+            <BevelledButtonWidget Name="ActionPanel.Primary.1" Style="{Styles/ButtonStyle_160x60}" Size="140, 56"/>
             <CanvasWidget Size="8, 0"/>
-            <BevelledButtonWidget Name="ActionPanel.Primary.2" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>
+            <BevelledButtonWidget Name="ActionPanel.Primary.2" Style="{Styles/ButtonStyle_160x60}" Size="140, 56"/>
             <CanvasWidget Size="8, 0"/>
-            <BevelledButtonWidget Name="ActionPanel.Primary.3" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>
+            <BevelledButtonWidget Name="ActionPanel.Primary.3" Style="{Styles/ButtonStyle_160x60}" Size="140, 56"/>
             <CanvasWidget Size="8, 0"/>
-            <BevelledButtonWidget Name="ActionPanel.Primary.4" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>
+            <BevelledButtonWidget Name="ActionPanel.Primary.4" Style="{Styles/ButtonStyle_160x60}" Size="140, 56"/>
         </StackPanelWidget>
         <StackPanelWidget Name="ActionPanel.Secondary" Direction="Horizontal" HorizontalAlignment="Near">
-            <BevelledButtonWidget Name="ActionPanel.Secondary.1" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>
+            <BevelledButtonWidget Name="ActionPanel.Secondary.1" Style="{Styles/ButtonStyle_160x60}" Size="140, 56"/>
             <CanvasWidget Size="8, 0"/>
-            <BevelledButtonWidget Name="ActionPanel.Secondary.2" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>
+            <BevelledButtonWidget Name="ActionPanel.Secondary.2" Style="{Styles/ButtonStyle_160x60}" Size="140, 56"/>
             <CanvasWidget Size="8, 0"/>
-            <BevelledButtonWidget Name="ActionPanel.Secondary.3" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>
+            <BevelledButtonWidget Name="ActionPanel.Secondary.3" Style="{Styles/ButtonStyle_160x60}" Size="140, 56"/>
             <CanvasWidget Size="8, 0"/>
-            <BevelledButtonWidget Name="ActionPanel.Secondary.4" Style="{Styles/ButtonStyle_160x60}" Size="140, 60"/>
+            <BevelledButtonWidget Name="ActionPanel.Secondary.4" Style="{Styles/ButtonStyle_160x60}" Size="140, 56"/>
         </StackPanelWidget>
-        <CanvasWidget Name="ActionPanel.PrimaryTrailingAction" Size="148, 60" Margin="148, 0"
+        <CanvasWidget Name="ActionPanel.PrimaryTrailingAction" Size="148, 56" Margin="148, 0"
                       HorizontalAlignment="Near" IsVisible="false"/>
         <BevelledButtonWidget Name="ActionPanel.Toggle" Style="{Styles/ButtonStyle_70x60}"
-                              HorizontalAlignment="Far" VerticalAlignment="Far"/>
+                              Size="70, 56" HorizontalAlignment="Far" VerticalAlignment="Far"/>
     </CanvasWidget>
 </ActionPanelWidget>

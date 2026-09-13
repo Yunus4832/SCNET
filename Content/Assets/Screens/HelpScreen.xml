@@ -12,10 +12,10 @@
 
             <CanvasWidget Size="0, 20"/>
 
-            <StackPanelWidget Direction="Vertical" Margin="20, 0">
-                <CanvasWidget>
+            <StackPanelWidget Direction="Vertical">
+                <CanvasWidget Style="{Styles/ScreenContentArea}">
                     <BevelledRectangleWidget Style="{Styles/Area}"/>
-                    <ListPanelWidget Name="TopicsList" Direction="Vertical" Margin="5, 3" ItemSize="56"
+                    <ListPanelWidget Name="TopicsList" Direction="Vertical" Margin="3, 3" ItemSize="56"
                                      SelectionColor="10, 70, 0, 90"/>
                 </CanvasWidget>
             </StackPanelWidget>

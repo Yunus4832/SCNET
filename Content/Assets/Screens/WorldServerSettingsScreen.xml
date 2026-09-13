@@ -105,7 +105,7 @@
             </CanvasWidget>
 
             <CanvasWidget Style="{Styles/ScreenDescriptionArea}" HorizontalAlignment="Center">
-                <LabelWidget Name="Description" Color="128, 128, 128" HorizontalAlignment="Center"
+                <LabelWidget Name="Description" Color="128, 128, 128" FontScale="0.8" HorizontalAlignment="Center"
                              VerticalAlignment="Center" WordWrap="true" TextAnchor="HorizontalCenter, VerticalCenter"
                              Margin="10, 0"/>
             </CanvasWidget>
