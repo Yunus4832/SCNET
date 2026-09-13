@@ -65,6 +65,11 @@ public sealed class ActionPanelWidget : CanvasWidget
 
             _primaryAccessoryHost.Children.Clear();
             field = value;
+            if (value is CanvasWidget canvasWidget)
+            {
+                canvasWidget.Size = new Vector2(canvasWidget.Size.X, _primaryAccessoryHost.Size.Y);
+            }
+
             if (value is not null)
             {
                 _primaryAccessoryHost.Children.Add(value);
@@ -86,6 +91,11 @@ public sealed class ActionPanelWidget : CanvasWidget
 
             _primaryTrailingActionHost.Children.Clear();
             field = value;
+            if (value is CanvasWidget canvasWidget)
+            {
+                canvasWidget.Size = new Vector2(canvasWidget.Size.X, _primaryTrailingActionHost.Size.Y);
+            }
+
             if (value is not null)
             {
                 _primaryTrailingActionHost.Children.Add(value);
