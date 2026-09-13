@@ -16,11 +16,10 @@ public sealed class ActionPanelWidget : CanvasWidget
     private readonly ContainerWidget _secondaryPanel;
     private readonly ButtonWidget _toggleButton;
     private readonly Dictionary<BevelledButtonWidget, (Color Center, Color Bevel)> _defaultButtonColors = [];
-    private readonly Dictionary<ButtonWidget, float> _defaultButtonWidths = [];
     private Func<object, bool> _itemEnabledProvider = _ => true;
     private Func<object, Color?> _itemColorProvider = _ => null;
     private Func<object, string> _itemTextProvider = item => item.ToString() ?? string.Empty;
-    private Func<object, float?> _itemWidthProvider = _ => null;
+    private Func<object, float> _itemWeightProvider = _ => 1f;
 
     public ActionPanelWidget()
     {
@@ -32,11 +31,6 @@ public sealed class ActionPanelWidget : CanvasWidget
         _toggleButton = Children.Find<ButtonWidget>("ActionPanel.Toggle")!;
         _primaryButtons = FindButtons("ActionPanel.Primary", _primaryPanel);
         _secondaryButtons = FindButtons("ActionPanel.Secondary", _secondaryPanel);
-        foreach (var button in _primaryButtons.Concat(_secondaryButtons))
-        {
-            _defaultButtonWidths.Add(button, button.Size.X);
-        }
-
         foreach (var button in _primaryButtons.Concat(_secondaryButtons).OfType<BevelledButtonWidget>())
         {
             _defaultButtonColors.Add(button, (button.CenterColor, button.BevelColor));
@@ -138,13 +132,13 @@ public sealed class ActionPanelWidget : CanvasWidget
         }
     }
 
-    public Func<object, float?> ItemWidthProvider
+    public Func<object, float> ItemWeightProvider
     {
-        get => _itemWidthProvider;
+        get => _itemWeightProvider;
         set
         {
             ArgumentNullException.ThrowIfNull(value);
-            _itemWidthProvider = value;
+            _itemWeightProvider = value;
             Refresh();
         }
     }
@@ -181,6 +175,7 @@ public sealed class ActionPanelWidget : CanvasWidget
         _toggleButton.Text = IsSecondaryVisible ? SecondaryToggleText : PrimaryToggleText;
         RefreshButtons(_primaryButtons, _primaryItems);
         RefreshButtons(_secondaryButtons, _secondaryItems);
+        UpdateLayoutWidths(ActualSize.X);
     }
 
     public override void Update()
@@ -203,6 +198,12 @@ public sealed class ActionPanelWidget : CanvasWidget
                 return;
             }
         }
+    }
+
+    protected override void MeasureOverride(Vector2 parentAvailableSize)
+    {
+        UpdateLayoutWidths(parentAvailableSize.X);
+        base.MeasureOverride(parentAvailableSize);
     }
 
     private static ButtonWidget[] FindButtons(string prefix, ContainerWidget panel)
@@ -231,10 +232,6 @@ public sealed class ActionPanelWidget : CanvasWidget
         {
             var item = items[i];
             buttons[i].IsVisible = item is not null;
-            buttons[i].Size = new Vector2(
-                item is null ? _defaultButtonWidths[buttons[i]] : _itemWidthProvider(item) ??
-                _defaultButtonWidths[buttons[i]],
-                buttons[i].Size.Y);
             if (buttons[i] is BevelledButtonWidget bevelledButton)
             {
                 var defaultColors = _defaultButtonColors[bevelledButton];
@@ -248,6 +245,101 @@ public sealed class ActionPanelWidget : CanvasWidget
                 buttons[i].Text = _itemTextProvider(item);
                 buttons[i].IsEnabled = _itemEnabledProvider(item);
             }
+        }
+    }
+
+    private float GetItemWeight(object item)
+    {
+        var weight = _itemWeightProvider(item);
+        if (!float.IsFinite(weight) || weight <= 0f)
+        {
+            throw new InvalidOperationException("Action weights must be finite and greater than zero.");
+        }
+
+        return weight;
+    }
+
+    private void UpdateGroupWidths(
+        ButtonWidget[] buttons,
+        object?[] items,
+        float availableWidth,
+        CanvasWidget? leadingSlot = null,
+        CanvasWidget? trailingSlot = null)
+    {
+        var usedSlots = items.Count(item => item is not null) + (leadingSlot is not null ? 1 : 0) +
+                        (trailingSlot is not null ? 1 : 0);
+        var totalWeight = (float)Math.Max(_maximumItemsPerGroup - usedSlots, 0);
+        if (leadingSlot is not null)
+        {
+            totalWeight += 1f;
+        }
+
+        foreach (var item in items)
+        {
+            if (item is not null)
+            {
+                totalWeight += GetItemWeight(item);
+            }
+        }
+
+        if (trailingSlot is not null)
+        {
+            totalWeight += 1f;
+        }
+
+        if (totalWeight <= 0f)
+        {
+            return;
+        }
+
+        var unitWidth = availableWidth / totalWeight;
+        if (leadingSlot is not null)
+        {
+            SetSlotWidth(leadingSlot, unitWidth);
+        }
+
+        for (var i = 0; i < buttons.Length; i++)
+        {
+            if (items[i] is { } item)
+            {
+                SetSlotWidth(buttons[i], unitWidth * GetItemWeight(item));
+            }
+        }
+
+        if (trailingSlot is not null)
+        {
+            SetSlotWidth(trailingSlot, unitWidth);
+        }
+    }
+
+    private void UpdateLayoutWidths(float width)
+    {
+        if (!float.IsFinite(width) || width <= 0f)
+        {
+            return;
+        }
+
+        var availableWidth = Math.Max(width - _toggleButton.Size.X - 2f * _toggleButton.Margin.X, 0f);
+        UpdateGroupWidths(
+            _primaryButtons,
+            _primaryItems,
+            availableWidth,
+            PrimaryAccessory is not null ? _primaryAccessoryHost : null,
+            PrimaryTrailingAction is not null ? _primaryTrailingActionHost : null);
+        UpdateGroupWidths(_secondaryButtons, _secondaryItems, availableWidth);
+    }
+
+    private static void SetSlotWidth(ButtonWidget button, float width)
+    {
+        button.Size = new Vector2(Math.Max(width - 2f * button.Margin.X, 0f), button.Size.Y);
+    }
+
+    private static void SetSlotWidth(CanvasWidget slot, float width)
+    {
+        slot.Size = new Vector2(Math.Max(width - 2f * slot.Margin.X, 0f), slot.Size.Y);
+        if (slot.Children.FirstOrDefault() is CanvasWidget content)
+        {
+            content.Size = new Vector2(slot.Size.X, content.Size.Y);
         }
     }
 }

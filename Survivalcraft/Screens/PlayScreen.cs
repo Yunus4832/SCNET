@@ -36,11 +36,10 @@ public class PlayScreen : Screen
             WorldAction.Delete => new Color(150, 50, 35),
             _ => null
         };
-        _actionPanel.ItemWidthProvider = item => item switch
+        _actionPanel.ItemWeightProvider = item => item switch
         {
-            WorldAction.Play => 240f,
-            WorldAction.Create or WorldAction.Settings => 190f,
-            _ => null
+            WorldAction.Play => 2f,
+            _ => 1f
         };
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems([WorldAction.Play, WorldAction.Create, WorldAction.Settings]);
