@@ -5,17 +5,14 @@
             <LabelWidget Name="TopBar.Label" Text="[ContentRepositoryScreen:Title]"/>
         </CanvasWidget>
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-            <CanvasWidget Size="0, 20"/>
-            <CanvasWidget Margin="20, 0">
+            <CanvasWidget Style="{Styles/ScreenContentArea}">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
-                <ListPanelWidget Name="RepositoryList" Direction="Vertical" Margin="5, 3" ItemSize="76"
+                <ListPanelWidget Name="RepositoryList" Direction="Vertical" Margin="3, 3" ItemSize="76"
                                  SelectionColor="10, 70, 0, 90"/>
                 <LabelWidget Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center"
                              Color="160, 160, 160"/>
             </CanvasWidget>
-            <CanvasWidget Size="0, 10"/>
-            <ActionPanelWidget Name="Actions" Margin="20, 0"/>
-            <CanvasWidget Size="0, 10"/>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
         </StackPanelWidget>
     </StackPanelWidget>
 </Screen>

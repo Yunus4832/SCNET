@@ -5,14 +5,14 @@
             <LabelWidget Name="TopBar.Label" Text="[OnlineContentScreen:Title]"/>
         </CanvasWidget>
         <CanvasWidget>
-            <CanvasWidget Margin="15, 76">
+            <CanvasWidget Margin="10, 76">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="82"
                                  SelectionColor="10, 70, 0, 90"/>
                 <LabelWidget Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center"
                              Color="180, 180, 180"/>
             </CanvasWidget>
-            <ActionPanelWidget Name="Actions" VerticalAlignment="Far" Margin="15, 8"/>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}" VerticalAlignment="Far"/>
             <CanvasWidget Size="Infinity, 60" VerticalAlignment="Near" Margin="4, 8">
                 <StackPanelWidget Direction="Horizontal">
                     <CanvasWidget Size="Infinity, 60" Margin="5, 0">

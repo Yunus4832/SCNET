@@ -8,7 +8,7 @@
             <LabelWidget Name="TopBar.Label" Text="[ContentScreen:1]"/>
         </CanvasWidget>
 
-        <CanvasWidget Margin="15, 10" ClampToBounds="true">
+        <CanvasWidget Style="{Styles/ScreenContentArea}" ClampToBounds="true">
             <BevelledRectangleWidget Style="{Styles/Area}"/>
             <ScrollPanelWidget Direction="Vertical" Margin="5, 5">
                 <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">

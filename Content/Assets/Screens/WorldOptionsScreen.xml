@@ -8,7 +8,7 @@
             <LabelWidget Name="TopBar.Label" Text="[WorldOptionsScreen:1]"/>
         </CanvasWidget>
 
-        <StackPanelWidget Direction="Vertical" Margin="20, 20">
+        <StackPanelWidget Direction="Vertical" Margin="10, 10">
 
             <CanvasWidget>
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
@@ -293,9 +293,7 @@
                 </ScrollPanelWidget>
             </CanvasWidget>
 
-            <CanvasWidget Size="0, 6"/>
-
-            <CanvasWidget Size="Infinity, 60" Margin="20, 0">
+            <CanvasWidget Style="{Styles/ScreenDescriptionArea}">
                 <LabelWidget Name="Description" Color="128, 128, 128" HorizontalAlignment="Center"
                              VerticalAlignment="Center" TextAnchor="HorizontalCenter, VerticalCenter" WordWrap="true"/>
             </CanvasWidget>

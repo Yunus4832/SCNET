@@ -10,13 +10,13 @@
 
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
 
-            <CanvasWidget Margin="15, 10">
+            <CanvasWidget Style="{Styles/ScreenContentArea}">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="64"
                                  SelectionColor="10, 70, 0, 90"/>
             </CanvasWidget>
 
-            <ActionPanelWidget Name="Actions" Margin="15, 10"/>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
 
         </StackPanelWidget>
 

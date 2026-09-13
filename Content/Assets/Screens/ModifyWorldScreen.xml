@@ -8,7 +8,7 @@
             <LabelWidget Name="TopBar.Label" Text="[ModifyWorldScreen:0]"/>
         </CanvasWidget>
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-            <CanvasWidget Size="Infinity, Infinity" Margin="10, 10">
+            <CanvasWidget Style="{Styles/ScreenContentArea}" Size="Infinity, Infinity">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ScrollPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Margin="3, 3">

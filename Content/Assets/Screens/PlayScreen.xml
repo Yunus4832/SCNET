@@ -10,17 +10,13 @@
 
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
 
-            <CanvasWidget Size="Infinity, 10"/>
+            <CanvasWidget Style="{Styles/ScreenContentArea}">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <ListPanelWidget Name="WorldsList" Direction="Vertical" HorizontalAlignment="Center" Margin="3, 3"
+                                 ItemSize="56" SelectionColor="10, 70, 0, 90"/>
+            </CanvasWidget>
 
-            <StackPanelWidget Direction="Vertical">
-                <CanvasWidget Margin="10, 0">
-                    <BevelledRectangleWidget Style="{Styles/Area}"/>
-                    <ListPanelWidget Name="WorldsList" Direction="Vertical" HorizontalAlignment="Center" Margin="3, 3"
-                                     ItemSize="56" SelectionColor="10, 70, 0, 90"/>
-                </CanvasWidget>
-            </StackPanelWidget>
-
-            <ActionPanelWidget Name="Actions" Margin="10, 10"/>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
 
         </StackPanelWidget>
 

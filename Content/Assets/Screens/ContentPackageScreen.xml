@@ -5,12 +5,12 @@
       <LabelWidget Name="TopBar.Label" Text="[ContentPackageScreen:Title]"/>
     </CanvasWidget>
     <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-      <CanvasWidget Margin="15, 10">
+      <CanvasWidget Style="{Styles/ScreenContentArea}">
         <BevelledRectangleWidget Style="{Styles/Area}"/>
         <ListPanelWidget Name="PackageList" Direction="Vertical" Margin="3, 3" ItemSize="72" SelectionColor="10, 70, 0, 90"/>
       </CanvasWidget>
       <LabelWidget Name="PickerUnavailable" Text="[ContentPackageScreen:PickerUnavailable]" Color="255, 180, 80" Margin="0, 4"/>
-      <ActionPanelWidget Name="Actions" Margin="15, 6"/>
+      <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
     </StackPanelWidget>
   </StackPanelWidget>
 </Screen>

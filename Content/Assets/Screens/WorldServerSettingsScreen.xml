@@ -8,7 +8,7 @@
             <LabelWidget Name="TopBar.Label" Text="[WorldServerSettingsScreen:Title]"/>
         </CanvasWidget>
 
-        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="20, 20">
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="10, 10">
 
             <CanvasWidget Size="Infinity, Infinity">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
@@ -104,7 +104,7 @@
                 </ScrollPanelWidget>
             </CanvasWidget>
 
-            <CanvasWidget HorizontalAlignment="Center" Size="Infinity, 48" Margin="0, 4">
+            <CanvasWidget Style="{Styles/ScreenDescriptionArea}" HorizontalAlignment="Center">
                 <LabelWidget Name="Description" Color="128, 128, 128" HorizontalAlignment="Center"
                              VerticalAlignment="Center" WordWrap="true" TextAnchor="HorizontalCenter, VerticalCenter"
                              Margin="10, 0"/>

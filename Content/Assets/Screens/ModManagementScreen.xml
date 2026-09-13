@@ -5,7 +5,7 @@
             <LabelWidget Name="TopBar.Label" Text="[ModManagementScreen:Title]"/>
         </CanvasWidget>
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-            <CanvasWidget Margin="10, 10">
+            <CanvasWidget Style="{Styles/ScreenContentArea}">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ListPanelWidget Name="ModsList" Direction="Vertical" Margin="3, 3" ItemSize="64"
                                  SelectionColor="10, 70, 0, 90"/>
@@ -14,7 +14,7 @@
             </CanvasWidget>
             <LabelWidget Name="PickerUnavailable" Text="[ModManagementScreen:PickerUnavailable]"
                          Color="255, 180, 80" Margin="0, 3"/>
-            <ActionPanelWidget Name="Actions" Margin="10, 4"/>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
         </StackPanelWidget>
     </StackPanelWidget>
 </Screen>
