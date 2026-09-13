@@ -15,12 +15,14 @@ public sealed class InlineSelectionWidget : CanvasWidget
     private readonly ListPanelWidget _list;
     private readonly CanvasWidget _listViewport;
     private readonly RectangleWidget _separator;
+    private readonly CanvasWidget _surface;
 
     private Func<object, string> _itemTextProvider = item => item.ToString() ?? string.Empty;
 
     public InlineSelectionWidget()
     {
         LoadContents(this, ContentManager.Get<XElement>("Widgets/InlineSelectionWidget"));
+        _surface = Children.Find<CanvasWidget>("InlineSelection.Surface")!;
         _background = Children.Find<BevelledRectangleWidget>("InlineSelection.Background")!;
         _header = Children.Find<CanvasWidget>("InlineSelection.Header")!;
         _headerLabel = Children.Find<LabelWidget>("InlineSelection.HeaderLabel")!;
@@ -83,6 +85,17 @@ public sealed class InlineSelectionWidget : CanvasWidget
             UpdateVisualState();
         }
     } = 52f;
+
+    public float SurfaceMargin
+    {
+        get;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            field = value;
+            UpdateVisualState();
+        }
+    } = 6f;
 
     public WidgetAlignment HeaderHorizontalAlignment
     {
@@ -269,9 +282,11 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     public override void ArrangeOverride()
     {
-        SetWidgetPosition(_header, Vector2.Zero);
-        SetWidgetPosition(_listViewport, new Vector2(_listPadding, CollapsedSize.Y + _listPadding));
-        SetWidgetPosition(_separator, new Vector2(0f, CollapsedSize.Y));
+        SetWidgetPosition(_surface, new Vector2(SurfaceMargin));
+        var headerSize = CalculateHeaderSize();
+        _surface.SetWidgetPosition(_header, Vector2.Zero);
+        _surface.SetWidgetPosition(_listViewport, new Vector2(_listPadding, headerSize.Y + _listPadding));
+        _surface.SetWidgetPosition(_separator, new Vector2(0f, headerSize.Y));
         base.ArrangeOverride();
     }
 
@@ -313,15 +328,23 @@ public sealed class InlineSelectionWidget : CanvasWidget
     {
         var listHeight = CalculateListHeight();
         Size = new Vector2(CollapsedSize.X, CollapsedSize.Y + (IsOpen ? listHeight : 0f));
-        _background.Size = Size;
+        var headerSize = CalculateHeaderSize();
+        var surfaceSize = new Vector2(headerSize.X, headerSize.Y + (IsOpen ? listHeight : 0f));
+        _surface.Size = surfaceSize;
+        _background.Size = surfaceSize;
         _background.BevelSize = _headerClickable.IsPressed ? -1f : 2f;
-        _header.Size = CollapsedSize;
+        _header.Size = headerSize;
         _listViewport.Size = new Vector2(
-            Math.Max(CollapsedSize.X - 2f * _listPadding, 0f),
+            Math.Max(headerSize.X - 2f * _listPadding, 0f),
             Math.Max(listHeight - 2f * _listPadding, 0f));
         _listViewport.IsVisible = IsOpen;
-        _separator.Size = new Vector2(CollapsedSize.X, _separatorThickness);
+        _separator.Size = new Vector2(headerSize.X, _separatorThickness);
         _separator.IsVisible = IsOpen;
+    }
+
+    private Vector2 CalculateHeaderSize()
+    {
+        return Vector2.Max(CollapsedSize - new Vector2(2f * SurfaceMargin), Vector2.Zero);
     }
 
     private float CalculateListHeight()

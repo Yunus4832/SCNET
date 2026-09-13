@@ -25,7 +25,7 @@
                                 <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
                                     <ClickableTextRowWidget Name="TerrainGenerationLabel"
                                                             Text="[WorldOptionsScreen:2]" Color="255, 255, 255"
-                                                            HorizontalAlignment="Far" VerticalAlignment="Center"
+                                                            HorizontalAlignment="Far" VerticalAlignment="Near"
                                                             TextHorizontalAlignment="Far" Margin="20, 0"/>
                                     <InlineSelectionWidget Name="TerrainGeneration" CollapsedSize="310, 60"
                                                            VerticalAlignment="Center" Margin="20, 0"
@@ -234,7 +234,7 @@
                             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
                                 <ClickableTextRowWidget Name="TimeOfDayLabel" Text="[WorldOptionsScreen:20]"
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
-                                                        VerticalAlignment="Center" TextHorizontalAlignment="Far"
+                                                        VerticalAlignment="Near" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
                                 <InlineSelectionWidget Name="TimeOfDay" CollapsedSize="310, 60"
                                                        VerticalAlignment="Center" Margin="20, 0"

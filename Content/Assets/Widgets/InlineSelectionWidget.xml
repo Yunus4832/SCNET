@@ -1,14 +1,16 @@
 <InlineSelectionWidget xmlns="runtime-namespace:Game.Widgets" IsHitTestVisible="false">
-    <BevelledRectangleWidget Name="InlineSelection.Background"/>
-    <CanvasWidget Name="InlineSelection.Header">
-        <LabelWidget Name="InlineSelection.HeaderLabel" FontScale="0.9" Color="255, 255, 255"
-                     HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        <ClickableWidget Name="InlineSelection.HeaderClickable" SoundName="Audio/UI/ButtonClick"/>
+    <CanvasWidget Name="InlineSelection.Surface">
+        <BevelledRectangleWidget Name="InlineSelection.Background"/>
+        <CanvasWidget Name="InlineSelection.Header">
+            <LabelWidget Name="InlineSelection.HeaderLabel" FontScale="0.9" Color="255, 255, 255"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <ClickableWidget Name="InlineSelection.HeaderClickable" SoundName="Audio/UI/ButtonClick"/>
+        </CanvasWidget>
+        <CanvasWidget Name="InlineSelection.ListViewport" IsVisible="false" ClampToBounds="true">
+            <ListPanelWidget Name="InlineSelection.List" Direction="Vertical" ItemSize="52"
+                             SelectionColor="10, 70, 0, 90"/>
+        </CanvasWidget>
+        <RectangleWidget Name="InlineSelection.Separator" IsVisible="false" FillColor="82, 79, 71, 255"
+                         OutlineColor="0, 0, 0, 0"/>
     </CanvasWidget>
-    <CanvasWidget Name="InlineSelection.ListViewport" IsVisible="false" ClampToBounds="true">
-        <ListPanelWidget Name="InlineSelection.List" Direction="Vertical" ItemSize="52"
-                         SelectionColor="10, 70, 0, 90"/>
-    </CanvasWidget>
-    <RectangleWidget Name="InlineSelection.Separator" IsVisible="false" FillColor="82, 79, 71, 255"
-                     OutlineColor="0, 0, 0, 0"/>
 </InlineSelectionWidget>
