@@ -10,17 +10,13 @@
 
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
 
-            <CanvasWidget Size="0, 10"/>
-
-            <StackPanelWidget Direction="Vertical" Margin="20, 0">
-                <CanvasWidget>
+            <StackPanelWidget Direction="Vertical">
+                <CanvasWidget Style="{Styles/ScreenContentArea}">
                     <BevelledRectangleWidget Style="{Styles/Area}"/>
-                    <ListPanelWidget Name="CreaturesList" Direction="Vertical" Margin="5, 3" ItemSize="120"
+                    <ListPanelWidget Name="CreaturesList" Direction="Vertical" Margin="3, 3" ItemSize="120"
                                      SelectionColor="10, 70, 0, 90"/>
                 </CanvasWidget>
             </StackPanelWidget>
-
-            <CanvasWidget Size="0, 10"/>
 
         </StackPanelWidget>
 

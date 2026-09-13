@@ -8,9 +8,9 @@
             <LabelWidget Name="TopBar.Label" Text="[WorldOptionsScreen:1]"/>
         </CanvasWidget>
 
-        <StackPanelWidget Direction="Vertical" Margin="10, 10">
+        <StackPanelWidget Direction="Vertical">
 
-            <CanvasWidget>
+            <CanvasWidget Style="{Styles/ScreenContentArea}">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ScrollPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Margin="3, 3">

@@ -5,7 +5,7 @@
             <LabelWidget Name="TopBar.Label" Text="[OnlineContentScreen:Title]"/>
         </CanvasWidget>
         <CanvasWidget>
-            <CanvasWidget Margin="10, 60">
+            <CanvasWidget Margin="10, 66">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="82"
                                  SelectionColor="10, 70, 0, 90"/>

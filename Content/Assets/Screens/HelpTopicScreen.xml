@@ -8,7 +8,7 @@
             <LabelWidget Name="TopBar.Label" Text="[HelpTopicScreen:1]"/>
         </CanvasWidget>
 
-        <CanvasWidget Size="Infinity, Infinity" Margin="10, 10">
+        <CanvasWidget Style="{Styles/ScreenContentArea}" Size="Infinity, Infinity">
 
             <BevelledRectangleWidget Style="{Styles/Area}"/>
 
