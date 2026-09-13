@@ -430,7 +430,7 @@ public sealed class SelectionDrawerWidget : CanvasWidget
             Math.Max(headerSize.X - 2f * _listPadding, 0f),
             Math.Max(listHeight - 2f * _listPadding, 0f));
         _listViewport.IsVisible = IsOpen;
-        _separator.Size = new Vector2(Size.X, _separatorThickness);
+        _separator.Size = new Vector2(headerSize.X, _separatorThickness);
         _separator.IsVisible = IsOpen;
     }
 
