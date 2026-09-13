@@ -48,6 +48,8 @@ public struct PlayerInput
 
     public bool TogglePlayerPanel;
 
+    public bool ToggleTouchControls;
+
     public Ray3? Dig;
 
     public Ray3? Hit;

@@ -122,7 +122,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         }
 
         var playerInput = ComponentInput.PlayerInput;
-        if (ComponentInput.IsControlledByTouch && _aim.HasValue)
+        if (ComponentInput.IsTouchInputActive && _aim.HasValue)
         {
             playerInput.Look = Vector2.Zero;
         }

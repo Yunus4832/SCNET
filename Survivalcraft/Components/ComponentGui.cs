@@ -140,6 +140,10 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public LabelWidget LevelLabelWidget { get; set; } = null!;
 
+    public bool AreTouchControlsVisible { get; private set; }
+
+    public float TouchControlsVisibilityFactor => 1f - _sidePanelsFactor;
+
     public Widget? ModalPanelWidget
     {
         get => _modalPanelContainerWidget.Children.Count <= 0 ? null : _modalPanelContainerWidget.Children[0];
@@ -253,6 +257,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             return;
         }
 
+        AreTouchControlsVisible = PlatformManager.Platform is Platform.Android;
+        _sidePanelsFactor = AreTouchControlsVisible ? 0f : 1f;
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
         _subsystemTimeOfDay = Project.FindSubsystem<SubsystemTimeOfDay>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
@@ -351,9 +357,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     public void UpdateSidePanelsAnimation()
     {
         var num = MathUtils.Min(Time.FrameDuration, 0.1f);
-        var flag = ModalPanelWidget != null &&
-                   _modalPanelAnimationData is not { NewWidget: null };
-        float num2 = !(ComponentPlayer.ComponentInput.IsControlledByTouch | flag) ? 1 : 0;
+        var num2 = AreTouchControlsVisible ? 0f : 1f;
         var x = num2 - _sidePanelsFactor;
         if (MathUtils.Abs(x) > 0.01f)
         {
@@ -369,6 +373,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             Matrix.CreateTranslation(_leftControlsContainerWidget.ActualSize.X * (0f - _sidePanelsFactor), 0f, 0f);
         _rightControlsContainerWidget.RenderTransform =
             Matrix.CreateTranslation(_rightControlsContainerWidget.ActualSize.X * _sidePanelsFactor, 0f, 0f);
+        _leftControlsContainerWidget.IsEnabled = AreTouchControlsVisible;
+        _rightControlsContainerWidget.IsEnabled = AreTouchControlsVisible;
     }
 
     public void UpdateModalPanelAnimation()
@@ -428,7 +434,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     {
         var componentRider = ComponentPlayer.ComponentRider;
         var componentSleep = ComponentPlayer.ComponentSleep;
-        var componentInput = ComponentPlayer.ComponentInput;
         var worldSettings = SubsystemGameInfo.WorldSettings;
         var gameMode = worldSettings.GameMode;
         UpdateSidePanelsAnimation();
@@ -464,16 +469,14 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         ControlsContainerWidget.IsVisible = ComponentPlayer.PlayerData.IsReadyForPlaying &&
                                             ComponentPlayer.GameWidget.ActiveCamera.IsEntityControlEnabled &&
                                             componentSleep.SleepFactor <= 0f;
-        _moveRectangleContainerWidget.IsVisible =
-            !SettingsManager.Current.HideMoveLookPads && componentInput.IsControlledByTouch;
-        _lookRectangleContainerWidget.IsVisible = !SettingsManager.Current.HideMoveLookPads &&
-                                                  componentInput.IsControlledByTouch &&
+        _moveRectangleContainerWidget.IsVisible = AreTouchControlsVisible;
+        _lookRectangleContainerWidget.IsVisible = AreTouchControlsVisible &&
                                                   (SettingsManager.Current.LookControlMode !=
                                                    LookControlMode.EntireScreen ||
                                                    SettingsManager.Current.MoveControlMode != MoveControlMode.Buttons);
         _lookPadContainerWidget.IsVisible = SettingsManager.Current.LookControlMode != LookControlMode.SplitTouch;
-        MoveRoseWidget.IsVisible = componentInput.IsControlledByTouch;
-        _moreContentsWidget.IsVisible = _moreButtonWidget.IsChecked;
+        MoveRoseWidget.IsDrawEnabled = AreTouchControlsVisible;
+        _moreContentsWidget.IsVisible = AreTouchControlsVisible && _moreButtonWidget.IsChecked;
         HealthBarWidget.IsVisible = gameMode != GameMode.Creative;
         FoodBarWidget.IsVisible = gameMode != 0 && worldSettings.AreAdventureSurvivalMechanicsEnabled;
         TemperatureBarWidget.IsVisible = gameMode != 0 && worldSettings.AreAdventureSurvivalMechanicsEnabled;
@@ -579,6 +582,15 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         var input = ComponentPlayer.GameWidget.Input;
         var playerInput = ComponentPlayer.ComponentInput.PlayerInput;
         var componentRider = ComponentPlayer.ComponentRider;
+
+        if (playerInput.ToggleTouchControls)
+        {
+            AreTouchControlsVisible = !AreTouchControlsVisible;
+            if (!AreTouchControlsVisible)
+            {
+                _moreButtonWidget.IsChecked = false;
+            }
+        }
 
         if (ComponentPlayer.GameWidget.ActiveCamera.IsEntityControlEnabled)
         {

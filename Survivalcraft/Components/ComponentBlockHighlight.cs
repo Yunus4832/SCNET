@@ -174,7 +174,7 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         {
             if (!_componentPlayer.ComponentAimingSights.IsSightsVisible &&
                 (SettingsManager.Current.LookControlMode == LookControlMode.SplitTouch ||
-                 !_componentPlayer.ComponentInput.IsControlledByTouch) &&
+                 !_componentPlayer.ComponentInput.IsTouchInputActive) &&
                 _highlightRaycastResult is TerrainRaycastResult result)
             {
                 var cellFace = result.CellFace;

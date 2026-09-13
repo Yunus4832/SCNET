@@ -3109,7 +3109,9 @@
             "60": "Y",
             "61": "Toggle precipitation",
             "62": "O",
-            "63": "Toggle fog"
+            "63": "Toggle fog",
+            "64": "F10",
+            "65": "Toggle touch controls"
         },
         "LevelFactorDialog": {
             "1": "Current multipliers:",
@@ -3408,7 +3410,6 @@
             "Window Mode:",
             "UI Size:",
             "UI Vertical Flip:",
-            "Hide Move/Look Pads:",
             "Show UI in screenshots:",
             "Show logo in screenshots:",
             "Screenshot resolution:"

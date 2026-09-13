@@ -443,7 +443,7 @@ public class ComponentLocomotion : Component, IUpdateable
 
                 var v2 =
                     !SettingsManager.Current.HorizontalCreativeFlight || _componentPlayer == null ||
-                    _componentPlayer.ComponentInput.IsControlledByTouch
+                    _componentPlayer.ComponentInput.IsTouchInputActive
                         ? Vector3.Normalize(vector + 0.1f * Vector3.UnitY)
                         : Vector3.Normalize(vector * new Vector3(1f, 0f, 1f));
                 var v3 = CreativeFlySpeed * (right * v.X + Vector3.UnitY * v.Y + v2 * v.Z);

@@ -84,8 +84,6 @@ public class Settings
 
     public ScreenshotSize ScreenshotSize { get; set; } = ScreenshotSize.ScreenSize;
 
-    public bool HideMoveLookPads { get; set; }
-
     public MoveControlMode MoveControlMode { get; set; } = MoveControlMode.Pad;
 
     public LookControlMode LookControlMode { get; set; } = LookControlMode.EntireScreen;

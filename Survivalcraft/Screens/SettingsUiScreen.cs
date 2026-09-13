@@ -8,8 +8,6 @@ public class SettingsUiScreen : Screen
 {
     private const string _typeName = nameof(SettingsUiScreen);
 
-    private readonly ButtonWidget _hideMoveLookPadsButton;
-
     private readonly ButtonWidget _languageButton;
 
     private readonly ButtonWidget _screenshotSizeButton;
@@ -36,7 +34,6 @@ public class SettingsUiScreen : Screen
         _windowModeButton = Children.Find<ButtonWidget>("WindowModeButton")!;
         _uiScaleSlider = Children.Find<SliderWidget>("UIScaleSlider")!;
         _upsideDownButton = Children.Find<ButtonWidget>("UpsideDownButton")!;
-        _hideMoveLookPadsButton = Children.Find<ButtonWidget>("HideMoveLookPads")!;
         _showGuiInScreenshotsButton = Children.Find<ButtonWidget>("ShowGuiInScreenshotsButton")!;
         _showLogoInScreenshotsButton = Children.Find<ButtonWidget>("ShowLogoInScreenshotsButton")!;
         _screenshotSizeButton = Children.Find<ButtonWidget>("ScreenshotSizeButton")!;
@@ -84,11 +81,6 @@ public class SettingsUiScreen : Screen
             SettingsManager.Current.UpsideDownLayout = !SettingsManager.Current.UpsideDownLayout;
         }
 
-        if (_hideMoveLookPadsButton.IsClicked)
-        {
-            SettingsManager.Current.HideMoveLookPads = !SettingsManager.Current.HideMoveLookPads;
-        }
-
         if (_showGuiInScreenshotsButton.IsClicked)
         {
             SettingsManager.Current.ShowGuiInScreenshots = !SettingsManager.Current.ShowGuiInScreenshots;
@@ -110,8 +102,6 @@ public class SettingsUiScreen : Screen
         _windowModeButton.Text = LanguageManager.Get("WindowMode", RunningSettingManager.Current.WindowMode.ToString());
         _languageButton.Text = LanguageManager.Get("Language", "Name");
         _upsideDownButton.Text = SettingsManager.Current.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
-        _hideMoveLookPadsButton.Text =
-            SettingsManager.Current.HideMoveLookPads ? LanguageManager.Yes : LanguageManager.No;
         _showGuiInScreenshotsButton.Text =
             SettingsManager.Current.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
         _showLogoInScreenshotsButton.Text =

@@ -202,7 +202,8 @@ public class GameWidget : CanvasWidget
         {
             if (_informationOverlaysContainer != null)
             {
-                var horizontalMargin = player.ComponentInput.IsControlledByTouch ? 76f : 12f;
+                var horizontalMargin = MathUtils.Lerp(12f, 76f,
+                    player.ComponentGui.TouchControlsVisibilityFactor);
                 if (_informationOverlaysContainer.Margin.X != horizontalMargin)
                 {
                     _informationOverlaysContainer.Margin = new Vector2(horizontalMargin, 8f);

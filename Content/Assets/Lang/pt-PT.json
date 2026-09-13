@@ -3109,7 +3109,9 @@
             "60": "Y",
             "61": "Desactivar precipitación",
             "62": "O",
-            "63": "Desactivar niebla"
+            "63": "Desactivar niebla",
+            "64": "F10",
+            "65": "Alternar interface de toque"
         },
         "LevelFactorDialog": {
             "1": "Multiplicador atual:",
@@ -3408,7 +3410,6 @@
             "Tamanho da janela:",
             "Tamanho de interface:",
             "Interface invertida vertical:",
-            "Oculta o ícone de visualização móvel:",
             "Screenshot da interface de exibição:",
             "A captura de tela mostra o logo:",
             "Resolução Screenshot:"

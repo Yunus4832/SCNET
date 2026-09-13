@@ -7,6 +7,8 @@ namespace Game.Components;
 
 public class ComponentInput : Component, IUpdateable
 {
+    private static readonly GamePadButton[] _gamePadButtons = Enum.GetValues<GamePadButton>();
+
     private ComponentGui _componentGui = null!;
 
     private ComponentPlayer _componentPlayer = null!;
@@ -25,7 +27,7 @@ public class ComponentInput : Component, IUpdateable
 
     public PlayerInput PlayerInput => _playerInput;
 
-    public bool IsControlledByTouch { get; set; } = true;
+    public bool IsTouchInputActive { get; private set; }
 
     public bool IsControlledByVr { get; set; }
 
@@ -129,10 +131,12 @@ public class ComponentInput : Component, IUpdateable
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _componentGui = Entity.FindComponent<ComponentGui>(true)!;
         _componentPlayer = Entity.FindComponent<ComponentPlayer>(true)!;
+        IsTouchInputActive = PlatformManager.Platform is Platform.Android;
     }
 
     public void UpdateInputFromMouseAndKeyboard(WidgetInput input)
     {
+        var isMouseOrKeyboardInputActive = false;
         var viewPosition = _componentPlayer.GameWidget.ActiveCamera.ViewPosition;
         var viewDirection = _componentPlayer.GameWidget.ActiveCamera.ViewDirection;
         if (_componentGui.ModalPanelWidget != null || DialogsManager.HasDialogs(_componentPlayer.GuiWidget))
@@ -157,10 +161,7 @@ public class ComponentInput : Component, IUpdateable
                 zero.X = 0.02f * mouseMovement.X / Time.FrameDuration / 60f;
                 zero.Y = -0.02f * mouseMovement.Y / Time.FrameDuration / 60f;
                 num = mouseWheelMovement / 120;
-                if (mouseMovement != Point2.Zero)
-                {
-                    IsControlledByTouch = false;
-                }
+                isMouseOrKeyboardInputActive = mouseMovement != Point2.Zero || mouseWheelMovement != 0;
             }
 
             var vector = default(Vector3) + Vector3.UnitX * (input.IsKeyDown(Key.D) ? 1 : 0);
@@ -169,6 +170,10 @@ public class ComponentInput : Component, IUpdateable
             vector += -Vector3.UnitX * (input.IsKeyDown(Key.A) ? 1 : 0);
             vector += Vector3.UnitY * (input.IsKeyDown(Key.Space) ? 1 : 0);
             vector += -Vector3.UnitY * (input.IsKeyDown(Key.Shift) ? 1 : 0);
+            isMouseOrKeyboardInputActive |= vector != Vector3.Zero ||
+                                            input.IsMouseButtonDown(MouseButton.Left) ||
+                                            input.IsMouseButtonDown(MouseButton.Right) ||
+                                            input.IsMouseButtonDown(MouseButton.Middle);
             _playerInput.Look += new Vector2(MathUtils.Clamp(zero.X, -15f, 15f), MathUtils.Clamp(zero.Y, -15f, 15f));
             _playerInput.Move += vector;
             _playerInput.SneakMove += vector;
@@ -211,6 +216,7 @@ public class ComponentInput : Component, IUpdateable
         _playerInput.EditItem |= input.IsKeyDownOnce(Key.G);
         _playerInput.KeyboardHelp |= input.IsKeyDownOnce(Key.H);
         _playerInput.TogglePlayerPanel |= input.IsKeyDownOnce(Key.N);
+        _playerInput.ToggleTouchControls |= input.IsKeyDownOnce(Key.F10);
         _playerInput.Precipitation |= input.IsKeyDownOnce(Key.Y);
         _playerInput.Fog |= input.IsKeyDownOnce(Key.O);
 
@@ -263,10 +269,16 @@ public class ComponentInput : Component, IUpdateable
         {
             _playerInput.SelectInventorySlot = 9;
         }
+
+        if (isMouseOrKeyboardInputActive || input.LastKey.HasValue)
+        {
+            IsTouchInputActive = false;
+        }
     }
 
     public void UpdateInputFromGamepad(WidgetInput input)
     {
+        var isGamepadInputActive = false;
         var viewPosition = _componentPlayer.GameWidget.ActiveCamera.ViewPosition;
         var viewDirection = _componentPlayer.GameWidget.ActiveCamera.ViewDirection;
         if (_componentGui.ModalPanelWidget != null || DialogsManager.HasDialogs(_componentPlayer.GuiWidget))
@@ -289,6 +301,9 @@ public class ComponentInput : Component, IUpdateable
                 input.GetPadStickPosition(GamePadStick.Right, SettingsManager.Current.GamepadDeadZone);
             var padTriggerPosition = input.GetPadTriggerPosition(GamePadTrigger.Left);
             var padTriggerPosition2 = input.GetPadTriggerPosition(GamePadTrigger.Right);
+            isGamepadInputActive = padStickPosition != Vector2.Zero || padStickPosition2 != Vector2.Zero ||
+                                   padTriggerPosition > 0f || padTriggerPosition2 > 0f ||
+                                   _gamePadButtons.Any(input.IsPadButtonDown);
             zero += new Vector3(2f * padStickPosition.X, 0f, 2f * padStickPosition.Y);
             zero += Vector3.UnitY * (input.IsPadButtonDown(GamePadButton.A) ? 1 : 0);
             zero += -Vector3.UnitY * (input.IsPadButtonDown(GamePadButton.RightShoulder) ? 1 : 0);
@@ -321,11 +336,6 @@ public class ComponentInput : Component, IUpdateable
                 _playerInput.ScrollInventory++;
             }
 
-            if (padStickPosition != Vector2.Zero || padStickPosition2 != Vector2.Zero)
-            {
-                IsControlledByTouch = false;
-            }
-
             _lastLeftTrigger = padTriggerPosition;
             _lastRightTrigger = padTriggerPosition2;
         }
@@ -340,6 +350,10 @@ public class ComponentInput : Component, IUpdateable
         _playerInput.ToggleInventory |= input.IsPadButtonDownOnce(GamePadButton.X);
         _playerInput.ToggleClothing |= input.IsPadButtonDownOnce(GamePadButton.Y);
         _playerInput.GamepadHelp |= input.IsPadButtonDownOnce(GamePadButton.Start);
+        if (isGamepadInputActive)
+        {
+            IsTouchInputActive = false;
+        }
     }
 
     public void UpdateInputFromWidgets(WidgetInput input)
@@ -362,7 +376,7 @@ public class ComponentInput : Component, IUpdateable
 
         if (_componentGui.ViewWidget is { TouchInput: not null })
         {
-            IsControlledByTouch = true;
+            IsTouchInputActive = true;
             var value = _componentGui.ViewWidget.TouchInput.Value;
             var activeCamera = _componentPlayer.GameWidget.ActiveCamera;
             var viewPosition = activeCamera.ViewPosition;
@@ -422,7 +436,7 @@ public class ComponentInput : Component, IUpdateable
 
         if (_componentGui.MoveWidget is { TouchInput: not null })
         {
-            IsControlledByTouch = true;
+            IsTouchInputActive = true;
             var radius = _componentGui.MoveWidget.Radius;
             var value2 = _componentGui.MoveWidget.TouchInput.Value;
             if (value2.InputType == TouchInputType.Tap)
@@ -446,7 +460,7 @@ public class ComponentInput : Component, IUpdateable
 
         if (_componentGui.MoveRoseWidget.Direction != Vector3.Zero || _componentGui.MoveRoseWidget.Jump)
         {
-            IsControlledByTouch = true;
+            IsTouchInputActive = true;
         }
 
         _playerInput.Move += _componentGui.MoveRoseWidget.Direction;
@@ -458,7 +472,7 @@ public class ComponentInput : Component, IUpdateable
             return;
         }
 
-        IsControlledByTouch = true;
+        IsTouchInputActive = true;
         var value3 = _componentGui.LookWidget.TouchInput.Value;
         if (value3.InputType == TouchInputType.Tap)
         {

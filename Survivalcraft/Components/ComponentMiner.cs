@@ -205,7 +205,7 @@ public class ComponentMiner : Component, IUpdateable
             }
         }
 
-        var flag = ComponentPlayer is { ComponentInput.IsControlledByTouch: false } &&
+        var flag = ComponentPlayer is { ComponentInput.IsTouchInputActive: false } &&
                    _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative;
         var flag2 = flag || (_lastPokingPhase <= 0.5f && PokingPhase > 0.5f);
         if (ComponentPlayer is { PlayerData.IsMainPlayer: false })
