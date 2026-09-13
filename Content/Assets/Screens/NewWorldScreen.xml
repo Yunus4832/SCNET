@@ -68,8 +68,8 @@
                 </ScrollPanelWidget>
             </CanvasWidget>
             <LabelWidget Name="Error" Text="[NewWorldScreen:8]" Color="255, 0, 0" VerticalAlignment="Center"
-                         HorizontalAlignment="Center" Margin="0, 4"/>
-            <CanvasWidget HorizontalAlignment="Center" Size="Infinity, 76" Margin="0, 0">
+                         HorizontalAlignment="Center" Margin="0, 2"/>
+            <CanvasWidget HorizontalAlignment="Center" Size="Infinity, 64">
                 <BevelledButtonWidget Name="Play" Style="{Styles/ButtonStyle_310x60}" Text="[NewWorldScreen:9]"
                                       VerticalAlignment="Center" HorizontalAlignment="Center">
                     <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="50, 150, 35"

@@ -10,8 +10,6 @@
 
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
 
-            <CanvasWidget Size="0, 20"/>
-
             <StackPanelWidget Direction="Vertical">
                 <CanvasWidget Style="{Styles/ScreenContentArea}">
                     <BevelledRectangleWidget Style="{Styles/Area}"/>
@@ -19,8 +17,6 @@
                                      SelectionColor="10, 70, 0, 90"/>
                 </CanvasWidget>
             </StackPanelWidget>
-
-            <CanvasWidget Size="0, 10"/>
 
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
                 <BevelledButtonWidget Name="BestiaryButton" Style="{Styles/ButtonStyle_310x60}" Text="[HelpScreen:2]">

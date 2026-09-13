@@ -61,7 +61,7 @@
                          Text="[ModifyWorldScreen:6]" Color="255, 0, 0" Margin="0, 2"/>
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="0, 2">
                 <BevelledButtonWidget Name="Apply" Style="{Styles/ButtonStyle_310x60}"
-                                      Size="310, 52" Text="[ModifyWorldScreen:8]" Margin="6, 0">
+                                      Text="[ModifyWorldScreen:8]" Margin="6, 0">
                     <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="50, 150, 35"
                                              BevelColor="50, 150, 35"/>
                 </BevelledButtonWidget>
