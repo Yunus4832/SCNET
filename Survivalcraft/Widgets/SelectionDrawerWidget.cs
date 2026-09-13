@@ -36,6 +36,8 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 
     private Func<object, string> _itemTextProvider = item => item.ToString() ?? string.Empty;
 
+    private float? _itemHeight;
+
     public SelectionDrawerWidget()
     {
         LoadContents(this, ContentManager.Get<XElement>("Widgets/SelectionDrawerWidget"));
@@ -80,15 +82,15 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 
     public float ItemHeight
     {
-        get;
+        get => _itemHeight ?? CalculateHeaderSize().Y;
         set
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(value);
-            field = value;
+            _itemHeight = value;
             _list.ItemSize = value;
             UpdateVisualState();
         }
-    } = 52f;
+    }
 
     public float SurfaceMargin
     {
@@ -421,6 +423,7 @@ public sealed class SelectionDrawerWidget : CanvasWidget
     {
         var listHeight = CalculateListHeight();
         var headerSize = CalculateHeaderSize();
+        _list.ItemSize = ItemHeight;
         var surfaceSize = new Vector2(headerSize.X, headerSize.Y + (IsOpen ? listHeight : 0f));
         _surface.Size = surfaceSize;
         _background.Size = surfaceSize;

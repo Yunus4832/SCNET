@@ -5,7 +5,7 @@
             <LabelWidget Name="TopBar.Label" Text="[OnlineContentScreen:Title]"/>
         </CanvasWidget>
         <CanvasWidget>
-            <CanvasWidget Margin="10, 76">
+            <CanvasWidget Margin="10, 60">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="82"
                                  SelectionColor="10, 70, 0, 90"/>
@@ -13,9 +13,9 @@
                              Color="180, 180, 180"/>
             </CanvasWidget>
             <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}" VerticalAlignment="Far"/>
-            <CanvasWidget Size="Infinity, 60" VerticalAlignment="Near" Margin="4, 8">
+            <CanvasWidget Size="Infinity, 56" VerticalAlignment="Near" Margin="10, 2">
                 <StackPanelWidget Direction="Horizontal">
-                    <CanvasWidget Size="Infinity, 60" Margin="5, 0">
+                    <CanvasWidget Size="Infinity, 56" Margin="4, 0">
                         <CanvasWidget Margin="6, 6">
                             <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                             <LabelWidget Name="SearchPlaceholder" Margin="10, 0" Color="128, 128, 128"
@@ -24,10 +24,10 @@
                                            VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
                         </CanvasWidget>
                     </CanvasWidget>
-                    <SelectionDrawerWidget Name="TypeFilter" Size="160, 60" Margin="4, 0" MaxVisibleItems="5"/>
-                    <SelectionDrawerWidget Name="RepositoryFilter" Size="160, 60" Margin="4, 0"
+                    <SelectionDrawerWidget Name="TypeFilter" Size="160, 56" Margin="4, 0" MaxVisibleItems="5"/>
+                    <SelectionDrawerWidget Name="RepositoryFilter" Size="160, 56" Margin="4, 0"
                                            MaxVisibleItems="5"/>
-                    <SelectionDrawerWidget Name="StatusFilter" Size="160, 60" Margin="4, 0"
+                    <SelectionDrawerWidget Name="StatusFilter" Size="160, 56" Margin="4, 0"
                                            MaxVisibleItems="5"/>
                 </StackPanelWidget>
             </CanvasWidget>

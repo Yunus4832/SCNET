@@ -57,7 +57,7 @@
                                      VerticalAlignment="Center"/>
                         <CanvasWidget Size="50, 0"/>
                         <SelectionDrawerWidget Name="Controls" Size="330, 50" Margin="0, 5"
-                                               ExpansionDirection="Down" MaxVisibleItems="4" ItemHeight="52"
+                                               ExpansionDirection="Down" MaxVisibleItems="4"
                                                SurfaceMargin="0" HeaderHorizontalAlignment="Center"
                                                HeaderContentMargin="0, 0"/>
                     </StackPanelWidget>
