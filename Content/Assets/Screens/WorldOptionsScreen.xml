@@ -27,7 +27,7 @@
                                                             Text="[WorldOptionsScreen:2]" Color="255, 255, 255"
                                                             HorizontalAlignment="Far" VerticalAlignment="Center"
                                                             TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                    <SelectionDrawerWidget Name="TerrainGeneration" Size="310, 60"
+                                    <InlineSelectionWidget Name="TerrainGeneration" CollapsedSize="310, 60"
                                                            VerticalAlignment="Center" Margin="20, 0"
                                                            MaxVisibleItems="5"/>
                                 </UniformSpacingPanelWidget>
@@ -236,7 +236,7 @@
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
                                                         VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
-                                <SelectionDrawerWidget Name="TimeOfDay" Size="310, 60"
+                                <InlineSelectionWidget Name="TimeOfDay" CollapsedSize="310, 60"
                                                        VerticalAlignment="Center" Margin="20, 0"
                                                        MaxVisibleItems="5"/>
                             </UniformSpacingPanelWidget>

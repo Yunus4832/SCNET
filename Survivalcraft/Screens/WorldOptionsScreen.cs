@@ -94,11 +94,11 @@ public class WorldOptionsScreen : Screen
 
     private readonly SliderWidget _temperatureOffsetSlider;
 
-    private readonly SelectionDrawerWidget _terrainGenerationDrawer;
+    private readonly InlineSelectionWidget _terrainGenerationSelection;
 
     private bool _updatingTerrainGeneration;
 
-    private readonly SelectionDrawerWidget _timeOfDayDrawer;
+    private readonly InlineSelectionWidget _timeOfDaySelection;
 
     private bool _updatingTimeOfDay;
 
@@ -131,22 +131,22 @@ public class WorldOptionsScreen : Screen
         _supernaturalCreaturesButton = Children.Find<ButtonWidget>("SupernaturalCreatures")!;
         _friendlyFireButton = Children.Find<ButtonWidget>("FriendlyFire")!;
         _environmentBehaviorButton = Children.Find<ButtonWidget>("EnvironmentBehavior")!;
-        _timeOfDayDrawer = Children.Find<SelectionDrawerWidget>("TimeOfDay")!;
-        _timeOfDayDrawer.ItemTextProvider = item =>
+        _timeOfDaySelection = Children.Find<InlineSelectionWidget>("TimeOfDay")!;
+        _timeOfDaySelection.ItemTextProvider = item =>
             LanguageManager.Get("TimeOfDayMode", ((TimeOfDayMode)item).ToString());
-        _timeOfDayDrawer.SelectionChanged += TimeOfDayChanged;
+        _timeOfDaySelection.SelectionChanged += TimeOfDayChanged;
         _areSeasonsChangingCheckBox = Children.Find<CheckboxWidget>("AreSeasonsChanging")!;
         _yearDaysSlider = Children.Find<SliderWidget>("YearDays")!;
         _timeOfYearSlider = Children.Find<SliderWidget>("TimeOfYear")!;
         _weatherEffectsButton = Children.Find<ButtonWidget>("WeatherEffects")!;
         _adventureRespawnButton = Children.Find<ButtonWidget>("AdventureRespawn")!;
         _adventureSurvivalMechanicsButton = Children.Find<ButtonWidget>("AdventureSurvivalMechanics")!;
-        _terrainGenerationDrawer = Children.Find<SelectionDrawerWidget>("TerrainGeneration")!;
-        _terrainGenerationDrawer.ItemTextProvider = item => StringsManager.GetString(
+        _terrainGenerationSelection = Children.Find<InlineSelectionWidget>("TerrainGeneration")!;
+        _terrainGenerationSelection.ItemTextProvider = item => StringsManager.GetString(
             "TerrainGenerationMode",
             (TerrainGenerationMode)item,
             "Name");
-        _terrainGenerationDrawer.SelectionChanged += TerrainGenerationChanged;
+        _terrainGenerationSelection.SelectionChanged += TerrainGenerationChanged;
         _flatTerrainLevelSlider = Children.Find<SliderWidget>("FlatTerrainLevel")!;
         _flatTerrainShoreRoughnessSlider = Children.Find<SliderWidget>("FlatTerrainShoreRoughness")!;
         _flatTerrainBlock = Children.Find<BlockIconWidget>("FlatTerrainBlock")!;
@@ -230,23 +230,23 @@ public class WorldOptionsScreen : Screen
         }
     }
 
-    private void RefreshTerrainGenerationDrawer()
+    private void RefreshTerrainGenerationSelection()
     {
         var modes = Enum.GetValues<TerrainGenerationMode>()
             .Where(mode => !TerrainGenerationModes.IsLegacy(mode) &&
                            (_worldSettings.GameMode == GameMode.Creative || !TerrainGenerationModes.IsFlat(mode)))
             .ToArray();
         _updatingTerrainGeneration = true;
-        _terrainGenerationDrawer.SetItems(modes.Cast<object>());
+        _terrainGenerationSelection.SetItems(modes.Cast<object>());
         var displayMode = TerrainGenerationModes.ToDisplayMode(_worldSettings.TerrainGenerationMode);
-        _terrainGenerationDrawer.SelectedItem = modes.Contains(displayMode) ? displayMode : modes[0];
+        _terrainGenerationSelection.SelectedItem = modes.Contains(displayMode) ? displayMode : modes[0];
         _updatingTerrainGeneration = false;
     }
 
     private void TerrainGenerationChanged()
     {
         if (_updatingTerrainGeneration || _isExistingWorld ||
-            _terrainGenerationDrawer.SelectedItem is not TerrainGenerationMode mode)
+            _terrainGenerationSelection.SelectedItem is not TerrainGenerationMode mode)
         {
             return;
         }
@@ -254,17 +254,17 @@ public class WorldOptionsScreen : Screen
         _worldSettings.TerrainGenerationMode = mode;
     }
 
-    private void RefreshTimeOfDayDrawer()
+    private void RefreshTimeOfDaySelection()
     {
         _updatingTimeOfDay = true;
-        _timeOfDayDrawer.SetItems(Enum.GetValues<TimeOfDayMode>().Cast<object>());
-        _timeOfDayDrawer.SelectedItem = _worldSettings.TimeOfDayMode;
+        _timeOfDaySelection.SetItems(Enum.GetValues<TimeOfDayMode>().Cast<object>());
+        _timeOfDaySelection.SelectedItem = _worldSettings.TimeOfDayMode;
         _updatingTimeOfDay = false;
     }
 
     private void TimeOfDayChanged()
     {
-        if (!_updatingTimeOfDay && _timeOfDayDrawer.SelectedItem is TimeOfDayMode mode)
+        if (!_updatingTimeOfDay && _timeOfDaySelection.SelectedItem is TimeOfDayMode mode)
         {
             _worldSettings.TimeOfDayMode = mode;
         }
@@ -284,15 +284,15 @@ public class WorldOptionsScreen : Screen
     {
         _worldSettings = (WorldSettings)parameters[0];
         _isExistingWorld = (bool)parameters[1];
-        RefreshTerrainGenerationDrawer();
-        RefreshTimeOfDayDrawer();
+        RefreshTerrainGenerationSelection();
+        RefreshTimeOfDaySelection();
         _descriptionLabel.Text = LanguageManager.GetContentWidgets(_typeName, "DefaultDescription");
     }
 
     public override void Leave()
     {
-        _terrainGenerationDrawer.Close();
-        _timeOfDayDrawer.Close();
+        _terrainGenerationSelection.Close();
+        _timeOfDaySelection.Close();
         _blockTexturesCache.Clear();
     }
 
