@@ -1,5 +1,6 @@
 using EntitySystem.Core;
 
+using Game.Localization;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -36,7 +37,7 @@ internal static class WorldControlCommandHandlers
         }
 
         BroadcastWeather(weather);
-        return CommandResult.LocalizedPublicOk(
+        return CommandResult.LocalizedPublicToast(
             command.Enabled
                 ? "world.weather.precipitation_started"
                 : "world.weather.precipitation_stopped",
@@ -65,7 +66,7 @@ internal static class WorldControlCommandHandlers
         }
 
         BroadcastWeather(weather);
-        return CommandResult.LocalizedPublicOk(
+        return CommandResult.LocalizedPublicToast(
             command.Enabled
                 ? "world.weather.fog_started"
                 : "world.weather.fog_stopped",
@@ -97,7 +98,7 @@ internal static class WorldControlCommandHandlers
         weather.ManualLightingStrike(
             command.Position,
             Vector3.Normalize(command.Direction));
-        return CommandResult.LocalizedPublicOk(
+        return CommandResult.LocalizedPublicToast(
             "world.weather.lightning_triggered",
             "LightningTriggered_Message",
             "已触发闪电。");
@@ -168,11 +169,24 @@ internal static class WorldControlCommandHandlers
                     command.Progress));
         }
 
-        return CommandResult.LocalizedPublicOk(
+        return CommandResult.LocalizedPublicToast(
             "world.season.changed",
             "SeasonChanged_Message",
             "已将季节设置为 {0}。",
-            command.Season.ToString());
+            ResolveSeasonName(command.Season));
+    }
+
+    private static string ResolveSeasonName(Season season)
+    {
+        var (key, fallback) = season switch
+        {
+            Season.Summer => ("SeasonSummer_Description", "夏季"),
+            Season.Autumn => ("SeasonAutumn_Description", "秋季"),
+            Season.Winter => ("SeasonWinter_Description", "冬季"),
+            Season.Spring => ("SeasonSpring_Description", "春季"),
+            _ => throw new ArgumentOutOfRangeException(nameof(season))
+        };
+        return LocalizationText.Get("Commands", key, fallback);
     }
 
     private static bool TryGetWeather(

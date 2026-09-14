@@ -535,17 +535,30 @@ public class CommandDispatcherTest
     }
 
     [Fact]
-    public void CommandResultPresentationKeepsAudienceAndSilenceDistinct()
+    public void CommandResultPresentationKeepsAudienceAndPresentationDistinct()
     {
         var publicResult = CommandResult.PublicOk(
             "changed",
             "world.changed");
+        var toastResult = CommandResult.LocalizedPublicToast(
+            "world.weather.changed",
+            "WeatherChanged_Message",
+            "changed");
         var silentResult = CommandResult.SilentOk("chat.sent");
 
         Assert.Equal(
             CommandResultAudience.AllPlayers,
             publicResult.Audience);
         Assert.False(publicResult.Sensitive);
+        Assert.Equal(
+            CommandResultPresentation.Default,
+            publicResult.Presentation);
+        Assert.Equal(
+            CommandResultAudience.AllPlayers,
+            toastResult.Audience);
+        Assert.Equal(
+            CommandResultPresentation.Toast,
+            toastResult.Presentation);
         Assert.Equal(string.Empty, silentResult.Message);
         Assert.Equal(
             CommandResultPresentation.Silent,

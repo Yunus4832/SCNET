@@ -5,6 +5,7 @@ using Engine.Graphics;
 using EntitySystem.Core;
 
 using Game.Commands;
+using Game.Messaging;
 using Game.Network;
 using Game.Network.Enums;
 
@@ -121,15 +122,33 @@ public class GameScreen : Screen
                     if (button is MessageDialogButton.Button2)
                     {
                         ClipboardManager.ClipboardString = claimCommand;
-                        DialogsManager.Alert(CommandText.Get(
-                            "AuthDialogCopied",
-                            "已复制：{0}",
-                            claimCommand));
+                        DisplayToast(
+                            project,
+                            CommandText.Get(
+                                "AuthDialogCopied",
+                                "已复制：{0}",
+                                claimCommand),
+                            success: true);
                         return;
                     }
 
                     var result = CommandExecutor.ExecutePlayer(claimCommand, player.PlayerData);
-                    DialogsManager.Alert(CommandText.Resolve(result));
+                    CommandResultPublisher.DisplayLocal(
+                        project,
+                        result with { Presentation = CommandResultPresentation.Toast });
                 }));
+    }
+
+    private static void DisplayToast(
+        Project project,
+        string message,
+        bool success)
+    {
+        project.FindSubsystem<SubsystemGameWidgets>(true)!
+            .Messages.DisplayLocal(
+                GameMessage.System(
+                    message,
+                    success ? GameMessageTone.Success : GameMessageTone.Error,
+                    GameMessagePresentation.Toast));
     }
 }

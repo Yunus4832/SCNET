@@ -197,6 +197,20 @@ public sealed record CommandResult(
             MessageKey: messageKey,
             MessageArguments: arguments);
 
+    public static CommandResult LocalizedPublicToast(
+        string code,
+        string messageKey,
+        string fallback,
+        params string[] arguments) =>
+        new(
+            true,
+            code,
+            FormatFallback(fallback, arguments),
+            Audience: CommandResultAudience.AllPlayers,
+            Presentation: CommandResultPresentation.Toast,
+            MessageKey: messageKey,
+            MessageArguments: arguments);
+
     public static CommandResult LocalizedSensitiveOk(
         string code,
         string messageKey,
@@ -261,6 +275,7 @@ public enum CommandResultAudience
 public enum CommandResultPresentation
 {
     Default,
+    Toast,
     Silent
 }
 

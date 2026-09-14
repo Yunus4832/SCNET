@@ -1923,11 +1923,11 @@ public static class BuiltInCommands
             );
         }
 
-        return CommandResult.LocalizedPublicOk(
+        return CommandResult.LocalizedPublicToast(
             "world.time.changed",
             "TimeChanged_Message",
             "已将世界时间设置为 {0}。",
-            value);
+            ResolveTimePresetName(value));
     }
 
     private static CommandResult ExecuteTimeAdvance(
@@ -1961,11 +1961,24 @@ public static class BuiltInCommands
                     time.TimeOfDayOffset));
         }
 
-        return CommandResult.LocalizedPublicOk(
+        return CommandResult.LocalizedPublicToast(
             "world.time.advanced",
             "TimeAdvanced_Message",
             "已将世界时间推进到 {0}。",
-            next.Name);
+            ResolveTimePresetName(next.Name));
+    }
+
+    private static string ResolveTimePresetName(string value)
+    {
+        var (key, fallback) = value.ToLowerInvariant() switch
+        {
+            "sunrise" => ("Sunrise", "黎明"),
+            "day" => ("Day", "中午"),
+            "sunset" => ("Sunset", "黄昏"),
+            "night" => ("Night", "午夜"),
+            _ => throw new InvalidOperationException($"Unsupported time value {value}.")
+        };
+        return LocalizationText.Get("TimeOfDayMode", key, fallback);
     }
 
     private static CommandResult ExecuteStop(

@@ -22,14 +22,9 @@ public static class CommandResultPublisher
         }
 
         var messages = project.FindSubsystem<SubsystemGameWidgets>(true)!.Messages;
-        var message = GameMessage.Command(CommandText.Resolve(result), result.Success);
+        var message = CreateMessage(result);
         if (result.Audience is CommandResultAudience.AllPlayers && !result.Sensitive)
         {
-            message = message with
-            {
-                Presentation =
-                GameMessagePresentation.Default | GameMessagePresentation.Toast
-            };
             messages.Publish(message, includePublisher: includeServer);
         }
         else if (requesterId.HasValue)
@@ -63,12 +58,7 @@ public static class CommandResultPublisher
         if (result.Audience is CommandResultAudience.AllPlayers &&
             !result.Sensitive)
         {
-            var message = GameMessage.Command(CommandText.Resolve(result), result.Success) with
-            {
-                Presentation =
-                GameMessagePresentation.Default |
-                GameMessagePresentation.Toast
-            };
+            var message = CreateMessage(result);
             messages.Relay(message, recipients: null, except: requester);
             messages.DisplayLocal(message);
         }
@@ -89,19 +79,31 @@ public static class CommandResultPublisher
             return;
         }
 
-        var message = GameMessage.Command(CommandText.Resolve(result), result.Success);
-        if (result.Audience is CommandResultAudience.AllPlayers &&
-            !result.Sensitive)
+        project.FindSubsystem<SubsystemGameWidgets>(true)!
+            .Messages.DisplayLocal(CreateMessage(result));
+    }
+
+    private static GameMessage CreateMessage(CommandResult result)
+    {
+        var presentation = result.Presentation switch
         {
-            message = message with
-            {
-                Presentation =
-                GameMessagePresentation.Default |
-                GameMessagePresentation.Toast
-            };
+            CommandResultPresentation.Toast => GameMessagePresentation.Toast,
+            _ => GameMessagePresentation.Default
+        };
+        var message = GameMessage.Command(result.Message, result.Success) with
+        {
+            Presentation = presentation
+        };
+        if (string.IsNullOrWhiteSpace(result.MessageKey))
+        {
+            return message;
         }
 
-        project.FindSubsystem<SubsystemGameWidgets>(true)!
-            .Messages.DisplayLocal(message);
+        return message with
+        {
+            LocalizationSection = "Commands",
+            LocalizationKey = result.MessageKey,
+            LocalizationArguments = result.MessageArguments?.ToArray() ?? []
+        };
     }
 }

@@ -100,10 +100,14 @@ public class GameWidget : CanvasWidget
         var hasMultiplayerMessaging =
             CommonLib.WorkType is not WorkType.Local &&
             CommonLib.Net.IsConnected;
-        if (hasMultiplayerMessaging && playerData.IsMainPlayer)
+        if (playerData.IsMainPlayer)
         {
             _messageService = SubsystemGameWidgets.Messages;
             _messageService.ToastRequested += DisplayToast;
+        }
+
+        if (hasMultiplayerMessaging && playerData.IsMainPlayer)
+        {
             PlayerInformationOverlay = new PlayerInformationOverlayWidget(this);
             PlayerPanel = new PlayerPanelWidget(playerData, PlayerInformationOverlay);
             MessageHistoryOverlay = new MessageHistoryOverlayWidget(SubsystemGameWidgets.Messages)
