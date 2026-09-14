@@ -196,7 +196,6 @@ public static class GameEntry
                 }
 
                 PerformanceManager.Update();
-                MotdManager.Update();
                 MusicManager.Update();
                 ScreensManager.Update();
                 DialogsManager.Update();

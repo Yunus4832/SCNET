@@ -1,7 +1,5 @@
 using Android.Content;
 using Android.Content.PM;
-using Android.Net;
-using Android.OS;
 
 using Game;
 
@@ -48,7 +46,6 @@ public class GameActivity : EngineActivity
         GamePlatformManager.RegisterPlatform(Platform.Android);
         RunMode.Value = RunModeType.Gui;
         GamePlatformManager.RegisterWebBrowserLauncher(OpenLink);
-        GamePlatformManager.RegisterInternetConnectionChecker(IsInternetConnectionAvailable);
         GamePlatformManager.RegisterTextInput(new EngineSdlTextInputBackend(processEditingKeyEvents: true));
         GamePlatformManager.RegisterClipboard(new SdlClipboardBackend());
         _filePicker = new AndroidFilePicker(this);
@@ -103,29 +100,6 @@ public class GameActivity : EngineActivity
     private void OpenLink(string link)
     {
         StartActivity(new Intent(Intent.ActionView, AndroidUri.Parse(link)));
-    }
-
-    private bool IsInternetConnectionAvailable()
-    {
-        var connectivityManager = GetConnectivityManager();
-        switch (Build.VERSION.SdkInt)
-        {
-            case >= (BuildVersionCodes)29:
-                return connectivityManager?.GetNetworkCapabilities(connectivityManager.ActiveNetwork)
-                           ?.HasCapability(NetCapability.Validated)
-                       ?? false;
-            case >= (BuildVersionCodes)21:
-                return connectivityManager?.ActiveNetworkInfo?.IsConnected ?? false;
-            default:
-                return true;
-        }
-    }
-
-    private ConnectivityManager? GetConnectivityManager()
-    {
-        return Build.VERSION.SdkInt >= (BuildVersionCodes)21
-            ? (ConnectivityManager?)GetSystemService(ConnectivityService)
-            : null;
     }
 
     private void LoadAssetAssemblies()

@@ -32,10 +32,6 @@
         "10": "Tipo inválido",
         "11": "A configuração foi alterada, você deseja recarregar?"
     },
-    "MainMenuScreen": {
-        "1": "Falha na aquisição de anúncios",
-        "2": "Nenhum anúncio foi emitido por enquanto.\nOu não se conecta à Internet para obter informações de anúncio."
-    },
     "ModManagementScreen": {
         "Title": "Gestão de Mods",
         "DeleteCacheShort": "Eliminar",
@@ -3200,8 +3196,7 @@
             "Restart": "Reiniciar",
             "SwitchInstance": "Mudar instância",
             "RestartHeadless": "Reiniciar como servidor",
-            "Exit": "Sair",
-            "Bulletin": "Anúncios"
+            "Exit": "Sair"
         },
         "ModManagementScreen": {
             "Title": "Gestão de Mods",

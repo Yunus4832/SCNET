@@ -49,11 +49,6 @@ public static class PlatformManager
         return true;
     }
 
-    public static void RegisterInternetConnectionChecker(Func<bool> checker)
-    {
-        WebManager.RegisterInternetConnectionChecker(checker);
-    }
-
     public static void RegisterWebBrowserLauncher(Action<string> launcher)
     {
         WebBrowserManager.RegisterLauncher(launcher);

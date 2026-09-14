@@ -32,10 +32,6 @@
         "10": "无效的类型",
         "11": "配置已更改，是否重新加载?"
     },
-    "MainMenuScreen": {
-        "1": "公告获取失败",
-        "2": "当前暂无发布公告，\n或者没有联网获取公告信息"
-    },
     "ModManagementScreen": {
         "Title": "模组管理",
         "DeleteCacheShort": "删除",
@@ -3200,8 +3196,7 @@
             "Restart": "重新启动",
             "SwitchInstance": "切换实例",
             "RestartHeadless": "重启到服务器",
-            "Exit": "退出游戏",
-            "Bulletin": "查看公告"
+            "Exit": "退出游戏"
         },
         "ModManagementScreen": {
             "Title": "模组管理",

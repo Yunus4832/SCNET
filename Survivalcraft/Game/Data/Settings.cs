@@ -112,16 +112,6 @@ public class Settings
 
     public bool HorizontalCreativeFlight { get; set; } = true;
 
-    public string MotdUpdateUrl { get; set; } = string.Empty;
-
-    public string MotdUpdateCheckUrl { get; set; } = string.Empty;
-
-    public double MotdUpdatePeriodHours { get; set; } = 12.0;
-
-    public DateTime MotdLastUpdateTime { get; set; } = DateTime.MinValue;
-
-    public string MotdLastDownloadedData { get; set; } = string.Empty;
-
     /// <summary>
     ///     Stable identifier for this local multiplayer client. This is not an account credential
     ///     and does not authenticate the player to a remote service.
@@ -162,8 +152,6 @@ public class Settings
     public ScreenLayout ScreenLayout4 { get; set; } = ScreenLayout.Quadruple;
 
     public bool UpsideDownLayout { get; set; }
-
-    public string BulletinTime { get; set; } = string.Empty;
 
     /** 生物数量配置 **/
     public int CreatureTotalLimit { get; set; } = 24;

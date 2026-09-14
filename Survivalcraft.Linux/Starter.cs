@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.NetworkInformation;
 using System.Reflection;
 
 using Engine.Core;
@@ -22,7 +21,6 @@ public class Starter
         var instance = RegisterStorageRoots(args);
         PlatformManager.RegisterPlatform(Platform.Desktop);
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
-        PlatformManager.RegisterInternetConnectionChecker(NetworkInterface.GetIsNetworkAvailable);
         var startup = StartupManager.Load(instance.GameArguments);
         var runningSetting = startup.Settings;
         InstallDesktopEntries();

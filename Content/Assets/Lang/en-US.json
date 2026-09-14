@@ -32,10 +32,6 @@
         "10": "Invalid item type.",
         "11": "The configuration has been changed. Do you want to reload it?"
     },
-    "MainMenuScreen": {
-        "1": "Announcement retrieval failed",
-        "2": "There are currently no published announcements,\nor you are not connected to the network to fetch announcement information"
-    },
     "ModManagementScreen": {
         "Title": "Mod Management",
         "DeleteCacheShort": "Delete",
@@ -3200,8 +3196,7 @@
             "Restart": "Restart",
             "SwitchInstance": "Switch Instance",
             "RestartHeadless": "Restart as Server",
-            "Exit": "Exit",
-            "Bulletin": "Announcements"
+            "Exit": "Exit"
         },
         "ModManagementScreen": {
             "Title": "Mod Management",

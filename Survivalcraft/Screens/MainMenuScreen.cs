@@ -9,8 +9,6 @@ namespace Game.Screens;
 
 public class MainMenuScreen : Screen
 {
-    private readonly ButtonWidget _showBulletinButton;
-
     private readonly VerticalTabMenuWidget _mainMenuTabs;
 
     private static readonly string _versionString = $"Version {VersionsManager.Version}";
@@ -19,7 +17,6 @@ public class MainMenuScreen : Screen
     {
         var node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
         LoadContents(this, node);
-        _showBulletinButton = Children.Find<ButtonWidget>("BulletinButton")!;
         _mainMenuTabs = Children.Find<VerticalTabMenuWidget>("MainMenuTabs")!;
         Children.Find<LabelWidget>("Version")!.Text = _versionString;
 
@@ -28,18 +25,10 @@ public class MainMenuScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        Children.Find<MotdWidget>(false)?.Restart();
-
         // 如果当前已连接网络，则停止连接
         if (CommonLib.Net.CurrentStage == NetNode.Stage.Connected)
         {
             CommonLib.Net.Stop();
-        }
-
-        // 显示公告（如果允许）
-        if (MotdManager.CanShowBulletin)
-        {
-            MotdManager.ShowBulletin();
         }
     }
 
@@ -215,33 +204,6 @@ public class MainMenuScreen : Screen
         if (Children.Find<ButtonWidget>("Settings")!.IsClicked)
         {
             ScreensManager.SwitchScreen("Settings");
-        }
-
-        if (_showBulletinButton.IsClicked)
-        {
-            var isChinese = LanguageManager.CurrentLanguage == "zh-CN";
-            var bulletinContent = isChinese
-                ? MotdManager.BulletinDefault.Content
-                : MotdManager.BulletinDefault.EnContent;
-            var bulletinTitle = isChinese
-                ? MotdManager.BulletinDefault.Title
-                : MotdManager.BulletinDefault.EnTitle;
-            if (string.IsNullOrEmpty(bulletinContent) ||
-                string.Equals(bulletinTitle, "null", StringComparison.OrdinalIgnoreCase))
-            {
-                DialogsManager.ShowDialog(
-                    null,
-                    new MessageDialog(
-                        LanguageManager.Get("MainMenuScreen", 1),
-                        LanguageManager.Get("MainMenuScreen", 2),
-                        LanguageManager.Ok
-                    )
-                );
-            }
-            else
-            {
-                MotdManager.ShowBulletin();
-            }
         }
 
         if (Children.Find<ButtonWidget>("Online")!.IsClicked)
