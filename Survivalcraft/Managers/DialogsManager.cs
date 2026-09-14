@@ -99,6 +99,7 @@ public static class DialogsManager
             LanguageManager.Yes,
             LanguageManager.No,
             new Vector2(-1f),
+            MessageDialog.CancelBehavior.InvokeButton2,
             (button, self) =>
             {
                 HideDialog(self);

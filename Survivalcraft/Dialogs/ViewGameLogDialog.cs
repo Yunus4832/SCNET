@@ -4,6 +4,13 @@ namespace Game.Dialogs;
 
 public class ViewGameLogDialog : Dialog
 {
+    private enum LogAction
+    {
+        Copy,
+        Filter,
+        Close
+    }
+
     private enum FilterType
     {
         /// <summary>
@@ -24,13 +31,9 @@ public class ViewGameLogDialog : Dialog
 
     private const string _typeName = nameof(ViewGameLogDialog);
 
-    private readonly ButtonWidget _closeButton;
-
-    private readonly ButtonWidget _copyButton;
+    private readonly ActionPanelWidget _actionPanel;
 
     private FilterType _filter = FilterType.All;
-
-    private readonly ButtonWidget _filterButton;
 
     private readonly ListPanelWidget _listPanel;
 
@@ -39,19 +42,36 @@ public class ViewGameLogDialog : Dialog
         var node = ContentManager.Get<XElement>("Dialogs/ViewGameLogDialog");
         LoadContents(this, node);
         _listPanel = Children.Find<ListPanelWidget>("ViewGameLogDialog.ListPanel")!;
-        _copyButton = Children.Find<ButtonWidget>("ViewGameLogDialog.CopyButton")!;
-        _filterButton = Children.Find<ButtonWidget>("ViewGameLogDialog.FilterButton")!;
-        _closeButton = Children.Find<ButtonWidget>("ViewGameLogDialog.CloseButton")!;
+        _actionPanel = Children.Find<ActionPanelWidget>("ViewGameLogDialog.Actions")!;
+        _actionPanel.ItemTextProvider = GetActionText;
+        _actionPanel.ItemClicked += ExecuteAction;
+        _actionPanel.SetPrimaryItems(
+        [
+            LogAction.Filter,
+            LogAction.Copy,
+            LogAction.Close
+        ],
+        [
+            1f,
+            1f,
+            1f,
+            0f
+        ]);
         _listPanel.ItemClicked += delegate (object item)
         {
             if (_listPanel.SelectedItem == item)
             {
+                var details = item.ToString() ?? string.Empty;
                 DialogsManager.ShowDialog(
                     ParentWidget,
                     new MessageDialog(
                         "Log Item",
-                        item.ToString() ?? string.Empty,
-                        LanguageManager.Ok
+                        details,
+                        LanguageManager.Ok,
+                        string.Empty,
+                        new Vector2(760f, -1f),
+                        MessageDialog.CancelBehavior.InvokeButton1,
+                        _ => { }
                     )
                 );
             }
@@ -61,36 +81,52 @@ public class ViewGameLogDialog : Dialog
 
     public override void Update()
     {
-        if (_copyButton.IsClicked)
-        {
-            ClipboardManager.ClipboardString = GameLogSink.GetRecentLog(131072);
-        }
-
-        if (_filterButton.IsClicked)
-        {
-            _filter = _filter switch
-            {
-                FilterType.All => FilterType.Warning,
-                FilterType.Warning => FilterType.Error,
-                FilterType.Error => FilterType.All,
-                _ => throw new ArgumentOutOfRangeException()
-            };
-
-            PopulateList();
-        }
-
-        if (Input.Cancel || _closeButton.IsClicked)
+        if (Input.Cancel)
         {
             DialogsManager.HideDialog(this);
         }
+    }
 
-        _filterButton.Text = _filter switch
+    private string GetActionText(object item)
+    {
+        return (LogAction)item switch
         {
-            FilterType.All => LanguageManager.Get(_typeName, "All"),
-            FilterType.Warning => LanguageManager.Get(_typeName, "Warning"),
-            FilterType.Error => LanguageManager.Get(_typeName, "Error"),
-            _ => _filterButton.Text
+            LogAction.Copy => LanguageManager.GetContentWidgets(_typeName, "Copy"),
+            LogAction.Filter => _filter switch
+            {
+                FilterType.All => LanguageManager.Get(_typeName, "All"),
+                FilterType.Warning => LanguageManager.Get(_typeName, "Warning"),
+                FilterType.Error => LanguageManager.Get(_typeName, "Error"),
+                _ => throw new ArgumentOutOfRangeException()
+            },
+            LogAction.Close => LanguageManager.GetContentWidgets(_typeName, "Close"),
+            _ => throw new ArgumentOutOfRangeException(nameof(item))
         };
+    }
+
+    private void ExecuteAction(object item)
+    {
+        switch ((LogAction)item)
+        {
+            case LogAction.Copy:
+                ClipboardManager.ClipboardString = GameLogSink.GetRecentLog(131072);
+                break;
+            case LogAction.Filter:
+                _filter = _filter switch
+                {
+                    FilterType.All => FilterType.Warning,
+                    FilterType.Warning => FilterType.Error,
+                    FilterType.Error => FilterType.All,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
+                PopulateList();
+                break;
+            case LogAction.Close:
+                DialogsManager.HideDialog(this);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(item));
+        }
     }
 
     public void PopulateList()

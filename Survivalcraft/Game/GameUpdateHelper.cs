@@ -53,6 +53,7 @@ public static class GameUpdateHelper
                     LanguageManager.Get("Usual", "yes"),
                     LanguageManager.Get("Usual", "no"),
                     new Vector2(-1f),
+                    MessageDialog.CancelBehavior.InvokeButton2,
                     (button, self) =>
                     {
                         if (button == MessageDialogButton.Button1)

@@ -99,7 +99,7 @@ public class GameScreen : Screen
         _administrationDialogProject = project;
         var claimCommand = $"/auth claim {code}";
         DialogsManager.ShowDialog(
-            this,
+            player.GuiWidget,
             new MessageDialog(
                 CommandText.Get(
                     "AuthDialogTitle",
@@ -114,7 +114,8 @@ public class GameScreen : Screen
                 CommandText.Get(
                     "AuthDialogCopy",
                     "复制命令"),
-                new Vector2(680f, 320f),
+                new Vector2(680f, -1f),
+                MessageDialog.CancelBehavior.Dismiss,
                 button =>
                 {
                     if (button is MessageDialogButton.Button2)

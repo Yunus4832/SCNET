@@ -131,6 +131,7 @@ public class VitalStatsWidget : CanvasWidget
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
+                    MessageDialog.CancelBehavior.InvokeButton1,
                     _ => { }
                 )
             );
@@ -146,6 +147,7 @@ public class VitalStatsWidget : CanvasWidget
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
+                    MessageDialog.CancelBehavior.InvokeButton1,
                     _ => { }
                 )
             );
@@ -161,6 +163,7 @@ public class VitalStatsWidget : CanvasWidget
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
+                    MessageDialog.CancelBehavior.InvokeButton1,
                     _ => { }
                 )
             );
@@ -175,7 +178,7 @@ public class VitalStatsWidget : CanvasWidget
                     topic4.Text,
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
-                    new Vector2(700f, 360f), _ => { }
+                    new Vector2(700f, 360f), MessageDialog.CancelBehavior.InvokeButton1, _ => { }
                 )
             );
         }
@@ -190,6 +193,7 @@ public class VitalStatsWidget : CanvasWidget
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
+                    MessageDialog.CancelBehavior.InvokeButton1,
                     _ => { }
                 )
             );
@@ -205,6 +209,7 @@ public class VitalStatsWidget : CanvasWidget
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
+                    MessageDialog.CancelBehavior.InvokeButton1,
                     _ => { }
                 )
             );
@@ -256,6 +261,7 @@ public class VitalStatsWidget : CanvasWidget
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
+                    MessageDialog.CancelBehavior.InvokeButton1,
                     _ => { }
                 )
             );
@@ -271,6 +277,7 @@ public class VitalStatsWidget : CanvasWidget
                     LanguageManager.Get("Usual", "ok"),
                     string.Empty,
                     new Vector2(700f, 360f),
+                    MessageDialog.CancelBehavior.InvokeButton1,
                     _ => { }));
         }
 
