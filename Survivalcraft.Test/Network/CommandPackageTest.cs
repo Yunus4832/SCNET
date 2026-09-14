@@ -87,7 +87,7 @@ public class CommandPackageTest
             true,
             CommandResultAudience.AllPlayers,
             CommandResultState.Pending,
-            CommandResultPresentation.Silent,
+            CommandResultPresentation.History | CommandResultPresentation.Toast,
             "TeamInvitationPending_Message",
             ["Alice"]);
         var package = CommandPackage.CreateResult(result, "request-result");

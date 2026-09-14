@@ -1007,11 +1007,11 @@ public static class BuiltInCommands
             .Select(entry => "/" + entry.Command.Name)
             .ToArray();
         return names.Length == 0
-            ? CommandResult.LocalizedOk(
+            ? CommandResult.LocalizedHistoryOk(
                 "command.help",
                 "HelpEmpty_Message",
                 "当前没有可用指令。")
-            : CommandResult.LocalizedOk(
+            : CommandResult.LocalizedHistoryOk(
                 "command.help",
                 "HelpHeading_Message",
                 "可用指令：\n{0}",
@@ -1058,7 +1058,7 @@ public static class BuiltInCommands
                 "command.forbidden",
                 "HelpForbidden_Message",
                 "你没有查看该指令的权限。")
-            : CommandResult.LocalizedOk(
+            : CommandResult.LocalizedHistoryOk(
                 "command.help.detail",
                 "HelpDetail_Message",
                 "{0}\n用法：\n{1}",
@@ -1580,16 +1580,16 @@ public static class BuiltInCommands
         }
 
         return ServerAdministrationBootstrap.IsClaimed(context.Project)
-            ? CommandResult.LocalizedOk(
+            ? CommandResult.LocalizedHistoryOk(
                 "auth.claimed",
                 "AuthClaimed_Message",
                 "服务器管理员已经完成首次认领。")
             : context.Principal.Is(CommandPrincipalKind.ServerOperator)
-                ? CommandResult.LocalizedOk(
+                ? CommandResult.LocalizedHistoryOk(
                     "auth.unclaimed",
                     "AuthUnclaimedConsole_Message",
                     "服务器尚未认领。\n使用 auth code 查看认领码，玩家上线后执行 /auth claim <认领码>。")
-                : CommandResult.LocalizedOk(
+                : CommandResult.LocalizedHistoryOk(
                     "auth.unclaimed",
                     "AuthUnclaimedPlayer_Message",
                     "服务器尚未认领。\n请输入 /auth claim <认领码> 完成首次管理员授权。");
@@ -1718,7 +1718,7 @@ public static class BuiltInCommands
                 context.Project))
             .Select(node => node.ToString())
             .ToArray();
-        return CommandResult.LocalizedOk(
+        return CommandResult.LocalizedHistoryOk(
             "permission.help",
             "PermissionHelp_Message",
             "授权用法：\n- /permission grant <player> <permission>（仅使用）\n- /permission delegate <player> <permission>（允许再授权）\n- /permission revoke <player> <permission>\n- /permission list [player]\n当前玩家：\n{0}\n可授权节点：\n{1}",

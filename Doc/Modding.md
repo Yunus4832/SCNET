@@ -138,6 +138,10 @@ public void Configure(IModContext context)
 如果操作在业务上必须绑定玩家实体，可以通过 `allowedPrincipals:
 CommandPrincipalKind.Player` 声明主体要求；这与命令来自消息面板、HTTP 或 stdin 无关。
 
+命令结果通过带有 flags 语义的 `CommandResultPresentation` 声明展示范围。默认结果同时进入
+`History` 消息记录并显示在 `Overlay` HUD；较长的帮助和列表结果应仅使用 `History`；短暂的状态通知可以仅使用 `Toast`；无需向玩家展示时使用 `Silent`。展示范围与
+`CommandResultAudience` 相互独立，不应通过受众范围推断 UI 展示方式。
+
 命令说明使用通用的 `Game.Localization.LocalizedText`，注册时不会读取当前语言。候选菜单和帮助信息在展示时解析资源，因此初始化语言或运行时切换语言都不需要重新注册命令。模组应在自己的语言资源中提供对应 section 和 key；只有 GUID 等运行时数据才应显式使用 `LocalizedText.Literal(...)`。
 
 HTTP 命令宿主使用统一的 `POST /commands` 入口，不为每条命令建立路径。请求通过 identity 分发：

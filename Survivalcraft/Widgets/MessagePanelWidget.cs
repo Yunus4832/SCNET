@@ -118,7 +118,7 @@ public sealed class MessagePanelWidget : CanvasWidget
             _transcript.AddMessage(message);
         }
 
-        _messageService.MessageReceived += AddNetMsg;
+        _messageService.HistoryMessageAdded += AddMessage;
         if (_historyOverlayWidget != null)
         {
             UpdateHistoryOverlayButton();
@@ -202,7 +202,7 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     public override void Dispose()
     {
-        _messageService.MessageReceived -= AddNetMsg;
+        _messageService.HistoryMessageAdded -= AddMessage;
         base.Dispose();
     }
 
@@ -269,7 +269,7 @@ public sealed class MessagePanelWidget : CanvasWidget
         }
     }
 
-    private void AddNetMsg(GameMessage message)
+    private void AddMessage(GameMessage message)
     {
         _transcript.AddMessage(message);
     }

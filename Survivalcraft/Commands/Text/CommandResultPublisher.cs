@@ -16,7 +16,7 @@ public static class CommandResultPublisher
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);
-        if (result.Presentation is CommandResultPresentation.Silent)
+        if (result.Presentation == CommandResultPresentation.Silent)
         {
             return;
         }
@@ -49,7 +49,7 @@ public static class CommandResultPublisher
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(requester);
-        if (result.Presentation is CommandResultPresentation.Silent)
+        if (result.Presentation == CommandResultPresentation.Silent)
         {
             return;
         }
@@ -74,7 +74,7 @@ public static class CommandResultPublisher
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);
-        if (result.Presentation is CommandResultPresentation.Silent)
+        if (result.Presentation == CommandResultPresentation.Silent)
         {
             return;
         }
@@ -85,11 +85,7 @@ public static class CommandResultPublisher
 
     private static GameMessage CreateMessage(CommandResult result)
     {
-        var presentation = result.Presentation switch
-        {
-            CommandResultPresentation.Toast => GameMessagePresentation.Toast,
-            _ => GameMessagePresentation.Default
-        };
+        var presentation = ToGameMessagePresentation(result.Presentation);
         var message = GameMessage.Command(result.Message, result.Success) with
         {
             Presentation = presentation
@@ -105,5 +101,26 @@ public static class CommandResultPublisher
             LocalizationKey = result.MessageKey,
             LocalizationArguments = result.MessageArguments?.ToArray() ?? []
         };
+    }
+
+    internal static GameMessagePresentation ToGameMessagePresentation(CommandResultPresentation presentation)
+    {
+        var result = GameMessagePresentation.None;
+        if ((presentation & CommandResultPresentation.History) != 0)
+        {
+            result |= GameMessagePresentation.History;
+        }
+
+        if ((presentation & CommandResultPresentation.Overlay) != 0)
+        {
+            result |= GameMessagePresentation.Overlay;
+        }
+
+        if ((presentation & CommandResultPresentation.Toast) != 0)
+        {
+            result |= GameMessagePresentation.Toast;
+        }
+
+        return result;
     }
 }

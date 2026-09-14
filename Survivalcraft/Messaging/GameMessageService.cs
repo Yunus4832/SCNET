@@ -15,7 +15,9 @@ public sealed class GameMessageService(Project project)
 
     public IReadOnlyList<GameMessage> History => [.. _history];
 
-    public event Action<GameMessage>? MessageReceived;
+    public event Action<GameMessage>? HistoryMessageAdded;
+
+    public event Action<GameMessage>? OverlayRequested;
 
     public event Action<GameMessage>? ToastRequested;
 
@@ -34,18 +36,16 @@ public sealed class GameMessageService(Project project)
         }
     }
 
-    internal void Receive(
-        GameMessage message,
-        bool external = false)
+    internal void Receive(GameMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
-        Insert(message, external);
+        Insert(message);
     }
 
-    public void DisplayLocal(GameMessage message, bool external = false)
+    public void DisplayLocal(GameMessage message)
     {
         ArgumentNullException.ThrowIfNull(message);
-        Insert(message, external);
+        Insert(message);
     }
 
     internal void Relay(
@@ -73,7 +73,7 @@ public sealed class GameMessageService(Project project)
         return message with { Content = MessageContent.Plain(text) };
     }
 
-    private void Insert(GameMessage message, bool external = false)
+    private void Insert(GameMessage message)
     {
         message = message.ResolveLocalization();
         if ((message.Presentation & GameMessagePresentation.History) != 0)
@@ -84,16 +84,12 @@ public sealed class GameMessageService(Project project)
             }
 
             _history.Enqueue(message);
-        }
-
-        if (!external)
-        {
-            Log.Information(GameMessageFormatter.Format(message).PlainText);
+            HistoryMessageAdded?.Invoke(message);
         }
 
         if ((message.Presentation & GameMessagePresentation.Overlay) != 0)
         {
-            MessageReceived?.Invoke(message);
+            OverlayRequested?.Invoke(message);
         }
 
         if ((message.Presentation & GameMessagePresentation.Toast) != 0)

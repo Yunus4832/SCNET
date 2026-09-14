@@ -544,6 +544,10 @@ public class CommandDispatcherTest
             "world.weather.changed",
             "WeatherChanged_Message",
             "changed");
+        var historyResult = CommandResult.LocalizedHistoryOk(
+            "command.help",
+            "HelpHeading_Message",
+            "help");
         var silentResult = CommandResult.SilentOk("chat.sent");
 
         Assert.Equal(
@@ -559,6 +563,15 @@ public class CommandDispatcherTest
         Assert.Equal(
             CommandResultPresentation.Toast,
             toastResult.Presentation);
+        Assert.Equal(
+            CommandResultPresentation.History,
+            historyResult.Presentation);
+        Assert.Equal(
+            GameMessagePresentation.History,
+            CommandResultPublisher.ToGameMessagePresentation(historyResult.Presentation));
+        Assert.Equal(
+            GameMessagePresentation.Default,
+            CommandResultPublisher.ToGameMessagePresentation(publicResult.Presentation));
         Assert.Equal(string.Empty, silentResult.Message);
         Assert.Equal(
             CommandResultPresentation.Silent,

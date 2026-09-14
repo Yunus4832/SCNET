@@ -42,19 +42,21 @@ public sealed class MessageHistoryOverlayWidget : CanvasWidget
         IsHitTestVisible = false;
         _transcript.IsEnabled = false;
         Children.Add(_transcript);
-        foreach (var message in messageService.History.TakeLast(_transcript.MaximumMessages))
+        foreach (var message in messageService.History
+                     .Where(message => (message.Presentation & GameMessagePresentation.Overlay) != 0)
+                     .TakeLast(_transcript.MaximumMessages))
         {
             _transcript.AddMessage(message);
             _messageCount++;
         }
 
-        messageService.MessageReceived += AddMessage;
+        messageService.OverlayRequested += AddMessage;
         UpdateVisibility();
     }
 
     public override void Dispose()
     {
-        _messageService.MessageReceived -= AddMessage;
+        _messageService.OverlayRequested -= AddMessage;
         base.Dispose();
     }
 

@@ -184,6 +184,19 @@ public sealed record CommandResult(
             MessageKey: messageKey,
             MessageArguments: arguments);
 
+    public static CommandResult LocalizedHistoryOk(
+        string code,
+        string messageKey,
+        string fallback,
+        params string[] arguments) =>
+        new(
+            true,
+            code,
+            FormatFallback(fallback, arguments),
+            Presentation: CommandResultPresentation.History,
+            MessageKey: messageKey,
+            MessageArguments: arguments);
+
     public static CommandResult LocalizedPublicOk(
         string code,
         string messageKey,
@@ -272,11 +285,14 @@ public enum CommandResultAudience
     AllPlayers
 }
 
-public enum CommandResultPresentation
+[Flags]
+public enum CommandResultPresentation : byte
 {
-    Default,
-    Toast,
-    Silent
+    Silent = 0,
+    History = 1,
+    Overlay = 2,
+    Toast = 4,
+    Default = History | Overlay
 }
 
 public sealed class CommandArguments
