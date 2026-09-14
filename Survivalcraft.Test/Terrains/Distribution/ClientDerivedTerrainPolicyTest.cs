@@ -55,6 +55,31 @@ public sealed class ClientDerivedTerrainPolicyTest
             ClientDerivedTerrainPolicy.FindPendingLightingDependency(
                 terrain,
                 TerrainContentRole.Authority,
+            target));
+    }
+
+    [Fact]
+    public void GeometryWaitsForAdjacentLoadedChunkToFinishLighting()
+    {
+        var terrain = new Terrain();
+        var target = terrain.AllocateChunk(0, 0);
+        var dependency = terrain.AllocateChunk(1, 0);
+        target.IsLoaded = true;
+        target.WorkerState = TerrainChunkState.InvalidVertices1;
+        dependency.IsLoaded = true;
+        dependency.WorkerState = TerrainChunkState.InvalidPropagatedLight;
+
+        Assert.Same(
+            dependency,
+            ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
+                terrain,
+                TerrainContentRole.Replica,
                 target));
+
+        dependency.WorkerState = TerrainChunkState.InvalidVertices1;
+        Assert.Null(ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
+            terrain,
+            TerrainContentRole.Replica,
+            target));
     }
 }

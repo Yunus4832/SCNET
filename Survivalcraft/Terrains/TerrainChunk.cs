@@ -66,8 +66,6 @@ public class TerrainChunk : IDisposable
 
     public long ClientGeometryContentVersion;
 
-    public int LightPropagationMask;
-
     public int ModificationCounter;
 
     private long _networkContentRevision;

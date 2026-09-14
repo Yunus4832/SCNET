@@ -1231,35 +1231,16 @@ public class TerrainUpdater
                 {
                     GenerateChunkSunLightAndHeight(chunk, skylightValue);
                     chunk.WorkerState = TerrainChunkState.InvalidPropagatedLight;
-                    chunk.LightPropagationMask = 0;
                     break;
                 }
             case TerrainChunkState.InvalidPropagatedLight:
                 {
                     _lightSources.Clear();
-                    for (var k = -1; k <= 1; k++)
-                    {
-                        for (var l = -1; l <= 1; l++)
-                        {
-                            var num = CalculateLightPropagationBitIndex(k, l);
-                            if (((chunk.LightPropagationMask >> num) & 1) != 0)
-                            {
-                                continue;
-                            }
-
-                            var chunkAtCell2 = _terrain.GetChunkAtCell(chunk.Origin.X + k * 16, chunk.Origin.Y + l * 16, false);
-                            if (chunkAtCell2 == null ||
-                                !ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(
-                                    _subsystemTerrain.ContentRole,
-                                    chunkAtCell2))
-                            {
-                                continue;
-                            }
-
-                            GenerateChunkLightSources(chunkAtCell2);
-                            UpdateNeighborsLightPropagationBitmasks(chunkAtCell2);
-                        }
-                    }
+                    GenerateChunkLightSources(chunk);
+                    GenerateChunkEdgeLightSources(chunk, 0);
+                    GenerateChunkEdgeLightSources(chunk, 1);
+                    GenerateChunkEdgeLightSources(chunk, 2);
+                    GenerateChunkEdgeLightSources(chunk, 3);
 
                     PropagateLight();
                     chunk.WorkerState = TerrainChunkState.InvalidVertices1;
@@ -1267,6 +1248,16 @@ public class TerrainUpdater
                 }
             case TerrainChunkState.InvalidVertices1:
                 {
+                    var dependency = ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
+                        _terrain,
+                        _subsystemTerrain.ContentRole,
+                        chunk);
+                    if (dependency != null)
+                    {
+                        UpdateChunkSingleStep(dependency, skylightValue);
+                        break;
+                    }
+
                     if (RunMode.Value is RunModeType.HeadlessServer)
                     {
                         chunk.WorkerState = TerrainChunkState.Valid;
@@ -1493,6 +1484,98 @@ public class TerrainUpdater
     }
 
     /// <summary>
+    ///     从相邻区块向目标区块的一条边界引入光源。
+    /// </summary>
+    /// <param name="chunk">目标区块。</param>
+    /// <param name="face">边界方向。</param>
+    private void GenerateChunkEdgeLightSources(TerrainChunk chunk, int face)
+    {
+        var x = 0;
+        var z = 0;
+        var neighborX = 0;
+        var neighborZ = 0;
+        TerrainChunk? neighbor;
+        switch (face)
+        {
+            case 0:
+                neighbor = _terrain.GetChunkAtCoords(chunk.Coords.X, chunk.Coords.Y + 1);
+                z = TerrainChunk.SizeMinusOne;
+                neighborZ = 0;
+                break;
+            case 1:
+                neighbor = _terrain.GetChunkAtCoords(chunk.Coords.X + 1, chunk.Coords.Y);
+                x = TerrainChunk.SizeMinusOne;
+                neighborX = 0;
+                break;
+            case 2:
+                neighbor = _terrain.GetChunkAtCoords(chunk.Coords.X, chunk.Coords.Y - 1);
+                z = 0;
+                neighborZ = TerrainChunk.SizeMinusOne;
+                break;
+            default:
+                neighbor = _terrain.GetChunkAtCoords(chunk.Coords.X - 1, chunk.Coords.Y);
+                x = 0;
+                neighborX = TerrainChunk.SizeMinusOne;
+                break;
+        }
+
+        if (neighbor == null ||
+            !ClientDerivedTerrainPolicy.CanAdvanceLightingDependency(_subsystemTerrain.ContentRole, neighbor) ||
+            neighbor.WorkerState < TerrainChunkState.InvalidPropagatedLight)
+        {
+            return;
+        }
+
+        for (var i = 0; i <= TerrainChunk.SizeMinusOne; i++)
+        {
+            switch (face)
+            {
+                case 0:
+                case 2:
+                    x = i;
+                    neighborX = i;
+                    break;
+                default:
+                    z = i;
+                    neighborZ = i;
+                    break;
+            }
+
+            var worldX = x + chunk.Origin.X;
+            var worldZ = z + chunk.Origin.Y;
+            var cellIndex = TerrainChunk.CalculateCellIndex(x, 0, z);
+            var neighborCellIndex = TerrainChunk.CalculateCellIndex(neighborX, 0, neighborZ);
+            for (var y = chunk.GetBottomHeightFast(x, z); y < (1 << TerrainChunk.HeightBits); y++)
+            {
+                var cellValue = chunk.GetCellValueFast(cellIndex + y);
+                var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
+                if (!block.Transparent)
+                {
+                    continue;
+                }
+
+                var light = Terrain.ExtractLight(neighbor.GetCellValueFast(neighborCellIndex + y)) - 1;
+                if (light <= Terrain.ExtractLight(cellValue))
+                {
+                    continue;
+                }
+
+                chunk.SetCellValueFast(cellIndex + y, Terrain.ReplaceLight(cellValue, light));
+                if (light > 1)
+                {
+                    _lightSources.Add(new LightSource
+                    {
+                        X = worldX,
+                        Y = y,
+                        Z = worldZ,
+                        Light = light
+                    });
+                }
+            }
+        }
+    }
+
+    /// <summary>
     ///     从指定位置传播光源到相邻方块
     /// </summary>
     /// <param name="x">X坐标</param>
@@ -1695,42 +1778,6 @@ public class TerrainUpdater
                         }
                     }
                 }
-            }
-        }
-    }
-
-    /// <summary>
-    ///     计算光照传播位掩码的索引
-    /// </summary>
-    /// <param name="x">相对 X 偏移（-1, 0, 1）</param>
-    /// <param name="z">相对 Z 偏移（-1, 0, 1）</param>
-    /// <returns>位掩码索引（0-8）</returns>
-    private static int CalculateLightPropagationBitIndex(int x, int z)
-    {
-        return x + 1 + 3 * (z + 1);
-    }
-
-    /// <summary>
-    ///     更新邻近区块的光照传播位掩码
-    /// </summary>
-    /// <param name="chunk">当前区块</param>
-    /// <remarks>
-    ///     标记周围 3x3 区域的区块，表示它们需要重新计算光照
-    /// </remarks>
-    private void UpdateNeighborsLightPropagationBitmasks(TerrainChunk chunk)
-    {
-        for (var i = -1; i <= 1; i++)
-        {
-            for (var j = -1; j <= 1; j++)
-            {
-                var chunkAtCoords = _terrain.GetChunkAtCoords(chunk.Coords.X + i, chunk.Coords.Y + j);
-                if (chunkAtCoords == null)
-                {
-                    continue;
-                }
-
-                var num = CalculateLightPropagationBitIndex(-i, -j);
-                chunkAtCoords.LightPropagationMask |= 1 << num;
             }
         }
     }
