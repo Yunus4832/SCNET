@@ -2,7 +2,7 @@
 
     <PanoramaWidget/>
 
-    <StackPanelWidget Direction="Vertical">
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Stretch">
 
         <CanvasWidget Size="0, Infinity"/>
 
