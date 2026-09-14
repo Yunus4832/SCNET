@@ -1,6 +1,6 @@
 <CheckboxWidget xmlns="runtime-namespace:Game.Widgets" Margin="0, 6" Color="255, 255, 255" IsAutoCheckingEnabled="true"
                 CheckboxSize="32, 32" TickSubtexture="{Textures/Atlas/Tick}">
-    <StackPanelWidget Direction="Horizontal">
+    <StackPanelWidget Direction="Horizontal" Margin="6, 0">
         <CanvasWidget Name="Checkbox.Canvas" VerticalAlignment="Center">
             <BevelledRectangleWidget Name="Checkbox.Rectangle" DirectionalLight="0" AmbientLight="1"
                                       BevelSize="1" RoundingRadius="4" ShadowColor="0, 0, 0, 0"/>

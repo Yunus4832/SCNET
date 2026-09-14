@@ -81,18 +81,21 @@
                                                                 HorizontalAlignment="Far" VerticalAlignment="Center"
                                                                 TextHorizontalAlignment="Far" Margin="20, 0"/>
                                         <CanvasWidget Size="310, 60" VerticalAlignment="Center" Margin="20, 0">
-                                            <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                            <StackPanelWidget Direction="Horizontal" Margin="12, 6"
-                                                              IsHitTestVisible="false">
-                                                <BlockIconWidget Name="FlatTerrainBlock" Size="48, 48"
-                                                                 VerticalAlignment="Center" Contents="1"/>
-                                                <CanvasWidget Size="10, 0" IsHitTestVisible="false"/>
-                                                <LabelWidget Name="FlatTerrainBlockLabel" VerticalAlignment="Center"/>
-                                                <CanvasWidget Size="Infinity, 0" IsHitTestVisible="false"/>
-                                                <LabelWidget Text="..." Size="32, 48" Color="160, 160, 160"
-                                                             HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                             TextAnchor="HorizontalCenter, VerticalCenter"/>
-                                            </StackPanelWidget>
+                                            <CanvasWidget Margin="0, 6" IsHitTestVisible="false">
+                                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                                                <StackPanelWidget Direction="Horizontal" Margin="12, 0">
+                                                    <BlockIconWidget Name="FlatTerrainBlock" Size="48, 48"
+                                                                     VerticalAlignment="Center" Contents="1"/>
+                                                    <CanvasWidget Size="10, 0" IsHitTestVisible="false"/>
+                                                    <LabelWidget Name="FlatTerrainBlockLabel"
+                                                                 VerticalAlignment="Center"/>
+                                                    <CanvasWidget Size="Infinity, 0" IsHitTestVisible="false"/>
+                                                    <LabelWidget Text="..." Size="32, 48" Color="160, 160, 160"
+                                                                 HorizontalAlignment="Center"
+                                                                 VerticalAlignment="Center"
+                                                                 TextAnchor="HorizontalCenter, VerticalCenter"/>
+                                                </StackPanelWidget>
+                                            </CanvasWidget>
                                             <ClickableWidget Name="FlatTerrainBlockSelector"
                                                              SoundName="Audio/UI/ButtonClick"/>
                                         </CanvasWidget>
@@ -156,22 +159,25 @@
                                                     VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                     Margin="20, 0"/>
                             <CanvasWidget Size="310, 60" VerticalAlignment="Center" Margin="20, 0">
-                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <StackPanelWidget Direction="Horizontal" Margin="12, 6" IsHitTestVisible="false">
-                                    <RectangleWidget Name="BlocksTextureIcon" Size="48, 48" FillColor="255, 255, 255"
-                                                     OutlineColor="0, 0, 0, 0" VerticalAlignment="Center"/>
-                                    <CanvasWidget Size="10, 0" IsHitTestVisible="false"/>
-                                    <CanvasWidget Size="Infinity, 48" IsHitTestVisible="false">
-                                        <StackPanelWidget Direction="Vertical" VerticalAlignment="Center"
-                                                          IsHitTestVisible="false">
-                                            <LabelWidget Name="BlocksTextureLabel"/>
-                                            <LabelWidget Name="BlocksTextureDetails" Color="128, 128, 128"/>
-                                        </StackPanelWidget>
-                                    </CanvasWidget>
-                                    <LabelWidget Text="..." Size="32, 48" Color="160, 160, 160"
-                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
-                                                 TextAnchor="HorizontalCenter, VerticalCenter"/>
-                                </StackPanelWidget>
+                                <CanvasWidget Margin="0, 6" IsHitTestVisible="false">
+                                    <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                                    <StackPanelWidget Direction="Horizontal" Margin="12, 0">
+                                        <RectangleWidget Name="BlocksTextureIcon" Size="48, 48"
+                                                         FillColor="255, 255, 255"
+                                                         OutlineColor="0, 0, 0, 0" VerticalAlignment="Center"/>
+                                        <CanvasWidget Size="10, 0" IsHitTestVisible="false"/>
+                                        <CanvasWidget Size="Infinity, 48" IsHitTestVisible="false">
+                                            <StackPanelWidget Direction="Vertical" VerticalAlignment="Center"
+                                                              IsHitTestVisible="false">
+                                                <LabelWidget Name="BlocksTextureLabel"/>
+                                                <LabelWidget Name="BlocksTextureDetails" Color="128, 128, 128"/>
+                                            </StackPanelWidget>
+                                        </CanvasWidget>
+                                        <LabelWidget Text="..." Size="32, 48" Color="160, 160, 160"
+                                                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                     TextAnchor="HorizontalCenter, VerticalCenter"/>
+                                    </StackPanelWidget>
+                                </CanvasWidget>
                                 <ClickableWidget Name="BlocksTextureSelector" SoundName="Audio/UI/ButtonClick"/>
                             </CanvasWidget>
                         </UniformSpacingPanelWidget>

@@ -1,5 +1,5 @@
 <SliderWidget xmlns="runtime-namespace:Game.Widgets" SoundName="Audio/UI/ButtonClick">
-    <StackPanelWidget Name="Slider.Panel" Direction="Horizontal" IsHitTestVisible="false">
+    <StackPanelWidget Name="Slider.Panel" Direction="Horizontal" IsHitTestVisible="false" Margin="6, 6">
         <CanvasWidget Name="Slider.Canvas" Size="Infinity, Infinity">
             <RectangleWidget Name="Slider.Rectangle" Size="Infinity, 6" OutlineColor="0, 0, 0, 0" FillColor="24, 112, 0"
                              VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10, 0"/>

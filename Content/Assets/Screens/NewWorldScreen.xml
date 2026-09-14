@@ -12,58 +12,54 @@
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
                 <ScrollPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center"
                                    Margin="3, 3">
-                    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Far" VerticalAlignment="Center"
-                                      Margin="40, 10">
-                    <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                        <LabelWidget Size="170, -1" TextAnchor="Right" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:1]"/>
-                        <CanvasWidget Size="40, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="310, 50" Margin="0, 5">
-                            <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                            <TextBoxWidget Name="Name" Size="310, 50" VerticalAlignment="Center"
-                                           MaximumLength="14" Margin="10, 0"/>
-                        </CanvasWidget>
-                    </StackPanelWidget>
-                    <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                        <LabelWidget Size="170, -1" TextAnchor="Right" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:2]"/>
-                        <CanvasWidget Size="40, 0"/>
-                        <CanvasWidget VerticalAlignment="Center" Size="310, 50" Margin="0, 5">
-                            <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                            <TextBoxWidget Name="Seed" Size="310, 50"
-                                           VerticalAlignment="Center" MaximumLength="14" Margin="10, 0"/>
-                            <LabelWidget Name="BlankSeed" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                         Text="[NewWorldScreen:3]" Color="96, 96, 96"/>
-                        </CanvasWidget>
-                    </StackPanelWidget>
-                    <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                        <LabelWidget Size="170, -1" TextAnchor="Right" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:4]"/>
-                        <CanvasWidget Size="40, 0"/>
-                        <BevelledButtonWidget Name="GameMode" Style="{Styles/ButtonStyle_310x60}"
-                                              VerticalAlignment="Center"/>
-                    </StackPanelWidget>
-                    <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                        <LabelWidget Size="170, -1" TextAnchor="Right" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:5]"/>
-                        <CanvasWidget Size="40, 0"/>
-                        <BevelledButtonWidget Name="StartingPosition" Style="{Styles/ButtonStyle_310x60}"
-                                              VerticalAlignment="Center"/>
-                    </StackPanelWidget>
-                    <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                        <LabelWidget Size="170, -1" TextAnchor="Right" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:6]"/>
-                        <CanvasWidget Size="40, 0"/>
-                        <BevelledButtonWidget Name="WorldOptions" Style="{Styles/ButtonStyle_310x60}"
-                                              Text="[NewWorldScreen:7]" VerticalAlignment="Center"/>
-                    </StackPanelWidget>
-                    <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">
-                        <LabelWidget Size="170, -1" TextAnchor="Right" VerticalAlignment="Center"
-                                     Text="[NewWorldScreen:22]"/>
-                        <CanvasWidget Size="40, 0"/>
-                        <BevelledButtonWidget Name="ServerSettings" Style="{Styles/ButtonStyle_310x60}"
-                                              Text="[NewWorldScreen:22]" VerticalAlignment="Center"/>
-                    </StackPanelWidget>
+                    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[NewWorldScreen:1]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center" TextAnchor="Right" Margin="20, 0"/>
+                            <CanvasWidget Size="310, 50" VerticalAlignment="Center" Margin="20, 5">
+                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                                <TextBoxWidget Name="Name" Size="310, 50" VerticalAlignment="Center"
+                                               MaximumLength="14" Margin="10, 0"/>
+                            </CanvasWidget>
+                        </UniformSpacingPanelWidget>
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[NewWorldScreen:2]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center" TextAnchor="Right" Margin="20, 0"/>
+                            <CanvasWidget Size="310, 50" VerticalAlignment="Center" Margin="20, 5">
+                                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                                <TextBoxWidget Name="Seed" Size="310, 50" VerticalAlignment="Center"
+                                               MaximumLength="14" Margin="10, 0"/>
+                                <LabelWidget Name="BlankSeed" HorizontalAlignment="Center"
+                                             VerticalAlignment="Center" Text="[NewWorldScreen:3]"
+                                             Color="96, 96, 96"/>
+                            </CanvasWidget>
+                        </UniformSpacingPanelWidget>
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[NewWorldScreen:4]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center" TextAnchor="Right" Margin="20, 0"/>
+                            <BevelledButtonWidget Name="GameMode" Style="{Styles/ButtonStyle_310x60}"
+                                                  VerticalAlignment="Center" Margin="20, 0"/>
+                        </UniformSpacingPanelWidget>
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[NewWorldScreen:5]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center" TextAnchor="Right" Margin="20, 0"/>
+                            <BevelledButtonWidget Name="StartingPosition" Style="{Styles/ButtonStyle_310x60}"
+                                                  VerticalAlignment="Center" Margin="20, 0"/>
+                        </UniformSpacingPanelWidget>
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[NewWorldScreen:6]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center" TextAnchor="Right" Margin="20, 0"/>
+                            <BevelledButtonWidget Name="WorldOptions" Style="{Styles/ButtonStyle_310x60}"
+                                                  Text="[NewWorldScreen:7]" VerticalAlignment="Center"
+                                                  Margin="20, 0"/>
+                        </UniformSpacingPanelWidget>
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[NewWorldScreen:22]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center" TextAnchor="Right" Margin="20, 0"/>
+                            <BevelledButtonWidget Name="ServerSettings" Style="{Styles/ButtonStyle_310x60}"
+                                                  Text="[NewWorldScreen:22]" VerticalAlignment="Center"
+                                                  Margin="20, 0"/>
+                        </UniformSpacingPanelWidget>
                     </StackPanelWidget>
                 </ScrollPanelWidget>
             </CanvasWidget>
