@@ -2482,22 +2482,6 @@
         }
     },
     "Help": {
-        "1": {
-            "value": "\\nThe multiplayer edition supports online play. The current mod system uses unified .scpkg content packages distributed through the content server and enabled in mod management.\\n\\nPlease credit the source when reposting. The original game copyright belongs to Kaalus.",
-            "Title": "Net Multiplayer Information"
-        },
-        "2": {
-            "value": "\\nThe current mod package format is .scpkg. Use Import in mod management to select one or more packages. Importing only adds them to the unified cache; enable them explicitly for the global profile or selected worlds.\\n\\nExport saves the original cached package through the system file picker. Remove a mod from every profile before deleting its cache entry.",
-            "Title": "Installing Net Multiplayer Mods"
-        },
-        "3": {
-            "value": "\n The API version uses the .scmod mod format. Only mods shown in the mod manager are valid.\n \nThe mod installation path is /sdcard/SurvivalCraft2.4_API1.8/Mods \n\n(On PC, the equivalent folder is Mods in the game directory.) \n\n\n Steps:\n\nUse the phone's built-in file manager, MT Manager, or another file manager to find a downloaded mod file compatible with the 2.4 plugin version (file format: scmod). Move or copy it into the Mods folder under Survivalcraft2.4_API1.8 in internal storage, then restart the game.\n\nTo uninstall a mod, delete the selected mod from the Mods folder or move it out of that folder, then restart the game.\n\nThe game must be restarted after every change to the Mods folder.\n\n\nIf this is inconvenient, you can also download mods from the built-in community and install them with the built-in mod manager.",
-            "Title": "Installing API Mods (Deprecated)"
-        },
-        "4": {
-            "value": "\n The API version is also known as the plugin version. It can load mods. Without mods, it can be played as a localized version of the original game.\n\nDevelopment team: 大大怪, 开心果果, 再回首zh, 被遗忘的青色剑士, 镁生素, 把红色赋予黑海, p0_INT, 酸菜味小咸鱼, 钅离_LX, 销锋镝铸.\n\n Please credit the source when redistributing.\n\nThe original game copyright belongs to Kaalus.",
-            "Title": "API Information (Deprecated)"
-        },
         "5": {
             "Name": "Gamepad",
             "Title": "Gamepad Controls",
@@ -2652,9 +2636,8 @@
             "Title": "Force Respawn"
         },
         "42": {
-            "value": "\\n\\nThe game lets you import and export worlds to the SD card for sharing and backup.\\n\\n\\n\\n\\n\\nIf your device does not have an SD card, the common external storage folder will be used.\\n\\nThe data location on the device is usually /sdcard/Survivalcraft2.2\\n ",
-            "Title": "SD Card",
-            "DisabledPlatforms": "Ios, Windows81, WindowsPhone81, Desktop"
+            "value": "\\n\\nThe game imports and exports content packages through the system file picker.\\n\\nYou choose the source or save location, and no fixed SD card directory is required.\\n\\n\\nAvailable locations are provided by the operating system and its file services.\\n\\nRelated actions are unavailable when the current platform does not provide file picking.\\n ",
+            "Title": "Importing and Exporting Files"
         },
         "43": {
             "value": "\\n\\nSneaking is useful when you want to move carefully, such as avoiding falling from the edge of a high block.\\n\\n\\nTo toggle sneak mode, press the sneak button on the right side of the screen.\\n\\nWhen sneak mode is enabled, your movement is constrained at block edges to prevent you from falling from the block you are standing on.\\n\\n\\nSneaking also makes your movement much quieter, letting you approach some animals without scaring them away. \\n\\nFor example, you can sneak up on a bird without frightening it. \\n\\nMake sure you do not approach it from the front, because it will see you and fly away. \\n ",
@@ -2663,6 +2646,10 @@
         "44": {
             "value": "\\n\\nFlying mode is only available in Creative mode.\\n\\nTo toggle flying mode, tap the fly button on the right side of the screen.\\n\\nJumping twice in quick succession also toggles flying mode.\\n\\n\\nFlying is much faster than walking and lets you quickly reach places that are hard to access on foot.\\n ",
             "Title": "Flying"
+        },
+        "45": {
+            "Title": "Disclaimer",
+            "value": "\\n\\nThis is an unofficial reverse-engineering and refactoring project\\nfor learning and technical research, not for commercial profit.\\n\\n\\nCopyright in the Survivalcraft trademarks, names, artwork, audio,\\nstory settings, and other original content belongs to the original author\\nand the respective rights holders.\\n\\nRepository contributors claim no copyright or trademark rights over the original work.\\n\\n\\nThis non-profit project is not affiliated with, authorized by, or endorsed by\\nthe original author, publisher, or related companies.\\n\\nIts code and documentation are for learning, research, and discussion only\\nand must not be used to infringe legal rights.\\n\\n\\nUsers are responsible for complying with local laws and platform rules\\nand accept the risks and legal responsibility of use.\\n\\nRights holders may report potentially infringing repository content through an Issue\\nor by contacting the maintainers for timely review.\\n "
         }
     },
     "Strings": {

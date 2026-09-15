@@ -2482,22 +2482,6 @@
         }
     },
     "Help": {
-        "1": {
-            "value": "\\nA edição multijogador suporta jogo online. O sistema de mods atual utiliza pacotes de conteúdo .scpkg unificados, distribuídos pelo servidor de conteúdo e ativados na gestão de mods.\\n\\nIndique a fonte ao republicar. Os direitos do jogo original pertencem a Kaalus.",
-            "Title": "INFORMAÇÕES LÍQUIDAS EM LINHA"
-        },
-        "2": {
-            "value": "\\nO formato atual dos pacotes de mods é .scpkg. Utilize Importar na gestão de mods para selecionar um ou mais pacotes. A importação apenas os adiciona à cache unificada; ative-os explicitamente no perfil global ou nos mundos selecionados.\\n\\nExportar guarda o pacote original em cache através do seletor de ficheiros do sistema. Remova um mod de todos os perfis antes de eliminar a respetiva entrada da cache.",
-            "Title": "Instalação de rede Mod tutorial online"
-        },
-        "3": {
-            "value": "O formato mod lançado pela versão da API é o scmod, e só o mod apresentado no Gestor de Mod é válido. \\ n\\ nmod A localização da instalação é / sdcard/ SurvivalCraft2. 4_ API1.8/ n( Da mesma forma, a versão do computador está na pasta Mods da pasta do jogo)\\ n\\ nspecific operations:\\ n\\ nususe o gestor de ficheiros ou gestor de MT que vem com o telemóvel para encontrar o ficheiro mod transferido (o formato de ficheiro é o 'scmod') disponível para a página 2. 4- plug. Mover ou copiar e colar para a pasta Mods na API1.8 no armazenamento interno do telefone, e depois reiniciar o jogo depois de mover os arquivos. \\ n\\ nif Deseja desinstalar o mod, remover ou remover o mod indicado na pasta Mods da pasta Mods e, finalmente, reiniciar o jogo. A pasta\\ nMods precisa de ser reiniciada após cada actualização. \\ n\\ nSe o achar problemático, tente transferir o 'mod' da compilação - na comunidade e instalá- lo com o seu próprio gestor de mods.",
-            "Title": "Instalação de mod tutorial da API (desactualizada na versão actual)"
-        },
-        "4": {
-            "value": "\\ nThe API, também conhecido como Plug - em versão, é uma versão que pode carregar mod. Não adicionar mod pode ser usado como a versão chinesa original do jogo. Equipa de desenvolvimento: Big Monster, pistácio, olhando para trás, espadachim ciano esquecido, probióticos de magnésio, dando vermelho para o Mar Negro, P0_int, peixe em pickles com sabor de sauerkraut, Li_LX, Xiefeng disprósio. Por favor, indique a fonte da reimpressão. O 'copyright' do jogo original pertence ao Kaalus (Lao k).",
-            "Title": "Informação relacionada com a API (a versão actual está desactualizada)"
-        },
         "5": {
             "value": "",
             "Name": "Gamepad",
@@ -2652,9 +2636,8 @@
             "Title": "Suicídio"
         },
         "42": {
-            "value": "O jogo permite importar e exportar mundos para um cartão SD para compartilhamento e backup. Se o seu dispositivo não tiver um cartão SD, a pasta de armazenamento externo comum será usada. n\\ nA localização dos dados no dispositivo é normalmente / sdcard / Survivalcraft2.2\\n ",
-            "Title": "cartão SD",
-            "DisabledPlatforms": "iOS, Windows81, WindowsPhone81, Desktop"
+            "value": "\\n\\nO jogo importa e exporta pacotes de conteúdo através do seletor de ficheiros do sistema.\\n\\nPode escolher a origem ou o local de destino, sem depender de uma pasta fixa no cartão SD.\\n\\n\\nOs locais disponíveis são fornecidos pelo sistema operativo e pelos respetivos serviços de ficheiros.\\n\\nAs ações relacionadas ficam indisponíveis quando a plataforma não oferece seleção de ficheiros.\\n ",
+            "Title": "Importar e exportar ficheiros"
         },
         "43": {
             "value": "Se você quiser se mover com cuidado, como evitar cair na borda de um quadrado alto, o esquivo é útil. n\\ n\\ nPara alternar o modo de esquivo, pressione o botão de esquivo no lado direito da tela.\\ Quando o modo furtivo está ativado, suas ações serão limitadas à borda da caixa para evitar que você caia de uma caixa em pé. O esquivo também vai tornar seus movimentos muito mais silenciosos, permitindo que você se aproxime de certos animais sem assustá - los. Por exemplo, você pode usar Stealth para se aproximar de um pássaro sem assustá - lo. Certifique-se de não se aproximar dele da frente, pois ele vai vê - lo e voar para longe. \\ N ",
@@ -2663,6 +2646,10 @@
         "44": {
             "value": "O modo de vôo só pode ser usado no modo de criação. Para alternar o modo de voo, clique no botão de voo no lado direito da tela. Dois saltos rápidos consecutivos também alteram o modo de voo. Voar é muito mais rápido do que andar e permite chegar rapidamente a lugares difíceis de alcançar a pé. n ",
             "Title": "Voar"
+        },
+        "45": {
+            "Title": "Aviso legal",
+            "value": "\\n\\nEste é um projeto não oficial de engenharia inversa e refatoração\\npara aprendizagem e investigação técnica, sem fins comerciais.\\n\\n\\nOs direitos sobre as marcas, nomes, recursos gráficos, áudio, ambientação\\ne outros conteúdos originais de Survivalcraft pertencem ao autor original\\ne aos respetivos titulares.\\n\\nOs contribuidores não reivindicam direitos de autor ou de marca sobre a obra original.\\n\\n\\nEste projeto sem fins lucrativos não é afiliado, autorizado nem apoiado\\npelo autor original, editora ou empresas associadas.\\n\\nO código e a documentação destinam-se apenas à aprendizagem, investigação e discussão\\ne não podem ser usados para infringir direitos legítimos.\\n\\n\\nOs utilizadores devem cumprir a legislação local e as regras das plataformas,\\nassumindo os riscos e responsabilidades legais.\\n\\nOs titulares de direitos podem comunicar conteúdo potencialmente infrator\\natravés de uma Issue ou contactando os responsáveis para análise.\\n "
         }
     },
     "Strings": {
