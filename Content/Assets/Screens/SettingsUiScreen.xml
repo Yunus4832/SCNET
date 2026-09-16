@@ -31,7 +31,7 @@
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
                         <LabelWidget Text="[SettingsUiScreen:3]" HorizontalAlignment="Far" VerticalAlignment="Center"
                                      Margin="20, 0"/>
-                        <SliderWidget Name="UIScaleSlider" Size="Infinity, 60" VerticalAlignment="Center"
+                        <SliderWidget Name="UIScaleSlider" Size="310, 60" VerticalAlignment="Center"
                                       Granularity="0.05" MinValue="0.5" MaxValue="1.2" Margin="20, 0"/>
                     </UniformSpacingPanelWidget>
 

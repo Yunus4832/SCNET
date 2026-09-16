@@ -32,9 +32,9 @@
                                                     Text="[WorldServerSettingsScreen:MaxPlayers]"
                                                     TextHorizontalAlignment="Far" Color="255, 255, 255"
                                                     Margin="20, 0"/>
-                            <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
+                            <CanvasWidget VerticalAlignment="Center" Size="310, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="MaxPlayers" Size="380, 50" Text="20" VerticalAlignment="Center"
+                                <TextBoxWidget Name="MaxPlayers" Size="310, 50" Text="20" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
                         </UniformSpacingPanelWidget>
@@ -45,9 +45,9 @@
                                                     Text="[WorldServerSettingsScreen:DaySpeed]"
                                                     TextHorizontalAlignment="Far" Color="255, 255, 255"
                                                     Margin="20, 0"/>
-                            <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
+                            <CanvasWidget VerticalAlignment="Center" Size="310, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="DaySpeed" Size="380, 50" VerticalAlignment="Center"
+                                <TextBoxWidget Name="DaySpeed" Size="310, 50" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
                         </UniformSpacingPanelWidget>
@@ -58,9 +58,9 @@
                                                     Text="[WorldServerSettingsScreen:RecoverySpeed]"
                                                     TextHorizontalAlignment="Far" Color="255, 255, 255"
                                                     Margin="20, 0"/>
-                            <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
+                            <CanvasWidget VerticalAlignment="Center" Size="310, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="RecoverySpeed" Size="380, 50" VerticalAlignment="Center"
+                                <TextBoxWidget Name="RecoverySpeed" Size="310, 50" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
                         </UniformSpacingPanelWidget>
@@ -71,9 +71,9 @@
                                                     Text="[WorldServerSettingsScreen:DisableBlocks]"
                                                     TextHorizontalAlignment="Far" Color="255, 255, 255"
                                                     Margin="20, 0"/>
-                            <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
+                            <CanvasWidget VerticalAlignment="Center" Size="310, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="DisableBlocks" Size="380, 50" VerticalAlignment="Center"
+                                <TextBoxWidget Name="DisableBlocks" Size="310, 50" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
                         </UniformSpacingPanelWidget>
@@ -93,9 +93,9 @@
                                                     Text="[WorldServerSettingsScreen:KeywordBlocking]"
                                                     TextHorizontalAlignment="Far" Color="255, 255, 255"
                                                     Margin="20, 0"/>
-                            <CanvasWidget VerticalAlignment="Center" Size="Infinity, 50" Margin="20, 5">
+                            <CanvasWidget VerticalAlignment="Center" Size="310, 50" Margin="20, 5">
                                 <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
-                                <TextBoxWidget Name="KeywordBlocking" Size="380, 50" VerticalAlignment="Center"
+                                <TextBoxWidget Name="KeywordBlocking" Size="310, 50" VerticalAlignment="Center"
                                                MaximumLength="16" Margin="10, 0"/>
                             </CanvasWidget>
                         </UniformSpacingPanelWidget>

@@ -26,7 +26,7 @@
                         <LabelWidget Text="[SettingsPerformanceScreen:3]" HorizontalAlignment="Far"
                                      VerticalAlignment="Center" Margin="20, 0"/>
                         <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" Margin="20, 0">
-                            <SliderWidget Name="VisibilityRangeSlider" Size="Infinity, 60" Granularity="1"/>
+                            <SliderWidget Name="VisibilityRangeSlider" Size="310, 60" Granularity="1"/>
                             <LabelWidget Name="VisibilityRangeWarningLabel" TextAnchor="HorizontalCenter"
                                          Color="128, 128, 128" HorizontalAlignment="Center"/>
                         </StackPanelWidget>

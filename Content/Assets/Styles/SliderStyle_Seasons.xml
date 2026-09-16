@@ -4,6 +4,6 @@
             <RectangleWidget Name="Slider.Rectangle" Subtexture="{Textures/Gui/SeasonsSlider}"
                              TextureLinearFilter="false" FillColor="255, 255, 255"/>
         </CanvasWidget>
-        <CanvasWidget Name="Slider.LabelCanvas" Size="100, Infinity"/>
+        <CanvasWidget Name="Slider.LabelCanvas" Size="80, Infinity"/>
     </StackPanelWidget>
 </SliderWidget>

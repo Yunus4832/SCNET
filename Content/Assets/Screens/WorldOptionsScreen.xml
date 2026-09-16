@@ -40,7 +40,7 @@
                                                                 Text="[WorldOptionsScreen:4]" Color="255, 255, 255"
                                                                 HorizontalAlignment="Far" VerticalAlignment="Center"
                                                                 TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <SliderWidget Name="IslandSizeEW" Size="Infinity, 60" VerticalAlignment="Center"
+                                        <SliderWidget Name="IslandSizeEW" Size="310, 60" VerticalAlignment="Center"
                                                       Margin="20, 0"/>
                                     </UniformSpacingPanelWidget>
                                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
@@ -48,7 +48,7 @@
                                                                 Text="[WorldOptionsScreen:5]" Color="255, 255, 255"
                                                                 HorizontalAlignment="Far" VerticalAlignment="Center"
                                                                 TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <SliderWidget Name="IslandSizeNS" Size="Infinity, 60" VerticalAlignment="Center"
+                                        <SliderWidget Name="IslandSizeNS" Size="310, 60" VerticalAlignment="Center"
                                                       Margin="20, 0"/>
                                     </UniformSpacingPanelWidget>
                                 </StackPanelWidget>
@@ -60,7 +60,7 @@
                                                                 Text="[WorldOptionsScreen:6]" Color="255, 255, 255"
                                                                 HorizontalAlignment="Far" VerticalAlignment="Center"
                                                                 TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <SliderWidget Name="FlatTerrainLevel" Size="Infinity, 60"
+                                        <SliderWidget Name="FlatTerrainLevel" Size="310, 60"
                                                       VerticalAlignment="Center" Margin="20, 0" Granularity="16"
                                                       MinValue="0" MaxValue="504"/>
                                     </UniformSpacingPanelWidget>
@@ -70,7 +70,7 @@
                                                                 Text="[WorldOptionsScreen:7]" Color="255, 255, 255"
                                                                 HorizontalAlignment="Far" VerticalAlignment="Center"
                                                                 TextHorizontalAlignment="Far" Margin="20, 0"/>
-                                        <SliderWidget Name="FlatTerrainShoreRoughness" Size="Infinity, 60"
+                                        <SliderWidget Name="FlatTerrainShoreRoughness" Size="310, 60"
                                                       VerticalAlignment="Center" Margin="20, 0" Granularity="0.1"
                                                       MinValue="0" MaxValue="1"/>
                                     </UniformSpacingPanelWidget>
@@ -120,7 +120,7 @@
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
                                                         VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
-                                <SliderWidget Name="SeaLevelOffset" Size="Infinity, 60" VerticalAlignment="Center"
+                                <SliderWidget Name="SeaLevelOffset" Size="310, 60" VerticalAlignment="Center"
                                               Margin="20, 0" Granularity="1" MinValue="0" MaxValue="16"/>
                             </UniformSpacingPanelWidget>
 
@@ -129,7 +129,7 @@
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
                                                         VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
-                                <SliderWidget Name="TemperatureOffset" Size="Infinity, 60" VerticalAlignment="Center"
+                                <SliderWidget Name="TemperatureOffset" Size="310, 60" VerticalAlignment="Center"
                                               Margin="20, 0" Granularity="2" MinValue="-16" MaxValue="16"/>
                             </UniformSpacingPanelWidget>
 
@@ -138,7 +138,7 @@
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
                                                         VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
-                                <SliderWidget Name="HumidityOffset" Size="Infinity, 60" VerticalAlignment="Center"
+                                <SliderWidget Name="HumidityOffset" Size="310, 60" VerticalAlignment="Center"
                                               Margin="20, 0" Granularity="2" MinValue="-16" MaxValue="16"/>
                             </UniformSpacingPanelWidget>
 
@@ -147,7 +147,7 @@
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
                                                         VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
-                                <SliderWidget Name="BiomeSize" Size="Infinity, 60" VerticalAlignment="Center"
+                                <SliderWidget Name="BiomeSize" Size="310, 60" VerticalAlignment="Center"
                                               Margin="20, 0" Granularity="2" MinValue="-16" MaxValue="16"/>
                             </UniformSpacingPanelWidget>
 
@@ -209,7 +209,7 @@
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
                                                         VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
-                                <SliderWidget Name="YearDays" Size="Infinity, 60" VerticalAlignment="Center"
+                                <SliderWidget Name="YearDays" Size="310, 60" VerticalAlignment="Center"
                                               Margin="20, 0"/>
                             </UniformSpacingPanelWidget>
 
@@ -218,7 +218,7 @@
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
                                                         VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                         Margin="20, 0"/>
-                                <SliderWidget Name="TimeOfYear" Style="{Styles/SliderStyle_Seasons}" Size="Infinity, 60"
+                                <SliderWidget Name="TimeOfYear" Style="{Styles/SliderStyle_Seasons}" Size="310, 60"
                                               VerticalAlignment="Center" Margin="20, 0" Granularity="0.01" MinValue="0"
                                               MaxValue="1"/>
                             </UniformSpacingPanelWidget>
