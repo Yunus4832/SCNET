@@ -26,6 +26,12 @@ public sealed class NetPlayScreen : Screen
         Name
     }
 
+    private enum SourceCategory
+    {
+        Local,
+        External
+    }
+
     private sealed record SourceFilterOption(IServerSource? Source);
 
     private sealed record ServerLoadResult(IReadOnlyList<ServerItem> Items, bool HadSourceErrors);
@@ -35,6 +41,7 @@ public sealed class NetPlayScreen : Screen
     private readonly TextBoxWidget _searchTextBox;
     private readonly LabelWidget _searchPlaceholder;
     private readonly ListPanelWidget _serverList;
+    private readonly SelectionDrawerWidget _sourceCategoryDrawer;
     private readonly SelectionDrawerWidget _sourceDrawer;
     private readonly SelectionDrawerWidget _sortDrawer;
     private readonly LabelWidget _statusLabel;
@@ -43,6 +50,7 @@ public sealed class NetPlayScreen : Screen
     private IReadOnlyList<IServerSource> _sources = [];
     private bool _busy;
     private bool _hadSourceErrors;
+    private bool _updatingSourceOptions;
 
     public NetPlayScreen()
     {
@@ -51,6 +59,7 @@ public sealed class NetPlayScreen : Screen
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _searchTextBox = Children.Find<TextBoxWidget>("Search")!;
         _searchPlaceholder = Children.Find<LabelWidget>("SearchPlaceholder")!;
+        _sourceCategoryDrawer = Children.Find<SelectionDrawerWidget>("SourceCategory")!;
         _sourceDrawer = Children.Find<SelectionDrawerWidget>("SourceFilter")!;
         _sortDrawer = Children.Find<SelectionDrawerWidget>("SortOrder")!;
         _statusLabel = Children.Find<LabelWidget>("Status")!;
@@ -70,8 +79,18 @@ public sealed class NetPlayScreen : Screen
             UpdateSearchPlaceholder();
             ApplyView();
         };
-        _sourceDrawer.ItemTextProvider = item => GetSourceName(((SourceFilterOption)item).Source);
-        _sourceDrawer.SelectionChanged += RefreshSelectedSource;
+        _sourceCategoryDrawer.ItemTextProvider = item => Text($"Category{item}");
+        _sourceCategoryDrawer.SetItems(Enum.GetValues<SourceCategory>().Cast<object>());
+        _sourceCategoryDrawer.SelectedItem = SourceCategory.Local;
+        _sourceCategoryDrawer.SelectionChanged += ReloadSourceOptionsAndRefresh;
+        _sourceDrawer.ItemTextProvider = item => GetSourceName((SourceFilterOption)item);
+        _sourceDrawer.SelectionChanged += () =>
+        {
+            if (!_updatingSourceOptions)
+            {
+                RefreshSelectedSource();
+            }
+        };
         _sortDrawer.ItemTextProvider = item => Text($"Sort{item}");
         _sortDrawer.SelectionChanged += ApplyView;
         _sortDrawer.SetItems(Enum.GetValues<ServerSortOrder>().Cast<object>());
@@ -107,7 +126,11 @@ public sealed class NetPlayScreen : Screen
         _searchPlaceholder.Text = Text("SearchPlaceholder");
         _searchTextBox.Text = string.Empty;
         UpdateSearchPlaceholder();
+        _sourceCategoryDrawer.RefreshItems();
         _sortDrawer.RefreshItems();
+        _updatingSourceOptions = true;
+        _sourceCategoryDrawer.SelectedItem = SourceCategory.Local;
+        _updatingSourceOptions = false;
         ReloadSources();
     }
 
@@ -117,6 +140,7 @@ public sealed class NetPlayScreen : Screen
         _refreshCancellation?.Dispose();
         _refreshCancellation = null;
         _busy = false;
+        _sourceCategoryDrawer.Close();
         _sourceDrawer.Close();
         _sortDrawer.Close();
         _actionPanel.ShowPrimaryItems();
@@ -143,26 +167,34 @@ public sealed class NetPlayScreen : Screen
             Margin = new Vector2(12f, 0f),
             VerticalAlignment = WidgetAlignment.Center
         };
-        var title = new LabelWidget { FontScale = 0.8f };
-        var details = new LabelWidget { FontScale = 0.55f, Color = new Color(170, 170, 170) };
+        var title = new LabelWidget { FontScale = 0.8f, Ellipsis = true, MaxLines = 1 };
+        var details = new LabelWidget
+        {
+            FontScale = 0.55f,
+            Color = new Color(170, 170, 170),
+            Ellipsis = true,
+            MaxLines = 1
+        };
+        var sourceDetails = $"{Text("Source")}: {GetSourceName(server.SourceKind, server.SourceName)}";
         switch (server.RuntimeStatus.Availability)
         {
             case ServerAvailability.Available:
                 title.Text = $"{server.DisplayName} ({server.RuntimeStatus.PingMilliseconds} ms)";
                 title.Color = Color.LightGreen;
-                details.Text = BuildDetails(server.RuntimeStatus);
+                details.Text = $"{sourceDetails} | {BuildDetails(server.RuntimeStatus)}";
                 break;
             case ServerAvailability.Checking:
                 title.Text = $"{server.DisplayName} {Text("Loading")}";
+                details.Text = sourceDetails;
                 break;
             case ServerAvailability.Unavailable:
                 title.Text = $"{server.DisplayName} {Text("Unavailable")}";
                 title.Color = Color.LightRed;
-                details.Text = server.Address;
+                details.Text = $"{sourceDetails} | {server.Address}";
                 break;
             default:
                 title.Text = server.DisplayName;
-                details.Text = server.Address;
+                details.Text = $"{sourceDetails} | {server.Address}";
                 break;
         }
 
@@ -196,12 +228,20 @@ public sealed class NetPlayScreen : Screen
 
     private void ReloadSources()
     {
-        var selectedId = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Source?.Id;
         _sources = SettingsManager.ServerSources.GetEnabledSources();
-        var options = new[] { new SourceFilterOption(null) }
-            .Concat(_sources.Select(source => new SourceFilterOption(source))).ToArray();
-        _sourceDrawer.SetItems(options.Cast<object>());
-        _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId) ?? options[0];
+        ReloadSourceOptions();
+        RefreshSelectedSource();
+    }
+
+    private void ReloadSourceOptionsAndRefresh()
+    {
+        if (_updatingSourceOptions)
+        {
+            return;
+        }
+
+        ReloadSourceOptions();
+        RefreshSelectedSource();
     }
 
     private void RefreshSelectedSource()
@@ -211,7 +251,7 @@ public sealed class NetPlayScreen : Screen
             return;
         }
 
-        var sources = option.Source is null ? _sources : [option.Source];
+        var sources = option.Source is null ? GetCategorySources() : [option.Source];
 
         _refreshCancellation?.Cancel();
         _refreshCancellation?.Dispose();
@@ -340,7 +380,8 @@ public sealed class NetPlayScreen : Screen
     {
         return server.DisplayName.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
                server.Address.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-               server.SourceName.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
+               GetSourceName(server.SourceKind, server.SourceName)
+                   .Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
                server.Description.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
                server.Tags.Any(tag => tag.Contains(search, StringComparison.CurrentCultureIgnoreCase));
     }
@@ -362,8 +403,9 @@ public sealed class NetPlayScreen : Screen
         {
             ServerAction.Connect => selected?.RuntimeStatus.Availability == ServerAvailability.Available,
             ServerAction.Add or ServerAction.Refresh => true,
-            ServerAction.Favorite => selected is not null,
-            ServerAction.Delete => selected?.SourceKind == ServerSourceKind.MyServers,
+            ServerAction.Favorite => selected is not null && selected.SourceKind != ServerSourceKind.Favorites,
+            ServerAction.Delete => selected?.SourceKind is ServerSourceKind.MyServers or
+                ServerSourceKind.Favorites or ServerSourceKind.Recent,
             _ => false
         };
     }
@@ -388,7 +430,7 @@ public sealed class NetPlayScreen : Screen
                 RefreshSelectedSource();
                 break;
             case ServerAction.Favorite when selected is not null:
-                ToggleFavorite(selected);
+                AddFavorite(selected);
                 break;
             case ServerAction.Delete when selected is not null:
                 ConfirmDelete(selected);
@@ -415,11 +457,16 @@ public sealed class NetPlayScreen : Screen
             }));
     }
 
-    private void ToggleFavorite(ServerItem server)
+    private void AddFavorite(ServerItem server)
     {
-        var isFavorite = SettingsManager.ServerDirectory.IsFavorite(server.Address);
-        SettingsManager.ServerDirectory.SetFavorite(server.DisplayName, server.Address, !isFavorite);
-        _actionPanel.Refresh();
+        try
+        {
+            SettingsManager.ServerDirectory.AddFavorite(server.DisplayName, server.Address);
+        }
+        catch (ArgumentException)
+        {
+            DialogsManager.Alert(Text("DuplicateFavorite"));
+        }
     }
 
     private void ConfirmDelete(ServerItem server)
@@ -433,7 +480,21 @@ public sealed class NetPlayScreen : Screen
         {
             if (button == MessageDialogButton.Button1)
             {
-                SettingsManager.ServerDirectory.DeleteMyServer(id);
+                switch (server.SourceKind)
+                {
+                    case ServerSourceKind.MyServers:
+                        SettingsManager.ServerDirectory.DeleteMyServer(id);
+                        break;
+                    case ServerSourceKind.Favorites:
+                        SettingsManager.ServerDirectory.DeleteFavorite(id);
+                        break;
+                    case ServerSourceKind.Recent:
+                        SettingsManager.ServerDirectory.DeleteRecentServer(id);
+                        break;
+                    default:
+                        return;
+                }
+
                 RefreshSelectedSource();
             }
         });
@@ -484,9 +545,37 @@ public sealed class NetPlayScreen : Screen
 
     private void SelectSourceAndRefresh(string sourceId)
     {
-        ReloadSources();
+        _sourceCategoryDrawer.SelectedItem = SourceCategory.Local;
         _sourceDrawer.SelectedItem = _sourceDrawer.Items.Cast<SourceFilterOption>()
             .First(option => option.Source?.Id == sourceId);
+    }
+
+    private void ReloadSourceOptions()
+    {
+        var selectedId = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Source?.Id;
+        var options = new[] { new SourceFilterOption(null) }
+            .Concat(GetCategorySources().Select(source => new SourceFilterOption(source))).ToArray();
+        _updatingSourceOptions = true;
+        try
+        {
+            _sourceDrawer.SetItems(options.Cast<object>());
+            _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId) ??
+                                         options[0];
+            _sourceDrawer.IsEnabled = options.Length > 1;
+        }
+        finally
+        {
+            _updatingSourceOptions = false;
+        }
+    }
+
+    private IReadOnlyList<IServerSource> GetCategorySources()
+    {
+        return _sourceCategoryDrawer.SelectedItem switch
+        {
+            SourceCategory.Local => _sources.Where(source => source.Kind != ServerSourceKind.Http).ToArray(),
+            _ => _sources.Where(source => source.Kind == ServerSourceKind.Http).ToArray()
+        };
     }
 
     private string GetActionText(object item)
@@ -494,12 +583,6 @@ public sealed class NetPlayScreen : Screen
         if (item is not ServerAction action)
         {
             return string.Empty;
-        }
-
-        if (action == ServerAction.Favorite && _serverList.SelectedItem is ServerItem selected &&
-            SettingsManager.ServerDirectory.IsFavorite(selected.Address))
-        {
-            return Text("Unfavorite");
         }
 
         return Text(action.ToString());
@@ -515,20 +598,30 @@ public sealed class NetPlayScreen : Screen
         };
     }
 
-    private static string GetSourceName(IServerSource? source)
+    private string GetSourceName(SourceFilterOption option)
     {
+        var source = option.Source;
         if (source is null)
         {
-            return Text("AllSources");
+            return _sourceCategoryDrawer.SelectedItem switch
+            {
+                SourceCategory.Local => Text("AllLocalSources"),
+                _ => Text("AllExternalSources")
+            };
         }
 
-        return source.Kind switch
+        return GetSourceName(source.Kind, source.Name);
+    }
+
+    private static string GetSourceName(ServerSourceKind kind, string fallbackName)
+    {
+        return kind switch
         {
             ServerSourceKind.MyServers => Text("MyServers"),
             ServerSourceKind.Favorites => Text("Favorites"),
             ServerSourceKind.Recent => Text("Recent"),
             ServerSourceKind.Lan => Text("Lan"),
-            _ => source.Name
+            _ => fallbackName
         };
     }
 

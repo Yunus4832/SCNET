@@ -16,7 +16,7 @@ public sealed class ContentServerOptions
 
     public string BuiltInServerDirectoryId { get; set; } = "scnet-content-server";
 
-    public string BuiltInServerDirectoryName { get; set; } = "SCNET Community Servers";
+    public string BuiltInServerDirectoryName { get; set; } = "SCNET Servers";
 
     public string BuiltInServerDirectoryDescription { get; set; } = "Server directory provided by this ContentServer";
 

@@ -29,9 +29,9 @@ public sealed class ServerSourceCatalog
                 _serverDirectory, snapshot => snapshot.RecentServers),
             new LanServerSource(_serverDiscovery)
         };
-        sources.AddRange(state.Subscriptions.Where(subscription => subscription.IsEnabled)
-            .OrderBy(subscription => subscription.Order)
-            .Select(subscription => new HttpServerSource(subscription, _protocolClient)));
+        sources.AddRange(state.InstalledSources.Where(source => source.IsEnabled)
+            .OrderBy(source => source.Order)
+            .Select(source => new HttpServerSource(source, _protocolClient)));
         return sources;
     }
 }

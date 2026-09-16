@@ -66,7 +66,7 @@ public sealed class ManageServerSourcesScreen : Screen
 
     private static Widget CreateSourceWidget(object item)
     {
-        var source = (ServerSourceSubscription)item;
+        var source = (InstalledServerSource)item;
         var widget = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/ServerSourceItem"), null);
         widget.Children.Find<LabelWidget>("ServerSourceItem.Name")!.Text = source.Name;
         widget.Children.Find<LabelWidget>("ServerSourceItem.Address")!.Text = source.ApiUrl;
@@ -78,7 +78,7 @@ public sealed class ManageServerSourcesScreen : Screen
 
     private void Refresh(Guid? selectedId = null)
     {
-        var sources = SettingsManager.ServerDirectory.Snapshot().Subscriptions;
+        var sources = SettingsManager.ServerDirectory.Snapshot().InstalledSources;
         _sourceList.ClearItems();
         foreach (var source in sources)
         {
@@ -91,7 +91,7 @@ public sealed class ManageServerSourcesScreen : Screen
         _statusLabel.Text = sources.Count == 0 ? Text("NoSources") : string.Empty;
     }
 
-    private void ShowEditor(ServerSourceSubscription? source)
+    private void ShowEditor(InstalledServerSource? source)
     {
         DialogsManager.ShowDialog(null, new ContentRepositoryDialog(
             source is null ? CommonText("AddTitle") : CommonText("EditTitle"),
@@ -101,7 +101,7 @@ public sealed class ManageServerSourcesScreen : Screen
             (name, address) => SaveEditor(source, name, address)));
     }
 
-    private bool SaveEditor(ServerSourceSubscription? source, string name, string address)
+    private bool SaveEditor(InstalledServerSource? source, string name, string address)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -111,14 +111,14 @@ public sealed class ManageServerSourcesScreen : Screen
 
         try
         {
-            var normalized = (source ?? new ServerSourceSubscription()) with { Name = name, ApiUrl = address };
+            var normalized = (source ?? new InstalledServerSource()) with { Name = name, ApiUrl = address };
             if (source is null)
             {
-                normalized = SettingsManager.ServerDirectory.AddSubscription(normalized);
+                normalized = SettingsManager.ServerDirectory.InstallSource(normalized);
             }
             else
             {
-                SettingsManager.ServerDirectory.EditSubscription(normalized);
+                SettingsManager.ServerDirectory.EditInstalledSource(normalized);
             }
 
             Refresh(normalized.Id);
@@ -145,8 +145,8 @@ public sealed class ManageServerSourcesScreen : Screen
             return false;
         }
 
-        var sources = SettingsManager.ServerDirectory.Snapshot().Subscriptions;
-        var selected = _sourceList.SelectedItem as ServerSourceSubscription;
+        var sources = SettingsManager.ServerDirectory.Snapshot().InstalledSources;
+        var selected = _sourceList.SelectedItem as InstalledServerSource;
         var index = selected is null ? -1 : sources.ToList().FindIndex(source => source.Id == selected.Id);
         return action switch
         {
@@ -165,8 +165,8 @@ public sealed class ManageServerSourcesScreen : Screen
             return;
         }
 
-        var sources = SettingsManager.ServerDirectory.Snapshot().Subscriptions;
-        var selected = _sourceList.SelectedItem as ServerSourceSubscription;
+        var sources = SettingsManager.ServerDirectory.Snapshot().InstalledSources;
+        var selected = _sourceList.SelectedItem as InstalledServerSource;
         var index = selected is null ? -1 : sources.ToList().FindIndex(source => source.Id == selected.Id);
         switch (action)
         {
@@ -177,7 +177,7 @@ public sealed class ManageServerSourcesScreen : Screen
                 ConfirmDelete(selected);
                 break;
             case SourceAction.Toggle when selected is not null:
-                Execute(() => SettingsManager.ServerDirectory.EditSubscription(selected with
+                Execute(() => SettingsManager.ServerDirectory.EditInstalledSource(selected with
                 {
                     IsEnabled = !selected.IsEnabled
                 }), selected.Id);
@@ -194,25 +194,25 @@ public sealed class ManageServerSourcesScreen : Screen
         }
     }
 
-    private void ConfirmDelete(ServerSourceSubscription source)
+    private void ConfirmDelete(InstalledServerSource source)
     {
         DialogsManager.Confirm(string.Format(Text("ConfirmDelete"), source.Name), button =>
         {
             if (button == MessageDialogButton.Button1)
             {
-                Execute(() => SettingsManager.ServerDirectory.DeleteSubscription(source.Id));
+                Execute(() => SettingsManager.ServerDirectory.DeleteInstalledSource(source.Id));
             }
         });
     }
 
-    private void Move(IReadOnlyList<ServerSourceSubscription> sources, int sourceIndex, int targetIndex)
+    private void Move(IReadOnlyList<InstalledServerSource> sources, int sourceIndex, int targetIndex)
     {
         var ids = sources.Select(source => source.Id).ToList();
         (ids[sourceIndex], ids[targetIndex]) = (ids[targetIndex], ids[sourceIndex]);
-        Execute(() => SettingsManager.ServerDirectory.SetSubscriptionOrder(ids), ids[targetIndex]);
+        Execute(() => SettingsManager.ServerDirectory.SetInstalledSourceOrder(ids), ids[targetIndex]);
     }
 
-    private void TestSource(ServerSourceSubscription source)
+    private void TestSource(InstalledServerSource source)
     {
         _testCancellation?.Cancel();
         var cancellation = new CancellationTokenSource();
@@ -262,7 +262,7 @@ public sealed class ManageServerSourcesScreen : Screen
             return string.Empty;
         }
 
-        var selected = _sourceList.SelectedItem as ServerSourceSubscription;
+        var selected = _sourceList.SelectedItem as InstalledServerSource;
         return action switch
         {
             SourceAction.AddOrEdit => selected is null ? CommonText("Add") : CommonText("Edit"),

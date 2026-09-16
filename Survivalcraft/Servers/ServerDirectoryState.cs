@@ -8,5 +8,5 @@ public sealed record ServerDirectoryState
 
     public IReadOnlyList<StoredServerEntry> RecentServers { get; init; } = [];
 
-    public IReadOnlyList<ServerSourceSubscription> Subscriptions { get; init; } = [];
+    public IReadOnlyList<InstalledServerSource> InstalledSources { get; init; } = [];
 }

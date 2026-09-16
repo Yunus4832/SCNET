@@ -133,5 +133,10 @@ public sealed class DirectoryServerRepository(
         _context.DirectoryServers.AnyAsync(server => server.Address == address &&
             server.ReviewStatus != DirectoryServerReviewStatus.Rejected, cancellationToken);
 
+    public Task<bool> HasPendingOrApprovedAddressAsync(string address, DirectoryServerId excludedId,
+        CancellationToken cancellationToken) =>
+        _context.DirectoryServers.AnyAsync(server => server.Id != excludedId && server.Address == address &&
+            server.ReviewStatus != DirectoryServerReviewStatus.Rejected, cancellationToken);
+
     public void Delete(DirectoryServer server) => _context.DirectoryServers.Remove(server);
 }

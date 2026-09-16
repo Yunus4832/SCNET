@@ -18,7 +18,7 @@ public static class ServerDirectorySettings
             MyServers = ReadServers(container.Element("MyServers")),
             Favorites = ReadServers(container.Element("Favorites")),
             RecentServers = ReadServers(container.Element("RecentServers")),
-            Subscriptions = ReadSubscriptions(container.Element("Subscriptions"))
+            InstalledSources = ReadInstalledSources(container.Element("InstalledSources"))
         }, defaultPort);
     }
 
@@ -29,16 +29,16 @@ public static class ServerDirectorySettings
             WriteServers("MyServers", normalized.MyServers),
             WriteServers("Favorites", normalized.Favorites),
             WriteServers("RecentServers", normalized.RecentServers),
-            new XElement("Subscriptions", normalized.Subscriptions.Select(subscription =>
-                new XElement("Subscription",
-                    new XAttribute("Id", subscription.Id),
-                    subscription.RegistrationId is null
+            new XElement("InstalledSources", normalized.InstalledSources.Select(source =>
+                new XElement("Source",
+                    new XAttribute("Id", source.Id),
+                    source.RegistrationId is null
                         ? null
-                        : new XAttribute("RegistrationId", subscription.RegistrationId),
-                    new XAttribute("Name", subscription.Name),
-                    new XAttribute("ApiUrl", subscription.ApiUrl),
-                    new XAttribute("IsEnabled", subscription.IsEnabled),
-                    new XAttribute("Order", subscription.Order)))));
+                        : new XAttribute("RegistrationId", source.RegistrationId),
+                    new XAttribute("Name", source.Name),
+                    new XAttribute("ApiUrl", source.ApiUrl),
+                    new XAttribute("IsEnabled", source.IsEnabled),
+                    new XAttribute("Order", source.Order)))));
         settings.Elements("ServerDirectory").Remove();
         settings.Add(container);
     }
@@ -56,9 +56,9 @@ public static class ServerDirectorySettings
         }).ToArray() ?? [];
     }
 
-    private static IReadOnlyList<ServerSourceSubscription> ReadSubscriptions(XElement? container)
+    private static IReadOnlyList<InstalledServerSource> ReadInstalledSources(XElement? container)
     {
-        return container?.Elements("Subscription").Select(element => new ServerSourceSubscription
+        return container?.Elements("Source").Select(element => new InstalledServerSource
         {
             Id = Guid.Parse(Required(element, "Id")),
             RegistrationId = element.Attribute("RegistrationId")?.Value,

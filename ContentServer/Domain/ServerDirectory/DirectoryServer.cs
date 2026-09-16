@@ -54,14 +54,7 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
         string? description, IReadOnlyList<string> tags, DateTimeOffset now)
     {
         ArgumentNullException.ThrowIfNull(publisherId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentException.ThrowIfNullOrWhiteSpace(address);
-        ArgumentNullException.ThrowIfNull(tags);
-        if (name.Length > 100 || address.Length > 255 || description?.Length > 1024 || tags.Count > 16 ||
-            tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32))
-        {
-            throw new ArgumentException("Directory server fields exceed their limits.");
-        }
+        ValidateFields(name, address, description, tags);
 
         return new DirectoryServer
         {
@@ -91,6 +84,23 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
         AddDomainEvent(new DirectoryServerReviewedDomainEvent(this, administratorId, ReviewStatus, ReviewMessage,
             now));
         return true;
+    }
+
+    public void Update(string name, string address, string? description, IReadOnlyList<string> tags,
+        bool requiresReview, DateTimeOffset now)
+    {
+        ValidateFields(name, address, description, tags);
+        Name = name.Trim();
+        Address = address.Trim();
+        Description = Normalize(description);
+        TagsJson = JsonSerializer.Serialize(tags.Select(tag => tag.Trim()).Distinct().ToArray());
+        UpdatedAt = now;
+        if (requiresReview)
+        {
+            ReviewStatus = DirectoryServerReviewStatus.Pending;
+            ReviewMessage = null;
+            ReviewedAt = null;
+        }
     }
 
     public void SetPublisherEnabled(bool enabled, DateTimeOffset now)
@@ -129,6 +139,18 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
     }
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    private static void ValidateFields(string name, string address, string? description, IReadOnlyList<string> tags)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(address);
+        ArgumentNullException.ThrowIfNull(tags);
+        if (name.Length > 100 || address.Length > 255 || description?.Length > 1024 || tags.Count > 16 ||
+            tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32))
+        {
+            throw new ArgumentException("Directory server fields exceed their limits.");
+        }
+    }
 }
 
 public sealed record DirectoryServerReviewedDomainEvent(DirectoryServer Server, AdministratorId AdministratorId,

@@ -43,6 +43,17 @@ public sealed class AdminDirectoryServerController(IMediator mediator,
     public Task<ResponseData> Restore(Guid id, CancellationToken cancellationToken) =>
         SetSuspended(id, false, null, cancellationToken);
 
+    [HttpPut("{id:guid}")]
+    public async Task<ResponseData> Update(Guid id, UpdateDirectoryServerRequest request,
+        CancellationToken cancellationToken)
+    {
+        var normalized = Validate(request);
+        var result = await mediator.Send(new UpdateDirectoryServerCommand(new DirectoryServerId(id), null,
+            request.Name.Trim(), normalized.Address, normalized.Description, normalized.Tags), cancellationToken);
+        EnsureUpdated(result);
+        return new ResponseData(true, "success", StatusCodes.Status200OK);
+    }
+
     [HttpDelete("{id:guid}")]
     public async Task<ResponseData> Delete(Guid id, CancellationToken cancellationToken)
     {
@@ -88,5 +99,38 @@ public sealed class AdminDirectoryServerController(IMediator mediator,
         }
 
         return new ResponseData(true, "success", StatusCodes.Status200OK);
+    }
+
+    internal static (string Address, string? Description, string[] Tags) Validate(UpdateDirectoryServerRequest request)
+    {
+        var tags = request.Tags ?? [];
+        if (string.IsNullOrWhiteSpace(request.Name) || request.Name.Length > 100 ||
+            request.Description?.Length > 1024 || tags.Length > 16 ||
+            tags.Any(tag => string.IsNullOrWhiteSpace(tag) || tag.Length > 32) ||
+            !ServerDirectoryController.IsValidAddress(request.Address))
+        {
+            throw new KnownException("invalid_server_submission", StatusCodes.Status400BadRequest);
+        }
+
+        return (ServerDirectoryController.NormalizeAddress(request.Address),
+            string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(), tags);
+    }
+
+    internal static void EnsureUpdated(UpdateDirectoryServerResult result)
+    {
+        if (result == UpdateDirectoryServerResult.NotFound)
+        {
+            throw new KnownException("server_not_found", StatusCodes.Status404NotFound);
+        }
+
+        if (result == UpdateDirectoryServerResult.NotOwned)
+        {
+            throw new KnownException("server_not_owned", StatusCodes.Status403Forbidden);
+        }
+
+        if (result == UpdateDirectoryServerResult.AddressConflict)
+        {
+            throw new KnownException("server_already_submitted", StatusCodes.Status409Conflict);
+        }
     }
 }

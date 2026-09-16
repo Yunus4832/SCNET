@@ -3,7 +3,8 @@
         <BevelledRectangleWidget Name="SelectionDrawer.Background"/>
         <CanvasWidget Name="SelectionDrawer.Header">
             <LabelWidget Name="SelectionDrawer.HeaderLabel" FontScale="0.9" Color="255, 255, 255"
-                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                         HorizontalAlignment="Stretch" VerticalAlignment="Center"
+                         TextAnchor="HorizontalCenter" Ellipsis="true" MaxLines="1"/>
             <ClickableWidget Name="SelectionDrawer.HeaderClickable" SoundName="Audio/UI/ButtonClick"/>
         </CanvasWidget>
         <CanvasWidget Name="SelectionDrawer.ListViewport" IsVisible="false" ClampToBounds="true">

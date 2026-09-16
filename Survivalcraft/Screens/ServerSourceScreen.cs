@@ -9,7 +9,7 @@ public sealed class ServerSourceScreen : Screen
 {
     private enum CatalogAction
     {
-        Subscribe
+        Install
     }
 
     private sealed record RepositoryFilterOption(Guid? RepositoryId, string Name);
@@ -42,11 +42,11 @@ public sealed class ServerSourceScreen : Screen
         };
         _repositoryDrawer.ItemTextProvider = item => ((RepositoryFilterOption)item).Name;
         _repositoryDrawer.SelectionChanged += () => ApplySearch();
-        _actionPanel.ItemTextProvider = _ => Text("Subscribe");
+        _actionPanel.ItemTextProvider = _ => Text("Install");
         _actionPanel.ItemEnabledProvider = _ => !_busy && _sourceList.SelectedItem is RegisteredServerSource source &&
-                                                     !IsSubscribed(source);
-        _actionPanel.ItemClicked += _ => Subscribe();
-        _actionPanel.SetPrimaryItems([CatalogAction.Subscribe]);
+                                                     !IsInstalled(source);
+        _actionPanel.ItemClicked += _ => Install();
+        _actionPanel.SetPrimaryItems([CatalogAction.Install]);
     }
 
     public override void Enter(object[] parameters)
@@ -84,8 +84,8 @@ public sealed class ServerSourceScreen : Screen
         var widget = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/ServerSourceItem"), null);
         widget.Children.Find<LabelWidget>("ServerSourceItem.Name")!.Text = source.Name;
         widget.Children.Find<LabelWidget>("ServerSourceItem.Address")!.Text = source.ApiUrl;
-        widget.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text = IsSubscribed(source)
-            ? Text("AlreadySubscribed")
+        widget.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text = IsInstalled(source)
+            ? Text("Installed")
             : source.RepositoryName;
         return widget;
     }
@@ -134,16 +134,16 @@ public sealed class ServerSourceScreen : Screen
         ApplySearch();
     }
 
-    private void Subscribe()
+    private void Install()
     {
-        if (_sourceList.SelectedItem is not RegisteredServerSource source || IsSubscribed(source))
+        if (_sourceList.SelectedItem is not RegisteredServerSource source || IsInstalled(source))
         {
             return;
         }
 
         try
         {
-            SettingsManager.ServerDirectory.AddSubscription(new ServerSourceSubscription
+            SettingsManager.ServerDirectory.InstallSource(new InstalledServerSource
             {
                 RegistrationId = $"{source.RepositoryId:N}:{source.RegistrationId}",
                 Name = source.Name,
@@ -154,16 +154,16 @@ public sealed class ServerSourceScreen : Screen
         }
         catch (Exception exception)
         {
-            Log.Error($"Server source subscription failed: {exception}");
+            Log.Error($"Server source installation failed: {exception}");
             DialogsManager.Alert(Text("LoadFailed"));
         }
     }
 
-    private static bool IsSubscribed(RegisteredServerSource source)
+    private static bool IsInstalled(RegisteredServerSource source)
     {
         var normalizedUrl = new Uri(source.ApiUrl).AbsoluteUri;
-        return SettingsManager.ServerDirectory.Snapshot().Subscriptions.Any(subscription =>
-            subscription.ApiUrl == normalizedUrl);
+        return SettingsManager.ServerDirectory.Snapshot().InstalledSources.Any(installedSource =>
+            installedSource.ApiUrl == normalizedUrl);
     }
 
     private void ApplySearch(RegisteredServerSource? selected = null)

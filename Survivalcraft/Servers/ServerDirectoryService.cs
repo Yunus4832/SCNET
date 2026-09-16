@@ -27,7 +27,7 @@ public sealed class ServerDirectoryService
                 MyServers = _state.MyServers.ToArray(),
                 Favorites = _state.Favorites.ToArray(),
                 RecentServers = _state.RecentServers.ToArray(),
-                Subscriptions = _state.Subscriptions.ToArray()
+                InstalledSources = _state.InstalledSources.ToArray()
             };
         }
     }
@@ -65,33 +65,37 @@ public sealed class ServerDirectoryService
         }
     }
 
-    public bool IsFavorite(string address)
+    public void DeleteFavorite(Guid id)
     {
-        var normalizedAddress = ServerAddress.Normalize(address, _defaultPort);
         lock (_gate)
         {
-            return _state.Favorites.Any(entry => entry.Address == normalizedAddress);
+            EnsureExists(_state.Favorites, id);
+            Commit(_state with { Favorites = Reorder(_state.Favorites.Where(item => item.Id != id)) });
         }
     }
 
-    public void SetFavorite(string name, string address, bool favorite)
+    public void DeleteRecentServer(Guid id)
+    {
+        lock (_gate)
+        {
+            EnsureExists(_state.RecentServers, id);
+            Commit(_state with { RecentServers = Reorder(_state.RecentServers.Where(item => item.Id != id)) });
+        }
+    }
+
+    public StoredServerEntry AddFavorite(string name, string address)
     {
         var normalizedAddress = ServerAddress.Normalize(address, _defaultPort);
         lock (_gate)
         {
-            var existing = _state.Favorites.FirstOrDefault(entry => entry.Address == normalizedAddress);
-            if (favorite && existing is null)
+            if (_state.Favorites.Any(entry => entry.Address == normalizedAddress))
             {
-                var entry = CreateServer(name, normalizedAddress, _state.Favorites.Count);
-                Commit(_state with { Favorites = _state.Favorites.Append(entry).ToArray() });
+                throw new ArgumentException("A favorite with this address already exists.", nameof(address));
             }
-            else if (!favorite && existing is not null)
-            {
-                Commit(_state with
-                {
-                    Favorites = Reorder(_state.Favorites.Where(entry => entry.Id != existing.Id))
-                });
-            }
+
+            var entry = CreateServer(name, normalizedAddress, _state.Favorites.Count);
+            Commit(_state with { Favorites = _state.Favorites.Append(entry).ToArray() });
+            return entry;
         }
     }
 
@@ -115,71 +119,71 @@ public sealed class ServerDirectoryService
         }
     }
 
-    public ServerSourceSubscription AddSubscription(ServerSourceSubscription subscription)
+    public InstalledServerSource InstallSource(InstalledServerSource source)
     {
-        ArgumentNullException.ThrowIfNull(subscription);
+        ArgumentNullException.ThrowIfNull(source);
         lock (_gate)
         {
-            var candidate = subscription with { Order = _state.Subscriptions.Count };
-            var normalized = NormalizeSubscription(candidate);
-            if (_state.Subscriptions.Any(item => item.ApiUrl == normalized.ApiUrl))
+            var candidate = source with { Order = _state.InstalledSources.Count };
+            var normalized = NormalizeInstalledSource(candidate);
+            if (_state.InstalledSources.Any(item => item.ApiUrl == normalized.ApiUrl))
             {
-                throw new ArgumentException("A subscription with this URL already exists.", nameof(subscription));
+                throw new ArgumentException("A server source with this URL is already installed.", nameof(source));
             }
 
-            Commit(_state with { Subscriptions = _state.Subscriptions.Append(normalized).ToArray() });
+            Commit(_state with { InstalledSources = _state.InstalledSources.Append(normalized).ToArray() });
             return normalized;
         }
     }
 
-    public void EditSubscription(ServerSourceSubscription subscription)
+    public void EditInstalledSource(InstalledServerSource source)
     {
-        ArgumentNullException.ThrowIfNull(subscription);
+        ArgumentNullException.ThrowIfNull(source);
         lock (_gate)
         {
-            EnsureSubscriptionExists(subscription.Id);
-            var normalized = NormalizeSubscription(subscription);
-            if (_state.Subscriptions.Any(item => item.Id != normalized.Id && item.ApiUrl == normalized.ApiUrl))
+            EnsureInstalledSourceExists(source.Id);
+            var normalized = NormalizeInstalledSource(source);
+            if (_state.InstalledSources.Any(item => item.Id != normalized.Id && item.ApiUrl == normalized.ApiUrl))
             {
-                throw new ArgumentException("A subscription with this URL already exists.", nameof(subscription));
+                throw new ArgumentException("A server source with this URL is already installed.", nameof(source));
             }
 
             Commit(_state with
             {
-                Subscriptions = _state.Subscriptions.Select(item => item.Id == normalized.Id ? normalized : item)
+                InstalledSources = _state.InstalledSources.Select(item => item.Id == normalized.Id ? normalized : item)
                     .ToArray()
             });
         }
     }
 
-    public void DeleteSubscription(Guid id)
+    public void DeleteInstalledSource(Guid id)
     {
         lock (_gate)
         {
-            EnsureSubscriptionExists(id);
+            EnsureInstalledSourceExists(id);
             Commit(_state with
             {
-                Subscriptions = ReorderSubscriptions(_state.Subscriptions.Where(item => item.Id != id))
+                InstalledSources = ReorderInstalledSources(_state.InstalledSources.Where(item => item.Id != id))
             });
         }
     }
 
-    public void SetSubscriptionOrder(IReadOnlyList<Guid> ids)
+    public void SetInstalledSourceOrder(IReadOnlyList<Guid> ids)
     {
         ArgumentNullException.ThrowIfNull(ids);
         lock (_gate)
         {
-            if (ids.Count != _state.Subscriptions.Count || ids.Distinct().Count() != ids.Count ||
-                ids.Any(id => _state.Subscriptions.All(item => item.Id != id)))
+            if (ids.Count != _state.InstalledSources.Count || ids.Distinct().Count() != ids.Count ||
+                ids.Any(id => _state.InstalledSources.All(item => item.Id != id)))
             {
-                throw new ArgumentException("Subscription order must contain every subscription exactly once.",
+                throw new ArgumentException("Installed source order must contain every source exactly once.",
                     nameof(ids));
             }
 
-            var byId = _state.Subscriptions.ToDictionary(item => item.Id);
+            var byId = _state.InstalledSources.ToDictionary(item => item.Id);
             Commit(_state with
             {
-                Subscriptions = ids.Select((id, order) => byId[id] with { Order = order }).ToArray()
+                InstalledSources = ids.Select((id, order) => byId[id] with { Order = order }).ToArray()
             });
         }
     }
@@ -194,7 +198,7 @@ public sealed class ServerDirectoryService
             RecentServers = NormalizeEntries(state.RecentServers, defaultPort, true)
                 .OrderByDescending(entry => entry.UpdatedAt).Take(MaximumRecentServers)
                 .Select((entry, order) => entry with { Order = order }).ToArray(),
-            Subscriptions = NormalizeSubscriptions(state.Subscriptions)
+            InstalledSources = NormalizeInstalledSources(state.InstalledSources)
         };
     }
 
@@ -234,19 +238,19 @@ public sealed class ServerDirectoryService
         };
     }
 
-    private static IReadOnlyList<ServerSourceSubscription> NormalizeSubscriptions(
-        IEnumerable<ServerSourceSubscription> subscriptions)
+    private static IReadOnlyList<InstalledServerSource> NormalizeInstalledSources(
+        IEnumerable<InstalledServerSource> sources)
     {
-        ArgumentNullException.ThrowIfNull(subscriptions);
+        ArgumentNullException.ThrowIfNull(sources);
         var ids = new HashSet<Guid>();
         var urls = new HashSet<string>(StringComparer.Ordinal);
-        var result = new List<ServerSourceSubscription>();
-        foreach (var subscription in subscriptions.OrderBy(item => item.Order))
+        var result = new List<InstalledServerSource>();
+        foreach (var source in sources.OrderBy(item => item.Order))
         {
-            var normalized = NormalizeSubscription(subscription) with { Order = result.Count };
+            var normalized = NormalizeInstalledSource(source) with { Order = result.Count };
             if (!ids.Add(normalized.Id) || !urls.Add(normalized.ApiUrl))
             {
-                throw new ArgumentException("Subscription IDs and URLs must be unique.");
+                throw new ArgumentException("Installed server source IDs and URLs must be unique.");
             }
 
             result.Add(normalized);
@@ -255,26 +259,26 @@ public sealed class ServerDirectoryService
         return result;
     }
 
-    private static ServerSourceSubscription NormalizeSubscription(ServerSourceSubscription subscription)
+    private static InstalledServerSource NormalizeInstalledSource(InstalledServerSource source)
     {
-        if (subscription.Id == Guid.Empty)
+        if (source.Id == Guid.Empty)
         {
-            throw new ArgumentException("Subscription must have a stable nonempty ID.");
+            throw new ArgumentException("Installed server source must have a stable nonempty ID.");
         }
 
-        var name = NormalizeName(subscription.Name);
-        if (!Uri.TryCreate(subscription.ApiUrl.Trim(), UriKind.Absolute, out var uri) ||
+        var name = NormalizeName(source.Name);
+        if (!Uri.TryCreate(source.ApiUrl.Trim(), UriKind.Absolute, out var uri) ||
             uri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(uri.UserInfo) ||
             !string.IsNullOrEmpty(uri.Fragment))
         {
-            throw new ArgumentException("Subscription URL must be an absolute HTTP(S) URL without credentials or fragment.");
+            throw new ArgumentException("Server source URL must be an absolute HTTP(S) URL without credentials or fragment.");
         }
 
-        return subscription with
+        return source with
         {
-            RegistrationId = string.IsNullOrWhiteSpace(subscription.RegistrationId)
+            RegistrationId = string.IsNullOrWhiteSpace(source.RegistrationId)
                 ? null
-                : subscription.RegistrationId.Trim(),
+                : source.RegistrationId.Trim(),
             Name = name,
             ApiUrl = uri.AbsoluteUri
         };
@@ -308,10 +312,10 @@ public sealed class ServerDirectoryService
         return entries.Select((entry, order) => entry with { Order = order }).ToArray();
     }
 
-    private static IReadOnlyList<ServerSourceSubscription> ReorderSubscriptions(
-        IEnumerable<ServerSourceSubscription> subscriptions)
+    private static IReadOnlyList<InstalledServerSource> ReorderInstalledSources(
+        IEnumerable<InstalledServerSource> sources)
     {
-        return subscriptions.Select((subscription, order) => subscription with { Order = order }).ToArray();
+        return sources.Select((source, order) => source with { Order = order }).ToArray();
     }
 
     private static void EnsureExists(IEnumerable<StoredServerEntry> entries, Guid id)
@@ -322,11 +326,11 @@ public sealed class ServerDirectoryService
         }
     }
 
-    private void EnsureSubscriptionExists(Guid id)
+    private void EnsureInstalledSourceExists(Guid id)
     {
-        if (_state.Subscriptions.All(subscription => subscription.Id != id))
+        if (_state.InstalledSources.All(source => source.Id != id))
         {
-            throw new KeyNotFoundException("Server source subscription does not exist.");
+            throw new KeyNotFoundException("Installed server source does not exist.");
         }
     }
 

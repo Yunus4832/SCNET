@@ -11,7 +11,7 @@ public sealed class ServerDirectoryServiceTest
         var service = new ServerDirectoryService(new ServerDirectoryState(), 28887, state => saved = state);
 
         service.AddMyServer("Mine", "example.com");
-        service.SetFavorite("Favorite", "example.com", true);
+        service.AddFavorite("Favorite", "example.com");
         service.RecordConnectionAttempt("Recent", "example.com", DateTimeOffset.UtcNow);
 
         Assert.NotNull(saved);
@@ -19,6 +19,32 @@ public sealed class ServerDirectoryServiceTest
         Assert.Single(saved.Favorites);
         Assert.Single(saved.RecentServers);
         Assert.Equal("example.com:28887", saved.MyServers[0].Address);
+    }
+
+    [Fact]
+    public void FavoritesAreDeduplicatedByNormalizedAddress()
+    {
+        var service = new ServerDirectoryService(new ServerDirectoryState(), 28887, _ => { });
+
+        service.AddFavorite("First", "example.com");
+
+        Assert.Throws<ArgumentException>(() => service.AddFavorite("Second", "example.com:28887"));
+        Assert.Single(service.Snapshot().Favorites);
+    }
+
+    [Fact]
+    public void FavoriteAndRecentEntriesCanBeDeletedByTheirOwnIds()
+    {
+        var service = new ServerDirectoryService(new ServerDirectoryState(), 28887, _ => { });
+        service.AddFavorite("Favorite", "favorite.example");
+        service.RecordConnectionAttempt("Recent", "recent.example", DateTimeOffset.UtcNow);
+        var snapshot = service.Snapshot();
+
+        service.DeleteFavorite(Assert.Single(snapshot.Favorites).Id);
+        service.DeleteRecentServer(Assert.Single(snapshot.RecentServers).Id);
+
+        Assert.Empty(service.Snapshot().Favorites);
+        Assert.Empty(service.Snapshot().RecentServers);
     }
 
     [Fact]
@@ -39,12 +65,12 @@ public sealed class ServerDirectoryServiceTest
     }
 
     [Fact]
-    public void SubscriptionUrlsMustBeUnique()
+    public void InstalledSourceUrlsMustBeUnique()
     {
         var service = new ServerDirectoryService(new ServerDirectoryState(), 28887, _ => { });
-        service.AddSubscription(new ServerSourceSubscription { Name = "One", ApiUrl = "https://example.com/list" });
+        service.InstallSource(new InstalledServerSource { Name = "One", ApiUrl = "https://example.com/list" });
 
-        Assert.Throws<ArgumentException>(() => service.AddSubscription(new ServerSourceSubscription
+        Assert.Throws<ArgumentException>(() => service.InstallSource(new InstalledServerSource
         {
             Name = "Two",
             ApiUrl = "https://example.com/list"

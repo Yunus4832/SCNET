@@ -13,6 +13,7 @@ import {
   type PagedData,
 } from '../api';
 import { contentTypeLabel } from '../contentTypes';
+import ServerSubmissionDialog from '../components/ServerSubmissionDialog.vue';
 
 interface Applicant {
   administratorId?: string;
@@ -65,6 +66,7 @@ interface DirectoryServer {
   name: string;
   address: string;
   description?: string;
+  tags: string[];
   reviewStatus: string;
   reviewMessage?: string;
   isEnabledByPublisher: boolean;
@@ -79,6 +81,7 @@ const tab = ref<'content' | 'publishers' | 'administrators' | 'servers' | 'serve
   'content',
 );
 const actionError = ref('');
+const serverTarget = ref<DirectoryServer>();
 const accessCacheKey = getAccess('administrator')?.apiKey.slice(0, 18) ?? 'anonymous';
 const manageSearchInput = ref('');
 const manageSearch = ref('');
@@ -314,6 +317,13 @@ async function deleteServer(id: string, name: string) {
   } catch (value) {
     actionError.value = value instanceof Error ? value.message : '删除失败';
   }
+}
+async function serverUpdated() {
+  serverTarget.value = undefined;
+  await Promise.all([
+    client.invalidateQueries({ queryKey: ['admin-servers'] }),
+    client.invalidateQueries({ queryKey: ['admin-server-applications'] }),
+  ]);
 }
 function switchMode(value: 'review' | 'manage') {
   mode.value = value;
@@ -693,6 +703,13 @@ function selectContentType(value: string) {
           </div>
         </div>
         <div v-else-if="tab === 'servers'" class="review-list">
+          <ServerSubmissionDialog
+            :open="Boolean(serverTarget)"
+            :target="serverTarget"
+            administrator
+            @close="serverTarget = undefined"
+            @submitted="serverUpdated"
+          />
           <h2>
             管理服务器 <small>{{ managedServers.data.value?.length ?? 0 }} 项结果</small>
           </h2>
@@ -714,6 +731,9 @@ function selectContentType(value: string) {
                 </p>
               </div>
               <div class="card-bottom">
+                <button class="button ghost content-status-button" @click="serverTarget = item">
+                  编辑
+                </button>
                 <button
                   class="button ghost content-status-button"
                   :disabled="item.reviewStatus !== 'approved'"

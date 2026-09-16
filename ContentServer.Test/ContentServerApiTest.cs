@@ -600,6 +600,16 @@ public sealed class ContentServerApiTest : IDisposable
         var id = submitted.GetProperty("id").GetString()!;
         Assert.Equal("pending", submitted.GetProperty("reviewStatus").GetString());
 
+        using var update = CreateAuthorizedRequest(HttpMethod.Put, $"/api/v1/publisher/servers/{id}", publisherKey);
+        update.Content = JsonContent.Create(new
+        {
+            name = "Updated Survival Server",
+            address = "updated.example.test:28887",
+            description = "Updated by publisher",
+            tags = new[] { "survival", "cooperative" }
+        });
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(update)).StatusCode);
+
         var emptyPage = await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory");
         Assert.Empty(emptyPage!.Servers);
         using var publisherList = CreateAuthorizedRequest(HttpMethod.Get, "/api/v1/publisher/servers", publisherKey);
@@ -618,11 +628,31 @@ public sealed class ContentServerApiTest : IDisposable
 
         var approvedPage = await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory");
         Assert.True(ServerSourceValidator.Validate(approvedPage).IsValid);
-        Assert.Equal("play.example.test:28887", Assert.Single(approvedPage!.Servers).Address);
+        Assert.Equal("updated.example.test:28887", Assert.Single(approvedPage!.Servers).Address);
         var snapshot = await new ServerSourceProtocolClient(client).GetAllAsync(
             new Uri(client.BaseAddress!, "/api/v1/server-directory"));
         Assert.Equal("scnet-content-server", snapshot.Source.Id);
         Assert.Single(snapshot.Servers);
+
+        using var updateApproved = CreateAuthorizedRequest(HttpMethod.Put,
+            $"/api/v1/publisher/servers/{id}", publisherKey);
+        updateApproved.Content = JsonContent.Create(new
+        {
+            name = "Publisher Revised Server",
+            address = "revised.example.test:28887",
+            description = "Requires another review",
+            tags = new[] { "revised" }
+        });
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(updateApproved)).StatusCode);
+        Assert.Empty((await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory"))!.Servers);
+        using var publisherListAfterUpdate = CreateAuthorizedRequest(HttpMethod.Get,
+            "/api/v1/publisher/servers", publisherKey);
+        var revisedServer = Assert.Single((await ReadDataAsync(await client.SendAsync(publisherListAfterUpdate)))
+            .EnumerateArray());
+        Assert.Equal("pending", revisedServer.GetProperty("reviewStatus").GetString());
+        using var reapprove = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/servers/{id}/approve", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(reapprove)).StatusCode);
 
         using var disable = CreateAuthorizedRequest(HttpMethod.Post,
             $"/api/v1/publisher/servers/{id}/disable", publisherKey);
@@ -642,9 +672,23 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(restore)).StatusCode);
         Assert.Single((await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory"))!.Servers);
 
+        using var adminUpdate = CreateAuthorizedRequest(HttpMethod.Put,
+            $"/api/v1/admin/servers/{id}", _administratorKey);
+        adminUpdate.Content = JsonContent.Create(new
+        {
+            name = "Administrator Updated Server",
+            address = "admin-updated.example.test:28887",
+            description = "Updated by administrator",
+            tags = new[] { "managed" }
+        });
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(adminUpdate)).StatusCode);
+        var adminUpdatedPage = await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory");
+        Assert.Equal("Administrator Updated Server", Assert.Single(adminUpdatedPage!.Servers).Name);
+
         var sources = await ReadDataAsync(await client.GetAsync("/api/v1/server-sources"));
         var builtIn = Assert.Single(sources.EnumerateArray(),
             item => item.GetProperty("id").GetString() == "builtin");
+        Assert.Equal("SCNET Servers", builtIn.GetProperty("name").GetString());
         Assert.EndsWith("/api/v1/server-directory", builtIn.GetProperty("apiUrl").GetString());
 
         using var managedSources = CreateAuthorizedRequest(HttpMethod.Get, "/api/v1/admin/server-sources",

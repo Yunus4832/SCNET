@@ -1,20 +1,48 @@
 <script setup lang="ts">
 import { Send, X } from 'lucide-vue-next';
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import { api } from '../api';
 
-const props = defineProps<{ open: boolean }>();
+interface EditableServer {
+  id: string;
+  name: string;
+  address: string;
+  description?: string;
+  tags: string[];
+}
+
+const props = defineProps<{
+  open: boolean;
+  target?: EditableServer;
+  administrator?: boolean;
+}>();
 const emit = defineEmits<{ close: []; submitted: [] }>();
 const busy = ref(false);
 const error = ref('');
 const form = reactive({ name: '', address: '', description: '', tags: '' });
 
+watch(
+  () => [props.open, props.target] as const,
+  ([open, target]) => {
+    if (!open) return;
+    Object.assign(form, {
+      name: target?.name ?? '',
+      address: target?.address ?? '',
+      description: target?.description ?? '',
+      tags: target?.tags.join(', ') ?? '',
+    });
+    error.value = '';
+  },
+  { immediate: true },
+);
+
 async function submit() {
   busy.value = true;
   error.value = '';
   try {
-    await api('/api/v1/publisher/servers', {
-      method: 'POST',
+    const basePath = props.administrator ? '/api/v1/admin/servers' : '/api/v1/publisher/servers';
+    await api(props.target ? `${basePath}/${props.target.id}` : basePath, {
+      method: props.target ? 'PUT' : 'POST',
       body: JSON.stringify({
         name: form.name,
         address: form.address,
@@ -25,7 +53,7 @@ async function submit() {
           .filter(Boolean),
       }),
     });
-    Object.assign(form, { name: '', address: '', description: '', tags: '' });
+    if (!props.target) Object.assign(form, { name: '', address: '', description: '', tags: '' });
     emit('submitted');
   } catch (value) {
     error.value = value instanceof Error ? value.message : '提交失败';
@@ -38,11 +66,13 @@ async function submit() {
 <template>
   <Teleport to="body">
     <div v-if="props.open" class="modal-overlay" @click.self="emit('close')">
-      <section class="modal-panel" role="dialog" aria-modal="true" aria-label="提交服务器">
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-label="服务器信息">
         <div class="modal-head">
           <div>
-            <h2 class="modal-title">提交服务器</h2>
-            <p>审核通过后会出现在本站内置服务器源中。</p>
+            <h2 class="modal-title">{{ props.target ? '编辑服务器' : '提交服务器' }}</h2>
+            <p v-if="props.target && !props.administrator">修改后需要管理员重新审核。</p>
+            <p v-else-if="props.target">管理员保存后立即生效。</p>
+            <p v-else>审核通过后会出现在本站内置服务器源中。</p>
           </div>
           <button class="button ghost" @click="emit('close')"><X :size="17" />关闭</button>
         </div>
@@ -62,7 +92,7 @@ async function submit() {
           <div class="modal-actions">
             <button type="button" class="button ghost" @click="emit('close')">取消</button>
             <button class="button primary" :disabled="busy">
-              <Send :size="17" />{{ busy ? '正在提交…' : '提交审核' }}
+              <Send :size="17" />{{ busy ? '正在保存…' : props.target ? '保存更改' : '提交审核' }}
             </button>
           </div>
         </form>

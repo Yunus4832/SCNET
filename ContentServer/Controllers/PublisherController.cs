@@ -145,6 +145,24 @@ public sealed class PublisherController(
     public Task<ResponseData> DisableServer(Guid id, CancellationToken cancellationToken) =>
         SetServerEnabled(id, false, cancellationToken);
 
+    [HttpPut("servers/{id:guid}")]
+    public async Task<ResponseData> UpdateServer(Guid id, UpdateDirectoryServerRequest request,
+        CancellationToken cancellationToken)
+    {
+        var publisher = await RequirePublisherAsync(cancellationToken);
+        if (publisher.Status != PublisherStatus.Active)
+        {
+            throw new KnownException("publisher_not_active", StatusCodes.Status403Forbidden);
+        }
+
+        var normalized = AdminDirectoryServerController.Validate(request);
+        var result = await mediator.Send(new UpdateDirectoryServerCommand(new DirectoryServerId(id),
+            publisher.PublisherId, request.Name.Trim(), normalized.Address, normalized.Description, normalized.Tags),
+            cancellationToken);
+        AdminDirectoryServerController.EnsureUpdated(result);
+        return new ResponseData(true, "success", StatusCodes.Status200OK);
+    }
+
     [HttpPost("server-sources")]
     public async Task<ResponseData<ServerSourceRegistrationResponse>> SubmitServerSource(
         SubmitServerSourceRequest request,

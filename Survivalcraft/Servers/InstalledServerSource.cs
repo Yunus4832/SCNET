@@ -1,6 +1,6 @@
 namespace Game.Servers;
 
-public sealed record ServerSourceSubscription
+public sealed record InstalledServerSource
 {
     public Guid Id { get; init; } = Guid.NewGuid();
 

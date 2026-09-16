@@ -3127,10 +3127,10 @@
             "Packages": "Пакеты",
             "Repositories": "Репозитории",
             "RepositoriesDescription": "Управление репозиториями для просмотра и загрузки контента",
-            "ServerSources": "Подписка на источники",
-            "ServerSourcesDescription": "Просмотр источников с серверов контента и подписка",
+            "ServerSources": "Установить источники серверов",
+            "ServerSourcesDescription": "Просмотр и установка источников серверов из серверов контента",
             "ManageServerSources": "Управление источниками",
-            "ManageServerSourcesDescription": "Управление подписанными и добавленными вручную источниками"
+            "ManageServerSourcesDescription": "Управление установленными и добавленными вручную источниками серверов"
         },
         "GameLoadingScreen": {
             "1": "Загрузка мира"
@@ -3505,14 +3505,18 @@
             "DownloadFailed": "Загрузка не удалась из всех подходящих источников.",
             "ModDownloaded": "Мод сохранён в кэш. Профиль не изменён.",
             "Installed": "Содержимое установлено.",
-            "InstallFailed": "Пакет сохранён в кэш, но установка не удалась."
+            "InstallFailed": "Пакет сохранён в кэш, но установка не удалась.",
+            "TypeMod": "Моды",
+            "TypeWorld": "Миры",
+            "TypeBlocksTexture": "Текстуры блоков",
+            "TypeCharacterSkin": "Облики персонажей",
+            "TypeFurniturePack": "Наборы мебели"
         },
         "NetPlayScreen": {
             "Connect": "Подключиться",
             "Add": "Добавить",
             "Refresh": "Обновить",
             "Favorite": "В избранное",
-            "Unfavorite": "Убрать из избранного",
             "Delete": "Удалить",
             "MyServers": "Мои серверы",
             "Favorites": "Избранное",
@@ -3533,19 +3537,24 @@
             "Season": "Сезон",
             "Time": "Время",
             "SearchPlaceholder": "Поиск серверов",
-            "AllSources": "Все источники",
             "SortNone": "Без сортировки",
             "SortPing": "По задержке",
             "SortPlayers": "По числу игроков",
             "SortName": "По имени",
-            "PartialLoadFailed": "Некоторые источники не загрузились"
+            "PartialLoadFailed": "Некоторые источники не загрузились",
+            "CategoryLocal": "Локальные",
+            "CategoryExternal": "Внешние",
+            "AllLocalSources": "Все локальные источники",
+            "AllExternalSources": "Все внешние источники",
+            "Source": "Источник",
+            "DuplicateFavorite": "Этот адрес сервера уже добавлен в избранное."
         },
         "ManageServerSourcesScreen": {
             "Title": "Управление источниками серверов",
-            "NoSources": "Нет подписок на источники серверов",
+            "NoSources": "Нет установленных источников серверов",
             "ConfirmDelete": "Удалить источник серверов «{0}»?",
             "NameRequired": "Введите имя источника серверов.",
-            "DuplicateAddress": "Этот адрес источника уже добавлен.",
+            "DuplicateAddress": "Этот источник серверов уже установлен.",
             "InvalidAddress": "Введите допустимый HTTP- или HTTPS-адрес источника.",
             "SaveFailed": "Не удалось сохранить источник серверов.",
             "Testing": "Проверка источника серверов…",
@@ -3553,14 +3562,14 @@
             "TestFailed": "Проверка источника серверов не удалась."
         },
         "ServerSourceScreen": {
-            "Title": "Подписка на источники серверов",
-            "Subscribe": "Подписаться",
-            "Empty": "На серверах содержимого нет доступных источников",
+            "Title": "Установка источников серверов",
+            "Empty": "На серверах контента нет доступных для установки источников серверов",
             "Loading": "Загрузка серверов содержимого…",
             "LoadFailed": "Не удалось загрузить каталог источников.",
-            "AlreadySubscribed": "Подписка оформлена",
             "SearchPlaceholder": "Поиск источников серверов",
-            "AllRepositories": "Все репозитории"
+            "AllRepositories": "Все репозитории",
+            "Install": "Установить",
+            "Installed": "Установлен"
         }
     },
     "FireworksBlock": {

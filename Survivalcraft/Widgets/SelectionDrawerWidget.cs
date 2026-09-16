@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Engine.Graphics;
+
 namespace Game.Widgets;
 
 public enum SelectionDrawerDirection
@@ -45,6 +47,8 @@ public sealed class SelectionDrawerWidget : CanvasWidget
         _background = Children.Find<BevelledRectangleWidget>("SelectionDrawer.Background")!;
         _header = Children.Find<CanvasWidget>("SelectionDrawer.Header")!;
         _headerLabel = Children.Find<LabelWidget>("SelectionDrawer.HeaderLabel")!;
+        _headerLabel.Ellipsis = true;
+        _headerLabel.MaxLines = 1;
         _headerClickable = Children.Find<ClickableWidget>("SelectionDrawer.HeaderClickable")!;
         _listViewport = Children.Find<CanvasWidget>("SelectionDrawer.ListViewport")!;
         _list = Children.Find<ListPanelWidget>("SelectionDrawer.List")!;
@@ -392,8 +396,11 @@ public sealed class SelectionDrawerWidget : CanvasWidget
             Text = _itemTextProvider(item),
             FontScale = ItemFontScale,
             Color = Color,
-            HorizontalAlignment = WidgetAlignment.Center,
-            VerticalAlignment = WidgetAlignment.Center
+            HorizontalAlignment = WidgetAlignment.Stretch,
+            VerticalAlignment = WidgetAlignment.Center,
+            TextAnchor = TextAnchor.HorizontalCenter,
+            Ellipsis = true,
+            MaxLines = 1
         };
     }
 

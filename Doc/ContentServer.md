@@ -149,7 +149,7 @@ dotnet ef migrations add <MigrationName> \
     "AllowedOrigins": ["https://content-ui.example.com"],
     "BuiltInServerDirectoryEnabled": true,
     "BuiltInServerDirectoryId": "scnet-content-server",
-    "BuiltInServerDirectoryName": "SCNET Community Servers",
+    "BuiltInServerDirectoryName": "SCNET Servers",
     "PublicBaseUrl": "https://content.example.com"
   }
 }
@@ -298,6 +298,7 @@ GET  /api/v1/publisher/server-sources
 POST /api/v1/publisher/server-sources
 GET  /api/v1/publisher/servers
 POST /api/v1/publisher/servers
+PUT  /api/v1/publisher/servers/{id}
 POST /api/v1/publisher/servers/{id}/enable
 POST /api/v1/publisher/servers/{id}/disable
 ```
@@ -328,7 +329,8 @@ POST /api/v1/publisher/content/{id}/enable
 上下架命令会再次校验内容归属，发布者不能操作其他发布者的内容；非 Active 发布者不能改变内容状态。
 
 服务器投稿属于当前发布者，审核状态与发布者上下架状态相互独立。服务器地址必须包含显式端口；审核通过后，
-发布者可以将服务器从内置目录下架或重新启用，但不能操作其他发布者的服务器。
+发布者可以编辑自己的服务器，或将服务器从内置目录下架、重新启用，但不能操作其他发布者的服务器。
+编辑服务器名称、地址、说明或标签后会重新进入待审核状态，审核通过前不会出现在内置目录中。
 
 管理员接口使用配置的 Bearer Key：
 
@@ -340,6 +342,7 @@ POST /api/v1/admin/publishers/{id}/suspend
 POST /api/v1/admin/publishers/{id}/revoke-key
 POST /api/v1/admin/publishers/{id}/restore-key
 GET    /api/v1/admin/servers
+PUT    /api/v1/admin/servers/{id}
 POST   /api/v1/admin/servers/{id}/approve
 POST   /api/v1/admin/servers/{id}/reject
 POST   /api/v1/admin/servers/{id}/suspend

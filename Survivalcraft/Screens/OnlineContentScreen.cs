@@ -75,7 +75,9 @@ public sealed class OnlineContentScreen : Screen
         _searchTextBox.TextChanged += _ => UpdateSearchPlaceholder();
         _searchTextBox.FocusLost += _ => ApplySearchText();
         _searchTextBox.Enter += textBox => textBox.HasFocus = false;
-        _typeFilterDrawer.ItemTextProvider = item => ((ContentTypeOption)item).Type?.ToString() ?? Text("AllTypes");
+        _typeFilterDrawer.ItemTextProvider = item => ((ContentTypeOption)item).Type is { } type
+            ? GetContentTypeName(type)
+            : Text("AllTypes");
         _repositoryFilterDrawer.ItemTextProvider = item => ((RepositoryOption)item).Name;
         _statusFilterDrawer.ItemTextProvider = item => Text($"Status{item}");
         _typeFilterDrawer.SelectionChanged += TypeFilterChanged;
@@ -153,9 +155,10 @@ public sealed class OnlineContentScreen : Screen
         var widget = (ContainerWidget)LoadWidget(null,
             ContentManager.Get<XElement>("Widgets/OnlineContentItem"), null);
         widget.Children.Find<LabelWidget>("OnlineContentItem.Name")!.Text = content.Name;
+        var typeName = GetContentTypeName(content.Type);
         widget.Children.Find<LabelWidget>("OnlineContentItem.Details")!.Text = latest is null
-            ? $"{content.Type} | {content.Identifier}"
-            : $"{content.Type} | {content.Identifier} | {latest.Version} | " +
+            ? $"{typeName} | {content.Identifier}"
+            : $"{typeName} | {content.Identifier} | {latest.Version} | " +
               DataSizeFormatter.Format(latest.PackageSize);
         widget.Children.Find<LabelWidget>("OnlineContentItem.Sources")!.Text = latest is null
             ? string.Empty
@@ -706,6 +709,11 @@ public sealed class OnlineContentScreen : Screen
     private static string Text(string key)
     {
         return LanguageManager.GetContentWidgets(nameof(OnlineContentScreen), key);
+    }
+
+    private static string GetContentTypeName(ContentPackageType type)
+    {
+        return Text($"Type{type}");
     }
 
     private sealed record ContentTypeOption(ContentPackageType? Type);

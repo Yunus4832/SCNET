@@ -23,7 +23,9 @@
                                            VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
                         </CanvasWidget>
                     </CanvasWidget>
-                    <SelectionDrawerWidget Name="SourceFilter" Size="190, 56" Margin="4, 0"
+                    <SelectionDrawerWidget Name="SourceCategory" Size="170, 56" Margin="4, 0"
+                                           MaxVisibleItems="2"/>
+                    <SelectionDrawerWidget Name="SourceFilter" Size="170, 56" Margin="4, 0"
                                            MaxVisibleItems="5"/>
                     <SelectionDrawerWidget Name="SortOrder" Size="170, 56" Margin="4, 0"
                                            MaxVisibleItems="4"/>

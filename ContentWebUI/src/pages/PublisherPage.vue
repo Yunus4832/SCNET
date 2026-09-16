@@ -96,6 +96,7 @@ const error = ref('');
 const showForm = ref(false);
 const showServerSourceForm = ref(false);
 const showServerForm = ref(false);
+const serverTarget = ref<DirectoryServer>();
 const submissionTarget = ref<ContentItem>();
 const view = ref<'content' | 'versions' | 'servers' | 'serverSources'>('content');
 const copiedVersionId = ref('');
@@ -153,7 +154,16 @@ async function serverSourceSubmitted() {
 }
 async function serverSubmitted() {
   showServerForm.value = false;
+  serverTarget.value = undefined;
   await queryClient.invalidateQueries({ queryKey: ['publisher-servers'] });
+}
+function editServer(item: DirectoryServer) {
+  serverTarget.value = item;
+  showServerForm.value = true;
+}
+function closeServerForm() {
+  showServerForm.value = false;
+  serverTarget.value = undefined;
 }
 async function setServerEnabled(item: DirectoryServer) {
   await api(
@@ -237,7 +247,8 @@ async function setServerEnabled(item: DirectoryServer) {
       />
       <ServerSubmissionDialog
         :open="showServerForm"
-        @close="showServerForm = false"
+        :target="serverTarget"
+        @close="closeServerForm"
         @submitted="serverSubmitted"
       />
       <div v-if="view === 'content' || view === 'versions'" class="workspace-tabs publisher-tabs">
@@ -377,6 +388,9 @@ async function setServerEnabled(item: DirectoryServer) {
               <span>{{
                 item.isSuspended ? '管理员已停用' : item.isEnabledByPublisher ? '已启用' : '已下架'
               }}</span>
+              <button class="button ghost content-status-button" @click="editServer(item)">
+                编辑
+              </button>
               <button
                 class="button ghost content-status-button"
                 :disabled="item.reviewStatus !== 'approved' || item.isSuspended"
