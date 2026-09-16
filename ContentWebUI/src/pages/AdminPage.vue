@@ -414,21 +414,23 @@ function selectContentType(value: string) {
                 <p>{{ item.summary || '无简介' }}</p>
               </div>
               <div class="card-bottom">
-                <button class="button ghost" @click="downloadPackage(item.versionId)">
-                  <Download :size="16" />测试包
-                </button>
-                <div class="review-actions">
-                  <button
-                    class="icon-button reject"
-                    @click="review(`/api/v1/admin/submissions/${item.versionId}`, false)"
-                  >
-                    <X /></button
-                  ><button
-                    class="icon-button approve"
-                    @click="review(`/api/v1/admin/submissions/${item.versionId}`, true)"
-                  >
-                    <Check />
+                <div class="card-actions">
+                  <button class="button ghost" @click="downloadPackage(item.versionId)">
+                    <Download :size="16" />测试包
                   </button>
+                  <div class="review-actions">
+                    <button
+                      class="icon-button reject"
+                      @click="review(`/api/v1/admin/submissions/${item.versionId}`, false)"
+                    >
+                      <X /></button
+                    ><button
+                      class="icon-button approve"
+                      @click="review(`/api/v1/admin/submissions/${item.versionId}`, true)"
+                    >
+                      <Check />
+                    </button>
+                  </div>
                 </div>
               </div>
             </article>
@@ -731,22 +733,24 @@ function selectContentType(value: string) {
                 </p>
               </div>
               <div class="card-bottom">
-                <button class="button ghost content-status-button" @click="serverTarget = item">
-                  编辑
-                </button>
-                <button
-                  class="button ghost content-status-button"
-                  :disabled="item.reviewStatus !== 'approved'"
-                  @click="setServerSuspended(item)"
-                >
-                  {{ item.isSuspended ? '恢复' : '停用' }}
-                </button>
-                <button
-                  class="button ghost content-status-button"
-                  @click="deleteServer(item.id, item.name)"
-                >
-                  <Trash2 :size="16" />删除
-                </button>
+                <div class="card-actions">
+                  <button class="button ghost content-status-button" @click="serverTarget = item">
+                    编辑
+                  </button>
+                  <button
+                    class="button ghost content-status-button"
+                    :disabled="item.reviewStatus !== 'approved'"
+                    @click="setServerSuspended(item)"
+                  >
+                    {{ item.isSuspended ? '恢复' : '停用' }}
+                  </button>
+                  <button
+                    class="button ghost content-status-button"
+                    @click="deleteServer(item.id, item.name)"
+                  >
+                    <Trash2 :size="16" />删除
+                  </button>
+                </div>
               </div>
             </article>
           </div>

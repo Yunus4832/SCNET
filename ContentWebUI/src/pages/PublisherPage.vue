@@ -388,16 +388,18 @@ async function setServerEnabled(item: DirectoryServer) {
               <span>{{
                 item.isSuspended ? '管理员已停用' : item.isEnabledByPublisher ? '已启用' : '已下架'
               }}</span>
-              <button class="button ghost content-status-button" @click="editServer(item)">
-                编辑
-              </button>
-              <button
-                class="button ghost content-status-button"
-                :disabled="item.reviewStatus !== 'approved' || item.isSuspended"
-                @click="setServerEnabled(item)"
-              >
-                {{ item.isEnabledByPublisher ? '下架' : '启用' }}
-              </button>
+              <div class="card-actions">
+                <button class="button ghost content-status-button" @click="editServer(item)">
+                  编辑
+                </button>
+                <button
+                  class="button ghost content-status-button"
+                  :disabled="item.reviewStatus !== 'approved' || item.isSuspended"
+                  @click="setServerEnabled(item)"
+                >
+                  {{ item.isEnabledByPublisher ? '下架' : '启用' }}
+                </button>
+              </div>
             </div>
           </article>
         </div>

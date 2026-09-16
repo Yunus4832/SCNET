@@ -733,6 +733,14 @@ td small {
   display: flex;
   align-items: center;
   gap: 9px;
+  margin-left: auto;
+}
+.card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 9px;
+  margin-left: auto;
 }
 .card-links button,
 .card-bottom a {
