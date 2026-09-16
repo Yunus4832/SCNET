@@ -8,6 +8,7 @@ import {
   Link2,
   LogOut,
   UploadCloud,
+  RadioTower,
 } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -15,6 +16,8 @@ import { api, clearAccess, getAccess, type ContentVersion, type PagedData } from
 import { copyText } from '../clipboard';
 import { getRuntimeConfig } from '../config';
 import ContentSubmissionDialog from '../components/ContentSubmissionDialog.vue';
+import ServerSourceSubmissionDialog from '../components/ServerSourceSubmissionDialog.vue';
+import ServerSubmissionDialog from '../components/ServerSubmissionDialog.vue';
 
 interface Publisher {
   publisherId: string;
@@ -34,6 +37,28 @@ interface ContentItem {
   status: string;
   createdAt: string;
   updatedAt: string;
+}
+interface ServerSourceRegistration {
+  id: string;
+  name: string;
+  apiUrl: string;
+  description?: string;
+  status: string;
+  reviewMessage?: string;
+  createdAt: string;
+}
+interface DirectoryServer {
+  id: string;
+  name: string;
+  address: string;
+  description?: string;
+  tags: string[];
+  reviewStatus: string;
+  reviewMessage?: string;
+  isEnabledByPublisher: boolean;
+  isSuspended: boolean;
+  suspensionReason?: string;
+  createdAt: string;
 }
 const router = useRouter();
 const queryClient = useQueryClient();
@@ -58,10 +83,20 @@ const contents = useQuery({
       `/api/v1/publisher/content?pageIndex=${contentPage.value}&pageSize=6`,
     ),
 });
+const serverSources = useQuery({
+  queryKey: ['publisher-server-sources', accessCacheKey],
+  queryFn: () => api<ServerSourceRegistration[]>('/api/v1/publisher/server-sources'),
+});
+const servers = useQuery({
+  queryKey: ['publisher-servers', accessCacheKey],
+  queryFn: () => api<DirectoryServer[]>('/api/v1/publisher/servers'),
+});
 const error = ref('');
 const showForm = ref(false);
+const showServerSourceForm = ref(false);
+const showServerForm = ref(false);
 const submissionTarget = ref<ContentItem>();
-const view = ref<'content' | 'versions'>('content');
+const view = ref<'content' | 'versions' | 'servers' | 'serverSources'>('content');
 const copiedVersionId = ref('');
 function removeKey() {
   clearAccess('publisher', getAccess('publisher')?.apiKey);
@@ -111,6 +146,23 @@ function closeForm() {
   showForm.value = false;
   submissionTarget.value = undefined;
 }
+async function serverSourceSubmitted() {
+  showServerSourceForm.value = false;
+  await queryClient.invalidateQueries({ queryKey: ['publisher-server-sources'] });
+}
+async function serverSubmitted() {
+  showServerForm.value = false;
+  await queryClient.invalidateQueries({ queryKey: ['publisher-servers'] });
+}
+async function setServerEnabled(item: DirectoryServer) {
+  await api(
+    `/api/v1/publisher/servers/${item.id}/${item.isEnabledByPublisher ? 'disable' : 'enable'}`,
+    {
+      method: 'POST',
+    },
+  );
+  await queryClient.invalidateQueries({ queryKey: ['publisher-servers'] });
+}
 </script>
 
 <template>
@@ -134,13 +186,41 @@ function closeForm() {
     <div v-if="self.isError.value" class="state error">{{ self.error.value?.message }}</div>
     <template v-else>
       <div class="workspace-toolbar">
-        <h2>内容发布</h2>
+        <div class="workspace-tabs publisher-tabs publisher-primary-tabs">
+          <button
+            :class="{ active: view === 'content' || view === 'versions' }"
+            @click="view = 'content'"
+          >
+            内容发布
+          </button>
+          <button :class="{ active: view === 'servers' }" @click="view = 'servers'">服务器</button>
+          <button :class="{ active: view === 'serverSources' }" @click="view = 'serverSources'">
+            服务器源
+          </button>
+        </div>
         <button
+          v-if="view === 'content' || view === 'versions'"
           class="button primary"
           :disabled="self.data.value?.status !== 'active'"
           @click="openForm()"
         >
           <UploadCloud :size="17" />提交新内容
+        </button>
+        <button
+          v-else-if="view === 'servers'"
+          class="button primary"
+          :disabled="self.data.value?.status !== 'active'"
+          @click="showServerForm = true"
+        >
+          <RadioTower :size="17" />提交服务器
+        </button>
+        <button
+          v-else
+          class="button primary"
+          :disabled="self.data.value?.status !== 'active'"
+          @click="showServerSourceForm = true"
+        >
+          <RadioTower :size="17" />提交服务器源
         </button>
       </div>
       <ContentSubmissionDialog
@@ -149,7 +229,17 @@ function closeForm() {
         @close="closeForm"
         @submitted="submissionCompleted"
       />
-      <div class="workspace-tabs publisher-tabs">
+      <ServerSourceSubmissionDialog
+        :open="showServerSourceForm"
+        @close="showServerSourceForm = false"
+        @submitted="serverSourceSubmitted"
+      />
+      <ServerSubmissionDialog
+        :open="showServerForm"
+        @close="showServerForm = false"
+        @submitted="serverSubmitted"
+      />
+      <div v-if="view === 'content' || view === 'versions'" class="workspace-tabs publisher-tabs">
         <button :class="{ active: view === 'content' }" @click="view = 'content'">内容管理</button
         ><button :class="{ active: view === 'versions' }" @click="view = 'versions'">
           版本记录
@@ -215,7 +305,7 @@ function closeForm() {
           </button>
         </div></template
       >
-      <template v-else
+      <template v-else-if="view === 'versions'"
         ><div class="workspace-toolbar compact-toolbar"><h2>版本提交记录</h2></div>
         <div v-if="submissions.data.value?.items.length" class="content-grid">
           <article
@@ -263,6 +353,60 @@ function closeForm() {
           </button>
         </div></template
       >
+      <template v-else-if="view === 'servers'">
+        <div v-if="servers.data.value?.length" class="content-grid">
+          <article v-for="item in servers.data.value" :key="item.id" class="content-card">
+            <div class="card-top">
+              <span class="type-pill">服务器</span>
+              <span class="status" :class="item.reviewStatus">{{ item.reviewStatus }}</span>
+            </div>
+            <div>
+              <h3>{{ item.name }}</h3>
+              <code>{{ item.address }}</code>
+              <p>
+                {{
+                  item.reviewMessage ||
+                  item.suspensionReason ||
+                  item.description ||
+                  '提交后等待管理员审核。'
+                }}
+              </p>
+            </div>
+            <div class="card-bottom">
+              <span>{{
+                item.isSuspended ? '管理员已停用' : item.isEnabledByPublisher ? '已启用' : '已下架'
+              }}</span>
+              <button
+                class="button ghost content-status-button"
+                :disabled="item.reviewStatus !== 'approved' || item.isSuspended"
+                @click="setServerEnabled(item)"
+              >
+                {{ item.isEnabledByPublisher ? '下架' : '启用' }}
+              </button>
+            </div>
+          </article>
+        </div>
+        <div v-else class="state">暂无服务器提交记录</div>
+      </template>
+      <template v-else>
+        <div v-if="serverSources.data.value?.length" class="content-grid">
+          <article v-for="item in serverSources.data.value" :key="item.id" class="content-card">
+            <div class="card-top">
+              <span class="type-pill">服务器源</span
+              ><span class="status" :class="item.status">{{ item.status }}</span>
+            </div>
+            <div>
+              <h3>{{ item.name }}</h3>
+              <code>{{ item.apiUrl }}</code>
+              <p>{{ item.reviewMessage || item.description || '提交后等待管理员审核。' }}</p>
+            </div>
+            <div class="card-bottom">
+              <span>{{ new Date(item.createdAt).toLocaleDateString() }}</span>
+            </div>
+          </article>
+        </div>
+        <div v-else class="state">暂无服务器源提交记录</div>
+      </template>
     </template>
   </section>
 </template>

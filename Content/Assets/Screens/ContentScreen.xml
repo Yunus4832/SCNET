@@ -59,6 +59,28 @@
 
             <StackPanelWidget Direction="Horizontal">
                 <CanvasWidget Size="350, 90">
+                    <LabelWidget Text="[ContentScreen:ServerSourcesDescription]" Color="128, 128, 128"
+                                 WordWrap="true" HorizontalAlignment="Far" VerticalAlignment="Center"
+                                 TextAnchor="VerticalCenter, HorizontalCenter"/>
+                </CanvasWidget>
+                <CanvasWidget Size="10, 0"/>
+                <BevelledButtonWidget Name="ServerSources" Text="[ContentScreen:ServerSources]"
+                                      Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>
+            </StackPanelWidget>
+
+            <StackPanelWidget Direction="Horizontal">
+                <CanvasWidget Size="350, 90">
+                    <LabelWidget Text="[ContentScreen:ManageServerSourcesDescription]" Color="128, 128, 128"
+                                 WordWrap="true" HorizontalAlignment="Far" VerticalAlignment="Center"
+                                 TextAnchor="VerticalCenter, HorizontalCenter"/>
+                </CanvasWidget>
+                <CanvasWidget Size="10, 0"/>
+                <BevelledButtonWidget Name="ManageServerSources" Text="[ContentScreen:ManageServerSources]"
+                                      Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center"/>
+            </StackPanelWidget>
+
+            <StackPanelWidget Direction="Horizontal">
+                <CanvasWidget Size="350, 90">
                     <LabelWidget Text="[ContentScreen:8]" Color="128, 128, 128" WordWrap="true"
                                  HorizontalAlignment="Far" VerticalAlignment="Center"
                                  TextAnchor="VerticalCenter, HorizontalCenter"/>

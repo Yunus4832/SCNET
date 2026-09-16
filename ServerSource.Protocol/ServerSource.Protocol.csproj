@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>SCNET.ServerSource.Protocol</AssemblyName>
+        <RootNamespace>ServerSource.Protocol</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.ServerSource.Protocol</PackageId>
+        <Description>SCNET server source HTTP contracts, validation and client.</Description>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <None Include="Schemas\server-source-v1.schema.json" Pack="true" PackagePath="schemas/"/>
+        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

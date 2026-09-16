@@ -124,26 +124,6 @@ public static class CommonLib
         w.Put(subsystemTimeOfDay.CalculateTimeOfDay());
     }
 
-    public static void ReadServerInfo(NetPlayScreen.Connect c, NetDataReader r, Stopwatch s, IPEndPoint ip,
-        bool isLocal = false)
-    {
-        c.Version = r.GetString();
-        c.PlayerCount = r.GetUShort();
-        c.MaxCount = r.GetUShort();
-        c.GameMode = (GameMode)r.GetByte();
-        c.TimeOfDay = r.GetFloat();
-        c.State = NetPlayScreen.ConnectState.Available;
-        c.UsedTime = s.ElapsedMilliseconds;
-        if (!isLocal)
-        {
-            return;
-        }
-
-        c.Name = "[本地] " + c.Name;
-        c.IP = ip.Address + ":" + ip.Port;
-    }
-
-
     public static string GetInnerIp()
     {
         var ipHost = Dns.GetHostAddresses(Dns.GetHostName());

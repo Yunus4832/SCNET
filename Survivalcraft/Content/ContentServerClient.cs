@@ -64,6 +64,22 @@ public sealed class ContentServerClient : IDisposable
         throw new InvalidDataException("ContentServer catalog exceeds the client paging limit.");
     }
 
+    public async Task<IReadOnlyList<ContentServerServerSource>> ListServerSourcesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await _httpClient.GetAsync("api/v1/server-sources",
+            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        var result = await ReadJsonAsync<ContentServerResponse<ContentServerServerSource[]>>(response,
+            cancellationToken).ConfigureAwait(false);
+        if (result?.Success != true || result.Data is null)
+        {
+            throw new InvalidDataException("ContentServer returned an invalid server source response.");
+        }
+
+        return result.Data;
+    }
+
     public Task<ContentServerPageResult<ContentCatalogItem>> ListPageAsync(ContentCatalogQuery query,
         CancellationToken cancellationToken = default)
     {
@@ -305,6 +321,8 @@ public sealed class ContentServerClient : IDisposable
 }
 
 public sealed record ContentServerHealth(string Name, string Version);
+
+public sealed record ContentServerServerSource(string Id, string Name, string ApiUrl, string? Description);
 
 public sealed record ContentCatalogQuery(string? Type = null, string? Search = null, int PageIndex = 1,
     int PageSize = ContentCatalogQuery.DefaultPageSize)

@@ -5,6 +5,9 @@ using System.Text.Json;
 
 using Content.Packaging;
 
+using ContentServer.Application;
+using ContentServer.Domain.Publishers;
+using ContentServer.Domain.ServerSources;
 using ContentServer.Infrastructure;
 
 using Game.Modding;
@@ -14,6 +17,8 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
+using ServerSource.Protocol;
 
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -461,6 +466,184 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.False(File.Exists(orphanPath));
     }
 
+    [Fact]
+    public async Task PublicServerSourceCatalogOnlyContainsApprovedRegistrations()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        await using (var scope = factory.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+            var publisher = Publisher.Apply("Source Publisher", "publisher@example.test", null, "prefix", "hash",
+                DateTimeOffset.UtcNow);
+            db.Publishers.Add(publisher);
+            await db.SaveChangesAsync();
+            var approved = ServerSourceRegistration.Submit(publisher.Id, "Approved",
+                new Uri("https://approved.example/servers"), null, DateTimeOffset.UtcNow);
+            approved.Review(true, new ContentServer.Domain.Administration.AdministratorId(Guid.CreateVersion7()),
+                null, DateTimeOffset.UtcNow);
+            var pending = ServerSourceRegistration.Submit(publisher.Id, "Pending",
+                new Uri("https://pending.example/servers"), null, DateTimeOffset.UtcNow);
+            db.ServerSources.AddRange(approved, pending);
+            await db.SaveChangesAsync();
+        }
+
+        var data = await ReadDataAsync(await client.GetAsync("/api/v1/server-sources"));
+
+        var source = Assert.Single(data.EnumerateArray(),
+            item => item.GetProperty("id").GetString() != "builtin");
+        Assert.Equal("Approved", source.GetProperty("name").GetString());
+        Assert.Equal("https://approved.example/servers", source.GetProperty("apiUrl").GetString());
+    }
+
+    [Fact]
+    public async Task ServerSourceSubmissionReviewQueryAndDeleteFormOneFlow()
+    {
+        await using var factory = CreateFactory(useStubServerSourceInspection: true);
+        using var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/api/v1/administrators/initialize", new
+        {
+            name = "Administrator",
+            apiKey = _administratorKey
+        });
+
+        using var publisherApplicationResponse = await client.PostAsJsonAsync("/api/v1/publishers", new
+        {
+            displayName = "Server Source Publisher",
+            contact = "publisher@example.test"
+        });
+        var publisherApplication = await ReadDataAsync(publisherApplicationResponse);
+        var publisherId = publisherApplication.GetProperty("publisherId").GetString()!;
+        var publisherKey = publisherApplication.GetProperty("apiKey").GetString()!;
+        using var approvePublisher = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/publishers/{publisherId}/approve", _administratorKey);
+        approvePublisher.Content = JsonContent.Create(new { });
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approvePublisher)).StatusCode);
+
+        using var submissionRequest = CreateAuthorizedRequest(HttpMethod.Post,
+            "/api/v1/publisher/server-sources", publisherKey);
+        submissionRequest.Content = JsonContent.Create(new
+        {
+            name = "Community",
+            apiUrl = "https://source.example/servers",
+            description = "Community servers"
+        });
+        using var submissionResponse = await client.SendAsync(submissionRequest);
+        Assert.Equal(HttpStatusCode.Created, submissionResponse.StatusCode);
+        var submission = await ReadDataAsync(submissionResponse);
+        var id = submission.GetProperty("id").GetString();
+        Assert.Equal("pending", submission.GetProperty("status").GetString());
+        Assert.Equal(publisherId, submission.GetProperty("publisherId").GetString());
+        Assert.DoesNotContain((await ReadDataAsync(await client.GetAsync("/api/v1/server-sources"))).EnumerateArray(),
+            item => item.GetProperty("id").GetString() == id);
+
+        using var publisherSourcesRequest = CreateAuthorizedRequest(HttpMethod.Get,
+            "/api/v1/publisher/server-sources", publisherKey);
+        var publisherSources = await ReadDataAsync(await client.SendAsync(publisherSourcesRequest));
+        Assert.Equal(id, Assert.Single(publisherSources.EnumerateArray()).GetProperty("id").GetString());
+
+        using var listRequest = CreateAuthorizedRequest(HttpMethod.Get,
+            "/api/v1/admin/server-sources?status=Pending", _administratorKey);
+        var pending = await ReadDataAsync(await client.SendAsync(listRequest));
+        Assert.Equal(id, Assert.Single(pending.EnumerateArray()).GetProperty("id").GetString());
+
+        using var approveRequest = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/server-sources/{id}/approve", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approveRequest)).StatusCode);
+        var publicSources = await ReadDataAsync(await client.GetAsync("/api/v1/server-sources"));
+        Assert.Contains(publicSources.EnumerateArray(), item => item.GetProperty("name").GetString() == "Community");
+
+        using var deleteRequest = CreateAuthorizedRequest(HttpMethod.Delete,
+            $"/api/v1/admin/server-sources/{id}", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(deleteRequest)).StatusCode);
+        Assert.DoesNotContain((await ReadDataAsync(await client.GetAsync("/api/v1/server-sources"))).EnumerateArray(),
+            item => item.GetProperty("id").GetString() == id);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+        Assert.Contains(await db.ReviewRecords.ToArrayAsync(), record => record.TargetType == "ServerSource");
+    }
+
+    [Fact]
+    public async Task BuiltInServerDirectorySupportsPublisherAndAdministratorWorkflow()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/api/v1/administrators/initialize", new
+        {
+            name = "Administrator",
+            apiKey = _administratorKey
+        });
+        var application = await ReadDataAsync(await client.PostAsJsonAsync("/api/v1/publishers", new
+        {
+            displayName = "Server Publisher",
+            contact = "server@example.test"
+        }));
+        var publisherId = application.GetProperty("publisherId").GetString()!;
+        var publisherKey = application.GetProperty("apiKey").GetString()!;
+        using var approvePublisher = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/publishers/{publisherId}/approve", _administratorKey);
+        approvePublisher.Content = JsonContent.Create(new { });
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approvePublisher)).StatusCode);
+
+        using var submit = CreateAuthorizedRequest(HttpMethod.Post, "/api/v1/publisher/servers", publisherKey);
+        submit.Content = JsonContent.Create(new
+        {
+            name = "Survival Server",
+            address = "play.example.test:28887",
+            description = "Test server",
+            tags = new[] { "survival" }
+        });
+        var submitted = await ReadDataAsync(await client.SendAsync(submit));
+        var id = submitted.GetProperty("id").GetString()!;
+        Assert.Equal("pending", submitted.GetProperty("reviewStatus").GetString());
+
+        var emptyPage = await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory");
+        Assert.Empty(emptyPage!.Servers);
+        using var publisherList = CreateAuthorizedRequest(HttpMethod.Get, "/api/v1/publisher/servers", publisherKey);
+        Assert.Equal(id, Assert.Single((await ReadDataAsync(await client.SendAsync(publisherList)))
+            .EnumerateArray()).GetProperty("id").GetString());
+
+        using var pendingList = CreateAuthorizedRequest(HttpMethod.Get,
+            "/api/v1/admin/servers?status=Pending", _administratorKey);
+        Assert.Equal(id, Assert.Single((await ReadDataAsync(await client.SendAsync(pendingList)))
+            .EnumerateArray()).GetProperty("id").GetString());
+        using var approve = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/servers/{id}/approve", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approve)).StatusCode);
+
+        var approvedPage = await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory");
+        Assert.True(ServerSourceValidator.Validate(approvedPage).IsValid);
+        Assert.Equal("play.example.test:28887", Assert.Single(approvedPage!.Servers).Address);
+        var snapshot = await new ServerSourceProtocolClient(client).GetAllAsync(
+            new Uri(client.BaseAddress!, "/api/v1/server-directory"));
+        Assert.Equal("scnet-content-server", snapshot.Source.Id);
+        Assert.Single(snapshot.Servers);
+
+        using var disable = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/publisher/servers/{id}/disable", publisherKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(disable)).StatusCode);
+        Assert.Empty((await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory"))!.Servers);
+        using var enable = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/publisher/servers/{id}/enable", publisherKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(enable)).StatusCode);
+
+        using var suspend = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/servers/{id}/suspend", _administratorKey);
+        suspend.Content = JsonContent.Create(new { message = "maintenance" });
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(suspend)).StatusCode);
+        Assert.Empty((await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory"))!.Servers);
+        using var restore = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/servers/{id}/restore", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(restore)).StatusCode);
+        Assert.Single((await client.GetFromJsonAsync<ServerSourcePage>("/api/v1/server-directory"))!.Servers);
+
+        var sources = await ReadDataAsync(await client.GetAsync("/api/v1/server-sources"));
+        var builtIn = Assert.Single(sources.EnumerateArray(),
+            item => item.GetProperty("id").GetString() == "builtin");
+        Assert.EndsWith("/api/v1/server-directory", builtIn.GetProperty("apiUrl").GetString());
+    }
+
     public void Dispose()
     {
         if (File.Exists(_databasePath))
@@ -474,7 +657,7 @@ public sealed class ContentServerApiTest : IDisposable
         }
     }
 
-    private WebApplicationFactory<Program> CreateFactory()
+    private WebApplicationFactory<Program> CreateFactory(bool useStubServerSourceInspection = false)
     {
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
@@ -485,6 +668,11 @@ public sealed class ContentServerApiTest : IDisposable
                     ["ContentServer:DatabasePath"] = _databasePath,
                     ["ContentServer:PackageStoragePath"] = _storagePath
                 }));
+            if (useStubServerSourceInspection)
+            {
+                builder.ConfigureServices(services =>
+                    services.AddSingleton<IServerSourceInspectionService, StubServerSourceInspectionService>());
+            }
         });
     }
 
@@ -537,5 +725,13 @@ public sealed class ContentServerApiTest : IDisposable
     private static async Task<JsonElement> ReadJsonAsync(HttpResponseMessage response)
     {
         return await response.Content.ReadFromJsonAsync<JsonElement>();
+    }
+
+    private sealed class StubServerSourceInspectionService : IServerSourceInspectionService
+    {
+        public Task<ServerSourceSnapshot> InspectAsync(Uri apiUrl, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new ServerSourceSnapshot(new ServerSourceDescriptor("source", "Source"), []));
+        }
     }
 }

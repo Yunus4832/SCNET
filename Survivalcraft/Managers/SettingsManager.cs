@@ -7,6 +7,8 @@ using EntitySystem.XmlUtilities;
 
 using Game.Network;
 
+using ServerSource.Protocol;
+
 namespace Game.Managers;
 
 public static class SettingsManager
@@ -17,6 +19,12 @@ public static class SettingsManager
         new(new Game.Content.ContentServerClientFactory());
 
     public static Game.Content.ContentRepositoryService ContentRepositories { get; private set; } = null!;
+
+    public static Game.Servers.ServerDirectoryService ServerDirectory { get; private set; } = null!;
+
+    public static Game.Servers.ServerSourceCatalog ServerSources { get; private set; } = null!;
+
+    private static HttpClient? _serverSourceHttpClient;
 
     public static event Action? BrightnessChanged;
 
@@ -41,6 +49,15 @@ public static class SettingsManager
         LoadSettings();
         ContentRepositories = new Game.Content.ContentRepositoryService(Current.ContentRepositories,
             ContentClients, SaveContentRepositories);
+        ServerDirectory = new Game.Servers.ServerDirectoryService(Current.ServerDirectory, Current.ServerPort,
+            SaveServerDirectory);
+        _serverSourceHttpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(30),
+            MaxResponseContentBufferSize = ServerSourceProtocol.MaximumResponseBytes
+        };
+        ServerSources = new Game.Servers.ServerSourceCatalog(ServerDirectory,
+            new ServerSourceProtocolClient(_serverSourceHttpClient), new Game.Servers.ServerDiscoveryService());
         var settingsChanged = false;
         if (EnsureMultiplayerClientId(Current))
         {
@@ -58,7 +75,11 @@ public static class SettingsManager
         }
 
         Window.Deactivated += SaveSettings;
-        Window.Closed += ContentClients.Dispose;
+        Window.Closed += () =>
+        {
+            ContentClients.Dispose();
+            _serverSourceHttpClient?.Dispose();
+        };
     }
 
     internal static bool EnsureMultiplayerClientId(Settings settings)
@@ -97,7 +118,6 @@ public static class SettingsManager
                 {
                     var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
                     AppConfigStore.ReadFromXml(xElement);
-                    ConnectionDirectory.ReadFromXml(xElement);
                     Current.ContentRepositories = Game.Content.ContentRepositorySettings.Read(xElement);
 
                     foreach (var item in xElement.Elements())
@@ -135,6 +155,8 @@ public static class SettingsManager
                             );
                         }
                     }
+
+                    Current.ServerDirectory = Game.Servers.ServerDirectorySettings.Read(xElement, Current.ServerPort);
                 }
 
                 Log.Information("Loaded settings.");
@@ -177,6 +199,21 @@ public static class SettingsManager
         }
     }
 
+    private static void SaveServerDirectory(Game.Servers.ServerDirectoryState serverDirectory)
+    {
+        var previous = Current.ServerDirectory;
+        Current.ServerDirectory = serverDirectory;
+        try
+        {
+            SaveSettingsCore();
+        }
+        catch
+        {
+            Current.ServerDirectory = previous;
+            throw;
+        }
+    }
+
     private static void SaveSettingsCore()
     {
         var xElement = new XElement("Settings");
@@ -204,8 +241,8 @@ public static class SettingsManager
         }
 
         AppConfigStore.WriteToXml(xElement);
-        ConnectionDirectory.WriteToXml(xElement);
         Game.Content.ContentRepositorySettings.Write(xElement, Current.ContentRepositories);
+        Game.Servers.ServerDirectorySettings.Write(xElement, Current.ServerDirectory, Current.ServerPort);
 
         var temporaryPath = GamePaths.SettingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try

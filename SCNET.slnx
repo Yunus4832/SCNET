@@ -48,6 +48,15 @@
             <BuildType Solution="DESKTOP|*" Project="Debug"/>
             <Build Solution="Release|*" Project="false"/>
         </Project>
+        <Project Path="ServerSource.Protocol\ServerSource.Protocol.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+        </Project>
+        <Project Path="ServerSource.Protocol.Test\ServerSource.Protocol.Test.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
     </Folder>
 
     <Folder Name="/04 Survivalcraft/">

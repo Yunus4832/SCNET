@@ -6,6 +6,8 @@ public class Settings
 {
     public IReadOnlyList<Game.Content.ContentRepository> ContentRepositories { get; internal set; } = [];
 
+    public Game.Servers.ServerDirectoryState ServerDirectory { get; internal set; } = new();
+
     public int ServerPort { get; set; } = 28887;
 
     public int BroadcastPort { get; set; } = 28888;

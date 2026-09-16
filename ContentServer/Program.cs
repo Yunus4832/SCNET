@@ -12,8 +12,21 @@ using Microsoft.Extensions.Options;
 
 using NetCorePal.Extensions.DependencyInjection;
 
+using ServerSource.Protocol;
+
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.Configure<ContentServerOptions>(builder.Configuration.GetSection(ContentServerOptions.SectionName));
+builder.Services.AddOptions<ContentServerOptions>()
+    .Bind(builder.Configuration.GetSection(ContentServerOptions.SectionName))
+    .Validate(options => !options.BuiltInServerDirectoryEnabled || ServerSourceValidator.Validate(
+        new ServerSourcePage(ServerSourceProtocol.CurrentVersion,
+            new ServerSourceDescriptor(options.BuiltInServerDirectoryId, options.BuiltInServerDirectoryName), [],
+            null)).IsValid, "Built-in server directory identity is invalid.")
+    .Validate(options => string.IsNullOrWhiteSpace(options.PublicBaseUrl) ||
+                         Uri.TryCreate(options.PublicBaseUrl, UriKind.Absolute, out var uri) &&
+                         uri.Scheme is "http" or "https" && string.IsNullOrEmpty(uri.UserInfo) &&
+                         string.IsNullOrEmpty(uri.Query) && string.IsNullOrEmpty(uri.Fragment),
+        "ContentServer PublicBaseUrl must be an absolute HTTP URL without credentials, query, or fragment.")
+    .ValidateOnStart();
 var allowedOrigins = builder.Configuration
     .GetSection($"{ContentServerOptions.SectionName}:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options => options.AddPolicy("ContentWebUI", policy =>
@@ -21,7 +34,7 @@ builder.Services.AddCors(options => options.AddPolicy("ContentWebUI", policy =>
     if (allowedOrigins.Length > 0)
     {
         policy.WithOrigins(allowedOrigins)
-            .WithMethods("GET", "POST", "OPTIONS")
+            .WithMethods("GET", "POST", "DELETE", "OPTIONS")
             .WithHeaders("Authorization", "Content-Type")
             .WithExposedHeaders("Content-Disposition");
     }
@@ -49,6 +62,7 @@ builder.Services.AddSingleton<ContentPackageStore>();
 builder.Services.AddSingleton<ContentSubmissionLock>();
 builder.Services.AddSingleton<ImageContentPackageBuilder>();
 builder.Services.AddScoped<ContentPackageSubmissionService>();
+builder.Services.AddSingleton<IServerSourceInspectionService, ServerSourceInspectionService>();
 builder.Services.AddScoped<ApiKeyAuthenticationContext>();
 builder.Services.AddScoped<ApiKeyAuthenticationMiddleware>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

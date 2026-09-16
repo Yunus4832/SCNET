@@ -3,6 +3,8 @@ using ContentServer.Domain.Contents;
 using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
 using ContentServer.Domain.Reviews;
+using ContentServer.Domain.ServerDirectory;
+using ContentServer.Domain.ServerSources;
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -95,5 +97,34 @@ public sealed class ReviewRecordConfiguration : IEntityTypeConfiguration<ReviewR
     {
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
+    }
+}
+
+public sealed class ServerSourceRegistrationConfiguration : IEntityTypeConfiguration<ServerSourceRegistration>
+{
+    public void Configure(EntityTypeBuilder<ServerSourceRegistration> b)
+    {
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
+        b.Property(x => x.Status).HasConversion<string>();
+        b.HasOne<Publisher>().WithMany().HasForeignKey(x => x.PublisherId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => x.PublisherId);
+        b.HasIndex(x => x.ApiUrl);
+        b.HasIndex(x => x.Status);
+    }
+}
+
+public sealed class DirectoryServerConfiguration : IEntityTypeConfiguration<DirectoryServer>
+{
+    public void Configure(EntityTypeBuilder<DirectoryServer> b)
+    {
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
+        b.Property(x => x.ReviewStatus).HasConversion<string>();
+        b.HasOne<Publisher>().WithMany().HasForeignKey(x => x.PublisherId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => x.PublisherId);
+        b.HasIndex(x => x.Address);
+        b.HasIndex(x => x.ReviewStatus);
+        b.Ignore(x => x.Tags);
     }
 }

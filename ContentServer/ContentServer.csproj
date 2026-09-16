@@ -7,6 +7,13 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
+        <ProjectReference Include="..\ServerSource.Protocol\ServerSource.Protocol.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+            <_Parameter1>ContentServer.Test</_Parameter1>
+        </AssemblyAttribute>
     </ItemGroup>
 
     <ItemGroup>

@@ -55,7 +55,7 @@ onMounted(async () => {
       <span>SCNET <b>CONTENT</b></span>
     </RouterLink>
     <nav>
-      <RouterLink class="nav-tab" to="/">内容广场</RouterLink>
+      <RouterLink class="nav-tab" to="/">社区内容</RouterLink>
       <RouterLink class="nav-tab" :to="workspaceTarget('publisher', publisherAccesses.length)"
         >内容发布</RouterLink
       >

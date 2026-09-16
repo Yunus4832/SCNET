@@ -1,160 +1,89 @@
 using System.Net;
-using System.Net.Sockets;
 using System.Xml.Linq;
 
 using Game.Content;
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
-
-using LiteNetLib;
-
-using ThreadState = System.Threading.ThreadState;
+using Game.Servers;
 
 namespace Game.Screens;
 
-public class NetPlayScreen : Screen
+public sealed class NetPlayScreen : Screen
 {
-    public enum ConnectState
+    private enum ServerAction
     {
-        Unavailable,
-        Checking,
-        Available
+        Connect,
+        Add,
+        Favorite,
+        Refresh,
+        Delete,
     }
 
-    private enum FilterType
+    private enum ServerSortOrder
     {
-        Collect,
-        Local
+        None,
+        Ping,
+        Players,
+        Name
     }
 
-    private const string _typeName = nameof(NetPlayScreen);
+    private sealed record SourceFilterOption(IServerSource? Source);
 
-    public static Dictionary<string, string> IpToDNS = new();
+    private sealed record ServerLoadResult(IReadOnlyList<ServerItem> Items, bool HadSourceErrors);
 
-    public static Dictionary<string, string> DNSToName = new();
-
-    public bool LookingForServer;
-
-    private readonly ButtonWidget _addButton;
-
-    private readonly ButtonWidget _collectButton;
-
-    private readonly ButtonWidget _filter0Button;
-
-    private readonly ButtonWidget _filter1Button;
-
-    private FilterType _filterType;
-
-    private bool _isLoadingList;
-
-    private readonly ButtonWidget _refreshButton;
-
-    private float _refreshTime;
-
-    private readonly ButtonWidget _removeButton;
-
-    private readonly LabelWidget _topBarLabel;
-
-    private readonly ListPanelWidget _worldsListWidget;
-
-    public readonly List<Thread> RunningTasks = [];
+    private readonly ActionPanelWidget _actionPanel;
+    private readonly ServerDiscoveryService _discoveryService = new();
+    private readonly TextBoxWidget _searchTextBox;
+    private readonly LabelWidget _searchPlaceholder;
+    private readonly ListPanelWidget _serverList;
+    private readonly SelectionDrawerWidget _sourceDrawer;
+    private readonly SelectionDrawerWidget _sortDrawer;
+    private readonly LabelWidget _statusLabel;
+    private CancellationTokenSource? _refreshCancellation;
+    private IReadOnlyList<ServerItem> _loadedServers = [];
+    private IReadOnlyList<IServerSource> _sources = [];
+    private bool _busy;
+    private bool _hadSourceErrors;
 
     public NetPlayScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/NetPlayScreen");
-        LoadContents(this, node);
-        _worldsListWidget = Children.Find<ListPanelWidget>("WorldsList")!;
-
-        _filter0Button = Children.Find<ButtonWidget>("TabPage")!;
-        _filter0Button.Text = LanguageManager.Get("NetPlayScreen", 3);
-        _filter0Button.Size = new Vector2(180, 60);
-        _filter1Button = new BevelledButtonWidget
-        { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _filter1Button.Text = LanguageManager.Get("NetPlayScreen", 4);
-        _filter1Button.Size = new Vector2(180, 60);
-        _filter0Button.ParentWidget?.AddChildren(_filter1Button);
-        _addButton = Children.Find<ButtonWidget>("Play")!;
-        _addButton.Text = LanguageManager.Get("NetPlayScreen", 7);
-        _addButton.Size = new Vector2(220, 60);
-        _removeButton = Children.Find<ButtonWidget>("NewWorld")!;
-        _removeButton.Text = LanguageManager.Get("NetPlayScreen", 8);
-        _removeButton.Size = new Vector2(220, 60);
-
-        _collectButton = new BevelledButtonWidget
-        { Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60") };
-        _collectButton.Text = LanguageManager.Get("NetPlayScreen", 9);
-        _collectButton.Size = new Vector2(160, 60);
-        _addButton.ParentWidget?.AddChildren(_collectButton);
-
-        _refreshButton = new BevelledButtonWidget
+        LoadContents(this, ContentManager.Get<XElement>("Screens/NetPlayScreen"));
+        _serverList = Children.Find<ListPanelWidget>("ServerList")!;
+        _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
+        _searchTextBox = Children.Find<TextBoxWidget>("Search")!;
+        _searchPlaceholder = Children.Find<LabelWidget>("SearchPlaceholder")!;
+        _sourceDrawer = Children.Find<SelectionDrawerWidget>("SourceFilter")!;
+        _sortDrawer = Children.Find<SelectionDrawerWidget>("SortOrder")!;
+        _statusLabel = Children.Find<LabelWidget>("Status")!;
+        _serverList.ItemWidgetFactory = CreateServerWidget;
+        _serverList.ItemClicked += item =>
         {
-            Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60")
-        };
-
-        _refreshButton.Text = LanguageManager.Get("NetPlayScreen", 10);
-        _refreshButton.Size = new Vector2(160, 60);
-
-        _addButton.ParentWidget?.RemoveChildren(Children.Find<ButtonWidget>("Properties")!);
-        _addButton.ParentWidget?.AddChildren(_refreshButton);
-        _topBarLabel = Children.Find<LabelWidget>("TopBar.Label")!;
-
-        _worldsListWidget.ItemWidgetFactory += obj =>
-        {
-            var connect = (Connect)obj;
-            var stackPanelWidget = new StackPanelWidget { Direction = LayoutDirection.Vertical };
-            var labelWidget = new LabelWidget { Name = "line1" };
-            var labelWidget2 = new LabelWidget { Name = "line2" };
-
-
-            var version = connect.Version;
-            var players = $" | {LanguageManager.Get("NetPlayScreen", 13)}: {connect.PlayerCount}/{connect.MaxCount}";
-            var gameMode =
-                $" | {LanguageManager.Get("NetPlayScreen", 14)}: " +
-                $"{LanguageManager.Get("GameMode", connect.GameMode.ToString())}";
-            var timeOfDay =
-                $" | {LanguageManager.Get("NetPlayScreen", 20)}: " +
-                $"{SubsystemTimeOfDay.GetTimeOfDayText(connect.TimeOfDay)}";
-            var season =
-                $" | {LanguageManager.Get("NetPlayScreen", 19)}: " +
-                $"{GetSeasonText(connect.Season, connect.TimeOfSeason)}";
-            var validTime = !string.IsNullOrEmpty(connect.ValidTime)
-                ? $" | {LanguageManager.Get("NetPlayScreen", 18)}: {connect.ValidTime}"
-                : string.Empty;
-
-
-            switch (connect.State)
+            if (ReferenceEquals(item, _serverList.SelectedItem))
             {
-                case ConnectState.Available:
-                    {
-                        labelWidget.Text = $"{connect} ({connect.UsedTime / 2:0} ms)";
-                        labelWidget.Color = Color.LightGreen;
-                        labelWidget2.Text = $"{version}{players}{gameMode}{timeOfDay}{season}{validTime}";
-
-                        break;
-                    }
-                case ConnectState.Checking:
-                    {
-                        labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 17)}";
-                        labelWidget.Color = Color.White;
-                        break;
-                    }
-                case ConnectState.Unavailable:
-                    {
-                        labelWidget.Text = $"{connect} {LanguageManager.Get("NetPlayScreen", 15)}";
-                        labelWidget.Color = Color.LightRed;
-                        break;
-                    }
+                ConnectSelected();
             }
-
-            stackPanelWidget.Children.Add(labelWidget);
-            stackPanelWidget.Children.Add(labelWidget2);
-            return stackPanelWidget;
         };
 
-        _worldsListWidget.ScrollPosition = 0f;
-        _worldsListWidget.ScrollSpeed = 0f;
-        _worldsListWidget.ItemClicked += OnItemClick;
+        _searchPlaceholder.Text = Text("SearchPlaceholder");
+        _searchTextBox.MaximumLength = 100;
+        _searchTextBox.TextChanged += _ =>
+        {
+            UpdateSearchPlaceholder();
+            ApplyView();
+        };
+        _sourceDrawer.ItemTextProvider = item => GetSourceName(((SourceFilterOption)item).Source);
+        _sourceDrawer.SelectionChanged += RefreshSelectedSource;
+        _sortDrawer.ItemTextProvider = item => Text($"Sort{item}");
+        _sortDrawer.SelectionChanged += ApplyView;
+        _sortDrawer.SetItems(Enum.GetValues<ServerSortOrder>().Cast<object>());
+        _sortDrawer.SelectedItem = ServerSortOrder.None;
+        _actionPanel.ItemTextProvider = GetActionText;
+        _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemColorProvider = GetActionColor;
+        _actionPanel.ItemClicked += ExecuteAction;
+        _actionPanel.SetPrimaryItems(
+            [ServerAction.Connect, ServerAction.Add, ServerAction.Favorite, ServerAction.Refresh],
+            [3f, 2f, 2f, 2f]);
+        _actionPanel.SetSecondaryItems([ServerAction.Delete]);
 
         GameEntry.HandleUri += uri =>
         {
@@ -163,152 +92,447 @@ public class NetPlayScreen : Screen
                 return;
             }
 
-            var ip = uri.Uri.AbsolutePath[1..];
-            var connect = new Connect();
-            if (!string.IsNullOrWhiteSpace(ip))
+            var address = uri.Uri.AbsolutePath.TrimStart('/');
+            if (!string.IsNullOrWhiteSpace(address))
             {
-                connect.IP = ip;
-                connect.Name = "scheme_" + DateTime.Now.Ticks;
-
-                Time.QueueTimeDelayedExecution(Time.RealTime + 1, () =>
-                {
-                    Log.Information($"连接到服务器:{connect.IP}");
-                    ConnectTo(connect);
-                });
-            }
-            else
-            {
-                DialogsManager.Alert("提示", "不能识别的连接");
+                ConnectToAddress(address, address, null);
             }
 
             uri.IsHandle = true;
         };
     }
 
-    public void AddConnectToListWidget(Connect? connect)
+    public override void Enter(object[] parameters)
     {
-        if (connect != null && !_worldsListWidget.Items.Contains(connect))
+        _searchPlaceholder.Text = Text("SearchPlaceholder");
+        _searchTextBox.Text = string.Empty;
+        UpdateSearchPlaceholder();
+        _sortDrawer.RefreshItems();
+        ReloadSources();
+    }
+
+    public override void Leave()
+    {
+        _refreshCancellation?.Cancel();
+        _refreshCancellation?.Dispose();
+        _refreshCancellation = null;
+        _busy = false;
+        _sourceDrawer.Close();
+        _sortDrawer.Close();
+        _actionPanel.ShowPrimaryItems();
+        _loadedServers = [];
+        _hadSourceErrors = false;
+        _serverList.SelectedItem = null;
+    }
+
+    public override void Update()
+    {
+        _actionPanel.Refresh();
+        if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            _worldsListWidget.AddItem(connect);
+            ScreensManager.SwitchScreen("MainMenu");
         }
     }
 
-    public void RemoveConnectToListWidget(Connect? connect)
+    private static Widget CreateServerWidget(object item)
     {
-        if (connect != null && _worldsListWidget.Items.Contains(connect))
+        var server = (ServerItem)item;
+        var panel = new StackPanelWidget
         {
-            _worldsListWidget.RemoveItem(connect);
-        }
-    }
-
-    //连接是否存在
-    public bool CheckConnectExists(Connect connect, out Connect? found)
-    {
-        found = _filterType switch
-        {
-            FilterType.Collect => ConnectionDirectory.Collected.Find(x => x.Equals(connect)),
-            FilterType.Local => ConnectionDirectory.Saved.Find(x => x.Equals(connect)),
-            _ => null
+            Direction = LayoutDirection.Vertical,
+            Margin = new Vector2(12f, 0f),
+            VerticalAlignment = WidgetAlignment.Center
         };
+        var title = new LabelWidget { FontScale = 0.8f };
+        var details = new LabelWidget { FontScale = 0.55f, Color = new Color(170, 170, 170) };
+        switch (server.RuntimeStatus.Availability)
+        {
+            case ServerAvailability.Available:
+                title.Text = $"{server.DisplayName} ({server.RuntimeStatus.PingMilliseconds} ms)";
+                title.Color = Color.LightGreen;
+                details.Text = BuildDetails(server.RuntimeStatus);
+                break;
+            case ServerAvailability.Checking:
+                title.Text = $"{server.DisplayName} {Text("Loading")}";
+                break;
+            case ServerAvailability.Unavailable:
+                title.Text = $"{server.DisplayName} {Text("Unavailable")}";
+                title.Color = Color.LightRed;
+                details.Text = server.Address;
+                break;
+            default:
+                title.Text = server.DisplayName;
+                details.Text = server.Address;
+                break;
+        }
 
-        return found != null;
+        panel.Children.Add(title);
+        panel.Children.Add(details);
+        return panel;
     }
 
-    //本地连接是否存在
-    public bool CheckSaveConnectExists(Connect connect, out Connect? found)
+    private static string BuildDetails(ServerRuntimeStatus status)
     {
-        found = ConnectionDirectory.Saved.Find(x => x.Equals(connect));
-        return found != null;
+        return $"{status.Version} | {Text("Players")}: " +
+               $"{status.PlayerCount}/{status.MaxPlayerCount} | {Text("Mode")}: " +
+               $"{LanguageManager.Get("GameMode", status.GameMode.ToString())} | " +
+               $"{Text("Time")}: " +
+               $"{SubsystemTimeOfDay.GetTimeOfDayText(status.TimeOfDay)} | " +
+               $"{Text("Season")}: {GetSeasonText(status.Season, status.TimeOfSeason)}";
     }
 
-    //收藏连接是否存在
-    public bool CheckCollectConnectExists(Connect connect, out Connect? found)
+    private static string GetSeasonText(Season season, float timeOfSeason)
     {
-        found = ConnectionDirectory.Collected.Find(x => x.Equals(connect));
-        return found != null;
+        var index = season switch
+        {
+            Season.Summer => timeOfSeason < 0.33f ? 0 : timeOfSeason < 0.67f ? 1 : 2,
+            Season.Autumn => timeOfSeason < 0.33f ? 3 : timeOfSeason < 0.67f ? 4 : 5,
+            Season.Winter => timeOfSeason < 0.33f ? 6 : timeOfSeason < 0.67f ? 7 : 8,
+            Season.Spring => timeOfSeason < 0.33f ? 9 : timeOfSeason < 0.67f ? 10 : 11,
+            _ => 1
+        };
+        return LanguageManager.Get("SubsystemSeasons", index);
     }
 
-    //更多服连接是否存在
-    public bool CheckOnlineConnectExists(Connect connect, out Connect? found)
+    private void ReloadSources()
     {
-        found = ConnectionDirectory.Discovered.Find(x => x.Equals(connect));
-        return found != null;
+        var selectedId = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Source?.Id;
+        _sources = SettingsManager.ServerSources.GetEnabledSources();
+        var options = new[] { new SourceFilterOption(null) }
+            .Concat(_sources.Select(source => new SourceFilterOption(source))).ToArray();
+        _sourceDrawer.SetItems(options.Cast<object>());
+        _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId) ?? options[0];
     }
 
-    public void OnItemClick(object? item)
+    private void RefreshSelectedSource()
     {
-        if (item == null || _worldsListWidget.SelectedItem != item)
+        if (_sourceDrawer.SelectedItem is not SourceFilterOption option)
         {
             return;
         }
 
-        var connect = (Connect)item;
-        ConnectTo(connect);
+        var sources = option.Source is null ? _sources : [option.Source];
+
+        _refreshCancellation?.Cancel();
+        _refreshCancellation?.Dispose();
+        var cancellation = new CancellationTokenSource();
+        _refreshCancellation = cancellation;
+        _busy = true;
+        _statusLabel.Text = Text("Loading");
+        _loadedServers = [];
+        _hadSourceErrors = false;
+        _serverList.ClearItems();
+        _actionPanel.Refresh();
+        Task.Run(() => LoadAndProbeAsync(sources, cancellation.Token), cancellation.Token)
+            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteRefresh(cancellation, task)));
     }
 
-    public void ConnectTo(Connect connect)
+    private async Task<ServerLoadResult> LoadAndProbeAsync(IReadOnlyList<IServerSource> sources,
+        CancellationToken cancellationToken)
     {
-        //如果本地没有，则保存到本地
-        if (!CheckSaveConnectExists(connect, out _))
+        var sourceResults = await Task.WhenAll(sources.Select(async source =>
         {
-            ConnectionDirectory.Saved.Add(connect);
-        }
-
-        if (!CheckConnectExists(connect, out var found))
-        {
-            found = connect;
-        }
-        else
-        {
-            found!.Name = connect.Name;
-            found.IP = connect.IP;
-        }
-
-        if (CommonLib.Resolve(found.IP, out var ep))
-        {
-            if (found.TemporaryRepositories.Count > 0)
+            try
             {
-                Log.Information($"服务器声明了 {found.TemporaryRepositories.Count} 个临时内容仓库");
+                return (Items: await source.LoadAsync(cancellationToken).ConfigureAwait(false), Failed: false);
             }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Log.Warning($"Could not load server source '{source.Name}': {exception.Message}");
+                return (Items: (IReadOnlyList<ServerItem>)[], Failed: true);
+            }
+        })).ConfigureAwait(false);
+        var items = sourceResults.SelectMany(result => result.Items).ToArray();
 
-            PrepareRemoteSessionAndConnect(ep!, found.RequiredModProfile, found.TemporaryRepositories);
-        }
-        else
+        using var concurrency = new SemaphoreSlim(8);
+        await Task.WhenAll(items.Where(item => item.SourceKind != ServerSourceKind.Lan).Select(async item =>
         {
-            DialogsManager.Alert("连接服务器失败");
+            await concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                item.RuntimeStatus = new ServerRuntimeStatus { Availability = ServerAvailability.Checking };
+                item.RuntimeStatus = await _discoveryService.ProbeAsync(item.Address, TimeSpan.FromMilliseconds(800),
+                    cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                concurrency.Release();
+            }
+        })).ConfigureAwait(false);
+        return new ServerLoadResult(items, sourceResults.Any(result => result.Failed));
+    }
+
+    private void CompleteRefresh(CancellationTokenSource cancellation, Task<ServerLoadResult> task)
+    {
+        if (!ReferenceEquals(_refreshCancellation, cancellation))
+        {
+            cancellation.Dispose();
+            return;
         }
+
+        _refreshCancellation = null;
+        cancellation.Dispose();
+        _busy = false;
+        if (task.IsCanceled)
+        {
+            return;
+        }
+
+        if (!task.IsCompletedSuccessfully)
+        {
+            Log.Error($"Server source loading failed: {task.Exception}");
+            _statusLabel.Text = Text("LoadFailed");
+            _actionPanel.Refresh();
+            return;
+        }
+
+        _loadedServers = task.Result.Items;
+        _hadSourceErrors = task.Result.HadSourceErrors;
+        ApplyView();
+        _actionPanel.Refresh();
+    }
+
+    private void ApplyView()
+    {
+        var selectedIdentity = (_serverList.SelectedItem as ServerItem)?.Identity;
+        var search = _searchTextBox.Text.Trim();
+        IEnumerable<ServerItem> servers = _loadedServers;
+        if (search.Length > 0)
+        {
+            servers = servers.Where(server => MatchesSearch(server, search));
+        }
+
+        servers = (_sortDrawer.SelectedItem as ServerSortOrder?) switch
+        {
+            ServerSortOrder.Ping => servers
+                .OrderBy(server => server.RuntimeStatus.Availability == ServerAvailability.Available ? 0 : 1)
+                .ThenBy(server => server.RuntimeStatus.PingMilliseconds),
+            ServerSortOrder.Players => servers
+                .OrderBy(server => server.RuntimeStatus.Availability == ServerAvailability.Available ? 0 : 1)
+                .ThenByDescending(server => server.RuntimeStatus.PlayerCount),
+            ServerSortOrder.Name => servers.OrderBy(server => server.DisplayName, StringComparer.CurrentCultureIgnoreCase),
+            _ => servers
+        };
+
+        var visibleServers = servers.ToArray();
+        _serverList.ClearItems();
+        foreach (var server in visibleServers)
+        {
+            _serverList.AddItem(server);
+        }
+
+        _serverList.SelectedItem = selectedIdentity is null
+            ? null
+            : visibleServers.FirstOrDefault(server => server.Identity == selectedIdentity);
+        _statusLabel.Text = _busy
+            ? Text("Loading")
+            : _hadSourceErrors
+                ? _loadedServers.Count == 0 ? Text("LoadFailed") : Text("PartialLoadFailed")
+                : visibleServers.Length == 0 ? Text("Empty") : string.Empty;
+        _actionPanel.Refresh();
+    }
+
+    private static bool MatchesSearch(ServerItem server, string search)
+    {
+        return server.DisplayName.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
+               server.Address.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+               server.SourceName.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
+               server.Description.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
+               server.Tags.Any(tag => tag.Contains(search, StringComparison.CurrentCultureIgnoreCase));
+    }
+
+    private void UpdateSearchPlaceholder()
+    {
+        _searchPlaceholder.IsVisible = string.IsNullOrEmpty(_searchTextBox.Text);
+    }
+
+    private bool IsActionEnabled(object item)
+    {
+        if (_busy || item is not ServerAction action)
+        {
+            return false;
+        }
+
+        var selected = _serverList.SelectedItem as ServerItem;
+        return action switch
+        {
+            ServerAction.Connect => selected?.RuntimeStatus.Availability == ServerAvailability.Available,
+            ServerAction.Add or ServerAction.Refresh => true,
+            ServerAction.Favorite => selected is not null,
+            ServerAction.Delete => selected?.SourceKind == ServerSourceKind.MyServers,
+            _ => false
+        };
+    }
+
+    private void ExecuteAction(object item)
+    {
+        if (item is not ServerAction action || !IsActionEnabled(action))
+        {
+            return;
+        }
+
+        var selected = _serverList.SelectedItem as ServerItem;
+        switch (action)
+        {
+            case ServerAction.Connect:
+                ConnectSelected();
+                break;
+            case ServerAction.Add:
+                ShowAddDialog();
+                break;
+            case ServerAction.Refresh:
+                RefreshSelectedSource();
+                break;
+            case ServerAction.Favorite when selected is not null:
+                ToggleFavorite(selected);
+                break;
+            case ServerAction.Delete when selected is not null:
+                ConfirmDelete(selected);
+                break;
+        }
+    }
+
+    private void ShowAddDialog()
+    {
+        DialogsManager.ShowDialog(null, new ContentRepositoryDialog(Text("AddTitle"), Text("NameLabel"),
+            Text("AddressLabel"), Text("Add"), string.Empty, string.Empty, (name, address) =>
+            {
+                try
+                {
+                    SettingsManager.ServerDirectory.AddMyServer(name, address);
+                    SelectSourceAndRefresh(ServerSourceIds.MyServers);
+                    return true;
+                }
+                catch (ArgumentException)
+                {
+                    DialogsManager.Alert(Text("InvalidServer"));
+                    return false;
+                }
+            }));
+    }
+
+    private void ToggleFavorite(ServerItem server)
+    {
+        var isFavorite = SettingsManager.ServerDirectory.IsFavorite(server.Address);
+        SettingsManager.ServerDirectory.SetFavorite(server.DisplayName, server.Address, !isFavorite);
+        _actionPanel.Refresh();
+    }
+
+    private void ConfirmDelete(ServerItem server)
+    {
+        if (!Guid.TryParseExact(server.EntryId, "N", out var id))
+        {
+            return;
+        }
+
+        DialogsManager.Confirm(string.Format(Text("ConfirmDelete"), server.DisplayName), button =>
+        {
+            if (button == MessageDialogButton.Button1)
+            {
+                SettingsManager.ServerDirectory.DeleteMyServer(id);
+                RefreshSelectedSource();
+            }
+        });
+    }
+
+    private void ConnectSelected()
+    {
+        if (_serverList.SelectedItem is not ServerItem server ||
+            server.RuntimeStatus.Availability != ServerAvailability.Available)
+        {
+            return;
+        }
+
+        ConnectToAddress(server.DisplayName, server.Address, server.RuntimeStatus);
     }
 
     public void ConnectToRemoteSession(IPEndPoint endPoint)
     {
-        var connect = new Connect
-        {
-            IP = endPoint.ToString(),
-            Name = endPoint.ToString(),
-            State = ConnectState.Checking
-        };
-        var busyDialog = new BusyDialog("连接服务器", "正在获取服务器信息...");
+        var busyDialog = new BusyDialog(Text("Connect"), Text("Loading"));
         DialogsManager.ShowDialog(null, busyDialog);
-        Task.Run(() =>
-        {
-            CheckConnect(connect, 2000);
-            Dispatcher.Dispatch(() =>
+        var address = endPoint.ToString();
+        Task.Run(() => _discoveryService.ProbeAsync(address, TimeSpan.FromSeconds(2), CancellationToken.None))
+            .ContinueWith(task => Dispatcher.Dispatch(() =>
             {
                 DialogsManager.HideDialog(busyDialog);
-                if (connect.State is not ConnectState.Available)
+                if (!task.IsCompletedSuccessfully ||
+                    task.Result.Availability != ServerAvailability.Available)
                 {
-                    DialogsManager.Alert("连接服务器失败");
+                    DialogsManager.Alert(Text("LoadFailed"));
                     return;
                 }
 
-                ConnectTo(connect);
-            });
-        });
+                ConnectToAddress(address, address, task.Result);
+            }));
     }
 
-    private void PrepareRemoteSessionAndConnect(
-        IPEndPoint endPoint,
-        ModProfile? requiredProfile,
+    private void ConnectToAddress(string name, string address, ServerRuntimeStatus? status)
+    {
+        if (!CommonLib.Resolve(address, out var endpoint))
+        {
+            DialogsManager.Alert(LanguageManager.Get("Usual", "error"));
+            return;
+        }
+
+        SettingsManager.ServerDirectory.RecordConnectionAttempt(name, address, DateTimeOffset.UtcNow);
+        PrepareRemoteSessionAndConnect(endpoint!, status?.RequiredModProfile, status?.TemporaryRepositories ?? []);
+    }
+
+    private void SelectSourceAndRefresh(string sourceId)
+    {
+        ReloadSources();
+        _sourceDrawer.SelectedItem = _sourceDrawer.Items.Cast<SourceFilterOption>()
+            .First(option => option.Source?.Id == sourceId);
+    }
+
+    private string GetActionText(object item)
+    {
+        if (item is not ServerAction action)
+        {
+            return string.Empty;
+        }
+
+        if (action == ServerAction.Favorite && _serverList.SelectedItem is ServerItem selected &&
+            SettingsManager.ServerDirectory.IsFavorite(selected.Address))
+        {
+            return Text("Unfavorite");
+        }
+
+        return Text(action.ToString());
+    }
+
+    private static Color? GetActionColor(object item)
+    {
+        return item switch
+        {
+            ServerAction.Connect => new Color(50, 150, 35),
+            ServerAction.Delete => new Color(150, 50, 35),
+            _ => null
+        };
+    }
+
+    private static string GetSourceName(IServerSource? source)
+    {
+        if (source is null)
+        {
+            return Text("AllSources");
+        }
+
+        return source.Kind switch
+        {
+            ServerSourceKind.MyServers => Text("MyServers"),
+            ServerSourceKind.Favorites => Text("Favorites"),
+            ServerSourceKind.Recent => Text("Recent"),
+            ServerSourceKind.Lan => Text("Lan"),
+            _ => source.Name
+        };
+    }
+
+    private void PrepareRemoteSessionAndConnect(IPEndPoint endPoint, ModProfile? requiredProfile,
         IReadOnlyList<ContentRepository> temporaryRepositories)
     {
         if (requiredProfile is not { Packages.Count: > 0 })
@@ -319,38 +543,27 @@ public class NetPlayScreen : Screen
 
         var busyDialog = new BusyDialog("准备服务器模组", "正在检查所需模组...");
         DialogsManager.ShowDialog(null, busyDialog);
-        Task.Run(() =>
-        {
-            try
+        Task.Run(() => ModRestartHelper.PrepareRemoteSession(SessionInfoManager.CreateRemoteClientSession(endPoint),
+                requiredProfile, temporaryRepositories,
+                message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)))
+            .ContinueWith(task => Dispatcher.Dispatch(() =>
             {
-                var result = ModRestartHelper.PrepareRemoteSession(
-                    SessionInfoManager.CreateRemoteClientSession(endPoint),
-                    requiredProfile,
-                    temporaryRepositories,
-                    message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message));
-                Dispatcher.Dispatch(() =>
+                DialogsManager.HideDialog(busyDialog);
+                if (!task.IsCompletedSuccessfully)
                 {
-                    DialogsManager.HideDialog(busyDialog);
-                    if (!result.RequiresRestart)
-                    {
-                        ConnectPreparedRemoteSession(endPoint);
-                        return;
-                    }
+                    Log.Error($"Remote mod session preparation failed: {task.Exception}");
+                    DialogsManager.Alert(LanguageManager.Get("Usual", "error"));
+                    return;
+                }
 
-                    ConfirmRemoteModRestart(result);
-                });
-            }
-            catch (Exception ex)
-            {
-                Dispatcher.Dispatch(() =>
+                if (!task.Result.RequiresRestart)
                 {
-                    DialogsManager.HideDialog(busyDialog);
-                    DialogsManager.Alert(
-                        "模组下载失败",
-                        $"无法准备服务器需要的模组。\n{ex.Message}");
-                });
-            }
-        });
+                    ConnectPreparedRemoteSession(endPoint);
+                    return;
+                }
+
+                ConfirmRemoteModRestart(task.Result);
+            }));
     }
 
     private static void ConnectPreparedRemoteSession(IPEndPoint endPoint)
@@ -361,500 +574,18 @@ public class NetPlayScreen : Screen
 
     private static void ConfirmRemoteModRestart(RemoteModSessionPreparation result)
     {
-        DialogsManager.ShowDialog(
-            null,
-            new MessageDialog(
-                "需要重启游戏",
-                $"{result.RestartReason}\n\n是否现在重启？",
-                "重启",
-                "取消",
-                button =>
+        DialogsManager.ShowDialog(null, new MessageDialog("需要重启游戏",
+            $"{result.RestartReason}\n\n是否现在重启？", "重启", "取消", button =>
+            {
+                if (button == MessageDialogButton.Button1)
                 {
-                    if (button != MessageDialogButton.Button1)
-                    {
-                        return;
-                    }
-
                     GameExitManager.RequestRestart(result.RemoteSession!, result.SessionProfile!);
-                }));
-    }
-
-    public void UpdateList()
-    {
-        try
-        {
-            _worldsListWidget.ClearItems();
-
-            if (_filterType == FilterType.Collect)
-            {
-                UpdateCollectList();
-            }
-            else if (_filterType == FilterType.Local)
-            {
-                UpdateLocalList();
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Error("UpdateNetList:" + e.Message);
-        }
-    }
-
-    //检查所有的Connect是否可以正常连接
-    private bool CheckingConnects(List<Connect> connects)
-    {
-        foreach (var c in connects)
-        {
-            if (c is { State: ConnectState.Checking })
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private void UpdateCollectList()
-    {
-        if (!CheckingConnects(ConnectionDirectory.Collected))
-        {
-            return;
-        }
-
-        ConnectionDirectory.Collected.Sort((c1, c2) => (int)c2.State - (int)c1.State);
-        foreach (var connection in ConnectionDirectory.Collected)
-        {
-            AddConnectToListWidget(connection);
-        }
-
-        _isLoadingList = false;
-    }
-
-    private void UpdateLocalList()
-    {
-        if (!CheckingConnects(ConnectionDirectory.Saved))
-        {
-            return;
-        }
-
-        ConnectionDirectory.Saved.Sort((c1, c2) => (int)c2.State - (int)c1.State);
-        foreach (var connection in ConnectionDirectory.Saved)
-        {
-            AddConnectToListWidget(connection);
-        }
-
-        _isLoadingList = false;
-    }
-
-    /// <summary>
-    ///     发现局域网服务器
-    /// </summary>
-    /// <param name="end"></param>
-    private static void DiscoverLocalServers(Action end)
-    {
-        var listener = new EventBasedNetListener();
-        var net = new NetManager(listener) { ReuseAddress = true };
-        var received = false;
-        try
-        {
-            net.UnconnectedMessagesEnabled = true;
-            net.Start();
-            var s = Stopwatch.StartNew();
-            listener.NetworkReceiveUnconnectedEvent += (ep, r, _) =>
-            {
-                if (ep.Address.AddressFamily != AddressFamily.InterNetwork)
-                {
-                    return;
                 }
-
-                var serverInfoPackage =
-                    PackageManager.DecodePackage<ServerInfoPackage>(null, r, null, null, ep);
-                serverInfoPackage.Ping = (int)s.ElapsedMilliseconds;
-                serverInfoPackage.From?.IsLocalRemote = true;
-                PackageDispatcher.Handle(serverInfoPackage, null, false);
-                received = true;
-            };
-            NetNode.SendWriterFromPackage(net, [new ServerInfoPackage(true)], null);
-            while (s.ElapsedMilliseconds < 500 && !received)
-            {
-                net.PollEvents();
-                Thread.Sleep(1);
-            }
-
-            Log.Debug("Exit Discover");
-        }
-        catch (Exception e)
-        {
-            Log.Error(e);
-        }
-        finally
-        {
-            net.Stop();
-            end.Invoke();
-        }
+            }));
     }
 
-    private static void CheckConnect(Connect c, int timeoutMilliseconds = 500)
+    private static string Text(string key)
     {
-        var listener = new EventBasedNetListener();
-        var net = new NetManager(listener) { ReuseAddress = true };
-        try
-        {
-            net.UnconnectedMessagesEnabled = true;
-            net.Start();
-            var received = false;
-            c.State = ConnectState.Checking;
-            if (CommonLib.Resolve(c.IP, out var cep))
-            {
-                IpToDNS[cep!.Address + ":" + cep.Port] = c.IP;
-                var s = Stopwatch.StartNew();
-                listener.NetworkReceiveUnconnectedEvent += (ep, r, _) =>
-                {
-                    if (!ep.Equals(cep))
-                    {
-                        return;
-                    }
-
-                    var serverInfoPackage =
-                        PackageManager.DecodePackage<ServerInfoPackage>(null, r, null, null, ep);
-                    ApplyServerInfo(c, serverInfoPackage, s.ElapsedMilliseconds);
-                    received = true;
-                };
-                NetNode.SendWriterFromPackage(net, [new ServerInfoPackage(true)], cep);
-                while (s.ElapsedMilliseconds < timeoutMilliseconds && !received)
-                {
-                    net.PollEvents();
-                    Thread.Sleep(1);
-                }
-
-                Log.Debug("Exit Check Connect");
-            }
-
-            if (c.State == ConnectState.Checking)
-            {
-                c.State = ConnectState.Unavailable;
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Error(e);
-            c.State = ConnectState.Unavailable;
-        }
-        finally
-        {
-            net.Stop();
-        }
-    }
-
-    private static void ApplyServerInfo(Connect connect, ServerInfoPackage package, long elapsedMilliseconds)
-    {
-        connect.State = ConnectState.Available;
-        connect.GameMode = package.GameMode;
-        connect.MaxCount = package.MaxPlayerCount;
-        connect.PlayerCount = package.ClientCount;
-        connect.UsedTime = elapsedMilliseconds;
-        connect.Version = package.Version;
-        connect.TimeOfDay = package.TimeOfDay;
-        connect.TemporaryRepositories = package.TemporaryRepositories;
-        connect.RequiredModProfile = package.RequiredModProfile;
-        connect.Season = package.Season;
-        connect.TimeOfSeason = package.TimeOfSeason;
-    }
-
-    private void AddIntoCheckList(Connect connect)
-    {
-        var thread = new Thread(() => CheckConnect(connect)) { IsBackground = true };
-        thread.Start();
-        RunningTasks.Add(thread);
-    }
-
-    private void RefreshConnects()
-    {
-        RunningTasks.Clear();
-        _worldsListWidget.ClearItems();
-        if (_filterType == FilterType.Collect) //收藏
-        {
-            var count = ConnectionDirectory.Collected.Count;
-            for (var i = 0; i < count; i++)
-            {
-                if (i < ConnectionDirectory.Collected.Count)
-                {
-                    var c = ConnectionDirectory.Collected[i];
-                    c.State = ConnectState.Checking;
-                    c.FromCollect = true;
-                    AddIntoCheckList(c);
-                }
-            }
-
-            UpdateList();
-        }
-
-        if (_filterType == FilterType.Local) //本地
-        {
-            LookingForServer = true;
-            var thread = new Thread(() => DiscoverLocalServers(delegate { LookingForServer = false; }))
-            { IsBackground = true };
-            thread.Start();
-            RunningTasks.Add(thread);
-
-            var count = ConnectionDirectory.Saved.Count;
-            for (var i = 0; i < count; i++)
-            {
-                if (i < ConnectionDirectory.Saved.Count)
-                {
-                    var c = ConnectionDirectory.Saved[i];
-                    c.State = ConnectState.Checking;
-                    c.FromLocal = true;
-                    AddIntoCheckList(c);
-                }
-            }
-
-            UpdateList();
-        }
-    }
-
-    public override void Enter(object[] parameters)
-    {
-        _filterType = FilterType.Local;
-        RefreshConnects();
-    }
-
-    public override void Leave()
-    {
-        RunningTasks.Clear();
-    }
-
-    public override void Update()
-    {
-        try
-        {
-            for (var i = RunningTasks.Count - 1; i >= 0; i--)
-            {
-                if (RunningTasks[i].ThreadState == ThreadState.Stopped)
-                {
-                    RunningTasks.RemoveAt(i);
-                    UpdateList();
-                    break;
-                }
-            }
-
-            _addButton.IsEnabled = _filterType is FilterType.Collect or FilterType.Local;
-            _removeButton.IsEnabled = _worldsListWidget.SelectedItem != null &&
-                                      _filterType is FilterType.Collect or FilterType.Local;
-            _topBarLabel.Text = LanguageManager.Get("NetPlayScreen", 5) + "(" + _worldsListWidget.Items.Count + ")" +
-                                (LookingForServer ? LanguageManager.Get("NetPlayScreen", 6) : "");
-            if (Time.PeriodicEvent(0.1f, 0))
-            {
-                _refreshTime += 0.1f;
-            }
-
-            _refreshButton.IsEnabled = _refreshTime > 1f;
-            _refreshButton.Color = _refreshButton.IsEnabled ? Color.Green : Color.LightGray;
-            _filter0Button.Color = _filterType == FilterType.Collect ? Color.Green : Color.White;
-            _filter1Button.Color = _filterType == FilterType.Local ? Color.Green : Color.White;
-
-            var loadingText = LanguageManager.Get("NetPlayScreen", 17);
-            _filter0Button.Text = _filterType == FilterType.Collect
-                ? loadingText
-                : LanguageManager.Get("NetPlayScreen", 3);
-            _filter1Button.Text = _filterType == FilterType.Local
-                ? loadingText
-                : LanguageManager.Get("NetPlayScreen", 4);
-
-            if (!_isLoadingList)
-            {
-                _filter0Button.Text = _filterType == FilterType.Collect
-                    ? LanguageManager.Get("NetPlayScreen", 3)
-                    : _filter0Button.Text;
-                _filter1Button.Text = _filterType == FilterType.Local
-                    ? LanguageManager.Get("NetPlayScreen", 4)
-                    : _filter1Button.Text;
-            }
-
-            if (_addButton.IsClicked) //添加服务器
-            {
-                DialogsManager.ShowDialog(null, new AddServerDialog((name, ip) =>
-                {
-                    var connect = new Connect
-                    {
-                        Name = name,
-                        IP = ip
-                    };
-                    if (_filterType == FilterType.Collect)
-                    {
-                        if (CheckCollectConnectExists(connect, out var found))
-                        {
-                            ConnectionDirectory.Collected.Remove(found!);
-                        }
-
-                        ConnectionDirectory.Collected.Add(connect);
-                    }
-                    else
-                    {
-                        if (CheckSaveConnectExists(connect, out var found))
-                        {
-                            ConnectionDirectory.Saved.Remove(found!);
-                        }
-
-                        ConnectionDirectory.Saved.Add(connect);
-                    }
-
-                    AddIntoCheckList(connect);
-                    UpdateList();
-                }));
-            }
-
-            if (_removeButton.IsClicked) //删除服务器
-            {
-                if (_worldsListWidget.SelectedItem != null)
-                {
-                    var c = (Connect)_worldsListWidget.SelectedItem;
-                    if (_filterType == FilterType.Collect && CheckCollectConnectExists(c, out var found))
-                    {
-                        ConnectionDirectory.Collected.Remove(found!);
-                    }
-
-                    if (_filterType == FilterType.Local && CheckSaveConnectExists(c, out var found2))
-                    {
-                        ConnectionDirectory.Saved.Remove(found2!);
-                    }
-
-                    UpdateList();
-                }
-            }
-
-            if (_collectButton.IsClicked)
-            {
-                if (_worldsListWidget.SelectedItem != null && _filterType != FilterType.Collect)
-                {
-                    var c = (Connect)_worldsListWidget.SelectedItem;
-                    if (CheckCollectConnectExists(c, out var found))
-                    {
-                        ConnectionDirectory.Collected.Remove(found!);
-                    }
-
-                    ConnectionDirectory.Collected.Add(c);
-                    DialogsManager.ShowDialog(
-                        this,
-                        new MessageDialog(
-                            "收藏成功",
-                            $"服[{c.Name}]已添加到自定义列表",
-                            "确定"
-                        )
-                    );
-                }
-            }
-
-            if (_refreshButton.IsClicked && _refreshTime > 1f) //刷新
-            {
-                _isLoadingList = true;
-                _refreshTime = 0;
-                RefreshConnects();
-            }
-
-            if (_filter0Button.IsClicked && _filterType != FilterType.Collect)
-            {
-                _isLoadingList = true;
-                _filterType = FilterType.Collect;
-                RefreshConnects();
-            }
-
-            if (_filter1Button.IsClicked && _filterType != FilterType.Local)
-            {
-                _isLoadingList = true;
-                _filterType = FilterType.Local;
-                RefreshConnects();
-            }
-
-            if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
-            {
-                ScreensManager.SwitchScreen("MainMenu");
-                _worldsListWidget.SelectedItem = null;
-            }
-        }
-        catch (Exception e)
-        {
-            Log.Warning(e.Message);
-        }
-    }
-
-    /// <summary>
-    ///     获取存档的季节
-    /// </summary>
-    /// <param name="season">季节枚举</param>
-    /// <param name="timeOfSeason">季节进度</param>
-    /// <returns>季节字符串</returns>
-    private string GetSeasonText(Season season, float timeOfSeason)
-    {
-        var seasonIndex = season switch
-        {
-            Season.Summer => timeOfSeason < 0.33f ? 0 : timeOfSeason < 0.67f ? 1 : 2,
-            Season.Autumn => timeOfSeason < 0.33f ? 3 : timeOfSeason < 0.67f ? 4 : 5,
-            Season.Winter => timeOfSeason < 0.33f ? 6 : timeOfSeason < 0.67f ? 7 : 8,
-            Season.Spring => timeOfSeason < 0.33f ? 9 : timeOfSeason < 0.67f ? 10 : 11,
-            _ => 1 // 默认盛夏
-        };
-
-        return LanguageManager.Get("SubsystemSeasons", seasonIndex);
-    }
-
-    public class Connect
-    {
-        public bool FromBroadcast;
-
-        public bool FromCollect;
-
-        public bool FromLocal;
-
-        public GameMode GameMode;
-
-        public string IP = string.Empty;
-
-        public long Level;
-
-        public ushort MaxCount;
-
-        public IReadOnlyList<ContentRepository> TemporaryRepositories = [];
-
-        public string Name = string.Empty;
-
-        public ushort PlayerCount;
-
-        public ModProfile? RequiredModProfile;
-
-        public ConnectState State;
-
-        public float TimeOfDay;
-
-        public long UsedTime;
-
-        public string ValidTime = string.Empty;
-
-        public string Version = string.Empty;
-
-        /// <summary>
-        ///     季节
-        /// </summary>
-        public Season Season { get; set; }
-
-        /// <summary>
-        ///     季节进度
-        /// </summary>
-        public float TimeOfSeason { get; set; }
-
-        public override int GetHashCode()
-        {
-            return IP.GetHashCode();
-        }
-
-        public override bool Equals(object? obj)
-        {
-            return obj is Connect connect && connect.IP == IP;
-        }
-
-        public override string ToString()
-        {
-            return $"{Name}";
-        }
+        return LanguageManager.GetContentWidgets(nameof(NetPlayScreen), key);
     }
 }

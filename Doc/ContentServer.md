@@ -1,7 +1,8 @@
 # ContentServer
 
 ContentServer 是 SCNET 的独立 ASP.NET Core 内容服务，项目位于 `ContentServer/`，并注册在
-`SCNET.slnx` 的 `08 Content` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询和包下载；
+`SCNET.slnx` 的 `08 Content` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询、包下载，
+以及服务器源地址的登记与审核；
 玩家身份、联机身份和平台 FilePicker 不属于该服务。
 
 ContentServer 是统一的远程内容协议和部署单元，但一个客户端可以配置多个独立部署作为内容仓库。持久仓库集合保存在客户端
@@ -122,6 +123,7 @@ ContentServer/Data/content-server.db
 - `Contents` / `ContentVersions`
 - `PackageBlobs`
 - `ReviewRecords`
+- `ServerSources`
 
 数据库结构由 `Infrastructure/Migrations` 中的 EF Core 迁移维护，服务启动时自动执行尚未应用的迁移。模型发生变化后，在仓库根目录创建迁移：
 
@@ -144,7 +146,11 @@ dotnet ef migrations add <MigrationName> \
   "ContentServer": {
     "DatabasePath": "Data/content-server.db",
     "MaximumPackageBytes": 268435456,
-    "AllowedOrigins": ["https://content-ui.example.com"]
+    "AllowedOrigins": ["https://content-ui.example.com"],
+    "BuiltInServerDirectoryEnabled": true,
+    "BuiltInServerDirectoryId": "scnet-content-server",
+    "BuiltInServerDirectoryName": "SCNET Community Servers",
+    "PublicBaseUrl": "https://content.example.com"
   }
 }
 ```
@@ -157,6 +163,8 @@ ContentServer__DatabasePath
 
 `AllowedOrigins` 只用于独立部署的浏览器 SPA，必须填写完整来源（协议、域名和端口），不使用通配符，
 也不允许跨域凭据。匿名下载和 Bearer API Key 请求均可跨域；响应暴露 `Content-Disposition` 供前端取得文件名。
+`PublicBaseUrl` 用于生成内置服务器源的公开协议地址；反向代理部署时应显式配置，避免依据内部请求地址生成 URL。
+`BuiltInServerDirectoryId` 必须符合服务器源协议的稳定 ID 规则，部署后不应随显示名称或域名变化。
 
 ## 独立 WebUI
 
@@ -194,6 +202,8 @@ Key 的 SHA-256 hash。数据库中一旦存在管理员，该端点固定返回
 
 ```text
 GET  /api/v1/health
+GET  /api/v1/server-sources
+GET  /api/v1/server-directory
 GET  /api/v1/content
 GET  /api/v1/content/{contentId}
 GET  /api/v1/content/{contentId}/versions
@@ -202,6 +212,27 @@ GET  /api/v1/mods
 GET  /api/v1/mods/{modId}
 GET  /api/v1/mods/{modId}/versions/{version}
 ```
+
+`GET /api/v1/server-sources` 是内容广场的服务器源板块，返回本站内置来源和审核通过的第三方服务器源地址。
+第三方服务器源由已激活的内容发布者提交并归属于该发布者；发布者工作台可查询自己的全部提交和审核状态。ContentServer 使用
+`SCNET.ServerSource.Protocol` 完整读取分页目录并执行协议校验，
+同时在每次 DNS 解析和重定向连接时拒绝回环、私有、链路本地及保留地址，避免公开校验端点访问内网。
+
+服务器源管理员接口：
+
+```text
+GET    /api/v1/admin/server-sources
+POST   /api/v1/admin/server-sources/{id}/approve
+POST   /api/v1/admin/server-sources/{id}/reject
+DELETE /api/v1/admin/server-sources/{id}
+```
+
+批准前会再次实时读取并验证来源。ContentServer 只管理来源 URL 的生命周期，不复制、聚合或持久化第三方
+来源返回的服务器条目。
+
+ContentServer 同时提供 `SCNET.ServerSource.Protocol` 的内置参考实现。启用内置服务器目录后，
+`GET /api/v1/server-sources` 会自动附加本站来源，客户端通过 `GET /api/v1/server-directory` 按统一协议分页
+读取已经审核、由发布者启用且未被管理员停用的服务器。内置来源不写入第三方服务器源登记表，也不审核自身。
 
 一次性管理员初始化接口：
 
@@ -262,7 +293,16 @@ GET  /api/v1/publisher
 GET  /api/v1/publisher/submissions
 GET  /api/v1/publisher/submissions/{versionId}
 POST /api/v1/publisher/submissions
+GET  /api/v1/publisher/server-sources
+POST /api/v1/publisher/server-sources
+GET  /api/v1/publisher/servers
+POST /api/v1/publisher/servers
+POST /api/v1/publisher/servers/{id}/enable
+POST /api/v1/publisher/servers/{id}/disable
 ```
+
+服务器源提交接收名称、服务器源 API URL 和可选说明。`GET /api/v1/publisher/server-sources` 仅返回当前
+发布者拥有的记录，包括待审核、已通过和已拒绝状态及审核意见；非 Active 发布者不能提交服务器源。
 
 内容提交使用 `multipart/form-data`：
 
@@ -286,6 +326,9 @@ POST /api/v1/publisher/content/{id}/enable
 
 上下架命令会再次校验内容归属，发布者不能操作其他发布者的内容；非 Active 发布者不能改变内容状态。
 
+服务器投稿属于当前发布者，审核状态与发布者上下架状态相互独立。服务器地址必须包含显式端口；审核通过后，
+发布者可以将服务器从内置目录下架或重新启用，但不能操作其他发布者的服务器。
+
 管理员接口使用配置的 Bearer Key：
 
 ```text
@@ -295,6 +338,12 @@ POST /api/v1/admin/publishers/{id}/reject
 POST /api/v1/admin/publishers/{id}/suspend
 POST /api/v1/admin/publishers/{id}/revoke-key
 POST /api/v1/admin/publishers/{id}/restore-key
+GET    /api/v1/admin/servers
+POST   /api/v1/admin/servers/{id}/approve
+POST   /api/v1/admin/servers/{id}/reject
+POST   /api/v1/admin/servers/{id}/suspend
+POST   /api/v1/admin/servers/{id}/restore
+DELETE /api/v1/admin/servers/{id}
 GET  /api/v1/admin/administrator-applications
 POST /api/v1/admin/administrators/{id}/revoke-key (仅超级管理员)
 POST /api/v1/admin/administrators/{id}/restore-key (仅超级管理员)

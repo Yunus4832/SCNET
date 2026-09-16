@@ -24,7 +24,8 @@
 |------|------|
 | `Survivalcraft/` | 核心游戏逻辑，联机规则、世界、网络、模组都在这里 |
 | `Content.Packaging/` | 位于 Protocol 层的统一 `.scpkg` 协议、校验和 payload codec |
-| `ContentServer/` | 统一 `.scpkg` 内容发布、审核、目录与下载服务 |
+| `ServerSource.Protocol/` | 位于 Protocol 层的服务器源 HTTP 契约、校验器和参考客户端 |
+| `ContentServer/` | 统一 `.scpkg` 内容发布服务及内置服务器源参考实现 |
 | `ContentWebUI/` | ContentServer 的发布者和管理员 Web 工作台 |
 | `VerificationBlockMod/` | 当前模组运行时的端到端示例模组 |
 | `Survivalcraft.ModTemplates/` | `dotnet new` 模组模板 |
@@ -115,12 +116,12 @@ dotnet test Survivalcraft.Test/
 - [构建与共享配置](Doc/BuildAndConfig.md) — 构建流程、共享属性与打包行为
 - [模组使用说明](Doc/Mods.md) — `.scpkg`、本地缓存、profile、仓库和联机 required mods
 - [模组开发](Doc/Modding.md) — 模组模板、`.scpkg` 构建、示例模组与 NuGet 包边界
-- [内容服务](Doc/ContentServer.md) — 统一内容发布、审核、匿名目录与包分发
+- [内容服务](Doc/ContentServer.md) — 内容发布、审核、匿名目录、包分发及内置服务器源
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问
 - [外部依赖](Doc/Dependencies.md) — 工具链、运行时包与测试依赖
 - [网络稳定性与容量测试](Doc/NetworkTesting.md) — UDP 损伤代理、弱网实验与并发容量测试边界
 - [地形内容分发架构](Doc/TerrainDistribution.md) — 权威内容、客户端派生、版本门禁与线程所有权
-- [ContentServer](Doc/ContentServer.md) — 发布者申请、SQLite 存储、内容审核、匿名下载与游戏端安装
+- [ContentServer](Doc/ContentServer.md) — 发布者申请、内容与服务器审核、匿名下载和内置服务器目录
 
 ## 版权与法律
 

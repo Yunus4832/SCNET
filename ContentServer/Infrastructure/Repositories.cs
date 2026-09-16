@@ -3,6 +3,8 @@ using ContentServer.Domain.Contents;
 using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
 using ContentServer.Domain.Reviews;
+using ContentServer.Domain.ServerDirectory;
+using ContentServer.Domain.ServerSources;
 
 using Microsoft.EntityFrameworkCore;
 
@@ -91,4 +93,45 @@ public sealed class PackageBlobRepository(
             package => package.Hash == hash,
             cancellationToken);
     }
+}
+
+public sealed class ServerSourceRegistrationRepository(
+    ContentServerDbContext context
+) : RepositoryBase<ServerSourceRegistration, ServerSourceRegistrationId, ContentServerDbContext>(context)
+{
+    private readonly ContentServerDbContext _context = context;
+
+    public Task<ServerSourceRegistration?> FindAsync(ServerSourceRegistrationId id,
+        CancellationToken cancellationToken)
+    {
+        return _context.ServerSources.FirstOrDefaultAsync(source => source.Id == id, cancellationToken);
+    }
+
+    public Task<bool> HasPendingOrActiveUrlAsync(string apiUrl, CancellationToken cancellationToken)
+    {
+        return _context.ServerSources.AnyAsync(source => source.ApiUrl == apiUrl &&
+                                                        source.Status != ServerSourceRegistrationStatus.Rejected,
+            cancellationToken);
+    }
+
+    public void Delete(ServerSourceRegistration source)
+    {
+        _context.ServerSources.Remove(source);
+    }
+}
+
+public sealed class DirectoryServerRepository(
+    ContentServerDbContext context
+) : RepositoryBase<DirectoryServer, DirectoryServerId, ContentServerDbContext>(context)
+{
+    private readonly ContentServerDbContext _context = context;
+
+    public Task<DirectoryServer?> FindAsync(DirectoryServerId id, CancellationToken cancellationToken) =>
+        _context.DirectoryServers.FirstOrDefaultAsync(server => server.Id == id, cancellationToken);
+
+    public Task<bool> HasPendingOrApprovedAddressAsync(string address, CancellationToken cancellationToken) =>
+        _context.DirectoryServers.AnyAsync(server => server.Address == address &&
+            server.ReviewStatus != DirectoryServerReviewStatus.Rejected, cancellationToken);
+
+    public void Delete(DirectoryServer server) => _context.DirectoryServers.Remove(server);
 }

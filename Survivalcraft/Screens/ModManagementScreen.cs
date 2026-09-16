@@ -50,8 +50,8 @@ public sealed class ModManagementScreen : Screen
         ]);
         _actionPanel.SetSecondaryItems(
         [
-            ModAction.DeleteCache,
-            ModAction.Refresh
+            ModAction.Refresh,
+            ModAction.DeleteCache
         ]);
         _modsList.ItemWidgetFactory = CreateModItemWidget;
     }

@@ -1,0 +1,14 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 76">
+    <StackPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="14, 0">
+        <CanvasWidget Size="Infinity, 76">
+            <StackPanelWidget Direction="Vertical" VerticalAlignment="Center">
+                <LabelWidget Name="ServerSourceItem.Name" FontScale="0.8"/>
+                <LabelWidget Name="ServerSourceItem.Address" FontScale="0.55" Color="160, 160, 160"/>
+            </StackPanelWidget>
+        </CanvasWidget>
+        <CanvasWidget Size="150, 76">
+            <LabelWidget Name="ServerSourceItem.State" VerticalAlignment="Center" HorizontalAlignment="Far"
+                         FontScale="0.65" Color="180, 180, 180"/>
+        </CanvasWidget>
+    </StackPanelWidget>
+</CanvasWidget>

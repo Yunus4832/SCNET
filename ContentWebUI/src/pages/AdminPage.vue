@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
-import { ArrowLeftRight, Check, Download, LogOut, Search, X } from 'lucide-vue-next';
+import { ArrowLeftRight, Check, Download, LogOut, Search, Trash2, X } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
@@ -44,10 +44,36 @@ interface ContentItem {
   createdAt: string;
   updatedAt: string;
 }
+interface ServerSourceRegistration {
+  id: string;
+  publisherId: string;
+  name: string;
+  apiUrl: string;
+  description?: string;
+  status: string;
+  reviewMessage?: string;
+  createdAt: string;
+  reviewedAt?: string;
+}
+interface DirectoryServer {
+  id: string;
+  publisherId: string;
+  name: string;
+  address: string;
+  description?: string;
+  reviewStatus: string;
+  reviewMessage?: string;
+  isEnabledByPublisher: boolean;
+  isSuspended: boolean;
+  suspensionReason?: string;
+  createdAt: string;
+}
 const router = useRouter();
 const client = useQueryClient();
 const mode = ref<'review' | 'manage'>('review');
-const tab = ref<'content' | 'publishers' | 'administrators'>('content');
+const tab = ref<'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources'>(
+  'content',
+);
 const actionError = ref('');
 const accessCacheKey = getAccess('administrator')?.apiKey.slice(0, 18) ?? 'anonymous';
 const manageSearchInput = ref('');
@@ -115,6 +141,16 @@ const administrators = useQuery({
       `/api/v1/admin/administrator-applications?status=Pending&pageIndex=${reviewAdministratorsPage.value}&pageSize=6`,
     ),
 });
+const serverSourceApplications = useQuery({
+  queryKey: ['admin-server-source-applications', accessCacheKey],
+  enabled: isActive,
+  queryFn: () => api<ServerSourceRegistration[]>('/api/v1/admin/server-sources?status=Pending'),
+});
+const serverApplications = useQuery({
+  queryKey: ['admin-server-applications', accessCacheKey],
+  enabled: isActive,
+  queryFn: () => api<DirectoryServer[]>('/api/v1/admin/servers?status=Pending'),
+});
 const managedContent = useQuery({
   queryKey: computed(() => [
     'admin-content',
@@ -154,6 +190,16 @@ const administratorKeys = useQuery({
     api<PagedData<Applicant>>(
       `/api/v1/admin/administrator-applications?${queryString({ query: manageSearch.value, pageIndex: administratorPage.value, pageSize: 6 })}`,
     ),
+});
+const managedServerSources = useQuery({
+  queryKey: ['admin-server-sources', accessCacheKey],
+  enabled: isActive,
+  queryFn: () => api<ServerSourceRegistration[]>('/api/v1/admin/server-sources'),
+});
+const managedServers = useQuery({
+  queryKey: ['admin-servers', accessCacheKey],
+  enabled: isActive,
+  queryFn: () => api<DirectoryServer[]>('/api/v1/admin/servers'),
 });
 const contentCount = useQuery({
   queryKey: ['admin-content-count', accessCacheKey],
@@ -231,6 +277,40 @@ async function restoreKey(role: 'publishers' | 'administrators', id: string) {
     actionError.value = value instanceof Error ? value.message : '操作失败';
   }
 }
+async function deleteServerSource(id: string, name: string) {
+  if (!window.confirm(`确定删除服务器源“${name}”吗？`)) return;
+  actionError.value = '';
+  try {
+    await api('/api/v1/admin/server-sources/' + id, { method: 'DELETE' });
+    await client.invalidateQueries({ queryKey: ['admin-server-sources'] });
+    await client.invalidateQueries({ queryKey: ['admin-server-source-applications'] });
+  } catch (value) {
+    actionError.value = value instanceof Error ? value.message : '删除失败';
+  }
+}
+async function setServerSuspended(item: DirectoryServer) {
+  actionError.value = '';
+  try {
+    await api(`/api/v1/admin/servers/${item.id}/${item.isSuspended ? 'restore' : 'suspend'}`, {
+      method: 'POST',
+      body: item.isSuspended ? undefined : JSON.stringify({ message: '管理员停用' }),
+    });
+    await client.invalidateQueries({ queryKey: ['admin-servers'] });
+  } catch (value) {
+    actionError.value = value instanceof Error ? value.message : '操作失败';
+  }
+}
+async function deleteServer(id: string, name: string) {
+  if (!window.confirm(`确定删除服务器“${name}”吗？`)) return;
+  actionError.value = '';
+  try {
+    await api('/api/v1/admin/servers/' + id, { method: 'DELETE' });
+    await client.invalidateQueries({ queryKey: ['admin-servers'] });
+    await client.invalidateQueries({ queryKey: ['admin-server-applications'] });
+  } catch (value) {
+    actionError.value = value instanceof Error ? value.message : '删除失败';
+  }
+}
 function switchMode(value: 'review' | 'manage') {
   mode.value = value;
   if (
@@ -240,7 +320,9 @@ function switchMode(value: 'review' | 'manage') {
   )
     tab.value = 'content';
 }
-function selectManageTab(value: 'content' | 'publishers' | 'administrators') {
+function selectManageTab(
+  value: 'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources',
+) {
   tab.value = value;
   manageSearchInput.value = '';
   manageSearch.value = '';
@@ -249,7 +331,7 @@ function submitManageSearch() {
   manageSearch.value = manageSearchInput.value.trim();
   if (tab.value === 'content') contentPage.value = 1;
   else if (tab.value === 'publishers') publisherPage.value = 1;
-  else administratorPage.value = 1;
+  else if (tab.value === 'administrators') administratorPage.value = 1;
 }
 function selectContentType(value: string) {
   contentType.value = value;
@@ -289,6 +371,14 @@ function selectContentType(value: string) {
           ><button :class="{ active: tab === 'administrators' }" @click="tab = 'administrators'">
             <b>{{ administrators.data.value?.total ?? 0 }}</b
             ><span>管理员申请</span>
+          </button>
+          <button :class="{ active: tab === 'servers' }" @click="tab = 'servers'">
+            <b>{{ serverApplications.data.value?.length ?? 0 }}</b
+            ><span>待审服务器</span>
+          </button>
+          <button :class="{ active: tab === 'serverSources' }" @click="tab = 'serverSources'">
+            <b>{{ serverSourceApplications.data.value?.length ?? 0 }}</b
+            ><span>服务器源</span>
           </button>
         </div>
         <p v-if="actionError" class="form-error">{{ actionError }}</p>
@@ -342,6 +432,79 @@ function selectContentType(value: string) {
               下一页
             </button>
           </div>
+        </div>
+        <div v-else-if="tab === 'servers'">
+          <h2>服务器审核</h2>
+          <div v-if="serverApplications.data.value?.length" class="content-grid">
+            <article
+              v-for="item in serverApplications.data.value"
+              :key="item.id"
+              class="content-card"
+            >
+              <div class="card-top">
+                <span class="eyebrow">发布者 {{ item.publisherId }}</span>
+              </div>
+              <div>
+                <h3>{{ item.name }}</h3>
+                <code>{{ item.address }}</code>
+                <p>{{ item.description || '未提供服务器说明' }}</p>
+              </div>
+              <div class="card-bottom">
+                <span>待审核</span>
+                <div class="review-actions">
+                  <button
+                    class="icon-button reject"
+                    @click="review(`/api/v1/admin/servers/${item.id}`, false)"
+                  >
+                    <X />
+                  </button>
+                  <button
+                    class="icon-button approve"
+                    @click="review(`/api/v1/admin/servers/${item.id}`, true)"
+                  >
+                    <Check />
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+          <div v-else class="state">没有待审核服务器</div>
+        </div>
+        <div v-else-if="tab === 'serverSources'">
+          <h2>服务器源审核</h2>
+          <div v-if="serverSourceApplications.data.value?.length" class="content-grid">
+            <article
+              v-for="item in serverSourceApplications.data.value"
+              :key="item.id"
+              class="content-card"
+            >
+              <div class="card-top">
+                <span class="eyebrow">发布者 {{ item.publisherId }}</span>
+              </div>
+              <div>
+                <h3>{{ item.name }}</h3>
+                <code>{{ item.apiUrl }}</code>
+                <p>{{ item.description || '未提供来源说明' }}</p>
+              </div>
+              <div class="card-bottom">
+                <span>待审核</span>
+                <div class="review-actions">
+                  <button
+                    class="icon-button reject"
+                    @click="review(`/api/v1/admin/server-sources/${item.id}`, false)"
+                  >
+                    <X /></button
+                  ><button
+                    class="icon-button approve"
+                    @click="review(`/api/v1/admin/server-sources/${item.id}`, true)"
+                  >
+                    <Check />
+                  </button>
+                </div>
+              </div>
+            </article>
+          </div>
+          <div v-else class="state">没有待审核服务器源</div>
         </div>
         <div v-else>
           <h2>{{ tab === 'publishers' ? '发布者申请审核' : '管理员申请审核' }}</h2>
@@ -438,6 +601,10 @@ function selectContentType(value: string) {
             <b>{{ publisherKeyCount.data.value?.total ?? 0 }}</b
             ><span>发布者 Key</span>
           </button>
+          <button :class="{ active: tab === 'servers' }" @click="selectManageTab('servers')">
+            <b>{{ managedServers.data.value?.length ?? 0 }}</b
+            ><span>服务器</span>
+          </button>
           <button
             v-if="self.data.value?.isSuperAdministrator"
             :class="{ active: tab === 'administrators' }"
@@ -445,6 +612,13 @@ function selectContentType(value: string) {
           >
             <b>{{ administratorKeyCount.data.value?.total ?? 0 }}</b
             ><span>管理员 Key</span>
+          </button>
+          <button
+            :class="{ active: tab === 'serverSources' }"
+            @click="selectManageTab('serverSources')"
+          >
+            <b>{{ managedServerSources.data.value?.length ?? 0 }}</b
+            ><span>服务器源</span>
           </button>
         </div>
         <p v-if="actionError" class="form-error">{{ actionError }}</p>
@@ -513,6 +687,77 @@ function selectContentType(value: string) {
               下一页
             </button>
           </div>
+        </div>
+        <div v-else-if="tab === 'servers'" class="review-list">
+          <h2>
+            管理服务器 <small>{{ managedServers.data.value?.length ?? 0 }} 项结果</small>
+          </h2>
+          <div v-if="managedServers.data.value?.length" class="admin-content-grid">
+            <article
+              v-for="item in managedServers.data.value"
+              :key="item.id"
+              class="content-card admin-content-card"
+            >
+              <div class="card-top">
+                <span class="status" :class="item.reviewStatus">{{ item.reviewStatus }}</span>
+                <span v-if="item.isSuspended" class="status suspended">已停用</span>
+              </div>
+              <div>
+                <h3>{{ item.name }}</h3>
+                <code>{{ item.address }}</code>
+                <p>
+                  {{ item.suspensionReason || item.description || `发布者 ${item.publisherId}` }}
+                </p>
+              </div>
+              <div class="card-bottom">
+                <button
+                  class="button ghost content-status-button"
+                  :disabled="item.reviewStatus !== 'approved'"
+                  @click="setServerSuspended(item)"
+                >
+                  {{ item.isSuspended ? '恢复' : '停用' }}
+                </button>
+                <button
+                  class="button ghost content-status-button"
+                  @click="deleteServer(item.id, item.name)"
+                >
+                  <Trash2 :size="16" />删除
+                </button>
+              </div>
+            </article>
+          </div>
+          <div v-else class="state compact-state">没有服务器记录</div>
+        </div>
+        <div v-else-if="tab === 'serverSources'" class="review-list">
+          <h2>
+            管理服务器源 <small>{{ managedServerSources.data.value?.length ?? 0 }} 项结果</small>
+          </h2>
+          <div v-if="managedServerSources.data.value?.length" class="admin-content-grid">
+            <article
+              v-for="item in managedServerSources.data.value"
+              :key="item.id"
+              class="content-card admin-content-card"
+            >
+              <div class="card-top">
+                <span class="status" :class="item.status">{{ item.status }}</span>
+              </div>
+              <div>
+                <h3>{{ item.name }}</h3>
+                <code>{{ item.apiUrl }}</code>
+                <p>{{ item.description || `发布者 ${item.publisherId}` }}</p>
+              </div>
+              <div class="card-bottom">
+                <span>{{ new Date(item.createdAt).toLocaleDateString() }}</span
+                ><button
+                  class="button ghost content-status-button"
+                  @click="deleteServerSource(item.id, item.name)"
+                >
+                  <Trash2 :size="16" />删除
+                </button>
+              </div>
+            </article>
+          </div>
+          <div v-else class="state compact-state">没有服务器源记录</div>
         </div>
         <div v-else class="review-list">
           <h2>

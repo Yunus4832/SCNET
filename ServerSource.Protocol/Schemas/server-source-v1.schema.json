@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://scnet.example/schemas/server-source-v1.schema.json",
+  "title": "SCNET Server Source v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["protocolVersion", "source", "servers", "nextCursor"],
+  "properties": {
+    "protocolVersion": { "const": 1 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 }
+      }
+    },
+    "servers": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "address", "description", "tags"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$" },
+          "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+          "address": { "type": "string", "minLength": 3, "maxLength": 255 },
+          "description": { "type": ["string", "null"], "maxLength": 1024 },
+          "tags": {
+            "type": "array",
+            "maxItems": 16,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1, "maxLength": 32 }
+          }
+        }
+      }
+    },
+    "nextCursor": { "type": ["string", "null"], "minLength": 1, "maxLength": 512 }
+  }
+}

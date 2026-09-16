@@ -855,28 +855,6 @@
         "2": "Lead Bullet",
         "3": "Lead Pellet"
     },
-    "NetPlayScreen": {
-        "1": "Community",
-        "2": "Personal",
-        "3": "Favorite",
-        "4": "Local",
-        "5": "Server List",
-        "6": "[Searching for Local Games...]",
-        "7": "Add Server",
-        "8": "Delete Server",
-        "9": "Favorite",
-        "10": "Refresh",
-        "11": "Added to Favorites",
-        "12": "Server Added to Custom List",
-        "13": "Players",
-        "14": "Mode",
-        "15": "(Failed)",
-        "16": "Community Login Required",
-        "17": "Loading...",
-        "18": "Expiration time",
-        "19": "Time",
-        "20": "Season"
-    },
     "CottonBlock": [
         "Cotton",
         "Wild Cotton"
@@ -3139,8 +3117,8 @@
         },
         "ContentScreen": {
             "1": "Choose Content Type",
-            "8": "Manage downloaded content",
-            "9": "Manage",
+            "8": "Manage installed block textures, player skins, and furniture packs",
+            "9": "Manage Installed Content",
             "12": "Manage global and world mods",
             "13": "Mods",
             "RemoteDescription": "Browse approved resources from the content server",
@@ -3148,7 +3126,11 @@
             "PackagesDescription": "Manage downloaded or file-imported content packages",
             "Packages": "Packages",
             "Repositories": "Repositories",
-            "RepositoriesDescription": "Manage repository sources used to browse and download content."
+            "RepositoriesDescription": "Manage repository sources used to browse and download content",
+            "ServerSources": "Subscribe to Sources",
+            "ServerSourcesDescription": "Browse and subscribe to server sources from content servers",
+            "ManageServerSources": "Manage Sources",
+            "ManageServerSourcesDescription": "Manage subscribed and manually added server sources"
         },
         "GameLoadingScreen": {
             "1": "Loading World"
@@ -3524,6 +3506,61 @@
             "ModDownloaded": "The mod was cached. No profile was changed.",
             "Installed": "Content installed.",
             "InstallFailed": "The package was cached, but installation failed."
+        },
+        "NetPlayScreen": {
+            "Connect": "Connect",
+            "Add": "Add",
+            "Refresh": "Refresh",
+            "Favorite": "Favorite",
+            "Unfavorite": "Unfavorite",
+            "Delete": "Delete",
+            "MyServers": "My Servers",
+            "Favorites": "Favorites",
+            "Recent": "Recent",
+            "Lan": "LAN",
+            "Empty": "No servers in this source",
+            "LoadFailed": "Could not load the server source.",
+            "NameLabel": "Server Name",
+            "AddressLabel": "Server Address",
+            "AddTitle": "Add Server",
+            "InvalidServer": "Enter a valid server name and address.",
+            "ConfirmDelete": "Delete server “{0}”?",
+            "Title": "Server List",
+            "Players": "Players",
+            "Mode": "Mode",
+            "Unavailable": "(Failed)",
+            "Loading": "Loading...",
+            "Season": "Time",
+            "Time": "Season",
+            "SearchPlaceholder": "Search servers",
+            "AllSources": "All sources",
+            "SortNone": "No sorting",
+            "SortPing": "By ping",
+            "SortPlayers": "By players",
+            "SortName": "By name",
+            "PartialLoadFailed": "Some server sources failed to load"
+        },
+        "ManageServerSourcesScreen": {
+            "Title": "Manage Server Sources",
+            "NoSources": "No server sources subscribed",
+            "ConfirmDelete": "Delete server source “{0}”?",
+            "NameRequired": "Enter a server source name.",
+            "DuplicateAddress": "This server source URL is already subscribed.",
+            "InvalidAddress": "Enter a valid HTTP or HTTPS server source URL.",
+            "SaveFailed": "Could not save the server source.",
+            "Testing": "Validating server source…",
+            "TestSucceeded": "Server source “{0}” is valid and returned {1} servers.",
+            "TestFailed": "Server source validation failed."
+        },
+        "ServerSourceScreen": {
+            "Title": "Subscribe to Server Sources",
+            "Subscribe": "Subscribe",
+            "Empty": "No server sources are available from content servers",
+            "Loading": "Loading content servers…",
+            "LoadFailed": "Could not load the server source catalog.",
+            "AlreadySubscribed": "Subscribed",
+            "SearchPlaceholder": "Search server sources",
+            "AllRepositories": "All repositories"
         }
     },
     "FireworksBlock": {

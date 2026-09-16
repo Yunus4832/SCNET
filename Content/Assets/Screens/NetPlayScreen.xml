@@ -1,44 +1,35 @@
 <Screen xmlns="runtime-namespace:Game.Widgets">
-
     <PanoramaWidget/>
-
     <StackPanelWidget Direction="Horizontal">
-
         <CanvasWidget Style="{Widgets/TopBarContents}">
-            <LabelWidget Name="TopBar.Label" Text="[PlayScreen:1]"/>
+            <LabelWidget Name="TopBar.Label" Text="[NetPlayScreen:Title]"/>
         </CanvasWidget>
-
-        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
-
-            <CanvasWidget Size="Infinity, 6"/>
-            <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" Margin="10, 4">
-                <BevelledButtonWidget Name="TabPage" Style="{Styles/ButtonStyle_310x60}" Text="[PlayScreen:3]"
-                                      VerticalAlignment="Center"/>
-            </StackPanelWidget>
-
-            <StackPanelWidget Direction="Vertical">
-                <CanvasWidget Style="{Styles/ScreenContentArea}">
-                    <BevelledRectangleWidget Style="{Styles/Area}"/>
-                    <ListPanelWidget Name="WorldsList" Direction="Vertical" HorizontalAlignment="Center" Margin="3, 3"
-                                     ItemSize="72" SelectionColor="10, 70, 0, 90"/>
-                </CanvasWidget>
-            </StackPanelWidget>
-
-            <StackPanelWidget Style="{Styles/ScreenBottomActions}">
-                <BevelledButtonWidget Name="Play" Style="{Styles/ButtonStyle_310x60}" Text="[PlayScreen:2]"
-                                      VerticalAlignment="Center">
-                    <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="50, 150, 35"
-                                             BevelColor="50, 150, 35"/>
-                </BevelledButtonWidget>
-                <BevelledButtonWidget Name="NewWorld" Style="{Styles/ButtonStyle_310x60}" Text="[PlayScreen:3]"
-                                      VerticalAlignment="Center"/>
-                <CanvasWidget Size="Infinity, 0"/>
-                <BevelledButtonWidget Name="Properties" Style="{Styles/ButtonStyle_160x60}" Text="[PlayScreen:4]"
-                                      VerticalAlignment="Center"/>
-            </StackPanelWidget>
-
-        </StackPanelWidget>
-
+        <CanvasWidget>
+            <CanvasWidget Margin="10, 66">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <ListPanelWidget Name="ServerList" Direction="Vertical" Margin="3, 3" ItemSize="72"
+                                 SelectionColor="10, 70, 0, 90"/>
+                <LabelWidget Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Color="160, 160, 160"/>
+            </CanvasWidget>
+            <CanvasWidget Size="Infinity, 56" VerticalAlignment="Near" Margin="10, 2">
+                <StackPanelWidget Direction="Horizontal">
+                    <CanvasWidget Size="Infinity, 56">
+                        <CanvasWidget Margin="0, 6">
+                            <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                            <LabelWidget Name="SearchPlaceholder" Margin="10, 0" Color="128, 128, 128"
+                                         VerticalAlignment="Center" IsHitTestVisible="false"/>
+                            <TextBoxWidget Name="Search" Size="Infinity, 48" Margin="10, 0"
+                                           VerticalAlignment="Center" HorizontalAlignment="Stretch"/>
+                        </CanvasWidget>
+                    </CanvasWidget>
+                    <SelectionDrawerWidget Name="SourceFilter" Size="190, 56" Margin="4, 0"
+                                           MaxVisibleItems="5"/>
+                    <SelectionDrawerWidget Name="SortOrder" Size="170, 56" Margin="4, 0"
+                                           MaxVisibleItems="4"/>
+                </StackPanelWidget>
+            </CanvasWidget>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}" VerticalAlignment="Far"/>
+        </CanvasWidget>
     </StackPanelWidget>
-
 </Screen>

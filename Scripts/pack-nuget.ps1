@@ -29,6 +29,10 @@ try {
     & dotnet pack "Content.Packaging/Content.Packaging.csproj" --configuration $Configuration @AdditionalArguments
     if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Content.Packaging failed with exit code $LASTEXITCODE." }
 
+    Write-Host "[SCNET Pack] Packing SCNET.ServerSource.Protocol"
+    & dotnet pack "ServerSource.Protocol/ServerSource.Protocol.csproj" --configuration $Configuration @AdditionalArguments
+    if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.ServerSource.Protocol failed with exit code $LASTEXITCODE." }
+
     Write-Host "[SCNET Pack] Packing SCNET.ContentTool"
     & dotnet pack "ContentTool/ContentTool.csproj" --configuration $Configuration @AdditionalArguments
     if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.ContentTool failed with exit code $LASTEXITCODE." }

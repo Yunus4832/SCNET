@@ -1,0 +1,18 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}">
+            <LabelWidget Name="TopBar.Label" Text="[ManageServerSourcesScreen:Title]"/>
+        </CanvasWidget>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+            <CanvasWidget Style="{Styles/ScreenContentArea}">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <ListPanelWidget Name="SourceList" Direction="Vertical" Margin="3, 3" ItemSize="76"
+                                 SelectionColor="10, 70, 0, 90"/>
+                <LabelWidget Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Color="160, 160, 160"/>
+            </CanvasWidget>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
+        </StackPanelWidget>
+    </StackPanelWidget>
+</Screen>

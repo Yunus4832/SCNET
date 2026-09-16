@@ -331,6 +331,31 @@ footer {
 .workspace-tabs {
   margin: 22px 0 16px;
 }
+.publisher-primary-tabs {
+  margin: 0;
+  gap: 24px;
+}
+.workspace-tabs.publisher-primary-tabs button {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: var(--muted);
+  background: transparent;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.018em;
+}
+.workspace-tabs.publisher-primary-tabs button:hover {
+  border-color: transparent;
+  color: var(--text);
+}
+.workspace-tabs.publisher-primary-tabs button.active {
+  border-color: transparent;
+  color: var(--text);
+  background: transparent;
+}
 .filters {
   margin: 14px 0;
 }
@@ -362,7 +387,7 @@ footer {
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
   margin: 0 0 18px;
 }
@@ -393,6 +418,7 @@ footer {
 .stats span {
   color: var(--muted);
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .review-list {
@@ -567,7 +593,7 @@ td small {
 }
 
 .hero {
-  padding: 36px 0 22px;
+  padding: 36px 0 12px;
 }
 .hero h1 {
   margin: 0;
@@ -614,6 +640,22 @@ td small {
 }
 .catalog-section {
   padding-bottom: 26px;
+}
+.catalog-tabs {
+  margin: 20px 0 12px;
+}
+.catalog-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.catalog-filter-row .filters {
+  margin: 0;
+}
+.server-source-count {
+  justify-content: flex-end;
 }
 .section-heading {
   margin-top: 8px;

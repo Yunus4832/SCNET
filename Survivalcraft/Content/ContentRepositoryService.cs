@@ -91,6 +91,35 @@ public sealed class ContentRepositoryService
         return await lease.Client.CheckHealthAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task<IReadOnlyList<RegisteredServerSource>> ListServerSourcesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var repositories = Snapshot().Where(repository => repository.IsEnabled).ToArray();
+        var results = new List<RegisteredServerSource>();
+        foreach (var repository in repositories)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                using var lease = _pool.Acquire(Guid.Empty, repository.Id);
+                var sources = await lease.Client.ListServerSourcesAsync(cancellationToken).ConfigureAwait(false);
+                results.AddRange(sources.Select(source => new RegisteredServerSource(repository.Id, repository.Name,
+                    source.Id, source.Name, source.ApiUrl, source.Description)));
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Log.Warning($"Could not load server sources from content repository '{repository.Name}': " +
+                            exception.Message);
+            }
+        }
+
+        return results;
+    }
+
     private void EnsureExists(Guid repositoryId)
     {
         if (!_repositories.Any(item => item.Id == repositoryId))
@@ -107,3 +136,6 @@ public sealed class ContentRepositoryService
         _repositories = normalized;
     }
 }
+
+public sealed record RegisteredServerSource(Guid RepositoryId, string RepositoryName, string RegistrationId,
+    string Name, string ApiUrl, string? Description);

@@ -22,6 +22,9 @@ dotnet pack "EntitySystem/EntitySystem.csproj" --configuration "$configuration" 
 echo "[SCNET Pack] Packing SCNET.Content.Packaging"
 dotnet pack "Content.Packaging/Content.Packaging.csproj" --configuration "$configuration" "$@"
 
+echo "[SCNET Pack] Packing SCNET.ServerSource.Protocol"
+dotnet pack "ServerSource.Protocol/ServerSource.Protocol.csproj" --configuration "$configuration" "$@"
+
 echo "[SCNET Pack] Packing SCNET.ContentTool"
 dotnet pack "ContentTool/ContentTool.csproj" --configuration "$configuration" "$@"
 

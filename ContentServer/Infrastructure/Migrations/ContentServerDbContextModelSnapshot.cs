@@ -32,15 +32,15 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("IsSuperAdministrator")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ReviewMessage")
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsSuperAdministrator")
-                        .HasColumnType("INTEGER");
 
                     b.Property<DateTimeOffset?>("ReviewedAt")
                         .HasColumnType("TEXT");
@@ -142,10 +142,10 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("ContentId")
+                    b.Property<string>("BlobHash")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("BlobHash")
+                    b.Property<Guid>("ContentId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ContentType")
@@ -155,11 +155,11 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("MetadataJson")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("Identifier")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MetadataJson")
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("PackageBlobId")
@@ -169,10 +169,10 @@ namespace ContentServer.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("PublisherId")
+                    b.Property<DateTimeOffset?>("PublishedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset?>("PublishedAt")
+                    b.Property<Guid>("PublisherId")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ReviewMessage")
@@ -207,11 +207,11 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("BlobHash")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("FileName")
@@ -342,6 +342,111 @@ namespace ContentServer.Infrastructure.Migrations
                     b.ToTable("ReviewRecords");
                 });
 
+            modelBuilder.Entity("ContentServer.Domain.ServerDirectory.DirectoryServer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabledByPublisher")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PublisherId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReviewMessage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("SuspendedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SuspensionReason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TagsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Address");
+
+                    b.HasIndex("PublisherId");
+
+                    b.HasIndex("ReviewStatus");
+
+                    b.ToTable("DirectoryServers");
+                });
+
+            modelBuilder.Entity("ContentServer.Domain.ServerSources.ServerSourceRegistration", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ApiUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PublisherId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReviewMessage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApiUrl");
+
+                    b.HasIndex("PublisherId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("ServerSources");
+                });
+
             modelBuilder.Entity("ContentServer.Domain.Administration.AdministratorKey", b =>
                 {
                     b.HasOne("ContentServer.Domain.Administration.Administrator", "Owner")
@@ -379,6 +484,24 @@ namespace ContentServer.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("ContentServer.Domain.ServerDirectory.DirectoryServer", b =>
+                {
+                    b.HasOne("ContentServer.Domain.Publishers.Publisher", null)
+                        .WithMany()
+                        .HasForeignKey("PublisherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ContentServer.Domain.ServerSources.ServerSourceRegistration", b =>
+                {
+                    b.HasOne("ContentServer.Domain.Publishers.Publisher", null)
+                        .WithMany()
+                        .HasForeignKey("PublisherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ContentServer.Domain.Administration.Administrator", b =>

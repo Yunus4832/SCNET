@@ -34,6 +34,7 @@ public sealed class ContentRepositoryScreen : Screen
         _repositoryList.ItemWidgetFactory = CreateRepositoryWidget;
         _actionPanel.ItemTextProvider = GetActionText;
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemColorProvider = item => item is RepositoryAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
         [
@@ -44,8 +45,8 @@ public sealed class ContentRepositoryScreen : Screen
         ]);
         _actionPanel.SetSecondaryItems(
         [
-            RepositoryAction.Delete,
-            RepositoryAction.Toggle
+            RepositoryAction.Toggle,
+            RepositoryAction.Delete
         ]);
     }
 

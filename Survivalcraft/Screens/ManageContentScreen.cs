@@ -45,9 +45,10 @@ public class ManageContentScreen : Screen
         ]);
         _filterDrawer.SelectedItem = _filter;
         _filterDrawer.SelectionChanged += FilterChanged;
-        _actionPanel.PrimaryTrailingAction = _filterDrawer;
+        _actionPanel.PrimaryAccessory = _filterDrawer;
         _actionPanel.ItemTextProvider = _ => LanguageManager.GetContentWidgets(_typeName, "3");
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemColorProvider = _ => new Color(150, 50, 35);
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems([ManageContentAction.Delete]);
         _contentList.ItemWidgetFactory = delegate (object obj)

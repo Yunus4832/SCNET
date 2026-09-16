@@ -855,28 +855,6 @@
         "2": "PRODUÇÃO Lead Bullet",
         "3": "PRODUÇÃO Lead Pinball"
     },
-    "NetPlayScreen": {
-        "1": "da comunidade",
-        "2": "pessoais",
-        "3": "favoritos",
-        "4": "locais",
-        "5": "Lista de servidores",
-        "6": "[Procurando jogos locais...]",
-        "7": "Adicionar servidor",
-        "8": "Remover servidor",
-        "9": "Favoritar",
-        "10": "Atualizar",
-        "11": "Adicionado aos favoritos",
-        "12": "Servidor adicionado à lista personalizada",
-        "13": "Jogadores",
-        "14": "Modo",
-        "15": "(Falhou)",
-        "16": "Login na comunidade requerido",
-        "17": "Carregando...",
-        "18": "Tiempo de expiración",
-        "19": "Estación",
-        "20": "Tiempo"
-    },
     "CottonBlock": [
         "Algodão",
         "Algodão selvagem"
@@ -3139,8 +3117,8 @@
         },
         "ContentScreen": {
             "1": "Escolha o método de aquisição",
-            "8": "Gestão de conteúdo existente",
-            "9": "Administração",
+            "8": "Gerir texturas de blocos, visuais de jogador e pacotes de mobiliário instalados",
+            "9": "Gerir conteúdo instalado",
             "12": "Gerir mods globais e dos mundos",
             "13": "Mods",
             "RemoteDescription": "Explorar recursos aprovados do servidor de conteúdos",
@@ -3148,7 +3126,11 @@
             "PackagesDescription": "Gerir pacotes de conteúdo transferidos ou importados de ficheiros",
             "Packages": "Pacotes",
             "Repositories": "Repositórios",
-            "RepositoriesDescription": "Gerir fontes de repositórios usadas para procurar e transferir conteúdo."
+            "RepositoriesDescription": "Gerir fontes de repositórios usadas para procurar e transferir conteúdo",
+            "ServerSources": "Subscrever fontes",
+            "ServerSourcesDescription": "Procurar e subscrever fontes fornecidas por servidores de conteúdo",
+            "ManageServerSources": "Gerir fontes",
+            "ManageServerSourcesDescription": "Gerir fontes subscritas e adicionadas manualmente"
         },
         "GameLoadingScreen": {
             "1": "Carregando o mundo"
@@ -3524,6 +3506,61 @@
             "ModDownloaded": "O mod foi guardado em cache. Nenhum perfil foi alterado.",
             "Installed": "Conteúdo instalado.",
             "InstallFailed": "O pacote foi guardado em cache, mas a instalação falhou."
+        },
+        "NetPlayScreen": {
+            "Connect": "Ligar",
+            "Add": "Adicionar",
+            "Refresh": "Atualizar",
+            "Favorite": "Favorito",
+            "Unfavorite": "Remover favorito",
+            "Delete": "Eliminar",
+            "MyServers": "Os meus servidores",
+            "Favorites": "Favoritos",
+            "Recent": "Recentes",
+            "Lan": "Rede local",
+            "Empty": "Não há servidores nesta fonte",
+            "LoadFailed": "Não foi possível carregar a fonte.",
+            "NameLabel": "Nome do servidor",
+            "AddressLabel": "Endereço do servidor",
+            "AddTitle": "Adicionar servidor",
+            "InvalidServer": "Introduza um nome e endereço de servidor válidos.",
+            "ConfirmDelete": "Eliminar o servidor “{0}”?",
+            "Title": "Lista de servidores",
+            "Players": "Jogadores",
+            "Mode": "Modo",
+            "Unavailable": "(Falhou)",
+            "Loading": "Carregando...",
+            "Season": "Estación",
+            "Time": "Tiempo",
+            "SearchPlaceholder": "Procurar servidores",
+            "AllSources": "Todas as fontes",
+            "SortNone": "Sem ordenação",
+            "SortPing": "Por latência",
+            "SortPlayers": "Por jogadores",
+            "SortName": "Por nome",
+            "PartialLoadFailed": "Falha ao carregar algumas fontes"
+        },
+        "ManageServerSourcesScreen": {
+            "Title": "Gerir fontes de servidores",
+            "NoSources": "Nenhuma fonte de servidores subscrita",
+            "ConfirmDelete": "Eliminar a fonte de servidores “{0}”?",
+            "NameRequired": "Introduza um nome para a fonte de servidores.",
+            "DuplicateAddress": "Este URL de fonte já está subscrito.",
+            "InvalidAddress": "Introduza um URL HTTP ou HTTPS válido.",
+            "SaveFailed": "Não foi possível guardar a fonte de servidores.",
+            "Testing": "A validar a fonte de servidores…",
+            "TestSucceeded": "A fonte “{0}” é válida e devolveu {1} servidores.",
+            "TestFailed": "A validação da fonte de servidores falhou."
+        },
+        "ServerSourceScreen": {
+            "Title": "Subscrever fontes de servidores",
+            "Subscribe": "Subscrever",
+            "Empty": "Não há fontes disponíveis nos servidores de conteúdo",
+            "Loading": "A carregar servidores de conteúdo…",
+            "LoadFailed": "Não foi possível carregar o catálogo de fontes.",
+            "AlreadySubscribed": "Subscrito",
+            "SearchPlaceholder": "Procurar fontes de servidores",
+            "AllRepositories": "Todos os repositórios"
         }
     },
     "FireworksBlock": {

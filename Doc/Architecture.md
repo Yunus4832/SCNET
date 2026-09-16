@@ -20,6 +20,7 @@
 - `Engine.Core/` 和 `Engine.Serialization/` 负责基础类型与序列化
 - `EntitySystem/` 提供实体与组件系统
 - `Content.Packaging/` 位于解决方案的 Protocol 层，定义与游戏运行时、服务端和工具共享的内容包协议
+- `ServerSource.Protocol/` 位于 Protocol 层，定义游戏客户端、ContentServer 和第三方服务器源共同使用的只读 HTTP 契约与校验规则；ContentServer 是带发布者投稿和管理员审核能力的完整参考实现
 - 平台项目只负责启动方式、资源打包和宿主差异
 
 这种拆分方式的好处在于：

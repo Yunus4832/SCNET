@@ -66,6 +66,36 @@ public sealed class ContentServerClientCatalogTest
         await Assert.ThrowsAsync<InvalidDataException>(() => client.CheckHealthAsync());
     }
 
+    [Fact]
+    public async Task ReadsRegisteredServerSources()
+    {
+        Uri? requested = null;
+        using var httpClient = new HttpClient(new StubHandler(request =>
+        {
+            requested = request.RequestUri;
+            var body = new
+            {
+                success = true,
+                message = string.Empty,
+                code = 200,
+                data = new[]
+                {
+                    new { id = "source-1", name = "Public", apiUrl = "https://source.example/list", description = "A source" }
+                }
+            };
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
+            };
+        }));
+        using var client = new ContentServerClient("https://content.example", httpClient);
+
+        var sources = await client.ListServerSourcesAsync();
+
+        Assert.Equal("https://content.example/api/v1/server-sources", requested?.AbsoluteUri);
+        Assert.Equal("https://source.example/list", Assert.Single(sources).ApiUrl);
+    }
+
     private static ContentCatalogItem Item(string version, string hash)
     {
         return new ContentCatalogItem { Version = version, PackageHash = hash };
