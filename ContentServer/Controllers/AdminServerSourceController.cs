@@ -9,6 +9,7 @@ using ContentServer.Middlewares;
 using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 using NetCorePal.Extensions.Dto;
 using NetCorePal.Extensions.Primitives;
@@ -18,15 +19,27 @@ namespace ContentServer.Controllers;
 [ApiController]
 [Route("api/v1/admin/server-sources")]
 public sealed class AdminServerSourceController(IMediator mediator, IServerSourceInspectionService inspection,
-    ApiKeyAuthenticationContext authenticationContext)
+    ApiKeyAuthenticationContext authenticationContext, IOptions<ContentServerOptions> options)
     : ControllerBase
 {
     [HttpGet]
-    public async Task<ResponseData<ServerSourceRegistrationResponse[]>> List(
+    public async Task<ResponseData<ServerSourceManagementResponse[]>> List(
         [FromQuery] ServerSourceRegistrationStatus? status, CancellationToken cancellationToken)
     {
         var sources = await mediator.Send(new ListServerSourcesQuery(status), cancellationToken);
-        return sources.Select(ServerSourceController.Map).ToArray().AsResponseData();
+        var responses = sources.Select(source => new ServerSourceManagementResponse(source.Id.ToString(),
+            source.PublisherId.ToString(), source.PublisherName, source.Name, source.ApiUrl, source.Description,
+            source.Status.ToString().ToLowerInvariant(), source.ReviewMessage, source.CreatedAt, source.ReviewedAt,
+            false)).ToList();
+        if (status is null && options.Value.BuiltInServerDirectoryEnabled)
+        {
+            responses.Insert(0, new ServerSourceManagementResponse("builtin", null, null,
+                options.Value.BuiltInServerDirectoryName,
+                ServerSourceController.GetBuiltInDirectoryUrl(options.Value, Request),
+                options.Value.BuiltInServerDirectoryDescription, "active", null, null, null, true));
+        }
+
+        return responses.ToArray().AsResponseData();
     }
 
     [HttpPost("{id:guid}/approve")]

@@ -186,7 +186,7 @@ public sealed class PublisherController(
 
         Response.StatusCode = StatusCodes.Status201Created;
         return new ServerSourceRegistrationResponse(result.Id.ToString(), publisher.PublisherId.ToString(),
-            request.Name.Trim(), apiUrl.AbsoluteUri, Normalize(request.Description),
+            publisher.DisplayName, request.Name.Trim(), apiUrl.AbsoluteUri, Normalize(request.Description),
             result.Status.ToString().ToLowerInvariant(), null, result.CreatedAt, null)
             .AsResponseData(code: StatusCodes.Status201Created);
     }

@@ -91,8 +91,9 @@ public sealed class ServerDirectoryController(IMediator mediator, IOptions<Conte
 
     internal static DirectoryServerResponse Map(DirectoryServerDto server)
     {
-        return new DirectoryServerResponse(server.Id.ToString(), server.PublisherId.ToString(), server.Name,
-            server.Address, server.Description, JsonSerializer.Deserialize<string[]>(server.TagsJson) ?? [],
+        return new DirectoryServerResponse(server.Id.ToString(), server.PublisherId.ToString(), server.PublisherName,
+            server.Name, server.Address, server.Description,
+            JsonSerializer.Deserialize<string[]>(server.TagsJson) ?? [],
             server.ReviewStatus.ToString().ToLowerInvariant(), server.ReviewMessage, server.IsEnabledByPublisher,
             server.SuspendedAt is not null, server.SuspensionReason, server.CreatedAt, server.UpdatedAt,
             server.ReviewedAt);

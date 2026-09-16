@@ -228,7 +228,8 @@ DELETE /api/v1/admin/server-sources/{id}
 ```
 
 批准前会再次实时读取并验证来源。ContentServer 只管理来源 URL 的生命周期，不复制、聚合或持久化第三方
-来源返回的服务器条目。
+来源返回的服务器条目。未指定状态筛选时，管理员列表还会包含一个不可删除的内置服务器源只读项；按状态查询
+待审核来源时不会返回该内置项。
 
 ContentServer 同时提供 `SCNET.ServerSource.Protocol` 的内置参考实现。启用内置服务器目录后，
 `GET /api/v1/server-sources` 会自动附加本站来源，客户端通过 `GET /api/v1/server-directory` 按统一协议分页

@@ -15,6 +15,7 @@ import { useRouter } from 'vue-router';
 import { api, clearAccess, getAccess, type ContentVersion, type PagedData } from '../api';
 import { copyText } from '../clipboard';
 import { getRuntimeConfig } from '../config';
+import { contentTypeLabel } from '../contentTypes';
 import ContentSubmissionDialog from '../components/ContentSubmissionDialog.vue';
 import ServerSourceSubmissionDialog from '../components/ServerSourceSubmissionDialog.vue';
 import ServerSubmissionDialog from '../components/ServerSubmissionDialog.vue';
@@ -260,7 +261,7 @@ async function setServerEnabled(item: DirectoryServer) {
             class="content-card"
           >
             <div class="card-top">
-              <span class="type-pill">{{ item.type }}</span
+              <span class="type-pill">{{ contentTypeLabel(item.type) }}</span
               ><span class="status" :class="item.status">{{
                 item.status === 'active' ? '已上架' : '已下架'
               }}</span>
@@ -314,7 +315,7 @@ async function setServerEnabled(item: DirectoryServer) {
             class="content-card"
           >
             <div class="card-top">
-              <span class="type-pill">{{ item.type }}</span
+              <span class="type-pill">{{ contentTypeLabel(item.type) }}</span
               ><span class="version">v{{ item.version }}</span>
             </div>
             <div>

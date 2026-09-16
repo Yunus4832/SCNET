@@ -545,7 +545,9 @@ public sealed class ContentServerApiTest : IDisposable
         using var listRequest = CreateAuthorizedRequest(HttpMethod.Get,
             "/api/v1/admin/server-sources?status=Pending", _administratorKey);
         var pending = await ReadDataAsync(await client.SendAsync(listRequest));
-        Assert.Equal(id, Assert.Single(pending.EnumerateArray()).GetProperty("id").GetString());
+        var pendingSource = Assert.Single(pending.EnumerateArray());
+        Assert.Equal(id, pendingSource.GetProperty("id").GetString());
+        Assert.Equal("Server Source Publisher", pendingSource.GetProperty("publisherName").GetString());
 
         using var approveRequest = CreateAuthorizedRequest(HttpMethod.Post,
             $"/api/v1/admin/server-sources/{id}/approve", _administratorKey);
@@ -606,8 +608,10 @@ public sealed class ContentServerApiTest : IDisposable
 
         using var pendingList = CreateAuthorizedRequest(HttpMethod.Get,
             "/api/v1/admin/servers?status=Pending", _administratorKey);
-        Assert.Equal(id, Assert.Single((await ReadDataAsync(await client.SendAsync(pendingList)))
-            .EnumerateArray()).GetProperty("id").GetString());
+        var pendingServer = Assert.Single((await ReadDataAsync(await client.SendAsync(pendingList)))
+            .EnumerateArray());
+        Assert.Equal(id, pendingServer.GetProperty("id").GetString());
+        Assert.Equal("Server Publisher", pendingServer.GetProperty("publisherName").GetString());
         using var approve = CreateAuthorizedRequest(HttpMethod.Post,
             $"/api/v1/admin/servers/{id}/approve", _administratorKey);
         Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approve)).StatusCode);
@@ -642,6 +646,13 @@ public sealed class ContentServerApiTest : IDisposable
         var builtIn = Assert.Single(sources.EnumerateArray(),
             item => item.GetProperty("id").GetString() == "builtin");
         Assert.EndsWith("/api/v1/server-directory", builtIn.GetProperty("apiUrl").GetString());
+
+        using var managedSources = CreateAuthorizedRequest(HttpMethod.Get, "/api/v1/admin/server-sources",
+            _administratorKey);
+        var managedBuiltIn = Assert.Single((await ReadDataAsync(await client.SendAsync(managedSources)))
+            .EnumerateArray(), item => item.GetProperty("id").GetString() == "builtin");
+        Assert.True(managedBuiltIn.GetProperty("isBuiltIn").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, managedBuiltIn.GetProperty("publisherId").ValueKind);
     }
 
     public void Dispose()

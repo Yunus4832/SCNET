@@ -26,7 +26,7 @@ public sealed class ServerSourceController(IMediator mediator, IOptions<ContentS
         if (options.Value.BuiltInServerDirectoryEnabled)
         {
             sources.Insert(0, new ServerSourceResponse("builtin", options.Value.BuiltInServerDirectoryName,
-                GetBuiltInDirectoryUrl(), options.Value.BuiltInServerDirectoryDescription));
+                GetBuiltInDirectoryUrl(options.Value, Request), options.Value.BuiltInServerDirectoryDescription));
         }
 
         return sources.ToArray().AsResponseData();
@@ -41,18 +41,17 @@ public sealed class ServerSourceController(IMediator mediator, IOptions<ContentS
 
     internal static ServerSourceRegistrationResponse Map(ServerSourceDto source)
     {
-        return new ServerSourceRegistrationResponse(source.Id.ToString(), source.PublisherId.ToString(), source.Name,
-            source.ApiUrl,
-            source.Description, source.Status.ToString().ToLowerInvariant(), source.ReviewMessage, source.CreatedAt,
-            source.ReviewedAt);
+        return new ServerSourceRegistrationResponse(source.Id.ToString(), source.PublisherId.ToString(),
+            source.PublisherName, source.Name, source.ApiUrl, source.Description,
+            source.Status.ToString().ToLowerInvariant(), source.ReviewMessage, source.CreatedAt, source.ReviewedAt);
     }
 
-    private string GetBuiltInDirectoryUrl()
+    internal static string GetBuiltInDirectoryUrl(ContentServerOptions options, HttpRequest request)
     {
-        var baseUrl = options.Value.PublicBaseUrl;
+        var baseUrl = options.PublicBaseUrl;
         if (string.IsNullOrWhiteSpace(baseUrl))
         {
-            baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/";
+            baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}/";
         }
 
         return new Uri(new Uri(baseUrl.TrimEnd('/') + "/"), "api/v1/server-directory").AbsoluteUri;

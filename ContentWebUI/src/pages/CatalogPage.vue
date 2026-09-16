@@ -13,6 +13,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { api, queryString, type ContentVersion, type PagedData } from '../api';
 import { copyText } from '../clipboard';
 import { getRuntimeConfig } from '../config';
+import { contentTypeLabel } from '../contentTypes';
 
 const search = ref('');
 const appliedSearch = ref('');
@@ -170,7 +171,7 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
           class="content-card"
         >
           <div class="card-top">
-            <span class="type-pill">{{ item.type }}</span
+            <span class="type-pill">{{ contentTypeLabel(item.type) }}</span
             ><span class="version">v{{ item.version }}</span>
           </div>
           <div>

@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ContentServer.Infrastructure.Migrations
 {
     [DbContext(typeof(ContentServerDbContext))]
-    [Migration("20260915094412_AddServerSources")]
-    partial class AddServerSources
+    [Migration("20260916032955_AddServerDiscovery")]
+    partial class AddServerDiscovery
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -345,6 +345,65 @@ namespace ContentServer.Infrastructure.Migrations
                     b.ToTable("ReviewRecords");
                 });
 
+            modelBuilder.Entity("ContentServer.Domain.ServerDirectory.DirectoryServer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsEnabledByPublisher")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("PublisherId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReviewMessage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReviewStatus")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("ReviewedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("SuspendedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SuspensionReason")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TagsJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Address");
+
+                    b.HasIndex("PublisherId");
+
+                    b.HasIndex("ReviewStatus");
+
+                    b.ToTable("DirectoryServers");
+                });
+
             modelBuilder.Entity("ContentServer.Domain.ServerSources.ServerSourceRegistration", b =>
                 {
                     b.Property<Guid>("Id")
@@ -428,6 +487,15 @@ namespace ContentServer.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("ContentServer.Domain.ServerDirectory.DirectoryServer", b =>
+                {
+                    b.HasOne("ContentServer.Domain.Publishers.Publisher", null)
+                        .WithMany()
+                        .HasForeignKey("PublisherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ContentServer.Domain.ServerSources.ServerSourceRegistration", b =>

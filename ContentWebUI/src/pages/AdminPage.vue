@@ -12,6 +12,7 @@ import {
   type ContentVersion,
   type PagedData,
 } from '../api';
+import { contentTypeLabel } from '../contentTypes';
 
 interface Applicant {
   administratorId?: string;
@@ -46,18 +47,21 @@ interface ContentItem {
 }
 interface ServerSourceRegistration {
   id: string;
-  publisherId: string;
+  publisherId?: string;
+  publisherName?: string;
   name: string;
   apiUrl: string;
   description?: string;
   status: string;
   reviewMessage?: string;
-  createdAt: string;
+  createdAt?: string;
   reviewedAt?: string;
+  isBuiltIn: boolean;
 }
 interface DirectoryServer {
   id: string;
   publisherId: string;
+  publisherName: string;
   name: string;
   address: string;
   description?: string;
@@ -365,20 +369,20 @@ function selectContentType(value: string) {
           <button :class="{ active: tab === 'content' }" @click="tab = 'content'">
             <b>{{ versions.data.value?.total ?? 0 }}</b
             ><span>待审内容</span></button
-          ><button :class="{ active: tab === 'publishers' }" @click="tab = 'publishers'">
-            <b>{{ publishers.data.value?.total ?? 0 }}</b
-            ><span>发布者申请</span></button
-          ><button :class="{ active: tab === 'administrators' }" @click="tab = 'administrators'">
-            <b>{{ administrators.data.value?.total ?? 0 }}</b
-            ><span>管理员申请</span>
-          </button>
-          <button :class="{ active: tab === 'servers' }" @click="tab = 'servers'">
+          ><button :class="{ active: tab === 'servers' }" @click="tab = 'servers'">
             <b>{{ serverApplications.data.value?.length ?? 0 }}</b
             ><span>待审服务器</span>
           </button>
           <button :class="{ active: tab === 'serverSources' }" @click="tab = 'serverSources'">
             <b>{{ serverSourceApplications.data.value?.length ?? 0 }}</b
-            ><span>服务器源</span>
+            ><span>待审服务器源</span>
+          </button>
+          <button :class="{ active: tab === 'publishers' }" @click="tab = 'publishers'">
+            <b>{{ publishers.data.value?.total ?? 0 }}</b
+            ><span>发布者申请</span></button
+          ><button :class="{ active: tab === 'administrators' }" @click="tab = 'administrators'">
+            <b>{{ administrators.data.value?.total ?? 0 }}</b
+            ><span>管理员申请</span>
           </button>
         </div>
         <p v-if="actionError" class="form-error">{{ actionError }}</p>
@@ -391,7 +395,7 @@ function selectContentType(value: string) {
               class="content-card"
             >
               <div class="card-top">
-                <span class="type-pill">{{ item.type }}</span
+                <span class="type-pill">{{ contentTypeLabel(item.type) }}</span
                 ><span class="version">v{{ item.version }}</span>
               </div>
               <div>
@@ -442,7 +446,7 @@ function selectContentType(value: string) {
               class="content-card"
             >
               <div class="card-top">
-                <span class="eyebrow">发布者 {{ item.publisherId }}</span>
+                <span class="eyebrow">发布者 {{ item.publisherName }}</span>
               </div>
               <div>
                 <h3>{{ item.name }}</h3>
@@ -479,7 +483,7 @@ function selectContentType(value: string) {
               class="content-card"
             >
               <div class="card-top">
-                <span class="eyebrow">发布者 {{ item.publisherId }}</span>
+                <span class="eyebrow">发布者 {{ item.publisherName }}</span>
               </div>
               <div>
                 <h3>{{ item.name }}</h3>
@@ -597,13 +601,20 @@ function selectContentType(value: string) {
             <b>{{ contentCount.data.value?.total ?? 0 }}</b
             ><span>累计内容</span>
           </button>
-          <button :class="{ active: tab === 'publishers' }" @click="selectManageTab('publishers')">
-            <b>{{ publisherKeyCount.data.value?.total ?? 0 }}</b
-            ><span>发布者 Key</span>
-          </button>
           <button :class="{ active: tab === 'servers' }" @click="selectManageTab('servers')">
             <b>{{ managedServers.data.value?.length ?? 0 }}</b
             ><span>服务器</span>
+          </button>
+          <button
+            :class="{ active: tab === 'serverSources' }"
+            @click="selectManageTab('serverSources')"
+          >
+            <b>{{ managedServerSources.data.value?.length ?? 0 }}</b
+            ><span>服务器源</span>
+          </button>
+          <button :class="{ active: tab === 'publishers' }" @click="selectManageTab('publishers')">
+            <b>{{ publisherKeyCount.data.value?.total ?? 0 }}</b
+            ><span>发布者 Key</span>
           </button>
           <button
             v-if="self.data.value?.isSuperAdministrator"
@@ -612,13 +623,6 @@ function selectContentType(value: string) {
           >
             <b>{{ administratorKeyCount.data.value?.total ?? 0 }}</b
             ><span>管理员 Key</span>
-          </button>
-          <button
-            :class="{ active: tab === 'serverSources' }"
-            @click="selectManageTab('serverSources')"
-          >
-            <b>{{ managedServerSources.data.value?.length ?? 0 }}</b
-            ><span>服务器源</span>
           </button>
         </div>
         <p v-if="actionError" class="form-error">{{ actionError }}</p>
@@ -649,7 +653,7 @@ function selectContentType(value: string) {
               class="content-card admin-content-card"
             >
               <div class="card-top">
-                <span class="type-pill">{{ item.type }}</span
+                <span class="type-pill">{{ contentTypeLabel(item.type) }}</span
                 ><span class="status" :class="item.status">{{
                   item.status === 'active' ? '已启用' : '已下架'
                 }}</span>
@@ -706,7 +710,7 @@ function selectContentType(value: string) {
                 <h3>{{ item.name }}</h3>
                 <code>{{ item.address }}</code>
                 <p>
-                  {{ item.suspensionReason || item.description || `发布者 ${item.publisherId}` }}
+                  {{ item.suspensionReason || item.description || `发布者 ${item.publisherName}` }}
                 </p>
               </div>
               <div class="card-bottom">
@@ -739,16 +743,26 @@ function selectContentType(value: string) {
               class="content-card admin-content-card"
             >
               <div class="card-top">
-                <span class="status" :class="item.status">{{ item.status }}</span>
+                <span class="status" :class="item.status">{{
+                  item.isBuiltIn ? '系统内置' : item.status
+                }}</span>
               </div>
               <div>
                 <h3>{{ item.name }}</h3>
                 <code>{{ item.apiUrl }}</code>
-                <p>{{ item.description || `发布者 ${item.publisherId}` }}</p>
+                <p>
+                  {{
+                    item.description ||
+                    (item.isBuiltIn ? 'ContentServer 内置服务器源' : `发布者 ${item.publisherName}`)
+                  }}
+                </p>
               </div>
               <div class="card-bottom">
-                <span>{{ new Date(item.createdAt).toLocaleDateString() }}</span
+                <span>{{
+                  item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '只读'
+                }}</span
                 ><button
+                  v-if="!item.isBuiltIn"
                   class="button ghost content-status-button"
                   @click="deleteServerSource(item.id, item.name)"
                 >
