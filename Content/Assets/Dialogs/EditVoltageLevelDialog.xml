@@ -8,8 +8,8 @@
 
             <CanvasWidget Size="0, Infinity"/>
 
-            <SliderWidget Name="EditVoltageLevelDialog.VoltageSlider" Granularity="1" MinValue="0" MaxValue="15"
-                          HorizontalAlignment="Center" Margin="40, 0"/>
+            <SliderWidget Name="EditVoltageLevelDialog.VoltageSlider" Size="410, 60" Granularity="1" MinValue="0"
+                          MaxValue="15" HorizontalAlignment="Center"/>
 
             <CanvasWidget Size="0, Infinity"/>
 

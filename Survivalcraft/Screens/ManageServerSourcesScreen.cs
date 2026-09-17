@@ -94,9 +94,9 @@ public sealed class ManageServerSourcesScreen : Screen
     private void ShowEditor(InstalledServerSource? source)
     {
         DialogsManager.ShowDialog(null, new ContentRepositoryDialog(
-            source is null ? CommonText("AddTitle") : CommonText("EditTitle"),
+            source is null ? Text("AddTitle") : Text("EditTitle"),
             CommonText("NameLabel"), CommonText("AddressLabel"),
-            source is null ? CommonText("Add") : CommonText("Edit"),
+            source is null ? CommonText("Add") : CommonText("Save"),
             source?.Name ?? string.Empty, source?.ApiUrl ?? string.Empty,
             (name, address) => SaveEditor(source, name, address)));
     }

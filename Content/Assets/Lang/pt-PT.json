@@ -3474,7 +3474,8 @@
             "TestFailed": "Não foi possível ligar ou a resposta do protocolo do repositório era inválida.",
             "EditTitle": "Editar repositório de conteúdo",
             "AddressLabel": "Endereço",
-            "NameLabel": "Nome"
+            "NameLabel": "Nome",
+            "Save": "Guardar"
         },
         "OnlineContentScreen": {
             "Title": "Conteúdo online",
@@ -3559,7 +3560,9 @@
             "SaveFailed": "Não foi possível guardar a fonte de servidores.",
             "Testing": "A validar a fonte de servidores…",
             "TestSucceeded": "A fonte “{0}” é válida e devolveu {1} servidores.",
-            "TestFailed": "A validação da fonte de servidores falhou."
+            "TestFailed": "A validação da fonte de servidores falhou.",
+            "AddTitle": "Adicionar fonte de servidores",
+            "EditTitle": "Editar fonte de servidores"
         },
         "ServerSourceScreen": {
             "Title": "Instalar fontes de servidores",
@@ -4012,7 +4015,7 @@
         "AuthDialogTitle": "A administração do servidor não está inicializada",
         "AuthDialogBody": "Código de reivindicação: {0}\n\nA reivindicação concede apenas a gestão e delegação de permissões padrão. Permissões da consola, como parar o servidor, ficam excluídas.",
         "AuthDialogClaim": "Reivindicar",
-        "AuthDialogCopy": "Copiar comando",
+        "AuthDialogCopy": "Copiar",
         "AuthDialogCopied": "Copiado: {0}",
         "AuthConsoleBootstrap_Message": "A ADMINISTRAÇÃO DO SERVIDOR NÃO FOI REIVINDICADA\nNenhum jogador possui permissões administrativas.\nCódigo de reivindicação: {0}\nPara inicializar a administração:\n1. Ligue-se a este servidor como jogador.\n2. Execute: /auth claim {0}\nUtilize auth code ou auth regenerate nesta consola, se necessário.",
         "Language_Description": "Mostrar ou alterar o idioma da interface local",

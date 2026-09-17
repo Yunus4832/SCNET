@@ -49,7 +49,7 @@ public class EditBatteryDialog : Dialog
     public void UpdateControls()
     {
         _voltageSlider.Text = string.Format("{0:0.0}V ({1})", 1.5f * _voltageLevel / 15f,
-            _voltageLevel < 8 ? "Low" : "High");
+            LanguageManager.Get("EditBatteryDialog", _voltageLevel < 8 ? 1 : 2));
         _voltageSlider.Value = _voltageLevel;
     }
 

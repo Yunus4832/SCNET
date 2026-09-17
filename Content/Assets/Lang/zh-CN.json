@@ -3474,7 +3474,8 @@
             "TestFailed": "无法连接或仓库协议响应无效。",
             "EditTitle": "编辑内容仓库",
             "AddressLabel": "地址",
-            "NameLabel": "名称"
+            "NameLabel": "名称",
+            "Save": "保存"
         },
         "OnlineContentScreen": {
             "Title": "在线内容",
@@ -3559,7 +3560,9 @@
             "SaveFailed": "无法保存服务器源。",
             "Testing": "正在验证服务器源…",
             "TestSucceeded": "服务器源“{0}”有效，共返回 {1} 个服务器。",
-            "TestFailed": "服务器源验证失败。"
+            "TestFailed": "服务器源验证失败。",
+            "AddTitle": "添加服务器源",
+            "EditTitle": "编辑服务器源"
         },
         "ServerSourceScreen": {
             "Title": "安装服务器源",
@@ -4012,7 +4015,7 @@
         "AuthDialogTitle": "服务器管理员尚未认领",
         "AuthDialogBody": "认领码：{0}\n\n认领只会授予标准权限的管理和再授权能力，不包含停服等控制台权限。",
         "AuthDialogClaim": "立即认领",
-        "AuthDialogCopy": "复制命令",
+        "AuthDialogCopy": "复制",
         "AuthDialogCopied": "已复制：{0}",
         "AuthConsoleBootstrap_Message": "服务器管理尚未初始化\n当前没有玩家拥有管理权限。\n认领码：{0}\n初始化管理权限：\n1. 以玩家身份连接此服务器。\n2. 执行：/auth claim {0}\n如有需要，可在此控制台执行 auth code 或 auth regenerate。",
         "Language_Description": "查询或切换本地界面语言",

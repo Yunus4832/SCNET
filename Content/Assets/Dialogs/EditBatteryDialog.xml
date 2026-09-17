@@ -1,15 +1,15 @@
 <CanvasWidget xmlns="runtime-namespace:Game.Widgets">
 
     <CanvasWidget Size="500, 300" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
-        <RectangleWidget FillColor="0, 0, 0, 255" OutlineColor="128, 128, 128, 128" OutlineThickness="2"/>
+        <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Near" Margin="0, 15">
 
             <LabelWidget Text="[EditBatteryDialog:1]" HorizontalAlignment="Center"/>
 
             <CanvasWidget Size="0, Infinity"/>
 
-            <SliderWidget Name="EditBatteryDialog.VoltageSlider" Granularity="1" MinValue="0" MaxValue="15"
-                          HorizontalAlignment="Center" Margin="40, 0"/>
+            <SliderWidget Name="EditBatteryDialog.VoltageSlider" Size="410, 60" Granularity="1" MinValue="0"
+                          MaxValue="15" HorizontalAlignment="Center"/>
 
             <CanvasWidget Size="0, Infinity"/>
 

@@ -117,7 +117,7 @@ public sealed class ContentRepositoryScreen : Screen
             repository is null ? Text("AddTitle") : Text("EditTitle"),
             Text("NameLabel"),
             Text("AddressLabel"),
-            repository is null ? Text("Add") : Text("Edit"),
+            repository is null ? Text("Add") : Text("Save"),
             repository?.Name ?? string.Empty,
             repository?.BaseUrl ?? string.Empty,
             (name, address) => SaveEditor(repository, name, address)));
