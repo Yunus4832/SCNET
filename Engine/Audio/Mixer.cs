@@ -18,6 +18,8 @@ public static class Mixer
 
     private static nint _context;
 
+    private static int _deviceRefreshRequested;
+
     public static bool IsAudioInitialized { get; private set; }
 
     public static float MasterVolume
@@ -124,6 +126,11 @@ public static class Mixer
 
     internal static void BeforeFrame()
     {
+        if (Interlocked.Exchange(ref _deviceRefreshRequested, 0) != 0)
+        {
+            TryRefreshDevice();
+        }
+
         if (AL is null)
         {
             return;
@@ -152,6 +159,45 @@ public static class Mixer
 
     internal static void AfterFrame()
     {
+    }
+
+    public static void RequestDeviceRefresh()
+    {
+        Interlocked.Exchange(ref _deviceRefreshRequested, 1);
+    }
+
+    private static unsafe bool TryRefreshDevice()
+    {
+        if (!IsAudioInitialized || audioContext is null || _device == 0)
+        {
+            return false;
+        }
+
+        var device = (Device*)_device;
+        const string extensionName = "ALC_SOFT_reopen_device";
+        if (!audioContext.IsExtensionPresent(device, extensionName))
+        {
+            Log.Warning("Cannot refresh audio device because {0} is unavailable.", extensionName);
+            return false;
+        }
+
+        var functionAddress = audioContext.GetProcAddress(device, "alcReopenDeviceSOFT");
+        if (functionAddress is null)
+        {
+            Log.Warning("Cannot refresh audio device because alcReopenDeviceSOFT is unavailable.");
+            return false;
+        }
+
+        var reopenDevice = (delegate* unmanaged[Cdecl]<Device*, byte*, int*, byte>)functionAddress;
+        if (reopenDevice(device, null, null) == 0)
+        {
+            Log.Error("Failed to refresh the default audio device.");
+            return false;
+        }
+
+        InternalSetMasterVolume(MasterVolume);
+        Log.Information("Refreshed the default audio device.");
+        return true;
     }
 
     internal static void InternalSetMasterVolume(float volume)

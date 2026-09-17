@@ -95,6 +95,7 @@ public static partial class Window
         ActivityInstance.Resumed += ResumedHandler;
         ActivityInstance.Destroyed += DestroyedHandler;
         ActivityInstance.NewIntent += NewIntentHandler;
+        ActivityInstance.AudioDevicesChanged += AudioDevicesChangedHandler;
         View.ShouldSwapAutomatically = false;
         View.Load += LoadHandler;
         return true;
@@ -102,6 +103,7 @@ public static partial class Window
 
     private static partial void DisposePlatformView()
     {
+        ActivityInstance.AudioDevicesChanged -= AudioDevicesChangedHandler;
     }
 
     private static partial void OnPlatformViewLoaded()
@@ -158,12 +160,18 @@ public static partial class Window
 
         _state = State.Active;
         ActivityInstance.EnableImmersiveMode();
+        Mixer.RequestDeviceRefresh();
         if (!VSync)
         {
             Time.QueueFrameIndexDelayedExecution(10, () => { View.GLContext?.SwapInterval(0); });
         }
 
         Activated?.Invoke();
+    }
+
+    private static void AudioDevicesChangedHandler()
+    {
+        Mixer.RequestDeviceRefresh();
     }
 
     public static void DestroyedHandler()

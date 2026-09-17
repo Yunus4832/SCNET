@@ -14,11 +14,32 @@ namespace Engine.Windowing;
 
 public class EngineActivity : SilkActivity
 {
+    private sealed class EngineAudioDeviceCallback(EngineActivity activity) : AudioDeviceCallback
+    {
+        public override void OnAudioDevicesAdded(AudioDeviceInfo[]? addedDevices)
+        {
+            if (addedDevices?.Any(device => device.IsSink) == true)
+            {
+                activity.AudioDevicesChanged?.Invoke();
+            }
+        }
+
+        public override void OnAudioDevicesRemoved(AudioDeviceInfo[]? removedDevices)
+        {
+            if (removedDevices?.Any(device => device.IsSink) == true)
+            {
+                activity.AudioDevicesChanged?.Invoke();
+            }
+        }
+    }
+
     internal static EngineActivity? activityInstance;
 
     public event Func<KeyEvent, bool>? OnDispatchKeyEvent;
 
     private bool _isForwardingTextInputKeyEvent;
+
+    private AudioDeviceCallback? _audioDeviceCallback;
 
     private AudioManager? AudioManager
     {
@@ -66,6 +87,8 @@ public class EngineActivity : SilkActivity
 
     public event Action? Destroyed;
 
+    public event Action? AudioDevicesChanged;
+
     public event Action<Intent?>? NewIntent;
 
     protected virtual ScreenOrientation DefaultScreenOrientation => ScreenOrientation.SensorLandscape;
@@ -80,6 +103,12 @@ public class EngineActivity : SilkActivity
         EnableImmersiveMode();
         VolumeControlStream = AndroidStream.Music;
         RequestedOrientation = DefaultScreenOrientation;
+        if (Build.VERSION.SdkInt >= BuildVersionCodes.M && AudioManager is not null)
+        {
+            _audioDeviceCallback = new EngineAudioDeviceCallback(this);
+            AudioManager.RegisterAudioDeviceCallback(_audioDeviceCallback, null);
+        }
+
         if (Build.VERSION.SdkInt >= (BuildVersionCodes)28 && Window != null)
         {
             ViewCompat.SetOnApplyWindowInsetsListener(Window.DecorView, new ApplyWindowInsetsListener());
@@ -114,6 +143,12 @@ public class EngineActivity : SilkActivity
 
     protected override void OnDestroy()
     {
+        if (_audioDeviceCallback is not null)
+        {
+            AudioManager?.UnregisterAudioDeviceCallback(_audioDeviceCallback);
+            _audioDeviceCallback = null;
+        }
+
         base.OnDestroy();
         Destroyed?.Invoke();
     }
