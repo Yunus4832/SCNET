@@ -34,7 +34,6 @@ public class GameScreen : Screen
 
         GameManager.Project.FindSubsystem<SubsystemAudio>(true)!.Unmute();
         MusicManager.CurrentMix = MusicManager.Mix.None;
-        _administrationDialogProject = null;
         TryShowAdministrationBootstrap();
     }
 
