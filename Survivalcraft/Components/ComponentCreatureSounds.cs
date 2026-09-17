@@ -60,21 +60,24 @@ public class ComponentCreatureSounds : Component
             return;
         }
 
-        PlayIdleSoundLogic(skipIfRecentlyPlayed);
+        if (PlayIdleSoundLocal(skipIfRecentlyPlayed))
+        {
+            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
+        }
     }
 
-    public void PlayIdleSoundLogic(bool skipIfRecentlyPlayed)
+    internal bool PlayIdleSoundLocal(bool skipIfRecentlyPlayed)
     {
         if (string.IsNullOrEmpty(_idleSound) ||
             !(_subsystemTime.GameTime > _lastSoundTime + (skipIfRecentlyPlayed ? 12f : 1f)))
         {
-            return;
+            return false;
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
         _subsystemAudio.PlayRandomSound(_idleSound, 1f, _random.Float(-0.1f, 0.1f),
             _componentCreature.ComponentBody.Position, _idleSoundMinDistance, false);
-        CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
+        return true;
     }
 
     public void PlayPainSound()
@@ -84,20 +87,23 @@ public class ComponentCreatureSounds : Component
             return;
         }
 
-        PlayPainSoundLogic();
+        if (PlayPainSoundLocal())
+        {
+            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 1));
+        }
     }
 
-    public void PlayPainSoundLogic()
+    internal bool PlayPainSoundLocal()
     {
         if (string.IsNullOrEmpty(_painSound) || !(_subsystemTime.GameTime > _lastSoundTime + 1.0))
         {
-            return;
+            return false;
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
         _subsystemAudio.PlayRandomSound(_painSound, 1f, _random.Float(-0.1f, 0.1f),
             _componentCreature.ComponentBody.Position, _painSoundMinDistance, false);
-        CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 1));
+        return true;
     }
 
     public void PlayMoanSound()
@@ -107,20 +113,23 @@ public class ComponentCreatureSounds : Component
             return;
         }
 
-        PlayMoanSoundLogic();
+        if (PlayMoanSoundLocal())
+        {
+            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 2));
+        }
     }
 
-    public void PlayMoanSoundLogic()
+    internal bool PlayMoanSoundLocal()
     {
         if (string.IsNullOrEmpty(_moanSound) || !(_subsystemTime.GameTime > _lastSoundTime + 1.0))
         {
-            return;
+            return false;
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
         _subsystemAudio.PlayRandomSound(_moanSound, 1f, _random.Float(-0.1f, 0.1f),
             _componentCreature.ComponentBody.Position, _moanSoundMinDistance, false);
-        CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 2));
+        return true;
     }
 
     public void PlaySneezeSound()
@@ -130,20 +139,23 @@ public class ComponentCreatureSounds : Component
             return;
         }
 
-        PlaySneezeSoundLogic();
+        if (PlaySneezeSoundLocal())
+        {
+            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 3));
+        }
     }
 
-    public void PlaySneezeSoundLogic()
+    internal bool PlaySneezeSoundLocal()
     {
         if (string.IsNullOrEmpty(_sneezeSound) || !(_subsystemTime.GameTime > _lastSoundTime + 1.0))
         {
-            return;
+            return false;
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
         _subsystemAudio.PlayRandomSound(_sneezeSound, 1f, _random.Float(-0.1f, 0.1f),
             _componentCreature.ComponentBody.Position, _sneezeSoundMinDistance, false);
-        CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 3));
+        return true;
     }
 
     public void PlayCoughSound()
@@ -153,20 +165,23 @@ public class ComponentCreatureSounds : Component
             return;
         }
 
-        PlayCoughSoundLogic();
+        if (PlayCoughSoundLocal())
+        {
+            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 4));
+        }
     }
 
-    public void PlayCoughSoundLogic()
+    internal bool PlayCoughSoundLocal()
     {
         if (string.IsNullOrEmpty(_coughSound) || !(_subsystemTime.GameTime > _lastCoughingSoundTime + 1.0))
         {
-            return;
+            return false;
         }
 
         _lastCoughingSoundTime = _subsystemTime.GameTime;
         _subsystemAudio.PlayRandomSound(_coughSound, 1f, _random.Float(-0.1f, 0.1f),
             _componentCreature.ComponentBody.Position, _coughSoundMinDistance, false);
-        CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 4));
+        return true;
     }
 
     public void PlayPukeSound()
@@ -176,20 +191,23 @@ public class ComponentCreatureSounds : Component
             return;
         }
 
-        PlayPukeSoundLogic();
+        if (PlayPukeSoundLocal())
+        {
+            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 5));
+        }
     }
 
-    public void PlayPukeSoundLogic()
+    internal bool PlayPukeSoundLocal()
     {
         if (string.IsNullOrEmpty(_pukeSound) || !(_subsystemTime.GameTime > _lastPukeSoundTime + 1.0))
         {
-            return;
+            return false;
         }
 
         _lastPukeSoundTime = _subsystemTime.GameTime;
         _subsystemAudio.PlayRandomSound(_pukeSound, 1f, _random.Float(-0.1f, 0.1f),
             _componentCreature.ComponentBody.Position, _pukeSoundMinDistance, false);
-        CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 5));
+        return true;
     }
 
     public void PlayAttackSound()
@@ -199,20 +217,23 @@ public class ComponentCreatureSounds : Component
             return;
         }
 
-        PlayAttackSoundLogic();
+        if (PlayAttackSoundLocal())
+        {
+            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 6));
+        }
     }
 
-    public void PlayAttackSoundLogic()
+    internal bool PlayAttackSoundLocal()
     {
         if (string.IsNullOrEmpty(_attackSound) || !(_subsystemTime.GameTime > _lastSoundTime + 1.0))
         {
-            return;
+            return false;
         }
 
         _lastSoundTime = _subsystemTime.GameTime;
         _subsystemAudio.PlayRandomSound(_attackSound, 1f, _random.Float(-0.1f, 0.1f),
             _componentCreature.ComponentBody.Position, _attackSoundMinDistance, false);
-        CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 6));
+        return true;
     }
 
     public bool PlayFootstepSound(float loudnessMultiplier)

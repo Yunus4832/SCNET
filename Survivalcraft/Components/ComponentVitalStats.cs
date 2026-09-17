@@ -481,8 +481,12 @@ public class ComponentVitalStats : Component, IUpdateable
                 }
 
                 var num5 = _componentPlayer.PlayerData.PlayerClass == PlayerClass.Female ? 0.2f : 0f;
-                _pantingSound.Volume = 1f * SettingsManager.Current.SoundsVolume * MathUtils.Saturate(1f * num4) *
-                                       MathUtils.Lerp(0.8f, 1f,
+                var distanceVolume = _componentPlayer.PlayerData.IsMainPlayer
+                    ? 1f
+                    : _subsystemAudio.CalculateVolume(
+                        _subsystemAudio.CalculateListenerDistance(_componentPlayer.ComponentBody.Position), 2f);
+                _pantingSound.Volume = SettingsManager.Current.SoundsVolume * MathUtils.Saturate(num4) *
+                                       distanceVolume * MathUtils.Lerp(0.8f, 1f,
                                            SimplexNoise.Noise((float)MathUtils.Remainder(3.0 * Time.RealTime + 100.0,
                                                1000.0)));
                 _pantingSound.Pitch = AudioManager.ToEnginePitch(num5 + MathUtils.Lerp(-0.15f, 0.05f, num4) *

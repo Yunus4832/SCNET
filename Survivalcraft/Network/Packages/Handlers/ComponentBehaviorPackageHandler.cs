@@ -74,25 +74,25 @@ public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<Compone
                         switch (package.Type)
                         {
                             case 0:
-                                creatureSound.PlayIdleSoundLogic(package.RowLeft);
+                                creatureSound.PlayIdleSoundLocal(package.RowLeft);
                                 break;
                             case 1:
-                                creatureSound.PlayPainSoundLogic();
+                                creatureSound.PlayPainSoundLocal();
                                 break;
                             case 2:
-                                creatureSound.PlayMoanSoundLogic();
+                                creatureSound.PlayMoanSoundLocal();
                                 break;
                             case 3:
-                                creatureSound.PlaySneezeSoundLogic();
+                                creatureSound.PlaySneezeSoundLocal();
                                 break;
                             case 4:
-                                creatureSound.PlayCoughSoundLogic();
+                                creatureSound.PlayCoughSoundLocal();
                                 break;
                             case 5:
-                                creatureSound.PlayPukeSoundLogic();
+                                creatureSound.PlayPukeSoundLocal();
                                 break;
                             case 6:
-                                creatureSound.PlayAttackSoundLogic();
+                                creatureSound.PlayAttackSoundLocal();
                                 break;
                         }
                     }
