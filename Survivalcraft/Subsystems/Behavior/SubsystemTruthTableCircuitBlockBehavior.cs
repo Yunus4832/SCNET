@@ -15,23 +15,34 @@ public class SubsystemTruthTableCircuitBlockBehavior() : SubsystemEditableItemBe
         var id = Terrain.ExtractData(value);
         var truthTableData = GetItemData(id);
         truthTableData = truthTableData != null ? (TruthTableData)truthTableData.Copy() : new TruthTableData();
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditTruthTableDialog(truthTableData, delegate
+        var editor = new TruthTableEditorWidget(truthTableData, saved =>
         {
+            if (!saved)
+            {
+                return;
+            }
+
             var p = new EditableBlockPackage(default, true, inventory.Id, slotIndex, truthTableData);
             CommonLib.Net.QueuePackage(p);
             if (CommonLib.WorkType != WorkType.Client)
             {
                 PackageDispatcher.Handle(p, CommonLib.Net, false);
             }
-        }));
+        }, () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+        componentPlayer.ComponentGui.ModalPanelWidget = editor;
         return true;
     }
 
     public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
     {
         var truthTableData = GetBlockData(new Point3(x, y, z)) ?? new TruthTableData();
-        DialogsManager.ShowDialog(componentPlayer.GuiWidget, new EditTruthTableDialog(truthTableData, delegate
+        var editor = new TruthTableEditorWidget(truthTableData, saved =>
         {
+            if (!saved)
+            {
+                return;
+            }
+
             var face = ((TruthTableCircuitBlock)BlocksManager.Blocks[188]).GetFace(value);
             var cell = new CellFace(x, y, z, face);
             var p = new EditableBlockPackage(cell, false, 0, 0, truthTableData);
@@ -40,7 +51,8 @@ public class SubsystemTruthTableCircuitBlockBehavior() : SubsystemEditableItemBe
             {
                 PackageDispatcher.Handle(p, CommonLib.Net, false);
             }
-        }));
+        }, () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+        componentPlayer.ComponentGui.ModalPanelWidget = editor;
         return true;
     }
 }

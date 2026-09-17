@@ -4,9 +4,9 @@ namespace Game;
 
 public class Settings
 {
-    public IReadOnlyList<Game.Content.ContentRepository> ContentRepositories { get; internal set; } = [];
+    public IReadOnlyList<Content.ContentRepository> ContentRepositories { get; internal set; } = [];
 
-    public Game.Servers.ServerDirectoryState ServerDirectory { get; internal set; } = new();
+    public Servers.ServerDirectoryState ServerDirectory { get; internal set; } = new();
 
     public int ServerPort { get; set; } = 28887;
 

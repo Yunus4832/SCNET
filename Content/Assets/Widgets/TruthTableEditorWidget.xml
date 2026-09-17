@@ -1,0 +1,16 @@
+<TruthTableEditorWidget xmlns="runtime-namespace:Game.Widgets">
+    <BevelledRectangleWidget Size="614, 382" BevelSize="3"/>
+    <LabelWidget CanvasWidget.Position="28, 14" Text="[TruthTableEditorWidget:Title]"
+                 Color="255, 255, 255, 192"/>
+    <GridPanelWidget Name="TruthTableEditor.Grid" CanvasWidget.Position="35, 75" ColumnsCount="8" RowsCount="2"/>
+    <StackPanelWidget CanvasWidget.Position="35, 298" Direction="Horizontal">
+        <BevelledButtonWidget Name="TruthTableEditor.Clear" Size="128, 54" Margin="4, 0"
+                              Text="[TruthTableEditorWidget:Clear]"/>
+        <BevelledButtonWidget Name="TruthTableEditor.Invert" Size="128, 54" Margin="4, 0"
+                              Text="[TruthTableEditorWidget:Invert]"/>
+        <BevelledButtonWidget Name="TruthTableEditor.Save" Size="128, 54" Margin="4, 0"
+                              Text="[TruthTableEditorWidget:Save]"/>
+        <BevelledButtonWidget Name="TruthTableEditor.Cancel" Size="128, 54" Margin="4, 0"
+                              Text="[TruthTableEditorWidget:Cancel]"/>
+    </StackPanelWidget>
+</TruthTableEditorWidget>

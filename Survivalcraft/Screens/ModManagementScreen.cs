@@ -3,7 +3,6 @@ using System.Xml.Linq;
 using Content.Packaging;
 
 using Game.Content;
-using Game.Modding;
 
 namespace Game.Screens;
 

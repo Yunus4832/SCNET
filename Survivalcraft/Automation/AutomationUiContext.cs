@@ -87,7 +87,7 @@ public static class AutomationUiContext
     private static IReadOnlyList<string> GetActions(Widget widget) =>
         widget is ScrollPanelWidget ? ["scroll", "swipe"] : ["tap"];
 
-    private static (Widget? Root, string Selector) GetActiveScope(IReadOnlyList<Game.Dialogs.Dialog> dialogs)
+    private static (Widget? Root, string Selector) GetActiveScope(IReadOnlyList<Dialogs.Dialog> dialogs)
     {
         if (dialogs.Count > 0)
         {

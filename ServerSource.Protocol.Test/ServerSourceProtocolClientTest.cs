@@ -1,8 +1,6 @@
 using System.Net;
 using System.Text;
 
-using ServerSource.Protocol;
-
 namespace ServerSource.Protocol.Test;
 
 public sealed class ServerSourceProtocolClientTest

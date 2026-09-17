@@ -69,12 +69,12 @@ public class ShaderParameter
             throw new InvalidOperationException("Shader parameter type mismatch.");
         }
 
-        if (inputValue.CloseTo(this.value[0]))
+        if (inputValue.CloseTo(value[0]))
         {
             return;
         }
 
-        this.value[0] = inputValue;
+        value[0] = inputValue;
         isChanged = true;
     }
 
@@ -111,7 +111,7 @@ public class ShaderParameter
 
         for (var j = 0; j < count; j++)
         {
-            this.value[j] = inputValue[j];
+            value[j] = inputValue[j];
         }
 
         isChanged = true;
@@ -129,7 +129,7 @@ public class ShaderParameter
             throw new InvalidOperationException("Shader parameter type mismatch.");
         }
 
-        if (!isChanged && inputValue.X.CloseTo(this.value[0]) && inputValue.Y.CloseTo(this.value[1]))
+        if (!isChanged && inputValue.X.CloseTo(value[0]) && inputValue.Y.CloseTo(value[1]))
         {
             return;
         }
@@ -162,7 +162,7 @@ public class ShaderParameter
             var num = 0;
             for (; i < count; i++)
             {
-                if (this.value[num++].CloseTo(inputValue[i].X) && this.value[num++].CloseTo(inputValue[i].Y))
+                if (value[num++].CloseTo(inputValue[i].X) && value[num++].CloseTo(inputValue[i].Y))
                 {
                     continue;
                 }
@@ -176,8 +176,8 @@ public class ShaderParameter
         var num2 = 0;
         for (; j < count; j++)
         {
-            this.value[num2++] = inputValue[j].X;
-            this.value[num2++] = inputValue[j].Y;
+            value[num2++] = inputValue[j].X;
+            value[num2++] = inputValue[j].Y;
         }
     }
 
@@ -199,9 +199,9 @@ public class ShaderParameter
             return;
         }
 
-        this.value[0] = inputValue.X;
-        this.value[1] = inputValue.Y;
-        this.value[2] = inputValue.Z;
+        value[0] = inputValue.X;
+        value[1] = inputValue.Y;
+        value[2] = inputValue.Z;
         isChanged = true;
     }
 
@@ -228,9 +228,9 @@ public class ShaderParameter
             var num = 0;
             for (; i < count; i++)
             {
-                if (this.value[num++].CloseTo(inputValue[i].X) &&
-                    this.value[num++].CloseTo(inputValue[i].Y) &&
-                    this.value[num++].CloseTo(inputValue[i].Z))
+                if (value[num++].CloseTo(inputValue[i].X) &&
+                    value[num++].CloseTo(inputValue[i].Y) &&
+                    value[num++].CloseTo(inputValue[i].Z))
                 {
                     continue;
                 }
@@ -318,10 +318,10 @@ public class ShaderParameter
         var num2 = 0;
         for (; j < count; j++)
         {
-            this.value[num2++] = inputValue[j].X;
-            this.value[num2++] = inputValue[j].Y;
-            this.value[num2++] = inputValue[j].Z;
-            this.value[num2++] = inputValue[j].W;
+            value[num2++] = inputValue[j].X;
+            value[num2++] = inputValue[j].Y;
+            value[num2++] = inputValue[j].Z;
+            value[num2++] = inputValue[j].W;
         }
     }
 
@@ -392,14 +392,14 @@ public class ShaderParameter
             var num = 0;
             for (; i < count; i++)
             {
-                if (this.value[num++].CloseTo(inputValue[i].M11) && this.value[num++].CloseTo(inputValue[i].M12) &&
-                    this.value[num++].CloseTo(inputValue[i].M13) && this.value[num++].CloseTo(inputValue[i].M14) &&
-                    this.value[num++].CloseTo(inputValue[i].M21) && this.value[num++].CloseTo(inputValue[i].M22) &&
-                    this.value[num++].CloseTo(inputValue[i].M23) && this.value[num++].CloseTo(inputValue[i].M24) &&
-                    this.value[num++].CloseTo(inputValue[i].M31) && this.value[num++].CloseTo(inputValue[i].M32) &&
-                    this.value[num++].CloseTo(inputValue[i].M33) && this.value[num++].CloseTo(inputValue[i].M34) &&
-                    this.value[num++].CloseTo(inputValue[i].M41) && this.value[num++].CloseTo(inputValue[i].M42) &&
-                    this.value[num++].CloseTo(inputValue[i].M43) && this.value[num++].CloseTo(inputValue[i].M44))
+                if (value[num++].CloseTo(inputValue[i].M11) && value[num++].CloseTo(inputValue[i].M12) &&
+                    value[num++].CloseTo(inputValue[i].M13) && value[num++].CloseTo(inputValue[i].M14) &&
+                    value[num++].CloseTo(inputValue[i].M21) && value[num++].CloseTo(inputValue[i].M22) &&
+                    value[num++].CloseTo(inputValue[i].M23) && value[num++].CloseTo(inputValue[i].M24) &&
+                    value[num++].CloseTo(inputValue[i].M31) && value[num++].CloseTo(inputValue[i].M32) &&
+                    value[num++].CloseTo(inputValue[i].M33) && value[num++].CloseTo(inputValue[i].M34) &&
+                    value[num++].CloseTo(inputValue[i].M41) && value[num++].CloseTo(inputValue[i].M42) &&
+                    value[num++].CloseTo(inputValue[i].M43) && value[num++].CloseTo(inputValue[i].M44))
                 {
                     continue;
                 }

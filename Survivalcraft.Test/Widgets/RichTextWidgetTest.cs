@@ -18,7 +18,7 @@ public class RichTextWidgetTest
             Content = new MessageContent(
             [
                 new MessageSegment("AA", MessageTextStyle.Sender),
-                new MessageSegment("BBBBBBBB", MessageTextStyle.Normal)
+                new MessageSegment("BBBBBBBB")
             ])
         };
 

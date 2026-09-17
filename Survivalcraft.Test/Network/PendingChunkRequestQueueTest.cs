@@ -45,7 +45,7 @@ public sealed class PendingChunkRequestQueueTest
     public void NewAllocationReplacesQueuedRequestWithoutChangingOrder()
     {
         var queue = new PendingChunkRequestQueue();
-        var first = Request(1, 2, 1);
+        var first = Request(1, 2);
         var replacement = Request(1, 2, 2);
 
         Assert.True(queue.Enqueue(first));

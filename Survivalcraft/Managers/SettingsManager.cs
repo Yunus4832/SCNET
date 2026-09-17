@@ -5,8 +5,6 @@ using Engine.Serialization;
 
 using EntitySystem.XmlUtilities;
 
-using Game.Network;
-
 using ServerSource.Protocol;
 
 namespace Game.Managers;
@@ -15,14 +13,14 @@ public static class SettingsManager
 {
     public static Settings Current { get; } = new();
 
-    public static Game.Content.ContentServerClientPool ContentClients { get; } =
-        new(new Game.Content.ContentServerClientFactory());
+    public static Content.ContentServerClientPool ContentClients { get; } =
+        new(new Content.ContentServerClientFactory());
 
-    public static Game.Content.ContentRepositoryService ContentRepositories { get; private set; } = null!;
+    public static Content.ContentRepositoryService ContentRepositories { get; private set; } = null!;
 
-    public static Game.Servers.ServerDirectoryService ServerDirectory { get; private set; } = null!;
+    public static Servers.ServerDirectoryService ServerDirectory { get; private set; } = null!;
 
-    public static Game.Servers.ServerSourceCatalog ServerSources { get; private set; } = null!;
+    public static Servers.ServerSourceCatalog ServerSources { get; private set; } = null!;
 
     private static HttpClient? _serverSourceHttpClient;
 
@@ -47,17 +45,17 @@ public static class SettingsManager
         }
 
         LoadSettings();
-        ContentRepositories = new Game.Content.ContentRepositoryService(Current.ContentRepositories,
+        ContentRepositories = new Content.ContentRepositoryService(Current.ContentRepositories,
             ContentClients, SaveContentRepositories);
-        ServerDirectory = new Game.Servers.ServerDirectoryService(Current.ServerDirectory, Current.ServerPort,
+        ServerDirectory = new Servers.ServerDirectoryService(Current.ServerDirectory, Current.ServerPort,
             SaveServerDirectory);
         _serverSourceHttpClient = new HttpClient
         {
             Timeout = TimeSpan.FromSeconds(30),
             MaxResponseContentBufferSize = ServerSourceProtocol.MaximumResponseBytes
         };
-        ServerSources = new Game.Servers.ServerSourceCatalog(ServerDirectory,
-            new ServerSourceProtocolClient(_serverSourceHttpClient), new Game.Servers.ServerDiscoveryService());
+        ServerSources = new Servers.ServerSourceCatalog(ServerDirectory,
+            new ServerSourceProtocolClient(_serverSourceHttpClient), new Servers.ServerDiscoveryService());
         var settingsChanged = false;
         if (EnsureMultiplayerClientId(Current))
         {
@@ -118,7 +116,7 @@ public static class SettingsManager
                 {
                     var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
                     AppConfigStore.ReadFromXml(xElement);
-                    Current.ContentRepositories = Game.Content.ContentRepositorySettings.Read(xElement);
+                    Current.ContentRepositories = Content.ContentRepositorySettings.Read(xElement);
 
                     foreach (var item in xElement.Elements())
                     {
@@ -156,7 +154,7 @@ public static class SettingsManager
                         }
                     }
 
-                    Current.ServerDirectory = Game.Servers.ServerDirectorySettings.Read(xElement, Current.ServerPort);
+                    Current.ServerDirectory = Servers.ServerDirectorySettings.Read(xElement, Current.ServerPort);
                 }
 
                 Log.Information("Loaded settings.");
@@ -184,7 +182,7 @@ public static class SettingsManager
         }
     }
 
-    private static void SaveContentRepositories(IReadOnlyList<Game.Content.ContentRepository> repositories)
+    private static void SaveContentRepositories(IReadOnlyList<Content.ContentRepository> repositories)
     {
         var previous = Current.ContentRepositories;
         Current.ContentRepositories = repositories;
@@ -199,7 +197,7 @@ public static class SettingsManager
         }
     }
 
-    private static void SaveServerDirectory(Game.Servers.ServerDirectoryState serverDirectory)
+    private static void SaveServerDirectory(Servers.ServerDirectoryState serverDirectory)
     {
         var previous = Current.ServerDirectory;
         Current.ServerDirectory = serverDirectory;
@@ -241,8 +239,8 @@ public static class SettingsManager
         }
 
         AppConfigStore.WriteToXml(xElement);
-        Game.Content.ContentRepositorySettings.Write(xElement, Current.ContentRepositories);
-        Game.Servers.ServerDirectorySettings.Write(xElement, Current.ServerDirectory, Current.ServerPort);
+        Content.ContentRepositorySettings.Write(xElement, Current.ContentRepositories);
+        Servers.ServerDirectorySettings.Write(xElement, Current.ServerDirectory, Current.ServerPort);
 
         var temporaryPath = GamePaths.SettingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try

@@ -148,10 +148,10 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
     {
         if (componentCreature != null)
         {
-            var context = new Game.Modding.CreatureTargetScoringContext(
+            var context = new CreatureTargetScoringContext(
                 _componentCreature,
                 componentCreature,
-                Game.Modding.CreatureTargetingKind.Chase,
+                CreatureTargetingKind.Chase,
                 1f);
             CurrentModRuntime.Value?.Gameplay.Invoke(context);
             if (context.Cancel || context.Score <= 0f)
@@ -437,10 +437,10 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                     return score;
                 }
 
-                var context = new Game.Modding.CreatureTargetScoringContext(
+                var context = new CreatureTargetScoringContext(
                     _componentCreature,
                     componentCreature,
-                    Game.Modding.CreatureTargetingKind.Chase,
+                    CreatureTargetingKind.Chase,
                     score);
                 CurrentModRuntime.Value?.Gameplay.Invoke(context);
                 return context.Cancel ? 0f : context.Score;

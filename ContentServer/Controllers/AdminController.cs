@@ -367,6 +367,6 @@ public sealed class AdminController(
 
     private static ResponseData Success()
     {
-        return new ResponseData(true, string.Empty, StatusCodes.Status200OK, null);
+        return new ResponseData(true, string.Empty, StatusCodes.Status200OK);
     }
 }

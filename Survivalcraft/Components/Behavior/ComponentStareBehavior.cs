@@ -153,10 +153,10 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
             return num2;
         }
 
-        var context = new Game.Modding.CreatureTargetScoringContext(
+        var context = new CreatureTargetScoringContext(
             _componentCreature,
             componentCreature,
-            Game.Modding.CreatureTargetingKind.Stare,
+            CreatureTargetingKind.Stare,
             num2);
         CurrentModRuntime.Value?.Gameplay.Invoke(context);
         return context.Cancel ? 0f : context.Score;

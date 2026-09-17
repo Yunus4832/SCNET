@@ -76,7 +76,7 @@ public class PaintBucketBlock : BucketBlock
 
     public override IEnumerable<CraftingRecipe> GetProceduralCraftingRecipes()
     {
-        var additives = new string[]
+        var additives = new[]
         {
             BlocksManager.Blocks[43].CraftingId,
             BlocksManager.Blocks[24].CraftingId,

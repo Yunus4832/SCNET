@@ -454,7 +454,7 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Equal(13, await db.ContentVersions.CountAsync());
         var storedPackage = await db.PackageBlobs.SingleAsync(item => item.Hash == packageHash);
         var storedVersion = await db.ContentVersions.SingleAsync(item =>
-            item.Id == new ContentServer.Domain.Contents.ContentVersionId(Guid.Parse(versionId)));
+            item.Id == new Domain.Contents.ContentVersionId(Guid.Parse(versionId)));
         Assert.Equal(storedPackage.Id, storedVersion.PackageBlobId);
 
         var packageStore = scope.ServiceProvider.GetRequiredService<ContentPackageStore>();
@@ -480,7 +480,7 @@ public sealed class ContentServerApiTest : IDisposable
             await db.SaveChangesAsync();
             var approved = ServerSourceRegistration.Submit(publisher.Id, "Approved",
                 new Uri("https://approved.example/servers"), null, DateTimeOffset.UtcNow);
-            approved.Review(true, new ContentServer.Domain.Administration.AdministratorId(Guid.CreateVersion7()),
+            approved.Review(true, new Domain.Administration.AdministratorId(Guid.CreateVersion7()),
                 null, DateTimeOffset.UtcNow);
             var pending = ServerSourceRegistration.Submit(publisher.Id, "Pending",
                 new Uri("https://pending.example/servers"), null, DateTimeOffset.UtcNow);

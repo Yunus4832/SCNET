@@ -187,10 +187,10 @@ public class ComponentFindPlayerBehavior : ComponentBehavior, IUpdateable
             return score;
         }
 
-        var context = new Game.Modding.CreatureTargetScoringContext(
+        var context = new CreatureTargetScoringContext(
             _componentCreature,
             target,
-            Game.Modding.CreatureTargetingKind.FindPlayer,
+            CreatureTargetingKind.FindPlayer,
             score);
         CurrentModRuntime.Value?.Gameplay.Invoke(context);
         return context.Cancel ? 0f : context.Score;

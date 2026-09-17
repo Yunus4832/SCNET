@@ -177,10 +177,10 @@ public class ComponentAvoidPlayerBehavior : ComponentBehavior, IUpdateable
             return score;
         }
 
-        var context = new Game.Modding.CreatureTargetScoringContext(
+        var context = new CreatureTargetScoringContext(
             _componentCreature,
             target,
-            Game.Modding.CreatureTargetingKind.AvoidPlayer,
+            CreatureTargetingKind.AvoidPlayer,
             score);
         CurrentModRuntime.Value?.Gameplay.Invoke(context);
         return context.Cancel ? 0f : context.Score;

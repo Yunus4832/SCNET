@@ -693,7 +693,6 @@ public static class WorldsManager
             var text = item.FullName.Replace('\\', '/');
             if (text.StartsWith("EmbeddedContent"))
             {
-                continue;
             }
             else
             {

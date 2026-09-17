@@ -361,7 +361,7 @@ internal sealed class ModAssemblyLoadContext(
 
     protected override Assembly? Load(AssemblyName assemblyName)
     {
-        var sharedAssembly = AssemblyLoadContext.Default.Assemblies.FirstOrDefault(assembly =>
+        var sharedAssembly = Default.Assemblies.FirstOrDefault(assembly =>
             string.Equals(assembly.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase));
         if (sharedAssembly is not null)
         {

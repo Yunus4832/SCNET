@@ -208,7 +208,7 @@ public sealed class ServerSourceScreen : Screen
                 .Where(repository => repository.IsEnabled)
                 .OrderBy(repository => repository.Priority)
                 .Select(repository => new RepositoryFilterOption(repository.Id, repository.Name))).ToArray();
-        _repositoryDrawer.SetItems(options.Cast<object>());
+        _repositoryDrawer.SetItems(options);
         _repositoryDrawer.SelectedItem = options.FirstOrDefault(option => option.RepositoryId == selectedId) ??
                                          options[0];
     }

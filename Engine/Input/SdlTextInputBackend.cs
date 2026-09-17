@@ -260,8 +260,8 @@ public sealed unsafe class SdlTextInputBackend(bool processEditingKeyEvents = fa
     private static bool IsTextKey(Key key)
     {
         return key is
-            (>= Key.A and <= Key.Z) or
-            (>= Key.Number0 and <= Key.Number9) or
+            >= Key.A and <= Key.Z or
+            >= Key.Number0 and <= Key.Number9 or
             Key.Space or
             Key.Tilde or
             Key.Minus or

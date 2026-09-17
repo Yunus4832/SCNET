@@ -23,7 +23,7 @@ internal static class BuiltInContentAssets
     private static IReadOnlyList<ContentRegistration> LoadFromArchive()
     {
         using var stream = Storage.OpenFile(_appArchivePath, OpenFileMode.Read);
-        using var archive = new System.IO.Compression.ZipArchive(
+        using var archive = new ZipArchive(
             stream,
             ZipArchiveMode.Read,
             leaveOpen: false);

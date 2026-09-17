@@ -810,7 +810,6 @@ public class CommandDispatcherTest
     {
         return new CommandPrincipal(
             name,
-            CommandPrincipalKind.Player,
             permissions: permissions,
             delegablePermissions: delegablePermissions);
     }

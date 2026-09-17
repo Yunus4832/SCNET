@@ -81,7 +81,7 @@ public class TextInputManagerTest : IDisposable
 
         Assert.Equal("中文", committed);
         Assert.Equal(1, backspaceCount);
-        Assert.Equal(new TextComposition("拼音", 2, 0), composition);
+        Assert.Equal(new TextComposition("拼音", 2), composition);
         Assert.True(TextInputManager.SuppressDirectText);
     }
 

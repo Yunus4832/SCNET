@@ -283,7 +283,7 @@ public sealed class NetPlayScreen : Screen
             catch (Exception exception)
             {
                 Log.Warning($"Could not load server source '{source.Name}': {exception.Message}");
-                return (Items: (IReadOnlyList<ServerItem>)[], Failed: true);
+                return (Items: [], Failed: true);
             }
         })).ConfigureAwait(false);
         var items = sourceResults.SelectMany(result => result.Items).ToArray();
@@ -558,7 +558,7 @@ public sealed class NetPlayScreen : Screen
         _updatingSourceOptions = true;
         try
         {
-            _sourceDrawer.SetItems(options.Cast<object>());
+            _sourceDrawer.SetItems(options);
             _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId) ??
                                          options[0];
             _sourceDrawer.IsEnabled = options.Length > 1;

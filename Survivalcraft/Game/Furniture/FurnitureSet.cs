@@ -14,4 +14,4 @@ public sealed class FurnitureSetDefault : FurnitureSet
     private FurnitureSetDefault()
     {
     }
-};
+}

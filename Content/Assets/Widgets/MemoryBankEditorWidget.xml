@@ -1,0 +1,12 @@
+<MemoryBankEditorWidget xmlns="runtime-namespace:Game.Widgets">
+    <BevelledRectangleWidget Size="614, 382" BevelSize="3"/>
+    <StackPanelWidget CanvasWidget.Position="203, 4" Direction="Horizontal">
+        <BevelledButtonWidget Name="MemoryBankEditor.Previous" Size="52, 44" Text="&lt;" Margin="3, 0"/>
+        <LabelWidget Name="MemoryBankEditor.Page" Size="90, 44" HorizontalAlignment="Center"
+                     TextAnchor="HorizontalCenter, VerticalCenter"/>
+        <BevelledButtonWidget Name="MemoryBankEditor.Next" Size="52, 44" Text="&gt;" Margin="3, 0"/>
+    </StackPanelWidget>
+
+    <StackPanelWidget Name="MemoryBankEditor.Table" CanvasWidget.Position="7, 55" Direction="Vertical"/>
+    <GridPanelWidget Name="MemoryBankEditor.Keypad" CanvasWidget.Position="7, 260" ColumnsCount="10" RowsCount="2"/>
+</MemoryBankEditorWidget>

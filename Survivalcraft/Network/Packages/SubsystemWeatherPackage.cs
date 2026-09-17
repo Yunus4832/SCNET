@@ -27,10 +27,6 @@ public class SubsystemWeatherPackage : IPackage
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
-    public SubsystemWeatherPackage()
-    {
-    }
-
     public static SubsystemWeatherPackage CreateSnapshot(SubsystemWeather weather)
     {
         ArgumentNullException.ThrowIfNull(weather);

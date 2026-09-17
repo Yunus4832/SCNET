@@ -73,7 +73,6 @@ public class CommandPermissionSetTest
                 PermissionGrantPolicy.OperatorOnly));
         var delegator = new CommandPrincipal(
             "Delegator",
-            CommandPrincipalKind.Player,
             permissions: [standard],
             delegablePermissions: [standard]);
 
@@ -103,7 +102,6 @@ public class CommandPermissionSetTest
                 PermissionGrantPolicy.OperatorOnly));
         var player = new CommandPrincipal(
             "Player",
-            CommandPrincipalKind.Player,
             permissions: [permission]);
 
         Assert.False(registry.HasEffectivePermission(permission, player, null));
@@ -131,11 +129,9 @@ public class CommandPermissionSetTest
             new CommandPermissionDefinition(CommandDomain.World));
         var useOnlyManager = new CommandPrincipal(
             "Manager",
-            CommandPrincipalKind.Player,
             permissions: [managerPermission]);
         var delegatingManager = new CommandPrincipal(
             "DelegatingManager",
-            CommandPrincipalKind.Player,
             permissions: [managerPermission],
             delegablePermissions: [managerPermission]);
 

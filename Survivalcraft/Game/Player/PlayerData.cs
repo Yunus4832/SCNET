@@ -72,7 +72,7 @@ public partial class PlayerData : IDisposable
 
     public Project Project { get; }
 
-    public Client? Client => CommonLib.Net.GetClientByGUID(PlayerGUID, false);
+    public Client? Client => CommonLib.Net.GetClientByGUID(PlayerGUID);
 
     public byte ClientId => Client?.ID ?? 0;
 

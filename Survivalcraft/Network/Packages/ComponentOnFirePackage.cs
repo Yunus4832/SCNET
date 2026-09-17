@@ -55,18 +55,18 @@ public class ComponentOnFirePackage : IPackage
     public ComponentOnFirePackage(int x, int y, int z, float expandability)
     {
         Type = EventType.BlockOnFireAdd;
-        this.X = x;
-        this.Y = y;
-        this.Z = z;
+        X = x;
+        Y = y;
+        Z = z;
         Duration = expandability;
     }
 
     public ComponentOnFirePackage(int x, int y, int z)
     {
         Type = EventType.BlockOnFireRemove;
-        this.X = x;
-        this.Y = y;
-        this.Z = z;
+        X = x;
+        Y = y;
+        Z = z;
     }
 
     public void WriteData(PackageStreamWriter writer)

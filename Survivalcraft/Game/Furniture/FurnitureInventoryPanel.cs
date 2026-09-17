@@ -269,12 +269,11 @@ public class FurnitureInventoryPanel : CanvasWidget
             }
         }
 
-        var list2 = new List<InventorySlotWidget>(Enumerable.Cast<InventorySlotWidget>(
-            from w in _inventoryGrid.Children
-            select w as InventorySlotWidget
-            into w
-            where w != null
-            select w));
+        var list2 = new List<InventorySlotWidget>((from w in _inventoryGrid.Children
+                                                   select w as InventorySlotWidget
+                                                   into w
+                                                   where w != null
+                                                   select w).Cast<InventorySlotWidget>());
         var num = ComponentFurnitureInventory.PageIndex * list2.Count;
         foreach (var item in list2)
         {

@@ -35,8 +35,6 @@ public class StreamLogSink : ILogSink
             case LogType.Error:
                 str = "ERROR: ";
                 break;
-            default:
-                break;
         }
 
         _writer.WriteLine(DateTime.Now.ToString("HH:mm:ss.fff") + " " + str + message);

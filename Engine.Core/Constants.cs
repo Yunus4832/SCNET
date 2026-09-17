@@ -34,6 +34,6 @@ public static class ConstantsExtension
 
     public static bool UncloseTo(this float left, float right)
     {
-        return !CloseTo(left, right);
+        return !left.CloseTo(right);
     }
 }

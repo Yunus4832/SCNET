@@ -18,4 +18,4 @@ public sealed class DragDataDefault
     private DragDataDefault()
     {
     }
-};
+}

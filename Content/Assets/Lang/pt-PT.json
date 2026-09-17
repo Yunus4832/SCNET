@@ -2855,14 +2855,6 @@
             "Hunger": "fome",
             "Choked": "Asfixia"
         },
-        "EditMemoryBankDialogAPI": [
-            "Editor de memória M",
-            "Clearing Zero",
-            "Transposição",
-            "Insira todos os dados:",
-            "Salvação de dados",
-            "Cancelamento"
-        ],
         "BuildFurnitureDialog": {
             "1": "...",
             "2": "Criação",
@@ -2883,30 +2875,6 @@
             "1": "Ajuste da tensão de alimentação",
             "2": "Determinação",
             "3": "Cancelamento"
-        },
-        "EditMemoryBankDialog": {
-            "1": "Edição de dados de memória",
-            "2": "Os dados de memória contêm 256 dígitos de 4 bytes que usam dados de entrada hexadecimais (0 a 9, A, B, C, D, E, F)",
-            "3": "0123456789 ABCDEF",
-            "4": "0",
-            "5": "1",
-            "6": "2",
-            "7": "3",
-            "8": "4",
-            "9": "5",
-            "10": "6",
-            "11": "7",
-            "12": "8",
-            "13": "9",
-            "14": "A A",
-            "15": "B",
-            "16": "C.",
-            "17": "D.",
-            "18": "e",
-            "19": "F",
-            "20": "Até 256 caracteres hexadecimais podem ser inseridos",
-            "21": "Determinação",
-            "22": "Cancelamento"
         },
         "EditPaletteDialog": {
             "1": "Edição Palette",
@@ -2938,30 +2906,6 @@
             "11": "URL",
             "12": "Número de linhas",
             "13": "Cancelamento"
-        },
-        "EditTruthTableDialog": {
-            "1": "Editar uma tabela de verdade",
-            "2": "A tabela de verdade define o valor de saída para todas as combinações possíveis de entradas.",
-            "3": "In4 In3 In2 In1 Out",
-            "4": " 0 0 0 0",
-            "5": " 1 0 0 0 1",
-            "6": " 0 0",
-            "7": " 0 0 1 1 1",
-            "8": " 0 0",
-            "9": " 1 2 3 3 4 5 5",
-            "10": " 0 1 1 0 0",
-            "11": " 0 1 1 1 1",
-            "12": " 1 0 0 0",
-            "13": " 1 0 0 1",
-            "14": " 1 0 1 0",
-            "15": " 1 0 1 1 1",
-            "16": " 1 1 0 0 0",
-            "17": " 1 2 3 4 5 5",
-            "18": " 1 1 1 0 0 0 0 0",
-            "19": " 1 1 1 1 1",
-            "20": "Você pode inserir até 16 caracteres binários (0 e 1)",
-            "21": "Determinação",
-            "22": "Cancelamento"
         },
         "GameMenuDialog": {
             "1": "Retorno",
@@ -3573,6 +3517,18 @@
             "AllRepositories": "Todos os repositórios",
             "Install": "Instalar",
             "Installed": "Instalada"
+        },
+        "TruthTableEditorWidget": {
+            "Title": "Editar tabela de verdade",
+            "Clear": "Limpar",
+            "Invert": "Inverter",
+            "Save": "Guardar",
+            "Cancel": "Cancelar"
+        },
+        "MemoryBankEditorWidget": {
+            "Save": "Guardar",
+            "Cancel": "Cancelar",
+            "Address": "Endereço"
         }
     },
     "FireworksBlock": {

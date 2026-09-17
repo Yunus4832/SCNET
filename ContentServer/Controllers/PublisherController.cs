@@ -316,7 +316,7 @@ public sealed class PublisherController(
             throw new KnownException("content_not_owned", StatusCodes.Status403Forbidden);
         }
 
-        return new ResponseData(true, string.Empty, StatusCodes.Status200OK, null);
+        return new ResponseData(true, string.Empty, StatusCodes.Status200OK);
     }
 
     private static string? Normalize(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -341,6 +341,6 @@ public sealed class PublisherController(
             throw new KnownException("server_not_owned", StatusCodes.Status403Forbidden);
         }
 
-        return new ResponseData(true, string.Empty, StatusCodes.Status200OK, null);
+        return new ResponseData(true, string.Empty, StatusCodes.Status200OK);
     }
 }

@@ -103,7 +103,7 @@ public static class ContentPackageCreationManager
 
     public static ContentPackageCreationArtifact CreateFurniture(ContentCreationIdentity identity, string assetKey)
     {
-        var path = Managers.FurniturePacksManager.GetFileName(assetKey);
+        var path = FurniturePacksManager.GetFileName(assetKey);
         if (!Storage.FileExists(path))
         {
             throw new InvalidOperationException($"Furniture asset '{assetKey}' does not exist.");

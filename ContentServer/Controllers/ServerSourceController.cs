@@ -1,4 +1,3 @@
-using ContentServer.Application;
 using ContentServer.Application.Queries;
 using ContentServer.Controllers.Contracts.Responses;
 
@@ -8,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 
 using NetCorePal.Extensions.Dto;
-using NetCorePal.Extensions.Primitives;
 
 namespace ContentServer.Controllers;
 

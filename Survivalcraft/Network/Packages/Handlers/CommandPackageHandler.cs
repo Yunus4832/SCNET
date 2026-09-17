@@ -48,8 +48,6 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
                             "你的指令权限已更新。"),
                         success: true));
             }
-
-            return;
         }
     }
 

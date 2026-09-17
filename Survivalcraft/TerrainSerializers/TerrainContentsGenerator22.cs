@@ -2562,7 +2562,7 @@ public class TerrainContentsGenerator22 : ITerrainContentsGenerator
             _waterPocketBrushes.Add(terrainBrush15);
         }
 
-        var array2 = new int[]
+        var array2 = new[]
         {
             8,
             12,
