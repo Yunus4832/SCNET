@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET UI Design"
+  short_description: "Keep SCNET game UI layouts and interactions consistent."
+  default_prompt: "Use $scnet-ui-design to design or review this SCNET UI change consistently."
