@@ -33,12 +33,6 @@ public static class SettingsManager
 
     public static void Initialize()
     {
-        var screenWidth = RunMode.Value is RunModeType.HeadlessServer ? 1280 : Window.ScreenSize.X;
-        var screenHeight = RunMode.Value is RunModeType.HeadlessServer ? 720 : Window.ScreenSize.Y;
-        var isWideScreen = screenWidth / (float)screenHeight > 1.33333337f;
-        Current.ScreenLayout2 = isWideScreen ? ScreenLayout.DoubleVertical : ScreenLayout.DoubleHorizontal;
-        Current.ScreenLayout3 = isWideScreen ? ScreenLayout.TripleVertical : ScreenLayout.TripleHorizontal;
-
         if (!Storage.DirectoryExists(GamePaths.Config))
         {
             Storage.CreateDirectory(GamePaths.Config);

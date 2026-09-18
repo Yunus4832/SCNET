@@ -2681,26 +2681,6 @@
         "FriendlyFire_False": "玩家将不能攻击和伤害其他玩家。",
         "CharacterSkin_Description": "选择在游戏中使用的角色皮肤。",
         "BlocksTexture_Description": "选择绘制世界时使用的方块纹理。你可以通过使用不同的方块纹理完全改变世界的外观。",
-        "ScreenLayout_Single_Name": "单人",
-        "ScreenLayout_Single_Description": "单人全屏游戏",
-        "ScreenLayout_DoubleVertical_Name": "双人垂直",
-        "ScreenLayout_DoubleVertical_Description": "两个玩家垂直分屏游戏",
-        "ScreenLayout_DoubleHorizontal_Name": "双人水平",
-        "ScreenLayout_DoubleHorizontal_Description": "两个玩家水平分屏游戏",
-        "ScreenLayout_DoubleOpposite_Name": "双人对分",
-        "ScreenLayout_DoubleOpposite_Description": "视角相反，用于共享触摸设备",
-        "ScreenLayout_TripleVertical_Name": "三人垂直",
-        "ScreenLayout_TripleVertical_Description": "三个玩家垂直分屏游戏",
-        "ScreenLayout_TripleHorizontal_Name": "三人水平",
-        "ScreenLayout_TripleHorizontal_Description": "三个玩家水平分屏游戏",
-        "ScreenLayout_TripleEven_Name": "三人平分",
-        "ScreenLayout_TripleEven_Description": "三个玩家平分屏幕游戏",
-        "ScreenLayout_TripleOpposite_Name": "三人对分",
-        "ScreenLayout_TripleOpposite_Description": "视角相反，用于共享触摸设备",
-        "ScreenLayout_Quadruple_Name": "四人平分",
-        "ScreenLayout_Quadruple_Description": "四个玩家平分屏幕游戏",
-        "ScreenLayout_QuadrupleOpposite_Name": "四人对分",
-        "ScreenLayout_QuadrupleOpposite_Description": "视角相反，用于共享触摸设备",
         "InstanceCreate_Description": "创建数据实例",
         "InstanceDelete_Description": "删除数据实例",
         "InstanceInvalidId_Message": "实例 ID 只能包含英文字母、数字、“-”和“_”。",
@@ -3216,19 +3196,11 @@
             "5": "...",
             "6": "控制方式",
             "7": "...",
-            "8": "添加玩家",
             "9": "删除玩家",
-            "10": "开始游戏",
-            "11": "加入新玩家"
+            "10": "开始游戏"
         },
         "PlayersScreen": [
-            "编辑玩家",
-            "屏幕布局",
-            "添加新玩家",
-            "不可在残酷模式添加新玩家",
-            "不可在冒险模式添加新玩家",
-            "已达到最大玩家上限数:{0}",
-            "选择屏幕布局"
+            "编辑玩家"
         ],
         "RecipaediaDescriptionScreen": {
             "1": "方块描述"

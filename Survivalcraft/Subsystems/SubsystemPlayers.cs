@@ -313,6 +313,11 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
         foreach (ValuesDictionary item in valuesDictionary.GetValue("Players", new ValuesDictionary()).Values)
         {
+            if (CommonLib.WorkType == WorkType.Local && _playersData.Count > 0)
+            {
+                continue;
+            }
+
             var playerData = new PlayerData(Project);
             playerData.Load(item);
             AddPlayerData(playerData);

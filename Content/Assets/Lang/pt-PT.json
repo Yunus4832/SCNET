@@ -2681,26 +2681,6 @@
         "FriendlyFire_False": "Os jogadores não poderão atacar e ferir outros jogadores.",
         "CharacterSkin_Description": "Escolha a pele do personagem a usar no jogo.",
         "BlocksTexture_Description": "Selecione a textura de quadrados para usar ao desenhar o mundo. Você pode mudar completamente a aparência do mundo usando diferentes texturas de quadrados.",
-        "ScreenLayout_Single_Name": "Individual",
-        "ScreenLayout_Single_Description": "Jogos de tela cheia para um jogador",
-        "ScreenLayout_DoubleVertical_Name": "Duas pessoas Vertical",
-        "ScreenLayout_DoubleVertical_Description": "Jogos de tela dividida vertical para dois jogadores",
-        "ScreenLayout_DoubleHorizontal_Name": "Nível duplo",
-        "ScreenLayout_DoubleHorizontal_Description": "Jogos de tela dividida horizontal para dois jogadores",
-        "ScreenLayout_DoubleOpposite_Name": "Duplo para dividir",
-        "ScreenLayout_DoubleOpposite_Description": "ângulo de visão oposto para compartilhar dispositivos de toque",
-        "ScreenLayout_TripleVertical_Name": "Três pessoas verticais",
-        "ScreenLayout_TripleVertical_Description": "Jogos de tela dividida vertical para três jogadores",
-        "ScreenLayout_TripleHorizontal_Name": "Nível de três pessoas",
-        "ScreenLayout_TripleHorizontal_Description": "Jogos de tela dividida horizontal para três jogadores",
-        "ScreenLayout_TripleEven_Name": "Três pessoas divididas igualmente.",
-        "ScreenLayout_TripleEven_Description": "Jogos de tela dividida para três jogadores",
-        "ScreenLayout_TripleOpposite_Name": "Três pessoas divididas",
-        "ScreenLayout_TripleOpposite_Description": "ângulo de visão oposto para compartilhar dispositivos de toque",
-        "ScreenLayout_Quadruple_Name": "Quatro pessoas divididas igualmente",
-        "ScreenLayout_Quadruple_Description": "Jogos de tela dividida para quatro jogadores",
-        "ScreenLayout_QuadrupleOpposite_Name": "Quatro para dividir",
-        "ScreenLayout_QuadrupleOpposite_Description": "ângulo de visão oposto para compartilhar dispositivos de toque",
         "InstanceCreate_Description": "Criar uma instância de dados",
         "InstanceDelete_Description": "Eliminar uma instância de dados",
         "InstanceInvalidId_Message": "Os IDs de instância só podem conter letras ASCII, números, “-” e “_”.",
@@ -3216,19 +3196,11 @@
             "5": "...",
             "6": "Modo de controle",
             "7": "...",
-            "8": "Adicionar jogadores",
             "9": "Remover jogadores",
-            "10": "Comece o jogo",
-            "11": "Junta-se a novos jogadores"
+            "10": "Comece o jogo"
         },
         "PlayersScreen": [
-            "Editando jogadores",
-            "Layout de tela",
-            "Adicione novos jogadores",
-            "Não é possível adicionar novos jogadores no modo brutal.",
-            "Não adicione novos jogadores no modo Aventura",
-            "O número máximo de jogadores foi atingido: {0}",
-            "Escolha layout de tela"
+            "Editando jogadores"
         ],
         "RecipaediaDescriptionScreen": {
             "1": "Descrição do bloco"

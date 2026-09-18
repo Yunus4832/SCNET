@@ -45,7 +45,7 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
     }
 
     [Fact]
-    public void MainClientAndLocalPlayersKeepLocalScheduling()
+    public void OnlyMainGuiPlayerKeepsLocalScheduling()
     {
         RunMode.Value = RunModeType.Gui;
         CommonLib.WorkType = WorkType.Client;
@@ -58,9 +58,12 @@ public sealed class LocalPlayerComponentSchedulingTest : IDisposable
         Assert.True(SubsystemDrawing.ShouldScheduleDrawable(mainGui));
 
         CommonLib.WorkType = WorkType.Local;
-        var localPlayer = CreatePlayer(false);
+        var localMainPlayer = CreatePlayer(true);
         Assert.True(SubsystemUpdate.ShouldScheduleUpdateable(
-            CreateGui(localPlayer)));
+            CreateGui(localMainPlayer)));
+        var additionalLocalPlayer = CreatePlayer(false);
+        Assert.False(SubsystemUpdate.ShouldScheduleUpdateable(
+            CreateGui(additionalLocalPlayer)));
     }
 
     [Fact]

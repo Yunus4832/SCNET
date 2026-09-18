@@ -74,8 +74,6 @@
             <CanvasWidget Size="0, Infinity"/>
 
             <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
-                <BevelledButtonWidget Name="AddButton" Text="[PlayerScreen:8]" Style="{Styles/ButtonStyle_310x60}"
-                                      VerticalAlignment="Center" Margin="20, 0"/>
                 <BevelledButtonWidget Name="DeleteButton" Text="[PlayerScreen:9]" Style="{Styles/ButtonStyle_310x60}"
                                       VerticalAlignment="Center" Margin="20, 0"/>
                 <BevelledButtonWidget Name="PlayButton" Style="{Styles/ButtonStyle_310x60}" Text="[PlayerScreen:10]"
@@ -83,8 +81,6 @@
                     <BevelledRectangleWidget Name="BevelledButton.Rectangle" CenterColor="50, 150, 35"
                                              BevelColor="50, 150, 35"/>
                 </BevelledButtonWidget>
-                <BevelledButtonWidget Name="AddAnotherButton" Text="[PlayerScreen:11]"
-                                      Style="{Styles/ButtonStyle_310x60}" VerticalAlignment="Center" Margin="20, 0"/>
             </StackPanelWidget>
 
             </StackPanelWidget>

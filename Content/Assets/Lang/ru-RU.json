@@ -2681,26 +2681,6 @@
         "FriendlyFire_False": "Игроки не смогут атаковать и наносить вред другим игрокам.",
         "CharacterSkin_Description": "Выберите скин персонажа для использования в игре.",
         "BlocksTexture_Description": "Выберите текстуру блоков для использования при рисовании мира. Вы можете полностью изменить внешний вид мира, используя другую текстуру блоков.",
-        "ScreenLayout_Single_Name": "Одинокий",
-        "ScreenLayout_Single_Description": "Однопользовательский полноэкранный режим",
-        "ScreenLayout_DoubleVertical_Name": "Двойная вертикаль",
-        "ScreenLayout_DoubleVertical_Description": "Два игрока разделены вертикально",
-        "ScreenLayout_DoubleHorizontal_Name": "Двойной горизонтально",
-        "ScreenLayout_DoubleHorizontal_Description": "Два игрока разделены горизонтально",
-        "ScreenLayout_DoubleOpposite_Name": "Двойной напротив",
-        "ScreenLayout_DoubleOpposite_Description": "Напротив, для совместного использования сенсорных устройств",
-        "ScreenLayout_TripleVertical_Name": "Тройной вертикально",
-        "ScreenLayout_TripleVertical_Description": "Три игрока разделены вертикально",
-        "ScreenLayout_TripleHorizontal_Name": "Тройной горизонтально",
-        "ScreenLayout_TripleHorizontal_Description": "Три игрока разделены горизонтально",
-        "ScreenLayout_TripleEven_Name": "Тройной поровну",
-        "ScreenLayout_TripleEven_Description": "Три игрока разделены поровну",
-        "ScreenLayout_TripleOpposite_Name": "Тройной напротив",
-        "ScreenLayout_TripleOpposite_Description": "Напротив, для совместного использования сенсорных устройств",
-        "ScreenLayout_Quadruple_Name": "Четверной",
-        "ScreenLayout_Quadruple_Description": "Четыре игрока разделены поровну",
-        "ScreenLayout_QuadrupleOpposite_Name": "Четверной напротив",
-        "ScreenLayout_QuadrupleOpposite_Description": "Напротив, для совместного использования сенсорных устройств",
         "InstanceCreate_Description": "Создать экземпляр данных",
         "InstanceDelete_Description": "Удалить экземпляр данных",
         "InstanceInvalidId_Message": "ID экземпляра может содержать только латинские буквы, цифры, «-» и «_».",
@@ -3216,19 +3196,11 @@
             "5": "...",
             "6": "Управление:",
             "7": "...",
-            "8": "Добавление",
             "9": "Удаление",
-            "10": "Играть!",
-            "11": "Добавление игрока"
+            "10": "Играть!"
         },
         "PlayersScreen": [
-            "Игроки",
-            "Разметка экрана",
-            "Добавление",
-            "Добавление игроков не поддерживается в жестокости",
-            "Добавление игроков не поддерживается в приключении",
-            "Достигнуто ограничение в {0} игроков",
-            "Разметка экрана"
+            "Игроки"
         ],
         "RecipaediaDescriptionScreen": {
             "1": "Описание"

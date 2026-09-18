@@ -145,14 +145,6 @@ public class Settings
 
     public int NewYearCelebrationLastYear { get; set; } = 2015;
 
-    public ScreenLayout ScreenLayout1 { get; set; } = ScreenLayout.Single;
-
-    public ScreenLayout ScreenLayout2 { get; set; } = ScreenLayout.DoubleVertical;
-
-    public ScreenLayout ScreenLayout3 { get; set; } = ScreenLayout.TripleVertical;
-
-    public ScreenLayout ScreenLayout4 { get; set; } = ScreenLayout.Quadruple;
-
     public bool UpsideDownLayout { get; set; }
 
     /** 生物数量配置 **/

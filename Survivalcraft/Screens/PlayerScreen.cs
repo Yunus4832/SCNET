@@ -16,7 +16,6 @@ public class PlayerScreen : Screen
     public enum Mode
     {
         Initial,
-        Add,
         Edit
     }
 
@@ -25,10 +24,6 @@ public class PlayerScreen : Screen
     private readonly BusyDialog _fetchingPlayerDialog = new("下载玩家...", string.Empty);
 
     public double EnterTime;
-
-    private readonly ButtonWidget _addAnotherButton;
-
-    private readonly ButtonWidget _addButton;
 
     private readonly ClickableWidget _characterSkinSelector;
 
@@ -82,8 +77,6 @@ public class PlayerScreen : Screen
         _controlsDrawer.SetItems(_inputDevices.Cast<object>());
         _controlsDrawer.SelectionChanged += UpdateInputDevice;
         _descriptionLabel = Children.Find<LabelWidget>("DescriptionLabel")!;
-        _addButton = Children.Find<ButtonWidget>("AddButton")!;
-        _addAnotherButton = Children.Find<ButtonWidget>("AddAnotherButton")!;
         _deleteButton = Children.Find<ButtonWidget>("DeleteButton")!;
         _playButton = Children.Find<ButtonWidget>("PlayButton")!;
         _characterSkinsCache = new CharacterSkinsCache();
@@ -112,29 +105,16 @@ public class PlayerScreen : Screen
         if (_mode == Mode.Initial)
         {
             _playerClassButton.IsEnabled = true;
-            _addButton.IsVisible = false;
             _deleteButton.IsVisible = false;
             _playButton.IsVisible = true;
-            _addAnotherButton.IsVisible = _playerData.SubsystemPlayers.PlayersData.Count < 3;
-        }
-        else if (_mode == Mode.Add)
-        {
-            _playerClassButton.IsEnabled = true;
-            _addButton.IsVisible = true;
-            _deleteButton.IsVisible = false;
-            _playButton.IsVisible = false;
-            _addAnotherButton.IsVisible = false;
         }
         else if (_mode == Mode.Edit)
         {
             _playerClassButton.IsEnabled = false;
-            _addButton.IsVisible = false;
             _deleteButton.IsVisible = _playerData.SubsystemPlayers.PlayersData.Count > 1;
             _playButton.IsVisible = false;
-            _addAnotherButton.IsVisible = false;
         }
 
-        _addAnotherButton.IsVisible &= CommonLib.WorkType == WorkType.Local;
         _deleteButton.IsVisible &= CommonLib.WorkType != WorkType.Client;
     }
 
@@ -243,19 +223,6 @@ public class PlayerScreen : Screen
             DialogsManager.ShowDialog(null, dialog);
         }
 
-        if (_addButton.IsClicked && VerifyName())
-        {
-            if (CommonLib.WorkType > 0)
-            {
-                DialogsManager.Alert("不可进行操作");
-            }
-            else
-            {
-                _playerData.SubsystemPlayers.AddPlayerData(_playerData);
-                ScreensManager.SwitchScreen("Players", _playerData.SubsystemPlayers);
-            }
-        }
-
         if (_deleteButton.IsClicked)
         {
             if (CommonLib.WorkType == WorkType.Server)
@@ -313,12 +280,6 @@ public class PlayerScreen : Screen
             }
         }
 
-        if (_addAnotherButton.IsClicked && VerifyName())
-        {
-            _playerData.SubsystemPlayers.AddPlayerData(_playerData);
-            ScreensManager.SwitchScreen("Player", Mode.Initial, _playerData.SubsystemPlayers.Project);
-        }
-
         if ((Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked) && VerifyName())
         {
             if (_mode == Mode.Initial)
@@ -328,7 +289,7 @@ public class PlayerScreen : Screen
                 CommonLib.Net.Stop();
                 ScreensManager.SwitchScreen("Play");
             }
-            else if (_mode is Mode.Add or Mode.Edit)
+            else if (_mode == Mode.Edit)
             {
                 ScreensManager.SwitchScreen("Players", _playerData.SubsystemPlayers);
             }

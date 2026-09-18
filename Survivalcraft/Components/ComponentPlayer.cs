@@ -67,7 +67,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
     public bool IsLocallyControlled =>
         RunMode.Value is RunModeType.Gui &&
-        (CommonLib.WorkType == WorkType.Local || PlayerData?.IsMainPlayer == true);
+        PlayerData?.IsMainPlayer == true;
 
     public ComponentGui ComponentGui { get; set; } = null!;
 

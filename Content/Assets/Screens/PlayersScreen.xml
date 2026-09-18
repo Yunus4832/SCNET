@@ -9,7 +9,6 @@
         </CanvasWidget>
 
         <StackPanelWidget Direction="Vertical">
-
             <CanvasWidget Style="{Styles/ScreenContentArea}">
                 <RectangleWidget FillColor="0, 0, 0, 192" OutlineColor="128, 128, 128, 128"/>
                 <ScrollPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -17,15 +16,6 @@
                     <StackPanelWidget Name="PlayersPanel" Direction="Vertical" Margin="20, 0"/>
                 </ScrollPanelWidget>
             </CanvasWidget>
-
-            <StackPanelWidget Style="{Styles/ScreenBottomActions}" VerticalAlignment="Center">
-                <BevelledButtonWidget Name="ScreenLayoutButton" Style="{Styles/ButtonStyle_310x60}"
-                                      Text="[PlayersScreen:1]" VerticalAlignment="Center"/>
-                <CanvasWidget Size="40, 0"/>
-                <BevelledButtonWidget Name="AddPlayerButton" Style="{Styles/ButtonStyle_310x60}"
-                                      Text="[PlayersScreen:2]" VerticalAlignment="Center"/>
-            </StackPanelWidget>
-
         </StackPanelWidget>
 
     </StackPanelWidget>

@@ -532,6 +532,7 @@ public class TerrainUpdater
                                 "Client terrain requests require a chunk content transport.");
             transport.Request(_requestSyncChunkList);
             _requestSyncChunkList.Clear();
+            UnpauseUpdateThread();
         }
     }
 
@@ -1039,6 +1040,13 @@ public class TerrainUpdater
     /// <returns>如果所有区块都已完成更新则返回 true，否则返回 false</returns>
     private bool ProcessNextChunkUpdate()
     {
+        var localHost = _subsystemTerrain.LocalChunkHost;
+        var localGenerationPending = localHost?.PendingCount > 0;
+        if (localGenerationPending)
+        {
+            localHost!.Update(1);
+        }
+
         lock (_updateParametersLock)
         {
             _threadUpdateParameters = _updateParameters;
@@ -1049,7 +1057,7 @@ public class TerrainUpdater
         var terrainChunk = FindBestChunkToUpdate(out var desiredState);
         if (terrainChunk == null)
         {
-            return true;
+            return !localGenerationPending;
         }
 
         // 如果区块不是预期的状态，则更新它

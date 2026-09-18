@@ -2681,26 +2681,6 @@
         "FriendlyFire_False": "Players will not be able to attack and injure other players.",
         "CharacterSkin_Description": "Choose character skin to use during the game.",
         "BlocksTexture_Description": "Choose blocks texture to use when drawing the world. You can completely change appearance of the world by using a different blocks texture.",
-        "ScreenLayout_Single_Name": "Single",
-        "ScreenLayout_Single_Description": "Single player full screen",
-        "ScreenLayout_DoubleVertical_Name": "Double Vertical",
-        "ScreenLayout_DoubleVertical_Description": "Two players split vertically",
-        "ScreenLayout_DoubleHorizontal_Name": "Double Horizontal",
-        "ScreenLayout_DoubleHorizontal_Description": "Two players split horizontally",
-        "ScreenLayout_DoubleOpposite_Name": "Double Opposite",
-        "ScreenLayout_DoubleOpposite_Description": "Opposite, for sharing touch devices",
-        "ScreenLayout_TripleVertical_Name": "Triple Vertical",
-        "ScreenLayout_TripleVertical_Description": "Three players split vertically",
-        "ScreenLayout_TripleHorizontal_Name": "Triple Horizontal",
-        "ScreenLayout_TripleHorizontal_Description": "Three players split horizontally",
-        "ScreenLayout_TripleEven_Name": "Triple Even",
-        "ScreenLayout_TripleEven_Description": "Three players split evenly",
-        "ScreenLayout_TripleOpposite_Name": "Triple Opposite",
-        "ScreenLayout_TripleOpposite_Description": "Opposite, for sharing touch devices",
-        "ScreenLayout_Quadruple_Name": "Quadruple",
-        "ScreenLayout_Quadruple_Description": "Four players split evenly",
-        "ScreenLayout_QuadrupleOpposite_Name": "Quadruple Opposite",
-        "ScreenLayout_QuadrupleOpposite_Description": "Opposite, for sharing touch devices",
         "InstanceCreate_Description": "Create a data instance",
         "InstanceDelete_Description": "Delete a data instance",
         "InstanceInvalidId_Message": "Instance IDs can contain only ASCII letters, digits, “-”, and “_”.",
@@ -3216,19 +3196,11 @@
             "5": "...",
             "6": "Controls:",
             "7": "...",
-            "8": "Add Player",
             "9": "Delete Player",
-            "10": "Play!",
-            "11": "Add Another"
+            "10": "Play!"
         },
         "PlayersScreen": [
-            "Edit Players",
-            "Screen Layout",
-            "New Player",
-            "Cannot add players in cruel mode.",
-            "Cannot add players in adventure mode.",
-            "A maximum of {0} players are allowed.",
-            "Select Screen Layout"
+            "Edit Players"
         ],
         "RecipaediaDescriptionScreen": {
             "1": "Block Description"

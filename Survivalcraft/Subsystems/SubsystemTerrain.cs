@@ -655,7 +655,6 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public void Update(float dt)
     {
-        LocalChunkHost?.Update(8);
         TerrainUpdater.Update();
         ProcessModifiedCells();
     }

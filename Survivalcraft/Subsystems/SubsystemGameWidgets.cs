@@ -104,11 +104,21 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
         _gameWidgets.Add(gameWidget);
         GamesWidget.Children.Add(gameWidget);
         playerData.GameWidget = gameWidget;
+        if (playerData.IsMainPlayer)
+        {
+            MainPlayerData = playerData;
+            MainPlayerWidget = gameWidget;
+        }
     }
 
     private void RemoveGameWidget(GameWidget gameWidget)
     {
         _gameWidgets.Remove(gameWidget);
         GamesWidget.Children.Remove(gameWidget);
+        if (ReferenceEquals(MainPlayerWidget, gameWidget))
+        {
+            MainPlayerData = null;
+            MainPlayerWidget = null;
+        }
     }
 }
