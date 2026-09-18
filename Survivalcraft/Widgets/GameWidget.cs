@@ -242,7 +242,10 @@ public class GameWidget : CanvasWidget
             ToggleMessagePanel(false);
         }
 
-        if (Input.IsKeyDownOnce(Key.Enter) &&
+        var modalPanel = PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
+        var isGameInputCaptured = PlayerData.ComponentPlayer?.ComponentGui.IsGameInputCaptured == true;
+        if (!isGameInputCaptured &&
+            Input.IsKeyDownOnce(Key.Enter) &&
             MessagePanel is { EditText.HasFocus: false } enterMessagePanel)
         {
             if (PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget ==
@@ -260,7 +263,8 @@ public class GameWidget : CanvasWidget
             Input.Clear();
         }
 
-        if (Input.IsKeyDownOnce(Key.Tilde) &&
+        if (!isGameInputCaptured &&
+            Input.IsKeyDownOnce(Key.Tilde) &&
             MessagePanel is not null)
         {
             var currentModalPanel =
@@ -277,7 +281,6 @@ public class GameWidget : CanvasWidget
             }
         }
 
-        var modalPanel = PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
         if (MessagePanel != null && modalPanel != MessagePanel)
         {
             MessagePanel.EditText.HasFocus = false;

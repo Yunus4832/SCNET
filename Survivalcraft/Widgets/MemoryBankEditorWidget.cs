@@ -6,13 +6,20 @@ using Engine.Input;
 
 namespace Game.Widgets;
 
-public sealed class MemoryBankEditorWidget : CanvasWidget
+public sealed class MemoryBankEditorWidget : CanvasWidget, IGameInputCapturingWidget
 {
     private const int _cellsPerRow = 4;
     private const int _digitsPerCell = 4;
     private const int _digitsPerPage = 64;
     private const int _rowsPerPage = 4;
     private const string _languageSection = nameof(MemoryBankEditorWidget);
+
+    private static readonly Key[] _digitKeys =
+    [
+        Key.Number0, Key.Number1, Key.Number2, Key.Number3, Key.Number4,
+        Key.Number5, Key.Number6, Key.Number7, Key.Number8, Key.Number9,
+        Key.A, Key.B, Key.C, Key.D, Key.E, Key.F
+    ];
 
     private readonly StringBuilder _cellBuffer = new(_digitsPerCell);
     private readonly LabelWidget[,] _cellLabels = new LabelWidget[_rowsPerPage, _cellsPerRow];
@@ -59,10 +66,10 @@ public sealed class MemoryBankEditorWidget : CanvasWidget
     public override void Update()
     {
         _saveButton.IsEnabled = _hasChanges;
-        foreach (var character in KeyboardInput.GetInput())
+        KeyboardInput.GetInput();
+        for (var value = 0; value < _digitKeys.Length; value++)
         {
-            var value = MemoryBankData.HexChars.IndexOf(char.ToUpperInvariant(character));
-            if (value >= 0)
+            if (Input.IsKeyDownOnce(_digitKeys[value]))
             {
                 AppendDigit(MemoryBankData.HexChars[value]);
             }
@@ -177,7 +184,7 @@ public sealed class MemoryBankEditorWidget : CanvasWidget
         }
 
         _tabButton = CreateKeyButton("Tab");
-        _backspaceButton = CreateKeyButton("⌫");
+        _backspaceButton = CreateKeyButton("<");
         _saveButton = CreateKeyButton(Text("Save"));
         _cancelButton = CreateKeyButton(Text("Cancel"));
         AddKeyButton(_tabButton, 6, 1);

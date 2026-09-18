@@ -199,8 +199,8 @@ public class ComponentInput : Component, IUpdateable
                 : _playerInput.PickBlockType;
         }
 
-        if (IsMessagePanelOpen() ||
-            DialogsManager.HasDialogs(_componentPlayer.GuiWidget) ||
+        if (_componentGui.IsGameInputCaptured ||
+            IsMessagePanelOpen() ||
             !AllowHandleInput)
         {
             return;
@@ -340,8 +340,8 @@ public class ComponentInput : Component, IUpdateable
             _lastRightTrigger = padTriggerPosition2;
         }
 
-        if (IsMessagePanelOpen() ||
-            DialogsManager.HasDialogs(_componentPlayer.GuiWidget) ||
+        if (_componentGui.IsGameInputCaptured ||
+            IsMessagePanelOpen() ||
             !AllowHandleInput)
         {
             return;

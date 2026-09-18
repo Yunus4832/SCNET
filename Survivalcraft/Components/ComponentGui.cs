@@ -144,6 +144,9 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public float TouchControlsVisibilityFactor => 1f - _sidePanelsFactor;
 
+    public bool IsGameInputCaptured =>
+        ModalPanelWidget is IGameInputCapturingWidget || DialogsManager.HasDialogs(ComponentPlayer.GuiWidget);
+
     public Widget? ModalPanelWidget
     {
         get => _modalPanelContainerWidget.Children.Count <= 0 ? null : _modalPanelContainerWidget.Children[0];
