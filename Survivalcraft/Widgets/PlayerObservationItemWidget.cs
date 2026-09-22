@@ -6,7 +6,7 @@ namespace Game.Widgets;
 public sealed class PlayerObservationItemWidget : CanvasWidget
 {
     private static readonly Subtexture _arrow =
-        TextureAtlasManager.GetSubtexture("Textures/Gui/Arrow");
+        TextureAtlasManager.GetSubtexture("Textures/Atlas/Arrow");
 
     private static readonly Subtexture _sleep =
         TextureAtlasManager.GetSubtexture("Textures/Atlas/Sleep");

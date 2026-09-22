@@ -89,8 +89,8 @@ public class GameWidget : CanvasWidget
         LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
         _messageButton = Children.Find<BitmapButtonWidget>("MsgButton")!;
         NetPlayerListButton = Children.Find<BitmapButtonWidget>("PlayerListButton")!;
-        NetPlayerListButton.NormalSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList");
-        NetPlayerListButton.ClickedSubtexture = LoadGuiSubtexture("Textures/Gui/PlayerList_Pressed");
+        NetPlayerListButton.NormalSubtexture = TextureAtlasManager.GetSubtexture("Textures/Atlas/PlayerList");
+        NetPlayerListButton.ClickedSubtexture = TextureAtlasManager.GetSubtexture("Textures/Atlas/PlayerList_Pressed");
         _messageButton.Text = "";
         _messageButton.IsVisible = false;
         NetPlayerListButton.IsVisible = false;
@@ -299,11 +299,6 @@ public class GameWidget : CanvasWidget
         {
             UpdateWidgetsHierarchy(GuiWidget);
         }
-    }
-
-    private static Subtexture LoadGuiSubtexture(string name)
-    {
-        return new Subtexture(ContentManager.Get<Texture2D>(name), Vector2.Zero, Vector2.One);
     }
 
     private WidgetInputDevice DetermineInputDevices()

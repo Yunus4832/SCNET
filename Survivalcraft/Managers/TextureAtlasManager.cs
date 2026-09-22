@@ -50,6 +50,11 @@ public static class TextureAtlasManager
         }
     }
 
+    public static bool TryGetSubtexture(string name, out Subtexture subtexture)
+    {
+        return _subtextures.TryGetValue(name, out subtexture!);
+    }
+
     private static void LoadTextureAtlas(Texture2D texture, string atlasDefinition, string prefix)
     {
         var array = atlasDefinition.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);

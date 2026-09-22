@@ -526,38 +526,16 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
 
     public void Draw(Widget.DrawContext dc)
     {
-        if (IsMouseCursorVisible && UseSoftMouseCursor && MousePosition.HasValue)
+        if (IsMouseCursorVisible && UseSoftMouseCursor && MousePosition.HasValue &&
+            TryGetCursorSubtexture(_mouseDragInProgress, _mouseDownPoint.HasValue, out var mouseCursor))
         {
-            var texture2D = _mouseDragInProgress ? ContentManager.Get<Texture2D>("Textures/Gui/PadCursorDrag") :
-                !_mouseDownPoint.HasValue ? ContentManager.Get<Texture2D>("Textures/Gui/PadCursor") :
-                ContentManager.Get<Texture2D>("Textures/Gui/PadCursorDown");
-            var texturedBatch2D = dc.CursorPrimitivesRenderer2D.TexturedBatch(texture2D);
-            if (Widget != null)
-            {
-                Vector2 corner;
-                var corner2 = (corner = Vector2.Transform(MousePosition.Value, Widget.InvertedGlobalTransform)) +
-                              new Vector2(texture2D.Width, texture2D.Height) * 0.8f;
-                var count = texturedBatch2D.TriangleVertices.Count;
-                texturedBatch2D.QueueQuad(corner, corner2, 0f, Vector2.Zero, Vector2.One, Color.White);
-                texturedBatch2D.TransformTriangles(Widget.GlobalTransform, count);
-            }
+            DrawCursor(dc, mouseCursor, MousePosition.Value);
         }
 
-        if (IsPadCursorVisible)
+        if (IsPadCursorVisible &&
+            TryGetCursorSubtexture(_padDragInProgress, _padDownPoint.HasValue, out var padCursor))
         {
-            var texture2D2 = _padDragInProgress ? ContentManager.Get<Texture2D>("Textures/Gui/PadCursorDrag") :
-                !_padDownPoint.HasValue ? ContentManager.Get<Texture2D>("Textures/Gui/PadCursor") :
-                ContentManager.Get<Texture2D>("Textures/Gui/PadCursorDown");
-            var texturedBatch2D2 = dc.CursorPrimitivesRenderer2D.TexturedBatch(texture2D2);
-            if (Widget != null)
-            {
-                Vector2 corner3;
-                var corner4 = (corner3 = Vector2.Transform(PadCursorPosition, Widget.InvertedGlobalTransform)) +
-                              new Vector2(texture2D2.Width, texture2D2.Height) * 0.8f;
-                var count2 = texturedBatch2D2.TriangleVertices.Count;
-                texturedBatch2D2.QueueQuad(corner3, corner4, 0f, Vector2.Zero, Vector2.One, Color.White);
-                texturedBatch2D2.TransformTriangles(Widget.GlobalTransform, count2);
-            }
+            DrawCursor(dc, padCursor, PadCursorPosition);
         }
 
         if (VrCursorPosition != Vector2.Zero)
@@ -565,6 +543,29 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
             dc.CursorPrimitivesRenderer2D.FlatBatch()
                 .QueueDisc(VrCursorPosition, new Vector2(10f, 10f), 0f, Color.White);
         }
+    }
+
+    private static bool TryGetCursorSubtexture(bool isDragging, bool isDown, out Subtexture subtexture)
+    {
+        var name = isDragging ? "Textures/Atlas/PadCursorDrag" :
+            isDown ? "Textures/Atlas/PadCursorDown" : "Textures/Atlas/PadCursor";
+        return TextureAtlasManager.TryGetSubtexture(name, out subtexture);
+    }
+
+    private void DrawCursor(Widget.DrawContext dc, Subtexture subtexture, Vector2 position)
+    {
+        if (Widget == null)
+        {
+            return;
+        }
+
+        var texture = subtexture.Texture;
+        var size = (subtexture.BottomRight - subtexture.TopLeft) * new Vector2(texture.Width, texture.Height) * 0.8f;
+        var corner = Vector2.Transform(position, Widget.InvertedGlobalTransform);
+        var texturedBatch2D = dc.CursorPrimitivesRenderer2D.TexturedBatch(texture);
+        var count = texturedBatch2D.TriangleVertices.Count;
+        texturedBatch2D.QueueQuad(corner, corner + size, 0f, subtexture.TopLeft, subtexture.BottomRight, Color.White);
+        texturedBatch2D.TransformTriangles(Widget.GlobalTransform, count);
     }
 
     public void ClearInput()

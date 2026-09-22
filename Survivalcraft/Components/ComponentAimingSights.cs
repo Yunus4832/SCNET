@@ -35,7 +35,7 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
         {
             if (IsSightsVisible)
             {
-                var texture = ContentManager.Get<Texture2D>("Textures/Gui/Sights");
+                var subtexture = TextureAtlasManager.GetSubtexture("Textures/Atlas/Sights");
                 var s = !camera.Eye.HasValue ? 8f : 2.5f;
                 var v = _sightsPosition + _sightsDirection * 50f;
                 var vector = Vector3.Normalize(Vector3.Cross(_sightsDirection, Vector3.UnitY));
@@ -44,10 +44,14 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
                 var p2 = v + s * (vector - v2);
                 var p3 = v + s * (vector + v2);
                 var p4 = v + s * (-vector + v2);
-                var texturedBatch3D = _primitivesRenderer3D.TexturedBatch(texture, false, 0, DepthStencilState.None);
+                var texturedBatch3D =
+                    _primitivesRenderer3D.TexturedBatch(subtexture.Texture, false, 0, DepthStencilState.None);
                 var count = texturedBatch3D.TriangleVertices.Count;
-                texturedBatch3D.QueueQuad(p, p2, p3, p4, new Vector2(0f, 0f), new Vector2(1f, 0f), new Vector2(1f, 1f),
-                    new Vector2(0f, 1f), Color.White);
+                texturedBatch3D.QueueQuad(p, p2, p3, p4,
+                    new Vector2(subtexture.TopLeft.X, subtexture.TopLeft.Y),
+                    new Vector2(subtexture.BottomRight.X, subtexture.TopLeft.Y),
+                    new Vector2(subtexture.BottomRight.X, subtexture.BottomRight.Y),
+                    new Vector2(subtexture.TopLeft.X, subtexture.BottomRight.Y), Color.White);
                 texturedBatch3D.TransformTriangles(camera.ViewMatrix, count);
             }
 

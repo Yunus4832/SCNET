@@ -40,7 +40,7 @@ public class MainMenuScreen : Screen
     private void ConfigureMainMenuTabs()
     {
         _mainMenuTabs.AddTab(new VerticalTabMenu(
-            "Textures/Gui/Exit",
+            "Textures/Atlas/Exit",
             () =>
             [
                 new VerticalTabMenuItem(MainMenuText("Restart"),
@@ -54,10 +54,10 @@ public class MainMenuScreen : Screen
             ],
             new Vector2(180f, 44f)));
         _mainMenuTabs.AddNavigationTab(
-            "Textures/Gui/Instance",
+            "Textures/Atlas/Instance",
             () => ScreensManager.SwitchScreen("InstanceManagement"));
         _mainMenuTabs.AddTab(new VerticalTabMenu(
-            "Textures/Gui/Earth",
+            "Textures/Atlas/Earth",
             () => LanguageManager.LanguageTypes
                 .Select(languageType => new VerticalTabMenuItem(
                     LanguageManager.GetLanguageDisplayName(languageType),
