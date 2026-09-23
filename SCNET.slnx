@@ -142,6 +142,11 @@
     </Folder>
 
     <Folder Name="/09 Tools/">
+        <Project Path="GuiAtlasTool\GuiAtlasTool.csproj">
+            <BuildType Solution="ANDROID|*" Project="Debug"/>
+            <BuildType Solution="DESKTOP|*" Project="Debug"/>
+            <Build Solution="ANDROID|*" Project="false"/>
+        </Project>
         <Project Path="ContentTool\ContentTool.csproj">
             <BuildType Solution="ANDROID|*" Project="Debug"/>
             <BuildType Solution="DESKTOP|*" Project="Debug"/>

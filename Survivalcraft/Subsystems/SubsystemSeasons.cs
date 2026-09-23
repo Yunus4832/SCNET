@@ -86,7 +86,7 @@ public class SubsystemSeasons : Subsystem, IUpdateable
             };
         }
 
-        _seasonsGradient ??= (Image)ContentManager.Get<Texture2D>("Textures/Gui/SeasonsSlider").Tag!;
+        _seasonsGradient ??= (Image)ContentManager.Get<Texture2D>("Textures/SeasonsSlider").Tag!;
         var x = (int)MathUtils.Clamp(MathUtils.Round(timeOfYear * _seasonsGradient.Width), 0f,
             _seasonsGradient.Width - 1);
         return _seasonsGradient.GetPixel(x, 0);
@@ -100,7 +100,7 @@ public class SubsystemSeasons : Subsystem, IUpdateable
             return;
         }
 
-        var seasonsGradient = (Image?)ContentManager.Get<Texture2D>("Textures/Gui/SeasonsSlider").Tag;
+        var seasonsGradient = (Image?)ContentManager.Get<Texture2D>("Textures/SeasonsSlider").Tag;
         _seasonsGradient = seasonsGradient ?? throw new InvalidOperationException("SeasonGradient is not initialized");
     }
 

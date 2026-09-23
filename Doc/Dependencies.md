@@ -19,6 +19,7 @@
 - `Silk.NET.OpenAL.Soft.Native`：桌面端音频补充
 - `Silk.NET.SDL`：Android 平台窗口/输入适配
 - `SixLabors.ImageSharp`：图片处理
+- `Svg.Skia`、`SkiaSharp`：构建期 SVG 栅格化与 GUI 图集生成；PNG 源由 `ImageSharp` 直接合入
 - `Xamarin.AndroidX.Core`：Android 兼容支持
 
 ## 测试依赖

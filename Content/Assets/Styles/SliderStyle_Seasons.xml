@@ -1,7 +1,7 @@
 <SliderWidget xmlns="runtime-namespace:Game.Widgets" SoundName="">
     <StackPanelWidget Name="Slider.Panel" Margin="6, 6">
         <CanvasWidget Name="Slider.Canvas" Size="Infinity, Infinity">
-            <RectangleWidget Name="Slider.Rectangle" Subtexture="{Textures/Gui/SeasonsSlider}"
+            <RectangleWidget Name="Slider.Rectangle" Subtexture="{Textures/SeasonsSlider}"
                              TextureLinearFilter="false" FillColor="255, 255, 255"/>
         </CanvasWidget>
         <CanvasWidget Name="Slider.LabelCanvas" Size="100, Infinity"/>

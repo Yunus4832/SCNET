@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET GUI Atlas Management"
+  short_description: "Manage mixed SVG and PNG GUI atlas sources safely."
+  default_prompt: "Use $scnet-gui-atlas-management to import, replace, generate, or validate SCNET GUI atlas assets."

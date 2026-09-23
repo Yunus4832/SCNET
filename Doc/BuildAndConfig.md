@@ -23,6 +23,7 @@
 
 这是全局构建目标入口，主要负责：
 
+- 在资源打包前根据独立 SVG 源文件增量生成 GUI 图集
 - 把 `Content/` 打成 `Content.zip`
 - 在 `Publish` 后打包桌面发布输出
 - 在 Android 构建后重命名 APK
@@ -105,8 +106,37 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 
 仓库使用 `Directory.Build.targets` 统一处理资源和发布结果：
 
+- `GuiAtlasTool/Assets/` 中任一 SVG、PNG 或 `GuiAtlasTool` 源码发生变化时，会先重新生成 GUI 图集
 - 构建前会把 `Content/` 打成 `Content.zip`
 - 桌面发布会将 `$(PublishDir)` 生成的发布输出压缩到仓库根目录下的 `Publish/` 目录
 - Android 发布会生成并重命名 APK 到 `Publish/`
 
 这也是为什么不同平台项目里会看到 `UsePackResourceTarget`、`UsePackOutputTarget` 和 `UseRenameApkTarget` 之类的属性。这些属性用于集中处理资源和发布产物。
+
+### GUI 图集
+
+`GuiAtlasTool/Assets/` 保存独立、透明且可直接渲染的 SVG 和 PNG。文件名就是图集条目名；例如
+`PlayerList.svg` 会生成 `Textures/Atlas/PlayerList`。SVG 必须使用整数像素声明 `width` 和
+`height`，并应提供对应的 `viewBox`；PNG 必须使用未预乘 Alpha 的 RGBA 数据。同一条目不能同时
+存在 SVG 和 PNG。不要把 Inkscape 工程文件、隐藏设计图层或背景画布放入该目录。
+
+`GuiAtlasTool` 会按尺寸和名称稳定排序源文件，自动排版、栅格化 SVG，并对所有条目统一预乘
+Alpha，然后生成：
+
+- `Content/Assets/Atlases/AtlasTexture.png`
+- `Content/Assets/Atlases/Atlas.txt`
+
+这两个文件是忽略的构建产物，不应提交。使用以下命令可以手动重新生成：
+
+```bash
+dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- generate \
+  GuiAtlasTool/Assets \
+  Content/Assets/Atlases/AtlasTexture.png \
+  Content/Assets/Atlases/Atlas.txt
+```
+
+需要导入普通 PNG、反预乘旧 PNG，或从已有预乘图集提取条目时，使用 `GuiAtlasTool` 的
+`prepare-png` 和 `extract` 命令；具体命令见 [`GuiAtlasTool/README.md`](../GuiAtlasTool/README.md)。
+
+启用了 `UsePackResourceTarget` 的平台项目会在 `PackResource` 前自动执行相同流程。MSBuild 使用
+SVG、PNG 和工具源码作为输入、图集文件作为输出，因此输入没有变化时不会重复生成。

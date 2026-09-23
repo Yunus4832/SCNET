@@ -8,7 +8,7 @@ public class PanoramaWidget : Widget
 
     private readonly float _timeOffset = new Random().Float(0f, 1000f);
 
-    public Texture2D Texture { get; set; } = ContentManager.Get<Texture2D>("Textures/Gui/Panorama");
+    public Texture2D Texture { get; set; } = ContentManager.Get<Texture2D>("Textures/Panorama");
 
     public void DrawImage(DrawContext dc)
     {

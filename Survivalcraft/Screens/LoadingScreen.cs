@@ -37,7 +37,7 @@ public class LoadingScreen : Screen
             VerticalAlignment = WidgetAlignment.Center,
             HorizontalAlignment = WidgetAlignment.Center
         };
-        rectangle1.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/CandyRufusLogo");
+        rectangle1.Subtexture = ContentManager.Get<Subtexture>("Textures/Branding/PublisherLogo");
         var rectangle2 = new RectangleWidget
         {
             FillColor = Color.White,
@@ -47,7 +47,7 @@ public class LoadingScreen : Screen
             HorizontalAlignment = WidgetAlignment.Far,
             Margin = new Vector2(10f)
         };
-        rectangle2.Subtexture = ContentManager.Get<Subtexture>("Textures/Gui/EngineLogo");
+        rectangle2.Subtexture = ContentManager.Get<Subtexture>("Textures/Branding/EngineLogo");
         var busyBar = new BusyBarWidget
         {
             VerticalAlignment = WidgetAlignment.Far,
@@ -195,8 +195,8 @@ public class LoadingScreen : Screen
     public override void Leave()
     {
         Window.VSync = SettingsManager.Current.VSync;
-        ContentManager.Dispose("Textures/Gui/CandyRufusLogo");
-        ContentManager.Dispose("Textures/Gui/EngineLogo");
+        ContentManager.Dispose("Textures/Branding/PublisherLogo");
+        ContentManager.Dispose("Textures/Branding/EngineLogo");
     }
 
     public override void Enter(object[] parameters)

@@ -108,7 +108,7 @@ public static class ScreenCaptureManager
             if (SettingsManager.Current.ShowLogoInScreenshots)
             {
                 var primitivesRenderer2D = new PrimitivesRenderer2D();
-                var texture2D = ContentManager.Get<Texture2D>("Textures/Gui/ScreenCaptureOverlay");
+                var texture2D = ContentManager.Get<Texture2D>("Textures/Branding/ScreenCaptureOverlay");
                 var vector = new Vector2((width - texture2D.Width) / 2, 0f);
                 var corner = vector + new Vector2(texture2D.Width, texture2D.Height);
                 primitivesRenderer2D.TexturedBatch(texture2D, false, 0, DepthStencilState.None)

@@ -357,3 +357,7 @@ Publish/*
 
 # ContentServer 前端构建产物（由 ContentWebUI dist 组合生成，构建时重建）
 ContentServer/wwwroot/
+
+# Generated GUI atlas
+/Content/Assets/Atlases/Atlas.txt
+/Content/Assets/Atlases/AtlasTexture.png

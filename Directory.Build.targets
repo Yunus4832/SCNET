@@ -5,9 +5,32 @@
         <SolutionRoot>$(MSBuildThisFileDirectory)</SolutionRoot>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <_GuiAtlasSourceDirectory>$(SolutionRoot)GuiAtlasTool\Assets</_GuiAtlasSourceDirectory>
+        <_GuiAtlasTexture>$(SolutionRoot)Content\Assets\Atlases\AtlasTexture.png</_GuiAtlasTexture>
+        <_GuiAtlasDefinition>$(SolutionRoot)Content\Assets\Atlases\Atlas.txt</_GuiAtlasDefinition>
+        <_GuiAtlasToolProject>$(SolutionRoot)GuiAtlasTool\GuiAtlasTool.csproj</_GuiAtlasToolProject>
+        <_GuiAtlasToolAssembly>$(SolutionRoot)GuiAtlasTool\bin\$(Configuration)\$(GlobalTargetFramework)\SCNET.GuiAtlasTool.dll</_GuiAtlasToolAssembly>
+    </PropertyGroup>
+
     <ItemGroup>
-        <MyContentFiles Include="$(MSBuildProjectDirectory)\..\Content\**\*.*"/>
+        <MyContentFiles Include="$(MSBuildProjectDirectory)\..\Content\**\*.*"
+                        Exclude="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
+        <MyContentFiles Include="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
+        <_GuiAtlasSources Include="$(_GuiAtlasSourceDirectory)\**\*.svg;$(_GuiAtlasSourceDirectory)\**\*.png"/>
+        <_GuiAtlasToolSources Include="$(SolutionRoot)GuiAtlasTool\**\*.cs;$(SolutionRoot)GuiAtlasTool\GuiAtlasTool.csproj"
+                              Exclude="$(SolutionRoot)GuiAtlasTool\bin\**\*;$(SolutionRoot)GuiAtlasTool\obj\**\*"/>
     </ItemGroup>
+
+    <Target Name="GenerateGuiAtlas"
+            BeforeTargets="GenerateContentManifest"
+            Condition="'$(UsePackResourceTarget)' == 'true'"
+            Inputs="@(_GuiAtlasSources);@(_GuiAtlasToolSources)"
+            Outputs="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)">
+        <MSBuild Projects="$(_GuiAtlasToolProject)" Targets="Build"
+                 Properties="Configuration=$(Configuration)"/>
+        <Exec Command="dotnet &quot;$(_GuiAtlasToolAssembly)&quot; generate &quot;$(_GuiAtlasSourceDirectory)&quot; &quot;$(_GuiAtlasTexture)&quot; &quot;$(_GuiAtlasDefinition)&quot;"/>
+    </Target>
 
     <Target Name="GenerateContentManifest"
             BeforeTargets="PackResource"
