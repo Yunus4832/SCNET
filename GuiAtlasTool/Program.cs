@@ -34,6 +34,9 @@ internal static class GuiAtlasProgram
                 case ["extract", var texturePath, var definitionPath, var outputDirectory, .. var entries]:
                     Extract(texturePath, definitionPath, outputDirectory, entries);
                     return 0;
+                case ["compose-game-button", var buttonType, var iconPath, var resourceName, .. var options]:
+                    ButtonComposer.Compose(buttonType, iconPath, resourceName, options);
+                    return 0;
                 default:
                     WriteUsage();
                     return 2;
@@ -484,6 +487,10 @@ internal static class GuiAtlasProgram
             "  SCNET.GuiAtlasTool prepare-png <input.png> <output.png> [--premultiplied] [--overwrite]");
         Console.Error.WriteLine(
             "  SCNET.GuiAtlasTool extract <atlas.png> <atlas.txt> <output-directory> <entry>... [--overwrite]");
+        Console.Error.WriteLine(
+            "  SCNET.GuiAtlasTool compose-game-button <floating|left-attached|right-attached> " +
+            "<icon.svg> <resource-name> [--scale <factor>] [--offset-x <value>] [--offset-y <value>] " +
+            "[--asset-directory <directory>] [--overwrite]");
     }
 
     private sealed record AtlasSource(string Name, string Path, int Width, int Height, AtlasSourceKind Kind);
