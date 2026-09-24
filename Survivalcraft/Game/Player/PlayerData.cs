@@ -126,6 +126,11 @@ public partial class PlayerData : IDisposable
         get => _playerClass;
         set
         {
+            if (value == _playerClass)
+            {
+                return;
+            }
+
             if (SubsystemPlayers.PlayersData.Contains(this))
             {
                 throw new InvalidOperationException(LanguageManager.Get(TypeName, 1));
