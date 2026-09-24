@@ -1,5 +1,3 @@
-using System.Text;
-
 namespace Game.ElectricElements;
 
 public abstract class ElectricElement(
@@ -24,17 +22,6 @@ public abstract class ElectricElement(
     public ReadOnlyList<CellFace> CellFaces { get; } = new(new List<CellFace>(cellFaces));
 
     public List<ElectricConnection> Connections { get; set; } = [];
-
-    public override int GetHashCode()
-    {
-        var s = new StringBuilder();
-        foreach (var cell in CellFaces)
-        {
-            s.Append(cell.ToString());
-        }
-
-        return s.ToString().GetHashCode();
-    }
 
     public virtual float GetOutputVoltage(int face)
     {

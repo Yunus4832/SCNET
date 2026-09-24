@@ -216,13 +216,15 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
     public static int SimulatedElectricElements;
 
-    private readonly Dictionary<ElectricElement, bool> _electricElements = new();
+    private readonly Dictionary<ElectricElement, bool> _electricElements =
+        new(ReferenceEqualityComparer.Instance);
 
     private readonly Dictionary<CellFace, ElectricElement> _electricElementsByCellFace = new();
 
     private readonly Dictionary<Point3, ElectricElement> _electricElementsToAdd = new();
 
-    private readonly Dictionary<ElectricElement, bool> _electricElementsToRemove = new();
+    private readonly Dictionary<ElectricElement, bool> _electricElementsToRemove =
+        new(ReferenceEqualityComparer.Instance);
 
     private readonly Dictionary<int, Dictionary<ElectricElement, bool>> _futureSimulateLists = new();
 
@@ -856,7 +858,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
     {
         if (_listsCache.Count <= 0)
         {
-            return new Dictionary<ElectricElement, bool>();
+            return new Dictionary<ElectricElement, bool>(ReferenceEqualityComparer.Instance);
         }
 
         var result = _listsCache[^1];
