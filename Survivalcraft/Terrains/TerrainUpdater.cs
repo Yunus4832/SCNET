@@ -1243,6 +1243,16 @@ public class TerrainUpdater
                 }
             case TerrainChunkState.InvalidPropagatedLight:
                 {
+                    var dependency = ClientDerivedTerrainPolicy.FindPendingLightingDependency(
+                        _terrain,
+                        _subsystemTerrain.ContentRole,
+                        chunk);
+                    if (dependency != null)
+                    {
+                        UpdateChunkSingleStep(dependency, skylightValue);
+                        break;
+                    }
+
                     _lightSources.Clear();
                     GenerateChunkLightSources(chunk);
                     GenerateChunkEdgeLightSources(chunk, 0);

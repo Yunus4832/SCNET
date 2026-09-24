@@ -82,4 +82,32 @@ public sealed class ClientDerivedTerrainPolicyTest
             TerrainContentRole.Replica,
             target));
     }
+
+    [Fact]
+    public void GeometryDependencyStillHonorsItsOwnLightingDependency()
+    {
+        var terrain = new Terrain();
+        var target = terrain.AllocateChunk(0, 0);
+        var geometryDependency = terrain.AllocateChunk(1, 0);
+        var lightingDependency = terrain.AllocateChunk(2, 0);
+        target.IsLoaded = true;
+        target.WorkerState = TerrainChunkState.InvalidVertices1;
+        geometryDependency.IsLoaded = true;
+        geometryDependency.WorkerState = TerrainChunkState.InvalidPropagatedLight;
+        lightingDependency.IsLoaded = true;
+        lightingDependency.WorkerState = TerrainChunkState.InvalidLight;
+
+        var pendingGeometry = ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
+            terrain,
+            TerrainContentRole.Replica,
+            target);
+
+        Assert.Same(geometryDependency, pendingGeometry);
+        Assert.Same(
+            lightingDependency,
+            ClientDerivedTerrainPolicy.FindPendingLightingDependency(
+                terrain,
+                TerrainContentRole.Replica,
+                pendingGeometry!));
+    }
 }
