@@ -5,9 +5,9 @@ namespace Game.Subsystems;
 
 public class SubsystemTimeOfDay : Subsystem
 {
-    private const double _offsetFix = 0.30000001192092896;
+    private const float _defaultDayDuration = 1200f;
 
-    private float _dayDuration = 1200;
+    private const double _offsetFix = 0.30000001192092896;
 
     public float DayOffset = 0.5f;
 
@@ -22,6 +22,8 @@ public class SubsystemTimeOfDay : Subsystem
     public float SunsetOffset = 0.75f;
 
     public bool TimeOfDayEnabled = true;
+
+    public float DayDuration { get; private set; } = _defaultDayDuration;
 
     public float DawnStart { get; private set; }
 
@@ -84,7 +86,7 @@ public class SubsystemTimeOfDay : Subsystem
 
     public double CalculateDay(double totalElapsedGameTime)
     {
-        return (totalElapsedGameTime + (TimeOfDayOffset + _offsetFix) * _dayDuration) / _dayDuration;
+        return (totalElapsedGameTime + (TimeOfDayOffset + _offsetFix) * DayDuration) / DayDuration;
     }
 
     public float CalculateTimeOfDay(double totalElapsedGameTime)
@@ -96,16 +98,16 @@ public class SubsystemTimeOfDay : Subsystem
     public float CalculateTimeOfDay()
     {
         return (float)MathUtils.Remainder(
-                   SubsystemGameInfo.TotalElapsedGameTime + (TimeOfDayOffset + _offsetFix) * _dayDuration,
-                   _dayDuration) /
-               _dayDuration;
+                   SubsystemGameInfo.TotalElapsedGameTime + (TimeOfDayOffset + _offsetFix) * DayDuration,
+                   DayDuration) /
+               DayDuration;
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
         SubsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         TimeOfDayOffset = valuesDictionary.GetValue<double>("TimeOfDayOffset");
-        _dayDuration *= SubsystemGameInfo.WorldSettings.DaySpeed;
+        DayDuration = _defaultDayDuration * SubsystemGameInfo.WorldSettings.DaySpeed;
         _subsystemSeasons = Project.FindSubsystem<SubsystemSeasons>(true)!;
         UpdateStarts();
     }
