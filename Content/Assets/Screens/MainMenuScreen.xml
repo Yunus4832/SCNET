@@ -57,4 +57,11 @@
                       Margin="8, 8" IsHitTestVisible="false">
         <VerticalTabMenuWidget Name="MainMenuTabs"/>
     </StackPanelWidget>
+    <CanvasWidget Name="MusicButton" Size="50, 50" HorizontalAlignment="Far" VerticalAlignment="Far"
+                  Margin="8, 8">
+        <RectangleWidget Name="MusicButton.Icon" Size="40, 40" HorizontalAlignment="Center"
+                         VerticalAlignment="Center" Subtexture="{Textures/Atlas/MenuMusic}"
+                         FillColor="72, 72, 72, 185" OutlineColor="0, 0, 0, 0"/>
+        <ClickableWidget Name="MusicButton.Clickable" SoundName="Audio/UI/ButtonClick"/>
+    </CanvasWidget>
 </Screen>

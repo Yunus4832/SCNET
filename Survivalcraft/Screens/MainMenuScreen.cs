@@ -11,6 +11,16 @@ public class MainMenuScreen : Screen
 {
     private readonly VerticalTabMenuWidget _mainMenuTabs;
 
+    private readonly RectangleWidget _logo;
+
+    private readonly RectangleWidget _musicButtonIcon;
+
+    private readonly ClickableWidget _musicButtonClickable;
+
+    private bool _isMenuMusicEnabled = true;
+
+    private float _musicButtonAngle;
+
     private static readonly string _versionString = $"Version {VersionsManager.Version}";
 
     public MainMenuScreen()
@@ -18,6 +28,9 @@ public class MainMenuScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
         LoadContents(this, node);
         _mainMenuTabs = Children.Find<VerticalTabMenuWidget>("MainMenuTabs")!;
+        _logo = Children.Find<RectangleWidget>("Logo")!;
+        _musicButtonIcon = Children.Find<RectangleWidget>("MusicButton.Icon")!;
+        _musicButtonClickable = Children.Find<ClickableWidget>("MusicButton.Clickable")!;
         Children.Find<LabelWidget>("Version")!.Text = _versionString;
 
         ConfigureMainMenuTabs();
@@ -25,6 +38,8 @@ public class MainMenuScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        MusicManager.CurrentMix = _isMenuMusicEnabled ? MusicManager.Mix.Menu : MusicManager.Mix.None;
+
         // 如果当前已连接网络，则停止连接
         if (CommonLib.Net.CurrentStage == NetNode.Stage.Connected)
         {
@@ -177,13 +192,8 @@ public class MainMenuScreen : Screen
 
     public override void Update()
     {
-        // 动态调整 Logo 大小
-        var rectangleWidget = Children.Find<RectangleWidget>("Logo")!;
-        var scale = 1f + 0.02f * MathUtils.Sin(1.5f * (float)MathUtils.Remainder(Time.FrameStartTime, 10000.0));
-        rectangleWidget.RenderTransform =
-            Matrix.CreateTranslation((0f - rectangleWidget.ActualSize.X) / 2f, (0f - rectangleWidget.ActualSize.Y) / 2f,
-                0f) * Matrix.CreateScale(scale, scale, 1f) * Matrix.CreateTranslation(rectangleWidget.ActualSize.X / 2f,
-                rectangleWidget.ActualSize.Y / 2f, 0f);
+        UpdateMusicButton();
+        UpdateLogoAnimation();
 
         // 处理按钮点击事件
         if (Children.Find<ButtonWidget>("Play")!.IsClicked)
@@ -228,6 +238,38 @@ public class MainMenuScreen : Screen
                 ConfirmExit();
             }
         }
+    }
+
+    private void UpdateMusicButton()
+    {
+        if (_musicButtonClickable.IsClicked)
+        {
+            _isMenuMusicEnabled = !_isMenuMusicEnabled;
+            MusicManager.CurrentMix = _isMenuMusicEnabled ? MusicManager.Mix.Menu : MusicManager.Mix.None;
+        }
+
+        if (_isMenuMusicEnabled && MusicManager.IsPlaying)
+        {
+            _musicButtonAngle += 0.4f * Time.FrameDuration;
+            if (_musicButtonAngle >= 2f * MathF.PI)
+            {
+                _musicButtonAngle -= 2f * MathF.PI;
+            }
+        }
+
+        _musicButtonIcon.RenderTransform =
+            Matrix.CreateTranslation(-_musicButtonIcon.ActualSize.X / 2f, -_musicButtonIcon.ActualSize.Y / 2f, 0f) *
+            Matrix.CreateRotationZ(_musicButtonAngle) *
+            Matrix.CreateTranslation(_musicButtonIcon.ActualSize.X / 2f, _musicButtonIcon.ActualSize.Y / 2f, 0f);
+    }
+
+    private void UpdateLogoAnimation()
+    {
+        var scale = 1f + 0.02f * MathUtils.Sin(1.5f * (float)MathUtils.Remainder(Time.FrameStartTime, 10000.0));
+        _logo.RenderTransform =
+            Matrix.CreateTranslation(-_logo.ActualSize.X / 2f, -_logo.ActualSize.Y / 2f, 0f) *
+            Matrix.CreateScale(scale, scale, 1f) *
+            Matrix.CreateTranslation(_logo.ActualSize.X / 2f, _logo.ActualSize.Y / 2f, 0f);
     }
 
     private static void ConfirmExit()
