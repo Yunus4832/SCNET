@@ -20,7 +20,7 @@ public static class VersionsManager
     /// <summary>
     ///     联机协议版本号
     /// </summary>
-    public static string ProtocolVersion { get; set; } = "0.0.0.2";
+    public static string ProtocolVersion { get; set; } = "0.0.0.3";
 
     static VersionsManager()
     {

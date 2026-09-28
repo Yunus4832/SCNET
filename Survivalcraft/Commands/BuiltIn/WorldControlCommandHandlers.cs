@@ -155,24 +155,18 @@ internal static class WorldControlCommandHandlers
             Season.Spring => SubsystemSeasons.SpringStart,
             _ => throw new ArgumentOutOfRangeException(nameof(command.Season))
         };
-        var gameInfo = context.Project.FindSubsystem<SubsystemGameInfo>(true)!;
-        gameInfo.WorldSettings.TimeOfYear =
-            IntervalUtils.Normalize(start + command.Progress * 0.25f);
+        var timeOfYear = IntervalUtils.Normalize(start + command.Progress * 0.25f);
         var seasons = context.Project.FindSubsystem<SubsystemSeasons>(true)!;
-        seasons.Season = command.Season;
-        seasons.TimeOfSeason = command.Progress;
+        seasons.SetTimeOfYear(timeOfYear);
         if (CommonLib.WorkType is WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(
-                new SubsystemSeasonPackage(
-                    (int)command.Season,
-                    command.Progress));
+            CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(timeOfYear));
         }
 
         return CommandResult.LocalizedPublicToast(
             "world.season.changed",
             "SeasonChanged_Message",
-            "已将季节设置为 {0}。",
+            "已将当前季节调整为 {0}，环境将逐步更新。",
             ResolveSeasonName(command.Season));
     }
 

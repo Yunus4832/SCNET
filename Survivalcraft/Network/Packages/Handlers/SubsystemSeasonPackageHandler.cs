@@ -10,15 +10,13 @@ public sealed class SubsystemSeasonPackageHandler : PackageHandlerBase<Subsystem
         }
 
         if (isServer ||
-            !Enum.IsDefined(typeof(Season), package.SeasonIndexNet) ||
-            !float.IsFinite(package.TimeOfSeasonNet) ||
-            package.TimeOfSeasonNet is < 0f or > 1f)
+            !float.IsFinite(package.TimeOfYear) ||
+            package.TimeOfYear is < 0f or >= 1f)
         {
             return;
         }
 
         var seasons = GameManager.Project.FindSubsystem<SubsystemSeasons>(true)!;
-        seasons.Season = (Season)package.SeasonIndexNet;
-        seasons.TimeOfSeason = package.TimeOfSeasonNet;
+        seasons.SetTimeOfYear(package.TimeOfYear);
     }
 }

@@ -160,7 +160,7 @@ public static class BuiltInCommands
             new CommandDefinition<SetSeasonCommand>(
                 WorldControlCommandHandlers.SetSeason,
                 CommandDomain.World,
-                CommandDescription("SeasonSet_Description", "设置当前季节"),
+                CommandDescription("SeasonSet_Description", "调整季节，环境将逐步更新"),
                 worldSeasonSet,
                 write: static (writer, command) =>
                 {
@@ -767,7 +767,7 @@ public static class BuiltInCommands
         var progressStages = new[] { "start", "middle", "end" };
         return new TextCommand(
             "season",
-            CommandDescription("Season_Description", "设置当前季节"),
+            CommandDescription("Season_Description", "调整当前季节，环境将逐步更新"),
             [
                 new CommandRoute(
                     [
@@ -784,7 +784,7 @@ public static class BuiltInCommands
                             arguments.Get<string>("season"),
                             ignoreCase: true),
                         0f),
-                    CommandDescription("SeasonSet_Description", "设置季节")),
+                    CommandDescription("SeasonSet_Description", "调整季节，环境将逐步更新")),
                 new CommandRoute(
                     [
                         new CommandLiteral("set"),
@@ -805,7 +805,7 @@ public static class BuiltInCommands
                             arguments.Get<string>("season"),
                             ignoreCase: true),
                         ParseSeasonProgress(arguments.Get<string>("progress"))),
-                    CommandDescription("SeasonProgress_Description", "设置季节及进度"))
+                    CommandDescription("SeasonProgress_Description", "调整季节及进度，环境将逐步更新"))
             ]);
     }
 

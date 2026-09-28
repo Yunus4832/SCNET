@@ -34,8 +34,6 @@ public class SubsystemSeasons : Subsystem, IUpdateable
 
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
-    private int _seasonIndex;
-
     public Season Season { get; set; }
 
     public float TimeOfSeason { get; set; }
@@ -49,14 +47,22 @@ public class SubsystemSeasons : Subsystem, IUpdateable
             return;
         }
 
-        TimeOfYearToSeason(_subsystemGameInfo.WorldSettings.TimeOfYear, out var season, out var timeOfSeason);
-        Season = season;
-        TimeOfSeason = timeOfSeason;
-        _seasonIndex = (int)Season;
-        if (Time.PeriodicEvent(10, 0.0) && CommonLib.WorkType == WorkType.Server) //服务器每秒更新一次传递给客户端季节信息
+        UpdateSeasonState();
+        if (Time.PeriodicEvent(10, 0.0) && CommonLib.WorkType == WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(_seasonIndex, TimeOfSeason));
+            CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(_subsystemGameInfo.WorldSettings.TimeOfYear));
         }
+    }
+
+    public void SetTimeOfYear(float timeOfYear)
+    {
+        if (!float.IsFinite(timeOfYear))
+        {
+            throw new ArgumentOutOfRangeException(nameof(timeOfYear));
+        }
+
+        _subsystemGameInfo.WorldSettings.TimeOfYear = IntervalUtils.Normalize(timeOfYear);
+        UpdateSeasonState();
     }
 
     public static string GetTimeOfYearName(float timeOfYear)
@@ -102,6 +108,13 @@ public class SubsystemSeasons : Subsystem, IUpdateable
 
         var seasonsGradient = (Image?)ContentManager.Get<Texture2D>("Textures/SeasonsSlider").Tag;
         _seasonsGradient = seasonsGradient ?? throw new InvalidOperationException("SeasonGradient is not initialized");
+    }
+
+    private void UpdateSeasonState()
+    {
+        TimeOfYearToSeason(_subsystemGameInfo.WorldSettings.TimeOfYear, out var season, out var timeOfSeason);
+        Season = season;
+        TimeOfSeason = timeOfSeason;
     }
 
     private static void TimeOfYearToSeason(float timeOfYear, out Season season, out float timeOfSeason)

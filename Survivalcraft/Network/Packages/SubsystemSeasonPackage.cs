@@ -5,9 +5,7 @@ namespace Game.Network.Packages;
 
 public class SubsystemSeasonPackage : IPackage
 {
-    public int SeasonIndexNet;
-
-    public float TimeOfSeasonNet { get; set; }
+    public float TimeOfYear { get; set; }
 
     public byte ID => (byte)PackageType.SubsystemSeason;
 
@@ -23,22 +21,19 @@ public class SubsystemSeasonPackage : IPackage
     {
     }
 
-    public SubsystemSeasonPackage(int seasonIndex, float timeOfSeason)
+    public SubsystemSeasonPackage(float timeOfYear)
     {
-        SeasonIndexNet = seasonIndex; //季节编号
-        TimeOfSeasonNet = timeOfSeason;
+        TimeOfYear = timeOfYear;
     }
 
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write(SeasonIndexNet);
-        writer.Write(BitConverter.ToInt32(BitConverter.GetBytes(TimeOfSeasonNet), 0));
+        writer.Write(TimeOfYear);
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        SeasonIndexNet = reader.ReadInt32();
-        TimeOfSeasonNet = BitConverter.ToSingle(BitConverter.GetBytes(reader.ReadInt32()), 0);
+        TimeOfYear = reader.ReadSingle();
     }
 }
