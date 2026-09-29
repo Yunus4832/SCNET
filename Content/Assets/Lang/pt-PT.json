@@ -3004,7 +3004,9 @@
             "62": "O",
             "63": "Desactivar niebla",
             "64": "F10",
-            "65": "Alternar interface de toque"
+            "65": "Alternar interface de toque",
+            "66": "F3",
+            "67": "Alternar diagnóstico"
         },
         "LevelFactorDialog": {
             "1": "Multiplicador atual:",
@@ -3231,14 +3233,6 @@
             "2": "Volume de som do jogo",
             "3": "Volume da música de fundo"
         },
-        "SettingsCompatibilityScreen": [
-            "Compatibilidade",
-            "Usando a faixa Z reduzida",
-            "Registo do jogo:",
-            "Ver",
-            "Restaurar predefinições:",
-            "Repor"
-        ],
         "SettingsControlsScreen": [
             "Ajuste das configurações de controle",
             "Modo de controle de movimento",
@@ -3278,8 +3272,6 @@
             "6": "Qualidade do céu",
             "7": "Objeto Shadow",
             "8": "Limitação do número de frames",
-            "9": "Exibir informações de depuração",
-            "10": "Exibir dados de desempenho",
             "11": "Baixa taxa de quadros limita a velocidade do jogo",
             "12": "Modo de aceleração do sono"
         },
@@ -3290,7 +3282,7 @@
             "4": "Interface do usuário",
             "5": "Volume de volume",
             "6": "Controle",
-            "7": "Compatibilidade de dispositivos e logs"
+            "7": "Diagnóstico e compatibilidade"
         },
         "SettingsUiScreen": [
             "Ajuste das configurações da interface do usuário",
@@ -3509,7 +3501,17 @@
             "Save": "Guardar",
             "Cancel": "Cancelar",
             "Address": "Endereço"
-        }
+        },
+        "SettingsDiagnosticsScreen": [
+            "Diagnóstico e compatibilidade",
+            "Mostrar informações de depuração",
+            "Mostrar gráfico de tempo de fotograma",
+            "Registo do jogo",
+            "Ver",
+            "Usar intervalo Z reduzido",
+            "Restaurar definições de compatibilidade",
+            "Repor"
+        ]
     },
     "FireworksBlock": {
         "ShapeDisplayNames": {

@@ -199,6 +199,7 @@ public static class GameEntry
                 MusicManager.Update();
                 ScreensManager.Update();
                 DialogsManager.Update();
+                DebugOverlayManager.Update();
                 AutomationInputController.Update();
                 HttpCommandExecutionQueue.Update();
                 AsyncDispatcher.Update();
@@ -221,6 +222,7 @@ public static class GameEntry
             {
                 ScreensManager.Draw();
                 PerformanceManager.Draw();
+                DebugOverlayManager.Draw();
                 ScreenCaptureManager.Run();
             }
             else

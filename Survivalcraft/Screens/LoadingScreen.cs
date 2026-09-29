@@ -159,7 +159,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("SettingsPerformance", new SettingsPerformanceScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsGraphics", new SettingsGraphicsScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsUi", new SettingsUiScreen()); });
-        AddLoadAction(delegate { AddScreen("SettingsCompatibility", new SettingsCompatibilityScreen()); });
+        AddLoadAction(delegate { AddScreen("SettingsDiagnostics", new SettingsDiagnosticsScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsAudio", new SettingsAudioScreen()); });
         AddLoadAction(delegate { AddScreen("SettingsControls", new SettingsControlsScreen()); });
         AddLoadAction(delegate { AddScreen("Play", new PlayScreen()); });

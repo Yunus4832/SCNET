@@ -3004,7 +3004,9 @@
             "62": "O",
             "63": "Toggle fog",
             "64": "F10",
-            "65": "Toggle touch controls"
+            "65": "Toggle touch controls",
+            "66": "F3",
+            "67": "Toggle diagnostics"
         },
         "LevelFactorDialog": {
             "1": "Current multipliers:",
@@ -3231,14 +3233,6 @@
             "2": "Sounds Volume:",
             "3": "Music Volume:"
         },
-        "SettingsCompatibilityScreen": [
-            "Adjust Device Compatibility",
-            "Use Reduced Z Range",
-            "Game Log:",
-            "View",
-            "Restore Defaults:",
-            "Reset"
-        ],
         "SettingsControlsScreen": [
             "Adjust Controls Settings",
             "Touchscreen Move Control:",
@@ -3278,8 +3272,6 @@
             "6": "Sky Rendering Mode:",
             "7": "Object Shadows:",
             "8": "Framerate Limit:",
-            "9": "Display Debug Information:",
-            "10": "Display FPS Ribbon:",
             "11": "Limit Game Run In Low FPS:",
             "12": "Time Acceleration Method During Sleep:"
         },
@@ -3290,7 +3282,7 @@
             "4": "User Interface",
             "5": "Audio",
             "6": "Controls",
-            "7": "Compatibility"
+            "7": "Diagnostics & Compatibility"
         },
         "SettingsUiScreen": [
             "Adjust User Interface Settings",
@@ -3509,7 +3501,17 @@
             "Save": "Save",
             "Cancel": "Cancel",
             "Address": "Address"
-        }
+        },
+        "SettingsDiagnosticsScreen": [
+            "Diagnostics and Compatibility",
+            "Display Debug Information",
+            "Display Frame Time Graph",
+            "Game Log",
+            "View",
+            "Use Reduced Z Range",
+            "Restore Compatibility Settings",
+            "Reset"
+        ]
     },
     "FireworksBlock": {
         "ShapeDisplayNames": {

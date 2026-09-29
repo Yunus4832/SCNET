@@ -6,9 +6,9 @@ public class SettingsScreen : Screen
 {
     private readonly ButtonWidget _audioButton;
 
-    private readonly ButtonWidget _compatibilityButton;
-
     private readonly ButtonWidget _controlsButton;
+
+    private readonly ButtonWidget _diagnosticsButton;
 
     private readonly ButtonWidget _graphicsButton;
 
@@ -25,7 +25,7 @@ public class SettingsScreen : Screen
         _performanceButton = Children.Find<ButtonWidget>("Performance")!;
         _graphicsButton = Children.Find<ButtonWidget>("Graphics")!;
         _uiButton = Children.Find<ButtonWidget>("Ui")!;
-        _compatibilityButton = Children.Find<ButtonWidget>("Compatibility")!;
+        _diagnosticsButton = Children.Find<ButtonWidget>("Diagnostics")!;
         _audioButton = Children.Find<ButtonWidget>("Audio")!;
         _controlsButton = Children.Find<ButtonWidget>("Controls")!;
     }
@@ -53,9 +53,9 @@ public class SettingsScreen : Screen
             ScreensManager.SwitchScreen("SettingsUi");
         }
 
-        if (_compatibilityButton.IsClicked)
+        if (_diagnosticsButton.IsClicked)
         {
-            ScreensManager.SwitchScreen("SettingsCompatibility");
+            ScreensManager.SwitchScreen("SettingsDiagnostics");
         }
 
         if (_audioButton.IsClicked)

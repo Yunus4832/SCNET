@@ -1,8 +1,4 @@
 using Engine.Graphics;
-using Engine.Media;
-
-using Game.Network;
-using Game.Network.Enums;
 
 namespace Game.Managers;
 
@@ -34,8 +30,6 @@ public static class PerformanceManager
 
     private static int _frameCount;
 
-    private static string _statsString;
-
     private static FrameData[] _frameData = [];
 
     private static int _frameDataIndex;
@@ -44,7 +38,6 @@ public static class PerformanceManager
     {
         _primitivesRenderer = new PrimitivesRenderer2D();
         _averageFrameTime = new RunningAverage(1f);
-        _statsString = string.Empty;
         _stateMachine = new StateMachine();
         _stateMachine.AddState(
             "PreMeasure",
@@ -118,11 +111,13 @@ public static class PerformanceManager
 
     public static float? LongTermAverageFrameTime => _longTermAverageFrameTime;
 
-    private static float AverageFrameTime => _averageFrameTime.Value;
+    public static float AverageFrameTime => _averageFrameTime.Value;
 
-    private static long TotalMemoryUsed { get; set; }
+    public static float CpuUtilization => _cpuUtilization;
 
-    private static long TotalGpuMemoryUsed { get; set; }
+    public static long TotalMemoryUsed { get; private set; }
+
+    public static long TotalGpuMemoryUsed { get; private set; }
 
     public static void Update()
     {
@@ -160,32 +155,6 @@ public static class PerformanceManager
     {
         var scale = new Vector2(MathUtils.Round(MathUtils.Clamp(ScreensManager.RootWidget.GlobalScale, 1f, 4f)));
         var viewport = Display.Viewport;
-        if (SettingsManager.Current.DisplayDebugInfo)
-        {
-            if (Time.PeriodicEvent(1.0, 0.0))
-            {
-                _statsString =
-                    $"SCREEN {ScreensManager.GetCurrentScreenName()}, " +
-                    $"CPUMEM {TotalMemoryUsed / 1024f / 1024f:0}MB, " +
-                    $"GPUMEM {TotalGpuMemoryUsed / 1024f / 1024f:0}MB, " +
-                    $"CPU {_cpuUtilization * 100f:0}%, {1f / AverageFrameTime:0.0} FPS";
-                if (CommonLib.WorkType == WorkType.Client)
-                {
-                    if (CommonLib.Net.Server != null)
-                    {
-                        var p = CommonLib.Net.Server.Peer;
-                        if (p != null)
-                        {
-                            _statsString += $", PL: {p.Statistics.PacketLossPercent}% Ping:{p.Ping}";
-                        }
-                    }
-                }
-            }
-
-            _primitivesRenderer.FontBatch(BitmapFont.DebugFont, 0, null, null, null, SamplerState.PointClamp)
-                .QueueText(_statsString, new Vector2(0f, 0f), 0f, Color.White, TextAnchor.Left, scale, Vector2.Zero);
-        }
-
         if (SettingsManager.Current.DisplayFpsRibbon)
         {
             var num = viewport.Width / scale.X > 480f ? scale.X * 2f : scale.X;

@@ -18,10 +18,6 @@ public class SettingsPerformanceScreen : Screen
 
     private const string _typeName = nameof(SettingsPerformanceScreen);
 
-    private readonly ButtonWidget _displayDebugInfoButton;
-
-    private readonly ButtonWidget _displayFpsRibbonButton;
-
     private int _enterVisibilityRange;
 
     private readonly ButtonWidget _framerateLimitButton;
@@ -49,8 +45,6 @@ public class SettingsPerformanceScreen : Screen
         _skyRenderingModeButton = Children.Find<ButtonWidget>("SkyRenderingModeButton")!;
         _objectShadowsButton = Children.Find<ButtonWidget>("ObjectShadowsButton")!;
         _framerateLimitButton = Children.Find<ButtonWidget>("FramerateLimitButton")!;
-        _displayDebugInfoButton = Children.Find<ButtonWidget>("DisplayDebugInfoButton")!;
-        _displayFpsRibbonButton = Children.Find<ButtonWidget>("DisplayFpsRibbonButton")!;
         _visibilityRangeSlider.MinValue = 0f;
         _visibilityRangeSlider.MaxValue = _visibilityRanges.Count - 1;
     }
@@ -104,16 +98,6 @@ public class SettingsPerformanceScreen : Screen
         if (_framerateLimitButton.IsClicked)
         {
             SettingsManager.Current.VSync = !SettingsManager.Current.VSync;
-        }
-
-        if (_displayDebugInfoButton.IsClicked)
-        {
-            SettingsManager.Current.DisplayDebugInfo = !SettingsManager.Current.DisplayDebugInfo;
-        }
-
-        if (_displayFpsRibbonButton.IsClicked)
-        {
-            SettingsManager.Current.DisplayFpsRibbon = !SettingsManager.Current.DisplayFpsRibbon;
         }
 
         _resolutionButton.Text =
@@ -174,14 +158,6 @@ public class SettingsPerformanceScreen : Screen
         _framerateLimitButton.Text = SettingsManager.Current.VSync
             ? LanguageManager.Get(_typeName, 11)
             : LanguageManager.Get(_typeName, 8);
-
-        _displayDebugInfoButton.Text = SettingsManager.Current.DisplayDebugInfo
-            ? LanguageManager.Yes
-            : LanguageManager.No;
-
-        _displayFpsRibbonButton.Text = SettingsManager.Current.DisplayFpsRibbon
-            ? LanguageManager.Yes
-            : LanguageManager.No;
 
         if (Input is { Back: false, Cancel: false } && !Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
