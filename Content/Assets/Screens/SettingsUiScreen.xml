@@ -15,10 +15,13 @@
                 <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center">
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                        <LabelWidget Text="[SettingsUiScreen:1]" HorizontalAlignment="Far" VerticalAlignment="Center"
-                                     Margin="20, 0"/>
-                        <BevelledButtonWidget Name="LanguageButton" Style="{Styles/ButtonStyle_310x60}"
-                                              VerticalAlignment="Center" Margin="20, 0"/>
+                        <CanvasWidget Size="310, 60" HorizontalAlignment="Far" VerticalAlignment="Near"
+                                      Margin="20, 0">
+                            <LabelWidget Text="[SettingsUiScreen:1]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center"/>
+                        </CanvasWidget>
+                        <InlineSelectionWidget Name="LanguageSelection" CollapsedSize="310, 60"
+                                               VerticalAlignment="Near" Margin="20, 0" MaxVisibleItems="4"/>
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Name="WindowModeContainer" Direction="Horizontal" Margin="0, 3">

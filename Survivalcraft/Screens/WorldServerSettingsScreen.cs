@@ -7,7 +7,7 @@ public class WorldServerSettingsScreen : Screen
 {
     private const string _typeName = nameof(WorldServerSettingsScreen);
 
-    private readonly TextBoxWidget _daySpeedTextBox;
+    private readonly SliderWidget _daySpeedSlider;
 
     private readonly TextBoxWidget _disableBlocks;
 
@@ -17,13 +17,13 @@ public class WorldServerSettingsScreen : Screen
 
     private readonly (ClickableTextRowWidget Label, string DescriptionName)[] _descriptionBindings;
 
-    private readonly TextBoxWidget _maxPlayer;
+    private readonly SliderWidget _maxPlayersSlider;
 
-    private readonly CheckboxWidget _randomSpawnPosition;
+    private readonly ButtonWidget _randomSpawnPositionButton;
 
-    private readonly TextBoxWidget _recoverySpeed;
+    private readonly SliderWidget _recoverySpeedSlider;
 
-    private readonly CheckboxWidget _runServer;
+    private readonly ButtonWidget _runServerButton;
 
     private string _returnScreenName = "NewWorld";
 
@@ -35,11 +35,11 @@ public class WorldServerSettingsScreen : Screen
     {
         var node = ContentManager.Get<XElement>("Screens/WorldServerSettingsScreen");
         LoadContents(this, node);
-        _runServer = Children.Find<CheckboxWidget>("RunServer")!;
-        _randomSpawnPosition = Children.Find<CheckboxWidget>("RandomSpawnPosition")!;
-        _maxPlayer = Children.Find<TextBoxWidget>("MaxPlayers")!;
-        _daySpeedTextBox = Children.Find<TextBoxWidget>("DaySpeed")!;
-        _recoverySpeed = Children.Find<TextBoxWidget>("RecoverySpeed")!;
+        _runServerButton = Children.Find<ButtonWidget>("RunServer")!;
+        _randomSpawnPositionButton = Children.Find<ButtonWidget>("RandomSpawnPosition")!;
+        _maxPlayersSlider = Children.Find<SliderWidget>("MaxPlayers")!;
+        _daySpeedSlider = Children.Find<SliderWidget>("DaySpeed")!;
+        _recoverySpeedSlider = Children.Find<SliderWidget>("RecoverySpeed")!;
         _disableBlocks = Children.Find<TextBoxWidget>("DisableBlocks")!;
         _keywordBlocking = Children.Find<TextBoxWidget>("KeywordBlocking")!;
         _descriptionLabel = Children.Find<LabelWidget>("Description")!;
@@ -71,12 +71,9 @@ public class WorldServerSettingsScreen : Screen
             Array.Copy(parameters, 2, _returnParameters, 0, _returnParameters.Length);
         }
 
-        _runServer.IsChecked = _worldSettings.RunServer;
-        _randomSpawnPosition.IsChecked = _worldSettings.RandomSpawnPosition;
-        _maxPlayer.Text = MathUtils.Max(_worldSettings.MaxOnlinePlayerCount, 1).ToString(CultureInfo.InvariantCulture);
-        _daySpeedTextBox.Text = NormalizeDaySpeed(_worldSettings.DaySpeed).ToString(CultureInfo.InvariantCulture);
-        _recoverySpeed.Text =
-            NormalizeRecoverySpeed(_worldSettings.RecoverFactor).ToString(CultureInfo.InvariantCulture);
+        _maxPlayersSlider.Value = MathUtils.Clamp(_worldSettings.MaxOnlinePlayerCount, 10, 100);
+        _daySpeedSlider.Value = NormalizeDaySpeed(_worldSettings.DaySpeed);
+        _recoverySpeedSlider.Value = NormalizeRecoverySpeed(_worldSettings.RecoverFactor);
         _disableBlocks.Text = _worldSettings.DisableBlocks;
         _keywordBlocking.Text = _worldSettings.KeywordBlocking;
         _descriptionLabel.Text = GetText("DefaultDescription");
@@ -84,7 +81,18 @@ public class WorldServerSettingsScreen : Screen
 
     public override void Update()
     {
+        if (_runServerButton.IsClicked)
+        {
+            _worldSettings.RunServer = !_worldSettings.RunServer;
+        }
+
+        if (_randomSpawnPositionButton.IsClicked)
+        {
+            _worldSettings.RandomSpawnPosition = !_worldSettings.RandomSpawnPosition;
+        }
+
         SaveSettings();
+        UpdateControlTexts();
         UpdateSelectedDescription();
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
@@ -95,17 +103,25 @@ public class WorldServerSettingsScreen : Screen
 
     private void SaveSettings()
     {
-        _worldSettings.RunServer = _runServer.IsChecked;
-        int.TryParse(_maxPlayer.Text, out var maxPlayers);
-        _worldSettings.MaxOnlinePlayerCount = (ushort)MathUtils.Max(maxPlayers, 1);
-        _worldSettings.RandomSpawnPosition = _randomSpawnPosition.IsChecked;
+        _worldSettings.MaxOnlinePlayerCount = (ushort)MathUtils.Round(_maxPlayersSlider.Value);
         _worldSettings.DisableBlocks = _disableBlocks.Text;
         _worldSettings.KeywordBlocking = _keywordBlocking.Text;
 
-        float.TryParse(_daySpeedTextBox.Text, out var daySpeed);
-        float.TryParse(_recoverySpeed.Text, out var recoverySpeed);
-        _worldSettings.DaySpeed = NormalizeDaySpeed(daySpeed);
-        _worldSettings.RecoverFactor = NormalizeRecoverySpeed(recoverySpeed);
+        _worldSettings.DaySpeed = _daySpeedSlider.Value;
+        _worldSettings.RecoverFactor = _recoverySpeedSlider.Value;
+    }
+
+    private void UpdateControlTexts()
+    {
+        _runServerButton.Text = _worldSettings.RunServer
+            ? LanguageManager.Get("Usual", "on")
+            : LanguageManager.Get("Usual", "off");
+        _randomSpawnPositionButton.Text = _worldSettings.RandomSpawnPosition
+            ? LanguageManager.Get("Usual", "on")
+            : LanguageManager.Get("Usual", "off");
+        _maxPlayersSlider.Text = MathUtils.Round(_maxPlayersSlider.Value).ToString(CultureInfo.InvariantCulture);
+        _daySpeedSlider.Text = $"{_daySpeedSlider.Value:0}x";
+        _recoverySpeedSlider.Text = $"{_recoverySpeedSlider.Value:0}x";
     }
 
     private (ClickableTextRowWidget Label, string DescriptionName) CreateDescriptionBinding(
@@ -139,11 +155,11 @@ public class WorldServerSettingsScreen : Screen
 
     private static float NormalizeDaySpeed(float daySpeed)
     {
-        return daySpeed <= 0f || daySpeed > 1f ? 1f : daySpeed;
+        return daySpeed < 1f || daySpeed > 10f ? 1f : daySpeed;
     }
 
     private static float NormalizeRecoverySpeed(float recoverySpeed)
     {
-        return recoverySpeed <= 0f ? 1f : recoverySpeed;
+        return recoverySpeed < 1f || recoverySpeed > 10f ? 1f : recoverySpeed;
     }
 }

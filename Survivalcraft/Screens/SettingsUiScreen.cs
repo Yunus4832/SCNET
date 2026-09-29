@@ -9,7 +9,7 @@ public class SettingsUiScreen : Screen
 {
     private const string _typeName = nameof(SettingsUiScreen);
 
-    private readonly ButtonWidget _languageButton;
+    private readonly InlineSelectionWidget _languageSelection;
 
     private readonly ButtonWidget _hudSafeAreaButton;
 
@@ -35,7 +35,16 @@ public class SettingsUiScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/SettingsUiScreen");
         LoadContents(this, node);
         _windowModeContainer = Children.Find<ContainerWidget>("WindowModeContainer")!;
-        _languageButton = Children.Find<BevelledButtonWidget>("LanguageButton")!;
+        _languageSelection = Children.Find<InlineSelectionWidget>("LanguageSelection")!;
+        _languageSelection.ItemTextProvider = item => LanguageManager.GetLanguageDisplayName((string)item);
+        _languageSelection.SelectionChanged += () =>
+        {
+            if (_languageSelection.SelectedItem is string languageType &&
+                !languageType.Equals(LanguageManager.CurrentLanguage, StringComparison.OrdinalIgnoreCase))
+            {
+                ChangeLanguage(languageType);
+            }
+        };
         _hudSafeAreaButton = Children.Find<ButtonWidget>("HudSafeArea")!;
         _hudSafeAreaPaddingSlider = Children.Find<SliderWidget>("HudSafeAreaPadding")!;
         _windowModeButton = Children.Find<ButtonWidget>("WindowModeButton")!;
@@ -49,6 +58,8 @@ public class SettingsUiScreen : Screen
     public override void Enter(object[] parameters)
     {
         _windowModeContainer.IsVisible = PlatformManager.Platform is not Platform.Android;
+        _languageSelection.SetItems(LanguageManager.LanguageTypes);
+        _languageSelection.SelectedItem = LanguageManager.CurrentLanguage;
     }
 
     public override void Update()
@@ -69,11 +80,6 @@ public class SettingsUiScreen : Screen
         if (_uiScaleSlider.SlidingCompleted)
         {
             SettingsManager.Current.UIScale = _uiScaleSlider.Value;
-        }
-
-        if (_languageButton.IsClicked)
-        {
-            OnLanguageButtonClick(); // 调用新的语言选择功能
         }
 
         if (!_uiScaleSlider.IsSliding)
@@ -117,7 +123,6 @@ public class SettingsUiScreen : Screen
 
         // 更新按钮文本
         _windowModeButton.Text = LanguageManager.Get("WindowMode", RunningSettingManager.Current.WindowMode.ToString());
-        _languageButton.Text = LanguageManager.Get("Language", "Name");
         _upsideDownButton.Text = SettingsManager.Current.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
         _hudSafeAreaButton.Text = SettingsManager.Current.HudSafeAreaEnabled
             ? LanguageManager.Get("Usual", "on")
@@ -136,20 +141,6 @@ public class SettingsUiScreen : Screen
         {
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
         }
-    }
-
-    private static void OnLanguageButtonClick()
-    {
-        DialogsManager.ShowDialog(
-            null,
-            new ListSelectionDialog(
-                string.Empty,
-                LanguageManager.LanguageTypes,
-                70f,
-                item => LanguageManager.GetLanguageDisplayName((string)item),
-                delegate (object item) { ChangeLanguage((string)item); }
-            )
-        );
     }
 
     public static void ChangeLanguage(string languageType)
