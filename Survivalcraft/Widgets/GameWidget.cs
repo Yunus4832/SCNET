@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 
-using Engine.Graphics;
 using Engine.Input;
 
 using EntitySystem.Core;
@@ -206,7 +205,7 @@ public class GameWidget : CanvasWidget
         {
             if (_informationOverlaysContainer != null)
             {
-                var horizontalMargin = MathUtils.Lerp(12f, 76f,
+                var horizontalMargin = MathUtils.Lerp(12f, 12f + player.ComponentGui.TouchControlsHorizontalInset,
                     player.ComponentGui.TouchControlsVisibilityFactor);
                 if (_informationOverlaysContainer.Margin.X != horizontalMargin)
                 {

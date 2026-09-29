@@ -8,6 +8,8 @@ public class ShortInventoryWidget : CanvasWidget
 
     private readonly GridPanelWidget _inventoryGrid;
 
+    public float HorizontalSafeAreaPadding { get; set; }
+
     public ShortInventoryWidget()
     {
         var node = ContentManager.Get<XElement>("Widgets/ShortInventoryWidget");
@@ -34,7 +36,8 @@ public class ShortInventoryWidget : CanvasWidget
         }
 
         var max = _inventory is ComponentCreativeInventory ? 10 : 7;
-        _inventory.VisibleSlotsCount = MathUtils.Clamp((int)((parentAvailableSize.X - 320f - 25f) / 72f), 7, max);
+        var availableWidth = parentAvailableSize.X - 320f - 25f - 2f * HorizontalSafeAreaPadding;
+        _inventory.VisibleSlotsCount = MathUtils.Clamp((int)(availableWidth / 72f), 7, max);
         if (_inventory.VisibleSlotsCount != _inventoryGrid.Children.Count)
         {
             _inventoryGrid.Children.Clear();

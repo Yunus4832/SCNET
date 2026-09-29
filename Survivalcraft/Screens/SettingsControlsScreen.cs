@@ -23,10 +23,6 @@ public class SettingsControlsScreen : Screen
 
     private readonly SliderWidget _holdDurationSlider;
 
-    private readonly ButtonWidget _horizontalCreativeFlightButton;
-
-    private readonly ContainerWidget _horizontalCreativeFlightPanel;
-
     private readonly ButtonWidget _leftHandedLayoutButton;
 
     private readonly ButtonWidget _lookControlModeButton;
@@ -46,8 +42,6 @@ public class SettingsControlsScreen : Screen
         _leftHandedLayoutButton = Children.Find<ButtonWidget>("LeftHandedLayout")!;
         _flipVerticalAxisButton = Children.Find<ButtonWidget>("FlipVerticalAxis")!;
         _autoJumpButton = Children.Find<ButtonWidget>("AutoJump")!;
-        _horizontalCreativeFlightButton = Children.Find<ButtonWidget>("HorizontalCreativeFlight")!;
-        _horizontalCreativeFlightPanel = Children.Find<ContainerWidget>("HorizontalCreativeFlightPanel")!;
         _moveSensitivitySlider = Children.Find<SliderWidget>("MoveSensitivitySlider")!;
         _lookSensitivitySlider = Children.Find<SliderWidget>("LookSensitivitySlider")!;
         _gamepadCursorSpeedSlider = Children.Find<SliderWidget>("GamepadCursorSpeedSlider")!;
@@ -56,7 +50,6 @@ public class SettingsControlsScreen : Screen
         _creativeReachSlider = Children.Find<SliderWidget>("CreativeReachSlider")!;
         _holdDurationSlider = Children.Find<SliderWidget>("HoldDurationSlider")!;
         _dragDistanceSlider = Children.Find<SliderWidget>("DragDistanceSlider")!;
-        _horizontalCreativeFlightPanel.IsVisible = false;
     }
 
     public override void Update()
@@ -89,11 +82,6 @@ public class SettingsControlsScreen : Screen
         if (_autoJumpButton.IsClicked)
         {
             SettingsManager.Current.AutoJump = !SettingsManager.Current.AutoJump;
-        }
-
-        if (_horizontalCreativeFlightButton.IsClicked)
-        {
-            SettingsManager.Current.HorizontalCreativeFlight = !SettingsManager.Current.HorizontalCreativeFlight;
         }
 
         if (_moveSensitivitySlider.IsSliding)
@@ -147,9 +135,6 @@ public class SettingsControlsScreen : Screen
             ? LanguageManager.Get("Usual", "on")
             : LanguageManager.Get("Usual", "off");
         _autoJumpButton.Text = SettingsManager.Current.AutoJump
-            ? LanguageManager.Get("Usual", "on")
-            : LanguageManager.Get("Usual", "off");
-        _horizontalCreativeFlightButton.Text = SettingsManager.Current.HorizontalCreativeFlight
             ? LanguageManager.Get("Usual", "on")
             : LanguageManager.Get("Usual", "off");
         _moveSensitivitySlider.Value = SettingsManager.Current.MoveSensitivity;

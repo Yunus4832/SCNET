@@ -441,11 +441,9 @@ public class ComponentLocomotion : Component, IUpdateable
                     v += FlyOrder.Value;
                 }
 
-                var v2 =
-                    !SettingsManager.Current.HorizontalCreativeFlight || _componentPlayer == null ||
-                    _componentPlayer.ComponentInput.IsTouchInputActive
-                        ? Vector3.Normalize(vector + 0.1f * Vector3.UnitY)
-                        : Vector3.Normalize(vector * new Vector3(1f, 0f, 1f));
+                var v2 = _componentPlayer == null || _componentPlayer.ComponentInput.IsTouchInputActive
+                    ? Vector3.Normalize(vector + 0.1f * Vector3.UnitY)
+                    : Vector3.Normalize(vector * new Vector3(1f, 0f, 1f));
                 var v3 = CreativeFlySpeed * (right * v.X + Vector3.UnitY * v.Y + v2 * v.Z);
                 var num = v == Vector3.Zero ? 5f : 3f;
                 velocity += MathUtils.Saturate(num * dt) * (v3 - velocity);

@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml.Linq;
 
 using Game.Commands;
@@ -9,6 +10,10 @@ public class SettingsUiScreen : Screen
     private const string _typeName = nameof(SettingsUiScreen);
 
     private readonly ButtonWidget _languageButton;
+
+    private readonly ButtonWidget _hudSafeAreaButton;
+
+    private readonly SliderWidget _hudSafeAreaPaddingSlider;
 
     private readonly ButtonWidget _screenshotSizeButton;
 
@@ -31,6 +36,8 @@ public class SettingsUiScreen : Screen
         LoadContents(this, node);
         _windowModeContainer = Children.Find<ContainerWidget>("WindowModeContainer")!;
         _languageButton = Children.Find<BevelledButtonWidget>("LanguageButton")!;
+        _hudSafeAreaButton = Children.Find<ButtonWidget>("HudSafeArea")!;
+        _hudSafeAreaPaddingSlider = Children.Find<SliderWidget>("HudSafeAreaPadding")!;
         _windowModeButton = Children.Find<ButtonWidget>("WindowModeButton")!;
         _uiScaleSlider = Children.Find<SliderWidget>("UIScaleSlider")!;
         _upsideDownButton = Children.Find<ButtonWidget>("UpsideDownButton")!;
@@ -41,7 +48,7 @@ public class SettingsUiScreen : Screen
 
     public override void Enter(object[] parameters)
     {
-        _windowModeContainer.IsVisible = true;
+        _windowModeContainer.IsVisible = PlatformManager.Platform is not Platform.Android;
     }
 
     public override void Update()
@@ -81,6 +88,16 @@ public class SettingsUiScreen : Screen
             SettingsManager.Current.UpsideDownLayout = !SettingsManager.Current.UpsideDownLayout;
         }
 
+        if (_hudSafeAreaButton.IsClicked)
+        {
+            SettingsManager.Current.HudSafeAreaEnabled = !SettingsManager.Current.HudSafeAreaEnabled;
+        }
+
+        if (_hudSafeAreaPaddingSlider.IsSliding)
+        {
+            SettingsManager.Current.HudSafeAreaPadding = _hudSafeAreaPaddingSlider.Value;
+        }
+
         if (_showGuiInScreenshotsButton.IsClicked)
         {
             SettingsManager.Current.ShowGuiInScreenshots = !SettingsManager.Current.ShowGuiInScreenshots;
@@ -102,6 +119,13 @@ public class SettingsUiScreen : Screen
         _windowModeButton.Text = LanguageManager.Get("WindowMode", RunningSettingManager.Current.WindowMode.ToString());
         _languageButton.Text = LanguageManager.Get("Language", "Name");
         _upsideDownButton.Text = SettingsManager.Current.UpsideDownLayout ? LanguageManager.Yes : LanguageManager.No;
+        _hudSafeAreaButton.Text = SettingsManager.Current.HudSafeAreaEnabled
+            ? LanguageManager.Get("Usual", "on")
+            : LanguageManager.Get("Usual", "off");
+        _hudSafeAreaPaddingSlider.IsEnabled = SettingsManager.Current.HudSafeAreaEnabled;
+        _hudSafeAreaPaddingSlider.Value = SettingsManager.Current.HudSafeAreaPadding;
+        _hudSafeAreaPaddingSlider.Text = MathUtils.Round(SettingsManager.Current.HudSafeAreaPadding)
+            .ToString(CultureInfo.InvariantCulture);
         _showGuiInScreenshotsButton.Text =
             SettingsManager.Current.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
         _showLogoInScreenshotsButton.Text =

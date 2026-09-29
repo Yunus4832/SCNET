@@ -2775,8 +2775,6 @@
             "1": ""
         },
         "GameWidget": {
-            "1": "Movimento",
-            "2": "Revisão",
             "3": "",
             "4": "",
             "5": "",
@@ -3240,7 +3238,6 @@
             "Modo esquerdo",
             "Eixo de inversão vertical",
             "Salto automático",
-            "Horizontal cria vôo",
             "Sensibilidade de movimento",
             "Verifique a sensibilidade",
             "Velocidade do cursor do gamepad",
@@ -3248,14 +3245,7 @@
             "Criação de velocidade de mineração de padrões",
             "Criar um padrão de colocação",
             "Duração da pressão longa",
-            "Distância mínima de arrastamento",
-            "Introdução de abertura",
-            "Diálogo de edição de memória",
-            "Criação de modo arrastar um conjunto de quadros",
-            "Arraste metade do quadrado no estado Split",
-            "Touch Screen Rocker Offset (em inglês)",
-            "Touch Screen Rocker Lateral Offset (em inglês)",
-            "Deslocamento longitudinal do rocker touchscreen"
+            "Distância mínima de arrastamento"
         ],
         "SettingsGraphicsScreen": {
             "1": "Ajuste das configurações de imagem",
@@ -3292,7 +3282,9 @@
             "Interface invertida vertical:",
             "Screenshot da interface de exibição:",
             "A captura de tela mostra o logo:",
-            "Resolução Screenshot:"
+            "Resolução Screenshot:",
+            "Margem segura da HUD",
+            "Tamanho da margem segura"
         ],
         "TrialEndedScreen": {
             "1": "O dia acabou.",

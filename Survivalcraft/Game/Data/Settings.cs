@@ -92,6 +92,14 @@ public class Settings
 
     public bool LeftHandedLayout { get; set; }
 
+    public bool HudSafeAreaEnabled { get; set; }
+
+    public float HudSafeAreaPadding
+    {
+        get;
+        set => field = MathUtils.Clamp(value, 0f, 80f);
+    } = 32f;
+
     public bool FlipVerticalAxis { get; set; }
 
     public float MoveSensitivity { get; set; } = 0.5f;
@@ -111,8 +119,6 @@ public class Settings
     public float MinimumDragDistance { get; set; } = 10f;
 
     public bool AutoJump { get; set; } = true;
-
-    public bool HorizontalCreativeFlight { get; set; } = true;
 
     /// <summary>
     ///     Stable identifier for this local multiplayer client. This is not an account credential

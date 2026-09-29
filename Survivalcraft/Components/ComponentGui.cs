@@ -44,6 +44,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     private ButtonWidget _helpButtonWidget = null!;
 
+    private readonly List<(BitmapButtonWidget Button, string AttachedName, string FloatingName)>
+        _hudSafeAreaButtons = [];
+
+    private bool? _hudSafeAreaEnabled;
+
     private ButtonWidget _inventoryButtonWidget = null!;
 
     private KeyboardHelpDialog? _keyboardHelpDialog;
@@ -143,6 +148,11 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     public bool AreTouchControlsVisible { get; private set; }
 
     public float TouchControlsVisibilityFactor => 1f - _sidePanelsFactor;
+
+    public float TouchControlsHorizontalInset =>
+        SettingsManager.Current.HudSafeAreaEnabled
+            ? SettingsManager.Current.HudSafeAreaPadding + 76f
+            : 64f;
 
     public bool IsGameInputCaptured =>
         ModalPanelWidget is IGameInputCapturingWidget || DialogsManager.HasDialogs(ComponentPlayer.GuiWidget);
@@ -310,6 +320,24 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _movePadContainerWidget = guiWidget.Children.Find<ContainerWidget>("MovePadContainer")!;
         _lookPadContainerWidget = guiWidget.Children.Find<ContainerWidget>("LookPadContainer")!;
         _moveButtonsContainerWidget = guiWidget.Children.Find<ContainerWidget>("MoveButtonsContainer")!;
+        _hudSafeAreaButtons.AddRange([
+            (guiWidget.Children.Find<BitmapButtonWidget>("BackButton")!, "BackButton", "BackButtonFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("ClothingButton")!, "ClothingButton",
+                "ClothingButtonFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("InventoryButton")!, "InventoryButton",
+                "InventoryButtonFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("PlayerListButton")!, "PlayerList",
+                "PlayerListFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("MoreButton")!, "MoreButton", "MoreButtonFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("CreativeFlyButton")!, "CreativeFlyButton",
+                "CreativeFlyButtonFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("CrouchButton")!, "SneakButton",
+                "SneakButtonFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("MountButton")!, "MountButton", "MountButtonFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("EditItemButton")!, "EditItemButton",
+                "EditItemButtonFloating"),
+            (guiWidget.Children.Find<BitmapButtonWidget>("MsgButton")!, "Msg", "MsgFloating")
+        ]);
         ShortInventoryWidget = guiWidget.Children.Find<ShortInventoryWidget>("ShortInventory")!;
         _largeMessageWidget = guiWidget.Children.Find<ContainerWidget>("LargeMessage")!;
         _messageWidget = guiWidget.Children.Find<ToastWidget>("Toast")!;
@@ -372,10 +400,13 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _sidePanelsFactor = num2;
         }
 
-        _leftControlsContainerWidget.RenderTransform =
-            Matrix.CreateTranslation(_leftControlsContainerWidget.ActualSize.X * (0f - _sidePanelsFactor), 0f, 0f);
-        _rightControlsContainerWidget.RenderTransform =
-            Matrix.CreateTranslation(_rightControlsContainerWidget.ActualSize.X * _sidePanelsFactor, 0f, 0f);
+        var safeAreaPadding = SettingsManager.Current.HudSafeAreaEnabled
+            ? SettingsManager.Current.HudSafeAreaPadding
+            : 0f;
+        _leftControlsContainerWidget.RenderTransform = Matrix.CreateTranslation(
+            (0f - (_leftControlsContainerWidget.ActualSize.X + safeAreaPadding)) * _sidePanelsFactor, 0f, 0f);
+        _rightControlsContainerWidget.RenderTransform = Matrix.CreateTranslation(
+            (_rightControlsContainerWidget.ActualSize.X + safeAreaPadding) * _sidePanelsFactor, 0f, 0f);
         _leftControlsContainerWidget.IsEnabled = AreTouchControlsVisible;
         _rightControlsContainerWidget.IsEnabled = AreTouchControlsVisible;
     }
@@ -439,6 +470,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         var componentSleep = ComponentPlayer.ComponentSleep;
         var worldSettings = SubsystemGameInfo.WorldSettings;
         var gameMode = worldSettings.GameMode;
+        UpdateHudSafeArea();
         UpdateSidePanelsAnimation();
         if (_modalPanelAnimationData != null)
         {
@@ -577,6 +609,38 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             ComponentPlayer.ComponentGui.HealthBarWidget.LitBarColor = ComponentPlayer.ComponentFlu.HasFlu
                 ? new Color(0, 48, 255)
                 : new Color(224, 24, 0);
+        }
+    }
+
+    private void UpdateHudSafeArea()
+    {
+        var enabled = SettingsManager.Current.HudSafeAreaEnabled;
+        var padding = enabled ? SettingsManager.Current.HudSafeAreaPadding : 0f;
+        var sideMargin = new Vector2(padding, 0f);
+        _leftControlsContainerWidget.Margin = sideMargin;
+        _rightControlsContainerWidget.Margin = sideMargin;
+        _moveContainerWidget.Margin = sideMargin;
+        _lookContainerWidget.Margin = sideMargin;
+        ShortInventoryWidget.HorizontalSafeAreaPadding = AreTouchControlsVisible ? padding : 0f;
+        if (_hudSafeAreaEnabled == enabled)
+        {
+            return;
+        }
+
+        _hudSafeAreaEnabled = enabled;
+        var touchControllerName = enabled ? "TouchControllerFloating" : "TouchController";
+        var touchControllerSubtexture =
+            TextureAtlasManager.GetSubtexture($"Textures/Atlas/{touchControllerName}");
+        _moveRectangleWidget.Subtexture = touchControllerSubtexture;
+        _lookRectangleWidget.Subtexture = touchControllerSubtexture;
+        foreach (var (button, attachedName, floatingName) in _hudSafeAreaButtons)
+        {
+            var resourceName = enabled ? floatingName : attachedName;
+            button.NormalSubtexture = TextureAtlasManager.GetSubtexture($"Textures/Atlas/{resourceName}");
+            button.ClickedSubtexture =
+                TextureAtlasManager.GetSubtexture($"Textures/Atlas/{resourceName}_Pressed");
+            button.Size = enabled ? new Vector2(68f, 64f) : new Vector2(64f, 64f);
+            button.Margin = enabled ? new Vector2(4f, 3f) : new Vector2(0f, 3f);
         }
     }
 

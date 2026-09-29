@@ -2775,8 +2775,6 @@
             "1": ""
         },
         "GameWidget": {
-            "1": "Move",
-            "2": "Look",
             "3": "",
             "4": "",
             "5": "",
@@ -3240,7 +3238,6 @@
             "Left-handed Layout:",
             "Flip Vertical Axis:",
             "Auto Jump:",
-            "Horizontal Creative Flight:",
             "Move Sensitivity:",
             "Look Sensitivity:",
             "Gamepad Cursor Speed:",
@@ -3248,14 +3245,7 @@
             "Creative Mode Dig Speed:",
             "Creative Mode Reach:",
             "Minimum Hold Duration:",
-            "Minimum Drag Distance:",
-            "Introduction:",
-            "MemoryBank Style:",
-            "Creative Mode Drag Max Stack Of Blocks:",
-            "Drag Half Stack Of Blocks In Split:",
-            "Touch Screen Joystick Offset",
-            "Touch Screen Joystick Offset X",
-            "Touch Screen Joystick Offset Y"
+            "Minimum Drag Distance:"
         ],
         "SettingsGraphicsScreen": {
             "1": "Adjust Graphics Settings",
@@ -3292,7 +3282,9 @@
             "UI Vertical Flip:",
             "Show UI in screenshots:",
             "Show logo in screenshots:",
-            "Screenshot resolution:"
+            "Screenshot resolution:",
+            "HUD safe margin",
+            "Safe margin size"
         ],
         "TrialEndedScreen": {
             "1": "The day has ended",
