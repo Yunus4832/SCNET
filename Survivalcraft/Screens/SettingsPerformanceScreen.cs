@@ -176,14 +176,12 @@ public class SettingsPerformanceScreen : Screen
                         return;
                     }
 
-                    SettingsManager.SaveSettings();
                     ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
                 })
             );
         }
         else
         {
-            SettingsManager.SaveSettings();
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
         }
     }

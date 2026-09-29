@@ -66,7 +66,6 @@ public class SettingsDiagnosticsScreen : Screen
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            SettingsManager.SaveSettings();
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
         }
     }

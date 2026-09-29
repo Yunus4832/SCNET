@@ -174,7 +174,6 @@ public class SettingsControlsScreen : Screen
             $"{MathUtils.Round(SettingsManager.Current.MinimumDragDistance)} " + LanguageManager.Get(_typeName, 2);
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            SettingsManager.SaveSettings();
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
         }
     }

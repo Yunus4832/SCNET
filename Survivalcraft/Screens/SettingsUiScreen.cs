@@ -110,7 +110,6 @@ public class SettingsUiScreen : Screen
             LanguageManager.Get("ScreenshotSize", SettingsManager.Current.ScreenshotSize.ToString());
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            SettingsManager.SaveSettings();
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
         }
     }

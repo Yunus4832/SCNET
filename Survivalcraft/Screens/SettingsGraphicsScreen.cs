@@ -60,7 +60,6 @@ public class SettingsGraphicsScreen : Screen
         _viewAngleSlider.Text = $"{MathUtils.Round(SettingsManager.Current.ViewAngle * 100f)}%";
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            SettingsManager.SaveSettings();
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
         }
     }

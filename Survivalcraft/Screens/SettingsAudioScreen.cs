@@ -34,7 +34,6 @@ public class SettingsAudioScreen : Screen
         _musicVolumeSlider.Text = MathUtils.Round(SettingsManager.Current.MusicVolume * 10f).ToString();
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            SettingsManager.SaveSettings();
             ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
         }
     }
