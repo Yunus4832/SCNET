@@ -1,0 +1,13 @@
+<Project>
+    <!-- 非主 Android 启动器复用主启动器的源码和资源 -->
+    <ItemGroup>
+        <Compile Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Android\**\*.cs"
+                 Exclude="$(MSBuildThisFileDirectory)..\Survivalcraft.Android\obj\**\*.cs"/>
+        <AndroidResource Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Android\Resources\values\colors.xml"
+                         Link="Resources\values\colors.xml"/>
+        <AndroidResource Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Android\Resources\values\styles.xml"
+                         Link="Resources\values\styles.xml"/>
+        <AndroidResource Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Android\Resources\mipmap\icon.png"
+                         Link="Resources\mipmap\icon.png"/>
+    </ItemGroup>
+</Project>

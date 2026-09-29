@@ -62,6 +62,23 @@
 
 Android 的几个变体项目会复用这份配置，只在自己的 `.csproj` 里覆盖架构、输出名和引用方式。这样一来就可以集中管理移动端的构建差异。
 
+### `SharedProperties/AndroidApplication.props`
+
+这是 Android 可运行启动器的公共项目配置，集中定义目标框架、程序集名称、最低系统版本、
+`Content.zip` 资产声明、共享 Manifest 和全局 `using`。每个架构项目仍显式声明自己的
+`RuntimeIdentifier`、APK 名称，并在 `ProjectReference` 中硬编码相同 RID，以避免 Rider 设计时
+构建和 MSBuild 项目引用求值产生架构偏差。
+
+公共 Manifest 位于 `SharedProperties/AndroidManifest.xml`，所有 Android 启动器使用同一个模板。
+架构项目不应保存独立副本；需要平台级声明时修改公共模板，需要真正的架构差异时再使用条件配置
+或 Manifest Overlay。
+
+### `SharedProperties/AndroidVariant.props`
+
+Arm32、x64 和 x86 变体通过这份配置链接 `Survivalcraft.Android/` 中的公共启动器源码与 Android
+资源。各变体继续保留独立的项目、`bin/obj`、`Content.zip` 和对应 ABI 的 OpenAL 库，使 Rider
+可以直接选择匹配设备架构的项目运行，同时避免不同 RID 的中间产物互相污染。
+
 ## 构建
 
 ```bash

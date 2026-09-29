@@ -1,37 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk" InitialTargets="PackResource">
     <PropertyGroup>
-        <AssemblyName>SurvivalcraftStarter</AssemblyName>
-        <TargetFramework>$(AndroidTargetFramework)</TargetFramework>
-        <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
         <RuntimeIdentifier>android-arm64</RuntimeIdentifier>
-        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
-    <!-- 安卓相关配置 -->
-    <Import Project="..\SharedProperties\Android.props"/>
-
-    <!--声明需要打包资源-->
-    <PropertyGroup>
-        <UsePackResourceTarget>true</UsePackResourceTarget>
-    </PropertyGroup>
+    <Import Project="..\SharedProperties\AndroidApplication.props"/>
 
     <!-- Release 配置 -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <OutputApkName>SCNET_Arm64-$(ScnetVersion).apk</OutputApkName>
-        <UseRenameApkTarget>true</UseRenameApkTarget>
     </PropertyGroup>
 
     <ItemGroup>
-        <AndroidAsset Include="Content.zip" Link="Assets\Content.zip"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <!-- 这里的 TargetFramework, RuntimeIdendifier 必须硬编码，MSBuild 的限制，请勿修改 -->
+        <!-- 这里的 TargetFramework, RuntimeIdentifier 必须硬编码，MSBuild 的限制，请勿修改 -->
         <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj" SetTargetFramework="TargetFramework=net10.0-android36.0">
             <AdditionalProperties>RuntimeIdentifier=android-arm64</AdditionalProperties>
         </ProjectReference>
     </ItemGroup>
-
-    <Import Project="..\SharedProperties\GlobalUsing.props"/>
-
 </Project>

@@ -1,47 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk" InitialTargets="PackResource">
     <PropertyGroup>
-        <AssemblyName>SurvivalcraftStarter</AssemblyName>
-        <TargetFramework>$(AndroidTargetFramework)</TargetFramework>
-        <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
         <RuntimeIdentifier>android-x64</RuntimeIdentifier>
-        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
-    <!-- 安卓相关配置 -->
-    <Import Project="..\SharedProperties\Android.props"/>
-
-    <!--声明需要打包资源-->
-    <PropertyGroup>
-        <UsePackResourceTarget>true</UsePackResourceTarget>
-    </PropertyGroup>
+    <Import Project="..\SharedProperties\AndroidApplication.props"/>
+    <Import Project="..\SharedProperties\AndroidVariant.props"/>
 
     <!-- Release 配置 -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <OutputApkName>SCNET_X64-$(ScnetVersion).apk</OutputApkName>
-        <UseRenameApkTarget>true</UseRenameApkTarget>
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Include="..\Survivalcraft.Android\**\*.cs" Exclude="..\Survivalcraft.Android\obj\**\*.cs"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <AndroidAsset Include="Content.zip" Link="Assets\Content.zip"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <AndroidResource Include="..\Survivalcraft.Android\Resources\values\colors.xml" Link="Resources\values\colors.xml"/>
-        <AndroidResource Include="..\Survivalcraft.Android\Resources\values\styles.xml" Link="Resources\values\styles.xml"/>
-        <AndroidResource Include="..\Survivalcraft.Android\Resources\mipmap\icon.png" Link="Resources\mipmap\icon.png"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <!-- 这里的 TargetFramework, RuntimeIdendifier 必须硬编码，MSBuild 的限制，请勿修改 -->
+        <!-- 这里的 TargetFramework, RuntimeIdentifier 必须硬编码，MSBuild 的限制，请勿修改 -->
         <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj" SetTargetFramework="TargetFramework=net10.0-android36.0">
             <AdditionalProperties>RuntimeIdentifier=android-x64</AdditionalProperties>
         </ProjectReference>
     </ItemGroup>
-
-    <Import Project="..\SharedProperties\GlobalUsing.props"/>
-
 </Project>

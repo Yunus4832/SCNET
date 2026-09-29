@@ -1,0 +1,20 @@
+<Project>
+    <!-- Android 启动器应用的公共配置 -->
+    <PropertyGroup>
+        <AssemblyName>SurvivalcraftStarter</AssemblyName>
+        <TargetFramework>$(AndroidTargetFramework)</TargetFramework>
+        <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
+        <OutputType>Exe</OutputType>
+        <UsePackResourceTarget>true</UsePackResourceTarget>
+        <UseRenameApkTarget Condition="'$(Configuration)' == 'Release'">true</UseRenameApkTarget>
+        <AndroidManifest>..\SharedProperties\AndroidManifest.xml</AndroidManifest>
+    </PropertyGroup>
+
+    <Import Project="$(MSBuildThisFileDirectory)Android.props"/>
+
+    <ItemGroup>
+        <AndroidAsset Include="$(MSBuildProjectDirectory)\Content.zip" Link="Assets\Content.zip"/>
+    </ItemGroup>
+
+    <Import Project="$(MSBuildThisFileDirectory)GlobalUsing.props"/>
+</Project>
