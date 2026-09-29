@@ -120,8 +120,6 @@ public abstract class Block
 
     public bool DiggingTransparent;
 
-    public bool ExplosionTransparent;
-
     public bool FluidBlocker = true;
 
     public bool Gatherable;

@@ -352,10 +352,10 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                         var block2 = BlocksManager.Blocks[num7];
                         if (!(BlocksManager.Blocks[num7] is FluidBlock))
                         {
-                            var num8 = _projectilesCount < 40 || block2.ExplosionTransparent ? 1f :
+                            var num8 = _projectilesCount < 40 || block2.ExplosionKeepsPickable ? 1f :
                                 _projectilesCount < 60 ? 0.5f :
                                 _projectilesCount >= 80 ? 0.125f : 0.25f;
-                            if (!(SharedRandom.Float(0f, 1f) < num8))
+                            if (SharedRandom.Float(0f, 1f) < num8)
                             {
                                 var velocity = impulse + SharedRandom.Vector3(0.05f * impulse.Length());
                                 if (_projectilesCount >= 1)
@@ -365,7 +365,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                                 }
 
                                 var num9 = flag2 ? 0f :
-                                    block2.ExplosionTransparent ? 1f :
+                                    block2.ExplosionKeepsPickable ? 1f :
                                     MathUtils.Lerp(1f, 0f, _projectilesCount / 25f);
                                 //添加抛射物
                                 var projectile = _subsystemProjectiles.AddProjectile(
