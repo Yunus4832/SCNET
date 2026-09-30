@@ -151,7 +151,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public float TouchControlsHorizontalInset =>
         SettingsManager.Current.HudSafeAreaEnabled
-            ? SettingsManager.Current.HudSafeAreaPadding + 76f
+            ? HudSafeAreaManager.GetEffectivePadding(ComponentPlayer.GameWidget.GlobalScale) + 76f
             : 64f;
 
     public bool IsGameInputCaptured =>
@@ -400,9 +400,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _sidePanelsFactor = num2;
         }
 
-        var safeAreaPadding = SettingsManager.Current.HudSafeAreaEnabled
-            ? SettingsManager.Current.HudSafeAreaPadding
-            : 0f;
+        var safeAreaPadding = HudSafeAreaManager.GetEffectivePadding(ComponentPlayer.GameWidget.GlobalScale);
         _leftControlsContainerWidget.RenderTransform = Matrix.CreateTranslation(
             (0f - (_leftControlsContainerWidget.ActualSize.X + safeAreaPadding)) * _sidePanelsFactor, 0f, 0f);
         _rightControlsContainerWidget.RenderTransform = Matrix.CreateTranslation(
@@ -615,7 +613,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     private void UpdateHudSafeArea()
     {
         var enabled = SettingsManager.Current.HudSafeAreaEnabled;
-        var padding = enabled ? SettingsManager.Current.HudSafeAreaPadding : 0f;
+        var padding = HudSafeAreaManager.GetEffectivePadding(ComponentPlayer.GameWidget.GlobalScale);
         var sideMargin = new Vector2(padding, 0f);
         _leftControlsContainerWidget.Margin = sideMargin;
         _rightControlsContainerWidget.Margin = sideMargin;

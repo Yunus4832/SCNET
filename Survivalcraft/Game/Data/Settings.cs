@@ -94,6 +94,8 @@ public class Settings
 
     public bool HudSafeAreaEnabled { get; set; }
 
+    public bool HudSafeAreaCustomPaddingEnabled { get; set; }
+
     public float HudSafeAreaPadding
     {
         get;

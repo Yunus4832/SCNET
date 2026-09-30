@@ -37,6 +37,8 @@ public static partial class Window
 
     public static event Action<UnhandledExceptionInfo>? UnhandledException;
 
+    public static event Action<Vector4, bool>? DisplayCutoutInsetsChanged;
+
 #pragma warning disable CS0067 // Event is never used
     public static event Action<Uri>? HandleUri;
 #pragma warning restore CS0067 // Event is never used
@@ -45,7 +47,26 @@ public static partial class Window
 
     public static bool IsActive => _state == State.Active;
 
+    public static bool HasWideNotch { get; private set; }
+
+    /// <summary>
+    ///     Display cutout insets in framebuffer pixels. X: left, Y: top, Z: right, W: bottom.
+    /// </summary>
+    public static Vector4 DisplayCutoutInsets { get; private set; } = Vector4.Zero;
+
     public static float Scale { get; set; } = 1.0f;
+
+    public static void DisplayCutoutInsetsChangedHandler(Vector4 insets, bool hasWideNotch)
+    {
+        if (HasWideNotch == hasWideNotch && DisplayCutoutInsets == insets)
+        {
+            return;
+        }
+
+        HasWideNotch = hasWideNotch;
+        DisplayCutoutInsets = insets;
+        DisplayCutoutInsetsChanged?.Invoke(insets, hasWideNotch);
+    }
 
     public static bool VSync
     {

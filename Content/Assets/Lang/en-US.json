@@ -3284,7 +3284,8 @@
             "Show logo in screenshots:",
             "Screenshot resolution:",
             "HUD safe margin",
-            "Safe margin size"
+            "Safe margin size",
+            "Custom Safe Margin"
         ],
         "TrialEndedScreen": {
             "1": "The day has ended",

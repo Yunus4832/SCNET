@@ -13,6 +13,8 @@ public class SettingsUiScreen : Screen
 
     private readonly ButtonWidget _hudSafeAreaButton;
 
+    private readonly ButtonWidget _hudSafeAreaCustomPaddingButton;
+
     private readonly SliderWidget _hudSafeAreaPaddingSlider;
 
     private readonly ButtonWidget _screenshotSizeButton;
@@ -46,6 +48,7 @@ public class SettingsUiScreen : Screen
             }
         };
         _hudSafeAreaButton = Children.Find<ButtonWidget>("HudSafeArea")!;
+        _hudSafeAreaCustomPaddingButton = Children.Find<ButtonWidget>("HudSafeAreaCustomPadding")!;
         _hudSafeAreaPaddingSlider = Children.Find<SliderWidget>("HudSafeAreaPadding")!;
         _windowModeButton = Children.Find<ButtonWidget>("WindowModeButton")!;
         _uiScaleSlider = Children.Find<SliderWidget>("UIScaleSlider")!;
@@ -99,6 +102,12 @@ public class SettingsUiScreen : Screen
             SettingsManager.Current.HudSafeAreaEnabled = !SettingsManager.Current.HudSafeAreaEnabled;
         }
 
+        if (_hudSafeAreaCustomPaddingButton.IsClicked)
+        {
+            SettingsManager.Current.HudSafeAreaCustomPaddingEnabled =
+                !SettingsManager.Current.HudSafeAreaCustomPaddingEnabled;
+        }
+
         if (_hudSafeAreaPaddingSlider.IsSliding)
         {
             SettingsManager.Current.HudSafeAreaPadding = _hudSafeAreaPaddingSlider.Value;
@@ -127,9 +136,21 @@ public class SettingsUiScreen : Screen
         _hudSafeAreaButton.Text = SettingsManager.Current.HudSafeAreaEnabled
             ? LanguageManager.Get("Usual", "on")
             : LanguageManager.Get("Usual", "off");
-        _hudSafeAreaPaddingSlider.IsEnabled = SettingsManager.Current.HudSafeAreaEnabled;
-        _hudSafeAreaPaddingSlider.Value = SettingsManager.Current.HudSafeAreaPadding;
-        _hudSafeAreaPaddingSlider.Text = MathUtils.Round(SettingsManager.Current.HudSafeAreaPadding)
+        _hudSafeAreaCustomPaddingButton.IsEnabled = SettingsManager.Current.HudSafeAreaEnabled;
+        _hudSafeAreaCustomPaddingButton.Text = SettingsManager.Current.HudSafeAreaCustomPaddingEnabled
+            ? LanguageManager.Get("Usual", "on")
+            : LanguageManager.Get("Usual", "off");
+        _hudSafeAreaPaddingSlider.IsEnabled = SettingsManager.Current.HudSafeAreaEnabled &&
+                                              SettingsManager.Current.HudSafeAreaCustomPaddingEnabled;
+        var hudSafeAreaPadding = SettingsManager.Current.HudSafeAreaCustomPaddingEnabled
+            ? SettingsManager.Current.HudSafeAreaPadding
+            : HudSafeAreaManager.GetAutomaticPadding(_hudSafeAreaPaddingSlider.GlobalScale);
+        if (!_hudSafeAreaPaddingSlider.IsSliding)
+        {
+            _hudSafeAreaPaddingSlider.Value = hudSafeAreaPadding;
+        }
+
+        _hudSafeAreaPaddingSlider.Text = MathUtils.Round(hudSafeAreaPadding)
             .ToString(CultureInfo.InvariantCulture);
         _showGuiInScreenshotsButton.Text =
             SettingsManager.Current.ShowGuiInScreenshots ? LanguageManager.Yes : LanguageManager.No;
@@ -164,4 +185,5 @@ public class SettingsUiScreen : Screen
                     LanguageManager.Ok));
         }
     }
+
 }

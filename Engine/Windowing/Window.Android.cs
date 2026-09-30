@@ -19,15 +19,6 @@ public static partial class Window
 
     public static SDLSurface Surface = null!;
 
-    public static bool HasWideNotch { get; set; }
-
-    /// <summary>
-    /// 刘海/水滴/挖孔在屏幕边缘的宽度。X: 左边，Y: 顶部，Z: 右边，W: 底部
-    /// </summary>
-    public static Vector4 DisplayCutoutInsets { get; set; } = Vector4.Zero;
-
-    public static event Action<Vector4, bool>? DisplayCutoutInsetsChanged;
-
     public static Point2 ScreenSize => new(View.Size.X, View.Size.Y);
 
     public static WindowMode WindowMode
@@ -215,16 +206,5 @@ public static partial class Window
         return result;
     }
 
-    public static void DisplayCutoutInsetsChangedHandler(Vector4 insets, bool hasWideNotch)
-    {
-        if (HasWideNotch == hasWideNotch && DisplayCutoutInsets == insets)
-        {
-            return;
-        }
-
-        HasWideNotch = hasWideNotch;
-        DisplayCutoutInsets = insets;
-        DisplayCutoutInsetsChanged?.Invoke(insets, hasWideNotch);
-    }
 }
 #endif

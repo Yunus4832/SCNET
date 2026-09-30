@@ -3284,7 +3284,8 @@
             "A captura de tela mostra o logo:",
             "Resolução Screenshot:",
             "Margem segura da HUD",
-            "Tamanho da margem segura"
+            "Tamanho da margem segura",
+            "Margem Segura Personalizada"
         ],
         "TrialEndedScreen": {
             "1": "O dia acabou.",
