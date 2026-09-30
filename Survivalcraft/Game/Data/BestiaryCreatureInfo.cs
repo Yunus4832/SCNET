@@ -8,9 +8,21 @@ public class BestiaryCreatureInfo
 
     public bool CanBeRidden;
 
-    public string Description = string.Empty;
+    public string? DescriptionKey;
 
-    public string DisplayName = string.Empty;
+    public string Description
+    {
+        get => DescriptionKey is null ? field : LanguageManager.GetDatabase("Description", DescriptionKey);
+        set;
+    } = string.Empty;
+
+    public string? DisplayNameKey;
+
+    public string DisplayName
+    {
+        get => DisplayNameKey is null ? field : LanguageManager.GetDatabase("DisplayName", DisplayNameKey);
+        set;
+    } = string.Empty;
 
     public bool HasSpawnerEgg;
 

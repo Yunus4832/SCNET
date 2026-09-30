@@ -10,6 +10,8 @@ public class BestiaryScreen : Screen
 {
     private readonly ListPanelWidget _creaturesList;
 
+    private int _languageRevision = -1;
+
     private Screen? _previousScreen;
 
     public BestiaryScreen()
@@ -45,12 +47,14 @@ public class BestiaryScreen : Screen
                 continue;
             }
 
+            string? displayNameKey = null;
             var value = valuesDictionary.GetValue<string>("DisplayName");
             if (value.StartsWith('[') && value.EndsWith("]"))
             {
                 var lp = value.Substring(1, value.Length - 2)
                     .Split([":"], StringSplitOptions.RemoveEmptyEntries);
-                value = LanguageManager.GetDatabase("DisplayName", lp[1]);
+                displayNameKey = lp[1];
+                value = LanguageManager.GetDatabase("DisplayName", displayNameKey);
             }
 
             if (string.IsNullOrEmpty(value))
@@ -101,19 +105,23 @@ public class BestiaryScreen : Screen
             var valuesDictionary9 =
                 DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary,
                     typeof(ComponentLoot));
+            string? descriptionKey = null;
             var dy = valuesDictionary.GetValue<string>("Description");
             if (dy.StartsWith('[') && dy.EndsWith(']'))
             {
                 var lp = dy.Substring(1, dy.Length - 2)
                     .Split([":"], StringSplitOptions.RemoveEmptyEntries);
-                dy = LanguageManager.GetDatabase("Description", lp[1]);
+                descriptionKey = lp[1];
+                dy = LanguageManager.GetDatabase("Description", descriptionKey);
             }
 
             var bestiaryCreatureInfo = new BestiaryCreatureInfo
             {
                 Order = order,
                 DisplayName = value,
+                DisplayNameKey = displayNameKey,
                 Description = dy,
+                DescriptionKey = descriptionKey,
                 ModelName = valuesDictionary2?.GetValue<string>("ModelName") ?? string.Empty,
                 TextureOverride = valuesDictionary2?.GetValue<string>("TextureOverride") ?? string.Empty,
                 Mass = valuesDictionary3?.GetValue<float>("Mass") ?? 0,
@@ -160,6 +168,18 @@ public class BestiaryScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        if (_languageRevision != LanguageManager.Revision)
+        {
+            var creatures = _creaturesList.Items.Cast<BestiaryCreatureInfo>().ToArray();
+            _creaturesList.ClearItems();
+            foreach (var creature in creatures)
+            {
+                _creaturesList.AddItem(creature);
+            }
+
+            _languageRevision = LanguageManager.Revision;
+        }
+
         if (ScreensManager.PreviousScreen != ScreensManager.FindScreen<Screen>("BestiaryDescription"))
         {
             _previousScreen = ScreensManager.PreviousScreen;
