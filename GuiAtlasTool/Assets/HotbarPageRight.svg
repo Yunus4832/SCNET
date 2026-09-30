@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="44" height="72" viewBox="0 0 44 72">
+    <path style="fill:#23211e;fill-opacity:0.33;stroke:#6c675c;stroke-width:2;stroke-linejoin:round;stroke-opacity:0.6"
+          d="M 0.75,4 C 0.75,2.2 2.2,0.75 4,0.75 h 18 c 11.74,0 21.25,9.51 21.25,21.25 v 28 c 0,11.74 -9.51,21.25 -21.25,21.25 H 4 c -1.8,0 -3.25,-1.45 -3.25,-3.25 z"/>
+    <path style="fill:#ffffff" d="M 15,18 31,36 15,54 Z"/>
+</svg>

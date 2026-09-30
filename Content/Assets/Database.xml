@@ -6654,7 +6654,7 @@
                     <Parameter Name="Class" Guid="412eb397-e85b-4b01-be86-a0cb3a4f83df"
                                Value="Game.Components.ComponentCreativeInventory" Type="string"/>
                     <Parameter Name="OpenSlotsCount" Description="Number of open slots"
-                               Guid="8c86a02f-99c7-4b97-8f78-cd6037660be2" Value="26" Type="int"/>
+                               Guid="8c86a02f-99c7-4b97-8f78-cd6037660be2" Value="30" Type="int"/>
                     <Parameter Name="PageIndex" Description="Active page of creative inventory"
                                Guid="8ebc611d-a9ac-4c70-8edc-a35ee63832ea" Value="0" Type="int"/>
                 </ComponentTemplate>

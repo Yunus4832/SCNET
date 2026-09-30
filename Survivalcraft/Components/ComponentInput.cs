@@ -9,6 +9,20 @@ public class ComponentInput : Component, IUpdateable
 {
     private static readonly GamePadButton[] _gamePadButtons = Enum.GetValues<GamePadButton>();
 
+    private static readonly Key[] _inventorySlotKeys =
+    [
+        Key.Number1,
+        Key.Number2,
+        Key.Number3,
+        Key.Number4,
+        Key.Number5,
+        Key.Number6,
+        Key.Number7,
+        Key.Number8,
+        Key.Number9,
+        Key.Number0
+    ];
+
     private ComponentGui _componentGui = null!;
 
     private ComponentPlayer _componentPlayer = null!;
@@ -178,7 +192,15 @@ public class ComponentInput : Component, IUpdateable
             _playerInput.Move += vector;
             _playerInput.SneakMove += vector;
             _playerInput.Jump |= input.IsKeyDownOnce(Key.Space);
-            _playerInput.ScrollInventory -= num;
+            if (_componentPlayer.ComponentMiner.Inventory is ComponentCreativeInventory &&
+                input.IsKeyDown(Key.Control))
+            {
+                _playerInput.ScrollInventoryPage -= num;
+            }
+            else
+            {
+                _playerInput.ScrollInventory -= num;
+            }
             _playerInput.Dig = input.IsMouseButtonDown(MouseButton.Left)
                 ? new Ray3(viewPosition, viewDirection)
                 : _playerInput.Dig;
@@ -220,54 +242,37 @@ public class ComponentInput : Component, IUpdateable
         _playerInput.Precipitation |= input.IsKeyDownOnce(Key.Y);
         _playerInput.Fog |= input.IsKeyDownOnce(Key.O);
 
-        if (input.IsKeyDownOnce(Key.Number1))
+        if (_componentPlayer.ComponentMiner.Inventory is ComponentCreativeInventory)
         {
-            _playerInput.SelectInventorySlot = 0;
+            if (input.IsKeyDownOnce(Key.Z))
+            {
+                _playerInput.ScrollInventoryPage--;
+            }
+
+            if (input.IsKeyDownOnce(Key.X))
+            {
+                _playerInput.ScrollInventoryPage++;
+            }
         }
 
-        if (input.IsKeyDownOnce(Key.Number2))
+        for (var i = 0; i < _inventorySlotKeys.Length; i++)
         {
-            _playerInput.SelectInventorySlot = 1;
-        }
+            if (!input.IsKeyDownOnce(_inventorySlotKeys[i]))
+            {
+                continue;
+            }
 
-        if (input.IsKeyDownOnce(Key.Number3))
-        {
-            _playerInput.SelectInventorySlot = 2;
-        }
+            if (_componentPlayer.ComponentMiner.Inventory is ComponentCreativeInventory &&
+                input.IsKeyDown(Key.Control))
+            {
+                _playerInput.SelectInventoryPage = i;
+            }
+            else
+            {
+                _playerInput.SelectInventorySlot = i;
+            }
 
-        if (input.IsKeyDownOnce(Key.Number4))
-        {
-            _playerInput.SelectInventorySlot = 3;
-        }
-
-        if (input.IsKeyDownOnce(Key.Number5))
-        {
-            _playerInput.SelectInventorySlot = 4;
-        }
-
-        if (input.IsKeyDownOnce(Key.Number6))
-        {
-            _playerInput.SelectInventorySlot = 5;
-        }
-
-        if (input.IsKeyDownOnce(Key.Number7))
-        {
-            _playerInput.SelectInventorySlot = 6;
-        }
-
-        if (input.IsKeyDownOnce(Key.Number8))
-        {
-            _playerInput.SelectInventorySlot = 7;
-        }
-
-        if (input.IsKeyDownOnce(Key.Number9))
-        {
-            _playerInput.SelectInventorySlot = 8;
-        }
-
-        if (input.IsKeyDownOnce(Key.Number0))
-        {
-            _playerInput.SelectInventorySlot = 9;
+            break;
         }
 
         if (isMouseOrKeyboardInputActive || input.LastKey.HasValue)

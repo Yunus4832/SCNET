@@ -524,8 +524,7 @@
         "4": "Cook an egg to increase its nutritional value"
     },
     "CreativeInventoryWidget": {
-        "1": "Furniture",
-        "2": "User"
+        "1": "Furniture"
     },
     "SettingsControlsScreen": [
         "{0} blocks",
@@ -3004,7 +3003,13 @@
             "64": "F10",
             "65": "Toggle touch controls",
             "66": "F3",
-            "67": "Toggle diagnostics"
+            "67": "Toggle diagnostics",
+            "68": "Z / X",
+            "69": "Previous/next page (creative)",
+            "70": "Ctrl + mouse wheel",
+            "71": "Switch hotbar page (creative)",
+            "72": "Ctrl + 1 to 0",
+            "73": "Select hotbar page (creative)"
         },
         "LevelFactorDialog": {
             "1": "Current multipliers:",

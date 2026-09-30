@@ -524,8 +524,7 @@
         "4": "Cozinhar ovos para aumentar o seu valor nutricional"
     },
     "CreativeInventoryWidget": {
-        "1": "Móveis",
-        "2": "Usuário Custom"
+        "1": "Móveis"
     },
     "SettingsControlsScreen": [
         "{0}Bloco",
@@ -3004,7 +3003,13 @@
             "64": "F10",
             "65": "Alternar interface de toque",
             "66": "F3",
-            "67": "Alternar diagnóstico"
+            "67": "Alternar diagnóstico",
+            "68": "Z / X",
+            "69": "Página anterior/seguinte (criativo)",
+            "70": "Ctrl + roda do rato",
+            "71": "Mudar página da barra rápida (criativo)",
+            "72": "Ctrl + 1 a 0",
+            "73": "Selecionar página da barra rápida (criativo)"
         },
         "LevelFactorDialog": {
             "1": "Multiplicador atual:",

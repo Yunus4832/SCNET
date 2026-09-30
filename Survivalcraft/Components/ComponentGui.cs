@@ -619,6 +619,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _rightControlsContainerWidget.Margin = sideMargin;
         _moveContainerWidget.Margin = sideMargin;
         _lookContainerWidget.Margin = sideMargin;
+        ShortInventoryWidget.AreSideControlsVisible = AreTouchControlsVisible;
         ShortInventoryWidget.HorizontalSafeAreaPadding = AreTouchControlsVisible ? padding : 0f;
         if (_hudSafeAreaEnabled == enabled)
         {

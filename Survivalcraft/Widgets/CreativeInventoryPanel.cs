@@ -16,7 +16,7 @@ public class CreativeInventoryPanel : CanvasWidget
 
     private int _pagesCount;
 
-    private List<int> _slotIndices = [];
+    private readonly List<int> _slotIndices = [];
 
     public CreativeInventoryPanel(CreativeInventoryWidget creativeInventoryWidget)
     {
@@ -71,25 +71,17 @@ public class CreativeInventoryPanel : CanvasWidget
 
         if (_componentCreativeInventory.CategoryIndex != _assignedCategoryIndex)
         {
-            if (_creativeInventoryWidget.GetCategoryName(_componentCreativeInventory.CategoryIndex) ==
-                LanguageManager.Get("CreativeInventoryWidget", 2))
+            _slotIndices.Clear();
+            for (var i = _componentCreativeInventory.OpenSlotsCount;
+                 i < _componentCreativeInventory.SlotsCount;
+                 i++)
             {
-                _slotIndices = new List<int>(Enumerable.Range(10, _componentCreativeInventory.OpenSlotsCount - 10));
-            }
-            else
-            {
-                _slotIndices.Clear();
-                for (var i = _componentCreativeInventory.OpenSlotsCount;
-                     i < _componentCreativeInventory.SlotsCount;
-                     i++)
+                var slotValue = _componentCreativeInventory.GetSlotValue(i);
+                var num2 = Terrain.ExtractContents(slotValue);
+                if (BlocksManager.Blocks[num2].GetCategory(slotValue) ==
+                    _creativeInventoryWidget.GetCategoryName(_componentCreativeInventory.CategoryIndex))
                 {
-                    var slotValue = _componentCreativeInventory.GetSlotValue(i);
-                    var num2 = Terrain.ExtractContents(slotValue);
-                    if (BlocksManager.Blocks[num2].GetCategory(slotValue) ==
-                        _creativeInventoryWidget.GetCategoryName(_componentCreativeInventory.CategoryIndex))
-                    {
-                        _slotIndices.Add(i);
-                    }
+                    _slotIndices.Add(i);
                 }
             }
 

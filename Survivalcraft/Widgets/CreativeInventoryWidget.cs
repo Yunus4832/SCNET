@@ -24,12 +24,6 @@ public class CreativeInventoryWidget : CanvasWidget
 
     private readonly ComponentCreativeInventory _componentCreativeInventory;
 
-    private readonly ButtonWidget _pageDownButton;
-
-    private readonly LabelWidget _pageLabel;
-
-    private readonly ButtonWidget _pageUpButton;
-
     private readonly ContainerWidget _panelContainer;
 
     public CreativeInventoryWidget(Entity entity)
@@ -40,9 +34,9 @@ public class CreativeInventoryWidget : CanvasWidget
         _categoryLeftButton = Children.Find<ButtonWidget>("CategoryLeftButton")!;
         _categoryRightButton = Children.Find<ButtonWidget>("CategoryRightButton")!;
         _categoryButton = Children.Find<ButtonWidget>("CategoryButton")!;
-        _pageUpButton = Children.Find<ButtonWidget>("PageUpButton")!;
-        _pageDownButton = Children.Find<ButtonWidget>("PageDownButton")!;
-        _pageLabel = Children.Find<LabelWidget>("PageLabel")!;
+        PageUpButton = Children.Find<ButtonWidget>("PageUpButton")!;
+        PageDownButton = Children.Find<ButtonWidget>("PageDownButton")!;
+        PageLabel = Children.Find<LabelWidget>("PageLabel")!;
         _panelContainer = Children.Find<ContainerWidget>("PanelContainer")!;
         _creativeInventoryPanel = new CreativeInventoryPanel(this)
         {
@@ -68,11 +62,6 @@ public class CreativeInventoryWidget : CanvasWidget
             Name = LanguageManager.Get(_typeName, 1),
             Panel = FurnitureInventoryPanel
         });
-        _categories.Add(new Category
-        {
-            Name = LanguageManager.Get(_typeName, 2),
-            Panel = _creativeInventoryPanel
-        });
         foreach (var category in _categories)
         {
             if (category.Name == "Electrics")
@@ -94,11 +83,11 @@ public class CreativeInventoryWidget : CanvasWidget
 
     public Entity Entity => _componentCreativeInventory.Entity;
 
-    public ButtonWidget PageDownButton => _pageDownButton;
+    public ButtonWidget PageDownButton { get; }
 
-    public ButtonWidget PageUpButton => _pageUpButton;
+    public ButtonWidget PageUpButton { get; }
 
-    public LabelWidget PageLabel => _pageLabel;
+    public LabelWidget PageLabel { get; }
 
     public string GetCategoryName(int index)
     {

@@ -1,3 +1,16 @@
 <ShortInventoryWidget xmlns="runtime-namespace:Game.Widgets">
-    <GridPanelWidget Name="InventoryGrid"/>
+    <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" VerticalAlignment="Far">
+        <LabelWidget Name="PageLabel" Size="120, 20" HorizontalAlignment="Center" VerticalAlignment="Center"
+                     TextAnchor="HorizontalCenter, VerticalCenter" FontScale="0.55" DropShadow="true"
+                     Color="220, 220, 220"/>
+        <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center">
+            <BitmapButtonWidget Name="PreviousPageButton" Size="44, 72"
+                                NormalSubtexture="{Textures/Atlas/HotbarPageLeft}"
+                                ClickedSubtexture="{Textures/Atlas/HotbarPageLeft_Pressed}"/>
+            <GridPanelWidget Name="InventoryGrid" HorizontalAlignment="Center"/>
+            <BitmapButtonWidget Name="NextPageButton" Size="44, 72"
+                                NormalSubtexture="{Textures/Atlas/HotbarPageRight}"
+                                ClickedSubtexture="{Textures/Atlas/HotbarPageRight_Pressed}"/>
+        </StackPanelWidget>
+    </StackPanelWidget>
 </ShortInventoryWidget>

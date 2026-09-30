@@ -24,10 +24,17 @@ public class ComponentCreativeInventory : Component, IInventory
     public int ActiveSlotIndex
     {
         get => _activeSlotIndex;
-        set => _activeSlotIndex = MathUtils.Clamp(value, 0, VisibleSlotsCount - 1);
+        set => _activeSlotIndex = MathUtils.Clamp(value, 0, OpenSlotsCount - 1);
     }
 
     public int SlotsCount => _slots.Count;
+
+    public int HotbarPageIndex => ActiveSlotIndex / VisibleSlotsCount;
+
+    public int HotbarPagesCount => (OpenSlotsCount + VisibleSlotsCount - 1) / VisibleSlotsCount;
+
+    public int CurrentHotbarPageSlotsCount =>
+        MathUtils.Min(VisibleSlotsCount, OpenSlotsCount - HotbarPageIndex * VisibleSlotsCount);
 
     public void DropAllItems(Vector3 position)
     {
@@ -38,7 +45,7 @@ public class ComponentCreativeInventory : Component, IInventory
         get;
         set
         {
-            value = MathUtils.Clamp(value, 0, 10);
+            value = MathUtils.Clamp(value, 1, 10);
             if (value == field)
             {
                 return;
@@ -46,20 +53,43 @@ public class ComponentCreativeInventory : Component, IInventory
 
             field = value;
             ActiveSlotIndex = ActiveSlotIndex;
-            var componentFrame = Entity.FindComponent<ComponentFrame>();
-            if (componentFrame == null)
-            {
-                return;
-            }
-
-            var position = componentFrame.Position + new Vector3(0f, 0.5f, 0f);
-            var velocity = 1f * componentFrame.Rotation.GetForwardVector();
-            for (var i = field; i < 10; i++)
-            {
-                DropSlotItems(i, position, velocity);
-            }
         }
     } = 10;
+
+    public int GetHotbarSlotIndex(int pageSlotIndex)
+    {
+        var slotIndex = HotbarPageIndex * VisibleSlotsCount + pageSlotIndex;
+        return pageSlotIndex >= 0 && pageSlotIndex < VisibleSlotsCount && slotIndex < OpenSlotsCount
+            ? slotIndex
+            : -1;
+    }
+
+    public void SelectHotbarPageSlot(int pageSlotIndex)
+    {
+        var slotIndex = GetHotbarSlotIndex(pageSlotIndex);
+        if (slotIndex >= 0)
+        {
+            ActiveSlotIndex = slotIndex;
+        }
+    }
+
+    public void ChangeHotbarPage(int offset)
+    {
+        var pageSlotIndex = ActiveSlotIndex % VisibleSlotsCount;
+        var pageIndex = MathUtils.Clamp(HotbarPageIndex + offset, 0, HotbarPagesCount - 1);
+        var pageSlotsCount = MathUtils.Min(VisibleSlotsCount, OpenSlotsCount - pageIndex * VisibleSlotsCount);
+        ActiveSlotIndex = pageIndex * VisibleSlotsCount + MathUtils.Min(pageSlotIndex, pageSlotsCount - 1);
+    }
+
+    public void SelectHotbarPage(int pageIndex)
+    {
+        if (pageIndex < 0 || pageIndex >= HotbarPagesCount)
+        {
+            return;
+        }
+
+        ChangeHotbarPage(pageIndex - HotbarPageIndex);
+    }
 
     public virtual void SetSlotValue(int slotIndex, object obj)
     {
@@ -94,11 +124,6 @@ public class ComponentCreativeInventory : Component, IInventory
 
     public int GetSlotCapacity(int slotIndex, int value)
     {
-        if (slotIndex >= VisibleSlotsCount && slotIndex < 10)
-        {
-            return 0;
-        }
-
         if (slotIndex >= 0 && slotIndex < OpenSlotsCount)
         {
             return 99980001;

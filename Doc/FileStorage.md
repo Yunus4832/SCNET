@@ -56,6 +56,8 @@ Starter 会先注册程序基础目录并读取 `Starter.xml`，再把选中的 
 
 世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。升级工具仍可在缺少 `Project.xml` 时读取旧 `Project.json` 并转换为 `Project.xml` 后继续升级。
 
+玩家实体会同时保存普通 `Inventory` 与 `CreativeInventory`，加载时由 `ComponentMiner` 根据世界模式选择当前使用的库存。修改世界模式只更新世界设置，不会在两套库存之间复制或转换物品；切回原模式时会恢复该模式上次保存的库存。世界升级或修复工具必须把两套库存视为独立状态，不能依据当前模式删除另一套库存。扩展创造物品栏槽位时应保留已有槽位索引，将新增但未出现在存档中的槽位初始化为空；创造仓库的物品目录由运行时资源生成，不属于需要迁移的存档数据。
+
 ## 说明
 
 - `app:` 适合读取随程序分发的资源

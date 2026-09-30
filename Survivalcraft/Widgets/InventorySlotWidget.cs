@@ -171,6 +171,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
     public bool ProcessingOnly { get; set; }
 
+    public bool ShowEmptyPlaceholder { get; set; }
+
     public Color CenterColor
     {
         get => _rectangleWidget.CenterColor;
@@ -347,7 +349,10 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 }
             }
 
-            if (!flag && _inventory.ActiveSlotIndex != _slotIndex && _slotIndex < 10)
+            var isHotbarSlot = _inventory is ComponentCreativeInventory creativeInventory
+                ? _slotIndex < creativeInventory.OpenSlotsCount
+                : _slotIndex < 10;
+            if (!flag && _inventory.ActiveSlotIndex != _slotIndex && isHotbarSlot)
             {
                 _inventory.ActiveSlotIndex = _slotIndex;
                 if (_inventory.ActiveSlotIndex == _slotIndex)
@@ -493,7 +498,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         }
         else
         {
-            _rectangleWidget.IsVisible = false;
+            _rectangleWidget.IsVisible = ShowEmptyPlaceholder;
             _highlightWidget.IsVisible = false;
             _blockIconWidget.IsVisible = false;
             _countWidget.IsVisible = false;

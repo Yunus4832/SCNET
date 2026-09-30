@@ -30,6 +30,10 @@ public struct PlayerInput
 
     public int ScrollInventory;
 
+    public int ScrollInventoryPage;
+
+    public int? SelectInventoryPage;
+
     public bool ToggleInventory;
 
     public bool ToggleClothing;

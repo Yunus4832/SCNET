@@ -129,10 +129,28 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
         if (ComponentMiner.Inventory is not InventoryDefault)
         {
-            ComponentMiner.Inventory.ActiveSlotIndex += playerInput.ScrollInventory;
-            if (playerInput.SelectInventorySlot.HasValue)
+            if (ComponentMiner.Inventory is ComponentCreativeInventory creativeInventory)
             {
-                ComponentMiner.Inventory.ActiveSlotIndex = MathUtils.Clamp(playerInput.SelectInventorySlot.Value, 0, 9);
+                creativeInventory.ChangeHotbarPage(playerInput.ScrollInventoryPage);
+                if (playerInput.SelectInventoryPage.HasValue)
+                {
+                    creativeInventory.SelectHotbarPage(playerInput.SelectInventoryPage.Value);
+                }
+
+                creativeInventory.ActiveSlotIndex += playerInput.ScrollInventory;
+                if (playerInput.SelectInventorySlot.HasValue)
+                {
+                    creativeInventory.SelectHotbarPageSlot(playerInput.SelectInventorySlot.Value);
+                }
+            }
+            else
+            {
+                ComponentMiner.Inventory.ActiveSlotIndex += playerInput.ScrollInventory;
+                if (playerInput.SelectInventorySlot.HasValue)
+                {
+                    ComponentMiner.Inventory.ActiveSlotIndex =
+                        MathUtils.Clamp(playerInput.SelectInventorySlot.Value, 0, 9);
+                }
             }
         }
 
@@ -584,26 +602,28 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         }
 
         var num6 = -1;
-        for (var i = 0; i < 10; i++)
+        for (var i = 0; i < componentCreativeInventory.VisibleSlotsCount; i++)
         {
-            if (componentCreativeInventory.GetSlotCapacity(i, num5) > 0 &&
-                componentCreativeInventory.GetSlotCount(i) > 0 &&
-                componentCreativeInventory.GetSlotValue(i) == num5)
+            var slotIndex = componentCreativeInventory.GetHotbarSlotIndex(i);
+            if (slotIndex >= 0 && componentCreativeInventory.GetSlotCapacity(slotIndex, num5) > 0 &&
+                componentCreativeInventory.GetSlotCount(slotIndex) > 0 &&
+                componentCreativeInventory.GetSlotValue(slotIndex) == num5)
             {
-                num6 = i;
+                num6 = slotIndex;
                 break;
             }
         }
 
         if (num6 < 0)
         {
-            for (var j = 0; j < 10; j++)
+            for (var i = 0; i < componentCreativeInventory.VisibleSlotsCount; i++)
             {
-                if (componentCreativeInventory.GetSlotCapacity(j, num5) > 0 &&
-                    (componentCreativeInventory.GetSlotCount(j) == 0 ||
-                     componentCreativeInventory.GetSlotValue(j) == 0))
+                var slotIndex = componentCreativeInventory.GetHotbarSlotIndex(i);
+                if (slotIndex >= 0 && componentCreativeInventory.GetSlotCapacity(slotIndex, num5) > 0 &&
+                    (componentCreativeInventory.GetSlotCount(slotIndex) == 0 ||
+                     componentCreativeInventory.GetSlotValue(slotIndex) == 0))
                 {
-                    num6 = j;
+                    num6 = slotIndex;
                     break;
                 }
             }
