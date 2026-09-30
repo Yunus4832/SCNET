@@ -1,3 +1,5 @@
+using System.Runtime.Intrinsics;
+
 namespace Engine.Core;
 
 public struct Matrix(
@@ -533,43 +535,25 @@ public struct Matrix(
 
     public static Matrix Lerp(Matrix m1, Matrix m2, float f)
     {
-        m1.M11 += (m2.M11 - m1.M11) * f;
-        m1.M12 += (m2.M12 - m1.M12) * f;
-        m1.M13 += (m2.M13 - m1.M13) * f;
-        m1.M14 += (m2.M14 - m1.M14) * f;
-        m1.M21 += (m2.M21 - m1.M21) * f;
-        m1.M22 += (m2.M22 - m1.M22) * f;
-        m1.M23 += (m2.M23 - m1.M23) * f;
-        m1.M24 += (m2.M24 - m1.M24) * f;
-        m1.M31 += (m2.M31 - m1.M31) * f;
-        m1.M32 += (m2.M32 - m1.M32) * f;
-        m1.M33 += (m2.M33 - m1.M33) * f;
-        m1.M34 += (m2.M34 - m1.M34) * f;
-        m1.M41 += (m2.M41 - m1.M41) * f;
-        m1.M42 += (m2.M42 - m1.M42) * f;
-        m1.M43 += (m2.M43 - m1.M43) * f;
-        m1.M44 += (m2.M44 - m1.M44) * f;
+        var factor = Vector128.Create(f);
+        LerpColumn(ref m1.M11, ref m2.M11, factor);
+        LerpColumn(ref m1.M12, ref m2.M12, factor);
+        LerpColumn(ref m1.M13, ref m2.M13, factor);
+        LerpColumn(ref m1.M14, ref m2.M14, factor);
         return m1;
     }
 
     public static void MultiplyRestricted(ref Matrix m1, ref Matrix m2, out Matrix result)
     {
-        result.M11 = m1.M11 * m2.M11 + m1.M12 * m2.M21 + m1.M13 * m2.M31 + m1.M14 * m2.M41;
-        result.M12 = m1.M11 * m2.M12 + m1.M12 * m2.M22 + m1.M13 * m2.M32 + m1.M14 * m2.M42;
-        result.M13 = m1.M11 * m2.M13 + m1.M12 * m2.M23 + m1.M13 * m2.M33 + m1.M14 * m2.M43;
-        result.M14 = m1.M11 * m2.M14 + m1.M12 * m2.M24 + m1.M13 * m2.M34 + m1.M14 * m2.M44;
-        result.M21 = m1.M21 * m2.M11 + m1.M22 * m2.M21 + m1.M23 * m2.M31 + m1.M24 * m2.M41;
-        result.M22 = m1.M21 * m2.M12 + m1.M22 * m2.M22 + m1.M23 * m2.M32 + m1.M24 * m2.M42;
-        result.M23 = m1.M21 * m2.M13 + m1.M22 * m2.M23 + m1.M23 * m2.M33 + m1.M24 * m2.M43;
-        result.M24 = m1.M21 * m2.M14 + m1.M22 * m2.M24 + m1.M23 * m2.M34 + m1.M24 * m2.M44;
-        result.M31 = m1.M31 * m2.M11 + m1.M32 * m2.M21 + m1.M33 * m2.M31 + m1.M34 * m2.M41;
-        result.M32 = m1.M31 * m2.M12 + m1.M32 * m2.M22 + m1.M33 * m2.M32 + m1.M34 * m2.M42;
-        result.M33 = m1.M31 * m2.M13 + m1.M32 * m2.M23 + m1.M33 * m2.M33 + m1.M34 * m2.M43;
-        result.M34 = m1.M31 * m2.M14 + m1.M32 * m2.M24 + m1.M33 * m2.M34 + m1.M34 * m2.M44;
-        result.M41 = m1.M41 * m2.M11 + m1.M42 * m2.M21 + m1.M43 * m2.M31 + m1.M44 * m2.M41;
-        result.M42 = m1.M41 * m2.M12 + m1.M42 * m2.M22 + m1.M43 * m2.M32 + m1.M44 * m2.M42;
-        result.M43 = m1.M41 * m2.M13 + m1.M42 * m2.M23 + m1.M43 * m2.M33 + m1.M44 * m2.M43;
-        result.M44 = m1.M41 * m2.M14 + m1.M42 * m2.M24 + m1.M43 * m2.M34 + m1.M44 * m2.M44;
+        var column1 = Vector128.LoadUnsafe(ref m1.M11);
+        var column2 = Vector128.LoadUnsafe(ref m1.M12);
+        var column3 = Vector128.LoadUnsafe(ref m1.M13);
+        var column4 = Vector128.LoadUnsafe(ref m1.M14);
+        result = default;
+        MultiplyColumn(column1, column2, column3, column4, Vector128.LoadUnsafe(ref m2.M11), ref result.M11);
+        MultiplyColumn(column1, column2, column3, column4, Vector128.LoadUnsafe(ref m2.M12), ref result.M12);
+        MultiplyColumn(column1, column2, column3, column4, Vector128.LoadUnsafe(ref m2.M13), ref result.M13);
+        MultiplyColumn(column1, column2, column3, column4, Vector128.LoadUnsafe(ref m2.M14), ref result.M14);
     }
 
     public static bool operator ==(Matrix m1, Matrix m2)
@@ -589,22 +573,30 @@ public struct Matrix(
 
     public static Matrix operator -(Matrix m)
     {
-        return new Matrix(0f - m.M11, 0f - m.M12, 0f - m.M13, 0f - m.M14, 0f - m.M21, 0f - m.M22, 0f - m.M23,
-            0f - m.M24, 0f - m.M31, 0f - m.M32, 0f - m.M33, 0f - m.M34, 0f - m.M41, 0f - m.M42, 0f - m.M43, 0f - m.M44);
+        var zero = Vector128<float>.Zero;
+        NegateColumn(ref m.M11, zero);
+        NegateColumn(ref m.M12, zero);
+        NegateColumn(ref m.M13, zero);
+        NegateColumn(ref m.M14, zero);
+        return m;
     }
 
     public static Matrix operator +(Matrix m1, Matrix m2)
     {
-        return new Matrix(m1.M11 + m2.M11, m1.M12 + m2.M12, m1.M13 + m2.M13, m1.M14 + m2.M14, m1.M21 + m2.M21,
-            m1.M22 + m2.M22, m1.M23 + m2.M23, m1.M24 + m2.M24, m1.M31 + m2.M31, m1.M32 + m2.M32, m1.M33 + m2.M33,
-            m1.M34 + m2.M34, m1.M41 + m2.M41, m1.M42 + m2.M42, m1.M43 + m2.M43, m1.M44 + m2.M44);
+        AddColumn(ref m1.M11, ref m2.M11);
+        AddColumn(ref m1.M12, ref m2.M12);
+        AddColumn(ref m1.M13, ref m2.M13);
+        AddColumn(ref m1.M14, ref m2.M14);
+        return m1;
     }
 
     public static Matrix operator -(Matrix m1, Matrix m2)
     {
-        return new Matrix(m1.M11 - m2.M11, m1.M12 - m2.M12, m1.M13 - m2.M13, m1.M14 - m2.M14, m1.M21 - m2.M21,
-            m1.M22 - m2.M22, m1.M23 - m2.M23, m1.M24 - m2.M24, m1.M31 - m2.M31, m1.M32 - m2.M32, m1.M33 - m2.M33,
-            m1.M34 - m2.M34, m1.M41 - m2.M41, m1.M42 - m2.M42, m1.M43 - m2.M43, m1.M44 - m2.M44);
+        SubtractColumn(ref m1.M11, ref m2.M11);
+        SubtractColumn(ref m1.M12, ref m2.M12);
+        SubtractColumn(ref m1.M13, ref m2.M13);
+        SubtractColumn(ref m1.M14, ref m2.M14);
+        return m1;
     }
 
     public static Matrix operator *(Matrix m1, Matrix m2)
@@ -615,28 +607,72 @@ public struct Matrix(
 
     public static Matrix operator *(Matrix m, float s)
     {
-        return new Matrix(m.M11 * s, m.M12 * s, m.M13 * s, m.M14 * s, m.M21 * s, m.M22 * s, m.M23 * s, m.M24 * s,
-            m.M31 * s, m.M32 * s, m.M33 * s, m.M34 * s, m.M41 * s, m.M42 * s, m.M43 * s, m.M44 * s);
+        var factor = Vector128.Create(s);
+        ScaleColumn(ref m.M11, factor);
+        ScaleColumn(ref m.M12, factor);
+        ScaleColumn(ref m.M13, factor);
+        ScaleColumn(ref m.M14, factor);
+        return m;
     }
 
     public static Matrix operator *(float s, Matrix m)
     {
-        return new Matrix(m.M11 * s, m.M12 * s, m.M13 * s, m.M14 * s, m.M21 * s, m.M22 * s, m.M23 * s, m.M24 * s,
-            m.M31 * s, m.M32 * s, m.M33 * s, m.M34 * s, m.M41 * s, m.M42 * s, m.M43 * s, m.M44 * s);
+        return m * s;
     }
 
     public static Matrix operator /(Matrix m1, Matrix m2)
     {
-        return new Matrix(m1.M11 / m2.M11, m1.M12 / m2.M12, m1.M13 / m2.M13, m1.M14 / m2.M14, m1.M21 / m2.M21,
-            m1.M22 / m2.M22, m1.M23 / m2.M23, m1.M24 / m2.M24, m1.M31 / m2.M31, m1.M32 / m2.M32, m1.M33 / m2.M33,
-            m1.M34 / m2.M34, m1.M41 / m2.M41, m1.M42 / m2.M42, m1.M43 / m2.M43, m1.M44 / m2.M44);
+        DivideColumn(ref m1.M11, ref m2.M11);
+        DivideColumn(ref m1.M12, ref m2.M12);
+        DivideColumn(ref m1.M13, ref m2.M13);
+        DivideColumn(ref m1.M14, ref m2.M14);
+        return m1;
     }
 
     public static Matrix operator /(Matrix m, float d)
     {
         var num = 1f / d;
-        return new Matrix(m.M11 * num, m.M12 * num, m.M13 * num, m.M14 * num, m.M21 * num, m.M22 * num, m.M23 * num,
-            m.M24 * num, m.M31 * num, m.M32 * num, m.M33 * num, m.M34 * num, m.M41 * num, m.M42 * num, m.M43 * num,
-            m.M44 * num);
+        return m * num;
     }
+
+    private static void AddColumn(ref float left, ref float right)
+    {
+        Vector128.StoreUnsafe(Vector128.LoadUnsafe(ref left) + Vector128.LoadUnsafe(ref right), ref left);
+    }
+
+    private static void DivideColumn(ref float left, ref float right)
+    {
+        Vector128.StoreUnsafe(Vector128.LoadUnsafe(ref left) / Vector128.LoadUnsafe(ref right), ref left);
+    }
+
+    private static void LerpColumn(ref float left, ref float right, Vector128<float> factor)
+    {
+        var start = Vector128.LoadUnsafe(ref left);
+        var end = Vector128.LoadUnsafe(ref right);
+        Vector128.StoreUnsafe(start + (end - start) * factor, ref left);
+    }
+
+    private static void MultiplyColumn(Vector128<float> column1, Vector128<float> column2,
+        Vector128<float> column3, Vector128<float> column4, Vector128<float> factors, ref float destination)
+    {
+        var result = column1 * Vector128.Create(factors[0]) + column2 * Vector128.Create(factors[1]) +
+                     column3 * Vector128.Create(factors[2]) + column4 * Vector128.Create(factors[3]);
+        Vector128.StoreUnsafe(result, ref destination);
+    }
+
+    private static void NegateColumn(ref float destination, Vector128<float> zero)
+    {
+        Vector128.StoreUnsafe(zero - Vector128.LoadUnsafe(ref destination), ref destination);
+    }
+
+    private static void ScaleColumn(ref float destination, Vector128<float> factor)
+    {
+        Vector128.StoreUnsafe(Vector128.LoadUnsafe(ref destination) * factor, ref destination);
+    }
+
+    private static void SubtractColumn(ref float left, ref float right)
+    {
+        Vector128.StoreUnsafe(Vector128.LoadUnsafe(ref left) - Vector128.LoadUnsafe(ref right), ref left);
+    }
+
 }

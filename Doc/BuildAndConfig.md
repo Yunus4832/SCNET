@@ -105,6 +105,19 @@ dotnet build SCNET.slnx --configuration Release
 - `ANDROID`
 - `DESKTOP`
 
+### 引擎数学基准
+
+`Engine.Core.Benchmarks` 提供 Matrix 运算和批量向量变换的标量/SIMD 对照。基准不参与 Release
+解决方案构建，也不使用第三方基准框架；运行时会报告进程架构、`Vector128` 硬件加速状态、两种实现
+的中位耗时和倍率。应使用 Release 配置运行，并在目标 x64 或 ARM64 设备上分别记录结果：
+
+```bash
+dotnet run --configuration Release --project Engine.Core.Benchmarks/Engine.Core.Benchmarks.csproj
+```
+
+这些数字只衡量对应数学热点，不代表整帧或整服性能提升。修改 SIMD 实现时，还应运行
+`Engine.Test` 中的逐位一致性测试。
+
 ### 配置语义
 
 - `Debug` 和 `Release` 是通用配置，会走完整解决方案编译流程

@@ -1,3 +1,5 @@
+using System.Runtime.Intrinsics;
+
 namespace Engine.Core;
 
 public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
@@ -87,18 +89,20 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
 
     public static Vector4 Floor(Vector4 v)
     {
-        return new Vector4(MathUtils.Floor(v.X), MathUtils.Floor(v.Y), MathUtils.Floor(v.Z), MathUtils.Floor(v.W));
+        var result = Vector128.Floor(Vector128.LoadUnsafe(ref v.X));
+        return new Vector4(result[0], result[1], result[2], result[3]);
     }
 
     public static Vector4 Ceiling(Vector4 v)
     {
-        return new Vector4(MathUtils.Ceiling(v.X), MathUtils.Ceiling(v.Y), MathUtils.Ceiling(v.Z),
-            MathUtils.Ceiling(v.W));
+        var result = Vector128.Ceiling(Vector128.LoadUnsafe(ref v.X));
+        return new Vector4(result[0], result[1], result[2], result[3]);
     }
 
     public static Vector4 Round(Vector4 v)
     {
-        return new Vector4(MathUtils.Round(v.X), MathUtils.Round(v.Y), MathUtils.Round(v.Z), MathUtils.Round(v.W));
+        var result = Vector128.Round(Vector128.LoadUnsafe(ref v.X));
+        return new Vector4(result[0], result[1], result[2], result[3]);
     }
 
     public static Vector4 Min(Vector4 v, float f)
@@ -187,6 +191,20 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
     public static void Transform(Vector4[] sourceArray, int sourceIndex, ref Matrix m, Vector4[] destinationArray,
         int destinationIndex, int count)
     {
+        if (Vector128.IsHardwareAccelerated)
+        {
+            CreateTransformRows(ref m, out var row1, out var row2, out var row3, out var row4);
+            for (var i = 0; i < count; i++)
+            {
+                var vector = sourceArray[sourceIndex + i];
+                var result = row1 * Vector128.Create(vector.X) + row2 * Vector128.Create(vector.Y) +
+                             row3 * Vector128.Create(vector.Z) + row4;
+                destinationArray[destinationIndex + i] = new Vector4(result[0], result[1], result[2], result[3]);
+            }
+
+            return;
+        }
+
         for (var i = 0; i < count; i++)
         {
             var vector = sourceArray[sourceIndex + i];
@@ -196,6 +214,15 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
                 vector.X * m.M13 + vector.Y * m.M23 + vector.Z * m.M33 + m.M43,
                 vector.X * m.M14 + vector.Y * m.M24 + vector.Z * m.M34 + m.M44);
         }
+    }
+
+    private static void CreateTransformRows(ref Matrix matrix, out Vector128<float> row1,
+        out Vector128<float> row2, out Vector128<float> row3, out Vector128<float> row4)
+    {
+        row1 = Vector128.Create(matrix.M11, matrix.M12, matrix.M13, matrix.M14);
+        row2 = Vector128.Create(matrix.M21, matrix.M22, matrix.M23, matrix.M24);
+        row3 = Vector128.Create(matrix.M31, matrix.M32, matrix.M33, matrix.M34);
+        row4 = Vector128.Create(matrix.M41, matrix.M42, matrix.M43, matrix.M44);
     }
 
     public static bool operator ==(Vector4 v1, Vector4 v2)

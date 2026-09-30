@@ -1,3 +1,5 @@
+using System.Runtime.Intrinsics;
+
 namespace Engine.Core;
 
 public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
@@ -281,6 +283,20 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
     public static void Transform(Vector3[] sourceArray, int sourceIndex, ref Matrix m, Vector3[] destinationArray,
         int destinationIndex, int count)
     {
+        if (Vector128.IsHardwareAccelerated)
+        {
+            CreateTransformRows(ref m, out var row1, out var row2, out var row3, out var row4);
+            for (var i = 0; i < count; i++)
+            {
+                var vector = sourceArray[sourceIndex + i];
+                var result = row1 * Vector128.Create(vector.X) + row2 * Vector128.Create(vector.Y) +
+                             row3 * Vector128.Create(vector.Z) + row4;
+                destinationArray[destinationIndex + i] = new Vector3(result[0], result[1], result[2]);
+            }
+
+            return;
+        }
+
         for (var i = 0; i < count; i++)
         {
             var vector = sourceArray[sourceIndex + i];
@@ -306,6 +322,20 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
     public static void TransformNormal(Vector3[] sourceArray, int sourceIndex, ref Matrix m, Vector3[] destinationArray,
         int destinationIndex, int count)
     {
+        if (Vector128.IsHardwareAccelerated)
+        {
+            CreateTransformRows(ref m, out var row1, out var row2, out var row3, out _);
+            for (var i = 0; i < count; i++)
+            {
+                var vector = sourceArray[sourceIndex + i];
+                var result = row1 * Vector128.Create(vector.X) + row2 * Vector128.Create(vector.Y) +
+                             row3 * Vector128.Create(vector.Z);
+                destinationArray[destinationIndex + i] = new Vector3(result[0], result[1], result[2]);
+            }
+
+            return;
+        }
+
         for (var i = 0; i < count; i++)
         {
             var vector = sourceArray[sourceIndex + i];
@@ -313,6 +343,15 @@ public struct Vector3(float x, float y, float z) : IEquatable<Vector3>
                 vector.X * m.M12 + vector.Y * m.M22 + vector.Z * m.M32,
                 vector.X * m.M13 + vector.Y * m.M23 + vector.Z * m.M33);
         }
+    }
+
+    private static void CreateTransformRows(ref Matrix matrix, out Vector128<float> row1,
+        out Vector128<float> row2, out Vector128<float> row3, out Vector128<float> row4)
+    {
+        row1 = Vector128.Create(matrix.M11, matrix.M12, matrix.M13, matrix.M14);
+        row2 = Vector128.Create(matrix.M21, matrix.M22, matrix.M23, matrix.M24);
+        row3 = Vector128.Create(matrix.M31, matrix.M32, matrix.M33, matrix.M34);
+        row4 = Vector128.Create(matrix.M41, matrix.M42, matrix.M43, matrix.M44);
     }
 
     public static bool operator ==(Vector3 v1, Vector3 v2)

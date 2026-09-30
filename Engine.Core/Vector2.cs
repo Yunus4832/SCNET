@@ -1,3 +1,5 @@
+using System.Runtime.Intrinsics;
+
 namespace Engine.Core;
 
 public struct Vector2(float x, float y) : IEquatable<Vector2>
@@ -240,6 +242,19 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
     public static void Transform(Vector2[] sourceArray, int sourceIndex, ref Matrix m, Vector2[] destinationArray,
         int destinationIndex, int count)
     {
+        if (Vector128.IsHardwareAccelerated)
+        {
+            CreateTransformRows(ref m, out var row1, out var row2, out var row4);
+            for (var i = 0; i < count; i++)
+            {
+                var vector = sourceArray[sourceIndex + i];
+                var result = row1 * Vector128.Create(vector.X) + row2 * Vector128.Create(vector.Y) + row4;
+                destinationArray[destinationIndex + i] = new Vector2(result[0], result[1]);
+            }
+
+            return;
+        }
+
         for (var i = 0; i < count; i++)
         {
             var vector = sourceArray[sourceIndex + i];
@@ -261,12 +276,33 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
     public static void TransformNormal(Vector2[] sourceArray, int sourceIndex, ref Matrix m, Vector2[] destinationArray,
         int destinationIndex, int count)
     {
+        if (Vector128.IsHardwareAccelerated)
+        {
+            CreateTransformRows(ref m, out var row1, out var row2, out _);
+            for (var i = 0; i < count; i++)
+            {
+                var vector = sourceArray[sourceIndex + i];
+                var result = row1 * Vector128.Create(vector.X) + row2 * Vector128.Create(vector.Y);
+                destinationArray[destinationIndex + i] = new Vector2(result[0], result[1]);
+            }
+
+            return;
+        }
+
         for (var i = 0; i < count; i++)
         {
             var vector = sourceArray[sourceIndex + i];
             destinationArray[destinationIndex + i] = new Vector2(vector.X * m.M11 + vector.Y * m.M21,
                 vector.X * m.M12 + vector.Y * m.M22);
         }
+    }
+
+    private static void CreateTransformRows(ref Matrix matrix, out Vector128<float> row1,
+        out Vector128<float> row2, out Vector128<float> row4)
+    {
+        row1 = Vector128.Create(matrix.M11, matrix.M12, matrix.M13, matrix.M14);
+        row2 = Vector128.Create(matrix.M21, matrix.M22, matrix.M23, matrix.M24);
+        row4 = Vector128.Create(matrix.M41, matrix.M42, matrix.M43, matrix.M44);
     }
 
     public static bool operator ==(Vector2 v1, Vector2 v2)
