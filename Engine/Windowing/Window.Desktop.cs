@@ -1,5 +1,3 @@
-#if DESKTOP
-
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -366,4 +364,3 @@ public static partial class Window
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(nint window, int attribute, ref int value, int valueSize);
 }
-#endif

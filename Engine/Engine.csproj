@@ -9,7 +9,6 @@
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
-        <DefineConstants>DESKTOP</DefineConstants>
         <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
     </PropertyGroup>
 
@@ -43,7 +42,12 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
+        <Compile Remove="**\*.Desktop.cs"/>
         <PackageReference Include="Xamarin.AndroidX.Core" Version="1.17.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework)'=='$(GlobalTargetFramework)'">
+        <Compile Remove="**\*.Android.cs"/>
     </ItemGroup>
 
     <ItemGroup>

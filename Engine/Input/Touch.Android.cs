@@ -1,4 +1,3 @@
-#if ANDROID
 using System.Collections.Concurrent;
 
 using Android.Views;
@@ -71,4 +70,3 @@ public static partial class Touch
         }
     }
 }
-#endif

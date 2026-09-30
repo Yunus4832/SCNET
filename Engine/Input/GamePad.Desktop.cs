@@ -1,5 +1,3 @@
-#if DESKTOP
-
 using Engine.Core;
 
 using Silk.NET.Input;
@@ -92,4 +90,3 @@ public static partial class GamePad
         }
     }
 }
-#endif

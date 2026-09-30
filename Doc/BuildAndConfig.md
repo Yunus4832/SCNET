@@ -102,8 +102,14 @@ dotnet build SCNET.slnx --configuration Release
 
 - `Debug`
 - `Release`
-- `ANDROID`
-- `DESKTOP`
+
+平台不再使用解决方案配置区分。开发、调试或验证单一平台时，直接选择对应的启动项目，
+例如：
+
+```bash
+dotnet build Survivalcraft.Linux/Survivalcraft.Linux.csproj
+dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj
+```
 
 ### 引擎数学基准
 
@@ -121,7 +127,7 @@ dotnet run --configuration Release --project Engine.Core.Benchmarks/Engine.Core.
 ### 配置语义
 
 - `Debug` 和 `Release` 是通用配置，会走完整解决方案编译流程
-- `ANDROID` 和 `DESKTOP` 是平台配置，只编译对应平台相关的项目
+- `Engine` 中的 Android 和桌面平台源码由目标框架选择，不依赖解决方案配置或手写的条件编译常量
 - `Debug` 更适合开发调试，`Release` 更适合发布打包
 - 测试工程在 `Release` 下会被排除，部分 Android 变体也会在 `Release` 下被排除
 - 当前代码库大量使用反射，因此不启用 `trim`，也不支持通过裁剪方式进行发布优化

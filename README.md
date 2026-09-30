@@ -96,7 +96,9 @@ dotnet build SCNET.slnx --configuration Release
 ./Scripts/pack-nuget.sh
 ```
 
-PowerShell 分别使用 `./Scripts/publish.ps1` 和 `./Scripts/pack-nuget.ps1`。可选构建配置：`Debug`、`Release`、`ANDROID`、`DESKTOP`。详细说明见 [构建与共享配置](Doc/BuildAndConfig.md) 和 [NuGet 包](Doc/NuGet.md)。
+PowerShell 分别使用 `./Scripts/publish.ps1` 和 `./Scripts/pack-nuget.ps1`。可选构建配置为 `Debug`
+和 `Release`；平台开发和运行通过选择对应的桌面或 Android 启动项目完成。详细说明见
+[构建与共享配置](Doc/BuildAndConfig.md) 和 [NuGet 包](Doc/NuGet.md)。
 
 ### 测试
 

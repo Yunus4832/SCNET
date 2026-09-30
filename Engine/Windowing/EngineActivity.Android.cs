@@ -1,13 +1,16 @@
-#if ANDROID
 using Android.Content;
 using Android.Content.PM;
 using Android.Media;
 using Android.OS;
 using Android.Views;
+
 using AndroidX.Core.View;
+
 using Engine.Core;
 using Engine.Input;
+
 using Silk.NET.Windowing.Sdl.Android;
+
 using AndroidStream = Android.Media.Stream;
 
 namespace Engine.Windowing;
@@ -400,5 +403,3 @@ public class EngineActivity : SilkActivity
         }
     }
 }
-
-#endif

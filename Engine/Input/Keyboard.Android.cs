@@ -1,4 +1,3 @@
-#if ANDROID
 using System.Collections.Concurrent;
 
 using Android.Views;
@@ -123,4 +122,3 @@ public static partial class Keyboard
         _ => null
     };
 }
-#endif

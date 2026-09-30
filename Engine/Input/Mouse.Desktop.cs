@@ -1,5 +1,3 @@
-#if DESKTOP
-
 using Engine.Core;
 
 using Silk.NET.Input;
@@ -154,4 +152,3 @@ public static partial class Mouse
         _desktopMouseEventPosition = Point2.Zero;
     }
 }
-#endif

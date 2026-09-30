@@ -1,4 +1,3 @@
-#if ANDROID
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -207,4 +206,3 @@ public static partial class Window
     }
 
 }
-#endif

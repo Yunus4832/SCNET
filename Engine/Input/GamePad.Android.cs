@@ -1,4 +1,3 @@
-#if ANDROID
 using System.Collections.Concurrent;
 
 using Android.Views;
@@ -95,18 +94,18 @@ public static partial class GamePad
             case < GamePadButton.A:
                 return;
             case >= GamePadButton.DPadLeft and <= GamePadButton.DPadDown:
-            {
-                var idx = gamePadButton switch
                 {
-                    GamePadButton.DPadLeft => 0,
-                    GamePadButton.DPadRight => 1,
-                    GamePadButton.DPadUp => 2,
-                    GamePadButton.DPadDown => 3,
-                    _ => throw new ArgumentOutOfRangeException(nameof(gamePadButton))
-                };
-                DpadFromKey[gamepadIndex, idx] = true;
-                break;
-            }
+                    var idx = gamePadButton switch
+                    {
+                        GamePadButton.DPadLeft => 0,
+                        GamePadButton.DPadRight => 1,
+                        GamePadButton.DPadUp => 2,
+                        GamePadButton.DPadDown => 3,
+                        _ => throw new ArgumentOutOfRangeException(nameof(gamePadButton))
+                    };
+                    DpadFromKey[gamepadIndex, idx] = true;
+                    break;
+                }
             case GamePadButton.LeftShoulder: states[gamepadIndex].Triggers[0] = 1f; break;
             case GamePadButton.RightShoulder: states[gamepadIndex].Triggers[1] = 1f; break;
         }
@@ -126,18 +125,18 @@ public static partial class GamePad
             case < GamePadButton.A:
                 return;
             case >= GamePadButton.DPadLeft and <= GamePadButton.DPadDown:
-            {
-                var idx = gamePadButton switch
                 {
-                    GamePadButton.DPadLeft => 0,
-                    GamePadButton.DPadRight => 1,
-                    GamePadButton.DPadUp => 2,
-                    GamePadButton.DPadDown => 3,
-                    _ => throw new ArgumentOutOfRangeException(nameof(gamePadButton))
-                };
-                DpadFromKey[gamepadIndex, idx] = false;
-                break;
-            }
+                    var idx = gamePadButton switch
+                    {
+                        GamePadButton.DPadLeft => 0,
+                        GamePadButton.DPadRight => 1,
+                        GamePadButton.DPadUp => 2,
+                        GamePadButton.DPadDown => 3,
+                        _ => throw new ArgumentOutOfRangeException(nameof(gamePadButton))
+                    };
+                    DpadFromKey[gamepadIndex, idx] = false;
+                    break;
+                }
             case GamePadButton.LeftShoulder: states[gamepadIndex].Triggers[0] = 0f; break;
             case GamePadButton.RightShoulder: states[gamepadIndex].Triggers[1] = 0f; break;
         }
@@ -239,4 +238,3 @@ public static partial class GamePad
         }
     }
 }
-#endif
