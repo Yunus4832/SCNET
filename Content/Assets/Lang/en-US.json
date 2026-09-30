@@ -3277,7 +3277,13 @@
             "4": "User Interface",
             "5": "Audio",
             "6": "Controls",
-            "7": "Diagnostics & Compatibility"
+            "7": "Diagnostics & Compatibility",
+            "PerformanceDescription": "Adjust the balance between visual quality and performance",
+            "GraphicsDescription": "Adjust brightness, field of view, and other display effects",
+            "UiDescription": "Adjust language, UI scale, safe margins, and screenshot options",
+            "AudioDescription": "Adjust game sound and background music volume",
+            "ControlsDescription": "Adjust control modes, sensitivity, and creative mode controls",
+            "DiagnosticsDescription": "View runtime information and adjust compatibility options"
         },
         "SettingsUiScreen": [
             "Adjust User Interface Settings",

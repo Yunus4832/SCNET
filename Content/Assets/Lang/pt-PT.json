@@ -3277,7 +3277,13 @@
             "4": "Interface do usuário",
             "5": "Volume de volume",
             "6": "Controle",
-            "7": "Diagnóstico e compatibilidade"
+            "7": "Diagnóstico e compatibilidade",
+            "PerformanceDescription": "Ajuste o equilíbrio entre a qualidade visual e o desempenho",
+            "GraphicsDescription": "Ajuste o brilho, o campo de visão e outros efeitos visuais",
+            "UiDescription": "Ajuste o idioma, a escala da interface, as margens seguras e as capturas de ecrã",
+            "AudioDescription": "Ajuste o volume dos sons do jogo e da música de fundo",
+            "ControlsDescription": "Ajuste os modos de controlo, a sensibilidade e os controlos do modo criativo",
+            "DiagnosticsDescription": "Consulte informações de execução e ajuste as opções de compatibilidade"
         },
         "SettingsUiScreen": [
             "Ajuste das configurações da interface do usuário",

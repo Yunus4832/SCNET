@@ -3277,7 +3277,13 @@
             "4": "用户界面",
             "5": "音量",
             "6": "控制",
-            "7": "诊断与兼容"
+            "7": "诊断与兼容",
+            "PerformanceDescription": "调整画面质量与运行性能之间的平衡",
+            "GraphicsDescription": "调整亮度、视野等画面显示效果",
+            "UiDescription": "调整语言、界面缩放、安全边距与截图选项",
+            "AudioDescription": "调整游戏音效和背景音乐音量",
+            "ControlsDescription": "调整操作方式、灵敏度与创造模式控制",
+            "DiagnosticsDescription": "查看运行信息并调整兼容性选项"
         },
         "SettingsUiScreen": [
             "调整用户界面设置",
