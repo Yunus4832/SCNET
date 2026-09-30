@@ -12,7 +12,7 @@ public class FullInventoryWidget : CanvasWidget
 
     private readonly GridPanelWidget _inventoryGrid;
 
-    public FullInventoryWidget(IInventory? inventory, ComponentCraftingTable componentCraftingTable)
+    public FullInventoryWidget(IInventory inventory, ComponentCraftingTable componentCraftingTable)
     {
         var node = ContentManager.Get<XElement>("Widgets/FullInventoryWidget");
         LoadContents(this, node);
@@ -20,7 +20,7 @@ public class FullInventoryWidget : CanvasWidget
         _craftingGrid = Children.Find<GridPanelWidget>("CraftingGrid")!;
         _craftingResultSlot = Children.Find<InventorySlotWidget>("CraftingResultSlot")!;
         _craftingRemainsSlot = Children.Find<InventorySlotWidget>("CraftingRemainsSlot")!;
-        var num = 10;
+        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)
         {
             for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)

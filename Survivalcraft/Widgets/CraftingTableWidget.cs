@@ -23,7 +23,7 @@ public class CraftingTableWidget : CanvasWidget
         _craftingGrid = Children.Find<GridPanelWidget>("CraftingGrid")!;
         _craftingResultSlot = Children.Find<InventorySlotWidget>("CraftingResultSlot")!;
         _craftingRemainsSlot = Children.Find<InventorySlotWidget>("CraftingRemainsSlot")!;
-        var num = 10;
+        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)
         {
             for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)

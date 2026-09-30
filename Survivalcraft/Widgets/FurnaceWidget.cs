@@ -32,7 +32,7 @@ public class FurnaceWidget : CanvasWidget
         _resultSlot = Children.Find<InventorySlotWidget>("ResultSlot")!;
         _remainsSlot = Children.Find<InventorySlotWidget>("RemainsSlot")!;
         _fuelSlot = Children.Find<InventorySlotWidget>("FuelSlot")!;
-        var num = 10;
+        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)
         {
             for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)

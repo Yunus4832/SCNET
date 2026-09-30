@@ -15,6 +15,10 @@ public class ComponentCreativeInventory : Component, IInventory
 
     public int OpenSlotsCount { get; set; }
 
+    public int StorageSlotsCount { get; set; }
+
+    public int BackpackStartIndex => OpenSlotsCount;
+
     public int CategoryIndex { get; set; }
 
     public int PageIndex { get; set; }
@@ -124,7 +128,7 @@ public class ComponentCreativeInventory : Component, IInventory
 
     public int GetSlotCapacity(int slotIndex, int value)
     {
-        if (slotIndex >= 0 && slotIndex < OpenSlotsCount)
+        if (slotIndex >= 0 && slotIndex < StorageSlotsCount)
         {
             return 99980001;
         }
@@ -138,7 +142,7 @@ public class ComponentCreativeInventory : Component, IInventory
         var slotValue = GetSlotValue(slotIndex);
         if (slotCount <= 0 || slotValue == 0)
         {
-            return slotIndex < OpenSlotsCount ? 0 : 9999;
+            return slotIndex < StorageSlotsCount ? 0 : 9999;
         }
 
         var blockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!
@@ -153,7 +157,7 @@ public class ComponentCreativeInventory : Component, IInventory
             }
         }
 
-        return slotIndex < OpenSlotsCount ? 0 : 9999;
+        return slotIndex < StorageSlotsCount ? 0 : 9999;
     }
 
     public void AddSlotItems(int slotIndex, int value, int count)
@@ -164,7 +168,7 @@ public class ComponentCreativeInventory : Component, IInventory
 
     public bool AddNetSlotItems(int slotIndex, int value, int count)
     {
-        if (slotIndex < 0 || slotIndex >= OpenSlotsCount)
+        if (slotIndex < 0 || slotIndex >= StorageSlotsCount)
         {
             return false;
         }
@@ -187,7 +191,7 @@ public class ComponentCreativeInventory : Component, IInventory
 
     public int RemoveNetSlotItems(int slotIndex, int count)
     {
-        if (slotIndex < 0 || slotIndex >= OpenSlotsCount)
+        if (slotIndex < 0 || slotIndex >= StorageSlotsCount)
         {
             return 1;
         }
@@ -231,7 +235,7 @@ public class ComponentCreativeInventory : Component, IInventory
             }
         }
 
-        if (slotIndex >= OpenSlotsCount)
+        if (slotIndex >= StorageSlotsCount)
         {
             processedValue = 0;
             processedCount = 0;
@@ -251,50 +255,52 @@ public class ComponentCreativeInventory : Component, IInventory
     {
         _activeSlotIndex = valuesDictionary.GetValue<int>("ActiveSlotIndex");
         OpenSlotsCount = valuesDictionary.GetValue<int>("OpenSlotsCount");
+        StorageSlotsCount = valuesDictionary.GetValue<int>("StorageSlotsCount");
+        if (StorageSlotsCount < OpenSlotsCount + PlayerInventoryLayout.BackpackSlotsCount)
+        {
+            throw new InvalidOperationException("Creative inventory storage does not contain the complete backpack.");
+        }
+
         CategoryIndex = valuesDictionary.GetValue<int>("CategoryIndex");
         PageIndex = valuesDictionary.GetValue<int>("PageIndex");
         Id = valuesDictionary.GetValue("Id", -1);
         var subInventory = Project.FindSubsystem<SubsystemInventories>(true)!;
         Id = Id == -1 ? subInventory.ProduceInventoryId(this) : subInventory.RegisterInventory(this);
-        for (var i = 0; i < OpenSlotsCount; i++)
+        for (var i = 0; i < StorageSlotsCount; i++)
         {
             _slots.Add(0);
         }
 
-        if (Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.GameMode != GameMode.Creative)
-        {
-            return;
-        }
-
-        var creativeValues = BlocksManager.GetCreativeValues().ToArray();
-        foreach (var creativeValue in creativeValues)
-        {
-            _slots.Add(creativeValue);
-        }
-
-        var externalValues = creativeValues
-            .Where(creativeValue =>
-                BlocksManager.TryGetBlockId(Terrain.ExtractContents(creativeValue), out var id) &&
-                id.Namespace != new ModId("game"))
-            .ToArray();
-        Log.Information(
-            "Initialized creative inventory with {0} registered values; external values: {1}.",
-            creativeValues.Length,
-            string.Join(",", externalValues));
-
         var value = valuesDictionary.GetValue<ValuesDictionary>("Slots", false);
-        if (value == null)
+        if (value != null)
         {
-            return;
+            for (var i = 0; i < StorageSlotsCount; i++)
+            {
+                var slot = value.GetValue<ValuesDictionary>("Slot" + i.ToString(CultureInfo.InvariantCulture), false);
+                if (slot != null)
+                {
+                    _slots[i] = slot.GetValue<int>("Contents");
+                }
+            }
         }
 
-        for (var j = 0; j < OpenSlotsCount; j++)
+        if (Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.GameMode == GameMode.Creative)
         {
-            var value2 = value.GetValue<ValuesDictionary>("Slot" + j.ToString(CultureInfo.InvariantCulture), false);
-            if (value2 != null)
+            var creativeValues = BlocksManager.GetCreativeValues().ToArray();
+            foreach (var creativeValue in creativeValues)
             {
-                _slots[j] = value2.GetValue<int>("Contents");
+                _slots.Add(creativeValue);
             }
+
+            var externalValues = creativeValues
+                .Where(creativeValue =>
+                    BlocksManager.TryGetBlockId(Terrain.ExtractContents(creativeValue), out var id) &&
+                    id.Namespace != new ModId("game"))
+                .ToArray();
+            Log.Information(
+                "Initialized creative inventory with {0} registered values; external values: {1}.",
+                creativeValues.Length,
+                string.Join(",", externalValues));
         }
     }
 
@@ -306,7 +312,7 @@ public class ComponentCreativeInventory : Component, IInventory
         valuesDictionary.SetValue("Id", Id);
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Slots", valuesDictionary2);
-        for (var i = 0; i < OpenSlotsCount; i++)
+        for (var i = 0; i < StorageSlotsCount; i++)
         {
             if (_slots[i] != 0)
             {

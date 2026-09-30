@@ -72,7 +72,7 @@ public class CreativeInventoryPanel : CanvasWidget
         if (_componentCreativeInventory.CategoryIndex != _assignedCategoryIndex)
         {
             _slotIndices.Clear();
-            for (var i = _componentCreativeInventory.OpenSlotsCount;
+            for (var i = _componentCreativeInventory.StorageSlotsCount;
                  i < _componentCreativeInventory.SlotsCount;
                  i++)
             {

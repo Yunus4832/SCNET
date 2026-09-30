@@ -7,6 +7,8 @@ public class ComponentInventory : ComponentInventoryBase
 {
     public const int ShortInventorySlotsCount = 10;
 
+    public int BackpackStartIndex => ShortInventorySlotsCount;
+
     public override int ActiveSlotIndex
     {
         get;

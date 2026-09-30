@@ -62,7 +62,7 @@ public class ClothingWidget : CanvasWidget
             _clothingStack.Children.Add(inventorySlotWidget);
         }
 
-        var num = 10;
+        var num = PlayerInventoryLayout.GetBackpackStartIndex(_componentPlayer.ComponentMiner.Inventory);
         for (var j = 0; j < _inventoryGrid.RowsCount; j++)
         {
             for (var k = 0; k < _inventoryGrid.ColumnsCount; k++)

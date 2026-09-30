@@ -42,7 +42,7 @@ public class CrossbowWidget : CanvasWidget
             }
         }
 
-        var num = 10;
+        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         foreach (var child in _inventoryGrid.Children)
         {
             (child as InventorySlotWidget)?.AssignInventorySlot(inventory, num++);

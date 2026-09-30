@@ -48,7 +48,7 @@ public class DispenserWidget : CanvasWidget
             }
         }
 
-        num = 10;
+        num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         for (var k = 0; k < _inventoryGrid.RowsCount; k++)
         {
             for (var l = 0; l < _inventoryGrid.ColumnsCount; l++)
