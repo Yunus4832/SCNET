@@ -5,9 +5,7 @@ namespace Game.Components;
 
 public class ComponentInventory : ComponentInventoryBase
 {
-    public const int ShortInventorySlotsCount = 10;
-
-    public int BackpackStartIndex => ShortInventorySlotsCount;
+    public const int ShortInventorySlotsCount = 7;
 
     public override int ActiveSlotIndex
     {
@@ -20,7 +18,7 @@ public class ComponentInventory : ComponentInventoryBase
         get;
         set
         {
-            value = MathUtils.Clamp(value, 0, 10);
+            value = MathUtils.Clamp(value, 0, ShortInventorySlotsCount);
             if (value == field)
             {
                 return;
@@ -36,16 +34,16 @@ public class ComponentInventory : ComponentInventoryBase
 
             var position = componentFrame.Position + new Vector3(0f, 0.5f, 0f);
             var velocity = 1f * componentFrame.Rotation.GetForwardVector();
-            for (var i = field; i < 10; i++)
+            for (var i = field; i < ShortInventorySlotsCount; i++)
             {
                 DropSlotItems(i, position, velocity);
             }
         }
-    } = 10;
+    } = ShortInventorySlotsCount;
 
     public override int GetSlotCapacity(int slotIndex, int value)
     {
-        if (slotIndex >= VisibleSlotsCount && slotIndex < 10)
+        if (slotIndex >= VisibleSlotsCount && slotIndex < ShortInventorySlotsCount)
         {
             return 0;
         }

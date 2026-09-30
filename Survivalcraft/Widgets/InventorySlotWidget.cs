@@ -351,7 +351,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
             var isHotbarSlot = _inventory is ComponentCreativeInventory creativeInventory
                 ? _slotIndex < creativeInventory.OpenSlotsCount
-                : _slotIndex < 10;
+                : _slotIndex < ComponentInventory.ShortInventorySlotsCount;
             if (!flag && _inventory.ActiveSlotIndex != _slotIndex && isHotbarSlot)
             {
                 _inventory.ActiveSlotIndex = _slotIndex;

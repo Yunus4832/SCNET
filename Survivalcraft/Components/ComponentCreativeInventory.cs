@@ -17,8 +17,6 @@ public class ComponentCreativeInventory : Component, IInventory
 
     public int StorageSlotsCount { get; set; }
 
-    public int BackpackStartIndex => OpenSlotsCount;
-
     public int CategoryIndex { get; set; }
 
     public int PageIndex { get; set; }
@@ -256,7 +254,9 @@ public class ComponentCreativeInventory : Component, IInventory
         _activeSlotIndex = valuesDictionary.GetValue<int>("ActiveSlotIndex");
         OpenSlotsCount = valuesDictionary.GetValue<int>("OpenSlotsCount");
         StorageSlotsCount = valuesDictionary.GetValue<int>("StorageSlotsCount");
-        if (StorageSlotsCount < OpenSlotsCount + PlayerInventoryLayout.BackpackSlotsCount)
+        if (OpenSlotsCount != PlayerInventoryLayout.CreativeBackpackStartIndex ||
+            StorageSlotsCount < PlayerInventoryLayout.CreativeBackpackStartIndex +
+            PlayerInventoryLayout.BackpackSlotsCount)
         {
             throw new InvalidOperationException("Creative inventory storage does not contain the complete backpack.");
         }
