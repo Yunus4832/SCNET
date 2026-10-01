@@ -4,7 +4,9 @@ namespace Game;
 
 public static class PlayerInventoryLayout
 {
-    public const int RegularBackpackStartIndex = ComponentInventory.ShortInventorySlotsCount;
+    public const int RegularHotbarSlotsCount = 14;
+
+    public const int RegularBackpackStartIndex = RegularHotbarSlotsCount;
 
     public const int CreativeBackpackStartIndex = 30;
 

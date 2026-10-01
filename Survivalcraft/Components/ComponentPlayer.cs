@@ -129,27 +129,18 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
         if (ComponentMiner.Inventory is not InventoryDefault)
         {
-            if (ComponentMiner.Inventory is ComponentCreativeInventory creativeInventory)
+            if (ComponentMiner.Inventory is IPagedInventory pagedInventory)
             {
-                creativeInventory.ChangeHotbarPage(playerInput.ScrollInventoryPage);
+                pagedInventory.ChangeHotbarPage(playerInput.ScrollInventoryPage);
                 if (playerInput.SelectInventoryPage.HasValue)
                 {
-                    creativeInventory.SelectHotbarPage(playerInput.SelectInventoryPage.Value);
+                    pagedInventory.SelectHotbarPage(playerInput.SelectInventoryPage.Value);
                 }
 
-                creativeInventory.ActiveSlotIndex += playerInput.ScrollInventory;
+                pagedInventory.ActiveSlotIndex += playerInput.ScrollInventory;
                 if (playerInput.SelectInventorySlot.HasValue)
                 {
-                    creativeInventory.SelectHotbarPageSlot(playerInput.SelectInventorySlot.Value);
-                }
-            }
-            else
-            {
-                ComponentMiner.Inventory.ActiveSlotIndex += playerInput.ScrollInventory;
-                if (playerInput.SelectInventorySlot.HasValue)
-                {
-                    ComponentMiner.Inventory.ActiveSlotIndex =
-                        MathUtils.Clamp(playerInput.SelectInventorySlot.Value, 0, 9);
+                    pagedInventory.SelectHotbarPageSlot(playerInput.SelectInventorySlot.Value);
                 }
             }
         }

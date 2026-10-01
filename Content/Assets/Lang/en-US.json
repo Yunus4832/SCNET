@@ -3005,11 +3005,11 @@
             "66": "F3",
             "67": "Toggle diagnostics",
             "68": "Z / X",
-            "69": "Previous/next page (creative)",
+            "69": "Previous/next page",
             "70": "Ctrl + mouse wheel",
-            "71": "Switch hotbar page (creative)",
+            "71": "Switch hotbar page",
             "72": "Ctrl + 1 to 0",
-            "73": "Select hotbar page (creative)"
+            "73": "Select hotbar page"
         },
         "LevelFactorDialog": {
             "1": "Current multipliers:",

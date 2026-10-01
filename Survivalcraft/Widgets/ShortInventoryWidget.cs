@@ -18,7 +18,7 @@ public class ShortInventoryWidget : CanvasWidget
 
     private readonly ButtonWidget _nextPageButton;
 
-    private readonly LabelWidget _pageLabel;
+    private readonly PageIndicatorWidget _pageIndicator;
 
     private readonly ButtonWidget _previousPageButton;
 
@@ -33,7 +33,7 @@ public class ShortInventoryWidget : CanvasWidget
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _previousPageButton = Children.Find<ButtonWidget>("PreviousPageButton")!;
         _nextPageButton = Children.Find<ButtonWidget>("NextPageButton")!;
-        _pageLabel = Children.Find<LabelWidget>("PageLabel")!;
+        _pageIndicator = Children.Find<PageIndicatorWidget>("PageIndicator")!;
     }
 
     public void AssignComponents(IInventory? inventory)
@@ -50,9 +50,9 @@ public class ShortInventoryWidget : CanvasWidget
 
     public override void Update()
     {
-        if (_inventory is not ComponentCreativeInventory creativeInventory)
+        if (_inventory is not IPagedInventory pagedInventory)
         {
-            _pageLabel.IsVisible = false;
+            _pageIndicator.IsVisible = false;
             _previousPageButton.IsVisible = false;
             _nextPageButton.IsVisible = false;
             return;
@@ -60,21 +60,24 @@ public class ShortInventoryWidget : CanvasWidget
 
         if (_previousPageButton.IsClicked)
         {
-            creativeInventory.ChangeHotbarPage(-1);
+            pagedInventory.ChangeHotbarPage(-1);
         }
 
         if (_nextPageButton.IsClicked)
         {
-            creativeInventory.ChangeHotbarPage(1);
+            pagedInventory.ChangeHotbarPage(1);
         }
 
-        var isPagingVisible = creativeInventory.HotbarPagesCount > 1;
-        _pageLabel.IsVisible = isPagingVisible;
+        var pagesCount = pagedInventory.GetHotbarPagesCount();
+        var pageIndex = pagedInventory.GetHotbarPageIndex();
+        var isPagingVisible = pagesCount > 1;
+        _pageIndicator.IsVisible = isPagingVisible;
+        _pageIndicator.PageCount = pagesCount;
+        _pageIndicator.PageIndex = pageIndex;
         _previousPageButton.IsVisible = isPagingVisible;
         _nextPageButton.IsVisible = isPagingVisible;
-        _previousPageButton.IsEnabled = creativeInventory.HotbarPageIndex > 0;
-        _nextPageButton.IsEnabled = creativeInventory.HotbarPageIndex < creativeInventory.HotbarPagesCount - 1;
-        _pageLabel.Text = $"{creativeInventory.HotbarPageIndex + 1}/{creativeInventory.HotbarPagesCount}";
+        _previousPageButton.IsEnabled = pageIndex > 0;
+        _nextPageButton.IsEnabled = pageIndex < pagesCount - 1;
     }
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)
@@ -87,18 +90,23 @@ public class ShortInventoryWidget : CanvasWidget
         var controlsWidth = AreSideControlsVisible ? _sideControlsReservedWidth : 0f;
         var availableWidth = parentAvailableSize.X - controlsWidth - _horizontalMargin -
                              2f * HorizontalSafeAreaPadding;
-        var creativeInventory = _inventory as ComponentCreativeInventory;
-        if (creativeInventory != null)
+        var pagedInventory = _inventory as IPagedInventory;
+        if (pagedInventory != null)
         {
-            availableWidth -= 2f * _pageButtonWidth;
-            _inventory.VisibleSlotsCount = MathUtils.Clamp((int)(availableWidth / 72f), 6, 10);
-        }
-        else
-        {
-            _inventory.VisibleSlotsCount = 7;
+            var slotsWithoutPaging = MathUtils.Max((int)(availableWidth / 72f), 1);
+            if (slotsWithoutPaging >= pagedInventory.HotbarSlotsCount)
+            {
+                _inventory.VisibleSlotsCount = pagedInventory.HotbarSlotsCount;
+            }
+            else
+            {
+                availableWidth -= 2f * _pageButtonWidth;
+                _inventory.VisibleSlotsCount = MathUtils.Clamp((int)(availableWidth / 72f), 6,
+                    pagedInventory.HotbarSlotsCount);
+            }
         }
 
-        var pageIndex = creativeInventory?.HotbarPageIndex ?? 0;
+        var pageIndex = pagedInventory?.GetHotbarPageIndex() ?? 0;
         if (_inventory.VisibleSlotsCount != _inventoryGrid.Children.Count || pageIndex != _assignedPageIndex)
         {
             _inventoryGrid.Children.Clear();
@@ -111,7 +119,7 @@ public class ShortInventoryWidget : CanvasWidget
                     BevelColor = new Color(181, 172, 154) * 0.6f,
                     CenterColor = new Color(181, 172, 154) * 0.33f
                 };
-                var slotIndex = creativeInventory?.GetHotbarSlotIndex(i) ?? i;
+                var slotIndex = pagedInventory?.GetHotbarSlotIndex(i) ?? i;
                 if (slotIndex >= 0)
                 {
                     inventorySlotWidget.AssignInventorySlot(_inventory, slotIndex);

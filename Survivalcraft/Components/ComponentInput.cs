@@ -192,7 +192,7 @@ public class ComponentInput : Component, IUpdateable
             _playerInput.Move += vector;
             _playerInput.SneakMove += vector;
             _playerInput.Jump |= input.IsKeyDownOnce(Key.Space);
-            if (_componentPlayer.ComponentMiner.Inventory is ComponentCreativeInventory &&
+            if (_componentPlayer.ComponentMiner.Inventory is IPagedInventory &&
                 input.IsKeyDown(Key.Control))
             {
                 _playerInput.ScrollInventoryPage -= num;
@@ -242,7 +242,7 @@ public class ComponentInput : Component, IUpdateable
         _playerInput.Precipitation |= input.IsKeyDownOnce(Key.Y);
         _playerInput.Fog |= input.IsKeyDownOnce(Key.O);
 
-        if (_componentPlayer.ComponentMiner.Inventory is ComponentCreativeInventory)
+        if (_componentPlayer.ComponentMiner.Inventory is IPagedInventory)
         {
             if (input.IsKeyDownOnce(Key.Z))
             {
@@ -262,7 +262,7 @@ public class ComponentInput : Component, IUpdateable
                 continue;
             }
 
-            if (_componentPlayer.ComponentMiner.Inventory is ComponentCreativeInventory &&
+            if (_componentPlayer.ComponentMiner.Inventory is IPagedInventory &&
                 input.IsKeyDown(Key.Control))
             {
                 _playerInput.SelectInventoryPage = i;

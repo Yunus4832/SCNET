@@ -6893,7 +6893,7 @@
                                    InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
                     <Parameter Name="Class" Guid="b4723611-8b4e-4763-a11d-b4ff19c6109f" Value="Game.Components.ComponentInventory"
                                Type="string"/>
-                    <Parameter Name="SlotsCount" Guid="c3a21e8b-d503-4c6d-af0f-67a67afaad96" Value="23" Type="int"/>
+                    <Parameter Name="SlotsCount" Guid="c3a21e8b-d503-4c6d-af0f-67a67afaad96" Value="30" Type="int"/>
                     <Parameter Name="ActiveSlotIndex" Description="Index of active slot"
                                Guid="f4215298-f311-4bbc-932d-9f783e5a6e66" Value="0" Type="int"/>
                 </ComponentTemplate>

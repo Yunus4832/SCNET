@@ -5,7 +5,7 @@ using EntitySystem.TemplatesDatabase;
 
 namespace Game.Components;
 
-public class ComponentCreativeInventory : Component, IInventory
+public class ComponentCreativeInventory : Component, IPagedInventory
 {
     public const int LargeNumber = 9999;
 
@@ -31,12 +31,7 @@ public class ComponentCreativeInventory : Component, IInventory
 
     public int SlotsCount => _slots.Count;
 
-    public int HotbarPageIndex => ActiveSlotIndex / VisibleSlotsCount;
-
-    public int HotbarPagesCount => (OpenSlotsCount + VisibleSlotsCount - 1) / VisibleSlotsCount;
-
-    public int CurrentHotbarPageSlotsCount =>
-        MathUtils.Min(VisibleSlotsCount, OpenSlotsCount - HotbarPageIndex * VisibleSlotsCount);
+    public int HotbarSlotsCount => OpenSlotsCount;
 
     public void DropAllItems(Vector3 position)
     {
@@ -57,41 +52,6 @@ public class ComponentCreativeInventory : Component, IInventory
             ActiveSlotIndex = ActiveSlotIndex;
         }
     } = 10;
-
-    public int GetHotbarSlotIndex(int pageSlotIndex)
-    {
-        var slotIndex = HotbarPageIndex * VisibleSlotsCount + pageSlotIndex;
-        return pageSlotIndex >= 0 && pageSlotIndex < VisibleSlotsCount && slotIndex < OpenSlotsCount
-            ? slotIndex
-            : -1;
-    }
-
-    public void SelectHotbarPageSlot(int pageSlotIndex)
-    {
-        var slotIndex = GetHotbarSlotIndex(pageSlotIndex);
-        if (slotIndex >= 0)
-        {
-            ActiveSlotIndex = slotIndex;
-        }
-    }
-
-    public void ChangeHotbarPage(int offset)
-    {
-        var pageSlotIndex = ActiveSlotIndex % VisibleSlotsCount;
-        var pageIndex = MathUtils.Clamp(HotbarPageIndex + offset, 0, HotbarPagesCount - 1);
-        var pageSlotsCount = MathUtils.Min(VisibleSlotsCount, OpenSlotsCount - pageIndex * VisibleSlotsCount);
-        ActiveSlotIndex = pageIndex * VisibleSlotsCount + MathUtils.Min(pageSlotIndex, pageSlotsCount - 1);
-    }
-
-    public void SelectHotbarPage(int pageIndex)
-    {
-        if (pageIndex < 0 || pageIndex >= HotbarPagesCount)
-        {
-            return;
-        }
-
-        ChangeHotbarPage(pageIndex - HotbarPageIndex);
-    }
 
     public virtual void SetSlotValue(int slotIndex, object obj)
     {
