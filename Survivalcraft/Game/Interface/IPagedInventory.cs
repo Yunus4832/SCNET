@@ -38,8 +38,13 @@ public static class PagedInventoryExtensions
     public static void ChangeHotbarPage(this IPagedInventory inventory, int offset)
     {
         var pageSlotIndex = inventory.ActiveSlotIndex % inventory.VisibleSlotsCount;
-        var pageIndex = MathUtils.Clamp(inventory.GetHotbarPageIndex() + offset, 0,
-            inventory.GetHotbarPagesCount() - 1);
+        var pagesCount = inventory.GetHotbarPagesCount();
+        var pageIndex = (inventory.GetHotbarPageIndex() + offset) % pagesCount;
+        if (pageIndex < 0)
+        {
+            pageIndex += pagesCount;
+        }
+
         var pageSlotsCount = MathUtils.Min(inventory.VisibleSlotsCount,
             inventory.HotbarSlotsCount - pageIndex * inventory.VisibleSlotsCount);
         inventory.ActiveSlotIndex = pageIndex * inventory.VisibleSlotsCount +
@@ -50,7 +55,11 @@ public static class PagedInventoryExtensions
     {
         if (pageIndex >= 0 && pageIndex < inventory.GetHotbarPagesCount())
         {
-            inventory.ChangeHotbarPage(pageIndex - inventory.GetHotbarPageIndex());
+            var pageSlotIndex = inventory.ActiveSlotIndex % inventory.VisibleSlotsCount;
+            var pageSlotsCount = MathUtils.Min(inventory.VisibleSlotsCount,
+                inventory.HotbarSlotsCount - pageIndex * inventory.VisibleSlotsCount);
+            inventory.ActiveSlotIndex = pageIndex * inventory.VisibleSlotsCount +
+                                        MathUtils.Min(pageSlotIndex, pageSlotsCount - 1);
         }
     }
 }

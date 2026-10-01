@@ -75,8 +75,8 @@ public class ShortInventoryWidget : CanvasWidget
         _pageIndicator.PageIndex = pageIndex;
         _previousPageButton.IsVisible = true;
         _nextPageButton.IsVisible = true;
-        _previousPageButton.IsEnabled = pageIndex > 0;
-        _nextPageButton.IsEnabled = pageIndex < pagesCount - 1;
+        _previousPageButton.IsEnabled = pagesCount > 1;
+        _nextPageButton.IsEnabled = pagesCount > 1;
     }
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)

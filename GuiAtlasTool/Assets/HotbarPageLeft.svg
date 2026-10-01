@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="44" height="72" viewBox="0 0 44 72">
-    <path style="fill:#23211e;fill-opacity:0.33;stroke:#6c675c;stroke-width:2;stroke-linejoin:round;stroke-opacity:0.6"
-          d="M 43.25,4 C 43.25,2.2 41.8,0.75 40,0.75 H 17 C 5.8,0.75 0.75,5.8 0.75,17 v 38 c 0,11.2 5.05,16.25 16.25,16.25 h 23 c 1.8,0 3.25,-1.45 3.25,-3.25 z"/>
+    <path style="fill:#b5ac9a;fill-opacity:0.33;stroke:#b5ac9a;stroke-width:2;stroke-linejoin:round;stroke-opacity:0.6"
+          d="M 43.25,2.75 41.25,0.75 H 17 C 5.8,0.75 0.75,5.8 0.75,17 v 38 c 0,11.2 5.05,16.25 16.25,16.25 h 24.25 l 2,-2 z"/>
     <path style="fill:#ffffff" d="M 29,18 13,36 29,54 Z"/>
 </svg>
