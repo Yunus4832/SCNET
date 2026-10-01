@@ -1,5 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="44" height="72" viewBox="0 0 44 72">
-    <path style="fill:#b5ac9a;fill-opacity:0.5;stroke:#b5ac9a;stroke-width:2;stroke-linejoin:round;stroke-opacity:0.75"
+    <defs>
+        <linearGradient id="bevel" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#7d776c" stop-opacity="0.82"/>
+            <stop offset="1" stop-color="#a19b8f" stop-opacity="0.68"/>
+        </linearGradient>
+    </defs>
+    <path style="fill:#8f897d;fill-opacity:0.5;stroke:url(#bevel);stroke-width:2;stroke-linejoin:round"
           d="M 0.75,2.75 2.75,0.75 H 27 c 11.2,0 16.25,5.05 16.25,16.25 v 38 c 0,11.2 -5.05,16.25 -16.25,16.25 H 2.75 l -2,-2 z"/>
     <path style="fill:#ffffff" d="M 16,19 32,37 16,55 Z"/>
 </svg>
