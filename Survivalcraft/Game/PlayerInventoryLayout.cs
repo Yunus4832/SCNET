@@ -1,24 +1,24 @@
-using Game.Components;
-
 namespace Game;
 
 public static class PlayerInventoryLayout
 {
-    public const int RegularHotbarSlotsCount = 14;
+    public const int MinHotbarSlotsCount = 7;
 
-    public const int RegularBackpackStartIndex = RegularHotbarSlotsCount;
+    public const int MaxHotbarSlotsCount = 30;
 
-    public const int CreativeBackpackStartIndex = 30;
+    public const int BackpackStartIndex = MaxHotbarSlotsCount;
 
     public const int BackpackSlotsCount = 16;
 
+    public const int StorageSlotsCount = BackpackStartIndex + BackpackSlotsCount;
+
     public static int GetBackpackStartIndex(IInventory inventory)
     {
-        return inventory switch
+        if (inventory is not IPagedInventory)
         {
-            ComponentCreativeInventory => CreativeBackpackStartIndex,
-            ComponentInventory => RegularBackpackStartIndex,
-            _ => throw new InvalidOperationException("Inventory is not a player inventory.")
-        };
+            throw new InvalidOperationException("Inventory is not a player inventory.");
+        }
+
+        return BackpackStartIndex;
     }
 }

@@ -3338,7 +3338,9 @@
             "26": "季节变化",
             "27": "一年的长度",
             "28": "季节",
-            "DefaultDescription": "调整地形、环境、季节和游戏规则等世界选项。"
+            "DefaultDescription": "调整地形、环境、季节和游戏规则等世界选项。",
+            "HotbarSlotsCount": "物品栏容量",
+            "HotbarSlotsCountDescription": "设置当前游戏模式的物品栏容量，空间不足时可通过分页访问"
         },
         "ModWorldSelectionDialog": {
             "Title": "选择世界"

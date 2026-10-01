@@ -77,6 +77,8 @@ public class WorldOptionsScreen : Screen
 
     private readonly SliderWidget _humidityOffsetSlider;
 
+    private readonly SliderWidget _hotbarSlotsCountSlider;
+
     private bool _isExistingWorld;
 
     private readonly SliderWidget _islandSizeEw;
@@ -126,6 +128,7 @@ public class WorldOptionsScreen : Screen
         _seaLevelOffsetSlider = Children.Find<SliderWidget>("SeaLevelOffset")!;
         _temperatureOffsetSlider = Children.Find<SliderWidget>("TemperatureOffset")!;
         _humidityOffsetSlider = Children.Find<SliderWidget>("HumidityOffset")!;
+        _hotbarSlotsCountSlider = Children.Find<SliderWidget>("HotbarSlotsCount")!;
         _biomeSizeSlider = Children.Find<SliderWidget>("BiomeSize")!;
         _paletteButton = Children.Find<ButtonWidget>("Palette")!;
         _supernaturalCreaturesButton = Children.Find<ButtonWidget>("SupernaturalCreatures")!;
@@ -178,6 +181,8 @@ public class WorldOptionsScreen : Screen
             CreateDescriptionBinding("BlocksTextureSettingLabel",
                 () => StringsManager.GetString("BlocksTexture", "Description")),
             CreateDescriptionBinding("PaletteLabel", () => StringsManager.GetString("Palette", "Description")),
+            CreateDescriptionBinding("HotbarSlotsCountLabel",
+                () => LanguageManager.GetContentWidgets(_typeName, "HotbarSlotsCountDescription")),
             CreateDescriptionBinding("AreSeasonsChangingLabel", () => StringsManager.GetString(
                 "AreSeasonsChanging", _worldSettings.AreSeasonsChanging)),
             CreateDescriptionBinding("YearDaysLabel", () => StringsManager.GetString("YearDays", "Description")),
@@ -405,6 +410,11 @@ public class WorldOptionsScreen : Screen
             DialogsManager.ShowDialog(null, new EditPaletteDialog(_worldSettings.Palette));
         }
 
+        if (_hotbarSlotsCountSlider.IsSliding)
+        {
+            _worldSettings.CurrentHotbarSlotsCount = (int)_hotbarSlotsCountSlider.Value;
+        }
+
         if (_supernaturalCreaturesButton.IsClicked)
         {
             _worldSettings.AreSupernaturalCreaturesEnabled = !_worldSettings.AreSupernaturalCreaturesEnabled;
@@ -487,6 +497,8 @@ public class WorldOptionsScreen : Screen
         _humidityOffsetSlider.Text = FormatOffset(_worldSettings.HumidityOffset);
         _biomeSizeSlider.Value = FindNearestIndex(_biomeSizes, _worldSettings.BiomeSize);
         _biomeSizeSlider.Text = _worldSettings.BiomeSize + "x";
+        _hotbarSlotsCountSlider.Value = _worldSettings.CurrentHotbarSlotsCount;
+        _hotbarSlotsCountSlider.Text = _worldSettings.CurrentHotbarSlotsCount.ToString();
         _environmentBehaviorButton.Text = LanguageManager.Get("EnvironmentBehaviorMode",
             _worldSettings.EnvironmentBehaviorMode.ToString());
         _areSeasonsChangingCheckBox.IsChecked = _worldSettings.AreSeasonsChanging;

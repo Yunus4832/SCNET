@@ -5,7 +5,8 @@ namespace Game.Components;
 
 public class ComponentInventory : ComponentInventoryBase, IPagedInventory
 {
-    public int HotbarSlotsCount => PlayerInventoryLayout.RegularHotbarSlotsCount;
+    public int HotbarSlotsCount =>
+        Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.SurvivalHotbarSlotsCount;
 
     public override int ActiveSlotIndex
     {
@@ -27,7 +28,7 @@ public class ComponentInventory : ComponentInventoryBase, IPagedInventory
             field = value;
             ActiveSlotIndex = ActiveSlotIndex;
         }
-    } = PlayerInventoryLayout.RegularHotbarSlotsCount;
+    } = PlayerInventoryLayout.MinHotbarSlotsCount;
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {

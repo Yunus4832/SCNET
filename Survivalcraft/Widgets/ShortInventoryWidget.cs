@@ -70,12 +70,11 @@ public class ShortInventoryWidget : CanvasWidget
 
         var pagesCount = pagedInventory.GetHotbarPagesCount();
         var pageIndex = pagedInventory.GetHotbarPageIndex();
-        var isPagingVisible = pagesCount > 1;
-        _pageIndicator.IsVisible = isPagingVisible;
+        _pageIndicator.IsVisible = true;
         _pageIndicator.PageCount = pagesCount;
         _pageIndicator.PageIndex = pageIndex;
-        _previousPageButton.IsVisible = isPagingVisible;
-        _nextPageButton.IsVisible = isPagingVisible;
+        _previousPageButton.IsVisible = true;
+        _nextPageButton.IsVisible = true;
         _previousPageButton.IsEnabled = pageIndex > 0;
         _nextPageButton.IsEnabled = pageIndex < pagesCount - 1;
     }
@@ -93,17 +92,9 @@ public class ShortInventoryWidget : CanvasWidget
         var pagedInventory = _inventory as IPagedInventory;
         if (pagedInventory != null)
         {
-            var slotsWithoutPaging = MathUtils.Max((int)(availableWidth / 72f), 1);
-            if (slotsWithoutPaging >= pagedInventory.HotbarSlotsCount)
-            {
-                _inventory.VisibleSlotsCount = pagedInventory.HotbarSlotsCount;
-            }
-            else
-            {
-                availableWidth -= 2f * _pageButtonWidth;
-                _inventory.VisibleSlotsCount = MathUtils.Clamp((int)(availableWidth / 72f), 6,
-                    pagedInventory.HotbarSlotsCount);
-            }
+            availableWidth -= 2f * _pageButtonWidth;
+            _inventory.VisibleSlotsCount = MathUtils.Clamp((int)(availableWidth / 72f), 6,
+                pagedInventory.HotbarSlotsCount);
         }
 
         var pageIndex = pagedInventory?.GetHotbarPageIndex() ?? 0;

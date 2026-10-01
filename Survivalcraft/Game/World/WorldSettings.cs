@@ -28,6 +28,26 @@ public class WorldSettings
 
     public float HumidityOffset;
 
+    public int CreativeHotbarSlotsCount = PlayerInventoryLayout.MaxHotbarSlotsCount;
+
+    public int SurvivalHotbarSlotsCount = PlayerInventoryLayout.MinHotbarSlotsCount;
+
+    public int CurrentHotbarSlotsCount
+    {
+        get => GameMode == GameMode.Creative ? CreativeHotbarSlotsCount : SurvivalHotbarSlotsCount;
+        set
+        {
+            if (GameMode == GameMode.Creative)
+            {
+                CreativeHotbarSlotsCount = value;
+            }
+            else
+            {
+                SurvivalHotbarSlotsCount = value;
+            }
+        }
+    }
+
     public bool IsAdventureRespawnAllowed = true;
 
     public bool IsFriendlyFireEnabled = true;
@@ -121,6 +141,12 @@ public class WorldSettings
         Name = valuesDictionary.GetValue<string>("WorldName");
         Seed = valuesDictionary.GetValue("WorldSeedString", string.Empty);
         GameMode = valuesDictionary.GetValue("GameMode", GameMode.Challenging);
+        SurvivalHotbarSlotsCount = MathUtils.Clamp(valuesDictionary.GetValue("SurvivalHotbarSlotsCount",
+            PlayerInventoryLayout.MinHotbarSlotsCount), PlayerInventoryLayout.MinHotbarSlotsCount,
+            PlayerInventoryLayout.MaxHotbarSlotsCount);
+        CreativeHotbarSlotsCount = MathUtils.Clamp(valuesDictionary.GetValue("CreativeHotbarSlotsCount",
+            PlayerInventoryLayout.MaxHotbarSlotsCount), PlayerInventoryLayout.MinHotbarSlotsCount,
+            PlayerInventoryLayout.MaxHotbarSlotsCount);
         EnvironmentBehaviorMode = valuesDictionary.GetValue("EnvironmentBehaviorMode", EnvironmentBehaviorMode.Living);
         TimeOfDayMode = valuesDictionary.GetValue("TimeOfDayMode", TimeOfDayMode.Changing);
         AreSeasonsChanging = valuesDictionary.GetValue("AreSeasonsChanging", true);
@@ -187,6 +213,8 @@ public class WorldSettings
     {
         valuesDictionary.SetValue("WorldName", Name);
         valuesDictionary.SetValue("GameMode", GameMode);
+        valuesDictionary.SetValue("SurvivalHotbarSlotsCount", SurvivalHotbarSlotsCount);
+        valuesDictionary.SetValue("CreativeHotbarSlotsCount", CreativeHotbarSlotsCount);
         valuesDictionary.SetValue("EnvironmentBehaviorMode", EnvironmentBehaviorMode);
         valuesDictionary.SetValue("TimeOfDayMode", TimeOfDayMode);
         valuesDictionary.SetValue("AreSeasonsChanging", AreSeasonsChanging);

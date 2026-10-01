@@ -3338,7 +3338,9 @@
             "26": "Mudança sazonal",
             "27": "A duração de um ano",
             "28": "Temporada",
-            "DefaultDescription": "Configure o terreno, o ambiente, as estações e as regras de jogo deste mundo."
+            "DefaultDescription": "Configure o terreno, o ambiente, as estações e as regras de jogo deste mundo.",
+            "HotbarSlotsCount": "Capacidade da barra rápida",
+            "HotbarSlotsCountDescription": "Define a capacidade da barra rápida para o modo atual; use páginas quando o espaço for limitado"
         },
         "ModWorldSelectionDialog": {
             "Title": "Selecionar mundos"

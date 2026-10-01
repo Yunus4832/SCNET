@@ -192,6 +192,16 @@
                                                   Margin="20, 0"/>
                         </UniformSpacingPanelWidget>
 
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <ClickableTextRowWidget Name="HotbarSlotsCountLabel"
+                                                    Text="[WorldOptionsScreen:HotbarSlotsCount]"
+                                                    Color="255, 255, 255" HorizontalAlignment="Far"
+                                                    VerticalAlignment="Center" TextHorizontalAlignment="Far"
+                                                    Margin="20, 0"/>
+                            <SliderWidget Name="HotbarSlotsCount" Size="410, 60" VerticalAlignment="Center"
+                                          Margin="20, 0" Granularity="1" MinValue="7" MaxValue="30"/>
+                        </UniformSpacingPanelWidget>
+
                         <!--Seasons panel-->
                         <StackPanelWidget Name="SeasonsPanel" Direction="Vertical" HorizontalAlignment="Center">
 

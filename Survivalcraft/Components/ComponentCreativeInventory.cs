@@ -13,10 +13,6 @@ public class ComponentCreativeInventory : Component, IPagedInventory
 
     private readonly List<int> _slots = [];
 
-    public int OpenSlotsCount { get; set; }
-
-    public int StorageSlotsCount { get; set; }
-
     public int CategoryIndex { get; set; }
 
     public int PageIndex { get; set; }
@@ -26,12 +22,13 @@ public class ComponentCreativeInventory : Component, IPagedInventory
     public int ActiveSlotIndex
     {
         get => _activeSlotIndex;
-        set => _activeSlotIndex = MathUtils.Clamp(value, 0, OpenSlotsCount - 1);
+        set => _activeSlotIndex = MathUtils.Clamp(value, 0, HotbarSlotsCount - 1);
     }
 
     public int SlotsCount => _slots.Count;
 
-    public int HotbarSlotsCount => OpenSlotsCount;
+    public int HotbarSlotsCount =>
+        Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.CreativeHotbarSlotsCount;
 
     public void DropAllItems(Vector3 position)
     {
@@ -42,7 +39,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
         get;
         set
         {
-            value = MathUtils.Clamp(value, 1, 10);
+            value = MathUtils.Clamp(value, 1, HotbarSlotsCount);
             if (value == field)
             {
                 return;
@@ -86,7 +83,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
 
     public int GetSlotCapacity(int slotIndex, int value)
     {
-        if (slotIndex >= 0 && slotIndex < StorageSlotsCount)
+        if (slotIndex >= 0 && slotIndex < PlayerInventoryLayout.StorageSlotsCount)
         {
             return 99980001;
         }
@@ -100,7 +97,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
         var slotValue = GetSlotValue(slotIndex);
         if (slotCount <= 0 || slotValue == 0)
         {
-            return slotIndex < StorageSlotsCount ? 0 : 9999;
+            return slotIndex < PlayerInventoryLayout.StorageSlotsCount ? 0 : 9999;
         }
 
         var blockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!
@@ -115,7 +112,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
             }
         }
 
-        return slotIndex < StorageSlotsCount ? 0 : 9999;
+        return slotIndex < PlayerInventoryLayout.StorageSlotsCount ? 0 : 9999;
     }
 
     public void AddSlotItems(int slotIndex, int value, int count)
@@ -126,7 +123,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
 
     public bool AddNetSlotItems(int slotIndex, int value, int count)
     {
-        if (slotIndex < 0 || slotIndex >= StorageSlotsCount)
+        if (slotIndex < 0 || slotIndex >= PlayerInventoryLayout.StorageSlotsCount)
         {
             return false;
         }
@@ -149,7 +146,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
 
     public int RemoveNetSlotItems(int slotIndex, int count)
     {
-        if (slotIndex < 0 || slotIndex >= StorageSlotsCount)
+        if (slotIndex < 0 || slotIndex >= PlayerInventoryLayout.StorageSlotsCount)
         {
             return 1;
         }
@@ -193,7 +190,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
             }
         }
 
-        if (slotIndex >= StorageSlotsCount)
+        if (slotIndex >= PlayerInventoryLayout.StorageSlotsCount)
         {
             processedValue = 0;
             processedCount = 0;
@@ -211,22 +208,13 @@ public class ComponentCreativeInventory : Component, IPagedInventory
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
     {
-        _activeSlotIndex = valuesDictionary.GetValue<int>("ActiveSlotIndex");
-        OpenSlotsCount = valuesDictionary.GetValue<int>("OpenSlotsCount");
-        StorageSlotsCount = valuesDictionary.GetValue<int>("StorageSlotsCount");
-        if (OpenSlotsCount != PlayerInventoryLayout.CreativeBackpackStartIndex ||
-            StorageSlotsCount < PlayerInventoryLayout.CreativeBackpackStartIndex +
-            PlayerInventoryLayout.BackpackSlotsCount)
-        {
-            throw new InvalidOperationException("Creative inventory storage does not contain the complete backpack.");
-        }
-
+        ActiveSlotIndex = valuesDictionary.GetValue<int>("ActiveSlotIndex");
         CategoryIndex = valuesDictionary.GetValue<int>("CategoryIndex");
         PageIndex = valuesDictionary.GetValue<int>("PageIndex");
         Id = valuesDictionary.GetValue("Id", -1);
         var subInventory = Project.FindSubsystem<SubsystemInventories>(true)!;
         Id = Id == -1 ? subInventory.ProduceInventoryId(this) : subInventory.RegisterInventory(this);
-        for (var i = 0; i < StorageSlotsCount; i++)
+        for (var i = 0; i < PlayerInventoryLayout.StorageSlotsCount; i++)
         {
             _slots.Add(0);
         }
@@ -234,7 +222,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
         var value = valuesDictionary.GetValue<ValuesDictionary>("Slots", false);
         if (value != null)
         {
-            for (var i = 0; i < StorageSlotsCount; i++)
+            for (var i = 0; i < PlayerInventoryLayout.StorageSlotsCount; i++)
             {
                 var slot = value.GetValue<ValuesDictionary>("Slot" + i.ToString(CultureInfo.InvariantCulture), false);
                 if (slot != null)
@@ -272,7 +260,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
         valuesDictionary.SetValue("Id", Id);
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Slots", valuesDictionary2);
-        for (var i = 0; i < StorageSlotsCount; i++)
+        for (var i = 0; i < PlayerInventoryLayout.StorageSlotsCount; i++)
         {
             if (_slots[i] != 0)
             {

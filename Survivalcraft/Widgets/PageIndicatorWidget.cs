@@ -12,13 +12,13 @@ public class PageIndicatorWidget : Widget
 
     public Color ActiveColor { get; set; } = new(235, 235, 235);
 
-    public Color InactiveColor { get; set; } = new(90, 90, 90);
+    public Color InactiveColor { get; set; } = new(150, 150, 150, 140);
 
     public override bool IsHitTestVisible { get; set; } = false;
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)
     {
-        IsDrawRequired = PageCount > 1;
+        IsDrawRequired = PageCount > 0;
         var width = PageCount * _dotDiameter + MathUtils.Max(PageCount - 1, 0) * _dotSpacing;
         DesiredSize = new Vector2(width, 10f);
     }

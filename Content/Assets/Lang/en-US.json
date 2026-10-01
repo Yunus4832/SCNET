@@ -3338,7 +3338,9 @@
             "26": "Changing Seasons:",
             "27": "Length Of Year:",
             "28": "Season:",
-            "DefaultDescription": "Configure terrain, environment, seasons, and gameplay rules for this world."
+            "DefaultDescription": "Configure terrain, environment, seasons, and gameplay rules for this world.",
+            "HotbarSlotsCount": "Hotbar capacity",
+            "HotbarSlotsCountDescription": "Sets the hotbar capacity for the current game mode; use pages when space is limited"
         },
         "ModWorldSelectionDialog": {
             "Title": "Select Worlds"

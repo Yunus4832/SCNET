@@ -6653,10 +6653,6 @@
                                Guid="0b626a24-73fd-401a-b05b-8c883548102b" Value="0" Type="int"/>
                     <Parameter Name="Class" Guid="412eb397-e85b-4b01-be86-a0cb3a4f83df"
                                Value="Game.Components.ComponentCreativeInventory" Type="string"/>
-                    <Parameter Name="OpenSlotsCount" Description="Number of open slots"
-                               Guid="8c86a02f-99c7-4b97-8f78-cd6037660be2" Value="30" Type="int"/>
-                    <Parameter Name="StorageSlotsCount" Description="Number of persistent editable slots"
-                               Guid="fb3193cf-2f71-45ba-b920-a25781ce11b4" Value="46" Type="int"/>
                     <Parameter Name="PageIndex" Description="Active page of creative inventory"
                                Guid="8ebc611d-a9ac-4c70-8edc-a35ee63832ea" Value="0" Type="int"/>
                 </ComponentTemplate>
@@ -6893,7 +6889,7 @@
                                    InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
                     <Parameter Name="Class" Guid="b4723611-8b4e-4763-a11d-b4ff19c6109f" Value="Game.Components.ComponentInventory"
                                Type="string"/>
-                    <Parameter Name="SlotsCount" Guid="c3a21e8b-d503-4c6d-af0f-67a67afaad96" Value="30" Type="int"/>
+                    <Parameter Name="SlotsCount" Guid="c3a21e8b-d503-4c6d-af0f-67a67afaad96" Value="46" Type="int"/>
                     <Parameter Name="ActiveSlotIndex" Description="Index of active slot"
                                Guid="f4215298-f311-4bbc-932d-9f783e5a6e66" Value="0" Type="int"/>
                 </ComponentTemplate>
