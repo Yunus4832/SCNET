@@ -12,7 +12,7 @@ public class PageIndicatorWidget : Widget
 
     public Color ActiveColor { get; set; } = new(235, 235, 235);
 
-    public Color InactiveColor { get; set; } = new(150, 150, 150, 140);
+    public Color InactiveColor { get; set; } = new(82, 78, 70, 140);
 
     public override bool IsHitTestVisible { get; set; } = false;
 
