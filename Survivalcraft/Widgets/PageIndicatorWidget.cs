@@ -2,17 +2,17 @@ namespace Game.Widgets;
 
 public class PageIndicatorWidget : Widget
 {
-    private const float _dotDiameter = 4f;
+    private const float _dotDiameter = 6f;
 
-    private const float _dotSpacing = 5f;
+    private const float _dotSpacing = 6f;
 
     public int PageCount { get; set; }
 
     public int PageIndex { get; set; }
 
-    public Color ActiveColor { get; set; } = new(255, 255, 255, 200);
+    public Color ActiveColor { get; set; } = new(235, 235, 235);
 
-    public Color InactiveColor { get; set; } = new(180, 180, 180, 80);
+    public Color InactiveColor { get; set; } = new(90, 90, 90);
 
     public override bool IsHitTestVisible { get; set; } = false;
 
@@ -32,7 +32,7 @@ public class PageIndicatorWidget : Widget
         for (var i = 0; i < PageCount; i++)
         {
             var color = i == PageIndex ? ActiveColor : InactiveColor;
-            flatBatch.QueueDisc(center, new Vector2(_dotDiameter / 2f), 0f, color * GlobalColorTransform, 12);
+            flatBatch.QueueDisc(center, new Vector2(_dotDiameter / 2f), 0f, color * GlobalColorTransform, 32);
             center.X += _dotDiameter + _dotSpacing;
         }
 
