@@ -59,6 +59,7 @@ public class TargetBlock : MountedElectricElementBlock
         var mountingFace = GetMountingFace(data);
         var s = LightingManager.LightIntensityByLightValueAndFace[num + 16 * mountingFace];
         var color = Color.White * s;
+        color.A = byte.MaxValue;
         switch (mountingFace)
         {
             case 2:
