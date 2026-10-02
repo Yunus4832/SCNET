@@ -35,6 +35,8 @@ public static class GameMessageFormatter
                     GetText("CommandPrefix", "[指令]"),
                     ResolveToneStyle(message.Tone, MessageTextStyle.Accent)));
                 break;
+            case GameMessageKind.Sign:
+                break;
         }
     }
 

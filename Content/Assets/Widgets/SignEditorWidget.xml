@@ -1,0 +1,64 @@
+<SignEditorWidget xmlns="runtime-namespace:Game.Widgets" Size="614, 382" ClampToBounds="true">
+    <BevelledRectangleWidget Size="614, 382" BevelSize="3"/>
+    <LabelWidget CanvasWidget.Position="28, 12" Text="[SignEditorWidget:Title]"
+                 Color="255, 255, 255, 192"/>
+
+    <StackPanelWidget CanvasWidget.Position="35, 45" Direction="Vertical">
+        <StackPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Size="72, 46" Text="[SignEditorWidget:Line1]" Color="180, 180, 180"
+                         TextAnchor="VerticalCenter"/>
+            <CanvasWidget Size="404, 46">
+                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                <TextBoxWidget Name="SignEditor.Text1" Size="404, 46" MaximumLength="64" Margin="10, 0"/>
+            </CanvasWidget>
+            <BevelledButtonWidget Name="SignEditor.Color1" Style="{Styles/ButtonStyle_ColorPicker}"
+                                  Size="46, 46" Margin="2, 0"/>
+        </StackPanelWidget>
+        <StackPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Size="72, 46" Text="[SignEditorWidget:Line2]" Color="180, 180, 180"
+                         TextAnchor="VerticalCenter"/>
+            <CanvasWidget Size="404, 46">
+                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                <TextBoxWidget Name="SignEditor.Text2" Size="404, 46" MaximumLength="64" Margin="10, 0"/>
+            </CanvasWidget>
+            <BevelledButtonWidget Name="SignEditor.Color2" Style="{Styles/ButtonStyle_ColorPicker}"
+                                  Size="46, 46" Margin="2, 0"/>
+        </StackPanelWidget>
+        <StackPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Size="72, 46" Text="[SignEditorWidget:Line3]" Color="180, 180, 180"
+                         TextAnchor="VerticalCenter"/>
+            <CanvasWidget Size="404, 46">
+                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                <TextBoxWidget Name="SignEditor.Text3" Size="404, 46" MaximumLength="64" Margin="10, 0"/>
+            </CanvasWidget>
+            <BevelledButtonWidget Name="SignEditor.Color3" Style="{Styles/ButtonStyle_ColorPicker}"
+                                  Size="46, 46" Margin="2, 0"/>
+        </StackPanelWidget>
+        <StackPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Size="72, 46" Text="[SignEditorWidget:Line4]" Color="180, 180, 180"
+                         TextAnchor="VerticalCenter"/>
+            <CanvasWidget Size="404, 46">
+                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                <TextBoxWidget Name="SignEditor.Text4" Size="404, 46" MaximumLength="64" Margin="10, 0"/>
+            </CanvasWidget>
+            <BevelledButtonWidget Name="SignEditor.Color4" Style="{Styles/ButtonStyle_ColorPicker}"
+                                  Size="46, 46" Margin="2, 0"/>
+        </StackPanelWidget>
+        <StackPanelWidget Direction="Horizontal" Margin="0, 3">
+            <LabelWidget Size="72, 46" Text="[SignEditorWidget:Url]" Color="180, 180, 180"
+                         TextAnchor="VerticalCenter"/>
+            <CanvasWidget Size="404, 46">
+                <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
+                <TextBoxWidget Name="SignEditor.Url" Size="404, 46" MaximumLength="256" Margin="10, 0"/>
+            </CanvasWidget>
+            <CanvasWidget Size="46, 46" Margin="2, 0"/>
+        </StackPanelWidget>
+    </StackPanelWidget>
+
+    <StackPanelWidget CanvasWidget.Position="137, 316" Direction="Horizontal">
+        <BevelledButtonWidget Name="SignEditor.Save" Size="160, 54" Margin="6, 0"
+                              Text="[SignEditorWidget:Save]"/>
+        <BevelledButtonWidget Name="SignEditor.Cancel" Size="160, 54" Margin="6, 0"
+                              Text="[SignEditorWidget:Cancel]"/>
+    </StackPanelWidget>
+</SignEditorWidget>

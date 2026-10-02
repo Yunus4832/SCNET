@@ -1,0 +1,32 @@
+<SignViewerWidget xmlns="runtime-namespace:Game.Widgets" Size="614, 382" ClampToBounds="true">
+    <BevelledRectangleWidget Size="614, 382" BevelSize="3"/>
+    <LabelWidget CanvasWidget.Position="28, 14" Text="[SignViewerWidget:Title]"
+                 Color="255, 255, 255, 192"/>
+
+    <CanvasWidget CanvasWidget.Position="28, 58" Size="558, 236" ClampToBounds="true">
+        <BevelledRectangleWidget BevelSize="-2" DirectionalLight="0.15"
+                                 CenterColor="181, 172, 154"/>
+        <ScrollPanelWidget Direction="Vertical" Margin="24, 18">
+            <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center" Margin="0, 4">
+                <LabelWidget Name="SignViewer.Line1" Size="500, -1" HorizontalAlignment="Center"
+                             TextAnchor="HorizontalCenter" WordWrap="true" Margin="0, 4"/>
+                <LabelWidget Name="SignViewer.Line2" Size="500, -1" HorizontalAlignment="Center"
+                             TextAnchor="HorizontalCenter" WordWrap="true" Margin="0, 4"/>
+                <LabelWidget Name="SignViewer.Line3" Size="500, -1" HorizontalAlignment="Center"
+                             TextAnchor="HorizontalCenter" WordWrap="true" Margin="0, 4"/>
+                <LabelWidget Name="SignViewer.Line4" Size="500, -1" HorizontalAlignment="Center"
+                             TextAnchor="HorizontalCenter" WordWrap="true" Margin="0, 4"/>
+            </StackPanelWidget>
+        </ScrollPanelWidget>
+        <LabelWidget Name="SignViewer.Empty" Text="[SignViewerWidget:Empty]" Color="160, 160, 160"
+                     HorizontalAlignment="Center" VerticalAlignment="Center"
+                     TextAnchor="HorizontalCenter, VerticalCenter"/>
+    </CanvasWidget>
+
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Far" Margin="0, 18">
+        <BevelledButtonWidget Name="SignViewer.OpenLink" Size="160, 54" Margin="6, 0"
+                              Text="[SignViewerWidget:OpenLink]"/>
+        <BevelledButtonWidget Name="SignViewer.Close" Size="160, 54" Margin="6, 0"
+                              Text="[SignViewerWidget:Close]"/>
+    </StackPanelWidget>
+</SignViewerWidget>

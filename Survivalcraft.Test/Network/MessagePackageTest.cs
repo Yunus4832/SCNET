@@ -1,3 +1,6 @@
+using Engine.Core;
+using Engine.Graphics;
+
 using Game.Messaging;
 using Game.Network.Packages;
 using Game.Network.Serialization;
@@ -19,7 +22,8 @@ public class MessagePackageTest
                     new MessageSegment("位置："),
                     new MessageSegment(
                         "出生点",
-                        MessageTextStyle.Accent)
+                        MessageTextStyle.Accent,
+                        new Color(12, 34, 56, 78))
                 ]),
                 GameMessageTone.Warning,
                 GameMessagePresentation.Default | GameMessagePresentation.Toast)
@@ -38,6 +42,8 @@ public class MessagePackageTest
             GameMessagePresentation.Default | GameMessagePresentation.Toast,
             clone.GameMessage.Presentation);
         Assert.Equal("位置：出生点", clone.GameMessage.Content.PlainText);
+        Assert.Null(clone.GameMessage.Content.Segments[0].Color);
+        Assert.Equal(new Color(12, 34, 56, 78), clone.GameMessage.Content.Segments[1].Color);
         Assert.Equal("MultiplayerUI", clone.GameMessage.LocalizationSection);
         Assert.Equal("PlayerJoined", clone.GameMessage.LocalizationKey);
         Assert.Equal(["Lily"], clone.GameMessage.LocalizationArguments);

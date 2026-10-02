@@ -9,7 +9,8 @@ internal sealed record RichTextLayoutFragment(
     string Text,
     Vector2 Position,
     Vector2 Size,
-    MessageTextStyle Style);
+    MessageTextStyle Style,
+    Color? Color);
 
 public class RichTextWidget : Widget
 {
@@ -68,7 +69,7 @@ public class RichTextWidget : Widget
         var scale = new Vector2(MathUtils.Max(ContentScale, 0.1f));
         foreach (var run in _layoutRuns)
         {
-            var color = ResolveColor(run.Style) * GlobalColorTransform;
+            var color = ResolveColor(run.Style, run.Color) * GlobalColorTransform;
             if (UseDropShadow)
             {
                 fontBatch.QueueText(
@@ -107,6 +108,10 @@ public class RichTextWidget : Widget
     }
 
     internal Color ResolveColor(MessageTextStyle style) =>
+        ResolveColor(style, null);
+
+    internal Color ResolveColor(MessageTextStyle style, Color? color) =>
+        color ??
         style switch
         {
             MessageTextStyle.Sender => NormalTextColor,
@@ -246,7 +251,8 @@ public class RichTextWidget : Widget
                 fragment,
                 position,
                 new Vector2(size.X, lineHeight),
-                segment.Style));
+                segment.Style,
+                segment.Color));
             position.X += size.X;
             index += count;
 

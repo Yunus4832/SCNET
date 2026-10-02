@@ -13,6 +13,8 @@ namespace Game.Subsystems;
 
 public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUpdateable
 {
+    private const int _surfaceLineMaximumLength = 16;
+
     public const float MaxVisibilityDistanceSqr = 400f;
 
     public const float MinUpdateDistance = 2f;
@@ -93,31 +95,28 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     public SignData? GetSignData(Point3 point)
     {
-        //关键词屏蔽
-        var arr = Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.KeywordBlocking
-            .Split([';'], StringSplitOptions.None);
         if (!_textsByPoint.TryGetValue(point, out var value))
         {
             return null;
         }
 
-        for (var i = 0; i < value.Lines.Length; i++)
-        {
-            foreach (var k in arr)
-            {
-                if (!string.IsNullOrEmpty(k))
-                {
-                    value.Lines[i] = value.Lines[i].Replace(k, "*");
-                }
-            }
-        }
-
-        return new SignData
+        var signData = new SignData
         {
             Lines = value.Lines.ToArray(),
             Colors = value.Colors.ToArray(),
             Url = value.Url
         };
+        var blockedKeywords = _subsystemGameInfo.WorldSettings.KeywordBlocking
+            .Split([';'], StringSplitOptions.RemoveEmptyEntries);
+        for (var i = 0; i < signData.Lines.Length; i++)
+        {
+            foreach (var keyword in blockedKeywords)
+            {
+                signData.Lines[i] = signData.Lines[i].Replace(keyword, "*");
+            }
+        }
+
+        return signData;
     }
 
     public void SetSignData(Point3 point, string[] lines, Color[] colors, string url)
@@ -179,37 +178,68 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
     public override bool OnInteract(TerrainRaycastResult raycastResult, ComponentMiner componentMiner)
     {
         var point = new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z);
+        var componentPlayer = componentMiner.ComponentPlayer;
+        if (componentPlayer is not { PlayerData.IsMainPlayer: true })
+        {
+            return true;
+        }
+
+        componentPlayer.ComponentGui.ModalPanelWidget = new SignViewerWidget(
+            GetSignData(point),
+            () => componentPlayer.ComponentGui.ModalPanelWidget = null);
+        AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+        return true;
+    }
+
+    public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer componentPlayer)
+    {
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure)
         {
-            var signData = GetSignData(point);
-            if (signData != null && !string.IsNullOrEmpty(signData.Url))
-            {
-                WebBrowserManager.LaunchBrowser(signData.Url);
-            }
+            componentPlayer.ComponentGui.DisplaySmallMessage(
+                LanguageManager.GetContentWidgets(nameof(SignEditorWidget), "ReadOnly"),
+                Color.White,
+                false,
+                false);
+            return true;
         }
-        else
+
+        var point = new Point3(x, y, z);
+        if (CommonLib.WorkType == WorkType.Client && componentPlayer == CommonLib.MainPlayer)
         {
-            if (CommonLib.WorkType == WorkType.Client && componentMiner.ComponentPlayer == CommonLib.MainPlayer)
-            {
-                IPackage package =
-                    new BlockEditPackage(
-                        new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
-                        BlockEditPackage.EventType.EditSign);
-                CommonLib.Net.QueuePackage(package);
-                AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
-                return true;
-            }
-
-            if (componentMiner.ComponentPlayer is { PlayerData.IsMainPlayer: false })
-            {
-                return true;
-            }
-
-            DialogsManager.ShowDialog(componentMiner.ComponentPlayer?.GuiWidget, new EditSignDialog(this, point));
+            CommonLib.Net.QueuePackage(new BlockEditPackage(point, BlockEditPackage.EventType.EditSign));
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
+            return true;
         }
 
+        if (!componentPlayer.PlayerData.IsMainPlayer)
+        {
+            return true;
+        }
+
+        OpenEditor(componentPlayer, point);
+        AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
         return true;
+    }
+
+    public void OpenEditor(ComponentPlayer componentPlayer, Point3 point)
+    {
+        if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure)
+        {
+            return;
+        }
+
+        componentPlayer.ComponentGui.ModalPanelWidget = new SignEditorWidget(
+            GetSignData(point),
+            signData =>
+            {
+                SetSignData(point, signData.Lines, signData.Colors, signData.Url);
+                if (CommonLib.WorkType != WorkType.Local)
+                {
+                    CommonLib.Net.QueuePackage(
+                        new SignBlockPackage(point, signData.Lines, signData.Colors, signData.Url));
+                }
+            },
+            () => componentPlayer.ComponentGui.ModalPanelWidget = null);
     }
 
     public override void OnBlockRemoved(int value, int newValue, int x, int y, int z)
@@ -375,7 +405,10 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
                 continue;
             }
 
-            list.Add(textData.Lines[i].Replace("\\", "").ToUpper());
+            var line = textData.Lines[i].Replace("\\", "").ToUpper();
+            list.Add(line.Length > _surfaceLineMaximumLength
+                ? $"{line[..(_surfaceLineMaximumLength - 3)]}..."
+                : line);
             list2.Add(textData.Colors[i]);
         }
 
@@ -400,13 +433,12 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
             num5 = num / num3;
         }
 
-        var flag = !string.IsNullOrEmpty(textData.Url);
         for (var j = 0; j < list.Count; j++)
         {
             fontBatch.QueueText(
                 position: new Vector2(num4 / 2f,
-                    j * _font.GlyphHeight + textData.TextureLocation.Value * (4f * _font.GlyphHeight) +
-                    (num5 - num2) / 2f), text: list[j], depth: 0f, color: flag ? new Color(0, 0, 64) : list2[j],
+                j * _font.GlyphHeight + textData.TextureLocation.Value * (4f * _font.GlyphHeight) +
+                    (num5 - num2) / 2f), text: list[j], depth: 0f, color: list2[j],
                 anchor: TextAnchor.HorizontalCenter, scale: new Vector2(1f / _font.Scale), spacing: Vector2.Zero);
         }
 

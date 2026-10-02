@@ -4,7 +4,8 @@ public enum GameMessageKind : byte
 {
     Chat,
     System,
-    Command
+    Command,
+    Sign
 }
 
 public enum GameMessageChannel : byte
@@ -45,7 +46,8 @@ public enum MessageTextStyle : byte
 
 public sealed record MessageSegment(
     string Text,
-    MessageTextStyle Style = MessageTextStyle.Normal);
+    MessageTextStyle Style = MessageTextStyle.Normal,
+    Color? Color = null);
 
 public sealed class MessageContent
 {
@@ -68,7 +70,8 @@ public sealed class MessageContent
             }
 
             if (normalized.LastOrDefault() is { } previous &&
-                previous.Style == segment.Style)
+                previous.Style == segment.Style &&
+                previous.Color == segment.Color)
             {
                 normalized[^1] = previous with { Text = previous.Text + segment.Text };
             }
@@ -116,6 +119,14 @@ public sealed record GameMessage(
             MessageContent.Plain(text),
             tone,
             presentation);
+
+    public static GameMessage Sign(IEnumerable<MessageSegment> segments) =>
+        new(
+            GameMessageKind.Sign,
+            GameMessageChannel.Global,
+            string.Empty,
+            new MessageContent(segments),
+            Presentation: GameMessagePresentation.Toast);
 
     public static GameMessage System(
         IEnumerable<MessageSegment> segments,

@@ -1,3 +1,5 @@
+using Game.Messaging;
+
 namespace Game.ElectricElements;
 
 public class SignElectricElement(
@@ -5,9 +7,14 @@ public class SignElectricElement(
     CellFace cellFace
 ) : ElectricElement(subsystemElectricity, cellFace)
 {
-    private bool _isMessageAllowed = true;
+    private bool _isMessageAllowed;
 
     private double? _lastMessageTime;
+
+    public override void OnAdded()
+    {
+        _isMessageAllowed = CalculateHighInputsCount() == 0;
+    }
 
     public override bool Simulate()
     {
@@ -21,16 +28,9 @@ public class SignElectricElement(
                 .GetSignData(new Point3(CellFaces[0].X, CellFaces[0].Y, CellFaces[0].Z));
             if (signData != null)
             {
-                var text = string.Join("\n", signData.Lines);
-                text = text.Trim('\n');
-                text = text.Replace("\\\n", "");
-                var color = signData.Colors[0] == Color.Black ? Color.White : signData.Colors[0];
-                color *= 255f / MathUtils.Max(color.R, color.G, color.B);
-                foreach (var componentPlayer in SubsystemElectricity.Project.FindSubsystem<SubsystemPlayers>(true)!
-                             .ComponentPlayers)
-                {
-                    componentPlayer.ComponentGui.DisplaySmallMessage(text, color, true, true);
-                }
+                var message = GameMessage.Sign(CreateMessageSegments(signData));
+                SubsystemElectricity.Project.FindSubsystem<SubsystemGameWidgets>(true)!
+                    .Messages.Publish(message);
             }
         }
 
@@ -40,5 +40,50 @@ public class SignElectricElement(
         }
 
         return false;
+    }
+
+    private static IReadOnlyList<MessageSegment> CreateMessageSegments(SignData signData)
+    {
+        var firstLine = Array.FindIndex(signData.Lines, line => !string.IsNullOrEmpty(line));
+        var lastLine = Array.FindLastIndex(signData.Lines, line => !string.IsNullOrEmpty(line));
+        if (firstLine < 0)
+        {
+            return [];
+        }
+
+        var segments = new List<MessageSegment>();
+        for (var index = firstLine; index <= lastLine; index++)
+        {
+            var line = signData.Lines[index];
+            var joinsNextLine = line.EndsWith('\\');
+            if (joinsNextLine)
+            {
+                line = line[..^1];
+            }
+
+            if (line.Length > 0)
+            {
+                segments.Add(new MessageSegment(
+                    line,
+                    Color: NormalizeMessageColor(signData.Colors[index])));
+            }
+
+            if (!joinsNextLine && index < lastLine)
+            {
+                segments.Add(new MessageSegment("\n"));
+            }
+        }
+
+        return segments;
+    }
+
+    private static Color NormalizeMessageColor(Color color)
+    {
+        if (color == Color.Black)
+        {
+            return Color.White;
+        }
+
+        return color * (255f / MathUtils.Max(color.R, color.G, color.B));
     }
 }

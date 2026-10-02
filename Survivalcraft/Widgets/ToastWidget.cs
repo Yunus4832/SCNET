@@ -10,12 +10,12 @@ public class ToastWidget : CanvasWidget
     {
         Size = new Vector2(660f, -1f),
         TextAnchor = TextAnchor.HorizontalCenter,
-        UseDropShadow = true
+        UseDropShadow = true,
+        HorizontalAlignment = WidgetAlignment.Center,
+        IsHitTestVisible = false
     };
 
     private bool _blinking;
-
-    private Color _color;
 
     private float _duration;
 
@@ -25,14 +25,19 @@ public class ToastWidget : CanvasWidget
 
     public void DisplayMessage(string text, Color color, bool blinking)
     {
-        _message = text;
+        DisplayMessage(MessageContent.Plain(text), color, blinking);
+    }
+
+    public void DisplayMessage(MessageContent content, Color color, bool blinking)
+    {
+        ArgumentNullException.ThrowIfNull(content);
+        _message = content.PlainText;
         Children.Clear();
-        _richTextWidget.Content = MessageContent.Plain(text);
+        _richTextWidget.Content = content;
+        _richTextWidget.NormalTextColor = color;
         Children.Add(_richTextWidget);
-        _richTextWidget.HorizontalAlignment = WidgetAlignment.Center;
         _messageStartTime = Time.RealTime;
         _duration = blinking ? 6f : 4f + MathUtils.Min(1f * _message.Count(c => c == '\n'), 4f);
-        _color = color;
         _blinking = blinking;
     }
 
@@ -57,7 +62,7 @@ public class ToastWidget : CanvasWidget
                     1f * (float)(_messageStartTime + _duration - realTime)));
             }
 
-            _richTextWidget.ColorTransform = _color * num;
+            _richTextWidget.ColorTransform = new Color(1f, 1f, 1f, num);
             _richTextWidget.IsVisible = true;
             if (realTime - _messageStartTime > _duration)
             {

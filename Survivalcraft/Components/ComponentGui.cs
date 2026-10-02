@@ -2,6 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Commands;
+using Game.Messaging;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -238,12 +239,26 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void DisplaySmallMessage(string text, Color color, bool blinking, bool playNotificationSound)
     {
+        DisplaySmallMessage(MessageContent.Plain(text), color, blinking, playNotificationSound);
+    }
+
+    public void DisplaySmallMessage(
+        MessageContent content,
+        Color color,
+        bool blinking,
+        bool playNotificationSound)
+    {
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
             return;
         }
 
-        _messageWidget.DisplayMessage(text, color, blinking);
+        _messageWidget.DisplayMessage(content, color, blinking);
+        PlayMessageNotification(playNotificationSound);
+    }
+
+    private void PlayMessageNotification(bool playNotificationSound)
+    {
         if (CommonLib.WorkType != WorkType.Local)
         {
             playNotificationSound = ComponentPlayer.PlayerData.IsMainPlayer;

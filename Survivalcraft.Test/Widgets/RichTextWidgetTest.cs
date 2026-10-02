@@ -49,6 +49,17 @@ public class RichTextWidgetTest
     }
 
     [Fact]
+    public void ExplicitSegmentColorOverridesSemanticColor()
+    {
+        var richText = new RichTextWidget();
+        var color = new Color(12, 34, 56, 78);
+
+        var resolved = richText.ResolveColor(MessageTextStyle.Error, color);
+
+        Assert.Equal(color, resolved);
+    }
+
+    [Fact]
     public void PlainTextDoesNotInterpretLegacyTags()
     {
         var richText = new RichTextWidget

@@ -119,9 +119,8 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 {
                     if (CommonLib.MainPlayer != null)
                     {
-                        DialogsManager.ShowDialog(CommonLib.MainPlayer.GuiWidget,
-                            new EditSignDialog(project.FindSubsystem<SubsystemSignBlockBehavior>(true)!,
-                                package.Point3));
+                        project.FindSubsystem<SubsystemSignBlockBehavior>(true)!
+                            .OpenEditor(CommonLib.MainPlayer, package.Point3);
                     }
                 }
 

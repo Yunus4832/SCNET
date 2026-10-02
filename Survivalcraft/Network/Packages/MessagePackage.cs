@@ -49,6 +49,12 @@ public sealed class MessagePackage : IPackage
         foreach (var segment in GameMessage.Content.Segments)
         {
             writer.WriteEnum(segment.Style);
+            writer.Write(segment.Color.HasValue);
+            if (segment.Color.HasValue)
+            {
+                writer.Write(segment.Color.Value);
+            }
+
             writer.Write(segment.Text);
         }
 
@@ -84,8 +90,9 @@ public sealed class MessagePackage : IPackage
         for (var index = 0; index < segmentCount; index++)
         {
             var style = reader.ReadEnum<MessageTextStyle>();
+            Color? color = reader.ReadBoolean() ? reader.ReadColor() : null;
             var text = reader.ReadString();
-            segments[index] = new MessageSegment(text, style);
+            segments[index] = new MessageSegment(text, style, color);
         }
 
         var localizationSection = reader.ReadString();

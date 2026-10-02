@@ -434,9 +434,10 @@ public class GameWidget : CanvasWidget
             GameMessageTone.Warning => new Color(245, 206, 96),
             _ => Color.White
         };
-        var blinking = message.Tone is GameMessageTone.Error or GameMessageTone.Warning;
+        var blinking = message.Kind is GameMessageKind.Sign ||
+                       message.Tone is GameMessageTone.Error or GameMessageTone.Warning;
         gui.DisplaySmallMessage(
-            message.Content.PlainText,
+            message.Content,
             color,
             blinking,
             playNotificationSound: blinking);
