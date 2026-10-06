@@ -15,13 +15,10 @@ public class SubsystemTerrainPackage : IPackage
         RequestSyncChunks,
         RequestTerrainChunkFragments,
         SyncTerrainChunkFragment,
-        ReplyResult,
         SyncTerrainCellDelta
     }
 
     public List<ChunkContentRequest> ChunkRequests = [];
-
-    public List<ChunkAllocationId> FailedChunkRequests = [];
 
     public List<TerrainChunkFragmentRequest> FragmentRequests = [];
 
@@ -32,10 +29,6 @@ public class SubsystemTerrainPackage : IPackage
     public DataType Type;
 
     public byte ID => (byte)PackageType.SubsystemTerrain;
-
-
-
-
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public SubsystemTerrainPackage()
@@ -46,12 +39,6 @@ public class SubsystemTerrainPackage : IPackage
     {
         Type = DataType.RequestSyncChunks;
         ChunkRequests.AddRange(requests);
-    }
-
-    public SubsystemTerrainPackage(List<ChunkAllocationId> failedRequests, byte r)
-    {
-        Type = DataType.ReplyResult;
-        FailedChunkRequests.AddRange(failedRequests);
     }
 
     public SubsystemTerrainPackage(EncodedTerrainChunkFragment fragment)
@@ -139,15 +126,6 @@ public class SubsystemTerrainPackage : IPackage
                 writer.Write(CellDelta.BaseContentVersion);
                 writer.Write(CellDelta.ResultContentVersion);
                 break;
-            case DataType.ReplyResult:
-                writer.Write((ushort)FailedChunkRequests.Count);
-                foreach (var allocation in FailedChunkRequests)
-                {
-                    writer.Write(allocation.Coords);
-                    writer.Write(allocation.Generation);
-                }
-
-                break;
         }
     }
 
@@ -232,17 +210,6 @@ public class SubsystemTerrainPackage : IPackage
                     reader.ReadInt32(),
                     reader.ReadInt64(),
                     reader.ReadInt64());
-                break;
-            case DataType.ReplyResult:
-                FailedChunkRequests = [];
-                var mc = reader.ReadUInt16();
-                while (mc-- > 0)
-                {
-                    FailedChunkRequests.Add(new ChunkAllocationId(
-                        reader.ReadPoint2(),
-                        reader.ReadUInt64()));
-                }
-
                 break;
         }
     }

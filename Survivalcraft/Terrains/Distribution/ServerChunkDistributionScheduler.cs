@@ -41,6 +41,25 @@ public sealed class ServerChunkDistributionScheduler(
 
     public long FragmentBytesRetransmitted => Interlocked.Read(ref _fragmentBytesRetransmitted);
 
+    internal (int Pending, int AwaitingContent, int OutstandingEncodes) GetBacklog()
+    {
+        var pending = 0;
+        var awaitingContent = 0;
+        foreach (var queue in _pending.Values)
+        {
+            foreach (var request in queue)
+            {
+                pending++;
+                if (!_authority.TryGetDescriptor(request.Allocation.Coords, out _))
+                {
+                    awaitingContent++;
+                }
+            }
+        }
+
+        return (pending, awaitingContent, _encoder.OutstandingCount);
+    }
+
     public bool TryGetClientLocation(Client client, out Vector2 center, out float contentDistance)
     {
         if (_clientLocations.TryGetValue(client, out var location))
@@ -159,7 +178,9 @@ public sealed class ServerChunkDistributionScheduler(
         _cache.Remove(chunk.Coords);
     }
 
-    public void Update()
+    public void Update() => Update(Time.PeriodicEvent(1, 0.6));
+
+    internal void Update(bool sendWindow)
     {
         DrainCompletedEncodes();
         foreach (var item in _pending)
@@ -172,64 +193,56 @@ public sealed class ServerChunkDistributionScheduler(
 
             item.Value.RemoveOutside(center, contentDistance);
             var toRemove = new List<Point2>();
-            var failures = new List<ChunkAllocationId>();
-            if (Time.PeriodicEvent(1, 0.6))
+            var requests = item.Value.TakePrioritized(
+                    center,
+                    GetPredictedCenter(item.Key, center),
+                    SettingsManager.Current.ServerChunkCountSendPer)
+                .ToArray();
+            var cachedCount = 0;
+            var cachedBytes = 0;
+            SendMissingFragments(item.Key, center, sendWindow, ref cachedCount, ref cachedBytes);
+            foreach (var request in requests)
             {
-                var requests = item.Value.TakePrioritized(
-                        center,
-                        GetPredictedCenter(item.Key, center),
-                        SettingsManager.Current.ServerChunkCountSendPer)
-                    .ToArray();
-                var cachedCount = 0;
-                var cachedBytes = 0;
-                SendMissingFragments(item.Key, center, ref cachedCount, ref cachedBytes);
-                foreach (var request in requests)
+                var coords = request.Allocation.Coords;
+                if (_authority.TryGetDescriptor(coords, out var descriptor))
                 {
-                    var coords = request.Allocation.Coords;
-                    if (_authority.TryGetDescriptor(coords, out var descriptor))
+                    if (_cache.TryGet(coords, descriptor.ContentVersion, out var encoded))
                     {
-                        if (_cache.TryGet(coords, descriptor.ContentVersion, out var encoded))
+                        if (!sendWindow)
                         {
-                            var transmissionBytes = encoded.Payload.Length;
-                            var byteBudget = Math.Max(1,
-                                SettingsManager.Current.ServerChunkBytesSendPerSecond);
-                            if (cachedCount > 0 && cachedBytes + transmissionBytes > byteBudget)
-                            {
-                                break;
-                            }
-
-                            foreach (var fragment in EncodedTerrainChunkFragmenter.Split(
-                                         encoded,
-                                         request.Allocation))
-                            {
-                                CommonLib.Net.QueuePackage(
-                                    new SubsystemTerrainPackage(fragment),
-                                    PackageAudience.To(item.Key));
-                            }
-
-                            toRemove.Add(coords);
-                            cachedCount++;
-                            cachedBytes += transmissionBytes;
+                            continue;
                         }
-                        else if (!_encoder.IsScheduled(descriptor) &&
-                                 _authority.TryGetSnapshot(coords, out var snapshot))
+
+                        var transmissionBytes = encoded.Payload.Length;
+                        var byteBudget = Math.Max(1,
+                            SettingsManager.Current.ServerChunkBytesSendPerSecond);
+                        if (cachedCount > 0 && cachedBytes + transmissionBytes > byteBudget)
                         {
-                            _encoder.TrySchedule(snapshot);
+                            break;
                         }
-                    }
-                    else
-                    {
-                        failures.Add(request.Allocation);
+
+                        foreach (var fragment in EncodedTerrainChunkFragmenter.Split(
+                                     encoded,
+                                     request.Allocation))
+                        {
+                            CommonLib.Net.QueuePackage(
+                                new SubsystemTerrainPackage(fragment),
+                                PackageAudience.To(item.Key));
+                        }
+
                         toRemove.Add(coords);
+                        cachedCount++;
+                        cachedBytes += transmissionBytes;
+                    }
+                    else if (_encoder.CanSchedule(descriptor) &&
+                             _authority.TryGetSnapshot(coords, out var snapshot))
+                    {
+                        _encoder.TrySchedule(snapshot);
                     }
                 }
-
-                if (failures.Count > 0)
-                {
-                    CommonLib.Net.QueuePackage(
-                        new SubsystemTerrainPackage(failures, 0),
-                        PackageAudience.To(item.Key));
-                }
+                // Missing descriptors also mean generation is still in progress.
+                // Keep the request until content is ready or interest moves away;
+                // rejecting it would add a client retry delay to normal generation.
             }
 
             foreach (var coords in toRemove)
@@ -291,6 +304,7 @@ public sealed class ServerChunkDistributionScheduler(
     private void SendMissingFragments(
         Client client,
         Vector2 center,
+        bool sendWindow,
         ref int sentCount,
         ref int sentBytes)
     {
@@ -314,7 +328,6 @@ public sealed class ServerChunkDistributionScheduler(
 
             if (!_authority.TryGetDescriptor(coords, out var descriptor))
             {
-                requests.Remove(coords);
                 continue;
             }
 
@@ -327,11 +340,16 @@ public sealed class ServerChunkDistributionScheduler(
 
             if (!_cache.TryGet(coords, descriptor.ContentVersion, out var encoded))
             {
-                if (!_encoder.IsScheduled(descriptor) && _authority.TryGetSnapshot(coords, out var snapshot))
+                if (_encoder.CanSchedule(descriptor) && _authority.TryGetSnapshot(coords, out var snapshot))
                 {
                     _encoder.TrySchedule(snapshot);
                 }
 
+                continue;
+            }
+
+            if (!sendWindow)
+            {
                 continue;
             }
 

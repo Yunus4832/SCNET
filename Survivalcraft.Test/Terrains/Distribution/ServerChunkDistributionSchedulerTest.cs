@@ -8,6 +8,45 @@ namespace Survivalcraft.Test.Terrains.Distribution;
 
 public sealed class ServerChunkDistributionSchedulerTest
 {
+    [Fact]
+    public void UnreadyContentRetainsRequestsUntilInterestMovesAway()
+    {
+        using var scheduler = new ServerChunkDistributionScheduler(new EmptyAuthority(), 1);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        var request = new ChunkContentRequest(new ChunkAllocationId(new Point2(0, 0), 1));
+        scheduler.UpdateClientLocation(client, Vector2.Zero, 64f);
+        scheduler.Enqueue(client, [request]);
+        scheduler.EnqueueMissing(client, [new TerrainChunkFragmentRequest(request.Allocation, 1, 1, [0])]);
+
+        scheduler.Update(true);
+
+        Assert.Equal(2, scheduler.GetPendingCount(client));
+        Assert.Equal((1, 1, 0), scheduler.GetBacklog());
+        scheduler.UpdateClientLocation(client, new Vector2(1000f), 64f);
+        Assert.Equal(0, scheduler.GetPendingCount(client));
+    }
+
+    [Fact]
+    public void ContentCanStartEncodingBetweenSendWindows()
+    {
+        var authority = new CountingAuthority();
+        using var scheduler = new ServerChunkDistributionScheduler(authority, 1);
+        var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
+        scheduler.UpdateClientLocation(client, Vector2.Zero, 64f);
+        scheduler.Enqueue(client, [new ChunkContentRequest(new ChunkAllocationId(new Point2(0, 0), 1))]);
+
+        scheduler.Update(true);
+        Assert.Equal(1, scheduler.GetPendingCount(client));
+        Assert.Equal(0, authority.SnapshotAttempts);
+
+        authority.Ready = true;
+        scheduler.Update(false);
+
+        Assert.Equal(1, scheduler.GetPendingCount(client));
+        Assert.Equal(1, authority.SnapshotAttempts);
+        Assert.Equal((1, 0, 0), scheduler.GetBacklog());
+    }
+
     [Theory]
     [InlineData(2, 0, true)]
     [InlineData(2, 1, false)]
@@ -137,6 +176,26 @@ public sealed class ServerChunkDistributionSchedulerTest
             request,
             out var selected));
         Assert.Empty(selected);
+    }
+
+    private sealed class CountingAuthority : IChunkContentAuthority
+    {
+        public bool Ready { get; set; }
+
+        public int SnapshotAttempts { get; private set; }
+
+        public bool TryGetDescriptor(Point2 coords, out AuthorityChunkDescriptor descriptor)
+        {
+            descriptor = new AuthorityChunkDescriptor(coords, 1);
+            return Ready;
+        }
+
+        public bool TryGetSnapshot(Point2 coords, out AuthorityChunkSnapshot snapshot)
+        {
+            SnapshotAttempts++;
+            snapshot = null!;
+            return false;
+        }
     }
 
     private sealed class EmptyAuthority : IChunkContentAuthority

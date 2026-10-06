@@ -70,8 +70,6 @@ public class TerrainUpdater
 
     private readonly List<ClientChunkSnapshot> _receivedChunkSnapshots = [];
 
-    private readonly List<ChunkAllocationId> _failedChunkAllocations = [];
-
     private readonly List<TerrainCellDelta> _receivedCellDeltas = [];
 
     private readonly Dictionary<Point2, long> _remoteChunkLastAccess = [];
@@ -161,6 +159,14 @@ public class TerrainUpdater
 
 
     public ServerChunkDistributionScheduler? ServerChunkDistribution { get; }
+
+    internal int PendingLocationCount => _pendingLocations.Count;
+
+    internal long LocationHandoffTimeouts { get; private set; }
+
+    internal long DeferredAllocationPasses { get; private set; }
+
+    private int _chunkSchedulingStep;
 
     private double _lastNetworkChunkDiagnosticTime;
 
@@ -424,10 +430,9 @@ public class TerrainUpdater
         // 是否有需要处理的 pendingLocations
         if (_pendingLocations.Count > 0)
         {
-            // 暂停地形更新线程
-            _pauseEvent.Reset();
-            // 不阻塞主线程；后台步骤完成后在后续帧继续处理位置变更。
-            if (UpdateEvent.WaitOne(0))
+            // 给当前短步骤一个有界的交接窗口，避免一次竞争就让后台停到下一帧。
+            // 较长步骤仍安全地延后处理，不改变地形修改的互斥边界。
+            if (TryPauseUpdateThread(_pauseEvent, UpdateEvent))
             {
                 // 恢复更新线程，但是因为 AutoResetEvent 令牌被消耗，更新线程阻塞
                 _pauseEvent.Set();
@@ -463,6 +468,10 @@ public class TerrainUpdater
                     // 重新设置 AutoResetEvent 令牌，让阻塞的更新线程恢复执行
                     UpdateEvent.Set();
                 }
+            }
+            else
+            {
+                LocationHandoffTimeouts++;
             }
         }
 
@@ -572,21 +581,6 @@ public class TerrainUpdater
                 {
                     deltaCoordinator.Receive(delta);
                 }
-            }
-
-            _failedChunkAllocations.Clear();
-            transport.DrainFailed(_failedChunkAllocations);
-            foreach (var allocation in _failedChunkAllocations)
-            {
-                var chunk = _terrain.GetChunkAtCoords(allocation.Coords.X, allocation.Coords.Y);
-                if (chunk == null || chunk.AllocationGeneration != allocation.Generation)
-                {
-                    continue;
-                }
-
-                chunk.IsRequested = false;
-                chunk.NetworkRequestTime = 0.0;
-                TerrainChunkStateExchange.RequestDowngrade(chunk, chunk.MainThreadState);
             }
 
             return true;
@@ -898,6 +892,7 @@ public class TerrainUpdater
 
         if (hasDeferredChunkDiscards)
         {
+            DeferredAllocationPasses++;
             return new ChunkAllocationResult(result, true);
         }
 
@@ -988,6 +983,15 @@ public class TerrainUpdater
         TerrainChunkStateExchange.ExchangeOnWorkerThread(_threadUpdateParameters.Chunks);
     }
 
+    internal static bool TryPauseUpdateThread(
+        ManualResetEvent pauseEvent,
+        AutoResetEvent updateEvent,
+        int millisecondsTimeout = 1)
+    {
+        pauseEvent.Reset();
+        return updateEvent.WaitOne(millisecondsTimeout);
+    }
+
     /// <summary>
     ///     更新线程的主循环逻辑
     /// </summary>
@@ -1054,7 +1058,10 @@ public class TerrainUpdater
         }
 
         // 查找最佳的更新区块
-        var terrainChunk = FindBestChunkToUpdate(out var desiredState);
+        // Reserve every fourth Headless step for the normal derived-data priority.
+        // Content delivery must not wait for all nearby lighting work to converge.
+        var preferContent = RunMode.Value == RunModeType.HeadlessServer && (++_chunkSchedulingStep & 3) != 0;
+        var terrainChunk = FindBestChunkToUpdate(preferContent, out var desiredState);
         if (terrainChunk == null)
         {
             return !localGenerationPending;
@@ -1075,69 +1082,23 @@ public class TerrainUpdater
     /// <remarks>
     ///     使用距离收敛策略：从最近的区块开始，优先更新可视范围内的区块到 Valid 状态，
     ///     其次是内容范围内的区块到 InvalidVertices1 状态
+    ///     无头服务器可先选择待生成内容，但每个优先级内仍按距离收敛。
     /// </remarks>
+    /// <param name="preferContent">是否先选择尚未完成权威内容的区块</param>
     /// <param name="desiredState">输出参数，找到区块的目标状态</param>
     /// <returns>需要更新的区块，如果没有则返回 null</returns>
-    private TerrainChunk? FindBestChunkToUpdate(out TerrainChunkState desiredState)
+    private TerrainChunk? FindBestChunkToUpdate(bool preferContent, out TerrainChunkState desiredState)
     {
-        var chunks = _threadUpdateParameters.Chunks;
-        var locations = _threadUpdateParameters.Locations.Values;
-
-        // 初始的距离（平方，下面都用距离替代）的最大限制
-        var maxDistanceSquared = 3.40282347E+38f;
-
-        TerrainChunk? result = null;
-        desiredState = TerrainChunkState.NotLoaded;
-
-        // 逐渐收敛距离的最大限制，找到最合适的更新区块和预期的状态
-        foreach (var terrainChunk in chunks)
-        {
-            // A client cannot advance a chunk until its contents arrive from the server.
-            // Selecting a nearby NotLoaded chunk repeatedly would otherwise starve loaded
-            // chunks (for example, chunks waiting for lighting and geometry) under packet loss.
-            if (!CanBackgroundUpdateChunk(_subsystemTerrain.ContentRole, terrainChunk))
-            {
-                continue;
-            }
-
-            // 跳过 Valid 状态的区块
-            if (terrainChunk.WorkerState >= TerrainChunkState.Valid)
-            {
-                continue;
-            }
-
-            foreach (var location in locations)
-            {
-                // 位置与区块中心的距离
-                var distanceSquared = Vector2.DistanceSquared(location.Center, terrainChunk.Center);
-                // 距离大于最大限制的区块，跳过
-                if (!(distanceSquared < maxDistanceSquared))
-                {
-                    continue;
-                }
-
-                // 距离小于位置 location 的可视范围，区块的预期状态设置为 Valid 将最大限制设置为区块与位置距离
-                if (distanceSquared <= MathUtils.Sqr(location.VisibilityDistance))
-                {
-                    desiredState = TerrainChunkState.Valid;
-                    maxDistanceSquared = distanceSquared;
-                    result = terrainChunk;
-                }
-                // 否则，如果区块的线程状态小于 InvalidVertices1, 并且距离小于位置的 ContentDistance 的距离，
-                // 则预期的区块状态为 InvalidVertices1, 更新最大限制为当前距离
-                else if (terrainChunk.WorkerState < TerrainChunkState.InvalidVertices1 &&
-                         distanceSquared <= MathUtils.Sqr(location.ContentDistance))
-                {
-                    desiredState = TerrainChunkState.InvalidVertices1;
-                    maxDistanceSquared = distanceSquared;
-                    result = terrainChunk;
-                }
-            }
-        }
+        var result = SelectChunkToUpdate(
+            _threadUpdateParameters.Chunks,
+            _threadUpdateParameters.Locations.Values,
+            _subsystemTerrain.ContentRole,
+            preferContent,
+            out desiredState);
 
         if (result == null)
         {
-            return result;
+            return null;
         }
 
         var dependency = ClientDerivedTerrainPolicy.FindPendingLightingDependency(
@@ -1153,6 +1114,80 @@ public class TerrainUpdater
 
         desiredState = TerrainChunkState.InvalidPropagatedLight;
         return dependency;
+    }
+
+    internal static TerrainChunk? SelectChunkToUpdate(
+        TerrainChunk[] chunks,
+        Dictionary<int, UpdateLocation>.ValueCollection locations,
+        TerrainContentRole role,
+        bool preferContent,
+        out TerrainChunkState desiredState)
+    {
+        // 初始的距离（平方，下面都用距离替代）的最大限制
+        var maxDistanceSquared = 3.40282347E+38f;
+        var bestPriority = 1;
+
+        TerrainChunk? result = null;
+        desiredState = TerrainChunkState.NotLoaded;
+
+        // 逐渐收敛距离的最大限制，找到最合适的更新区块和预期的状态
+        foreach (var terrainChunk in chunks)
+        {
+            // A client cannot advance a chunk until its contents arrive from the server.
+            // Selecting a nearby NotLoaded chunk repeatedly would otherwise starve loaded
+            // chunks (for example, chunks waiting for lighting and geometry) under packet loss.
+            if (!CanBackgroundUpdateChunk(role, terrainChunk))
+            {
+                continue;
+            }
+
+            // 跳过 Valid 状态的区块
+            if (terrainChunk.WorkerState >= TerrainChunkState.Valid)
+            {
+                continue;
+            }
+
+            var priority = preferContent && role == TerrainContentRole.Authority &&
+                           terrainChunk.WorkerState < TerrainChunkState.InvalidLight
+                ? 0
+                : 1;
+            if (priority > bestPriority)
+            {
+                continue;
+            }
+
+            foreach (var location in locations)
+            {
+                // 位置与区块中心的距离
+                var distanceSquared = Vector2.DistanceSquared(location.Center, terrainChunk.Center);
+                // 距离大于最大限制的区块，跳过
+                if (priority == bestPriority && !(distanceSquared < maxDistanceSquared))
+                {
+                    continue;
+                }
+
+                // 距离小于位置 location 的可视范围，区块的预期状态设置为 Valid 将最大限制设置为区块与位置距离
+                if (distanceSquared <= MathUtils.Sqr(location.VisibilityDistance))
+                {
+                    desiredState = TerrainChunkState.Valid;
+                    bestPriority = priority;
+                    maxDistanceSquared = distanceSquared;
+                    result = terrainChunk;
+                }
+                // 否则，如果区块的线程状态小于 InvalidVertices1, 并且距离小于位置的 ContentDistance 的距离，
+                // 则预期的区块状态为 InvalidVertices1, 更新最大限制为当前距离
+                else if (terrainChunk.WorkerState < TerrainChunkState.InvalidVertices1 &&
+                         distanceSquared <= MathUtils.Sqr(location.ContentDistance))
+                {
+                    desiredState = TerrainChunkState.InvalidVertices1;
+                    bestPriority = priority;
+                    maxDistanceSquared = distanceSquared;
+                    result = terrainChunk;
+                }
+            }
+        }
+
+        return result;
     }
 
     internal static bool CanBackgroundUpdateChunk(TerrainContentRole role, TerrainChunk chunk) =>
@@ -1266,6 +1301,12 @@ public class TerrainUpdater
                 }
             case TerrainChunkState.InvalidVertices1:
                 {
+                    if (RunMode.Value is RunModeType.HeadlessServer)
+                    {
+                        chunk.WorkerState = TerrainChunkState.Valid;
+                        break;
+                    }
+
                     var dependency = ClientDerivedTerrainPolicy.FindPendingGeometryDependency(
                         _terrain,
                         _subsystemTerrain.ContentRole,
@@ -1273,12 +1314,6 @@ public class TerrainUpdater
                     if (dependency != null)
                     {
                         UpdateChunkSingleStep(dependency, skylightValue);
-                        break;
-                    }
-
-                    if (RunMode.Value is RunModeType.HeadlessServer)
-                    {
-                        chunk.WorkerState = TerrainChunkState.Valid;
                         break;
                     }
 

@@ -34,7 +34,7 @@
                                                     TextHorizontalAlignment="Far" Color="255, 255, 255"
                                                     Margin="20, 0"/>
                             <SliderWidget Name="MaxPlayers" Size="410, 60" VerticalAlignment="Center"
-                                          Margin="20, 0" MinValue="10" MaxValue="100" Granularity="1"/>
+                                          Margin="20, 0" MinValue="10" Granularity="1"/>
                         </UniformSpacingPanelWidget>
 
                         <UniformSpacingPanelWidget Direction="Horizontal" VerticalAlignment="Center" Margin="0, 3">

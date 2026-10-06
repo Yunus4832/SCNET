@@ -38,6 +38,7 @@ public class WorldServerSettingsScreen : Screen
         _runServerButton = Children.Find<ButtonWidget>("RunServer")!;
         _randomSpawnPositionButton = Children.Find<ButtonWidget>("RandomSpawnPosition")!;
         _maxPlayersSlider = Children.Find<SliderWidget>("MaxPlayers")!;
+        _maxPlayersSlider.MaxValue = WorldSettings.MaximumOnlinePlayerCount;
         _daySpeedSlider = Children.Find<SliderWidget>("DaySpeed")!;
         _recoverySpeedSlider = Children.Find<SliderWidget>("RecoverySpeed")!;
         _disableBlocks = Children.Find<TextBoxWidget>("DisableBlocks")!;
@@ -71,7 +72,7 @@ public class WorldServerSettingsScreen : Screen
             Array.Copy(parameters, 2, _returnParameters, 0, _returnParameters.Length);
         }
 
-        _maxPlayersSlider.Value = MathUtils.Clamp(_worldSettings.MaxOnlinePlayerCount, 10, 100);
+        _maxPlayersSlider.Value = _worldSettings.MaxOnlinePlayerCount;
         _daySpeedSlider.Value = NormalizeDaySpeed(_worldSettings.DaySpeed);
         _recoverySpeedSlider.Value = NormalizeRecoverySpeed(_worldSettings.RecoverFactor);
         _disableBlocks.Text = _worldSettings.DisableBlocks;

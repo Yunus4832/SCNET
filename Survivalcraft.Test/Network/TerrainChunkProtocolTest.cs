@@ -42,15 +42,6 @@ public sealed class TerrainChunkProtocolTest
     }
 
     [Fact]
-    public void FailureRoundTripPreservesAllocationGeneration()
-    {
-        var expected = new ChunkAllocationId(new Point2(7, 8), 31);
-        var clone = RoundTrip(new SubsystemTerrainPackage([expected], 0));
-
-        Assert.Equal(expected, Assert.Single(clone.FailedChunkRequests));
-    }
-
-    [Fact]
     public void MissingFragmentRequestRoundTripPreservesIndices()
     {
         var expected = new TerrainChunkFragmentRequest(

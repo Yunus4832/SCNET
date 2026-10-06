@@ -8,6 +8,25 @@ namespace Survivalcraft.Test.Network;
 public sealed class NetworkChunkCodecTest
 {
     [Fact]
+    public void SnapshotEncodingDoesNotCopyImmutableContentAgain()
+    {
+        using var terrain = new Terrain();
+        using var chunk = new TerrainChunk(terrain, 0, 0);
+        chunk.SetCellValueFast(0, 0, 0, Terrain.MakeBlockValue(3, 15, 2));
+        var snapshot = Snapshot(chunk);
+
+        var direct = NetworkChunkCodec.Encode(chunk);
+        var immutable = NetworkChunkCodec.Encode(snapshot);
+        Assert.Equal(direct.Payload, immutable.Payload);
+
+        var directBytes = MeasureAllocatedBytes(() => NetworkChunkCodec.Encode(chunk));
+        var snapshotBytes = MeasureAllocatedBytes(() => NetworkChunkCodec.Encode(snapshot));
+        // Encoding an immutable snapshot must not add another 256 KiB cell-array copy.
+        Assert.True(snapshotBytes <= directBytes + 32 * 1024,
+            $"Direct encoding allocated {directBytes} bytes; snapshot encoding allocated {snapshotBytes}.");
+    }
+
+    [Fact]
     public void CodecRemovesLightAndRebuildableShaftFields()
     {
         using var terrain = new Terrain();
@@ -95,4 +114,15 @@ public sealed class NetworkChunkCodecTest
         chunk.NetworkContentRevision + 1,
         chunk.Cells.ToArray(),
         chunk.Shafts.ToArray());
+
+    private static long MeasureAllocatedBytes(Func<EncodedTerrainChunk> encode)
+    {
+        var start = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 4; i++)
+        {
+            _ = encode();
+        }
+
+        return GC.GetAllocatedBytesForCurrentThread() - start;
+    }
 }

@@ -49,11 +49,11 @@ internal sealed class NetworkChunkEncoder : IDisposable
         }
     }
 
-    public bool IsScheduled(AuthorityChunkDescriptor descriptor)
+    public bool CanSchedule(AuthorityChunkDescriptor descriptor)
     {
         lock (_lock)
         {
-            return _pending.Contains(descriptor);
+            return !_disposed && _pending.Count < _maximumOutstanding && !_pending.Contains(descriptor);
         }
     }
 

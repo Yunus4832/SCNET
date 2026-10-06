@@ -14,8 +14,6 @@ public sealed class NetworkChunkContentTransport : IChunkContentTransport
 {
     private readonly ConcurrentQueue<ClientChunkSnapshot> _received = new();
 
-    private readonly ConcurrentQueue<ChunkAllocationId> _failed = new();
-
     private readonly ConcurrentQueue<TerrainCellDelta> _deltas = new();
 
     private readonly TerrainChunkFragmentReassembler _reassembler = new();
@@ -91,15 +89,6 @@ public sealed class NetworkChunkContentTransport : IChunkContentTransport
             encoded.Payload));
     }
 
-    public void ReceiveFailures(IEnumerable<ChunkAllocationId> allocations)
-    {
-        ArgumentNullException.ThrowIfNull(allocations);
-        foreach (var allocation in allocations)
-        {
-            _failed.Enqueue(allocation);
-        }
-    }
-
     public void Receive(TerrainCellDelta delta) => _deltas.Enqueue(delta);
 
     public int DrainReceived(ICollection<ClientChunkSnapshot> destination)
@@ -109,19 +98,6 @@ public sealed class NetworkChunkContentTransport : IChunkContentTransport
         while (_received.TryDequeue(out var snapshot))
         {
             destination.Add(snapshot);
-            count++;
-        }
-
-        return count;
-    }
-
-    public int DrainFailed(ICollection<ChunkAllocationId> destination)
-    {
-        ArgumentNullException.ThrowIfNull(destination);
-        var count = 0;
-        while (_failed.TryDequeue(out var allocation))
-        {
-            destination.Add(allocation);
             count++;
         }
 

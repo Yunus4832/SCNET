@@ -7,6 +7,4 @@ public interface IChunkContentTransport
     int DrainReceived(ICollection<ClientChunkSnapshot> destination);
 
     int DrainDeltas(ICollection<TerrainCellDelta> destination);
-
-    int DrainFailed(ICollection<ChunkAllocationId> destination);
 }

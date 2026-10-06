@@ -18,6 +18,7 @@ public sealed class NetworkChunkEncoderTest
         var cache = new NetworkChunkCache();
         using var encoder = new NetworkChunkEncoder();
 
+        Assert.True(encoder.CanSchedule(new AuthorityChunkDescriptor(snapshot.Coords, snapshot.ContentVersion)));
         Assert.True(encoder.TrySchedule(snapshot));
         var encoded = Assert.Single(WaitForCompletion(encoder, cache));
 
@@ -26,6 +27,7 @@ public sealed class NetworkChunkEncoderTest
         Assert.Equal(7, Terrain.ExtractContents(
             NetworkChunkCodec.Decode(snapshot.Coords, encoded.Payload).GetCellValueFast(1, 20, 3)));
         Assert.Equal(0, encoder.OutstandingCount);
+        Assert.True(encoder.CanSchedule(new AuthorityChunkDescriptor(snapshot.Coords, snapshot.ContentVersion)));
     }
 
     [Fact]
@@ -67,6 +69,7 @@ public sealed class NetworkChunkEncoderTest
         Assert.True(encoder.TrySchedule(Snapshot(new Point2(0, 0), 1)));
         Assert.True(encodeStarted.Wait(TimeSpan.FromSeconds(5)));
         Assert.True(encoder.TrySchedule(Snapshot(new Point2(1, 0), 1)));
+        Assert.False(encoder.CanSchedule(new AuthorityChunkDescriptor(new Point2(2, 0), 1)));
         Assert.False(encoder.TrySchedule(Snapshot(new Point2(2, 0), 1)));
         Assert.Equal(2, encoder.OutstandingCount);
         allowEncode.Set();
@@ -105,7 +108,7 @@ public sealed class NetworkChunkEncoderTest
 
         Assert.True(encoder.TrySchedule(snapshot));
         Assert.True(encodeStarted.Wait(TimeSpan.FromSeconds(5)));
-        Assert.True(encoder.IsScheduled(new AuthorityChunkDescriptor(
+        Assert.False(encoder.CanSchedule(new AuthorityChunkDescriptor(
             snapshot.Coords,
             snapshot.ContentVersion)));
         Assert.True(encoder.TrySchedule(Snapshot(snapshot.Coords, snapshot.ContentVersion)));

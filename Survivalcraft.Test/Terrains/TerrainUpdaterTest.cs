@@ -10,6 +10,115 @@ namespace Survivalcraft.Test.Terrains;
 
 public sealed class TerrainUpdaterTest
 {
+    [Theory]
+    [InlineData(TerrainContentRole.Authority, true, false, true)]
+    [InlineData(TerrainContentRole.Authority, true, true, true)]
+    [InlineData(TerrainContentRole.Authority, false, false, false)]
+    [InlineData(TerrainContentRole.Replica, true, false, false)]
+    public void ContentPriorityPreservesNormalAndReplicaScheduling(
+        TerrainContentRole role,
+        bool preferContent,
+        bool reverse,
+        bool selectsContent)
+    {
+        using var derived = new TerrainChunk(null!, 0, 0) { WorkerState = TerrainChunkState.InvalidLight };
+        using var content = new TerrainChunk(null!, 2, 0);
+        TerrainChunk[] chunks = reverse ? [content, derived] : [derived, content];
+        var locations = new Dictionary<int, TerrainUpdater.UpdateLocation>
+        {
+            [0] = new() { Center = derived.Center, VisibilityDistance = 64f, ContentDistance = 64f }
+        };
+
+        var selected = TerrainUpdater.SelectChunkToUpdate(chunks, locations.Values, role, preferContent, out _);
+
+        Assert.Same(selectsContent ? content : derived, selected);
+    }
+
+    [Fact]
+    public void ContentPriorityStillChoosesNearestRelevantContent()
+    {
+        using var near = new TerrainChunk(null!, 1, 0);
+        using var far = new TerrainChunk(null!, 2, 0);
+        using var outside = new TerrainChunk(null!, 10, 0);
+        var locations = new Dictionary<int, TerrainUpdater.UpdateLocation>
+        {
+            [0] = new() { Center = new Vector2(8f, 8f), VisibilityDistance = 32f, ContentDistance = 64f }
+        };
+
+        var selected = TerrainUpdater.SelectChunkToUpdate(
+            [far, outside, near], locations.Values, TerrainContentRole.Authority, true, out var state);
+
+        Assert.Same(near, selected);
+        Assert.Equal(TerrainChunkState.Valid, state);
+    }
+
+    [Fact]
+    public void MissingRelevantContentFallsBackToDerivedWork()
+    {
+        using var derived = new TerrainChunk(null!, 0, 0) { WorkerState = TerrainChunkState.InvalidLight };
+        using var outside = new TerrainChunk(null!, 10, 0);
+        var locations = new Dictionary<int, TerrainUpdater.UpdateLocation>
+        {
+            [0] = new() { Center = derived.Center, VisibilityDistance = 64f, ContentDistance = 64f }
+        };
+
+        var selected = TerrainUpdater.SelectChunkToUpdate(
+            [outside, derived], locations.Values, TerrainContentRole.Authority, true, out _);
+
+        Assert.Same(derived, selected);
+    }
+
+    [Fact]
+    public void LocationUpdateTakesExactlyOneWorkerToken()
+    {
+        using var pause = new ManualResetEvent(true);
+        using var token = new AutoResetEvent(true);
+
+        Assert.True(TerrainUpdater.TryPauseUpdateThread(pause, token));
+        Assert.False(pause.WaitOne(0));
+        Assert.False(token.WaitOne(0));
+
+        // Only the owner releases the token after modifying terrain.
+        pause.Set();
+        Assert.False(token.WaitOne(0));
+        token.Set();
+        Assert.True(token.WaitOne(0));
+        Assert.False(token.WaitOne(0));
+    }
+
+    [Fact]
+    public void UnfinishedWorkerStepDefersLocationUpdateWithoutLosingItsToken()
+    {
+        using var pause = new ManualResetEvent(true);
+        using var token = new AutoResetEvent(false);
+
+        Assert.False(TerrainUpdater.TryPauseUpdateThread(pause, token, 0));
+        Assert.False(pause.WaitOne(0));
+
+        // The active step completes, leaving the worker paused for the next attempt.
+        token.Set();
+        Assert.True(TerrainUpdater.TryPauseUpdateThread(pause, token, 0));
+        Assert.False(token.WaitOne(0));
+    }
+
+    [Fact]
+    public async Task LocationUpdateCanAcceptTheCurrentStepCompletionWithoutAnotherFrame()
+    {
+        using var pause = new ManualResetEvent(true);
+        using var token = new AutoResetEvent(false);
+        var worker = Task.Run(() =>
+        {
+            Assert.True(SpinWait.SpinUntil(() => !pause.WaitOne(0), TimeSpan.FromSeconds(5)));
+            token.Set();
+        });
+
+        // A generous test deadline validates the handoff rather than OS timer precision.
+        Assert.True(TerrainUpdater.TryPauseUpdateThread(pause, token, 5000));
+        await worker;
+        Assert.False(pause.WaitOne(0));
+        Assert.False(token.WaitOne(0));
+    }
+
     [Fact]
     public void ChunkGeometryUsesSixteenSlicesFor256BlockHeight()
     {

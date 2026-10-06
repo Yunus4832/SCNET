@@ -6,6 +6,10 @@ namespace Game;
 
 public class WorldSettings
 {
+    public const ushort MaximumOnlinePlayerCount = 32;
+
+    private ushort _maxOnlinePlayerCount = 20;
+
     public bool AreAdventureSurvivalMechanicsEnabled = true;
 
     public bool AreSeasonsChanging = true;
@@ -56,7 +60,11 @@ public class WorldSettings
 
     public string KeywordBlocking = string.Empty;
 
-    public ushort MaxOnlinePlayerCount = 20;
+    public ushort MaxOnlinePlayerCount
+    {
+        get => _maxOnlinePlayerCount;
+        set => _maxOnlinePlayerCount = Math.Min(value, MaximumOnlinePlayerCount);
+    }
 
     public ModProfileResolutionStrategy ModProfileResolutionStrategy = ModProfileResolutionStrategy.GlobalPlusWorld;
 

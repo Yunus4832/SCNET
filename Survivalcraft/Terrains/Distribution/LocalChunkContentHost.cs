@@ -122,9 +122,6 @@ public sealed class LocalChunkContentHost : IChunkContentTransport
     public int DrainReceived(ICollection<ClientChunkSnapshot> destination) =>
         _transport.DrainReceived(destination);
 
-    public int DrainFailed(ICollection<ChunkAllocationId> destination) =>
-        _transport.DrainFailed(destination);
-
     public int DrainDeltas(ICollection<TerrainCellDelta> destination) =>
         _transport.DrainDeltas(destination);
 }

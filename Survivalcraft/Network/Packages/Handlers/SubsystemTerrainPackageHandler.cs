@@ -11,8 +11,7 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
             SubsystemTerrainPackage.DataType.RequestSyncChunks or
                 SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments => isServer,
             SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment or
-                SubsystemTerrainPackage.DataType.SyncTerrainCellDelta or
-                SubsystemTerrainPackage.DataType.ReplyResult => !isServer,
+                SubsystemTerrainPackage.DataType.SyncTerrainCellDelta => !isServer,
             _ => false
         };
     }
@@ -63,13 +62,6 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                                      throw new InvalidOperationException(
                                          "Remote terrain cell deltas require a network chunk transport.");
                 deltaTransport.Receive(package.CellDelta);
-                break;
-            case SubsystemTerrainPackage.DataType.ReplyResult:
-                var failureTransport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
-                                       throw new InvalidOperationException(
-                                           "Remote terrain failures require a network chunk transport.");
-                failureTransport.ReceiveFailures(package.FailedChunkRequests);
-
                 break;
         }
     }

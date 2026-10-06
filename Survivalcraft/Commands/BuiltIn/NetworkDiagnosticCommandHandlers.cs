@@ -11,6 +11,7 @@ internal static class NetworkDiagnosticCommandHandlers
         var statistics = CommonLib.Net.SendStatistics;
         var snapshot = new
         {
+            Terrain = CaptureTerrainBacklog(context),
             HeadlessTicks = RunMode.Value == RunModeType.HeadlessServer ? HeadlessEntry.TickStatistics : null,
             Interest = context.Project?.FindSubsystem<SubsystemNetworkInterest>()?.Statistics,
             Routing = statistics.GetRouting(),
@@ -55,5 +56,29 @@ internal static class NetworkDiagnosticCommandHandlers
         return new CommandResult(true, "diagnostics.network.send_statistics",
             "Connection send totals captured; excludes transport overhead and retransmissions.",
             Data: JsonSerializer.SerializeToNode(snapshot));
+    }
+
+    private static object? CaptureTerrainBacklog(CommandContext context)
+    {
+        var terrain = context.Project?.FindSubsystem<SubsystemTerrain>();
+        var scheduler = terrain?.TerrainUpdater.ServerChunkDistribution;
+        if (scheduler == null)
+        {
+            return null;
+        }
+
+        var backlog = scheduler.GetBacklog();
+        return new
+        {
+            backlog.Pending,
+            backlog.AwaitingContent,
+            backlog.OutstandingEncodes,
+            terrain!.TerrainUpdater.PendingLocationCount,
+            terrain.TerrainUpdater.LocationHandoffTimeouts,
+            terrain.TerrainUpdater.DeferredAllocationPasses,
+            AllocatedStates = terrain.Terrain.AllocatedChunks.GroupBy(chunk => chunk.WorkerState)
+                .ToDictionary(group => group.Key.ToString(), group => group.Count()),
+            SaveOutstanding = terrain.TerrainSaveCoordinator?.OutstandingCount
+        };
     }
 }

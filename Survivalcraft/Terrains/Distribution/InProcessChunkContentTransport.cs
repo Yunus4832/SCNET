@@ -53,12 +53,6 @@ public sealed class InProcessChunkContentTransport(IChunkContentAuthority author
         return count;
     }
 
-    public int DrainFailed(ICollection<ChunkAllocationId> destination)
-    {
-        ArgumentNullException.ThrowIfNull(destination);
-        return 0;
-    }
-
     public int DrainDeltas(ICollection<TerrainCellDelta> destination)
     {
         ArgumentNullException.ThrowIfNull(destination);

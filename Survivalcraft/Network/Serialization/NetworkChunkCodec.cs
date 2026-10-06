@@ -42,11 +42,15 @@ public static class NetworkChunkCodec
         return Encode(
             snapshot.Coords,
             snapshot.ContentVersion,
-            snapshot.Cells.ToArray(),
-            snapshot.Shafts.ToArray());
+            snapshot.Cells.Span,
+            snapshot.Shafts.Span);
     }
 
-    private static EncodedTerrainChunk Encode(Point2 coords, long contentVersion, int[] cells, long[] shafts)
+    private static EncodedTerrainChunk Encode(
+        Point2 coords,
+        long contentVersion,
+        ReadOnlySpan<int> cells,
+        ReadOnlySpan<long> shafts)
     {
         using var rleStream = new MemoryStream(_rawBodySize / 4);
         using (var writer = new BinaryWriter(rleStream, System.Text.Encoding.UTF8, true))
@@ -166,7 +170,7 @@ public static class NetworkChunkCodec
             chunk.Shafts);
     }
 
-    private static void WriteClimate(BinaryWriter writer, long[] shafts)
+    private static void WriteClimate(BinaryWriter writer, ReadOnlySpan<long> shafts)
     {
         for (var z = 0; z < 16; z++)
         {
@@ -192,7 +196,7 @@ public static class NetworkChunkCodec
         }
     }
 
-    private static void WriteRleCells(BinaryWriter writer, int[] cells)
+    private static void WriteRleCells(BinaryWriter writer, ReadOnlySpan<int> cells)
     {
         var value = 0;
         var count = 0;
