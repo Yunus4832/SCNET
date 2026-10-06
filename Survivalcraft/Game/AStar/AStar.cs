@@ -229,18 +229,16 @@ public class AStar<T> where T : unmanaged
     {
         while (_nodesCacheIndex >= _nodesCache.Count)
         {
-            _nodesCache.Add(new Node
-            {
-                Position = position,
-                PreviousPosition = previousPosition,
-                F = g + h,
-                G = g,
-                H = h
-            }
-            );
+            _nodesCache.Add(new Node());
         }
 
-        return _nodesCache.Array[_nodesCacheIndex++];
+        var node = _nodesCache.Array[_nodesCacheIndex++];
+        node.Position = position;
+        node.PreviousPosition = previousPosition;
+        node.F = g + h;
+        node.G = g;
+        node.H = h;
+        return node;
     }
 
     public class Node
