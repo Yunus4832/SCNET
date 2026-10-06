@@ -2,8 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemWeatherPackageHandler : PackageHandlerBase<SubsystemWeatherPackage>
 {
-    public override void Handle(SubsystemWeatherPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(SubsystemWeatherPackage package, PackageReceiveContext context)
     {
+        var isServer = context.IsServer;
         if (GameManager.Project is null)
         {
             return;

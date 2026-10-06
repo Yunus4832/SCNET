@@ -27,11 +27,8 @@ public class ComponentVitalStatPackage : IPackage
 
     public byte ID => (byte)PackageType.ComponentVitalStat;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.Playing;
 

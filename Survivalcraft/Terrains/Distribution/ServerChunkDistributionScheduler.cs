@@ -19,13 +19,15 @@ public sealed class ServerChunkDistributionScheduler(
 
     private readonly NetworkChunkEncoder _encoder = new(maximumOutstandingEncodes);
 
-    private readonly Dictionary<Client, PendingChunkRequestQueue> _pending = [];
+    private readonly Dictionary<Client, PendingChunkRequestQueue> _pending = new(ReferenceEqualityComparer.Instance);
 
-    private readonly Dictionary<Client, Vector2> _clientCenters = [];
+    private readonly Dictionary<Client, ClientInterestLocation> _clientLocations =
+        new(ReferenceEqualityComparer.Instance);
 
-    private readonly Dictionary<Client, ClientMotion> _clientMotions = [];
+    private readonly Dictionary<Client, ClientMotion> _clientMotions = new(ReferenceEqualityComparer.Instance);
 
-    private readonly Dictionary<Client, Dictionary<Point2, TerrainChunkFragmentRequest>> _missing = [];
+    private readonly Dictionary<Client, Dictionary<Point2, TerrainChunkFragmentRequest>> _missing =
+        new(ReferenceEqualityComparer.Instance);
 
     private readonly List<Client> _clientsToRemove = [];
 
@@ -39,19 +41,40 @@ public sealed class ServerChunkDistributionScheduler(
 
     public long FragmentBytesRetransmitted => Interlocked.Read(ref _fragmentBytesRetransmitted);
 
+    public bool TryGetClientLocation(Client client, out Vector2 center, out float contentDistance)
+    {
+        if (_clientLocations.TryGetValue(client, out var location))
+        {
+            center = location.Center;
+            contentDistance = location.ContentDistance;
+            return true;
+        }
+
+        center = default;
+        contentDistance = 0f;
+        return false;
+    }
+
     public int Enqueue(Client client, IEnumerable<ChunkContentRequest> requests)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(requests);
+        if (!TryGetClientLocation(client, out var center, out var contentDistance))
+        {
+            return 0;
+        }
+
+        var allowed = requests.Where(request =>
+            NetworkTerrainPolicy.IsChunkRelevant(request.Allocation.Coords, center, contentDistance));
         if (_pending.TryGetValue(client, out var queue))
         {
-            return queue.EnqueueRange(requests);
+            return queue.EnqueueRange(allowed);
         }
 
         queue = new PendingChunkRequestQueue();
         _pending.Add(client, queue);
 
-        return queue.EnqueueRange(requests);
+        return queue.EnqueueRange(allowed);
     }
 
     public int GetPendingCount(Client client) =>
@@ -61,7 +84,7 @@ public sealed class ServerChunkDistributionScheduler(
     public int UpdateClientLocation(Client client, Vector2 center, float contentDistance)
     {
         ArgumentNullException.ThrowIfNull(client);
-        _clientCenters[client] = center;
+        _clientLocations[client] = new ClientInterestLocation(center, contentDistance);
         UpdateClientMotion(client, center, Time.RealTime);
         var removed = _pending.TryGetValue(client, out var queue)
             ? queue.RemoveOutside(center, contentDistance)
@@ -72,7 +95,7 @@ public sealed class ServerChunkDistributionScheduler(
         }
 
         foreach (var coords in missing.Keys.Where(coords =>
-                     !IsWithinDistance(coords, center, contentDistance + 12f)).ToArray())
+                     !NetworkTerrainPolicy.IsChunkRelevant(coords, center, contentDistance)).ToArray())
         {
             missing.Remove(coords);
             removed++;
@@ -87,6 +110,11 @@ public sealed class ServerChunkDistributionScheduler(
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(requests);
+        if (!TryGetClientLocation(client, out var center, out var contentDistance))
+        {
+            return 0;
+        }
+
         if (!_missing.TryGetValue(client, out var queue))
         {
             queue = [];
@@ -101,6 +129,11 @@ public sealed class ServerChunkDistributionScheduler(
         var added = 0;
         foreach (var request in requests)
         {
+            if (!NetworkTerrainPolicy.IsChunkRelevant(request.Allocation.Coords, center, contentDistance))
+            {
+                continue;
+            }
+
             if (!queue.ContainsKey(request.Allocation.Coords))
             {
                 added++;
@@ -116,7 +149,7 @@ public sealed class ServerChunkDistributionScheduler(
     {
         ArgumentNullException.ThrowIfNull(client);
         _pending.Remove(client);
-        _clientCenters.Remove(client);
+        _clientLocations.Remove(client);
         _clientMotions.Remove(client);
         _missing.Remove(client);
     }
@@ -131,16 +164,21 @@ public sealed class ServerChunkDistributionScheduler(
         DrainCompletedEncodes();
         foreach (var item in _pending)
         {
+            if (!TryGetClientLocation(item.Key, out var center, out var contentDistance))
+            {
+                _clientsToRemove.Add(item.Key);
+                continue;
+            }
+
+            item.Value.RemoveOutside(center, contentDistance);
             var toRemove = new List<Point2>();
             var failures = new List<ChunkAllocationId>();
             if (Time.PeriodicEvent(1, 0.6))
             {
-                var requests = (_clientCenters.TryGetValue(item.Key, out var center)
-                        ? item.Value.TakePrioritized(
-                            center,
-                            GetPredictedCenter(item.Key, center),
-                            SettingsManager.Current.ServerChunkCountSendPer)
-                        : item.Value.Take(SettingsManager.Current.ServerChunkCountSendPer))
+                var requests = item.Value.TakePrioritized(
+                        center,
+                        GetPredictedCenter(item.Key, center),
+                        SettingsManager.Current.ServerChunkCountSendPer)
                     .ToArray();
                 var cachedCount = 0;
                 var cachedBytes = 0;
@@ -164,10 +202,9 @@ public sealed class ServerChunkDistributionScheduler(
                                          encoded,
                                          request.Allocation))
                             {
-                                CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(fragment)
-                                {
-                                    To = item.Key
-                                });
+                                CommonLib.Net.QueuePackage(
+                                    new SubsystemTerrainPackage(fragment),
+                                    PackageAudience.To(item.Key));
                             }
 
                             toRemove.Add(coords);
@@ -189,7 +226,9 @@ public sealed class ServerChunkDistributionScheduler(
 
                 if (failures.Count > 0)
                 {
-                    CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(failures, 0) { To = item.Key });
+                    CommonLib.Net.QueuePackage(
+                        new SubsystemTerrainPackage(failures, 0),
+                        PackageAudience.To(item.Key));
                 }
             }
 
@@ -212,7 +251,7 @@ public sealed class ServerChunkDistributionScheduler(
     {
         _encoder.Dispose();
         _pending.Clear();
-        _clientCenters.Clear();
+        _clientLocations.Clear();
         _clientMotions.Clear();
         _missing.Clear();
         _clientsToRemove.Clear();
@@ -266,6 +305,13 @@ public sealed class ServerChunkDistributionScheduler(
                      .ToArray())
         {
             var coords = request.Allocation.Coords;
+            if (!TryGetClientLocation(client, out var approvedCenter, out var distance) ||
+                !NetworkTerrainPolicy.IsChunkRelevant(coords, approvedCenter, distance))
+            {
+                requests.Remove(coords);
+                continue;
+            }
+
             if (!_authority.TryGetDescriptor(coords, out var descriptor))
             {
                 requests.Remove(coords);
@@ -305,7 +351,9 @@ public sealed class ServerChunkDistributionScheduler(
 
             foreach (var fragment in fragments)
             {
-                CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(fragment) { To = client });
+                CommonLib.Net.QueuePackage(
+                    new SubsystemTerrainPackage(fragment),
+                    PackageAudience.To(client));
             }
 
             Interlocked.Add(ref _fragmentsRetransmitted, fragments.Length);
@@ -351,24 +399,18 @@ public sealed class ServerChunkDistributionScheduler(
                Vector2.DistanceSquared(center, chunkCenter) * 0.3f;
     }
 
-    private static bool IsWithinDistance(Point2 coords, Vector2 center, float distance)
-    {
-        var chunkCenter = new Vector2((coords.X + 0.5f) * 16f, (coords.Y + 0.5f) * 16f);
-        return Vector2.DistanceSquared(center, chunkCenter) <= MathUtils.Sqr(distance);
-    }
-
     private void RemoveEmptyClients()
     {
         foreach (var client in _clientsToRemove)
         {
             _pending.Remove(client);
-            _clientCenters.Remove(client);
-            _clientMotions.Remove(client);
             _missing.Remove(client);
         }
 
         _clientsToRemove.Clear();
     }
+
+    private readonly record struct ClientInterestLocation(Vector2 Center, float ContentDistance);
 
     private readonly record struct ClientMotion(Vector2 Center, Vector2 Velocity, double Time);
 }

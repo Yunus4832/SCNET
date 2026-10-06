@@ -9,11 +9,8 @@ public class ConnectionRejectPackage : IPackage
 
     public byte ID => (byte)PackageType.ConnectionReject;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.NotConnected;
 

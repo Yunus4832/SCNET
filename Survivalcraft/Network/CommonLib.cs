@@ -163,14 +163,20 @@ public static class CommonLib
 
     public static byte[]? GetNowProject(Project project)
     {
+        var previousMode = project.SendToClientMode;
         project.SendToClientMode = true;
-        var rootNode = new ValuesDictionary();
-        var projData = project.Save();
-        projData.EntityDataList.EntitiesData.Clear();
-        projData.Save(rootNode);
-        var data = rootNode.ToMessagePack();
-        project.SendToClientMode = false;
-        return data;
+        try
+        {
+            var rootNode = new ValuesDictionary();
+            var projData = project.Save();
+            projData.EntityDataList.EntitiesData.Clear();
+            projData.Save(rootNode);
+            return rootNode.ToMessagePack();
+        }
+        finally
+        {
+            project.SendToClientMode = previousMode;
+        }
     }
 
     public static byte[] EncodeFrame(Stream stream, CompressionPolicy compressionPolicy)

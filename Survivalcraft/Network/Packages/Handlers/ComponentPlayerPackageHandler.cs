@@ -2,15 +2,54 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<ComponentPlayerPackage>
 {
-    public override void Handle(ComponentPlayerPackage package, NetNode? netNode, bool isServer)
+    internal static ComponentBody? ResolveMovementBody(ComponentBody playerBody, bool mounted)
     {
+        if (mounted != (playerBody.ParentBody is not null))
+        {
+            return null;
+        }
+
+        return playerBody.ParentBody ?? playerBody;
+    }
+
+    internal static bool AcceptsDirection(ComponentPlayerPackage.PlayerAction action, bool isServer)
+    {
+        return action switch
+        {
+            ComponentPlayerPackage.PlayerAction.AddExperience or ComponentPlayerPackage.PlayerAction.SyncStat or
+                ComponentPlayerPackage.PlayerAction.PositionSet => !isServer,
+            ComponentPlayerPackage.PlayerAction.IntoPlaying or ComponentPlayerPackage.PlayerAction.Restart or
+                ComponentPlayerPackage.PlayerAction.Drop or ComponentPlayerPackage.PlayerAction.DragDrop => isServer,
+            ComponentPlayerPackage.PlayerAction.BodyUpdate or ComponentPlayerPackage.PlayerAction.InteractEvent or
+                ComponentPlayerPackage.PlayerAction.AimEvent or ComponentPlayerPackage.PlayerAction.DigEvent or
+                ComponentPlayerPackage.PlayerAction.Hit or ComponentPlayerPackage.PlayerAction.CreativeFlyChange => true,
+            _ => false
+        };
+    }
+
+    internal static bool AcceptsSender(bool isServer, Client? sender, PlayerData? player)
+    {
+        return !isServer || sender is not null && player is not null && ReferenceEquals(player.Client, sender);
+    }
+
+    internal static bool AreDropParametersValid(int slot, int slotsCount, int count, int available, Vector3 velocity)
+    {
+        return slot >= 0 && slot < slotsCount && count > 0 && count <= available &&
+               float.IsFinite(velocity.X) && float.IsFinite(velocity.Y) && float.IsFinite(velocity.Z) &&
+               velocity.LengthSquared() <= 144.01f;
+    }
+
+    public override void Handle(ComponentPlayerPackage package, PackageReceiveContext context)
+    {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ComponentPlayerPackage)}");
             return;
         }
 
-        if (GameManager.Project is null)
+        if (GameManager.Project is null || !AcceptsDirection(package.Type, isServer))
         {
             return;
         }
@@ -24,7 +63,7 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
             return;
         }
 
-        if (package.From is not null && (package.PlayerData == null || package.PlayerData.ClientId != package.From.ID))
+        if (!AcceptsSender(isServer, context.Sender, package.PlayerData))
         {
             return;
         }
@@ -34,32 +73,27 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
             case ComponentPlayerPackage.PlayerAction.BodyUpdate:
                 package.PlayerEvent(player =>
                 {
-                    ComponentBody body;
+                    var body = ResolveMovementBody(player.ComponentBody,
+                        package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.ParentBodyChange));
+                    if (body is null)
+                    {
+                        return;
+                    }
+
                     if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.ParentBodyChange))
                     {
-                        if (player.ComponentBody.ParentBody != null)
+                        if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.LookAnglesChange))
                         {
-                            body = player.ComponentBody.ParentBody;
-                            if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.LookAnglesChange))
-                            {
-                                var loco = body.Locomotion;
-                                loco?.NetLookAngles.SetNext(package.LookAngles);
-                            }
-
-                            if (package.PackageChangeFlag.HasFlag(
-                                    ComponentPlayerPackage.ChangFlag.ChildLookAnglesChange))
-                            {
-                                player.ComponentBody.Locomotion?.NetLookAngles.SetNext(package.ChildLookAngles);
-                            }
+                            body.Locomotion?.NetLookAngles.SetNext(package.LookAngles);
                         }
-                        else
+
+                        if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.ChildLookAnglesChange))
                         {
-                            body = player.ComponentBody;
+                            player.ComponentBody.Locomotion?.NetLookAngles.SetNext(package.ChildLookAngles);
                         }
                     }
                     else
                     {
-                        body = player.ComponentBody;
                         if (package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.LookAnglesChange))
                         {
                             player.ComponentLocomotion.NetLookAngles.SetNext(package.LookAngles);
@@ -108,8 +142,7 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
                         return;
                     }
 
-                    package.Except = package.From;
-                    netNode.QueuePackage(package);
+                    NetworkSender.SendToObservers(player.Entity, package, context.Sender);
                 });
                 break;
             case ComponentPlayerPackage.PlayerAction.AimEvent:
@@ -121,8 +154,7 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
                         return;
                     }
 
-                    package.Except = package.From;
-                    netNode.QueuePackage(package);
+                    NetworkSender.SendToObservers(player.Entity, package, context.Sender);
                 });
                 break;
             case ComponentPlayerPackage.PlayerAction.DigEvent:
@@ -134,8 +166,7 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
                         return;
                     }
 
-                    package.Except = package.From;
-                    netNode.QueuePackage(package);
+                    NetworkSender.SendToObservers(player.Entity, package, context.Sender);
                 });
                 break;
             case ComponentPlayerPackage.PlayerAction.CreativeFlyChange:
@@ -147,8 +178,7 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
                         return;
                     }
 
-                    package.Except = package.From;
-                    netNode.QueuePackage(package);
+                    NetworkSender.SendToObservers(player.Entity, package, context.Sender);
                 });
                 break;
             case ComponentPlayerPackage.PlayerAction.Hit:
@@ -167,8 +197,7 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
                             return;
                         }
 
-                        package.Except = package.From;
-                        netNode.QueuePackage(package);
+                        NetworkSender.SendToObservers(player.Entity, package, context.Sender);
                     });
                 });
                 break;
@@ -194,10 +223,21 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
                     project.FindSubsystem<SubsystemInventories>(true)!.FindInventoryById(package.InventoryID,
                         inventory =>
                         {
-                            // 丢弃背包内的物品，不是活动栏的
-                            player.ViewWidget.NetDragDrop(package.HitPosition,
-                                new InventoryDragData { Inventory = inventory, SlotIndex = package.ActiveSlot },
-                                package.Count);
+                            if (!SubsystemInventories.CanClientAccess(inventory, context.Sender!) ||
+                                package.ActiveSlot < 0 || package.ActiveSlot >= inventory.SlotsCount ||
+                                !AreDropParametersValid(package.ActiveSlot, inventory.SlotsCount, package.Count,
+                                    inventory.GetSlotCount(package.ActiveSlot), package.HitPosition))
+                            {
+                                return;
+                            }
+
+                            var value = inventory.GetSlotValue(package.ActiveSlot);
+                            var removed = inventory.RemoveSlotItems(package.ActiveSlot, package.Count);
+                            if (removed > 0)
+                            {
+                                project.FindSubsystem<SubsystemPickables>(true)!.AddPickable(value, removed,
+                                    player.ComponentCreatureModel.EyePosition, package.HitPosition, null);
+                            }
                         });
                 });
                 break;

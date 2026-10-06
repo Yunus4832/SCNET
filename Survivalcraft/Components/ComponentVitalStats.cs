@@ -110,7 +110,14 @@ public class ComponentVitalStats : Component, IUpdateable
             if (_componentPlayer.ComponentSleep.SubsystemUpdate.IsLastUpdateInFrame &&
                 Time.PeriodicEvent(1.0, 0.5))
             {
-                CommonLib.Net.QueuePackage(new ComponentVitalStatPackage(this));
+                if (CommonLib.WorkType == WorkType.Server && _componentPlayer.PlayerData.Client is { } owner)
+                {
+                    NetworkSender.SendTo(owner, new ComponentVitalStatPackage(this));
+                }
+                else if (CommonLib.WorkType == WorkType.Client)
+                {
+                    NetworkSender.SendToServer(new ComponentVitalStatPackage(this));
+                }
             }
         }
         else

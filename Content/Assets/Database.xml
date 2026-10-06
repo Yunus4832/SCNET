@@ -5814,6 +5814,8 @@
                     <ParameterSet Name="Pickables"
                                   Description="Contains pickables, each one in a separate parameter set"
                                   Guid="27fcf1b1-0153-4f93-8379-37c59dcfab12"/>
+                    <Parameter Name="Dependencies" Guid="3b2a066c-a0da-4dce-a273-5f96c45b63de"
+                               Value="NetworkInterest" Type="string"/>
                     <Parameter Name="Class" Guid="32d392de-69c1-4d04-9e0b-5c7463201892" Value="Game.Subsystems.SubsystemPickables"
                                Type="string"/>
                 </SubsystemTemplate>
@@ -5938,6 +5940,8 @@
                                    Guid="bb01254d-4991-4135-96f2-50ad9262a28e"
                                    InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
                     <ParameterSet Name="MovingBlockSets" Guid="f1b82bdb-c80f-4985-8ad4-e3ee1805bff3"/>
+                    <Parameter Name="Dependencies" Guid="d02e730f-4cbb-4980-8b2f-a2eec0627992"
+                               Value="NetworkInterest" Type="string"/>
                     <Parameter Name="Class" Guid="1739995d-79de-4d04-9763-432c22b3f416"
                                Value="Game.Subsystems.SubsystemMovingBlocks" Type="string"/>
                 </SubsystemTemplate>
@@ -5945,8 +5949,18 @@
                                    Description="Manages physical bodies and allows spatial queries and raycasts"
                                    Guid="c4d99daf-a6ef-4290-8f20-2908e4e6c35e"
                                    InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+                    <Parameter Name="Dependencies" Guid="8959a898-749c-457d-b707-cc907b157eac"
+                               Value="NetworkInterest" Type="string"/>
                     <Parameter Name="Class" Guid="ee3b5830-8ad9-4512-9045-e145b1d859bd" Value="Game.Subsystems.SubsystemBodies"
                                Type="string"/>
+                </SubsystemTemplate>
+                <SubsystemTemplate Name="NetworkInterest" Description="Manages network interest and replicated entities"
+                                   Guid="880526dc-6a55-49c8-97ea-b344cdbd3e86"
+                                   InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
+                    <Parameter Name="Dependencies" Guid="6b1139c9-d0b8-420f-812f-a3e0da5b185d"
+                               Value="Players,Terrain" Type="string"/>
+                    <Parameter Name="Class" Guid="9156270b-9cee-4674-b82d-94f52289857a"
+                               Value="Game.Subsystems.SubsystemNetworkInterest" Type="string"/>
                 </SubsystemTemplate>
                 <SubsystemTemplate Name="Sky" Description="Renders sky and celestial objects"
                                    Guid="c5722262-a4f6-42de-afe7-ce272092f2d8"
@@ -5975,6 +5989,8 @@
                     <ParameterSet Name="Projectiles"
                                   Description="Contains projectiles, each one in a separate parameter set"
                                   Guid="d27d4103-cefd-4361-872d-d7760162f50d"/>
+                    <Parameter Name="Dependencies" Guid="80588f5c-ad43-4dad-93b7-98775e873b03"
+                               Value="NetworkInterest" Type="string"/>
                     <Parameter Name="Class" Guid="dafb8e14-11b9-44b7-a208-424b770aeaa9"
                                Value="Game.Subsystems.SubsystemProjectiles" Type="string"/>
                 </SubsystemTemplate>
@@ -6814,6 +6830,8 @@
                 </ComponentTemplate>
                 <ComponentTemplate Name="Furnace" Description="A furnace" Guid="c91f7906-de35-4e94-ba6e-90cd55cd19d4"
                                    InheritanceParent="81a44c6a-c30a-4f53-8d64-0c30aabab8f9">
+                    <Parameter Name="SmeltingProgress" Description="Current smelting progress"
+                               Guid="d3fe01d8-20d1-4763-9466-9051b43786e3" Value="0" Type="float"/>
                     <Parameter Name="FireTimeRemaining" Description="Fire time remaining, in seconds"
                                Guid="2830cd84-3ff3-4165-aad1-19685e751850" Value="0" Type="float"/>
                     <Parameter Name="HeatLevel" Description="Current heat level in furnace"
@@ -7352,6 +7370,8 @@
                                          InheritanceParent="f47a3ccb-3c3d-443d-90fb-0eac53780343"/>
                 <MemberSubsystemTemplate Name="Bodies" Guid="fa8fcbe9-c7f5-4185-8110-922d5cd65143"
                                          InheritanceParent="c4d99daf-a6ef-4290-8f20-2908e4e6c35e"/>
+                <MemberSubsystemTemplate Name="NetworkInterest" Guid="6edd106b-30d8-4c27-8e4e-8ed6ff85fe98"
+                                         InheritanceParent="880526dc-6a55-49c8-97ea-b344cdbd3e86"/>
             </ProjectTemplate>
             <SubsystemTemplate Name="Subsystem" Guid="a3914c13-7801-46a6-b23a-9e2b36e9defb">
                 <Parameter Name="IsOptional"

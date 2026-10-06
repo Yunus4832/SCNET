@@ -14,9 +14,6 @@ public sealed class InitialWorldSnapshotPackage : IPackage
     public byte[] EntityData = [];
 
     public byte ID => (byte)PackageType.InitialWorldSnapshot;
-    public Client? To { get; set; }
-    public Client? Except { get; set; }
-    public Client? From { get; set; }
     public ClientState MinNeedState => ClientState.NotConnected;
 
     public InitialWorldSnapshotPackage()
@@ -76,6 +73,13 @@ public sealed class InitialWorldSnapshotPackage : IPackage
     {
         var values = new ValuesDictionary();
         values.ApplyOverridesUseMessagePack(data);
-        return project.LoadEntitiesAll(new EntityDataList(project.GameDatabase, values, false));
+        var entityData = new EntityDataList(project.GameDatabase, values, false);
+        // 删除旧组件后再加载新组件，避免旧组件注销新注册的同 ID 库存等状态。
+        foreach (var entity in entityData.EntitiesData)
+        {
+            project.FindEntityById(entity.Id, existing => project.RemoveEntity(existing, true));
+        }
+
+        return project.LoadEntitiesAll(entityData);
     }
 }

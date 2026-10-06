@@ -4,9 +4,23 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<SubsystemTerrainPackage>
 {
-    public override void Handle(SubsystemTerrainPackage package, NetNode? netNode, bool isServer)
+    internal static bool AcceptsDirection(SubsystemTerrainPackage.DataType type, bool isServer)
     {
-        if (GameManager.Project is null)
+        return type switch
+        {
+            SubsystemTerrainPackage.DataType.RequestSyncChunks or
+                SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments => isServer,
+            SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment or
+                SubsystemTerrainPackage.DataType.SyncTerrainCellDelta or
+                SubsystemTerrainPackage.DataType.ReplyResult => !isServer,
+            _ => false
+        };
+    }
+
+    public override void Handle(SubsystemTerrainPackage package, PackageReceiveContext context)
+    {
+        var isServer = context.IsServer;
+        if (GameManager.Project is null || !AcceptsDirection(package.Type, isServer))
         {
             return;
         }
@@ -16,7 +30,7 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
         switch (package.Type)
         {
             case SubsystemTerrainPackage.DataType.RequestSyncChunks:
-                if (package.From is null)
+                if (context.Sender is null)
                 {
                     break;
                 }
@@ -24,10 +38,10 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                 var scheduler = subsystemTerrain.TerrainUpdater.ServerChunkDistribution ??
                                 throw new InvalidOperationException(
                                     "Terrain chunk requests require an authoritative server scheduler.");
-                scheduler.Enqueue(package.From, package.ChunkRequests);
+                scheduler.Enqueue(context.Sender, package.ChunkRequests);
                 break;
             case SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments:
-                if (package.From is null)
+                if (context.Sender is null)
                 {
                     break;
                 }
@@ -35,7 +49,7 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
                 var fragmentScheduler = subsystemTerrain.TerrainUpdater.ServerChunkDistribution ??
                                         throw new InvalidOperationException(
                                             "Terrain fragment requests require an authoritative server scheduler.");
-                fragmentScheduler.EnqueueMissing(package.From, package.FragmentRequests);
+                fragmentScheduler.EnqueueMissing(context.Sender, package.FragmentRequests);
                 break;
             case SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment:
                 var transport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
@@ -45,11 +59,6 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
 
                 break;
             case SubsystemTerrainPackage.DataType.SyncTerrainCellDelta:
-                if (isServer)
-                {
-                    break;
-                }
-
                 var deltaTransport = subsystemTerrain.ChunkContentTransport as NetworkChunkContentTransport ??
                                      throw new InvalidOperationException(
                                          "Remote terrain cell deltas require a network chunk transport.");

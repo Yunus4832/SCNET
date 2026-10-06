@@ -72,7 +72,7 @@ public class ComponentHealth : Component, IUpdateable
         {
             if (CommonLib.WorkType != WorkType.Client && Time.PeriodicEvent(2.0, 0.0))
             {
-                CommonLib.Net.QueuePackage(new ComponentHealthPackage(this));
+                NetworkSender.SendToObservers(Entity, new ComponentHealthPackage(this));
             }
 
             var num = 0f;
@@ -157,12 +157,12 @@ public class ComponentHealth : Component, IUpdateable
                     Injure(num4, null, false, cause);
                 }
             }
-            else
+            else if (CommonLib.WorkType == WorkType.Client)
             {
                 //是(主玩家、被主玩家骑乘的生物)计算伤害，请求给服务器
                 if (flagMainPlayer || flagMainRider)
                 {
-                    CommonLib.Net.QueuePackage(new ComponentHealthPackage(this, null, num4, cause, false, true,
+                    NetworkSender.SendToServer(new ComponentHealthPackage(this, null, num4, cause, false, true,
                         ComponentHealthPackage.RequestInjureType.Fall));
                 }
             }
@@ -210,7 +210,7 @@ public class ComponentHealth : Component, IUpdateable
             {
                 if (flagMainPlayer || flagMainRider)
                 {
-                    CommonLib.Net.QueuePackage(new ComponentHealthPackage(this, null, num7, cause, false, true,
+                    NetworkSender.SendToServer(new ComponentHealthPackage(this, null, num7, cause, false, true,
                         ComponentHealthPackage.RequestInjureType.Fire));
                 }
             }
@@ -340,7 +340,9 @@ public class ComponentHealth : Component, IUpdateable
         cause = context.Cause;
 
         NetInjure(amount, attacker, cause);
-        CommonLib.Net.QueuePackage(new ComponentHealthPackage(this, attacker, amount, cause, ignoreInvulnerability));
+        NetworkSender.SendToObservers(
+            Entity,
+            new ComponentHealthPackage(this, attacker, amount, cause, ignoreInvulnerability));
     }
 
     public void NetInjure(float amount, ComponentCreature? attacker, string cause)
@@ -367,7 +369,7 @@ public class ComponentHealth : Component, IUpdateable
                     {
                         Cause = CauseOfDeath
                     };
-                    CommonLib.Net.QueuePackage(componentHealthPackage);
+                    NetworkSender.SendToObservers(Entity, componentHealthPackage);
                 }
 
                 if (attacker != null)

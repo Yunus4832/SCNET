@@ -65,7 +65,7 @@ public static class CommandGateway
             return requestId;
         }
 
-        CommonLib.Net.QueuePackage(CommandPackage.CreateRequest(input, requestId));
+        NetworkSender.SendToServer(CommandPackage.CreateRequest(input, requestId));
         return requestId;
     }
 
@@ -127,7 +127,7 @@ public static class CommandGateway
             return requestId;
         }
 
-        CommonLib.Net.QueuePackage(
+        NetworkSender.SendToServer(
             CommandPackage.CreateRequest(commandId, payload, requestId));
         return requestId;
     }

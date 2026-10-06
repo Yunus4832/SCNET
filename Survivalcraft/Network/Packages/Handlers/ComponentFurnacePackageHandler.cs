@@ -2,9 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentFurnacePackageHandler : PackageHandlerBase<ComponentFurnacePackage>
 {
-    public override void Handle(ComponentFurnacePackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ComponentFurnacePackage package, PackageReceiveContext context)
     {
-        if (GameManager.Project is null)
+        if (GameManager.Project is null || context.IsServer)
         {
             return;
         }

@@ -381,6 +381,9 @@ public sealed class ModProfileManagerTest : IDisposable
         ModProfileResolutionStrategy strategy,
         string? directoryName = null)
     {
+        using var runtime = GameModRuntime.Start();
+        runtime.InitializeDatabase();
+
         if (!Storage.DirectoryExists(GamePaths.Worlds))
         {
             Storage.CreateDirectory(GamePaths.Worlds);

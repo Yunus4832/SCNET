@@ -268,7 +268,7 @@ public class PlayerScreen : Screen
             {
                 if (CommonLib.WorkType == WorkType.Client)
                 {
-                    CommonLib.Net.QueuePackage(new PlayerDataPackage(_playerData, PlayerDataPackage.DataType.Create));
+                    NetworkSender.SendToServer(new PlayerDataPackage(_playerData, PlayerDataPackage.DataType.Create));
                     DialogsManager.ShowDialog(this, _fetchingPlayerDialog);
                 }
                 else

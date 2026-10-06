@@ -2,11 +2,31 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentClothingPackageHandler : PackageHandlerBase<ComponentClothingPackage>
 {
-    public override void Handle(ComponentClothingPackage package, NetNode? netNode, bool isServer)
+    internal static bool IsValidResourceName(string name)
     {
+        return !string.IsNullOrWhiteSpace(name) && name is not ("." or "..") &&
+               name.IndexOfAny(['/', '\\', ':', '\0']) < 0;
+    }
+
+    internal static bool AcceptsDirection(ComponentClothingPackage.DataType type, bool isServer)
+    {
+        return isServer
+            ? type is ComponentClothingPackage.DataType.RequestSkin or ComponentClothingPackage.DataType.WhoHasReply
+            : type is ComponentClothingPackage.DataType.ReplySkin or ComponentClothingPackage.DataType.WhoHas;
+    }
+
+    public override void Handle(ComponentClothingPackage package, PackageReceiveContext context)
+    {
+        var netNode = context.Node;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ComponentClothingPackage)}");
+            return;
+        }
+
+        if (!IsValidResourceName(package.SkinName) || !AcceptsDirection(package.Type, context.IsServer) ||
+            (context.IsServer && context.Sender is null))
+        {
             return;
         }
 
@@ -16,14 +36,14 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
                 if (CharacterSkinsManager.HasSkinRes(package.SkinName))
                 {
                     netNode.QueuePackage(new ComponentClothingPackage(package.SkinName,
-                        ComponentClothingPackage.DataType.ReplySkin));
+                        ComponentClothingPackage.DataType.ReplySkin), PackageAudience.To(context.Sender!));
                 }
                 else
                 {
                     if (!CharacterSkinsManager.WaitReplyList.Contains(package.SkinName))
                     {
                         netNode.QueuePackage(new ComponentClothingPackage(package.SkinName,
-                            ComponentClothingPackage.DataType.WhoHas));
+                            ComponentClothingPackage.DataType.WhoHas), PackageAudience.Global);
                         CharacterSkinsManager.WaitReplyList.Add(package.SkinName);
                     }
                 }
@@ -43,7 +63,7 @@ public sealed class ComponentClothingPackageHandler : PackageHandlerBase<Compone
             case ComponentClothingPackage.DataType.WhoHas:
                 if (CharacterSkinsManager.HasSkinRes(package.SkinName))
                 {
-                    netNode.QueuePackage(new ComponentClothingPackage(package.SkinName,
+                    NetworkSender.SendToServer(new ComponentClothingPackage(package.SkinName,
                         ComponentClothingPackage.DataType.WhoHasReply));
                 }
 

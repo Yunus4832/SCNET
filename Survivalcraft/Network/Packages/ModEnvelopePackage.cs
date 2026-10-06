@@ -15,11 +15,8 @@ public sealed class ModEnvelopePackage : IPackage
 
     public byte ID => (byte)PackageType.ModPackage;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => RequiredState;
 

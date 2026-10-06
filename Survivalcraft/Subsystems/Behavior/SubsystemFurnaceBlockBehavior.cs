@@ -25,20 +25,30 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        var componentFurnaces = new List<ComponentFurnace>();
+        var byClient = new Dictionary<Client, List<ComponentFurnace>>(ReferenceEqualityComparer.Instance);
         var subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>(true)!;
         foreach (var pair in subsystemBlockEntities.BlockEntities)
         {
             var furnace = pair.Value.Entity.FindComponent<ComponentFurnace>();
             if (furnace != null)
             {
-                componentFurnaces.Add(furnace);
+                foreach (var client in SubsystemInventories.GetObservers(furnace).Where(client =>
+                             client.IsConnected && client.State == ClientState.Playing))
+                {
+                    if (!byClient.TryGetValue(client, out var furnaces))
+                    {
+                        furnaces = [];
+                        byClient.Add(client, furnaces);
+                    }
+
+                    furnaces.Add(furnace);
+                }
             }
         }
 
-        if (componentFurnaces.Count > 0)
+        foreach (var (client, furnaces) in byClient)
         {
-            CommonLib.Net.QueuePackage(new ComponentFurnacePackage(componentFurnaces));
+            NetworkSender.SendTo(client, new ComponentFurnacePackage(furnaces));
         }
     }
 
@@ -133,7 +143,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 new BlockEditPackage(
                     new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
                     BlockEditPackage.EventType.OpenInventoryByPoint);
-            CommonLib.Net.QueuePackage(package);
+            NetworkSender.SendToServer(package);
             return true;
         }
 

@@ -67,7 +67,7 @@ public class ComponentSickness : Component, IUpdateable
                 if (CommonLib.WorkType != WorkType.Client)
                 {
                     NauseaEffect();
-                    CommonLib.Net.QueuePackage(new ComponentSicknessPackage(this));
+                    NetworkSender.SendToObservers(Entity, new ComponentSicknessPackage(this));
                 }
             }
         }
@@ -131,7 +131,7 @@ public class ComponentSickness : Component, IUpdateable
             return;
         }
 
-        CommonLib.Net.QueuePackage(new ComponentSicknessPackage(this));
+        NetworkSender.SendToObservers(Entity, new ComponentSicknessPackage(this));
         SicknessDuration = 0f;
     }
 

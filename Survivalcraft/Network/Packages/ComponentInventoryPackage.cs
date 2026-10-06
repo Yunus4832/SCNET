@@ -41,11 +41,8 @@ public class ComponentInventoryPackage : IPackage
 
     public byte ID => (byte)PackageType.ComponentInventory;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 

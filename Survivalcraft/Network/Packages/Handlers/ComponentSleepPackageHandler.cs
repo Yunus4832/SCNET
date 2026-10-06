@@ -2,20 +2,36 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentSleepPackage>
 {
-    public override void Handle(ComponentSleepPackage package, NetNode? netNode, bool isServer)
+    internal static bool AcceptsDirection(ComponentSleepPackage.EventType type, bool isServer)
     {
+        return isServer
+            ? type is ComponentSleepPackage.EventType.SleepRequest or ComponentSleepPackage.EventType.WakeupRequest
+            : type is ComponentSleepPackage.EventType.Sleep or ComponentSleepPackage.EventType.WakeUp;
+    }
+
+    public override void Handle(ComponentSleepPackage package, PackageReceiveContext context)
+    {
+        var netNode = context.Node;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ComponentSleepPackage)}");
             return;
         }
 
-        if (GameManager.Project is null)
+        if (GameManager.Project is null || !AcceptsDirection(package.Type, context.IsServer))
         {
             return;
         }
 
         var project = GameManager.Project;
+        if (context.IsServer && (context.Sender is null ||
+            !project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData.Any(player =>
+                ReferenceEquals(player.Client, context.Sender) &&
+                player.ComponentPlayer?.Entity.EntityId == package.EntityId)))
+        {
+            return;
+        }
+
         project.FindEntityById(package.EntityId, e =>
             {
                 var sleep = e.FindComponent<ComponentSleep>();
@@ -33,18 +49,17 @@ public sealed class ComponentSleepPackageHandler : PackageHandlerBase<ComponentS
                         }
                         else
                         {
-                            netNode.QueuePackage(
-                                new ComponentSleepPackage(
+                            var response = new ComponentSleepPackage(
                                     sleep,
                                     ComponentSleepPackage.EventType.Sleep,
                                     package.AllowManualWakeup,
                                     false,
                                     reason2
-                                )
-                                {
-                                    To = package.From
-                                }
-                            );
+                                );
+                            if (context.Sender is not null)
+                            {
+                                netNode.QueuePackage(response, PackageAudience.To(context.Sender));
+                            }
                         }
 
                         break;

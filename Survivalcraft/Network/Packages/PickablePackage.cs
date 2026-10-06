@@ -5,6 +5,8 @@ namespace Game.Network.Packages;
 
 public class PickablePackage : IPackage
 {
+    public const int MaxPositionsPerSnapshot = 24;
+
     public enum PickType
     {
         Create,
@@ -13,8 +15,7 @@ public class PickablePackage : IPackage
         RequestSync,
         SetFlyToPosition,
         CreateList,
-        DeleteList,
-        SyncList
+        DeleteList
     }
 
     public byte Count;
@@ -31,6 +32,8 @@ public class PickablePackage : IPackage
 
     public PickType Type;
 
+    public uint StateTick = unchecked((uint)Time.FrameIndex);
+
     public int Value;
 
     public Vector3 Velocity;
@@ -41,11 +44,8 @@ public class PickablePackage : IPackage
 
     public byte ID => (byte)PackageType.Pickable;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
@@ -81,13 +81,8 @@ public class PickablePackage : IPackage
 
     public void WriteData(PackageStreamWriter writer)
     {
-        if (GameManager.Project is null)
-        {
-            return;
-        }
-
-        var subsystemPickables = GameManager.Project.FindSubsystem<SubsystemPickables>(true)!;
         writer.WriteEnum(Type);
+        writer.Write(StateTick);
         switch (Type)
         {
             case PickType.Create:
@@ -143,27 +138,13 @@ public class PickablePackage : IPackage
             case PickType.RequestSync:
                 writer.Write(Id);
                 break;
-            case PickType.SyncList:
-                {
-                    var pickables = subsystemPickables.Pickables;
-                    writer.Write(pickables.Count);
-                    foreach (var pickable in pickables)
-                    {
-                        writer.Write(pickable.Id);
-                        writer.Write(pickable.Count);
-                        writer.Write(pickable.Value);
-                        writer.Write(pickable.Position);
-                        writer.Write(pickable.Velocity);
-                        writer.Write(pickable.StuckMatrix);
-                    }
-                }
-                break;
         }
     }
 
     public void ReadData(PackageStreamReader reader)
     {
         Type = reader.ReadEnum<PickType>();
+        StateTick = reader.ReadUInt32();
         switch (Type)
         {
             case PickType.Create:
@@ -229,24 +210,6 @@ public class PickablePackage : IPackage
                 break;
             case PickType.RequestSync:
                 Id = reader.ReadUInt16();
-                break;
-            case PickType.SyncList:
-                {
-                    var count = reader.ReadInt32();
-                    for (var i = 0; i < count; i++)
-                    {
-                        var pickable = new Pickable
-                        {
-                            Id = reader.ReadUInt16(),
-                            Count = reader.ReadInt32(),
-                            Value = reader.ReadInt32(),
-                            Position = reader.ReadVector3(),
-                            Velocity = reader.ReadVector3(),
-                            StuckMatrix = reader.ReadMatrixNullable()
-                        };
-                        Pickables.Add(pickable);
-                    }
-                }
                 break;
         }
     }

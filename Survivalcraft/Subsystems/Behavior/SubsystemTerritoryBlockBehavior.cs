@@ -443,7 +443,14 @@ public class SubsystemTerritoryBlockBehavior : SubsystemBlockBehavior, IDrawable
             show.CheckStatusChanged += flag =>
             {
                 territoriy.IsVisible = flag;
-                CommonLib.Net.QueuePackage(new TerritoriyPackage(territoriy));
+                if (CommonLib.WorkType == WorkType.Client)
+                {
+                    NetworkSender.SendToServer(new TerritoriyPackage(territoriy));
+                }
+                else if (CommonLib.WorkType == WorkType.Server)
+                {
+                    CommonLib.Net.QueuePackage(new TerritoriyPackage(territoriy), PackageAudience.Global);
+                }
             };
             stackPanel.Children.Add(show);
 
@@ -456,7 +463,14 @@ public class SubsystemTerritoryBlockBehavior : SubsystemBlockBehavior, IDrawable
             applyToFriend.CheckStatusChanged += flag =>
             {
                 territoriy.ApplyToFriend = flag;
-                CommonLib.Net.QueuePackage(new TerritoriyPackage(territoriy));
+                if (CommonLib.WorkType == WorkType.Client)
+                {
+                    NetworkSender.SendToServer(new TerritoriyPackage(territoriy));
+                }
+                else if (CommonLib.WorkType == WorkType.Server)
+                {
+                    CommonLib.Net.QueuePackage(new TerritoriyPackage(territoriy), PackageAudience.Global);
+                }
             };
             stackPanel.Children.Add(applyToFriend);
         }

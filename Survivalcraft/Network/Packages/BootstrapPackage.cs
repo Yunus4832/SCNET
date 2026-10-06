@@ -11,9 +11,6 @@ public sealed class BootstrapPackage : IPackage
     public byte[] TextureData = [];
 
     public byte ID => (byte)PackageType.Bootstrap;
-    public Client? To { get; set; }
-    public Client? Except { get; set; }
-    public Client? From { get; set; }
     public ClientState MinNeedState => ClientState.NotConnected;
 
     public BootstrapPackage()

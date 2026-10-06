@@ -24,11 +24,8 @@ public class ClientPackage : IPackage
 
     public byte ID => (byte)PackageType.Client;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.NotConnected;
 

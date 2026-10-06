@@ -2,8 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ConnectionRejectPackageHandler : PackageHandlerBase<ConnectionRejectPackage>
 {
-    public override void Handle(ConnectionRejectPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ConnectionRejectPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ConnectionRejectPackage)}");

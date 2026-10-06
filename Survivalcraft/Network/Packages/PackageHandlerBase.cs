@@ -4,10 +4,10 @@ public abstract class PackageHandlerBase<TPackage> : IPackageHandler<TPackage> w
 {
     public Type PackageType => typeof(TPackage);
 
-    public abstract void Handle(TPackage package, NetNode? netNode, bool isServer);
+    public abstract void Handle(TPackage package, PackageReceiveContext context);
 
-    void IPackageHandler.Handle(IPackage package, NetNode? netNode, bool isServer)
+    void IPackageHandler.Handle(IPackage package, PackageReceiveContext context)
     {
-        Handle((TPackage)package, netNode, isServer);
+        Handle((TPackage)package, context);
     }
 }

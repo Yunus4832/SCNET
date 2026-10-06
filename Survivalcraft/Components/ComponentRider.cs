@@ -85,7 +85,8 @@ public class ComponentRider : Component, IUpdateable
                 parentBody.Position +
                 Vector3.Transform(componentBody2.ParentBodyPositionOffset, parentBody.Rotation),
                 componentBody2.Position);
-        if (distance > 0.160000011f)
+        // Terrain loading pauses body movement; it must not look like a broken mount constraint.
+        if (componentBody2.IsTerrainReady && parentBody.IsTerrainReady && distance > 0.160000011f)
         {
             _outOfMountTime += dt;
         }
@@ -181,11 +182,11 @@ public class ComponentRider : Component, IUpdateable
             if (CommonLib.WorkType != WorkType.Client)
             {
                 StartNetMounting(componentMount);
-                CommonLib.Net.QueuePackage(new ComponentMountPackage(this, componentMount));
+                NetworkSender.SendToObservers(Entity, new ComponentMountPackage(this, componentMount));
             }
             else
             {
-                CommonLib.Net.QueuePackage(new ComponentMountPackage(this, componentMount, true));
+                NetworkSender.SendToServer(new ComponentMountPackage(this, componentMount, true));
             }
         }
     }
@@ -233,11 +234,11 @@ public class ComponentRider : Component, IUpdateable
             if (CommonLib.WorkType != WorkType.Client)
             {
                 StartNetDismounting();
-                CommonLib.Net.QueuePackage(new ComponentMountPackage(this));
+                NetworkSender.SendToObservers(Entity, new ComponentMountPackage(this));
             }
             else
             {
-                CommonLib.Net.QueuePackage(new ComponentMountPackage(this, true));
+                NetworkSender.SendToServer(new ComponentMountPackage(this, true));
             }
         }
     }

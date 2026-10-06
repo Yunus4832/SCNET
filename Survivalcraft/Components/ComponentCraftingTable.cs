@@ -3,6 +3,9 @@ using System.Globalization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Network;
+using Game.Network.Enums;
+
 namespace Game.Components;
 
 public class ComponentCraftingTable : ComponentInventoryBase
@@ -95,6 +98,11 @@ public class ComponentCraftingTable : ComponentInventoryBase
 
     public void UpdateCraftingResult()
     {
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            return;
+        }
+
         var num = int.MaxValue;
         for (var i = 0; i < _craftingGridSize; i++)
         {

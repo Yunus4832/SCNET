@@ -61,13 +61,11 @@ public sealed class PendingChunkRequestQueue : IEnumerable<ChunkContentRequest>
 
     public int RemoveOutside(Vector2 center, float contentDistance)
     {
-        var maximumDistanceSquared = MathUtils.Sqr(contentDistance + 12f);
         var removed = 0;
         foreach (var request in _ordered.ToArray())
         {
             var coords = request.Allocation.Coords;
-            var chunkCenter = new Vector2((coords.X + 0.5f) * 16f, (coords.Y + 0.5f) * 16f);
-            if (Vector2.DistanceSquared(center, chunkCenter) <= maximumDistanceSquared)
+            if (NetworkTerrainPolicy.IsChunkRelevant(coords, center, contentDistance))
             {
                 continue;
             }

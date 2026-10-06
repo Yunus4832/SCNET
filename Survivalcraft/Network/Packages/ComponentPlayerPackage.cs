@@ -102,11 +102,8 @@ public class ComponentPlayerPackage : IPackage
 
     public byte ID => (byte)PackageType.ComponentPlayer;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
@@ -125,63 +122,34 @@ public class ComponentPlayerPackage : IPackage
                 if (body != null)
                 {
                     PackageChangeFlag |= ChangFlag.ParentBodyChange;
-                    if (body.Locomotion is { SendLookAngles: not null })
+                    if (body.Locomotion is { } locomotion)
                     {
                         PackageChangeFlag |= ChangFlag.LookAnglesChange;
-                        LookAngles = body.Locomotion.SendLookAngles.Value;
-                        body.Locomotion.SendLookAngles = null;
+                        LookAngles = locomotion.LookAngles;
                     }
 
-                    if (player.ComponentLocomotion.SendLookAngles.HasValue)
-                    {
-                        PackageChangeFlag |= ChangFlag.ChildLookAnglesChange;
-                        ChildLookAngles = player.ComponentLocomotion.SendLookAngles.Value;
-                        player.ComponentLocomotion.SendLookAngles = null;
-                    }
+                    PackageChangeFlag |= ChangFlag.ChildLookAnglesChange;
+                    ChildLookAngles = player.ComponentLocomotion.LookAngles;
                 }
                 else
                 {
                     body = player.ComponentBody;
-                    if (player.ComponentLocomotion.SendLookAngles.HasValue)
-                    {
-                        PackageChangeFlag |= ChangFlag.LookAnglesChange;
-                        LookAngles = player.ComponentLocomotion.SendLookAngles.Value;
-                        player.ComponentLocomotion.SendLookAngles = null;
-                    }
+                    PackageChangeFlag |= ChangFlag.LookAnglesChange | ChangFlag.SneakChange;
+                    LookAngles = player.ComponentLocomotion.LookAngles;
+                    Sneaking = body.TargetCrouchFactor.CloseTo(1f);
 
                     if (player.ComponentLocomotion.LadderValue.HasValue)
                     {
                         PackageChangeFlag |= ChangFlag.LadderChange;
                         LadderValue = player.ComponentLocomotion.LadderValue.Value;
                     }
-
-                    if (body.CrouchFactor.UncloseTo(body.TargetCrouchFactor))
-                    {
-                        PackageChangeFlag |= ChangFlag.SneakChange;
-                        Sneaking = body.TargetCrouchFactor.CloseTo(1f);
-                    }
                 }
 
-                if (body.SendPosition.HasValue)
-                {
-                    Position = body.SendPosition.Value;
-                    PackageChangeFlag |= ChangFlag.PositionChange;
-                    body.SendPosition = null;
-                }
-
-                if (body.SendRotation.HasValue)
-                {
-                    PackageChangeFlag |= ChangFlag.RotationChange;
-                    Rotation = body.SendRotation.Value;
-                    body.SendRotation = null;
-                }
-
-                if (body.SendVelocity.HasValue)
-                {
-                    PackageChangeFlag |= ChangFlag.VelocityChange;
-                    Velocity = body.SendVelocity.Value;
-                    body.SendVelocity = null;
-                }
+                // Unreliable snapshots must restore unchanged state after a lost packet.
+                PackageChangeFlag |= ChangFlag.PositionChange | ChangFlag.RotationChange | ChangFlag.VelocityChange;
+                Position = body.Position;
+                Rotation = body.Rotation;
+                Velocity = body.Velocity;
 
                 break;
             case PlayerAction.DigEvent:

@@ -1,7 +1,7 @@
 using Engine.Graphics;
 
 using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Enums;
 
 namespace Game.Blocks;
 
@@ -110,7 +110,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
     public int Paint(SubsystemTerrain? terrain, int value, int? color)
     {
-        if (terrain is null)
+        if (terrain is null || CommonLib.WorkType == WorkType.Client)
         {
             return value;
         }
@@ -134,7 +134,6 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         {
             var data2 = SetDesignIndex(data, furnitureDesign.Index, furnitureDesign.ShadowStrengthFactor,
                 furnitureDesign.IsLightEmitter);
-            CommonLib.Net.QueuePackage(new FurniturePackage(list[0], true));
             return Terrain.ReplaceData(value, data2);
         }
 
@@ -522,7 +521,6 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
                 return null;
             }
 
-            CommonLib.Net.QueuePackage(new FurniturePackage(furnitureDesign2, true));
             return new CraftingRecipe
             {
                 ResultValue = Terrain.MakeBlockValue(Index, 0,
@@ -550,7 +548,6 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
                 return null;
             }
 
-            CommonLib.Net.QueuePackage(new FurniturePackage(furnitureDesign3, true));
             return new CraftingRecipe
             {
                 ResultValue = Terrain.MakeBlockValue(Index, 0,
@@ -580,7 +577,6 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
                 return null;
             }
 
-            CommonLib.Net.QueuePackage(new FurniturePackage(furnitureDesign4, true));
             return new CraftingRecipe
             {
                 ResultValue = Terrain.MakeBlockValue(Index, 0,

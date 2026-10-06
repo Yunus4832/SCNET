@@ -1,3 +1,6 @@
+using Game.Network;
+using Game.Network.Enums;
+
 namespace Game.ElectricElements;
 
 public class CounterElectricElement : RotateableElectricElement
@@ -39,6 +42,12 @@ public class CounterElectricElement : RotateableElectricElement
 
     public override bool Simulate()
     {
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            return RestorePersistentVoltage(SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point) ??
+                _counter / 15f * (!_overflow ? 1 : -1));
+        }
+
         var counter = _counter;
         var overflow = _overflow;
         var flag = false;
@@ -130,5 +139,15 @@ public class CounterElectricElement : RotateableElectricElement
 
         SubsystemElectricity.WritePersistentVoltage(CellFaces[0].Point, _counter / 15f * (!_overflow ? 1 : -1));
         return true;
+    }
+
+    public override bool RestorePersistentVoltage(float voltage)
+    {
+        var counter = (int)MathUtils.Round(MathUtils.Abs(voltage) * 15f);
+        var overflow = voltage < 0f;
+        var changed = _counter != counter || _overflow != overflow;
+        _counter = counter;
+        _overflow = overflow;
+        return changed;
     }
 }

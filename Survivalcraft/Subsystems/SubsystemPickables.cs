@@ -11,6 +11,8 @@ namespace Game.Subsystems;
 
 public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 {
+    private const int _outOfRangeRemoveTicks = 3;
+
     private static readonly int[] _drawOrders = [10];
 
     private readonly DrawBlockEnvironmentData _drawBlockEnvironmentData = new();
@@ -42,6 +44,8 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
     private SubsystemParticles _subsystemParticles = null!;
+
+    private SubsystemNetworkInterest _subsystemNetworkInterest = null!;
 
     private SubsystemPlayers _subsystemPlayers = null!;
 
@@ -396,14 +400,27 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
         foreach (var item in PickablesToRemove)
         {
+            var observers = _subsystemNetworkInterest.Entities
+                .GetObservers(EntityInterestGroup.Pickables, item.Id)
+                .ToArray();
             if (RemovePickable(item))
             {
-                //服务器广播pickable
-                CommonLib.Net.QueuePackage(new PickablePackage(item, PickablePackage.PickType.Delete));
+                if (observers.Length > 0)
+                {
+                    CommonLib.Net.QueuePackage(
+                        new PickablePackage(item, PickablePackage.PickType.Delete),
+                        PackageAudience.To(observers));
+                }
+
+                _subsystemNetworkInterest.Entities.RemoveEntity(EntityInterestGroup.Pickables, item.Id);
             }
         }
 
         PickablesToRemove.Clear();
+        if (Time.PeriodicEvent(0.1, 0.0))
+        {
+            UpdateNetworkInterest();
+        }
     }
 
     public event Action<Pickable>? PickableAdded;
@@ -416,7 +433,6 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             return null;
         }
 
-        //服务器广播pickable
         var pickable = CreatePickable(null, value, count, position, velocity, stuckMatrix);
         if (pickable == null)
         {
@@ -424,7 +440,6 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         }
 
         pickable.NetToRemove = true;
-        CommonLib.Net.QueuePackage(new PickablePackage(pickable, PickablePackage.PickType.Create));
         return pickable;
     }
 
@@ -539,7 +554,9 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         {
             pickable.FlyToPosition =
                 positionFix + 0.1f * MathUtils.Sqrt(distance) * tmpPlayer.ComponentBody.Velocity;
-            CommonLib.Net.QueuePackage(new PickablePackage(pickable, PickablePackage.PickType.SetFlyToPosition));
+            SendToPickableObservers(
+                pickable,
+                new PickablePackage(pickable, PickablePackage.PickType.SetFlyToPosition));
         }
     }
 
@@ -558,7 +575,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
         if (!found && CommonLib.WorkType == WorkType.Client && requestSync)
         {
-            CommonLib.Net.QueuePackage(new PickablePackage(new Pickable { Id = id },
+            NetworkSender.SendToServer(new PickablePackage(new Pickable { Id = id },
                 PickablePackage.PickType.RequestSync));
         }
 
@@ -568,6 +585,23 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
     public bool TryGetPickable(ushort id, out Pickable pickable)
     {
         return _pickablesById.TryGetValue(id, out pickable!);
+    }
+
+    internal void ApplyPositionSnapshot(IEnumerable<Pickable> positions, uint stateTick)
+    {
+        foreach (var position in positions)
+        {
+            PickableAction(position.Id, pickable =>
+            {
+                if (unchecked((int)(stateTick - pickable.LastStateTick)) <= 0)
+                {
+                    return;
+                }
+
+                pickable.LastStateTick = stateTick;
+                pickable.Position = position.Position;
+            });
+        }
     }
 
     public bool RemovePickable(Pickable pickable)
@@ -594,6 +628,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true)!;
+        _subsystemNetworkInterest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         _subsystemExplosions = Project.FindSubsystem<SubsystemExplosions>(true)!;
         _subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!;
         _subsystemFireBlockBehavior = Project.FindSubsystem<SubsystemFireBlockBehavior>(true)!;
@@ -628,10 +663,76 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         }
     }
 
+    private void UpdateNetworkInterest()
+    {
+        var candidates = _subsystemNetworkInterest.GetPointCandidates(_pickables.Select(pickable =>
+            ((int)pickable.Id, pickable.Position.XZ)));
+        foreach (var client in CommonLib.Net.Clients.Values)
+        {
+            if (client == CommonLib.Net.Self || !client.IsConnected)
+            {
+                continue;
+            }
+
+            var current = candidates.TryGetValue(client, out var ids) ? ids : [];
+            var relevant = current.Select(id => _pickablesById[(ushort)id]).ToList();
+            var changes = _subsystemNetworkInterest.Entities.Synchronize(
+                client,
+                EntityInterestGroup.Pickables,
+                current,
+                id => _pickablesById.ContainsKey((ushort)id),
+                _outOfRangeRemoveTicks);
+
+            var entered = changes.Entered
+                .Select(id => _pickablesById[(ushort)id])
+                .ToList();
+            if (entered.Count > 0)
+            {
+                CommonLib.Net.QueuePackage(
+                    new PickablePackage(entered, PickablePackage.PickType.CreateList),
+                    PackageAudience.To(client));
+            }
+
+            if (changes.Left.Count > 0)
+            {
+                var left = changes.Left.Select(id => new Pickable { Id = (ushort)id }).ToList();
+                CommonLib.Net.QueuePackage(
+                    new PickablePackage(left, PickablePackage.PickType.DeleteList),
+                    PackageAudience.To(client));
+            }
+
+            // 24 * (ushort ID + Vector3) leaves ample framing space below the minimum MTU.
+            for (var i = 0; i < relevant.Count; i += PickablePackage.MaxPositionsPerSnapshot)
+            {
+                CommonLib.Net.QueuePackage(
+                    new PickablePackage(relevant.GetRange(i,
+                        Math.Min(PickablePackage.MaxPositionsPerSnapshot, relevant.Count - i))),
+                    PackageAudience.To(client));
+            }
+        }
+    }
+
+    private void SendToPickableObservers(Pickable pickable, IPackage package)
+    {
+        var observers = _subsystemNetworkInterest.Entities
+            .GetObservers(EntityInterestGroup.Pickables, pickable.Id)
+            .Where(client => client.IsConnected)
+            .ToArray();
+        if (observers.Length > 0)
+        {
+            CommonLib.Net.QueuePackage(package, PackageAudience.To(observers));
+        }
+    }
+
     public override void Save(ValuesDictionary valuesDictionary)
     {
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Pickables", valuesDictionary2);
+        if (Project.SendToClientMode)
+        {
+            return;
+        }
+
         var num = 0;
         foreach (var pickable in _pickables)
         {

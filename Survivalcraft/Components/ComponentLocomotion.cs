@@ -61,8 +61,6 @@ public class ComponentLocomotion : Component, IUpdateable
 
     public NetVector2 NetLookAngles = null!;
 
-    public Vector2? SendLookAngles;
-
     public float AccelerationFactor { get; set; }
 
     public float WalkSpeed { get; set; }
@@ -92,11 +90,6 @@ public class ComponentLocomotion : Component, IUpdateable
         {
             value.X = MathUtils.Clamp(value.X, 0f - MathUtils.DegToRad(140f), MathUtils.DegToRad(140f));
             value.Y = MathUtils.Clamp(value.Y, 0f - MathUtils.DegToRad(82f), MathUtils.DegToRad(82f));
-            if (field != value)
-            {
-                SendLookAngles = value;
-            }
-
             field = value;
         }
     }

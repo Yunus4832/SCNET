@@ -457,7 +457,10 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             baseContentVersion,
             resultContentVersion);
         ClientTerrainDeltas?.Receive(delta);
-        CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(delta));
+        if (CommonLib.WorkType == WorkType.Server)
+        {
+            NetworkSender.SendToChunkObservers(Project, authorityChunk.Coords, new SubsystemTerrainPackage(delta));
+        }
     }
 
     public void ChangeCell(

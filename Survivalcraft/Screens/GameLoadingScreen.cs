@@ -112,7 +112,7 @@ public class GameLoadingScreen : Screen
             {
                 if (CommonLib.Net.CurrentStage == Stage.Connected)
                 {
-                    CommonLib.Net.QueuePackage(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Connected));
+                    NetworkSender.SendToServer(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Connected));
                 }
             });
 
@@ -141,7 +141,7 @@ public class GameLoadingScreen : Screen
                     GameManager.LoadProject(_worldInfo, gamesWidget);
                     if (_isAdventureRestart && CommonLib.WorkType == WorkType.Client)
                     {
-                        CommonLib.Net.QueuePackage(new ComponentPlayerPackage(CommonLib.MainPlayer!,
+                        NetworkSender.SendToServer(new ComponentPlayerPackage(CommonLib.MainPlayer!,
                             ComponentPlayerPackage.PlayerAction.IntoPlaying));
                     }
 
@@ -207,15 +207,16 @@ public class GameLoadingScreen : Screen
         );
     }
 
-    private static void Handle(NetNode node, IEnumerable<IPackage> packages)
+    private static void Handle(NetNode node, IEnumerable<ReceivedPackage> packages)
     {
-        foreach (var package in packages)
+        foreach (var received in packages)
         {
+            var package = received.Package;
             if (package is ClientPackage clientPackage)
             {
                 try
                 {
-                    PackageDispatcher.Handle(clientPackage, node, false);
+                    PackageDispatcher.Handle(clientPackage, received.Context);
                 }
                 catch (Exception e)
                 {
@@ -226,7 +227,7 @@ public class GameLoadingScreen : Screen
             {
                 try
                 {
-                    PackageDispatcher.Handle(bootstrapPackage, node, false);
+                    PackageDispatcher.Handle(bootstrapPackage, received.Context);
                 }
                 catch (Exception e)
                 {
@@ -235,7 +236,7 @@ public class GameLoadingScreen : Screen
             }
             else // 无法处理的包在Project加载后进行处理
             {
-                CommonLib.Net.AddPendingHandlePackage(package);
+                CommonLib.Net.AddPendingHandlePackage(received);
             }
         }
     }

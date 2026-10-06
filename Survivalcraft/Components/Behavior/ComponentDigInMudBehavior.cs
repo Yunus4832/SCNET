@@ -56,7 +56,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
             _isDigIn = value;
             if (CommonLib.WorkType == WorkType.Server)
             {
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, _isDigIn));
+                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, _isDigIn));
             }
         }
     }

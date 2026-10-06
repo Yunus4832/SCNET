@@ -1,3 +1,6 @@
+using Game.Network;
+using Game.Network.Enums;
+
 namespace Game.ElectricElements;
 
 public class SRLatchElectricElement : RotateableElectricElement
@@ -28,6 +31,11 @@ public class SRLatchElectricElement : RotateableElectricElement
 
     public override bool Simulate()
     {
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            return RestorePersistentVoltage(SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point) ?? _voltage);
+        }
+
         var voltage = _voltage;
         var flag = false;
         var flag2 = false;
@@ -116,5 +124,12 @@ public class SRLatchElectricElement : RotateableElectricElement
 
         SubsystemElectricity.WritePersistentVoltage(CellFaces[0].Point, _voltage);
         return true;
+    }
+
+    public override bool RestorePersistentVoltage(float voltage)
+    {
+        var changed = !_voltage.Equals(voltage);
+        _voltage = voltage;
+        return changed;
     }
 }

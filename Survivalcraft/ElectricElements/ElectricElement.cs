@@ -33,6 +33,12 @@ public abstract class ElectricElement(
         return false;
     }
 
+    /// <summary>Restores replicated persistent state and reports whether an output changed.</summary>
+    public virtual bool RestorePersistentVoltage(float voltage)
+    {
+        return false;
+    }
+
     public virtual void OnAdded()
     {
     }

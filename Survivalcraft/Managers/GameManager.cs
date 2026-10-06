@@ -228,17 +228,30 @@ public static class GameManager
         project.EntityRemoved += (_, arg) => { entityMaps.Remove(arg.Entity.EntityId); };
         project.EntityAdded += (_, arg) =>
         {
-            if (!ShouldSendEntityToClients(arg.Entity))
+            if (!EntityPackage.ShouldSendEntityToClients(arg.Entity) || IsInterestManagedBody(arg.Entity) ||
+                arg.Entity.FindComponent<ComponentBlockEntity>() is not null)
             {
                 return;
             }
 
-            var componentPlayer = arg.Entity.FindComponent<ComponentPlayer>();
-            net.QueuePackage(componentPlayer?.PlayerData.Client != null
-                ? new PlayerJoinedPackage(project, componentPlayer.PlayerData, arg.Entity)
-                : new EntityPackage(arg.Entity));
+            net.QueuePackage(new EntityPackage(arg.Entity), PackageAudience.Global);
         };
-        project.EntityRemoved += (_, arg) => { net.QueuePackage(new EntityPackage(arg.Entity.EntityId)); };
+        project.EntityRemoved += (_, arg) =>
+        {
+            if (arg.Entity.FindComponent<ComponentBlockEntity>() is not null)
+            {
+                var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
+                net.QueuePackage(new EntityPackage(arg.Entity.EntityId), PackageAudience.To(
+                    interest.Entities.GetObservers(EntityInterestGroup.BlockEntities, arg.Entity.EntityId).ToArray()));
+                interest.Entities.RemoveEntity(EntityInterestGroup.BlockEntities, arg.Entity.EntityId);
+                return;
+            }
+
+            if (!IsInterestManagedBody(arg.Entity))
+            {
+                net.QueuePackage(new EntityPackage(arg.Entity.EntityId), PackageAudience.Global);
+            }
+        };
         net.OnClientStateChanged += client => OnServerClientStateChanged(project, net, client);
         net.OnClientTransportConnected += client => SendBootstrap(project, net, client);
         net.OnClientBootstrapApplied += client => SendInitialWorldSnapshot(project, net, client);
@@ -248,7 +261,8 @@ public static class GameManager
     private static void SetupClientNetworkHandlers(Project project, NetNode net)
     {
         net.CurrentConnectionPhase = ConnectionPhase.BootstrapApplied;
-        net.QueuePackage(new ConnectionPhaseAckPackage(net.ConnectionEpoch, ConnectionPhase.BootstrapApplied));
+        net.QueuePackage(new ConnectionPhaseAckPackage(net.ConnectionEpoch, ConnectionPhase.BootstrapApplied),
+            PackageAudience.To(net.Server!));
         net.OnClientStateChanged += c =>
         {
             c.SetProject(project);
@@ -297,27 +311,25 @@ public static class GameManager
         }
     }
 
-    private static bool ShouldSendEntityToClients(Entity entity)
+    private static bool IsInterestManagedBody(Entity entity)
     {
-        if (RunMode.Value is RunModeType.Gui)
-        {
-            return true;
-        }
-
-        var componentPlayer = entity.FindComponent<ComponentPlayer>();
-        return componentPlayer is null || componentPlayer.PlayerData.Client is not null;
+        var body = entity.FindComponent<ComponentBody>();
+        return body is not null;
     }
 
     private static void OnServerClientStateChanged(Project project, NetNode net, Client client)
     {
         client.SetProject(project);
-        net.QueuePackage(new ClientPackage(client.ID, client.State) { Except = client });
+        net.QueuePackage(
+            new ClientPackage(client.ID, client.State),
+            PackageAudience.Except(client));
         switch (client.State)
         {
             case ClientState.NotConnected:
+                project.FindSubsystem<SubsystemNetworkInterest>(true)!.Entities.RemoveClient(client);
                 var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
                 subsystemPlayers.MakePlayerOffline(client.GUID);
-                net.QueuePackage(new PlayerListPackage(subsystemPlayers));
+                net.QueuePackage(new PlayerListPackage(subsystemPlayers), PackageAudience.Global);
                 GC.Collect();
                 break;
             case ClientState.LoadTerrain:
@@ -358,7 +370,7 @@ public static class GameManager
             if (subsystemPlayers.MakePlayerOnline(client.GUID, out var playerData, out var entity))
             {
                 client.CachePlayerEntity = entity!;
-                net.QueuePackage(new PlayerListPackage(subsystemPlayers));
+                net.QueuePackage(new PlayerListPackage(subsystemPlayers), PackageAudience.Global);
             }
         }
         catch (Exception ex)
@@ -387,18 +399,25 @@ public static class GameManager
         }
 
         client.ConnectionPhase = ConnectionPhase.BootstrapSent;
-        net.QueuePackage(new BootstrapPackage(client.ConnectionEpoch, net.Clients.Values, textureData, data)
-        { To = client });
+        net.QueuePackage(
+            new BootstrapPackage(client.ConnectionEpoch, net.Clients.Values, textureData, data),
+            PackageAudience.To(client));
     }
 
     private static void SendInitialWorldSnapshot(Project project, NetNode net, Client client)
     {
         var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
-        var sendList = project.EntityKeys.Where(ShouldSendEntityToClients).ToList();
+        var subsystemNetworkInterest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
+        var sendList = project.EntityKeys
+            .Where(EntityPackage.ShouldSendEntityToClients)
+            .Where(entity => subsystemNetworkInterest.ShouldIncludeInInitialSnapshot(client, entity))
+            .ToList();
+        subsystemNetworkInterest.SeedInitialSnapshot(client, sendList);
         client.ConnectionPhase = ConnectionPhase.WorldSnapshotSent;
-        net.QueuePackage(new InitialWorldSnapshotPackage(client.ConnectionEpoch, project, net.Clients.Values,
-            subsystemPlayers.PlayersData, sendList)
-        { To = client });
+        net.QueuePackage(
+            new InitialWorldSnapshotPackage(client.ConnectionEpoch, project, net.Clients.Values,
+                subsystemPlayers.PlayersData, sendList),
+            PackageAudience.To(client));
     }
 
     private static void CompleteClientJoin(Project project, Client client)

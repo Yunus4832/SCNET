@@ -62,7 +62,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayIdleSoundLocal(skipIfRecentlyPlayed))
         {
-            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
+            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
         }
     }
 
@@ -89,7 +89,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayPainSoundLocal())
         {
-            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 1));
+            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 1));
         }
     }
 
@@ -115,7 +115,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayMoanSoundLocal())
         {
-            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 2));
+            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 2));
         }
     }
 
@@ -141,7 +141,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlaySneezeSoundLocal())
         {
-            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 3));
+            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 3));
         }
     }
 
@@ -167,7 +167,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayCoughSoundLocal())
         {
-            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 4));
+            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 4));
         }
     }
 
@@ -193,7 +193,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayPukeSoundLocal())
         {
-            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 5));
+            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 5));
         }
     }
 
@@ -219,7 +219,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayAttackSoundLocal())
         {
-            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, 6));
+            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 6));
         }
     }
 

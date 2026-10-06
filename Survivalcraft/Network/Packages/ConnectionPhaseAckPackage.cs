@@ -9,9 +9,6 @@ public sealed class ConnectionPhaseAckPackage : IPackage
     public ConnectionPhase Phase;
 
     public byte ID => (byte)PackageType.ConnectionPhaseAck;
-    public Client? To { get; set; }
-    public Client? Except { get; set; }
-    public Client? From { get; set; }
     public ClientState MinNeedState => ClientState.NotConnected;
 
     public ConnectionPhaseAckPackage()

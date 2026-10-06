@@ -99,7 +99,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             return;
         }
 
-        CommonLib.Net.QueuePackage(new ExplosionsPackage(_explosionCells));
+        SendExplosionCellsToObservers();
         _explosionCells.Clear();
     }
 
@@ -570,8 +570,62 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         PlayExplosionSound(position, num2, delay, playExplosionSound);
         if (playExplosionSound)
         {
-            CommonLib.Net.QueuePackage(new ExplosionsPackage(position, num2, delay));
+            var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
+            var audibleRange = GetExplosionSoundRange(num2);
+            var observers = interest.GetObserversWithin(position.XZ, audibleRange).ToArray();
+            if (observers.Length > 0)
+            {
+                CommonLib.Net.QueuePackage(
+                    new ExplosionsPackage(position, num2, delay),
+                    PackageAudience.To(observers));
+            }
         }
+    }
+
+    private void SendExplosionCellsToObservers()
+    {
+        if (_explosionCells.Count == 0)
+        {
+            return;
+        }
+
+        var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
+        var cellsByClient = new Dictionary<Client, Dictionary<Point2, List<(Point3, float)>>>(
+            ReferenceEqualityComparer.Instance);
+        foreach (var (chunk, cells) in _explosionCells)
+        {
+            foreach (var client in interest.GetChunkObservers(chunk))
+            {
+                if (!cellsByClient.TryGetValue(client, out var clientCells))
+                {
+                    clientCells = [];
+                    cellsByClient.Add(client, clientCells);
+                }
+
+                clientCells.Add(chunk, cells);
+            }
+        }
+
+        foreach (var (client, cells) in cellsByClient)
+        {
+            CommonLib.Net.QueuePackage(
+                new ExplosionsPackage(cells),
+                PackageAudience.To(client));
+        }
+    }
+
+    private static float GetExplosionSoundRange(float level)
+    {
+        return level switch
+        {
+            > 1000000f => 40f,
+            > 100000f => 30f,
+            > 20000f => 26f,
+            > 4000f => 24f,
+            > 100f => 22f,
+            > 0f => 20f,
+            _ => 0f
+        };
     }
 
     public virtual void PlayExplosionSound(Vector3 position, float level, float delay, bool playExplosionSound)

@@ -136,6 +136,26 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         _lastUpdatePositions.Clear();
     }
 
+    private void SendChunkState(Client client, Point2 chunk)
+    {
+        foreach (var data in _textsByPoint.Values.Where(data =>
+                     data.Point.X >> 4 == chunk.X && data.Point.Z >> 4 == chunk.Y))
+        {
+            NetworkSender.SendTo(client, new SignBlockPackage(data.Point, data.Lines, data.Colors, data.Url));
+        }
+    }
+
+    public void ClearChunkState(Point2 chunk)
+    {
+        foreach (var point in _textsByPoint.Keys.Where(point =>
+                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y).ToArray())
+        {
+            _textsByPoint.Remove(point);
+        }
+
+        _lastUpdatePositions.Clear();
+    }
+
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(x, y, z);
@@ -206,7 +226,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         var point = new Point3(x, y, z);
         if (CommonLib.WorkType == WorkType.Client && componentPlayer == CommonLib.MainPlayer)
         {
-            CommonLib.Net.QueuePackage(new BlockEditPackage(point, BlockEditPackage.EventType.EditSign));
+            NetworkSender.SendToServer(new BlockEditPackage(point, BlockEditPackage.EventType.EditSign));
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);
             return true;
         }
@@ -233,10 +253,14 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
             signData =>
             {
                 SetSignData(point, signData.Lines, signData.Colors, signData.Url);
-                if (CommonLib.WorkType != WorkType.Local)
+                var package = new SignBlockPackage(point, signData.Lines, signData.Colors, signData.Url);
+                if (CommonLib.WorkType == WorkType.Server)
                 {
-                    CommonLib.Net.QueuePackage(
-                        new SignBlockPackage(point, signData.Lines, signData.Colors, signData.Url));
+                    NetworkSender.SendToChunkObservers(Project, new Point2(point.X >> 4, point.Z >> 4), package);
+                }
+                else if (CommonLib.WorkType == WorkType.Client)
+                {
+                    NetworkSender.SendToServer(package);
                 }
             },
             () => componentPlayer.ComponentGui.ModalPanelWidget = null);
@@ -262,6 +286,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         base.Load(valuesDictionary);
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
+        Project.FindSubsystem<SubsystemNetworkInterest>(true)!.ChunkEntered += SendChunkState;
 
         foreach (ValuesDictionary value11 in valuesDictionary.GetValue<ValuesDictionary>("Texts").Values)
         {
@@ -299,6 +324,11 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         var num = 0;
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Texts", valuesDictionary2);
+        if (Project.SendToClientMode)
+        {
+            return;
+        }
+
         foreach (var value in _textsByPoint.Values)
         {
             var valuesDictionary3 = new ValuesDictionary();
@@ -354,6 +384,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     public override void Dispose()
     {
+        Project.FindSubsystem<SubsystemNetworkInterest>(true)!.ChunkEntered -= SendChunkState;
         if (RunMode.Value is RunModeType.HeadlessServer)
         {
             return;

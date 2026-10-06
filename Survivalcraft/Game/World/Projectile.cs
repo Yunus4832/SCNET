@@ -2,6 +2,10 @@ namespace Game;
 
 public class Projectile : WorldItem
 {
+    public int NetworkId;
+
+    public uint LastNetworkStateTick;
+
     public Vector3 AngularVelocity;
 
     public bool IsFireProjectile;

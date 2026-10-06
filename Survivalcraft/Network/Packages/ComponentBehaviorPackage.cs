@@ -29,11 +29,8 @@ public class ComponentBehaviorPackage : IPackage
 
     public byte ID => (byte)PackageType.ComponentBehavior;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.Playing;
 

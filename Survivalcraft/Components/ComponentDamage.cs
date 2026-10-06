@@ -48,7 +48,7 @@ public class ComponentDamage : Component, IUpdateable
         {
             if (CommonLib.WorkType != WorkType.Client)
             {
-                CommonLib.Net.QueuePackage(new ComponentHealthPackage(this));
+                NetworkSender.SendToObservers(Entity, new ComponentHealthPackage(this));
             }
 
             _subsystemParticles.AddParticleSystem(new BlockDebrisParticleSystem(_subsystemTerrain,
@@ -91,7 +91,7 @@ public class ComponentDamage : Component, IUpdateable
             HitPoints = MathUtils.Max(HitPoints - amount, 0f);
         }
 
-        CommonLib.Net.QueuePackage(new ComponentHealthPackage(this));
+        NetworkSender.SendToObservers(Entity, new ComponentHealthPackage(this));
     }
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)

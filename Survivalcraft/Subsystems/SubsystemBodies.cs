@@ -17,16 +17,10 @@ public class SubsystemBodies : Subsystem, IUpdateable
     /// </summary>
     private const int _maxBodiesPerSnapshotPackage = 20;
 
-    private readonly Dictionary<Client, List<ComponentBody>> _toSendList = new();
+    private readonly Dictionary<Client, List<ComponentBody>> _toSendList = new(ReferenceEqualityComparer.Instance);
 
     /// <summary>状态流轮次序号，每轮递增，同一轮所有生物包共享。</summary>
     private uint _stateTick;
-
-    /// <summary>每个客户端应持有的无骑手非玩家生物 ID 集合（服务端驱动 AOI 移除用）。</summary>
-    private readonly Dictionary<Client, HashSet<int>> _clientCreatureSets = new();
-
-    /// <summary>生物离开客户端 AOI 后的连续快照轮次数（去抖）。</summary>
-    private readonly Dictionary<Client, Dictionary<int, int>> _clientOutOfRangeTicks = new();
 
     private const int _outOfRangeRemoveTicks = 30;
 
@@ -39,6 +33,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
     private readonly Dictionary<Point2, DynamicArray<ComponentBody>> _componentBodiesByArea = new();
 
     private SubsystemPlayers _subsystemPlayers = null!;
+
+    private SubsystemNetworkInterest _subsystemNetworkInterest = null!;
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
@@ -54,6 +50,13 @@ public class SubsystemBodies : Subsystem, IUpdateable
         {
             var flag = _subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1, 0.0);
             _toSendList.Clear();
+            var eligibleClients = flag
+                ? _subsystemPlayers.PlayersData
+                    .Where(player => !player.IsMainPlayer && player.ComponentPlayer is not null &&
+                                     player.Client is { IsConnected: true })
+                    .Select(player => player.Client!)
+                    .ToHashSet<Client>(ReferenceEqualityComparer.Instance)
+                : [];
             foreach (var body in Bodies)
             {
                 UpdateBody(body);
@@ -62,62 +65,50 @@ public class SubsystemBodies : Subsystem, IUpdateable
                     continue;
                 }
 
-                foreach (var playerData in _subsystemPlayers.PlayersData)
+                foreach (var client in _subsystemNetworkInterest.GetBodyCandidates(body))
                 {
-                    if (playerData.IsMainPlayer)
+                    if (!eligibleClients.Contains(client))
                     {
                         continue;
                     }
 
-                    if (playerData.Client == null || playerData.ComponentPlayer == null ||
-                        !_subsystemTerrain.TerrainUpdater.UpdateLocations.ContainsKey(playerData.PlayerIndex) ||
-                        !IsBodyInRange(body.Position.XZ,
-                            _subsystemTerrain.TerrainUpdater.UpdateLocations[playerData.PlayerIndex]))
-                    {
-                        continue;
-                    }
-
-                    if (!_toSendList.TryGetValue(playerData.Client, out var list))
+                    if (!_toSendList.TryGetValue(client, out var list))
                     {
                         list = [];
-                        _toSendList.Add(playerData.Client, list);
+                        _toSendList.Add(client, list);
                     }
 
-                    if (body.Player == null && body.ChildBodies.Count == 0 && flag)
-                    {
-                        list.Add(body);
-                    }
+                    list.Add(body);
                 }
             }
 
-            if (_toSendList.Count <= 0)
+            if (!flag)
             {
                 return;
             }
 
+            UpdateClientCreatureInterests();
+            _stateTick++;
+            foreach (var item in _toSendList)
             {
-                _stateTick++;
-                foreach (var item in _toSendList)
+                var bodies = item.Value;
+                bodies.RemoveAll(body => body.Player is not null);
+                for (var i = 0; i < bodies.Count; i += _maxBodiesPerSnapshotPackage)
                 {
-                    var bodies = item.Value;
-                    for (var i = 0; i < bodies.Count; i += _maxBodiesPerSnapshotPackage)
-                    {
-                        var count = Math.Min(_maxBodiesPerSnapshotPackage, bodies.Count - i);
-                        var chunk = bodies.GetRange(i, count);
-                        CommonLib.Net.QueuePackage(
-                            new SubsystemBodyPackage(chunk) { To = item.Key, StateTick = _stateTick });
-                    }
+                    var count = Math.Min(_maxBodiesPerSnapshotPackage, bodies.Count - i);
+                    var chunk = bodies.GetRange(i, count);
+                    CommonLib.Net.QueuePackage(
+                        new SubsystemBodyPackage(chunk) { StateTick = _stateTick },
+                        PackageAudience.To(item.Key));
                 }
+            }
 
-                UpdateClientCreatureSets();
-
-                // FlyOrderChange 是一次性标志，发送后重置；其它字段改为每轮全量发送，无需重置。
-                foreach (var item in _toSendList)
+            // FlyOrderChange 是一次性标志，发送后重置；其它字段改为每轮全量发送，无需重置。
+            foreach (var item in _toSendList)
+            {
+                foreach (var body in item.Value)
                 {
-                    foreach (var body in item.Value)
-                    {
-                        body.Locomotion?.FlyOrderChange = false;
-                    }
+                    body.Locomotion?.FlyOrderChange = false;
                 }
             }
         }
@@ -281,113 +272,76 @@ public class SubsystemBodies : Subsystem, IUpdateable
         if (hasBody && CommonLib.Net.IsServer)
         {
             // 服务器移除生物时通过可靠的生命周期消息通知客户端，不再依赖快照成员列表。
-            CommonLib.Net.QueuePackage(new EntityPackage(entity.EntityId));
-            foreach (var set in _clientCreatureSets.Values)
+            var observers = _subsystemNetworkInterest.Entities
+                .GetObservers(EntityInterestGroup.Creatures, entity.EntityId)
+                .Where(client => client.IsConnected)
+                .ToArray();
+            if (observers.Length > 0)
             {
-                set.Remove(entity.EntityId);
+                CommonLib.Net.QueuePackage(
+                    new EntityPackage(entity.EntityId),
+                    PackageAudience.To(observers));
             }
 
-            foreach (var ticks in _clientOutOfRangeTicks.Values)
-            {
-                ticks.Remove(entity.EntityId);
-            }
+            _subsystemNetworkInterest.Entities.RemoveEntity(EntityInterestGroup.Creatures, entity.EntityId);
         }
     }
 
     /// <summary>
     ///     服务端驱动的 AOI 离场移除：对比每个客户端上一轮与当前轮的快照集合，
     ///     对连续多轮离开范围的生物发送 EntityPackage(Remove) 通知客户端删除。
-    ///     客户端重新进入范围时通过 RequestSync 重新加载实体。
+    ///     玩家和普通生物共用进入基线；骑乘依赖共享兴趣范围。
+    ///     客户端重新进入范围时由服务端主动发送完整基线。
     /// </summary>
-    private void UpdateClientCreatureSets()
+    internal static bool CanReceiveEntityBaseline(ClientState state) => state >= ClientState.ProjectLoaded;
+
+    private void UpdateClientCreatureInterests()
     {
-        foreach (var client in _clientCreatureSets.Keys.ToList())
-        {
-            if (CommonLib.Net.Clients.TryGetValue(client.ID, out var current) && ReferenceEquals(current, client))
-            {
-                continue;
-            }
-
-            _clientCreatureSets.Remove(client);
-            _clientOutOfRangeTicks.Remove(client);
-        }
-
-        var clients = new HashSet<Client>(_toSendList.Keys);
-        clients.UnionWith(_clientCreatureSets.Keys);
+        var clients = _subsystemPlayers.PlayersData
+            .Where(player => !player.IsMainPlayer &&
+                             player.Client is { IsConnected: true } client && CanReceiveEntityBaseline(client.State))
+            .Select(player => player.Client!)
+            .ToArray();
         foreach (var client in clients)
         {
-            if (!_clientCreatureSets.TryGetValue(client, out var expected))
-            {
-                // 首轮以全部无骑手生物做种子：客户端 ProjectLoaded 时收到了全部实体，
-                // 范围外的生物由后续轮次的定向移除清理掉。
-                expected = [];
-                foreach (var body in Bodies)
-                {
-                    if (body.Player == null && body.ChildBodies.Count == 0)
-                    {
-                        expected.Add(body.Entity.EntityId);
-                    }
-                }
-
-                _clientCreatureSets[client] = expected;
-            }
-
             var current = _toSendList.TryGetValue(client, out var list)
                 ? list.Select(body => body.Entity.EntityId).ToHashSet()
                 : [];
-
-            if (!_clientOutOfRangeTicks.TryGetValue(client, out var outTicks))
+            var changes = _subsystemNetworkInterest.Entities.Synchronize(
+                client,
+                EntityInterestGroup.Creatures,
+                current,
+                IsTrackableCreature,
+                _outOfRangeRemoveTicks);
+            var entered = new List<Entity>();
+            foreach (var creatureId in changes.Entered)
             {
-                outTicks = new Dictionary<int, int>();
-                _clientOutOfRangeTicks[client] = outTicks;
+                if (!_idBodies.TryGetValue((ushort)creatureId, out var body))
+                {
+                    continue;
+                }
+
+                entered.Add(body.Entity);
+                list?.Remove(body);
             }
 
-            foreach (var creatureId in expected.ToList())
+            if (entered.Count > 0)
             {
-                if (current.Contains(creatureId))
-                {
-                    outTicks.Remove(creatureId);
-                    continue;
-                }
-
-                // 生物已不在快照范围：只有仍是无骑手非玩家生物才通知客户端移除；
-                // 变成被骑乘/玩家或已从服务器移除时，交给其它包处理，不再跟踪。
-                if (!_idBodies.TryGetValue((ushort)creatureId, out var body) ||
-                    body.Player != null ||
-                    body.ChildBodies.Count != 0)
-                {
-                    expected.Remove(creatureId);
-                    outTicks.Remove(creatureId);
-                    continue;
-                }
-
-                var ticks = outTicks.TryGetValue(creatureId, out var count) ? count : 0;
-                if (++ticks < _outOfRangeRemoveTicks)
-                {
-                    outTicks[creatureId] = ticks;
-                    continue;
-                }
-
-                expected.Remove(creatureId);
-                outTicks.Remove(creatureId);
-                CommonLib.Net.QueuePackage(new EntityPackage(creatureId) { To = client });
+                CommonLib.Net.QueuePackage(new EntityPackage(entered), PackageAudience.To(client));
             }
 
-            foreach (var creatureId in current)
+            foreach (var creatureId in changes.Left)
             {
-                if (expected.Add(creatureId))
-                {
-                    outTicks.Remove(creatureId);
-                }
+                CommonLib.Net.QueuePackage(
+                    new EntityPackage(creatureId),
+                    PackageAudience.To(client));
             }
         }
     }
 
-    private static bool IsBodyInRange(Vector2 position, TerrainUpdater.UpdateLocation location)
+    private bool IsTrackableCreature(int creatureId)
     {
-        var distance = Vector2.DistanceSquared(location.Center, position);
-        var content = MathUtils.Sqr(location.ContentDistance);
-        return distance <= content;
+        return _idBodies.ContainsKey((ushort)creatureId);
     }
 
     public override void Load(ValuesDictionary valuesDictionary)
@@ -395,6 +349,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
         base.Load(valuesDictionary);
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemPlayers = Project.FindSubsystem<SubsystemPlayers>(true)!;
+        _subsystemNetworkInterest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
     }
 

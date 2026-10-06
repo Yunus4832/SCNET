@@ -1,6 +1,7 @@
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Network.Packages.Handlers;
 
 namespace Game.Subsystems;
 
@@ -23,11 +24,7 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                 {
                     var p = new EditableBlockPackage(EditableItemType.AdjustableDelayGate, default, true, inventory.Id,
                         slotIndex, newDelay);
-                    CommonLib.Net.QueuePackage(p);
-                    if (CommonLib.WorkType != WorkType.Client)
-                    {
-                        PackageDispatcher.Handle(p, CommonLib.Net, false);
-                    }
+                    EditableBlockPackageHandler.Submit(p);
                 }
             }));
         return true;
@@ -60,11 +57,7 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                         0,
                         newDelay
                     );
-                    CommonLib.Net.QueuePackage(p);
-                    if (CommonLib.WorkType != WorkType.Client)
-                    {
-                        PackageDispatcher.Handle(p, CommonLib.Net, false);
-                    }
+                    EditableBlockPackageHandler.Submit(p);
                 }));
         return true;
     }

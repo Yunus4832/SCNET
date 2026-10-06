@@ -452,6 +452,11 @@ public static class BuiltInCommands
                 allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (_, _) => { },
                 read: static _ => new LeaveTeamCommand()));
+        commands.Register(new ResourceId(owner, "diagnostics/network/get"),
+            new CommandDefinition<GetNetworkSendStatisticsCommand>(NetworkDiagnosticCommandHandlers.GetSendStatistics,
+                CommandDomain.Application,
+                LocalizedText.Literal("读取连接内网络发送统计"),
+                allowedPrincipals: CommandPrincipalKind.ApplicationUser | CommandPrincipalKind.ServerOperator));
         commands.Register(new ResourceId(owner, "automation/ui/context/get"),
             new CommandDefinition<GetAutomationUiContextCommand>(AutomationCommandHandlers.GetContext,
                 CommandDomain.Application,
@@ -520,6 +525,8 @@ public static class BuiltInCommands
         commands.Adapters.Register(
             new ResourceId(owner, "server/stop"),
             HttpCommandBinding.Create(static _ => new StopServerCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "diagnostics/network/get"),
+            HttpCommandBinding.Create(static _ => new GetNetworkSendStatisticsCommand()));
         commands.Adapters.Register(new ResourceId(owner, "automation/ui/context/get"),
             HttpCommandBinding.Create(static _ => new GetAutomationUiContextCommand()));
         commands.Adapters.Register(new ResourceId(owner, "automation/ui/tap"),
@@ -1919,7 +1926,7 @@ public static class BuiltInCommands
                 new SubsystemTimePackage(
                     time.SubsystemGameInfo.TotalElapsedGameTime,
                     time.TimeOfDayOffset
-                )
+                ), PackageAudience.Global
             );
         }
 
@@ -1958,7 +1965,7 @@ public static class BuiltInCommands
             CommonLib.Net.QueuePackage(
                 new SubsystemTimePackage(
                     time.SubsystemGameInfo.TotalElapsedGameTime,
-                    time.TimeOfDayOffset));
+                    time.TimeOfDayOffset), PackageAudience.Global);
         }
 
         return CommandResult.LocalizedPublicToast(
@@ -2206,7 +2213,7 @@ public static class BuiltInCommands
         var package = CommandPackage.CreatePermissionSnapshot(
             player.PlayerGUID,
             player.CommandPermissions.Grants);
-        CommonLib.Net.QueuePackage(package);
+        CommonLib.Net.QueuePackage(package, PackageAudience.To(player.Client));
     }
 
     private sealed class DirectRegistration(

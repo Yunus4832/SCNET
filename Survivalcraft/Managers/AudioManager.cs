@@ -4,9 +4,11 @@ namespace Game.Managers;
 
 public static class AudioManager
 {
+    public const float UnscaledMinAudibleVolume = 0.05f;
+
     private static readonly Dictionary<string, SoundBuffer> _bufferCaches = new();
 
-    public static float MinAudibleVolume => 0.05f * SettingsManager.Current.SoundsVolume;
+    public static float MinAudibleVolume => UnscaledMinAudibleVolume * SettingsManager.Current.SoundsVolume;
 
     public static void PlaySound(string name, float volume, float pitch, float pan)
     {

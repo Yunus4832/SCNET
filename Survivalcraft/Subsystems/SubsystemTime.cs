@@ -1,6 +1,9 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Network;
+using Game.Network.Enums;
+
 namespace Game.Subsystems;
 
 public class SubsystemTime : Subsystem
@@ -66,7 +69,9 @@ public class SubsystemTime : Subsystem
             }
         }
 
-        if (num2 + num3 == _subsystemPlayers.ComponentPlayers.Count && num2 >= 1)
+        // A client's entity set is AOI-filtered, not the authoritative online player set.
+        if (CommonLib.WorkType != WorkType.Client &&
+            num2 + num3 == _subsystemPlayers.ComponentPlayers.Count && num2 >= 1)
         {
             FixedTimeStep = 0.05f;
             _subsystemUpdate.UpdatesPerFrame = 20;

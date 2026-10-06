@@ -2,8 +2,12 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<ComponentInventoryPackage>
 {
-    public override void Handle(ComponentInventoryPackage package, NetNode? netNode, bool isServer)
+    internal static bool IsValidSlot(int slot, int count) => slot >= 0 && slot < count;
+
+    public override void Handle(ComponentInventoryPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ComponentInventoryPackage)}");
@@ -26,14 +30,30 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
             case ComponentInventoryPackage.EventType.ActiveSlotChange:
                 subsystemInventories?.FindInventoryById(package.InventoryID, inventory =>
                 {
+                    if (!IsValidSlot(package.ActiveSlot, inventory.SlotsCount))
+                    {
+                        return;
+                    }
+
+                    if (isServer && (context.Sender is null ||
+                                     !SubsystemInventories.CanClientAccess(inventory, context.Sender)))
+                    {
+                        return;
+                    }
+
                     inventory.ActiveSlotIndex = package.ActiveSlot;
                     if (!isServer)
                     {
                         return;
                     }
 
-                    package.Except = package.From;
-                    netNode.QueuePackage(package);
+                    var observers = SubsystemInventories.GetObservers(inventory)
+                        .Where(client => client.IsConnected && !ReferenceEquals(client, context.Sender))
+                        .ToArray();
+                    if (observers.Length > 0)
+                    {
+                        netNode.QueuePackage(package, PackageAudience.To(observers));
+                    }
                 });
                 break;
             case ComponentInventoryPackage.EventType.InventorySync:
@@ -89,6 +109,11 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                 break;
 
             case ComponentInventoryPackage.EventType.HandleMoveItem:
+                if (!isServer || context.Sender is null)
+                {
+                    break;
+                }
+
                 if (package.SourceInventorySlot != null)
                 {
                     sourceInventoryObject =
@@ -100,7 +125,13 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                         if (sourceInventoryObject is not null)
                         // 数据捕捉
                         {
-                            if (targetInventoryObject != null)
+                            if (targetInventoryObject != null &&
+                                IsValidSlot(package.SourceInventorySlot.SlotIndex, sourceInventoryObject.SlotsCount) &&
+                                IsValidSlot(package.TargetInventorySlot.SlotIndex, targetInventoryObject.SlotsCount) &&
+                                package.TargetInventorySlot.Count > 0 &&
+                                package.TargetInventorySlot.Count <= sourceInventoryObject.GetSlotCount(package.SourceInventorySlot.SlotIndex) &&
+                                SubsystemInventories.CanClientAccess(sourceInventoryObject, context.Sender) &&
+                                SubsystemInventories.CanClientAccess(targetInventoryObject, context.Sender))
                             {
                                 InventorySlotWidget.HandleMoveItem(sourceInventoryObject,
                                     package.SourceInventorySlot.SlotIndex,
@@ -114,6 +145,11 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                 // 服务器找不到背包？怀疑是来打服的！！！
                 break;
             case ComponentInventoryPackage.EventType.HandleDragDrop:
+                if (!isServer || context.Sender is null)
+                {
+                    break;
+                }
+
                 if (package.SourceInventorySlot != null)
                 {
                     sourceInventoryObject =
@@ -125,7 +161,12 @@ public sealed class ComponentInventoryPackageHandler : PackageHandlerBase<Compon
                         if (sourceInventoryObject is not null)
                         // 数据捕捉
                         {
-                            if (targetInventoryObject != null)
+                            if (targetInventoryObject != null &&
+                                IsValidSlot(package.SourceInventorySlot.SlotIndex, sourceInventoryObject.SlotsCount) &&
+                                IsValidSlot(package.TargetInventorySlot.SlotIndex, targetInventoryObject.SlotsCount) &&
+                                Enum.IsDefined(package.DragMode) &&
+                                SubsystemInventories.CanClientAccess(sourceInventoryObject, context.Sender) &&
+                                SubsystemInventories.CanClientAccess(targetInventoryObject, context.Sender))
                             {
                                 InventorySlotWidget.HandleDragDrop(sourceInventoryObject,
                                     package.SourceInventorySlot.SlotIndex,

@@ -12,6 +12,36 @@ namespace Game.Subsystems;
 
 public class SubsystemElectricity : Subsystem, IUpdateable
 {
+    private readonly ElectricityReplicationTracker _replication = new();
+
+    private readonly Dictionary<Point3, float> _networkVoltages = [];
+
+    public void ReceiveNetworkSnapshot(NetSimulate snapshot)
+    {
+        if (snapshot.IsBaseline)
+        {
+            _networkVoltages.Clear();
+        }
+
+        foreach (var point in snapshot.Removed)
+        {
+            _networkVoltages.Remove(point);
+        }
+
+        foreach (var (point, voltage) in snapshot.SaveData)
+        {
+            _networkVoltages[point] = voltage;
+        }
+
+        var complete = new NetSimulate { StartStep = snapshot.StartStep };
+        foreach (var (point, voltage) in _networkVoltages)
+        {
+            complete.SaveData[point] = voltage;
+        }
+
+        List.Add(complete);
+    }
+
     public const float CircuitStepDuration = 0.01f;
 
     private static readonly ElectricConnectionPath?[] _connectionPathsTable =
@@ -268,20 +298,27 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             SimulatedElectricElements = 0;
             _remainingSimulationTime = MathUtils.Min(_remainingSimulationTime + dt, 0.1f);
             var sendFlag = Time.PeriodicEvent(0.05, 0.0);
-            if (sendFlag)
+            if (sendFlag && CommonLib.WorkType == WorkType.Server)
             {
-                var netSimulate = new NetSimulate
+                var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
+                var clients = CommonLib.Net.Clients.Values.Where(client => client != CommonLib.Net.Self &&
+                    client.IsConnected && client.State == ClientState.Playing).ToArray();
+                _replication.RetainClients(clients);
+                var snapshots = BuildNetworkSnapshots(CircuitStep, clients, _persistentElementsVoltages,
+                    interest.GetChunkObservers);
+                foreach (var (client, snapshot) in snapshots)
                 {
-                    StartStep = CircuitStep
-                };
-                foreach (var c in _persistentElementsVoltages)
-                {
-                    netSimulate.SaveData.Add(c.Key, c.Value);
-                }
+                    var changes = _replication.Capture(client, snapshot.SaveData);
+                    snapshot.IsBaseline = changes.IsBaseline;
+                    snapshot.SaveData.Clear();
+                    foreach (var (point, voltage) in changes.Voltages)
+                    {
+                        snapshot.SaveData[point] = voltage;
+                    }
 
-                List.Add(netSimulate);
-                CommonLib.Net.QueuePackage(new SubsystemElectricityPackage(List));
-                List.Clear();
+                    snapshot.Removed.AddRange(changes.Removed);
+                    NetworkSender.SendTo(client, new SubsystemElectricityPackage(snapshot));
+                }
             }
 
             while (_remainingSimulationTime >= 0.01f)
@@ -309,9 +346,11 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         }
         else
         {
-            _remainingSimulationTime = MathUtils.Min(_remainingSimulationTime + dt, 0.1f);
             FrameStartCircuitStep = CircuitStep;
-            while (_remainingSimulationTime >= 0.01f)
+            List.RemoveAll(snapshot => snapshot.StartStep < CircuitStep);
+            UpdateElectricElements();
+            // 客户端按权威时间步追赶，但每帧最多执行十步，不积累单帧无界工作量。
+            for (var steps = 0; steps < 10 && List.Count > 0; steps++)
             {
                 //更新元件信息
                 UpdateElectricElements();
@@ -320,13 +359,21 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                 {
                     if (List[0].StartStep == CircuitStep)
                     {
+                        _persistentElementsVoltages.Clear();
                         foreach (var (point, f) in List[0].SaveData)
                         {
                             _persistentElementsVoltages[point] = f;
+                            for (var face = 0; face < 6; face++)
+                            {
+                                var element = GetElectricElement(point.X, point.Y, point.Z, face);
+                                if (element?.RestorePersistentVoltage(f) == true)
+                                {
+                                    QueueElectricElementConnectionsForSimulation(element, CircuitStep + 1);
+                                }
+                            }
                         }
 
                         List.RemoveAt(0);
-                        _remainingSimulationTime -= 0.01f;
                     }
 
                     if (_futureSimulateLists.Remove(CircuitStep, out var value))
@@ -345,14 +392,36 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
                     ++CircuitStep;
                 }
-                else
+            }
+        }
+    }
+
+    internal static Dictionary<Client, NetSimulate> BuildNetworkSnapshots(int step, IEnumerable<Client> clients,
+        IReadOnlyDictionary<Point3, float> voltages, Func<Point2, IEnumerable<Client>> getChunkObservers)
+    {
+        var snapshots = new Dictionary<Client, NetSimulate>(ReferenceEqualityComparer.Instance);
+        foreach (var client in clients)
+        {
+            snapshots[client] = new NetSimulate { StartStep = step };
+        }
+
+        foreach (var chunk in voltages.GroupBy(value => new Point2(value.Key.X >> 4, value.Key.Z >> 4)))
+        {
+            foreach (var observer in getChunkObservers(chunk.Key))
+            {
+                if (!snapshots.TryGetValue(observer, out var snapshot))
                 {
-                    _remainingSimulationTime -= 0.01f;
+                    continue;
+                }
+
+                foreach (var (point, voltage) in chunk)
+                {
+                    snapshot.SaveData[point] = voltage;
                 }
             }
-
-            List.Clear();
         }
+
+        return snapshots;
     }
 
     public void OnElectricElementBlockGenerated(int x, int y, int z)
@@ -553,6 +622,13 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
     public override void Save(ValuesDictionary valuesDictionary)
     {
+        valuesDictionary.SetValue("Step", CircuitStep);
+        if (Project.SendToClientMode)
+        {
+            valuesDictionary.SetValue("VoltagesByCell", string.Empty);
+            return;
+        }
+
         var num = 0;
         var stringBuilder = new StringBuilder();
         foreach (var persistentElementsVoltage in _persistentElementsVoltages)
@@ -874,6 +950,10 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
     public class NetSimulate
     {
+        public bool IsBaseline;
+
+        public readonly List<Point3> Removed = [];
+
         public readonly Dictionary<Point3, float> SaveData = new();
 
         public int StartStep;

@@ -872,8 +872,17 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 }
             }
 
-            CommonLib.Net.QueuePackage(new ComponentPlayerPackage(ComponentPlayer,
-                ComponentPlayerPackage.PlayerAction.CreativeFlyChange));
+            if (CommonLib.WorkType == WorkType.Server)
+            {
+                NetworkSender.SendToObservers(ComponentPlayer.Entity,
+                    new ComponentPlayerPackage(ComponentPlayer, ComponentPlayerPackage.PlayerAction.CreativeFlyChange),
+                    ComponentPlayer.PlayerData.Client);
+            }
+            else if (CommonLib.WorkType == WorkType.Client)
+            {
+                NetworkSender.SendToServer(new ComponentPlayerPackage(ComponentPlayer,
+                    ComponentPlayerPackage.PlayerAction.CreativeFlyChange));
+            }
         }
 
         if (!ComponentPlayer.ComponentInput.IsControlledByVr &&

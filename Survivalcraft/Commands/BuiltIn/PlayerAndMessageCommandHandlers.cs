@@ -109,8 +109,8 @@ internal static class PlayerAndMessageCommandHandlers
         actor.CharacterSkinName = skinName;
         actor.PlayerClass = playerClass;
         CommonLib.Net.QueuePackage(
-            new PlayerDataPackage(actor, PlayerDataPackage.DataType.Modify));
-        CommonLib.Net.QueuePackage(new PlayerListPackage(players));
+            new PlayerDataPackage(actor, PlayerDataPackage.DataType.Modify), PackageAudience.Global);
+        CommonLib.Net.QueuePackage(new PlayerListPackage(players), PackageAudience.Global);
         return CommandResult.LocalizedOk(
             "player.profile.updated",
             "PlayerProfileUpdated_Message",
@@ -128,8 +128,7 @@ internal static class PlayerAndMessageCommandHandlers
             var snapshot = new PlayerDataPackage(
                 player,
                 PlayerDataPackage.DataType.Modify);
-            snapshot.To = player.Client;
-            CommonLib.Net.QueuePackage(snapshot);
+            CommonLib.Net.QueuePackage(snapshot, PackageAudience.To(player.Client));
         }
 
         return CommandResult.LocalizedFail(code, messageKey, message);

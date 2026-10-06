@@ -2,8 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemSeasonPackageHandler : PackageHandlerBase<SubsystemSeasonPackage>
 {
-    public override void Handle(SubsystemSeasonPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(SubsystemSeasonPackage package, PackageReceiveContext context)
     {
+        var isServer = context.IsServer;
         if (GameManager.Project is null)
         {
             return;

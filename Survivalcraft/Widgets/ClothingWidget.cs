@@ -94,7 +94,7 @@ public class ClothingWidget : CanvasWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            CommonLib.Net.QueuePackage(new ComponentSleepPackage(_componentPlayer.ComponentSleep,
+            NetworkSender.SendToServer(new ComponentSleepPackage(_componentPlayer.ComponentSleep,
                 ComponentSleepPackage.EventType.SleepRequest, true));
         }
         else

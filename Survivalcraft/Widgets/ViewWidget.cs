@@ -59,7 +59,7 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            CommonLib.Net.QueuePackage(new ComponentPlayerPackage(GameWidget.PlayerData,
+            NetworkSender.SendToServer(new ComponentPlayerPackage(GameWidget.PlayerData,
                 inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
         }
         else

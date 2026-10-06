@@ -10,6 +10,7 @@ using Game.Modding.Data;
 
 namespace Survivalcraft.Test.Modding;
 
+[Collection(ConfigFileCollection.Name)]
 public class ModPackageTest
 {
     [Fact]

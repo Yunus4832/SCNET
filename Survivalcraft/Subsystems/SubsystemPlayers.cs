@@ -109,13 +109,43 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
         if (CommonLib.WorkType == WorkType.Server && Time.PeriodicEvent(0.25, 0.0))
         {
-            CommonLib.Net.QueuePackage(new OnlinePlayerStatePackage(this));
+            SendOnlinePlayerStates();
         }
     }
 
     public event Action<PlayerData>? PlayerAdded;
     public event Action<PlayerData>? PlayerRemoved;
     public event Action? PlayerListChanged;
+
+    private void SendOnlinePlayerStates()
+    {
+        var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
+        foreach (var recipient in _playersData)
+        {
+            if (recipient.IsMainPlayer || recipient.Client is not { IsConnected: true } client)
+            {
+                continue;
+            }
+
+            var states = _playersData
+                .Where(player => player.ComponentPlayer is not null)
+                .Where(player =>
+                    player.PlayerGUID == recipient.PlayerGUID ||
+                    interest.IsPositionRelevant(client, player.ComponentPlayer!.ComponentBody.Position.XZ))
+                .Select(player =>
+                {
+                    var componentPlayer = player.ComponentPlayer!;
+                    return new OnlinePlayerState(
+                        player.PlayerGUID,
+                        componentPlayer.ComponentBody.Position,
+                        MathUtils.Saturate(componentPlayer.ComponentHealth.Health),
+                        componentPlayer.ComponentSleep.IsSleeping);
+                });
+            CommonLib.Net.QueuePackage(
+                new OnlinePlayerStatePackage(states),
+                PackageAudience.To(client));
+        }
+    }
 
     public bool IsPlayer(Entity entity)
     {
@@ -231,7 +261,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         _startupPlayerCreateRequested = true;
         if (CommonLib.WorkType == WorkType.Client)
         {
-            CommonLib.Net.QueuePackage(new PlayerDataPackage(playerData, PlayerDataPackage.DataType.Create));
+            NetworkSender.SendToServer(new PlayerDataPackage(playerData, PlayerDataPackage.DataType.Create));
         }
         else
         {
@@ -592,7 +622,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             }
 
             // 恢复的实体先不加入项目，等连接完成初始世界快照后再挂载。
-            // 挂载时玩家数据和实体通过 PlayerJoinedPackage 原子同步。
+            // 挂载时玩家数据和实体通过 EntityPackage 原子同步。
             entity.EntityId = 0;
             // 离线记录保留在 _offlinePlayers 中（读取不删除），避免客户端在 ProjectLoaded
             // 之前断开时丢失玩家数据；下次正常退出时会重新覆盖为最新数据。
@@ -694,6 +724,40 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         }
 
         PlayerListChanged?.Invoke();
+    }
+
+    public IEnumerable<int> GetOfflineInventoryValues()
+    {
+        foreach (var (playerGuid, record) in _offlinePlayers)
+        {
+            if (_playersData.Any(player => player.PlayerGUID == playerGuid &&
+                player.ComponentPlayer is { } componentPlayer && Project.EntityKeys.Contains(componentPlayer.Entity)))
+            {
+                continue;
+            }
+
+            foreach (var value in GetSavedInventoryValues(record.EntityData))
+            {
+                yield return value;
+            }
+        }
+    }
+
+    internal static IEnumerable<int> GetSavedInventoryValues(ValuesDictionary entityData)
+    {
+        var overrides = entityData.GetValue("Overrides", new ValuesDictionary());
+        foreach (var component in overrides.Values.OfType<ValuesDictionary>())
+        {
+            var slots = component.GetValue("Slots", new ValuesDictionary());
+            foreach (var slot in slots.Values.OfType<ValuesDictionary>())
+            {
+                var value = slot.GetValue("Contents", 0);
+                if (value != 0 && slot.GetValue("Count", 1) > 0)
+                {
+                    yield return value;
+                }
+            }
+        }
     }
 
     public string GetPlayerGroupKey(Guid playerGuid)

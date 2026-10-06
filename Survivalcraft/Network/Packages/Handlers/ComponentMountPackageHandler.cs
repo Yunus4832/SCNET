@@ -2,14 +2,30 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentMountPackage>
 {
-    public override void Handle(ComponentMountPackage package, NetNode? netNode, bool isServer)
+    internal static bool AcceptsDirection(ComponentMountPackage.EventType type, bool isServer)
     {
-        if (GameManager.Project is null)
+        return isServer
+            ? type is ComponentMountPackage.EventType.MountRequest or ComponentMountPackage.EventType.DismountRequest
+            : type is ComponentMountPackage.EventType.Mount or ComponentMountPackage.EventType.Dismount;
+    }
+
+    public override void Handle(ComponentMountPackage package, PackageReceiveContext context)
+    {
+        var isServer = context.IsServer;
+        if (GameManager.Project is null || !AcceptsDirection(package.Type, isServer))
         {
             return;
         }
 
         var project = GameManager.Project;
+        var player = project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData
+            .FirstOrDefault(playerData => ReferenceEquals(playerData.Client, context.Sender));
+        if (isServer && (context.Sender is null ||
+                         player?.ComponentPlayer?.Entity.EntityId != package.FromId))
+        {
+            return;
+        }
+
         switch (package.Type)
         {
             case ComponentMountPackage.EventType.Dismount:
@@ -76,7 +92,10 @@ public sealed class ComponentMountPackageHandler : PackageHandlerBase<ComponentM
                     project.FindEntityById(package.TargetId, entity2 =>
                     {
                         var mount = entity2.FindComponent<ComponentMount>();
-                        if (mount != null && rider != null)
+                        if (mount != null && rider != null &&
+                            project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                                .IsPositionRelevant(context.Sender!, mount.ComponentBody.Position.XZ) &&
+                            rider.ScoreMount(mount, 2.5f) > 0f)
                         {
                             rider.StartMounting(mount);
                         }

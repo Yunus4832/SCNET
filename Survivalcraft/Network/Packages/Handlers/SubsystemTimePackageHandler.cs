@@ -2,8 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemTimePackageHandler : PackageHandlerBase<SubsystemTimePackage>
 {
-    public override void Handle(SubsystemTimePackage package, NetNode? netNode, bool isServer)
+    public override void Handle(SubsystemTimePackage package, PackageReceiveContext context)
     {
+        var isServer = context.IsServer;
         if (GameManager.Project is null)
         {
             return;

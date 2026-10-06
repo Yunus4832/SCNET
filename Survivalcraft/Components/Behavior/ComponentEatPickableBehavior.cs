@@ -41,6 +41,8 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
+    private bool _isSubscribedToPickables;
+
     public float Satiation => _satiation;
 
     public override float ImportanceLevel => _importanceLevel;
@@ -58,7 +60,7 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
             field = value;
             if (CommonLib.WorkType == WorkType.Server)
             {
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, field));
+                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, field));
             }
         }
     }
@@ -95,21 +97,7 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
             _foodFactors[(int)foodType] = (float)item.Value;
         }
 
-        _subsystemPickables.PickableAdded += delegate (Pickable pickable)
-        {
-            if (TryAddPickable(pickable) && _pickable == null)
-            {
-                _pickable = pickable;
-            }
-        };
-        _subsystemPickables.PickableRemoved += delegate (Pickable pickable)
-        {
-            _pickables.Remove(pickable);
-            if (_pickable == pickable)
-            {
-                _pickable = null;
-            }
-        };
+        SubscribeToPickables();
         stateMachine.AddState(
             "Inactive",
             delegate
@@ -308,6 +296,22 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
         stateMachine.TransitionTo("Inactive");
     }
 
+    public override void OnEntityAdded()
+    {
+        SubscribeToPickables();
+    }
+
+    public override void OnEntityRemoved()
+    {
+        UnsubscribeFromPickables();
+    }
+
+    public override void Dispose()
+    {
+        UnsubscribeFromPickables();
+        base.Dispose();
+    }
+
     public float GetFoodFactor(FoodType foodType)
     {
         return _foodFactors[(int)foodType];
@@ -353,5 +357,48 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
 
         _pickables.Add(pickable, true);
         return true;
+    }
+
+    private void SubscribeToPickables()
+    {
+        if (_isSubscribedToPickables)
+        {
+            return;
+        }
+
+        _subsystemPickables.PickableAdded += PickableAdded;
+        _subsystemPickables.PickableRemoved += PickableRemoved;
+        _isSubscribedToPickables = true;
+    }
+
+    private void UnsubscribeFromPickables()
+    {
+        if (!_isSubscribedToPickables)
+        {
+            return;
+        }
+
+        _subsystemPickables.PickableAdded -= PickableAdded;
+        _subsystemPickables.PickableRemoved -= PickableRemoved;
+        _isSubscribedToPickables = false;
+        _pickables.Clear();
+        _pickable = null;
+    }
+
+    private void PickableAdded(Pickable pickable)
+    {
+        if (TryAddPickable(pickable) && _pickable == null)
+        {
+            _pickable = pickable;
+        }
+    }
+
+    private void PickableRemoved(Pickable pickable)
+    {
+        _pickables.Remove(pickable);
+        if (_pickable == pickable)
+        {
+            _pickable = null;
+        }
     }
 }

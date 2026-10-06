@@ -12,15 +12,13 @@ public interface IModNetwork
     void Send(
         string messageType,
         Action<PackageStreamWriter> writePayload,
-        Client? to = null,
-        Client? except = null,
+        PackageAudience audience,
         ClientState minNeedState = ClientState.Connected);
 
     void Send(
         string messageType,
         byte[] payload,
-        Client? to = null,
-        Client? except = null,
+        PackageAudience audience,
         ClientState minNeedState = ClientState.Connected);
 }
 
@@ -35,7 +33,7 @@ public sealed class ModNetworkHooks
         .Select(registration => new ModNetworkRegistrationInfo(registration.Owner, registration.MessageType))
         .ToArray();
 
-    public void Dispatch(ModEnvelopePackage package, NetNode? netNode, bool isServer)
+    public void Dispatch(ModEnvelopePackage package, PackageReceiveContext receiveContext)
     {
         ModId owner;
         try
@@ -64,9 +62,9 @@ public sealed class ModNetworkHooks
                     handler.Owner,
                     package.MessageType,
                     reader,
-                    package.From,
-                    netNode,
-                    isServer);
+                    receiveContext.Sender,
+                    receiveContext.Node,
+                    receiveContext.IsServer);
                 handler.Handler(context);
             }
             catch (Exception exception)
@@ -94,38 +92,37 @@ public sealed class ModNetworkHooks
         ModId owner,
         string messageType,
         Action<PackageStreamWriter> writePayload,
-        Client? to,
-        Client? except,
+        PackageAudience audience,
         ClientState minNeedState)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
         ArgumentNullException.ThrowIfNull(writePayload);
+        ArgumentNullException.ThrowIfNull(audience);
         using var writer = new PackageStreamWriter();
         writePayload(writer);
-        Send(owner, messageType, writer.Data(), to, except, minNeedState);
+        Send(owner, messageType, writer.Data(), audience, minNeedState);
     }
 
     internal void Send(
         ModId owner,
         string messageType,
         byte[] payload,
-        Client? to,
-        Client? except,
+        PackageAudience audience,
         ClientState minNeedState)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
         ArgumentNullException.ThrowIfNull(payload);
+        ArgumentNullException.ThrowIfNull(audience);
         if (CommonLib.Net == null)
         {
             throw new InvalidOperationException("Network is not initialized.");
         }
 
-        CommonLib.Net.QueuePackage(new ModEnvelopePackage(owner.ToString(), messageType, payload)
+        var package = new ModEnvelopePackage(owner.ToString(), messageType, payload)
         {
-            To = to,
-            Except = except,
             RequiredState = minNeedState
-        });
+        };
+        CommonLib.Net.QueuePackage(package, audience);
     }
 
     private IDisposable Register(
@@ -179,18 +176,16 @@ public sealed class ModNetworkHooks
         public void Send(
             string messageType,
             Action<PackageStreamWriter> writePayload,
-            Client? to = null,
-            Client? except = null,
+            PackageAudience audience,
             ClientState minNeedState = ClientState.Connected) =>
-            hooks.Send(owner, messageType, writePayload, to, except, minNeedState);
+            hooks.Send(owner, messageType, writePayload, audience, minNeedState);
 
         public void Send(
             string messageType,
             byte[] payload,
-            Client? to = null,
-            Client? except = null,
+            PackageAudience audience,
             ClientState minNeedState = ClientState.Connected) =>
-            hooks.Send(owner, messageType, payload, to, except, minNeedState);
+            hooks.Send(owner, messageType, payload, audience, minNeedState);
     }
 
     private sealed class Registration(
@@ -249,16 +244,15 @@ public sealed class ModNetworkMessageContext(
             return;
         }
 
-        hooks.Send(Owner, MessageType, writePayload, From, null, minNeedState);
+        hooks.Send(Owner, MessageType, writePayload, PackageAudience.To(From), minNeedState);
     }
 
     public void Send(
         string targetMessageType,
         Action<PackageStreamWriter> writePayload,
-        Client? to = null,
-        Client? except = null,
+        PackageAudience audience,
         ClientState minNeedState = ClientState.Connected)
     {
-        hooks.Send(Owner, targetMessageType, writePayload, to, except, minNeedState);
+        hooks.Send(Owner, targetMessageType, writePayload, audience, minNeedState);
     }
 }

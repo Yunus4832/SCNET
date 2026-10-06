@@ -341,7 +341,10 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
         if (CommonLib.WorkType != WorkType.Client)
         {
             NetMakeLightingStrike(targetPosition);
-            CommonLib.Net.QueuePackage(new SubsystemSkyPackage(targetPosition));
+            if (CommonLib.WorkType == WorkType.Server)
+            {
+                CommonLib.Net.QueuePackage(new SubsystemSkyPackage(targetPosition), PackageAudience.Global);
+            }
         }
     }
 
@@ -376,7 +379,9 @@ public class SubsystemSky : Subsystem, IDrawable, IUpdateable
             _subsystemAudio.PlayRandomSound("Audio/ThunderFar", 0.8f, _random.Float(-0.2f, 0.2f), 0f, delay);
         }
 
-        if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != 0)
+        // 客户端只重放闪电和雷声。生物状态、统计及爆炸由服务端权威复制。
+        if (CommonLib.WorkType == WorkType.Client ||
+            _subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != 0)
         {
             return;
         }

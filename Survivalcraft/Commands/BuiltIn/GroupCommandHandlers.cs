@@ -205,8 +205,7 @@ internal static class GroupCommandHandlers
         }
         else if (responder.Client is not null)
         {
-            package.To = responder.Client;
-            CommonLib.Net.QueuePackage(package);
+            CommonLib.Net.QueuePackage(package, PackageAudience.To(responder.Client));
         }
     }
 
@@ -248,14 +247,13 @@ internal static class GroupCommandHandlers
             var resultPackage = CommandPackage.CreateResult(
                 result,
                 operation.OperationId.ToString("N"));
-            resultPackage.To = initiator.Client;
-            CommonLib.Net.QueuePackage(resultPackage);
+            CommonLib.Net.QueuePackage(resultPackage, PackageAudience.To(initiator.Client));
         }
     }
 
     private static void BroadcastSnapshot(SubsystemPlayers players)
     {
-        CommonLib.Net.QueuePackage(GroupManagePackage.CreateSnapshot(players));
+        CommonLib.Net.QueuePackage(GroupManagePackage.CreateSnapshot(players), PackageAudience.Global);
         players.PlayersData
             .Find(player => player.IsMainPlayer)?
             .GameWidget.RefreshPlayerViews();

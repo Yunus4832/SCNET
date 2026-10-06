@@ -603,7 +603,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         {
             IPackage package = new ComponentInventoryPackage(sourceInventorySlot, targetInventorySlot,
                 ComponentInventoryPackage.EventType.HandleMoveItem);
-            CommonLib.Net.QueuePackage(package);
+            NetworkSender.SendToServer(package);
             //return false; // 这样搞的话客户端太难受了
         }
 
@@ -680,7 +680,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 DragMode = dragMode,
                 ProcessingOnly = processingOnly
             };
-            CommonLib.Net.QueuePackage(package);
+            NetworkSender.SendToServer(package);
         }
 
 

@@ -8,8 +8,10 @@ namespace Game.Network.Packages.Handlers;
 /// </summary>
 public sealed class GroupManagePackageHandler : PackageHandlerBase<GroupManagePackage>
 {
-    public override void Handle(GroupManagePackage package, NetNode? netNode, bool isServer)
+    public override void Handle(GroupManagePackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (isServer ||
             netNode is null ||
             GameManager.Project is not { } project)

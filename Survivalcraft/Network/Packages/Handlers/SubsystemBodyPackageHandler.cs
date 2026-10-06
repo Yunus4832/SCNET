@@ -2,8 +2,13 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBodyPackage>
 {
-    public override void Handle(SubsystemBodyPackage package, NetNode? netNode, bool isServer)
+    internal static bool OwnsCollisionSource(Client? sender, Client? owner) =>
+        sender is not null && ReferenceEquals(sender, owner);
+
+    public override void Handle(SubsystemBodyPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(SubsystemBodyPackage)}");
@@ -11,6 +16,12 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
         }
 
         if (GameManager.Project is null)
+        {
+            return;
+        }
+
+        // 身体快照和冲量只由服务端下发，客户端仅报告自身碰撞。
+        if (!AcceptsDirection(package.PackageEventType, isServer))
         {
             return;
         }
@@ -75,16 +86,27 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
 
                 if (ml.Count > 0)
                 {
-                    netNode.QueuePackage(new EntityPackage(ml));
+                    NetworkSender.SendToServer(new EntityPackage(ml));
                 }
 
                 break;
             case SubsystemBodyPackage.EventType.HandleAxisCollision:
                 project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(package.CreatureId, from =>
                 {
+                    if (isServer && !OwnsCollisionSource(context.Sender, from.Player?.PlayerData.Client))
+                    {
+                        return;
+                    }
+
                     project.FindSubsystem<SubsystemBodies>(true)!.FindBodyByCreatureID(package.TargetCreatureId,
                         target =>
                         {
+                            if (isServer && !project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                                    .IsPositionRelevant(context.Sender!, target.Position.XZ))
+                            {
+                                return;
+                            }
+
                             target.Velocity = package.Impulse;
                             target.NetVelocity.SetNext(package.Impulse);
                             from.CollidedWithBody?.Invoke(target);
@@ -97,6 +119,11 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
                     .FindBodyByCreatureID(package.CreatureId, body => { body.ApplyImpulseNet(package.Impulse); });
                 break;
         }
+    }
+
+    internal static bool AcceptsDirection(SubsystemBodyPackage.EventType type, bool isServer)
+    {
+        return !isServer || type == SubsystemBodyPackage.EventType.HandleAxisCollision;
     }
 
     /// <summary>无符号回绕安全的大小比较：value 是否比 previous 更新。</summary>

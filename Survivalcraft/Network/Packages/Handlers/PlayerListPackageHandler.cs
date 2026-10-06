@@ -2,8 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class PlayerListPackageHandler : PackageHandlerBase<PlayerListPackage>
 {
-    public override void Handle(PlayerListPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(PlayerListPackage package, PackageReceiveContext context)
     {
+        var isServer = context.IsServer;
         if (isServer || GameManager.Project is null)
         {
             return;

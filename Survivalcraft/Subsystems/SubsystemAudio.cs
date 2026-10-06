@@ -197,6 +197,12 @@ public class SubsystemAudio : Subsystem, IUpdateable
         return 1f;
     }
 
+    internal static float CalculateAudibleRadius(float volume, float minDistance)
+    {
+        // 播放器的音量和阈值一起缩放，因此网络候选范围不依赖主机音量设置。
+        return minDistance * (1f + volume / AudioManager.UnscaledMinAudibleVolume) / 2f;
+    }
+
     public float CalculateDelay(Vector3 position)
     {
         return CalculateDelay(CalculateListenerDistance(position));

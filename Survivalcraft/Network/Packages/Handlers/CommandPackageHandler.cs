@@ -13,8 +13,10 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
     private readonly Dictionary<Guid, long> _lastCommandTimestamp = [];
 
-    public override void Handle(CommandPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(CommandPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (netNode is null || GameManager.Project is not { } project)
         {
             return;
@@ -22,7 +24,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
         if (isServer)
         {
-            HandleServer(package, project);
+            HandleServer(package, project, context);
             return;
         }
 
@@ -51,12 +53,12 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
         }
     }
 
-    private void HandleServer(CommandPackage package, Project project)
+    private void HandleServer(CommandPackage package, Project project, PackageReceiveContext context)
     {
         if (package.Mode is not (
                 CommandPackage.CommandPackageMode.Request or
                 CommandPackage.CommandPackageMode.TypedRequest) ||
-            package.From is null)
+            context.Sender is null)
         {
             return;
         }
@@ -75,7 +77,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             }
         }
 
-        if (_lastCommandTimestamp.TryGetValue(package.From.GUID, out var last) &&
+        if (_lastCommandTimestamp.TryGetValue(context.Sender.GUID, out var last) &&
             now - last < _minimumCommandInterval)
         {
             result = CommandResult.LocalizedFail(
@@ -85,7 +87,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
         }
         else
         {
-            _lastCommandTimestamp[package.From.GUID] = now;
+            _lastCommandTimestamp[context.Sender.GUID] = now;
             if (package.Mode is CommandPackage.CommandPackageMode.Request &&
                 package.Input.Length > _maximumCommandLength)
             {
@@ -96,11 +98,11 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             }
             else if (package.Mode is CommandPackage.CommandPackageMode.TypedRequest)
             {
-                result = ExecuteTyped(package, package.From.PlayerData);
+                result = ExecuteTyped(package, context.Sender.PlayerData);
             }
             else
             {
-                var player = package.From.PlayerData;
+                var player = context.Sender.PlayerData;
                 result = CommandExecutor.ExecutePlayer(
                     package.Input,
                     player,
@@ -114,7 +116,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
         CommandResultPublisher.PublishRemote(
             project,
             result,
-            package.From,
+            context.Sender,
             package.CorrelationId);
     }
 

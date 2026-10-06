@@ -3,6 +3,7 @@ using EntitySystem.TemplatesDatabase;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Network.Packages.Handlers;
 
 namespace Game.Subsystems;
 
@@ -57,6 +58,18 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         value.Move = length;
     }
 
+    private void PlayPistonSound(Point3 position)
+    {
+        var soundPosition = new Vector3(position);
+        _subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, soundPosition, 2f, true);
+        if (CommonLib.WorkType == WorkType.Server)
+        {
+            // 距离衰减在 21 格达到 0.05 的听觉阈值；保守候选范围为镜头偏移留余量。
+            NetworkSender.SendNearPoint(Project, soundPosition, 64f,
+                new MovingBlockPackage { Type = MovingBlockPackage.EventType.PistonSound, Position = soundPosition });
+        }
+    }
+
     public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
     {
         var value = inventory.GetSlotValue(slotIndex);
@@ -72,11 +85,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
             var p = new EditableBlockPackage(EditableItemType.Piston, default, true, inventory.Id, slotIndex,
                 newData);
-            CommonLib.Net.QueuePackage(p);
-            if (CommonLib.WorkType != WorkType.Client)
-            {
-                PackageDispatcher.Handle(p, CommonLib.Net, false);
-            }
+            EditableBlockPackageHandler.Submit(p);
         }));
         return true;
     }
@@ -94,11 +103,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
             var cell = new CellFace(x, y, z, 0);
             var p = new EditableBlockPackage(EditableItemType.Piston, cell, false, 0, 0, newData);
-            CommonLib.Net.QueuePackage(p);
-            if (CommonLib.WorkType != WorkType.Client)
-            {
-                PackageDispatcher.Handle(p, CommonLib.Net, false);
-            }
+            EditableBlockPackageHandler.Submit(p);
         }));
         return true;
     }
@@ -429,7 +434,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
             _subsystemTerrain.ChangeCell(position.X, position.Y, position.Z,
                 Terrain.MakeBlockValue(PistonBlock.Index, 0, PistonBlock.SetIsExtended(data, true)));
-            _subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, new Vector3(position), 2f, true);
+            PlayPistonSound(position);
 
             return false;
         }
@@ -507,7 +512,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             _allowPistonHeadRemove = false;
         }
 
-        _subsystemAudio.PlaySound("Audio/Piston", 1f, 0f, new Vector3(position), 2f, true);
+        PlayPistonSound(position);
 
         return false;
     }

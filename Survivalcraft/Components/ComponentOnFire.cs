@@ -120,7 +120,7 @@ public class ComponentOnFire : Component, IUpdateable
             return;
         }
 
-        CommonLib.Net.QueuePackage(new ComponentOnFirePackage(this, attacker, duration));
+        NetworkSender.SendToObservers(Entity, new ComponentOnFirePackage(this, attacker, duration));
         SetOnFireNet(attacker, duration);
     }
 
@@ -149,10 +149,8 @@ public class ComponentOnFire : Component, IUpdateable
         _subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true)!;
         ComponentBody = Entity.FindComponent<ComponentBody>(true)!;
         var value = valuesDictionary.GetValue<float>("FireDuration");
-        if (value > 0f)
-        {
-            SetOnFire(null, value);
-        }
+        // Loading a baseline restores state; it is not an authority-side ignition event.
+        _fireDuration = value > 0f ? value : 0f;
     }
 
     public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)

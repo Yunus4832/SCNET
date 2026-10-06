@@ -1,5 +1,3 @@
-using EntitySystem.TemplatesDatabase;
-
 using Game.Network.Enums;
 using Game.Network.Serialization;
 
@@ -36,17 +34,12 @@ public class PlayerDataPackage : IPackage
 
     public TerrainUpdater.UpdateLocation UpdateLocation;
 
-    public ValuesDictionary? Vd;
-
     public int Visibility;
 
     public byte ID => (byte)PackageType.PlayerData;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.Connected;
 
@@ -56,13 +49,11 @@ public class PlayerDataPackage : IPackage
 
     public PlayerDataPackage(PlayerData playerData, DataType dataType)
     {
-        Vd = new ValuesDictionary();
         Type = dataType;
         PlayerName = playerData.Name;
         SkinName = playerData.CharacterSkinName;
         PlayerGuid = playerData.PlayerGUID;
         PlayerClass = playerData.PlayerClass;
-        playerData.Save(Vd);
     }
 
     public PlayerDataPackage(int time, string msg)
@@ -84,12 +75,9 @@ public class PlayerDataPackage : IPackage
         switch (Type)
         {
             case DataType.Create:
-                if (Vd != null)
-                {
-                    var messagePack = Vd.ToMessagePack();
-                    writer.WriteBuff(messagePack);
-                }
-
+                writer.Write(PlayerName);
+                writer.Write(SkinName);
+                writer.WriteEnum(PlayerClass);
                 break;
             case DataType.Modify:
                 writer.Write(PlayerGuid);
@@ -123,9 +111,9 @@ public class PlayerDataPackage : IPackage
         switch (Type)
         {
             case DataType.Create:
-                var messagePack = reader.ReadBuff();
-                Vd = new ValuesDictionary();
-                Vd.ApplyOverridesUseMessagePack(messagePack);
+                PlayerName = reader.ReadString();
+                SkinName = reader.ReadString();
+                PlayerClass = reader.ReadEnum<PlayerClass>();
                 break;
             case DataType.Modify:
                 PlayerGuid = reader.ReadGuid();

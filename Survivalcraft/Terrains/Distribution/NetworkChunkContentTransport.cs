@@ -65,14 +65,14 @@ public sealed class NetworkChunkContentTransport : IChunkContentTransport
         if (fullRequests.Count > 0)
         {
             Interlocked.Add(ref _fullChunkRequestsSent, fullRequests.Count);
-            CommonLib.Net.QueuePackage(new SubsystemTerrainPackage(fullRequests));
+            NetworkSender.SendToServer(new SubsystemTerrainPackage(fullRequests));
         }
 
         foreach (var batch in fragmentRequests.Chunk(
                      SubsystemTerrainPackage.MaximumFragmentRequestsPerPackage))
         {
             Interlocked.Add(ref _missingFragmentRequestsSent, batch.Length);
-            CommonLib.Net.QueuePackage(SubsystemTerrainPackage.CreateFragmentRequest(batch));
+            NetworkSender.SendToServer(SubsystemTerrainPackage.CreateFragmentRequest(batch));
         }
     }
 

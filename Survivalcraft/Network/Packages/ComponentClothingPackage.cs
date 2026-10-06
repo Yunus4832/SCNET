@@ -21,11 +21,8 @@ public class ComponentClothingPackage : IPackage
 
     public byte ID => (byte)PackageType.ComponentClothing;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
@@ -38,7 +35,8 @@ public class ComponentClothingPackage : IPackage
     {
         Type = type;
         SkinName = skinName;
-        if (!CharacterSkinsManager.HasSkinRes(SkinName))
+        if (type is not (DataType.ReplySkin or DataType.WhoHasReply) ||
+            !CharacterSkinsManager.HasSkinRes(SkinName))
         {
             return;
         }

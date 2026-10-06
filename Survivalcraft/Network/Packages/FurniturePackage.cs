@@ -1,3 +1,5 @@
+using EntitySystem.TemplatesDatabase;
+
 using Game.Network.Enums;
 using Game.Network.Serialization;
 
@@ -14,8 +16,9 @@ public class FurniturePackage : IPackage
         RenameFurnitureSet,
         MoveFurnitureSet,
         AddToFurnitureSet,
-        TryAddDesignChain,
-        RemoveFurnitureDesigns
+        DesignChain,
+        RemoveFurnitureDesigns,
+        ImportFurnitureSet
     }
 
     public string AddXml = string.Empty;
@@ -36,11 +39,8 @@ public class FurniturePackage : IPackage
 
     public byte ID => (byte)PackageType.Furniture;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
@@ -89,13 +89,67 @@ public class FurniturePackage : IPackage
         AddXml = furnitureSet.Name;
     }
 
-    public FurniturePackage(FurnitureDesign design, bool garbageCollectIfNeeded)
+    public FurniturePackage(FurnitureDesign design)
     {
-        PackageEventType = EventType.TryAddDesignChain;
-        FurnitureIndex = design.Index;
-        var dict = design.Save();
-        AddXml = CommonLib.SerializeVDict(dict);
-        StartValue = garbageCollectIfNeeded ? 1 : 0;
+        PackageEventType = EventType.DesignChain;
+        AddXml = SerializeDesigns(design.ListChain());
+    }
+
+    public FurniturePackage(List<FurnitureDesign> designs, string setName)
+    {
+        PackageEventType = EventType.ImportFurnitureSet;
+        AddXml = SerializeDesigns(designs);
+        FromName = setName;
+    }
+
+    private static string SerializeDesigns(List<FurnitureDesign> chain)
+    {
+        var dict = new ValuesDictionary();
+        for (var i = 0; i < chain.Count; i++)
+        {
+            var node = chain[i].Save();
+            node.SetValue("NetworkIndex", chain[i].Index);
+            node.SetValue("LinkedDesign", chain.IndexOf(chain[i].LinkedDesign!));
+            dict.SetValue(i.ToString(System.Globalization.CultureInfo.InvariantCulture), node);
+        }
+
+        return CommonLib.SerializeVDict(dict);
+    }
+
+    internal List<FurnitureDesign> ReadDesignChain(SubsystemTerrain? terrain)
+    {
+        var values = CommonLib.ReadVDict(AddXml);
+        if (values.Count > 65535)
+        {
+            throw new InvalidOperationException("Furniture design count exceeds capacity.");
+        }
+
+        var chain = new List<FurnitureDesign>();
+        for (var i = 0; i < values.Count; i++)
+        {
+            var node = values.GetValue<ValuesDictionary>(i.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            if (node.GetValue<int>("Resolution") is < 2 or > FurnitureDesign.MaxResolution)
+            {
+                throw new InvalidOperationException("Invalid furniture resolution.");
+            }
+
+            chain.Add(new FurnitureDesign(node.GetValue<int>("NetworkIndex"), terrain, node));
+        }
+
+        foreach (var node in chain)
+        {
+            if (node.LoadTimeLinkedDesignIndex < -1 || node.LoadTimeLinkedDesignIndex >= chain.Count)
+            {
+                throw new InvalidOperationException("Invalid furniture design link index.");
+            }
+
+            if (node.LoadTimeLinkedDesignIndex >= 0)
+            {
+                node.LinkedDesign = chain[node.LoadTimeLinkedDesignIndex];
+            }
+        }
+
+        return chain;
     }
 
     public FurniturePackage(FurnitureDesign design, Dictionary<Point3, int> list, CellFace cellFace, int value,
@@ -119,10 +173,12 @@ public class FurniturePackage : IPackage
         writer.WriteEnum(PackageEventType);
         switch (PackageEventType)
         {
-            case EventType.TryAddDesignChain:
+            case EventType.ImportFurnitureSet:
                 writer.Write(AddXml);
-                writer.Write(FurnitureIndex);
-                writer.Write(StartValue);
+                writer.Write(FromName);
+                break;
+            case EventType.DesignChain:
+                writer.Write(AddXml);
                 break;
             case EventType.AddToFurnitureSet:
             case EventType.MoveFurnitureSet:
@@ -154,6 +210,9 @@ public class FurniturePackage : IPackage
 
                 break;
             case EventType.Add:
+                writer.Write(FurnitureIndex);
+                writer.Write(AddXml);
+                break;
             case EventType.RequestAdd:
                 writer.Write(FurnitureIndex);
                 writer.Write(AddXml);
@@ -175,10 +234,12 @@ public class FurniturePackage : IPackage
         PackageEventType = reader.ReadEnum<EventType>();
         switch (PackageEventType)
         {
-            case EventType.TryAddDesignChain:
+            case EventType.ImportFurnitureSet:
                 AddXml = reader.ReadString();
-                FurnitureIndex = reader.ReadInt32();
-                StartValue = reader.ReadInt32();
+                FromName = reader.ReadString();
+                break;
+            case EventType.DesignChain:
+                AddXml = reader.ReadString();
                 break;
             case EventType.AddToFurnitureSet:
             case EventType.MoveFurnitureSet:
@@ -209,6 +270,9 @@ public class FurniturePackage : IPackage
 
                 break;
             case EventType.Add:
+                FurnitureIndex = reader.ReadInt32();
+                AddXml = reader.ReadString();
+                break;
             case EventType.RequestAdd:
                 FurnitureIndex = reader.ReadInt32();
                 AddXml = reader.ReadString();

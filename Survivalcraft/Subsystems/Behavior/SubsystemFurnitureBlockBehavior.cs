@@ -38,6 +38,18 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
     public ReadOnlyList<FurnitureSet> FurnitureSets => new(_furnitureSets);
 
+    public int NetworkRevision { get; private set; }
+
+    public void NotifyNetworkChange()
+    {
+        NetworkRevision++;
+    }
+
+    public void InstallNetworkDesign(FurnitureDesign design)
+    {
+        AddDesign(design.Index, design);
+    }
+
     public FurnitureDesign? GetDesign(int index)
     {
         if (index < 0 || index >= FurnitureDesigns.Length)
@@ -107,6 +119,11 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             return furnitureDesign;
         }
 
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            return null;
+        }
+
         var list = design.ListChain();
         if (garbageCollectIfNeeded && FurnitureDesigns.Count(d => d == null) < list.Count)
         {
@@ -136,6 +153,11 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         if (num != list.Count)
         {
             throw new InvalidOperationException("public error.");
+        }
+
+        if (CommonLib.WorkType == WorkType.Server)
+        {
+            NetworkSender.SendGlobal(new FurniturePackage(design));
         }
 
         return design;
@@ -278,14 +300,20 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                     CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
                 }
 
-                CommonLib.Net.QueuePackage(
-                    new FurniturePackage(
+                var package = new FurniturePackage(
                         design,
                         valuesDictionary,
                         start,
                         startValue,
-                        CommonLib.WorkType == WorkType.Client)
-                );
+                        CommonLib.WorkType == WorkType.Client);
+                if (CommonLib.WorkType == WorkType.Client)
+                {
+                    NetworkSender.SendToServer(package);
+                }
+                else if (CommonLib.WorkType == WorkType.Server)
+                {
+                    CommonLib.Net.QueuePackage(package, PackageAudience.Global);
+                }
             });
         DialogsManager.ShowDialog(componentMiner.ComponentPlayer?.GuiWidget, dialog);
     }
@@ -413,17 +441,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
     public FurnitureSet NewFurnitureSet(string name, string importedFrom)
     {
-        if (name.Length > MaxFurnitureSetNameLength)
-        {
-            name = name[..MaxFurnitureSetNameLength];
-        }
-
-        var num = 0;
-        while (FurnitureSets.FirstOrDefault(fs => fs.Name == name) != null)
-        {
-            num++;
-            name = num > 0 ? name + num.ToString(CultureInfo.InvariantCulture) : name;
-        }
+        name = GetAvailableFurnitureSetName(name, null);
 
         var furnitureSet = new FurnitureSet
         {
@@ -432,6 +450,24 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         };
         _furnitureSets.Add(furnitureSet);
         return furnitureSet;
+    }
+
+    public void RenameFurnitureSet(FurnitureSet furnitureSet, string name)
+    {
+        furnitureSet.Name = GetAvailableFurnitureSetName(name, furnitureSet);
+    }
+
+    private string GetAvailableFurnitureSetName(string name, FurnitureSet? excluded)
+    {
+        var baseName = name[..Math.Min(name.Length, MaxFurnitureSetNameLength)];
+        var candidate = baseName;
+        for (var suffix = 1; _furnitureSets.Any(set => !ReferenceEquals(set, excluded) && set.Name == candidate); suffix++)
+        {
+            var number = suffix.ToString(CultureInfo.InvariantCulture);
+            candidate = baseName[..Math.Min(baseName.Length, MaxFurnitureSetNameLength - number.Length)] + number;
+        }
+
+        return candidate;
     }
 
     public void DeleteFurnitureSet(FurnitureSet furnitureSet)
@@ -690,11 +726,13 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             }
         }
 
-        foreach (var item in allExistingItems)
+        var inventoryValues = allExistingItems.Select(item => item.Value)
+            .Concat(Project.FindSubsystem<SubsystemPlayers>(true)!.GetOfflineInventoryValues());
+        foreach (var value in inventoryValues)
         {
-            if (Terrain.ExtractContents(item.Value) == FurnitureBlock.Index)
+            if (Terrain.ExtractContents(value) == FurnitureBlock.Index)
             {
-                var designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(item.Value));
+                var designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(value));
                 var design = GetDesign(designIndex);
                 design?.GcUsed = true;
             }
@@ -728,7 +766,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
         if (CommonLib.WorkType == WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(new FurniturePackage(list));
+            CommonLib.Net.QueuePackage(new FurniturePackage(list), PackageAudience.Global);
         }
     }
 

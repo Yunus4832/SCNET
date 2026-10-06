@@ -33,8 +33,9 @@ public static class PackageTransportPolicy
     public static readonly PackageTransport Bulk =
         new(NetworkChannel.Bulk, DeliveryMethod.ReliableOrdered, 0.10);
 
-    public static readonly PackageTransport TerrainBulk =
-        new(NetworkChannel.TerrainBulk, DeliveryMethod.ReliableUnordered, 0.10);
+    // Whole-list metadata must remain atomic; reliable transport supports fragmentation.
+    public static readonly PackageTransport PlayerListState =
+        new(NetworkChannel.Bulk, DeliveryMethod.ReliableOrdered, 0.10, true);
 
     public static readonly PackageTransport TerrainFragment =
         new(NetworkChannel.TerrainFragment, DeliveryMethod.Unreliable, 0.02);
@@ -46,31 +47,48 @@ public static class PackageTransportPolicy
         {
             ComponentPlayerPackage { Type: ComponentPlayerPackage.PlayerAction.BodyUpdate } => Snapshot,
             SubsystemBodyPackage { PackageEventType: SubsystemBodyPackage.EventType.BodyUpdate } => StateStream,
-            PickablePackage { Type: PickablePackage.PickType.Update } => Snapshot,
-            OnlinePlayerStatePackage => Snapshot,
+            PickablePackage { Type: PickablePackage.PickType.Update } => StateStream,
+            OnlinePlayerStatePackage => PlayerListState,
             ComponentBehaviorPackage { PackageEventType: ComponentBehaviorPackage.EventType.CreatureSound } => Effect,
             ComponentHealthPackage { Type: ComponentHealthPackage.EventType.HitResult } => Effect,
             ExplosionsPackage { Type: ExplosionsPackage.EventType.Sound } => Effect,
+            ProjectilePackage { Type: ProjectilePackage.EventType.Update } => StateStream,
+            ProjectilePackage { Type: ProjectilePackage.EventType.Effect } => Effect,
             ProjectilePackage => ReliableEvent,
+            MovingBlockPackage { Type: MovingBlockPackage.EventType.Update } => StateStream,
+            MovingBlockPackage { Type: MovingBlockPackage.EventType.PistonSound } => Effect,
             MovingBlockPackage => ReliableEvent,
             ComponentPlayerPackage => ReliableEvent,
             ComponentHealthPackage => ReliableEvent,
-            ComponentMountPackage => ReliableEvent,
+            ComponentMountPackage
+            {
+                Type: ComponentMountPackage.EventType.Mount or ComponentMountPackage.EventType.Dismount
+            } => Bulk,
+            ComponentMountPackage => Control,
+            ComponentOnFirePackage { Type: not ComponentOnFirePackage.EventType.ComponentOnFire } => Bulk,
             ComponentOnFirePackage => ReliableEvent,
             ComponentSleepPackage => ReliableEvent,
             PickablePackage => ReliableEvent,
             ExplosionsPackage => ReliableEvent,
-            EntityPackage { Type: EntityPackage.EventType.LoadList } => Bulk,
+            // 对象创建、删除及其库存状态必须共享顺序，不能跨通道抢先应用。
+            EntityPackage { Type: not EntityPackage.EventType.RequestSync } => Bulk,
+            ComponentInventoryPackage
+            {
+                PackageEventType: ComponentInventoryPackage.EventType.InventorySync or
+                ComponentInventoryPackage.EventType.SetSlotsItem or
+                ComponentInventoryPackage.EventType.ActiveSlotChange
+            } => Bulk,
             BootstrapPackage => Bulk,
             InitialWorldSnapshotPackage => Bulk,
-            PlayerJoinedPackage => Bulk,
+            EditableBlockPackage => Bulk,
+            SignBlockPackage => Bulk,
+            ChunkStateResetPackage => Bulk,
+            BlockEditPackage { Type: BlockEditPackage.EventType.OpenInventoryByID } => Bulk,
+            ComponentFurnacePackage => Bulk,
             SubsystemTerrainPackage { Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment } =>
                 TerrainFragment,
-            FurniturePackage
-            {
-                PackageEventType: FurniturePackage.EventType.Add or
-                FurniturePackage.EventType.TryAddDesignChain
-            } => Bulk,
+            FurniturePackage { PackageEventType: FurniturePackage.EventType.RequestAdd } => Control,
+            FurniturePackage => Bulk,
             _ => Control
         };
     }

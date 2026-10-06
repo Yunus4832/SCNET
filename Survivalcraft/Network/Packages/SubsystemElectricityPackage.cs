@@ -5,17 +5,12 @@ namespace Game.Network.Packages;
 
 public class SubsystemElectricityPackage : IPackage
 {
-    public SubsystemElectricity? Subsystem;
-
-    public readonly List<SubsystemElectricity.NetSimulate> NetSimulates = [];
+    public readonly SubsystemElectricity.NetSimulate Snapshot = new();
 
     public byte ID => (byte)PackageType.SubsystemElectricity;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.Playing;
 
@@ -23,42 +18,53 @@ public class SubsystemElectricityPackage : IPackage
     {
     }
 
-    public SubsystemElectricityPackage(List<SubsystemElectricity.NetSimulate> netSimulates)
+    public SubsystemElectricityPackage(SubsystemElectricity.NetSimulate snapshot)
     {
-        NetSimulates.AddRange(netSimulates);
+        Snapshot = snapshot;
     }
 
     public void WriteData(PackageStreamWriter writer)
     {
-        writer.Write((byte)NetSimulates.Count);
-        foreach (var netSimulate in NetSimulates)
+        writer.Write(Snapshot.StartStep);
+        writer.Write(Snapshot.IsBaseline);
+        writer.Write(Snapshot.SaveData.Count);
+        foreach (var item in Snapshot.SaveData)
         {
-            writer.Write(netSimulate.StartStep);
-            writer.Write((ushort)netSimulate.SaveData.Count);
-            foreach (var item in netSimulate.SaveData)
-            {
-                writer.WriteBlockPoint(item.Key);
-                writer.Write(item.Value);
-            }
+            writer.WriteBlockPoint(item.Key);
+            writer.Write(item.Value);
+        }
+
+        writer.Write(Snapshot.Removed.Count);
+        foreach (var point in Snapshot.Removed)
+        {
+            writer.WriteBlockPoint(point);
         }
     }
 
     public void ReadData(PackageStreamReader reader)
     {
-        var count = reader.ReadByte();
-        for (byte i = 0; i < count; i++)
+        Snapshot.StartStep = reader.ReadInt32();
+        Snapshot.IsBaseline = reader.ReadBoolean();
+        var count = reader.ReadInt32();
+        if (count < 0 || count > (reader.BaseStream.Length - reader.BaseStream.Position) / 16)
         {
-            var netSimulate = new SubsystemElectricity.NetSimulate
-            {
-                StartStep = reader.ReadInt32()
-            };
-            var electricsCount = reader.ReadUInt16();
-            for (var p = 0; p < electricsCount; p++)
-            {
-                netSimulate.SaveData.Add(reader.ReadBlockPoint(), reader.ReadSingle());
-            }
+            throw new InvalidDataException("Invalid electricity voltage count.");
+        }
 
-            NetSimulates.Add(netSimulate);
+        for (var i = 0; i < count; i++)
+        {
+            Snapshot.SaveData.Add(reader.ReadBlockPoint(), reader.ReadSingle());
+        }
+
+        var removedCount = reader.ReadInt32();
+        if (removedCount < 0 || removedCount > (reader.BaseStream.Length - reader.BaseStream.Position) / 12)
+        {
+            throw new InvalidDataException("Invalid electricity removal count.");
+        }
+
+        for (var i = 0; i < removedCount; i++)
+        {
+            Snapshot.Removed.Add(reader.ReadBlockPoint());
         }
     }
 }

@@ -13,6 +13,8 @@ public class Pickable : WorldItem
     //联机增加参数
     public ushort Id = 0;
 
+    public uint LastStateTick;
+
     public Vector3? LastPosition;
 
     public bool NetToRemove;

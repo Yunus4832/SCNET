@@ -42,7 +42,7 @@ public class SubsystemCraftingTableBlockBehavior : SubsystemBlockBehavior
                 new BlockEditPackage(
                     new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
                     BlockEditPackage.EventType.OpenInventoryByPoint);
-            CommonLib.Net.QueuePackage(package);
+            NetworkSender.SendToServer(package);
             return true;
         }
 

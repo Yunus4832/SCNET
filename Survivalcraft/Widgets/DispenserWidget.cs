@@ -100,11 +100,7 @@ public class DispenserWidget : CanvasWidget
             var tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) |
                              (DispenserBlock.GetAcceptsDrops(data) ? 1 << 1 : 0));
             var p = new DispenserPackage(_componentBlockEntity.Coordinates, tmp);
-            CommonLib.Net.QueuePackage(p);
-            if (CommonLib.WorkType != WorkType.Client)
-            {
-                PackageDispatcher.Handle(p, CommonLib.Net, false);
-            }
+            NetworkSender.SendToServer(p);
         }
 
         _dispenseButton.IsChecked = mode == DispenserBlock.Mode.Dispense;

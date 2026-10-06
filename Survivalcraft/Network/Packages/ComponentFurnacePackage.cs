@@ -9,11 +9,8 @@ public class ComponentFurnacePackage : IPackage
 
     public byte ID => (byte)PackageType.ComponentFurnace;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 

@@ -8,6 +8,49 @@ namespace Survivalcraft.Test.Subsystems;
 public sealed class SubsystemPickablesTest
 {
     [Fact]
+    public void PositionSnapshotsRejectDuplicatesAndOlderTicksAcrossWraparound()
+    {
+        var subsystem = new SubsystemPickables();
+        var pickable = subsystem.CreatePickable(1, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
+        pickable.LastStateTick = uint.MaxValue - 1;
+        var position = new Vector3(4f, 5f, 6f);
+        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = position }], 1);
+        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.Zero }], 1);
+        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.Zero }], uint.MaxValue);
+        Assert.Equal(position, pickable.Position);
+        Assert.Equal(1u, pickable.LastStateTick);
+    }
+
+    [Fact]
+    public void SameTickIndependentChunksUpdateDifferentPickables()
+    {
+        var subsystem = new SubsystemPickables();
+        var first = subsystem.CreatePickable(1, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
+        var second = subsystem.CreatePickable(2, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
+        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.One }], 10);
+        subsystem.ApplyPositionSnapshot([new Pickable { Id = 2, Position = Vector3.One }], 10);
+        Assert.Equal(Vector3.One, first.Position);
+        Assert.Equal(Vector3.One, second.Position);
+    }
+
+    [Fact]
+    public void PositionSnapshotDoesNotDeleteAbsentPickables()
+    {
+        var subsystem = new SubsystemPickables();
+        var updated = subsystem.CreatePickable(1, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
+        var retained = subsystem.CreatePickable(2, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
+        var position = new Vector3(10f, 20f, 30f);
+
+        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = position }], 1);
+        subsystem.ApplyPositionSnapshot([], 2);
+
+        Assert.Equal(position, updated.Position);
+        Assert.True(subsystem.TryGetPickable(2, out var indexed));
+        Assert.Same(retained, indexed);
+        Assert.Empty(subsystem.PickablesToRemove);
+    }
+
+    [Fact]
     public void AllocatorProducesUniqueIdsAndReusesReleasedId()
     {
         var subsystem = new SubsystemPickables();

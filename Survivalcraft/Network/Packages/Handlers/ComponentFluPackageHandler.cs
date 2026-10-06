@@ -2,7 +2,7 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentFluPackageHandler : PackageHandlerBase<ComponentFluPackage>
 {
-    public override void Handle(ComponentFluPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ComponentFluPackage package, PackageReceiveContext context)
     {
         if (GameManager.Project is null)
         {

@@ -38,9 +38,6 @@ public class ComponentSleepPackage : IPackage
     }
 
     public byte ID => (byte)PackageType.ComponentSleep;
-    public Client? To { get; set; }
-    public Client? Except { get; set; }
-    public Client? From { get; set; }
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
     public void WriteData(PackageStreamWriter writer)

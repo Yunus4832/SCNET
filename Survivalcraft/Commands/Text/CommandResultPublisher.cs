@@ -64,8 +64,7 @@ public static class CommandResultPublisher
         }
 
         var resultPackage = CommandPackage.CreateResult(result, correlationId);
-        resultPackage.To = requester;
-        CommonLib.Net.QueuePackage(resultPackage);
+        CommonLib.Net.QueuePackage(resultPackage, PackageAudience.To(requester));
     }
 
     public static void DisplayLocal(

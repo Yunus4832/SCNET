@@ -44,7 +44,7 @@ public class ComponentRandomPeckBehavior : ComponentBehavior, IUpdateable
             _isFeed = value;
             if (CommonLib.WorkType == WorkType.Server)
             {
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, _isFeed));
+                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, _isFeed));
             }
         }
     }

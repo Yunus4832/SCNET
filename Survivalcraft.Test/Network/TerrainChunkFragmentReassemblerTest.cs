@@ -43,6 +43,11 @@ public sealed class TerrainChunkFragmentReassemblerTest
 
         Assert.False(reassembler.Add(fragments[0], out _));
         Assert.False(reassembler.Add(fragments[2], out _));
+        foreach (var fragment in fragments.Skip(3))
+        {
+            Assert.False(reassembler.Add(fragment, out _));
+        }
+
         Assert.True(reassembler.Add(fragments[1], out var completed));
         Assert.Equal(encoded.Payload, completed.Payload);
     }
@@ -88,7 +93,8 @@ public sealed class TerrainChunkFragmentReassemblerTest
         Assert.Equal(allocation, request.Allocation);
         Assert.Equal(encoded.ContentVersion, request.ContentVersion);
         Assert.Equal(fragments.Length, request.FragmentCount);
-        Assert.Equal([1, 3], request.MissingFragmentIndices);
+        Assert.Equal(fragments.Where(fragment => fragment.FragmentIndex is not (0 or 2))
+            .Select(fragment => fragment.FragmentIndex), request.MissingFragmentIndices);
     }
 
     [Fact]

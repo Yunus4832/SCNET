@@ -298,7 +298,7 @@ public class TerrainUpdater
         _pendingLocations[locationIndex] = location;
         if (_subsystemTerrain.UsesRemoteChunkTransport)
         {
-            CommonLib.Net.QueuePackage(new PlayerDataPackage(location));
+            NetworkSender.SendToServer(new PlayerDataPackage(location));
         }
     }
 

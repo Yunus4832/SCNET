@@ -2,13 +2,14 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ServerInfoPackageHandler : PackageHandlerBase<ServerInfoPackage>
 {
-    public override void Handle(ServerInfoPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ServerInfoPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
         if (package.RequestInfo)
         {
-            if (package.From?.IPPoint != null)
+            if (context.Sender?.IPPoint != null)
             {
-                netNode?.SendWriterFromPackage(new ServerInfoPackage(false), package.From.IPPoint);
+                netNode?.SendWriterFromPackage(new ServerInfoPackage(false), context.Sender.IPPoint);
             }
         }
     }

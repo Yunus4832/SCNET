@@ -84,7 +84,7 @@ public class SubsystemCactusBlockBehavior : SubsystemPollableBlockBehavior, IUpd
         }
         else
         {
-            CommonLib.Net.QueuePackage(new ComponentHealthPackage(creature.ComponentHealth, null, amount, cuase,
+            NetworkSender.SendToServer(new ComponentHealthPackage(creature.ComponentHealth, null, amount, cuase,
                 false, true, ComponentHealthPackage.RequestInjureType.Cactus));
         }
     }

@@ -1,6 +1,7 @@
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Network.Packages.Handlers;
 
 namespace Game.Subsystems;
 
@@ -23,11 +24,7 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
                 {
                     var p = new EditableBlockPackage(EditableItemType.Switch, default, true, inventory.Id, slotIndex,
                         newVoltageLevel);
-                    CommonLib.Net.QueuePackage(p);
-                    if (CommonLib.WorkType != WorkType.Client)
-                    {
-                        PackageDispatcher.Handle(p, CommonLib.Net, false);
-                    }
+                    EditableBlockPackageHandler.Submit(p);
                 }
             }));
         return true;
@@ -52,11 +49,7 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
                     var cell = new CellFace(x, y, z, face);
                     var p = new EditableBlockPackage(EditableItemType.Switch, cell, false, 0, 0,
                         newVoltageLevel);
-                    CommonLib.Net.QueuePackage(p);
-                    if (CommonLib.WorkType != WorkType.Client)
-                    {
-                        PackageDispatcher.Handle(p, CommonLib.Net, false);
-                    }
+                    EditableBlockPackageHandler.Submit(p);
                 }
             )
         );

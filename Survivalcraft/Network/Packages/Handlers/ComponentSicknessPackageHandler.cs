@@ -2,7 +2,7 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentSicknessPackageHandler : PackageHandlerBase<ComponentSicknessPackage>
 {
-    public override void Handle(ComponentSicknessPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ComponentSicknessPackage package, PackageReceiveContext context)
     {
         if (GameManager.Project is null)
         {

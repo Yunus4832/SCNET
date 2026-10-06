@@ -24,17 +24,14 @@ public enum NetworkChannel : byte
     /// <summary>尽力而为的一次性效果：瞬时事件，丢失即消失，无最新优先语义。</summary>
     Effect = 3,
 
-    /// <summary>可靠有序：实体加载、地形等大块数据。</summary>
+    /// <summary>可靠有序：实体加载及需要原子应用的整列表数据。</summary>
     Bulk = 4,
 
     /// <summary>状态流：可丢弃、多数据报，最新优先由应用层 StateTick 保证。</summary>
     StateStream = 5,
 
-    /// <summary>可靠无序：地形区块独立到达，避免一个丢失分片阻塞其他区块。</summary>
-    TerrainBulk = 6,
-
     /// <summary>应用层地形分片：单数据报、丢失后由区块请求重试补齐。</summary>
-    TerrainFragment = 7
+    TerrainFragment = 6
 }
 
 /// <summary>数据包的传输方式声明。</summary>

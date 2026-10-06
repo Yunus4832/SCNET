@@ -55,7 +55,7 @@ public enum PackageType : byte
     Bootstrap,
     ConnectionPhaseAck,
     InitialWorldSnapshot,
-    PlayerJoined,
+    ChunkStateReset,
 
     ModPackage = 255 // 为后面的mod数据传输做保留
 }
@@ -134,27 +134,15 @@ public class PackageManager
             PackageType.ConnectionPhaseAck);
         RegisterBuiltInPackage<InitialWorldSnapshotPackage, InitialWorldSnapshotPackageHandler>(
             PackageType.InitialWorldSnapshot);
-        RegisterBuiltInPackage<PlayerJoinedPackage, PlayerJoinedPackageHandler>(PackageType.PlayerJoined);
+        RegisterBuiltInPackage<ChunkStateResetPackage, ChunkStateResetPackageHandler>(PackageType.ChunkStateReset);
         RegisterBuiltInPackage<ModEnvelopePackage, ModEnvelopePackageHandler>(PackageType.ModPackage);
     }
 
-    public static void RegisterPackage(Func<IPackage> factory)
+    public static void RegisterPackage<TPackage>(Func<TPackage> factory, IPackageHandler<TPackage> handler)
+        where TPackage : IPackage
     {
         var package = factory();
-        RegisterPackage(package.ID, package.GetType().Name, package.GetType(), factory);
-    }
-
-    public static void RegisterPackage(PackageType packageType, Func<IPackage> factory)
-    {
-        var package = factory();
-        var packageID = (byte)packageType;
-        if (package.ID != packageID)
-        {
-            throw new InvalidOperationException(
-                $"数据包ID不匹配，注册ID:{packageID}，Package[{package.GetType().Name}] ID:{package.ID}");
-        }
-
-        RegisterPackage(packageID, package.GetType().Name, package.GetType(), factory);
+        RegisterPackage(package.ID, package.GetType().Name, package.GetType(), () => factory(), handler);
     }
 
     private static void RegisterBuiltInPackage<TPackage, THandler>(PackageType packageType)
@@ -172,21 +160,20 @@ public class PackageManager
         RegisterPackage(packageID, typeof(TPackage).Name, typeof(TPackage), () => new TPackage(), new THandler());
     }
 
-    public static void RegisterPackage(IPackage package)
-    {
-        var packageType = package.GetType();
-        RegisterPackage(package.ID, packageType.Name, packageType,
-            () => (IPackage)Activator.CreateInstance(packageType)!);
-    }
-
     private static void RegisterPackage(
         byte packageID,
         string packageName,
         Type packageType,
         Func<IPackage> factory,
-        IPackageHandler? handler = null
+        IPackageHandler handler
     )
     {
+        ArgumentNullException.ThrowIfNull(handler);
+        if (handler.PackageType != packageType)
+        {
+            throw new ArgumentException("Package handler type must match the registered package type.", nameof(handler));
+        }
+
         if (_packageRegistrations[packageID] == null)
         {
             _packageRegistrations[packageID] = new PackageRegistration
@@ -194,14 +181,7 @@ public class PackageManager
                 Name = packageName,
                 Create = factory
             };
-            if (handler != null)
-            {
-                PackageDispatcher.Register(handler);
-            }
-            else
-            {
-                PackageDispatcher.RegisterLegacyHandler(packageType);
-            }
+            PackageDispatcher.Register(handler);
 
             Log.Debug($"注册Package[{packageName}]，ID:{packageID}");
         }
@@ -223,19 +203,19 @@ public class PackageManager
         PackageDispatcher.Unregister(package.GetType());
     }
 
-    public static T DecodePackage<T>(
+    public static (T Package, PackageReceiveContext Context) DecodePackage<T>(
         NetNode? netNode,
         NetDataReader reader,
         NetPeer? netPeer = null,
         ConnectionRequest? request = null,
         IPEndPoint? iPEndPoint = null
-    ) where T : class
+    ) where T : class, IPackage
     {
         var obj = DecodePackages(netNode, reader, netPeer, request, iPEndPoint)[0];
-        return (T)obj;
+        return ((T)obj.Package, obj.Context);
     }
 
-    public static List<IPackage> DecodePackages(
+    public static List<ReceivedPackage> DecodePackages(
         NetNode? netNode,
         NetDataReader reader,
         NetPeer? netPeer = null,
@@ -271,7 +251,8 @@ public class PackageManager
             }
         }
 
-        var packages = new List<IPackage>();
+        var packages = new List<ReceivedPackage>();
+        var context = new PackageReceiveContext(netNode, netNode?.IsServer ?? false, from);
         byte packageID = 99;
         if (reader.AvailableBytes == 0)
         {
@@ -298,9 +279,8 @@ public class PackageManager
                 {
                     var package = registration.Create();
                     last = package;
-                    package.From = from!;
                     package.ReadData(packageReader);
-                    packages.Add(package);
+                    packages.Add(new ReceivedPackage(package, context));
                 }
                 else
                 {

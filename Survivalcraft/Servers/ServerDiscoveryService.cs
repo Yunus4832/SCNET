@@ -45,10 +45,11 @@ public sealed class ServerDiscoveryService
                 }
 
                 var package = PackageManager.DecodePackage<ServerInfoPackage>(null, reader, null, null, remote);
-                status = CreateStatus(package, stopwatch.ElapsedMilliseconds);
+                status = CreateStatus(package.Package, stopwatch.ElapsedMilliseconds);
             };
-            NetNode.SendWriterFromPackage(network, [new ServerInfoPackage(true)], endpoint);
-            Poll(network, timeout, cancellationToken, () => status is not null);
+            void SendProbe() => NetNode.SendUnconnectedPackage(network, new ServerInfoPackage(true), endpoint!);
+            SendProbe();
+            Poll(network, timeout, cancellationToken, () => status is not null, SendProbe);
             return status ?? new ServerRuntimeStatus { Availability = ServerAvailability.Unavailable };
         }
         catch (OperationCanceledException)
@@ -95,7 +96,7 @@ public sealed class ServerDiscoveryService
                         Address = address,
                         DisplayName = address,
                         Order = items.Count,
-                        RuntimeStatus = CreateStatus(package, stopwatch.ElapsedMilliseconds)
+                        RuntimeStatus = CreateStatus(package.Package, stopwatch.ElapsedMilliseconds)
                     };
                 }
                 catch (Exception exception)
@@ -103,7 +104,7 @@ public sealed class ServerDiscoveryService
                     Log.Warning($"Ignored invalid LAN discovery response from '{remote}': {exception.Message}");
                 }
             };
-            NetNode.SendWriterFromPackage(network, [new ServerInfoPackage(true)], null);
+            NetNode.BroadcastServerDiscovery(network);
             Poll(network, timeout, cancellationToken, () => false);
             return items.Values.ToArray();
         }
@@ -122,14 +123,22 @@ public sealed class ServerDiscoveryService
         }
     }
 
-    private static void Poll(NetManager network, TimeSpan timeout, CancellationToken cancellationToken,
-        Func<bool> completed)
+    internal static void Poll(NetManager network, TimeSpan timeout, CancellationToken cancellationToken,
+        Func<bool> completed, Action? retry = null)
     {
         var stopwatch = Stopwatch.StartNew();
+        var nextRetry = TimeSpan.FromMilliseconds(250);
         while (stopwatch.Elapsed < timeout && !completed())
         {
             cancellationToken.ThrowIfCancellationRequested();
             network.PollEvents();
+            if (retry is not null && !completed() && stopwatch.Elapsed < timeout && stopwatch.Elapsed >= nextRetry)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                retry();
+                nextRetry = stopwatch.Elapsed + TimeSpan.FromMilliseconds(250);
+            }
+
             Thread.Sleep(2);
         }
     }

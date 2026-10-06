@@ -393,6 +393,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     public override void Load(ValuesDictionary valuesDictionary)
     {
         base.Load(valuesDictionary);
+        Project.FindSubsystem<SubsystemNetworkInterest>(true)!.ChunkEntered += SendChunkState;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemParticles = Project.FindSubsystem<SubsystemParticles>(true)!;
         _subsystemViews = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
@@ -423,7 +424,11 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         if (CommonLib.WorkType != WorkType.Client)
         {
-            CommonLib.Net.QueuePackage(new ComponentOnFirePackage(x, y, z, expandability));
+            if (CommonLib.WorkType == WorkType.Server)
+            {
+                NetworkSender.SendToChunkObservers(Project, new Point2(x >> 4, z >> 4),
+                    new ComponentOnFirePackage(x, y, z, expandability));
+            }
             AddFireNet(x, y, z, expandability);
         }
     }
@@ -445,6 +450,31 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         _fireData[point] = fireData;
     }
 
+    public void ClearChunkState(Point2 chunk)
+    {
+        foreach (var point in _fireData.Keys.Where(point =>
+                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y).ToArray())
+        {
+            RemoveFireNet(point.X, point.Y, point.Z);
+        }
+    }
+
+    private void SendChunkState(Client client, Point2 chunk)
+    {
+        foreach (var fire in _fireData.Values.Where(fire =>
+                     fire.Point.X >> 4 == chunk.X && fire.Point.Z >> 4 == chunk.Y))
+        {
+            NetworkSender.SendTo(client,
+                new ComponentOnFirePackage(fire.Point.X, fire.Point.Y, fire.Point.Z, fire.FireExpandability));
+        }
+    }
+
+    public override void Dispose()
+    {
+        Project.FindSubsystem<SubsystemNetworkInterest>(true)!.ChunkEntered -= SendChunkState;
+        base.Dispose();
+    }
+
     private void RemoveFire(int x, int y, int z)
     {
         if (CommonLib.WorkType == WorkType.Client)
@@ -452,7 +482,11 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        CommonLib.Net.QueuePackage(new ComponentOnFirePackage(x, y, z));
+        if (CommonLib.WorkType == WorkType.Server)
+        {
+            NetworkSender.SendToChunkObservers(Project, new Point2(x >> 4, z >> 4),
+                new ComponentOnFirePackage(x, y, z));
+        }
         RemoveFireNet(x, y, z);
     }
 

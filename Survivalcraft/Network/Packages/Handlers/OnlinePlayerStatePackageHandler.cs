@@ -2,8 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class OnlinePlayerStatePackageHandler : PackageHandlerBase<OnlinePlayerStatePackage>
 {
-    public override void Handle(OnlinePlayerStatePackage package, NetNode? netNode, bool isServer)
+    public override void Handle(OnlinePlayerStatePackage package, PackageReceiveContext context)
     {
+        var isServer = context.IsServer;
         if (isServer || GameManager.Project is null)
         {
             return;

@@ -28,6 +28,8 @@ public sealed record ListPlayersCommand : IGameCommand;
 
 public sealed record GetRunModeCommand : IGameCommand;
 
+public sealed record GetNetworkSendStatisticsCommand : IGameCommand;
+
 public sealed record SetRunModeCommand(
     RunModeType TargetMode,
     SessionInfo? RestartSession = null) : IGameCommand;

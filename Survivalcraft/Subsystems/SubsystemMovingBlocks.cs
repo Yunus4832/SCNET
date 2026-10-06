@@ -27,6 +27,10 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
 
     private readonly List<MovingBlockSet> _removing = [];
 
+    private int _nextNetworkId = 1;
+
+    private uint _networkStateTick;
+
     private readonly DynamicArray<IMovingBlockSet> _result = [];
 
     private Shader _shader = null!;
@@ -36,6 +40,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
     private SubsystemAnimatedTextures _subsystemAnimatedTextures = null!;
 
     private SubsystemSky _subsystemSky = null!;
+
+    private SubsystemNetworkInterest _subsystemNetworkInterest = null!;
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
@@ -114,6 +120,11 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         _canGenerateGeometry = true;
         foreach (var movingBlockSet in MovingBlockSets)
         {
+            if (CommonLib.WorkType == WorkType.Client && movingBlockSet.NetworkStopped)
+            {
+                continue;
+            }
+
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(
                 Terrain.ToCell(movingBlockSet.Position.X),
                 Terrain.ToCell(movingBlockSet.Position.Z),
@@ -153,6 +164,11 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                 movingBlockSet.CurrentVelocity =
                     num5 / num * (movingBlockSet.TargetPosition - movingBlockSet.Position);
                 movingBlockSet.Position += movingBlockSet.CurrentVelocity * _subsystemTime.GameTimeDelta;
+            }
+
+            if (CommonLib.WorkType == WorkType.Client)
+            {
+                continue;
             }
 
             movingBlockSet.Stop = false;
@@ -198,8 +214,13 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         {
             foreach (var item in _stopped)
             {
+                SendMovingBlockEvent(item, true);
                 DoStop(item);
-                CommonLib.Net.QueuePackage(new MovingBlockPackage(item, true));
+            }
+
+            if (Time.PeriodicEvent(0.1, 0.0))
+            {
+                UpdateClientMovingBlockInterests();
             }
         }
 
@@ -225,6 +246,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
     {
         var movingBlockSet = new MovingBlockSet
         {
+            NetworkId = AllocateNetworkId(),
             Position = position,
             StartPosition = position,
             TargetPosition = targetPosition,
@@ -257,7 +279,6 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         }
 
         MovingBlockSets.Add(movingBlockSet);
-        CommonLib.Net.QueuePackage(new MovingBlockPackage(movingBlockSet));
 
         return movingBlockSet;
     }
@@ -269,8 +290,10 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             return;
         }
 
-        RemoveMovingBlockSetLogic(movingBlockSet);
-        CommonLib.Net.QueuePackage(new MovingBlockPackage(movingBlockSet, false));
+        var set = (MovingBlockSet)movingBlockSet;
+        SendMovingBlockEvent(set, false);
+        RemoveMovingBlockSetLogic(set);
+        _subsystemNetworkInterest.Entities.RemoveEntity(EntityInterestGroup.MovingBlocks, set.NetworkId);
     }
 
     public void RemoveMovingBlockSetLogic(IMovingBlockSet movingBlockSet)
@@ -305,6 +328,84 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         }
 
         return null;
+    }
+
+    public MovingBlockSet? FindMovingBlocks(int networkId)
+    {
+        return MovingBlockSets.Find(movingBlockSet => movingBlockSet.NetworkId == networkId);
+    }
+
+    private int AllocateNetworkId()
+    {
+        return _nextNetworkId++;
+    }
+
+    private void SendMovingBlockEvent(MovingBlockSet movingBlockSet, bool stopped)
+    {
+        var observers = _subsystemNetworkInterest.Entities
+            .GetObservers(EntityInterestGroup.MovingBlocks, movingBlockSet.NetworkId)
+            .Where(client => client.IsConnected)
+            .ToArray();
+        if (observers.Length > 0)
+        {
+            CommonLib.Net.QueuePackage(
+                new MovingBlockPackage(movingBlockSet, stopped),
+                PackageAudience.To(observers));
+        }
+    }
+
+    private void UpdateClientMovingBlockInterests()
+    {
+        _networkStateTick++;
+        var movingBlocks = MovingBlockSets.ToDictionary(set => set.NetworkId);
+        var relevant = _subsystemNetworkInterest.GetPointCandidates(movingBlocks.Values.Select(set =>
+            (set.NetworkId, set.Position.XZ)));
+        foreach (var client in CommonLib.Net.Clients.Values)
+        {
+            if (client == CommonLib.Net.Self || !client.IsConnected)
+            {
+                continue;
+            }
+
+            var current = relevant.TryGetValue(client, out var ids) ? ids : [];
+            var changes = _subsystemNetworkInterest.Entities.Synchronize(
+                client,
+                EntityInterestGroup.MovingBlocks,
+                current,
+                movingBlocks.ContainsKey,
+                3);
+            foreach (var networkId in changes.Entered)
+            {
+                if (movingBlocks.TryGetValue(networkId, out var movingBlockSet))
+                {
+                    CommonLib.Net.QueuePackage(
+                        new MovingBlockPackage(movingBlockSet) { StateTick = _networkStateTick },
+                        PackageAudience.To(client));
+                }
+            }
+
+            foreach (var networkId in changes.Left)
+            {
+                if (movingBlocks.TryGetValue(networkId, out var movingBlockSet))
+                {
+                    CommonLib.Net.QueuePackage(
+                        new MovingBlockPackage(movingBlockSet, false),
+                        PackageAudience.To(client));
+                }
+            }
+
+            foreach (var networkId in current.Except(changes.Entered))
+            {
+                var movingBlockSet = movingBlocks[networkId];
+                CommonLib.Net.QueuePackage(
+                    new MovingBlockPackage(movingBlockSet, false)
+                    {
+                        Type = MovingBlockPackage.EventType.Update,
+                        StateTick = _networkStateTick
+                    },
+                    PackageAudience.To(client));
+            }
+        }
     }
 
     public MovingBlocksRaycastResult? Raycast(Vector3 start, Vector3 end, bool extendToFillCells)
@@ -351,6 +452,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
+        _subsystemNetworkInterest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         _subsystemAnimatedTextures = Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
         if (RunMode.Value is RunModeType.Gui)
         {
@@ -367,6 +469,11 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
     {
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("MovingBlockSets", valuesDictionary2);
+        if (Project.SendToClientMode)
+        {
+            return;
+        }
+
         var num = 0;
         foreach (var movingBlockSet in MovingBlockSets)
         {
@@ -397,13 +504,36 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             list.Add(item);
         }
 
-        return AddMovingBlockSet(value, value2, value3, value4, value5, value6, list, value7, value8, false);
+        var movingBlockSet = (MovingBlockSet?)AddMovingBlockSet(
+            value,
+            value2,
+            value3,
+            value4,
+            value5,
+            value6,
+            list,
+            value7,
+            value8,
+            false);
+        if (movingBlockSet is not null)
+        {
+            movingBlockSet.StartPosition = value9.GetValue<Vector3>("StartPosition");
+            movingBlockSet.CurrentVelocity = value9.GetValue<Vector3>("CurrentVelocity");
+            var networkId = value9.GetValue<int>("NetworkId");
+            movingBlockSet.NetworkId = networkId;
+            _nextNetworkId = Math.Max(_nextNetworkId, networkId + 1);
+        }
+
+        return movingBlockSet;
     }
 
     public static ValuesDictionary SaveMovingItem(MovingBlockSet movingBlockSet)
     {
         var valuesDictionary3 = new ValuesDictionary();
         valuesDictionary3.SetValue("Position", movingBlockSet.Position);
+        valuesDictionary3.SetValue("StartPosition", movingBlockSet.StartPosition);
+        valuesDictionary3.SetValue("CurrentVelocity", movingBlockSet.CurrentVelocity);
+        valuesDictionary3.SetValue("NetworkId", movingBlockSet.NetworkId);
         valuesDictionary3.SetValue("TargetPosition", movingBlockSet.TargetPosition);
         valuesDictionary3.SetValue("Speed", movingBlockSet.Speed);
         valuesDictionary3.SetValue("Acceleration", movingBlockSet.Acceleration);
@@ -668,6 +798,12 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         public Vector3 GeometryOffset;
 
         public string Id = string.Empty;
+
+        public int NetworkId;
+
+        public uint LastNetworkStateTick;
+
+        public bool NetworkStopped;
 
         public readonly DynamicArray<int> Indices = [];
 

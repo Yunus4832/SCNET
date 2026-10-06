@@ -22,8 +22,6 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public Action<ComponentBody>? CollidedWithBody;
 
-    public Vector3 LastVelocity;
-
     public ComponentLocomotion? Locomotion;
 
     private readonly DynamicArray<CollisionBox> _bodiesCollisionBoxes = [];
@@ -82,11 +80,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public NetVelocity NetVelocity = null!;
 
-    private ushort _parentEntityId;
-
     public ComponentPlayer? Player;
-
-    public Vector3? SendVelocity;
 
     /// <summary>最近一次应用的状态流轮次序号（客户端联机用，用于丢弃旧包）。</summary>
     public uint LastBodyStateTick;
@@ -186,14 +180,6 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 _velocity = Vector3.Zero;
             }
 
-            if (LastVelocity == _velocity)
-            {
-                return _velocity;
-            }
-
-            LastVelocity = _velocity;
-            SendVelocity = _velocity;
-
             return _velocity;
         }
         set
@@ -253,6 +239,10 @@ public class ComponentBody : ComponentFrame, IUpdateable
     public Vector3 ParentBodyPositionOffset { get; set; }
 
     public Quaternion ParentBodyRotationOffset { get; set; }
+
+    public bool IsTerrainReady => _subsystemTerrain.Terrain.GetChunkAtCell(
+        Terrain.ToCell(Position.X), Terrain.ToCell(Position.Z), false) is
+    { MainThreadState: > TerrainChunkState.InvalidContents4 };
 
     public UpdateOrder UpdateOrder
     {
@@ -343,9 +333,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
 
         var position = base.Position;
-        var chunkAtCell =
-            _subsystemTerrain.Terrain.GetChunkAtCell(Terrain.ToCell(position.X), Terrain.ToCell(position.Z), false);
-        if (chunkAtCell is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+        if (!IsTerrainReady)
         {
             Velocity = Vector3.Zero;
             return;
@@ -538,7 +526,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             return;
         }
 
-        CommonLib.Net.QueuePackage(new SubsystemBodyPackage(this, impulse));
+        NetworkSender.SendToObservers(Entity, new SubsystemBodyPackage(this, impulse));
         ApplyImpulseNet(impulse);
     }
 
@@ -583,11 +571,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         WaterTurnSpeed = valuesDictionary.GetValue<float>("WaterTurnSpeed");
         Velocity = valuesDictionary.GetValue<Vector3>("Velocity");
         MaxSmoothRiseHeight = valuesDictionary.GetValue<float>("MaxSmoothRiseHeight");
-        var i = valuesDictionary.GetValue<object>("ParentBody");
-        if (i is ushort ui)
-        {
-            _parentEntityId = ui;
-        }
+        var parentReference = valuesDictionary.GetValue<object>("ParentBody");
 
         ParentBodyPositionOffset = valuesDictionary.GetValue<Vector3>("ParentBodyPositionOffset");
         ParentBodyRotationOffset = valuesDictionary.GetValue<Quaternion>("ParentBodyRotationOffset");
@@ -597,9 +581,19 @@ public class ComponentBody : ComponentFrame, IUpdateable
         IsWaterDragEnabled = true;
         Player = Entity.FindComponent<ComponentPlayer>();
         Locomotion = Entity.FindComponent<ComponentLocomotion>();
-        if (_parentEntityId > 0)
+        if (parentReference is EntityReference reference)
         {
-            var entity = idToEntityMap.FindEntity(_parentEntityId);
+            ParentBody = reference.GetEntity(Entity, idToEntityMap, false)?.FindComponent<ComponentBody>();
+        }
+        else
+        {
+            var parentEntityId = Convert.ToInt32(parentReference);
+            var entity = idToEntityMap.FindEntity(parentEntityId);
+            if (entity is null && parentEntityId > 0)
+            {
+                Project.FindEntityById(parentEntityId, existing => entity = existing);
+            }
+
             if (entity != null)
             {
                 ParentBody = entity.FindComponent<ComponentBody>();
@@ -1063,7 +1057,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
             if (CommonLib.WorkType == WorkType.Client && Player is { PlayerData.IsMainPlayer: true })
             {
-                CommonLib.Net.QueuePackage(new SubsystemBodyPackage(this, componentBody, componentBody._velocity));
+                NetworkSender.SendToServer(new SubsystemBodyPackage(this, componentBody, componentBody._velocity));
             }
 
             CollidedWithBody?.Invoke(componentBody);

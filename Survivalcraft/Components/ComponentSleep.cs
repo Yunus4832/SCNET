@@ -198,14 +198,15 @@ public class ComponentSleep : Component, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            CommonLib.Net.QueuePackage(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.SleepRequest,
+            NetworkSender.SendToServer(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.SleepRequest,
                 allowManualWakeup));
         }
         else
         {
             NetSleep(allowManualWakeup);
-            CommonLib.Net.QueuePackage(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.Sleep,
-                allowManualWakeup, true));
+            NetworkSender.SendToObservers(
+                Entity,
+                new ComponentSleepPackage(this, ComponentSleepPackage.EventType.Sleep, allowManualWakeup, true));
         }
     }
 
@@ -213,12 +214,14 @@ public class ComponentSleep : Component, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            CommonLib.Net.QueuePackage(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.WakeupRequest));
+            NetworkSender.SendToServer(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.WakeupRequest));
         }
         else
         {
             NetWakeUp();
-            CommonLib.Net.QueuePackage(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.WakeUp));
+            NetworkSender.SendToObservers(
+                Entity,
+                new ComponentSleepPackage(this, ComponentSleepPackage.EventType.WakeUp));
         }
     }
 

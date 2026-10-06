@@ -79,8 +79,11 @@ public class ComponentLevel : Component, IUpdateable
         }
 
         NetAddExperience(count, playSound);
-        CommonLib.Net.QueuePackage(new ComponentPlayerPackage(_componentPlayer.PlayerData, count, playSound,
-            _componentPlayer.PlayerData.Level));
+        if (CommonLib.WorkType == WorkType.Server && _componentPlayer.PlayerData.Client is { } owner)
+        {
+            NetworkSender.SendTo(owner, new ComponentPlayerPackage(_componentPlayer.PlayerData, count, playSound,
+                _componentPlayer.PlayerData.Level));
+        }
     }
 
 

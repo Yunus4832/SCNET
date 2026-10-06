@@ -2,14 +2,39 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentHealthPackageHandler : PackageHandlerBase<ComponentHealthPackage>
 {
-    public override void Handle(ComponentHealthPackage package, NetNode? netNode, bool isServer)
+    internal static bool AcceptsDirection(ComponentHealthPackage.EventType type, bool isServer)
     {
-        if (GameManager.Project is null)
+        return isServer
+            ? type == ComponentHealthPackage.EventType.RequestInjure
+            : type is ComponentHealthPackage.EventType.Injure or ComponentHealthPackage.EventType.HitResult or
+                ComponentHealthPackage.EventType.SyncHealth or ComponentHealthPackage.EventType.Damage;
+    }
+
+    public override void Handle(ComponentHealthPackage package, PackageReceiveContext context)
+    {
+        if (GameManager.Project is null || !AcceptsDirection(package.Type, context.IsServer))
         {
             return;
         }
 
         var project = GameManager.Project;
+        if (context.IsServer)
+        {
+            var player = project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData
+                .FirstOrDefault(data => ReferenceEquals(data.Client, context.Sender))?.ComponentPlayer;
+            var mount = player?.Entity.FindComponent<ComponentRider>()?.Mount;
+            if (context.Sender is null || player is null ||
+                (package.TargetId != player.Entity.EntityId && package.TargetId != mount?.Entity.EntityId) ||
+                package.AttackerId != 0 ||
+                (package.IgnoreInvulnerability &&
+                 (package.InjureRequestType != ComponentHealthPackage.RequestInjureType.Choke ||
+                  package.TargetId != player.Entity.EntityId || package.Amount != 0.1f)) ||
+                !float.IsFinite(package.Amount) || package.Amount <= 0f)
+            {
+                return;
+            }
+        }
+
         switch (package.Type)
         {
             case ComponentHealthPackage.EventType.RequestInjure:
@@ -40,26 +65,22 @@ public sealed class ComponentHealthPackageHandler : PackageHandlerBase<Component
                 project.FindEntityById(package.TargetId, entity =>
                 {
                     var health = entity.FindComponent<ComponentHealth>();
-                    ComponentCreature? attacker;
+                    ComponentCreature? attacker = null;
                     if (health == null)
                     {
                         return;
                     }
 
-                    if (package.AttackerId == 0)
-                    {
-                        health.NetInjure(package.Amount, null, package.Cause);
-                        health.Health = package.Health;
-                    }
-                    else
+                    if (package.AttackerId != 0)
                     {
                         project.FindEntityById(package.AttackerId, entity2 =>
                         {
                             attacker = entity2.FindComponent<ComponentCreature>();
-                            health.NetInjure(package.Amount, attacker, package.Cause);
-                            health.Health = package.Health;
                         });
                     }
+
+                    health.NetInjure(package.Amount, attacker, package.Cause);
+                    health.Health = package.Health;
                 });
                 break;
             case ComponentHealthPackage.EventType.HitResult:

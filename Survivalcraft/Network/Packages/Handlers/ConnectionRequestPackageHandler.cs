@@ -6,8 +6,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<ConnectionRequestPackage>
 {
-    public override void Handle(ConnectionRequestPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ConnectionRequestPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ConnectionRequestPackage)}");
@@ -17,16 +18,16 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
         var connectionError = new StringBuilder();
         if (package.MultiplayerClientId == Guid.Empty)
         {
-            if (package.From == null)
+            if (context.Sender == null)
             {
                 return;
             }
 
-            if (package.From.Request != null)
+            if (context.Sender.Request != null)
             {
                 netNode.SendWriterFromPackage(
                     new ConnectionRejectPackage("联机客户端 ID 无效"),
-                    package.From.Request,
+                    context.Sender.Request,
                     true);
             }
 
@@ -38,14 +39,15 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
             return;
         }
 
-        AcceptClient(package, GameManager.Project, netNode, connectionError);
+        AcceptClient(package, GameManager.Project, netNode, connectionError, context);
     }
 
     private static void AcceptClient(
         ConnectionRequestPackage package,
         Project project,
         NetNode netNode,
-        StringBuilder connectionError
+        StringBuilder connectionError,
+        PackageReceiveContext context
     )
     {
         var multiplayerClientId = package.MultiplayerClientId;
@@ -62,7 +64,7 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
                 connectionError.AppendLine("客户端和服务器使用了相同的联机客户端 ID");
             }
             else if (netNode.Peers.FirstOrDefault(c =>
-                         c != package.From &&
+                         !ReferenceEquals(c, context.Sender) &&
                          (c.GUID == multiplayerClientId || c.TokenId == package.TmpToken)) != null)
             {
                 connectionError.AppendLine("你的ID与服务器中某个在线玩家的ID相同");
@@ -83,26 +85,26 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
 
             if (connectionError.Length > 0)
             {
-                if (package.From == null || package.From.Request == null)
+                if (context.Sender == null || context.Sender.Request == null)
                 {
                     return;
                 }
 
                 netNode.SendWriterFromPackage(
                     new ConnectionRejectPackage(connectionError.ToString()),
-                    package.From.Request,
+                    context.Sender.Request,
                     true);
-                Log.Information("Received connection request from " + package.From.IPPoint + ", rejected -- " +
+                Log.Information("Received connection request from " + context.Sender.IPPoint + ", rejected -- " +
                                 connectionError);
             }
             else
             {
-                if (package.From == null || package.From.Request == null)
+                if (context.Sender == null || context.Sender.Request == null)
                 {
                     return;
                 }
 
-                netNode.PendingPeer = package.From.Request.Accept();
+                netNode.PendingPeer = context.Sender.Request.Accept();
                 var addClient = netNode.CreateClient(
                     netNode.PendingPeer,
                     package.TmpToken,
@@ -114,19 +116,19 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
                     netNode.SendWriterFromPackage(clientPackage, c.Peer, true);
                 }
 
-                Log.Information("Received connection request from " + package.From.IPPoint + ", accepted");
+                Log.Information("Received connection request from " + context.Sender.IPPoint + ", accepted");
 
                 netNode.DeliveryEvent(null, null);
             }
         }
         else
         {
-            if (package.From == null || package.From.Request == null)
+            if (context.Sender == null || context.Sender.Request == null)
             {
                 return;
             }
 
-            netNode.SendWriterFromPackage(new ConnectionRejectPackage("无法识别的数据包头"), package.From.Request, true);
+            netNode.SendWriterFromPackage(new ConnectionRejectPackage("无法识别的数据包头"), context.Sender.Request, true);
             Log.Information("无法识别的数据包头");
         }
     }

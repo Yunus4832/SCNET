@@ -1,6 +1,7 @@
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Network.Packages.Handlers;
 
 namespace Game.Subsystems;
 
@@ -26,11 +27,7 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
 
                 var p = new EditableBlockPackage(EditableItemType.Button, default, true, inventory.Id, slotIndex,
                     newVoltageLevel);
-                CommonLib.Net.QueuePackage(p);
-                if (CommonLib.WorkType != WorkType.Client)
-                {
-                    PackageDispatcher.Handle(p, CommonLib.Net, false);
-                }
+                EditableBlockPackageHandler.Submit(p);
             }));
         return true;
     }
@@ -60,11 +57,7 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
                         0,
                         newVoltageLevel
                     );
-                    CommonLib.Net.QueuePackage(p);
-                    if (CommonLib.WorkType != WorkType.Client)
-                    {
-                        PackageDispatcher.Handle(p, CommonLib.Net, false);
-                    }
+                    EditableBlockPackageHandler.Submit(p);
                 }));
         return true;
     }

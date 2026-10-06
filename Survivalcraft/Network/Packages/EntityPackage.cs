@@ -1,4 +1,5 @@
 using EntitySystem.Core;
+using EntitySystem.TemplatesDatabase;
 
 using Game.Network.Enums;
 using Game.Network.Serialization;
@@ -17,6 +18,12 @@ public class EntityPackage : IPackage
 
     public List<Entity> Entities = [];
 
+    public byte[] EntityData = [];
+
+    public readonly List<ClientPackage> Clients = [];
+
+    public readonly List<ValuesDictionary> Players = [];
+
     public int EntityId;
 
     public List<int> EntityIdList = [];
@@ -25,11 +32,8 @@ public class EntityPackage : IPackage
 
     public byte ID => (byte)PackageType.Entity;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
@@ -69,6 +73,23 @@ public class EntityPackage : IPackage
         {
             case EventType.LoadOne:
             case EventType.LoadList:
+                var players = Entities.Select(entity => entity.FindComponent<ComponentPlayer>()?.PlayerData)
+                    .OfType<PlayerData>().Distinct().ToArray();
+                writer.Write(players.Length);
+                foreach (var player in players)
+                {
+                    var client = player.Client;
+                    writer.Write(client is not null);
+                    if (client is not null)
+                    {
+                        new ClientPackage(client.ID, client.TokenId, client.GUID).WriteData(writer);
+                    }
+
+                    var values = new ValuesDictionary();
+                    player.Save(values);
+                    writer.Write(values);
+                }
+
                 writer.WriteEntityLoadList(Entities);
                 break;
             case EventType.Remove:
@@ -92,7 +113,20 @@ public class EntityPackage : IPackage
         {
             case EventType.LoadOne:
             case EventType.LoadList:
-                Entities = reader.ReadEntityLoadList();
+                var count = reader.ReadInt32();
+                for (var i = 0; i < count; i++)
+                {
+                    if (reader.ReadBoolean())
+                    {
+                        var client = new ClientPackage();
+                        client.ReadData(reader);
+                        Clients.Add(client);
+                    }
+
+                    Players.Add(reader.ReadValuesDictionary());
+                }
+
+                EntityData = reader.ReadBuff();
                 break;
             case EventType.Remove:
                 EntityId = reader.ReadInt32();

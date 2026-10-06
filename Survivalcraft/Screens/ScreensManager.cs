@@ -153,19 +153,11 @@ public static class ScreensManager
         }
         else if (factor < 0.5f)
         {
-            if (_animationData.OldScreen != null)
+            var animation = _animationData;
+            ApplyScreenTransition(animation);
+            if (_animationData != animation)
             {
-                _animationData.OldScreen.Leave();
-                RootWidget.Children.Remove(_animationData.OldScreen);
-            }
-
-            if (_animationData.NewScreen != null)
-            {
-                RootWidget.Children.Insert(0, _animationData.NewScreen);
-                _animationData.NewScreen.Enter(_animationData.Parameters);
-                OnEnterScreen?.Invoke();
-                _animationData.NewScreen.ColorTransform = Color.Transparent;
-                RootWidget.IsUpdateEnabled = true;
+                return;
             }
         }
         else if (_animationData.NewScreen != null)
@@ -188,6 +180,17 @@ public static class ScreensManager
 
     private static void EndAnimation()
     {
+        var animation = _animationData!;
+        if (animation.Factor < 0.5f)
+        {
+            animation.Factor = 0.5f;
+            ApplyScreenTransition(animation);
+            if (_animationData != animation)
+            {
+                return;
+            }
+        }
+
         if (_animationData!.NewScreen != null)
         {
             _animationData.NewScreen.ColorTransform = Color.White;
@@ -195,6 +198,24 @@ public static class ScreensManager
         }
 
         _animationData = null;
+    }
+
+    private static void ApplyScreenTransition(AnimationData animation)
+    {
+        if (animation.OldScreen != null)
+        {
+            animation.OldScreen.Leave();
+            RootWidget.Children.Remove(animation.OldScreen);
+        }
+
+        if (animation.NewScreen != null)
+        {
+            RootWidget.Children.Insert(0, animation.NewScreen);
+            animation.NewScreen.ColorTransform = Color.Transparent;
+            RootWidget.IsUpdateEnabled = true;
+            animation.NewScreen.Enter(animation.Parameters);
+            OnEnterScreen?.Invoke();
+        }
     }
 
     private static string GetScreenName(Screen screen)

@@ -1,6 +1,7 @@
 using Game.Commands;
 using Game.Localization;
 using Game.Modding;
+using Game.Network;
 using Game.Network.Packages;
 
 namespace Survivalcraft.Test.Modding;
@@ -264,13 +265,13 @@ public class ModHostTest
             () => new ModNetworkHookMod(calls));
 
         host.LoadAndStart([descriptor]);
-        host.Network.Dispatch(new ModEnvelopePackage("example.net", "downed.sync", []), null, true);
+        host.Network.Dispatch(new ModEnvelopePackage("example.net", "downed.sync", []), new PackageReceiveContext(null, true, null));
 
         Assert.Equal(["high", "normal"], calls);
 
         host.StopAll();
         calls.Clear();
-        host.Network.Dispatch(new ModEnvelopePackage("example.net", "downed.sync", []), null, true);
+        host.Network.Dispatch(new ModEnvelopePackage("example.net", "downed.sync", []), new PackageReceiveContext(null, true, null));
         Assert.Empty(calls);
     }
 

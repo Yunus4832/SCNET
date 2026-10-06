@@ -2,9 +2,11 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ExplosionsPackageHandler : PackageHandlerBase<ExplosionsPackage>
 {
-    public override void Handle(ExplosionsPackage package, NetNode? netNode, bool isServer)
+    internal static bool AcceptsDirection(bool isServer) => !isServer;
+
+    public override void Handle(ExplosionsPackage package, PackageReceiveContext context)
     {
-        if (GameManager.Project is null)
+        if (GameManager.Project is null || !AcceptsDirection(context.IsServer))
         {
             return;
         }

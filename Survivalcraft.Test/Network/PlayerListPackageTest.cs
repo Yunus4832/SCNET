@@ -31,7 +31,7 @@ public class PlayerListPackageTest
     }
 
     [Fact]
-    public void OnlineStateSnapshotRoundTripsAndUsesSnapshotTransport()
+    public void OnlineStateSnapshotRoundTripsAndUsesAtomicReliableTransport()
     {
         var package = new OnlinePlayerStatePackage();
         package.Players.Add(new OnlinePlayerState(
@@ -43,7 +43,7 @@ public class PlayerListPackageTest
         var clone = RoundTrip(package);
 
         Assert.Equal(package.Players, clone.Players);
-        Assert.Equal(PackageTransportPolicy.Snapshot, PackageTransportPolicy.Get(package));
+        Assert.Equal(PackageTransportPolicy.PlayerListState, PackageTransportPolicy.Get(package));
     }
 
     private static PlayerListPackage RoundTrip(PlayerListPackage package)

@@ -569,7 +569,11 @@ public class ComponentMiner : Component, IUpdateable
             var text = LanguageManager.Get(Name, 2);
             if (CommonLib.WorkType != WorkType.Client)
             {
-                CommonLib.Net.QueuePackage(new ComponentHealthPackage(position, velocity, Color.White, text));
+                NetworkSender.SendNearPoint(
+                    Project,
+                    position,
+                    24f,
+                    new ComponentHealthPackage(position, velocity, Color.White, text));
                 var particleSystem = new HitValueParticleSystem(position, velocity, Color.White, text);
                 Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
             }
@@ -810,8 +814,11 @@ public class ComponentMiner : Component, IUpdateable
                         var velocity = 1f * hitDirection + attacker.ComponentBody.Velocity;
                         if (CommonLib.WorkType != WorkType.Client)
                         {
-                            CommonLib.Net.QueuePackage(new ComponentHealthPackage(position, velocity, Color.White,
-                                text2));
+                            NetworkSender.SendNearPoint(
+                                target.Project,
+                                position,
+                                24f,
+                                new ComponentHealthPackage(position, velocity, Color.White, text2));
                             var particleSystem = new HitValueParticleSystem(position, velocity, Color.White, text2);
                             target.Project.FindSubsystem<SubsystemParticles>(true)!.AddParticleSystem(particleSystem);
                         }

@@ -106,10 +106,8 @@ public sealed class GameMessageService(Project project)
         var netNode = CommonLib.Net;
         if (!netNode.IsServer || recipients is null)
         {
-            netNode.QueuePackage(new MessagePackage(message)
-            {
-                Except = except
-            });
+            var audience = except is null ? PackageAudience.Global : PackageAudience.Except(except);
+            netNode.QueuePackage(new MessagePackage(message), audience);
             return;
         }
 
@@ -122,10 +120,7 @@ public sealed class GameMessageService(Project project)
                 continue;
             }
 
-            netNode.QueuePackage(new MessagePackage(message)
-            {
-                To = client
-            });
+            netNode.QueuePackage(new MessagePackage(message), PackageAudience.To(client));
         }
     }
 }

@@ -1,10 +1,25 @@
+using EntitySystem.Core;
+
 namespace Game.Network.Packages.Handlers;
 
 public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackage>
 {
-    public override void Handle(BlockEditPackage package, NetNode? netNode, bool isServer)
+    private static void ReplyOpenInventory(IInventory inventory, Client client)
     {
-        if (package.From == null)
+        if (inventory is Component component &&
+            component.Entity.FindComponent<ComponentBlockEntity>() is { } block)
+        {
+            component.Project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                .EnsureBlockEntityObserved(client, block);
+        }
+
+        NetworkSender.SendTo(client, new BlockEditPackage(inventory));
+    }
+
+    public override void Handle(BlockEditPackage package, PackageReceiveContext context)
+    {
+        var isServer = context.IsServer;
+        if (context.Sender == null)
         {
             Log.Information("出现空玩家打开背包");
             return;
@@ -24,11 +39,9 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 if (isServer)
                 {
                     var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
-                    if (inventory != null)
+                    if (inventory != null && SubsystemInventories.CanClientAccess(inventory, context.Sender))
                     {
-                        IPackage newPackage = new BlockEditPackage(inventory);
-                        newPackage.To = package.From;
-                        CommonLib.Net.QueuePackage(newPackage);
+                        ReplyOpenInventory(inventory, context.Sender);
                     }
                 }
                 else
@@ -77,15 +90,19 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
             case BlockEditPackage.EventType.OpenInventoryByPoint:
                 if (isServer)
                 {
+                    if (!project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                            .IsPositionRelevant(context.Sender, new Vector2(package.Point3.X, package.Point3.Z)))
+                    {
+                        break;
+                    }
+
                     var subsystemBlockEntities = project.FindSubsystem<SubsystemBlockEntities>(true)!;
                     var blockEntity =
                         subsystemBlockEntities.GetBlockEntity(package.Point3.X, package.Point3.Y, package.Point3.Z);
                     var inventory = blockEntity?.Entity.FindComponent<IInventory>(false);
                     if (inventory != null)
                     {
-                        IPackage newPackage = new BlockEditPackage(inventory);
-                        newPackage.To = package.From;
-                        CommonLib.Net.QueuePackage(newPackage);
+                        ReplyOpenInventory(inventory, context.Sender);
                     }
                 }
 
@@ -95,7 +112,8 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
                 {
                     var inventory = subsystemInventories.GetInventoryById(package.InventoryId);
 
-                    if (inventory != null)
+                    if (inventory != null && package.SlotIndex >= 0 && package.SlotIndex < inventory.SlotsCount &&
+                        SubsystemInventories.CanClientAccess(inventory, context.Sender))
                     {
                         var theItemValue = inventory.GetSlotValue(package.SlotIndex);
                         if (Terrain.ExtractContents(theItemValue) == 200)
@@ -112,8 +130,13 @@ public sealed class BlockEditPackageHandler : PackageHandlerBase<BlockEditPackag
             case BlockEditPackage.EventType.EditSign:
                 if (isServer)
                 {
-                    package.To = package.From;
-                    CommonLib.Net.QueuePackage(package);
+                    if (!project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                            .IsPositionRelevant(context.Sender, new Vector2(package.Point3.X, package.Point3.Z)))
+                    {
+                        break;
+                    }
+
+                    CommonLib.Net.QueuePackage(package, PackageAudience.To(context.Sender));
                 }
                 else
                 {

@@ -18,6 +18,24 @@ public abstract class SubsystemEditableItemBehavior<T>(
 
     private SubsystemItemsScanner _subsystemItemsScanner = null!;
 
+    protected abstract EditableBlockPackage CreateBlockStatePackage(Point3 point, T data);
+
+    private void SendChunkState(Client client, Point2 chunk)
+    {
+        foreach (var entry in _blocksData.Where(entry =>
+                     entry.Key.X >> 4 == chunk.X && entry.Key.Z >> 4 == chunk.Y))
+        {
+            NetworkSender.SendTo(client, CreateBlockStatePackage(entry.Key, entry.Value));
+        }
+    }
+
+    public override void Dispose()
+    {
+        _subsystemItemsScanner.ItemsScanned -= GarbageCollectItems;
+        Project.FindSubsystem<SubsystemNetworkInterest>(true)!.ChunkEntered -= SendChunkState;
+        base.Dispose();
+    }
+
     public T? GetBlockData(Point3 point)
     {
         _blocksData.TryGetValue(point, out var value);
@@ -31,6 +49,15 @@ public abstract class SubsystemEditableItemBehavior<T>(
             _blocksData[point] = t;
         }
         else
+        {
+            _blocksData.Remove(point);
+        }
+    }
+
+    public void ClearChunkState(Point2 chunk)
+    {
+        foreach (var point in _blocksData.Keys.Where(point =>
+                     point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y).ToArray())
         {
             _blocksData.Remove(point);
         }
@@ -69,16 +96,16 @@ public abstract class SubsystemEditableItemBehavior<T>(
             var num = FindFreeItemId();
             ItemsData.Add(num, (T)blockData.Copy());
             dropValue.Value = Terrain.ReplaceData(dropValue.Value, num);
-            if (CommonLib.WorkType != WorkType.Client)
+            if (CommonLib.WorkType == WorkType.Server)
             {
                 if (blockData is MemoryBankData memory)
                 {
-                    CommonLib.Net.QueuePackage(new EditableBlockPackage(num, memory));
+                    CommonLib.Net.QueuePackage(new EditableBlockPackage(num, memory), PackageAudience.Global);
                 }
 
                 if (blockData is TruthTableData truthTableData)
                 {
-                    CommonLib.Net.QueuePackage(new EditableBlockPackage(num, truthTableData));
+                    CommonLib.Net.QueuePackage(new EditableBlockPackage(num, truthTableData), PackageAudience.Global);
                 }
             }
         }
@@ -110,6 +137,7 @@ public abstract class SubsystemEditableItemBehavior<T>(
         }
 
         _subsystemItemsScanner.ItemsScanned += GarbageCollectItems;
+        Project.FindSubsystem<SubsystemNetworkInterest>(true)!.ChunkEntered += SendChunkState;
     }
 
     public override void Save(ValuesDictionary valuesDictionary)
@@ -117,10 +145,13 @@ public abstract class SubsystemEditableItemBehavior<T>(
         base.Save(valuesDictionary);
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Blocks", valuesDictionary2);
-        foreach (var blocksDatum in _blocksData)
+        if (!Project.SendToClientMode)
         {
-            valuesDictionary2.SetValue(HumanReadableConverter.ConvertToString(blocksDatum.Key),
-                blocksDatum.Value.SaveString());
+            foreach (var blocksDatum in _blocksData)
+            {
+                valuesDictionary2.SetValue(HumanReadableConverter.ConvertToString(blocksDatum.Key),
+                    blocksDatum.Value.SaveString());
+            }
         }
 
         var valuesDictionary3 = new ValuesDictionary();

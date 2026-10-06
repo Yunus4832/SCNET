@@ -90,7 +90,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
             _isAttack = value;
             if (CommonLib.WorkType != WorkType.Client)
             {
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, value));
+                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, value));
             }
         }
     }

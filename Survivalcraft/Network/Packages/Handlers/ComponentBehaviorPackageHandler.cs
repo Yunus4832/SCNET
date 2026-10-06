@@ -2,8 +2,10 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<ComponentBehaviorPackage>
 {
-    public override void Handle(ComponentBehaviorPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ComponentBehaviorPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ComponentBehaviorPackage)}");
@@ -16,6 +18,15 @@ public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<Compone
         }
 
         var project = GameManager.Project;
+        if (isServer && (package.PackageEventType != ComponentBehaviorPackage.EventType.HumanRow ||
+            context.Sender is null ||
+            !project.FindSubsystem<SubsystemPlayers>(true)!.PlayersData.Any(player =>
+                ReferenceEquals(player.Client, context.Sender) &&
+                player.ComponentPlayer?.Entity.EntityId == package.EntityId)))
+        {
+            return;
+        }
+
         project.FindEntityById(package.EntityId, entity =>
         {
             switch (package.PackageEventType)
@@ -61,8 +72,7 @@ public sealed class ComponentBehaviorPackageHandler : PackageHandlerBase<Compone
                             humanModel.ComponentCreature.ComponentBody.Position, 3f, true);
                         if (isServer)
                         {
-                            package.Except = package.From;
-                            netNode.QueuePackage(package);
+                            NetworkSender.SendToObservers(entity, package, context.Sender);
                         }
                     }
 

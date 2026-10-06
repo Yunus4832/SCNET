@@ -4,16 +4,17 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class InitialWorldSnapshotPackageHandler : PackageHandlerBase<InitialWorldSnapshotPackage>
 {
-    public override void Handle(InitialWorldSnapshotPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(InitialWorldSnapshotPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (isServer || netNode == null || GameManager.Project == null || package.Epoch != netNode.ConnectionEpoch)
         {
             return;
         }
 
         var project = GameManager.Project;
-        package.ClientList.From = package.From;
-        PackageDispatcher.Handle(package.ClientList, netNode, false);
+        PackageDispatcher.Handle(package.ClientList, context);
         var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
         foreach (var values in package.Players)
         {
@@ -30,7 +31,8 @@ public sealed class InitialWorldSnapshotPackageHandler : PackageHandlerBase<Init
 
         project.AddEntities(InitialWorldSnapshotPackage.DeserializeEntities(project, package.EntityData));
         netNode.CurrentConnectionPhase = ConnectionPhase.Live;
-        netNode.QueuePackage(new ConnectionPhaseAckPackage(package.Epoch, ConnectionPhase.WorldSnapshotApplied));
+        netNode.QueuePackage(new ConnectionPhaseAckPackage(package.Epoch, ConnectionPhase.WorldSnapshotApplied),
+            PackageAudience.To(netNode.Server!));
         ScreensManager.FindScreen<GameLoadingScreen>("GameLoading", true)!.WorldSnapshotApplied();
     }
 }

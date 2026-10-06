@@ -153,6 +153,7 @@ public sealed class StarterInstanceManagerTest : IDisposable
 
     public void Dispose()
     {
+        Storage.RegisterFileSystemRoot("starter", AppContext.BaseDirectory);
         Directory.Delete(_directory, true);
     }
 }

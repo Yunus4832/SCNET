@@ -53,7 +53,10 @@ public class ComponentFlu : Component, IUpdateable
     {
         if (CommonLib.WorkType != WorkType.Client && Time.PeriodicEvent(1.0, 0.5))
         {
-            CommonLib.Net.QueuePackage(new ComponentFluPackage(this, ComponentFluPackage.EventType.SyncStat));
+            if (_componentPlayer.PlayerData.Client is { } owner)
+            {
+                NetworkSender.SendTo(owner, new ComponentFluPackage(this, ComponentFluPackage.EventType.SyncStat));
+            }
         }
 
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ||
@@ -82,7 +85,9 @@ public class ComponentFlu : Component, IUpdateable
                 if (CommonLib.WorkType != WorkType.Client)
                 {
                     FluEffect();
-                    CommonLib.Net.QueuePackage(new ComponentFluPackage(this, ComponentFluPackage.EventType.FluEffect));
+                    NetworkSender.SendToObservers(
+                        Entity,
+                        new ComponentFluPackage(this, ComponentFluPackage.EventType.FluEffect));
                 }
             }
         }
@@ -98,7 +103,7 @@ public class ComponentFlu : Component, IUpdateable
                     if (CommonLib.WorkType != WorkType.Client)
                     {
                         StartFlu();
-                        CommonLib.Net.QueuePackage(
+                        NetworkSender.SendToObservers(Entity,
                             new ComponentFluPackage(this, ComponentFluPackage.EventType.StartFlu));
                     }
                 }
@@ -118,7 +123,9 @@ public class ComponentFlu : Component, IUpdateable
                 if (CommonLib.WorkType != WorkType.Client)
                 {
                     Sneeze();
-                    CommonLib.Net.QueuePackage(new ComponentFluPackage(this, ComponentFluPackage.EventType.Sneeze));
+                    NetworkSender.SendToObservers(
+                        Entity,
+                        new ComponentFluPackage(this, ComponentFluPackage.EventType.Sneeze));
                 }
             }
         }

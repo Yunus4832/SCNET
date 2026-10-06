@@ -12,6 +12,34 @@ namespace Survivalcraft.Test.Network;
 public sealed class TerrainTransportPolicyTest
 {
     [Fact]
+    public void TransportChannelsAreContiguousAndCoveredByNetManager()
+    {
+        var channels = Enum.GetValues<NetworkChannel>();
+        Assert.Equal(Enumerable.Range(0, channels.Length).Select(index => (byte)index),
+            channels.Select(channel => (byte)channel));
+        var node = new NetNode();
+        Assert.Equal(channels.Length, node.NetManager.ChannelsCount);
+    }
+
+    [Fact]
+    public void FullFragmentFitsInitialSafeMtuWithoutCompression()
+    {
+        var allocation = new ChunkAllocationId(new Point2(int.MinValue, int.MaxValue), ulong.MaxValue);
+        var chunk = new EncodedTerrainChunk(allocation.Coords, long.MaxValue,
+            new byte[EncodedTerrainChunkFragmenter.DefaultFragmentPayloadSize]);
+        var fragment = Assert.Single(EncodedTerrainChunkFragmenter.Split(chunk, allocation));
+        var package = new SubsystemTerrainPackage(fragment);
+        using var writer = new PackageStreamWriter();
+        writer.Write((byte)0);
+        writer.Write(package.ID);
+        package.WriteData(writer);
+
+        var datagram = CommonLib.GetWriter(writer, out _, CommonLib.CompressionPolicy.None);
+
+        Assert.InRange(datagram.Length, 1, 507);
+    }
+
+    [Fact]
     public void ChunkFragmentsUseIndependentUnreliableDatagrams()
     {
         var coords = new Point2(1, 2);

@@ -190,14 +190,17 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
         }
 
         _isRun = false;
-        CommonLib.Net.QueuePackage(
-            new ComponentFurnacePackage(
-                Entity.EntityId,
-                FireTimeRemaining,
-                SmeltingProgress,
-                HeatLevel
-            )
-        );
+        if (CommonLib.WorkType == WorkType.Server)
+        {
+            var observers = SubsystemInventories.GetObservers(this)
+                .Where(client => client.IsConnected && client.State == ClientState.Playing).ToArray();
+            if (observers.Length > 0)
+            {
+                CommonLib.Net.QueuePackage(
+                    new ComponentFurnacePackage(Entity.EntityId, FireTimeRemaining, SmeltingProgress, HeatLevel),
+                    PackageAudience.To(observers));
+            }
+        }
     }
 
     public override int GetSlotCapacity(int slotIndex, int value)
@@ -242,6 +245,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
 
         FireTimeRemaining = valuesDictionary.GetValue<float>("FireTimeRemaining");
         HeatLevel = valuesDictionary.GetValue<float>("HeatLevel");
+        SmeltingProgress = valuesDictionary.GetValue<float>("SmeltingProgress");
         _updateSmeltingRecipe = true;
     }
 
@@ -250,6 +254,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
         base.Save(valuesDictionary, entityToIdMap);
         valuesDictionary.SetValue("FireTimeRemaining", FireTimeRemaining);
         valuesDictionary.SetValue("HeatLevel", HeatLevel);
+        valuesDictionary.SetValue("SmeltingProgress", SmeltingProgress);
     }
 
     public CraftingRecipe? FindSmeltingRecipe(float heatLevel)

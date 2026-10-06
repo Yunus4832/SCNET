@@ -674,14 +674,15 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 {
                     if (CommonLib.WorkType == WorkType.Client)
                     {
-                        CommonLib.Net.QueuePackage(new ComponentClothingPackage(
+                        NetworkSender.SendToServer(new ComponentClothingPackage(
                             _componentPlayer.PlayerData.CharacterSkinName,
                             ComponentClothingPackage.DataType.RequestSkin));
                     }
                     else if (CommonLib.WorkType == WorkType.Server)
                     {
                         CommonLib.Net.QueuePackage(new ComponentClothingPackage(
-                            _componentPlayer.PlayerData.CharacterSkinName, ComponentClothingPackage.DataType.WhoHas));
+                            _componentPlayer.PlayerData.CharacterSkinName, ComponentClothingPackage.DataType.WhoHas),
+                            PackageAudience.Global);
                     }
                 }
             }

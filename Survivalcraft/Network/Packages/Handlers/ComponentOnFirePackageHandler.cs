@@ -2,9 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentOnFirePackageHandler : PackageHandlerBase<ComponentOnFirePackage>
 {
-    public override void Handle(ComponentOnFirePackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ComponentOnFirePackage package, PackageReceiveContext context)
     {
-        if (GameManager.Project is null)
+        if (GameManager.Project is null || context.IsServer)
         {
             return;
         }
@@ -36,18 +36,17 @@ public sealed class ComponentOnFirePackageHandler : PackageHandlerBase<Component
                         return;
                     }
 
-                    if (package.AttackerEntityId == 0)
-                    {
-                        onFire.SetOnFireNet(null, package.Duration);
-                    }
-                    else
+                    ComponentCreature? attacker = null;
+                    if (package.AttackerEntityId != 0)
                     {
                         project.FindEntityById(package.AttackerEntityId, e2 =>
                         {
-                            var creature = e2.FindComponent<ComponentCreature>();
-                            onFire.SetOnFireNet(creature, package.Duration);
+                            attacker = e2.FindComponent<ComponentCreature>();
                         });
                     }
+
+                    // 攻击者可能不在本客户端兴趣范围，不能因此丢失被观察实体的着火状态。
+                    onFire.SetOnFireNet(attacker, package.Duration);
                 });
                 break;
         }

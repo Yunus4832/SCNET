@@ -2,8 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemSkyPackageHandler : PackageHandlerBase<SubsystemSkyPackage>
 {
-    public override void Handle(SubsystemSkyPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(SubsystemSkyPackage package, PackageReceiveContext context)
     {
+        var isServer = context.IsServer;
         if (GameManager.Project is null)
         {
             return;

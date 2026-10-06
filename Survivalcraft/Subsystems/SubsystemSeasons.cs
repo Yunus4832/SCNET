@@ -50,7 +50,8 @@ public class SubsystemSeasons : Subsystem, IUpdateable
         UpdateSeasonState();
         if (Time.PeriodicEvent(10, 0.0) && CommonLib.WorkType == WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(_subsystemGameInfo.WorldSettings.TimeOfYear));
+            CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(_subsystemGameInfo.WorldSettings.TimeOfYear),
+                PackageAudience.Global);
         }
     }
 

@@ -2,8 +2,20 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
 {
-    public override void Handle(PickablePackage package, NetNode? netNode, bool isServer)
+    internal static void ApplyBaseline(Pickable pickable, PickablePackage package)
     {
+        pickable.Value = package.Value;
+        pickable.Count = package.Count;
+        pickable.Position = package.Position;
+        pickable.Velocity = package.Velocity;
+        pickable.StuckMatrix = package.StuckMatrix;
+        pickable.LastStateTick = package.StateTick;
+    }
+
+    public override void Handle(PickablePackage package, PackageReceiveContext context)
+    {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(PickablePackage)}");
@@ -15,6 +27,12 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
             return;
         }
 
+        // 客户端上行只允许恢复请求，所有拾取物状态均由服务端下发。
+        if (isServer != (package.Type == PickablePackage.PickType.RequestSync))
+        {
+            return;
+        }
+
         var project = GameManager.Project;
         var subsystemPickable = project.FindSubsystem<SubsystemPickables>(true)!;
         switch (package.Type)
@@ -22,34 +40,21 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
             case PickablePackage.PickType.Create:
                 if (subsystemPickable.TryGetPickable(package.Id, out var tmp))
                 {
-                    tmp.Value = package.Value;
-                    tmp.Count = package.Count;
-                    tmp.Velocity = package.Velocity;
-                    tmp.StuckMatrix = package.StuckMatrix;
+                    ApplyBaseline(tmp, package);
                 }
                 else
                 {
-                    subsystemPickable.CreatePickable(package.Id, package.Value, package.Count, package.Position,
-                        package.Velocity, package.StuckMatrix);
+                    var created = subsystemPickable.CreatePickable(package.Id, package.Value, package.Count,
+                        package.Position, package.Velocity, package.StuckMatrix);
+                    if (created is not null)
+                    {
+                        created.LastStateTick = package.StateTick;
+                    }
                 }
 
                 break;
             case PickablePackage.PickType.Update:
-                var receivedIds = new HashSet<ushort>();
-                foreach (var c in package.Pickables)
-                {
-                    receivedIds.Add(c.Id);
-                    subsystemPickable.PickableAction(c.Id, pick => { pick.Position = c.Position; });
-                }
-
-                foreach (var c in subsystemPickable.Pickables)
-                {
-                    if (!receivedIds.Contains(c.Id))
-                    {
-                        subsystemPickable.PickablesToRemove.Add(c);
-                    }
-                }
-
+                subsystemPickable.ApplyPositionSnapshot(package.Pickables, package.StateTick);
                 break;
             case PickablePackage.PickType.Delete:
                 subsystemPickable.PickableAction(
@@ -67,24 +72,34 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                 );
                 break;
             case PickablePackage.PickType.RequestSync:
-                var flag = subsystemPickable.PickableAction(
-                    package.Id,
-                    pick =>
-                    {
-                        netNode.QueuePackage(new PickablePackage(pick, PickablePackage.PickType.Create)
-                        { To = package.From });
-                    }
-                );
-                if (!flag)
+                if (context.Sender is null)
                 {
-                    netNode.QueuePackage(new PickablePackage(package.Id) { To = package.From });
+                    break;
+                }
+
+                var interest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
+                if (subsystemPickable.TryGetPickable(package.Id, out var requested) &&
+                    interest.IsPositionRelevant(context.Sender, requested.Position.XZ))
+                {
+                    netNode.QueuePackage(
+                        new PickablePackage(requested, PickablePackage.PickType.Create),
+                        PackageAudience.To(context.Sender));
+                    interest.Entities.AddObserved(
+                        context.Sender,
+                        EntityInterestGroup.Pickables,
+                        requested.Id);
+                }
+                else
+                {
+                    netNode.QueuePackage(
+                        new PickablePackage(package.Id),
+                        PackageAudience.To(context.Sender));
                 }
 
                 break;
             case PickablePackage.PickType.SetFlyToPosition:
                 subsystemPickable.PickableAction(package.Id, pick => { pick.FlyToPosition = package.FlyToPosition; });
                 break;
-            case PickablePackage.PickType.SyncList:
             case PickablePackage.PickType.CreateList:
                 if (isServer)
                 {
@@ -93,8 +108,12 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
 
                 foreach (var pickable in package.Pickables)
                 {
-                    subsystemPickable.CreatePickable(pickable.Id, pickable.Value, pickable.Count, pickable.Position,
-                        pickable.Velocity, pickable.StuckMatrix);
+                    var created = subsystemPickable.CreatePickable(pickable.Id, pickable.Value, pickable.Count,
+                        pickable.Position, pickable.Velocity, pickable.StuckMatrix);
+                    if (created is not null)
+                    {
+                        created.LastStateTick = package.StateTick;
+                    }
                 }
 
                 break;

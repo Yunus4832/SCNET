@@ -3,7 +3,6 @@ using System.Xml.Linq;
 using Engine.Graphics;
 using Engine.Media;
 
-using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
 
@@ -222,20 +221,6 @@ public sealed class PackageStreamReader : BinaryReader
     {
         var str = ReadString();
         return XmlUtils.LoadXmlFromString(str, true);
-    }
-
-    public List<Entity> ReadEntityLoadList()
-    {
-        if (GameManager.Project is null)
-        {
-            throw new InvalidOperationException("GameManager.Project is not initialized");
-        }
-
-        var messagePack = ReadBuff();
-        var vd = new ValuesDictionary();
-        vd.ApplyOverridesUseMessagePack(messagePack);
-        var entityDataList = new EntityDataList(GameManager.Project.GameDatabase, vd, false);
-        return GameManager.Project.LoadEntitiesAll(entityDataList);
     }
 
     public Texture2D ReadTexture2D()

@@ -2,20 +2,29 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class DispenserPackageHandler : PackageHandlerBase<DispenserPackage>
 {
-    public override void Handle(DispenserPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(DispenserPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(DispenserPackage)}");
             return;
         }
 
-        if (GameManager.Project is null)
+        if (GameManager.Project is null || !isServer)
         {
             return;
         }
 
         var project = GameManager.Project;
+        if (context.Sender is null ||
+            !project.FindSubsystem<SubsystemNetworkInterest>(true)!.IsPositionRelevant(context.Sender,
+                new Vector2(package.Point.X, package.Point.Z)))
+        {
+            return;
+        }
+
         var sut = project.FindSubsystem<SubsystemTerrain>(true)!;
         var value = sut.Terrain.GetCellValue(package.Point.X, package.Point.Y, package.Point.Z);
         if (Terrain.ExtractContents(value) == DispenserBlock.Index)
@@ -27,9 +36,5 @@ public sealed class DispenserPackageHandler : PackageHandlerBase<DispenserPackag
             sut.ChangeCell(package.Point.X, package.Point.Y, package.Point.Z, Terrain.ReplaceData(value, data));
         }
 
-        if (isServer)
-        {
-            netNode.QueuePackage(package);
-        }
     }
 }

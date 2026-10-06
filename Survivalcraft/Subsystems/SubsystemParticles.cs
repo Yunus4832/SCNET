@@ -120,6 +120,11 @@ public class SubsystemParticles : Subsystem, IDrawable, IUpdateable
 
     private void RemoveNetParticleSystem(ParticleSystemBase particleSystem)
     {
+        if (RunMode.Value is RunModeType.HeadlessServer)
+        {
+            return;
+        }
+
         if (particleSystem.SubsystemParticles != this)
         {
             throw new InvalidOperationException("Particle system is not added.");

@@ -5,6 +5,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
+using Game.Network.Enums;
 using Game.Network.Packages;
 
 namespace Game.Components;
@@ -214,7 +215,17 @@ public class ComponentHumanModel : ComponentCreatureModel
             MathUtils.Floor(1.1000000238418579 * subsystemTime.GameTime) !=
             MathUtils.Floor(1.1000000238418579 * (subsystemTime.GameTime - subsystemTime.GameTimeDelta)))
         {
-            CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this));
+            if (CommonLib.WorkType == WorkType.Client)
+            {
+                if (Entity.FindComponent<ComponentPlayer>()?.PlayerData.IsMainPlayer == true)
+                {
+                    NetworkSender.SendToServer(new ComponentBehaviorPackage(this));
+                }
+            }
+            else if (CommonLib.WorkType == WorkType.Server)
+            {
+                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this));
+            }
             _subsystemAudio.PlayRandomSound("Audio/Rowing", random.Float(0.4f, 0.6f), random.Float(-0.3f, 0.2f),
                 ComponentCreature.ComponentBody.Position, 3f, true);
         }

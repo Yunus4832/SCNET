@@ -117,8 +117,16 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             _lastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex)
         {
             _lastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-            CommonLib.Net.QueuePackage(new ComponentInventoryPackage(ComponentMiner.Inventory,
-                ComponentMiner.Inventory.ActiveSlotIndex));
+            var package = new ComponentInventoryPackage(ComponentMiner.Inventory,
+                ComponentMiner.Inventory.ActiveSlotIndex);
+            if (CommonLib.WorkType == WorkType.Server)
+            {
+                NetworkSender.SendToObservers(Entity, package);
+            }
+            else if (CommonLib.WorkType == WorkType.Client)
+            {
+                NetworkSender.SendToServer(package);
+            }
         }
 
         var playerInput = ComponentInput.PlayerInput;
@@ -215,14 +223,15 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             if (CommonLib.WorkType != WorkType.Client)
             //服务器广播玩家数据
             {
-                CommonLib.Net.QueuePackage(
-                    new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate)
-                    { Except = PlayerData.Client });
+                NetworkSender.SendToObservers(
+                    Entity,
+                    new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate),
+                    PlayerData.Client);
             }
             else if (PlayerData.IsMainPlayer)
-            //客户端广播自己的数据
+            //客户端向服务端提交自己的数据
             {
-                CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this,
+                NetworkSender.SendToServer(new ComponentPlayerPackage(this,
                     ComponentPlayerPackage.PlayerAction.BodyUpdate));
             }
         }
@@ -494,7 +503,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                     ComponentMiner.Hit(bodyRaycastResult.Value.ComponentBody, hitPosition, hitDirection);
                     if (CommonLib.WorkType == WorkType.Client)
                     {
-                        CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this,
+                        NetworkSender.SendToServer(new ComponentPlayerPackage(this,
                             bodyRaycastResult.Value.ComponentBody, hitPosition, hitDirection));
                     }
                 }
@@ -516,7 +525,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             }
             else
             {
-                CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this,
+                NetworkSender.SendToServer(new ComponentPlayerPackage(this,
                     ComponentPlayerPackage.PlayerAction.Drop));
             }
         }
@@ -525,22 +534,19 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         {
             ComponentMiner.DigFaceChange = false;
             _lastDigEvent = CurDigEventItem;
-            CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this,
-                ComponentPlayerPackage.PlayerAction.DigEvent));
+            PublishAction(ComponentPlayerPackage.PlayerAction.DigEvent);
         }
 
         if (_lastInteractEvent.InteractEvent != CurInteractEventItem.InteractEvent)
         {
             _lastInteractEvent = CurInteractEventItem;
-            CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this,
-                ComponentPlayerPackage.PlayerAction.InteractEvent));
+            PublishAction(ComponentPlayerPackage.PlayerAction.InteractEvent);
         }
 
         if (_lastAimEvent.AimEvent != CurAimEventItem.AimEvent)
         {
             _lastAimEvent = CurAimEventItem;
-            CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this,
-                ComponentPlayerPackage.PlayerAction.AimEvent));
+            PublishAction(ComponentPlayerPackage.PlayerAction.AimEvent);
         }
 
         if (!playerInput.PickBlockType.HasValue || flag)
@@ -633,6 +639,18 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         _subsystemAudio.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f, 0f);
 
         #endregion
+    }
+
+    private void PublishAction(ComponentPlayerPackage.PlayerAction action)
+    {
+        if (CommonLib.WorkType == WorkType.Server)
+        {
+            NetworkSender.SendToObservers(Entity, new ComponentPlayerPackage(this, action), PlayerData.Client);
+        }
+        else if (CommonLib.WorkType == WorkType.Client)
+        {
+            NetworkSender.SendToServer(new ComponentPlayerPackage(this, action));
+        }
     }
 
     public void AddDigEvent(DigEvent digEvent, Ray3? digRay, TerrainRaycastResult? raycastResult)

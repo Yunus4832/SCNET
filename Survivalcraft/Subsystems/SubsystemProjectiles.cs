@@ -25,6 +25,10 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
 
     private readonly List<Projectile> _projectilesToRemove = [];
 
+    private int _nextNetworkId = 1;
+
+    private uint _networkStateTick;
+
     private readonly Random _random = new();
 
     private SubsystemAudio _subsystemAudio = null!;
@@ -42,6 +46,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
     private SubsystemNoise _subsystemNoise = null!;
+
+    private SubsystemNetworkInterest _subsystemNetworkInterest = null!;
 
     private SubsystemParticles _subsystemParticles = null!;
 
@@ -118,6 +124,12 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
 
     public void Update(float dt)
     {
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            UpdateReplicatedMotion(dt);
+            return;
+        }
+
         var totalElapsedGameTime = _subsystemGameInfo.TotalElapsedGameTime;
         foreach (var projectile in _projectiles)
         {
@@ -214,6 +226,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                         {
                             _subsystemTerrain.DestroyCell(0, cellFace2.X, cellFace2.Y, cellFace2.Z, 0, true, false);
                             _subsystemSoundMaterials.PlayImpactSound(cellValue, position, 1f);
+                            SendEffect(ProjectilePackage.EffectType.Impact, cellValue, position);
                         }
 
                         if (projectile.IsIncendiary)
@@ -238,6 +251,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                         if (num2 > 5f)
                         {
                             _subsystemSoundMaterials.PlayImpactSound(cellValue, position, 1f);
+                            SendEffect(ProjectilePackage.EffectType.Impact, cellValue, position);
                         }
 
                         if (block.Stickable && num2 > 10f && _random.Bool(block2.ProjectileStickProbability))
@@ -282,6 +296,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                         {
                             _subsystemParticles.AddParticleSystem(block.CreateDebrisParticleSystem(_subsystemTerrain,
                                 projectile.Position, projectile.Value, 1f));
+                            SendEffect(ProjectilePackage.EffectType.Debris, projectile.Value, projectile.Position);
                         }
                         else if (!projectile.ToRemove && (vector2.HasValue || projectile.Velocity.Length() < 1f))
                         {
@@ -367,6 +382,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                                     false));
                                 _subsystemAudio.PlayRandomSound("Audio/Splashes", 1f, _random.Float(-0.2f, 0.2f),
                                     projectile.Position, 6f, true);
+                                SendEffect(ProjectilePackage.EffectType.WaterSplash, projectile.Value,
+                                    new Vector3(projectile.Position.X, surfaceHeight.Value, projectile.Position.Z));
                                 MakeProjectileNoise(projectile);
                             }
                         }
@@ -380,6 +397,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                             new MagmaSplashParticleSystem(_subsystemTerrain, projectile.Position, false));
                         _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f),
                             projectile.Position, 3f, true);
+                        SendEffect(ProjectilePackage.EffectType.MagmaSplash, projectile.Value, projectile.Position);
                         projectile.ToRemove = true;
                         _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(projectile.Position.X),
                             Terrain.ToCell(projectile.Position.Y), Terrain.ToCell(projectile.Position.Z),
@@ -394,6 +412,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                     {
                         _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f),
                             projectile.Position, 3f, true);
+                        SendEffect(ProjectilePackage.EffectType.Sizzle, projectile.Value, projectile.Position);
                         projectile.ToRemove = true;
                         _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(projectile.Position.X),
                             Terrain.ToCell(projectile.Position.Y), Terrain.ToCell(projectile.Position.Z),
@@ -411,10 +430,114 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             }
 
             _projectiles.Remove(item);
+            if (CommonLib.WorkType == WorkType.Server)
+            {
+                SendProjectileRemoval(item);
+            }
+
             ProjectileRemoved?.Invoke(item);
         }
 
         _projectilesToRemove.Clear();
+        if (CommonLib.WorkType == WorkType.Server && Time.PeriodicEvent(0.1, 0.0))
+        {
+            UpdateClientProjectileInterests();
+        }
+    }
+
+    private void SendEffect(ProjectilePackage.EffectType effect, int value, Vector3 position)
+    {
+        if (CommonLib.WorkType != WorkType.Server)
+        {
+            return;
+        }
+
+        var package = new ProjectilePackage
+        {
+            Type = ProjectilePackage.EventType.Effect,
+            Effect = effect,
+            Value = value,
+            Position = position
+        };
+        if (effect == ProjectilePackage.EffectType.Debris)
+        {
+            var observers = _subsystemNetworkInterest.GetObservers(position.XZ).ToArray();
+            if (observers.Length > 0)
+            {
+                CommonLib.Net.QueuePackage(package, PackageAudience.To(observers));
+            }
+
+            return;
+        }
+
+        var minDistance = effect == ProjectilePackage.EffectType.Impact ? 5f :
+            effect == ProjectilePackage.EffectType.WaterSplash ? 6f : 3f;
+        var volume = effect == ProjectilePackage.EffectType.Impact ? 0.5f : 1f;
+        var audibleRadius = SubsystemAudio.CalculateAudibleRadius(volume, minDistance);
+        NetworkSender.SendNearPoint(Project, position, audibleRadius, package);
+    }
+
+    public void PlayReplicatedEffect(ProjectilePackage.EffectType effect, int value, Vector3 position)
+    {
+        switch (effect)
+        {
+            case ProjectilePackage.EffectType.Impact:
+                _subsystemSoundMaterials.PlayImpactSound(value, position, 1f);
+                break;
+            case ProjectilePackage.EffectType.Debris:
+                _subsystemParticles.AddParticleSystem(BlocksManager.Blocks[Terrain.ExtractContents(value)]
+                    .CreateDebrisParticleSystem(_subsystemTerrain, position, value, 1f));
+                break;
+            case ProjectilePackage.EffectType.WaterSplash:
+                _subsystemParticles.AddParticleSystem(new WaterSplashParticleSystem(_subsystemTerrain, position, false));
+                _subsystemAudio.PlayRandomSound("Audio/Splashes", 1f, _random.Float(-0.2f, 0.2f), position, 6f, true);
+                break;
+            case ProjectilePackage.EffectType.MagmaSplash:
+                _subsystemParticles.AddParticleSystem(new MagmaSplashParticleSystem(_subsystemTerrain, position, false));
+                goto case ProjectilePackage.EffectType.Sizzle;
+            case ProjectilePackage.EffectType.Sizzle:
+                _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f), position, 3f, true);
+                break;
+        }
+    }
+
+    private void UpdateReplicatedMotion(float dt)
+    {
+        foreach (var projectile in _projectiles)
+        {
+            var chunk = _subsystemTerrain.Terrain.GetChunkAtCell(
+                Terrain.ToCell(projectile.Position.X), Terrain.ToCell(projectile.Position.Z), false);
+            projectile.NoChunk = chunk is not { MainThreadState: > TerrainChunkState.InvalidContents4 };
+            if (projectile.NoChunk)
+            {
+                projectile.TrailParticleSystem?.IsStopped = true;
+                continue;
+            }
+
+            var block = BlocksManager.Blocks[Terrain.ExtractContents(projectile.Value)];
+            projectile.Position += projectile.Velocity * dt;
+            projectile.IsInWater = IsWater(projectile.Position);
+            var damping = MathUtils.Pow(projectile.IsInWater ? 0.001f : block.ProjectileDamping, dt);
+            projectile.Velocity.Y -= 10f * dt;
+            projectile.Velocity *= damping;
+            projectile.AngularVelocity *= damping;
+            projectile.Rotation += projectile.AngularVelocity * dt;
+            if (projectile.TrailParticleSystem is not { } trail)
+            {
+                continue;
+            }
+
+            if (!_subsystemParticles.ContainsParticleSystem((ParticleSystemBase)trail))
+            {
+                _subsystemParticles.AddParticleSystem((ParticleSystemBase)trail);
+            }
+
+            var rotation = projectile.Rotation.LengthSquared() > 0f
+                ? Matrix.CreateFromAxisAngle(Vector3.Normalize(projectile.Rotation), projectile.Rotation.Length())
+                : Matrix.Identity;
+            trail.Position = projectile.Position + Vector3.TransformNormal(projectile.TrailOffset, rotation);
+            trail.IsStopped = projectile.IsInWater;
+        }
     }
 
     public event Action<Projectile>? ProjectileAdded;
@@ -434,7 +557,6 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         }
 
         var proj = AddProjectileNet(value, position, velocity, angularVelocity, owner);
-        CommonLib.Net.QueuePackage(new ProjectilePackage(proj));
         return proj;
     }
 
@@ -443,11 +565,13 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         Vector3 position,
         Vector3 velocity,
         Vector3 angularVelocity,
-        ComponentCreature? owner
+        ComponentCreature? owner,
+        int networkId = 0
     )
     {
         var projectile = new Projectile
         {
+            NetworkId = networkId != 0 ? networkId : AllocateNetworkId(),
             Value = value,
             Position = position,
             Velocity = velocity,
@@ -460,7 +584,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         };
         _projectiles.Add(projectile);
         ProjectileAdded?.Invoke(projectile);
-        if (owner is { PlayerStats: not null })
+        if (CommonLib.WorkType != WorkType.Client && owner is { PlayerStats: not null })
         {
             owner.PlayerStats.RangedAttacks++;
         }
@@ -483,13 +607,13 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         }
 
         proj.IsFireProjectile = true;
-        CommonLib.Net.QueuePackage(new ProjectilePackage(proj));
 
         return proj;
     }
 
     public Projectile? FireProjectileNet(int value, Vector3 position, Vector3 velocity, Vector3 angularVelocity,
-        ComponentCreature? owner)
+        ComponentCreature? owner,
+        int networkId = 0)
     {
         var num = Terrain.ExtractContents(value);
         var block = BlocksManager.Blocks[num];
@@ -521,14 +645,56 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             return null;
         }
 
-        var projectile = AddProjectileNet(value, vector, velocity, angularVelocity, owner);
+        var projectile = AddProjectileNet(value, vector, velocity, angularVelocity, owner, networkId);
+        InitializeFiredProjectile(projectile);
+        return projectile;
+    }
+
+    public Projectile AddReplicatedProjectile(ProjectilePackage package, ComponentCreature? owner)
+    {
+        var projectile = AddProjectileNet(
+            package.Value,
+            package.Position,
+            package.Velocity,
+            package.AngularVelocity,
+            owner,
+            package.NetworkId);
+        if (package.IsFireProjectile)
+        {
+            InitializeFiredProjectile(projectile);
+        }
+
+        projectile.TrailOffset = package.TrailOffset;
+        projectile.Rotation = package.Rotation;
+        projectile.LastNetworkStateTick = package.StateTick;
+        return projectile;
+    }
+
+    internal static bool ApplyNetworkMotion(Projectile projectile, ProjectilePackage package)
+    {
+        if (unchecked((int)(package.StateTick - projectile.LastNetworkStateTick)) <= 0)
+        {
+            return false;
+        }
+
+        projectile.LastNetworkStateTick = package.StateTick;
+        projectile.Position = package.Position;
+        projectile.Rotation = package.Rotation;
+        projectile.Velocity = package.Velocity;
+        projectile.AngularVelocity = package.AngularVelocity;
+        return true;
+    }
+
+    private void InitializeFiredProjectile(Projectile projectile)
+    {
+        projectile.IsFireProjectile = true;
+        var num = Terrain.ExtractContents(projectile.Value);
         var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
         foreach (var behavior in blockBehaviors)
         {
             behavior.OnFiredAsProjectile(projectile);
         }
 
-        return projectile;
     }
 
     public void AddTrail(Projectile projectile, Vector3 offset, ITrailParticleSystem particleSystem)
@@ -564,6 +730,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemNoise = Project.FindSubsystem<SubsystemNoise>(true)!;
+        _subsystemNetworkInterest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         _subsystemExplosions = Project.FindSubsystem<SubsystemExplosions>(true)!;
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _subsystemBlockBehaviors = Project.FindSubsystem<SubsystemBlockBehaviors>(true)!;
@@ -574,11 +741,21 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         {
             var projectile = new Projectile
             {
+                NetworkId = item.GetValue("NetworkId", 0),
                 Value = item.GetValue<int>("Value"),
                 Position = item.GetValue<Vector3>("Position"),
                 Velocity = item.GetValue<Vector3>("Velocity"),
                 CreationTime = item.GetValue<double>("CreationTime")
             };
+            if (projectile.NetworkId == 0)
+            {
+                projectile.NetworkId = AllocateNetworkId();
+            }
+            else
+            {
+                _nextNetworkId = Math.Max(_nextNetworkId, projectile.NetworkId + 1);
+            }
+
             _projectiles.Add(projectile);
         }
     }
@@ -587,16 +764,114 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
     {
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Projectiles", valuesDictionary2);
+        if (Project.SendToClientMode)
+        {
+            return;
+        }
+
         var num = 0;
         foreach (var projectile in _projectiles)
         {
             var valuesDictionary3 = new ValuesDictionary();
             valuesDictionary2.SetValue(num.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
             valuesDictionary3.SetValue("Value", projectile.Value);
+            valuesDictionary3.SetValue("NetworkId", projectile.NetworkId);
             valuesDictionary3.SetValue("Position", projectile.Position);
             valuesDictionary3.SetValue("Velocity", projectile.Velocity);
             valuesDictionary3.SetValue("CreationTime", projectile.CreationTime);
             num++;
+        }
+    }
+
+    public Projectile? FindProjectile(int networkId)
+    {
+        return _projectiles.Find(projectile => projectile.NetworkId == networkId);
+    }
+
+    public void RemoveProjectileNet(int networkId)
+    {
+        var projectile = FindProjectile(networkId);
+        if (projectile is null)
+        {
+            return;
+        }
+
+        RemoveTrail(projectile);
+        _projectiles.Remove(projectile);
+        ProjectileRemoved?.Invoke(projectile);
+    }
+
+    private int AllocateNetworkId()
+    {
+        return _nextNetworkId++;
+    }
+
+    private void SendProjectileRemoval(Projectile projectile)
+    {
+        var observers = _subsystemNetworkInterest.Entities
+            .GetObservers(EntityInterestGroup.Projectiles, projectile.NetworkId)
+            .Where(client => client.IsConnected)
+            .ToArray();
+        if (observers.Length > 0)
+        {
+            CommonLib.Net.QueuePackage(
+                new ProjectilePackage(projectile.NetworkId),
+                PackageAudience.To(observers));
+        }
+
+        _subsystemNetworkInterest.Entities.RemoveEntity(
+            EntityInterestGroup.Projectiles,
+            projectile.NetworkId);
+    }
+
+    private void UpdateClientProjectileInterests()
+    {
+        _networkStateTick++;
+        var projectiles = _projectiles.ToDictionary(projectile => projectile.NetworkId);
+        var relevant = _subsystemNetworkInterest.GetPointCandidates(projectiles.Values.Select(projectile =>
+            (projectile.NetworkId, projectile.Position.XZ)));
+        foreach (var client in CommonLib.Net.Clients.Values)
+        {
+            if (client == CommonLib.Net.Self || !client.IsConnected)
+            {
+                continue;
+            }
+
+            var current = relevant.TryGetValue(client, out var ids) ? ids : [];
+            var changes = _subsystemNetworkInterest.Entities.Synchronize(
+                client,
+                EntityInterestGroup.Projectiles,
+                current,
+                projectiles.ContainsKey,
+                3);
+            foreach (var networkId in changes.Entered)
+            {
+                if (projectiles.TryGetValue(networkId, out var projectile))
+                {
+                    CommonLib.Net.QueuePackage(
+                        new ProjectilePackage(projectile) { StateTick = _networkStateTick },
+                        PackageAudience.To(client));
+                }
+            }
+
+            foreach (var networkId in changes.Left)
+            {
+                CommonLib.Net.QueuePackage(
+                    new ProjectilePackage(networkId),
+                    PackageAudience.To(client));
+            }
+
+            foreach (var networkId in current.Except(changes.Entered))
+            {
+                var projectile = projectiles[networkId];
+                CommonLib.Net.QueuePackage(
+                    new ProjectilePackage(projectile)
+                    {
+                        Type = ProjectilePackage.EventType.Update,
+                        StateTick = _networkStateTick
+                    },
+                    PackageAudience.To(client));
+            }
         }
     }
 

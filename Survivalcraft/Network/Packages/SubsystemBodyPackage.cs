@@ -37,11 +37,8 @@ public class SubsystemBodyPackage : IPackage
 
     public byte ID => (byte)PackageType.SubsystemBody;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.Playing;
 

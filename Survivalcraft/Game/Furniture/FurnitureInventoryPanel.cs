@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Network.Packages.Handlers;
 
 namespace Game;
 
@@ -13,6 +14,8 @@ public class FurnitureInventoryPanel : CanvasWidget
     private readonly ButtonWidget _addButton;
 
     private int _assignedPage;
+
+    private int _networkRevision;
 
     private readonly ComponentPlayer _componentPlayer;
 
@@ -86,6 +89,18 @@ public class FurnitureInventoryPanel : CanvasWidget
 
     public override void Update()
     {
+        if (_networkRevision != SubsystemFurnitureBlockBehavior.NetworkRevision)
+        {
+            _networkRevision = SubsystemFurnitureBlockBehavior.NetworkRevision;
+            if (ComponentFurnitureInventory.FurnitureSet is not FurnitureSetDefault &&
+                !SubsystemFurnitureBlockBehavior.FurnitureSets.Contains(ComponentFurnitureInventory.FurnitureSet))
+            {
+                ComponentFurnitureInventory.FurnitureSet = FurnitureSetDefault.Default;
+            }
+
+            Invalidate();
+        }
+
         if (_populateNeeded)
         {
             Populate();
@@ -293,14 +308,6 @@ public class FurnitureInventoryPanel : CanvasWidget
         _assignedPage = ComponentFurnitureInventory.PageIndex;
     }
 
-    public void NewFurnitureSetLogic(string s, string from = "")
-    {
-        var furnitureSet = SubsystemFurnitureBlockBehavior.NewFurnitureSet(s, from);
-        ComponentFurnitureInventory.FurnitureSet = furnitureSet;
-        Populate();
-        _furnitureSetList.ScrollToItem(furnitureSet);
-    }
-
     public void NewFurnitureSet()
     {
         _componentPlayer.GuiWidget.Input.EnterText(
@@ -310,25 +317,9 @@ public class FurnitureInventoryPanel : CanvasWidget
             20,
             delegate (string s)
             {
-                NewFurnitureSetLogic(s);
-                CommonLib.Net.QueuePackage(new FurniturePackage(s));
+                FurniturePackageHandler.Submit(new FurniturePackage(new FurnitureSet { Name = s }));
             }
         );
-    }
-
-    public void DeleteFurnitureSetLogic(FurnitureSet furnitureSet)
-    {
-        if (furnitureSet is FurnitureSetDefault)
-        {
-            return;
-        }
-
-        var num = SubsystemFurnitureBlockBehavior.FurnitureSets.IndexOf(furnitureSet);
-        SubsystemFurnitureBlockBehavior.DeleteFurnitureSet(furnitureSet);
-        SubsystemFurnitureBlockBehavior.GarbageCollectDesigns();
-        ComponentFurnitureInventory.FurnitureSet =
-            num > 0 ? SubsystemFurnitureBlockBehavior.FurnitureSets[num - 1] : FurnitureSetDefault.Default;
-        Invalidate();
     }
 
     public void DeleteFurnitureSet()
@@ -339,19 +330,7 @@ public class FurnitureInventoryPanel : CanvasWidget
             return;
         }
 
-        DeleteFurnitureSetLogic(furnitureSet);
-        CommonLib.Net.QueuePackage(new FurniturePackage(furnitureSet.Name));
-    }
-
-    public void RenameFurnitureSetLogic(FurnitureSet furnitureSet, string s)
-    {
-        if (furnitureSet is FurnitureSetDefault)
-        {
-            return;
-        }
-
-        furnitureSet.Name = s;
-        Invalidate();
+        FurniturePackageHandler.Submit(new FurniturePackage(furnitureSet.Name));
     }
 
     public void RenameFurnitureSet()
@@ -369,21 +348,9 @@ public class FurnitureInventoryPanel : CanvasWidget
             20,
             delegate (string s)
             {
-                RenameFurnitureSetLogic(furnitureSet, s);
-                CommonLib.Net.QueuePackage(new FurniturePackage(furnitureSet.Name, s));
+                FurniturePackageHandler.Submit(new FurniturePackage(furnitureSet.Name, s));
             }
         );
-    }
-
-    public void MoveFurnitureSetLogic(FurnitureSet furnitureSet, int move)
-    {
-        if (furnitureSet is FurnitureSetDefault)
-        {
-            return;
-        }
-
-        SubsystemFurnitureBlockBehavior.MoveFurnitureSet(furnitureSet, move);
-        Invalidate();
     }
 
     public void MoveFurnitureSet(int move)
@@ -393,16 +360,22 @@ public class FurnitureInventoryPanel : CanvasWidget
             return;
         }
 
-        MoveFurnitureSetLogic(furnitureSet, move);
-        CommonLib.Net.QueuePackage(new FurniturePackage(furnitureSet, move));
+        FurniturePackageHandler.Submit(new FurniturePackage(furnitureSet, move));
     }
 
     private void ImportFurnitureSet(SubsystemTerrain subsystemTerrain, string text)
     {
         var num = 0;
         var num2 = 0;
-        var list =
-            FurnitureDesign.ListChains(FurniturePacksManager.LoadFurniturePack(subsystemTerrain, text));
+        var designs = FurniturePacksManager.LoadFurniturePack(subsystemTerrain, text);
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            FurniturePackageHandler.Submit(new FurniturePackage(designs.ToList(),
+                FurniturePacksManager.GetDisplayName(text)));
+            return;
+        }
+
+        var list = FurnitureDesign.ListChains(designs);
         var list2 = new List<FurnitureDesign>();
         SubsystemFurnitureBlockBehavior.GarbageCollectDesigns();
         foreach (var item in list)
@@ -428,7 +401,7 @@ public class FurnitureInventoryPanel : CanvasWidget
                 SubsystemFurnitureBlockBehavior.NewFurnitureSet(FurniturePacksManager.GetDisplayName(text), text);
             if (CommonLib.WorkType == WorkType.Server)
             {
-                CommonLib.Net.QueuePackage(new FurniturePackage(furnitureSet));
+                CommonLib.Net.QueuePackage(new FurniturePackage(furnitureSet), PackageAudience.Global);
             }
 
             foreach (var item2 in list2)
@@ -436,7 +409,7 @@ public class FurnitureInventoryPanel : CanvasWidget
                 SubsystemFurnitureBlockBehavior.AddToFurnitureSet(item2, furnitureSet);
                 if (CommonLib.WorkType == WorkType.Server)
                 {
-                    CommonLib.Net.QueuePackage(new FurniturePackage(item2, furnitureSet));
+                    CommonLib.Net.QueuePackage(new FurniturePackage(item2, furnitureSet), PackageAudience.Global);
                 }
             }
 

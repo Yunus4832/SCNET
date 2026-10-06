@@ -160,7 +160,7 @@ internal static class WorldControlCommandHandlers
         seasons.SetTimeOfYear(timeOfYear);
         if (CommonLib.WorkType is WorkType.Server)
         {
-            CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(timeOfYear));
+            CommonLib.Net.QueuePackage(new SubsystemSeasonPackage(timeOfYear), PackageAudience.Global);
         }
 
         return CommandResult.LocalizedPublicToast(
@@ -208,7 +208,7 @@ internal static class WorldControlCommandHandlers
         if (CommonLib.WorkType is WorkType.Server)
         {
             CommonLib.Net.QueuePackage(
-                SubsystemWeatherPackage.CreateSnapshot(weather));
+                SubsystemWeatherPackage.CreateSnapshot(weather), PackageAudience.Global);
         }
     }
 

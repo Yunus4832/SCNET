@@ -12,6 +12,7 @@ using Game.Widgets;
 
 namespace Survivalcraft.Test.Modding;
 
+[Collection(ConfigFileCollection.Name)]
 public class GameModRuntimeTest
 {
     [Fact]

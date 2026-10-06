@@ -409,7 +409,7 @@ public partial class PlayerData : IDisposable
                 HideSpawnDialog();
                 if (CommonLib.WorkType == WorkType.Client)
                 {
-                    CommonLib.Net.QueuePackage(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Playing));
+                    NetworkSender.SendToServer(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Playing));
                 }
             },
             delegate
@@ -504,7 +504,7 @@ public partial class PlayerData : IDisposable
                 {
                     if (CommonLib.WorkType == WorkType.Client && IsMainPlayer)
                     {
-                        CommonLib.Net.QueuePackage(new ComponentPlayerPackage(this,
+                        NetworkSender.SendToServer(new ComponentPlayerPackage(this,
                             ComponentPlayerPackage.PlayerAction.Restart));
                     }
 
@@ -651,6 +651,12 @@ public partial class PlayerData : IDisposable
 
     public void Update()
     {
+        // 客户端的远端玩家仅是复制元数据，不能驱动本地出生/死亡状态机。
+        if (CommonLib.WorkType == WorkType.Client && !IsMainPlayer)
+        {
+            return;
+        }
+
         _stateMachine.Update();
     }
 

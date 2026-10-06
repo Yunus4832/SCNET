@@ -40,7 +40,7 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
             field = value;
             if (CommonLib.WorkType == WorkType.Server)
             {
-                CommonLib.Net.QueuePackage(new ComponentBehaviorPackage(this, field));
+                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, field));
             }
         }
     }

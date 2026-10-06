@@ -2,15 +2,15 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class SubsystemElectricityPackageHandler : PackageHandlerBase<SubsystemElectricityPackage>
 {
-    public override void Handle(SubsystemElectricityPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(SubsystemElectricityPackage package, PackageReceiveContext context)
     {
-        if (GameManager.Project is null)
+        if (context.IsServer || GameManager.Project is null)
         {
             return;
         }
 
         var project = GameManager.Project;
-        package.Subsystem = project.FindSubsystem<SubsystemElectricity>(true)!;
-        package.Subsystem.List.AddRange(package.NetSimulates);
+        var subsystem = project.FindSubsystem<SubsystemElectricity>(true)!;
+        subsystem.ReceiveNetworkSnapshot(package.Snapshot);
     }
 }

@@ -28,10 +28,9 @@ public sealed class TerrainChunkProtocolTest
         chunk.SetCellValueFast(0, 0, 0, 12);
         var encoded = NetworkChunkCodec.Encode(chunk);
         var allocation = new ChunkAllocationId(chunk.Coords, 99);
-        var fragment = Assert.Single(EncodedTerrainChunkFragmenter.Split(
+        var fragment = EncodedTerrainChunkFragmenter.Split(
             encoded,
-            allocation,
-            encoded.Payload.Length));
+            allocation).First();
         var clone = RoundTrip(new SubsystemTerrainPackage(fragment));
 
         Assert.Equal(fragment.Allocation, clone.ChunkFragment.Allocation);

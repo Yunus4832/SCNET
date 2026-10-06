@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 
 using Game.Network;
+using Game.Network.Enums;
 using Game.Network.Packages;
 
 namespace Game.Widgets;
@@ -108,8 +109,11 @@ public class CrossbowWidget : CanvasWidget
                 _dragStartOffset = null;
                 if (draw == 15)
                 {
-                    CommonLib.Net.QueuePackage(new BlockEditPackage(_inventory, _slotIndex,
-                        BlockEditPackage.EventType.CrossbowPull));
+                    if (CommonLib.WorkType == WorkType.Client)
+                    {
+                        NetworkSender.SendToServer(new BlockEditPackage(_inventory, _slotIndex,
+                            BlockEditPackage.EventType.CrossbowPull));
+                    }
 
                     AudioManager.PlaySound("Audio/UI/ItemMoved", 1f, 0f, 0f);
                     return;

@@ -4,10 +4,10 @@ public interface IPackageHandler
 {
     Type PackageType { get; }
 
-    void Handle(IPackage package, NetNode? netNode, bool isServer);
+    void Handle(IPackage package, PackageReceiveContext context);
 }
 
 public interface IPackageHandler<in TPackage> : IPackageHandler where TPackage : IPackage
 {
-    void Handle(TPackage package, NetNode? netNode, bool isServer);
+    void Handle(TPackage package, PackageReceiveContext context);
 }

@@ -27,6 +27,11 @@ public class RandomGeneratorElectricElement : RotateableElectricElement
 
     public override bool Simulate()
     {
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            return RestorePersistentVoltage(SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point) ?? _voltage);
+        }
+
         var voltage = _voltage;
         var flag = false;
         var flag2 = false;
@@ -91,5 +96,12 @@ public class RandomGeneratorElectricElement : RotateableElectricElement
         }
 
         return v;
+    }
+
+    public override bool RestorePersistentVoltage(float voltage)
+    {
+        var changed = !_voltage.Equals(voltage);
+        _voltage = voltage;
+        return changed;
     }
 }

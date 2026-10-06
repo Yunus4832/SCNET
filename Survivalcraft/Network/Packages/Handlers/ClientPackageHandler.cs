@@ -4,8 +4,24 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
 {
-    public override void Handle(ClientPackage package, NetNode? netNode, bool isServer)
+    internal static Client ResolveServerClient(Client? current, Client incoming, Client? sender)
     {
+        if (current is not null && current.GUID == incoming.GUID &&
+            ReferenceEquals(current.Peer, sender?.Peer))
+        {
+            current.ID = incoming.ID;
+            current.TokenId = incoming.TokenId;
+            current.State = incoming.State;
+            return current;
+        }
+
+        incoming.Peer = sender?.Peer;
+        return incoming;
+    }
+
+    public override void Handle(ClientPackage package, PackageReceiveContext context)
+    {
+        var netNode = context.Node;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(ClientPackage)}");
@@ -22,7 +38,7 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
 
                 var project = GameManager.Project;
                 netNode.AddClient(new Client(
-                    package.From?.Peer,
+                    context.Sender?.Peer,
                     package.Client!.ID,
                     package.Client.TokenId,
                     package.Client.GUID,
@@ -42,11 +58,12 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
             case ClientPackage.EventType.SyncList:
                 foreach (var c in package.List)
                 {
+                    var client = c;
                     if (c.ID == 0)
                     {
-                        c.Peer = package.From?.Peer;
-                        c.Peer?.Tag = c;
-                        netNode.Server = package.From;
+                        client = ResolveServerClient(netNode.Server, c, context.Sender);
+                        client.Peer?.Tag = client;
+                        netNode.Server = client;
                     }
                     else
                     {
@@ -56,7 +73,7 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
                         }
                     }
 
-                    netNode.AddClient(c);
+                    netNode.AddClient(client);
                 }
 
                 if (netNode.Self == null)
@@ -69,11 +86,10 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
             case ClientPackage.EventType.StateChange:
                 if (netNode.Clients.TryGetValue(package.Client!.ID, out var nodeClient))
                 {
-                    package.From = nodeClient;
-                    if (package.From.State != package.Client.State)
+                    if (nodeClient.State != package.Client.State)
                     {
-                        package.From.State = package.Client.State;
-                        netNode.OnClientStateChanged?.Invoke(package.From);
+                        nodeClient.State = package.Client.State;
+                        netNode.OnClientStateChanged?.Invoke(nodeClient);
                     }
                 }
 

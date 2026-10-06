@@ -67,7 +67,13 @@ public class SubsystemBlockEntities : Subsystem
         var componentBlockEntity = entity.FindComponent<ComponentBlockEntity>();
         if (componentBlockEntity != null)
         {
-            BlockEntities.Remove(componentBlockEntity.Coordinates);
+            RemoveBlockEntity(componentBlockEntity);
         }
+    }
+
+    internal bool RemoveBlockEntity(ComponentBlockEntity block)
+    {
+        return BlockEntities.TryGetValue(block.Coordinates, out var registered) &&
+               ReferenceEquals(registered, block) && BlockEntities.Remove(block.Coordinates);
     }
 }

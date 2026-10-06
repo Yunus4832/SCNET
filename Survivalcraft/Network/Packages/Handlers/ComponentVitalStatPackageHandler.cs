@@ -2,8 +2,9 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class ComponentVitalStatPackageHandler : PackageHandlerBase<ComponentVitalStatPackage>
 {
-    public override void Handle(ComponentVitalStatPackage package, NetNode? netNode, bool isServer)
+    public override void Handle(ComponentVitalStatPackage package, PackageReceiveContext context)
     {
+        var isServer = context.IsServer;
         if (GameManager.Project is null)
         {
             return;

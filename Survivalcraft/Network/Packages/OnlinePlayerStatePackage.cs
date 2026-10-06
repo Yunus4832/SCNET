@@ -9,11 +9,8 @@ public sealed class OnlinePlayerStatePackage : IPackage
 
     public byte ID => (byte)PackageType.OnlinePlayerState;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.ProjectLoaded;
 
@@ -21,21 +18,9 @@ public sealed class OnlinePlayerStatePackage : IPackage
     {
     }
 
-    public OnlinePlayerStatePackage(SubsystemPlayers subsystemPlayers)
+    public OnlinePlayerStatePackage(IEnumerable<OnlinePlayerState> players)
     {
-        foreach (var playerData in subsystemPlayers.PlayersData)
-        {
-            if (playerData.ComponentPlayer is not { } player)
-            {
-                continue;
-            }
-
-            Players.Add(new OnlinePlayerState(
-                playerData.PlayerGUID,
-                player.ComponentBody.Position,
-                MathUtils.Saturate(player.ComponentHealth.Health),
-                player.ComponentSleep.IsSleeping));
-        }
+        Players.AddRange(players);
     }
 
     public void WriteData(PackageStreamWriter writer)

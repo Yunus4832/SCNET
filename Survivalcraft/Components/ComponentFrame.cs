@@ -7,10 +7,6 @@ public class ComponentFrame : Component
 {
     private bool _cachedMatrixValid;
 
-    public Vector3? SendPosition;
-
-    public Quaternion? SendRotation;
-
     public virtual Vector3 Position
     {
         get;
@@ -68,8 +64,6 @@ public class ComponentFrame : Component
     {
         Position = valuesDictionary.GetValue<Vector3>("Position");
         Rotation = valuesDictionary.GetValue<Quaternion>("Rotation");
-        RotationChanged += obj => { SendRotation = obj.Rotation; };
-        PositionChanged += obj => { SendPosition = obj.Position; };
     }
 
     public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)

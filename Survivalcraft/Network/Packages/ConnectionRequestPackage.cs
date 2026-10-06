@@ -19,11 +19,8 @@ public class ConnectionRequestPackage : IPackage
 
     public byte ID => (byte)PackageType.ConnectionRequest;
 
-    public Client? To { get; set; }
 
-    public Client? Except { get; set; }
 
-    public Client? From { get; set; }
 
     public ClientState MinNeedState => ClientState.NotConnected;
 

@@ -4,6 +4,16 @@
 
 如果只是配置、下载或启用模组，见 [Mods.md](./Mods.md)。
 
+## 网络消息受众
+
+`context.Network.Send(messageType, payload, audience)` 与消息处理上下文的 `Send`
+要求显式传入 `Game.Network.PackageAudience`，没有默认广播或可选 `to/except` 参数。
+全局消息使用 `PackageAudience.Global`，定向消息使用 `PackageAudience.To(client)`，
+空间消息将统一兴趣查询得到的观察者集合传入 `PackageAudience.To(observers)`。
+集合会在创建受众时复制，空集合不会退回全局广播；连接按对象身份匹配。
+客户端上行消息应显式指定当前服务端连接，不把上行请求描述成全局广播。
+`Reply` 只回复当前接收上下文的原发送者；没有发送者时不发送。
+
 ## 创建项目
 
 Install the published template package:

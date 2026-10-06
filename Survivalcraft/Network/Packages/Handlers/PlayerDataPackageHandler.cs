@@ -2,15 +2,27 @@ namespace Game.Network.Packages.Handlers;
 
 public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPackage>
 {
-    public override void Handle(PlayerDataPackage package, NetNode? netNode, bool isServer)
+    internal static bool CanCreatePlayer(Client? sender, IEnumerable<Guid> existingPlayers) =>
+        sender is not null && sender.GUID != Guid.Empty && !existingPlayers.Contains(sender.GUID);
+
+    internal static bool AcceptsDirection(PlayerDataPackage.DataType type, bool isServer) =>
+        isServer
+            ? type is PlayerDataPackage.DataType.Create or PlayerDataPackage.DataType.Delete or
+                PlayerDataPackage.DataType.SetUpdateLocation
+            : type is PlayerDataPackage.DataType.Modify or PlayerDataPackage.DataType.CloseTime or
+                PlayerDataPackage.DataType.Bugle or PlayerDataPackage.DataType.Count;
+
+    public override void Handle(PlayerDataPackage package, PackageReceiveContext context)
     {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
         if (netNode == null)
         {
             Log.Information($"Package处理器需要NetNode:{nameof(PlayerDataPackage)}");
             return;
         }
 
-        if (GameManager.Project is null)
+        if (GameManager.Project is null || !AcceptsDirection(package.Type, isServer))
         {
             return;
         }
@@ -21,26 +33,29 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
         switch (package.Type)
         {
             case PlayerDataPackage.DataType.Create:
-                if (!isServer)
+                if (!CanCreatePlayer(context.Sender, subsystemPlayers.PlayersData.Select(player => player.PlayerGUID)) ||
+                    !Enum.IsDefined(package.PlayerClass) || string.IsNullOrWhiteSpace(package.SkinName))
                 {
                     break;
                 }
 
-                playerData = new PlayerData(project);
-                if (package.Vd != null)
+                var name = PlayerData.SanitizeName(package.PlayerName.Trim());
+                if (!PlayerData.VerifyName(name) || subsystemPlayers.PlayersData.Any(player => player.Name == name))
                 {
-                    playerData.Load(package.Vd);
+                    break;
                 }
 
+                playerData = new PlayerData(project)
+                {
+                    PlayerGUID = context.Sender!.GUID,
+                    Name = name,
+                    CharacterSkinName = package.SkinName,
+                    PlayerClass = package.PlayerClass
+                };
                 subsystemPlayers.AddPlayerData(playerData);
-                netNode.QueuePackage(new PlayerListPackage(subsystemPlayers));
+                netNode.QueuePackage(new PlayerListPackage(subsystemPlayers), PackageAudience.Global);
                 break;
             case PlayerDataPackage.DataType.Modify:
-                if (isServer)
-                {
-                    break;
-                }
-
                 var playerData2 = subsystemPlayers.FindPlayerData(p => p.PlayerGUID == package.PlayerGuid);
                 if (playerData2 != null)
                 {
@@ -51,47 +66,23 @@ public sealed class PlayerDataPackageHandler : PackageHandlerBase<PlayerDataPack
 
                 break;
             case PlayerDataPackage.DataType.Delete:
-                netNode.RemoveClient(package.From);
+                netNode.RemoveClient(context.Sender);
                 break;
             case PlayerDataPackage.DataType.SetUpdateLocation:
-                var player = subsystemPlayers.PlayersData.Find(x => x.Client == package.From);
+                var player = subsystemPlayers.PlayersData.Find(x => ReferenceEquals(x.Client, context.Sender));
                 if (player == null)
                 {
                     Log.Warning(
                         $"Ignored terrain update location without matching player: " +
-                        $"client={package.From?.ID.ToString() ?? "null"}, center={package.UpdateLocation.Center}.");
+                        $"client={context.Sender?.ID.ToString() ?? "null"}, center={package.UpdateLocation.Center}.");
                     break;
                 }
 
-                if (NetworkTerrainPolicy.TryClampClientUpdateLocation(
-                        package.UpdateLocation,
-                        SettingsManager.Current.MaxClientVisibilityRange,
-                        out var updateLocation
-                    )
-                   )
-                {
-                    var updater = project.FindSubsystem<SubsystemTerrain>(true)!.TerrainUpdater;
-                    // LastChunksUpdateCenter belongs to the server updater. Copying the client's
-                    // value first makes SetUpdateLocation treat every remote move as unchanged and
-                    // leaves server terrain generation centered at the old player position.
-                    updater.SetUpdateLocation(
-                        player.PlayerIndex,
-                        updateLocation.Center,
-                        updateLocation.VisibilityDistance,
-                        updateLocation.ContentDistance
-                    );
-                    if (updater.ServerChunkDistribution != null && package.From != null)
-                    {
-                        updater.ServerChunkDistribution.UpdateClientLocation(
-                            package.From,
-                            updateLocation.Center,
-                            updateLocation.ContentDistance);
-                    }
-                }
-                else
+                if (context.Sender is null || !project.FindSubsystem<SubsystemNetworkInterest>(true)!
+                        .SetRequestedLocation(context.Sender, player, package.UpdateLocation))
                 {
                     Log.Warning(
-                        $"Rejected invalid terrain update location: client={package.From?.ID.ToString() ?? "null"}, " +
+                        $"Rejected invalid terrain update location: client={context.Sender?.ID.ToString() ?? "null"}, " +
                         $"center={package.UpdateLocation.Center}.");
                 }
 
