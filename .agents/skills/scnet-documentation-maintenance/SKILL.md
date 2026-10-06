@@ -7,6 +7,10 @@ description: "Assess and maintain SCNET repository documentation and agent guida
 
 Treat documentation impact as part of completing a behavior, architecture, or repository-workflow change. Project documentation includes `README.md`, files under `Doc/`, component-specific README files, `AGENTS.md`, and the maintained guidance under `.agents/skills/`. Search by affected type, option, subsystem, file format, command, tool, workflow, and user-facing term instead of reading every document or Skill.
 
+Temporary implementation plans, execution logs, and agent drafts are not formal documentation.
+Use `scnet-agent-workspace` to keep them under the ignored `.agent-work/<task-id>/` directory;
+promote only durable supported behavior into project docs, without links that depend on local notes.
+
 ## Update documentation when
 
 - command-line arguments, commands, configuration fields, defaults, or precedence change;

@@ -112,7 +112,9 @@ if ! [[ "$startup_timeout" =~ ^[1-9][0-9]*$ ]]; then
 fi
 
 if [[ -z "$artifact_dir" ]]; then
-    artifact_dir="$(mktemp -d -t scnet-smoke-XXXXXXXX)"
+    artifact_root="$repo_root/.agent-work/headless-smoke/artifacts"
+    mkdir -p "$artifact_root"
+    artifact_dir="$(mktemp -d "$artifact_root/run-XXXXXXXX")"
 else
     mkdir -p "$artifact_dir"
     artifact_dir="$(cd "$artifact_dir" && pwd)"

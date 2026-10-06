@@ -74,12 +74,15 @@ Capture platform and native failures with logcat while treating the instance gam
 authoritative application record:
 
 ```bash
+mkdir -p .agent-work/android-debug/artifacts
 adb -s <serial> logcat -c
 adb -s <serial> logcat --pid="$(adb -s <serial> shell pidof com.candy.scnet | tr -d '\r')"
 adb -s <serial> pull \
   /storage/emulated/0/scnet/Instances/android-client/Logs \
-  artifacts/android-client-logs
+  .agent-work/android-debug/artifacts/client-logs
 ```
+
+Replace the example task/run names for repeated runs so earlier evidence is not overwritten.
 
 If the process dies before a PID-filtered logcat starts, collect a bounded unfiltered logcat and
 search for the package name, `AndroidRuntime`, `libc`, and crash markers. Preserve the exact Intent

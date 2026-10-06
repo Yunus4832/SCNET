@@ -1,0 +1,6 @@
+interface:
+  display_name: "SCNET Agent Workspace"
+  short_description: "Keep temporary agent plans and drafts out of commits."
+  default_prompt: "Use $scnet-agent-workspace to organize this task's temporary records in .agent-work while keeping formal documentation and commits clean."
+policy:
+  allow_implicit_invocation: true

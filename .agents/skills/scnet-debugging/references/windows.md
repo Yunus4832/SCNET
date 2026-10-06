@@ -134,6 +134,9 @@ Select-String -Path $Log.FullName -Pattern 'ERROR:|Unhandled exception|COMMAND E
 Preserve the exact command lines, PIDs, logs, readiness markers, stop method, and exit codes according
 to [evidence.md](evidence.md).
 
+Collect retained evidence under `.agent-work\<task-id>\artifacts\<run-id>` at the repository root,
+or the user-specified destination. Do not move `$Output\Instances` or change the runtime log location.
+
 Before each run, record whether `$Output\Instances\<instance>` already exists. After all associated
 processes have stopped and required logs have been copied, remove a newly created successful-run
 instance with an exact validated path unless it is still needed for reproduction:

@@ -8,6 +8,8 @@ description: Run repeatable SCNET weak-network, recovery, multiplayer transport,
 Run from the repository root. Load and follow `scnet-debugging` for process startup, instance isolation,
 runtime logs, evidence preservation, and teardown. Never run an automated experiment against the
 default instance.
+Use `scnet-agent-workspace` for retained experiment output: one
+`.agent-work/<task-id>/artifacts/<run-id>/` directory per run, unless explicitly directed elsewhere.
 
 ## Select the experiment
 
@@ -21,8 +23,9 @@ default instance.
 
 1. State the hypothesis and pass/fail criterion before the run. A process remaining alive is not a
    network-stability result.
-2. Build and test `NetworkDamageTool` before an impairment run. Use explicit loopback ports and one
-   proxy instance per real client.
+2. Verify a successful build and tests for the current `NetworkDamageTool` code before impairment
+   runs; reuse that evidence while the tool and environment remain unchanged. Use explicit loopback
+   ports and one proxy instance per real client.
 3. Record the exact damage profile and seed. Never describe an unseeded random run as reproducible.
 4. Separate protocol correctness from experience quality. Permanent missing chunks, lost required
    events, or failure to recover are correctness failures; latency percentiles and visible jitter are

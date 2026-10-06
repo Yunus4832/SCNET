@@ -1,11 +1,15 @@
 ---
 name: scnet-debugging
-description: Diagnose and smoke-test SCNET game, Android client, and Headless server changes on Linux, Windows, or Android with repeatable build, startup-session, command, log, exception, timeout, and evidence-preservation workflows. Use when reproducing runtime bugs, validating networking or Mod changes, starting a test world, inspecting crashes or hangs, or verifying a fix without relying only on unit tests.
+description: Diagnose and smoke-test SCNET game, Android client, and Headless server changes on Linux, Windows, or Android with repeatable startup, runtime evidence, test fixtures, and teardown. Use when reproducing runtime bugs, validating networking or Mod changes, building gameplay test fixtures, inspecting crashes or hangs, or verifying a fix beyond unit tests.
 ---
 
 # SCNET Debugging
 
 Run from the repository root. Treat runtime logs, exit status, command results, and preserved artifacts as evidence; do not infer success merely because the process stayed alive.
+
+Use `scnet-agent-workspace` for retained local test output. Unless the user specifies otherwise,
+collect each run under `.agent-work/<task-id>/artifacts/<run-id>/`; leave application instances and
+their authoritative logs in their runtime-owned locations.
 
 ## Workflow
 
@@ -26,6 +30,8 @@ The script creates a dedicated data instance by default. It records whether the 
 before the run, copies instance logs into the artifact directory, and deletes a newly created
 instance after a successful run. It preserves failed runs for diagnosis. Pass `--keep-instance`
 only when a successful run must remain reproducible. Never run automated checks against the default instance.
+Its default artifact directory is a unique run under `.agent-work/headless-smoke/artifacts/`;
+pass `--artifacts .agent-work/<task-id>/artifacts/<run-id>` to attach it to an existing task.
 On Windows, follow the equivalent log-driven procedure in [references/windows.md](references/windows.md).
 
 6. Inspect the reported artifact directory and complete instance runtime logs. Treat the files under
@@ -45,6 +51,9 @@ On Windows, follow the equivalent log-driven procedure in [references/windows.md
 - Use a GUI client only for rendering, input, screen transitions, widgets, and client/server interaction.
 - Use an Android client with ADB for Android startup, networking, lifecycle, graphics, and device-specific failures.
 - Use both Headless and GUI for network protocol or multiplayer behavior.
+
+For temporary Mod fixtures, multi-stage gameplay scenarios, or persistence/lifecycle regressions,
+read [references/gameplay-fixtures.md](references/gameplay-fixtures.md) before implementing the test.
 
 ## Multi-instance sessions
 

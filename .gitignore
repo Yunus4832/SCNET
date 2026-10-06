@@ -36,6 +36,9 @@ Generated\ Files/
 # Local Codex workspace settings
 .codex/
 
+# Local agent plans, execution records, and drafts (not project deliverables)
+/.agent-work/
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*

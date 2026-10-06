@@ -1,6 +1,7 @@
 # Diagnostic Evidence
 
-Preserve one artifact directory per run with:
+Preserve one artifact directory per run, normally
+`.agent-work/<task-id>/artifacts/<run-id>/` under `scnet-agent-workspace`, with:
 
 - complete instance runtime log, plus stdout/stderr when separately available;
 - exact command line;

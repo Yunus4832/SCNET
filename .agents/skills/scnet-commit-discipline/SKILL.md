@@ -37,3 +37,7 @@ A commit should be independently understandable, focused, and complete:
 - If the working tree contains multiple objectives, propose an explicit file or hunk grouping before staging. Use patch staging only when a file genuinely contains separable changes and the split can be made safely.
 
 Before committing, inspect `git status --short`, the staged diff, and the unstaged diff. Verify that the staged set matches the intended boundary and contains no secrets, temporary evidence, build outputs, or unrelated files. Report anything intentionally left unstaged.
+
+Temporary agent plans and drafts belong in the ignored `.agent-work/` directory under
+`scnet-agent-workspace`, not in documentation commits. Do not force-add them or delete them merely
+to make a commit clean; maintained skills and formal documentation remain normal tracked deliverables.

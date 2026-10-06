@@ -44,3 +44,27 @@ Run broader project tests only when shared behavior has a meaningful blast radiu
 Use runtime checks when correctness depends on lifecycle, networking, GUI input, rendering, Android behavior, world loading, Headless startup, timing, or external resources. Load and follow `scnet-debugging` for those sessions, including isolated instances, logs, evidence, and cleanup.
 
 If validation is skipped, state why the available static evidence is sufficient. If a check fails for an unrelated or environmental reason, distinguish it from regressions caused by the change and do not claim success without supporting evidence.
+
+## Reuse evidence and finish finite validation
+
+For a long refactor, keep a compact current acceptance list separate from chronological run notes.
+Use `scnet-agent-workspace` for these temporary records rather than adding them to formal docs.
+Associate each remaining requirement with the evidence needed and update it when that evidence is
+obtained. Historical statements such as "not yet tested" must not keep a now-verified item open.
+Retain earlier failures and limitations; closing a requirement does not retroactively pass its failed runs.
+
+Before another run, state which unresolved requirement or changed dependency it addresses. Reuse
+valid evidence when the relevant production path, fixture, environment, and acceptance contract are
+unchanged. Identify the tested build and affected scope; do not label old results as a new-build run.
+Shared transport, serialization, or lifecycle changes can invalidate several scenarios even when
+their individual gameplay code did not change.
+
+A fixture-only edit normally needs its own compilation and targeted scenario, not a rebuild and
+full regression run of unchanged game code. Likewise, unchanged impairment tooling need not be
+rebuilt for every seeded run. Resolve a prerequisite or fixture failure before repeating the costly
+whole experiment; inspect stored evidence before rerunning simply to add instrumentation.
+
+Distinguish required coverage from optional exploration and user-device experience checks. Do not
+grow an acceptance checklist into every game feature or repeat already-proven ordinary flows for
+confidence alone. At handoff, map the original scope to current evidence and disclose untested
+boundaries without shrinking explicit requirements to match what happened to pass.
