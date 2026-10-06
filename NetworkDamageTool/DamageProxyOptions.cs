@@ -9,9 +9,14 @@ public sealed record LinkImpairmentOptions(
     double LossProbability,
     int BandwidthKilobitsPerSecond)
 {
+    public TimeSpan OutageStart { get; init; }
+
+    public TimeSpan OutageDuration { get; init; }
+
     public override string ToString() =>
         $"latency={LatencyMilliseconds}ms,jitter={JitterMilliseconds}ms," +
-        $"loss={LossProbability:P1},bandwidth={BandwidthKilobitsPerSecond}kbps";
+        $"loss={LossProbability:P1},bandwidth={BandwidthKilobitsPerSecond}kbps," +
+        $"outage={OutageStart.TotalSeconds}s+{OutageDuration.TotalSeconds}s";
 }
 
 public sealed record DamageProxyOptions(
@@ -59,15 +64,30 @@ public sealed record DamageProxyOptions(
                             --DIR-jitter-ms N         Uniform +/- jitter
                             --DIR-loss P              Drop probability from 0 to 1
                             --DIR-bandwidth-kbps N    Link bandwidth; 0 means unlimited
+                            --DIR-outage-start-seconds N  Outage start since proxy run began
+                            --DIR-outage-duration-seconds N  Drop all traffic during this window
                           """);
     }
 
-    private static LinkImpairmentOptions ParseLink(Dictionary<string, string> options, string prefix) =>
-        new(
+    private static LinkImpairmentOptions ParseLink(Dictionary<string, string> options, string prefix)
+    {
+        var start = ParseInt(options, $"{prefix}-outage-start-seconds", 0, 0, int.MaxValue);
+        var duration = ParseInt(options, $"{prefix}-outage-duration-seconds", 0, 0, int.MaxValue);
+        if (options.ContainsKey($"{prefix}-outage-start-seconds") && duration == 0)
+        {
+            throw new ArgumentException($"'--{prefix}-outage-start-seconds' requires a positive outage duration.");
+        }
+
+        return new LinkImpairmentOptions(
             ParseInt(options, $"{prefix}-latency-ms", 0, 0, 60_000),
             ParseInt(options, $"{prefix}-jitter-ms", 0, 0, 60_000),
             ParseDouble(options, $"{prefix}-loss", 0, 0, 1),
-            ParseInt(options, $"{prefix}-bandwidth-kbps", 0, 0, int.MaxValue));
+            ParseInt(options, $"{prefix}-bandwidth-kbps", 0, 0, int.MaxValue))
+        {
+            OutageStart = TimeSpan.FromSeconds(start),
+            OutageDuration = TimeSpan.FromSeconds(duration)
+        };
+    }
 
     private static Dictionary<string, string> ParseOptions(string[] args)
     {

@@ -6,6 +6,74 @@ namespace NetworkDamageTool.Test;
 public sealed class DamageProxyIntegrationTest
 {
     [Fact]
+    public async Task OutageDropsTrafficAndRecoversWithoutChangingRoute()
+    {
+        using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var proxyEndPoint = new IPEndPoint(IPAddress.Loopback, ReserveUdpPort());
+        var outage = new LinkImpairmentOptions(0, 0, 0, 0)
+        {
+            OutageStart = TimeSpan.FromMilliseconds(500),
+            OutageDuration = TimeSpan.FromMilliseconds(700)
+        };
+        var noDamage = new LinkImpairmentOptions(0, 0, 0, 0);
+        var options = new DamageProxyOptions(proxyEndPoint, (IPEndPoint)server.Client.LocalEndPoint!,
+            1, outage, noDamage, null, null);
+        await using var proxy = new DamageProxy(options);
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var proxyTask = proxy.RunAsync(cancellation.Token);
+        using var client = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        try
+        {
+            await client.SendAsync(new byte[] { 1 }, proxyEndPoint, cancellation.Token);
+            var first = await server.ReceiveAsync(cancellation.Token);
+            await Task.Delay(600, cancellation.Token);
+            await client.SendAsync(new byte[] { 2 }, proxyEndPoint, cancellation.Token);
+            await Task.Delay(800, cancellation.Token);
+            await client.SendAsync(new byte[] { 3 }, proxyEndPoint, cancellation.Token);
+            var resumed = await server.ReceiveAsync(cancellation.Token);
+            Assert.Equal(new byte[] { 3 }, resumed.Buffer);
+            Assert.Equal(first.RemoteEndPoint, resumed.RemoteEndPoint);
+        }
+        finally
+        {
+            cancellation.Cancel();
+            await proxyTask;
+        }
+    }
+
+    [Fact]
+    public async Task DiscoveryAndConnectionEndpointsKeepIndependentReplyRoutes()
+    {
+        using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        var proxyEndPoint = new IPEndPoint(IPAddress.Loopback, ReserveUdpPort());
+        var noDamage = new LinkImpairmentOptions(0, 0, 0, 0);
+        var options = new DamageProxyOptions(proxyEndPoint, (IPEndPoint)server.Client.LocalEndPoint!,
+            1, noDamage, noDamage, null, null);
+        await using var proxy = new DamageProxy(options);
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var proxyTask = proxy.RunAsync(cancellation.Token);
+        using var discovery = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+        using var connection = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));
+
+        await discovery.SendAsync(new byte[] { 1 }, proxyEndPoint, cancellation.Token);
+        var discoveryRequest = await server.ReceiveAsync(cancellation.Token);
+        await connection.SendAsync(new byte[] { 2 }, proxyEndPoint, cancellation.Token);
+        var connectionRequest = await server.ReceiveAsync(cancellation.Token);
+        Assert.NotEqual(discoveryRequest.RemoteEndPoint, connectionRequest.RemoteEndPoint);
+
+        // A late discovery reply must not be redirected to the newer connection socket.
+        await server.SendAsync(new byte[] { 22 }, connectionRequest.RemoteEndPoint, cancellation.Token);
+        await server.SendAsync(new byte[] { 11 }, discoveryRequest.RemoteEndPoint, cancellation.Token);
+        Assert.Equal(new byte[] { 22 }, (await connection.ReceiveAsync(cancellation.Token)).Buffer);
+        Assert.Equal(new byte[] { 11 }, (await discovery.ReceiveAsync(cancellation.Token)).Buffer);
+
+        await discovery.SendAsync(new byte[] { 3 }, proxyEndPoint, cancellation.Token);
+        Assert.Equal(discoveryRequest.RemoteEndPoint, (await server.ReceiveAsync(cancellation.Token)).RemoteEndPoint);
+        cancellation.Cancel();
+        await proxyTask;
+    }
+
+    [Fact]
     public async Task ZeroDamageForwardsDatagramsInBothDirections()
     {
         using var server = new UdpClient(new IPEndPoint(IPAddress.Loopback, 0));

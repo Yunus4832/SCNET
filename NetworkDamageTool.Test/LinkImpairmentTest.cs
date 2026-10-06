@@ -3,6 +3,35 @@ namespace NetworkDamageTool.Test;
 public sealed class LinkImpairmentTest
 {
     [Fact]
+    public void OutageUsesHalfOpenWindowAndRecoversNormalPolicy()
+    {
+        var options = new LinkImpairmentOptions(100, 0, 0, 0)
+        {
+            OutageStart = TimeSpan.FromSeconds(10),
+            OutageDuration = TimeSpan.FromSeconds(5)
+        };
+        var link = new LinkImpairment(options, 1);
+        Assert.False(link.Decide(100, TimeSpan.FromSeconds(9.999)).Drop);
+        Assert.True(link.Decide(100, TimeSpan.FromSeconds(10)).Drop);
+        Assert.True(link.Decide(100, TimeSpan.FromSeconds(14.999)).Drop);
+        Assert.Equal(new ImpairmentDecision(false, TimeSpan.FromMilliseconds(100)),
+            link.Decide(100, TimeSpan.FromSeconds(15)));
+    }
+
+    [Fact]
+    public void OutageOptionsRequireDurationAndKeepDirectionsIndependent()
+    {
+        string[] args = ["run", "--listen", "127.0.0.1:28989", "--target", "127.0.0.1:28987"];
+        Assert.Throws<ArgumentException>(() => DamageProxyOptions.Parse(
+            [.. args, "--up-outage-start-seconds", "10"]));
+        var options = DamageProxyOptions.Parse(
+            [.. args, "--up-outage-start-seconds", "10", "--up-outage-duration-seconds", "5"]);
+        Assert.Equal(TimeSpan.FromSeconds(10), options.Upstream.OutageStart);
+        Assert.Equal(TimeSpan.FromSeconds(5), options.Upstream.OutageDuration);
+        Assert.Equal(TimeSpan.Zero, options.Downstream.OutageDuration);
+    }
+
+    [Fact]
     public void SameSeedProducesSameDecisions()
     {
         var options = new LinkImpairmentOptions(100, 30, 0.25, 512);

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
@@ -11,18 +12,16 @@ public sealed class DamageProxy : IAsyncDisposable
 
     private readonly DamageProxyOptions _options;
 
-    private readonly UdpClient _serverSocket;
+    private readonly ConcurrentDictionary<IPEndPoint, UdpClient> _routes = new();
 
     private readonly ProxyStatistics _statistics;
 
-    private IPEndPoint? _clientEndPoint;
+    private IPAddress? _clientAddress;
 
     public DamageProxy(DamageProxyOptions options)
     {
         _options = options;
         _clientSocket = new UdpClient(options.ListenEndPoint);
-        _serverSocket = new UdpClient(AddressFamily.InterNetwork);
-        _serverSocket.Connect(options.TargetEndPoint);
         _statistics = new ProxyStatistics(options.EventsPath);
     }
 
@@ -35,7 +34,7 @@ public sealed class DamageProxy : IAsyncDisposable
             true,
             _statistics,
             async (datagram, token) =>
-                await _serverSocket.SendAsync(datagram, token).ConfigureAwait(false));
+                await datagram.ServerSocket.SendAsync(datagram.Buffer, token).ConfigureAwait(false));
         var downstream = new DatagramPump(
             new LinkImpairment(_options.Downstream, unchecked(_options.Seed * 397) ^ 0x5f3759df),
             stopwatch,
@@ -43,25 +42,23 @@ public sealed class DamageProxy : IAsyncDisposable
             _statistics,
             async (datagram, token) =>
             {
-                var client = Volatile.Read(ref _clientEndPoint);
-                if (client != null)
-                {
-                    await _clientSocket.SendAsync(datagram, client, token).ConfigureAwait(false);
-                }
+                await _clientSocket.SendAsync(datagram.Buffer, datagram.ClientEndPoint, token).ConfigureAwait(false);
             });
 
         using var registration = cancellationToken.Register(() =>
         {
             _clientSocket.Close();
-            _serverSocket.Close();
+            foreach (var socket in _routes.Values)
+            {
+                socket.Close();
+            }
         });
 
         var tasks = new[]
         {
             upstream.RunAsync(cancellationToken),
             downstream.RunAsync(cancellationToken),
-            ReceiveClientAsync(upstream, cancellationToken),
-            ReceiveServerAsync(downstream, cancellationToken),
+            ReceiveClientAsync(upstream, downstream, cancellationToken),
             _statistics.RunReporterAsync(cancellationToken)
         };
         try
@@ -84,56 +81,88 @@ public sealed class DamageProxy : IAsyncDisposable
         }
     }
 
-    private async Task ReceiveClientAsync(DatagramPump pump, CancellationToken cancellationToken)
+    private async Task ReceiveClientAsync(DatagramPump upstream, DatagramPump downstream,
+        CancellationToken cancellationToken)
     {
-        while (!cancellationToken.IsCancellationRequested)
+        var receivers = new List<Task>();
+        try
         {
-            var received = await _clientSocket.ReceiveAsync(cancellationToken).ConfigureAwait(false);
-            var knownClient = Volatile.Read(ref _clientEndPoint);
-            if (knownClient == null)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                Volatile.Write(ref _clientEndPoint, received.RemoteEndPoint);
-                Console.WriteLine($"Accepted client endpoint {received.RemoteEndPoint}.");
+                var received = await _clientSocket.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+                _clientAddress ??= received.RemoteEndPoint.Address;
+                if (!_clientAddress.Equals(received.RemoteEndPoint.Address))
+                {
+                    Console.Error.WriteLine($"Ignoring datagram from {received.RemoteEndPoint}; this proxy serves {_clientAddress}.");
+                    continue;
+                }
+
+                if (!_routes.TryGetValue(received.RemoteEndPoint, out var socket))
+                {
+                    // Bound temporary discovery sockets without allowing arbitrary route growth.
+                    if (_routes.Count >= 64)
+                    {
+                        Console.Error.WriteLine($"Ignoring new endpoint {received.RemoteEndPoint}; restart the proxy after 64 routes.");
+                        continue;
+                    }
+
+                    socket = new UdpClient(AddressFamily.InterNetwork);
+                    socket.Connect(_options.TargetEndPoint);
+                    _routes[received.RemoteEndPoint] = socket;
+                    receivers.Add(ReceiveServerAsync(socket, received.RemoteEndPoint, downstream, cancellationToken));
+                    Console.WriteLine($"Accepted client endpoint {received.RemoteEndPoint}.");
+                }
+
+                _statistics.Received(true, received.Buffer.Length);
+                await upstream.EnqueueAsync(new RoutedDatagram(received.Buffer, socket, received.RemoteEndPoint), cancellationToken)
+                    .ConfigureAwait(false);
             }
-            else if (!knownClient.Equals(received.RemoteEndPoint))
+        }
+        finally
+        {
+            foreach (var socket in _routes.Values)
             {
-                Console.Error.WriteLine(
-                    $"Ignoring datagram from {received.RemoteEndPoint}; this proxy instance serves {knownClient}.");
-                continue;
+                socket.Close();
             }
 
-            _statistics.Received(true, received.Buffer.Length);
-            await pump.EnqueueAsync(received.Buffer, cancellationToken).ConfigureAwait(false);
+            await Task.WhenAll(receivers).ConfigureAwait(false);
         }
     }
 
-    private async Task ReceiveServerAsync(DatagramPump pump, CancellationToken cancellationToken)
+    private async Task ReceiveServerAsync(UdpClient socket, IPEndPoint clientEndPoint,
+        DatagramPump pump, CancellationToken cancellationToken)
     {
         while (!cancellationToken.IsCancellationRequested)
         {
-            var received = await _serverSocket.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+            var received = await socket.ReceiveAsync(cancellationToken).ConfigureAwait(false);
             _statistics.Received(false, received.Buffer.Length);
-            await pump.EnqueueAsync(received.Buffer, cancellationToken).ConfigureAwait(false);
+            await pump.EnqueueAsync(new RoutedDatagram(received.Buffer, socket, clientEndPoint), cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 
     public async ValueTask DisposeAsync()
     {
         _clientSocket.Dispose();
-        _serverSocket.Dispose();
+        foreach (var socket in _routes.Values)
+        {
+            socket.Dispose();
+        }
         await _statistics.DisposeAsync().ConfigureAwait(false);
     }
 
+    private sealed record RoutedDatagram(byte[] Buffer, UdpClient ServerSocket, IPEndPoint ClientEndPoint);
+
     private sealed class DatagramPump
     {
-        private readonly Channel<byte[]> _channel = Channel.CreateBounded<byte[]>(new BoundedChannelOptions(65_536)
+        private readonly Channel<RoutedDatagram> _channel = Channel.CreateBounded<RoutedDatagram>(new BoundedChannelOptions(65_536)
         {
             SingleReader = true,
-            SingleWriter = true,
+            SingleWriter = false,
             FullMode = BoundedChannelFullMode.Wait
         });
 
-        private readonly Func<ReadOnlyMemory<byte>, CancellationToken, ValueTask> _forward;
+        private readonly Func<RoutedDatagram, CancellationToken, ValueTask> _forward;
         private readonly LinkImpairment _impairment;
         private readonly ProxyStatistics _statistics;
         private readonly Stopwatch _stopwatch;
@@ -144,7 +173,7 @@ public sealed class DamageProxy : IAsyncDisposable
             Stopwatch stopwatch,
             bool upstream,
             ProxyStatistics statistics,
-            Func<ReadOnlyMemory<byte>, CancellationToken, ValueTask> forward)
+            Func<RoutedDatagram, CancellationToken, ValueTask> forward)
         {
             _impairment = impairment;
             _stopwatch = stopwatch;
@@ -153,7 +182,7 @@ public sealed class DamageProxy : IAsyncDisposable
             _forward = forward;
         }
 
-        public ValueTask EnqueueAsync(byte[] datagram, CancellationToken cancellationToken) =>
+        public ValueTask EnqueueAsync(RoutedDatagram datagram, CancellationToken cancellationToken) =>
             _channel.Writer.WriteAsync(datagram, cancellationToken);
 
         public void Complete() => _channel.Writer.TryComplete();
@@ -162,7 +191,7 @@ public sealed class DamageProxy : IAsyncDisposable
         {
             await foreach (var datagram in _channel.Reader.ReadAllAsync(cancellationToken).ConfigureAwait(false))
             {
-                var decision = _impairment.Decide(datagram.Length, _stopwatch.Elapsed);
+                var decision = _impairment.Decide(datagram.Buffer.Length, _stopwatch.Elapsed);
                 if (decision.Drop)
                 {
                     _statistics.Dropped(_upstream);
@@ -175,7 +204,7 @@ public sealed class DamageProxy : IAsyncDisposable
         }
 
         private async Task ForwardLaterAsync(
-            byte[] datagram,
+            RoutedDatagram datagram,
             TimeSpan delay,
             CancellationToken cancellationToken)
         {
@@ -184,6 +213,12 @@ public sealed class DamageProxy : IAsyncDisposable
                 if (delay > TimeSpan.Zero)
                 {
                     await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                }
+
+                if (_impairment.IsOutage(_stopwatch.Elapsed))
+                {
+                    _statistics.Dropped(_upstream);
+                    return;
                 }
 
                 await _forward(datagram, cancellationToken).ConfigureAwait(false);

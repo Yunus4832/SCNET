@@ -8,9 +8,12 @@ public sealed class LinkImpairment(LinkImpairmentOptions options, int seed)
 
     private TimeSpan _nextTransmission;
 
+    public bool IsOutage(TimeSpan elapsed) => options.OutageDuration > TimeSpan.Zero &&
+        elapsed >= options.OutageStart && elapsed < options.OutageStart + options.OutageDuration;
+
     public ImpairmentDecision Decide(int byteCount, TimeSpan elapsed)
     {
-        if (_random.NextDouble() < options.LossProbability)
+        if (IsOutage(elapsed) || _random.NextDouble() < options.LossProbability)
         {
             return new ImpairmentDecision(true, TimeSpan.Zero);
         }
