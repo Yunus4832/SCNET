@@ -257,6 +257,21 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
     }
 
+    public void ApplyAuthoritativePosition(Vector3 position, Vector3 velocity)
+    {
+        Position = position;
+        Velocity = velocity;
+        NetPosition = new NetPosition(position);
+        NetVelocity = new NetVelocity(velocity);
+        CollisionVelocityChange = Vector3.Zero;
+        StandingOnValue = null;
+        StandingOnBody = null;
+        StandingOnVelocity = Vector3.Zero;
+        _totalImpulse = Vector3.Zero;
+        _directMove = Vector3.Zero;
+        _stoppedTime = 0f;
+    }
+
     public void Update(float dt)
     {
         if (CommonLib.WorkType == WorkType.Client)

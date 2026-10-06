@@ -253,8 +253,7 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
             case ComponentPlayerPackage.PlayerAction.PositionSet:
                 package.PlayerEvent(player =>
                 {
-                    player.ComponentBody.Position = package.Position;
-                    player.ComponentBody.Velocity = package.Velocity;
+                    player.ComponentBody.ApplyAuthoritativePosition(package.Position, package.Velocity);
                 });
                 break;
         }

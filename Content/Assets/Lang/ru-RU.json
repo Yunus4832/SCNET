@@ -3996,7 +3996,20 @@
         "AutomationUiScreenshot_Description": "Сделать снимок интерфейса автоматизации",
         "AutomationUiScroll_Description": "Прокрутить цель автоматизации интерфейса",
         "AutomationUiSwipe_Description": "Провести по цели автоматизации интерфейса",
-        "AutomationMouseMove_Description": "Отправить относительное движение мыши"
+        "AutomationMouseMove_Description": "Отправить относительное движение мыши",
+        "Teleport_Description": "Телепортироваться к координатам или игроку",
+        "TeleportSelf_Description": "Телепортировать себя",
+        "TeleportOther_Description": "Телепортировать другого игрока",
+        "TeleportSelfPosition_Description": "Телепортироваться к координатам",
+        "TeleportSelfPlayer_Description": "Телепортироваться к игроку",
+        "TeleportOtherPosition_Description": "Телепортировать игрока к координатам",
+        "TeleportOtherPlayer_Description": "Телепортировать игрока к другому игроку",
+        "TeleportPlayerUnavailable_Message": "Игрок должен быть в сети, загружен и жив. В консоли укажите игрока.",
+        "TeleportInvalidTarget_Message": "Укажите координаты или игрока назначения, но не оба.",
+        "TeleportDestinationUnavailable_Message": "Игрок назначения ещё не вошёл в мир.",
+        "TeleportInvalidPosition_Message": "Координаты должны быть конечными: X/Z в пределах ±1000000, Y от 0 до 255.",
+        "TeleportMounted_Message": "Перед телепортацией спешьтесь.",
+        "TeleportCompleted_Message": "Игрок {0} телепортирован в {1}."
     },
     "AndroidServer": {
         "Title": "Журнал сервера",

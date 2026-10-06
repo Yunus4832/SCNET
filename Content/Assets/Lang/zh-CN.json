@@ -3996,7 +3996,20 @@
         "AutomationUiScreenshot_Description": "捕获自动化 UI 截图",
         "AutomationUiScroll_Description": "滚动自动化 UI 目标",
         "AutomationUiSwipe_Description": "滑动自动化 UI 目标",
-        "AutomationMouseMove_Description": "发送相对鼠标移动"
+        "AutomationMouseMove_Description": "发送相对鼠标移动",
+        "Teleport_Description": "传送到坐标或在线玩家",
+        "TeleportSelf_Description": "传送自己",
+        "TeleportOther_Description": "传送指定玩家",
+        "TeleportSelfPosition_Description": "传送自己到坐标",
+        "TeleportSelfPlayer_Description": "传送自己到玩家",
+        "TeleportOtherPosition_Description": "传送指定玩家到坐标",
+        "TeleportOtherPlayer_Description": "传送指定玩家到玩家",
+        "TeleportPlayerUnavailable_Message": "目标玩家必须在线、已加载且存活；控制台请指定玩家。",
+        "TeleportInvalidTarget_Message": "请指定坐标或目标玩家，不能同时指定。",
+        "TeleportDestinationUnavailable_Message": "目的地玩家尚未进入世界。",
+        "TeleportInvalidPosition_Message": "坐标必须有限，X/Z 在 ±1000000 内，Y 在 0–255 内。",
+        "TeleportMounted_Message": "请先离开坐骑再传送。",
+        "TeleportCompleted_Message": "已传送 {0} 到 {1}。"
     },
     "AndroidServer": {
         "Title": "服务器日志",

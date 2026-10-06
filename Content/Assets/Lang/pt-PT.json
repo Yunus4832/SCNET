@@ -3996,7 +3996,20 @@
         "AutomationUiScreenshot_Description": "Capturar uma imagem da IU da automatização",
         "AutomationUiScroll_Description": "Deslocar um alvo de IU da automatização",
         "AutomationUiSwipe_Description": "Deslizar um alvo de IU da automatização",
-        "AutomationMouseMove_Description": "Enviar movimento relativo do rato"
+        "AutomationMouseMove_Description": "Enviar movimento relativo do rato",
+        "Teleport_Description": "Teletransportar para coordenadas ou um jogador online",
+        "TeleportSelf_Description": "Teletransportar-se",
+        "TeleportOther_Description": "Teletransportar outro jogador",
+        "TeleportSelfPosition_Description": "Teletransportar-se para coordenadas",
+        "TeleportSelfPlayer_Description": "Teletransportar-se para um jogador",
+        "TeleportOtherPosition_Description": "Teletransportar outro jogador para coordenadas",
+        "TeleportOtherPlayer_Description": "Teletransportar outro jogador para um jogador",
+        "TeleportPlayerUnavailable_Message": "O jogador deve estar online, carregado e vivo. Especifique um jogador na consola.",
+        "TeleportInvalidTarget_Message": "Indique coordenadas ou um jogador de destino, não ambos.",
+        "TeleportDestinationUnavailable_Message": "O jogador de destino ainda não entrou no mundo.",
+        "TeleportInvalidPosition_Message": "As coordenadas devem ser finitas: X/Z entre ±1000000 e Y entre 0–255.",
+        "TeleportMounted_Message": "Desmonte antes de se teletransportar.",
+        "TeleportCompleted_Message": "{0} teletransportado para {1}."
     },
     "AndroidServer": {
         "Title": "Registo do servidor",

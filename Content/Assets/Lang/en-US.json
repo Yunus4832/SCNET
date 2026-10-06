@@ -3996,7 +3996,20 @@
         "AutomationUiScreenshot_Description": "Capture an automation UI screenshot",
         "AutomationUiScroll_Description": "Scroll an automation UI target",
         "AutomationUiSwipe_Description": "Swipe an automation UI target",
-        "AutomationMouseMove_Description": "Send relative mouse movement"
+        "AutomationMouseMove_Description": "Send relative mouse movement",
+        "Teleport_Description": "Teleport to coordinates or an online player",
+        "TeleportSelf_Description": "Teleport yourself",
+        "TeleportOther_Description": "Teleport another player",
+        "TeleportSelfPosition_Description": "Teleport yourself to coordinates",
+        "TeleportSelfPlayer_Description": "Teleport yourself to a player",
+        "TeleportOtherPosition_Description": "Teleport another player to coordinates",
+        "TeleportOtherPlayer_Description": "Teleport another player to a player",
+        "TeleportPlayerUnavailable_Message": "The player must be online, loaded and alive. Specify a player from the console.",
+        "TeleportInvalidTarget_Message": "Specify either coordinates or a destination player, not both.",
+        "TeleportDestinationUnavailable_Message": "The destination player has not entered the world.",
+        "TeleportInvalidPosition_Message": "Coordinates must be finite: X/Z within ±1000000 and Y within 0–255.",
+        "TeleportMounted_Message": "Dismount before teleporting.",
+        "TeleportCompleted_Message": "Teleported {0} to {1}."
     },
     "AndroidServer": {
         "Title": "Server Log",

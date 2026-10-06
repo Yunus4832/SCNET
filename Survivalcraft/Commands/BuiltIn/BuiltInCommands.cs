@@ -52,6 +52,46 @@ public static class BuiltInCommands
         RegisterCreativePermission(commands, worldFogSet);
         RegisterCreativePermission(commands, worldLightningTrigger);
         RegisterCreativePermission(commands, worldSeasonSet);
+        var teleportSelf = new ResourceId(owner, "player.teleport.self");
+        var teleportOthers = new ResourceId(owner, "player.teleport.others");
+        RegisterCreativePermission(commands, teleportSelf);
+        RegisterPermission(commands, teleportOthers, CommandDomain.World, PermissionGrantPolicy.OperatorManaged);
+        commands.Register(new ResourceId(owner, "player/teleport/self"),
+            new CommandDefinition<TeleportSelfCommand>(TeleportCommandHandlers.Self, CommandDomain.World,
+                CommandDescription("TeleportSelf_Description", "传送自己"), teleportSelf,
+                allowedPrincipals: CommandPrincipalKind.Player | CommandPrincipalKind.System,
+                write: static (writer, command) =>
+                {
+                    writer.Write(command.Position.HasValue);
+                    if (command.Position.HasValue)
+                    {
+                        writer.Write(command.Position.Value);
+                    }
+                    writer.Write(command.DestinationPlayer != null);
+                    if (command.DestinationPlayer != null)
+                    {
+                        writer.Write(command.DestinationPlayer);
+                    }
+                },
+                read: static reader => ReadTeleportSelf(reader)));
+        commands.Register(new ResourceId(owner, "player/teleport/other"),
+            new CommandDefinition<TeleportPlayerCommand>(TeleportCommandHandlers.Player, CommandDomain.World,
+                CommandDescription("TeleportOther_Description", "传送指定玩家"), teleportOthers,
+                write: static (writer, command) =>
+                {
+                    writer.Write(command.Player);
+                    writer.Write(command.Position.HasValue);
+                    if (command.Position.HasValue)
+                    {
+                        writer.Write(command.Position.Value);
+                    }
+                    writer.Write(command.DestinationPlayer != null);
+                    if (command.DestinationPlayer != null)
+                    {
+                        writer.Write(command.DestinationPlayer);
+                    }
+                },
+                read: static reader => ReadTeleportPlayer(reader)));
         RegisterPermission(
             commands,
             serverStop,
@@ -547,6 +587,15 @@ public static class BuiltInCommands
 
         commands.Adapters.Register(new ResourceId(owner, "text/help"), CreateHelpText());
         commands.Adapters.Register(new ResourceId(owner, "text/time"), CreateTimeText());
+        commands.Adapters.Register(new ResourceId(owner, "text/tp"), CreateTeleportText());
+        commands.Adapters.Register(new ResourceId(owner, "player/teleport/other"),
+            HttpCommandBinding.Create(arguments => new TeleportPlayerCommand(arguments.Get<string>("player"),
+                    ReadTeleportPosition(arguments), arguments.GetOrDefault<string?>("destination", null)),
+                new HttpCommandArgumentDefinition("player", "string"),
+                new HttpCommandArgumentDefinition("x", "number", false),
+                new HttpCommandArgumentDefinition("y", "number", false),
+                new HttpCommandArgumentDefinition("z", "number", false),
+                new HttpCommandArgumentDefinition("destination", "string", false)));
         commands.Adapters.Register(new ResourceId(owner, "text/weather"), CreateWeatherText());
         commands.Adapters.Register(new ResourceId(owner, "text/season"), CreateSeasonText());
         commands.Adapters.Register(new ResourceId(owner, "text/players"), CreatePlayersText());
@@ -732,6 +781,51 @@ public static class BuiltInCommands
                     CommandDescription("HelpDetail_Description", "显示指定指令的用法"))
             ],
             ["?"]);
+    }
+
+    private static TeleportPlayerCommand ReadTeleportPlayer(Game.Network.Serialization.PackageStreamReader reader)
+    {
+        var player = reader.ReadString();
+        var target = ReadTeleportSelf(reader);
+        return new TeleportPlayerCommand(player, target.Position, target.DestinationPlayer);
+    }
+
+    private static TeleportSelfCommand ReadTeleportSelf(Game.Network.Serialization.PackageStreamReader reader)
+    {
+        Vector3? position = reader.ReadBoolean() ? reader.ReadVector3() : null;
+        var destination = reader.ReadBoolean() ? reader.ReadString() : null;
+        return new TeleportSelfCommand(position, destination);
+    }
+
+    private static Vector3? ReadTeleportPosition(HttpCommandArguments arguments) =>
+        arguments.Values.ContainsKey("x") || arguments.Values.ContainsKey("y") || arguments.Values.ContainsKey("z")
+            ? new Vector3(arguments.Get<float>("x"), arguments.Get<float>("y"), arguments.Get<float>("z"))
+            : null;
+
+    internal static TextCommand CreateTeleportText()
+    {
+        CommandSegment[] coordinates =
+        [
+            new CommandArgument("x", CommandArgumentKind.Number),
+            new CommandArgument("y", CommandArgumentKind.Number),
+            new CommandArgument("z", CommandArgumentKind.Number)
+        ];
+        static Vector3 Position(CommandArguments arguments) => new(
+            (float)arguments.Get<double>("x"), (float)arguments.Get<double>("y"), (float)arguments.Get<double>("z"));
+        return new TextCommand("tp", CommandDescription("Teleport_Description", "传送到坐标或在线玩家"),
+        [
+            new CommandRoute(coordinates, typeof(TeleportSelfCommand),
+                arguments => new TeleportSelfCommand(Position(arguments)), CommandDescription("TeleportSelfPosition_Description", "传送自己到坐标")),
+            new CommandRoute([new CommandArgument("destination")], typeof(TeleportSelfCommand),
+                arguments => new TeleportSelfCommand(DestinationPlayer: arguments.Get<string>("destination")),
+                CommandDescription("TeleportSelfPlayer_Description", "传送自己到玩家")),
+            new CommandRoute([new CommandArgument("player"), .. coordinates], typeof(TeleportPlayerCommand),
+                arguments => new TeleportPlayerCommand(arguments.Get<string>("player"), Position(arguments)),
+                CommandDescription("TeleportOtherPosition_Description", "传送指定玩家到坐标")),
+            new CommandRoute([new CommandArgument("player"), new CommandArgument("destination")], typeof(TeleportPlayerCommand),
+                arguments => new TeleportPlayerCommand(arguments.Get<string>("player"), DestinationPlayer: arguments.Get<string>("destination")),
+                CommandDescription("TeleportOtherPlayer_Description", "传送指定玩家到玩家"))
+        ]);
     }
 
     internal static TextCommand CreateTimeText()

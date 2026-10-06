@@ -360,6 +360,11 @@ public class CommandDispatcherTest
         AssertDomain<CloneInstanceCommand>(registry, CommandDomain.Application);
         AssertDomain<ExitApplicationCommand>(registry, CommandDomain.Application);
         AssertDomain<SetWorldTimeCommand>(registry, CommandDomain.World);
+        AssertDomain<TeleportSelfCommand>(registry, CommandDomain.World);
+        AssertDomain<TeleportPlayerCommand>(registry, CommandDomain.World);
+        Assert.True(registry.TryGetDefinition<TeleportPlayerCommand>(out var teleport));
+        Assert.True(registry.Permissions.TryGet(teleport!.Definition.RequiredPermission!.Value, out var teleportPermission));
+        Assert.Equal(PermissionGrantPolicy.OperatorManaged, teleportPermission!.Definition.GrantPolicy);
         AssertDomain<CreateTeamCommand>(registry, CommandDomain.World);
         AssertDomain<StopServerCommand>(registry, CommandDomain.Server);
         AssertDomain<GrantPlayerPermissionCommand>(registry, CommandDomain.Server);
@@ -469,6 +474,10 @@ public class CommandDispatcherTest
         IGameCommand[] commands =
         [
             new AdvanceWorldTimeCommand(),
+            new TeleportSelfCommand(new Vector3(1f, 64f, 3f)),
+            new TeleportSelfCommand(DestinationPlayer: "Codex"),
+            new TeleportPlayerCommand("Tester", new Vector3(-1f, 64f, 3f)),
+            new TeleportPlayerCommand("Tester", DestinationPlayer: "Codex"),
             new SetPrecipitationCommand(true),
             new SetFogCommand(false),
             new TriggerPlayerLightningCommand(),
@@ -772,6 +781,32 @@ public class CommandDispatcherTest
         registry.Adapters.Register(_owner, Id("text"), text);
         registry.Freeze();
         return registry;
+    }
+
+    [Theory]
+    [InlineData("/tp 1 64 -2")]
+    [InlineData("/tp Codex")]
+    [InlineData("/tp \"Player One\" 1 64 -2")]
+    [InlineData("/tp \"Player One\" Codex")]
+    public void TeleportTextRoutesReachTheWorldHandler(string text)
+    {
+        var principal = new CommandPrincipal("Operator", CommandPrincipalKind.ServerOperator | CommandPrincipalKind.Player);
+        var result = new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal));
+        Assert.Equal("teleport.no_world", result.Code);
+    }
+
+    [Fact]
+    public void TeleportRequiresSeparateSelfAndOtherPermissions()
+    {
+        var registry = BuiltInRegistry();
+        Assert.True(registry.TryGetDefinition<TeleportSelfCommand>(out var self));
+        Assert.True(registry.TryGetDefinition<TeleportPlayerCommand>(out var other));
+        var ordinary = Player("Player");
+        var authorized = Player("Player", [new ResourceId(new ModId("game"), "player.teleport.self")]);
+        Assert.False(self!.Definition.IsPotentiallyAuthorized(registry.Permissions, ordinary, null));
+        Assert.True(self.Definition.IsPotentiallyAuthorized(registry.Permissions, authorized, null));
+        Assert.False(other!.Definition.IsPotentiallyAuthorized(registry.Permissions, authorized, null));
+        Assert.False(self.Definition.CanInvoke(new CommandPrincipal("Console", CommandPrincipalKind.ServerOperator), null));
     }
 
     private static CommandRegistry BuiltInRegistry()
