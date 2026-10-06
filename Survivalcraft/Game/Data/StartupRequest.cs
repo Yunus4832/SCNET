@@ -12,6 +12,10 @@ public sealed class StartupRequest
 
     public GameMode? GameMode { get; set; }
 
+    public TerrainGenerationMode? TerrainGenerationMode { get; set; }
+
+    public int? TerrainLevel { get; set; }
+
     public string? ConnectHost { get; set; }
 
     public int? ConnectPort { get; set; }

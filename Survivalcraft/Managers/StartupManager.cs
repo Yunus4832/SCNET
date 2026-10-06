@@ -92,6 +92,31 @@ public static class StartupManager
                 continue;
             }
 
+            if (string.Equals(arg, "--terrain", StringComparison.OrdinalIgnoreCase))
+            {
+                var value = ReadOptionValue(args, ref i, "--terrain");
+                if (!Enum.TryParse<TerrainGenerationMode>(value, true, out var terrain) ||
+                    !Enum.IsDefined(terrain) || TerrainGenerationModes.IsLegacy(terrain))
+                {
+                    throw new ArgumentException("--terrain requires Continent, Island, FlatContinent or FlatIsland.");
+                }
+
+                request.TerrainGenerationMode = terrain;
+                continue;
+            }
+
+            if (string.Equals(arg, "--terrain-level", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!int.TryParse(ReadOptionValue(args, ref i, "--terrain-level"), out var level) ||
+                    level is < 2 or > 252)
+                {
+                    throw new ArgumentException("--terrain-level must be between 2 and 252.");
+                }
+
+                request.TerrainLevel = level;
+                continue;
+            }
+
             if (string.Equals(arg, "--connect", StringComparison.OrdinalIgnoreCase))
             {
                 connectOverride = ReadOptionValue(args, ref i, "--connect");
@@ -248,14 +273,16 @@ public static class StartupManager
 
         if (!string.IsNullOrWhiteSpace(request.World) ||
             request.Seed != null ||
-            request.GameMode != null)
+            request.GameMode != null || request.TerrainGenerationMode != null || request.TerrainLevel != null)
         {
-            Log.Warning("Ignoring --world/--seed/--game-mode because --session was not specified.");
+            Log.Warning("Ignoring world creation overrides because --session was not specified.");
         }
 
         request.World = null;
         request.Seed = null;
         request.GameMode = null;
+        request.TerrainGenerationMode = null;
+        request.TerrainLevel = null;
     }
 
     private static string ResolveActiveSessionId(

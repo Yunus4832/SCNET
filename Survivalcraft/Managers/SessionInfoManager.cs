@@ -229,6 +229,8 @@ public static class SessionInfoManager
                 Name = worldArg,
                 Seed = string.IsNullOrWhiteSpace(seedArg) ? GenerateRandomSeed() : seedArg,
                 GameMode = sessionInfo.GameMode ?? GameMode.Survival,
+                TerrainGenerationMode = sessionInfo.TerrainGenerationMode ?? TerrainGenerationMode.Continent,
+                TerrainLevel = sessionInfo.TerrainLevel ?? 64,
                 RunServer = true
             };
             var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldArg);
@@ -237,6 +239,7 @@ public static class SessionInfoManager
         }
         else
         {
+            WarnIgnoredTerrainOptions(sessionInfo);
             if (!string.IsNullOrWhiteSpace(seedArg))
             {
                 Log.Warning($"World already exists; ignoring provided seed \"{seedArg}\".");
@@ -381,10 +384,13 @@ public static class SessionInfoManager
                 sessionInfo.World,
                 sessionInfo.Seed,
                 sessionInfo.GameMode,
+                sessionInfo.TerrainGenerationMode,
+                sessionInfo.TerrainLevel,
                 runServer: StartupManager.Current.Request.ForceWorldRunServer);
         }
         else
         {
+            WarnIgnoredTerrainOptions(sessionInfo);
             worldInfo!.GameModeOverride = sessionInfo.GameMode;
             if (StartupManager.Current.Request.ForceWorldRunServer &&
                 !worldInfo.WorldSettings.RunServer)
@@ -594,6 +600,16 @@ public static class SessionInfoManager
             element.Add(new XAttribute(nameof(SessionInfo.GameMode), gameMode));
         }
 
+        if (sessionInfo.TerrainGenerationMode is { } terrain)
+        {
+            element.Add(new XAttribute(nameof(SessionInfo.TerrainGenerationMode), terrain));
+        }
+
+        if (sessionInfo.TerrainLevel is { } level)
+        {
+            element.Add(new XAttribute(nameof(SessionInfo.TerrainLevel), level));
+        }
+
         if (sessionInfo.HttpCommandEnabled is { } httpCommandEnabled)
         {
             element.Add(new XAttribute(nameof(SessionInfo.HttpCommandEnabled), httpCommandEnabled));
@@ -630,6 +646,12 @@ public static class SessionInfoManager
         sessionInfo.Seed = element.Attribute(nameof(SessionInfo.Seed))?.Value ?? string.Empty;
         sessionInfo.GameMode = ParseGameMode(
             element.Attribute(nameof(SessionInfo.GameMode))?.Value);
+        sessionInfo.TerrainGenerationMode = element.Attribute(nameof(SessionInfo.TerrainGenerationMode)) is { } terrain
+            ? Enum.Parse<TerrainGenerationMode>(terrain.Value, true)
+            : null;
+        sessionInfo.TerrainLevel = element.Attribute(nameof(SessionInfo.TerrainLevel)) is { } level
+            ? int.Parse(level.Value)
+            : null;
         sessionInfo.ServerHost = element.Attribute(nameof(SessionInfo.ServerHost))?.Value ?? string.Empty;
         sessionInfo.ServerPort = ParseServerPort(element.Attribute(nameof(SessionInfo.ServerPort))?.Value);
         sessionInfo.BroadcastPort = ParseServerPort(element.Attribute(nameof(SessionInfo.BroadcastPort))?.Value);
@@ -713,6 +735,16 @@ public static class SessionInfoManager
             sessionInfo.GameMode = gameMode;
         }
 
+        if (request.TerrainGenerationMode is { } terrain)
+        {
+            sessionInfo.TerrainGenerationMode = terrain;
+        }
+
+        if (request.TerrainLevel is { } level)
+        {
+            sessionInfo.TerrainLevel = level;
+        }
+
         if (request.ServerPort is { } serverPort)
         {
             sessionInfo.ServerPort = serverPort;
@@ -748,6 +780,8 @@ public static class SessionInfoManager
         string worldName,
         string? seed,
         GameMode? gameMode,
+        TerrainGenerationMode? terrainGenerationMode,
+        int? terrainLevel,
         bool runServer)
     {
         var worldSettings = new WorldSettings
@@ -755,6 +789,8 @@ public static class SessionInfoManager
             Name = NormalizeWorld(worldName),
             Seed = string.IsNullOrWhiteSpace(seed) ? GenerateRandomSeed() : seed,
             GameMode = gameMode ?? GameMode.Survival,
+            TerrainGenerationMode = terrainGenerationMode ?? TerrainGenerationMode.Continent,
+            TerrainLevel = terrainLevel ?? 64,
             RunServer = runServer
         };
         var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldSettings.Name);
@@ -764,6 +800,17 @@ public static class SessionInfoManager
 
     private static void Normalize(SessionInfo sessionInfo)
     {
+        if (sessionInfo.TerrainGenerationMode is { } terrain &&
+            (!Enum.IsDefined(terrain) || TerrainGenerationModes.IsLegacy(terrain)))
+        {
+            throw new ArgumentException("Session terrain must use a current generation mode.");
+        }
+
+        if (sessionInfo.TerrainLevel is < 2 or > 252)
+        {
+            throw new ArgumentException("Session terrain level must be between 2 and 252.");
+        }
+
         sessionInfo.SessionId = !IsValidSessionId(sessionInfo.SessionId)
             ? Guid.NewGuid().ToString("N")
             : NormalizeSessionId(sessionInfo.SessionId);
@@ -773,6 +820,14 @@ public static class SessionInfoManager
         if (sessionInfo.ServerPort < 0)
         {
             sessionInfo.ServerPort = 0;
+        }
+    }
+
+    private static void WarnIgnoredTerrainOptions(SessionInfo sessionInfo)
+    {
+        if (sessionInfo.TerrainGenerationMode != null || sessionInfo.TerrainLevel != null)
+        {
+            Log.Warning("World already exists; ignoring terrain creation options without changing saved terrain settings.");
         }
     }
 
@@ -842,6 +897,8 @@ public static class SessionInfoManager
             World = source.World,
             Seed = source.Seed,
             GameMode = source.GameMode,
+            TerrainGenerationMode = source.TerrainGenerationMode,
+            TerrainLevel = source.TerrainLevel,
             ServerHost = source.ServerHost,
             ServerPort = source.ServerPort,
             BroadcastPort = source.BroadcastPort,

@@ -39,6 +39,34 @@ public sealed class StartupManagerTest : IDisposable
     }
 
     [Fact]
+    public void FlatTerrainOverridesRoundTripOnlyWhenSaved()
+    {
+        var session = SaveSession("flat-automation");
+        var args = new[]
+        {
+            "--session", "flat-automation", "--terrain", "FlatContinent", "--terrain-level", "72"
+        };
+        var transient = StartupManager.Load(args);
+        Assert.Equal(TerrainGenerationMode.FlatContinent, transient.Session.TerrainGenerationMode);
+        Assert.Equal(72, transient.Session.TerrainLevel);
+        Assert.Null(SessionInfoManager.Load(session.SessionId).TerrainGenerationMode);
+        StartupManager.Load([.. args, "--save"]);
+        var restored = StartupManager.Load(["--session", "flat-automation"]);
+        Assert.Equal(TerrainGenerationMode.FlatContinent, restored.Session.TerrainGenerationMode);
+        Assert.Equal(72, restored.Session.TerrainLevel);
+    }
+
+    [Theory]
+    [InlineData("--terrain", "LegacyContinent23")]
+    [InlineData("--terrain", "unknown")]
+    [InlineData("--terrain-level", "1")]
+    [InlineData("--terrain-level", "253")]
+    public void InvalidTerrainCreationParametersAreRejected(string option, string value)
+    {
+        Assert.Throws<ArgumentException>(() => StartupManager.Load(["--session", "flat", option, value]));
+    }
+
+    [Fact]
     public void ExplicitSessionOverridesAreTransientWithoutSave()
     {
         var defaultSession = SaveSession("default-session");

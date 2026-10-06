@@ -23,6 +23,10 @@ public sealed class SessionInfo
 
     public GameMode? GameMode { get; set; }
 
+    public TerrainGenerationMode? TerrainGenerationMode { get; set; }
+
+    public int? TerrainLevel { get; set; }
+
     public string ServerHost { get; set; } = string.Empty;
 
     public int ServerPort { get; set; }

@@ -59,13 +59,16 @@
 - `--session <名称>`: 按名称选择或创建 session
 - `--world <名称>`: 和 `--session` 一起使用，设置 session 的目标世界
 - `--seed <种子>`: 和 `--session` 一起使用，设置新世界种子
+- `--terrain <类型>`: 和 `--session` 一起使用，设置新世界地形，可取 `Continent`、`Island`、`FlatContinent`、`FlatIsland`
+- `--terrain-level <高度>`: 和 `--session` 一起使用，设置新世界平坦地形高度，范围 2–252，默认 64
 - `--game-mode <模式>`: 和 `--session` 一起使用，覆盖 session 游戏模式
 - `--log-level <级别>`: 设置日志级别
 - `--window-mode <模式>`: GUI 窗口模式，可取 `Resizable`、`Borderless` 或 `Fullscreen`
 - `--window-size <宽x高>`: GUI 窗口尺寸，例如 `1280x720`
 - `--save`: 保存合并后的启动设置
 
-`--world`、`--seed` 和 `--game-mode` 没有 `--session` 时会被忽略。
+`--world`、`--seed`、`--terrain`、`--terrain-level` 和 `--game-mode` 没有 `--session` 时会被忽略。
+地形类型和高度随命名会话通过 `--save` 保存；只作用于新世界，已有世界会报告忽略，不修改存档地形。
 
 `--window-mode` 和 `--window-size` 只在 GUI 模式生效；Headless 会忽略它们，也不会因 `--save` 将其覆盖值持久化。
 
