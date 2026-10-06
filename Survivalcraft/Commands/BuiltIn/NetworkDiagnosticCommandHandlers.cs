@@ -11,6 +11,7 @@ internal static class NetworkDiagnosticCommandHandlers
         var statistics = CommonLib.Net.SendStatistics;
         var snapshot = new
         {
+            HeadlessTicks = RunMode.Value == RunModeType.HeadlessServer ? HeadlessEntry.TickStatistics : null,
             Interest = context.Project?.FindSubsystem<SubsystemNetworkInterest>()?.Statistics,
             Routing = statistics.GetRouting(),
             Encoding = statistics.GetEncoding(),

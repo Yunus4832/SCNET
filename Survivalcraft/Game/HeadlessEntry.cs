@@ -14,6 +14,8 @@ public sealed record HeadlessCommandSuggestions(
 
 public static class HeadlessEntry
 {
+    public static HeadlessTickStatistics TickStatistics { get; } = new();
+
     private sealed record ConsoleCommandRequest(
         string Input,
         bool WriteResultToLog,
@@ -184,6 +186,8 @@ public static class HeadlessEntry
 
         while (_running)
         {
+            var tickStarted = Stopwatch.GetTimestamp();
+            var startLateness = Math.Max(0, sw.Elapsed.TotalMilliseconds - nextTickMs);
             try
             {
                 Time.BeforeFrame();
@@ -202,6 +206,7 @@ public static class HeadlessEntry
                 Log.Error(ex);
             }
 
+            TickStatistics.Record(Stopwatch.GetElapsedTime(tickStarted).TotalMilliseconds, startLateness);
             nextTickMs += tickMs;
             var delay = nextTickMs - sw.ElapsedMilliseconds;
             switch (delay)

@@ -54,5 +54,8 @@ encoding, serialization, and send pressure.
 Plot or tabulate client count against CPU, memory, tick lateness, outbound bandwidth, chunk queue peak,
 and P95 canary latency. Capacity is the knee before objectives fail, not the last count before a crash.
 
-Until a protocol load client and server metrics exist, report capacity as unknown and provide only a
-baseline resource measurement. Never extrapolate a maximum from one or two clients.
+Use [scnet-server-load-testing](../../scnet-server-load-testing/SKILL.md) and `ServerLoadTool` for
+the maintained thin protocol client. Its supported workloads are idle, shared movement and exploration;
+it is not a combat or full client-physics generator. Optional Headless diagnostic sampling includes
+tick counters and reliable queues. Missing metrics remain unknown. Never extrapolate a maximum from
+one or two clients or claim coverage of unsupported workload classes.

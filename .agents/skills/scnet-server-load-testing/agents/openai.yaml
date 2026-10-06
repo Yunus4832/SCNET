@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET Server Load Testing"
+  short_description: "Measure SCNET server load with bounded thin protocol clients"
+  default_prompt: "Use $scnet-server-load-testing to run a bounded SCNET server load baseline."

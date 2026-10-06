@@ -73,6 +73,10 @@
     </Folder>
 
     <Folder Name="/09 Tools/">
+        <Project Path="ServerLoadTool/ServerLoadTool.csproj"/>
+        <Project Path="ServerLoadTool.Test/ServerLoadTool.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="GuiAtlasTool\GuiAtlasTool.csproj"/>
         <Project Path="ContentTool\ContentTool.csproj"/>
         <Project Path="LanguageTool\LanguageTool.csproj"/>
