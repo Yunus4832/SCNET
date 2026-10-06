@@ -2994,7 +2994,9 @@
             "70": "Ctrl + 鼠标滚轮",
             "71": "切换物品栏页面",
             "72": "Ctrl + 1 到 0",
-            "73": "选择物品栏页面"
+            "73": "选择物品栏页面",
+            "MarkKey": "M",
+            "MarkDescription": "标记返回点"
         },
         "LevelFactorDialog": {
             "1": "当前乘数：",
@@ -3997,7 +3999,7 @@
         "AutomationUiScroll_Description": "滚动自动化 UI 目标",
         "AutomationUiSwipe_Description": "滑动自动化 UI 目标",
         "AutomationMouseMove_Description": "发送相对鼠标移动",
-        "Teleport_Description": "传送到坐标或在线玩家",
+        "Teleport_Description": "传送到返回点、坐标或在线玩家",
         "TeleportSelf_Description": "传送自己",
         "TeleportOther_Description": "传送指定玩家",
         "TeleportSelfPosition_Description": "传送自己到坐标",
@@ -4009,7 +4011,19 @@
         "TeleportDestinationUnavailable_Message": "目的地玩家尚未进入世界。",
         "TeleportInvalidPosition_Message": "坐标必须有限，X/Z 在 ±1000000 内，Y 在 0–255 内。",
         "TeleportMounted_Message": "请先离开坐骑再传送。",
-        "TeleportCompleted_Message": "已传送 {0} 到 {1}。"
+        "TeleportCompleted_Message": "已传送 {0} 到 {1}。",
+        "TeleportBlocked_Message": "落点空间不足，玩家会卡在方块中，未执行传送。",
+        "TeleportLoading_Message": "正在准备落点地形，加载完成后检查并传送。",
+        "TeleportTimeout_Message": "落点地形加载超时，已取消传送。",
+        "TeleportCancelled_Message": "已取消等待中的传送。",
+        "MarkPrevious_Description": "标记自己的当前位置（M）",
+        "TeleportPrevious_Description": "传送到自己的返回点",
+        "MarkPrivate_Description": "保存个人标记",
+        "MarkPublic_Description": "保存公共标记",
+        "TeleportMark_Description": "传送到命名标记",
+        "MarkInvalidName_Message": "名称需为 1–64 个字符，不能包含控制字符或首尾空白。",
+        "MarkSaved_Message": "已保存标记 {0}：{1}。",
+        "MarkMissing_Message": "该作用域中没有标记 {0}。"
     },
     "AndroidServer": {
         "Title": "服务器日志",

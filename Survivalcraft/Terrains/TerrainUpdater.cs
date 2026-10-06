@@ -278,7 +278,7 @@ public class TerrainUpdater
     ///     设置更新位置的属性
     /// </summary>
     /// <remarks>
-    ///     在 <see cref="_updateParameters" /> 中查找指定索引的 Location，
+    ///     以待交接的位置变更优先于 <see cref="_updateParameters" /> 中已应用的位置，
     ///     如果参数发生变化或位置移动超过阈值，则更新并加入待处理列表
     /// </remarks>
     /// <param name="locationIndex">位置索引</param>
@@ -288,7 +288,7 @@ public class TerrainUpdater
     public void SetUpdateLocation(int locationIndex, Vector2 center, float visibilityDistance, float contentDistance)
     {
         contentDistance = MathUtils.Max(contentDistance, visibilityDistance);
-        _updateParameters.Locations.TryGetValue(locationIndex, out var location);
+        var location = ResolveUpdateLocation(locationIndex, _updateParameters.Locations, _pendingLocations);
         if (contentDistance.CloseTo(location.ContentDistance) &&
             visibilityDistance.CloseTo(location.VisibilityDistance) &&
             location.LastChunksUpdateCenter.HasValue &&
@@ -314,8 +314,13 @@ public class TerrainUpdater
     /// <param name="locationIndex">位置索引</param>
     public void RemoveUpdateLocation(int locationIndex)
     {
-        _updateParameters.Locations.Remove(locationIndex);
+        _pendingLocations[locationIndex] = null;
     }
+
+    internal static UpdateLocation ResolveUpdateLocation(int locationIndex,
+        IReadOnlyDictionary<int, UpdateLocation> current,
+        IReadOnlyDictionary<int, UpdateLocation?> pending) =>
+        pending.TryGetValue(locationIndex, out var queued) ? queued.GetValueOrDefault() : current.GetValueOrDefault(locationIndex);
 
 
     /// <summary>

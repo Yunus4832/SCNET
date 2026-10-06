@@ -70,6 +70,10 @@ public partial class PlayerData : IDisposable
 
     public CommandPermissionSet CommandPermissions { get; } = new();
 
+    internal PlayerTeleportRequest? PendingTeleport { get; set; }
+
+    public PositionMarks PrivateMarks { get; } = new();
+
     public Project Project { get; }
 
     public Client? Client => CommonLib.Net.GetClientByGUID(PlayerGUID);
@@ -520,6 +524,7 @@ public partial class PlayerData : IDisposable
 
     public void Dispose()
     {
+        PendingTeleport?.Dispose();
         HideSpawnDialog();
     }
 
@@ -663,6 +668,7 @@ public partial class PlayerData : IDisposable
     public void Load(ValuesDictionary valuesDictionary)
     {
         SpawnPosition = valuesDictionary.GetValue("SpawnPosition", Vector3.Zero);
+        PrivateMarks.Load(valuesDictionary.GetValue("PrivateMarks", new ValuesDictionary()));
         FirstSpawnTime = valuesDictionary.GetValue("FirstSpawnTime", 0.0);
         LastSpawnTime = valuesDictionary.GetValue("LastSpawnTime", 0.0);
         SpawnsCount = valuesDictionary.GetValue("SpawnsCount", 0);
@@ -698,6 +704,10 @@ public partial class PlayerData : IDisposable
     public void Save(ValuesDictionary valuesDictionary)
     {
         valuesDictionary.SetValue("SpawnPosition", SpawnPosition);
+        if (!Project.SendToClientMode)
+        {
+            valuesDictionary.SetValue("PrivateMarks", PrivateMarks.Save());
+        }
         valuesDictionary.SetValue("FirstSpawnTime", FirstSpawnTime);
         valuesDictionary.SetValue("LastSpawnTime", LastSpawnTime);
         valuesDictionary.SetValue("SpawnsCount", SpawnsCount);

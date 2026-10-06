@@ -2994,7 +2994,9 @@
             "70": "Ctrl + колесо мыши",
             "71": "Сменить страницу панели",
             "72": "Ctrl + 1–0",
-            "73": "Выбрать страницу панели"
+            "73": "Выбрать страницу панели",
+            "MarkKey": "M",
+            "MarkDescription": "отметить точку возврата"
         },
         "LevelFactorDialog": {
             "1": "Множители",
@@ -3997,7 +3999,7 @@
         "AutomationUiScroll_Description": "Прокрутить цель автоматизации интерфейса",
         "AutomationUiSwipe_Description": "Провести по цели автоматизации интерфейса",
         "AutomationMouseMove_Description": "Отправить относительное движение мыши",
-        "Teleport_Description": "Телепортироваться к координатам или игроку",
+        "Teleport_Description": "Телепортироваться к точке возврата, координатам или игроку онлайн",
         "TeleportSelf_Description": "Телепортировать себя",
         "TeleportOther_Description": "Телепортировать другого игрока",
         "TeleportSelfPosition_Description": "Телепортироваться к координатам",
@@ -4009,7 +4011,19 @@
         "TeleportDestinationUnavailable_Message": "Игрок назначения ещё не вошёл в мир.",
         "TeleportInvalidPosition_Message": "Координаты должны быть конечными: X/Z в пределах ±1000000, Y от 0 до 255.",
         "TeleportMounted_Message": "Перед телепортацией спешьтесь.",
-        "TeleportCompleted_Message": "Игрок {0} телепортирован в {1}."
+        "TeleportCompleted_Message": "Игрок {0} телепортирован в {1}.",
+        "TeleportBlocked_Message": "В точке назначения недостаточно места. Телепортация отменена, чтобы избежать застревания в блоках.",
+        "TeleportLoading_Message": "Подготовка местности в точке назначения. Перед телепортацией будет проверена безопасность.",
+        "TeleportTimeout_Message": "Время ожидания загрузки местности истекло. Телепортация отменена.",
+        "TeleportCancelled_Message": "Ожидающая телепортация отменена.",
+        "MarkPrevious_Description": "Отметить свою текущую позицию (M)",
+        "TeleportPrevious_Description": "Телепортироваться к своей точке возврата",
+        "MarkPrivate_Description": "Сохранить личную отметку",
+        "MarkPublic_Description": "Сохранить общую отметку",
+        "TeleportMark_Description": "Телепортироваться к отметке",
+        "MarkInvalidName_Message": "Имя должно содержать 1–64 символа, без управляющих символов и пробелов по краям.",
+        "MarkSaved_Message": "Отметка {0} сохранена: {1}.",
+        "MarkMissing_Message": "В этой области нет отметки {0}."
     },
     "AndroidServer": {
         "Title": "Журнал сервера",

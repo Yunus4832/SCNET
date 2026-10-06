@@ -12,6 +12,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 {
     private sealed record OfflinePlayerData(ValuesDictionary PlayerData, ValuesDictionary EntityData);
 
+    public PositionMarks PublicMarks { get; } = new();
+
     private readonly Dictionary<Guid, OfflinePlayerData> _offlinePlayers = new();
 
     private readonly Dictionary<Guid, OnlinePlayerState> _onlinePlayerStates = new();
@@ -98,6 +100,8 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             {
                 playersDatum.Update();
             }
+
+            playersDatum.PendingTeleport?.Update();
         }
 
         foreach (var playerData in _toRemove)
@@ -190,6 +194,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         var existing = _playersData.FirstOrDefault(pd => pd.PlayerGUID == playerData.PlayerGUID);
         if (existing != null && !ReferenceEquals(existing, playerData))
         {
+            existing.PendingTeleport?.Cancel();
             // 玩家重连时服务端会重新广播 PlayerData，旧数据可能因客户端未收到离线通知而残留。
             // 直接替换旧记录，避免“Player already added”异常导致新 PlayerData 无法建立、
             // 以及后续玩家实体加载失败。
@@ -279,6 +284,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             throw new InvalidOperationException("Player does not exist.");
         }
 
+        playerData.PendingTeleport?.Cancel();
         _playersData.Remove(playerData);
         _usedIndies.Remove(playerData.PlayerIndex);
         if (playerData.ComponentPlayer != null)
@@ -335,6 +341,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemGameWidgets = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
         GlobalSpawnPosition = valuesDictionary.GetValue<Vector3>("GlobalSpawnPosition");
+        PublicMarks.Load(valuesDictionary.GetValue("PublicMarks", new ValuesDictionary()));
         var blackPlayers = valuesDictionary.GetValue("BlackPlayerGuidList", new ValuesDictionary());
         foreach (var item in blackPlayers)
         {
@@ -388,6 +395,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
     public override void Save(ValuesDictionary valuesDictionary)
     {
+        valuesDictionary.SetValue("PublicMarks", PublicMarks.Save());
         var onlinePlayersListVd = new ValuesDictionary();
         var num = 0;
         foreach (var playersDatum in _playersData)

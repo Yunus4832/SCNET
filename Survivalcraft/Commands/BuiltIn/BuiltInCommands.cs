@@ -56,6 +56,30 @@ public static class BuiltInCommands
         var teleportOthers = new ResourceId(owner, "player.teleport.others");
         RegisterCreativePermission(commands, teleportSelf);
         RegisterPermission(commands, teleportOthers, CommandDomain.World, PermissionGrantPolicy.OperatorManaged);
+        var publicMark = new ResourceId(owner, "world.mark.manage");
+        RegisterCreativePermission(commands, publicMark);
+        commands.Register(new ResourceId(owner, "player/mark/private"),
+            new CommandDefinition<MarkPrivatePositionCommand>(TeleportCommandHandlers.MarkPrivate, CommandDomain.World,
+                CommandDescription("MarkPrivate_Description", "保存个人标记"),
+                allowedPrincipals: CommandPrincipalKind.Player,
+                write: static (writer, command) => writer.Write(command.Name),
+                read: static reader => new MarkPrivatePositionCommand(reader.ReadString())));
+        commands.Register(new ResourceId(owner, "world/mark/public"),
+            new CommandDefinition<MarkPublicPositionCommand>(TeleportCommandHandlers.MarkPublic, CommandDomain.World,
+                CommandDescription("MarkPublic_Description", "保存公共标记"), publicMark,
+                allowedPrincipals: CommandPrincipalKind.Player,
+                write: static (writer, command) => writer.Write(command.Name),
+                read: static reader => new MarkPublicPositionCommand(reader.ReadString())));
+        commands.Register(new ResourceId(owner, "player/teleport/mark"),
+            new CommandDefinition<TeleportMarkCommand>(TeleportCommandHandlers.MarkTeleport, CommandDomain.World,
+                CommandDescription("TeleportMark_Description", "传送到命名标记"), teleportSelf,
+                allowedPrincipals: CommandPrincipalKind.Player,
+                write: static (writer, command) =>
+                {
+                    writer.Write(command.Name);
+                    writer.Write(command.Public);
+                },
+                read: static reader => new TeleportMarkCommand(reader.ReadString(), reader.ReadBoolean())));
         commands.Register(new ResourceId(owner, "player/teleport/self"),
             new CommandDefinition<TeleportSelfCommand>(TeleportCommandHandlers.Self, CommandDomain.World,
                 CommandDescription("TeleportSelf_Description", "传送自己"), teleportSelf,
@@ -588,6 +612,18 @@ public static class BuiltInCommands
         commands.Adapters.Register(new ResourceId(owner, "text/help"), CreateHelpText());
         commands.Adapters.Register(new ResourceId(owner, "text/time"), CreateTimeText());
         commands.Adapters.Register(new ResourceId(owner, "text/tp"), CreateTeleportText());
+        commands.Adapters.Register(new ResourceId(owner, "text/mark"),
+            new TextCommand("mark", CommandDescription("MarkPrevious_Description", "标记自己的当前位置（M）"),
+            [
+                new CommandRoute([], typeof(MarkPrivatePositionCommand),
+                    _ => new MarkPrivatePositionCommand("previous")),
+                new CommandRoute([new CommandLiteral("private"), new CommandArgument("name")], typeof(MarkPrivatePositionCommand),
+                    arguments => new MarkPrivatePositionCommand(arguments.Get<string>("name")),
+                    CommandDescription("MarkPrivate_Description", "保存个人标记")),
+                new CommandRoute([new CommandLiteral("public"), new CommandArgument("name")], typeof(MarkPublicPositionCommand),
+                    arguments => new MarkPublicPositionCommand(arguments.Get<string>("name")),
+                    CommandDescription("MarkPublic_Description", "保存公共标记"))
+            ]));
         commands.Adapters.Register(new ResourceId(owner, "player/teleport/other"),
             HttpCommandBinding.Create(arguments => new TeleportPlayerCommand(arguments.Get<string>("player"),
                     ReadTeleportPosition(arguments), arguments.GetOrDefault<string?>("destination", null)),
@@ -812,8 +848,16 @@ public static class BuiltInCommands
         ];
         static Vector3 Position(CommandArguments arguments) => new(
             (float)arguments.Get<double>("x"), (float)arguments.Get<double>("y"), (float)arguments.Get<double>("z"));
-        return new TextCommand("tp", CommandDescription("Teleport_Description", "传送到坐标或在线玩家"),
+        return new TextCommand("tp", CommandDescription("Teleport_Description", "传送到返回点、坐标或在线玩家"),
         [
+            new CommandRoute([new CommandLiteral("private"), new CommandArgument("name")], typeof(TeleportMarkCommand),
+                arguments => new TeleportMarkCommand(arguments.Get<string>("name"), false),
+                CommandDescription("TeleportMark_Description", "传送到命名标记")),
+            new CommandRoute([new CommandLiteral("public"), new CommandArgument("name")], typeof(TeleportMarkCommand),
+                arguments => new TeleportMarkCommand(arguments.Get<string>("name"), true),
+                CommandDescription("TeleportMark_Description", "传送到命名标记")),
+            new CommandRoute([], typeof(TeleportMarkCommand),
+                _ => new TeleportMarkCommand("previous", false), CommandDescription("TeleportPrevious_Description", "传送到自己的返回点")),
             new CommandRoute(coordinates, typeof(TeleportSelfCommand),
                 arguments => new TeleportSelfCommand(Position(arguments)), CommandDescription("TeleportSelfPosition_Description", "传送自己到坐标")),
             new CommandRoute([new CommandArgument("destination")], typeof(TeleportSelfCommand),

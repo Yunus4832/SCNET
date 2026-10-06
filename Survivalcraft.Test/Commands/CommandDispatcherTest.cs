@@ -784,6 +784,9 @@ public class CommandDispatcherTest
     }
 
     [Theory]
+    [InlineData("/tp")]
+    [InlineData("/tp private home")]
+    [InlineData("/tp public home")]
     [InlineData("/tp 1 64 -2")]
     [InlineData("/tp Codex")]
     [InlineData("/tp \"Player One\" 1 64 -2")]
@@ -807,6 +810,72 @@ public class CommandDispatcherTest
         Assert.True(self.Definition.IsPotentiallyAuthorized(registry.Permissions, authorized, null));
         Assert.False(other!.Definition.IsPotentiallyAuthorized(registry.Permissions, authorized, null));
         Assert.False(self.Definition.CanInvoke(new CommandPrincipal("Console", CommandPrincipalKind.ServerOperator), null));
+    }
+
+    [Fact]
+    public void MarkIsAPlayerOwnedWorldCommandWithoutTeleportPermission()
+    {
+        var registry = BuiltInRegistry();
+        Assert.True(registry.TryGetDefinition<MarkPrivatePositionCommand>(out var mark));
+        Assert.Equal(CommandDomain.World, mark!.Definition.Domain);
+        Assert.True(mark.Definition.IsPotentiallyAuthorized(registry.Permissions, Player("Player"), null));
+        Assert.False(mark.Definition.CanInvoke(CommandPrincipal.ServerOperator, null));
+        Assert.True(registry.TryEncode(new MarkPrivatePositionCommand("previous"), out var id, out var payload, out _));
+        Assert.True(registry.TryDecode(id, payload, out var decoded, out _));
+        Assert.Equal(new MarkPrivatePositionCommand("previous"), decoded);
+        Assert.Equal("teleport.no_world", new TextCommandAdapter(registry).Execute("/mark", Context()).Code);
+    }
+
+    [Theory]
+    [InlineData("mark")]
+    [InlineData("tp")]
+    public void BareShortcutsCreateTheSameCommandAsPrivatePrevious(string name)
+    {
+        var adapter = new TextCommandAdapter(BuiltInRegistry());
+        Assert.True(adapter.TryFind(name, out var entry));
+        var bare = Assert.Single(entry!.Command.Routes, route => route.Segments.Count == 0);
+        var explicitRoute = Assert.Single(entry.Command.Routes, route =>
+            route.Segments.Count == 2 && route.Segments[0] is CommandLiteral { Value: "private" });
+        var command = bare.CreateCommand(new CommandArguments(new Dictionary<string, object>()));
+        var explicitCommand = explicitRoute.CreateCommand(new CommandArguments(new Dictionary<string, object>
+        {
+            ["name"] = "previous"
+        }));
+        Assert.Equal(explicitRoute.CommandType, bare.CommandType);
+        Assert.Equal(explicitCommand, command);
+        Assert.Equal(name == "mark" ? (IGameCommand)new MarkPrivatePositionCommand("previous") :
+            new TeleportMarkCommand("previous", false), command);
+    }
+
+    [Fact]
+    public void NamedMarksEnforceScopePermissionsAndRoundTripOverTheNetwork()
+    {
+        var registry = BuiltInRegistry();
+        Assert.True(registry.TryGetDefinition<MarkPrivatePositionCommand>(out var personal));
+        Assert.True(registry.TryGetDefinition<MarkPublicPositionCommand>(out var shared));
+        Assert.True(personal!.Definition.IsPotentiallyAuthorized(registry.Permissions, Player("Player"), null));
+        Assert.False(shared!.Definition.IsPotentiallyAuthorized(registry.Permissions, Player("Player"), null));
+        Assert.True(shared.Definition.IsPotentiallyAuthorized(registry.Permissions,
+            Player("Admin", [new ResourceId(new ModId("game"), "world.mark.manage")]), null));
+        Assert.False(personal.Definition.CanInvoke(CommandPrincipal.ServerOperator, null));
+        IGameCommand[] commands =
+        [
+            new MarkPrivatePositionCommand("My home"),
+            new MarkPublicPositionCommand("出生点"),
+            new TeleportMarkCommand("home", false),
+            new TeleportMarkCommand("home", true)
+        ];
+        foreach (var command in commands)
+        {
+            Assert.True(registry.TryEncode(command, out var id, out var payload, out _));
+            Assert.True(registry.TryDecode(id, payload, out var decoded, out _));
+            Assert.Equal(command, decoded);
+        }
+
+        var principal = new CommandPrincipal("Operator", CommandPrincipalKind.ServerOperator | CommandPrincipalKind.Player);
+        var adapter = new TextCommandAdapter(registry);
+        Assert.Equal("teleport.no_world", adapter.Execute("/mark private \"My home\"", Context(principal)).Code);
+        Assert.Equal("teleport.no_world", adapter.Execute("/mark public home", Context(principal)).Code);
     }
 
     private static CommandRegistry BuiltInRegistry()

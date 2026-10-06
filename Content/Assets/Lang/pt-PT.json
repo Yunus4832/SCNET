@@ -2994,7 +2994,9 @@
             "70": "Ctrl + roda do rato",
             "71": "Mudar página da barra rápida",
             "72": "Ctrl + 1 a 0",
-            "73": "Selecionar página da barra rápida"
+            "73": "Selecionar página da barra rápida",
+            "MarkKey": "M",
+            "MarkDescription": "marcar ponto de regresso"
         },
         "LevelFactorDialog": {
             "1": "Multiplicador atual:",
@@ -3997,7 +3999,7 @@
         "AutomationUiScroll_Description": "Deslocar um alvo de IU da automatização",
         "AutomationUiSwipe_Description": "Deslizar um alvo de IU da automatização",
         "AutomationMouseMove_Description": "Enviar movimento relativo do rato",
-        "Teleport_Description": "Teletransportar para coordenadas ou um jogador online",
+        "Teleport_Description": "Teletransportar para um ponto de regresso, coordenadas ou um jogador online",
         "TeleportSelf_Description": "Teletransportar-se",
         "TeleportOther_Description": "Teletransportar outro jogador",
         "TeleportSelfPosition_Description": "Teletransportar-se para coordenadas",
@@ -4009,7 +4011,19 @@
         "TeleportDestinationUnavailable_Message": "O jogador de destino ainda não entrou no mundo.",
         "TeleportInvalidPosition_Message": "As coordenadas devem ser finitas: X/Z entre ±1000000 e Y entre 0–255.",
         "TeleportMounted_Message": "Desmonte antes de se teletransportar.",
-        "TeleportCompleted_Message": "{0} teletransportado para {1}."
+        "TeleportCompleted_Message": "{0} teletransportado para {1}.",
+        "TeleportBlocked_Message": "Não há espaço suficiente no destino. Teletransporte cancelado para evitar ficar preso em blocos.",
+        "TeleportLoading_Message": "A preparar o terreno de destino. A segurança será verificada antes do teletransporte.",
+        "TeleportTimeout_Message": "O carregamento do terreno de destino excedeu o tempo limite. Teletransporte cancelado.",
+        "TeleportCancelled_Message": "Teletransporte pendente cancelado.",
+        "MarkPrevious_Description": "Marcar a posição atual (M)",
+        "TeleportPrevious_Description": "Teletransportar para o ponto de regresso",
+        "MarkPrivate_Description": "Guardar marca privada",
+        "MarkPublic_Description": "Guardar marca pública",
+        "TeleportMark_Description": "Teleportar para uma marca",
+        "MarkInvalidName_Message": "O nome deve ter 1–64 caracteres, sem caracteres de controlo nem espaços nas extremidades.",
+        "MarkSaved_Message": "Marca {0} guardada: {1}.",
+        "MarkMissing_Message": "A marca {0} não existe neste âmbito."
     },
     "AndroidServer": {
         "Title": "Registo do servidor",

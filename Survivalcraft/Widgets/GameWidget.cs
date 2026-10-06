@@ -4,6 +4,7 @@ using Engine.Input;
 
 using EntitySystem.Core;
 
+using Game.Commands;
 using Game.Messaging;
 using Game.Network;
 using Game.Network.Enums;
@@ -243,6 +244,13 @@ public class GameWidget : CanvasWidget
 
         var modalPanel = PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
         var isGameInputCaptured = PlayerData.ComponentPlayer?.ComponentGui.IsGameInputCaptured == true;
+        if (Window.IsActive && PlayerData.IsReadyForPlaying && player?.ComponentHealth.Health > 0f &&
+            !isGameInputCaptured && modalPanel == null && !DialogsManager.HasDialogs(player.GuiWidget) &&
+            Input.IsKeyDownOnce(Key.M))
+        {
+            CommandGateway.Submit(PlayerData, new MarkPrivatePositionCommand("previous"));
+        }
+
         if (!isGameInputCaptured &&
             Input.IsKeyDownOnce(Key.Enter) &&
             MessagePanel is { EditText.HasFocus: false } enterMessagePanel)

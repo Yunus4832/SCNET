@@ -2994,7 +2994,9 @@
             "70": "Ctrl + mouse wheel",
             "71": "Switch hotbar page",
             "72": "Ctrl + 1 to 0",
-            "73": "Select hotbar page"
+            "73": "Select hotbar page",
+            "MarkKey": "M",
+            "MarkDescription": "mark return point"
         },
         "LevelFactorDialog": {
             "1": "Current multipliers:",
@@ -3997,7 +3999,7 @@
         "AutomationUiScroll_Description": "Scroll an automation UI target",
         "AutomationUiSwipe_Description": "Swipe an automation UI target",
         "AutomationMouseMove_Description": "Send relative mouse movement",
-        "Teleport_Description": "Teleport to coordinates or an online player",
+        "Teleport_Description": "Teleport to a return point, coordinates or an online player",
         "TeleportSelf_Description": "Teleport yourself",
         "TeleportOther_Description": "Teleport another player",
         "TeleportSelfPosition_Description": "Teleport yourself to coordinates",
@@ -4009,7 +4011,19 @@
         "TeleportDestinationUnavailable_Message": "The destination player has not entered the world.",
         "TeleportInvalidPosition_Message": "Coordinates must be finite: X/Z within ±1000000 and Y within 0–255.",
         "TeleportMounted_Message": "Dismount before teleporting.",
-        "TeleportCompleted_Message": "Teleported {0} to {1}."
+        "TeleportCompleted_Message": "Teleported {0} to {1}.",
+        "TeleportBlocked_Message": "Not enough space at the destination. Teleport cancelled to avoid getting stuck in blocks.",
+        "TeleportLoading_Message": "Preparing destination terrain. Safety will be checked before teleporting.",
+        "TeleportTimeout_Message": "Destination terrain loading timed out. Teleport cancelled.",
+        "TeleportCancelled_Message": "Pending teleport cancelled.",
+        "MarkPrevious_Description": "Mark your current position (M)",
+        "TeleportPrevious_Description": "Teleport to your return point",
+        "MarkPrivate_Description": "Save a private mark",
+        "MarkPublic_Description": "Save a public mark",
+        "TeleportMark_Description": "Teleport to a named mark",
+        "MarkInvalidName_Message": "Names must contain 1–64 characters, without control characters or leading/trailing whitespace.",
+        "MarkSaved_Message": "Saved mark {0}: {1}.",
+        "MarkMissing_Message": "No mark {0} exists in this scope."
     },
     "AndroidServer": {
         "Title": "Server Log",

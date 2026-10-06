@@ -10,6 +10,49 @@ namespace Survivalcraft.Test.Terrains;
 
 public sealed class TerrainUpdaterTest
 {
+    [Fact]
+    public void QueuedRemovalDoesNotReuseAnAppliedTeleportLocation()
+    {
+        var applied = new TerrainUpdater.UpdateLocation
+        {
+            Center = new Vector2(100f, 100f),
+            ContentDistance = 16f,
+            LastChunksUpdateCenter = new Vector2(100f, 100f)
+        };
+        var current = new Dictionary<int, TerrainUpdater.UpdateLocation> { [-2] = applied };
+        var pending = new Dictionary<int, TerrainUpdater.UpdateLocation?> { [-2] = null };
+        Assert.Equal(default, TerrainUpdater.ResolveUpdateLocation(-2, current, pending));
+        pending.Clear();
+        Assert.Equal(applied, TerrainUpdater.ResolveUpdateLocation(-2, current, pending));
+    }
+
+    [Fact]
+    public void LatestQueuedLocationWinsBeforeWorkerHandoff()
+    {
+        var latest = new TerrainUpdater.UpdateLocation { Center = new Vector2(200f, 200f) };
+        var current = new Dictionary<int, TerrainUpdater.UpdateLocation> { [-2] = new() { Center = Vector2.Zero } };
+        var pending = new Dictionary<int, TerrainUpdater.UpdateLocation?> { [-2] = latest };
+        Assert.Equal(latest, TerrainUpdater.ResolveUpdateLocation(-2, current, pending));
+    }
+
+    [Theory]
+    [InlineData(-1, -1)]
+    [InlineData(-1, 0)]
+    [InlineData(0, -1)]
+    [InlineData(0, 0)]
+    public void ContentOnlyTeleportLocationSchedulesAllChunksAtABoundary(int x, int z)
+    {
+        using var chunk = new TerrainChunk(null!, x, z);
+        var locations = new Dictionary<int, TerrainUpdater.UpdateLocation>
+        {
+            [-2] = new() { Center = Vector2.Zero, VisibilityDistance = 0f, ContentDistance = 16f }
+        };
+        var selected = TerrainUpdater.SelectChunkToUpdate(
+            [chunk], locations.Values, TerrainContentRole.Authority, true, out var state);
+        Assert.Same(chunk, selected);
+        Assert.Equal(TerrainChunkState.InvalidVertices1, state);
+    }
+
     [Theory]
     [InlineData(TerrainContentRole.Authority, true, false, true)]
     [InlineData(TerrainContentRole.Authority, true, true, true)]
