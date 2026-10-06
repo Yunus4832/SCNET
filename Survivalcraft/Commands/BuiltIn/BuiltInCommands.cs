@@ -462,10 +462,62 @@ public static class BuiltInCommands
                 CommandDomain.Application,
                 CommandDescription("AutomationUiContext_Description", "显示自动化 UI 上下文"),
                 hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/input/run"),
+            new CommandDefinition<RunAutomationInputCommand>(AutomationCommandHandlers.RunInput,
+                CommandDomain.Application, LocalizedText.Literal("执行有时限的组合输入"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/gameplay/context/get"),
+            new CommandDefinition<GetAutomationGameplayContextCommand>(AutomationCommandHandlers.GameplayContext,
+                CommandDomain.Application, LocalizedText.Literal("读取角色操作上下文"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/view/look_at"),
+            new CommandDefinition<LookAtAutomationTargetCommand>(AutomationCommandHandlers.LookAt,
+                CommandDomain.Application, LocalizedText.Literal("朝向世界坐标"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/view/status"),
+            new CommandDefinition<GetAutomationViewStatusCommand>(AutomationCommandHandlers.ViewStatus,
+                CommandDomain.Application, LocalizedText.Literal("读取视角控制状态"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/view/angles"),
+            new CommandDefinition<SetAutomationViewAnglesCommand>(AutomationCommandHandlers.SetViewAngles,
+                CommandDomain.Application, LocalizedText.Literal("按角度调整视角"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/view/cancel"),
+            new CommandDefinition<CancelAutomationViewCommand>(AutomationCommandHandlers.CancelView,
+                CommandDomain.Application, LocalizedText.Literal("取消视角控制"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/navigation/start"),
+            new CommandDefinition<NavigateAutomationPlayerCommand>(AutomationCommandHandlers.Navigate,
+                CommandDomain.Application, LocalizedText.Literal("自动步行到指定位置"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/navigation/status"),
+            new CommandDefinition<GetAutomationNavigationStatusCommand>(AutomationCommandHandlers.NavigationStatus,
+                CommandDomain.Application, LocalizedText.Literal("读取自动导航状态"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/navigation/cancel"),
+            new CommandDefinition<CancelAutomationNavigationCommand>(AutomationCommandHandlers.CancelNavigation,
+                CommandDomain.Application, LocalizedText.Literal("取消自动导航"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/input/status"),
+            new CommandDefinition<GetAutomationActionStatusCommand>(AutomationCommandHandlers.ActionStatus,
+                CommandDomain.Application, LocalizedText.Literal("读取自动化输入状态"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/input/cancel"),
+            new CommandDefinition<CancelAutomationActionCommand>(AutomationCommandHandlers.CancelAction,
+                CommandDomain.Application, LocalizedText.Literal("取消自动化输入"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/input/text"),
+            new CommandDefinition<EnterAutomationTextCommand>(AutomationCommandHandlers.EnterText,
+                CommandDomain.Application, LocalizedText.Literal("发送自动化文本输入"),
+                hostRequirement: CommandHostRequirement.Gui));
         commands.Register(new ResourceId(owner, "automation/ui/tap"),
             new CommandDefinition<TapAutomationUiCommand>(AutomationCommandHandlers.Tap,
                 CommandDomain.Application,
                 CommandDescription("AutomationUiTap_Description", "点击自动化 UI 目标"),
+                hostRequirement: CommandHostRequirement.Gui));
+        commands.Register(new ResourceId(owner, "automation/ui/drag"),
+            new CommandDefinition<DragAutomationUiCommand>(AutomationCommandHandlers.Drag,
+                CommandDomain.Application, LocalizedText.Literal("拖动库存物品"),
                 hostRequirement: CommandHostRequirement.Gui));
         commands.Register(new ResourceId(owner, "automation/ui/scroll"),
             new CommandDefinition<ScrollAutomationUiCommand>(AutomationCommandHandlers.Scroll,
@@ -529,9 +581,77 @@ public static class BuiltInCommands
             HttpCommandBinding.Create(static _ => new GetNetworkSendStatisticsCommand()));
         commands.Adapters.Register(new ResourceId(owner, "automation/ui/context/get"),
             HttpCommandBinding.Create(static _ => new GetAutomationUiContextCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/input/run"),
+            HttpCommandBinding.Create(arguments => new RunAutomationInputCommand(
+                    new Game.Automation.AutomationInputAction(
+                        arguments.GetOrDefault<string[]>("keys", []).Select(key => Enum.Parse<Key>(key, true)).ToArray(),
+                        arguments.GetOrDefault<string[]>("mouseButtons", []).Select(button => Enum.Parse<MouseButton>(button, true)).ToArray(),
+                        arguments.GetOrDefault("durationFrames", 1),
+                        arguments.GetOrDefault("mouseDeltaX", 0),
+                        arguments.GetOrDefault("mouseDeltaY", 0),
+                        arguments.GetOrDefault<double?>("durationSeconds", null))),
+                new HttpCommandArgumentDefinition("keys", "string[]", false),
+                new HttpCommandArgumentDefinition("mouseButtons", "string[]", false),
+                new HttpCommandArgumentDefinition("durationFrames", "integer", false),
+                new HttpCommandArgumentDefinition("durationSeconds", "number", false),
+                new HttpCommandArgumentDefinition("mouseDeltaX", "integer", false),
+                new HttpCommandArgumentDefinition("mouseDeltaY", "integer", false)));
+        commands.Adapters.Register(new ResourceId(owner, "automation/input/status"),
+            HttpCommandBinding.Create(static _ => new GetAutomationActionStatusCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/gameplay/context/get"),
+            HttpCommandBinding.Create(static _ => new GetAutomationGameplayContextCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/view/look_at"),
+            HttpCommandBinding.Create(arguments => new LookAtAutomationTargetCommand(
+                    new Vector3(arguments.Get<float>("x"), arguments.Get<float>("y"), arguments.Get<float>("z")),
+                    arguments.GetOrDefault("toleranceDegrees", 1f), arguments.GetOrDefault("timeoutSeconds", 10d)),
+                new HttpCommandArgumentDefinition("x", "number"),
+                new HttpCommandArgumentDefinition("y", "number"),
+                new HttpCommandArgumentDefinition("z", "number"),
+                new HttpCommandArgumentDefinition("toleranceDegrees", "number", false),
+                new HttpCommandArgumentDefinition("timeoutSeconds", "number", false)));
+        commands.Adapters.Register(new ResourceId(owner, "automation/view/status"),
+            HttpCommandBinding.Create(static _ => new GetAutomationViewStatusCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/view/angles"),
+            HttpCommandBinding.Create(arguments => new SetAutomationViewAnglesCommand(
+                    arguments.Get<float>("yawDegrees"), arguments.Get<float>("pitchDegrees"),
+                    arguments.GetOrDefault("relative", false), arguments.GetOrDefault("toleranceDegrees", 1f),
+                    arguments.GetOrDefault("timeoutSeconds", 10d)),
+                new HttpCommandArgumentDefinition("yawDegrees", "number"),
+                new HttpCommandArgumentDefinition("pitchDegrees", "number"),
+                new HttpCommandArgumentDefinition("relative", "boolean", false),
+                new HttpCommandArgumentDefinition("toleranceDegrees", "number", false),
+                new HttpCommandArgumentDefinition("timeoutSeconds", "number", false)));
+        commands.Adapters.Register(new ResourceId(owner, "automation/view/cancel"),
+            HttpCommandBinding.Create(static _ => new CancelAutomationViewCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/navigation/start"),
+            HttpCommandBinding.Create(arguments => new NavigateAutomationPlayerCommand(
+                    new Vector3(arguments.Get<float>("x"), arguments.Get<float>("y"), arguments.Get<float>("z")),
+                    arguments.GetOrDefault("range", 0.75f),
+                    arguments.GetOrDefault("timeoutSeconds", 30d)),
+                new HttpCommandArgumentDefinition("x", "number"),
+                new HttpCommandArgumentDefinition("y", "number"),
+                new HttpCommandArgumentDefinition("z", "number"),
+                new HttpCommandArgumentDefinition("range", "number", false),
+                new HttpCommandArgumentDefinition("timeoutSeconds", "number", false)));
+        commands.Adapters.Register(new ResourceId(owner, "automation/navigation/status"),
+            HttpCommandBinding.Create(static _ => new GetAutomationNavigationStatusCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/navigation/cancel"),
+            HttpCommandBinding.Create(static _ => new CancelAutomationNavigationCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/input/cancel"),
+            HttpCommandBinding.Create(static _ => new CancelAutomationActionCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "automation/input/text"),
+            HttpCommandBinding.Create(arguments => new EnterAutomationTextCommand(arguments.Get<string>("text")),
+                new HttpCommandArgumentDefinition("text", "string")));
         commands.Adapters.Register(new ResourceId(owner, "automation/ui/tap"),
             HttpCommandBinding.Create(arguments => new TapAutomationUiCommand(arguments.Get<string>("selector")),
                 new HttpCommandArgumentDefinition("selector", "string")));
+        commands.Adapters.Register(new ResourceId(owner, "automation/ui/drag"),
+            HttpCommandBinding.Create(arguments => new DragAutomationUiCommand(
+                    arguments.Get<string>("sourceSelector"), arguments.Get<string>("targetSelector"),
+                    arguments.GetOrDefault("durationSeconds", 0.5d)),
+                new HttpCommandArgumentDefinition("sourceSelector", "string"),
+                new HttpCommandArgumentDefinition("targetSelector", "string"),
+                new HttpCommandArgumentDefinition("durationSeconds", "number", false)));
         commands.Adapters.Register(new ResourceId(owner, "automation/ui/scroll"),
             HttpCommandBinding.Create(arguments => new ScrollAutomationUiCommand(
                     arguments.Get<string>("selector"),

@@ -3,6 +3,8 @@ using Engine.Input;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Automation;
+
 namespace Game.Components;
 
 public class ComponentInput : Component, IUpdateable
@@ -41,6 +43,10 @@ public class ComponentInput : Component, IUpdateable
 
     public PlayerInput PlayerInput => _playerInput;
 
+    public AutomationNavigationController Navigation { get; } = new();
+
+    public AutomationViewController ViewControl { get; } = new();
+
     public bool IsTouchInputActive { get; private set; }
 
     public bool IsControlledByVr { get; set; }
@@ -70,6 +76,8 @@ public class ComponentInput : Component, IUpdateable
         UpdateInputFromMouseAndKeyboard(_componentPlayer.GameWidget.Input);
         UpdateInputFromGamepad(_componentPlayer.GameWidget.Input);
         UpdateInputFromWidgets(_componentPlayer.GameWidget.Input);
+        Navigation.ApplyInput(_componentPlayer, ref _playerInput);
+        ViewControl.ApplyInput(_componentPlayer, ref _playerInput);
         if (_playerInput.Jump)
         {
             if (Time.RealTime - _lastJumpTime < 0.3)
@@ -133,6 +141,13 @@ public class ComponentInput : Component, IUpdateable
     {
         SplitSourceInventory = inventory;
         SplitSourceSlotIndex = slotIndex;
+    }
+
+    public override void Dispose()
+    {
+        Navigation.Cancel("character_disposed");
+        ViewControl.Cancel("character_disposed");
+        base.Dispose();
     }
 
     public Ray3? CalculateVrHandRay()

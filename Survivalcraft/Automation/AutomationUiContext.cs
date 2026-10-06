@@ -9,7 +9,9 @@ public sealed record AutomationTarget(
     float Width,
     float Height,
     bool Enabled,
-    IReadOnlyList<string> Actions);
+    IReadOnlyList<string> Actions,
+    AutomationInventorySlot? Slot = null,
+    string? HitTargetType = null);
 
 public sealed record AutomationUiSnapshot(
     string Screen,
@@ -55,10 +57,23 @@ public static class AutomationUiContext
             widget.GlobalBounds.Max.Y > widget.GlobalBounds.Min.Y)
         {
             var bounds = widget.GlobalBounds;
-            var text = widget is ButtonWidget button ? button.Text : widget.Title;
+            var text = widget switch
+            {
+                ButtonWidget button => button.Text,
+                TextBoxWidget textBox => textBox.Text,
+                _ => widget.Title
+            };
+            var slot = widget is InventorySlotWidget { InventoryId: { } inventoryId } inventorySlot
+                ? new AutomationInventorySlot(inventoryId, inventorySlot.SlotIndex, inventorySlot.SlotValue, inventorySlot.SlotCount)
+                : null;
+            if (slot is { Value: not 0 })
+            {
+                text = BlocksManager.Blocks[Terrain.ExtractContents(slot.Value)].GetDisplayName(null, slot.Value);
+            }
+
             yield return new AutomationTarget(path, widget.GetType().Name, text,
                 bounds.Min.X, bounds.Min.Y, bounds.Max.X - bounds.Min.X, bounds.Max.Y - bounds.Min.Y, true,
-                GetActions(widget));
+                GetActions(widget), slot, widget.HitTestGlobal((bounds.Min + bounds.Max) / 2f)?.GetType().Name);
         }
 
         if (widget is not ContainerWidget container)
@@ -81,11 +96,16 @@ public static class AutomationUiContext
 
     private static bool IsAutomationTarget(Widget widget) =>
         widget.IsHitTestVisible &&
-        (widget is ButtonWidget or ClickableWidget or ScrollPanelWidget ||
+        (widget is not InventorySlotWidget inventorySlot || inventorySlot.InventoryId != null) &&
+        (widget is ButtonWidget or ClickableWidget or ScrollPanelWidget or InventorySlotWidget or TextBoxWidget ||
          (widget is not ContainerWidget && !string.IsNullOrWhiteSpace(widget.Name)));
 
-    private static IReadOnlyList<string> GetActions(Widget widget) =>
-        widget is ScrollPanelWidget ? ["scroll", "swipe"] : ["tap"];
+    private static IReadOnlyList<string> GetActions(Widget widget) => widget switch
+    {
+        ScrollPanelWidget => ["scroll", "swipe"],
+        InventorySlotWidget => ["tap", "drag"],
+        _ => ["tap"]
+    };
 
     private static (Widget? Root, string Selector) GetActiveScope(IReadOnlyList<Dialogs.Dialog> dialogs)
     {

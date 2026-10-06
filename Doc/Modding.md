@@ -180,3 +180,6 @@ commands.Adapters.Register(
 内置 GUI 自动化命令位于 `game:automation/ui/*`，业务实现集中在 `Game.Automation`，命令层只负责参数校验和结果封装。`context/get` 返回目标支持的 `actions`；`tap`、`scroll`（鼠标滚轮）和 `swipe`（跨帧触摸轨迹）都必须通过 `Engine.Input.InputSimulation` 注入，不应直接修改 Widget 状态或调用 Screen 回调。`swipe` 的 `deltaX/deltaY` 表示手指从目标中心移动的方向和距离，例如向上滑动使用负的 `deltaY`。
 
 相对鼠标输入使用 `game:automation/input/mouse/move`，其 `deltaX/deltaY` 会与同一帧的物理鼠标位移合并，可用于游戏内视角控制。它与用于 UI 命中定位的绝对鼠标坐标是两种不同语义。
+
+普通游玩和交互验证优先使用 [游戏自动化](Automation.md) 的组合输入、库存拖放、角色观测和步行导航。
+Mod 适合准备确定性场景和补充观测，不应通过直接改位置、库存或调用交互回调代替被测操作。

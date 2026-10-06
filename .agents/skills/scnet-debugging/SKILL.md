@@ -1,6 +1,6 @@
 ---
 name: scnet-debugging
-description: Diagnose and smoke-test SCNET game, Android client, and Headless server changes on Linux, Windows, or Android with repeatable startup, runtime evidence, test fixtures, and teardown. Use when reproducing runtime bugs, validating networking or Mod changes, building gameplay test fixtures, inspecting crashes or hangs, or verifying a fix beyond unit tests.
+description: Diagnose and smoke-test SCNET game, Android client, and Headless server changes, or control normal gameplay through built-in automation. Use for runtime reproduction, gameplay interaction, networking or Mod validation, test fixtures, crashes, hangs, and verification beyond unit tests on Linux, Windows, or Android.
 ---
 
 # SCNET Debugging
@@ -93,6 +93,10 @@ Treat any of the following as a failed smoke test until explained:
 For evidence contents and reporting, read [references/evidence.md](references/evidence.md).
 
 ## GUI automation
+
+For controlling characters, navigating, editing inventory or verifying gameplay through HTTP,
+read [references/automation.md](references/automation.md). Use structured gameplay observations and
+bounded actions rather than implementing ordinary movement and interactions in a temporary Mod.
 
 For an automated GUI run, use a dedicated `--instance`, start the game in the user's existing
 desktop session when one is available, and enable the HTTP command service. `--instance` provides

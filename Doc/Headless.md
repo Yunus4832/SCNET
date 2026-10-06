@@ -95,7 +95,7 @@ HTTP 只暴露显式注册了 `HttpCommandBinding` 的命令。Headless HTTP 请
 curl -H "Authorization: Bearer <token>" http://127.0.0.1:28889/commands
 ```
 
-GUI 模式还会发现 `game:automation/ui/context/get`、`tap`、`scroll`、`swipe`、`key`、`screenshot`，以及相对鼠标输入 `game:automation/input/mouse/move`。上下文命令返回当前 Screen、Dialog、目标 Widget 的 selector、文本、逻辑边界与支持的 actions；点击、滚轮、跨帧触摸滑动和相对鼠标移动都通过 Engine 合成输入执行。Headless 不会发现或执行这些 GUI 专用命令。
+GUI 模式还提供 UI 发现、点击、拖放、滚动、截图、组合键鼠输入、文本输入、角色观测和步行导航，完整合同见 [游戏自动化](Automation.md)。操作通过正常输入和角色运动路径执行。Headless 不会发现或执行这些 GUI 专用命令。
 
 GUI 与 Headless 都提供只读命令 `game:diagnostics/network/get`，无参数。返回当前 NetNode 生命周期内的连接内发送累计统计：通道的应用层发送批次与编码字节，以及各包类型的接收方投递次数与未压缩载荷字节。两次读取的差值可用于比较测试时间段；编码字节不含传输协议头、底层重传与分片开销，载荷字节不含包标记且不能与编码字节相加。未发送或延后的快照不计入，无连接发现消息不计入。该命令仅供应用用户与服务器操作员使用，不向普通联机玩家开放。
 

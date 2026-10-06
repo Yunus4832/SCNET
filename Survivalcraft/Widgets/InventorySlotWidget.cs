@@ -42,6 +42,14 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
     private int _slotIndex;
 
+    public int SlotIndex => _slotIndex;
+
+    public int? InventoryId => _inventory?.Id;
+
+    public int SlotValue => _inventory?.GetSlotValue(_slotIndex) ?? 0;
+
+    public int SlotCount => _inventory?.GetSlotCount(_slotIndex) ?? 0;
+
     private readonly LabelWidget _splitLabelWidget;
 
     private SubsystemTerrain? _subsystemTerrain;
