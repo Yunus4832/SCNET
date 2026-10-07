@@ -123,7 +123,6 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
     private void SendOnlinePlayerStates()
     {
-        var interest = Project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         foreach (var recipient in _playersData)
         {
             if (recipient.IsMainPlayer || recipient.Client is not { IsConnected: true } client)
@@ -133,9 +132,6 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
             var states = _playersData
                 .Where(player => player.ComponentPlayer is not null)
-                .Where(player =>
-                    player.PlayerGUID == recipient.PlayerGUID ||
-                    interest.IsPositionRelevant(client, player.ComponentPlayer!.ComponentBody.Position.XZ))
                 .Select(player =>
                 {
                     var componentPlayer = player.ComponentPlayer!;
