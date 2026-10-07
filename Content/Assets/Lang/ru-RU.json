@@ -4025,11 +4025,9 @@
         "MarkInvalidName_Message": "Имя должно содержать 1–64 символа, без управляющих символов и пробелов по краям.",
         "MarkSaved_Message": "Отметка {0} сохранена: {1}.",
         "MarkMissing_Message": "В этой области нет отметки {0}.",
-        "TeleportSpawn_Description": "Телепортироваться к своей точке появления",
-        "TeleportWorldSpawn_Description": "Телепортироваться к точке появления мира",
-        "TeleportSpawnMissing_Message": "Точка появления ещё не определена.",
         "TeleportUnchanged_Message": "Игрок назначения совпадает с перемещаемым игроком. Телепортация не выполнена.",
-        "PermissionManageStandard_Description": "Управлять стандартными разрешениями команд"
+        "PermissionManageStandard_Description": "Управлять стандартными разрешениями команд",
+        "TeleportOtherMark_Description": "Телепортировать другого игрока к отметке"
     },
     "AndroidServer": {
         "Title": "Журнал сервера",

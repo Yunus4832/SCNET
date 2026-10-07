@@ -4025,11 +4025,9 @@
         "MarkInvalidName_Message": "O nome deve ter 1–64 caracteres, sem caracteres de controlo nem espaços nas extremidades.",
         "MarkSaved_Message": "Marca {0} guardada: {1}.",
         "MarkMissing_Message": "A marca {0} não existe neste âmbito.",
-        "TeleportSpawn_Description": "Teleportar para o ponto de nascimento",
-        "TeleportWorldSpawn_Description": "Teleportar para o ponto de nascimento do mundo",
-        "TeleportSpawnMissing_Message": "O ponto de nascimento ainda não foi definido.",
         "TeleportUnchanged_Message": "O destino é o próprio jogador a teleportar. Não foi efetuado qualquer teletransporte.",
-        "PermissionManageStandard_Description": "Gerir permissões de comandos padrão"
+        "PermissionManageStandard_Description": "Gerir permissões de comandos padrão",
+        "TeleportOtherMark_Description": "Teleportar outro jogador para uma marca"
     },
     "AndroidServer": {
         "Title": "Registo do servidor",

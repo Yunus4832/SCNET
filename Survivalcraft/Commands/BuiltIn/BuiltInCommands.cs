@@ -59,13 +59,6 @@ public static class BuiltInCommands
         RegisterCreativePermission(commands, teleportSelf, CommandDescription("TeleportSelf_Description", "传送自己"));
         RegisterPermission(commands, teleportOthers, CommandDomain.World,
             description: CommandDescription("TeleportOther_Description", "传送指定玩家"));
-        commands.Register(new ResourceId(owner, "player/teleport/spawn"),
-            new CommandDefinition<TeleportSpawnCommand>(TeleportCommandHandlers.Spawn, CommandDomain.World,
-                CommandDescription("TeleportSpawn_Description", "传送到出生点"), teleportSelf,
-                allowedPrincipals: CommandPrincipalKind.Player,
-                write: static (writer, command) => writer.Write(command.World),
-                read: static reader => new TeleportSpawnCommand(reader.ReadBoolean()),
-                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         var publicMark = new ResourceId(owner, "world.mark.manage");
         RegisterCreativePermission(commands, publicMark, CommandDescription("MarkPublic_Description", "保存公共标记"));
         commands.Register(new ResourceId(owner, "player/mark/private"),
@@ -90,6 +83,17 @@ public static class BuiltInCommands
                     writer.Write(command.Public);
                 },
                 read: static reader => new TeleportMarkCommand(reader.ReadString(), reader.ReadBoolean()),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
+        commands.Register(new ResourceId(owner, "player/teleport/other_mark"),
+            new CommandDefinition<TeleportPlayerMarkCommand>(TeleportCommandHandlers.PlayerMarkTeleport, CommandDomain.World,
+                CommandDescription("TeleportOtherMark_Description", "传送指定玩家到标记"), teleportOthers,
+                write: static (writer, command) =>
+                {
+                    writer.Write(command.Player);
+                    writer.Write(command.Name);
+                    writer.Write(command.Public);
+                },
+                read: static reader => new TeleportPlayerMarkCommand(reader.ReadString(), reader.ReadString(), reader.ReadBoolean()),
                 panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(new ResourceId(owner, "player/teleport/self"),
             new CommandDefinition<TeleportSelfCommand>(TeleportCommandHandlers.Self, CommandDomain.World,
@@ -888,10 +892,12 @@ public static class BuiltInCommands
             new CommandRoute([playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers), new CommandLiteral("player"), new CommandArgument("destination", SuggestionProvider: SuggestTeleportDestinations)], typeof(TeleportPlayerCommand),
                 arguments => new TeleportPlayerCommand(arguments.Get<string>("player"), DestinationPlayer: arguments.Get<string>("destination")),
                 CommandDescription("TeleportOtherPlayer_Description", "传送指定玩家到玩家")),
-            new CommandRoute([self, new CommandLiteral("spawn")], typeof(TeleportSpawnCommand),
-                _ => new TeleportSpawnCommand(false), CommandDescription("TeleportSpawn_Description", "传送到出生点")),
-            new CommandRoute([self, new CommandLiteral("worldspawn")], typeof(TeleportSpawnCommand),
-                _ => new TeleportSpawnCommand(true), CommandDescription("TeleportWorldSpawn_Description", "传送到世界出生点")),
+            new CommandRoute([playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers), new CommandLiteral("private"), new CommandArgument("name", SuggestionProvider: SuggestTargetPrivateMarks)], typeof(TeleportPlayerMarkCommand),
+                arguments => new TeleportPlayerMarkCommand(arguments.Get<string>("player"), arguments.Get<string>("name"), false),
+                CommandDescription("TeleportOtherMark_Description", "传送指定玩家到标记")),
+            new CommandRoute([playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers), new CommandLiteral("public"), new CommandArgument("name", SuggestionProvider: SuggestPublicMarks)], typeof(TeleportPlayerMarkCommand),
+                arguments => new TeleportPlayerMarkCommand(arguments.Get<string>("player"), arguments.Get<string>("name"), true),
+                CommandDescription("TeleportOtherMark_Description", "传送指定玩家到标记")),
             new CommandRoute([self, new CommandLiteral("private"), new CommandArgument("name", SuggestionProvider: SuggestPrivateMarks)], typeof(TeleportMarkCommand),
                 arguments => new TeleportMarkCommand(arguments.Get<string>("name"), false),
                 CommandDescription("TeleportMark_Description", "传送到命名标记")),
@@ -2401,6 +2407,11 @@ public static class BuiltInCommands
 
     private static IEnumerable<CommandArgumentSuggestion> SuggestPublicMarks(CommandSuggestionContext context) =>
         (context.Project?.FindSubsystem<SubsystemPlayers>()?.PublicMarks.Names ?? []).Select(name => new CommandArgumentSuggestion(name));
+
+    private static IEnumerable<CommandArgumentSuggestion> SuggestTargetPrivateMarks(CommandSuggestionContext context) =>
+        (context.CompletedTokens.Count >= 2
+            ? FindPlayer(context.Project, context.CompletedTokens[1])?.PrivateMarks.Names ?? []
+            : []).Select(name => new CommandArgumentSuggestion(name));
 
     private static IEnumerable<CommandArgumentSuggestion> SuggestTeleportDestinations(CommandSuggestionContext context)
     {

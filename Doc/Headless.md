@@ -114,23 +114,25 @@ Headless 的诊断还返回 `HeadlessTicks`，记录进程内累计 tick 工作�
 /tp self public spawn       # 传送到公共命名标记
 /tp                         # 传送到自己的返回点
 /tp self private previous   # 与裸 /tp、键盘 F6 相同
-/tp self spawn              # 自己的出生点
-/tp self worldspawn         # 世界公共出生点
+/tp self private spawn      # 自己的出生位置快照
+/tp self public spawn       # 世界出生位置快照
 /tp self player "Player Name"
 /tp self position 100 70 -200
 /tp player "Player Name" position 100 70 -200
 /tp player "Player Name" player "Destination Player"
+/tp player "Player Name" private spawn
+/tp player "Player Name" public spawn
 ```
 
 不带参数的 `/mark` 和键盘 M 都提交与 `/mark private previous` 相同的命令；裸 `/tp` 提交与 `/tp self private previous` 相同的命令。`previous` 就是普通的个人命名标记，没有独立的命令、存储字段或特殊查找路径。M 仅在正常游戏输入中生效，不在聊天、编辑面板或对话框中触发。此点随世界中的玩家数据保存，联机时由服务端维护。`/mark` 不授予传送权限。
 命名标记也随存档保存：private 保存到各玩家数据（包括服务端离线玩家记录），public 保存到世界的玩家子系统。两类标记相互独立，不跨存档共享；名称不区分大小写，允许 1–64 个字符，含空格时使用引号。联机客户端不接收他人的个人标记，标记写入与传送解析均由服务端执行。个人标记无需额外权限；公共标记写入需要 `game:world.mark.manage`（创造模式默认允许，其他模式按标准权限授予），传送使用现有的 `game:player.teleport.self` 权限与同样的落点加载、安全检查。成功传送只更新个人标记 `previous`，不修改其他个人标记或公共标记。
 裸 `/tp` 传送到个人标记 `previous`，尚未记录时返回与其他缺失标记相同的提示。其他格式分别传送调用者或指定玩家。玩家名称不区分大小写，也可以使用玩家 GUID；含空格的名称需要引号。
 F6 直接提交该传送命令，不打开命令面板；与 M 一样，仅在窗口激活、玩家存活且没有 HUD 面板或对话框占用输入时生效，仍遵守传送权限和落点安全检查。
-`/tp` 一级补全只提供 `self` 和 `player`，按各自的传送权限过滤。self 后选择 `position`、`player`、`private`、`public`、`spawn` 或 `worldspawn`；player 后先选择被传送玩家，再选择 `position` 或 `player` 目的地，不访问他人的个人标记。`/tp player A` 是不完整命令，不执行传送；这一分组始终要求 `game:player.teleport.others`，即使 A 是调用者自身也不切换权限语义。旧的隐式玩家、裸坐标和直接目的地路线不再支持。
+`/tp` 一级补全只提供 `self` 和 `player`，按各自的传送权限过滤。self 后选择 `position`、`player`、`private` 或 `public`；player 后先选择被传送玩家，再选择同样的四种目的地。private 始终使用被传送玩家自己的个人标记，public 使用当前世界的公共标记。具有传送他人权限的调用者可在对应 private 路线补全该玩家的标记名称，不向其他客户端广播这些名称。`/tp player A` 是不完整命令，不执行传送；这一分组始终要求 `game:player.teleport.others`，即使 A 是调用者自身也不切换权限语义。旧的隐式玩家、裸坐标及独立 spawn/worldspawn 路线不再支持。
 目的玩家候选排除被传送玩家自身，但被传送玩家候选保留调用者自身；名称和 GUID 均可指定玩家。手动指定自己到自己时返回 `teleport.unchanged`，不移动、不取消已有等待请求、不覆盖 previous。self private/public 后补全对应作用域的已有标记，`/mark` 使用相同名称补全便于覆盖。联机命令补全在短暂输入防抖后向服务端查询，服务端按当前连接玩家的权限和作用域生成候选，只回复请求者；候选响应不会执行命令，也不会传输标记坐标，旧输入的迟到响应被忽略。
 任何成功传送都会将被传送玩家实际离开的位置覆盖为其返回点，因此连续裸 `/tp` 可以往返切换；异步等待期间不提前覆盖，失败或取消不覆盖。移动方块或地形变化后，返回点仍需接受同样的安全校验。
 `game:player.teleport.self` 是标准权限，创造模式玩家默认拥有；其他模式需要授权。
-`worldspawn` 使用游戏已有出生算法在世界粗略出生锚点附近选择站立位置，所需地形先异步准备，然后执行同样的身体碰撞检查；`spawn` 使用玩家已确定的出生位置。
+玩家进入 Playing 状态时，服务端在缺失时将已确定的实际出生位置复制到该玩家的 `private spawn`；世界 `public spawn` 保存首次完成该初始化的玩家的实际出生位置，而非可能位于方块内部的粗略世界出生锚点。它们都是普通、可覆盖并随存档保存的坐标标记，不保留特殊解析路径；后续睡觉或重生不会自动更新已有标记，覆盖标记也不会影响真实出生机制。
 `game:player.teleport.others` 是标准权限，但不会因创造模式而默认授予。服务端操作员或具备相应授权能力的玩家可使用 `/permission grant "Player Name" game:player.teleport.others` 授予使用权，或使用 `/permission delegate "Player Name" game:player.teleport.others` 同时授予使用及再授权能力。仅持有使用权不能继续授权他人。
 grant 候选按使用权授权能力筛选，delegate 候选按再授权能力筛选，两者展示权限各自的说明。
 消息面板默认在命令执行后回到消息输入。传送、时间设置/推进、天气和季节设置成功后关闭面板；查询时间、帮助及授权等命令保留消息面板。失败或等待地形加载时不关闭，传送等待实际成功后才关闭。该行为由命令注册声明，本地和联机一致。

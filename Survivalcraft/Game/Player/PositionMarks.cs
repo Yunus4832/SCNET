@@ -14,6 +14,8 @@ public sealed class PositionMarks
 
     public void Set(string name, Vector3 position) => _positions[name] = position;
 
+    public void SetIfMissing(string name, Vector3 position) => _positions.TryAdd(name, position);
+
     public bool TryGet(string name, out Vector3 position) => _positions.TryGetValue(name, out position);
 
     public void Load(ValuesDictionary values)

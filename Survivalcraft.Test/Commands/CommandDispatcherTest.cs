@@ -39,7 +39,7 @@ public class CommandDispatcherTest
         Type[] closeCommands =
         [
             typeof(TeleportSelfCommand), typeof(TeleportPlayerCommand), typeof(TeleportMarkCommand),
-            typeof(TeleportSpawnCommand), typeof(SetWorldTimeCommand), typeof(AdvanceWorldTimeCommand),
+            typeof(TeleportPlayerMarkCommand), typeof(SetWorldTimeCommand), typeof(AdvanceWorldTimeCommand),
             typeof(SetPrecipitationCommand), typeof(SetFogCommand), typeof(TriggerPlayerLightningCommand),
             typeof(TriggerLightningCommand), typeof(SetSeasonCommand)
         ];
@@ -823,12 +823,14 @@ public class CommandDispatcherTest
     [InlineData("/tp")]
     [InlineData("/tp self private home")]
     [InlineData("/tp self public home")]
-    [InlineData("/tp self spawn")]
-    [InlineData("/tp self worldspawn")]
+    [InlineData("/tp self private spawn")]
+    [InlineData("/tp self public spawn")]
     [InlineData("/tp self player Codex")]
     [InlineData("/tp self position 1 64 -2")]
     [InlineData("/tp player \"Player One\" position 1 64 -2")]
     [InlineData("/tp player \"Player One\" player Codex")]
+    [InlineData("/tp player \"Player One\" private spawn")]
+    [InlineData("/tp player \"Player One\" public spawn")]
     public void TeleportTextRoutesReachTheWorldHandler(string text)
     {
         var principal = new CommandPrincipal("Operator", CommandPrincipalKind.ServerOperator | CommandPrincipalKind.Player);
@@ -845,6 +847,8 @@ public class CommandDispatcherTest
     [InlineData("/tp public home")]
     [InlineData("/tp spawn")]
     [InlineData("/tp worldspawn")]
+    [InlineData("/tp self spawn")]
+    [InlineData("/tp self worldspawn")]
     [InlineData("/tp player Codex Other")]
     [InlineData("/tp player Codex 1 64 -2")]
     [InlineData("/tp Codex Other")]
@@ -921,7 +925,9 @@ public class CommandDispatcherTest
             new MarkPrivatePositionCommand("My home"),
             new MarkPublicPositionCommand("出生点"),
             new TeleportMarkCommand("home", false),
-            new TeleportMarkCommand("home", true)
+            new TeleportMarkCommand("home", true),
+            new TeleportPlayerMarkCommand("Player One", "spawn", false),
+            new TeleportPlayerMarkCommand("Player One", "spawn", true)
         ];
         foreach (var command in commands)
         {
@@ -934,6 +940,11 @@ public class CommandDispatcherTest
         var adapter = new TextCommandAdapter(registry);
         Assert.Equal("teleport.no_world", adapter.Execute("/mark private \"My home\"", Context(principal)).Code);
         Assert.Equal("teleport.no_world", adapter.Execute("/mark public home", Context(principal)).Code);
+        Assert.True(registry.TryGetDefinition<TeleportPlayerMarkCommand>(out var playerMark));
+        Assert.False(playerMark!.Definition.IsPotentiallyAuthorized(registry.Permissions,
+            Player("SelfOnly", [new ResourceId(new ModId("game"), "player.teleport.self")]), null));
+        Assert.True(playerMark.Definition.IsPotentiallyAuthorized(registry.Permissions,
+            Player("Other", [new ResourceId(new ModId("game"), "player.teleport.others")]), null));
     }
 
     private static CommandRegistry BuiltInRegistry()

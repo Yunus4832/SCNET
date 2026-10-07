@@ -4025,11 +4025,9 @@
         "MarkInvalidName_Message": "Names must contain 1–64 characters, without control characters or leading/trailing whitespace.",
         "MarkSaved_Message": "Saved mark {0}: {1}.",
         "MarkMissing_Message": "No mark {0} exists in this scope.",
-        "TeleportSpawn_Description": "Teleport to your spawn point",
-        "TeleportWorldSpawn_Description": "Teleport to the world spawn point",
-        "TeleportSpawnMissing_Message": "The spawn point has not been established.",
         "TeleportUnchanged_Message": "The destination is the player being teleported. No teleport was performed.",
-        "PermissionManageStandard_Description": "Manage standard command permissions"
+        "PermissionManageStandard_Description": "Manage standard command permissions",
+        "TeleportOtherMark_Description": "Teleport another player to a mark"
     },
     "AndroidServer": {
         "Title": "Server Log",

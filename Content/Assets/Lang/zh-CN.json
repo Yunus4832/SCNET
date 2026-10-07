@@ -4025,11 +4025,9 @@
         "MarkInvalidName_Message": "名称需为 1–64 个字符，不能包含控制字符或首尾空白。",
         "MarkSaved_Message": "已保存标记 {0}：{1}。",
         "MarkMissing_Message": "该作用域中没有标记 {0}。",
-        "TeleportSpawn_Description": "传送到出生点",
-        "TeleportWorldSpawn_Description": "传送到世界出生点",
-        "TeleportSpawnMissing_Message": "出生点尚未确定。",
         "TeleportUnchanged_Message": "目标玩家就是被传送玩家，未执行传送。",
-        "PermissionManageStandard_Description": "管理标准命令权限"
+        "PermissionManageStandard_Description": "管理标准命令权限",
+        "TeleportOtherMark_Description": "传送指定玩家到标记"
     },
     "AndroidServer": {
         "Title": "服务器日志",

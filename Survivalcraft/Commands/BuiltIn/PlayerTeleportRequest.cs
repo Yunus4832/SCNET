@@ -29,7 +29,7 @@ internal sealed class PlayerTeleportRequest : IDisposable
         _deadline = Time.RealTime + 30;
         // Player indices are nonnegative; -1 is the updater's bootstrap location.
         _locationIndex = -2 - target.PlayerIndex;
-        _updater.SetUpdateLocation(_locationIndex, position.XZ, 0f, command is TeleportSpawnCommand { World: true } ? 32f : 16f);
+        _updater.SetUpdateLocation(_locationIndex, position.XZ, 0f, 16f);
     }
 
     public void Update()
@@ -82,7 +82,7 @@ internal sealed class PlayerTeleportRequest : IDisposable
                 return;
             }
 
-            if (TeleportCommandHandlers.TryComplete(context, _target, _position, _command is TeleportSpawnCommand { World: true }) is { } result)
+            if (TeleportCommandHandlers.TryComplete(context, _target, _position) is { } result)
             {
                 Finish(result);
             }

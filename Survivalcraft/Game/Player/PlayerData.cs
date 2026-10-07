@@ -411,6 +411,7 @@ public partial class PlayerData : IDisposable
             delegate
             {
                 HideSpawnDialog();
+                InitializeSpawnMarks();
                 if (CommonLib.WorkType == WorkType.Client)
                 {
                     NetworkSender.SendToServer(new ClientPackage(CommonLib.Net.Self!.ID, ClientState.Playing));
@@ -663,6 +664,18 @@ public partial class PlayerData : IDisposable
         }
 
         _stateMachine.Update();
+    }
+
+    internal void InitializeSpawnMarks()
+    {
+        if (CommonLib.WorkType == WorkType.Client || SpawnPosition == Vector3.Zero)
+        {
+            return;
+        }
+
+        PrivateMarks.SetIfMissing("spawn", SpawnPosition);
+        // GlobalSpawnPosition is only a coarse anchor. Keep the first resolved spawn as an ordinary world mark.
+        SubsystemPlayers.PublicMarks.SetIfMissing("spawn", SpawnPosition);
     }
 
     public void Load(ValuesDictionary valuesDictionary)
