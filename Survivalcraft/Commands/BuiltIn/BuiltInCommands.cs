@@ -39,6 +39,7 @@ public static class BuiltInCommands
             permissionGrant,
             CommandDomain.Server,
             PermissionGrantPolicy.OperatorOnly,
+            description: CommandDescription("PermissionGrant_Description", "授予玩家命令权限"),
             implicitGrant: (principal, _) =>
                 principal.DelegablePermissions.Count > 0 ||
                 principal.HasPermission(permissionManageStandard));
@@ -46,16 +47,18 @@ public static class BuiltInCommands
             commands,
             permissionManageStandard,
             CommandDomain.Server,
+            description: CommandDescription("PermissionManageStandard_Description", "管理标准命令权限"),
             managesStandardPermissions: true);
-        RegisterCreativePermission(commands, worldTimeSet);
-        RegisterCreativePermission(commands, worldPrecipitationSet);
-        RegisterCreativePermission(commands, worldFogSet);
-        RegisterCreativePermission(commands, worldLightningTrigger);
-        RegisterCreativePermission(commands, worldSeasonSet);
+        RegisterCreativePermission(commands, worldTimeSet, CommandDescription("TimeSet_Description", "设置世界时间"));
+        RegisterCreativePermission(commands, worldPrecipitationSet, CommandDescription("WeatherRain_Description", "开启或停止降水"));
+        RegisterCreativePermission(commands, worldFogSet, CommandDescription("WeatherFog_Description", "开启或关闭雾气"));
+        RegisterCreativePermission(commands, worldLightningTrigger, CommandDescription("LightningTarget_Description", "在目标附近触发闪电"));
+        RegisterCreativePermission(commands, worldSeasonSet, CommandDescription("SeasonSet_Description", "调整季节，环境将逐步更新"));
         var teleportSelf = new ResourceId(owner, "player.teleport.self");
         var teleportOthers = new ResourceId(owner, "player.teleport.others");
-        RegisterCreativePermission(commands, teleportSelf);
-        RegisterPermission(commands, teleportOthers, CommandDomain.World, PermissionGrantPolicy.OperatorManaged);
+        RegisterCreativePermission(commands, teleportSelf, CommandDescription("TeleportSelf_Description", "传送自己"));
+        RegisterPermission(commands, teleportOthers, CommandDomain.World,
+            description: CommandDescription("TeleportOther_Description", "传送指定玩家"));
         commands.Register(new ResourceId(owner, "player/teleport/spawn"),
             new CommandDefinition<TeleportSpawnCommand>(TeleportCommandHandlers.Spawn, CommandDomain.World,
                 CommandDescription("TeleportSpawn_Description", "传送到出生点"), teleportSelf,
@@ -63,7 +66,7 @@ public static class BuiltInCommands
                 write: static (writer, command) => writer.Write(command.World),
                 read: static reader => new TeleportSpawnCommand(reader.ReadBoolean())));
         var publicMark = new ResourceId(owner, "world.mark.manage");
-        RegisterCreativePermission(commands, publicMark);
+        RegisterCreativePermission(commands, publicMark, CommandDescription("MarkPublic_Description", "保存公共标记"));
         commands.Register(new ResourceId(owner, "player/mark/private"),
             new CommandDefinition<MarkPrivatePositionCommand>(TeleportCommandHandlers.MarkPrivate, CommandDomain.World,
                 CommandDescription("MarkPrivate_Description", "保存个人标记"),
@@ -126,17 +129,20 @@ public static class BuiltInCommands
             commands,
             serverStop,
             CommandDomain.Server,
-            PermissionGrantPolicy.OperatorOnly);
+            PermissionGrantPolicy.OperatorOnly,
+            description: CommandDescription("StopAction_Description", "停止 Headless 服务端"));
         RegisterPermission(
             commands,
             serverAuthManage,
             CommandDomain.Server,
-            PermissionGrantPolicy.OperatorOnly);
+            PermissionGrantPolicy.OperatorOnly,
+            description: CommandDescription("Auth_Description", "认领服务器管理员身份"));
         RegisterPermission(
             commands,
             playerProfileManage,
             CommandDomain.Server,
-            PermissionGrantPolicy.OperatorOnly);
+            PermissionGrantPolicy.OperatorOnly,
+            description: CommandDescription("PlayerProfileServer_Description", "管理玩家资料"));
 
         commands.Register(
             new ResourceId(owner, "help"),
@@ -775,12 +781,14 @@ public static class BuiltInCommands
 
     private static void RegisterCreativePermission(
         IModCommands commands,
-        ResourceId id)
+        ResourceId id,
+        LocalizedText description)
     {
         RegisterPermission(
             commands,
             id,
             CommandDomain.World,
+            description: description,
             implicitGrant: WorldControlCommandHandlers.IsCreativePlayer);
     }
 
@@ -789,6 +797,7 @@ public static class BuiltInCommands
         ResourceId id,
         CommandDomain domain,
         PermissionGrantPolicy grantPolicy = PermissionGrantPolicy.Standard,
+        LocalizedText? description = null,
         bool managesStandardPermissions = false,
         Func<CommandPrincipal, Project?, bool>? implicitGrant = null)
     {
@@ -797,6 +806,7 @@ public static class BuiltInCommands
             new CommandPermissionDefinition(
                 domain,
                 grantPolicy,
+                description,
                 managesStandardPermissions: managesStandardPermissions,
                 implicitGrant: implicitGrant));
     }
@@ -1175,7 +1185,7 @@ public static class BuiltInCommands
                     [
                         new CommandLiteral("grant"),
                         PlayerArgument(),
-                        PermissionArgument(SuggestDelegablePermissionNodes)
+                        PermissionArgument(SuggestGrantablePermissionNodes)
                     ],
                     typeof(GrantPlayerPermissionCommand),
                     arguments => new GrantPlayerPermissionCommand(
@@ -2416,21 +2426,24 @@ public static class BuiltInCommands
                 entry.Command.Description));
     }
 
-    private static IEnumerable<CommandArgumentSuggestion> SuggestDelegablePermissionNodes(
-        CommandSuggestionContext context)
+    private static IEnumerable<CommandArgumentSuggestion> SuggestGrantablePermissionNodes(CommandSuggestionContext context) =>
+        SuggestPermissionNodes(context, false);
+
+    private static IEnumerable<CommandArgumentSuggestion> SuggestDelegablePermissionNodes(CommandSuggestionContext context) =>
+        SuggestPermissionNodes(context, true);
+
+    private static IEnumerable<CommandArgumentSuggestion> SuggestPermissionNodes(
+        CommandSuggestionContext context, bool canDelegate)
     {
         return context.Registry.Permissions.Definitions
-            .Select(node => node.Id)
             .Where(node => context.Registry.Permissions.CanGrant(
-                node,
+                node.Id,
                 context.Principal,
                 context.Project,
-                canDelegate: true))
+                canDelegate))
             .Select(node => new CommandArgumentSuggestion(
-                node.ToString(),
-                CommandDescription(
-                    "PermissionNodeSuggestion_Description",
-                    "可授权权限节点")));
+                node.Id.ToString(),
+                node.Definition.Description));
     }
 
     private static IEnumerable<CommandArgumentSuggestion> SuggestRevocablePermissionNodes(

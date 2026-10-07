@@ -3932,7 +3932,6 @@
         "PermissionCannotRevoke_Message": "Permission {0} cannot be revoked, or you lack the required delegation scope.",
         "PermissionNotHeld_Message": "{0} does not directly hold permission {1}.",
         "PermissionRevoked_Message": "Revoked permission {1} from {0}.",
-        "PermissionNodeSuggestion_Description": "Grantable permission node",
         "PermissionCurrentDelegate_Description": "Currently delegable",
         "PermissionCurrentUse_Description": "Currently use-only",
         "PermissionListEmpty_Message": "{0} currently has no command permissions.",
@@ -4029,7 +4028,8 @@
         "TeleportSpawn_Description": "Teleport to your spawn point",
         "TeleportWorldSpawn_Description": "Teleport to the world spawn point",
         "TeleportSpawnMissing_Message": "The spawn point has not been established.",
-        "TeleportUnchanged_Message": "The destination is the player being teleported. No teleport was performed."
+        "TeleportUnchanged_Message": "The destination is the player being teleported. No teleport was performed.",
+        "PermissionManageStandard_Description": "Manage standard command permissions"
     },
     "AndroidServer": {
         "Title": "Server Log",

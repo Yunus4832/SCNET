@@ -3932,7 +3932,6 @@
         "PermissionCannotRevoke_Message": "权限节点 {0} 不可撤销，或你没有对应的管理范围。",
         "PermissionNotHeld_Message": "{0} 没有直接持有权限 {1}。",
         "PermissionRevoked_Message": "已撤销 {0} 的权限 {1}。",
-        "PermissionNodeSuggestion_Description": "可授权权限节点",
         "PermissionCurrentDelegate_Description": "当前为可再授权",
         "PermissionCurrentUse_Description": "当前为仅使用",
         "PermissionListEmpty_Message": "{0} 当前没有任何指令权限。",
@@ -4029,7 +4028,8 @@
         "TeleportSpawn_Description": "传送到出生点",
         "TeleportWorldSpawn_Description": "传送到世界出生点",
         "TeleportSpawnMissing_Message": "出生点尚未确定。",
-        "TeleportUnchanged_Message": "目标玩家就是被传送玩家，未执行传送。"
+        "TeleportUnchanged_Message": "目标玩家就是被传送玩家，未执行传送。",
+        "PermissionManageStandard_Description": "管理标准命令权限"
     },
     "AndroidServer": {
         "Title": "服务器日志",

@@ -131,7 +131,8 @@ F6 直接提交该传送命令，不打开命令面板；与 M 一样，仅在�
 任何成功传送都会将被传送玩家实际离开的位置覆盖为其返回点，因此连续裸 `/tp` 可以往返切换；异步等待期间不提前覆盖，失败或取消不覆盖。移动方块或地形变化后，返回点仍需接受同样的安全校验。
 `game:player.teleport.self` 是标准权限，创造模式玩家默认拥有；其他模式需要授权。
 `worldspawn` 使用游戏已有出生算法在世界粗略出生锚点附近选择站立位置，所需地形先异步准备，然后执行同样的身体碰撞检查；`spawn` 使用玩家已确定的出生位置。
-`game:player.teleport.others` 是 OperatorManaged 权限，只能由服务端操作员授予使用权，不可再授权。
+`game:player.teleport.others` 是标准权限，但不会因创造模式而默认授予。服务端操作员或具备相应授权能力的玩家可使用 `/permission grant "Player Name" game:player.teleport.others` 授予使用权，或使用 `/permission delegate "Player Name" game:player.teleport.others` 同时授予使用及再授权能力。仅持有使用权不能继续授权他人。
+grant 候选按使用权授权能力筛选，delegate 候选按再授权能力筛选，两者展示权限各自的说明。
 认领服务器不会自动获得传送其他玩家的权限。控制台必须指定被传送玩家。
 
 目标玩家必须在线、进入世界且存活，骑乘时需先离开坐骑。坐标是脚底位置，仅支持绝对坐标；

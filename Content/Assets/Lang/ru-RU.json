@@ -3932,7 +3932,6 @@
         "PermissionCannotRevoke_Message": "Разрешение {0} нельзя отозвать, либо у вас нет необходимой области делегирования.",
         "PermissionNotHeld_Message": "У {0} нет напрямую выданного разрешения {1}.",
         "PermissionRevoked_Message": "У {0} отозвано разрешение {1}.",
-        "PermissionNodeSuggestion_Description": "Доступное для выдачи разрешение",
         "PermissionCurrentDelegate_Description": "Сейчас можно делегировать",
         "PermissionCurrentUse_Description": "Сейчас только использование",
         "PermissionListEmpty_Message": "У {0} сейчас нет разрешений команд.",
@@ -4029,7 +4028,8 @@
         "TeleportSpawn_Description": "Телепортироваться к своей точке появления",
         "TeleportWorldSpawn_Description": "Телепортироваться к точке появления мира",
         "TeleportSpawnMissing_Message": "Точка появления ещё не определена.",
-        "TeleportUnchanged_Message": "Игрок назначения совпадает с перемещаемым игроком. Телепортация не выполнена."
+        "TeleportUnchanged_Message": "Игрок назначения совпадает с перемещаемым игроком. Телепортация не выполнена.",
+        "PermissionManageStandard_Description": "Управлять стандартными разрешениями команд"
     },
     "AndroidServer": {
         "Title": "Журнал сервера",

@@ -364,7 +364,7 @@ public class CommandDispatcherTest
         AssertDomain<TeleportPlayerCommand>(registry, CommandDomain.World);
         Assert.True(registry.TryGetDefinition<TeleportPlayerCommand>(out var teleport));
         Assert.True(registry.Permissions.TryGet(teleport!.Definition.RequiredPermission!.Value, out var teleportPermission));
-        Assert.Equal(PermissionGrantPolicy.OperatorManaged, teleportPermission!.Definition.GrantPolicy);
+        Assert.Equal(PermissionGrantPolicy.Standard, teleportPermission!.Definition.GrantPolicy);
         AssertDomain<CreateTeamCommand>(registry, CommandDomain.World);
         AssertDomain<StopServerCommand>(registry, CommandDomain.Server);
         AssertDomain<GrantPlayerPermissionCommand>(registry, CommandDomain.Server);
