@@ -15,6 +15,42 @@ public class CommandDispatcherTest
 {
     private static readonly ModId _owner = new("example.commands");
 
+    [Theory]
+    [InlineData(true, CommandResultState.Completed)]
+    [InlineData(true, CommandResultState.Pending)]
+    [InlineData(false, CommandResultState.Completed)]
+    public void DispatcherCarriesRegisteredPanelBehavior(bool success, CommandResultState state)
+    {
+        var registry = new CommandRegistry();
+        registry.Register(_owner, Id("scale"), new CommandDefinition<ScaleCommand>(
+            (_, _) => new CommandResult(success, "test", "test", State: state),
+            CommandDomain.World, panelBehavior: CommandPanelBehavior.CloseOnSuccess));
+        registry.Freeze();
+        var result = new CommandDispatcher(registry).Execute(new ScaleCommand(1), Context());
+        Assert.Equal(CommandPanelBehavior.CloseOnSuccess, result.PanelBehavior);
+        Assert.Equal(success, result.Success);
+        Assert.Equal(state, result.State);
+    }
+
+    [Fact]
+    public void MutatingWorldCommandsClosePanelWhileQueriesAndOtherCommandsReturnToMessages()
+    {
+        var registry = BuiltInRegistry();
+        Type[] closeCommands =
+        [
+            typeof(TeleportSelfCommand), typeof(TeleportPlayerCommand), typeof(TeleportMarkCommand),
+            typeof(TeleportSpawnCommand), typeof(SetWorldTimeCommand), typeof(AdvanceWorldTimeCommand),
+            typeof(SetPrecipitationCommand), typeof(SetFogCommand), typeof(TriggerPlayerLightningCommand),
+            typeof(TriggerLightningCommand), typeof(SetSeasonCommand)
+        ];
+        foreach (var command in registry.Definitions)
+        {
+            Assert.Equal(closeCommands.Contains(command.Definition.CommandType)
+                ? CommandPanelBehavior.CloseOnSuccess
+                : CommandPanelBehavior.ReturnToMessage, command.Definition.PanelBehavior);
+        }
+    }
+
     [Fact]
     public void TypedDispatcherExecutesRegisteredWorldCommand()
     {

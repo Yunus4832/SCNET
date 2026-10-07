@@ -66,6 +66,7 @@ public sealed class MessagePanelWidget : CanvasWidget
     private GameMessageChannel _messageChannel;
 
     private string? _suggestionRequestId;
+    private string? _commandRequestId;
     private double _suggestionSendAt;
     private bool _suggestionPending;
     private IReadOnlyList<CommandSuggestion>? _remoteSuggestions;
@@ -139,6 +140,11 @@ public sealed class MessagePanelWidget : CanvasWidget
         EditText.CaretPosition = EditText.Text.Length;
     }
 
+    internal void BeginPanelSession()
+    {
+        _commandRequestId = null;
+    }
+
     public void BeginCommandInput()
     {
         if (!EditText.Text.StartsWith('/'))
@@ -162,6 +168,7 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     public void ResetInput()
     {
+        _commandRequestId = null;
         EditText.Text = string.Empty;
         EditText.HasFocus = false;
         _commandSuggestions.Hide();
@@ -263,6 +270,7 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     private void SubmitOrClose()
     {
+        Input.Clear();
         if (EditText.Text.Trim() == "/")
         {
             CancelCommandInput();
@@ -291,11 +299,48 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     private void ExecuteCommand(string input)
     {
-        CommandGateway.Submit(PlayerData, input);
+        _commandRequestId = Guid.NewGuid().ToString("N");
+        CommandGateway.Submit(PlayerData, input, _commandRequestId);
+    }
+
+    internal void ReceiveCommandResult(CommandResult result, string correlationId)
+    {
+        if (correlationId != _commandRequestId ||
+            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget != this)
+        {
+            return;
+        }
+
+        if (result.State == CommandResultState.Pending)
+        {
+            return;
+        }
+
+        _commandRequestId = null;
+        if (!string.IsNullOrEmpty(EditText.Text))
+        {
+            return;
+        }
+
+        if (result.Success && result.PanelBehavior == CommandPanelBehavior.CloseOnSuccess)
+        {
+            ResetInput();
+            PlayerData.ComponentPlayer.ComponentGui.ModalPanelWidget = null;
+        }
+        else
+        {
+            _commandSuggestions.Hide();
+            SetCommandTextFocus(false);
+        }
     }
 
     private void RefreshCommandSuggestions()
     {
+        if (!string.IsNullOrEmpty(EditText.Text))
+        {
+            _commandRequestId = null;
+        }
+
         _remoteSuggestions = null;
         _suggestionRequestId = null;
         _suggestionPending = false;

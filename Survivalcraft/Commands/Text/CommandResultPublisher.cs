@@ -12,10 +12,16 @@ public static class CommandResultPublisher
         Project project,
         CommandResult result,
         byte? requesterId = null,
-        bool includeServer = true)
+        bool includeServer = true,
+        string? correlationId = null)
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);
+        if (includeServer)
+        {
+            NotifyPanel(project, result, correlationId);
+        }
+
         if (result.Presentation == CommandResultPresentation.Silent)
         {
             return;
@@ -49,14 +55,9 @@ public static class CommandResultPublisher
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);
         ArgumentNullException.ThrowIfNull(requester);
-        if (result.Presentation == CommandResultPresentation.Silent)
-        {
-            return;
-        }
-
         var messages = project.FindSubsystem<SubsystemGameWidgets>(true)!.Messages;
         if (result.Audience is CommandResultAudience.AllPlayers &&
-            !result.Sensitive)
+            !result.Sensitive && result.Presentation != CommandResultPresentation.Silent)
         {
             var message = CreateMessage(result);
             messages.Relay(message, recipients: null, except: requester);
@@ -69,10 +70,12 @@ public static class CommandResultPublisher
 
     public static void DisplayLocal(
         Project project,
-        CommandResult result)
+        CommandResult result,
+        string? correlationId = null)
     {
         ArgumentNullException.ThrowIfNull(project);
         ArgumentNullException.ThrowIfNull(result);
+        NotifyPanel(project, result, correlationId);
         if (result.Presentation == CommandResultPresentation.Silent)
         {
             return;
@@ -80,6 +83,14 @@ public static class CommandResultPublisher
 
         project.FindSubsystem<SubsystemGameWidgets>(true)!
             .Messages.DisplayLocal(CreateMessage(result));
+    }
+
+    private static void NotifyPanel(Project project, CommandResult result, string? correlationId)
+    {
+        if (correlationId != null && CommonLib.MainPlayer?.PlayerData.Project == project)
+        {
+            CommonLib.MainPlayer.GameWidget.MessagePanel?.ReceiveCommandResult(result, correlationId);
+        }
     }
 
     private static GameMessage CreateMessage(CommandResult result)

@@ -42,7 +42,7 @@ public sealed class CommandDispatcher(CommandRegistry registry)
 
         try
         {
-            return definition.Handle(context, command);
+            return definition.Handle(context, command) with { PanelBehavior = definition.PanelBehavior };
         }
         catch (Exception exception)
         {

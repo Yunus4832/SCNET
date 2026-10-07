@@ -155,6 +155,7 @@ CommandPrincipalKind.Player` 声明主体要求；这与命令来自消息面板
 命令说明使用通用的 `Game.Localization.LocalizedText`，注册时不会读取当前语言。候选菜单和帮助信息在展示时解析资源，因此初始化语言或运行时切换语言都不需要重新注册命令。模组应在自己的语言资源中提供对应 section 和 key；只有 GUID 等运行时数据才应显式使用 `LocalizedText.Literal(...)`。
 联机世界命令候选由服务端使用当前连接玩家的主体、权限和 `SuggestionProvider` 生成，客户端只合并本地 Application 候选。响应保留说明的 section/key/fallback，由客户端解析语言，不同步提供器使用的完整业务数据。提供器应只返回该玩家可见的信息，不应改变世界状态；输入补全不会执行命令。已输入的字面子命令优先于同位置的通用参数路线，避免 `player` 等子命令被当作玩家名称继续提示坐标。
 `CommandLiteral` 可提供独立的 `LocalizedText` 说明，用于主体分组等中间层候选；未提供时使用整条路线说明。
+`CommandDefinition<TCommand>` 的 `panelBehavior` 声明消息面板的执行后行为，默认 `CommandPanelBehavior.ReturnToMessage`。需要成功后回到游戏的命令可注册 `CloseOnSuccess`。行为随命令结果返回，只作用于提交该请求的面板；失败和 Pending 不关闭，异步命令须在最终结果中携带该注册行为。用户开始新输入、重新打开或切换面板后，旧请求不会改变当前面板。
 
 HTTP 命令宿主使用统一的 `POST /commands` 入口，不为每条命令建立路径。请求通过 identity 分发：
 

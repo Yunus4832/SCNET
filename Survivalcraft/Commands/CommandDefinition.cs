@@ -20,6 +20,8 @@ public interface ICommandDefinition
 
     CommandDomain Domain { get; }
 
+    CommandPanelBehavior PanelBehavior { get; }
+
     ResourceId? RequiredPermission { get; }
 
     CommandHostRequirement HostRequirement { get; }
@@ -59,6 +61,8 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
 
     public CommandDomain Domain { get; }
 
+    public CommandPanelBehavior PanelBehavior { get; }
+
     public ResourceId? RequiredPermission { get; }
 
     public CommandHostRequirement HostRequirement { get; }
@@ -75,10 +79,12 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         CommandHostRequirement hostRequirement = CommandHostRequirement.None,
         CommandPrincipalKind? allowedPrincipals = null,
         Action<PackageStreamWriter, TCommand>? write = null,
-        Func<PackageStreamReader, TCommand>? read = null)
+        Func<PackageStreamReader, TCommand>? read = null,
+        CommandPanelBehavior panelBehavior = CommandPanelBehavior.ReturnToMessage)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
         Domain = domain;
+        PanelBehavior = panelBehavior;
         Description = description ?? LocalizedText.Empty;
         RequiredPermission = requiredPermission;
         HostRequirement = hostRequirement;

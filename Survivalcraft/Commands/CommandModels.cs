@@ -154,7 +154,8 @@ public sealed record CommandResult(
     CommandResultPresentation Presentation = CommandResultPresentation.Default,
     string MessageKey = "",
     IReadOnlyList<string>? MessageArguments = null,
-    JsonNode? Data = null)
+    JsonNode? Data = null,
+    CommandPanelBehavior PanelBehavior = CommandPanelBehavior.ReturnToMessage)
 {
     public static CommandResult Ok(string message, string code = "command.ok") => new(true, code, message);
 

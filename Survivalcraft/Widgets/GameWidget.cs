@@ -393,6 +393,7 @@ public class GameWidget : CanvasWidget
             return;
         }
 
+        MessagePanel.BeginPanelSession();
         gui.ModalPanelWidget = MessagePanel;
         MessagePanel.EditText.HasFocus = false;
         if (commandInput)

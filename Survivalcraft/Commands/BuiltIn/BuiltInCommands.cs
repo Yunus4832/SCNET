@@ -64,7 +64,8 @@ public static class BuiltInCommands
                 CommandDescription("TeleportSpawn_Description", "传送到出生点"), teleportSelf,
                 allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (writer, command) => writer.Write(command.World),
-                read: static reader => new TeleportSpawnCommand(reader.ReadBoolean())));
+                read: static reader => new TeleportSpawnCommand(reader.ReadBoolean()),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         var publicMark = new ResourceId(owner, "world.mark.manage");
         RegisterCreativePermission(commands, publicMark, CommandDescription("MarkPublic_Description", "保存公共标记"));
         commands.Register(new ResourceId(owner, "player/mark/private"),
@@ -88,7 +89,8 @@ public static class BuiltInCommands
                     writer.Write(command.Name);
                     writer.Write(command.Public);
                 },
-                read: static reader => new TeleportMarkCommand(reader.ReadString(), reader.ReadBoolean())));
+                read: static reader => new TeleportMarkCommand(reader.ReadString(), reader.ReadBoolean()),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(new ResourceId(owner, "player/teleport/self"),
             new CommandDefinition<TeleportSelfCommand>(TeleportCommandHandlers.Self, CommandDomain.World,
                 CommandDescription("TeleportSelf_Description", "传送自己"), teleportSelf,
@@ -106,7 +108,8 @@ public static class BuiltInCommands
                         writer.Write(command.DestinationPlayer);
                     }
                 },
-                read: static reader => ReadTeleportSelf(reader)));
+                read: static reader => ReadTeleportSelf(reader),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(new ResourceId(owner, "player/teleport/other"),
             new CommandDefinition<TeleportPlayerCommand>(TeleportCommandHandlers.Player, CommandDomain.World,
                 CommandDescription("TeleportOther_Description", "传送指定玩家"), teleportOthers,
@@ -124,7 +127,8 @@ public static class BuiltInCommands
                         writer.Write(command.DestinationPlayer);
                     }
                 },
-                read: static reader => ReadTeleportPlayer(reader)));
+                read: static reader => ReadTeleportPlayer(reader),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         RegisterPermission(
             commands,
             serverStop,
@@ -176,7 +180,8 @@ public static class BuiltInCommands
                 CommandDescription("TimeSet_Description", "设置世界时间"),
                 worldTimeSet,
                 write: static (writer, command) => writer.Write(command.Preset),
-                read: static reader => new SetWorldTimeCommand(reader.ReadString())));
+                read: static reader => new SetWorldTimeCommand(reader.ReadString()),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(
             new ResourceId(owner, "world/time/advance"),
             new CommandDefinition<AdvanceWorldTimeCommand>(
@@ -185,7 +190,8 @@ public static class BuiltInCommands
                 CommandDescription("TimeAdvance_Description", "前进到下一个时间节点"),
                 worldTimeSet,
                 write: static (_, _) => { },
-                read: static _ => new AdvanceWorldTimeCommand()));
+                read: static _ => new AdvanceWorldTimeCommand(),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(
             new ResourceId(owner, "world/weather/precipitation/set"),
             new CommandDefinition<SetPrecipitationCommand>(
@@ -194,7 +200,8 @@ public static class BuiltInCommands
                 CommandDescription("WeatherRain_Description", "开启或停止降水"),
                 worldPrecipitationSet,
                 write: static (writer, command) => writer.Write(command.Enabled),
-                read: static reader => new SetPrecipitationCommand(reader.ReadBoolean())));
+                read: static reader => new SetPrecipitationCommand(reader.ReadBoolean()),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(
             new ResourceId(owner, "world/weather/fog/set"),
             new CommandDefinition<SetFogCommand>(
@@ -203,7 +210,8 @@ public static class BuiltInCommands
                 CommandDescription("WeatherFog_Description", "开启或关闭雾气"),
                 worldFogSet,
                 write: static (writer, command) => writer.Write(command.Enabled),
-                read: static reader => new SetFogCommand(reader.ReadBoolean())));
+                read: static reader => new SetFogCommand(reader.ReadBoolean()),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(
             new ResourceId(owner, "world/weather/lightning/trigger_player"),
             new CommandDefinition<TriggerPlayerLightningCommand>(
@@ -215,7 +223,8 @@ public static class BuiltInCommands
                 worldLightningTrigger,
                 allowedPrincipals: CommandPrincipalKind.Player,
                 write: static (_, _) => { },
-                read: static _ => new TriggerPlayerLightningCommand()));
+                read: static _ => new TriggerPlayerLightningCommand(),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(
             new ResourceId(owner, "world/weather/lightning/trigger"),
             new CommandDefinition<TriggerLightningCommand>(
@@ -230,7 +239,8 @@ public static class BuiltInCommands
                 },
                 read: static reader => new TriggerLightningCommand(
                     reader.ReadVector3(),
-                    reader.ReadVector3())));
+                    reader.ReadVector3()),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(
             new ResourceId(owner, "world/season/set"),
             new CommandDefinition<SetSeasonCommand>(
@@ -245,7 +255,8 @@ public static class BuiltInCommands
                 },
                 read: static reader => new SetSeasonCommand(
                     reader.ReadEnum<Season>(),
-                    reader.ReadSingle())));
+                    reader.ReadSingle()),
+                panelBehavior: CommandPanelBehavior.CloseOnSuccess));
         commands.Register(
             new ResourceId(owner, "player/list"),
             new CommandDefinition<ListPlayersCommand>(

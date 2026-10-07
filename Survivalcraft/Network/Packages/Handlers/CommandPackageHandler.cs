@@ -65,7 +65,7 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             package.Result is { } result)
         {
             DialogsManager.HideLoadingDialogs();
-            CommandResultPublisher.DisplayLocal(project, result);
+            CommandResultPublisher.DisplayLocal(project, result, package.CorrelationId);
             return;
         }
 

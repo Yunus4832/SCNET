@@ -118,7 +118,8 @@ public class CommandPackageTest
             CommandResultState.Pending,
             CommandResultPresentation.History | CommandResultPresentation.Toast,
             "TeamInvitationPending_Message",
-            ["Alice"]);
+            ["Alice"],
+            PanelBehavior: CommandPanelBehavior.CloseOnSuccess);
         var package = CommandPackage.CreateResult(result, "request-result");
 
         var clone = RoundTrip(package);
@@ -133,6 +134,7 @@ public class CommandPackageTest
         Assert.Equal(result.Audience, clone.Result.Audience);
         Assert.Equal(result.State, clone.Result.State);
         Assert.Equal(result.Presentation, clone.Result.Presentation);
+        Assert.Equal(result.PanelBehavior, clone.Result.PanelBehavior);
         Assert.Equal(result.MessageKey, clone.Result.MessageKey);
         Assert.Equal(result.MessageArguments, clone.Result.MessageArguments);
     }

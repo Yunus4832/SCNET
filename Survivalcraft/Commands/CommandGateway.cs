@@ -49,7 +49,7 @@ public static class CommandGateway
                     input,
                     player.Project,
                     requestId);
-                CommandResultPublisher.DisplayLocal(player.Project, result);
+                CommandResultPublisher.DisplayLocal(player.Project, result, requestId);
                 return requestId;
             }
         }
@@ -61,7 +61,8 @@ public static class CommandGateway
                 player.Project,
                 result,
                 player.Client?.ID,
-                includeServer: player.IsMainPlayer);
+                includeServer: player.IsMainPlayer,
+                correlationId: requestId);
             return requestId;
         }
 
@@ -89,7 +90,7 @@ public static class CommandGateway
                 command,
                 player.Project,
                 requestId);
-            CommandResultPublisher.DisplayLocal(player.Project, result);
+            CommandResultPublisher.DisplayLocal(player.Project, result, requestId);
             return requestId;
         }
 
@@ -100,7 +101,8 @@ public static class CommandGateway
                 player.Project,
                 result,
                 player.Client?.ID,
-                includeServer: player.IsMainPlayer);
+                includeServer: player.IsMainPlayer,
+                correlationId: requestId);
             return requestId;
         }
 

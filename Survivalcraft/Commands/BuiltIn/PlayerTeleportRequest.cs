@@ -120,6 +120,11 @@ internal sealed class PlayerTeleportRequest : IDisposable
         }
 
         Dispose();
+        if (_context.Registry.TryGetDefinition(_command.GetType(), out var registered))
+        {
+            result = result with { PanelBehavior = registered!.Definition.PanelBehavior };
+        }
+
         Log.Information($"Teleport completed: code={result.Code}, success={result.Success}, correlation={_context.CorrelationId}: {result.Message}");
         if (CommonLib.WorkType == WorkType.Server && _requesterClient != null)
         {
@@ -131,7 +136,8 @@ internal sealed class PlayerTeleportRequest : IDisposable
         else
         {
             CommandResultPublisher.Publish(_context.Project!, result,
-                includeServer: _context.Principal.Player is null or { IsMainPlayer: true });
+                includeServer: _context.Principal.Player is null or { IsMainPlayer: true },
+                correlationId: _context.CorrelationId);
         }
     }
 }

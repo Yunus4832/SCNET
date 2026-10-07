@@ -150,6 +150,7 @@ public sealed class CommandPackage : IPackage
                 writer.WriteEnum(result.Audience);
                 writer.WriteEnum(result.State);
                 writer.WriteEnum(result.Presentation);
+                writer.WriteEnum(result.PanelBehavior);
                 writer.Write(result.MessageKey);
                 var arguments = result.MessageArguments ?? [];
                 if (arguments.Count > _maximumMessageArgumentCount)
@@ -237,6 +238,7 @@ public sealed class CommandPackage : IPackage
                 var audience = reader.ReadEnum<CommandResultAudience>();
                 var state = reader.ReadEnum<CommandResultState>();
                 var presentation = reader.ReadEnum<CommandResultPresentation>();
+                var panelBehavior = reader.ReadEnum<CommandPanelBehavior>();
                 var messageKey = reader.ReadString();
                 var argumentCount = reader.ReadByte();
                 if (argumentCount > _maximumMessageArgumentCount)
@@ -260,7 +262,8 @@ public sealed class CommandPackage : IPackage
                     state,
                     presentation,
                     messageKey,
-                    messageArguments);
+                    messageArguments,
+                    PanelBehavior: panelBehavior);
                 break;
             case CommandPackageMode.PermissionSnapshot:
                 PlayerGuid = reader.ReadGuid();
