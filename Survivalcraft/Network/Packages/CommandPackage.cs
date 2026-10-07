@@ -1,4 +1,5 @@
 using Game.Commands;
+using Game.Localization;
 using Game.Network.Enums;
 using Game.Network.Serialization;
 
@@ -11,7 +12,9 @@ public sealed class CommandPackage : IPackage
         Request,
         TypedRequest,
         Result,
-        PermissionSnapshot
+        PermissionSnapshot,
+        SuggestionRequest,
+        Suggestions
     }
 
     private const int _maximumPermissionCount = 256;
@@ -40,6 +43,14 @@ public sealed class CommandPackage : IPackage
     public CommandResult? Result { get; private set; }
 
     public IReadOnlyList<CommandPermissionGrant> PermissionGrants { get; private set; } = [];
+
+    public IReadOnlyList<CommandSuggestion> Suggestions { get; private set; } = [];
+
+    public static CommandPackage CreateSuggestionRequest(string input, string correlationId) =>
+        new(CommandPackageMode.SuggestionRequest, correlationId) { Input = input };
+
+    public static CommandPackage CreateSuggestions(string input, string correlationId, IEnumerable<CommandSuggestion> suggestions) =>
+        new(CommandPackageMode.Suggestions, correlationId) { Input = input, Suggestions = suggestions.Take(64).ToArray() };
 
     public CommandPackage()
     {
@@ -106,7 +117,22 @@ public sealed class CommandPackage : IPackage
         switch (Mode)
         {
             case CommandPackageMode.Request:
+            case CommandPackageMode.SuggestionRequest:
                 writer.Write(Input);
+                break;
+            case CommandPackageMode.Suggestions:
+                writer.Write(Input);
+                writer.Write((byte)Suggestions.Count);
+                foreach (var suggestion in Suggestions)
+                {
+                    writer.Write(suggestion.Value);
+                    writer.Write(suggestion.IsArgument);
+                    var description = suggestion.DescriptionSource ?? LocalizedText.Literal(suggestion.Description);
+                    writer.Write(description.Section);
+                    writer.Write(description.Key);
+                    writer.Write(description.Fallback);
+                }
+
                 break;
             case CommandPackageMode.TypedRequest:
                 writer.Write(CommandId.Namespace.Value);
@@ -160,7 +186,30 @@ public sealed class CommandPackage : IPackage
         switch (Mode)
         {
             case CommandPackageMode.Request:
+            case CommandPackageMode.SuggestionRequest:
                 Input = reader.ReadString();
+                break;
+            case CommandPackageMode.Suggestions:
+                Input = reader.ReadString();
+                var suggestionCount = reader.ReadByte();
+                if (suggestionCount > 64)
+                {
+                    throw new InvalidDataException("Too many command suggestions.");
+                }
+
+                var suggestions = new CommandSuggestion[suggestionCount];
+                for (var index = 0; index < suggestionCount; index++)
+                {
+                    var value = reader.ReadString();
+                    var isArgument = reader.ReadBoolean();
+                    var section = reader.ReadString();
+                    var key = reader.ReadString();
+                    var fallback = reader.ReadString();
+                    var description = section.Length == 0 ? LocalizedText.Literal(fallback) : new LocalizedText(section, key, fallback);
+                    suggestions[index] = new CommandSuggestion(value, description.Resolve(), isArgument, description);
+                }
+
+                Suggestions = suggestions;
                 break;
             case CommandPackageMode.TypedRequest:
                 CommandId = new ResourceId(

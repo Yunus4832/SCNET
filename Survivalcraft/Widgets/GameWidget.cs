@@ -245,10 +245,17 @@ public class GameWidget : CanvasWidget
         var modalPanel = PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget;
         var isGameInputCaptured = PlayerData.ComponentPlayer?.ComponentGui.IsGameInputCaptured == true;
         if (Window.IsActive && PlayerData.IsReadyForPlaying && player?.ComponentHealth.Health > 0f &&
-            !isGameInputCaptured && modalPanel == null && !DialogsManager.HasDialogs(player.GuiWidget) &&
-            Input.IsKeyDownOnce(Key.M))
+            !isGameInputCaptured && modalPanel == null && !DialogsManager.HasDialogs(player.GuiWidget))
         {
-            CommandGateway.Submit(PlayerData, new MarkPrivatePositionCommand("previous"));
+            if (Input.IsKeyDownOnce(Key.M))
+            {
+                CommandGateway.Submit(PlayerData, new MarkPrivatePositionCommand("previous"));
+            }
+
+            if (Input.IsKeyDownOnce(Key.F6))
+            {
+                CommandGateway.Submit(PlayerData, new TeleportMarkCommand("previous", false));
+            }
         }
 
         if (!isGameInputCaptured &&

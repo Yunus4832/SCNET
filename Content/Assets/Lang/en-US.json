@@ -2996,7 +2996,9 @@
             "72": "Ctrl + 1 to 0",
             "73": "Select hotbar page",
             "MarkKey": "M",
-            "MarkDescription": "mark return point"
+            "MarkDescription": "mark return point",
+            "TeleportPreviousKey": "F6",
+            "TeleportPreviousDescription": "Teleport to return point"
         },
         "LevelFactorDialog": {
             "1": "Current multipliers:",
@@ -4023,7 +4025,10 @@
         "TeleportMark_Description": "Teleport to a named mark",
         "MarkInvalidName_Message": "Names must contain 1–64 characters, without control characters or leading/trailing whitespace.",
         "MarkSaved_Message": "Saved mark {0}: {1}.",
-        "MarkMissing_Message": "No mark {0} exists in this scope."
+        "MarkMissing_Message": "No mark {0} exists in this scope.",
+        "TeleportSpawn_Description": "Teleport to your spawn point",
+        "TeleportWorldSpawn_Description": "Teleport to the world spawn point",
+        "TeleportSpawnMissing_Message": "The spawn point has not been established."
     },
     "AndroidServer": {
         "Title": "Server Log",

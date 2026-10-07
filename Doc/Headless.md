@@ -113,6 +113,12 @@ Headless 的诊断还返回 `HeadlessTicks`，记录进程内累计 tick 工作�
 /tp private home           # 传送到自己的命名标记
 /tp public spawn           # 传送到公共命名标记
 /tp                         # 传送到自己的返回点
+/tp private previous        # 与裸 /tp、键盘 F6 相同
+/tp spawn                   # 自己的出生点
+/tp worldspawn              # 世界公共出生点
+/tp player "Player Name"    # 自己传送到在线玩家
+/tp player "Player Name" 100 70 -200
+/tp player "Player Name" "Destination Player"
 /tp 100 70 -200
 /tp "Player Name"
 /tp "Player Name" 100 70 -200
@@ -122,8 +128,11 @@ Headless 的诊断还返回 `HeadlessTicks`，记录进程内累计 tick 工作�
 不带参数的 `/mark` 和键盘 M 都提交与 `/mark private previous` 相同的命令；裸 `/tp` 提交与 `/tp private previous` 相同的命令。`previous` 就是普通的个人命名标记，没有独立的命令、存储字段或特殊查找路径。M 仅在正常游戏输入中生效，不在聊天、编辑面板或对话框中触发。此点随世界中的玩家数据保存，联机时由服务端维护。`/mark` 不授予传送权限。
 命名标记也随存档保存：private 保存到各玩家数据（包括服务端离线玩家记录），public 保存到世界的玩家子系统。两类标记相互独立，不跨存档共享；名称不区分大小写，允许 1–64 个字符，含空格时使用引号。联机客户端不接收他人的个人标记，标记写入与传送解析均由服务端执行。个人标记无需额外权限；公共标记写入需要 `game:world.mark.manage`（创造模式默认允许，其他模式按标准权限授予），传送使用现有的 `game:player.teleport.self` 权限与同样的落点加载、安全检查。成功传送只更新个人标记 `previous`，不修改其他个人标记或公共标记。
 裸 `/tp` 传送到个人标记 `previous`，尚未记录时返回与其他缺失标记相同的提示。其他格式分别传送调用者或指定玩家。玩家名称不区分大小写，也可以使用玩家 GUID；含空格的名称需要引号。
+F6 直接提交该传送命令，不打开命令面板；与 M 一样，仅在窗口激活、玩家存活且没有 HUD 面板或对话框占用输入时生效，仍遵守传送权限和落点安全检查。
+`/tp` 补全包含 `spawn`、`worldspawn`、`private`、`public`、`player` 和在线玩家；private/public 后补全对应作用域的已有标记，`/mark` 使用相同名称补全便于覆盖。player 后补全在线玩家名称，传送另一玩家仍需 `game:player.teleport.others` 权限。出生点使用独立命令路由，不占用命名标记。联机命令补全在短暂输入防抖后向服务端查询，服务端按当前连接玩家的权限和作用域生成候选，只回复请求者；候选响应不会执行命令，也不会传输标记坐标，旧输入的迟到响应被忽略。
 任何成功传送都会将被传送玩家实际离开的位置覆盖为其返回点，因此连续裸 `/tp` 可以往返切换；异步等待期间不提前覆盖，失败或取消不覆盖。移动方块或地形变化后，返回点仍需接受同样的安全校验。
 `game:player.teleport.self` 是标准权限，创造模式玩家默认拥有；其他模式需要授权。
+`worldspawn` 使用游戏已有出生算法在世界粗略出生锚点附近选择站立位置，所需地形先异步准备，然后执行同样的身体碰撞检查；`spawn` 使用玩家已确定的出生位置。
 `game:player.teleport.others` 是 OperatorManaged 权限，只能由服务端操作员授予使用权，不可再授权。
 认领服务器不会自动获得传送其他玩家的权限。控制台必须指定被传送玩家。
 

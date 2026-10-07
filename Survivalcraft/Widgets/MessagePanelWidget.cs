@@ -2,6 +2,9 @@ using System.Xml.Linq;
 
 using Game.Commands;
 using Game.Messaging;
+using Game.Network;
+using Game.Network.Enums;
+using Game.Network.Packages;
 
 namespace Game.Widgets;
 
@@ -61,6 +64,11 @@ public sealed class MessagePanelWidget : CanvasWidget
     };
 
     private GameMessageChannel _messageChannel;
+
+    private string? _suggestionRequestId;
+    private double _suggestionSendAt;
+    private bool _suggestionPending;
+    private IReadOnlyList<CommandSuggestion>? _remoteSuggestions;
 
     public override WidgetAlignment HorizontalAlignment { get; set; } = WidgetAlignment.Center;
 
@@ -161,6 +169,13 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     public override void Update()
     {
+        if (_suggestionPending && Time.RealTime >= _suggestionSendAt && IsCommandInput &&
+            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget == this)
+        {
+            _suggestionPending = false;
+            NetworkSender.SendToServer(CommandPackage.CreateSuggestionRequest(EditText.Text, _suggestionRequestId!));
+        }
+
         if (_messagingEnabled && _channelButton.IsClicked)
         {
             _messageChannel = (GameMessageChannel)(((int)_messageChannel + 1) % 2);
@@ -281,6 +296,9 @@ public sealed class MessagePanelWidget : CanvasWidget
 
     private void RefreshCommandSuggestions()
     {
+        _remoteSuggestions = null;
+        _suggestionRequestId = null;
+        _suggestionPending = false;
         var isCommandInput = EditText.Text.StartsWith('/');
         _commandButton.IsChecked = isCommandInput;
         if (!isCommandInput || CurrentModRuntime.Value is not { } runtime)
@@ -289,10 +307,39 @@ public sealed class MessagePanelWidget : CanvasWidget
             return;
         }
 
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            _suggestionRequestId = Guid.NewGuid().ToString("N");
+            _suggestionPending = true;
+            _suggestionSendAt = Time.RealTime + 0.15;
+        }
+
+        DisplayCommandSuggestions();
+    }
+
+    internal void ReceiveSuggestions(string input, string correlationId, IReadOnlyList<CommandSuggestion> suggestions)
+    {
+        if (input != EditText.Text || correlationId != _suggestionRequestId ||
+            PlayerData.ComponentPlayer?.ComponentGui.ModalPanelWidget != this)
+        {
+            return;
+        }
+
+        _remoteSuggestions = suggestions;
+        DisplayCommandSuggestions();
+    }
+
+    private void DisplayCommandSuggestions()
+    {
+        if (CurrentModRuntime.Value is not { } runtime)
+        {
+            return;
+        }
+
         var principal = CommandPrincipal.FromPlayer(PlayerData);
         var textAdapter = new TextCommandAdapter(runtime.Commands);
         _commandSuggestions.SetSuggestions(
-            textAdapter.Suggest(EditText.Text, principal)
+            (_remoteSuggestions ?? textAdapter.Suggest(EditText.Text, principal))
                 .Concat(textAdapter.Suggest(
                     EditText.Text,
                     CommandPrincipal.ApplicationUser))

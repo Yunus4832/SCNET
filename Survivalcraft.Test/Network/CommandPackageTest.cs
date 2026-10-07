@@ -1,4 +1,5 @@
 using Game.Commands;
+using Game.Localization;
 using Game.Modding;
 using Game.Network;
 using Game.Network.Packages;
@@ -8,6 +9,34 @@ namespace Survivalcraft.Test.Network;
 
 public class CommandPackageTest
 {
+    [Fact]
+    public void SuggestionsPreserveRequestIdentityAndLocalizationWithoutExecutingCommands()
+    {
+        var request = RoundTrip(CommandPackage.CreateSuggestionRequest("/tp private H", "completion-1"));
+        Assert.Equal(CommandPackage.CommandPackageMode.SuggestionRequest, request.Mode);
+        Assert.Equal("/tp private H", request.Input);
+        Assert.Equal("completion-1", request.CorrelationId);
+        Assert.Null(request.Result);
+        var description = new LocalizedText("Commands", "TeleportMark_Description", "Teleport to a mark");
+        var response = RoundTrip(CommandPackage.CreateSuggestions(request.Input, request.CorrelationId,
+            [new CommandSuggestion("Home One", description.Resolve(), true, description)]));
+        Assert.Equal(CommandPackage.CommandPackageMode.Suggestions, response.Mode);
+        Assert.Equal(request.CorrelationId, response.CorrelationId);
+        Assert.Equal(request.Input, response.Input);
+        var suggestion = Assert.Single(response.Suggestions);
+        Assert.Equal("Home One", suggestion.Value);
+        Assert.Equal(description, suggestion.DescriptionSource);
+        Assert.True(suggestion.IsArgument);
+    }
+
+    [Fact]
+    public void SuggestionResponseIsBounded()
+    {
+        var response = RoundTrip(CommandPackage.CreateSuggestions("/tp private ", "bounded",
+            Enumerable.Range(0, 100).Select(index => new CommandSuggestion(index.ToString(), "", true))));
+        Assert.Equal(64, response.Suggestions.Count);
+    }
+
     [Fact]
     public void RequestRoundTrips()
     {

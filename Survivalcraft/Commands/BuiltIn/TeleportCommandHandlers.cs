@@ -6,6 +6,23 @@ namespace Game.Commands;
 
 internal static class TeleportCommandHandlers
 {
+    public static CommandResult Spawn(CommandContext context, TeleportSpawnCommand command)
+    {
+        if (ValidateTarget(context, context.Principal.Player) is { } unavailable)
+        {
+            return unavailable;
+        }
+
+        var player = context.Principal.Player!;
+        var position = command.World ? player.SubsystemPlayers.GlobalSpawnPosition : player.SpawnPosition;
+        if (position == Vector3.Zero)
+        {
+            return CommandResult.LocalizedFail("teleport.spawn_missing", "TeleportSpawnMissing_Message", "出生点尚未确定。");
+        }
+
+        return Teleport(context, player, command, position, null);
+    }
+
     public static CommandResult MarkPrivate(CommandContext context, MarkPrivatePositionCommand command) =>
         MarkNamed(context, command.Name, false);
 
@@ -139,7 +156,7 @@ internal static class TeleportCommandHandlers
         }
 
         target!.PendingTeleport?.Cancel();
-        if (TryComplete(context, target, position.Value) is { } result)
+        if (TryComplete(context, target, position.Value, command is TeleportSpawnCommand { World: true }) is { } result)
         {
             return result;
         }
@@ -149,7 +166,7 @@ internal static class TeleportCommandHandlers
     }
 
     // Null means terrain preparation is still in progress, not a failed teleport.
-    internal static CommandResult? TryComplete(CommandContext context, PlayerData target, Vector3 position)
+    internal static CommandResult? TryComplete(CommandContext context, PlayerData target, Vector3 position, bool resolveWorldSpawn = false)
     {
         if (ValidateTarget(context, target) is { } unavailable)
         {
@@ -165,9 +182,17 @@ internal static class TeleportCommandHandlers
         var body = player.ComponentBody;
         var box = GetDestinationBox(position, body.StanceBoxSize);
         var subsystemTerrain = context.Project!.FindSubsystem<SubsystemTerrain>(true)!;
-        if (!IsDestinationTerrainReady(subsystemTerrain.Terrain, box))
+        var preparationBox = resolveWorldSpawn ? new BoundingBox(position - new Vector3(8f), position + new Vector3(8f)) : box;
+        if (!IsDestinationTerrainReady(subsystemTerrain.Terrain, preparationBox))
         {
             return null;
+        }
+
+        if (resolveWorldSpawn)
+        {
+            // GlobalSpawnPosition is a coarse spawn anchor, not necessarily a valid standing position.
+            position = target.FindNoIntroSpawnPosition(position, false);
+            box = GetDestinationBox(position, body.StanceBoxSize);
         }
 
         DynamicArray<ComponentBody.CollisionBox> collisions = [];

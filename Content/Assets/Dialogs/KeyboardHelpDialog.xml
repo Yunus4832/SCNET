@@ -37,6 +37,7 @@
                             <LabelWidget Text="[KeyboardHelpDialog:70]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:72]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:MarkKey]" HorizontalAlignment="Center"/>
+                            <LabelWidget Text="[KeyboardHelpDialog:TeleportPreviousKey]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:15]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:16]" HorizontalAlignment="Center"/>
                             <LabelWidget Text="[KeyboardHelpDialog:17]" HorizontalAlignment="Center"/>
@@ -75,6 +76,7 @@
                             <LabelWidget Text="[KeyboardHelpDialog:71]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:73]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:MarkDescription]" Color="160, 160, 160"/>
+                            <LabelWidget Text="[KeyboardHelpDialog:TeleportPreviousDescription]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:39]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:40]" Color="160, 160, 160"/>
                             <LabelWidget Text="[KeyboardHelpDialog:41]" Color="160, 160, 160"/>

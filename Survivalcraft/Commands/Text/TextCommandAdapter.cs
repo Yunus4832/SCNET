@@ -83,7 +83,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                 .Select(entry => new CommandSuggestion(
                     entry.Command.Name,
                     entry.Command.Description.Resolve(),
-                    false))
+                    false, entry.Command.Description))
                 .ToArray();
         }
 
@@ -102,11 +102,15 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             principal,
             channel,
             completed);
-        foreach (var route in registered.Command.Routes)
+        var matchedRoutes = registered.Command.Routes.Where(route =>
+            _registry.CanInvoke(route.CommandType, principal) && route.Segments.Count >= completed.Length &&
+            MatchesCompleted(route, completed)).ToArray();
+        var specificity = matchedRoutes.Select(route => route.Segments.Take(completed.Length).OfType<CommandLiteral>().Count())
+            .DefaultIfEmpty(0).Max();
+        foreach (var route in matchedRoutes)
         {
-            if (!_registry.CanInvoke(route.CommandType, principal) ||
-                completed.Length >= route.Segments.Count ||
-                !MatchesCompleted(route, completed))
+            if (completed.Length >= route.Segments.Count ||
+                route.Segments.Take(completed.Length).OfType<CommandLiteral>().Count() < specificity)
             {
                 continue;
             }
@@ -121,7 +125,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                         new CommandSuggestion(
                             literal.Value,
                             route.Description.Resolve(),
-                            false));
+                            false, route.Description));
                     break;
                 case CommandArgument argument:
                     var argumentSuggestions = GetArgumentSuggestions(
@@ -139,7 +143,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                                 suggestion.Value,
                                 (suggestion.Description ??
                                  route.Description).Resolve(),
-                                true));
+                                true, suggestion.Description ?? route.Description));
                     }
 
                     if (argumentSuggestions.Count > 0)
@@ -153,7 +157,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                         new CommandSuggestion(
                             placeholder,
                             route.Description.Resolve(),
-                            true));
+                            true, route.Description));
                     break;
             }
         }

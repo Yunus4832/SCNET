@@ -474,6 +474,6 @@ public sealed class TextCommand : ICommandAdapterBinding
     }
 }
 
-public sealed record CommandSuggestion(string Value, string Description, bool IsArgument);
+public sealed record CommandSuggestion(string Value, string Description, bool IsArgument, LocalizedText? DescriptionSource = null);
 
 public sealed record RegisteredTextCommand(ResourceId Id, TextCommand Command);

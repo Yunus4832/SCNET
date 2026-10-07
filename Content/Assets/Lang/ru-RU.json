@@ -2996,7 +2996,9 @@
             "72": "Ctrl + 1–0",
             "73": "Выбрать страницу панели",
             "MarkKey": "M",
-            "MarkDescription": "отметить точку возврата"
+            "MarkDescription": "отметить точку возврата",
+            "TeleportPreviousKey": "F6",
+            "TeleportPreviousDescription": "Телепортироваться к точке возврата"
         },
         "LevelFactorDialog": {
             "1": "Множители",
@@ -4023,7 +4025,10 @@
         "TeleportMark_Description": "Телепортироваться к отметке",
         "MarkInvalidName_Message": "Имя должно содержать 1–64 символа, без управляющих символов и пробелов по краям.",
         "MarkSaved_Message": "Отметка {0} сохранена: {1}.",
-        "MarkMissing_Message": "В этой области нет отметки {0}."
+        "MarkMissing_Message": "В этой области нет отметки {0}.",
+        "TeleportSpawn_Description": "Телепортироваться к своей точке появления",
+        "TeleportWorldSpawn_Description": "Телепортироваться к точке появления мира",
+        "TeleportSpawnMissing_Message": "Точка появления ещё не определена."
     },
     "AndroidServer": {
         "Title": "Журнал сервера",

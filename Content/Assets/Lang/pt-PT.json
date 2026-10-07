@@ -2996,7 +2996,9 @@
             "72": "Ctrl + 1 a 0",
             "73": "Selecionar página da barra rápida",
             "MarkKey": "M",
-            "MarkDescription": "marcar ponto de regresso"
+            "MarkDescription": "marcar ponto de regresso",
+            "TeleportPreviousKey": "F6",
+            "TeleportPreviousDescription": "Teleportar para o ponto de regresso"
         },
         "LevelFactorDialog": {
             "1": "Multiplicador atual:",
@@ -4023,7 +4025,10 @@
         "TeleportMark_Description": "Teleportar para uma marca",
         "MarkInvalidName_Message": "O nome deve ter 1–64 caracteres, sem caracteres de controlo nem espaços nas extremidades.",
         "MarkSaved_Message": "Marca {0} guardada: {1}.",
-        "MarkMissing_Message": "A marca {0} não existe neste âmbito."
+        "MarkMissing_Message": "A marca {0} não existe neste âmbito.",
+        "TeleportSpawn_Description": "Teleportar para o ponto de nascimento",
+        "TeleportWorldSpawn_Description": "Teleportar para o ponto de nascimento do mundo",
+        "TeleportSpawnMissing_Message": "O ponto de nascimento ainda não foi definido."
     },
     "AndroidServer": {
         "Title": "Registo do servidor",

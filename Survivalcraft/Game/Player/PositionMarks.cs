@@ -6,6 +6,8 @@ public sealed class PositionMarks
 {
     private readonly Dictionary<string, Vector3> _positions = new(StringComparer.OrdinalIgnoreCase);
 
+    public IEnumerable<string> Names => _positions.Keys;
+
     public static bool IsValidName(string name) =>
         !string.IsNullOrWhiteSpace(name) && name.Length <= 64 &&
         name == name.Trim() && !name.Any(char.IsControl);

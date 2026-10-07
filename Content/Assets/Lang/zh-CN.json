@@ -2996,7 +2996,9 @@
             "72": "Ctrl + 1 到 0",
             "73": "选择物品栏页面",
             "MarkKey": "M",
-            "MarkDescription": "标记返回点"
+            "MarkDescription": "标记返回点",
+            "TeleportPreviousKey": "F6",
+            "TeleportPreviousDescription": "传送到返回点"
         },
         "LevelFactorDialog": {
             "1": "当前乘数：",
@@ -4023,7 +4025,10 @@
         "TeleportMark_Description": "传送到命名标记",
         "MarkInvalidName_Message": "名称需为 1–64 个字符，不能包含控制字符或首尾空白。",
         "MarkSaved_Message": "已保存标记 {0}：{1}。",
-        "MarkMissing_Message": "该作用域中没有标记 {0}。"
+        "MarkMissing_Message": "该作用域中没有标记 {0}。",
+        "TeleportSpawn_Description": "传送到出生点",
+        "TeleportWorldSpawn_Description": "传送到世界出生点",
+        "TeleportSpawnMissing_Message": "出生点尚未确定。"
     },
     "AndroidServer": {
         "Title": "服务器日志",

@@ -13,6 +13,8 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
     private readonly Dictionary<Guid, long> _lastCommandTimestamp = [];
 
+    private readonly Dictionary<Guid, long> _lastSuggestionTimestamp = [];
+
     public override void Handle(CommandPackage package, PackageReceiveContext context)
     {
         var netNode = context.Node;
@@ -24,7 +26,38 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
 
         if (isServer)
         {
+            if (package.Mode is CommandPackage.CommandPackageMode.SuggestionRequest)
+            {
+                if (context.Sender is not { } sender || package.Input.Length > _maximumCommandLength ||
+                    CurrentModRuntime.Value is not { } runtime)
+                {
+                    return;
+                }
+
+                var now = Stopwatch.GetTimestamp();
+                if (_lastSuggestionTimestamp.TryGetValue(sender.GUID, out var last) && now - last < _minimumCommandInterval)
+                {
+                    return;
+                }
+
+                if (_lastSuggestionTimestamp.Count > 1024)
+                {
+                    _lastSuggestionTimestamp.Clear();
+                }
+
+                _lastSuggestionTimestamp[sender.GUID] = now;
+                var suggestions = new TextCommandAdapter(runtime.Commands).Suggest(package.Input, CommandPrincipal.FromPlayer(sender.PlayerData));
+                netNode.QueuePackage(CommandPackage.CreateSuggestions(package.Input, package.CorrelationId, suggestions), PackageAudience.To(sender));
+                return;
+            }
+
             HandleServer(package, project, context);
+            return;
+        }
+
+        if (package.Mode is CommandPackage.CommandPackageMode.Suggestions)
+        {
+            CommonLib.MainPlayer?.GameWidget.MessagePanel?.ReceiveSuggestions(package.Input, package.CorrelationId, package.Suggestions);
             return;
         }
 
