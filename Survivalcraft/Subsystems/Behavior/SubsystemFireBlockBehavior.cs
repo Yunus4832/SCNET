@@ -74,6 +74,32 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     var x = value.Point.X;
                     var y = value.Point.Y;
                     var z = value.Point.Z;
+                    var chunk = SubsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
+                    if (chunk is not { MainThreadState: > TerrainChunkState.InvalidContents4 })
+                    {
+                        _copyIndex++;
+                        continue;
+                    }
+
+                    if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) != FireBlock.Index)
+                    {
+                        RemoveFireNet(x, y, z);
+                        _copyIndex++;
+                        continue;
+                    }
+
+                    // Chunk baselines do not necessarily replay every historical neighbor change.
+                    // Revalidate fuel on the authority so orphan fire cells cannot survive indefinitely.
+                    if (CommonLib.WorkType != WorkType.Client && HasLoadedFuelNeighbors(x, z))
+                    {
+                        OnNeighborBlockChanged(x, y, z, x, y, z);
+                        if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) != FireBlock.Index)
+                        {
+                            _copyIndex++;
+                            continue;
+                        }
+                    }
+
                     var num4 = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
                     _fireSoundIntensity +=
                         1f / (_subsystemAudio.CalculateListenerDistanceSquared(new Vector3(x, y, z)) + 0.01f);
@@ -357,6 +383,21 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         SubsystemTerrain.ChangeCell(x, y, z, value2);
     }
 
+    private bool HasLoadedFuelNeighbors(int x, int z)
+    {
+        for (var face = 0; face < 4; face++)
+        {
+            var offset = CellFace.FaceToPoint3(face);
+            if (SubsystemTerrain.Terrain.GetChunkAtCell(x + offset.X, z + offset.Z, false) is not
+                { MainThreadState: > TerrainChunkState.InvalidContents4 })
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public override void OnBlockAdded(int value, int oldValue, int x, int y, int z)
     {
         AddFire(x, y, z, 1f);
@@ -477,11 +518,6 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private void RemoveFire(int x, int y, int z)
     {
-        if (CommonLib.WorkType == WorkType.Client)
-        {
-            return;
-        }
-
         if (CommonLib.WorkType == WorkType.Server)
         {
             NetworkSender.SendToChunkObservers(Project, new Point2(x >> 4, z >> 4),

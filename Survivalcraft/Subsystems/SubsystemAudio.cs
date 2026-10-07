@@ -3,9 +3,6 @@ using Engine.Audio;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Network;
-using Game.Network.Enums;
-
 namespace Game.Subsystems;
 
 public class SubsystemAudio : Subsystem, IUpdateable
@@ -35,21 +32,9 @@ public class SubsystemAudio : Subsystem, IUpdateable
     public void Update(float dt)
     {
         _listenerPositions.Clear();
-        if (CommonLib.WorkType == WorkType.Client)
+        foreach (var gameWidget in _subsystemViews.GameWidgets)
         {
-            foreach (var gameWidget in _subsystemViews.GameWidgets)
-            {
-                if (!gameWidget.PlayerData.IsMainPlayer)
-                {
-                    continue;
-                }
-
-                _listenerPositions.Add(gameWidget.ActiveCamera.ViewPosition);
-            }
-        }
-        else
-        {
-            foreach (var gameWidget in _subsystemViews.GameWidgets)
+            if (gameWidget.PlayerData.IsMainPlayer)
             {
                 _listenerPositions.Add(gameWidget.ActiveCamera.ViewPosition);
             }
