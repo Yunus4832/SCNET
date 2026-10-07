@@ -15,7 +15,7 @@ public class Pickable : WorldItem
 
     public uint LastStateTick;
 
-    public Vector3? LastPosition;
+    public Vector3? NetworkPosition;
 
     public bool NetToRemove;
 

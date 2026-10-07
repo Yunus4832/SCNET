@@ -9,6 +9,9 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
         pickable.Position = package.Position;
         pickable.Velocity = package.Velocity;
         pickable.StuckMatrix = package.StuckMatrix;
+        pickable.FlyToPosition = null;
+        pickable.NetworkPosition = null;
+        pickable.ToRemove = false;
         pickable.LastStateTick = package.StateTick;
     }
 
@@ -96,9 +99,6 @@ public sealed class PickablePackageHandler : PackageHandlerBase<PickablePackage>
                         PackageAudience.To(context.Sender));
                 }
 
-                break;
-            case PickablePackage.PickType.SetFlyToPosition:
-                subsystemPickable.PickableAction(package.Id, pick => { pick.FlyToPosition = package.FlyToPosition; });
                 break;
             case PickablePackage.PickType.CreateList:
                 if (isServer)

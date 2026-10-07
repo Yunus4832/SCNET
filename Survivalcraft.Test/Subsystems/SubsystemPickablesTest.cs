@@ -17,7 +17,7 @@ public sealed class SubsystemPickablesTest
         subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = position }], 1);
         subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.Zero }], 1);
         subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.Zero }], uint.MaxValue);
-        Assert.Equal(position, pickable.Position);
+        Assert.Equal(position, pickable.NetworkPosition);
         Assert.Equal(1u, pickable.LastStateTick);
     }
 
@@ -29,8 +29,8 @@ public sealed class SubsystemPickablesTest
         var second = subsystem.CreatePickable(2, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
         subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.One }], 10);
         subsystem.ApplyPositionSnapshot([new Pickable { Id = 2, Position = Vector3.One }], 10);
-        Assert.Equal(Vector3.One, first.Position);
-        Assert.Equal(Vector3.One, second.Position);
+        Assert.Equal(Vector3.One, first.NetworkPosition);
+        Assert.Equal(Vector3.One, second.NetworkPosition);
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public sealed class SubsystemPickablesTest
         subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = position }], 1);
         subsystem.ApplyPositionSnapshot([], 2);
 
-        Assert.Equal(position, updated.Position);
+        Assert.Equal(position, updated.NetworkPosition);
         Assert.True(subsystem.TryGetPickable(2, out var indexed));
         Assert.Same(retained, indexed);
         Assert.Empty(subsystem.PickablesToRemove);

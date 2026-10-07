@@ -145,6 +145,16 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
         foreach (var pickable in _pickables)
         {
+            if (CommonLib.WorkType == WorkType.Client)
+            {
+                UpdateClientPosition(pickable, dt);
+                _subsystemFluidBlockBehavior.GetSurfaceHeight(
+                    Terrain.ToCell(pickable.Position.X), Terrain.ToCell(pickable.Position.Y + 0.1f),
+                    Terrain.ToCell(pickable.Position.Z), out var clientSurface);
+                UpdateSplashEffects(pickable, clientSurface);
+                continue;
+            }
+
             if (pickable.ToRemove)
             {
                 PickablesToRemove.Add(pickable);
@@ -330,29 +340,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                         }
                     }
 
-                    if (surfaceBlock is WaterBlock && !pickable.SplashGenerated)
+                    if (UpdateSplashEffects(pickable, surfaceBlock) && surfaceBlock is MagmaBlock)
                     {
-                        _subsystemParticles.AddParticleSystem(
-                            new WaterSplashParticleSystem(_subsystemTerrain, pickable.Position, false));
-                        _subsystemAudio.PlayRandomSound("Audio/Splashes", 1f, _random.Float(-0.2f, 0.2f),
-                            pickable.Position, 6f, true);
-                        pickable.SplashGenerated = true;
-                    }
-                    else if (surfaceBlock is MagmaBlock && !pickable.SplashGenerated)
-                    {
-                        _subsystemParticles.AddParticleSystem(
-                            new MagmaSplashParticleSystem(_subsystemTerrain, pickable.Position, false));
-                        _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f),
-                            pickable.Position, 3f, true);
                         pickable.ToRemove = true;
-                        pickable.SplashGenerated = true;
                         _subsystemExplosions.TryExplodeBlock(Terrain.ToCell(pickable.Position.X),
                             Terrain.ToCell(pickable.Position.Y), Terrain.ToCell(pickable.Position.Z),
                             pickable.Value);
-                    }
-                    else if (surfaceBlock == null)
-                    {
-                        pickable.SplashGenerated = false;
                     }
 
                     if (_subsystemTime.PeriodicGameTimeEvent(1.0, pickable.GetHashCode() % 100 / 100.0) &&
@@ -554,9 +547,6 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         {
             pickable.FlyToPosition =
                 positionFix + 0.1f * MathUtils.Sqrt(distance) * tmpPlayer.ComponentBody.Velocity;
-            SendToPickableObservers(
-                pickable,
-                new PickablePackage(pickable, PickablePackage.PickType.SetFlyToPosition));
         }
     }
 
@@ -593,15 +583,63 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         {
             PickableAction(position.Id, pickable =>
             {
-                if (unchecked((int)(stateTick - pickable.LastStateTick)) <= 0)
-                {
-                    return;
-                }
-
-                pickable.LastStateTick = stateTick;
-                pickable.Position = position.Position;
+                ApplyMotionSnapshot(pickable, position, stateTick);
             });
         }
+    }
+
+    internal static void ApplyMotionSnapshot(Pickable pickable, Pickable snapshot, uint stateTick)
+    {
+        if (unchecked((int)(stateTick - pickable.LastStateTick)) <= 0)
+        {
+            return;
+        }
+
+        pickable.LastStateTick = stateTick;
+        pickable.NetworkPosition = snapshot.Position;
+        pickable.Velocity = Vector3.Zero;
+        pickable.FlyToPosition = null;
+        pickable.ToRemove = false;
+    }
+
+    internal static void UpdateClientPosition(Pickable pickable, float dt)
+    {
+        if (pickable.NetworkPosition is { } position)
+        {
+            pickable.Position = Vector3.Lerp(pickable.Position, position, 1f - MathUtils.Exp(-20f * dt));
+        }
+    }
+
+    private bool UpdateSplashEffects(Pickable pickable, FluidBlock? surfaceBlock)
+    {
+        if (surfaceBlock is null)
+        {
+            pickable.SplashGenerated = false;
+            return false;
+        }
+
+        if (pickable.SplashGenerated)
+        {
+            return false;
+        }
+
+        if (surfaceBlock is WaterBlock)
+        {
+            _subsystemParticles.AddParticleSystem(
+                new WaterSplashParticleSystem(_subsystemTerrain, pickable.Position, false));
+            _subsystemAudio.PlayRandomSound("Audio/Splashes", 1f, _random.Float(-0.2f, 0.2f),
+                pickable.Position, 6f, true);
+        }
+        else if (surfaceBlock is MagmaBlock)
+        {
+            _subsystemParticles.AddParticleSystem(
+                new MagmaSplashParticleSystem(_subsystemTerrain, pickable.Position, false));
+            _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.2f, 0.2f),
+                pickable.Position, 3f, true);
+        }
+
+        pickable.SplashGenerated = true;
+        return true;
     }
 
     public bool RemovePickable(Pickable pickable)
@@ -709,18 +747,6 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                         Math.Min(PickablePackage.MaxPositionsPerSnapshot, relevant.Count - i))),
                     PackageAudience.To(client));
             }
-        }
-    }
-
-    private void SendToPickableObservers(Pickable pickable, IPackage package)
-    {
-        var observers = _subsystemNetworkInterest.Entities
-            .GetObservers(EntityInterestGroup.Pickables, pickable.Id)
-            .Where(client => client.IsConnected)
-            .ToArray();
-        if (observers.Length > 0)
-        {
-            CommonLib.Net.QueuePackage(package, PackageAudience.To(observers));
         }
     }
 

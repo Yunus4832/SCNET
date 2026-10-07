@@ -13,14 +13,11 @@ public class PickablePackage : IPackage
         Update,
         Delete,
         RequestSync,
-        SetFlyToPosition,
         CreateList,
         DeleteList
     }
 
     public byte Count;
-
-    public Vector3? FlyToPosition;
 
     public byte? GetPlayer;
 
@@ -68,7 +65,6 @@ public class PickablePackage : IPackage
         Velocity = pickable.Velocity;
         GetPlayer = pickable.GetPickPlayer;
         StuckMatrix = pickable.StuckMatrix;
-        FlyToPosition = pickable.FlyToPosition;
         Type = pickType;
         PlaySound = pickable.PlaySound;
     }
@@ -99,14 +95,6 @@ public class PickablePackage : IPackage
                 {
                     writer.Write(t.Id);
                     writer.Write(t.Position);
-                }
-
-                break;
-            case PickType.SetFlyToPosition:
-                writer.Write(Id);
-                if (FlyToPosition != null)
-                {
-                    writer.Write(FlyToPosition.Value);
                 }
 
                 break;
@@ -168,10 +156,6 @@ public class PickablePackage : IPackage
                         Pickables.Add(pickable);
                     }
                 }
-                break;
-            case PickType.SetFlyToPosition:
-                Id = reader.ReadUInt16();
-                FlyToPosition = reader.ReadVector3();
                 break;
             case PickType.Delete:
                 Id = reader.ReadUInt16();
