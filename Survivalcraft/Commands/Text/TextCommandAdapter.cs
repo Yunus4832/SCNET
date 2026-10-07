@@ -124,8 +124,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                         literal.Value,
                         new CommandSuggestion(
                             literal.Value,
-                            route.Description.Resolve(),
-                            false, route.Description));
+                            (literal.Description ?? route.Description).Resolve(),
+                            false, literal.Description ?? route.Description));
                     break;
                 case CommandArgument argument:
                     var argumentSuggestions = GetArgumentSuggestions(

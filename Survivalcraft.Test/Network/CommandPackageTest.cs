@@ -12,9 +12,9 @@ public class CommandPackageTest
     [Fact]
     public void SuggestionsPreserveRequestIdentityAndLocalizationWithoutExecutingCommands()
     {
-        var request = RoundTrip(CommandPackage.CreateSuggestionRequest("/tp private H", "completion-1"));
+        var request = RoundTrip(CommandPackage.CreateSuggestionRequest("/tp self private H", "completion-1"));
         Assert.Equal(CommandPackage.CommandPackageMode.SuggestionRequest, request.Mode);
-        Assert.Equal("/tp private H", request.Input);
+        Assert.Equal("/tp self private H", request.Input);
         Assert.Equal("completion-1", request.CorrelationId);
         Assert.Null(request.Result);
         var description = new LocalizedText("Commands", "TeleportMark_Description", "Teleport to a mark");
@@ -32,7 +32,7 @@ public class CommandPackageTest
     [Fact]
     public void SuggestionResponseIsBounded()
     {
-        var response = RoundTrip(CommandPackage.CreateSuggestions("/tp private ", "bounded",
+        var response = RoundTrip(CommandPackage.CreateSuggestions("/tp self private ", "bounded",
             Enumerable.Range(0, 100).Select(index => new CommandSuggestion(index.ToString(), "", true))));
         Assert.Equal(64, response.Suggestions.Count);
     }

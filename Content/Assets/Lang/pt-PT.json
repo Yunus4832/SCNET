@@ -4001,7 +4001,7 @@
         "AutomationUiScroll_Description": "Deslocar um alvo de IU da automatização",
         "AutomationUiSwipe_Description": "Deslizar um alvo de IU da automatização",
         "AutomationMouseMove_Description": "Enviar movimento relativo do rato",
-        "Teleport_Description": "Teletransportar para um ponto de regresso, coordenadas ou um jogador online",
+        "Teleport_Description": "Escolher o próprio jogador ou outro, depois o destino",
         "TeleportSelf_Description": "Teletransportar-se",
         "TeleportOther_Description": "Teletransportar outro jogador",
         "TeleportSelfPosition_Description": "Teletransportar-se para coordenadas",
@@ -4028,7 +4028,8 @@
         "MarkMissing_Message": "A marca {0} não existe neste âmbito.",
         "TeleportSpawn_Description": "Teleportar para o ponto de nascimento",
         "TeleportWorldSpawn_Description": "Teleportar para o ponto de nascimento do mundo",
-        "TeleportSpawnMissing_Message": "O ponto de nascimento ainda não foi definido."
+        "TeleportSpawnMissing_Message": "O ponto de nascimento ainda não foi definido.",
+        "TeleportUnchanged_Message": "O destino é o próprio jogador a teleportar. Não foi efetuado qualquer teletransporte."
     },
     "AndroidServer": {
         "Title": "Registo do servidor",

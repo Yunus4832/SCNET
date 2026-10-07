@@ -78,8 +78,11 @@ internal static class TeleportCommandHandlers
 
     private static PlayerData? FindPlayer(CommandContext context, string name) =>
         context.Project?.FindSubsystem<SubsystemPlayers>(true)?.FindPlayerData(player =>
-            Guid.TryParse(name, out var id) ? player.PlayerGUID == id :
-                string.Equals(player.Name, name, StringComparison.OrdinalIgnoreCase));
+            MatchesPlayer(player, name));
+
+    internal static bool MatchesPlayer(PlayerData player, string name) =>
+        Guid.TryParse(name, out var id) ? player.PlayerGUID == id :
+            string.Equals(player.Name, name, StringComparison.OrdinalIgnoreCase);
 
     internal static bool IsValidPosition(Vector3 position) =>
         float.IsFinite(position.X) && float.IsFinite(position.Y) && float.IsFinite(position.Z) &&
@@ -141,6 +144,11 @@ internal static class TeleportCommandHandlers
         if (destination != null)
         {
             var destinationPlayer = FindPlayer(context, destination);
+            if (ReferenceEquals(destinationPlayer, target))
+            {
+                return CommandResult.LocalizedOk("teleport.unchanged", "TeleportUnchanged_Message", "目标玩家就是被传送玩家，未执行传送。");
+            }
+
             if (destinationPlayer?.ComponentPlayer == null || !destinationPlayer.IsReadyForPlaying ||
                 destinationPlayer.ComponentPlayer.ComponentHealth.Health <= 0f)
             {

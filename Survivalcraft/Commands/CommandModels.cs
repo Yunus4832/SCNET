@@ -329,7 +329,7 @@ public sealed class CommandArguments
 
 public abstract record CommandSegment;
 
-public sealed record CommandLiteral(string Value) : CommandSegment
+public sealed record CommandLiteral(string Value, LocalizedText? Description = null) : CommandSegment
 {
     public string Value { get; } = Validate(Value);
 

@@ -4001,7 +4001,7 @@
         "AutomationUiScroll_Description": "滚动自动化 UI 目标",
         "AutomationUiSwipe_Description": "滑动自动化 UI 目标",
         "AutomationMouseMove_Description": "发送相对鼠标移动",
-        "Teleport_Description": "传送到返回点、坐标或在线玩家",
+        "Teleport_Description": "选择自己或指定玩家，再选择传送目的地",
         "TeleportSelf_Description": "传送自己",
         "TeleportOther_Description": "传送指定玩家",
         "TeleportSelfPosition_Description": "传送自己到坐标",
@@ -4028,7 +4028,8 @@
         "MarkMissing_Message": "该作用域中没有标记 {0}。",
         "TeleportSpawn_Description": "传送到出生点",
         "TeleportWorldSpawn_Description": "传送到世界出生点",
-        "TeleportSpawnMissing_Message": "出生点尚未确定。"
+        "TeleportSpawnMissing_Message": "出生点尚未确定。",
+        "TeleportUnchanged_Message": "目标玩家就是被传送玩家，未执行传送。"
     },
     "AndroidServer": {
         "Title": "服务器日志",

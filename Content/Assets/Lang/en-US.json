@@ -4001,7 +4001,7 @@
         "AutomationUiScroll_Description": "Scroll an automation UI target",
         "AutomationUiSwipe_Description": "Swipe an automation UI target",
         "AutomationMouseMove_Description": "Send relative mouse movement",
-        "Teleport_Description": "Teleport to a return point, coordinates or an online player",
+        "Teleport_Description": "Choose yourself or a player, then a teleport destination",
         "TeleportSelf_Description": "Teleport yourself",
         "TeleportOther_Description": "Teleport another player",
         "TeleportSelfPosition_Description": "Teleport yourself to coordinates",
@@ -4028,7 +4028,8 @@
         "MarkMissing_Message": "No mark {0} exists in this scope.",
         "TeleportSpawn_Description": "Teleport to your spawn point",
         "TeleportWorldSpawn_Description": "Teleport to the world spawn point",
-        "TeleportSpawnMissing_Message": "The spawn point has not been established."
+        "TeleportSpawnMissing_Message": "The spawn point has not been established.",
+        "TeleportUnchanged_Message": "The destination is the player being teleported. No teleport was performed."
     },
     "AndroidServer": {
         "Title": "Server Log",

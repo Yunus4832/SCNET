@@ -4001,7 +4001,7 @@
         "AutomationUiScroll_Description": "Прокрутить цель автоматизации интерфейса",
         "AutomationUiSwipe_Description": "Провести по цели автоматизации интерфейса",
         "AutomationMouseMove_Description": "Отправить относительное движение мыши",
-        "Teleport_Description": "Телепортироваться к точке возврата, координатам или игроку онлайн",
+        "Teleport_Description": "Выберите себя или игрока, затем место назначения",
         "TeleportSelf_Description": "Телепортировать себя",
         "TeleportOther_Description": "Телепортировать другого игрока",
         "TeleportSelfPosition_Description": "Телепортироваться к координатам",
@@ -4028,7 +4028,8 @@
         "MarkMissing_Message": "В этой области нет отметки {0}.",
         "TeleportSpawn_Description": "Телепортироваться к своей точке появления",
         "TeleportWorldSpawn_Description": "Телепортироваться к точке появления мира",
-        "TeleportSpawnMissing_Message": "Точка появления ещё не определена."
+        "TeleportSpawnMissing_Message": "Точка появления ещё не определена.",
+        "TeleportUnchanged_Message": "Игрок назначения совпадает с перемещаемым игроком. Телепортация не выполнена."
     },
     "AndroidServer": {
         "Title": "Журнал сервера",

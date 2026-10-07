@@ -785,22 +785,38 @@ public class CommandDispatcherTest
 
     [Theory]
     [InlineData("/tp")]
-    [InlineData("/tp private home")]
-    [InlineData("/tp public home")]
-    [InlineData("/tp spawn")]
-    [InlineData("/tp worldspawn")]
-    [InlineData("/tp player \"Player One\"")]
-    [InlineData("/tp player \"Player One\" 1 64 -2")]
-    [InlineData("/tp player \"Player One\" Codex")]
-    [InlineData("/tp 1 64 -2")]
-    [InlineData("/tp Codex")]
-    [InlineData("/tp \"Player One\" 1 64 -2")]
-    [InlineData("/tp \"Player One\" Codex")]
+    [InlineData("/tp self private home")]
+    [InlineData("/tp self public home")]
+    [InlineData("/tp self spawn")]
+    [InlineData("/tp self worldspawn")]
+    [InlineData("/tp self player Codex")]
+    [InlineData("/tp self position 1 64 -2")]
+    [InlineData("/tp player \"Player One\" position 1 64 -2")]
+    [InlineData("/tp player \"Player One\" player Codex")]
     public void TeleportTextRoutesReachTheWorldHandler(string text)
     {
         var principal = new CommandPrincipal("Operator", CommandPrincipalKind.ServerOperator | CommandPrincipalKind.Player);
         var result = new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal));
         Assert.Equal("teleport.no_world", result.Code);
+    }
+
+    [Theory]
+    [InlineData("/tp self")]
+    [InlineData("/tp player Codex")]
+    [InlineData("/tp Codex")]
+    [InlineData("/tp 1 64 -2")]
+    [InlineData("/tp private home")]
+    [InlineData("/tp public home")]
+    [InlineData("/tp spawn")]
+    [InlineData("/tp worldspawn")]
+    [InlineData("/tp player Codex Other")]
+    [InlineData("/tp player Codex 1 64 -2")]
+    [InlineData("/tp Codex Other")]
+    [InlineData("/tp Codex 1 64 -2")]
+    public void TeleportRejectsIncompleteAndImplicitRoutes(string text)
+    {
+        var principal = new CommandPrincipal("Operator", CommandPrincipalKind.ServerOperator | CommandPrincipalKind.Player);
+        Assert.Equal("command.usage", new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal)).Code);
     }
 
     [Fact]
@@ -840,7 +856,8 @@ public class CommandDispatcherTest
         Assert.True(adapter.TryFind(name, out var entry));
         var bare = Assert.Single(entry!.Command.Routes, route => route.Segments.Count == 0);
         var explicitRoute = Assert.Single(entry.Command.Routes, route =>
-            route.Segments.Count == 2 && route.Segments[0] is CommandLiteral { Value: "private" });
+            route.Segments.Count == (name == "mark" ? 2 : 3) &&
+            route.Segments[name == "mark" ? 0 : 1] is CommandLiteral { Value: "private" });
         var command = bare.CreateCommand(new CommandArguments(new Dictionary<string, object>()));
         var explicitCommand = explicitRoute.CreateCommand(new CommandArguments(new Dictionary<string, object>
         {

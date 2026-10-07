@@ -846,6 +846,8 @@ public static class BuiltInCommands
 
     internal static TextCommand CreateTeleportText()
     {
+        var self = new CommandLiteral("self", CommandDescription("TeleportSelf_Description", "传送自己"));
+        var playerTarget = new CommandLiteral("player", CommandDescription("TeleportOther_Description", "传送指定玩家"));
         CommandSegment[] coordinates =
         [
             new CommandArgument("x", CommandArgumentKind.Number),
@@ -854,40 +856,31 @@ public static class BuiltInCommands
         ];
         static Vector3 Position(CommandArguments arguments) => new(
             (float)arguments.Get<double>("x"), (float)arguments.Get<double>("y"), (float)arguments.Get<double>("z"));
-        return new TextCommand("tp", CommandDescription("Teleport_Description", "传送到返回点、坐标或在线玩家"),
+        return new TextCommand("tp", CommandDescription("Teleport_Description", "选择自己或指定玩家，再选择传送目的地"),
         [
-            new CommandRoute([new CommandLiteral("player"), new CommandArgument("destination", SuggestionProvider: SuggestPlayers)], typeof(TeleportSelfCommand),
+            new CommandRoute([self, new CommandLiteral("player"), new CommandArgument("destination", SuggestionProvider: SuggestTeleportDestinations)], typeof(TeleportSelfCommand),
                 arguments => new TeleportSelfCommand(DestinationPlayer: arguments.Get<string>("destination")),
                 CommandDescription("TeleportSelfPlayer_Description", "传送自己到玩家")),
-            new CommandRoute([new CommandLiteral("player"), new CommandArgument("player", SuggestionProvider: SuggestPlayers), .. coordinates], typeof(TeleportPlayerCommand),
+            new CommandRoute([playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers), new CommandLiteral("position"), .. coordinates], typeof(TeleportPlayerCommand),
                 arguments => new TeleportPlayerCommand(arguments.Get<string>("player"), Position(arguments)),
                 CommandDescription("TeleportOtherPosition_Description", "传送指定玩家到坐标")),
-            new CommandRoute([new CommandLiteral("player"), new CommandArgument("player", SuggestionProvider: SuggestPlayers), new CommandArgument("destination", SuggestionProvider: SuggestPlayers)], typeof(TeleportPlayerCommand),
+            new CommandRoute([playerTarget, new CommandArgument("player", SuggestionProvider: SuggestPlayers), new CommandLiteral("player"), new CommandArgument("destination", SuggestionProvider: SuggestTeleportDestinations)], typeof(TeleportPlayerCommand),
                 arguments => new TeleportPlayerCommand(arguments.Get<string>("player"), DestinationPlayer: arguments.Get<string>("destination")),
                 CommandDescription("TeleportOtherPlayer_Description", "传送指定玩家到玩家")),
-            new CommandRoute([new CommandLiteral("spawn")], typeof(TeleportSpawnCommand),
+            new CommandRoute([self, new CommandLiteral("spawn")], typeof(TeleportSpawnCommand),
                 _ => new TeleportSpawnCommand(false), CommandDescription("TeleportSpawn_Description", "传送到出生点")),
-            new CommandRoute([new CommandLiteral("worldspawn")], typeof(TeleportSpawnCommand),
+            new CommandRoute([self, new CommandLiteral("worldspawn")], typeof(TeleportSpawnCommand),
                 _ => new TeleportSpawnCommand(true), CommandDescription("TeleportWorldSpawn_Description", "传送到世界出生点")),
-            new CommandRoute([new CommandLiteral("private"), new CommandArgument("name", SuggestionProvider: SuggestPrivateMarks)], typeof(TeleportMarkCommand),
+            new CommandRoute([self, new CommandLiteral("private"), new CommandArgument("name", SuggestionProvider: SuggestPrivateMarks)], typeof(TeleportMarkCommand),
                 arguments => new TeleportMarkCommand(arguments.Get<string>("name"), false),
                 CommandDescription("TeleportMark_Description", "传送到命名标记")),
-            new CommandRoute([new CommandLiteral("public"), new CommandArgument("name", SuggestionProvider: SuggestPublicMarks)], typeof(TeleportMarkCommand),
+            new CommandRoute([self, new CommandLiteral("public"), new CommandArgument("name", SuggestionProvider: SuggestPublicMarks)], typeof(TeleportMarkCommand),
                 arguments => new TeleportMarkCommand(arguments.Get<string>("name"), true),
                 CommandDescription("TeleportMark_Description", "传送到命名标记")),
             new CommandRoute([], typeof(TeleportMarkCommand),
                 _ => new TeleportMarkCommand("previous", false), CommandDescription("TeleportPrevious_Description", "传送到自己的返回点")),
-            new CommandRoute(coordinates, typeof(TeleportSelfCommand),
-                arguments => new TeleportSelfCommand(Position(arguments)), CommandDescription("TeleportSelfPosition_Description", "传送自己到坐标")),
-            new CommandRoute([new CommandArgument("destination", SuggestionProvider: SuggestPlayers)], typeof(TeleportSelfCommand),
-                arguments => new TeleportSelfCommand(DestinationPlayer: arguments.Get<string>("destination")),
-                CommandDescription("TeleportSelfPlayer_Description", "传送自己到玩家")),
-            new CommandRoute([new CommandArgument("player", SuggestionProvider: SuggestPlayers), .. coordinates], typeof(TeleportPlayerCommand),
-                arguments => new TeleportPlayerCommand(arguments.Get<string>("player"), Position(arguments)),
-                CommandDescription("TeleportOtherPosition_Description", "传送指定玩家到坐标")),
-            new CommandRoute([new CommandArgument("player", SuggestionProvider: SuggestPlayers), new CommandArgument("destination", SuggestionProvider: SuggestPlayers)], typeof(TeleportPlayerCommand),
-                arguments => new TeleportPlayerCommand(arguments.Get<string>("player"), DestinationPlayer: arguments.Get<string>("destination")),
-                CommandDescription("TeleportOtherPlayer_Description", "传送指定玩家到玩家"))
+            new CommandRoute([self, new CommandLiteral("position"), .. coordinates], typeof(TeleportSelfCommand),
+                arguments => new TeleportSelfCommand(Position(arguments)), CommandDescription("TeleportSelfPosition_Description", "传送自己到坐标"))
         ]);
     }
 
@@ -2387,6 +2380,17 @@ public static class BuiltInCommands
 
     private static IEnumerable<CommandArgumentSuggestion> SuggestPublicMarks(CommandSuggestionContext context) =>
         (context.Project?.FindSubsystem<SubsystemPlayers>()?.PublicMarks.Names ?? []).Select(name => new CommandArgumentSuggestion(name));
+
+    private static IEnumerable<CommandArgumentSuggestion> SuggestTeleportDestinations(CommandSuggestionContext context)
+    {
+        var players = GetPlayers(context.Project).ToArray();
+        var target = context.CompletedTokens.Count >= 2 &&
+                     string.Equals(context.CompletedTokens[0], "player", StringComparison.OrdinalIgnoreCase)
+            ? players.FirstOrDefault(player => TeleportCommandHandlers.MatchesPlayer(player, context.CompletedTokens[1]))
+            : context.Principal.Player;
+        return players.Where(player => !ReferenceEquals(player, target)).Select(player =>
+            new CommandArgumentSuggestion(player.Name, LocalizedText.Literal(player.PlayerGUID.ToString())));
+    }
 
     private static IEnumerable<CommandArgumentSuggestion> SuggestPlayers(
         CommandSuggestionContext context)
