@@ -56,6 +56,10 @@ Starter 会先注册程序基础目录并读取 `Starter.xml`，再把选中的 
 
 世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。升级工具仍可在缺少 `Project.xml` 时读取旧 `Project.json` 并转换为 `Project.xml` 后继续升级。
 
+`Project.xml` 的 `ExtensionData` 与 `Subsystems`、`Entities` 同级，用于非实体业务数据，内部按所有者标识和数据标识组织 `ValuesDictionary`。它复用世界保存流程，不产生独立文件；主线程保存时复制嵌套字典，后台写入不会遍历运行时业务字典。客户端世界初始化快照不包含该节点，业务数据需要联机展示时由对应功能显式同步。
+
+内置标记使用 `ExtensionData/game/position-marks`：`Public` 保存公共标记，`Private` 按玩家 GUID（无连字符的 `N` 格式）保存私有标记。标记属于世界，不依赖玩家在线状态或实体生命周期；`PlayerData` 与 `Players` 子系统不再分别保存 `PrivateMarks`、`PublicMarks`。旧开发存档的这些字段不再读取，不提供自动迁移，旧标记需要重新建立。`game` 是核心数据所有者，不能把整个 `ExtensionData` 当作第三方模组数据删除。
+
 玩家实体会同时保存普通 `Inventory` 与 `CreativeInventory`，加载时由 `ComponentMiner` 根据世界模式选择当前使用的库存。两套库存都为物品栏预留 `0–29`、为背包预留 `30–45`；世界设置 `SurvivalHotbarSlotsCount` 与 `CreativeHotbarSlotsCount` 分别决定两套库存中前 7–30 个物品栏槽位可用，运行时生成的创造物品目录位于持久化槽位之后。修改世界模式只更新世界设置，不会在两套库存之间复制或转换物品；切回原模式时会恢复该模式上次保存的库存。因此，在一种模式下保存于背包的物品切换模式后不可访问属于预期行为。旧版存档中的普通库存使用不同的槽位布局，不再兼容。
 
 世界升级或修复工具必须把两套库存视为独立状态，不能依据当前模式删除、合并或重排另一套库存。扩展任一库存时应保留已有槽位索引，将新增但未出现在存档中的槽位初始化为空；创造物品目录不属于需要迁移的存档数据。

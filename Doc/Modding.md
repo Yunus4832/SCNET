@@ -53,6 +53,24 @@ payload/assets/<mod-id>/**
 
 模板资源位于 `Survivalcraft.ModTemplates/Survivalcraft.Mod/`。解决方案里唯一与模板打包直接相关的项目是 `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`，它会把这些资源打包成可发布的 `dotnet new` 模板包。
 
+## 世界业务数据
+
+模组可以把不属于实体、组件或子系统结构的业务数据保存到当前世界的扩展节点：
+
+```csharp
+using Game.Modding;
+
+// 在能够取得当前 Project 的世界回调或业务操作中使用。
+var data = context.GetWorldData(project, "territories");
+data.SetValue("enabled", true);
+```
+
+`GetWorldData` 自动使用 `context.Manifest.Id` 作为所有者，第二个参数是模组内稳定的数据标识。返回的 `ValuesDictionary` 属于该世界，修改会随下一次世界保存写入 `Project.xml` 的 `ExtensionData`；不需要单独调用保存，也没有额外的模组卸载生命周期。不要在 `Configure` 或 `Start` 阶段假定世界已加载，不要把字典缓存到跨世界的静态状态中。
+
+载荷复用现有 `ValuesDictionary` 序列化，使用嵌套字典、字符串、数值及已有可序列化值类型，不直接存储模组自定义 CLR 对象。玩家相关业务数据可使用玩家 GUID 作为字典键；不会自动解析实体引用或级联清理数据。扩展数据默认不发送给联机客户端，需要同步时使用模组自己的网络消息。
+
+所有者分组使维护工具能够识别和整组清理业务数据，但不是权限沙箱，也不提供模组实体、方块、物品的来源追踪或完整卸载能力。真正属于实体、组件或子系统的数据仍可使用原有序列化机制，不要求全部搬到扩展节点。
+
 ## 示例模组
 
 `VerificationBlockMod/` 是当前端到端验证模组，展示了：

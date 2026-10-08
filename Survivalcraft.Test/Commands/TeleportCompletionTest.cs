@@ -195,9 +195,8 @@ public class TeleportCompletionTest
         var player = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
         player.PlayerGUID = Guid.NewGuid();
         typeof(PlayerData).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(player, project);
-        var marks = new PositionMarks();
-        marks.Set(name, Vector3.Zero);
-        typeof(PlayerData).GetField("<PrivateMarks>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(player, marks);
+        player.SubsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
+        player.PrivateMarks.Set(name, Vector3.Zero);
         return player;
     }
 

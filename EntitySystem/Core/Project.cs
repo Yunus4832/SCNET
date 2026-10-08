@@ -15,6 +15,8 @@ public class Project : IDisposable
 
     public DatabaseObject ProjectTemplate { get; protected init; }
 
+    public ProjectExtensionData ExtensionData { get; } = new();
+
     public ReadOnlyList<Subsystem> ReadOnlySubsystems => new(subsystems);
 
     public Dictionary<Entity, bool>.KeyCollection EntityKeys => entityDictionary.Keys;
@@ -45,6 +47,7 @@ public class Project : IDisposable
         {
             GameDatabase = gameDatabase;
             ProjectTemplate = projectData.ValuesDictionary.DatabaseObject;
+            ExtensionData.Load(projectData.ExtensionData);
             var dictionary = new Dictionary<string, Subsystem>();
             foreach (var item in from x in projectData.ValuesDictionary.Values
                                  select x as ValuesDictionary
@@ -339,6 +342,11 @@ public class Project : IDisposable
         }
 
         projectData.EntityDataList = SaveEntities(EntityKeys);
+        // World business data is persisted, never included in client bootstrap snapshots.
+        if (!SendToClientMode)
+        {
+            projectData.ExtensionData = ExtensionData.Save();
+        }
         return projectData;
     }
 

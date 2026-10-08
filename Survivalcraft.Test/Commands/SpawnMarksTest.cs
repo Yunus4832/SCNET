@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using Engine.Core;
@@ -27,8 +26,6 @@ public class SpawnMarksTest
             CommonLib.WorkType = workType;
             var players = new SubsystemPlayers { GlobalSpawnPosition = new Vector3(1f, 60f, 1f) };
             var player = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
-            typeof(PlayerData).GetField("<PrivateMarks>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!
-                .SetValue(player, new PositionMarks());
             player.SubsystemPlayers = players;
             player.InitializeSpawnMarks();
             Assert.Empty(player.PrivateMarks.Names);

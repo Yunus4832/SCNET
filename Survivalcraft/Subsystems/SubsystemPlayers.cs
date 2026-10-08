@@ -12,7 +12,11 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 {
     private sealed record OfflinePlayerData(ValuesDictionary PlayerData, ValuesDictionary EntityData);
 
-    public PositionMarks PublicMarks { get; } = new();
+    private readonly PositionMarkStore _positionMarks = new();
+
+    public PositionMarks PublicMarks => _positionMarks.PublicMarks;
+
+    public PositionMarks GetPrivateMarks(Guid playerGuid) => _positionMarks.GetPrivateMarks(playerGuid);
 
     private readonly Dictionary<Guid, OfflinePlayerData> _offlinePlayers = new();
 
@@ -337,7 +341,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         _subsystemGameWidgets = Project.FindSubsystem<SubsystemGameWidgets>(true)!;
         GlobalSpawnPosition = valuesDictionary.GetValue<Vector3>("GlobalSpawnPosition");
-        PublicMarks.Load(valuesDictionary.GetValue("PublicMarks", new ValuesDictionary()));
+        _positionMarks.Load(Project.ExtensionData.Get("game", "position-marks"));
         var blackPlayers = valuesDictionary.GetValue("BlackPlayerGuidList", new ValuesDictionary());
         foreach (var item in blackPlayers)
         {
@@ -391,7 +395,12 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
 
     public override void Save(ValuesDictionary valuesDictionary)
     {
-        valuesDictionary.SetValue("PublicMarks", PublicMarks.Save());
+        if (!Project.SendToClientMode)
+        {
+            var marks = Project.ExtensionData.Get("game", "position-marks");
+            marks.Clear();
+            marks.ApplyOverrides(_positionMarks.Save());
+        }
         var onlinePlayersListVd = new ValuesDictionary();
         var num = 0;
         foreach (var playersDatum in _playersData)

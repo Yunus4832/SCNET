@@ -13,6 +13,8 @@ public class ProjectData
 
     public ValuesDictionary ValuesDictionary = new();
 
+    public ValuesDictionary ExtensionData = new();
+
     public ProjectData()
     {
     }
@@ -35,6 +37,7 @@ public class ProjectData
     {
         var rootNode = new ValuesDictionary();
         rootNode.ApplyOverridesUseMessagePack(msgPack);
+        ExtensionData.ApplyOverrides(rootNode.GetValue("ExtensionData", new ValuesDictionary()));
         var attributeValue = rootNode.GetValue("Guid", Guid.Empty);
         var attributeValue2 = rootNode.GetValue("Name", string.Empty);
         DatabaseObject databaseObject;
@@ -118,6 +121,12 @@ public class ProjectData
         {
             EntityDataList = new EntityDataList(gameDatabase, xElement2, ignoreInvalidEntities);
         }
+
+        var extensionNode = XmlUtils.FindChildElement(projectNode, "ExtensionData", false);
+        if (extensionNode != null)
+        {
+            ExtensionData.ApplyOverrides(extensionNode);
+        }
     }
 
     public void Save(XElement projectNode)
@@ -128,6 +137,10 @@ public class ProjectData
         ValuesDictionary.Save(node);
         var entitiesNode = XmlUtils.AddElement(projectNode, "Entities");
         EntityDataList.Save(entitiesNode);
+        if (ExtensionData.Count > 0)
+        {
+            ExtensionData.Save(XmlUtils.AddElement(projectNode, "ExtensionData"));
+        }
     }
 
     public void Save(ValuesDictionary rootNode)
@@ -138,5 +151,9 @@ public class ProjectData
         rootNode.SetValue("Subsystems", ValuesDictionary);
         rootNode.SetValue("Entities", entityList);
         EntityDataList.Save(entityList);
+        if (ExtensionData.Count > 0)
+        {
+            rootNode.SetValue("ExtensionData", ExtensionData);
+        }
     }
 }
