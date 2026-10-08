@@ -141,6 +141,24 @@ public sealed class StarterInstanceManagerTest : IDisposable
             File.ReadAllText(Path.Combine(_directory, "Instances", "current-clone", "Data", "value.txt")));
     }
 
+    [Fact]
+    public void RunningInstanceAllowsSmallStartTimeDifference()
+    {
+        StarterInstanceManager.Initialize([]);
+        StarterInstanceManager.CreateInstance("secondary");
+        var runtimeDirectory = Path.Combine(_directory, "Instances", "secondary", ".runtime");
+        Directory.CreateDirectory(runtimeDirectory);
+        using var process = System.Diagnostics.Process.GetCurrentProcess();
+        var startTime = process.StartTime.ToUniversalTime().Ticks;
+        new XElement("InstanceProcess",
+            new XAttribute("Pid", process.Id),
+            new XAttribute("StartTimeUtcTicks", startTime + 1000))
+            .Save(Path.Combine(runtimeDirectory, $"{process.Id}.xml"));
+
+        Assert.True(StarterInstanceManager.IsInstanceRunning("secondary"));
+        Assert.Throws<InvalidOperationException>(() => StarterInstanceManager.DeleteInstance("secondary"));
+    }
+
     [Theory]
     [InlineData("../escape")]
     [InlineData("with/slash")]

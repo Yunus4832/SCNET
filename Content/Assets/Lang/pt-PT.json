@@ -3350,7 +3350,10 @@
             "Clone": "Clonar",
             "CloneTitle": "Clonar a instância “{0}” para um novo ID",
             "Working": "A processar a instância",
-            "OperationFailed": "A operação da instância falhou."
+            "OperationFailed": "A operação da instância falhou.",
+            "Launch": "Abrir em nova janela",
+            "LaunchFailed": "Não foi possível iniciar esta instância numa nova janela.",
+            "ConfirmLaunch": "Abrir a instância “{0}” numa nova janela?"
         },
         "ContentPackageScreen": {
             "Title": "Cache de pacotes de conteúdo",

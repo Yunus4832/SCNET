@@ -11,13 +11,16 @@ public class InstanceManagementScreen : Screen
         Create,
         Clone,
         Delete,
-        Switch
+        Switch,
+        Launch
     }
 
     private readonly ActionPanelWidget _actionPanel;
     private readonly ListPanelWidget _instancesList;
 
     private Screen? _previousScreen;
+
+    private double _nextRefreshTime;
 
     public InstanceManagementScreen()
     {
@@ -26,20 +29,23 @@ public class InstanceManagementScreen : Screen
         _instancesList = Children.Find<ListPanelWidget>("InstancesList")!;
         _actionPanel.ItemTextProvider = item => Text(item.ToString()!);
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
+        _actionPanel.ItemColorProvider = item => item is InstanceAction.Delete ? new Color(150, 50, 35) : null;
         _actionPanel.ItemClicked += ExecuteAction;
         _actionPanel.SetPrimaryItems(
         [
             InstanceAction.Create,
             InstanceAction.Clone,
-            InstanceAction.Delete,
-            InstanceAction.Switch
+            InstanceAction.Switch,
+            InstanceAction.Launch
         ]);
+        _actionPanel.SetSecondaryItems([InstanceAction.Delete]);
         _instancesList.ItemWidgetFactory = CreateInstanceItemWidget;
     }
 
     public override void Enter(object[] parameters)
     {
         _previousScreen = ScreensManager.PreviousScreen;
+        _nextRefreshTime = Time.RealTime + 1;
         RefreshInstances();
     }
 
@@ -50,6 +56,12 @@ public class InstanceManagementScreen : Screen
 
     public override void Update()
     {
+        if (Time.RealTime >= _nextRefreshTime)
+        {
+            _nextRefreshTime = Time.RealTime + 1;
+            RefreshInstances();
+        }
+
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
             ScreensManager.SwitchScreen(_previousScreen ?? ScreensManager.FindScreen<Screen>("MainMenu"));
@@ -65,6 +77,8 @@ public class InstanceManagementScreen : Screen
             InstanceAction.Clone => selected?.CanClone == true,
             InstanceAction.Delete => selected is { IsCurrent: false, IsRunning: false },
             InstanceAction.Switch => selected is { IsCurrent: false },
+            InstanceAction.Launch => PlatformManager.CanLaunchInstance &&
+                                     selected is { IsCurrent: false, IsRunning: false, RunMode: RunModeType.Gui },
             _ => false
         };
     }
@@ -86,6 +100,9 @@ public class InstanceManagementScreen : Screen
             case InstanceAction.Switch when selected is { IsCurrent: false }:
                 ConfirmSwitch(selected);
                 break;
+            case InstanceAction.Launch when selected is { IsCurrent: false, IsRunning: false, RunMode: RunModeType.Gui }:
+                ConfirmLaunch(selected);
+                break;
         }
     }
 
@@ -98,12 +115,19 @@ public class InstanceManagementScreen : Screen
             null);
         var idLabel = widget.Children.Find<LabelWidget>("InstanceItem.Id")!;
         idLabel.Text = instance.Id;
-        idLabel.Color = instance.IsCurrent ? new Color(96, 220, 96) : Color.White;
-        widget.Children.Find<LabelWidget>("InstanceItem.Status")!.Text = instance.IsCurrent
+        var statusColor = instance.IsCurrent
+            ? new Color(96, 220, 96)
+            : instance.IsRunning
+                ? new Color(255, 190, 80)
+                : new Color(180, 180, 180);
+        idLabel.Color = statusColor;
+        var statusLabel = widget.Children.Find<LabelWidget>("InstanceItem.Status")!;
+        statusLabel.Text = instance.IsCurrent
             ? Text("CurrentRunning")
             : instance.IsRunning
                 ? Text("RunningElsewhere")
                 : Text("NotRunning");
+        statusLabel.Color = statusColor;
         widget.Children.Find<LabelWidget>("InstanceItem.RunMode")!.Text = instance.RunMode == RunModeType.HeadlessServer
             ? Text("HeadlessMode")
             : Text("GuiMode");
@@ -112,15 +136,28 @@ public class InstanceManagementScreen : Screen
 
     private void RefreshInstances()
     {
-        _instancesList.ClearItems();
-        foreach (var instanceId in StarterInstanceManager.ListInstances())
-        {
-            _instancesList.AddItem(new InstanceItem(
+        var selectedId = (_instancesList.SelectedItem as InstanceItem)?.Id;
+        var instances = StarterInstanceManager.ListInstances()
+            .Select(instanceId => new InstanceItem(
                 instanceId,
                 string.Equals(instanceId, StarterInstanceManager.Current.Id, StringComparison.OrdinalIgnoreCase),
                 StarterInstanceManager.IsInstanceRunning(instanceId),
                 StarterInstanceManager.CanCloneInstance(instanceId),
-                StarterInstanceManager.GetRunMode(instanceId)));
+                StarterInstanceManager.GetRunMode(instanceId)))
+            .ToArray();
+        if (_instancesList.Items.Cast<InstanceItem>().SequenceEqual(instances))
+        {
+            return;
+        }
+
+        _instancesList.ClearItems();
+        foreach (var instance in instances)
+        {
+            _instancesList.AddItem(instance);
+            if (string.Equals(instance.Id, selectedId, StringComparison.OrdinalIgnoreCase))
+            {
+                _instancesList.SelectedItem = instance;
+            }
         }
     }
 
@@ -192,6 +229,38 @@ public class InstanceManagementScreen : Screen
                 if (button is MessageDialogButton.Button1)
                 {
                     Execute(new SwitchInstanceCommand(instance.Id));
+                }
+            });
+    }
+
+    private void ConfirmLaunch(InstanceItem instance)
+    {
+        DialogsManager.Confirm(
+            string.Format(Text("ConfirmLaunch"), instance.Id),
+            button =>
+            {
+                if (button is not MessageDialogButton.Button1)
+                {
+                    return;
+                }
+
+                if (StarterInstanceManager.IsInstanceRunning(instance.Id) ||
+                    StarterInstanceManager.GetRunMode(instance.Id) is not RunModeType.Gui)
+                {
+                    RefreshInstances();
+                    return;
+                }
+
+                try
+                {
+                    PlatformManager.LaunchInstance(instance.Id);
+                    RefreshInstances();
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"Failed to launch instance '{instance.Id}': {ex}");
+                    DialogsManager.ShowDialog(null, new MessageDialog(
+                        LanguageManager.Error, Text("LaunchFailed"), LanguageManager.Ok));
                 }
             });
     }

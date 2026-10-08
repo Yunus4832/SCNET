@@ -3350,7 +3350,10 @@
             "Clone": "克隆",
             "CloneTitle": "将实例“{0}”克隆为新 ID",
             "Working": "正在处理实例",
-            "OperationFailed": "实例操作失败。"
+            "OperationFailed": "实例操作失败。",
+            "Launch": "新窗口启动",
+            "LaunchFailed": "无法在新窗口中启动该实例。",
+            "ConfirmLaunch": "要在新窗口中启动实例“{0}”吗？"
         },
         "ContentPackageScreen": {
             "Title": "内容包缓存",

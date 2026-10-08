@@ -93,6 +93,8 @@ Starter 使用两阶段 Storage 注册：先将程序基础目录注册为 `star
 
 命令行选择实例不会修改 `CurrentInstance`，因此可以同时启动互不干扰的 GUI 和 Headless 调试实例。普通应用重启保持当前进程的实例；`GameExitAction.SwitchInstance` 则消费 `NextInstance` 并进入目标实例。实例内部的 `RunningSetting` 和 session 不保存实例 ID。
 
+桌面端实例管理可将未运行的 GUI 实例在新窗口中启动。启动器向新进程显式传入 `--gui --instance <实例名>`，保留当前窗口，也不改写 `Starter.xml` 的当前或下次实例。当前实例、已运行实例和 Headless 实例不提供此操作；Headless 实例仍可通过切换或命令行启动。
+
 Starter 还负责注册平台能力。交互式文件打开与保存统一通过 `Engine.FileStorage.FilePicker` 暴露，
 具体 `IFilePicker` 由 Windows、Linux 或 Android Starter 提供；它不参与实例选择、Storage 根目录
 注册或 session 持久化。未注册实现时 `FilePicker.IsAvailable` 为 `false`，Headless 不提供交互式

@@ -19,6 +19,7 @@ public class Starter
         var instance = RegisterStorageRoots(args);
         PlatformManager.RegisterPlatform(Platform.Desktop);
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
+        PlatformManager.RegisterInstanceLauncher(LaunchInstance);
         var startup = StartupManager.Load(instance.GameArguments);
         var runningSetting = startup.Settings;
         if (runningSetting.RunMode is RunModeType.HeadlessServer)
@@ -81,13 +82,30 @@ public class Starter
 
     private static void Restart(string instanceId)
     {
+        StartInstanceProcess(instanceId, false);
+    }
+
+    private static void LaunchInstance(string instanceId)
+    {
+        StartInstanceProcess(instanceId, true);
+    }
+
+    private static void StartInstanceProcess(string instanceId, bool forceGui)
+    {
         var executablePath = Environment.ProcessPath
                              ?? throw new InvalidOperationException("Cannot determine executable path.");
         var startInfo = new ProcessStartInfo(executablePath) { UseShellExecute = false };
+        if (forceGui)
+        {
+            startInfo.ArgumentList.Add("--gui");
+        }
+
         startInfo.ArgumentList.Add(StarterInstanceManager.InstanceArgument);
         startInfo.ArgumentList.Add(instanceId);
-
-        Process.Start(startInfo);
+        if (Process.Start(startInfo) == null)
+        {
+            throw new InvalidOperationException($"Failed to launch instance '{instanceId}'.");
+        }
     }
 
     private static void OpenUrl(string url)

@@ -14,6 +14,8 @@ public static class PlatformManager
         LegacyScheme
     ];
 
+    private static Action<string>? _instanceLauncher;
+
     public static Platform Platform { get; private set; } = Platform.Desktop;
 
     public static void RegisterPlatform(Platform platform)
@@ -52,6 +54,18 @@ public static class PlatformManager
     public static void RegisterWebBrowserLauncher(Action<string> launcher)
     {
         WebBrowserManager.RegisterLauncher(launcher);
+    }
+
+    public static void RegisterInstanceLauncher(Action<string> launcher)
+    {
+        _instanceLauncher = launcher;
+    }
+
+    public static bool CanLaunchInstance => _instanceLauncher != null;
+
+    public static void LaunchInstance(string instanceId)
+    {
+        (_instanceLauncher ?? throw new InvalidOperationException("Instance launching is unavailable."))(instanceId);
     }
 
     public static void RegisterClipboard(IClipboardBackend backend)

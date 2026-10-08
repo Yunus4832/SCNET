@@ -3350,7 +3350,10 @@
             "Clone": "Clone",
             "CloneTitle": "Clone instance “{0}” to a new ID",
             "Working": "Processing instance",
-            "OperationFailed": "The instance operation failed."
+            "OperationFailed": "The instance operation failed.",
+            "Launch": "Open in New Window",
+            "LaunchFailed": "Could not start this instance in a new window.",
+            "ConfirmLaunch": "Open instance “{0}” in a new window?"
         },
         "ContentPackageScreen": {
             "Title": "Content Package Cache",

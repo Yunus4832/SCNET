@@ -21,6 +21,7 @@ public class Starter
         var instance = RegisterStorageRoots(args);
         PlatformManager.RegisterPlatform(Platform.Desktop);
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
+        PlatformManager.RegisterInstanceLauncher(LaunchInstance);
         var startup = StartupManager.Load(instance.GameArguments);
         var runningSetting = startup.Settings;
         InstallDesktopEntries();
@@ -159,6 +160,24 @@ public class Starter
 
     private static void RestartFromDesktop(RunModeType runMode, string instanceId)
     {
+        if (TryLaunchDesktopInstance(runMode, instanceId, "Survivalcraft Restart"))
+        {
+            return;
+        }
+
+        NotifyManualRestartRequired();
+    }
+
+    private static void LaunchInstance(string instanceId)
+    {
+        if (!TryLaunchDesktopInstance(RunModeType.Gui, instanceId, "Survivalcraft"))
+        {
+            throw new InvalidOperationException("No supported desktop instance launcher was found.");
+        }
+    }
+
+    private static bool TryLaunchDesktopInstance(RunModeType runMode, string instanceId, string name)
+    {
         var executablePath = Environment.ProcessPath
                              ?? throw new InvalidOperationException("Cannot determine executable path.");
         var executableDirectory = Path.GetDirectoryName(executablePath)
@@ -167,35 +186,24 @@ public class Starter
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             ".local", "share", "applications");
         Directory.CreateDirectory(desktopDirectory);
-        var desktopId = $"SurvivalcraftRestart{Environment.ProcessId}";
+        var desktopId = $"SurvivalcraftInstance{Environment.ProcessId}{Guid.NewGuid():N}";
         var modeArgument = runMode is RunModeType.HeadlessServer ? "--server" : "--gui";
-        WriteDesktopEntry(
-            desktopDirectory,
-            desktopId,
-            "Survivalcraft Restart",
-            executablePath,
-            executableDirectory,
-            $"{modeArgument} {StarterInstanceManager.InstanceArgument} {instanceId}",
-            runMode is RunModeType.HeadlessServer,
-            true);
+        WriteDesktopEntry(desktopDirectory, desktopId, name, executablePath,
+            executableDirectory, $"{modeArgument} {StarterInstanceManager.InstanceArgument} {instanceId}",
+            runMode is RunModeType.HeadlessServer, true);
         if (TryLaunchDesktopEntry("gtk-launch", [desktopId]))
         {
-            return;
+            return true;
         }
 
         TryRunDesktopCommand("kbuildsycoca6", ["--noincremental"]);
         if (TryLaunchDesktopEntry("kioclient6", ["exec", $"applications:{desktopId}.desktop"]))
         {
-            return;
+            return true;
         }
 
         TryRunDesktopCommand("kbuildsycoca5", ["--noincremental"]);
-        if (TryLaunchDesktopEntry("kioclient5", ["exec", $"applications:{desktopId}.desktop"]))
-        {
-            return;
-        }
-
-        NotifyManualRestartRequired();
+        return TryLaunchDesktopEntry("kioclient5", ["exec", $"applications:{desktopId}.desktop"]);
     }
 
     private static bool TryLaunchDesktopEntry(string executable, string[] arguments)

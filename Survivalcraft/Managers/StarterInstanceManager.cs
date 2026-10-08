@@ -392,7 +392,8 @@ public static class StarterInstanceManager
 
             using var process = Process.GetProcessById(pid.Value);
             return !process.HasExited &&
-                   process.StartTime.ToUniversalTime().Ticks == startTimeUtcTicks.Value;
+                   Math.Abs(process.StartTime.ToUniversalTime().Ticks - startTimeUtcTicks.Value) <
+                   TimeSpan.TicksPerSecond;
         }
         catch
         {
