@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 namespace Game.Network;
 
 public readonly record struct NetworkChannelSendStatistics(long Batches, long EncodedBytes);

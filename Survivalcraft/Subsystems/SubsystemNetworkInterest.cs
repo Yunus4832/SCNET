@@ -1,5 +1,3 @@
-using System.Diagnostics;
-
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 

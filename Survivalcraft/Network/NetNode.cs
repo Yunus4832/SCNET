@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Net;
 
 using EntitySystem.Core;
