@@ -279,14 +279,11 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public bool SetCellOnFire(int x, int y, int z, float fireExpandability, ComponentMiner? miner = null)
     {
-        //在领地范围
-        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
+        var igniting = new CellIgnitingContext(SubsystemTerrain, new Point3(x, y, z), miner);
+        CurrentModRuntime.Value?.Gameplay.Invoke(igniting);
+        if (igniting.Cancel)
         {
-            if (miner == null || !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy!))
-            {
-                miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("领地范围内不可点火", Color.Yellow, false, true);
-                return false;
-            }
+            return false;
         }
 
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);

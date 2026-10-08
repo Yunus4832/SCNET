@@ -1,0 +1,19 @@
+{
+  "formatVersion": 1,
+  "type": "mod",
+  "identifier": "scnet.territory",
+  "name": "Territory Stone",
+  "version": "1.0.2",
+  "payload": {
+    "format": "scnet.mod-v1",
+    "entry": "payload/mod.json",
+    "mediaType": "application/json"
+  },
+  "metadata": {
+    "side": "common",
+    "entrypoints": {
+      "common": "TerritoryStoneMod.ModEntry, TerritoryStoneMod"
+    },
+    "dependencies": []
+  }
+}

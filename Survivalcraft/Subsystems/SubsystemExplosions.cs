@@ -277,20 +277,20 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         PlayerData? playerData = null
     )
     {
-        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
-        {
-            if (playerData == null ||
-                !SubsystemTerritoryBlockBehavior.AllowPlayerAction(playerData.ComponentPlayer, territoriy!))
-            {
-                playerData?.ComponentPlayer?.ComponentGui.DisplaySmallMessage(LanguageManager.Get(GetType().Name, 1),
-                    Color.Yellow, false, true);
-                return;
-            }
-        }
-
         if (processed.Get(x, y, z))
         {
             return;
+        }
+
+        var gameplay = CurrentModRuntime.Value?.Gameplay;
+        if (gameplay is { HasExplosionPointProcessingHandlers: true })
+        {
+            var processing = new ExplosionPointProcessingContext(this, new Point3(x, y, z), playerData);
+            gameplay.Invoke(processing);
+            if (processing.Cancel)
+            {
+                return;
+            }
         }
 
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(x, y, z);

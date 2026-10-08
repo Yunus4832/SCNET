@@ -1,0 +1,35 @@
+{
+    "Blocks": {
+        "TerritoryBlock:0": {
+            "DisplayName": "领地石",
+            "Description": "放置后可获得该方块周围 1x1 区块范围内的挖掘和放置权限。每个玩家只能拥有一个领地石。",
+            "CRDescription:0": "用铜锭、钻石、铁锭和花岗岩制作领地石"
+        }
+    },
+    "TerritoryBlock": {
+        "1": "需要等级大于或等于 {0} 级才能制作{1}，当前等级 {2} 级"
+    },
+    "SubsystemTerritoryBlockBehavior": {
+        "1": "显示范围",
+        "2": "队友开放",
+        "3": "你没有该领地石使用权限",
+        "4": "该领地石未生效",
+        "5": "禁用方块ID {0}",
+        "6": "范围内有其它玩家领地，生效失败!"
+    },
+    "TerritorySettings": {
+        "Title": "领地设置",
+        "ShowBoundary": "显示边界",
+        "RestrictEntry": "禁止非成员进入",
+        "ApplyToTeam": "队友可通行和建造",
+        "Close": "关闭",
+        "OwnerOnly": "只有领地拥有者可以修改设置"
+    },
+    "TerritoryProtection": {
+        "EntryRestricted": "此领地禁止非成员进入；可离开，或请领主关闭限制",
+        "Protected": "此领地不允许你挖掘或放置方块",
+        "StoneOwnerOnly": "只有领主或管理员可以挖掘领地石",
+        "ClaimUnavailable": "你已有领地，或此范围与其他领地重叠",
+        "PlacementBlocked": "这里不能放置领地石"
+    }
+}

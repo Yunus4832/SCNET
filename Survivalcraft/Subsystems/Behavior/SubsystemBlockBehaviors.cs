@@ -5,35 +5,13 @@ namespace Game.Subsystems;
 
 public class SubsystemBlockBehaviors : Subsystem
 {
-    private const string _typeName = nameof(SubsystemBlockBehaviors);
-
     private readonly List<SubsystemBlockBehavior> _blockBehaviors = [];
 
     private SubsystemBlockBehavior[][] _blockBehaviorsByContents = [];
 
     public ReadOnlyList<SubsystemBlockBehavior> BlockBehaviors => new(_blockBehaviors);
 
-    public SubsystemBlockBehavior[] GetBlockBehaviors(int contents, ComponentMiner? miner = null, Point3? point = null)
-    {
-        if (!point.HasValue ||
-            !SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(
-                point.Value.X,
-                point.Value.Z,
-                out Territoriy? territoriy) ||
-            miner != null && SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy!) ||
-            territoriy!.AllowBlockBehavior)
-        {
-            return _blockBehaviorsByContents[contents];
-        }
-
-        miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage(
-            LanguageManager.Get(_typeName, 1),
-            Color.Yellow,
-            false,
-            true
-        );
-        return [];
-    }
+    public SubsystemBlockBehavior[] GetBlockBehaviors(int contents) => _blockBehaviorsByContents[contents];
 
     public override void Load(ValuesDictionary valuesDictionary)
     {

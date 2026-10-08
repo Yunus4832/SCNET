@@ -1,0 +1,25 @@
+<DatabasePatch>
+    <Folder Name="Subsystems" Guid="75acb50b-fb75-4c85-af38-a0fb51a9eb90">
+        <SubsystemTemplate Name="Territory" Guid="de6818ee-d871-4a6f-bb95-36b50d1ce5f1">
+            <Parameter Name="Class" Guid="33efb6f9-beb9-4923-ab3f-9beac60daa24"
+                       Value="TerritoryStoneMod.TerritorySubsystem" Type="string"/>
+            <Parameter Name="IsOptional" Guid="ca0f3de2-a05e-4cd1-9d2b-8d5b3e5cf43d"
+                       Value="false" Type="bool"/>
+        </SubsystemTemplate>
+        <SubsystemTemplate Name="TerritoryStoneBehavior" Guid="4b0cc1c9-4fb8-4972-a692-6256082b96c8"
+                           InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
+            <Parameter Name="Class" Guid="84c3a716-89ae-45c0-90de-27db6060520c"
+                       Value="TerritoryStoneMod.TerritoryBlockBehavior" Type="string"/>
+            <Parameter Name="Dependencies" Guid="f79934dd-09ac-4d67-981a-f5b21f52dc0f"
+                       Value="Terrain,Territory" Type="string"/>
+        </SubsystemTemplate>
+    </Folder>
+    <Folder Name="Abstract" Guid="c6ba6a30-5042-4d3d-9bea-199cd4acc3fa">
+        <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+            <MemberSubsystemTemplate Name="Territory" Guid="0bce54dd-dd98-46ea-8d93-6e5a01692e45"
+                                     InheritanceParent="de6818ee-d871-4a6f-bb95-36b50d1ce5f1"/>
+            <MemberSubsystemTemplate Name="TerritoryStoneBehavior" Guid="39b6b82c-ae0c-44b5-bf07-a0cb87396830"
+                                     InheritanceParent="4b0cc1c9-4fb8-4972-a692-6256082b96c8"/>
+        </ProjectTemplate>
+    </Folder>
+</DatabasePatch>

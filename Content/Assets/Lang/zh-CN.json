@@ -2451,11 +2451,6 @@
         "FallenLeavesBlock:0": {
             "DisplayName": "落叶",
             "Description": "秋天从树上落下的树叶"
-        },
-        "TerritoryBlock:0": {
-            "DisplayName": "领地石",
-            "Description": "放置后可获得该方块周围 1x1 区块范围内的挖掘和放置权限。每个玩家只能拥有一个领地石。",
-            "CRDescription:0": "用铜锭、钻石、铁锭和花岗岩制作领地石"
         }
     },
     "Help": {
@@ -3746,17 +3741,6 @@
         }
     },
     "GameUpdateHelper": "联机版更新啦！",
-    "TerritoryBlock": {
-        "1": "需要等级大于或等于 {0} 级才能制作{1}，当前等级 {2} 级"
-    },
-    "SubsystemTerritoryBlockBehavior": {
-        "1": "显示范围",
-        "2": "队友开放",
-        "3": "你没有该领地石使用权限",
-        "4": "该领地石未生效",
-        "5": "禁用方块ID {0}",
-        "6": "范围内有其它玩家领地，生效失败!"
-    },
     "SubsystemBlockBehaviors": {
         "1": "你在这里没有方块行为权限"
     },

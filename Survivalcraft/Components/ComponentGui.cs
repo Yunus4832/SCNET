@@ -822,7 +822,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             if (editBlockContext is { Cancel: false, Handled: false })
             {
                 var blockBehaviors =
-                    _subsystemBlockBehaviors.GetBlockBehaviors(contents, ComponentPlayer.ComponentMiner, value);
+                    _subsystemBlockBehaviors.GetBlockBehaviors(contents);
                 for (var i = 0;
                      i < blockBehaviors.Length && !blockBehaviors[i]
                          .OnEditBlock(value.X, value.Y, value.Z, cellValue, ComponentPlayer);

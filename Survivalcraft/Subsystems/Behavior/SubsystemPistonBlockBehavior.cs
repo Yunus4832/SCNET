@@ -365,16 +365,12 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var pass = true;
             while (num3 < 8)
             {
-                if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(
-                        position.X + offset.X,
-                        position.Z + offset.Z,
-                        out var territoriy))
+                var moving = new PistonBlockMovingContext(this, position, position + offset, false);
+                CurrentModRuntime.Value?.Gameplay.Invoke(moving);
+                if (moving.Cancel)
                 {
-                    if (territoriy!.IsVisible)
-                    {
-                        pass = false;
-                        break;
-                    }
+                    pass = false;
+                    break;
                 }
 
                 var cellValue2 = terrain.GetCellValue(
@@ -449,13 +445,11 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var num4 = 0;
             for (var i = 0; i < pullCount + 1; i++)
             {
-                if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(position.X + offset.X,
-                        position.Z + offset.Z, out var territoriy))
+                var moving = new PistonBlockMovingContext(this, position, position + offset, true);
+                CurrentModRuntime.Value?.Gameplay.Invoke(moving);
+                if (moving.Cancel)
                 {
-                    if (territoriy!.IsVisible)
-                    {
-                        break;
-                    }
+                    break;
                 }
 
                 var cellValue3 = terrain.GetCellValue(position.X + offset.X, position.Y + offset.Y,
@@ -648,8 +642,6 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 return false;
             case BedrockBlock.Index:
                 return y > 1;
-            case TerritoryBlock.Index:
-                return false;
             default:
                 {
                     var block = BlocksManager.Blocks[num];
@@ -669,7 +661,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
                     if (block is not AttachedSignBlock)
                     {
-                        return block is { NonDuplicable: false, Collidable: true };
+                        return block.IsMovableByPiston(value, pistonFace, y, out isEnd);
                     }
 
                     isEnd = true;

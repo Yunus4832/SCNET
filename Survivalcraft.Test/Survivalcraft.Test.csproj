@@ -14,11 +14,14 @@
 
     <ItemGroup>
         <Using Include="Xunit"/>
+        <None Include="..\Content\Assets\Database.xml" Link="Fixtures\Database.xml"
+              CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
         <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj"/>
+        <ProjectReference Include="..\TerritoryStoneMod\TerritoryStoneMod.csproj"/>
     </ItemGroup>
 
 </Project>

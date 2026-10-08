@@ -58,6 +58,7 @@
     </Folder>
 
     <Folder Name="/07 Mod/">
+        <Project Path="TerritoryStoneMod/TerritoryStoneMod.csproj"/>
         <Project Path="Survivalcraft.ModTemplates\Survivalcraft.ModTemplates.csproj"/>
         <Project Path="VerificationBlockMod/VerificationBlockMod.csproj">
             <Build Solution="Release|*" Project="false"/>

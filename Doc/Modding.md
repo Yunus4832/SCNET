@@ -53,6 +53,21 @@ payload/assets/<mod-id>/**
 
 模板资源位于 `Survivalcraft.ModTemplates/Survivalcraft.Mod/`。解决方案里唯一与模板打包直接相关的项目是 `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`，它会把这些资源打包成可发布的 `dotnet new` 模板包。
 
+## 世界操作扩展点
+
+`Gameplay.OnTerrainCellChanging` 在地形写入前运行；通过 `DestroyCell` 破坏方块时，也在掉落物、粒子和收获回调之前运行，取消后不会产生这些副作用。破坏过程只调用一次该钩子。`BlockBehaviors.OnBlockPlaced` 名称虽然是过去式，但实际在放置写入之前调用，提供最终落点，可以取消放置；不要在此回调中假定方块已经写入地形。
+
+`Gameplay` 还提供以下局部扩展点，沿用注册优先级及模组停止时清理的规则：
+
+- `OnCellIgniting`：点火前，可以取消，包含目标坐标和发起者。
+- `OnExplosionPointProcessing`：爆炸传播点处理前，可以取消该点，包含目标坐标和发起玩家。
+- `OnTerrainCollisionBoxes`：身体地形碰撞查询时，可向本次查询的缓冲区贡献碰撞盒；不要保留或在回调后修改该缓冲区。自定义碰撞盒可设置 `Collided` 回调，仅在该碰撞盒实际阻挡身体移动时调用。
+- `OnMounting`：开始骑乘前，可以取消；客户端请求和服务端执行经过该入口，客户端应用权威骑乘结果不重新授权。
+- `OnPistonBlockMoving`：活塞推拉扫描前，可以取消该扫描位置，包含活塞位置、目标位置和推拉方向。
+- `OnMovingBlockSetTerrainCollision`：移动方块集地形碰撞查询时，可调用方块集的 `Stop()`；范围是最小坐标包含、最大坐标不包含的格子范围。
+
+这些钩子不是自动的领地或权限系统，模组需要自行定义业务规则和服务端身份检查。直接应用权威网络结果、生成地形或底层地形写入不等于玩家操作，不应据此假定所有写入都经过这些入口。
+
 ## 世界业务数据
 
 模组可以把不属于实体、组件或子系统结构的业务数据保存到当前世界的扩展节点：

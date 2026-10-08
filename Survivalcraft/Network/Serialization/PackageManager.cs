@@ -38,7 +38,6 @@ public enum PackageType : byte
     Message,
     Entity,
     Projectile,
-    Territoriy,
     Furniture,
     Explosion,
     MovingBlockSet,
@@ -115,7 +114,6 @@ public class PackageManager
         RegisterBuiltInPackage<MessagePackage, MessagePackageHandler>(PackageType.Message);
         RegisterBuiltInPackage<EntityPackage, EntityPackageHandler>(PackageType.Entity);
         RegisterBuiltInPackage<ProjectilePackage, ProjectilePackageHandler>(PackageType.Projectile);
-        RegisterBuiltInPackage<TerritoriyPackage, TerritoriyPackageHandler>(PackageType.Territoriy);
         RegisterBuiltInPackage<FurniturePackage, FurniturePackageHandler>(PackageType.Furniture);
         RegisterBuiltInPackage<ExplosionsPackage, ExplosionsPackageHandler>(PackageType.Explosion);
         RegisterBuiltInPackage<MovingBlockPackage, MovingBlockPackageHandler>(PackageType.MovingBlockSet);

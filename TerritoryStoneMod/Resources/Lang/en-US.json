@@ -1,0 +1,35 @@
+{
+    "Blocks": {
+        "TerritoryBlock:0": {
+            "DisplayName": "Territory Stone",
+            "Description": "Place it to claim digging and building permission in the surrounding 1x1 chunk area. Each player can own only one Territory Stone.",
+            "CRDescription:0": "Craft a Territory Stone from copper ingots, diamond, iron ingots and granite"
+        }
+    },
+    "TerritoryBlock": {
+        "1": "You need level {0} or higher to craft {1}. Current level: {2}"
+    },
+    "SubsystemTerritoryBlockBehavior": {
+        "1": "Show range",
+        "2": "Allow teammates",
+        "3": "You do not have permission to use this Territory Stone",
+        "4": "This Territory Stone is not active",
+        "5": "Disabled block ID {0}",
+        "6": "Another player has territory in this range. Activation failed!"
+    },
+    "TerritorySettings": {
+        "Title": "Territory settings",
+        "ShowBoundary": "Show boundary",
+        "RestrictEntry": "Block entry by non-members",
+        "ApplyToTeam": "Allow teammates to enter and build",
+        "Close": "Close",
+        "OwnerOnly": "Only the territory owner can change settings"
+    },
+    "TerritoryProtection": {
+        "EntryRestricted": "You cannot enter this territory. You may leave, or ask the owner to allow entry.",
+        "Protected": "You cannot dig or place blocks in this territory.",
+        "StoneOwnerOnly": "Only the owner or an administrator can dig this Territory Stone.",
+        "ClaimUnavailable": "You already own a territory, or this area overlaps another territory.",
+        "PlacementBlocked": "A Territory Stone cannot be placed here."
+    }
+}

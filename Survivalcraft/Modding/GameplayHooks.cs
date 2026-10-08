@@ -29,6 +29,18 @@ public interface IModGameplayHooks
     IDisposable OnPlayerRespawnRequested(Action<PlayerRespawnRequestedContext> handler, int priority = 0);
 
     IDisposable OnCreatureTargetScoring(Action<CreatureTargetScoringContext> handler, int priority = 0);
+
+    IDisposable OnCellIgniting(Action<CellIgnitingContext> handler, int priority = 0);
+
+    IDisposable OnExplosionPointProcessing(Action<ExplosionPointProcessingContext> handler, int priority = 0);
+
+    IDisposable OnTerrainCollisionBoxes(Action<TerrainCollisionBoxesContext> handler, int priority = 0);
+
+    IDisposable OnMounting(Action<MountingContext> handler, int priority = 0);
+
+    IDisposable OnPistonBlockMoving(Action<PistonBlockMovingContext> handler, int priority = 0);
+
+    IDisposable OnMovingBlockSetTerrainCollision(Action<MovingBlockSetTerrainCollisionContext> handler, int priority = 0);
 }
 
 public sealed class GameplayHooks
@@ -46,6 +58,16 @@ public sealed class GameplayHooks
     private readonly ModHook<PlayerSpawnedContext> _playerSpawned = new();
     private readonly ModHook<PlayerRespawnRequestedContext> _playerRespawnRequested = new();
     private readonly ModHook<CreatureTargetScoringContext> _creatureTargetScoring = new();
+    private readonly ModHook<CellIgnitingContext> _cellIgniting = new();
+    private readonly ModHook<ExplosionPointProcessingContext> _explosionPointProcessing = new();
+    private readonly ModHook<TerrainCollisionBoxesContext> _terrainCollisionBoxes = new();
+    private readonly ModHook<MountingContext> _mounting = new();
+    private readonly ModHook<PistonBlockMovingContext> _pistonBlockMoving = new();
+    private readonly ModHook<MovingBlockSetTerrainCollisionContext> _movingBlockSetTerrainCollision = new();
+
+    internal bool HasExplosionPointProcessingHandlers => _explosionPointProcessing.HasHandlers;
+
+    internal bool HasTerrainCollisionBoxesHandlers => _terrainCollisionBoxes.HasHandlers;
 
     public void Invoke(CreatureInjuringContext context) => _creatureInjuring.Invoke(context);
 
@@ -73,6 +95,18 @@ public sealed class GameplayHooks
 
     public void Invoke(CreatureTargetScoringContext context) => _creatureTargetScoring.Invoke(context);
 
+    public void Invoke(CellIgnitingContext context) => _cellIgniting.Invoke(context);
+
+    public void Invoke(ExplosionPointProcessingContext context) => _explosionPointProcessing.Invoke(context);
+
+    public void Invoke(TerrainCollisionBoxesContext context) => _terrainCollisionBoxes.Invoke(context);
+
+    public void Invoke(MountingContext context) => _mounting.Invoke(context);
+
+    public void Invoke(PistonBlockMovingContext context) => _pistonBlockMoving.Invoke(context);
+
+    public void Invoke(MovingBlockSetTerrainCollisionContext context) => _movingBlockSetTerrainCollision.Invoke(context);
+
     internal IModGameplayHooks ForOwner(ModId owner) => new OwnedGameplayHooks(owner, this);
 
     internal void Freeze()
@@ -90,6 +124,12 @@ public sealed class GameplayHooks
         _playerSpawned.Freeze();
         _playerRespawnRequested.Freeze();
         _creatureTargetScoring.Freeze();
+        _cellIgniting.Freeze();
+        _explosionPointProcessing.Freeze();
+        _terrainCollisionBoxes.Freeze();
+        _mounting.Freeze();
+        _pistonBlockMoving.Freeze();
+        _movingBlockSetTerrainCollision.Freeze();
     }
 
     internal void RemoveOwner(ModId owner)
@@ -107,6 +147,12 @@ public sealed class GameplayHooks
         _playerSpawned.RemoveOwner(owner);
         _playerRespawnRequested.RemoveOwner(owner);
         _creatureTargetScoring.RemoveOwner(owner);
+        _cellIgniting.RemoveOwner(owner);
+        _explosionPointProcessing.RemoveOwner(owner);
+        _terrainCollisionBoxes.RemoveOwner(owner);
+        _mounting.RemoveOwner(owner);
+        _pistonBlockMoving.RemoveOwner(owner);
+        _movingBlockSetTerrainCollision.RemoveOwner(owner);
     }
 
     private sealed class OwnedGameplayHooks(ModId owner, GameplayHooks hooks) : IModGameplayHooks
@@ -150,6 +196,24 @@ public sealed class GameplayHooks
 
         public IDisposable OnCreatureTargetScoring(Action<CreatureTargetScoringContext> handler, int priority = 0) =>
             hooks._creatureTargetScoring.Register(owner, handler, priority);
+
+        public IDisposable OnCellIgniting(Action<CellIgnitingContext> handler, int priority = 0) =>
+            hooks._cellIgniting.Register(owner, handler, priority);
+
+        public IDisposable OnExplosionPointProcessing(Action<ExplosionPointProcessingContext> handler, int priority = 0) =>
+            hooks._explosionPointProcessing.Register(owner, handler, priority);
+
+        public IDisposable OnTerrainCollisionBoxes(Action<TerrainCollisionBoxesContext> handler, int priority = 0) =>
+            hooks._terrainCollisionBoxes.Register(owner, handler, priority);
+
+        public IDisposable OnMounting(Action<MountingContext> handler, int priority = 0) =>
+            hooks._mounting.Register(owner, handler, priority);
+
+        public IDisposable OnPistonBlockMoving(Action<PistonBlockMovingContext> handler, int priority = 0) =>
+            hooks._pistonBlockMoving.Register(owner, handler, priority);
+
+        public IDisposable OnMovingBlockSetTerrainCollision(Action<MovingBlockSetTerrainCollisionContext> handler, int priority = 0) =>
+            hooks._movingBlockSetTerrainCollision.Register(owner, handler, priority);
     }
 }
 
@@ -159,6 +223,8 @@ internal sealed class ModHook<TContext>
     private Registration[] _handlers = [];
     private bool _isFrozen;
     private long _sequence;
+
+    public bool HasHandlers => _handlers.Length > 0;
 
     public IDisposable Register(ModId owner, Action<TContext> handler, int priority)
     {

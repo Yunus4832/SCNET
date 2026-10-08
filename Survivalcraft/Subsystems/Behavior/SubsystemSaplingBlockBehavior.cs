@@ -131,14 +131,6 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var x = saplingData.Point.X;
         var y = saplingData.Point.Y;
         var z = saplingData.Point.Z;
-        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
-        {
-            if (!territoriy!.AllowBlockBehavior)
-            {
-                return;
-            }
-        }
-
         var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(x - 6, z - 6, false);
         var chunkAtCell2 = SubsystemTerrain.Terrain.GetChunkAtCell(x - 6, z + 6, false);
         var chunkAtCell3 = SubsystemTerrain.Terrain.GetChunkAtCell(x + 6, z - 6, false);

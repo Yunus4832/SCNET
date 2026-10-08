@@ -1,0 +1,35 @@
+{
+    "Blocks": {
+        "TerritoryBlock:0": {
+            "DisplayName": "Pedra de Território",
+            "Description": "Coloca-a para obter permissão de escavação e construção na área envolvente de 1x1 chunk. Cada jogador só pode possuir uma Pedra de Território.",
+            "CRDescription:0": "Cria uma Pedra de Território com lingotes de cobre, diamante, lingotes de ferro e granito"
+        }
+    },
+    "TerritoryBlock": {
+        "1": "Precisas do nível {0} ou superior para criar {1}. Nível atual: {2}"
+    },
+    "SubsystemTerritoryBlockBehavior": {
+        "1": "Mostrar alcance",
+        "2": "Permitir colegas de equipa",
+        "3": "Não tens permissão para usar esta Pedra de Território",
+        "4": "Esta Pedra de Território não está ativa",
+        "5": "ID de bloco desativado {0}",
+        "6": "Outro jogador tem território nesta área. A ativação falhou!"
+    },
+    "TerritorySettings": {
+        "Title": "Definições do território",
+        "ShowBoundary": "Mostrar limites",
+        "RestrictEntry": "Impedir a entrada de não membros",
+        "ApplyToTeam": "Permitir entrada e construção à equipa",
+        "Close": "Fechar",
+        "OwnerOnly": "Só o proprietário pode alterar as definições"
+    },
+    "TerritoryProtection": {
+        "EntryRestricted": "Não podes entrar neste território. Podes sair ou pedir ao proprietário que permita a entrada.",
+        "Protected": "Não podes escavar nem colocar blocos neste território.",
+        "StoneOwnerOnly": "Só o proprietário ou um administrador pode escavar esta Pedra de Território.",
+        "ClaimUnavailable": "Já tens um território ou esta área sobrepõe-se a outro território.",
+        "PlacementBlocked": "Não podes colocar uma Pedra de Território aqui."
+    }
+}

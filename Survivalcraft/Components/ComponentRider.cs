@@ -164,19 +164,11 @@ public class ComponentRider : Component, IUpdateable
     {
         if (!_isAnimating && Mount == null)
         {
-            var componentPlayer = Entity.FindComponent<ComponentPlayer>();
-            if (componentPlayer != null)
+            var mounting = new MountingContext(this, componentMount);
+            CurrentModRuntime.Value?.Gameplay.Invoke(mounting);
+            if (mounting.Cancel)
             {
-                var v = componentMount.ComponentBody.Position.XZ;
-                if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy((int)MathUtils.Floor(v.X),
-                        (int)MathUtils.Floor(v.Y), out Territoriy? territoriy))
-                {
-                    if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(componentPlayer, territoriy!))
-                    {
-                        componentPlayer.ComponentGui.DisplaySmallMessage("领地内的载具不可乘骑", Color.Yellow, false, false);
-                        return;
-                    }
-                }
+                return;
             }
 
             if (CommonLib.WorkType != WorkType.Client)

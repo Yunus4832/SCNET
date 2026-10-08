@@ -999,6 +999,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 return;
             }
 
+            pushingCollisionBox.Collided?.Invoke(this);
             var num3 = Terrain.ExtractContents(pushingCollisionBox.BlockValue);
             if (BlocksManager.Blocks[num3].HasCollisionBehavior)
             {
@@ -1136,6 +1137,11 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public void FindTerrainCollisionBoxes(BoundingBox box, DynamicArray<CollisionBox> result)
     {
+        var gameplay = CurrentModRuntime.Value?.Gameplay;
+        if (gameplay is { HasTerrainCollisionBoxesHandlers: true })
+        {
+            gameplay.Invoke(new TerrainCollisionBoxesContext(this, box, result));
+        }
         var point = Terrain.ToCell(box.Min);
         var point2 = Terrain.ToCell(box.Max);
         point.Y = MathUtils.Max(point.Y, 0);
@@ -1157,84 +1163,34 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
                 var num = TerrainChunk.CalculateCellIndex(i & 0xF, point.Y, j & 0xF);
                 var num2 = point.Y;
-                var x = chunkAtCell.Coords.X * 16 + (i & 0xF);
-                var z = chunkAtCell.Coords.Y * 16 + (j & 0xF);
-                var allowPlayerPass = AllowPlayerPass(x, z);
-                if (!allowPlayerPass)
+                while (num2 <= point2.Y)
                 {
-                    var block = BlocksManager.Blocks[46];
-                    var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, 46);
-                    var v = new Vector3(i, num2, j);
-                    foreach (var collisionBox in customCollisionBoxes)
+                    var cellValueFast = chunkAtCell.GetCellValueFast(num);
+                    var num3 = Terrain.ExtractContents(cellValueFast);
+                    if (num3 != 0)
                     {
-                        result.Add(new CollisionBox
+                        var block = BlocksManager.Blocks[num3];
+                        if (block.Collidable)
                         {
-                            Box = new BoundingBox(v + collisionBox.Min, v + collisionBox.Max),
-                            BlockValue = 46
-                        });
-                    }
-                }
-                else
-                {
-                    while (num2 <= point2.Y)
-                    {
-                        var cellValueFast = chunkAtCell.GetCellValueFast(num);
-                        var num3 = Terrain.ExtractContents(cellValueFast);
-                        if (num3 != 0)
-                        {
-                            var block = BlocksManager.Blocks[num3];
-                            if (block.Collidable)
+                            var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, cellValueFast);
+                            var v = new Vector3(i, num2, j);
+                            foreach (var collisionBox in customCollisionBoxes)
                             {
-                                var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, cellValueFast);
-                                var v = new Vector3(i, num2, j);
-                                foreach (var collisionBox in customCollisionBoxes)
+                                result.Add(new CollisionBox
                                 {
-                                    result.Add(new CollisionBox
-                                    {
-                                        Box = new BoundingBox(v + collisionBox.Min,
-                                            v + collisionBox.Max),
-                                        BlockValue = cellValueFast
-                                    });
-                                }
+                                    Box = new BoundingBox(v + collisionBox.Min,
+                                        v + collisionBox.Max),
+                                    BlockValue = cellValueFast
+                                });
                             }
                         }
-
-                        num2++;
-                        num++;
                     }
+
+                    num2++;
+                    num++;
                 }
             }
         }
-    }
-
-    public bool AllowPlayerPass(int x, int z)
-    {
-        if (Player == null)
-        {
-            return true;
-        }
-
-        if (!SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(x, z, out var territoriy))
-        {
-            return true;
-        }
-
-        if (!territoriy!.IsVisible)
-        {
-            return true;
-        }
-
-        if (SubsystemTerritoryBlockBehavior.AllowPlayerAction(Player, territoriy))
-        {
-            return true;
-        }
-
-        if (_subsystemTime.PeriodicGameTimeEvent(1f, 0))
-        {
-            Player.ComponentGui.DisplaySmallMessage("你没有通过该领地的权限", Color.Yellow, false, true);
-        }
-
-        return false;
     }
 
     public void FindSneakCollisionBoxes(Vector3 position, Vector2 overhang, DynamicArray<CollisionBox> result)
@@ -1542,5 +1498,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         public ComponentBody ComponentBody;
 
         public BoundingBox Box;
+
+        public Action<ComponentBody>? Collided;
     }
 }

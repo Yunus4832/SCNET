@@ -27,7 +27,9 @@
                                                           and '%(Filename)' != 'Engine'
                                                           and '%(Filename)' != 'Engine.Core'
                                                           and '%(Filename)' != 'Engine.Serialization'
-                                                          and '%(Filename)' != 'EngineSystem'"/>
+                                                          and '%(Filename)' != 'EngineSystem'
+                                                          and '%(Filename)' != 'SCNET.Content.Packaging'
+                                                          and '%(Filename)' != 'SCNET.ServerSource.Protocol'"/>
         </ItemGroup>
         <RemoveDir Directories="$(_SurvivalcraftModStage)"/>
         <MakeDir Directories="$(_SurvivalcraftModStage)/assemblies;$(_SurvivalcraftModStage)/data;$(_SurvivalcraftModStage)/assets/$(SurvivalcraftModId);$(_SurvivalcraftModPackageDirectory)"/>

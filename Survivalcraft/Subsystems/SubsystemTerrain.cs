@@ -475,36 +475,14 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             return;
         }
 
-        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
+        if (TryPrepareCellChange(x, y, z, ref value, miner))
         {
-            if (!territoriy!.AllowBlockBehavior)
-            {
-                if (miner == null ||
-                    !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
-                {
-                    miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow, false, true);
-                    return;
-                }
-            }
-            else
-            {
-                if (territoriy.IsVisible)
-                {
-                    if (SubsystemTerritoryBlockBehavior.IsInTerritoriyBorder(territoriy, x, z))
-                    {
-                        if (miner == null ||
-                            !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
-                        {
-                            miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow,
-                                false,
-                                true);
-                            return;
-                        }
-                    }
-                }
-            }
+            ChangeCellNet(x, y, z, value, updateModificationCounter, miner);
         }
+    }
 
+    private bool TryPrepareCellChange(int x, int y, int z, ref int value, ComponentMiner? miner)
+    {
         var changingContext = new TerrainCellChangingContext(
             this,
             x,
@@ -516,11 +494,11 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         CurrentModRuntime.Value?.Gameplay.Invoke(changingContext);
         if (changingContext.Cancel)
         {
-            return;
+            return false;
         }
 
         value = changingContext.NewValue;
-        ChangeCellNet(x, y, z, value, updateModificationCounter, miner);
+        return true;
     }
 
     public void DestroyCell(
@@ -537,47 +515,15 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             return;
         }
 
-        var allowBlockBehavior = true;
-        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(x, z, out Territoriy? territoriy))
+        // Authorize before drops, particles and harvest callbacks, not after their side effects.
+        if (!TryPrepareCellChange(x, y, z, ref newValue, miner))
         {
-            if (!territoriy!.AllowBlockBehavior)
-            {
-                allowBlockBehavior = false;
-                if (miner == null ||
-                    !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
-                {
-                    miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow, false, true);
-                    return;
-                }
-            }
-            else
-            {
-                if (territoriy.IsVisible)
-                {
-                    if (SubsystemTerritoryBlockBehavior.IsInTerritoriyBorder(territoriy, x, z))
-                    {
-                        if (miner == null ||
-                            !SubsystemTerritoryBlockBehavior.AllowPlayerAction(miner.ComponentPlayer, territoriy))
-                        {
-                            miner?.ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块行为权限", Color.Yellow,
-                                false,
-                                true);
-                            return;
-                        }
-                    }
-                }
-            }
+            return;
         }
 
         var cellValue = Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
         var block = BlocksManager.Blocks[num];
-        if (!allowBlockBehavior && block is DoorBlock) //如果不允许方块行为且为门方块则不掉落物品，因为门为两格高的特殊方块，禁用行为后可以刷
-        {
-            ChangeCell(x, y, z, newValue, true, miner);
-            return;
-        }
-
         if (num != 0)
         {
             var showDebris = true;
@@ -628,7 +574,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             }
         }
 
-        ChangeCell(x, y, z, newValue, true, miner);
+        ChangeCellNet(x, y, z, newValue, true, miner);
     }
 
     public void Draw(Camera camera, int drawOrder)

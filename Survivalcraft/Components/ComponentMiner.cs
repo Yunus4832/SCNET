@@ -137,41 +137,10 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Dig(TerrainRaycastResult raycastResult, bool isEnd = false)
     {
-        //在领地范围
-        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(
-                raycastResult.CellFace.X,
-                raycastResult.CellFace.Z,
-                out Territoriy? territoriy))
-        {
-            if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
-            {
-                if (Time.PeriodicEvent(1.0, 0.0))
-                {
-                    ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块挖掘权限", Color.Yellow, false, false);
-                }
-
-                return false;
-            }
-        }
-
         var result = false;
         _lastDigFrameIndex = Time.FrameIndex;
         var cellFace = raycastResult.CellFace;
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
-        if (TerritoryBlock.IsTerritoryValue(cellValue))
-        //不是管理员
-        {
-            if (ComponentPlayer is { PlayerData.ServerManager: false } && territoriy != null)
-            //不是所有者
-            {
-                if (ComponentPlayer.PlayerData.PlayerGUID != territoriy.OwnerGuid)
-                {
-                    ComponentPlayer.ComponentGui.DisplaySmallMessage("只有领地拥有者才可挖掘", Color.Yellow, false, true);
-                    return false;
-                }
-            }
-        }
-
         var num = Terrain.ExtractContents(cellValue);
         var block = BlocksManager.Blocks[num];
         var activeBlockValue = ActiveBlockValue;
@@ -286,30 +255,6 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Place(TerrainRaycastResult raycastResult)
     {
-        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(
-                raycastResult.CellFace.X,
-                raycastResult.CellFace.Z,
-                out Territoriy? territoriy))
-        {
-            if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
-            {
-                if (Time.PeriodicEvent(1.0, 0.0))
-                {
-                    ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块放置权限", Color.Yellow, false, false);
-                }
-
-                return false;
-            }
-        }
-
-        if (ComponentPlayer != null &&
-            SubsystemTerritoryBlockBehavior.Territories.ContainsKey(ComponentPlayer.PlayerGuid) &&
-            TerritoryBlock.IsTerritoryValue(ActiveBlockValue))
-        {
-            ComponentPlayer.ComponentGui.DisplaySmallMessage("你需要挖掉原来的领地石才能放置新的", Color.Red, false, true);
-            return false;
-        }
-
         if (!Place(raycastResult, ActiveBlockValue))
         {
             return false;
@@ -362,11 +307,6 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        if (oldBlockId is 233 or 232 or 229 or 226 && TerritoryBlock.IsTerritoryValue(value))
-        {
-            return false; //海底方块吞领地石
-        }
-
         if (num3 is <= 0 or >= 256 || (!IsBlockPlacingAllowed(ComponentCreature.ComponentBody) &&
                                        _subsystemGameInfo.WorldSettings.GameMode > GameMode.Survival))
         {
@@ -412,7 +352,7 @@ public class ComponentMiner : Component, IUpdateable
         value = blockPlacedContext.Value;
 
         var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(
-            Terrain.ExtractContents(placementData.Value), this, new Point3(num2, num3, num4));
+            Terrain.ExtractContents(placementData.Value));
         foreach (var behavior in blockBehaviors)
         {
             behavior.OnBlockPlaced(this, num2, num3, num4, ref placementData, value);
@@ -434,20 +374,6 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Use(Ray3 ray)
     {
-        var obj = Raycast(ray, RaycastMode.Digging);
-        if (obj is TerrainRaycastResult terrainRaycast)
-        {
-            var cellFace = terrainRaycast.CellFace;
-            if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(cellFace.X, cellFace.Z, out Territoriy? territoriy))
-            {
-                if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
-                {
-                    ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块使用权限", Color.Yellow, false, false);
-                    return false;
-                }
-            }
-        }
-
         var num = Terrain.ExtractContents(ActiveBlockValue);
         var block = BlocksManager.Blocks[num];
 
@@ -467,7 +393,7 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num, this, Terrain.ToCell(ray.Position));
+        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
         if (!blockBehaviors.Any(behavior => behavior.OnUse(ray, this)) && !useContext.Handled)
         {
             return false;
@@ -479,18 +405,6 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Interact(TerrainRaycastResult raycastResult)
     {
-        if (SubsystemTerritoryBlockBehavior.CheckIsInTerritoriy(
-                raycastResult.CellFace.X,
-                raycastResult.CellFace.Z,
-                out Territoriy? territoriy))
-        {
-            if (!SubsystemTerritoryBlockBehavior.AllowPlayerAction(ComponentPlayer, territoriy!))
-            {
-                ComponentPlayer?.ComponentGui.DisplaySmallMessage("你在这里没有方块交互权限", Color.Yellow, false, false);
-                return false;
-            }
-        }
-
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(raycastResult.CellFace.X,
             raycastResult.CellFace.Y, raycastResult.CellFace.Z);
         var interactContext = new BlockInteractContext(raycastResult, this, cellValue);
@@ -502,7 +416,7 @@ public class ComponentMiner : Component, IUpdateable
 
         var cellContents = Terrain.ExtractContents(cellValue);
         var blockBehaviors =
-            _subsystemBlockBehaviors.GetBlockBehaviors(cellContents, this, raycastResult.CellFace.Point);
+            _subsystemBlockBehaviors.GetBlockBehaviors(cellContents);
         if (!blockBehaviors.Any(behavior => behavior.OnInteract(raycastResult, this)) && !interactContext.Handled)
         {
             return false;
@@ -609,7 +523,7 @@ public class ComponentMiner : Component, IUpdateable
             return true;
         }
 
-        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num, this, Terrain.ToCell(aim.Position));
+        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
         return blockBehaviors.Any(behavior => behavior.OnAim(aim, this, state));
     }
 

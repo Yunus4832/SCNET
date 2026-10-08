@@ -612,6 +612,8 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         point2.X = (int)MathUtils.Ceiling(movingBlockSet.Box.Right + movingBlockSet.Position.X);
         point2.Y = (int)MathUtils.Ceiling(movingBlockSet.Box.Bottom + movingBlockSet.Position.Y);
         point2.Z = (int)MathUtils.Ceiling(movingBlockSet.Box.Far + movingBlockSet.Position.Z);
+        CurrentModRuntime.Value?.Gameplay.Invoke(
+            new MovingBlockSetTerrainCollisionContext(this, movingBlockSet, point, point2));
         for (var i = point.X; i < point2.X; i++)
         {
             for (var j = point.Z; j < point2.Z; j++)
@@ -621,18 +623,6 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                     if (Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(i, k, j)) != 0)
                     {
                         CollidedWithTerrain?.Invoke(movingBlockSet, new Point3(i, k, j));
-                    }
-                    else
-                    {
-                        if (!SubsystemTerritoryBlockBehavior.CheckIsInTerritoriyBorder(i, j, out var territoriy))
-                        {
-                            continue;
-                        }
-
-                        if (territoriy!.IsVisible)
-                        {
-                            movingBlockSet.Stop = true;
-                        }
                     }
                 }
             }

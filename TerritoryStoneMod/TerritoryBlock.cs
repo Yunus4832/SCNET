@@ -1,4 +1,13 @@
-namespace Game.Blocks;
+using Engine.Core;
+
+using Game;
+using Game.Blocks;
+using Game.Components;
+using Game.Managers;
+using Game.Subsystems;
+using Game.Terrains;
+
+namespace TerritoryStoneMod;
 
 public class TerritoryBlock : CubeBlock
 {
@@ -23,6 +32,8 @@ public class TerritoryBlock : CubeBlock
     {
         return 255;
     }
+
+    public override bool IsEditable(int value) => true;
 
     public override IEnumerable<int> GetCreativeValues()
     {
