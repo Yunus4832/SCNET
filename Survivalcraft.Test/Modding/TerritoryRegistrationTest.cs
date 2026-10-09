@@ -2,16 +2,45 @@ using System.Xml.Linq;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game;
+using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
 using Game.Modding.Data;
+using Game.Terrains;
 
 using TerritoryStoneMod;
 
 namespace Survivalcraft.Test.Modding;
 
+[Collection(ConfigFileCollection.Name)]
 public class TerritoryRegistrationTest
 {
+    [Theory]
+    [InlineData("zh-CN", "领地石")]
+    [InlineData("en-US", "Territory Stone")]
+    [InlineData("pt-PT", "Pedra de Território")]
+    [InlineData("ru-RU", "Камень территории")]
+    public void ModLanguageAddsLocalizedBlockAndHelpText(string culture, string name)
+    {
+        ContentManager.Initialize();
+        using var runtime = GameModRuntime.Start([
+            new ModDescriptor(new ModManifest(ModEntry.ModId, "Territory Stone", "1.0.3"), () => new ModEntry())
+        ]);
+
+        runtime.InitializeLanguage(culture);
+
+        var block = new TerritoryBlock { DisplayName = "Territory Stone" };
+        var value = Terrain.MakeBlockValue(TerritoryBlock.Index);
+        Assert.Equal(name, block.GetDisplayName(null, value));
+        Assert.False(string.IsNullOrWhiteSpace(block.GetDescription(value)));
+        Assert.Equal(name, LanguageManager.GetHelpTopic("48", "Title"));
+        Assert.Equal("TerritoryStone", LanguageManager.GetHelpTopic("48", "Name"));
+        var help = LanguageManager.GetHelpTopic("48", "value");
+        Assert.Contains("G", help);
+        Assert.Contains("tp", help);
+    }
+
     [Fact]
     public void EntryContributesItsBlockAndDatabaseTemplateThroughOwnedRegistries()
     {

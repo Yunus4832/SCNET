@@ -155,7 +155,6 @@ public static class LanguageManager
         {
             if (TryGetProperty(oldObject, newChild.Key, out var oldChild))
             {
-                oldChild = oldChild?.DeepClone();
                 if (oldChild is JsonObject oldJsonObject && newChild.Value is JsonObject newJsonObject)
                 {
                     MergeJsonObject(oldJsonObject, newJsonObject);

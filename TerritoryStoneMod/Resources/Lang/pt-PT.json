@@ -2,7 +2,7 @@
     "Blocks": {
         "TerritoryBlock:0": {
             "DisplayName": "Pedra de Território",
-            "Description": "Coloca-a para obter permissão de escavação e construção na área envolvente de 1x1 chunk. Cada jogador só pode possuir uma Pedra de Território.",
+            "Description": "Coloca-a para proteger os blocos à volta. O proprietário pode definir o acesso da equipa, a visibilidade dos limites e a entrada de não membros. Cada jogador pode ter um território.",
             "CRDescription:0": "Cria uma Pedra de Território com lingotes de cobre, diamante, lingotes de ferro e granito"
         }
     },
@@ -16,6 +16,13 @@
         "4": "Esta Pedra de Território não está ativa",
         "5": "ID de bloco desativado {0}",
         "6": "Outro jogador tem território nesta área. A ativação falhou!"
+    },
+    "Help": {
+        "48": {
+            "Name": "TerritoryStone",
+            "Title": "Pedra de Território",
+            "value": "Coloca uma Pedra de Território para proteger a área à volta. Cada jogador pode ter um território. Jogadores sem permissão não podem escavar nem colocar blocos dentro dele; o proprietário e os administradores podem. O proprietário também pode permitir a entrada e a construção aos colegas de equipa.\\n\\nCom 'Impedir a entrada de não membros' ativo, o limite impede a entrada a pé de jogadores sem permissão. Quem já estiver dentro pode sair a pé, para não ficar preso após nascer ou reaparecer. Desativar esta opção permite atravessar o território, mas não concede permissão para escavar ou construir. 'Mostrar limites' só altera a visibilidade, não as permissões. Os animais não são bloqueados pelo limite.\\n\\nO comando privilegiado tp transporta o jogador diretamente e ignora o limite de movimento, pelo que pode entrar no território. As permissões dos comandos determinam quem pode usar tp. Aponta para a pedra e prime G ou o botão de edição para alterar as definições; só o proprietário pode alterar as definições do seu território."
+        }
     },
     "TerritorySettings": {
         "Title": "Definições do território",

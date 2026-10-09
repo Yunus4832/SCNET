@@ -3,7 +3,7 @@
   "type": "mod",
   "identifier": "scnet.territory",
   "name": "Territory Stone",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "payload": {
     "format": "scnet.mod-v1",
     "entry": "payload/mod.json",

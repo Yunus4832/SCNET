@@ -2,7 +2,7 @@
     "Blocks": {
         "TerritoryBlock:0": {
             "DisplayName": "Territory Stone",
-            "Description": "Place it to claim digging and building permission in the surrounding 1x1 chunk area. Each player can own only one Territory Stone.",
+            "Description": "Place it to protect nearby blocks. The owner can set team access, boundary visibility, and whether non-members may enter. Each player can own one territory.",
             "CRDescription:0": "Craft a Territory Stone from copper ingots, diamond, iron ingots and granite"
         }
     },
@@ -16,6 +16,13 @@
         "4": "This Territory Stone is not active",
         "5": "Disabled block ID {0}",
         "6": "Another player has territory in this range. Activation failed!"
+    },
+    "Help": {
+        "48": {
+            "Name": "TerritoryStone",
+            "Title": "Territory Stone",
+            "value": "Place a Territory Stone to protect the surrounding area. Each player can own one territory. Players without permission cannot dig or place blocks inside it; the owner and administrators can. The owner may also allow teammates to enter and build.\\n\\nWhen 'Block entry by non-members' is enabled, the boundary stops unauthorized players walking in from outside. Players already inside can still walk out, so a spawn or respawn cannot trap them. Turning this setting off allows passage, but does not grant digging or building rights. 'Show boundary' only changes visibility, not access. Animals are not blocked by the boundary.\\n\\nThe privileged tp command moves a player directly and bypasses the walking boundary, so it can enter a territory. Command permissions determine who may use tp. Aim at the stone and press G or the edit button to change settings; only the owner can change that territory's settings."
+        }
     },
     "TerritorySettings": {
         "Title": "Territory settings",
