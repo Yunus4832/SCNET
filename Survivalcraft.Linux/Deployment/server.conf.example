@@ -1,0 +1,14 @@
+# Copy this file to server.conf, then run ./deploy.sh.
+INSTANCE=server
+SESSION=survival
+WORLD=World
+SEED=123456
+GAME_MODE=Survival
+SERVER_PORT=28887
+
+# Required only when MODS is nonempty. The URL must be reachable from the container.
+CONTENT_SERVER=
+
+# One "mod-id version" pair per line. Empty means no mods.
+MODS='
+'

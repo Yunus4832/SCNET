@@ -151,6 +151,12 @@ public static class StartupManager
                 continue;
             }
 
+            if (string.Equals(arg, "--no-broadcast", StringComparison.OrdinalIgnoreCase))
+            {
+                request.BroadcastPort = -1;
+                continue;
+            }
+
             if (string.Equals(arg, "--http-command", StringComparison.OrdinalIgnoreCase))
             {
                 request.HttpCommandEnabled = true;

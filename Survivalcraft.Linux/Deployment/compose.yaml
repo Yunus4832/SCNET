@@ -1,0 +1,24 @@
+services:
+  game-server:
+    image: __SCNET_IMAGE__
+    restart: unless-stopped
+    working_dir: /app
+    network_mode: host
+    volumes:
+      - "${SCNET_INSTANCES_DIR:-./Instances}:/app/Instances"
+    command:
+      - --instance
+      - ${SCNET_INSTANCE:-server}
+      - --server
+      - --session
+      - ${SCNET_SESSION:-survival}
+      - --world
+      - ${SCNET_WORLD:-World}
+      - --seed
+      - ${SCNET_SEED:-123456}
+      - --game-mode
+      - ${SCNET_GAME_MODE:-Survival}
+      - --server-port
+      - ${SCNET_SERVER_PORT:-28887}
+      - --no-broadcast
+      - --save

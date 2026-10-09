@@ -124,9 +124,12 @@ public static class HeadlessEntry
             var serverPort = startupSession.ServerPort > 0
                 ? startupSession.ServerPort
                 : SettingsManager.Current.ServerPort;
-            var broadcastPort = startupSession.BroadcastPort > 0
-                ? startupSession.BroadcastPort
-                : SettingsManager.Current.BroadcastPort;
+            var broadcastPort = startupSession.BroadcastPort switch
+            {
+                < 0 => "disabled",
+                > 0 => startupSession.BroadcastPort.ToString(),
+                _ => SettingsManager.Current.BroadcastPort.ToString()
+            };
             Log.Information($"Selected world: {world.WorldSettings.Name} ({world.DirectoryName})");
             Log.Information(
                 $"Server ports: game={serverPort}, broadcast={broadcastPort}");

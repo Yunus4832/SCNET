@@ -6,6 +6,23 @@ Headless 模式在不打开游戏窗口的情况下运行服务端逻辑，适�
 
 ## 启动方式
 
+### 容器部署
+
+Linux 主机执行 `./Scripts/publish.sh --project Survivalcraft.Linux` 会同时生成桌面 ZIP 和 `Publish/game-server-<版本>-linux-amd64.tar.gz`。构建机需要 Podman 或 Docker，基础镜像为 `mcr.microsoft.com/dotnet/runtime:10.0`；默认只使用本地已有基础镜像，可用 `IMAGE_PULL_POLICY=missing` 允许构建时拉取。镜像使用同一 `SurvivalcraftStarter` 二进制文件，以 `--server` 参数运行。
+
+将镜像包复制到部署机器并解压。首次执行 `./deploy.sh` 会创建 `server.conf` 并要求编辑；按 `server.conf.example` 填入实例、会话、世界、种子、游戏模式、游戏 UDP 端口，以及可选的 ContentServer URL 和模组列表。再次运行脚本会校验并导入镜像、查询所选模组的精确 PackageHash、生成实例的 `Config/ModProfile.xml`、更新内容仓库配置，再通过 Compose 启动服务器：
+
+```bash
+tar -xzf game-server-<版本>-linux-amd64.tar.gz
+./deploy.sh
+# 编辑 server.conf
+./deploy.sh
+```
+
+配置文件是由服务器管理员维护的可信 Shell 文件。`MODS` 每行填写一个 `模组标识 版本号`；空列表无需内容服务器。配置模组时，部署主机需要能访问 ContentServer，容器自身也需要能够访问该地址来下载缺失的包。部署脚本会保留实例中已有的其他 `Settings.xml` 内容，并同步全局、当前世界和当前会话的模组 profile；`Instances/` 目录持久化世界、设置和模组缓存。
+
+端口和世界参数来自 `server.conf`，每次启动都会用 `--save` 保存启动会话。种子只在首次创建世界时生效。容器使用 Linux 宿主网络，游戏 UDP 端口直接监听宿主机；容器不启用用于局域网发现的广播端口。部署主机还需要 `sha256sum`、Python 3 和相应的 Docker Compose 或 Podman Compose。
+
 ### Windows
 
 ```bash
@@ -39,6 +56,7 @@ Android 同样通过 `RunningSettingManager` 选择 GUI 或 Headless。正常应
 - `--instance <实例名>`: 选择或创建 `Instances/<实例名>` 数据实例；省略时由 `Starter.xml` 选择
 - `--server-port <端口>`: 仅覆盖本次运行的游戏端口
 - `--broadcast-port <端口>`: 仅覆盖本次运行的广播端口
+- `--no-broadcast`: 禁用当前会话的局域网发现广播，容器部署默认使用
 - `--http-command`: 为本次有效 session 启用 loopback HTTP 命令宿主
 - `--no-http-command`: 为本次有效 session 禁用 loopback HTTP 命令宿主
 - `--http-command-port <端口>`: 覆盖 loopback HTTP 命令宿主的默认端口 `28889`

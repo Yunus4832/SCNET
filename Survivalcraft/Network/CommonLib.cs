@@ -85,9 +85,12 @@ public static class CommonLib
         var serverPort = sessionInfo.ServerPort > 0
             ? sessionInfo.ServerPort
             : SettingsManager.Current.ServerPort;
-        var broadcastPort = sessionInfo.BroadcastPort > 0
-            ? sessionInfo.BroadcastPort
-            : SettingsManager.Current.BroadcastPort;
+        int? broadcastPort = sessionInfo.BroadcastPort switch
+        {
+            < 0 => null,
+            > 0 => sessionInfo.BroadcastPort,
+            _ => SettingsManager.Current.BroadcastPort
+        };
         return Net.StartServer(serverPort, broadcastPort);
     }
 

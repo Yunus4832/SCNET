@@ -151,7 +151,7 @@ Bash 脚本接受重复的 `--project` 或 `--project=名称`；`--` 后面的�
 
 NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scripts/pack-nuget.sh` 或 `Scripts/pack-nuget.ps1`，具体包边界和使用方式见 [NuGet 包](./NuGet.md)。不要使用解决方案级 `dotnet publish` 或 `dotnet pack` 代替这些脚本；多目标共享项目应由下游入口按顺序独立处理。
 
-根目录 `Publish` 中的桌面压缩包、重命名后的 Android APK，以及 ContentServer 的 portable 和容器镜像包只在 `Publish` 阶段生成；普通 `Build` 不会更新这些发行产物。
+根目录 `Publish` 中的桌面压缩包、重命名后的 Android APK、ContentServer 的 portable 和容器镜像包，以及 Linux 游戏服务器镜像包只在 `Publish` 阶段生成；普通 `Build` 不会更新这些发行产物。Linux 游戏服务器部署方式见 [Headless 模式](./Headless.md#容器部署)。
 
 ### 打包行为
 

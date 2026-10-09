@@ -12,7 +12,7 @@ $ErrorActionPreference = "Stop"
 Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
     if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft.Linux") {
-        Write-Host "[SCNET Publish] Publishing Survivalcraft.Linux"
+        Write-Host "[SCNET Publish] Publishing Survivalcraft.Linux (desktop ZIP and Linux server image bundle on Linux)"
         & dotnet publish "Survivalcraft.Linux/Survivalcraft.Linux.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) {
             throw "Publishing Survivalcraft.Linux failed with exit code $LASTEXITCODE."

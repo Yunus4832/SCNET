@@ -47,7 +47,7 @@ done
 cd "$repository_root"
 
 if ! $selected || $publish_linux; then
-    echo "[SCNET Publish] Publishing Survivalcraft.Linux"
+    echo "[SCNET Publish] Publishing Survivalcraft.Linux (desktop ZIP and server image bundle on Linux)"
     dotnet publish "Survivalcraft.Linux/Survivalcraft.Linux.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 

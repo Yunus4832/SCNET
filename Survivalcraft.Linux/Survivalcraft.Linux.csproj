@@ -24,6 +24,7 @@
     <ItemGroup>
         <None Include="Content.zip">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         </None>
     </ItemGroup>
 
@@ -41,5 +42,12 @@
             <AdditionalProperties>RuntimeIdentifier=linux-x64</AdditionalProperties>
         </ProjectReference>
     </ItemGroup>
+
+    <Target Name="BuildLinuxServerImage"
+            AfterTargets="PackOutput"
+            Condition="'$(Configuration)' == 'Release' AND '$(BuildLinuxServerImage)' != 'false' AND $([MSBuild]::IsOSPlatform('Linux'))">
+        <Exec Command="bash &quot;$(MSBuildProjectDirectory)/Deployment/build-image.sh&quot;"
+              EnvironmentVariables="SCNET_PUBLISH_DIR=$(PublishDir);SCNET_VERSION=$(ScnetVersion);OUTPUT_DIR=$(SolutionRoot)Publish"/>
+    </Target>
 
 </Project>
