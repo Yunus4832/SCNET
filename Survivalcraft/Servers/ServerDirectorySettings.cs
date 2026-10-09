@@ -15,9 +15,7 @@ public static class ServerDirectorySettings
 
         return ServerDirectoryService.Normalize(new ServerDirectoryState
         {
-            MyServers = ReadServers(container.Element("MyServers")),
-            Favorites = ReadServers(container.Element("Favorites")),
-            RecentServers = ReadServers(container.Element("RecentServers")),
+            LocalServers = ReadServers(container.Element("LocalServers")),
             InstalledSources = ReadInstalledSources(container.Element("InstalledSources"))
         }, defaultPort);
     }
@@ -26,9 +24,7 @@ public static class ServerDirectorySettings
     {
         var normalized = ServerDirectoryService.Normalize(state, defaultPort);
         var container = new XElement("ServerDirectory",
-            WriteServers("MyServers", normalized.MyServers),
-            WriteServers("Favorites", normalized.Favorites),
-            WriteServers("RecentServers", normalized.RecentServers),
+            WriteServers("LocalServers", normalized.LocalServers),
             new XElement("InstalledSources", normalized.InstalledSources.Select(source =>
                 new XElement("Source",
                     new XAttribute("Id", source.Id),
@@ -50,6 +46,7 @@ public static class ServerDirectorySettings
             Id = Guid.Parse(Required(element, "Id")),
             Name = Required(element, "Name"),
             Address = Required(element, "Address"),
+            Tags = Enum.Parse<LocalServerTag>(Required(element, "Tags")),
             Order = int.Parse(Required(element, "Order"), CultureInfo.InvariantCulture),
             UpdatedAt = DateTimeOffset.Parse(Required(element, "UpdatedAt"), CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind)
@@ -75,6 +72,7 @@ public static class ServerDirectorySettings
             new XAttribute("Id", server.Id),
             new XAttribute("Name", server.Name),
             new XAttribute("Address", server.Address),
+            new XAttribute("Tags", server.Tags),
             new XAttribute("Order", server.Order),
             new XAttribute("UpdatedAt", server.UpdatedAt.ToString("O", CultureInfo.InvariantCulture)))));
     }

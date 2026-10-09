@@ -18,6 +18,10 @@ public sealed record ServerItem
 
     public IReadOnlyList<string> Tags { get; init; } = [];
 
+    public LocalServerTag LocalTags { get; init; }
+
+    public DateTimeOffset UpdatedAt { get; init; }
+
     public int Order { get; init; }
 
     public ServerRuntimeStatus RuntimeStatus { get; set; } = new();

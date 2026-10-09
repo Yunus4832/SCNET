@@ -2631,7 +2631,7 @@
         },
         "47": {
             "Title": "Server List",
-            "value": "\\n\\nThe server list combines locally saved servers, LAN discovery results, and servers supplied by installed server sources. When the screen opens, the game reads the selected sources and checks each server’s availability, latency, and player count.\\n\\n\\nThe first filter at the top switches between Local Sources and External Sources. Local sources include My Servers, Favorites, Recent, and LAN. External sources come from installed and enabled server sources. The second filter can show every source in the selected category or one specific source.\\n\\n\\nThe same address can be supplied by different sources and remains a separate entry in each source. Every entry displays its source, and actions such as favorite or delete apply only to the selected source entry.\\n\\n\\nSearch matches server names, addresses, sources, descriptions, and tags. Sorting can preserve source order or arrange entries by latency, player count, or name.\\n\\n\\nSelect an available server and press Connect to join it. Add saves an address under My Servers. Favorite adds the selected server to Favorites, where the same address and port cannot be added twice. Connection attempts are recorded automatically under Recent.\\n\\n\\nDelete is available only for entries under My Servers, Favorites, and Recent. Servers from external sources are maintained by their source provider. To disable or remove an entire external source, open Content → Manage Server Sources. Refresh reloads the currently filtered sources and probes their servers again.\\n "
+            "value": "The server list has three categories: Local, LAN, and External. Selecting a category loads its servers and checks their status.\\n\\nLocal servers have one entry per address. Added, Favorite, and Recent are tags that can coexist; use the second filter to view a tag. Favoriting adds the Favorite tag, and connecting adds Recent. Unfavorite removes only the Favorite tag. Delete removes the entire local entry. An entry with no tags is removed automatically.\\n\\nLAN servers come from the current scan and are not saved. Favoriting a LAN server adds it to the Local category. External servers come from installed sources; use the second filter to choose a source. The same address may appear separately in Local, LAN, and External.\\n\\nSearch matches names, addresses, sources, descriptions, and tags. Servers can be sorted by ping, player count, or name."
         }
     },
     "Strings": {
@@ -3436,13 +3436,13 @@
             "Favorites": "Favorites",
             "Recent": "Recent",
             "Lan": "LAN",
-            "Empty": "No servers in this source",
+            "Empty": "No servers found",
             "LoadFailed": "Could not load the server source.",
             "NameLabel": "Server Name",
             "AddressLabel": "Server Address",
             "AddTitle": "Add Server",
             "InvalidServer": "Enter a valid server name and address.",
-            "ConfirmDelete": "Delete server “{0}”?",
+            "ConfirmDelete": "Delete server {0} from the local list?",
             "Title": "Server List",
             "Players": "Players",
             "Mode": "Mode",
@@ -3458,10 +3458,13 @@
             "PartialLoadFailed": "Some server sources failed to load",
             "CategoryLocal": "Local",
             "CategoryExternal": "External",
-            "AllLocalSources": "All Local Sources",
             "AllExternalSources": "All External Sources",
             "Source": "Source",
-            "DuplicateFavorite": "This server address is already in favorites."
+            "DuplicateFavorite": "This server address is already in favorites.",
+            "CategoryLan": "LAN",
+            "AllLocalTags": "All",
+            "Unfavorite": "Unfavorite",
+            "DuplicateLocalServer": "This server is already in the local list."
         },
         "ManageServerSourcesScreen": {
             "Title": "Manage Server Sources",

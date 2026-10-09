@@ -5,7 +5,7 @@ public sealed class ServerDirectoryService
     public const int MaximumRecentServers = 20;
 
     private readonly int _defaultPort;
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private readonly Action<ServerDirectoryState> _save;
     private ServerDirectoryState _state;
 
@@ -24,9 +24,7 @@ public sealed class ServerDirectoryService
         {
             return _state with
             {
-                MyServers = _state.MyServers.ToArray(),
-                Favorites = _state.Favorites.ToArray(),
-                RecentServers = _state.RecentServers.ToArray(),
+                LocalServers = _state.LocalServers.ToArray(),
                 InstalledSources = _state.InstalledSources.ToArray()
             };
         }
@@ -36,50 +34,52 @@ public sealed class ServerDirectoryService
     {
         lock (_gate)
         {
-            var entry = CreateServer(name, address, _state.MyServers.Count);
-            Commit(_state with { MyServers = _state.MyServers.Append(entry).ToArray() });
+            var normalizedAddress = ServerAddress.Normalize(address, _defaultPort);
+            var existing = _state.LocalServers.FirstOrDefault(entry => entry.Address == normalizedAddress);
+            if (existing?.Tags.HasFlag(LocalServerTag.MyServer) == true)
+            {
+                throw new ArgumentException("This server has already been added.", nameof(address));
+            }
+
+            var entry = existing is null
+                ? CreateServer(name, normalizedAddress, LocalServerTag.MyServer)
+                : existing with { Name = NormalizeName(name), Tags = existing.Tags | LocalServerTag.MyServer };
+            Commit(_state with
+            {
+                LocalServers = existing is null
+                    ? _state.LocalServers.Append(entry).ToArray()
+                    : _state.LocalServers.Select(item => item.Id == existing.Id ? entry : item).ToArray()
+            });
             return entry;
         }
     }
 
-    public void EditMyServer(StoredServerEntry entry)
+    public void DeleteLocalServer(Guid id)
     {
-        ArgumentNullException.ThrowIfNull(entry);
         lock (_gate)
         {
-            EnsureExists(_state.MyServers, entry.Id);
-            var normalized = NormalizeEntry(entry, _defaultPort);
+            EnsureExists(_state.LocalServers, id);
+            Commit(_state with { LocalServers = Reorder(_state.LocalServers.Where(entry => entry.Id != id)) });
+        }
+    }
+
+    public void RemoveLocalTag(Guid id, LocalServerTag tag)
+    {
+        if (tag is not (LocalServerTag.MyServer or LocalServerTag.Favorite or LocalServerTag.Recent))
+        {
+            throw new ArgumentOutOfRangeException(nameof(tag));
+        }
+
+        lock (_gate)
+        {
+            EnsureExists(_state.LocalServers, id);
             Commit(_state with
             {
-                MyServers = _state.MyServers.Select(item => item.Id == entry.Id ? normalized : item).ToArray()
+                LocalServers = Reorder(_state.LocalServers.Select(entry => entry.Id == id
+                        ? entry with { Tags = entry.Tags & ~tag }
+                        : entry)
+                    .Where(entry => entry.Tags != LocalServerTag.None))
             });
-        }
-    }
-
-    public void DeleteMyServer(Guid id)
-    {
-        lock (_gate)
-        {
-            EnsureExists(_state.MyServers, id);
-            Commit(_state with { MyServers = Reorder(_state.MyServers.Where(item => item.Id != id)) });
-        }
-    }
-
-    public void DeleteFavorite(Guid id)
-    {
-        lock (_gate)
-        {
-            EnsureExists(_state.Favorites, id);
-            Commit(_state with { Favorites = Reorder(_state.Favorites.Where(item => item.Id != id)) });
-        }
-    }
-
-    public void DeleteRecentServer(Guid id)
-    {
-        lock (_gate)
-        {
-            EnsureExists(_state.RecentServers, id);
-            Commit(_state with { RecentServers = Reorder(_state.RecentServers.Where(item => item.Id != id)) });
         }
     }
 
@@ -88,13 +88,21 @@ public sealed class ServerDirectoryService
         var normalizedAddress = ServerAddress.Normalize(address, _defaultPort);
         lock (_gate)
         {
-            if (_state.Favorites.Any(entry => entry.Address == normalizedAddress))
+            var existing = _state.LocalServers.FirstOrDefault(entry => entry.Address == normalizedAddress);
+            if (existing?.Tags.HasFlag(LocalServerTag.Favorite) == true)
             {
                 throw new ArgumentException("A favorite with this address already exists.", nameof(address));
             }
 
-            var entry = CreateServer(name, normalizedAddress, _state.Favorites.Count);
-            Commit(_state with { Favorites = _state.Favorites.Append(entry).ToArray() });
+            var entry = existing is null
+                ? CreateServer(name, normalizedAddress, LocalServerTag.Favorite)
+                : existing with { Tags = existing.Tags | LocalServerTag.Favorite };
+            Commit(_state with
+            {
+                LocalServers = existing is null
+                    ? _state.LocalServers.Append(entry).ToArray()
+                    : _state.LocalServers.Select(item => item.Id == existing.Id ? entry : item).ToArray()
+            });
             return entry;
         }
     }
@@ -104,18 +112,30 @@ public sealed class ServerDirectoryService
         var normalizedAddress = ServerAddress.Normalize(address, _defaultPort);
         lock (_gate)
         {
-            var existing = _state.RecentServers.FirstOrDefault(entry => entry.Address == normalizedAddress);
-            var recent = new StoredServerEntry
+            var existing = _state.LocalServers.FirstOrDefault(entry => entry.Address == normalizedAddress);
+            var recent = existing is null
+                ? CreateServer(name, normalizedAddress, LocalServerTag.Recent) with { UpdatedAt = now }
+                : existing with
+                {
+                    Name = existing.Tags == LocalServerTag.Recent ? NormalizeName(name) : existing.Name,
+                    Tags = existing.Tags | LocalServerTag.Recent,
+                    UpdatedAt = now
+                };
+            var entries = existing is null
+                ? _state.LocalServers.Append(recent)
+                : _state.LocalServers.Select(entry => entry.Id == existing.Id ? recent : entry);
+            var expired = entries.Where(entry => entry.Tags.HasFlag(LocalServerTag.Recent))
+                .OrderByDescending(entry => entry.UpdatedAt)
+                .Skip(MaximumRecentServers)
+                .Select(entry => entry.Id)
+                .ToHashSet();
+            Commit(_state with
             {
-                Id = existing?.Id ?? Guid.NewGuid(),
-                Name = NormalizeName(name),
-                Address = normalizedAddress,
-                UpdatedAt = now
-            };
-            var entries = _state.RecentServers.Where(entry => entry.Address != normalizedAddress)
-                .Prepend(recent)
-                .Take(MaximumRecentServers);
-            Commit(_state with { RecentServers = Reorder(entries) });
+                LocalServers = Reorder(entries.Select(entry => expired.Contains(entry.Id)
+                        ? entry with { Tags = entry.Tags & ~LocalServerTag.Recent }
+                        : entry)
+                    .Where(entry => entry.Tags != LocalServerTag.None))
+            });
         }
     }
 
@@ -193,17 +213,13 @@ public sealed class ServerDirectoryService
         ArgumentNullException.ThrowIfNull(state);
         return state with
         {
-            MyServers = NormalizeEntries(state.MyServers, defaultPort, false),
-            Favorites = NormalizeEntries(state.Favorites, defaultPort, true),
-            RecentServers = NormalizeEntries(state.RecentServers, defaultPort, true)
-                .OrderByDescending(entry => entry.UpdatedAt).Take(MaximumRecentServers)
-                .Select((entry, order) => entry with { Order = order }).ToArray(),
+            LocalServers = NormalizeEntries(state.LocalServers, defaultPort),
             InstalledSources = NormalizeInstalledSources(state.InstalledSources)
         };
     }
 
     private static IReadOnlyList<StoredServerEntry> NormalizeEntries(IEnumerable<StoredServerEntry> entries,
-        int defaultPort, bool uniqueAddresses)
+        int defaultPort)
     {
         ArgumentNullException.ThrowIfNull(entries);
         var ids = new HashSet<Guid>();
@@ -212,9 +228,9 @@ public sealed class ServerDirectoryService
         foreach (var entry in entries.OrderBy(entry => entry.Order))
         {
             var normalized = NormalizeEntry(entry, defaultPort);
-            if (!ids.Add(normalized.Id) || uniqueAddresses && !addresses.Add(normalized.Address))
+            if (!ids.Add(normalized.Id) || !addresses.Add(normalized.Address))
             {
-                throw new ArgumentException("Server entry IDs must be unique and this source requires unique addresses.");
+                throw new ArgumentException("Local server IDs and addresses must be unique.");
             }
 
             result.Add(normalized with { Order = result.Count });
@@ -229,6 +245,12 @@ public sealed class ServerDirectoryService
         if (entry.Id == Guid.Empty)
         {
             throw new ArgumentException("Server entry must have a stable nonempty ID.");
+        }
+
+        if (entry.Tags == LocalServerTag.None ||
+            (entry.Tags & ~(LocalServerTag.MyServer | LocalServerTag.Favorite | LocalServerTag.Recent)) != 0)
+        {
+            throw new ArgumentException("Local server tags are invalid.");
         }
 
         return entry with
@@ -284,13 +306,14 @@ public sealed class ServerDirectoryService
         };
     }
 
-    private StoredServerEntry CreateServer(string name, string address, int order)
+    private StoredServerEntry CreateServer(string name, string address, LocalServerTag tag)
     {
         return new StoredServerEntry
         {
             Name = NormalizeName(name),
             Address = ServerAddress.Normalize(address, _defaultPort),
-            Order = order,
+            Tags = tag,
+            Order = _state.LocalServers.Count,
             UpdatedAt = DateTimeOffset.UtcNow
         };
     }

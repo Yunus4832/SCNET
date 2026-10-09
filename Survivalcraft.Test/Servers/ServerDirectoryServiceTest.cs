@@ -5,63 +5,64 @@ namespace Survivalcraft.Test.Servers;
 public sealed class ServerDirectoryServiceTest
 {
     [Fact]
-    public void SourcesKeepSameAddressAsIndependentEntries()
+    public void LocalTagsShareOneEntryForTheSameNormalizedAddress()
     {
         ServerDirectoryState? saved = null;
         var service = new ServerDirectoryService(new ServerDirectoryState(), 28887, state => saved = state);
 
-        service.AddMyServer("Mine", "example.com");
-        service.AddFavorite("Favorite", "example.com");
+        var added = service.AddMyServer("Mine", "example.com");
+        service.AddFavorite("Favorite", "example.com:28887");
         service.RecordConnectionAttempt("Recent", "example.com", DateTimeOffset.UtcNow);
 
-        Assert.NotNull(saved);
-        Assert.Single(saved.MyServers);
-        Assert.Single(saved.Favorites);
-        Assert.Single(saved.RecentServers);
-        Assert.Equal("example.com:28887", saved.MyServers[0].Address);
+        var entry = Assert.Single(saved!.LocalServers);
+        Assert.Equal(added.Id, entry.Id);
+        Assert.Equal("Mine", entry.Name);
+        Assert.Equal("example.com:28887", entry.Address);
+        Assert.Equal(LocalServerTag.MyServer | LocalServerTag.Favorite | LocalServerTag.Recent, entry.Tags);
     }
 
     [Fact]
-    public void FavoritesAreDeduplicatedByNormalizedAddress()
+    public void FavoriteTagCannotBeAddedTwice()
     {
         var service = new ServerDirectoryService(new ServerDirectoryState(), 28887, _ => { });
 
         service.AddFavorite("First", "example.com");
 
         Assert.Throws<ArgumentException>(() => service.AddFavorite("Second", "example.com:28887"));
-        Assert.Single(service.Snapshot().Favorites);
+        Assert.Single(service.Snapshot().LocalServers);
     }
 
     [Fact]
-    public void FavoriteAndRecentEntriesCanBeDeletedByTheirOwnIds()
+    public void RemovingLastTagDeletesEntryAndDeletingEntryRemovesAllTags()
     {
         var service = new ServerDirectoryService(new ServerDirectoryState(), 28887, _ => { });
-        service.AddFavorite("Favorite", "favorite.example");
-        service.RecordConnectionAttempt("Recent", "recent.example", DateTimeOffset.UtcNow);
-        var snapshot = service.Snapshot();
+        var favorite = service.AddFavorite("Favorite", "favorite.example");
+        var combined = service.AddMyServer("Mine", "mine.example");
+        service.AddFavorite("Mine", "mine.example");
 
-        service.DeleteFavorite(Assert.Single(snapshot.Favorites).Id);
-        service.DeleteRecentServer(Assert.Single(snapshot.RecentServers).Id);
+        service.RemoveLocalTag(favorite.Id, LocalServerTag.Favorite);
+        service.DeleteLocalServer(combined.Id);
 
-        Assert.Empty(service.Snapshot().Favorites);
-        Assert.Empty(service.Snapshot().RecentServers);
+        Assert.Empty(service.Snapshot().LocalServers);
     }
 
     [Fact]
-    public void RecentServersAreDeduplicatedAndMostRecentFirst()
+    public void RecentLimitRemovesOnlyTheRecentTagFromOlderEntries()
     {
         var service = new ServerDirectoryService(new ServerDirectoryState(), 28887, _ => { });
-        var earlier = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
-        var later = earlier.AddMinutes(1);
+        var start = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
+        var favorite = service.AddFavorite("Favorite", "favorite.example");
+        service.RecordConnectionAttempt("Favorite", "favorite.example", start);
+        for (var index = 0; index < ServerDirectoryService.MaximumRecentServers; index++)
+        {
+            service.RecordConnectionAttempt($"Recent {index}", $"recent{index}.example", start.AddMinutes(index + 1));
+        }
 
-        service.RecordConnectionAttempt("Old", "example.com:28887", earlier);
-        service.RecordConnectionAttempt("Other", "other.example:28887", later);
-        service.RecordConnectionAttempt("New", "example.com", later.AddMinutes(1));
-
-        var recent = service.Snapshot().RecentServers;
-        Assert.Equal(2, recent.Count);
-        Assert.Equal("New", recent[0].Name);
-        Assert.Equal("example.com:28887", recent[0].Address);
+        var entries = service.Snapshot().LocalServers;
+        Assert.Equal(ServerDirectoryService.MaximumRecentServers + 1, entries.Count);
+        Assert.Equal(LocalServerTag.Favorite, entries.Single(entry => entry.Id == favorite.Id).Tags);
+        Assert.Equal(ServerDirectoryService.MaximumRecentServers,
+            entries.Count(entry => entry.Tags.HasFlag(LocalServerTag.Recent)));
     }
 
     [Fact]

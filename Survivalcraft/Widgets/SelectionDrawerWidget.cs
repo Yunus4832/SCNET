@@ -180,11 +180,25 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 
     public Color Color
     {
-        get => _headerLabel.Color;
+        get;
         set
         {
-            _headerLabel.Color = value;
+            field = value;
             RebuildList();
+        }
+    } = Color.White;
+
+    public override bool IsEnabled
+    {
+        get => base.IsEnabled;
+        set
+        {
+            if (!value)
+            {
+                Close();
+            }
+
+            base.IsEnabled = value;
         }
     }
 
@@ -246,7 +260,7 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 
     public void Open()
     {
-        if (_items.Count == 0)
+        if (!IsEnabledGlobal || _items.Count == 0)
         {
             return;
         }
@@ -301,6 +315,7 @@ public sealed class SelectionDrawerWidget : CanvasWidget
     protected override void MeasureOverride(Vector2 parentAvailableSize)
     {
         UpdateVisualState();
+        _headerLabel.Color = IsEnabledGlobal ? Color : new Color(112, 112, 112);
         base.MeasureOverride(parentAvailableSize);
     }
 

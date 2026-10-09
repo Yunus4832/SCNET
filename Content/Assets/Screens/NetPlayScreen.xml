@@ -24,7 +24,7 @@
                         </CanvasWidget>
                     </CanvasWidget>
                     <SelectionDrawerWidget Name="SourceCategory" Size="170, 56" Margin="4, 0"
-                                           MaxVisibleItems="2"/>
+                                           MaxVisibleItems="3"/>
                     <SelectionDrawerWidget Name="SourceFilter" Size="170, 56" Margin="4, 0"
                                            MaxVisibleItems="5"/>
                     <SelectionDrawerWidget Name="SortOrder" Size="170, 56" Margin="4, 0"

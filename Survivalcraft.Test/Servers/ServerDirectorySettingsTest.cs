@@ -7,14 +7,21 @@ namespace Survivalcraft.Test.Servers;
 public sealed class ServerDirectorySettingsTest
 {
     [Fact]
-    public void RoundTripsAllIndependentSources()
+    public void RoundTripsLocalTagsAndInstalledSources()
     {
         var timestamp = DateTimeOffset.Parse("2026-01-01T00:00:00Z");
         var state = new ServerDirectoryState
         {
-            MyServers = [CreateServer("Mine", 0, timestamp)],
-            Favorites = [CreateServer("Favorite", 0, timestamp)],
-            RecentServers = [CreateServer("Recent", 0, timestamp)],
+            LocalServers =
+            [
+                new StoredServerEntry
+                {
+                    Name = "Mine",
+                    Address = "example.com:28887",
+                    Tags = LocalServerTag.MyServer | LocalServerTag.Favorite | LocalServerTag.Recent,
+                    UpdatedAt = timestamp
+                }
+            ],
             InstalledSources =
             [
                 new InstalledServerSource
@@ -30,20 +37,12 @@ public sealed class ServerDirectorySettingsTest
         ServerDirectorySettings.Write(document, state, 28887);
         var restored = ServerDirectorySettings.Read(document, 28887);
 
-        Assert.Equal("Mine", Assert.Single(restored.MyServers).Name);
-        Assert.Equal("Favorite", Assert.Single(restored.Favorites).Name);
-        Assert.Equal("Recent", Assert.Single(restored.RecentServers).Name);
+        var entry = Assert.Single(restored.LocalServers);
+        Assert.Equal("Mine", entry.Name);
+        Assert.Equal(LocalServerTag.MyServer | LocalServerTag.Favorite | LocalServerTag.Recent, entry.Tags);
+        Assert.Equal(timestamp, entry.UpdatedAt);
         Assert.Equal("source-1", Assert.Single(restored.InstalledSources).RegistrationId);
+        Assert.Null(document.Element("ServerDirectory")!.Element("Lan"));
     }
 
-    private static StoredServerEntry CreateServer(string name, int order, DateTimeOffset timestamp)
-    {
-        return new StoredServerEntry
-        {
-            Name = name,
-            Address = "example.com:28887",
-            Order = order,
-            UpdatedAt = timestamp
-        };
-    }
 }

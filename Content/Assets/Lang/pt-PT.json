@@ -2631,7 +2631,7 @@
         },
         "47": {
             "Title": "Lista de servidores",
-            "value": "\\n\\nA lista de servidores reúne servidores guardados localmente, resultados da pesquisa na rede local e servidores fornecidos por fontes de servidores instaladas. Ao abrir o ecrã, o jogo lê as fontes selecionadas e verifica a disponibilidade, a latência e o número de jogadores de cada servidor.\\n\\n\\nO primeiro filtro no topo alterna entre Fontes locais e Fontes externas. As fontes locais incluem Os meus servidores, Favoritos, Recentes e LAN. As fontes externas provêm de fontes de servidores instaladas e ativadas. O segundo filtro pode mostrar todas as fontes da categoria selecionada ou apenas uma fonte específica.\\n\\n\\nO mesmo endereço pode ser fornecido por fontes diferentes e permanece uma entrada separada em cada fonte. Cada entrada mostra a respetiva fonte, e ações como adicionar aos favoritos ou eliminar aplicam-se apenas à entrada da fonte selecionada.\\n\\n\\nA pesquisa encontra nomes, endereços, fontes, descrições e etiquetas de servidores. A ordenação pode manter a ordem da fonte ou organizar as entradas por latência, número de jogadores ou nome.\\n\\n\\nSelecione um servidor disponível e prima Ligar para entrar. Adicionar guarda um endereço em Os meus servidores. Favorito adiciona o servidor selecionado aos Favoritos, onde o mesmo endereço e porta não podem ser adicionados duas vezes. As tentativas de ligação são registadas automaticamente em Recentes.\\n\\n\\nEliminar só está disponível para entradas em Os meus servidores, Favoritos e Recentes. Os servidores de fontes externas são mantidos pelo fornecedor da fonte. Para desativar ou remover uma fonte externa completa, abra Conteúdo → Gerir fontes de servidores. Atualizar volta a carregar as fontes atualmente filtradas e verifica novamente os seus servidores.\\n "
+            "value": "A lista de servidores tem três categorias: Locais, Rede local e Externos. Ao escolher uma categoria, o jogo carrega os servidores e verifica o estado.\\n\\nNos servidores locais existe uma entrada por endereço. Adicionados, Favoritos e Recentes são etiquetas que podem coexistir; use o segundo filtro para escolher uma etiqueta. Favoritar adiciona a etiqueta Favorito e ligar adiciona Recente. Remover favorito retira apenas essa etiqueta. Eliminar remove a entrada local inteira. Uma entrada sem etiquetas é removida automaticamente.\\n\\nOs servidores da rede local vêm da pesquisa atual e não são guardados. Ao favoritar um deles, ele passa a constar dos servidores locais. Os servidores externos vêm de fontes instaladas; use o segundo filtro para escolher uma fonte. O mesmo endereço pode aparecer em categorias diferentes.\\n\\nA pesquisa inclui nomes, endereços, fontes, descrições e etiquetas. Pode ordenar por latência, número de jogadores ou nome."
         }
     },
     "Strings": {
@@ -3436,13 +3436,13 @@
             "Favorites": "Favoritos",
             "Recent": "Recentes",
             "Lan": "Rede local",
-            "Empty": "Não há servidores nesta fonte",
+            "Empty": "Nenhum servidor encontrado",
             "LoadFailed": "Não foi possível carregar a fonte.",
             "NameLabel": "Nome do servidor",
             "AddressLabel": "Endereço do servidor",
             "AddTitle": "Adicionar servidor",
             "InvalidServer": "Introduza um nome e endereço de servidor válidos.",
-            "ConfirmDelete": "Eliminar o servidor “{0}”?",
+            "ConfirmDelete": "Eliminar o servidor {0} da lista local?",
             "Title": "Lista de servidores",
             "Players": "Jogadores",
             "Mode": "Modo",
@@ -3458,10 +3458,13 @@
             "PartialLoadFailed": "Falha ao carregar algumas fontes",
             "CategoryLocal": "Locais",
             "CategoryExternal": "Externas",
-            "AllLocalSources": "Todas as fontes locais",
             "AllExternalSources": "Todas as fontes externas",
             "Source": "Fonte",
-            "DuplicateFavorite": "Este endereço de servidor já está nos favoritos."
+            "DuplicateFavorite": "Este endereço de servidor já está nos favoritos.",
+            "CategoryLan": "Rede local",
+            "AllLocalTags": "Todos",
+            "Unfavorite": "Remover favorito",
+            "DuplicateLocalServer": "Este servidor já está na lista local."
         },
         "ManageServerSourcesScreen": {
             "Title": "Gerir fontes de servidores",

@@ -8,6 +8,8 @@ public sealed record StoredServerEntry
 
     public string Address { get; init; } = string.Empty;
 
+    public LocalServerTag Tags { get; init; }
+
     public int Order { get; init; }
 
     public DateTimeOffset UpdatedAt { get; init; } = DateTimeOffset.UtcNow;

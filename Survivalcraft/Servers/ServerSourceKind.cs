@@ -2,9 +2,7 @@ namespace Game.Servers;
 
 public enum ServerSourceKind
 {
-    MyServers,
-    Favorites,
-    Recent,
+    Local,
     Lan,
     Http
 }

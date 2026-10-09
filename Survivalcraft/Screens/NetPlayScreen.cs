@@ -29,10 +29,11 @@ public sealed class NetPlayScreen : Screen
     private enum SourceCategory
     {
         Local,
+        Lan,
         External
     }
 
-    private sealed record SourceFilterOption(IServerSource? Source);
+    private sealed record SourceFilterOption(IServerSource? Source, LocalServerTag Tag = LocalServerTag.None);
 
     private sealed record ServerLoadResult(IReadOnlyList<ServerItem> Items, bool HadSourceErrors);
 
@@ -175,7 +176,13 @@ public sealed class NetPlayScreen : Screen
             Ellipsis = true,
             MaxLines = 1
         };
-        var sourceDetails = $"{Text("Source")}: {GetSourceName(server.SourceKind, server.SourceName)}";
+        var sourceName = GetSourceName(server.SourceKind, server.SourceName);
+        if (server.SourceKind == ServerSourceKind.Local)
+        {
+            sourceName += " | " + string.Join(", ", GetLocalTagNames(server.LocalTags));
+        }
+
+        var sourceDetails = $"{Text("Source")}: {sourceName}";
         switch (server.RuntimeStatus.Availability)
         {
             case ServerAvailability.Available:
@@ -341,6 +348,17 @@ public sealed class NetPlayScreen : Screen
         var selectedIdentity = (_serverList.SelectedItem as ServerItem)?.Identity;
         var search = _searchTextBox.Text.Trim();
         IEnumerable<ServerItem> servers = _loadedServers;
+        if (_sourceCategoryDrawer.SelectedItem is SourceCategory.Local &&
+            _sourceDrawer.SelectedItem is SourceFilterOption { Tag: not LocalServerTag.None } option)
+        {
+            servers = servers.Where(server => server.LocalTags.HasFlag(option.Tag));
+            if (option.Tag == LocalServerTag.Recent &&
+                _sortDrawer.SelectedItem is ServerSortOrder.None)
+            {
+                servers = servers.OrderByDescending(server => server.UpdatedAt);
+            }
+        }
+
         if (search.Length > 0)
         {
             servers = servers.Where(server => MatchesSearch(server, search));
@@ -382,6 +400,8 @@ public sealed class NetPlayScreen : Screen
                server.Address.Contains(search, StringComparison.OrdinalIgnoreCase) ||
                GetSourceName(server.SourceKind, server.SourceName)
                    .Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
+               GetLocalTagNames(server.LocalTags).Any(name =>
+                   name.Contains(search, StringComparison.CurrentCultureIgnoreCase)) ||
                server.Description.Contains(search, StringComparison.CurrentCultureIgnoreCase) ||
                server.Tags.Any(tag => tag.Contains(search, StringComparison.CurrentCultureIgnoreCase));
     }
@@ -403,9 +423,8 @@ public sealed class NetPlayScreen : Screen
         {
             ServerAction.Connect => selected?.RuntimeStatus.Availability == ServerAvailability.Available,
             ServerAction.Add or ServerAction.Refresh => true,
-            ServerAction.Favorite => selected is not null && selected.SourceKind != ServerSourceKind.Favorites,
-            ServerAction.Delete => selected?.SourceKind is ServerSourceKind.MyServers or
-                ServerSourceKind.Favorites or ServerSourceKind.Recent,
+            ServerAction.Favorite => selected is not null,
+            ServerAction.Delete => selected?.SourceKind == ServerSourceKind.Local,
             _ => false
         };
     }
@@ -430,7 +449,7 @@ public sealed class NetPlayScreen : Screen
                 RefreshSelectedSource();
                 break;
             case ServerAction.Favorite when selected is not null:
-                AddFavorite(selected);
+                ToggleFavorite(selected);
                 break;
             case ServerAction.Delete when selected is not null:
                 ConfirmDelete(selected);
@@ -445,8 +464,17 @@ public sealed class NetPlayScreen : Screen
             {
                 try
                 {
+                    var normalizedAddress = ServerAddress.Normalize(address, SettingsManager.Current.ServerPort);
+                    if (SettingsManager.ServerDirectory.Snapshot().LocalServers.Any(entry =>
+                            entry.Address == normalizedAddress &&
+                            entry.Tags.HasFlag(LocalServerTag.MyServer)))
+                    {
+                        DialogsManager.Alert(Text("DuplicateLocalServer"));
+                        return false;
+                    }
+
                     SettingsManager.ServerDirectory.AddMyServer(name, address);
-                    SelectSourceAndRefresh(ServerSourceIds.MyServers);
+                    SelectLocalTagAndRefresh(LocalServerTag.MyServer);
                     return true;
                 }
                 catch (ArgumentException)
@@ -457,11 +485,26 @@ public sealed class NetPlayScreen : Screen
             }));
     }
 
-    private void AddFavorite(ServerItem server)
+    private void ToggleFavorite(ServerItem server)
     {
         try
         {
-            SettingsManager.ServerDirectory.AddFavorite(server.DisplayName, server.Address);
+            if (IsFavorite(server))
+            {
+                var address = ServerAddress.Normalize(server.Address, SettingsManager.Current.ServerPort);
+                var entry = SettingsManager.ServerDirectory.Snapshot().LocalServers
+                    .First(item => item.Address == address);
+                SettingsManager.ServerDirectory.RemoveLocalTag(entry.Id, LocalServerTag.Favorite);
+            }
+            else
+            {
+                SettingsManager.ServerDirectory.AddFavorite(server.DisplayName, server.Address);
+            }
+
+            if (_sourceCategoryDrawer.SelectedItem is SourceCategory.Local)
+            {
+                RefreshSelectedSource();
+            }
         }
         catch (ArgumentException)
         {
@@ -480,22 +523,11 @@ public sealed class NetPlayScreen : Screen
         {
             if (button == MessageDialogButton.Button1)
             {
-                switch (server.SourceKind)
+                if (server.SourceKind == ServerSourceKind.Local)
                 {
-                    case ServerSourceKind.MyServers:
-                        SettingsManager.ServerDirectory.DeleteMyServer(id);
-                        break;
-                    case ServerSourceKind.Favorites:
-                        SettingsManager.ServerDirectory.DeleteFavorite(id);
-                        break;
-                    case ServerSourceKind.Recent:
-                        SettingsManager.ServerDirectory.DeleteRecentServer(id);
-                        break;
-                    default:
-                        return;
+                    SettingsManager.ServerDirectory.DeleteLocalServer(id);
+                    RefreshSelectedSource();
                 }
-
-                RefreshSelectedSource();
             }
         });
     }
@@ -543,23 +575,42 @@ public sealed class NetPlayScreen : Screen
         PrepareRemoteSessionAndConnect(endpoint!, status?.RequiredModProfile, status?.TemporaryRepositories ?? []);
     }
 
-    private void SelectSourceAndRefresh(string sourceId)
+    private void SelectLocalTagAndRefresh(LocalServerTag tag)
     {
+        _updatingSourceOptions = true;
         _sourceCategoryDrawer.SelectedItem = SourceCategory.Local;
+        _updatingSourceOptions = false;
+        ReloadSourceOptions();
+        _updatingSourceOptions = true;
         _sourceDrawer.SelectedItem = _sourceDrawer.Items.Cast<SourceFilterOption>()
-            .First(option => option.Source?.Id == sourceId);
+            .First(option => option.Tag == tag);
+        _updatingSourceOptions = false;
+        RefreshSelectedSource();
     }
 
     private void ReloadSourceOptions()
     {
         var selectedId = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Source?.Id;
-        var options = new[] { new SourceFilterOption(null) }
-            .Concat(GetCategorySources().Select(source => new SourceFilterOption(source))).ToArray();
+        var selectedTag = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Tag ?? LocalServerTag.None;
+        var options = _sourceCategoryDrawer.SelectedItem switch
+        {
+            SourceCategory.Local => new[]
+            {
+                new SourceFilterOption(null),
+                new SourceFilterOption(null, LocalServerTag.MyServer),
+                new SourceFilterOption(null, LocalServerTag.Favorite),
+                new SourceFilterOption(null, LocalServerTag.Recent)
+            },
+            SourceCategory.Lan => [new SourceFilterOption(null)],
+            _ => new[] { new SourceFilterOption(null) }
+                .Concat(GetCategorySources().Select(source => new SourceFilterOption(source))).ToArray()
+        };
         _updatingSourceOptions = true;
         try
         {
             _sourceDrawer.SetItems(options);
-            _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId) ??
+            _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId &&
+                                                                  option.Tag == selectedTag) ??
                                          options[0];
             _sourceDrawer.IsEnabled = options.Length > 1;
         }
@@ -573,7 +624,8 @@ public sealed class NetPlayScreen : Screen
     {
         return _sourceCategoryDrawer.SelectedItem switch
         {
-            SourceCategory.Local => _sources.Where(source => source.Kind != ServerSourceKind.Http).ToArray(),
+            SourceCategory.Local => _sources.Where(source => source.Kind == ServerSourceKind.Local).ToArray(),
+            SourceCategory.Lan => _sources.Where(source => source.Kind == ServerSourceKind.Lan).ToArray(),
             _ => _sources.Where(source => source.Kind == ServerSourceKind.Http).ToArray()
         };
     }
@@ -583,6 +635,12 @@ public sealed class NetPlayScreen : Screen
         if (item is not ServerAction action)
         {
             return string.Empty;
+        }
+
+        if (action == ServerAction.Favorite && _serverList.SelectedItem is ServerItem selected &&
+            IsFavorite(selected))
+        {
+            return Text("Unfavorite");
         }
 
         return Text(action.ToString());
@@ -601,11 +659,17 @@ public sealed class NetPlayScreen : Screen
     private string GetSourceName(SourceFilterOption option)
     {
         var source = option.Source;
+        if (option.Tag != LocalServerTag.None)
+        {
+            return GetLocalTagName(option.Tag);
+        }
+
         if (source is null)
         {
             return _sourceCategoryDrawer.SelectedItem switch
             {
-                SourceCategory.Local => Text("AllLocalSources"),
+                SourceCategory.Local => Text("AllLocalTags"),
+                SourceCategory.Lan => "—",
                 _ => Text("AllExternalSources")
             };
         }
@@ -617,12 +681,44 @@ public sealed class NetPlayScreen : Screen
     {
         return kind switch
         {
-            ServerSourceKind.MyServers => Text("MyServers"),
-            ServerSourceKind.Favorites => Text("Favorites"),
-            ServerSourceKind.Recent => Text("Recent"),
+            ServerSourceKind.Local => Text("CategoryLocal"),
             ServerSourceKind.Lan => Text("Lan"),
             _ => fallbackName
         };
+    }
+
+    private static IEnumerable<string> GetLocalTagNames(LocalServerTag tags)
+    {
+        foreach (var tag in new[] { LocalServerTag.MyServer, LocalServerTag.Favorite, LocalServerTag.Recent })
+        {
+            if (tags.HasFlag(tag))
+            {
+                yield return GetLocalTagName(tag);
+            }
+        }
+    }
+
+    private static string GetLocalTagName(LocalServerTag tag)
+    {
+        return tag switch
+        {
+            LocalServerTag.MyServer => Text("MyServers"),
+            LocalServerTag.Favorite => Text("Favorites"),
+            LocalServerTag.Recent => Text("Recent"),
+            _ => throw new ArgumentOutOfRangeException(nameof(tag))
+        };
+    }
+
+    private static bool IsFavorite(ServerItem server)
+    {
+        if (server.LocalTags.HasFlag(LocalServerTag.Favorite))
+        {
+            return true;
+        }
+
+        var address = ServerAddress.Normalize(server.Address, SettingsManager.Current.ServerPort);
+        return SettingsManager.ServerDirectory.Snapshot().LocalServers.Any(entry =>
+            entry.Address == address && entry.Tags.HasFlag(LocalServerTag.Favorite));
     }
 
     private void PrepareRemoteSessionAndConnect(IPEndPoint endPoint, ModProfile? requiredProfile,
