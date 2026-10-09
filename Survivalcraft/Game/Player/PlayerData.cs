@@ -352,7 +352,7 @@ public partial class PlayerData : IDisposable
                 if (!(CommonLib.WorkType == WorkType.Client && !IsMainPlayer))
                 {
                     _subsystemTerrain.TerrainUpdater.SetUpdateLocation(PlayerIndex, center,
-                        MathUtils.Min(SettingsManager.Current.VisibilityRange, 32f), 0f);
+                        MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f), 0f);
                 }
             },
             delegate
@@ -363,7 +363,7 @@ public partial class PlayerData : IDisposable
                 }
 
                 var updateProgress = _subsystemTerrain.TerrainUpdater.GetUpdateProgress(PlayerIndex,
-                    MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f), 0f);
+                    MathUtils.Min(SettingsManager.Current.VisibilityRange, 32f), 0f);
                 UpdateSpawnProgress(0.5f + 0.5f * updateProgress);
                 if ((!(updateProgress >= 1f) || !(Time.FrameStartTime - _terrainWaitStartTime > 2.0)) &&
                     !(Time.FrameStartTime - _terrainWaitStartTime >= 15.0))
@@ -411,6 +411,13 @@ public partial class PlayerData : IDisposable
             delegate
             {
                 HideSpawnDialog();
+                if (RunMode.Value is RunModeType.Gui && _gameWidgetInitialized)
+                {
+                    _subsystemTerrain.TerrainRenderer.CompleteInitialChunkFadeIn(GameWidget.GameWidgetIndex,
+                        ComponentPlayer!.ComponentBody.Position.XZ,
+                        MathUtils.Min(SettingsManager.Current.VisibilityRange, 64f));
+                }
+
                 InitializeSpawnMarks();
                 if (CommonLib.WorkType == WorkType.Client)
                 {

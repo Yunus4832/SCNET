@@ -84,6 +84,19 @@ public class TerrainRenderer : IDisposable
         Display.DeviceReset -= DisplayDeviceReset;
     }
 
+    public void CompleteInitialChunkFadeIn(int gameWidgetIndex, Vector2 center, float distance)
+    {
+        var distanceSquared = MathUtils.Sqr(distance);
+        foreach (var chunk in _subsystemTerrain.Terrain.AllocatedChunks)
+        {
+            if (chunk.MainThreadState == TerrainChunkState.Valid &&
+                Vector2.DistanceSquared(center, chunk.Center) <= distanceSquared)
+            {
+                chunk.HazeEnds[gameWidgetIndex] = float.MaxValue;
+            }
+        }
+    }
+
     public void PrepareForDrawing(Camera camera)
     {
         var xZ = camera.ViewPosition.XZ;
