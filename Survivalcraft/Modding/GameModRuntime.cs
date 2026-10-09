@@ -51,7 +51,7 @@ public sealed class GameModRuntime : IDisposable
 
     public CommandRegistry Commands => Host.Commands;
 
-    public ModProfile? CreateServerRequiredProfile()
+    public ModProfile CreateServerRequiredProfile()
     {
         var packages = EffectiveProfile.Packages
             .Select(package => new ModPackageRequirement
@@ -61,11 +61,6 @@ public sealed class GameModRuntime : IDisposable
                 PackageHash = package.PackageHash
             })
             .ToList();
-        if (packages.Count == 0)
-        {
-            return null;
-        }
-
         var profile = new ModProfile
         {
             Id = "server",

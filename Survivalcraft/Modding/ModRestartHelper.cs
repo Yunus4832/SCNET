@@ -12,7 +12,7 @@ public static class ModRestartHelper
     {
         ArgumentNullException.ThrowIfNull(remoteSession);
 
-        if (requiredProfile is not { Packages.Count: > 0 })
+        if (requiredProfile is null)
         {
             return RemoteModSessionPreparation.Ready();
         }
@@ -24,11 +24,12 @@ public static class ModRestartHelper
         bool downloadedAny;
         try
         {
-            downloadedAny = ModProfileResolver.EnsurePackagesAvailable(
-                sessionProfile,
-                Storage.GetSystemPath(GamePaths.ContentPackageCache),
-                context,
-                log);
+            downloadedAny = sessionProfile.Packages.Count > 0 &&
+                            ModProfileResolver.EnsurePackagesAvailable(
+                                sessionProfile,
+                                Storage.GetSystemPath(GamePaths.ContentPackageCache),
+                                context,
+                                log);
         }
         finally
         {
@@ -76,6 +77,11 @@ public static class ModRestartHelper
 
     private static string CreateRestartReason(ModProfile profile, bool downloadedAny)
     {
+        if (profile.Packages.Count == 0)
+        {
+            return "服务器未启用模组，需要重启后卸载当前模组。";
+        }
+
         var packages = profile.Packages
             .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
             .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)

@@ -124,6 +124,8 @@ Headless 启动时没有 GUI 中途切换流程。它会直接解析启动 sessi
 4. 如果 `CurrentModRuntime.Value.EffectiveProfile` 已经是同一组精确 requirement，直接继续连接
 5. 否则创建临时 session profile 并请求重启
 
+服务器没有启用模组时也会明确下发空 required profile。客户端若仍加载全局模组，同样会创建空的临时 session profile 并请求重启，以卸载这些模组后再连接。
+
 非法、重复或互相冲突的 requirement 会在下载、创建 pending session 或重启前被拒绝。缓存准备完成后才会创建远程 pending
 session；重启后即使仓库离线，也能从内容寻址缓存恢复。联机校验还会比较运行时计算的 mod data hash，客户端和服务端有效模组
 不同会被拒绝。World、材质、皮肤和家具包不进入 RequiredModProfile，也不会在联机准备阶段自动安装。

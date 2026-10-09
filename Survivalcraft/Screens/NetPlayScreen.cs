@@ -628,13 +628,13 @@ public sealed class NetPlayScreen : Screen
     private void PrepareRemoteSessionAndConnect(IPEndPoint endPoint, ModProfile? requiredProfile,
         IReadOnlyList<ContentRepository> temporaryRepositories)
     {
-        if (requiredProfile is not { Packages.Count: > 0 })
+        if (requiredProfile is null)
         {
             ConnectPreparedRemoteSession(endPoint);
             return;
         }
 
-        var busyDialog = new BusyDialog("准备服务器模组", "正在检查所需模组...");
+        var busyDialog = new BusyDialog("准备服务器模组", "正在核对服务器模组...");
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() => ModRestartHelper.PrepareRemoteSession(SessionInfoManager.CreateRemoteClientSession(endPoint),
                 requiredProfile, temporaryRepositories,
