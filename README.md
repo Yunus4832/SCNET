@@ -27,7 +27,7 @@
 | `ServerSource.Protocol/` | 位于 Protocol 层的服务器源 HTTP 契约、校验器和参考客户端 |
 | `ContentServer/` | 统一 `.scpkg` 内容发布服务及内置服务器源参考实现 |
 | `ContentWebUI/` | ContentServer 的发布者和管理员 Web 工作台 |
-| `VerificationBlockMod/` | 当前模组运行时的端到端示例模组 |
+| `TerritoryStoneMod/` | 领地石模组 |
 | `Survivalcraft.ModTemplates/` | `dotnet new` 模组模板 |
 | `Engine/` | 平台能力层，负责窗口、渲染、音频和输入 |
 | `Engine.Core/` | 基础类型和运行模式，给各项目共用 |
@@ -66,10 +66,10 @@ dotnet run --project Survivalcraft.Linux/Survivalcraft.Linux.csproj -- --server
 当前模组运行时使用统一 `.scpkg` 内容包和带精确 PackageHash 的 `ModProfile` 控制加载范围。包统一进入内容寻址缓存；
 客户端可以配置多个匿名 ContentServer 仓库，启动补全和在线内容页共用缓存优先、同 hash 来源回退的下载服务。
 
-示例模组构建：
+领地石模组构建：
 
 ```bash
-dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
+dotnet build TerritoryStoneMod/TerritoryStoneMod.csproj -c Debug
 ```
 
 首次构建或更新 Mod SDK 后，需要先按 [NuGet 包](Doc/NuGet.md#本地打包) 将当前版本

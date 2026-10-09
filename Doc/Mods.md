@@ -128,28 +128,6 @@ Headless 启动时没有 GUI 中途切换流程。它会直接解析启动 sessi
 session；重启后即使仓库离线，也能从内容寻址缓存恢复。联机校验还会比较运行时计算的 mod data hash，客户端和服务端有效模组
 不同会被拒绝。World、材质、皮肤和家具包不进入 RequiredModProfile，也不会在联机准备阶段自动安装。
 
-## 示例模组
-
-仓库内置示例：
-
-- 项目：`VerificationBlockMod/`
-- 模组 ID：`verification.block`
-- 版本：`1.0.0`
-
-构建：
-
-```bash
-dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
-```
-
-首次构建或更新 Mod SDK 后，先按 [NuGet 包](./NuGet.md#本地打包) 生成仓库本地包源。
-
-输出：
-
-```text
-VerificationBlockMod/bin/Debug/net10.0/packages/verification.block.scpkg
-```
-
 ## 开发文档
 
 创建和打包模组见 [Modding.md](./Modding.md)。

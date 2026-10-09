@@ -40,7 +40,7 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 - 平台启动项目（`Survivalcraft.Windows`、`Survivalcraft.Linux` 和 Android 项目）
   属于应用程序，应以对应平台的产物形式分发。
 - 测试项目仅用于验证实现。
-- `VerificationBlockMod` 是集成示例，产物为 `.scpkg`，而不是 NuGet 包。
+- `TerritoryStoneMod` 是实际模组，产物为 `.scpkg`，而不是 NuGet 包。
 - `Survivalcraft.ModTemplates/Survivalcraft.Mod/` 是模板源代码；只有对应的模板打包
   项目会生成 NuGet 包。
 
@@ -59,7 +59,7 @@ PowerShell：
 ```
 
 包会输出到 `Publish/NuGet`。仓库根目录的 `NuGet.Config` 已将该目录注册为
-`SCNET Local` 文件源，因此 `VerificationBlockMod` 和仓库内生成的 Mod 项目与外部
+`SCNET Local` 文件源，因此 `TerritoryStoneMod` 和仓库内生成的 Mod 项目与外部
 开发者一样，只使用 `PackageReference`，不回退到项目引用或相对路径 Target。
 
 如需在干净环境中验证使用方流程，请从该目录安装模板，在仓库外创建项目，并将
