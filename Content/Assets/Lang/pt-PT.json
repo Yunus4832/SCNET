@@ -36,7 +36,7 @@
         "Title": "Gestão de Mods",
         "DeleteCacheShort": "Eliminar",
         "Export": "Exportar",
-        "AddGlobal": "Global",
+        "AddGlobal": "Adicionar",
         "RemoveGlobal": "Remover",
         "World": "Mundo",
         "DeleteCacheTitle": "Apagar cache",
@@ -61,7 +61,8 @@
         "StatusRuntime": "Execução atual",
         "ReferencedCannotDelete": "Este pacote em cache ainda é referenciado por um perfil ou pela execução atual e não pode ser eliminado.",
         "DeleteCacheFailed": "Não foi possível eliminar a entrada de cache do mod.",
-        "Details": "Detalhes"
+        "Details": "Detalhes",
+        "ReplaceGlobal": "Substituir"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Nenhuma caixa adequada foi encontrada",
@@ -3328,7 +3329,7 @@
             "HotbarSlotsCountDescription": "Define a capacidade da barra rápida para o modo atual; use páginas quando o espaço for limitado"
         },
         "ModWorldSelectionDialog": {
-            "Title": "Selecionar mundos"
+            "Title": "Adicionar ou substituir versão do mod no mundo"
         },
         "InstanceManagementScreen": {
             "Title": "Gestão de instâncias",

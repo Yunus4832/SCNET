@@ -36,7 +36,7 @@
         "Title": "Mod Management",
         "DeleteCacheShort": "Delete",
         "Export": "Export",
-        "AddGlobal": "Global",
+        "AddGlobal": "Add Global",
         "RemoveGlobal": "Remove",
         "World": "World",
         "DeleteCacheTitle": "Delete Cache",
@@ -61,7 +61,8 @@
         "StatusRuntime": "Current Runtime",
         "ReferencedCannotDelete": "This cached package is still referenced by a profile or the current runtime and cannot be deleted.",
         "DeleteCacheFailed": "Could not delete the mod cache entry.",
-        "Details": "Details"
+        "Details": "Details",
+        "ReplaceGlobal": "Replace Global"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Unsuitable block found",
@@ -3328,7 +3329,7 @@
             "HotbarSlotsCountDescription": "Sets the hotbar capacity for the current game mode; use pages when space is limited"
         },
         "ModWorldSelectionDialog": {
-            "Title": "Select Worlds"
+            "Title": "Add or Replace World Mod Version"
         },
         "InstanceManagementScreen": {
             "Title": "Instance Management",

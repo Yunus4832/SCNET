@@ -61,7 +61,8 @@
         "StatusRuntime": "当前运行",
         "ReferencedCannotDelete": "该缓存包仍被 Profile 或当前 Runtime 引用，不能删除。",
         "DeleteCacheFailed": "删除 Mod 缓存失败。",
-        "Details": "查看说明"
+        "Details": "查看说明",
+        "ReplaceGlobal": "替换全局"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "没有找到合适的方块",
@@ -3328,7 +3329,7 @@
             "HotbarSlotsCountDescription": "设置当前游戏模式的物品栏容量，空间不足时可通过分页访问"
         },
         "ModWorldSelectionDialog": {
-            "Title": "选择世界"
+            "Title": "加入或替换世界模组版本"
         },
         "InstanceManagementScreen": {
             "Title": "实例管理",

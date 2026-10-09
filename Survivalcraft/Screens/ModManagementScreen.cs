@@ -155,7 +155,10 @@ public sealed class ModManagementScreen : Screen
         return action switch
         {
             ModAction.Global => LanguageManager.Get(_typeName,
-                selected?.IsGlobal == true ? "RemoveGlobal" : "AddGlobal"),
+                selected?.IsGlobal == true ? "RemoveGlobal" :
+                selected is not null && _globalProfile.Packages.Any(package =>
+                    string.Equals(package.ModId, selected.ModId, StringComparison.OrdinalIgnoreCase))
+                    ? "ReplaceGlobal" : "AddGlobal"),
             ModAction.DeleteCache => LanguageManager.Get(_typeName, "DeleteCacheShort"),
             ModAction.Refresh => LanguageManager.Get(_typeName, "RefreshLocal"),
             _ => LanguageManager.Get(_typeName, action.ToString())

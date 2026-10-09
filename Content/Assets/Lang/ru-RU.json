@@ -36,7 +36,7 @@
         "Title": "Моды",
         "DeleteCacheShort": "Удалить",
         "Export": "Экспорт",
-        "AddGlobal": "Глобально",
+        "AddGlobal": "Добавить",
         "RemoveGlobal": "Убрать",
         "World": "Мир",
         "DeleteCacheTitle": "Удалить кэш",
@@ -61,7 +61,8 @@
         "StatusRuntime": "Текущий запуск",
         "ReferencedCannotDelete": "Пакет всё ещё используется профилем или текущим запуском и не может быть удалён.",
         "DeleteCacheFailed": "Не удалось удалить мод из кэша.",
-        "Details": "Подробнее"
+        "Details": "Подробнее",
+        "ReplaceGlobal": "Заменить"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Превращение в мебель не поддерживается",
@@ -3328,7 +3329,7 @@
             "HotbarSlotsCountDescription": "Задаёт размер панели для текущего режима; при нехватке места используются страницы"
         },
         "ModWorldSelectionDialog": {
-            "Title": "Выбор миров"
+            "Title": "Добавить или заменить версию мода в мире"
         },
         "InstanceManagementScreen": {
             "Title": "Управление экземплярами",
