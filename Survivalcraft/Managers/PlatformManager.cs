@@ -6,14 +6,6 @@ public static class PlatformManager
 {
     public const string Scheme = "com.candy.scnet";
 
-    public const string LegacyScheme = "com.candy.survivalcraft";
-
-    private static readonly string[] _knownSchemes =
-    [
-        Scheme,
-        LegacyScheme
-    ];
-
     private static Action<string>? _instanceLauncher;
 
     public static Platform Platform { get; private set; } = Platform.Desktop;
@@ -42,7 +34,7 @@ public static class PlatformManager
             return false;
         }
 
-        if (!_knownSchemes.Contains(parsedUri.Scheme, StringComparer.OrdinalIgnoreCase))
+        if (!string.Equals(parsedUri.Scheme, Scheme, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
