@@ -45,6 +45,9 @@ payload/data/**
 payload/assets/<mod-id>/**
 ```
 
+模组可以在 `payload/assets/<mod-id>/lang/<语言代码>.json` 中补充翻译。可选语言及其显示名称只由游戏内置语言文件定义；
+模组提供的其他语言代码不会新增语言选项，也不会在运行时加载。
+
 模板项目引用 `SCNET.Survivalcraft` 作为编译期 API，并私有引用 `SCNET.ContentTool`。
 工具包携带的构建目标会在构建后创建和验证 `.scpkg`，宿主运行时程序集不会复制进包。
 

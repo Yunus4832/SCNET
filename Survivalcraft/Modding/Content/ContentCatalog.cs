@@ -4,6 +4,8 @@ namespace Game.Modding.Content;
 
 public sealed class ContentCatalog
 {
+    private static readonly ModId _gameModId = new("game");
+
     private readonly IReadOnlyList<Entry> _entries;
     private readonly HashSet<ModId> _installedOwners = [];
 
@@ -15,6 +17,7 @@ public sealed class ContentCatalog
     public IReadOnlyList<ResourceId> Resources => _entries.Select(entry => entry.Id).ToArray();
 
     public IReadOnlyList<string> LanguageTypes => _entries
+        .Where(entry => entry.Id.Namespace == _gameModId)
         .Select(entry => GetLanguageType(entry.Registration.RelativePath))
         .Where(type => type is not null)
         .Distinct(StringComparer.OrdinalIgnoreCase)
@@ -67,7 +70,7 @@ public sealed class ContentCatalog
         LanguageManager.LanguageTypes.Clear();
         LanguageManager.LanguageTypes.AddRange(LanguageTypes);
         LanguageManager.ClearLanguageDisplayNames();
-        foreach (var entry in _entries)
+        foreach (var entry in _entries.Where(entry => entry.Id.Namespace == _gameModId))
         {
             var entryLanguageType = GetLanguageType(entry.Registration.RelativePath);
             if (entryLanguageType == null)
@@ -117,7 +120,7 @@ public sealed class ContentCatalog
 
     private static string ToContentPath(Entry entry)
     {
-        return entry.Id.Namespace == new ModId("game")
+        return entry.Id.Namespace == _gameModId
             ? entry.Registration.RelativePath
             : $"{entry.Id.Namespace}/{entry.Registration.RelativePath}";
     }

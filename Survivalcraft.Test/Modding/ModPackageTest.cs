@@ -170,6 +170,11 @@ public class ModPackageTest
             });
         var package = ModPackage.Read("assets.scpkg", packageStream);
         var host = new ModHost();
+        var gameId = new ResourceId(new ModId("game"), "lang/zh-CN.json");
+        using var builtInLanguage = host.Extensions.GetRegistry<ContentRegistration>(ContentExtensions.RegistryName)
+            .Register(gameId.Namespace, gameId,
+                new ContentRegistration("lang/zh-CN.json",
+                    """{"Language":{"Name":"中文"},"Usual":{"ok":"确定"}}"""u8.ToArray()));
         host.LoadAndStart([package.CreateDescriptor(ModSide.Server)]);
         var catalog = ContentCatalog.Compile(host.Extensions);
 
@@ -180,6 +185,7 @@ public class ModPackageTest
         Assert.Contains("zh-CN", catalog.LanguageTypes);
         catalog.InitializeLanguage("zh-CN");
         Assert.Equal("OK", LanguageManager.Ok);
+        Assert.Equal("中文", LanguageManager.GetLanguageDisplayName("zh-CN"));
 
         catalog.Uninstall();
         Assert.False(ContentManager.ContainsKey("example.assets/text/readme.txt"));
