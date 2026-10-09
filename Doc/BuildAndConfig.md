@@ -134,6 +134,21 @@ dotnet run --configuration Release --project Engine.Core.Benchmarks/Engine.Core.
 
 `Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、Windows、Android Arm64、Android Arm32 和 ContentServer。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
 
+不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32` 和 `ContentServer`。例如：
+
+```bash
+./Scripts/publish.sh --project ContentServer
+./Scripts/publish.sh --project Survivalcraft.Linux --project ContentServer
+./Scripts/publish.sh --project ContentServer -- --no-restore
+```
+
+```powershell
+./Scripts/publish.ps1 -Project ContentServer
+./Scripts/publish.ps1 -Project Survivalcraft.Linux,ContentServer
+```
+
+Bash 脚本接受重复的 `--project` 或 `--project=名称`；`--` 后面的参数会传给所选项目的 `dotnet publish`。PowerShell 脚本使用 `-Project` 指定一个或多个项目，其他参数仍通过剩余参数传给 `dotnet publish`。
+
 NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scripts/pack-nuget.sh` 或 `Scripts/pack-nuget.ps1`，具体包边界和使用方式见 [NuGet 包](./NuGet.md)。不要使用解决方案级 `dotnet publish` 或 `dotnet pack` 代替这些脚本；多目标共享项目应由下游入口按顺序独立处理。
 
 根目录 `Publish` 中的桌面压缩包、重命名后的 Android APK，以及 ContentServer 的 portable 和容器镜像包只在 `Publish` 阶段生成；普通 `Build` 不会更新这些发行产物。

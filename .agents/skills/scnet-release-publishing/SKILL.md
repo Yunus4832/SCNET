@@ -11,7 +11,7 @@ Use this workflow only for an explicit request to create distributable artifacts
 
 - Application and service artifacts: run `Scripts/publish.sh` on Bash hosts or `Scripts/publish.ps1` on PowerShell hosts from the repository root.
 - NuGet SDK and template packages: run `Scripts/pack-nuget.sh` or `Scripts/pack-nuget.ps1` from the repository root.
-- A user-requested single target: run only that target's explicit `dotnet publish` or `dotnet pack` command as written in the corresponding script. Keep target-specific arguments local to that command.
+- A user-requested single application or service target: pass its project name to `Scripts/publish.sh --project <name>` or `Scripts/publish.ps1 -Project <name>`. For a single NuGet package, run only its explicit `dotnet pack` command as written in the corresponding script. Keep target-specific arguments local to that command.
 
 Treat the repository scripts as the canonical inventory and ordering. Read the relevant script before publishing. Do not replace it with solution-level `dotnet publish` or `dotnet pack`, parallelize its entries, or introduce a loop: shared projects are multi-targeted and individual release entries may require different parameters.
 
