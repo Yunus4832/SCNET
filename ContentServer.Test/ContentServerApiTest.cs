@@ -6,17 +6,24 @@ using System.Text.Json;
 using Content.Packaging;
 
 using ContentServer.Application;
+using ContentServer.Application.Commands;
+using ContentServer.Domain.Contents;
+using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
 using ContentServer.Domain.ServerSources;
 using ContentServer.Infrastructure;
 
 using Game.Modding;
 
+using MediatR;
+
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
+using NetCorePal.Extensions.Domain;
 
 using ServerSource.Protocol;
 
@@ -30,6 +37,93 @@ public sealed class ContentServerApiTest : IDisposable
     private const string _administratorKey = "integration-administrator-key";
     private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"content-server-{Guid.NewGuid():N}.db");
     private readonly string _storagePath = Path.Combine(Path.GetTempPath(), $"content-server-files-{Guid.NewGuid():N}");
+
+    [Fact]
+    public async Task EveryPersistedEntityHasFilteredAuditDeletion()
+    {
+        await using var factory = CreateFactory();
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+
+        foreach (var entity in db.Model.GetEntityTypes())
+        {
+            var deleted = entity.FindProperty("Deleted");
+            Assert.NotNull(deleted);
+            Assert.False(deleted.IsShadowProperty());
+            Assert.Equal(typeof(Deleted), deleted.ClrType);
+            Assert.NotNull(entity.GetQueryFilter());
+        }
+    }
+
+    [Fact]
+    public async Task DeletingContentKeepsPackagesUsedByAnotherContent()
+    {
+        await using var factory = CreateFactory();
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var now = DateTimeOffset.UtcNow;
+        var package = PackageBlob.Create(new string('b', 64), new string('c', 64), 1,
+            "shared.scpkg", "application/vnd.scnet.content-package", now);
+        db.PackageBlobs.Add(package);
+        await db.SaveChangesAsync();
+
+        var publisherId = new PublisherId(Guid.NewGuid());
+        var first = ContentItem.Create(publisherId, "mod", "shared-first", "First", "", "", now);
+        var second = ContentItem.Create(publisherId, "mod", "shared-second", "Second", "", "", now);
+        first.SubmitVersion("1.0.0", "", "", package.Id, package.Hash, package.BlobHash, null, now);
+        second.SubmitVersion("1.0.0", "", "", package.Id, package.Hash, package.BlobHash, null, now);
+        db.Contents.AddRange(first, second);
+        await db.SaveChangesAsync();
+
+        Assert.True(await mediator.Send(new DeleteContentCommand(first.Id)));
+        Assert.True(await db.PackageBlobs.AsNoTracking().AnyAsync(item => item.Id == package.Id));
+        Assert.True(await db.ContentVersions.AsNoTracking().AnyAsync(item => item.ContentId == second.Id));
+    }
+
+    [Fact]
+    public async Task DeletedContentIdentifierAndPackageHashCanBeReused()
+    {
+        await using var factory = CreateFactory();
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+        var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        var now = DateTimeOffset.UtcNow;
+        var publisherId = new PublisherId(Guid.NewGuid());
+        var hash = new string('d', 64);
+        var originalPackage = PackageBlob.Create(hash, hash, 1, "original.scpkg", "application/test", now);
+        db.PackageBlobs.Add(originalPackage);
+        await db.SaveChangesAsync();
+        var original = ContentItem.Create(publisherId, "mod", "reusable", "Original", "", "", now);
+        original.SubmitVersion("1.0.0", "", "", originalPackage.Id, hash, hash, null, now);
+        db.Contents.Add(original);
+        await db.SaveChangesAsync();
+
+        Assert.True(await mediator.Send(new DeleteContentCommand(original.Id)));
+
+        var replacementPackage = PackageBlob.Create(hash, hash, 1, "replacement.scpkg", "application/test", now);
+        db.PackageBlobs.Add(replacementPackage);
+        await db.SaveChangesAsync();
+        var replacement = ContentItem.Create(publisherId, "mod", "reusable", "Replacement", "", "", now);
+        replacement.SubmitVersion("1.0.0", "", "", replacementPackage.Id, hash, hash, null, now);
+        db.Contents.Add(replacement);
+        await db.SaveChangesAsync();
+
+        Assert.Equal(replacement.Id, (await db.Contents.SingleAsync()).Id);
+        Assert.Equal(replacementPackage.Id, (await db.PackageBlobs.SingleAsync()).Id);
+    }
+
+    [Fact]
+    public async Task MalformedRequestBodyReturnsBadRequest()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        using var body = new StringContent("{");
+        body.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+        using var response = await client.PostAsync("/api/v1/publishers", body);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("invalid_request", (await ReadJsonAsync(response)).GetProperty("message").GetString());
+    }
 
     [Fact]
     public async Task PublisherApprovalContentApprovalAndAnonymousDownloadFormOneFlow()
@@ -166,6 +260,8 @@ public sealed class ContentServerApiTest : IDisposable
         var contentId = submission.GetProperty("contentId").GetString()!;
         var versionId = submission.GetProperty("versionId").GetString()!;
         var packageHash = submission.GetProperty("packageHash").GetString()!;
+        Assert.Equal("Test summary", submission.GetProperty("summary").GetString());
+        Assert.Equal("Test package description", submission.GetProperty("description").GetString());
 
         using var idempotentRequest = CreateAuthorizedRequest(
             HttpMethod.Post, "/api/v1/publisher/submissions", publisherKey);
@@ -404,6 +500,7 @@ public sealed class ContentServerApiTest : IDisposable
             { new StringContent(imageIdentifier), "identifier" },
             { new StringContent("Integration Skin"), "name" },
             { new StringContent("1.0.0"), "version" },
+            { new StringContent("Integration skin"), "summary" },
             { new StringContent("Generated in the API integration test"), "description" },
             { new ByteArrayContent(imageSource), "source", "skin.png" }
         };
@@ -423,6 +520,8 @@ public sealed class ContentServerApiTest : IDisposable
         {
             var inspection = ContentPackageReader.Inspect(stream);
             Assert.Equal(ContentPackageType.CharacterSkin, inspection.Manifest.Type);
+            Assert.Equal("Integration skin", inspection.Manifest.Summary);
+            Assert.Equal("Generated in the API integration test", inspection.Manifest.Description);
             builtImageHash = inspection.PackageHash;
         }
 
@@ -464,6 +563,63 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Contains(orphanPath, packageStore.AuditOrphans(referencedHashes));
         Assert.Equal(1, packageStore.CleanOrphans(referencedHashes));
         Assert.False(File.Exists(orphanPath));
+
+        using (var unauthorizedDelete = await client.DeleteAsync($"/api/v1/admin/content/{contentId}"))
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, unauthorizedDelete.StatusCode);
+        }
+
+        await db.Database.ExecuteSqlRawAsync("""
+                                            CREATE TRIGGER fail_content_version_update
+                                            BEFORE UPDATE OF Deleted ON ContentVersions
+                                            BEGIN
+                                                SELECT RAISE(FAIL, 'injected deletion failure');
+                                            END;
+                                            """);
+        using (var failedDelete = CreateAuthorizedRequest(HttpMethod.Delete,
+                   $"/api/v1/admin/content/{contentId}", _administratorKey))
+        {
+            Assert.NotEqual(HttpStatusCode.OK, (await client.SendAsync(failedDelete)).StatusCode);
+        }
+
+        Assert.True(await db.Contents.AsNoTracking().AnyAsync(item => item.Id ==
+            new Domain.Contents.ContentId(Guid.Parse(contentId))));
+        Assert.True(await db.ContentVersions.AsNoTracking().AnyAsync(item => item.Id ==
+            new Domain.Contents.ContentVersionId(Guid.Parse(versionId))));
+        Assert.True(await db.PackageBlobs.AsNoTracking().AnyAsync(item => item.Hash == packageHash));
+        Assert.True(File.Exists(Path.Combine(_storagePath, "packages", packageHash + ".scpkg")));
+        await db.Database.ExecuteSqlRawAsync("DROP TRIGGER fail_content_version_update");
+
+        using (var deleteContent = CreateAuthorizedRequest(HttpMethod.Delete,
+                   $"/api/v1/admin/content/{contentId}", _administratorKey))
+        {
+            Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(deleteContent)).StatusCode);
+        }
+
+        Assert.False(await db.Contents.AsNoTracking().AnyAsync(item => item.Id ==
+            new Domain.Contents.ContentId(Guid.Parse(contentId))));
+        Assert.False(await db.ContentVersions.AsNoTracking().AnyAsync(item => item.Id ==
+            new Domain.Contents.ContentVersionId(Guid.Parse(versionId))));
+        Assert.True(await db.Contents.WhereDeleted(new Deleted(true)).AsNoTracking().AnyAsync(item => item.Id ==
+            new Domain.Contents.ContentId(Guid.Parse(contentId))));
+        Assert.True(await db.ContentVersions.WhereDeleted(new Deleted(true)).AsNoTracking().AnyAsync(item => item.Id ==
+            new Domain.Contents.ContentVersionId(Guid.Parse(versionId))));
+        Assert.True(await db.Contents.IncludeDeleted().AsNoTracking().AnyAsync(item => item.Id ==
+            new Domain.Contents.ContentId(Guid.Parse(contentId))));
+        Assert.False(await db.PackageBlobs.AsNoTracking().AnyAsync(item => item.Hash == packageHash));
+        Assert.True(await db.PackageBlobs.WhereDeleted(new Deleted(true)).AsNoTracking()
+            .AnyAsync(item => item.Hash == packageHash));
+        Assert.False(File.Exists(Path.Combine(_storagePath, "packages", packageHash + ".scpkg")));
+        Assert.False(await db.ReviewRecords.AsNoTracking().AnyAsync(record =>
+            (record.TargetType == "Content" && record.TargetId == contentId) ||
+            (record.TargetType == "ContentVersion" && record.TargetId == versionId)));
+        Assert.True(await db.ReviewRecords.WhereDeleted(new Deleted(true)).AsNoTracking().AnyAsync(record =>
+            record.TargetType == "ContentVersion" && record.TargetId == versionId));
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await client.GetAsync($"/api/v1/packages/{packageHash}")).StatusCode);
+        using var repeatedDelete = CreateAuthorizedRequest(HttpMethod.Delete,
+            $"/api/v1/admin/content/{contentId}", _administratorKey);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.SendAsync(repeatedDelete)).StatusCode);
     }
 
     [Fact]
@@ -563,6 +719,8 @@ public sealed class ContentServerApiTest : IDisposable
 
         await using var scope = factory.Services.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+        Assert.True(await db.ServerSources.WhereDeleted(new Deleted(true)).AnyAsync(source =>
+            source.Id == new ServerSourceRegistrationId(Guid.Parse(id!))));
         Assert.Contains(await db.ReviewRecords.ToArrayAsync(), record => record.TargetType == "ServerSource");
     }
 
@@ -739,8 +897,8 @@ public sealed class ContentServerApiTest : IDisposable
         using var metadata = JsonDocument.Parse("""
                                                 {"side":"common","entrypoints":{},"dependencies":[]}
                                                 """);
-        var manifest = new ContentPackageManifest(1, ContentPackageType.Mod, identifier,
-            "Integration Mod", version,
+        var manifest = new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion, ContentPackageType.Mod, identifier,
+            "Integration Mod", "Test summary", "Test package description", version,
             new ContentPackagePayload("scnet.mod-v1", "payload/mod.json", "application/json"),
             metadata.RootElement.Clone());
         var modJson = "{\"formatVersion\":1}"u8.ToArray();

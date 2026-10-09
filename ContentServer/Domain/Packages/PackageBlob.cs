@@ -10,6 +10,8 @@ public sealed class PackageBlob : Entity<PackageBlobId>, IAggregateRoot
     {
     }
 
+    public Deleted Deleted { get; private set; } = new(false);
+
     public string Hash { get; private set; } = string.Empty;
 
     public string BlobHash { get; private set; } = string.Empty;
@@ -40,4 +42,6 @@ public sealed class PackageBlob : Entity<PackageBlobId>, IAggregateRoot
             CreatedAt = now
         };
     }
+
+    public void Delete() => Deleted = new Deleted(true);
 }

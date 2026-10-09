@@ -111,13 +111,26 @@ public static class ContentPackageCreationDialogs
 
                 DialogsManager.ShowDialog(null, new TextBoxDialog(
                     LanguageManager.Get(_typeName, "Version"), "1.0.0", 40,
-                    version => _ = Create(type, source, image, name.Trim(), version.Trim(), setBusy, saved, failed),
+                    version => AskDescription(type, source, image, name.Trim(), version.Trim(),
+                        setBusy, saved, failed),
                     false));
             }, false));
     }
 
-    private static async Task Create(ContentPackageType type, AssetSource source, PickedFile? image,
+    private static void AskDescription(ContentPackageType type, AssetSource source, PickedFile? image,
         string name, string version, Action<bool> setBusy, Action saved, Action<Exception> failed)
+    {
+        DialogsManager.ShowDialog(null, new TextBoxDialog(
+            LanguageManager.Get(_typeName, "Summary"), string.Empty, 160,
+            summary => DialogsManager.ShowDialog(null, new TextBoxDialog(
+                LanguageManager.Get(_typeName, "Description"), string.Empty, 4000,
+                description => _ = Create(type, source, image, name, summary.Trim(), description.Trim(), version,
+                    setBusy, saved, failed), false)), false));
+    }
+
+    private static async Task Create(ContentPackageType type, AssetSource source, PickedFile? image,
+        string name, string summary, string description, string version,
+        Action<bool> setBusy, Action saved, Action<Exception> failed)
     {
         setBusy(true);
         try
@@ -127,15 +140,15 @@ public static class ContentPackageCreationDialogs
             {
                 await using var input = await image.OpenReadAsync(CancellationToken.None);
                 artifact = await Task.Run(() => ContentPackageCreationManager.CreateImage(type,
-                    new ContentCreationIdentity(name, version), input));
+                    new ContentCreationIdentity(name, summary, description, version), input));
             }
             else
             {
                 artifact = await Task.Run(() => type == ContentPackageType.World
-                    ? ContentPackageCreationManager.CreateWorld(new ContentCreationIdentity(name, version),
-                        source.AssetKey)
-                    : ContentPackageCreationManager.CreateFurniture(new ContentCreationIdentity(name, version),
-                        source.AssetKey));
+                    ? ContentPackageCreationManager.CreateWorld(
+                        new ContentCreationIdentity(name, summary, description, version), source.AssetKey)
+                    : ContentPackageCreationManager.CreateFurniture(
+                        new ContentCreationIdentity(name, summary, description, version), source.AssetKey));
             }
 
             await using var validationStream = artifact.OpenRead();
@@ -157,7 +170,8 @@ public static class ContentPackageCreationDialogs
     {
         var manifest = inspection.Manifest;
         var preview = string.Format(LanguageManager.Get(_typeName, "Preview"), GetTypeName(manifest.Type),
-            manifest.Name, manifest.Version, manifest.Identifier, artifact.PackageHash);
+            manifest.Name, manifest.Version, manifest.Identifier, artifact.PackageHash) +
+            $"\n{manifest.Summary}\n{manifest.Description}";
         DialogsManager.ShowDialog(null, new MessageDialog(
             LanguageManager.Get(_typeName, "PreviewTitle"), preview,
             LanguageManager.Get(_typeName, "Save"), LanguageManager.Get("Usual", "cancel"),

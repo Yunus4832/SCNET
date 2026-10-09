@@ -15,7 +15,7 @@ ContentPackageCache。仓库中不再包含独立的模组服务或另一套模�
 ContentServer 保持为一个 Web 项目，但源码按 DDD 职责分为四个命名空间：
 
 ```text
-Controllers -> Application -> Domain
+Endpoints -> Application -> Domain
                    |
                    v
               Infrastructure
@@ -26,17 +26,16 @@ Controllers -> Application -> Domain
 - `ContentServer.Application.Queries`：每个文件包含一个 Query 及其对应的 QueryHandler，读取使用 `IQuery`/`IQueryHandler`。
 - `ContentServer.Domain.Reviews`：独立的审核记录域；Publisher 和 Content 聚合只发布审核结果领域事件，
   对应事件处理器发送 `CreateReviewRecordCommand` 创建审核记录。
-- `ContentServer.Domain.Packages`：独立的包存储域。上传 Endpoint 完成大小和表单校验后，先发送
-  `StorePackageBlobCommand` 持久化并按 SHA-256 去重，再把返回的 `PackageBlobId` 传给
-  Content 域命令；Content 聚合只引用包 ID，不持有包数据。
+- `ContentServer.Domain.Packages`：独立的包存储域。上传 Endpoint 完成大小和表单校验后，
+  `SubmitContentPackageCommand` 按 SHA-256 去重并持久化包记录；Content 聚合只引用包 ID，不持有包数据。
 - `ContentServer.Infrastructure`：NetCorePal EF Core 聚合仓储、`AppDbContextBase`、实体映射、SQLite、数据库初始化和迁移。
-- `ContentServer.Controllers`：HTTP 路由、表单解析和响应映射，不直接实现认证或业务状态转换。
-  HTTP 请求与响应模型分别位于 `Controllers/Contracts/Requests` 和
-  `Controllers/Contracts/Responses`，Application 层不引用这些 Web API 契约。
+- `ContentServer.Endpoints`：每个 HTTP 操作使用独立的 FastEndpoints 类型，按 Admin、Public、Publisher
+  等受众及 Contents、Servers、Packages 等领域组织命名空间。请求与响应模型仍定义在端点文件中。
+  端点负责表单解析、响应映射以及发送命令和查询；Application 层不引用 HTTP 契约。
 
-Controller 将 HTTP Request 映射为 Command 或 Query，并将 Application DTO 通过
-`Controllers/Mappings` 映射为 HTTP Response。Command 和 Query 只返回 Application DTO，不返回领域实体、
-`ResponseData` 或其他 HTTP 类型；API 响应外壳统一由 Controller 调用 `AsResponseData()` 创建。
+Endpoint 将 HTTP Request 映射为 Command 或 Query，并将 Application DTO 映射为 HTTP Response。
+Command 和 Query 只返回 Application DTO，不返回领域实体、`ResponseData` 或其他 HTTP 类型；
+API 响应外壳由 Endpoint 调用 `AsResponseData()` 创建。跨领域命令由领域事件处理器发送。
 
 除包下载的原始二进制流外，HTTP API 统一返回 NetCorePal `ResponseData<T>`：
 
@@ -50,21 +49,20 @@ Controller 将 HTTP Request 映射为 Command 或 Query，并将 Application DTO
 }
 ```
 
-Controller 端点直接声明具体的 `ResponseData<TResponse>` 返回类型，响应载荷使用
+端点使用具体的 `ResponseData<TResponse>` 返回类型，响应载荷使用
 `PublisherResponse`、`ContentVersionResponse`、`ModPackageResponse` 等明确 DTO；列表统一使用
-NetCorePal `PagedData<T>`。只有需要返回 `FileResult` 的包下载端点使用 `IActionResult`，从而让编译器和 OpenAPI
-能够获得其余接口的完整响应契约。
+NetCorePal `PagedData<T>`。包下载端点直接写入文件流，其余端点返回相应的 JSON 契约。
 
 业务代码不捕获异常以拼装 HTTP 错误。可预期的请求、认证和业务错误抛出 `KnownException`，状态码写入
 `ErrorCode`；`GlobalExceptionHandler` 在 HTTP 边界统一转换响应。EF 唯一约束冲突统一返回 409，无法识别的异常
 记录完整服务端日志并只向客户端返回 `internal_server_error` 和 500，避免泄露内部信息。模型绑定错误也使用同一
 响应结构。无返回数据的成功操作返回 HTTP 200 和不带 `data` 的 `ResponseData`；包下载成功时仍直接返回文件流。
 
-API Key 认证由 `Middlewares/ApiKeyAuthenticationMiddleware` 在进入 Controller 前统一处理。Middleware 把已认证的
+API Key 认证由 `Middlewares/ApiKeyAuthenticationMiddleware` 在进入 Endpoint 前统一处理。Middleware 把已认证的
 Publisher 或 Administrator ID 写入 scoped `ApiKeyAuthenticationContext`；该上下文只保存强类型身份 ID，不保存
-由 EF Core 跟踪的领域实体。需要认证的 Controller 通过构造函数显式
-依赖该上下文，不从 `HttpContext` 隐式查找身份。无需认证的发布者申请使用独立的
-`PublisherApplicationController`。Key 的随机生成、显示前缀和 SHA-256 计算集中在 `Utils/ApiKeyUtility`，不与 HTTP
+由 EF Core 跟踪的领域实体。需要认证的 Endpoint 通过构造函数显式
+依赖该上下文，不从 `HttpContext` 隐式查找身份。无需认证的发布者申请使用独立的端点。
+Key 的随机生成、显示前缀和 SHA-256 计算集中在 `Utils/ApiKeyUtility`，不与 HTTP
 或数据库查询混合。
 管理员 Key 有效但身份尚未 Active 时，身份状态接口仍允许访问，管理操作返回 HTTP 403；只有 Key 不存在或已撤销时
 才返回 HTTP 401。WebUI 仅在 401 时将本地 Key 标记为失效并退回工作台入口，不能把权限不足误判为凭证失效。
@@ -75,16 +73,27 @@ ContentServer 不提供登录或服务端会话。Web UI 在浏览器 `localStor
 
 命令由 `AddUnitOfWorkBehaviors` 自动开启事务并在处理器成功后保存工作单元，因此命令处理器不得自行调用
 `SaveChangesAsync`。聚合的写入通过 `RepositoryBase` 仓储完成；认证使用时间和启动初始化不属于命令流程，可以显式保存。
-内容上传 Endpoint 先发送 `FindContentItemQuery` 判断发布者的内容标识是否存在，再分别路由到
-`CreateContentItemCommand` 或 `UpdateContentItemVersionCommand`。创建聚合和追加版本是两个独立职责；Command
-不返回领域实体或重复的提交参数。工作单元提交后，Endpoint 使用自己已有的发布者 ID、内容标识和版本发送
+内容上传 Endpoint 先发送 `FindContentItemQuery` 和 `GetContentVersionQuery` 检查标识所有权、类型和重复版本，
+再发送 `SubmitContentPackageCommand`。包文件暂存、提交及查询编排留在上传 Endpoint，
+不另设代发命令的 Service。工作单元提交后，Endpoint 使用发布者 ID、内容标识和版本发送
 `GetContentVersionQuery`，读取包含最终强类型 ID 和包信息的
 查询 DTO；版本集合的新增由 EF Core 变更检测自动持久化，不需要为子实体增加专用仓储写入 API。
 WebUI 将提交入口拆分为“创建新内容”和“更新已有内容”。更新时先从发布者自己的内容中选择目标，保持类型和
-`identifier` 不变，预填并允许修改名称与简介，然后提交新的版本号和资源包；更新命令会在追加版本的同一事务中
-保存名称与简介。发布者工作台按内容聚合列出自己提交的内容，并允许发布者直接下架或恢复自己的内容；该操作不会
+`identifier` 不变，由新包清单提供名称、简短说明和详细描述，然后提交新的版本号和资源包；更新命令会在追加版本的同一事务中
+保存名称、简短说明和详细描述。发布者工作台按内容聚合列出自己提交的内容，并允许发布者直接下架或恢复自己的内容；该操作不会
 改变已经审核通过的版本状态。下架同时从公共列表隐藏内容并停止所有版本的匿名包下载，已有脚本直链也会返回 404；
 恢复上架后原下载链接重新有效。版本记录为每个已发布版本提供可复制的匿名下载链接。
+
+管理员工作台提供删除内容操作，与上下架分开。`DELETE /api/v1/admin/content/{contentId}`
+发送内容删除命令；命令处理器调用内容聚合的 `Delete` 方法，由聚合标记自身及版本并发出删除领域事件。EF 全局查询过滤器使已删除内容和版本不再出现在业务查询中，
+原下载链接随即失效。删除领域事件调用包域和审核域命令：相关审核记录软删除；没有其他有效版本引用的包记录软删除，
+数据库事务成功后移除对应包文件。共用包仍保留。网页操作要求输入该内容的 Identifier 再执行删除；发布者仍只管理上下架。
+若文件清理中断，服务下次启动时会清理没有有效包记录引用的文件。
+
+所有持久化领域实体均显式定义 NetCorePal 的 `Deleted` 字段，并配置全局查询过滤器；
+删除命令调用对应领域方法修改该字段，保留数据库记录。其他持久化操作不会自动软删除。
+审计值使用 NetCorePal 的强类型 `Deleted`；需要读取已删除记录时，可在 `IQueryable` 上链式调用 `IncludeDeleted()`
+或 `WhereDeleted(new Deleted(true))`，供删除后的事件处理等流程使用。
 
 领域事件使用 NetCorePal 自带的 `IDomainEvent`/`IDomainEventHandler`，由 `AppDbContextBase` 协调保存与进程内发布。
 审核类事件处理器发送 Reviews 域命令，并通过独立工作单元持久化审核记录；
@@ -93,7 +102,7 @@ WebUI 将提交入口拆分为“创建新内容”和“更新已有内容”�
 CQRS 在这里表示代码职责分离，而不是把数据拆成两套数据库：命令和查询仍使用同一个 SQLite 数据源，避免当前规模下不必要的最终一致性成本。
 列表 Query 使用 NetCorePal `PageRequest` 和 `ToPagedData`，HTTP 缺省值为第一页、每页 10 条，并计算总条数。
 `pageSize` 最大为 100。内容、提交、发布者和管理员列表还接受可选的 `query` 参数，使用参数化 LINQ
-在名称、稳定标识、简介或联系方式等适用字段上进行模糊搜索。
+在名称、稳定标识、简短说明、详细描述或联系方式等适用字段上进行模糊搜索。
 版本列表先对 `ContentVersions` 单表应用过滤和分页，再分别读取当前页关联的 `Contents` 与 `PackageBlobs`
 并组合查询 DTO；其他读取也使用 LINQ 方法链和单表分步查询，不使用 LINQ query-comprehension 的多表 Join。
 管理员内容管理列表使用独立的 `ListContentItemsQuery` 直接分页查询 `Contents`，每个聚合只返回一项，不通过版本
@@ -125,17 +134,17 @@ ContentServer/Data/content-server.db
 - `ReviewRecords`
 - `ServerSources`
 
-数据库结构由 `Infrastructure/Migrations` 中的 EF Core 迁移维护，服务启动时自动执行尚未应用的迁移。模型发生变化后，在仓库根目录创建迁移：
+数据库结构由 `Infrastructure/Migrations` 中的一份 EF Core 初始迁移和模型快照维护，服务启动时自动应用迁移。项目发布前，模型发生变化时重新生成初始迁移：
 
 ```bash
-dotnet ef migrations add <MigrationName> \
+dotnet ef migrations add InitialContentServer \
   --project ContentServer/ContentServer.csproj \
   --startup-project ContentServer/ContentServer.csproj \
   --output-dir Infrastructure/Migrations
 ```
 
-提交模型修改时必须同时提交迁移和 `ContentServerDbContextModelSnapshot.cs`。部署升级前仍应备份 SQLite 文件；
-自动迁移解决结构升级，不代替数据备份。
+重新生成前删除旧迁移文件和快照。提交模型修改时必须同时提交新迁移和
+`ContentServerDbContextModelSnapshot.cs`。旧开发数据库的迁移历史不再适用，需删除数据库文件后重新初始化。
 
 ## 配置
 

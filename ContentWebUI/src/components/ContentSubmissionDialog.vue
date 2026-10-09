@@ -18,6 +18,8 @@ interface PackagePreview {
   type: string;
   identifier: string;
   name: string;
+  summary: string;
+  description: string;
   version: string;
   packageHash: string;
   packageSize: number;
@@ -36,6 +38,7 @@ interface ExistingContentTarget {
   identifier: string;
   name: string;
   summary?: string;
+  description?: string;
 }
 
 const props = defineProps<{ open: boolean; target?: ExistingContentTarget }>();
@@ -57,6 +60,7 @@ const form = reactive({
   identifier: createUuid(),
   name: '',
   version: '1.0.0',
+  summary: '',
   description: '',
   createdAt: new Date().toISOString(),
 });
@@ -69,7 +73,9 @@ const canCreate = computed(
     !!sourceInspection.value &&
     !!form.identifier &&
     !!form.name &&
-    !!form.version,
+    !!form.version &&
+    !!form.summary.trim() &&
+    !!form.description.trim(),
 );
 
 function resetImageIdentity() {
@@ -82,7 +88,8 @@ function resetImageIdentity() {
     identifier: props.target?.identifier ?? createUuid(),
     name: props.target?.name ?? '',
     version: '1.0.0',
-    description: props.target?.summary ?? '',
+    summary: props.target?.summary ?? '',
+    description: props.target?.description ?? '',
     createdAt: new Date().toISOString(),
   });
   sourceFile.value = undefined;
@@ -140,7 +147,8 @@ function imageBody() {
   body.set('identifier', form.identifier);
   body.set('name', form.name);
   body.set('version', form.version);
-  body.set('description', form.description);
+  body.set('summary', form.summary.trim());
+  body.set('description', form.description.trim());
   body.set('source', sourceFile.value!);
   return body;
 }
@@ -181,6 +189,7 @@ async function persistDraft() {
     identifier: form.identifier,
     name: form.name,
     version: form.version,
+    summary: form.summary,
     description: form.description,
     sourceBlobId: form.sourceBlobId,
     sourceFileName: sourceFile.value.name,
@@ -293,6 +302,8 @@ onUnmounted(() => {
           <div v-if="packagePreview" class="state package-preview">
             <strong>{{ packagePreview.name }} · {{ packagePreview.version }}</strong>
             <code>{{ packagePreview.identifier }}</code>
+            <p>{{ packagePreview.summary }}</p>
+            <p class="package-description">{{ packagePreview.description }}</p>
             <span>{{ packagePreview.type }} · {{ packagePreview.packageSize }} bytes</span>
             <code>{{ packagePreview.packageHash }}</code>
           </div>
@@ -323,7 +334,8 @@ onUnmounted(() => {
             <label>名称<input v-model="form.name" /></label>
             <label>版本<input v-model="form.version" placeholder="1.0.0" /></label>
           </div>
-          <label>简介<textarea v-model="form.description" rows="2" /></label>
+          <label>简短说明<input v-model.trim="form.summary" maxlength="160" required /></label>
+          <label>详细描述<textarea v-model.trim="form.description" rows="4" maxlength="4000" required /></label>
           <label class="file-field"
             >PNG 源文件<input type="file" accept="image/png,.png" @change="selectSource"
           /></label>

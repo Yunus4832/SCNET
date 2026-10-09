@@ -7,6 +7,7 @@ export interface ContentDraft {
   identifier: string;
   name: string;
   version: string;
+  summary: string;
   description: string;
   baselineHash?: string;
   sourceBlobId: string;

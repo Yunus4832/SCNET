@@ -7,7 +7,8 @@ using Engine.Media;
 
 namespace Game.Content;
 
-public sealed record ContentCreationIdentity(string Name, string Version, Stream? BaselinePackage = null);
+public sealed record ContentCreationIdentity(string Name, string Summary, string Description, string Version,
+    Stream? BaselinePackage = null);
 
 public sealed class ContentPackageCreationArtifact(string path, string packageHash) : IDisposable
 {
@@ -146,7 +147,7 @@ public static class ContentPackageCreationManager
         }
 
         return new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion, type, identifier,
-            identity.Name, identity.Version, payload, metadata);
+            identity.Name, identity.Summary, identity.Description, identity.Version, payload, metadata);
     }
 
     private static ContentPackageCreationArtifact Write(ContentPackageManifest manifest,

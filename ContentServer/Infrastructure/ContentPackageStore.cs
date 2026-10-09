@@ -123,6 +123,8 @@ public sealed class ContentPackageStore
 
     public void DeleteTemporary(StagedContentPackage package) => File.Delete(package.TemporaryPath);
 
+    public void Delete(string packageHash) => File.Delete(GetPath(packageHash));
+
     public IReadOnlyList<string> AuditOrphans(IReadOnlySet<string> referencedHashes) =>
         Directory.EnumerateFiles(_packagesPath, $"*{ContentPackageReader.FileExtension}")
             .Where(path => !referencedHashes.Contains(Path.GetFileNameWithoutExtension(path)))

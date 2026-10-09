@@ -14,6 +14,7 @@ public sealed class ModManagementScreen : Screen
     {
         Import,
         Export,
+        Details,
         Global,
         World,
         DeleteCache,
@@ -49,6 +50,7 @@ public sealed class ModManagementScreen : Screen
         ]);
         _actionPanel.SetSecondaryItems(
         [
+            ModAction.Details,
             ModAction.Refresh,
             ModAction.DeleteCache
         ]);
@@ -101,6 +103,7 @@ public sealed class ModManagementScreen : Screen
             ModAction.Import => FilePicker.IsAvailable,
             ModAction.Export => FilePicker.IsAvailable && selected?.LocalEntry is not null,
             ModAction.Global or ModAction.World => selected is not null,
+            ModAction.Details => selected?.LocalEntry is not null,
             ModAction.DeleteCache => selected?.LocalEntry is not null,
             ModAction.Refresh => true,
             _ => false
@@ -122,6 +125,9 @@ public sealed class ModManagementScreen : Screen
                 break;
             case ModAction.Export when selected is not null:
                 ExportPackage(selected);
+                break;
+            case ModAction.Details when selected?.LocalEntry is { } local:
+                DialogsManager.Alert($"{local.Name}\n\n{local.Description}");
                 break;
             case ModAction.Global when selected is not null:
                 ToggleGlobal(selected);
@@ -458,26 +464,14 @@ public sealed class ModManagementScreen : Screen
             status.Add(LanguageManager.Get(_typeName, "StatusRuntime"));
         }
 
-        return new StackPanelWidget
-        {
-            Direction = LayoutDirection.Vertical,
-            Children =
-            {
-                new LabelWidget
-                {
-                    Text = $"{mod.ModId}  {mod.Version}",
-                    HorizontalAlignment = WidgetAlignment.Near,
-                    VerticalAlignment = WidgetAlignment.Center
-                },
-                new LabelWidget
-                {
-                    Text = $"{mod.PackageHash} | {string.Join(" / ", status)}",
-                    Color = Color.Gray,
-                    FontScale = 0.55f,
-                    HorizontalAlignment = WidgetAlignment.Near,
-                    VerticalAlignment = WidgetAlignment.Center
-                }
-            }
-        };
+        var widget = (ContainerWidget)LoadWidget(null,
+            ContentManager.Get<XElement>("Widgets/ModManagementItem"), null);
+        widget.Children.Find<LabelWidget>("ModManagementItem.Name")!.Text = mod.LocalEntry?.Name ?? mod.ModId;
+        widget.Children.Find<LabelWidget>("ModManagementItem.Summary")!.Text = mod.LocalEntry?.Summary ?? string.Empty;
+        widget.Children.Find<LabelWidget>("ModManagementItem.Id")!.Text = mod.ModId;
+        widget.Children.Find<LabelWidget>("ModManagementItem.Version")!.Text = mod.Version;
+        widget.Children.Find<LabelWidget>("ModManagementItem.Status")!.Text = string.Join(" / ", status);
+        widget.Children.Find<LabelWidget>("ModManagementItem.Hash")!.Text = mod.PackageHash;
+        return widget;
     }
 }

@@ -198,6 +198,11 @@ PublishScripts/
 # ContentServer uses Packages as a domain source directory.
 !ContentServer/Domain/Packages/
 !ContentServer/Domain/Packages/**
+# ContentServer also groups HTTP endpoints by domain.
+!ContentServer/Endpoints/Public/Packages/
+!ContentServer/Endpoints/Public/Packages/**
+!ContentServer/Endpoints/Publisher/Packages/
+!ContentServer/Endpoints/Publisher/Packages/**
 # Uncomment if necessary however generally it will be regenerated when needed
 #!**/[Pp]ackages/repositories.config
 # NuGet v3's project.json files produces more ignorable files

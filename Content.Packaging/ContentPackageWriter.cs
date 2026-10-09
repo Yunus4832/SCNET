@@ -78,6 +78,8 @@ public static class ContentPackageWriter
             writer.WriteString("type", TypeToString(manifest.Type));
             writer.WriteString("identifier", manifest.Identifier);
             writer.WriteString("name", manifest.Name);
+            writer.WriteString("summary", manifest.Summary);
+            writer.WriteString("description", manifest.Description);
             writer.WriteString("version", manifest.Version);
             writer.WritePropertyName("payload");
             writer.WriteStartObject();

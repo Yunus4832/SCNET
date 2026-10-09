@@ -24,7 +24,8 @@ public sealed record ContentVersionDto(
     string Type,
     string Identifier,
     string Name,
-    string? Summary,
+    string Summary,
+    string Description,
     ContentStatus ContentStatus,
     string VersionId,
     string Version,
@@ -44,8 +45,9 @@ public sealed record ContentVersionDto(
             content.PublisherId.ToString(),
             content.Type,
             content.Identifier,
-            content.Name,
-            content.Summary,
+            version.Name,
+            version.Summary,
+            version.Description,
             content.Status,
             version.Id.ToString(),
             version.Version,
@@ -104,7 +106,8 @@ public sealed class ListVersionsQueryHandler(
                 search is not null,
                 content => content.Name.Contains(search!) ||
                            content.Identifier.Contains(search!) ||
-                           content.Summary != null && content.Summary.Contains(search!));
+                           content.Summary.Contains(search!) ||
+                           content.Description.Contains(search!));
 
         var contentIds = await contents.Select(content => content.Id).ToListAsync(cancellationToken);
         var versions = db.ContentVersions.AsNoTracking()

@@ -41,7 +41,8 @@ interface ContentItem {
   type: string;
   identifier: string;
   name: string;
-  summary?: string;
+  summary: string;
+  description: string;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -258,6 +259,19 @@ async function setContentStatus(contentId: string, enabled: boolean) {
     actionError.value = value instanceof Error ? value.message : '操作失败';
   }
 }
+async function deleteContent(item: ContentItem) {
+  const typed = window.prompt(
+    `删除“${item.name}”及其所有版本。内容将从列表中隐藏，下载链接失效；未被其他内容使用的包文件和相关审核记录也会删除。\n请输入 Identifier 以确认：${item.identifier}`,
+  );
+  if (typed !== item.identifier) return;
+  actionError.value = '';
+  try {
+    await api(`/api/v1/admin/content/${item.contentId}`, { method: 'DELETE' });
+    await client.invalidateQueries();
+  } catch (value) {
+    actionError.value = value instanceof Error ? value.message : '删除失败';
+  }
+}
 async function revokeKey(publisherId: string) {
   try {
     await api('/api/v1/admin/publishers/' + publisherId + '/revoke-key', { method: 'POST' });
@@ -411,7 +425,11 @@ function selectContentType(value: string) {
               <div>
                 <h3>{{ item.name }}</h3>
                 <code>{{ item.identifier }}</code>
-                <p>{{ item.summary || '无简介' }}</p>
+                <p>{{ item.summary }}</p>
+                <details class="card-details">
+                  <summary>详细描述</summary>
+                  <p class="package-description">{{ item.description }}</p>
+                </details>
               </div>
               <div class="card-bottom">
                 <div class="card-actions">
@@ -673,18 +691,27 @@ function selectContentType(value: string) {
               <div>
                 <h3>{{ item.name }}</h3>
                 <code>{{ item.identifier }}</code>
-                <p>{{ item.summary || '暂无简介。' }}</p>
+                <p>{{ item.summary }}</p>
+                <details class="card-details">
+                  <summary>详细描述</summary>
+                  <p class="package-description">{{ item.description }}</p>
+                </details>
               </div>
               <div class="card-bottom">
                 <span>{{
                   item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : ''
                 }}</span
-                ><button
-                  class="button ghost content-status-button"
-                  @click="setContentStatus(item.contentId, item.status !== 'active')"
-                >
-                  {{ item.status === 'active' ? '下架内容' : '启用内容' }}
-                </button>
+                ><div class="card-actions">
+                  <button
+                    class="button ghost content-status-button"
+                    @click="setContentStatus(item.contentId, item.status !== 'active')"
+                  >
+                    {{ item.status === 'active' ? '下架内容' : '启用内容' }}
+                  </button>
+                  <button class="button ghost destructive" @click="deleteContent(item)">
+                    <Trash2 :size="16" />删除
+                  </button>
+                </div>
               </div>
             </article>
           </div>

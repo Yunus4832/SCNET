@@ -17,6 +17,7 @@ public sealed class PublisherConfiguration : IEntityTypeConfiguration<Publisher>
 {
     public void Configure(EntityTypeBuilder<Publisher> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.Property(x => x.Status).HasConversion<string>();
@@ -29,6 +30,7 @@ public sealed class PublisherKeyConfiguration : IEntityTypeConfiguration<Publish
 {
     public void Configure(EntityTypeBuilder<PublisherKey> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.HasIndex(x => x.KeyHash).IsUnique();
@@ -39,11 +41,12 @@ public sealed class ContentItemConfiguration : IEntityTypeConfiguration<ContentI
 {
     public void Configure(EntityTypeBuilder<ContentItem> b)
     {
+        b.ConfigureSoftDelete();
         b.ToTable("Contents");
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.Property(x => x.Status).HasConversion<string>();
-        b.HasIndex(x => x.NormalizedIdentifier).IsUnique();
+        b.HasIndex(x => x.NormalizedIdentifier).IsUnique().HasFilter("\"Deleted\" = 0");
         b.HasMany(x => x.Versions).WithOne(x => x.Owner).HasForeignKey(x => x.ContentId);
     }
 }
@@ -52,6 +55,7 @@ public sealed class ContentVersionConfiguration : IEntityTypeConfiguration<Conte
 {
     public void Configure(EntityTypeBuilder<ContentVersion> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.Property(x => x.Status).HasConversion<string>();
@@ -64,9 +68,10 @@ public sealed class PackageBlobConfiguration : IEntityTypeConfiguration<PackageB
 {
     public void Configure(EntityTypeBuilder<PackageBlob> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
-        b.HasIndex(x => x.Hash).IsUnique();
+        b.HasIndex(x => x.Hash).IsUnique().HasFilter("\"Deleted\" = 0");
     }
 }
 
@@ -74,6 +79,7 @@ public sealed class AdministratorConfiguration : IEntityTypeConfiguration<Admini
 {
     public void Configure(EntityTypeBuilder<Administrator> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.Property(x => x.Status).HasConversion<string>();
@@ -85,6 +91,7 @@ public sealed class AdministratorKeyConfiguration : IEntityTypeConfiguration<Adm
 {
     public void Configure(EntityTypeBuilder<AdministratorKey> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.HasIndex(x => x.KeyHash).IsUnique();
@@ -95,6 +102,7 @@ public sealed class ReviewRecordConfiguration : IEntityTypeConfiguration<ReviewR
 {
     public void Configure(EntityTypeBuilder<ReviewRecord> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
     }
@@ -104,6 +112,7 @@ public sealed class ServerSourceRegistrationConfiguration : IEntityTypeConfigura
 {
     public void Configure(EntityTypeBuilder<ServerSourceRegistration> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.Property(x => x.Status).HasConversion<string>();
@@ -118,6 +127,7 @@ public sealed class DirectoryServerConfiguration : IEntityTypeConfiguration<Dire
 {
     public void Configure(EntityTypeBuilder<DirectoryServer> b)
     {
+        b.ConfigureSoftDelete();
         b.HasKey(x => x.Id);
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.Property(x => x.ReviewStatus).HasConversion<string>();

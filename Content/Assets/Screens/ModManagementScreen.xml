@@ -7,7 +7,7 @@
         <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
             <CanvasWidget Style="{Styles/ScreenContentArea}">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
-                <ListPanelWidget Name="ModsList" Direction="Vertical" Margin="3, 3" ItemSize="64"
+                <ListPanelWidget Name="ModsList" Direction="Vertical" Margin="3, 3" ItemSize="88"
                                  SelectionColor="10, 70, 0, 90"/>
                 <LabelWidget Name="Empty" Text="[ModManagementScreen:Empty]" HorizontalAlignment="Center"
                              VerticalAlignment="Center" Color="160, 160, 160"/>

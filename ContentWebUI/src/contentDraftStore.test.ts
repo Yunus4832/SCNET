@@ -8,6 +8,7 @@ const draft: ContentDraft = {
   identifier: '0c644f44-b9cf-4099-97ca-99dd7be7108e',
   name: 'Test Skin',
   version: '1.0.0',
+  summary: 'draft summary',
   description: 'draft test',
   sourceBlobId: 'blob-1',
   sourceFileName: 'skin.png',

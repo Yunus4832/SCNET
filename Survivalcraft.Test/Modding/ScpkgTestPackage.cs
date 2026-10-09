@@ -42,6 +42,8 @@ internal static class ScpkgTestPackage
             ContentPackageType.Mod,
             identifier,
             legacy.GetProperty("name").GetString()!,
+            "Test summary",
+            "Test package description",
             legacy.GetProperty("version").GetString()!,
             new ContentPackagePayload("scnet.mod-v1", "payload/mod.json", "application/json"),
             metadata);

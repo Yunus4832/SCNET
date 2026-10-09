@@ -1,0 +1,80 @@
+using ContentServer.Application.Commands;
+using ContentServer.Domain.Publishers;
+using ContentServer.Middlewares;
+
+using FastEndpoints;
+
+using MediatR;
+
+using Microsoft.AspNetCore.Authorization;
+
+using NetCorePal.Extensions.Dto;
+using NetCorePal.Extensions.Primitives;
+
+namespace ContentServer.Endpoints.Admin.Publishers;
+
+[HttpPost("/api/v1/admin/publishers/{publisherId}/approve")]
+[AllowAnonymous]
+public sealed class AdminApprovePublisherEndpoint(IMediator mediator, ApiKeyAuthenticationContext authenticationContext)
+    : ContentEndpoint
+{
+    public override async Task HandleAsync(CancellationToken cancellationToken)
+    {
+        var publisherId = Route<string>("publisherId") ?? throw new BadHttpRequestException("Missing route value.");
+        var result = await ApprovePublisher(publisherId, cancellationToken);
+        await Send.ResponseAsync(result, HttpContext.Response.StatusCode, cancellationToken);
+    }
+
+    private Task<ResponseData> ApprovePublisher(string publisherId, CancellationToken cancellationToken)
+    {
+        return ReviewPublisher(publisherId, PublisherStatus.Active, null, cancellationToken);
+    }
+
+    private async Task<ResponseData> ReviewPublisher(
+        string id,
+        PublisherStatus status,
+        string? message,
+        CancellationToken cancellationToken
+    )
+    {
+        var result = await mediator.Send(
+            new ReviewPublisherCommand(
+                new PublisherId(ParseId(id)),
+                authenticationContext.RequireAdministratorId(),
+                status,
+                message
+            ),
+            cancellationToken
+        );
+        EnsureReviewCompleted(result, "publisher_not_found", "publisher_already_reviewed");
+        return Success();
+    }
+
+    private static Guid ParseId(string value)
+    {
+        return Guid.TryParse(value, out var id)
+            ? id
+            : throw new KnownException("invalid_id", StatusCodes.Status400BadRequest);
+    }
+
+    private static void EnsureReviewCompleted(
+        ReviewPublisherResult result,
+        string notFoundMessage,
+        string invalidStateMessage)
+    {
+        if (result == ReviewPublisherResult.NotFound)
+        {
+            throw new KnownException(notFoundMessage, StatusCodes.Status404NotFound);
+        }
+
+        if (result == ReviewPublisherResult.InvalidState)
+        {
+            throw new KnownException(invalidStateMessage, StatusCodes.Status409Conflict);
+        }
+    }
+
+    private static ResponseData Success()
+    {
+        return new ResponseData(true, string.Empty, StatusCodes.Status200OK);
+    }
+}

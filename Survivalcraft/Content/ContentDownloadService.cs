@@ -80,7 +80,7 @@ public sealed class ContentDownloadService(ContentServerClientPool pool, IConten
 
         var aggregatedVersion = new AggregatedContentVersion(version, packageHash,
             selectedMetadata.PackageSize, selectedMetadata.FileName, false, sources);
-        var content = new AggregatedContentEntry(ContentPackageType.Mod, modId, modId, null,
+        var content = new AggregatedContentEntry(ContentPackageType.Mod, modId, modId, null, null,
             [aggregatedVersion]);
         try
         {

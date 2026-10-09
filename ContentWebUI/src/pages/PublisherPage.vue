@@ -34,7 +34,8 @@ interface ContentItem {
   type: string;
   identifier: string;
   name: string;
-  summary?: string;
+  summary: string;
+  description: string;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -280,7 +281,11 @@ async function setServerEnabled(item: DirectoryServer) {
             <div>
               <h3>{{ item.name }}</h3>
               <code>{{ item.identifier }}</code>
-              <p>{{ item.summary || '暂无简介。' }}</p>
+              <p>{{ item.summary }}</p>
+              <details class="card-details">
+                <summary>详细描述</summary>
+                <p class="package-description">{{ item.description }}</p>
+              </details>
             </div>
             <div class="card-bottom">
               <span>{{ new Date(item.updatedAt).toLocaleDateString() }}</span>
@@ -332,6 +337,11 @@ async function setServerEnabled(item: DirectoryServer) {
             <div>
               <h3>{{ item.name }}</h3>
               <code>{{ item.identifier }}</code>
+              <p>{{ item.summary }}</p>
+              <details class="card-details">
+                <summary>详细描述</summary>
+                <p class="package-description">{{ item.description }}</p>
+              </details>
               <p>{{ item.reviewMessage || '提交后等待管理员审核。' }}</p>
             </div>
             <div class="card-bottom">

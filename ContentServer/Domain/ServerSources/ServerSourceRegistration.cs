@@ -20,6 +20,8 @@ public sealed class ServerSourceRegistration : Entity<ServerSourceRegistrationId
     {
     }
 
+    public Deleted Deleted { get; private set; } = new(false);
+
     public string Name { get; private set; } = string.Empty;
 
     public string ApiUrl { get; private set; } = string.Empty;
@@ -75,6 +77,12 @@ public sealed class ServerSourceRegistration : Entity<ServerSourceRegistrationId
         UpdatedAt = now;
         AddDomainEvent(new ServerSourceReviewedDomainEvent(this, administratorId, Status, ReviewMessage, now));
         return true;
+    }
+
+    public void Delete(DateTimeOffset now)
+    {
+        Deleted = new Deleted(true);
+        UpdatedAt = now;
     }
 
     private static string? Normalize(string? value)

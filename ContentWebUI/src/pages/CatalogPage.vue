@@ -177,7 +177,11 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
           <div>
             <h3>{{ item.name }}</h3>
             <code>{{ item.identifier }}</code>
-            <p>{{ item.summary || '创作者暂未提供简介。' }}</p>
+            <p>{{ item.summary }}</p>
+            <details class="card-details">
+              <summary>详细描述</summary>
+              <p class="package-description">{{ item.description }}</p>
+            </details>
           </div>
           <div class="card-bottom">
             <span>{{ size(item.packageSize) }}</span>
@@ -218,6 +222,7 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
                     {{ size(item.packageSize) }}</small
                   >
                 </div>
+                <p class="version-summary" :title="item.summary">{{ item.summary }}</p>
                 <div class="version-actions">
                   <button class="button ghost" @click="copyDownloadLink(item)">
                     <Check v-if="copiedVersionId === item.versionId" :size="15" /><Link2

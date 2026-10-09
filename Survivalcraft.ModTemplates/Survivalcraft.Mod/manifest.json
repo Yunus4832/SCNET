@@ -3,6 +3,8 @@
   "type": "mod",
   "identifier": "example.mod",
   "name": "Example Mod",
+  "summary": "A sample content package.",
+  "description": "A sample mod project. Replace this text with a clear description of its features and usage.",
   "version": "1.0.0",
   "payload": {
     "format": "scnet.mod-v1",

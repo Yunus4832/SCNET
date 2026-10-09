@@ -157,7 +157,7 @@ public sealed class ContentCatalogService
                     .ThenBy(item => item.Source.Repository.Priority)
                     .ThenBy(item => item.Source.Repository.Id).First();
                 return new AggregatedContentEntry(group.Key.Type, group.Key.Identifier, metadata.Item.Name,
-                    metadata.Item.Summary, versions);
+                    metadata.Item.Summary, metadata.Item.Description, versions);
             })
             .ToArray();
     }

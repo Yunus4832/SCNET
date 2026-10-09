@@ -4,8 +4,11 @@ using ContentServer.Domain.Contents;
 using ContentServer.Domain.Publishers;
 using ContentServer.Domain.ServerDirectory;
 using ContentServer.Domain.ServerSources;
+using ContentServer.Infrastructure;
 
 using MediatR;
+
+using Microsoft.EntityFrameworkCore;
 
 using NetCorePal.Extensions.Domain;
 
@@ -124,6 +127,29 @@ public sealed class ContentStatusChangedHandler(
             ),
             cancellationToken
         );
+    }
+}
+
+public sealed class ContentDeletedHandler(
+    ContentServerDbContext db,
+    IMediator mediator
+) : IDomainEventHandler<ContentDeletedDomainEvent>
+{
+    public async Task Handle(ContentDeletedDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var deletedVersions = await db.ContentVersions
+            .WhereDeleted(new Deleted(true))
+            .Where(version => version.ContentId == domainEvent.Content.Id)
+            .ToListAsync(cancellationToken);
+        if (deletedVersions.Count != domainEvent.Content.Versions.Count)
+        {
+            throw new InvalidOperationException("Deleted content versions are not queryable in the deletion event.");
+        }
+
+        await mediator.Send(new DeleteUnreferencedPackagesCommand(
+            deletedVersions.Select(version => version.PackageHash).Distinct().ToArray()), cancellationToken);
+        await mediator.Send(new DeleteContentReviewsCommand(domainEvent.Content.Id.ToString(),
+            deletedVersions.Select(version => version.Id.ToString()).ToArray()), cancellationToken);
     }
 }
 

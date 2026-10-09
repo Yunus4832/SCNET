@@ -3,6 +3,8 @@
   "type": "mod",
   "identifier": "example.golden",
   "name": "Golden Mod",
+  "summary": "Golden package for protocol tests.",
+  "description": "A reference mod package used by packaging tests.",
   "version": "1.0.0",
   "payload": {
     "format": "scnet.mod-v1",

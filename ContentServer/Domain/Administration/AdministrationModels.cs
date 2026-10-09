@@ -20,6 +20,8 @@ public class Administrator : Entity<AdministratorId>, IAggregateRoot
     {
     }
 
+    public Deleted Deleted { get; private set; } = new(false);
+
     public string Name { get; private set; } = string.Empty;
 
     public AdministratorStatus Status { get; private set; }
@@ -149,6 +151,8 @@ public class AdministratorKey : Entity<AdministratorKeyId>
     private AdministratorKey()
     {
     }
+
+    public Deleted Deleted { get; private set; } = new(false);
 
     public AdministratorId AdministratorId { get; private set; } = null!;
 

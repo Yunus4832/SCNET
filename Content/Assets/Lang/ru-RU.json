@@ -60,7 +60,8 @@
         "StatusMissing": "Отсутствует",
         "StatusRuntime": "Текущий запуск",
         "ReferencedCannotDelete": "Пакет всё ещё используется профилем или текущим запуском и не может быть удалён.",
-        "DeleteCacheFailed": "Не удалось удалить мод из кэша."
+        "DeleteCacheFailed": "Не удалось удалить мод из кэша.",
+        "Details": "Подробнее"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Превращение в мебель не поддерживается",
@@ -3357,7 +3358,8 @@
             "Export": "Экспорт",
             "Install": "Установить",
             "Delete": "Удалить",
-            "Create": "Создать"
+            "Create": "Создать",
+            "Details": "Подробнее"
         },
         "ContentRepositoryScreen": {
             "Title": "Репозитории контента",
@@ -3420,7 +3422,8 @@
             "TypeWorld": "Миры",
             "TypeBlocksTexture": "Текстуры блоков",
             "TypeCharacterSkin": "Облики персонажей",
-            "TypeFurniturePack": "Наборы мебели"
+            "TypeFurniturePack": "Наборы мебели",
+            "Details": "Подробнее"
         },
         "NetPlayScreen": {
             "Connect": "Подключиться",
@@ -4072,6 +4075,8 @@
         "World": "Мир",
         "BlocksTexture": "Текстура блоков",
         "CharacterSkin": "Скин персонажа",
-        "FurniturePack": "Пакет мебели"
+        "FurniturePack": "Пакет мебели",
+        "Summary": "Краткое описание",
+        "Description": "Подробное описание"
     }
 }

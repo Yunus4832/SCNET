@@ -18,7 +18,7 @@ public sealed class DeleteServerSourceCommandHandler(ServerSourceRegistrationRep
             return false;
         }
 
-        repository.Delete(source);
+        source.Delete(DateTimeOffset.UtcNow);
         return true;
     }
 }

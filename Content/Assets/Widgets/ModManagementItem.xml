@@ -1,0 +1,24 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 88">
+    <StackPanelWidget Direction="Horizontal" IsInverted="true" VerticalAlignment="Center" Margin="12, 4">
+        <CanvasWidget Size="230, 80">
+            <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" HorizontalAlignment="Far">
+                <LabelWidget Name="ModManagementItem.Version" Color="255, 255, 255" FontScale="0.65"
+                             HorizontalAlignment="Far" TextAnchor="Right" Ellipsis="true" MaxLines="1"/>
+                <LabelWidget Name="ModManagementItem.Status" Color="120, 190, 120" FontScale="0.55"
+                             HorizontalAlignment="Far" TextAnchor="Right" Ellipsis="true" MaxLines="1"/>
+                <LabelWidget Name="ModManagementItem.Hash" Color="128, 128, 128" FontScale="0.48"
+                             HorizontalAlignment="Far" TextAnchor="Right" Ellipsis="true" MaxLines="1"/>
+            </StackPanelWidget>
+        </CanvasWidget>
+        <CanvasWidget Size="Infinity, 80">
+            <StackPanelWidget Direction="Vertical" VerticalAlignment="Center">
+                <LabelWidget Name="ModManagementItem.Name" Color="255, 255, 255" FontScale="0.8"
+                             Ellipsis="true" MaxLines="1"/>
+                <LabelWidget Name="ModManagementItem.Summary" Color="220, 220, 220" FontScale="0.55"
+                             Ellipsis="true" MaxLines="1"/>
+                <LabelWidget Name="ModManagementItem.Id" Color="150, 150, 150" FontScale="0.5"
+                             Ellipsis="true" MaxLines="1"/>
+            </StackPanelWidget>
+        </CanvasWidget>
+    </StackPanelWidget>
+</CanvasWidget>

@@ -27,7 +27,8 @@ export interface ContentVersion {
   type: string;
   identifier: string;
   name: string;
-  summary?: string;
+  summary: string;
+  description: string;
   contentStatus: string;
   versionId: string;
   version: string;

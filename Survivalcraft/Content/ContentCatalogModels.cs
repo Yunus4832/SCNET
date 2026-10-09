@@ -25,6 +25,7 @@ public sealed record AggregatedContentEntry(
     string Identifier,
     string Name,
     string? Summary,
+    string? Description,
     IReadOnlyList<AggregatedContentVersion> Versions);
 
 public sealed record ContentCatalogRepositoryFailure(Guid RepositoryId, string RepositoryName, string Message);

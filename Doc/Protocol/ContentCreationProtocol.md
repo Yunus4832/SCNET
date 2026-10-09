@@ -1,6 +1,6 @@
 # SCNET 内容制造与发布契约 v1
 
-> 状态：**正式协议；实现待后续阶段完成。** 本文只固定内容制造、浏览器草稿、提交和元数据权限边界；不要求阶段 0 提前实现游戏 UI、ContentWebUI 或 ContentServer 路由。
+> 状态：**当前实现契约。** 本文描述内容制造、浏览器草稿、提交和元数据权限边界。
 
 ## 1. 权限与事实来源
 
@@ -10,12 +10,12 @@
 |---|---|---|---|
 | `formatVersion`、`type`、`payload`、类型 metadata | 对应官方制造入口 | 共享 Reader/codec 校验；不得修改 | 是 |
 | `identifier` | Mod 项目声明；其他类型由制造入口生成或从显式基线包继承 | 校验格式、类型稳定和 Publisher 归属；不得重新分配或修改 | 是 |
-| `name`、`version` | 创作者在制造时确认 | 作为不可变包事实保存；不得用仓库展示编辑覆盖 | 是 |
+| `name`、`summary`、`description`、`version` | 创作者在制造时确认 | 作为不可变包事实保存；不得用仓库展示编辑覆盖 | 是 |
 | payload 字节 | 创作源通过 codec 产生 | 权威校验；不得转码、修复或重打包 | 是 |
 | `PackageHash` | Writer/Reader 计算 | 重算并作为公开制品身份；不接受客户端声明值 | 不作为输入字段 |
 | `ContentId`、`PublisherId`、提交时间 | ContentServer | 服务端生成并保存 | 否 |
 | Pending/Published/Rejected、审核人、审核时间、理由 | ContentServer 审核流程 | 只追加不可变审核事实；当前状态由事实派生 | 否 |
-| 仓库展示摘要、标签、截图、上下架状态 | Publisher 提交，ContentServer 审核/管理 | 独立仓库元数据，可编辑但不能伪装成包内事实 | 否 |
+| 仓库标签、截图、上下架状态 | Publisher 提交，ContentServer 审核/管理 | 独立仓库元数据，可编辑但不能伪装成包内事实 | 否 |
 | `BlobHash` | ContentServer 可选计算 | 仅诊断物理 ZIP，不向客户端充当身份 | 否 |
 
 审核员可以批准、拒绝、下架或恢复仓库记录，不能修改包内字段、payload、Publisher 归属或已发生审核记录。若包错误，Publisher 必须使用新 SemVer 重新制造和提交。
@@ -56,7 +56,8 @@ type                仅 blocksTexture / characterSkin
 identifier          内容 UUID；创建草稿时生成，后续编辑保持不变
 name                manifest 显示名
 version             SemVer 字符串
-description         可选仓库展示草稿，不进入 manifest
+summary             必填简短说明，进入 manifest
+description         必填详细描述，进入 manifest
 baselineHash        可选；显式导入基线包时仅用于向用户展示
 sourceBlobId        指向 sources.blobId
 sourceFileName      仅展示，不作为协议字段
@@ -82,11 +83,11 @@ updatedAt           ISO 8601 UTC
 逻辑操作固定为：
 
 1. `validate-source`：接收 type、PNG 流，返回权威宽高、媒体类型、源字节 SHA-256 和错误；不保存服务器状态。
-2. `build-package`：接收 type、identifier、name、version、可选 description 和 PNG 流；生成并 verify `.scpkg` 后流式返回下载，服务器不保存草稿或源 Blob。
+2. `build-package`：接收 type、identifier、name、version、必填 summary、description 和 PNG 流；生成并 verify `.scpkg` 后流式返回下载，服务器不保存草稿或源 Blob。
 3. `submit-generated`：接收与 build 相同的输入；在同一请求内生成一次包，把该制品提交为 Pending，并返回 ContentId、VersionId、PackageHash 和审核状态。不得先返回一个包再用第二次重打包结果提交。
 4. `submit-package`：接收任意官方入口产生的完整 `.scpkg`，返回权威 manifest、PackageHash、冲突或 Pending 结果；不重新制造。
 
-具体 HTTP 路径可在阶段 2/3 按 Controller 组织确定，但请求语义、认证、无服务器草稿和响应事实不得改变。请求取消或连接断开必须停止读取、删除临时文件且不创建 Pending 记录。description 等仓库展示字段与包内 name 分开显示，不能覆盖 manifest 预览。
+具体 HTTP 路径可在阶段 2/3 按 Controller 组织确定，但请求语义、认证、无服务器草稿和响应事实不得改变。请求取消或连接断开必须停止读取、删除临时文件且不创建 Pending 记录。summary 和 description 均来自包内 manifest，预览和提交响应必须原样展示。
 
 ## 6. 阶段验收归属
 

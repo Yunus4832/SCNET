@@ -60,7 +60,8 @@
         "StatusMissing": "Missing",
         "StatusRuntime": "Current Runtime",
         "ReferencedCannotDelete": "This cached package is still referenced by a profile or the current runtime and cannot be deleted.",
-        "DeleteCacheFailed": "Could not delete the mod cache entry."
+        "DeleteCacheFailed": "Could not delete the mod cache entry.",
+        "Details": "Details"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Unsuitable block found",
@@ -3357,7 +3358,8 @@
             "Export": "Export",
             "Install": "Install",
             "Delete": "Delete",
-            "Create": "Create"
+            "Create": "Create",
+            "Details": "Details"
         },
         "ContentRepositoryScreen": {
             "Title": "Content Repositories",
@@ -3420,7 +3422,8 @@
             "TypeWorld": "Worlds",
             "TypeBlocksTexture": "Block textures",
             "TypeCharacterSkin": "Character skins",
-            "TypeFurniturePack": "Furniture packs"
+            "TypeFurniturePack": "Furniture packs",
+            "Details": "Details"
         },
         "NetPlayScreen": {
             "Connect": "Connect",
@@ -4072,6 +4075,8 @@
         "World": "World",
         "BlocksTexture": "Blocks texture",
         "CharacterSkin": "Character skin",
-        "FurniturePack": "Furniture pack"
+        "FurniturePack": "Furniture pack",
+        "Summary": "Short summary",
+        "Description": "Detailed description"
     }
 }

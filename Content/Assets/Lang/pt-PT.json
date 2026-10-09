@@ -60,7 +60,8 @@
         "StatusMissing": "Em falta",
         "StatusRuntime": "Execução atual",
         "ReferencedCannotDelete": "Este pacote em cache ainda é referenciado por um perfil ou pela execução atual e não pode ser eliminado.",
-        "DeleteCacheFailed": "Não foi possível eliminar a entrada de cache do mod."
+        "DeleteCacheFailed": "Não foi possível eliminar a entrada de cache do mod.",
+        "Details": "Detalhes"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "Nenhuma caixa adequada foi encontrada",
@@ -3357,7 +3358,8 @@
             "Export": "Exportar",
             "Install": "Instalar",
             "Delete": "Eliminar",
-            "Create": "Criar"
+            "Create": "Criar",
+            "Details": "Detalhes"
         },
         "ContentRepositoryScreen": {
             "Title": "Repositórios de conteúdo",
@@ -3420,7 +3422,8 @@
             "TypeWorld": "Mundos",
             "TypeBlocksTexture": "Texturas de blocos",
             "TypeCharacterSkin": "Skins de personagem",
-            "TypeFurniturePack": "Pacotes de mobiliário"
+            "TypeFurniturePack": "Pacotes de mobiliário",
+            "Details": "Detalhes"
         },
         "NetPlayScreen": {
             "Connect": "Ligar",
@@ -4072,6 +4075,8 @@
         "World": "Mundo",
         "BlocksTexture": "Textura de blocos",
         "CharacterSkin": "Visual de personagem",
-        "FurniturePack": "Pacote de mobiliário"
+        "FurniturePack": "Pacote de mobiliário",
+        "Summary": "Resumo breve",
+        "Description": "Descrição detalhada"
     }
 }

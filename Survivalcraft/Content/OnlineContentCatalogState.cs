@@ -134,7 +134,8 @@ public sealed class OnlineContentCatalogState
             .Where(entry => string.IsNullOrEmpty(normalizedSearch) ||
                             entry.Name.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
                             entry.Identifier.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) ||
-                            entry.Summary?.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) == true)
+                            entry.Summary?.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) == true ||
+                            entry.Description?.Contains(normalizedSearch, StringComparison.OrdinalIgnoreCase) == true)
             .Where(entry => repositoryId is null || entry.Versions.SelectMany(version => version.Sources)
                 .Any(source => source.RepositoryId == repositoryId))
             .Where(entry => MatchesStatus(entry, status))

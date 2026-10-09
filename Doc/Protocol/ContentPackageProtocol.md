@@ -65,6 +65,8 @@ payload/**
   "type": "blocksTexture",
   "identifier": "a5a3f8d1-8b7c-4fe0-9c9f-1acf7efbf0a1",
   "name": "Granite Terrain",
+  "summary": "A high contrast terrain texture.",
+  "description": "Replaces terrain blocks with a granite themed texture set.",
   "version": "1.0.0",
   "payload": {
     "format": "scnet.blocks-texture.png-v1",
@@ -86,9 +88,11 @@ payload/**
 | `type` | 精确为 `mod`、`world`、`blocksTexture`、`characterSkin` 或 `furniturePack`。 |
 | `identifier` | Mod 是规范 ModId；其余类型是小写 RFC 4122 UUID（`8-4-4-4-12` 十六进制形式）。全局、大小写不敏感地唯一。 |
 | `name` | NFC 文本，去除首尾 Unicode 空白后长度 1–120 个 Unicode 标量值；不得含控制字符。它只是显示名称。 |
+| `summary` | 必填简短说明，NFC、去首尾空白、1–160 个 Unicode 标量值，不含控制字符。 |
+| `description` | 必填详细描述，NFC、去首尾空白、1–4000 个 Unicode 标量值，允许换行符 LF，不含其他控制字符。 |
 | `version` | 严格 SemVer 2.0.0，必须含 major/minor/patch，禁止前导零和 build metadata（`+...`）。保留 prerelease。原始字符串是版本键，比较使用 SemVer。 |
 | `payload` | 下节定义的精确对象。 |
-| `metadata` | 对应 `type` 的精确对象；不得放入展示摘要、发布者、审核状态、ContentId 或本地资产 ID。 |
+| `metadata` | 对应 `type` 的精确对象；不得放入发布者、审核状态、ContentId 或本地资产 ID。 |
 
 ModId 继续使用现有规范：小写 ASCII 段以 `.` 分隔，段由字母或数字开头，可包含 `-` 和 `_`；最大 120 字符。SDK 必须提供单一验证器，游戏端和服务端不能各自实现正则。
 
@@ -106,7 +110,7 @@ Writer 必须用 UTF-8 无 BOM、两空格缩进、LF 换行和上表字段顺�
 公开的逐字节测试向量位于 [PackageHashVectors.json](./PackageHashVectors.json)，其他语言实现必须得到其中记录的
 `packageHash`，不能仅以同一实现内 Writer/Reader 结果相等作为互操作证据。
 可由 Writer 直接打包的最小 Mod 黄金源位于 `Content.Packaging.Test/Assets/GoldenMod/`，其固定 PackageHash 为
-`3f6d65a916b78a55ab6bab6a2c246888b4f7aa41913eff3c0d3c882bd6263a9a`。测试程序集还固定了五类最小逻辑包的 manifest、payload
+`337794900c515803f0cb6cd93d4862997c73c74cb19165508cf31c6da5753c18`。测试程序集还固定了五类最小逻辑包的 manifest、payload
 字节和预期 PackageHash，任何协议实现变更都必须显式更新并审查这些值，不能由测试在运行时自行接受新 hash。
 
 长度前缀和排序消除了连接歧义；ZIP 条目顺序、压缩等级、压缩方式、时间戳、extra fields 和 ZIP 注释不参与。manifest 的空白或字段顺序变化会改变 `PackageHash`，因为它改变了实际 manifest 字节。ContentServer 可另存原始 ZIP 的 `BlobHash`，但它不是公开包身份，不能替代 `PackageHash`。

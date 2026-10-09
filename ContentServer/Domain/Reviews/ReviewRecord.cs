@@ -12,6 +12,8 @@ public sealed class ReviewRecord : Entity<ReviewRecordId>, IAggregateRoot
     {
     }
 
+    public Deleted Deleted { get; private set; } = new(false);
+
     public AdministratorId AdministratorId { get; private set; } = null!;
 
     public string TargetType { get; private set; } = string.Empty;
@@ -42,6 +44,8 @@ public sealed class ReviewRecord : Entity<ReviewRecordId>, IAggregateRoot
             CreatedAt = now
         };
     }
+
+    public void Delete() => Deleted = new Deleted(true);
 
     private static string? NormalizeOptionalText(string? value)
     {

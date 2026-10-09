@@ -6,7 +6,8 @@ using ContentServer.Application.Commands;
 using ContentServer.Infrastructure;
 using ContentServer.Middlewares;
 
-using Microsoft.AspNetCore.Mvc;
+using FastEndpoints;
+
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -61,35 +62,12 @@ builder.Services.AddRepositories(typeof(ContentServerDbContext).Assembly);
 builder.Services.AddSingleton<ContentPackageStore>();
 builder.Services.AddSingleton<ContentSubmissionLock>();
 builder.Services.AddSingleton<ImageContentPackageBuilder>();
-builder.Services.AddScoped<ContentPackageSubmissionService>();
 builder.Services.AddSingleton<IServerSourceInspectionService, ServerSourceInspectionService>();
 builder.Services.AddScoped<ApiKeyAuthenticationContext>();
 builder.Services.AddScoped<ApiKeyAuthenticationMiddleware>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
-builder.Services.AddControllers()
-    .AddJsonOptions(options =>
-    {
-        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
-        options.JsonSerializerOptions.WriteIndented = true;
-    });
-builder.Services.Configure<ApiBehaviorOptions>(options =>
-{
-    options.InvalidModelStateResponseFactory = context =>
-    {
-        var errors = context.ModelState.Values
-            .SelectMany(value => value.Errors)
-            .Select(object (error) => string.IsNullOrWhiteSpace(error.ErrorMessage)
-                ? "invalid_value"
-                : error.ErrorMessage)
-            .ToArray();
-        return new BadRequestObjectResult(new NetCorePal.Extensions.Dto.ResponseData(
-            false,
-            "invalid_request",
-            StatusCodes.Status400BadRequest,
-            errors));
-    };
-});
+builder.Services.AddFastEndpoints();
 
 var app = builder.Build();
 await using (var scope = app.Services.CreateAsyncScope())
@@ -99,10 +77,10 @@ await using (var scope = app.Services.CreateAsyncScope())
     var packageStore = scope.ServiceProvider.GetRequiredService<ContentPackageStore>();
     packageStore.CleanTemporaryFiles();
     var referencedHashes = await db.PackageBlobs.AsNoTracking().Select(package => package.Hash).ToHashSetAsync();
-    var orphanCount = packageStore.AuditOrphans(referencedHashes).Count;
+    var orphanCount = packageStore.CleanOrphans(referencedHashes);
     if (orphanCount > 0)
     {
-        app.Logger.LogWarning("Content package storage contains {OrphanCount} orphan package files", orphanCount);
+        app.Logger.LogInformation("Removed {OrphanCount} unreferenced package files", orphanCount);
     }
 }
 
@@ -111,6 +89,6 @@ app.UseDefaultFiles();
 app.UseStaticFiles();
 app.UseCors("ContentWebUI");
 app.UseMiddleware<ApiKeyAuthenticationMiddleware>();
-app.MapControllers();
+app.UseFastEndpoints();
 app.MapFallbackToFile("index.html");
 app.Run();

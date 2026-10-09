@@ -33,6 +33,8 @@ internal static class ContentToolProgram
                 Console.WriteLine($"Type: {inspection.Manifest.Type}");
                 Console.WriteLine($"Identifier: {inspection.Manifest.Identifier}");
                 Console.WriteLine($"Name: {inspection.Manifest.Name}");
+                Console.WriteLine($"Summary: {inspection.Manifest.Summary}");
+                Console.WriteLine($"Description: {inspection.Manifest.Description}");
                 Console.WriteLine($"Version: {inspection.Manifest.Version}");
                 Console.WriteLine($"PackageHash: {inspection.PackageHash}");
                 Console.WriteLine($"Payload entries: {inspection.Entries.Count - 1}");

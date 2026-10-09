@@ -108,7 +108,7 @@ public sealed class ContentDownloadServiceTest : IDisposable
             new ContentCatalogSource(sessionScope, session.Id, session.Name, session.Priority, true,
                 "s", "v1", $"api/v1/packages/{hash}")
         ]);
-        var content = new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", null,
+        var content = new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", null, null,
             [version]);
         var service = new ContentDownloadService(pool, new ContentPackageCache(_root));
 
@@ -135,7 +135,7 @@ public sealed class ContentDownloadServiceTest : IDisposable
             "content", "version", $"api/v1/packages/{hash}");
         var version = new AggregatedContentVersion("1.0.0", hash, package.Length,
             "example.scpkg", false, [source]);
-        var content = new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", null,
+        var content = new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", null, null,
             [version]);
         var service = new ContentDownloadService(pool, new ContentPackageCache(_root));
 
@@ -174,7 +174,7 @@ public sealed class ContentDownloadServiceTest : IDisposable
                 $"api/v1/packages/{hash}")
         };
         var version = new AggregatedContentVersion("1.0.0", hash, 100, "example.scpkg", false, sources);
-        return (new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", null, [version]),
+        return (new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", null, null, [version]),
             version);
     }
 

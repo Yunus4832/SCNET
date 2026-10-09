@@ -9,6 +9,8 @@ public sealed record ContentPackageManifest(
     ContentPackageType Type,
     string Identifier,
     string Name,
+    string Summary,
+    string Description,
     string Version,
     ContentPackagePayload Payload,
     JsonElement Metadata)
@@ -35,7 +37,8 @@ public sealed record ContentPackageManifest(
             }
 
             EnsureExactProperties(root,
-                ["formatVersion", "type", "identifier", "name", "version", "payload", "metadata"], "manifest");
+                ["formatVersion", "type", "identifier", "name", "summary", "description", "version",
+                    "payload", "metadata"], "manifest");
             var formatVersion = GetRequiredInt32(root, "formatVersion", "manifest");
             if (formatVersion != CurrentFormatVersion)
             {
@@ -45,8 +48,10 @@ public sealed record ContentPackageManifest(
             var type = ParseType(GetRequiredString(root, "type", "manifest"));
             var identifier = GetRequiredString(root, "identifier", "manifest");
             var name = GetRequiredString(root, "name", "manifest");
+            var summary = GetRequiredString(root, "summary", "manifest");
+            var description = GetRequiredString(root, "description", "manifest");
             var version = GetRequiredString(root, "version", "manifest");
-            ValidateIdentity(type, identifier, name, version);
+            ValidateIdentity(type, identifier, name, summary, description, version);
             var payload = ContentPackagePayload.Parse(GetRequiredProperty(root, "payload", "manifest"));
             var metadata = GetRequiredProperty(root, "metadata", "manifest");
             if (metadata.ValueKind != JsonValueKind.Object)
@@ -54,8 +59,8 @@ public sealed record ContentPackageManifest(
                 throw new ContentPackageException("manifest.metadata must be an object.");
             }
 
-            return new ContentPackageManifest(formatVersion, type, identifier, name, version, payload,
-                metadata.Clone());
+            return new ContentPackageManifest(formatVersion, type, identifier, name, summary, description,
+                version, payload, metadata.Clone());
         }
         catch (JsonException exception)
         {
@@ -126,7 +131,21 @@ public sealed record ContentPackageManifest(
         };
     }
 
-    private static void ValidateIdentity(ContentPackageType type, string identifier, string name, string version)
+    private static void ValidateDescription(string value, string field, int maxLength)
+    {
+        var scalarCount = value.EnumerateRunes().Count();
+        if (value.Trim() != value || !value.IsNormalized(NormalizationForm.FormC) ||
+            scalarCount < 1 || scalarCount > maxLength ||
+            value.EnumerateRunes().Any(rune => Rune.IsControl(rune) &&
+                (field != "description" || rune.Value != '\n')))
+        {
+            throw new ContentPackageException(
+                $"manifest.{field} must be trimmed, 1-{maxLength} characters and contain no invalid control characters.");
+        }
+    }
+
+    private static void ValidateIdentity(ContentPackageType type, string identifier, string name,
+        string summary, string description, string version)
     {
         if (identifier.Length > 120 ||
             (type == ContentPackageType.Mod ? !_modIdPattern.IsMatch(identifier) : !_uuidPattern.IsMatch(identifier)))
@@ -141,6 +160,9 @@ public sealed record ContentPackageManifest(
             throw new ContentPackageException(
                 "manifest.name must be trimmed, 1-120 characters and contain no control characters.");
         }
+
+        ValidateDescription(summary, "summary", 160);
+        ValidateDescription(description, "description", 4000);
 
         if (!SemanticVersion.TryParse(version, out _))
         {

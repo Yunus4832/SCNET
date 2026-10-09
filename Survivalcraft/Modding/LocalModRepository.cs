@@ -13,7 +13,7 @@ public sealed class LocalModRepository(string directoryPath)
         return _cache.List()
             .Where(entry => entry.Type == ContentPackageType.Mod)
             .Select(entry => new LocalModPackageEntry(entry.Path, Path.GetFileName(entry.Path),
-                entry.Identifier, entry.Version, entry.PackageHash))
+                entry.Identifier, entry.Version, entry.PackageHash, entry.Name, entry.Summary, entry.Description))
             .ToArray();
     }
 
@@ -112,5 +112,8 @@ public sealed record LocalModPackageEntry(
     string FileName,
     string ModId,
     string Version,
-    string PackageHash
+    string PackageHash,
+    string Name = "",
+    string Summary = "",
+    string Description = ""
 );

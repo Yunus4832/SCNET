@@ -60,7 +60,8 @@
         "StatusMissing": "缺失",
         "StatusRuntime": "当前运行",
         "ReferencedCannotDelete": "该缓存包仍被 Profile 或当前 Runtime 引用，不能删除。",
-        "DeleteCacheFailed": "删除 Mod 缓存失败。"
+        "DeleteCacheFailed": "删除 Mod 缓存失败。",
+        "Details": "查看说明"
     },
     "SubsystemFurnitureBlockBehavior": {
         "0": "没有找到合适的方块",
@@ -3357,7 +3358,8 @@
             "Export": "导出",
             "Install": "安装",
             "Delete": "删除",
-            "Create": "创建"
+            "Create": "创建",
+            "Details": "查看说明"
         },
         "ContentRepositoryScreen": {
             "Title": "内容仓库",
@@ -3420,7 +3422,8 @@
             "TypeWorld": "世界",
             "TypeBlocksTexture": "方块材质",
             "TypeCharacterSkin": "玩家皮肤",
-            "TypeFurniturePack": "家具包"
+            "TypeFurniturePack": "家具包",
+            "Details": "查看说明"
         },
         "NetPlayScreen": {
             "Connect": "连接",
@@ -4072,6 +4075,8 @@
         "World": "世界",
         "BlocksTexture": "方块材质",
         "CharacterSkin": "人物皮肤",
-        "FurniturePack": "家具包"
+        "FurniturePack": "家具包",
+        "Summary": "简短说明",
+        "Description": "详细描述"
     }
 }

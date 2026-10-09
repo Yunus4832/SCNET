@@ -14,7 +14,8 @@ public sealed record SubmitContentPackageCommand(
     string Type,
     string Identifier,
     string Name,
-    string? Summary,
+    string Summary,
+    string Description,
     string Version,
     string Metadata,
     string PackageHash,
@@ -44,7 +45,7 @@ public sealed class SubmitContentPackageCommandHandler(ContentServerDbContext db
         if (content is null)
         {
             content = ContentItem.Create(command.PublisherId, command.Type, command.Identifier,
-                command.Name, command.Summary, now);
+                command.Name, command.Summary, command.Description, now);
             await db.Contents.AddAsync(content, cancellationToken);
         }
         else
@@ -64,10 +65,10 @@ public sealed class SubmitContentPackageCommandHandler(ContentServerDbContext db
                 throw new KnownException("content_version_conflict", 409);
             }
 
-            content.UpdateDetails(command.Name, command.Summary, now);
+            content.UpdateDetails(command.Name, command.Summary, command.Description, now);
         }
 
-        content.SubmitVersion(command.Version, package.Id, command.PackageHash, command.BlobHash,
-            command.Metadata, now);
+        content.SubmitVersion(command.Version, command.Summary, command.Description, package.Id,
+            command.PackageHash, command.BlobHash, command.Metadata, now);
     }
 }

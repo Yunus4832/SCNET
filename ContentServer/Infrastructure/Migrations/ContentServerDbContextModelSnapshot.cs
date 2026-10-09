@@ -29,6 +29,11 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
 
@@ -68,6 +73,11 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("KeyHash")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -100,6 +110,15 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Identifier")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -120,6 +139,7 @@ namespace ContentServer.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Summary")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Type")
@@ -132,7 +152,8 @@ namespace ContentServer.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("NormalizedIdentifier")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"Deleted\" = 0");
 
                     b.ToTable("Contents", (string)null);
                 });
@@ -155,11 +176,24 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Identifier")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("MetadataJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("PackageBlobId")
@@ -182,6 +216,10 @@ namespace ContentServer.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Summary")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -214,6 +252,11 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("FileName")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -232,7 +275,8 @@ namespace ContentServer.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Hash")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"Deleted\" = 0");
 
                     b.ToTable("PackageBlobs");
                 });
@@ -248,6 +292,11 @@ namespace ContentServer.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
@@ -283,6 +332,11 @@ namespace ContentServer.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("KeyHash")
                         .IsRequired()
@@ -326,6 +380,11 @@ namespace ContentServer.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Message")
                         .HasColumnType("TEXT");
 
@@ -353,6 +412,11 @@ namespace ContentServer.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");
@@ -412,6 +476,11 @@ namespace ContentServer.Infrastructure.Migrations
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<string>("Description")
                         .HasColumnType("TEXT");

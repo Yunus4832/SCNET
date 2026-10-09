@@ -18,6 +18,8 @@ public sealed class ContentPackageCacheTest : IDisposable
         await using var first = new MemoryStream(bytes, writable: false);
         var firstEntry = await cache.ImportAsync(first);
         var firstWrite = File.GetLastWriteTimeUtc(firstEntry.Path);
+        Assert.Equal("Test summary", firstEntry.Summary);
+        Assert.Equal("Test package description", firstEntry.Description);
 
         await using var repeated = new MemoryStream(bytes, writable: false);
         var repeatedEntry = await cache.ImportAsync(repeated);

@@ -81,7 +81,7 @@ public sealed class OnlineContentCatalogStateTest
 
     private static AggregatedContentEntry Entry(params AggregatedContentVersion[] versions)
     {
-        return new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", "Summary", versions);
+        return new AggregatedContentEntry(ContentPackageType.Mod, "example.mod", "Example", "Summary", "Description", versions);
     }
 
     private static AggregatedContentVersion Version(string version, string hash, params ContentCatalogSource[] sources)

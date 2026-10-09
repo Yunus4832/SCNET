@@ -22,6 +22,8 @@ public class Publisher : Entity<PublisherId>, IAggregateRoot
     {
     }
 
+    public Deleted Deleted { get; private set; } = new(false);
+
     public string DisplayName { get; private set; } = string.Empty;
 
     public string Contact { get; private set; } = string.Empty;
@@ -146,6 +148,8 @@ public class PublisherKey : Entity<PublisherKeyId>
     private PublisherKey()
     {
     }
+
+    public Deleted Deleted { get; private set; } = new(false);
 
     public PublisherId PublisherId { get; private set; } = null!;
 

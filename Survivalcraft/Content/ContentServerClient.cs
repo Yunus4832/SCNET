@@ -368,6 +368,7 @@ public sealed class ContentCatalogItem
     public string Identifier { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public string? Summary { get; init; }
+    public string? Description { get; init; }
     public string VersionId { get; init; } = string.Empty;
     public string Version { get; init; } = string.Empty;
     public string PackageHash { get; init; } = string.Empty;
@@ -384,6 +385,7 @@ public sealed class ContentServerModPackage
     public string FileName { get; init; } = string.Empty;
     public long PackageSize { get; init; }
     public string Side { get; init; } = "common";
+    public string? Summary { get; init; }
     public string? Description { get; init; }
     public DateTimeOffset UploadedAtUtc { get; init; }
     public string DownloadUrl { get; init; } = string.Empty;

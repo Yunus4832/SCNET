@@ -8,6 +8,8 @@ public sealed record ContentPackageCacheEntry(
     ContentPackageType Type,
     string Identifier,
     string Name,
+    string Summary,
+    string Description,
     string Version,
     long Size);
 
@@ -258,5 +260,6 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
 
     private static ContentPackageCacheEntry ToEntry(string path, ContentPackageInspection inspection) => new(
         path, inspection.PackageHash, inspection.Manifest.Type, inspection.Manifest.Identifier,
-        inspection.Manifest.Name, inspection.Manifest.Version, new FileInfo(path).Length);
+        inspection.Manifest.Name, inspection.Manifest.Summary, inspection.Manifest.Description,
+        inspection.Manifest.Version, new FileInfo(path).Length);
 }

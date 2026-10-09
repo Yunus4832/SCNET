@@ -22,6 +22,8 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
     {
     }
 
+    public Deleted Deleted { get; private set; } = new(false);
+
     public PublisherId PublisherId { get; private set; } = null!;
 
     public string Name { get; private set; } = string.Empty;
@@ -106,6 +108,12 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
     public void SetPublisherEnabled(bool enabled, DateTimeOffset now)
     {
         IsEnabledByPublisher = enabled;
+        UpdatedAt = now;
+    }
+
+    public void Delete(DateTimeOffset now)
+    {
+        Deleted = new Deleted(true);
         UpdatedAt = now;
     }
 

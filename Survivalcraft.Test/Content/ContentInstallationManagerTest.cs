@@ -171,13 +171,13 @@ public sealed class ContentInstallationManagerTest : IDisposable
     {
         using var source = new MemoryStream(OnePixelPng(), writable: false);
         using var first = ContentPackageCreationManager.CreateImage(ContentPackageType.BlocksTexture,
-            new ContentCreationIdentity("Created Texture", "1.0.0"), source);
+            new ContentCreationIdentity("Created Texture", "Summary", "Description", "1.0.0"), source);
         using var firstPackage = first.OpenRead();
         var firstInspection = ContentPackageReader.Inspect(firstPackage);
         firstPackage.Position = 0;
         using var nextSource = new MemoryStream(OnePixelPng(), writable: false);
         using var next = ContentPackageCreationManager.CreateImage(ContentPackageType.BlocksTexture,
-            new ContentCreationIdentity("Created Texture v2", "2.0.0", firstPackage), nextSource);
+            new ContentCreationIdentity("Created Texture v2", "Summary", "Description", "2.0.0", firstPackage), nextSource);
         using var nextPackage = next.OpenRead();
         var nextInspection = ContentPackageReader.Inspect(nextPackage);
 
@@ -200,7 +200,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
         using var gif = new MemoryStream("GIF89a"u8.ToArray(), writable: false);
 
         Assert.ThrowsAny<Exception>(() => ContentPackageCreationManager.CreateImage(
-            ContentPackageType.CharacterSkin, new ContentCreationIdentity("Not PNG", "1.0.0"), gif));
+            ContentPackageType.CharacterSkin, new ContentCreationIdentity("Not PNG", "Summary", "Description", "1.0.0"), gif));
 
         Assert.Equal(before, Storage.ListFileNames(GamePaths.ContentPackageCreationTemp)
             .ToHashSet(StringComparer.Ordinal));
@@ -238,7 +238,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
         }
 
         using var artifact = ContentPackageCreationManager.CreateWorld(
-            new ContentCreationIdentity("Large World", "1.0.0"), Storage.GetFileName(sourceDirectory));
+            new ContentCreationIdentity("Large World", "Summary", "Description", "1.0.0"), Storage.GetFileName(sourceDirectory));
         var cacheDirectory = Path.Combine(Path.GetTempPath(), $"scnet-large-cache-{Guid.NewGuid():N}");
         _temporaryDirectories.Add(cacheDirectory);
         var cache = new ContentPackageCache(cacheDirectory);
@@ -314,8 +314,8 @@ public sealed class ContentInstallationManagerTest : IDisposable
             ["projectFormat"] = "scnet-project-xml-v1",
             ["regionsDirectory"] = "payload/world/Regions"
         });
-        var manifest = new ContentPackageManifest(1, ContentPackageType.World,
-            "9e9a67f8-79df-4d05-8cfa-61bd8095661e", "Installed World", "1.0.0",
+        var manifest = new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion, ContentPackageType.World,
+            "9e9a67f8-79df-4d05-8cfa-61bd8095661e", "Installed World", "Summary", "Description", "1.0.0",
             new ContentPackagePayload("scnet.world-v1", "payload/world/Project.xml", "application/xml"), metadata);
         var project = Encoding.UTF8.GetBytes(
             "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>");
@@ -337,7 +337,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
         var bytes = OnePixelPng();
         var isTexture = type == ContentPackageType.BlocksTexture;
         var entry = isTexture ? "payload/texture.png" : "payload/skin.png";
-        var manifest = new ContentPackageManifest(1, type, Guid.NewGuid().ToString(), displayName, "1.0.0",
+        var manifest = new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion, type, Guid.NewGuid().ToString(), displayName, "Summary", "Description", "1.0.0",
             new ContentPackagePayload(isTexture ? "scnet.blocks-texture.png-v1" : "scnet.character-skin.png-v1",
                 entry, "image/png"),
             JsonSerializer.SerializeToElement(new Dictionary<string, object> { ["width"] = 1, ["height"] = 1 }));

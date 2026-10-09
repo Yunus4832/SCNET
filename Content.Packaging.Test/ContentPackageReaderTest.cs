@@ -19,6 +19,17 @@ public sealed class ContentPackageReaderTest
         Assert.Equal("example.test", firstInspection.Manifest.Identifier);
     }
 
+    [Theory]
+    [InlineData("summary")]
+    [InlineData("description")]
+    public void ManifestRequiresBothDescriptions(string field)
+    {
+        var manifest = _modManifest.Replace($"\"{field}\": ", $"\"missing{field}\": ",
+            StringComparison.Ordinal);
+
+        Assert.Throws<ContentPackageException>(() => ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(manifest)));
+    }
+
     [Fact]
     public void PublicPackageHashVectorMatchesProtocol()
     {
@@ -48,7 +59,7 @@ public sealed class ContentPackageReaderTest
 
         var hash = ContentPackageWriter.Write(package, manifest, entries);
 
-        Assert.Equal("3f6d65a916b78a55ab6bab6a2c246888b4f7aa41913eff3c0d3c882bd6263a9a", hash);
+        Assert.Equal("337794900c515803f0cb6cd93d4862997c73c74cb19165508cf31c6da5753c18", hash);
     }
 
     [Fact]
@@ -318,6 +329,8 @@ public sealed class ContentPackageReaderTest
                                                                              "type": "world",
                                                                              "identifier": "0f46af8f-134f-4b52-9397-c43ecbcd79d7",
                                                                              "name": "World",
+                                                                             "summary": "Test summary",
+                                                                             "description": "Test package description",
                                                                              "version": "1.0.0",
                                                                              "payload": { "format": "scnet.world-v1", "entry": "payload/world/Project.xml", "mediaType": "application/xml" },
                                                                              "metadata": { "projectFormat": "scnet-project-xml-v1", "regionsDirectory": "payload/world/Regions" }
@@ -344,6 +357,8 @@ public sealed class ContentPackageReaderTest
                                                                              "type": "furniturePack",
                                                                              "identifier": "1d5700c1-85da-41e2-b9f0-d0422e2f7937",
                                                                              "name": "Furniture",
+                                                                             "summary": "Test summary",
+                                                                             "description": "Test package description",
                                                                              "version": "1.0.0",
                                                                              "payload": { "format": "scnet.furniture-designs-xml-v1", "entry": "payload/furniture/FurnitureDesigns.xml", "mediaType": "application/xml" },
                                                                              "metadata": { "designCount": 1 }
@@ -418,7 +433,7 @@ public sealed class ContentPackageReaderTest
         {
             {
                 _modManifest, ContentPackageType.Mod,
-                "b3915f3d63c4f78b7c924ebbb38b487d508c3cb2c22b741d49f920255733fc83", [
+                "ebdebaa20640c7e42cfde9d54dee8f10208ccb3e176c72073da027dd52d7ac72", [
                     Entry("payload/mod.json", "{\"formatVersion\":1}"),
                     Entry("payload/data/example.txt", "golden mod data")
                 ]
@@ -430,13 +445,15 @@ public sealed class ContentPackageReaderTest
                   "type": "world",
                   "identifier": "7e96a4f3-fae8-4727-9fcb-9d35c2fc08b6",
                   "name": "Golden World",
+                  "summary": "Test summary",
+                  "description": "Test package description",
                   "version": "1.0.0",
                   "payload": { "format": "scnet.world-v1", "entry": "payload/world/Project.xml", "mediaType": "application/xml" },
                   "metadata": { "projectFormat": "scnet-project-xml-v1", "regionsDirectory": "payload/world/Regions" }
                 }
                 """,
                 ContentPackageType.World,
-                "722ee264e95bb2477a2f482b87e86d1f7ae3356ea2b6d4c7495079cdaba6df8a", [
+                "0a53d7f7a3cc9e3da1b0d057a4766e0d6b8f4f15f97680cb2561ddd759e2c40f", [
                     Entry("payload/world/Project.xml",
                         "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>"),
                     Entry("payload/world/Regions/0,0.dat", "region")
@@ -446,14 +463,14 @@ public sealed class ContentPackageReaderTest
                 ImageManifest("blocksTexture", "payload/texture.png", "scnet.blocks-texture.png-v1",
                     "1f8f7ff4-923e-45f5-9d0e-10b1ed44b0fa"),
                 ContentPackageType.BlocksTexture,
-                "9b5714e3e6b09ee2214484ba21d29c430fef23356c36c3a2c1bcb03a77da899f",
+                "b4b4f491cda69dbacf5042c17abbd51faf7f7aa5653189def41120659b8695e5",
                 [Entry("payload/texture.png", _onePixelPng)]
             },
             {
                 ImageManifest("characterSkin", "payload/skin.png", "scnet.character-skin.png-v1",
                     "af7db01d-9225-4b90-83d5-967d57e58b7a"),
                 ContentPackageType.CharacterSkin,
-                "23293b6b083b4bb73bbc741911f89d131be0a7d5b697619536a4a55d2bcdf213",
+                "723dd235c2714d955bfc70a57a2eafeaa0071c7ab2e7e4c41fdc30dac2e35849",
                 [Entry("payload/skin.png", _onePixelPng)]
             },
             {
@@ -463,13 +480,15 @@ public sealed class ContentPackageReaderTest
                   "type": "furniturePack",
                   "identifier": "a11bf107-f0d0-442f-94f2-c0ff1a2a8794",
                   "name": "Golden Furniture",
+                  "summary": "Test summary",
+                  "description": "Test package description",
                   "version": "1.0.0",
                   "payload": { "format": "scnet.furniture-designs-xml-v1", "entry": "payload/furniture/FurnitureDesigns.xml", "mediaType": "application/xml" },
                   "metadata": { "designCount": 1 }
                 }
                 """,
                 ContentPackageType.FurniturePack,
-                "7e877a868154ba31715a59120c93b7d380263d8eda42c6ce44d0c0ab818f0068", [
+                "023a5fa845d72661cf55efdbc11ebe47d2b5701af716f2c5119ba87f69206907", [
                     Entry("payload/furniture/FurnitureDesigns.xml",
                         "<FurnitureDesigns><Values Name=\"0\" /></FurnitureDesigns>")
                 ]
@@ -564,6 +583,8 @@ public sealed class ContentPackageReaderTest
             "type": "{{type}}",
             "identifier": "{{identifier}}",
             "name": "Golden {{type}}",
+            "summary": "Test summary",
+            "description": "Test package description",
             "version": "1.0.0",
             "payload": { "format": "{{format}}", "entry": "{{entry}}", "mediaType": "image/png" },
             "metadata": { "width": 1, "height": 1 }
@@ -579,6 +600,8 @@ public sealed class ContentPackageReaderTest
                                           "type": "mod",
                                           "identifier": "example.test",
                                           "name": "Example Test",
+                                          "summary": "Test summary",
+                                          "description": "Test package description",
                                           "version": "1.0.0",
                                           "payload": {
                                             "format": "scnet.mod-v1",

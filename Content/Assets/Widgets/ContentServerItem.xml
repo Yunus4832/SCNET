@@ -1,6 +1,7 @@
-<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 72">
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 92">
   <StackPanelWidget Direction="Vertical" Margin="12, 5">
     <LabelWidget Name="ContentServerItem.Name" Color="255, 255, 255"/>
+    <LabelWidget Name="ContentServerItem.Summary" Color="220, 220, 220" FontScale="0.65"/>
     <LabelWidget Name="ContentServerItem.Details" Color="128, 128, 128"/>
   </StackPanelWidget>
 </CanvasWidget>

@@ -29,6 +29,8 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
     {
     }
 
+    public Deleted Deleted { get; private set; } = new(false);
+
     public PublisherId PublisherId { get; private set; } = null!;
 
     public string Type { get; private set; } = string.Empty;
@@ -39,7 +41,9 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
 
     public string Name { get; private set; } = string.Empty;
 
-    public string? Summary { get; private set; }
+    public string Summary { get; private set; } = string.Empty;
+
+    public string Description { get; private set; } = string.Empty;
 
     public ContentStatus Status { get; private set; }
 
@@ -54,7 +58,8 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
         string type,
         string identifier,
         string name,
-        string? summary,
+        string summary,
+        string description,
         DateTimeOffset now
     )
     {
@@ -65,7 +70,8 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
             Identifier = identifier,
             NormalizedIdentifier = identifier.ToLowerInvariant(),
             Name = name,
-            Summary = NormalizeOptionalText(summary),
+            Summary = summary,
+            Description = description,
             Status = ContentStatus.Active,
             CreatedAt = now,
             UpdatedAt = now
@@ -74,23 +80,26 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
 
     public ContentVersion SubmitVersion(
         string version,
+        string summary,
+        string description,
         PackageBlobId packageBlobId,
         string packageHash,
         string blobHash,
         string? metadata,
         DateTimeOffset now)
     {
-        var item = ContentVersion.Create(PublisherId, Type, Identifier, version, packageBlobId,
+        var item = ContentVersion.Create(PublisherId, Type, Identifier, Name, version, summary, description, packageBlobId,
             packageHash, blobHash, NormalizeOptionalText(metadata), now);
         Versions.Add(item);
         AddDomainEvent(new ContentVersionSubmittedDomainEvent(this, item));
         return item;
     }
 
-    public void UpdateDetails(string name, string? summary, DateTimeOffset now)
+    public void UpdateDetails(string name, string summary, string description, DateTimeOffset now)
     {
         Name = name.Trim();
-        Summary = NormalizeOptionalText(summary);
+        Summary = summary;
+        Description = description;
         UpdatedAt = now;
     }
 
@@ -136,6 +145,23 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
         UpdatedAt = now;
     }
 
+    public void Delete(DateTimeOffset now)
+    {
+        if (Deleted.Value)
+        {
+            return;
+        }
+
+        Deleted = new Deleted(true);
+        UpdatedAt = now;
+        foreach (var version in Versions)
+        {
+            version.Delete(now);
+        }
+
+        AddDomainEvent(new ContentDeletedDomainEvent(this, now));
+    }
+
     private static string? NormalizeOptionalText(string? value)
     {
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
@@ -148,9 +174,17 @@ public class ContentVersion : Entity<ContentVersionId>
     {
     }
 
+    public Deleted Deleted { get; private set; } = new(false);
+
     public ContentId ContentId { get; private set; } = null!;
 
+    public string Name { get; private set; } = string.Empty;
+
     public string Version { get; private set; } = string.Empty;
+
+    public string Summary { get; private set; } = string.Empty;
+
+    public string Description { get; private set; } = string.Empty;
 
     public PublisherId PublisherId { get; private set; } = null!;
 
@@ -184,7 +218,10 @@ public class ContentVersion : Entity<ContentVersionId>
         PublisherId publisherId,
         string contentType,
         string identifier,
+        string name,
         string version,
+        string summary,
+        string description,
         PackageBlobId packageBlobId,
         string packageHash,
         string? blobHash,
@@ -197,7 +234,10 @@ public class ContentVersion : Entity<ContentVersionId>
             PublisherId = publisherId,
             ContentType = contentType,
             Identifier = identifier,
+            Name = name,
             Version = version,
+            Summary = summary,
+            Description = description,
             PackageBlobId = packageBlobId,
             PackageHash = packageHash,
             BlobHash = blobHash,
@@ -219,6 +259,13 @@ public class ContentVersion : Entity<ContentVersionId>
             PublishedAt = now;
         }
     }
+
+    public void Delete(DateTimeOffset now)
+    {
+        Deleted = new Deleted(true);
+        UpdatedAt = now;
+    }
+
 }
 
 public sealed record ContentVersionSubmittedDomainEvent(
@@ -241,3 +288,5 @@ public sealed record ContentStatusChangedDomainEvent(
     ContentStatus Status,
     DateTimeOffset OccurredAt
 ) : IDomainEvent;
+
+public sealed record ContentDeletedDomainEvent(ContentItem Content, DateTimeOffset OccurredAt) : IDomainEvent;

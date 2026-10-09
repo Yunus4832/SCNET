@@ -13,6 +13,7 @@ public sealed class ContentPackageScreen : Screen
     private enum PackageAction
     {
         Create,
+        Details,
         Import,
         Export,
         Install,
@@ -52,7 +53,7 @@ public sealed class ContentPackageScreen : Screen
             PackageAction.Export,
             PackageAction.Install
         ]);
-        _actionPanel.SetSecondaryItems([PackageAction.Delete]);
+        _actionPanel.SetSecondaryItems([PackageAction.Details, PackageAction.Delete]);
         _packageList.ItemWidgetFactory = item =>
         {
             var package = (ContentPackageCacheEntry)item;
@@ -60,6 +61,7 @@ public sealed class ContentPackageScreen : Screen
                 this, ContentManager.Get<XElement>("Widgets/ContentServerItem"), null);
             widget.Children.Find<LabelWidget>("ContentServerItem.Name")!.Text =
                 $"{package.Name}  {package.Version}";
+            widget.Children.Find<LabelWidget>("ContentServerItem.Summary")!.Text = package.Summary;
             widget.Children.Find<LabelWidget>("ContentServerItem.Details")!.Text =
                 $"{package.Type} | {package.Identifier} | {DataSizeFormatter.Format(package.Size)}";
             return widget;
@@ -105,7 +107,7 @@ public sealed class ContentPackageScreen : Screen
         {
             PackageAction.Create or PackageAction.Import => FilePicker.IsAvailable,
             PackageAction.Export => FilePicker.IsAvailable && hasSelection,
-            PackageAction.Install or PackageAction.Delete => hasSelection,
+            PackageAction.Install or PackageAction.Delete or PackageAction.Details => hasSelection,
             _ => false
         };
     }
@@ -128,6 +130,9 @@ public sealed class ContentPackageScreen : Screen
                 break;
             case PackageAction.Export when selected is not null:
                 ExportPackage(selected);
+                break;
+            case PackageAction.Details when selected is not null:
+                DialogsManager.Alert($"{selected.Name}\n\n{selected.Description}");
                 break;
             case PackageAction.Install when selected is not null:
                 InstallPackage(selected);

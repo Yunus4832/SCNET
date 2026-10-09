@@ -16,7 +16,8 @@ public sealed record ContentItemDto(
     string Type,
     string Identifier,
     string Name,
-    string? Summary,
+    string Summary,
+    string Description,
     ContentStatus Status,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
@@ -41,8 +42,8 @@ public sealed class ListContentItemsQueryHandler(ContentServerDbContext db)
             .WhereIf(search is not null, content =>
                 content.Name.Contains(search!) ||
                 content.Identifier.Contains(search!) ||
-                content.Summary != null &&
-                content.Summary.Contains(search!))
+                content.Summary.Contains(search!) ||
+                content.Description.Contains(search!))
             .OrderByDescending(content => content.Id)
             .Select(content => new ContentItemDto(
                 content.Id,
@@ -51,6 +52,7 @@ public sealed class ListContentItemsQueryHandler(ContentServerDbContext db)
                 content.Identifier,
                 content.Name,
                 content.Summary,
+                content.Description,
                 content.Status,
                 content.CreatedAt,
                 content.UpdatedAt))

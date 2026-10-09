@@ -17,6 +17,7 @@ public sealed class OnlineContentScreen : Screen
     private enum CatalogAction
     {
         Download,
+        Details,
         PreviousPage,
         NextPage,
         Refresh
@@ -95,7 +96,7 @@ public sealed class OnlineContentScreen : Screen
             CatalogAction.PreviousPage,
             CatalogAction.NextPage
         ]);
-        _actionPanel.SetSecondaryItems([CatalogAction.Refresh]);
+        _actionPanel.SetSecondaryItems([CatalogAction.Details, CatalogAction.Refresh]);
     }
 
     public override void Enter(object[] parameters)
@@ -155,11 +156,13 @@ public sealed class OnlineContentScreen : Screen
         var widget = (ContainerWidget)LoadWidget(null,
             ContentManager.Get<XElement>("Widgets/OnlineContentItem"), null);
         widget.Children.Find<LabelWidget>("OnlineContentItem.Name")!.Text = content.Name;
+        widget.Children.Find<LabelWidget>("OnlineContentItem.Identifier")!.Text = content.Identifier;
         var typeName = GetContentTypeName(content.Type);
         widget.Children.Find<LabelWidget>("OnlineContentItem.Details")!.Text = latest is null
-            ? $"{typeName} | {content.Identifier}"
-            : $"{typeName} | {content.Identifier} | {latest.Version} | " +
+            ? typeName
+            : $"{typeName} | {latest.Version} | " +
               DataSizeFormatter.Format(latest.PackageSize);
+        widget.Children.Find<LabelWidget>("OnlineContentItem.Summary")!.Text = content.Summary ?? string.Empty;
         widget.Children.Find<LabelWidget>("OnlineContentItem.Sources")!.Text = latest is null
             ? string.Empty
             : string.Join(", ", latest.Sources.Select(source => source.RepositoryName).Distinct());
@@ -297,6 +300,7 @@ public sealed class OnlineContentScreen : Screen
         return action switch
         {
             CatalogAction.Download => GetSelectedVersion() is { IsCached: false },
+            CatalogAction.Details => _contentList.SelectedItem is AggregatedContentEntry,
             CatalogAction.PreviousPage => _pageIndex > 1,
             CatalogAction.NextPage => entriesCount > _pageIndex * _pageSize || _state.HasMore,
             CatalogAction.Refresh => true,
@@ -315,6 +319,9 @@ public sealed class OnlineContentScreen : Screen
         {
             case CatalogAction.Download when GetSelectedVersion() is { } version:
                 Download(version.Version);
+                break;
+            case CatalogAction.Details when _contentList.SelectedItem is AggregatedContentEntry entry:
+                DialogsManager.Alert($"{entry.Name}\n\n{entry.Description}");
                 break;
             case CatalogAction.PreviousPage:
                 _pageIndex--;

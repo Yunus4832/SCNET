@@ -7,7 +7,7 @@
         <CanvasWidget>
             <CanvasWidget Margin="10, 66">
                 <BevelledRectangleWidget Style="{Styles/Area}"/>
-                <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="82"
+                <ListPanelWidget Name="ContentList" Direction="Vertical" Margin="3, 3" ItemSize="100"
                                  SelectionColor="10, 70, 0, 90"/>
                 <LabelWidget Name="Status" HorizontalAlignment="Center" VerticalAlignment="Center"
                              Color="180, 180, 180"/>

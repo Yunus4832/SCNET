@@ -3,7 +3,9 @@
   "type": "mod",
   "identifier": "scnet.territory",
   "name": "Territory Stone",
-  "version": "1.0.3",
+  "summary": "放置领地石，保护所在区块的建造与通行。",
+  "description": "领地石保护所在区块：非授权玩家不能挖掘或放置方块。领主可单独设置是否禁止非成员步行进入；已在领地内的玩家始终可以离开，传送不受限制。对准领地石按 G 或点击编辑按钮调整设置。",
+  "version": "1.0.0",
   "payload": {
     "format": "scnet.mod-v1",
     "entry": "payload/mod.json",

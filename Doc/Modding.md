@@ -48,7 +48,7 @@ payload/assets/<mod-id>/**
 模板项目引用 `SCNET.Survivalcraft` 作为编译期 API，并私有引用 `SCNET.ContentTool`。
 工具包携带的构建目标会在构建后创建和验证 `.scpkg`，宿主运行时程序集不会复制进包。
 
-仓库内的 `VerificationBlockMod` 也只通过相同的 NuGet 包引用构建，不使用项目引用或
+仓库内的 `TerritoryStoneMod` 也只通过相同的 NuGet 包引用构建，不使用项目引用或
 相对路径导入 Target。本地开发时先将当前版本包生成到仓库的 `Publish/NuGet` 文件源。
 
 模板资源位于 `Survivalcraft.ModTemplates/Survivalcraft.Mod/`。解决方案里唯一与模板打包直接相关的项目是 `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`，它会把这些资源打包成可发布的 `dotnet new` 模板包。
@@ -85,29 +85,6 @@ data.SetValue("enabled", true);
 载荷复用现有 `ValuesDictionary` 序列化，使用嵌套字典、字符串、数值及已有可序列化值类型，不直接存储模组自定义 CLR 对象。玩家相关业务数据可使用玩家 GUID 作为字典键；不会自动解析实体引用或级联清理数据。扩展数据默认不发送给联机客户端，需要同步时使用模组自己的网络消息。
 
 所有者分组使维护工具能够识别和整组清理业务数据，但不是权限沙箱，也不提供模组实体、方块、物品的来源追踪或完整卸载能力。真正属于实体、组件或子系统的数据仍可使用原有序列化机制，不要求全部搬到扩展节点。
-
-## 示例模组
-
-`VerificationBlockMod/` 是当前端到端验证模组，展示了：
-
-- 代码、数据和 assets 打进同一个 `.scpkg`
-- 注册自定义方块
-- 生命周期日志
-- 玩家伤害拦截
-- 方块挖掘、放置和世界更新回调
-
-构建：
-
-```bash
-dotnet pack Engine.Core/Engine.Core.csproj -c Release
-dotnet pack Engine.Serialization/Engine.Serialization.csproj -c Release
-dotnet pack Engine/Engine.csproj -c Release
-dotnet pack EntitySystem/EntitySystem.csproj -c Release
-dotnet pack Content.Packaging/Content.Packaging.csproj -c Release
-dotnet pack Survivalcraft/Survivalcraft.csproj -c Release
-dotnet pack ContentTool/ContentTool.csproj -c Release
-dotnet build VerificationBlockMod/VerificationBlockMod.csproj -c Debug
-```
 
 ## 命令与前端适配器
 

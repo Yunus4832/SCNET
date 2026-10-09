@@ -39,6 +39,8 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         ContentPackageType type,
         string identifier,
         string name,
+        string summary,
+        string description,
         string version,
         long maximumBytes,
         CancellationToken cancellationToken)
@@ -67,7 +69,7 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
                 height = sourceInspection.Height
             });
             var manifest = new ContentPackageManifest(ContentPackageManifest.CurrentFormatVersion,
-                type, identifier, name, version, payload, metadata);
+                type, identifier, name, summary, description, version, payload, metadata);
             await using (var output = new FileStream(packagePath, FileMode.CreateNew, FileAccess.ReadWrite,
                              FileShare.None, 64 * 1024, FileOptions.Asynchronous | FileOptions.SequentialScan))
             {

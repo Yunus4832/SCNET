@@ -18,7 +18,7 @@ public sealed class DeleteDirectoryServerCommandHandler(DirectoryServerRepositor
             return false;
         }
 
-        repository.Delete(server);
+        server.Delete(DateTimeOffset.UtcNow);
         return true;
     }
 }

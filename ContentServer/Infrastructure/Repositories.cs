@@ -70,30 +70,23 @@ public sealed class ContentRepository(
         return _context.Contents.FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
     }
 
+    public Task<ContentItem?> FindWithVersionsAsync(ContentId id, CancellationToken cancellationToken)
+    {
+        return _context.Contents.Include(item => item.Versions)
+            .FirstOrDefaultAsync(item => item.Id == id, cancellationToken);
+    }
+
     public Task<ContentItem?> FindByVersionAsync(ContentVersionId versionId, CancellationToken cancellationToken)
     {
         return _context.Contents.Include(item => item.Versions)
             .FirstOrDefaultAsync(item => item.Versions.Any(version => version.Id == versionId), cancellationToken);
     }
+
 }
 
 public sealed class ReviewRecordRepository(
     ContentServerDbContext context
 ) : RepositoryBase<ReviewRecord, ReviewRecordId, ContentServerDbContext>(context);
-
-public sealed class PackageBlobRepository(
-    ContentServerDbContext context
-) : RepositoryBase<PackageBlob, PackageBlobId, ContentServerDbContext>(context)
-{
-    private readonly ContentServerDbContext _context = context;
-
-    public Task<PackageBlob?> FindByHashAsync(string hash, CancellationToken cancellationToken)
-    {
-        return _context.PackageBlobs.FirstOrDefaultAsync(
-            package => package.Hash == hash,
-            cancellationToken);
-    }
-}
 
 public sealed class ServerSourceRegistrationRepository(
     ContentServerDbContext context
@@ -114,10 +107,6 @@ public sealed class ServerSourceRegistrationRepository(
             cancellationToken);
     }
 
-    public void Delete(ServerSourceRegistration source)
-    {
-        _context.ServerSources.Remove(source);
-    }
 }
 
 public sealed class DirectoryServerRepository(
@@ -138,5 +127,4 @@ public sealed class DirectoryServerRepository(
         _context.DirectoryServers.AnyAsync(server => server.Id != excludedId && server.Address == address &&
             server.ReviewStatus != DirectoryServerReviewStatus.Rejected, cancellationToken);
 
-    public void Delete(DirectoryServer server) => _context.DirectoryServers.Remove(server);
 }
