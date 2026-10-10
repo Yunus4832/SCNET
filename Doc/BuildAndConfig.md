@@ -11,6 +11,7 @@
 - `GlobalTargetFramework`
 - `AndroidTargetFramework`
 - `MinAndroidApiVersion`
+- `AndroidVersionCode`（发布新版 APK 时递增，且同一签名密钥保持不变）
 - `LangVersion`
 - `Nullable`
 - `WarningsAsErrors`
@@ -70,6 +71,7 @@ Android 的几个变体项目会复用这份配置，只在自己的 `.csproj` �
 构建和 MSBuild 项目引用求值产生架构偏差。
 
 公共 Manifest 位于 `SharedProperties/AndroidManifest.xml`，所有 Android 启动器使用同一个模板。
+应用通过限制到缓存 `updates/` 子目录的 FileProvider 把已校验 APK 交给 Android 系统安装器；各架构变体必须链接同一份 `update_paths.xml`。
 架构项目不应保存独立副本；需要平台级声明时修改公共模板，需要真正的架构差异时再使用条件配置
 或 Manifest Overlay。
 

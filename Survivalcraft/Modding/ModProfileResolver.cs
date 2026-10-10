@@ -1,4 +1,5 @@
 using Game.Content;
+using Game.Managers;
 
 namespace Game.Modding;
 
@@ -14,7 +15,7 @@ public static class ModProfileResolver
         Directory.CreateDirectory(localRepositoryPath);
         var repository = new LocalModRepository(localRepositoryPath);
         var download = CreateDownloadService(localRepositoryPath);
-        var context = ContentSourceContext.Persistent(SettingsManager.Current.ContentRepositories);
+        var context = ContentSourceContext.Persistent(ContentRepositoryManager.Current.Snapshot());
         var resolvedSources = new List<ModPackageSource>();
         foreach (var requirement in profile.Packages)
         {
@@ -31,7 +32,7 @@ public static class ModProfileResolver
         Action<string>? log = null)
     {
         return EnsurePackagesAvailable(profile, localRepositoryPath,
-            ContentSourceContext.Persistent(SettingsManager.Current.ContentRepositories), log);
+            ContentSourceContext.Persistent(ContentRepositoryManager.Current.Snapshot()), log);
     }
 
     public static bool EnsurePackagesAvailable(
@@ -102,7 +103,7 @@ public static class ModProfileResolver
 
     private static ContentDownloadService CreateDownloadService(string localRepositoryPath)
     {
-        return new ContentDownloadService(SettingsManager.ContentClients,
+        return new ContentDownloadService(ContentServerClientPool.Shared,
             new ContentPackageCache(localRepositoryPath));
     }
 }

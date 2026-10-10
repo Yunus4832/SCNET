@@ -3387,7 +3387,9 @@
             "EditTitle": "Editar repositório de conteúdo",
             "AddressLabel": "Endereço",
             "NameLabel": "Nome",
-            "Save": "Guardar"
+            "Save": "Guardar",
+            "InformationSource": "Fonte de info",
+            "SelectInformationSource": "Selecionar fonte"
         },
         "OnlineContentScreen": {
             "Title": "Conteúdo online",
@@ -3528,6 +3530,24 @@
             "Save": "Guardar",
             "Cancel": "Cancelar",
             "ReadOnly": "As placas não podem ser editadas no modo Aventura"
+        },
+        "GameInformationManager": {
+            "Announcements": "Anúncios",
+            "Updates": "Verificar atualizações",
+            "Configure": "Configurar",
+            "UpToDate": "Já está atualizado",
+            "ReleaseDetails": "Origem: {0}  Versão: {1}  {2}  Download: {3}",
+            "Download": "Baixar",
+            "OpenLink": "Abrir link",
+            "ConfirmDownload": "Baixar {1} de {0}?",
+            "Downloading": "Baixando atualização",
+            "Install": "Instalar atualização",
+            "ConfirmInstall": "O pacote {1} de {0} foi verificado. Abrir instalador?",
+            "InstallFailed": "Não foi possível abrir o instalador",
+            "DownloadFailed": "Falha no download ou verificação. Tente novamente.",
+            "NoInformationSourceTitle": "Sem fonte de anúncios e versões",
+            "NoInformationSourceBody": "Selecione primeiro uma fonte de anúncios e versões nas configurações de repositórios.",
+            "ReleaseCheckFailed": "Não foi possível verificar as versões do jogo em “{0}”. Verifique o endereço do servidor e a conexão de rede."
         }
     },
     "FireworksBlock": {
@@ -3747,7 +3767,6 @@
             "47": "Um pequeno pássaro que vive em regiões temperadas.Às vezes, os ovos são pequenos, mas comestíveis. Eu não posso comer."
         }
     },
-    "GameUpdateHelper": "A versão online está atualizada!",
     "SubsystemBlockBehaviors": {
         "1": "Não tens permissão para usar comportamentos de bloco aqui"
     },

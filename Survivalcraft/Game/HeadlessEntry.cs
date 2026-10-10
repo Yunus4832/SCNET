@@ -385,6 +385,8 @@ public static class HeadlessEntry
     private static bool InitializeHeadless()
     {
         SettingsManager.Initialize();
+        ContentRepositoryManager.Initialize();
+        ServerDirectoryManager.Initialize();
         ContentManager.Initialize();
         PackageManager.Initialize();
         var startupSession = StartupManager.Current.Session;

@@ -150,6 +150,8 @@ public static class GameEntry
         Log.Information(
             $"Survivalcraft starting up at {DateTime.Now}, Version={VersionsManager.Version}, ProtocolVersion={VersionsManager.ProtocolVersion}, Platform={PlatformManager.Platform}, Storage.AvailableFreeSpace={Storage.FreeSpace / 1024 / 1024}MB, ApproximateScreenDpi={ScreenResolutionManager.ApproximateScreenDpi:0.0}, ApproxScreenInches={ScreenResolutionManager.ApproximateScreenInches:0.0}, ScreenResolution={Window.Size}, ProcessorsCount={Environment.ProcessorCount}, RAM={Utilities.GetTotalAvailableMemory() / 1024 / 1024}MB, 64bit={Marshal.SizeOf<IntPtr>() == 8}");
         SettingsManager.Initialize();
+        ContentRepositoryManager.Initialize();
+        ServerDirectoryManager.Initialize();
         ContentManager.Initialize();
         ScreensManager.Initialize();
     }

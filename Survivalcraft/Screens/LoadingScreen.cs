@@ -140,7 +140,7 @@ public class LoadingScreen : Screen
             }
 
             MusicManager.CurrentMix = MusicManager.Mix.Menu;
-            GameUpdateHelper.CheckGameUpdate();
+            GameInformationManager.StartAutomaticCheck();
         });
     }
 

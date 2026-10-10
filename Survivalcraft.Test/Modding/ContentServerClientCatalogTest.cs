@@ -66,6 +66,56 @@ public sealed class ContentServerClientCatalogTest
         await Assert.ThrowsAsync<InvalidDataException>(() => client.CheckHealthAsync());
     }
 
+    [Theory]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.Unauthorized)]
+    public async Task HealthCheckReturnsHttpFailure(HttpStatusCode statusCode)
+    {
+        using var httpClient = new HttpClient(new StubHandler(_ => new HttpResponseMessage(statusCode)));
+        using var client = new ContentServerClient("https://content.example", httpClient);
+
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() => client.CheckHealthAsync());
+
+        Assert.Equal(statusCode, exception.StatusCode);
+    }
+
+    [Fact]
+    public async Task HealthCheckReturnsUnreachableForNetworkFailure()
+    {
+        using var httpClient = new HttpClient(new StubHandler(_ => throw new HttpRequestException("Connection refused")));
+        using var client = new ContentServerClient("https://content.example", httpClient);
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => client.CheckHealthAsync());
+    }
+
+    [Fact]
+    public async Task HealthCheckReturnsTimeoutForClientTimeout()
+    {
+        using var httpClient = new HttpClient(new StubHandler(_ => throw new TaskCanceledException("Timed out")));
+        using var client = new ContentServerClient("https://content.example", httpClient);
+
+        await Assert.ThrowsAsync<TaskCanceledException>(() => client.CheckHealthAsync());
+    }
+
+    [Fact]
+    public async Task AnnouncementAndReleaseQueriesPropagateConnectionFailure()
+    {
+        using var httpClient = new HttpClient(new StubHandler(_ => throw new HttpRequestException("Connection refused")));
+        using var client = new ContentServerClient("https://content.example", httpClient);
+
+        await Assert.ThrowsAsync<HttpRequestException>(() => client.ListGameAnnouncementsAsync());
+        await Assert.ThrowsAsync<HttpRequestException>(() => client.GetLatestGameReleaseAsync("linux"));
+    }
+
+    [Fact]
+    public async Task MissingLatestReleaseIsSuccessfulEmptyResult()
+    {
+        using var httpClient = new HttpClient(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound)));
+        using var client = new ContentServerClient("https://content.example", httpClient);
+
+        Assert.Null(await client.GetLatestGameReleaseAsync("linux"));
+    }
+
     [Fact]
     public async Task ReadsRegisteredServerSources()
     {

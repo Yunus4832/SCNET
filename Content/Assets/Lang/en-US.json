@@ -3387,7 +3387,9 @@
             "EditTitle": "Edit Content Repository",
             "AddressLabel": "Address",
             "NameLabel": "Name",
-            "Save": "Save"
+            "Save": "Save",
+            "InformationSource": "Info source",
+            "SelectInformationSource": "Select Source"
         },
         "OnlineContentScreen": {
             "Title": "Online Content",
@@ -3528,6 +3530,24 @@
             "Save": "Save",
             "Cancel": "Cancel",
             "ReadOnly": "Signs cannot be edited in Adventure mode"
+        },
+        "GameInformationManager": {
+            "Announcements": "Announcements",
+            "Updates": "Check Updates",
+            "Configure": "Configure",
+            "UpToDate": "Already up to date",
+            "ReleaseDetails": "Source: {0}  Version: {1}  {2}  Download: {3}",
+            "Download": "Download",
+            "OpenLink": "Open Link",
+            "ConfirmDownload": "Download {1} from {0}?",
+            "Downloading": "Downloading update",
+            "Install": "Install Update",
+            "ConfirmInstall": "The {1} package from {0} passed verification. Open system installer?",
+            "InstallFailed": "Could not open system installer",
+            "DownloadFailed": "Download or verification failed. Please retry.",
+            "NoInformationSourceTitle": "No announcement and release source",
+            "NoInformationSourceBody": "Select an announcement and release source in content repository settings first.",
+            "ReleaseCheckFailed": "Could not check game releases from “{0}”. Check the server address and network connection."
         }
     },
     "FireworksBlock": {
@@ -3747,7 +3767,6 @@
             "47": "A tiny bird which lives in temperate areas. Sometimes lays very small but edible eggs. Not edible."
         }
     },
-    "GameUpdateHelper": "The multiplayer version has been updated！",
     "SubsystemBlockBehaviors": {
         "1": "You do not have permission to use block behavior here"
     },

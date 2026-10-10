@@ -1,6 +1,8 @@
-namespace Game.Servers;
+using Game.Servers;
 
-public sealed record ServerDirectoryState
+namespace Game;
+
+public sealed record ServerDirectorySettings
 {
     public IReadOnlyList<StoredServerEntry> LocalServers { get; init; } = [];
 

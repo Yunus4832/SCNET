@@ -56,7 +56,7 @@ Survivalcraft 将本地源、局域网和每一个已安装 HTTP 来源分开。
 会在本地源创建条目或添加收藏标记。在线状态、延迟和世界信息只保存在当前刷新周期。
 
 NetPlay 的第一层筛选选择本地源、局域网或外部源。第二层在本地源下筛选标记，在外部源下筛选具体来源；
-局域网无需第二层筛选。本地条目存放在 Settings 的 `ServerDirectory/LocalServers` 节点，局域网结果不序列化。
+局域网无需第二层筛选。本地条目存放在实例的 `ServerDirectory.xml` 中的 `LocalServers` 节点，局域网结果不序列化。
 
 ## ContentServer 参考实现
 
@@ -64,7 +64,7 @@ ContentServer 内置实现本协议，并通过 `/api/v1/server-directory` 提�
 管理员审核、编辑和停用属于 ContentServer 的管理 API，不属于服务器源协议。第三方服务器源可以自行决定条目如何进入
 目录；不希望自行实现认证、审核和管理能力的部署者可以直接运行 ContentServer。
 
-已安装服务器源存放在 Settings 的 `ServerDirectory/InstalledSources` 节点中，包含稳定本地 ID、可选
+已安装服务器源存放在实例的 `ServerDirectory.xml` 中的 `InstalledSources` 节点中，包含稳定本地 ID、可选
 ContentServer 登记 ID、显示名称、API URL、启用状态和顺序。NetPlay 只读取已启用来源；安装、禁用、排序和删除由内容页面中的
 服务器源管理 Screen 负责。
 

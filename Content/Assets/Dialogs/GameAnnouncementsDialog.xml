@@ -1,0 +1,27 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets">
+    <CanvasWidget Size="760, 420" ClampToBounds="true" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <BevelledRectangleWidget Style="{Styles/DialogArea}"/>
+        <LabelWidget Name="GameAnnouncementsDialog.Header" Size="760, 55"
+                     TextAnchor="HorizontalCenter, VerticalCenter"/>
+        <CanvasWidget CanvasWidget.Position="18, 55" Size="235, 285">
+            <BevelledRectangleWidget Style="{Styles/Area}"/>
+            <ListPanelWidget Name="GameAnnouncementsDialog.List" Direction="Vertical" Margin="4, 4"/>
+        </CanvasWidget>
+        <CanvasWidget CanvasWidget.Position="265, 55" Size="477, 285">
+            <BevelledRectangleWidget Style="{Styles/Area}"/>
+            <LabelWidget Name="GameAnnouncementsDialog.Title" CanvasWidget.Position="15, 10" Size="447, 30"
+                         FontScale="1.1" TextAnchor="Left, VerticalCenter"/>
+            <LabelWidget Name="GameAnnouncementsDialog.Date" CanvasWidget.Position="15, 40" Size="447, 20"
+                         FontScale="0.65" Color="160, 160, 160" TextAnchor="Left, VerticalCenter"/>
+            <CanvasWidget CanvasWidget.Position="15, 68" Size="447, 202">
+                <ScrollPanelWidget Direction="Vertical">
+                    <LabelWidget Name="GameAnnouncementsDialog.Body" FontScale="0.85" Margin="4, 0"
+                                 Color="225, 225, 225" WordWrap="true" HorizontalAlignment="Stretch"
+                                 VerticalAlignment="Near"/>
+                </ScrollPanelWidget>
+            </CanvasWidget>
+        </CanvasWidget>
+        <BevelledButtonWidget Name="GameAnnouncementsDialog.Close" CanvasWidget.Position="300, 350"
+                              Style="{Styles/ButtonStyle_160x60}"/>
+    </CanvasWidget>
+</CanvasWidget>

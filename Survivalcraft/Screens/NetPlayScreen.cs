@@ -2,6 +2,7 @@ using System.Net;
 using System.Xml.Linq;
 
 using Game.Content;
+using Game.Managers;
 using Game.Network;
 using Game.Servers;
 
@@ -235,7 +236,7 @@ public sealed class NetPlayScreen : Screen
 
     private void ReloadSources()
     {
-        _sources = SettingsManager.ServerSources.GetEnabledSources();
+        _sources = ServerSourceCatalog.Current.GetEnabledSources();
         ReloadSourceOptions();
         RefreshSelectedSource();
     }
@@ -271,7 +272,7 @@ public sealed class NetPlayScreen : Screen
         _serverList.ClearItems();
         _actionPanel.Refresh();
         Task.Run(() => LoadAndProbeAsync(sources, cancellation.Token), cancellation.Token)
-            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteRefresh(cancellation, task)));
+            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteRefresh(cancellation, task)), cancellation.Token);
     }
 
     private async Task<ServerLoadResult> LoadAndProbeAsync(IReadOnlyList<IServerSource> sources,
@@ -372,7 +373,8 @@ public sealed class NetPlayScreen : Screen
             ServerSortOrder.Players => servers
                 .OrderBy(server => server.RuntimeStatus.Availability == ServerAvailability.Available ? 0 : 1)
                 .ThenByDescending(server => server.RuntimeStatus.PlayerCount),
-            ServerSortOrder.Name => servers.OrderBy(server => server.DisplayName, StringComparer.CurrentCultureIgnoreCase),
+            ServerSortOrder.Name => servers.OrderBy(server => server.DisplayName,
+                StringComparer.CurrentCultureIgnoreCase),
             _ => servers
         };
 
@@ -390,7 +392,9 @@ public sealed class NetPlayScreen : Screen
             ? Text("Loading")
             : _hadSourceErrors
                 ? _loadedServers.Count == 0 ? Text("LoadFailed") : Text("PartialLoadFailed")
-                : visibleServers.Length == 0 ? Text("Empty") : string.Empty;
+                : visibleServers.Length == 0
+                    ? Text("Empty")
+                    : string.Empty;
         _actionPanel.Refresh();
     }
 
@@ -464,8 +468,8 @@ public sealed class NetPlayScreen : Screen
             {
                 try
                 {
-                    var normalizedAddress = ServerAddress.Normalize(address, SettingsManager.Current.ServerPort);
-                    if (SettingsManager.ServerDirectory.Snapshot().LocalServers.Any(entry =>
+                    var normalizedAddress = ServerAddress.Normalize(address);
+                    if (ServerDirectoryManager.Current.Snapshot().LocalServers.Any(entry =>
                             entry.Address == normalizedAddress &&
                             entry.Tags.HasFlag(LocalServerTag.MyServer)))
                     {
@@ -473,7 +477,7 @@ public sealed class NetPlayScreen : Screen
                         return false;
                     }
 
-                    SettingsManager.ServerDirectory.AddMyServer(name, address);
+                    ServerDirectoryManager.Current.AddMyServer(name, address);
                     SelectLocalTagAndRefresh(LocalServerTag.MyServer);
                     return true;
                 }
@@ -491,14 +495,14 @@ public sealed class NetPlayScreen : Screen
         {
             if (IsFavorite(server))
             {
-                var address = ServerAddress.Normalize(server.Address, SettingsManager.Current.ServerPort);
-                var entry = SettingsManager.ServerDirectory.Snapshot().LocalServers
+                var address = ServerAddress.Normalize(server.Address);
+                var entry = ServerDirectoryManager.Current.Snapshot().LocalServers
                     .First(item => item.Address == address);
-                SettingsManager.ServerDirectory.RemoveLocalTag(entry.Id, LocalServerTag.Favorite);
+                ServerDirectoryManager.Current.RemoveLocalTag(entry.Id, LocalServerTag.Favorite);
             }
             else
             {
-                SettingsManager.ServerDirectory.AddFavorite(server.DisplayName, server.Address);
+                ServerDirectoryManager.Current.AddFavorite(server.DisplayName, server.Address);
             }
 
             if (_sourceCategoryDrawer.SelectedItem is SourceCategory.Local)
@@ -525,7 +529,7 @@ public sealed class NetPlayScreen : Screen
             {
                 if (server.SourceKind == ServerSourceKind.Local)
                 {
-                    SettingsManager.ServerDirectory.DeleteLocalServer(id);
+                    ServerDirectoryManager.Current.DeleteLocalServer(id);
                     RefreshSelectedSource();
                 }
             }
@@ -571,7 +575,7 @@ public sealed class NetPlayScreen : Screen
             return;
         }
 
-        SettingsManager.ServerDirectory.RecordConnectionAttempt(name, address, DateTimeOffset.UtcNow);
+        ServerDirectoryManager.Current.RecordConnectionAttempt(name, address, DateTimeOffset.UtcNow);
         PrepareRemoteSessionAndConnect(endpoint!, status?.RequiredModProfile, status?.TemporaryRepositories ?? []);
     }
 
@@ -594,13 +598,13 @@ public sealed class NetPlayScreen : Screen
         var selectedTag = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Tag ?? LocalServerTag.None;
         var options = _sourceCategoryDrawer.SelectedItem switch
         {
-            SourceCategory.Local => new[]
-            {
+            SourceCategory.Local =>
+            [
                 new SourceFilterOption(null),
                 new SourceFilterOption(null, LocalServerTag.MyServer),
                 new SourceFilterOption(null, LocalServerTag.Favorite),
                 new SourceFilterOption(null, LocalServerTag.Recent)
-            },
+            ],
             SourceCategory.Lan => [new SourceFilterOption(null)],
             _ => new[] { new SourceFilterOption(null) }
                 .Concat(GetCategorySources().Select(source => new SourceFilterOption(source))).ToArray()
@@ -610,7 +614,7 @@ public sealed class NetPlayScreen : Screen
         {
             _sourceDrawer.SetItems(options);
             _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId &&
-                                                                  option.Tag == selectedTag) ??
+                                                                          option.Tag == selectedTag) ??
                                          options[0];
             _sourceDrawer.IsEnabled = options.Length > 1;
         }
@@ -716,8 +720,8 @@ public sealed class NetPlayScreen : Screen
             return true;
         }
 
-        var address = ServerAddress.Normalize(server.Address, SettingsManager.Current.ServerPort);
-        return SettingsManager.ServerDirectory.Snapshot().LocalServers.Any(entry =>
+        var address = ServerAddress.Normalize(server.Address);
+        return ServerDirectoryManager.Current.Snapshot().LocalServers.Any(entry =>
             entry.Address == address && entry.Tags.HasFlag(LocalServerTag.Favorite));
     }
 

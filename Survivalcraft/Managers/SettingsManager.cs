@@ -5,24 +5,11 @@ using Engine.Serialization;
 
 using EntitySystem.XmlUtilities;
 
-using ServerSource.Protocol;
-
 namespace Game.Managers;
 
 public static class SettingsManager
 {
     public static Settings Current { get; } = new();
-
-    public static Content.ContentServerClientPool ContentClients { get; } =
-        new(new Content.ContentServerClientFactory());
-
-    public static Content.ContentRepositoryService ContentRepositories { get; private set; } = null!;
-
-    public static Servers.ServerDirectoryService ServerDirectory { get; private set; } = null!;
-
-    public static Servers.ServerSourceCatalog ServerSources { get; private set; } = null!;
-
-    private static HttpClient? _serverSourceHttpClient;
 
     public static event Action? BrightnessChanged;
 
@@ -39,17 +26,6 @@ public static class SettingsManager
         }
 
         LoadSettings();
-        ContentRepositories = new Content.ContentRepositoryService(Current.ContentRepositories,
-            ContentClients, SaveContentRepositories);
-        ServerDirectory = new Servers.ServerDirectoryService(Current.ServerDirectory, Current.ServerPort,
-            SaveServerDirectory);
-        _serverSourceHttpClient = new HttpClient
-        {
-            Timeout = TimeSpan.FromSeconds(30),
-            MaxResponseContentBufferSize = ServerSourceProtocol.MaximumResponseBytes
-        };
-        ServerSources = new Servers.ServerSourceCatalog(ServerDirectory,
-            new ServerSourceProtocolClient(_serverSourceHttpClient), new Servers.ServerDiscoveryService());
         var settingsChanged = false;
         if (EnsureMultiplayerClientId(Current))
         {
@@ -67,11 +43,6 @@ public static class SettingsManager
         }
 
         Window.Deactivated += SaveSettings;
-        Window.Closed += () =>
-        {
-            ContentClients.Dispose();
-            _serverSourceHttpClient?.Dispose();
-        };
     }
 
     internal static bool EnsureMultiplayerClientId(Settings settings)
@@ -110,8 +81,6 @@ public static class SettingsManager
                 {
                     var xElement = XmlUtils.LoadXmlFromStream(stream, null, true);
                     AppConfigStore.ReadFromXml(xElement);
-                    Current.ContentRepositories = Content.ContentRepositorySettings.Read(xElement);
-
                     foreach (var item in xElement.Elements())
                     {
                         var name = "<unknown>";
@@ -148,7 +117,6 @@ public static class SettingsManager
                         }
                     }
 
-                    Current.ServerDirectory = Servers.ServerDirectorySettings.Read(xElement, Current.ServerPort);
                 }
 
                 Log.Information("Loaded settings.");
@@ -173,36 +141,6 @@ public static class SettingsManager
         catch (Exception e)
         {
             ExceptionManager.ReportExceptionToUser("Saving settings failed.", e);
-        }
-    }
-
-    private static void SaveContentRepositories(IReadOnlyList<Content.ContentRepository> repositories)
-    {
-        var previous = Current.ContentRepositories;
-        Current.ContentRepositories = repositories;
-        try
-        {
-            SaveSettingsCore();
-        }
-        catch
-        {
-            Current.ContentRepositories = previous;
-            throw;
-        }
-    }
-
-    private static void SaveServerDirectory(Servers.ServerDirectoryState serverDirectory)
-    {
-        var previous = Current.ServerDirectory;
-        Current.ServerDirectory = serverDirectory;
-        try
-        {
-            SaveSettingsCore();
-        }
-        catch
-        {
-            Current.ServerDirectory = previous;
-            throw;
         }
     }
 
@@ -233,9 +171,6 @@ public static class SettingsManager
         }
 
         AppConfigStore.WriteToXml(xElement);
-        Content.ContentRepositorySettings.Write(xElement, Current.ContentRepositories);
-        Servers.ServerDirectorySettings.Write(xElement, Current.ServerDirectory, Current.ServerPort);
-
         var temporaryPath = GamePaths.SettingsFile + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {

@@ -2,7 +2,9 @@ namespace Game.Content;
 
 public sealed class ContentServerClientPool(ContentServerClientFactory factory) : IDisposable
 {
-    private readonly object _gate = new();
+    public static ContentServerClientPool Shared { get; } = new(new ContentServerClientFactory());
+
+    private readonly Lock _gate = new();
     private readonly Dictionary<(Guid Scope, Guid Repository), Entry> _entries = [];
     private readonly HashSet<Guid> _closedScopes = [];
     private bool _disposed;
@@ -32,13 +34,13 @@ public sealed class ContentServerClientPool(ContentServerClientFactory factory) 
             foreach (var repository in normalized.Values)
             {
                 var key = (scope, repository.Id);
-                if (!_entries.ContainsKey(key))
+                if (!_entries.TryGetValue(key, out var entry))
                 {
                     _entries.Add(key, new Entry(repository.BaseUrl, repository));
                 }
                 else
                 {
-                    _entries[key].Repository = repository;
+                    entry.Repository = repository;
                 }
             }
         }

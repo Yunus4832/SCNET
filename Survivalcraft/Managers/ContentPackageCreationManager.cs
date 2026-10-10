@@ -5,9 +5,13 @@ using Content.Packaging;
 
 using Engine.Media;
 
-namespace Game.Content;
+namespace Game.Managers;
 
-public sealed record ContentCreationIdentity(string Name, string Summary, string Description, string Version,
+public sealed record ContentCreationIdentity(
+    string Name,
+    string Summary,
+    string Description,
+    string Version,
     Stream? BaselinePackage = null);
 
 public sealed class ContentPackageCreationArtifact(string path, string packageHash) : IDisposable

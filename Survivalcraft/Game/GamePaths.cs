@@ -30,6 +30,10 @@ public static class GamePaths
 
     public static string SettingsFile => "config:Settings.xml";
 
+    public static string ContentRepositoriesFile => "config:ContentRepositories.xml";
+
+    public static string ServerDirectoryFile => "config:ServerDirectory.xml";
+
     public static string GlobalModProfileFile => "config:ModProfile.xml";
 
     public static string SessionProfilesDirectory => Storage.CombinePaths(Config, "SessionProfiles");

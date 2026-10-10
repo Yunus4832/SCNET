@@ -106,14 +106,12 @@ def main():
     packages = resolve_mods(base_url, requested)
 
     config_path = instance_path / "Config"
-    settings_path = config_path / "Settings.xml"
-    settings = ET.parse(settings_path).getroot() if settings_path.exists() else ET.Element("Settings")
-    if settings.tag != "Settings":
-        fail(f"Unexpected Settings.xml root: {settings.tag}")
-    repositories = settings.find("ContentRepositories")
+    repositories_path = config_path / "ContentRepositories.xml"
     if base_url:
-        if repositories is None:
-            repositories = ET.SubElement(settings, "ContentRepositories")
+        repositories = ET.parse(repositories_path).getroot() if repositories_path.exists() \
+            else ET.Element("ContentRepositories")
+        if repositories.tag != "ContentRepositories":
+            fail(f"Unexpected ContentRepositories.xml root: {repositories.tag}")
         existing = repositories.find("Repository")
         repository_id = existing.get("Id") if existing is not None else str(uuid.uuid4())
         repositories.clear()
@@ -137,8 +135,8 @@ def main():
                     fail(f"Invalid session ID for {session_name}")
                 break
 
-    if base_url or settings_path.exists():
-        write_xml(settings_path, settings)
+    if base_url:
+        write_xml(repositories_path, repositories)
     write_xml(config_path / "ModProfile.xml", profile_xml("default", packages))
     if world_path.is_dir():
         write_xml(world_path / "WorldModProfile.xml", profile_xml(world_name, packages))

@@ -1,6 +1,6 @@
 namespace Game.Servers;
 
-public sealed class LocalServerSource(ServerDirectoryService service) : IServerSource
+public sealed class LocalServerSource(ServerDirectoryManager service) : IServerSource
 {
     public string Id => ServerSourceIds.Local;
 

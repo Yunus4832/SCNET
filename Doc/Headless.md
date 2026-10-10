@@ -19,7 +19,7 @@ tar -xzf game-server-<版本>-linux-amd64.tar.gz
 ./deploy.sh
 ```
 
-配置文件是由服务器管理员维护的可信 Shell 文件。`MODS` 每行填写一个 `模组标识 版本号`；空列表无需内容服务器。配置模组时，部署主机需要能访问 ContentServer，容器自身也需要能够访问该地址来下载缺失的包。部署脚本会保留实例中已有的其他 `Settings.xml` 内容，并同步全局、当前世界和当前会话的模组 profile；`Instances/` 目录持久化世界、设置和模组缓存。
+配置文件是由服务器管理员维护的可信 Shell 文件。`MODS` 每行填写一个 `模组标识 版本号`；空列表无需内容服务器。配置模组时，部署主机需要能访问 ContentServer，容器自身也需要能够访问该地址来下载缺失的包。部署脚本会在实例的 `ContentRepositories.xml` 中配置内容服务器，并同步全局、当前世界和当前会话的模组 profile；`Instances/` 目录持久化世界、设置和模组缓存。
 
 端口和世界参数来自 `server.conf`，每次启动都会用 `--save` 保存启动会话。种子只在首次创建世界时生效。容器使用 Linux 宿主网络，游戏 UDP 端口直接监听宿主机；容器不启用用于局域网发现的广播端口。部署主机还需要 `sha256sum`、Python 3 和相应的 Docker Compose 或 Podman Compose。
 
@@ -251,7 +251,7 @@ Headless 启动时：
 
 ## 内容服务
 
-Headless 与 GUI 使用相同的 `ContentSourceContext` 和统一下载服务。每个实例在 `Settings.xml` 中维护有序的持久内容仓库集合；
+Headless 与 GUI 使用相同的 `ContentSourceContext` 和统一下载服务。每个实例在 `ContentRepositories.xml` 中维护有序的持久内容仓库集合；
 启动先按 Profile 的 `ModId + Version + PackageHash` 查询 ContentPackageCache，只有精确包缺失时才按启用仓库顺序查询和下载。
 首选来源失败后，只会回退到声明同一 PackageHash 的其他来源。
 

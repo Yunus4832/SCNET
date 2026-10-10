@@ -4,13 +4,9 @@ namespace Game.Servers;
 
 public static class ServerAddress
 {
-    public static string Normalize(string address, int defaultPort)
+    public static string Normalize(string address)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(address);
-        if (defaultPort is < 1 or > 65535)
-        {
-            throw new ArgumentOutOfRangeException(nameof(defaultPort));
-        }
 
         if (!Uri.TryCreate($"tcp://{address.Trim()}", UriKind.Absolute, out var uri) ||
             string.IsNullOrWhiteSpace(uri.Host) || !string.IsNullOrEmpty(uri.UserInfo) ||
@@ -20,8 +16,7 @@ public static class ServerAddress
             throw new ArgumentException("Server address is invalid.", nameof(address));
         }
 
-        var port = uri.IsDefaultPort || uri.Port < 1 ? defaultPort : uri.Port;
-        if (port is < 1 or > 65535)
+        if (uri.Port is 0 or > 65535)
         {
             throw new ArgumentException("Server port is invalid.", nameof(address));
         }
@@ -29,6 +24,6 @@ public static class ServerAddress
         var host = uri.HostNameType == UriHostNameType.IPv6
             ? $"[{IPAddress.Parse(uri.Host)}]"
             : uri.Host.ToLowerInvariant();
-        return $"{host}:{port}";
+        return uri.Port < 1 ? host : $"{host}:{uri.Port}";
     }
 }

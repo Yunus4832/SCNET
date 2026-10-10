@@ -1,24 +1,39 @@
-namespace Game.Servers;
+using System.Globalization;
+using System.Xml.Linq;
 
-public sealed class ServerDirectoryService
+using Game.Servers;
+
+namespace Game.Managers;
+
+public sealed class ServerDirectoryManager
 {
     public const int MaximumRecentServers = 20;
 
-    private readonly int _defaultPort;
-    private readonly Lock _gate = new();
-    private readonly Action<ServerDirectoryState> _save;
-    private ServerDirectoryState _state;
+    public static ServerDirectoryManager Current { get; private set; } = null!;
 
-    public ServerDirectoryService(ServerDirectoryState state, int defaultPort, Action<ServerDirectoryState> save)
+    private readonly Lock _gate = new();
+    private readonly Action<ServerDirectorySettings> _save;
+    private ServerDirectorySettings _state;
+
+    public static void Initialize()
+    {
+        Current = new ServerDirectoryManager();
+    }
+
+    public ServerDirectoryManager()
+        : this(LoadOrDefault(), Save)
+    {
+    }
+
+    public ServerDirectoryManager(ServerDirectorySettings state, Action<ServerDirectorySettings> save)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(save);
-        _defaultPort = defaultPort;
         _save = save;
-        _state = Normalize(state, defaultPort);
+        _state = state;
     }
 
-    public ServerDirectoryState Snapshot()
+    public ServerDirectorySettings Snapshot()
     {
         lock (_gate)
         {
@@ -34,7 +49,7 @@ public sealed class ServerDirectoryService
     {
         lock (_gate)
         {
-            var normalizedAddress = ServerAddress.Normalize(address, _defaultPort);
+            var normalizedAddress = ServerAddress.Normalize(address);
             var existing = _state.LocalServers.FirstOrDefault(entry => entry.Address == normalizedAddress);
             if (existing?.Tags.HasFlag(LocalServerTag.MyServer) == true)
             {
@@ -85,7 +100,7 @@ public sealed class ServerDirectoryService
 
     public StoredServerEntry AddFavorite(string name, string address)
     {
-        var normalizedAddress = ServerAddress.Normalize(address, _defaultPort);
+        var normalizedAddress = ServerAddress.Normalize(address);
         lock (_gate)
         {
             var existing = _state.LocalServers.FirstOrDefault(entry => entry.Address == normalizedAddress);
@@ -109,7 +124,7 @@ public sealed class ServerDirectoryService
 
     public void RecordConnectionAttempt(string name, string address, DateTimeOffset now)
     {
-        var normalizedAddress = ServerAddress.Normalize(address, _defaultPort);
+        var normalizedAddress = ServerAddress.Normalize(address);
         lock (_gate)
         {
             var existing = _state.LocalServers.FirstOrDefault(entry => entry.Address == normalizedAddress);
@@ -208,18 +223,17 @@ public sealed class ServerDirectoryService
         }
     }
 
-    public static ServerDirectoryState Normalize(ServerDirectoryState state, int defaultPort)
+    public static ServerDirectorySettings Normalize(ServerDirectorySettings state)
     {
         ArgumentNullException.ThrowIfNull(state);
         return state with
         {
-            LocalServers = NormalizeEntries(state.LocalServers, defaultPort),
+            LocalServers = NormalizeEntries(state.LocalServers),
             InstalledSources = NormalizeInstalledSources(state.InstalledSources)
         };
     }
 
-    private static IReadOnlyList<StoredServerEntry> NormalizeEntries(IEnumerable<StoredServerEntry> entries,
-        int defaultPort)
+    private static IReadOnlyList<StoredServerEntry> NormalizeEntries(IEnumerable<StoredServerEntry> entries)
     {
         ArgumentNullException.ThrowIfNull(entries);
         var ids = new HashSet<Guid>();
@@ -227,7 +241,7 @@ public sealed class ServerDirectoryService
         var result = new List<StoredServerEntry>();
         foreach (var entry in entries.OrderBy(entry => entry.Order))
         {
-            var normalized = NormalizeEntry(entry, defaultPort);
+            var normalized = NormalizeEntry(entry);
             if (!ids.Add(normalized.Id) || !addresses.Add(normalized.Address))
             {
                 throw new ArgumentException("Local server IDs and addresses must be unique.");
@@ -239,7 +253,7 @@ public sealed class ServerDirectoryService
         return result;
     }
 
-    private static StoredServerEntry NormalizeEntry(StoredServerEntry entry, int defaultPort)
+    private static StoredServerEntry NormalizeEntry(StoredServerEntry entry)
     {
         ArgumentNullException.ThrowIfNull(entry);
         if (entry.Id == Guid.Empty)
@@ -256,7 +270,7 @@ public sealed class ServerDirectoryService
         return entry with
         {
             Name = NormalizeName(entry.Name),
-            Address = ServerAddress.Normalize(entry.Address, defaultPort)
+            Address = ServerAddress.Normalize(entry.Address)
         };
     }
 
@@ -293,7 +307,8 @@ public sealed class ServerDirectoryService
             uri.Scheme is not ("http" or "https") || !string.IsNullOrEmpty(uri.UserInfo) ||
             !string.IsNullOrEmpty(uri.Fragment))
         {
-            throw new ArgumentException("Server source URL must be an absolute HTTP(S) URL without credentials or fragment.");
+            throw new ArgumentException(
+                "Server source URL must be an absolute HTTP(S) URL without credentials or fragment.");
         }
 
         return source with
@@ -311,7 +326,7 @@ public sealed class ServerDirectoryService
         return new StoredServerEntry
         {
             Name = NormalizeName(name),
-            Address = ServerAddress.Normalize(address, _defaultPort),
+            Address = ServerAddress.Normalize(address),
             Tags = tag,
             Order = _state.LocalServers.Count,
             UpdatedAt = DateTimeOffset.UtcNow
@@ -357,10 +372,120 @@ public sealed class ServerDirectoryService
         }
     }
 
-    private void Commit(ServerDirectoryState state)
+    private void Commit(ServerDirectorySettings state)
     {
-        var normalized = Normalize(state, _defaultPort);
+        var normalized = Normalize(state);
         _save(normalized);
         _state = normalized;
+    }
+
+    public static ServerDirectorySettings Load()
+    {
+        if (!Storage.FileExists(GamePaths.ServerDirectoryFile))
+        {
+            return new ServerDirectorySettings();
+        }
+
+        using var stream = Storage.OpenFile(GamePaths.ServerDirectoryFile, OpenFileMode.Read);
+        return Read(XElement.Load(stream));
+    }
+
+    private static ServerDirectorySettings LoadOrDefault()
+    {
+        try
+        {
+            return Load();
+        }
+        catch (Exception exception)
+        {
+            ExceptionManager.ReportExceptionToUser("Loading server directory failed.", exception);
+            return new ServerDirectorySettings();
+        }
+    }
+
+    public static void Save(ServerDirectorySettings state)
+    {
+        if (!Storage.DirectoryExists(GamePaths.Config))
+        {
+            Storage.CreateDirectory(GamePaths.Config);
+        }
+
+        using var stream = Storage.OpenFile(GamePaths.ServerDirectoryFile, OpenFileMode.Create);
+        Write(state).Save(stream);
+    }
+
+    public static ServerDirectorySettings Read(XElement document)
+    {
+        if (document.Name != "ServerDirectory")
+        {
+            throw new FormatException("Invalid server directory root element.");
+        }
+
+        return new ServerDirectorySettings
+        {
+            LocalServers = ReadServers(document.Element("LocalServers")),
+            InstalledSources = ReadInstalledSources(document.Element("InstalledSources"))
+        };
+    }
+
+    public static XElement Write(ServerDirectorySettings state)
+    {
+        var normalized = ServerDirectoryManager.Normalize(state);
+        return new XElement("ServerDirectory",
+            WriteServers("LocalServers", normalized.LocalServers),
+            new XElement("InstalledSources", normalized.InstalledSources.Select(source =>
+                new XElement("Source",
+                    new XAttribute("Id", source.Id),
+                    source.RegistrationId is null
+                        ? null
+                        : new XAttribute("RegistrationId", source.RegistrationId),
+                    new XAttribute("Name", source.Name),
+                    new XAttribute("ApiUrl", source.ApiUrl),
+                    new XAttribute("IsEnabled", source.IsEnabled),
+                    new XAttribute("Order", source.Order)))));
+    }
+
+    private static IReadOnlyList<StoredServerEntry> ReadServers(XElement? container)
+    {
+        return container?.Elements("Server").Select(element => new StoredServerEntry
+        {
+            Id = Guid.Parse(Required(element, "Id")),
+            Name = Required(element, "Name"),
+            Address = Required(element, "Address"),
+            Tags = Enum.Parse<LocalServerTag>(Required(element, "Tags")),
+            Order = int.Parse(Required(element, "Order"), CultureInfo.InvariantCulture),
+            UpdatedAt = DateTimeOffset.Parse(Required(element, "UpdatedAt"), CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind)
+        }).ToArray() ?? [];
+    }
+
+    private static IReadOnlyList<InstalledServerSource> ReadInstalledSources(XElement? container)
+    {
+        return container?.Elements("Source").Select(element => new InstalledServerSource
+        {
+            Id = Guid.Parse(Required(element, "Id")),
+            RegistrationId = element.Attribute("RegistrationId")?.Value,
+            Name = Required(element, "Name"),
+            ApiUrl = Required(element, "ApiUrl"),
+            IsEnabled = bool.Parse(Required(element, "IsEnabled")),
+            Order = int.Parse(Required(element, "Order"), CultureInfo.InvariantCulture)
+        }).ToArray() ?? [];
+    }
+
+    private static XElement WriteServers(string name, IEnumerable<StoredServerEntry> servers)
+    {
+        return new XElement(name, servers.Select(server => new XElement("Server",
+            new XAttribute("Id", server.Id),
+            new XAttribute("Name", server.Name),
+            new XAttribute("Address", server.Address),
+            new XAttribute("Tags", server.Tags),
+            new XAttribute("Order", server.Order),
+            new XAttribute("UpdatedAt", server.UpdatedAt.ToString("O", CultureInfo.InvariantCulture)))));
+    }
+
+    private static string Required(XElement element, string name)
+    {
+        return element.Attribute(name)?.Value ??
+               throw new FormatException($"Missing server directory attribute '{name}'.");
     }
 }

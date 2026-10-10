@@ -10,11 +10,23 @@
             <RectangleWidget Name="Logo" Size="800, 100" OutlineColor="0, 0, 0, 0" HorizontalAlignment="Center"
                              FillColor="255, 255, 255" Margin="0, 0" Subtexture="{Textures/Branding/MainLogo}"/>
             <CanvasWidget Size="0, 5"/>
-            <LabelWidget Name="Version" FontScale="0.5" HorizontalAlignment="Center"
-                         Color="64, 192, 64" DropShadow="true"/>
+            <CanvasWidget Size="800, 30" HorizontalAlignment="Center">
+                <LabelWidget Name="Version" FontScale="0.5" HorizontalAlignment="Center"
+                             VerticalAlignment="Center" Color="64, 192, 64" DropShadow="true"/>
+                <ClickableWidget Name="Version.Clickable" SoundName="Audio/UI/ButtonClick"/>
+            </CanvasWidget>
         </StackPanelWidget>
 
-        <CanvasWidget Size="0, Infinity"/>
+        <CanvasWidget Size="800, Infinity" HorizontalAlignment="Center">
+            <CanvasWidget Name="AnnouncementTicker" Size="800, 24" VerticalAlignment="Center"
+                          ClampToBounds="true">
+                <LabelWidget Name="AnnouncementTicker.Text" Size="800, 24" FontScale="0.6"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"
+                             TextAnchor="VerticalCenter, HorizontalCenter" Color="64, 192, 64"
+                             DropShadow="true"/>
+                <ClickableWidget Name="AnnouncementTicker.Clickable" SoundName="Audio/UI/ButtonClick"/>
+            </CanvasWidget>
+        </CanvasWidget>
 
         <StackPanelWidget HorizontalAlignment="Center" Direction="Vertical" Margin="0, 0">
             <StackPanelWidget HorizontalAlignment="Center">
@@ -33,7 +45,6 @@
                 <BevelledButtonWidget Name="Online" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center"
                                       VerticalAlignment="Center" Text="[MainMenuScreen:3]"/>
             </StackPanelWidget>
-
             <BevelledButtonWidget Name="Buy" Style="{Styles/ButtonStyle_310x60}" HorizontalAlignment="Center"
                                   VerticalAlignment="Center" Text="[MainMenuScreen:6]" IsVisible="false"/>
         </StackPanelWidget>

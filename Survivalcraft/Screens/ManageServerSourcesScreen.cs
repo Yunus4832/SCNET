@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+using Game.Managers;
 using Game.Servers;
 
 using ServerSource.Protocol;
@@ -78,7 +79,7 @@ public sealed class ManageServerSourcesScreen : Screen
 
     private void Refresh(Guid? selectedId = null)
     {
-        var sources = SettingsManager.ServerDirectory.Snapshot().InstalledSources;
+        var sources = ServerDirectoryManager.Current.Snapshot().InstalledSources;
         _sourceList.ClearItems();
         foreach (var source in sources)
         {
@@ -114,11 +115,11 @@ public sealed class ManageServerSourcesScreen : Screen
             var normalized = (source ?? new InstalledServerSource()) with { Name = name, ApiUrl = address };
             if (source is null)
             {
-                normalized = SettingsManager.ServerDirectory.InstallSource(normalized);
+                normalized = ServerDirectoryManager.Current.InstallSource(normalized);
             }
             else
             {
-                SettingsManager.ServerDirectory.EditInstalledSource(normalized);
+                ServerDirectoryManager.Current.EditInstalledSource(normalized);
             }
 
             Refresh(normalized.Id);
@@ -145,7 +146,7 @@ public sealed class ManageServerSourcesScreen : Screen
             return false;
         }
 
-        var sources = SettingsManager.ServerDirectory.Snapshot().InstalledSources;
+        var sources = ServerDirectoryManager.Current.Snapshot().InstalledSources;
         var selected = _sourceList.SelectedItem as InstalledServerSource;
         var index = selected is null ? -1 : sources.ToList().FindIndex(source => source.Id == selected.Id);
         return action switch
@@ -165,7 +166,7 @@ public sealed class ManageServerSourcesScreen : Screen
             return;
         }
 
-        var sources = SettingsManager.ServerDirectory.Snapshot().InstalledSources;
+        var sources = ServerDirectoryManager.Current.Snapshot().InstalledSources;
         var selected = _sourceList.SelectedItem as InstalledServerSource;
         var index = selected is null ? -1 : sources.ToList().FindIndex(source => source.Id == selected.Id);
         switch (action)
@@ -177,7 +178,7 @@ public sealed class ManageServerSourcesScreen : Screen
                 ConfirmDelete(selected);
                 break;
             case SourceAction.Toggle when selected is not null:
-                Execute(() => SettingsManager.ServerDirectory.EditInstalledSource(selected with
+                Execute(() => ServerDirectoryManager.Current.EditInstalledSource(selected with
                 {
                     IsEnabled = !selected.IsEnabled
                 }), selected.Id);
@@ -200,7 +201,7 @@ public sealed class ManageServerSourcesScreen : Screen
         {
             if (button == MessageDialogButton.Button1)
             {
-                Execute(() => SettingsManager.ServerDirectory.DeleteInstalledSource(source.Id));
+                Execute(() => ServerDirectoryManager.Current.DeleteInstalledSource(source.Id));
             }
         });
     }
@@ -209,7 +210,7 @@ public sealed class ManageServerSourcesScreen : Screen
     {
         var ids = sources.Select(source => source.Id).ToList();
         (ids[sourceIndex], ids[targetIndex]) = (ids[targetIndex], ids[sourceIndex]);
-        Execute(() => SettingsManager.ServerDirectory.SetInstalledSourceOrder(ids), ids[targetIndex]);
+        Execute(() => ServerDirectoryManager.Current.SetInstalledSourceOrder(ids), ids[targetIndex]);
     }
 
     private void TestSource(InstalledServerSource source)

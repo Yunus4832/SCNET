@@ -28,18 +28,56 @@ public sealed class ContentServerClient : IDisposable
 
     public async Task<ContentServerHealth> CheckHealthAsync(CancellationToken cancellationToken = default)
     {
-        using var httpResponse = await _httpClient.GetAsync("api/v1/health", HttpCompletionOption.ResponseHeadersRead,
+        using var response = await _httpClient.GetAsync("api/v1/health", HttpCompletionOption.ResponseHeadersRead,
             cancellationToken).ConfigureAwait(false);
-        httpResponse.EnsureSuccessStatusCode();
-        var response = await ReadJsonAsync<ContentServerResponse<ContentServerHealth>>(httpResponse,
+        response.EnsureSuccessStatusCode();
+        var result = await ReadJsonAsync<ContentServerResponse<ContentServerHealth>>(response,
             cancellationToken).ConfigureAwait(false);
-        if (response?.Success != true || response.Data is null ||
-            string.IsNullOrWhiteSpace(response.Data.Name) || string.IsNullOrWhiteSpace(response.Data.Version))
+        if (result?.Success != true || result.Data is null ||
+            string.IsNullOrWhiteSpace(result.Data.Name) || string.IsNullOrWhiteSpace(result.Data.Version))
         {
             throw new InvalidDataException("ContentServer returned an invalid health response.");
         }
 
-        return response.Data;
+        return result.Data;
+    }
+
+    public async Task<IReadOnlyList<GameAnnouncement>> ListGameAnnouncementsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        using var response = await _httpClient.GetAsync("api/v1/announcements",
+            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        var result = await ReadJsonAsync<ContentServerResponse<GameAnnouncement[]>>(response, cancellationToken)
+            .ConfigureAwait(false);
+        if (result?.Success != true || result.Data is null)
+        {
+            throw new InvalidDataException("ContentServer returned invalid announcements.");
+        }
+
+        return result.Data;
+    }
+
+    public async Task<GameRelease?> GetLatestGameReleaseAsync(string platform,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(platform);
+        using var response = await _httpClient.GetAsync($"api/v1/game-releases/latest/{platform}",
+            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+
+        response.EnsureSuccessStatusCode();
+        var result = await ReadJsonAsync<ContentServerResponse<GameRelease>>(response, cancellationToken)
+            .ConfigureAwait(false);
+        if (result?.Success != true || result.Data is null)
+        {
+            throw new InvalidDataException("ContentServer returned an invalid game release.");
+        }
+
+        return result.Data;
     }
 
     public async Task<IReadOnlyList<ContentCatalogItem>> ListAsync(CancellationToken cancellationToken = default)

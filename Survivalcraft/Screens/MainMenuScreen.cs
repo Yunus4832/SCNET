@@ -17,6 +17,20 @@ public class MainMenuScreen : Screen
 
     private readonly ClickableWidget _musicButtonClickable;
 
+    private readonly CanvasWidget _announcementTicker;
+
+    private readonly LabelWidget _announcementTickerText;
+
+    private readonly ClickableWidget _announcementTickerClickable;
+
+    private readonly ClickableWidget _versionClickable;
+
+    private IReadOnlyList<string> _announcementTitles = [];
+
+    private double _tickerStartedAt;
+
+    private int _tickerIndex;
+
     private bool _isMenuMusicEnabled = true;
 
     private float _musicButtonAngle;
@@ -31,6 +45,12 @@ public class MainMenuScreen : Screen
         _logo = Children.Find<RectangleWidget>("Logo")!;
         _musicButtonIcon = Children.Find<RectangleWidget>("MusicButton.Icon")!;
         _musicButtonClickable = Children.Find<ClickableWidget>("MusicButton.Clickable")!;
+        _announcementTicker = Children.Find<CanvasWidget>("AnnouncementTicker")!;
+        _announcementTickerText = Children.Find<LabelWidget>("AnnouncementTicker.Text")!;
+        _announcementTickerClickable = Children.Find<ClickableWidget>("AnnouncementTicker.Clickable")!;
+        _versionClickable = Children.Find<ClickableWidget>("Version.Clickable")!;
+        _announcementTickerText.Ellipsis = true;
+        _announcementTickerText.MaxLines = 1;
         Children.Find<LabelWidget>("Version")!.Text = _versionString;
 
         ConfigureMainMenuTabs();
@@ -38,6 +58,8 @@ public class MainMenuScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        UpdateAnnouncementTicker();
+        GameInformationManager.AnnouncementsChanged += UpdateAnnouncementTicker;
         MusicManager.CurrentMix = _isMenuMusicEnabled ? MusicManager.Mix.Menu : MusicManager.Mix.None;
 
         // 如果当前已连接网络，则停止连接
@@ -49,7 +71,42 @@ public class MainMenuScreen : Screen
 
     public override void Leave()
     {
+        GameInformationManager.AnnouncementsChanged -= UpdateAnnouncementTicker;
         Keyboard.BackButtonQuitsApp = false;
+    }
+
+    private void UpdateAnnouncementTicker()
+    {
+        _announcementTitles = GameInformationManager.AnnouncementTitles;
+        _announcementTicker.IsVisible = _announcementTitles.Count > 0;
+        _tickerIndex = 0;
+        _tickerStartedAt = Time.RealTime;
+        _announcementTickerText.Text = _announcementTitles.Count > 0
+            ? _announcementTitles[0]
+            : string.Empty;
+    }
+
+    private void UpdateAnnouncementTickerAnimation()
+    {
+        if (_announcementTitles.Count == 0)
+        {
+            return;
+        }
+
+        var elapsed = Time.RealTime - _tickerStartedAt;
+        if (elapsed >= 8.0)
+        {
+            _tickerIndex = (_tickerIndex + 1) % _announcementTitles.Count;
+            _tickerStartedAt = Time.RealTime;
+            _announcementTickerText.Text = _announcementTitles[_tickerIndex];
+            elapsed = 0.0;
+        }
+
+        var width = _announcementTicker.ActualSize.X;
+        var offset = elapsed < 0.5 ? width * (1f - (float)(elapsed / 0.5))
+            : elapsed > 7.5 ? -width * (float)((elapsed - 7.5) / 0.5)
+            : 0f;
+        _announcementTicker.SetWidgetPosition(_announcementTickerText, new Vector2(offset, 0f));
     }
 
     private void ConfigureMainMenuTabs()
@@ -194,6 +251,7 @@ public class MainMenuScreen : Screen
     {
         UpdateMusicButton();
         UpdateLogoAnimation();
+        UpdateAnnouncementTickerAnimation();
 
         // 处理按钮点击事件
         if (Children.Find<ButtonWidget>("Play")!.IsClicked)
@@ -219,6 +277,16 @@ public class MainMenuScreen : Screen
         if (Children.Find<ButtonWidget>("Online")!.IsClicked)
         {
             ScreensManager.SwitchScreen("NetPlay");
+        }
+
+        if (_announcementTickerClickable.IsClicked)
+        {
+            GameInformationManager.ShowAnnouncements();
+        }
+
+        if (_versionClickable.IsClicked)
+        {
+            GameInformationManager.CheckManually();
         }
 
         var exitRequested = Input.Back && !Keyboard.BackButtonQuitsApp;

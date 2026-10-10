@@ -4,10 +4,6 @@ namespace Game;
 
 public class Settings
 {
-    public IReadOnlyList<Content.ContentRepository> ContentRepositories { get; internal set; } = [];
-
-    public Servers.ServerDirectoryState ServerDirectory { get; internal set; } = new();
-
     public int ServerPort { get; set; } = 28887;
 
     public int BroadcastPort { get; set; } = 28888;
@@ -184,7 +180,6 @@ public class Settings
 
     public bool AutoGarbageCollect { get; set; } = true;
 
-    public int RejectedUpdateCount { get; set; } = 0;
 }
 
 public enum PlayerListFilter

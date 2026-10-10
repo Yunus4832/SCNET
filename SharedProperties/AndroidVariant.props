@@ -9,5 +9,7 @@
                          Link="Resources\values\styles.xml"/>
         <AndroidResource Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Android\Resources\mipmap\icon.png"
                          Link="Resources\mipmap\icon.png"/>
+        <AndroidResource Include="$(MSBuildThisFileDirectory)..\Survivalcraft.Android\Resources\xml\update_paths.xml"
+                         Link="Resources\xml\update_paths.xml"/>
     </ItemGroup>
 </Project>

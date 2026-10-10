@@ -143,9 +143,9 @@ public static class CommonLib
 
     public static bool Resolve(string ip, out IPEndPoint? ep)
     {
-        if (Uri.TryCreate("http://" + ip, UriKind.Absolute, out var uri))
+        if (Uri.TryCreate("tcp://" + ip, UriKind.Absolute, out var uri))
         {
-            var port = uri.IsDefaultPort ? SettingsManager.Current.ServerPort : uri.Port;
+            var port = uri.Port < 1 ? SettingsManager.Current.ServerPort : uri.Port;
             if (IPAddress.TryParse(uri.Host, out var addr))
             {
                 ep = new IPEndPoint(addr, port);

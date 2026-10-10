@@ -8,6 +8,10 @@ public static class PlatformManager
 
     private static Action<string>? _instanceLauncher;
 
+    private static Action<string>? _apkInstaller;
+
+    private static string? _apkDownloadDirectory;
+
     public static Platform Platform { get; private set; } = Platform.Desktop;
 
     public static void RegisterPlatform(Platform platform)
@@ -51,6 +55,22 @@ public static class PlatformManager
     public static void RegisterInstanceLauncher(Action<string> launcher)
     {
         _instanceLauncher = launcher;
+    }
+
+    public static void RegisterApkInstaller(Action<string> installer, string downloadDirectory)
+    {
+        _apkInstaller = installer;
+        _apkDownloadDirectory = downloadDirectory;
+    }
+
+    public static bool CanInstallApk => _apkInstaller is not null;
+
+    public static string ApkDownloadDirectory => _apkDownloadDirectory
+        ?? throw new InvalidOperationException("APK download directory is unavailable.");
+
+    public static void InstallApk(string path)
+    {
+        (_apkInstaller ?? throw new InvalidOperationException("APK installation is unavailable."))(path);
     }
 
     public static bool CanLaunchInstance => _instanceLauncher != null;

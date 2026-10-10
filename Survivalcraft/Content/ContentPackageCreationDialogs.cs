@@ -170,8 +170,8 @@ public static class ContentPackageCreationDialogs
     {
         var manifest = inspection.Manifest;
         var preview = string.Format(LanguageManager.Get(_typeName, "Preview"), GetTypeName(manifest.Type),
-            manifest.Name, manifest.Version, manifest.Identifier, artifact.PackageHash) +
-            $"\n{manifest.Summary}\n{manifest.Description}";
+                          manifest.Name, manifest.Version, manifest.Identifier, artifact.PackageHash) +
+                      $"\n{manifest.Summary}\n{manifest.Description}";
         DialogsManager.ShowDialog(null, new MessageDialog(
             LanguageManager.Get(_typeName, "PreviewTitle"), preview,
             LanguageManager.Get(_typeName, "Save"), LanguageManager.Get("Usual", "cancel"),

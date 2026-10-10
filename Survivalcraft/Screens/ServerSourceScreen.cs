@@ -44,7 +44,7 @@ public sealed class ServerSourceScreen : Screen
         _repositoryDrawer.SelectionChanged += () => ApplySearch();
         _actionPanel.ItemTextProvider = _ => Text("Install");
         _actionPanel.ItemEnabledProvider = _ => !_busy && _sourceList.SelectedItem is RegisteredServerSource source &&
-                                                     !IsInstalled(source);
+                                                !IsInstalled(source);
         _actionPanel.ItemClicked += _ => Install();
         _actionPanel.SetPrimaryItems([CatalogAction.Install]);
     }
@@ -100,9 +100,10 @@ public sealed class ServerSourceScreen : Screen
         _sources = [];
         _sourceList.ClearItems();
         _statusLabel.Text = Text("Loading");
-        Task.Run(() => SettingsManager.ContentRepositories.ListServerSourcesAsync(cancellation.Token),
+        var catalog = new ContentServerSourceCatalog(ContentServerClientPool.Shared);
+        Task.Run(() => catalog.QueryAsync(ContentRepositoryManager.Current.Snapshot(), cancellation.Token),
                 cancellation.Token)
-            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteLoad(cancellation, task)));
+            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteLoad(cancellation, task)), cancellation.Token);
     }
 
     private void CompleteLoad(CancellationTokenSource cancellation,
@@ -143,7 +144,7 @@ public sealed class ServerSourceScreen : Screen
 
         try
         {
-            SettingsManager.ServerDirectory.InstallSource(new InstalledServerSource
+            ServerDirectoryManager.Current.InstallSource(new InstalledServerSource
             {
                 RegistrationId = $"{source.RepositoryId:N}:{source.RegistrationId}",
                 Name = source.Name,
@@ -162,7 +163,7 @@ public sealed class ServerSourceScreen : Screen
     private static bool IsInstalled(RegisteredServerSource source)
     {
         var normalizedUrl = new Uri(source.ApiUrl).AbsoluteUri;
-        return SettingsManager.ServerDirectory.Snapshot().InstalledSources.Any(installedSource =>
+        return ServerDirectoryManager.Current.Snapshot().InstalledSources.Any(installedSource =>
             installedSource.ApiUrl == normalizedUrl);
     }
 
@@ -204,7 +205,7 @@ public sealed class ServerSourceScreen : Screen
     {
         var selectedId = (_repositoryDrawer.SelectedItem as RepositoryFilterOption)?.RepositoryId;
         var options = new[] { new RepositoryFilterOption(null, Text("AllRepositories")) }
-            .Concat(SettingsManager.ContentRepositories.Snapshot()
+            .Concat(ContentRepositoryManager.Current.Snapshot()
                 .Where(repository => repository.IsEnabled)
                 .OrderBy(repository => repository.Priority)
                 .Select(repository => new RepositoryFilterOption(repository.Id, repository.Name))).ToArray();

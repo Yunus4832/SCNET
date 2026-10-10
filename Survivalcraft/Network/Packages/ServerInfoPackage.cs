@@ -74,7 +74,7 @@ public class ServerInfoPackage : IPackage
         GameMode = subsystemGameInfo.WorldSettings.GameMode;
         TimeOfDay = subsystemTimeOfDay.CalculateTimeOfDay();
         RequiredModProfile = CurrentModRuntime.Value?.CreateServerRequiredProfile();
-        TemporaryRepositories = SettingsManager.Current.ContentRepositories
+        TemporaryRepositories = ContentRepositoryManager.Current.Snapshot()
             .Where(repository => repository.IsEnabled).ToArray();
         Season = subsystemSeasons.Season;
         TimeOfSeason = subsystemSeasons.TimeOfSeason;

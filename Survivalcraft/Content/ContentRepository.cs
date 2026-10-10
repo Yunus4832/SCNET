@@ -25,7 +25,11 @@ public sealed record ContentRepository
             throw new ArgumentException("Repository addresses must be absolute HTTP(S) URLs without credentials, queries or fragments.");
         }
 
-        return this with { Name = Name.Trim(), BaseUrl = uri.AbsoluteUri.TrimEnd('/') };
+        return this with
+        {
+            Name = Name.Trim(),
+            BaseUrl = uri.AbsoluteUri.TrimEnd('/')
+        };
     }
 
     public static IReadOnlyList<ContentRepository> NormalizeAll(IEnumerable<ContentRepository> repositories)

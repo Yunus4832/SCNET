@@ -33,6 +33,8 @@
 - `config:RunningSetting.xml`
 - `config:SessionInfo.xml`
 - `config:Settings.xml`
+- `config:ContentRepositories.xml`
+- `config:ServerDirectory.xml`
 - `config:ModProfile.xml`
 - `config:SessionProfiles/<sessionId>.xml`
 - `<world>/Project.xml`

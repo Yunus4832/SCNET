@@ -1,6 +1,8 @@
 using Android.Content;
 using Android.Content.PM;
 
+using AndroidX.Core.Content;
+
 using Game;
 
 using AndroidLog = Android.Util.Log;
@@ -50,6 +52,7 @@ public class GameActivity : EngineActivity
         GamePlatformManager.RegisterClipboard(new SdlClipboardBackend());
         _filePicker = new AndroidFilePicker(this);
         GamePlatformManager.RegisterFilePicker(_filePicker);
+        GamePlatformManager.RegisterApkInstaller(InstallApk, Path.Combine(CacheDir!.AbsolutePath, "updates"));
         InitializeAndroidId();
         LoadAssetAssemblies();
 
@@ -100,6 +103,21 @@ public class GameActivity : EngineActivity
     private void OpenLink(string link)
     {
         StartActivity(new Intent(Intent.ActionView, AndroidUri.Parse(link)));
+    }
+
+    private void InstallApk(string path)
+    {
+        var file = new Java.IO.File(path);
+        if (!file.Exists())
+        {
+            throw new FileNotFoundException("Verified APK was not found.", path);
+        }
+
+        var uri = FileProvider.GetUriForFile(this, $"{PackageName}.updates", file);
+        var intent = new Intent(Intent.ActionInstallPackage);
+        intent.SetData(uri);
+        intent.AddFlags(ActivityFlags.GrantReadUriPermission);
+        StartActivity(intent);
     }
 
     private void LoadAssetAssemblies()

@@ -20,7 +20,7 @@ public static class ModRestartHelper
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, requiredProfile);
         var scopeId = Guid.NewGuid();
         var context = ContentSourceContext.Session(scopeId, temporaryRepositories,
-            SettingsManager.Current.ContentRepositories);
+            ContentRepositoryManager.Current.Snapshot());
         bool downloadedAny;
         try
         {
@@ -33,7 +33,7 @@ public static class ModRestartHelper
         }
         finally
         {
-            SettingsManager.ContentClients.RemoveScope(scopeId);
+            ContentServerClientPool.Shared.RemoveScope(scopeId);
         }
         if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
         {

@@ -1,3 +1,5 @@
+using Game;
+using Game.Managers;
 using Game.Servers;
 
 using ServerSource.Protocol;
@@ -9,7 +11,7 @@ public sealed class LocalServerSourceTest
     [Fact]
     public async Task CatalogExposesOneLocalSourceAndSeparateLanSource()
     {
-        var directory = new ServerDirectoryService(new ServerDirectoryState(), 28887, _ => { });
+        var directory = new ServerDirectoryManager(new ServerDirectorySettings(), _ => { });
         directory.AddMyServer("Mine", "example.com");
         directory.AddFavorite("Mine", "example.com");
         using var httpClient = new HttpClient();
@@ -21,7 +23,7 @@ public sealed class LocalServerSourceTest
         Assert.Single(sources, source => source.Kind == ServerSourceKind.Lan);
         var item = Assert.Single(await local.LoadAsync(CancellationToken.None));
 
-        Assert.Equal("example.com:28887", item.Address);
+        Assert.Equal("example.com", item.Address);
         Assert.Equal(LocalServerTag.MyServer | LocalServerTag.Favorite, item.LocalTags);
     }
 }

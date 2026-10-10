@@ -2,6 +2,7 @@ using System.Net;
 
 using EntitySystem.Core;
 
+using Game.Managers;
 using Game.Network.Enums;
 using Game.Network.Packages;
 using Game.Network.Serialization;
@@ -543,7 +544,7 @@ public class NetNode
 
             if (flag)
             {
-                var repositoryCount = SettingsManager.Current.ContentRepositories.Count(repository =>
+                var repositoryCount = ContentRepositoryManager.Current.Snapshot().Count(repository =>
                     repository.IsEnabled);
                 if (repositoryCount > 0)
                 {

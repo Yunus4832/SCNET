@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 
 using Game.Content;
+using Game.Managers;
 
 namespace Game.Screens;
 
@@ -13,7 +14,8 @@ public sealed class ContentRepositoryScreen : Screen
         Toggle,
         MoveUp,
         MoveDown,
-        Test
+        Test,
+        SelectInformationSource
     }
 
     private readonly ActionPanelWidget _actionPanel;
@@ -39,13 +41,14 @@ public sealed class ContentRepositoryScreen : Screen
         _actionPanel.SetPrimaryItems(
         [
             RepositoryAction.AddOrEdit,
+            RepositoryAction.SelectInformationSource,
             RepositoryAction.MoveUp,
-            RepositoryAction.MoveDown,
-            RepositoryAction.Test
+            RepositoryAction.MoveDown
         ]);
         _actionPanel.SetSecondaryItems(
         [
             RepositoryAction.Toggle,
+            RepositoryAction.Test,
             RepositoryAction.Delete
         ]);
     }
@@ -91,14 +94,16 @@ public sealed class ContentRepositoryScreen : Screen
         widget.Children.Find<LabelWidget>("ContentRepositoryItem.Name")!.Text = repository.Name;
         widget.Children.Find<LabelWidget>("ContentRepositoryItem.Address")!.Text = repository.BaseUrl;
         widget.Children.Find<LabelWidget>("ContentRepositoryItem.State")!.Text = repository.IsEnabled
-            ? Text("Enabled")
+            ? repository.Id == ContentRepositoryManager.Current.GameInformationSource?.Id
+                ? Text("InformationSource")
+                : Text("Enabled")
             : Text("Disabled");
         return widget;
     }
 
     private void Refresh(Guid? selectedId = null)
     {
-        var repositories = SettingsManager.ContentRepositories.Snapshot();
+        var repositories = ContentRepositoryManager.Current.Snapshot();
         _repositoryList.ClearItems();
         foreach (var repository in repositories)
         {
@@ -133,7 +138,7 @@ public sealed class ContentRepositoryScreen : Screen
 
         try
         {
-            var current = SettingsManager.ContentRepositories.Snapshot();
+            var current = ContentRepositoryManager.Current.Snapshot();
             var candidate = (repository ?? new ContentRepository
             {
                 Priority = current.Count
@@ -151,11 +156,11 @@ public sealed class ContentRepositoryScreen : Screen
 
             if (repository is null)
             {
-                SettingsManager.ContentRepositories.Add(normalized);
+                ContentRepositoryManager.Current.Add(normalized);
             }
             else
             {
-                SettingsManager.ContentRepositories.Edit(normalized);
+                ContentRepositoryManager.Current.Edit(normalized);
             }
 
             Refresh(normalized.Id);
@@ -180,7 +185,7 @@ public sealed class ContentRepositoryScreen : Screen
         {
             if (button == MessageDialogButton.Button1)
             {
-                Execute(() => SettingsManager.ContentRepositories.Delete(repository.Id));
+                Execute(() => ContentRepositoryManager.Current.Delete(repository.Id));
             }
         });
     }
@@ -190,7 +195,7 @@ public sealed class ContentRepositoryScreen : Screen
         var ids = repositories.Select(repository => repository.Id).ToList();
         (ids[sourceIndex], ids[targetIndex]) = (ids[targetIndex], ids[sourceIndex]);
         var selectedId = ids[targetIndex];
-        Execute(() => SettingsManager.ContentRepositories.SetOrder(ids), selectedId);
+        Execute(() => ContentRepositoryManager.Current.SetOrder(ids), selectedId);
     }
 
     private bool IsActionEnabled(object item)
@@ -200,7 +205,7 @@ public sealed class ContentRepositoryScreen : Screen
             return false;
         }
 
-        var repositories = SettingsManager.ContentRepositories.Snapshot();
+        var repositories = ContentRepositoryManager.Current.Snapshot();
         var selected = _repositoryList.SelectedItem as ContentRepository;
         var selectedIndex = selected is null
             ? -1
@@ -209,6 +214,9 @@ public sealed class ContentRepositoryScreen : Screen
         {
             RepositoryAction.AddOrEdit => true,
             RepositoryAction.Delete or RepositoryAction.Toggle => selected is not null,
+            RepositoryAction.SelectInformationSource => selected is { IsEnabled: true } &&
+                                                        selected.Id != ContentRepositoryManager.Current
+                                                            .GameInformationSource?.Id,
             RepositoryAction.MoveUp => selectedIndex > 0,
             RepositoryAction.MoveDown => selectedIndex >= 0 && selectedIndex < repositories.Count - 1,
             RepositoryAction.Test => selected?.IsEnabled == true,
@@ -223,7 +231,7 @@ public sealed class ContentRepositoryScreen : Screen
             return;
         }
 
-        var repositories = SettingsManager.ContentRepositories.Snapshot();
+        var repositories = ContentRepositoryManager.Current.Snapshot();
         var selected = _repositoryList.SelectedItem as ContentRepository;
         var selectedIndex = selected is null
             ? -1
@@ -237,10 +245,14 @@ public sealed class ContentRepositoryScreen : Screen
                 ConfirmDelete(selected);
                 break;
             case RepositoryAction.Toggle when selected is not null:
-                Execute(() => SettingsManager.ContentRepositories.Edit(selected with
+                Execute(() => ContentRepositoryManager.Current.Edit(selected with
                 {
                     IsEnabled = !selected.IsEnabled
                 }), selected.Id);
+                break;
+            case RepositoryAction.SelectInformationSource when selected is not null:
+                Execute(() => ContentRepositoryManager.Current.SelectGameInformationSource(selected.Id), selected.Id);
+                GameInformationManager.StartAutomaticCheck();
                 break;
             case RepositoryAction.MoveUp:
                 Move(repositories, selectedIndex, selectedIndex - 1);
@@ -279,10 +291,16 @@ public sealed class ContentRepositoryScreen : Screen
         var busyDialog = new BusyDialog(Text("Testing"), repository.Name);
         _testDialog = busyDialog;
         DialogsManager.ShowDialog(null, busyDialog);
-        Task.Run(() => SettingsManager.ContentRepositories.TestConnectionAsync(repository.Id, cancellation.Token),
-                cancellation.Token)
+        ContentServerClientPool.Shared.Update(Guid.Empty,
+            ContentRepositoryManager.Current.Snapshot());
+        Task.Run(async () =>
+            {
+                using var lease = ContentServerClientPool.Shared.Acquire(Guid.Empty, repository.Id);
+                return await lease.Client.CheckHealthAsync(cancellation.Token).ConfigureAwait(false);
+            }, cancellation.Token)
             .ContinueWith(task => Dispatcher.Dispatch(() =>
             {
+                var userCancelled = cancellation.IsCancellationRequested;
                 cancellation.Dispose();
                 if (!ReferenceEquals(_testCancellation, cancellation))
                 {
@@ -293,7 +311,7 @@ public sealed class ContentRepositoryScreen : Screen
                 _testDialog = null;
                 _busy = false;
                 DialogsManager.HideDialog(busyDialog);
-                if (task.IsCanceled)
+                if (userCancelled)
                 {
                     return;
                 }
@@ -303,12 +321,27 @@ public sealed class ContentRepositoryScreen : Screen
                     DialogsManager.Alert(string.Format(Text("TestSucceeded"),
                         task.Result.Name, task.Result.Version));
                 }
-                else
+                else if (task.IsCanceled)
                 {
-                    Log.Error($"Content repository test failed: {task.Exception}");
+                    Log.Warning($"Content repository test timed out for '{repository.Name}' ({repository.BaseUrl}).");
                     ShowError(Text("TestFailed"));
                 }
-            }));
+                else
+                {
+                    var exception = task.Exception?.GetBaseException();
+                    if (exception is HttpRequestException or InvalidDataException or System.Text.Json.JsonException)
+                    {
+                        Log.Warning($"Content repository test failed for '{repository.Name}' " +
+                                    $"({repository.BaseUrl}): {exception.Message}");
+                    }
+                    else
+                    {
+                        Log.Error($"Unexpected content repository test failure: {exception}");
+                    }
+
+                    ShowError(Text("TestFailed"));
+                }
+            }), cancellation.Token);
     }
 
     private void Execute(Action action, Guid? selectedId = null)
