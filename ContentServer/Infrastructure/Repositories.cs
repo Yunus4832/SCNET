@@ -1,7 +1,8 @@
 using ContentServer.Domain.Administration;
+using ContentServer.Domain.Announcements;
 using ContentServer.Domain.Contents;
-using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
+using ContentServer.Domain.Releases;
 using ContentServer.Domain.Reviews;
 using ContentServer.Domain.ServerDirectory;
 using ContentServer.Domain.ServerSources;
@@ -11,6 +12,12 @@ using Microsoft.EntityFrameworkCore;
 using NetCorePal.Extensions.Repository.EntityFrameworkCore;
 
 namespace ContentServer.Infrastructure;
+
+public sealed class GameAnnouncementRepository(ContentServerDbContext context)
+    : RepositoryBase<GameAnnouncement, GameAnnouncementId, ContentServerDbContext>(context);
+
+public sealed class GameReleaseRepository(ContentServerDbContext context)
+    : RepositoryBase<GameRelease, GameReleaseId, ContentServerDbContext>(context);
 
 public sealed class AdministratorRepository(
     ContentServerDbContext context

@@ -13,6 +13,7 @@ import {
   type PagedData,
 } from '../api';
 import { contentTypeLabel } from '../contentTypes';
+import GameInformationManagement from '../components/GameInformationManagement.vue';
 import ServerSubmissionDialog from '../components/ServerSubmissionDialog.vue';
 
 interface Applicant {
@@ -77,7 +78,7 @@ interface DirectoryServer {
 }
 const router = useRouter();
 const client = useQueryClient();
-const mode = ref<'review' | 'manage'>('review');
+const mode = ref<'review' | 'manage' | 'gameInformation'>('review');
 const tab = ref<'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources'>(
   'content',
 );
@@ -339,7 +340,7 @@ async function serverUpdated() {
     client.invalidateQueries({ queryKey: ['admin-server-applications'] }),
   ]);
 }
-function switchMode(value: 'review' | 'manage') {
+function switchMode(value: 'review' | 'manage' | 'gameInformation') {
   mode.value = value;
   if (
     value === 'manage' &&
@@ -386,7 +387,13 @@ function selectContentType(value: string) {
     <template v-else>
       <div class="workspace-tabs primary-tabs">
         <button :class="{ active: mode === 'review' }" @click="switchMode('review')">审核</button
-        ><button :class="{ active: mode === 'manage' }" @click="switchMode('manage')">管理</button>
+        ><button :class="{ active: mode === 'manage' }" @click="switchMode('manage')">管理</button
+        ><button
+          :class="{ active: mode === 'gameInformation' }"
+          @click="switchMode('gameInformation')"
+        >
+          公告与游戏版本
+        </button>
       </div>
       <template v-if="mode === 'review'"
         ><div class="stats">
@@ -625,7 +632,7 @@ function selectContentType(value: string) {
           </div>
         </div></template
       >
-      <div v-else>
+      <div v-else-if="mode === 'manage'">
         <div class="stats">
           <button :class="{ active: tab === 'content' }" @click="selectManageTab('content')">
             <b>{{ contentCount.data.value?.total ?? 0 }}</b
@@ -958,6 +965,7 @@ function selectContentType(value: string) {
           </div>
         </div>
       </div>
+      <GameInformationManagement v-else />
     </template>
   </section>
 </template>

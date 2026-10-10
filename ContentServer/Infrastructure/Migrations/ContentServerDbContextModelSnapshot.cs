@@ -102,6 +102,44 @@ namespace ContentServer.Infrastructure.Migrations
                     b.ToTable("AdministratorKeys");
                 });
 
+            modelBuilder.Entity("ContentServer.Domain.Announcements.GameAnnouncement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "PublishedAt");
+
+                    b.ToTable("GameAnnouncements");
+                });
+
             modelBuilder.Entity("ContentServer.Domain.Contents.ContentItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -365,6 +403,84 @@ namespace ContentServer.Infrastructure.Migrations
                     b.ToTable("PublisherKeys");
                 });
 
+            modelBuilder.Entity("ContentServer.Domain.Releases.GameRelease", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset?>("PublishedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Version")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("Version")
+                        .IsUnique()
+                        .HasFilter("\"Deleted\" = 0");
+
+                    b.ToTable("GameReleases");
+                });
+
+            modelBuilder.Entity("ContentServer.Domain.Releases.GameReleaseArtifact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Deleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("DownloadUrl")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("GameReleaseId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Platform")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Platform");
+
+                    b.HasIndex("GameReleaseId", "Platform")
+                        .IsUnique()
+                        .HasFilter("\"Deleted\" = 0");
+
+                    b.ToTable("GameReleaseArtifacts");
+                });
+
             modelBuilder.Entity("ContentServer.Domain.Reviews.ReviewRecord", b =>
                 {
                     b.Property<Guid>("Id")
@@ -555,6 +671,17 @@ namespace ContentServer.Infrastructure.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("ContentServer.Domain.Releases.GameReleaseArtifact", b =>
+                {
+                    b.HasOne("ContentServer.Domain.Releases.GameRelease", "Owner")
+                        .WithMany("Artifacts")
+                        .HasForeignKey("GameReleaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Owner");
+                });
+
             modelBuilder.Entity("ContentServer.Domain.ServerDirectory.DirectoryServer", b =>
                 {
                     b.HasOne("ContentServer.Domain.Publishers.Publisher", null)
@@ -586,6 +713,11 @@ namespace ContentServer.Infrastructure.Migrations
             modelBuilder.Entity("ContentServer.Domain.Publishers.Publisher", b =>
                 {
                     b.Navigation("Keys");
+                });
+
+            modelBuilder.Entity("ContentServer.Domain.Releases.GameRelease", b =>
+                {
+                    b.Navigation("Artifacts");
                 });
 #pragma warning restore 612, 618
         }

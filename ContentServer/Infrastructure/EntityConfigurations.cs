@@ -1,7 +1,9 @@
 using ContentServer.Domain.Administration;
+using ContentServer.Domain.Announcements;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
+using ContentServer.Domain.Releases;
 using ContentServer.Domain.Reviews;
 using ContentServer.Domain.ServerDirectory;
 using ContentServer.Domain.ServerSources;
@@ -136,5 +138,44 @@ public sealed class DirectoryServerConfiguration : IEntityTypeConfiguration<Dire
         b.HasIndex(x => x.Address);
         b.HasIndex(x => x.ReviewStatus);
         b.Ignore(x => x.Tags);
+    }
+}
+
+public sealed class GameAnnouncementConfiguration : IEntityTypeConfiguration<GameAnnouncement>
+{
+    public void Configure(EntityTypeBuilder<GameAnnouncement> b)
+    {
+        b.ConfigureSoftDelete();
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
+        b.Property(x => x.Status).HasConversion<string>();
+        b.HasIndex(x => new { x.Status, x.PublishedAt });
+    }
+}
+
+public sealed class GameReleaseConfiguration : IEntityTypeConfiguration<GameRelease>
+{
+    public void Configure(EntityTypeBuilder<GameRelease> b)
+    {
+        b.ConfigureSoftDelete();
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
+        b.Property(x => x.Status).HasConversion<string>();
+        b.HasMany(x => x.Artifacts).WithOne(x => x.Owner).HasForeignKey(x => x.GameReleaseId)
+            .OnDelete(DeleteBehavior.Cascade);
+        b.HasIndex(x => x.Version).IsUnique().HasFilter("\"Deleted\" = 0");
+        b.HasIndex(x => x.Status);
+    }
+}
+
+public sealed class GameReleaseArtifactConfiguration : IEntityTypeConfiguration<GameReleaseArtifact>
+{
+    public void Configure(EntityTypeBuilder<GameReleaseArtifact> b)
+    {
+        b.ConfigureSoftDelete();
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
+        b.HasIndex(x => new { x.GameReleaseId, x.Platform }).IsUnique().HasFilter("\"Deleted\" = 0");
+        b.HasIndex(x => x.Platform);
     }
 }

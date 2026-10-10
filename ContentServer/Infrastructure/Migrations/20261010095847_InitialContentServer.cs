@@ -56,6 +56,42 @@ public partial class InitialContentServer : Migration
             });
 
         migrationBuilder.CreateTable(
+            name: "GameAnnouncements",
+            columns: table => new
+            {
+                Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                Deleted = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                Title = table.Column<string>(type: "TEXT", nullable: false),
+                Body = table.Column<string>(type: "TEXT", nullable: false),
+                Status = table.Column<string>(type: "TEXT", nullable: false),
+                CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                UpdatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                PublishedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_GameAnnouncements", x => x.Id);
+            });
+
+        migrationBuilder.CreateTable(
+            name: "GameReleases",
+            columns: table => new
+            {
+                Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                Deleted = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                Version = table.Column<string>(type: "TEXT", nullable: false),
+                Description = table.Column<string>(type: "TEXT", nullable: false),
+                Status = table.Column<string>(type: "TEXT", nullable: false),
+                CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                UpdatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                PublishedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_GameReleases", x => x.Id);
+            });
+
+        migrationBuilder.CreateTable(
             name: "PackageBlobs",
             columns: table => new
             {
@@ -131,6 +167,28 @@ public partial class InitialContentServer : Migration
                     name: "FK_AdministratorKeys_Administrators_AdministratorId",
                     column: x => x.AdministratorId,
                     principalTable: "Administrators",
+                    principalColumn: "Id",
+                    onDelete: ReferentialAction.Cascade);
+            });
+
+        migrationBuilder.CreateTable(
+            name: "GameReleaseArtifacts",
+            columns: table => new
+            {
+                Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                Deleted = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                GameReleaseId = table.Column<Guid>(type: "TEXT", nullable: false),
+                Platform = table.Column<string>(type: "TEXT", nullable: false),
+                DownloadUrl = table.Column<string>(type: "TEXT", nullable: false),
+                Sha256 = table.Column<string>(type: "TEXT", nullable: false)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_GameReleaseArtifacts", x => x.Id);
+                table.ForeignKey(
+                    name: "FK_GameReleaseArtifacts_GameReleases_GameReleaseId",
+                    column: x => x.GameReleaseId,
+                    principalTable: "GameReleases",
                     principalColumn: "Id",
                     onDelete: ReferentialAction.Cascade);
             });
@@ -304,6 +362,35 @@ public partial class InitialContentServer : Migration
             column: "ReviewStatus");
 
         migrationBuilder.CreateIndex(
+            name: "IX_GameAnnouncements_Status_PublishedAt",
+            table: "GameAnnouncements",
+            columns: new[] { "Status", "PublishedAt" });
+
+        migrationBuilder.CreateIndex(
+            name: "IX_GameReleaseArtifacts_GameReleaseId_Platform",
+            table: "GameReleaseArtifacts",
+            columns: new[] { "GameReleaseId", "Platform" },
+            unique: true,
+            filter: "\"Deleted\" = 0");
+
+        migrationBuilder.CreateIndex(
+            name: "IX_GameReleaseArtifacts_Platform",
+            table: "GameReleaseArtifacts",
+            column: "Platform");
+
+        migrationBuilder.CreateIndex(
+            name: "IX_GameReleases_Status",
+            table: "GameReleases",
+            column: "Status");
+
+        migrationBuilder.CreateIndex(
+            name: "IX_GameReleases_Version",
+            table: "GameReleases",
+            column: "Version",
+            unique: true,
+            filter: "\"Deleted\" = 0");
+
+        migrationBuilder.CreateIndex(
             name: "IX_PackageBlobs_Hash",
             table: "PackageBlobs",
             column: "Hash",
@@ -355,6 +442,12 @@ public partial class InitialContentServer : Migration
             name: "DirectoryServers");
 
         migrationBuilder.DropTable(
+            name: "GameAnnouncements");
+
+        migrationBuilder.DropTable(
+            name: "GameReleaseArtifacts");
+
+        migrationBuilder.DropTable(
             name: "PublisherKeys");
 
         migrationBuilder.DropTable(
@@ -371,6 +464,9 @@ public partial class InitialContentServer : Migration
 
         migrationBuilder.DropTable(
             name: "PackageBlobs");
+
+        migrationBuilder.DropTable(
+            name: "GameReleases");
 
         migrationBuilder.DropTable(
             name: "Publishers");

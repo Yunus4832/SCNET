@@ -39,6 +39,85 @@ public sealed class ContentServerApiTest : IDisposable
     private readonly string _storagePath = Path.Combine(Path.GetTempPath(), $"content-server-files-{Guid.NewGuid():N}");
 
     [Fact]
+    public async Task AnnouncementsAndReleasesArePublicOnlyWhenPublished()
+    {
+        await using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/api/v1/administrators/initialize", new
+        {
+            name = "Administrator",
+            apiKey = _administratorKey
+        });
+
+        using var announcementRequest = CreateAuthorizedRequest(HttpMethod.Post,
+            "/api/v1/admin/announcements", _administratorKey);
+        announcementRequest.Content = JsonContent.Create(new { title = "News", body = "Test announcement" });
+        var announcement = await ReadDataAsync(await client.SendAsync(announcementRequest));
+        var announcementId = announcement.GetProperty("id").GetString();
+        using var emptyAnnouncements = await client.GetAsync("/api/v1/announcements");
+        Assert.True(emptyAnnouncements.IsSuccessStatusCode, await emptyAnnouncements.Content.ReadAsStringAsync());
+        Assert.Empty((await ReadDataAsync(emptyAnnouncements)).EnumerateArray());
+
+        using var releaseRequest = CreateAuthorizedRequest(HttpMethod.Post,
+            "/api/v1/admin/game-releases", _administratorKey);
+        releaseRequest.Content = JsonContent.Create(new
+        {
+            version = "2.0.0",
+            description = "Update",
+            artifacts = new[]
+            {
+                new
+                {
+                    platform = "android-arm64",
+                    downloadUrl = "https://example.test/game.apk",
+                    sha256 = new string('a', 64)
+                },
+                new
+                {
+                    platform = "windows-x64",
+                    downloadUrl = "https://example.test/game.zip",
+                    sha256 = new string('b', 64)
+                }
+            }
+        });
+        var release = await ReadDataAsync(await client.SendAsync(releaseRequest));
+        var releaseId = release.GetProperty("id").GetString();
+        using var managedReleasesRequest = CreateAuthorizedRequest(HttpMethod.Get,
+            "/api/v1/admin/game-releases", _administratorKey);
+        var managedRelease = Assert.Single((await ReadDataAsync(await client.SendAsync(managedReleasesRequest)))
+            .EnumerateArray());
+        Assert.Equal(2, managedRelease.GetProperty("artifacts").GetArrayLength());
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await client.GetAsync("/api/v1/game-releases/latest/android-arm64")).StatusCode);
+
+        using var publishAnnouncement = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/announcements/{announcementId}/publish", _administratorKey);
+        using var publishRelease = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/game-releases/{releaseId}/publish", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(publishAnnouncement)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(publishRelease)).StatusCode);
+        Assert.Equal("News", Assert.Single((await ReadDataAsync(await client.GetAsync("/api/v1/announcements")))
+            .EnumerateArray()).GetProperty("title").GetString());
+        Assert.Equal("2.0.0", (await ReadDataAsync(await client.GetAsync(
+            "/api/v1/game-releases/latest/android-arm64"))).GetProperty("version").GetString());
+        var publicRelease = Assert.Single((await ReadDataAsync(await client.GetAsync("/api/v1/game-releases")))
+            .EnumerateArray());
+        Assert.Equal(2, publicRelease.GetProperty("artifacts").GetArrayLength());
+        Assert.Equal("https://example.test/game.zip", (await ReadDataAsync(await client.GetAsync(
+            "/api/v1/game-releases/latest/windows-x64"))).GetProperty("downloadUrl").GetString());
+
+        using var withdrawAnnouncement = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/announcements/{announcementId}/withdraw", _administratorKey);
+        using var withdrawRelease = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/game-releases/{releaseId}/withdraw", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(withdrawAnnouncement)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(withdrawRelease)).StatusCode);
+        Assert.Empty((await ReadDataAsync(await client.GetAsync("/api/v1/announcements"))).EnumerateArray());
+        Assert.Equal(HttpStatusCode.NotFound,
+            (await client.GetAsync("/api/v1/game-releases/latest/android-arm64")).StatusCode);
+    }
+
+    [Fact]
     public async Task EveryPersistedEntityHasFilteredAuditDeletion()
     {
         await using var factory = CreateFactory();
@@ -947,4 +1026,5 @@ public sealed class ContentServerApiTest : IDisposable
             return Task.FromResult(new ServerSourceSnapshot(new ServerSourceDescriptor("source", "Source"), []));
         }
     }
+
 }

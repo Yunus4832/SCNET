@@ -1,7 +1,9 @@
 using ContentServer.Domain.Administration;
+using ContentServer.Domain.Announcements;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
+using ContentServer.Domain.Releases;
 using ContentServer.Domain.Reviews;
 using ContentServer.Domain.ServerDirectory;
 using ContentServer.Domain.ServerSources;
@@ -29,6 +31,9 @@ public sealed partial class ContentServerDbContext(
     public DbSet<ReviewRecord> ReviewRecords => Set<ReviewRecord>();
     public DbSet<ServerSourceRegistration> ServerSources => Set<ServerSourceRegistration>();
     public DbSet<DirectoryServer> DirectoryServers => Set<DirectoryServer>();
+    public DbSet<GameAnnouncement> GameAnnouncements => Set<GameAnnouncement>();
+    public DbSet<GameRelease> GameReleases => Set<GameRelease>();
+    public DbSet<GameReleaseArtifact> GameReleaseArtifacts => Set<GameReleaseArtifact>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -5,8 +5,10 @@ import {
   Check,
   ExternalLink,
   Link2,
+  Megaphone,
   PackageSearch,
   RadioTower,
+  Rocket,
   Search,
 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -17,7 +19,7 @@ import { contentTypeLabel } from '../contentTypes';
 
 const search = ref('');
 const appliedSearch = ref('');
-const catalogView = ref<'content' | 'serverSources'>('content');
+const catalogView = ref<'content' | 'serverSources' | 'gameInformation'>('content');
 const type = ref('');
 const page = ref(1);
 const selectedContent = ref<ContentVersion>();
@@ -29,6 +31,23 @@ interface ServerSource {
   name: string;
   apiUrl: string;
   description?: string;
+}
+interface Announcement {
+  id: string;
+  title: string;
+  body: string;
+  publishedAt?: string;
+}
+interface GameRelease {
+  id: string;
+  version: string;
+  description: string;
+  artifacts: GameReleaseArtifact[];
+  publishedAt?: string;
+}
+interface GameReleaseArtifact {
+  platform: string;
+  downloadUrl: string;
 }
 const serverSources = useQuery({
   queryKey: ['server-sources'],
@@ -42,6 +61,31 @@ const filteredServerSources = computed(() => {
     [item.name, item.apiUrl, item.description]
       .filter(Boolean)
       .some((value) => value!.toLocaleLowerCase().includes(query)),
+  );
+});
+const announcements = useQuery({
+  queryKey: ['game-announcements'],
+  enabled: computed(() => catalogView.value === 'gameInformation'),
+  queryFn: () => api<Announcement[]>('/api/v1/announcements'),
+});
+const releases = useQuery({
+  queryKey: ['game-releases'],
+  enabled: computed(() => catalogView.value === 'gameInformation'),
+  queryFn: () => api<GameRelease[]>('/api/v1/game-releases'),
+});
+const filteredAnnouncements = computed(() => {
+  const query = appliedSearch.value.toLocaleLowerCase();
+  if (!query) return announcements.data.value ?? [];
+  return (announcements.data.value ?? []).filter((item) =>
+    [item.title, item.body].some((value) => value.toLocaleLowerCase().includes(query)),
+  );
+});
+const filteredReleases = computed(() => {
+  const query = appliedSearch.value.toLocaleLowerCase();
+  if (!query) return releases.data.value ?? [];
+  return (releases.data.value ?? []).filter((item) =>
+    [item.version, item.description, ...item.artifacts.map((artifact) => artifact.platform)]
+      .some((value) => value.toLocaleLowerCase().includes(query)),
   );
 });
 const types = [
@@ -130,12 +174,22 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
       >
         服务器源
       </button>
+      <button
+        :class="{ active: catalogView === 'gameInformation' }"
+        @click="catalogView = 'gameInformation'"
+      >
+        公告和游戏版本
+      </button>
     </div>
     <form class="search-box" @submit.prevent="submitSearch">
       <Search :size="20" /><input
         v-model="search"
         :placeholder="
-          catalogView === 'content' ? '搜索名称、标识符或简介' : '搜索服务器源名称、地址或说明'
+          catalogView === 'content'
+            ? '搜索名称、标识符或简介'
+            : catalogView === 'serverSources'
+              ? '搜索服务器源名称、地址或说明'
+              : '搜索公告、版本号、平台或说明'
         "
       />
       <button class="button primary">搜索</button>
@@ -256,7 +310,7 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
         ><button :disabled="page === pages" @click="page++">下一页</button>
       </div>
     </template>
-    <template v-else>
+    <template v-else-if="catalogView === 'serverSources'">
       <div class="catalog-filter-row server-source-count">
         <span class="count">{{ filteredServerSources.length }} 个来源</span>
       </div>
@@ -286,5 +340,78 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
         </article>
       </div>
     </template>
+    <template v-else>
+      <div v-if="announcements.isPending.value || releases.isPending.value" class="state">
+        <span class="spinner" />正在取得公告与游戏版本…
+      </div>
+      <div v-else-if="announcements.isError.value || releases.isError.value" class="state error">
+        {{ announcements.error.value?.message || releases.error.value?.message }}
+      </div>
+      <div v-else class="game-information-sections">
+        <section class="public-information-section">
+          <div class="section-title-row">
+            <div><Megaphone :size="19" /><h2>游戏公告</h2></div>
+            <span class="count">{{ filteredAnnouncements.length }} 条公告</span>
+          </div>
+          <div v-if="filteredAnnouncements.length" class="information-list">
+            <article v-for="item in filteredAnnouncements" :key="item.id" class="information-card">
+              <div class="information-card-head">
+                <h3>{{ item.title }}</h3>
+                <time v-if="item.publishedAt">{{ new Date(item.publishedAt).toLocaleDateString() }}</time>
+              </div>
+              <p>{{ item.body }}</p>
+            </article>
+          </div>
+          <div v-else class="state compact-state">没有找到匹配的公告</div>
+        </section>
+        <section class="public-information-section">
+          <div class="section-title-row">
+            <div><Rocket :size="19" /><h2>游戏版本</h2></div>
+            <span class="count">{{ filteredReleases.length }} 个版本</span>
+          </div>
+          <div v-if="filteredReleases.length" class="information-list release-information-list">
+            <article v-for="item in filteredReleases" :key="item.id" class="information-card release-card">
+              <div class="information-card-head">
+                <div><h3>v{{ item.version }}</h3><span class="platform-label">{{ item.artifacts.map((artifact) => artifact.platform).join(' · ') }}</span></div>
+                <time v-if="item.publishedAt">{{ new Date(item.publishedAt).toLocaleDateString() }}</time>
+              </div>
+              <p>{{ item.description || '未提供版本说明。' }}</p>
+              <div class="artifact-downloads">
+                <a v-for="artifact in item.artifacts" :key="artifact.platform" :href="artifact.downloadUrl" target="_blank" rel="noreferrer">
+                  <span>{{ artifact.platform }}</span><ArrowDownToLine :size="16" />下载
+                </a>
+              </div>
+            </article>
+          </div>
+          <div v-else class="state compact-state">没有找到匹配的游戏版本</div>
+        </section>
+      </div>
+    </template>
   </section>
 </template>
+
+<style scoped>
+.game-information-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.public-information-section { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 86%, transparent); }
+.section-title-row, .section-title-row > div, .information-card-head {
+  display: flex;
+  align-items: center;
+}
+.section-title-row { justify-content: space-between; gap: 16px; margin-bottom: 10px; }
+.section-title-row > div { gap: 8px; }
+.section-title-row h2 { margin: 0; font-size: 18px; }
+.information-list { display: grid; gap: 10px; }
+.information-card { min-width: 0; padding: 17px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.information-card-head { align-items: flex-start; justify-content: space-between; gap: 14px; }
+.information-card h3 { margin: 0; font-size: 17px; }
+.information-card time, .platform-label { color: var(--muted); font-size: 12px; }
+.information-card p { margin: 12px 0 0; color: #bdc6c0; line-height: 1.6; white-space: pre-wrap; }
+.platform-label { display: block; margin-top: 4px; }
+.artifact-downloads { display: grid; gap: 7px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
+.artifact-downloads a { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 12px; font-weight: 600; }
+.artifact-downloads a span { min-width: 0; margin-right: auto; color: var(--muted); }
+.artifact-downloads a:hover { color: var(--accent); }
+@media (max-width: 720px) {
+  .game-information-sections { grid-template-columns: 1fr; }
+}
+</style>

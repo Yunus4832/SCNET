@@ -23,7 +23,7 @@ public sealed class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logge
 
         if (exception is KnownException or BadHttpRequestException)
         {
-            logger.LogWarning(exception, "Request failed with a known error: {Message}", message);
+            logger.LogWarning("Request failed with a known error: {Message}", message);
         }
         else
         {
