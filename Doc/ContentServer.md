@@ -14,7 +14,7 @@ ContentPackageCache。仓库中不再包含独立的模组服务或另一套模�
 
 ## 游戏公告与版本目录
 
-管理员工作台的“公告与游戏版本”页面管理两类独立于 scpak 的数据。公告草稿可编辑，发布后通过 `GET /api/v1/announcements` 匿名读取，撤回后不再出现在公开列表。版本草稿按版本号和平台记录更新说明、外部下载地址、字节大小及 SHA-256；发布后通过 `GET /api/v1/game-releases?platform=...` 查询列表，通过 `GET /api/v1/game-releases/latest/{platform}` 查询最新版本，撤回后不再公开。平台标识为 `windows-x64`、`linux-x64`、`android-arm64`、`android-arm32`。ContentServer 不托管游戏安装包。
+管理员工作台的“公告与游戏版本”页面管理两类独立于 `.scpkg` 内容包的数据。公告草稿可编辑，发布后通过 `GET /api/v1/announcements` 匿名读取，撤回后不再出现在公开列表。版本草稿按版本号和平台记录更新说明、外部下载地址及 SHA-256；发布后通过 `GET /api/v1/game-releases?platform=...` 查询列表，通过 `GET /api/v1/game-releases/latest/{platform}` 查询最新版本，撤回后不再公开。平台标识为 `windows-x64`、`linux-x64`、`android-arm64`、`android-arm32`。ContentServer 不托管游戏安装包，也不会在记录版本时访问下载地址。
 
 游戏 GUI 启动后异步从选定来源获取公告与适用平台的最新版本。未选择来源、请求超时或服务不可用均不阻止进入游戏；失败只写日志。主菜单滚动展示公告标题，点击后展开公告列表；点击版本号手动检查更新。桌面端打开外部下载链接，由用户自行安装；Android 下载 APK 后校验 SHA-256，再交给系统安装器，由用户在系统界面确认。该哈希只验证文件与所选内容服务器记录一致，不证明服务器身份。
 

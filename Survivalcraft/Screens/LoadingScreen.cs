@@ -23,7 +23,6 @@ public class LoadingScreen : Screen
         _canvas.Size = new Vector2(float.PositiveInfinity);
         _canvas.AddChildren(_background);
         AddChildren(_canvas);
-        Log.Information("Initializing Mods Manager. Api Version: " + ModPlatformInfo.ApiVersion);
     }
 
     public void ContentLoaded()
