@@ -74,7 +74,7 @@ updatedAt           ISO 8601 UTC
 
 容量写入失败必须保留旧草稿，提示浏览器存储不足并允许直接制造/下载而不保存草稿。界面始终提示：草稿仅存在当前浏览器配置，清理站点数据、隐私模式回收或浏览器策略可能永久删除它。
 
-第一阶段不定义草稿交换格式，也不提供导入或导出。用户可以删除单条草稿或一次清理全部草稿及其源 Blob；清理必须在同一 IndexedDB 事务中覆盖 `drafts` 和 `sources`，不能留下无主源文件。
+当前不定义草稿交换格式，也不提供导入或导出。用户可以删除单条草稿或一次清理全部草稿及其源 Blob；清理必须在同一 IndexedDB 事务中覆盖 `drafts` 和 `sources`，不能留下无主源文件。
 
 ## 5. 无代码图片制造与提交契约
 
@@ -87,12 +87,10 @@ updatedAt           ISO 8601 UTC
 3. `submit-generated`：接收与 build 相同的输入；在同一请求内生成一次包，把该制品提交为 Pending，并返回 ContentId、VersionId、PackageHash 和审核状态。不得先返回一个包再用第二次重打包结果提交。
 4. `submit-package`：接收任意官方入口产生的完整 `.scpkg`，返回权威 manifest、PackageHash、冲突或 Pending 结果；不重新制造。
 
-具体 HTTP 路径可在阶段 2/3 按 Controller 组织确定，但请求语义、认证、无服务器草稿和响应事实不得改变。请求取消或连接断开必须停止读取、删除临时文件且不创建 Pending 记录。summary 和 description 均来自包内 manifest，预览和提交响应必须原样展示。
+这些操作分别由 `ContentServer.Endpoints.Publisher.Packages` 下的 FastEndpoint 实现；Endpoint 负责读取请求和发送命令，制造与提交规则由应用层和领域层执行。请求取消或连接断开必须停止读取、删除临时文件且不创建 Pending 记录。summary 和 description 均来自包内 manifest，预览和提交响应必须原样展示。
 
-## 6. 阶段验收归属
+## 6. 实现约束
 
-- 阶段 1 已验证 Mod MSBuild、ContentTool 和共享 Writer。
-- 阶段 2 实现完整包提交、权限事实和 ContentServer 文件存储。
-- 阶段 3 实现 IndexedDB、图片预览、无状态制造及浏览器端到端测试。
-- 阶段 4 实现游戏制造源、非 Mod installer 和大型 World 非平台流式压力测试。
-- 阶段 5 实现真实平台 FilePicker 保存、取消及 UI 流程。
+Mod MSBuild、ContentTool、游戏制造器和 WebUI 制造入口共享同一 Writer、Reader、codec 与
+PackageHash 定义。平台 FilePicker、浏览器 IndexedDB 和 ContentServer 文件存储只负责各自边界内的
+保存与传输，不能建立第二套包格式、身份算法或隐式安装流程。

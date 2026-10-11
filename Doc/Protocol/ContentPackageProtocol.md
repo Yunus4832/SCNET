@@ -282,6 +282,8 @@ dotnet run --project ContentTool/ContentTool.csproj -- pack manifest.json path/t
 `inspect` 输出公共 manifest 和 `PackageHash`；`verify` 只在完整 ZIP、manifest、payload 布局和逻辑 hash 验证通过时返回
 0。`pack` 将指定目录中的相对文件写入包内 `payload/`，通过共享 Writer 在同目录临时文件中生成并复验包，成功后再原子替换输出目标。格式错误、不可读文件或非 `.scpkg` 输入必须返回非零状态。
 
-## 10. 实施顺序
+## 10. 当前实现
 
-五类黄金包、公开 hash 向量、`Content.Packaging`、ContentTool、Mod MSBuild 目标和 Mod Runtime 读取路径均已建立。Mod 构建和游戏解析现在只接受 `.scpkg`；其余旧内容格式仍按迁移计划等待对应 installer 替代链路就绪后删除。下一条纵向实施链路是让 ContentServer 复用同一 Reader、codec 和 PackageHash，并把包制品迁移到内容寻址文件存储。
+五类黄金包、公开 hash 向量、`Content.Packaging`、ContentTool、Mod MSBuild 目标、游戏安装器和
+Mod Runtime 均使用本协议。ContentServer 复用同一 Reader、codec 和 PackageHash，并按内容哈希保存
+原始 `.scpkg` 制品。包的制造、缓存、提交、下载、安装和运行时读取不再维护并行格式或独立身份算法。

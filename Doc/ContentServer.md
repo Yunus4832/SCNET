@@ -396,139 +396,15 @@ dotnet run --project ContentServer/ContentServer.csproj
 `ContentServer.csproj` 的 build target 自动执行前端构建，并把 `ContentWebUI/dist` 复制到 `wwwroot`，
 因此调试时用 `npm run dev`，部署时只需发布 ContentServer。
 
-## 容器镜像（推荐）
+## 发布与部署
 
-MSBuild 是后端、WebUI 和发行包的统一入口。只有显式执行 `Publish` 且配置名称严格为 `Release` 时才打包；普通
-`Build`、`Debug` 和其他自定义配置只编译项目。所有系统生成不带 RID、以 `dotnet ContentServer.dll` 启动的 framework-dependent portable ZIP；
-Linux 额外执行隔离的 `linux-x64` build/publish，并把该目录封装进 .NET 10 Chiseled 运行镜像：
-
-```bash
-dotnet publish ContentServer/ContentServer.csproj -c Release
-```
-
-产物默认直接写入 `Publish/`：
-
-```text
-content-server-0.0.1-portable.zip
-content-server-0.0.1-linux-amd64.tar.gz    # 仅 Linux
-```
-
-portable 包不携带 .NET，目标机器需要 ASP.NET Core Runtime 10。非 Linux 系统不会执行 Bash，也不要求安装容器
-工具链。Linux 构建机需要 Podman 或 Docker；镜像组装自动优先选择 Podman，其次选择 Docker。可以明确指定：
-
-```bash
-CONTAINER_ENGINE=docker dotnet publish ContentServer/ContentServer.csproj -c Release
-```
-
-默认读取 `ContentServer.csproj` 的 `Version` 作为标签，当前生成 `linux/amd64` 镜像
-`localhost/scnet/content-server:0.0.1`。`localhost` 明确表示当前是通过归档传输的本地镜像，而不是远程镜像仓库。
-Git revision 单独记录在 OCI Label 中；工作区不干净时 revision 会带 `-dirty` 并输出警告，但不会改变发布版本标签。
-可以覆盖镜像名称、标签、平台和输出目录：
-
-```bash
-IMAGE_NAME=example/content-server IMAGE_TAG=0.1.0 \
-  dotnet publish ContentServer/ContentServer.csproj -c Release
-```
-
-镜像基础层取自 `ContentServer/Deployment/Dockerfile` 的 `mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled`。
-发行构建默认只使用本地已有的基础镜像（`IMAGE_PULL_POLICY=never`），不会为解析基础镜像回源 registry，因此离线或
-受限网络下不会阻塞；本地缺少该镜像时构建会立即失败而不会隐式拉取。构建机首次使用前先手动拉取：
-
-```bash
-podman pull mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled
-```
-
-需要允许构建时拉取时，把 `IMAGE_PULL_POLICY` 设为 `missing` 或 `always`：
-
-```bash
-IMAGE_PULL_POLICY=missing dotnet publish ContentServer/ContentServer.csproj -c Release
-```
-
-portable 与 `linux-x64` 发布使用 `obj` 下的独立目录，嵌套的 Linux 构建显式关闭发行 Target，避免递归和输出冲突。
-`ContentServer/Deployment/build-image.sh` 只校验并组装 MSBuild 提供的 Linux publish 目录，不再执行 `dotnet build`
-或 `dotnet publish`，也不作为日常发行入口直接调用。
-
-Linux 镜像流程把镜像和部署文件组合成一个适合分发的压缩包，架构是文件名的一部分：
-
-```text
-content-server-<tag>-linux-amd64.tar.gz
-```
-
-压缩包解压后包含 Docker archive、镜像归档的 SHA-256、`compose.yaml`、`Caddyfile` 和 `deploy.sh`。镜像归档在外层 bundle
-压缩时统一压缩，避免重复压缩。输出的 `compose.yaml` 会硬编码本次构建的精确镜像引用，而仓库中的
-`ContentServer/Deployment/compose.yaml` 是构建模板。这样部署包不依赖外部镜像变量，也不会意外使用其他标签。
-
-没有镜像仓库时，通过 SSH 复制并导入到 Docker 主机，无需把源码复制到服务器：
-
-```bash
-scp Publish/content-server-<tag>-linux-amd64.tar.gz dev:content-server/
-ssh dev
-cd content-server
-tar -xzf content-server-<tag>-linux-amd64.tar.gz
-./deploy.sh
-```
-
-`deploy.sh` 自动探测 Podman 或 Docker，也可以通过 `CONTAINER_ENGINE` 显式指定。无参数运行时会等待用户选择
-是否校验并导入镜像、是否启动以及使用 HTTP 或 HTTPS，不对人工操作设置超时。`--default` 跳过全部问题，
-采用“导入镜像、HTTP、启动容器”的完整默认方案：
-
-```bash
-./deploy.sh --default
-```
-
-需要覆盖默认项时可以组合 `--default` 与 `--skip-import`、`--https` 或 `--no-start`；也可以不使用默认方案，
-通过 `--import`、`--skip-import`、`--http`、`--https`、`--no-start` 明确指定所需操作。stdin 不可用且参数不足
-会明确失败，不会等待或悄悄选择。HTTP 模式手动启动：
-
-```bash
-mkdir -p Data
-docker compose -f compose.yaml up -d content-server
-curl http://127.0.0.1:5000/api/v1/health
-```
-
-HTTPS 模式启用 Caddy profile：
-
-```bash
-mkdir -p Data CaddyData CaddyConfig
-CONTENTSERVER_BIND_ADDRESS=127.0.0.1 docker compose -f compose.yaml --profile https up -d
-curl --cacert caddy-root.crt https://content.dev.scnet/api/v1/health
-```
-
-HTTP 模式默认把宿主 `5000` 映射到 ContentServer 的 `8080`，无需域名和客户端证书配置；可以通过
-`CONTENTSERVER_PORT` 和 `CONTENTSERVER_BIND_ADDRESS` 覆盖。WebUI 会明确提示 HTTP 通信未加密。匿名浏览与下载
-可以使用 HTTP，但发布者或管理员 Key 不应通过不可信网络传输，部署者需要根据网络边界承担相应风险。
-
-HTTPS 模式的 Caddy 默认在宿主 `80` 和 `443` 端口提供入口，使用内部 CA 为 `content.dev.scnet` 自动签发证书，
-再通过容器网络代理到 ContentServer。脚本默认把 ContentServer 的 HTTP 端口限制在宿主回环地址。可以通过
-`CONTENTSERVER_HTTP_PORT`、`CONTENTSERVER_HTTPS_PORT` 和 `CONTENTSERVER_HOSTNAME` 覆盖 Caddy 入口配置。
-ContentServer 数据仍由 `./Data` 挂载为 `/data`，也可以通过 `CONTENTSERVER_DATA_DIR` 覆盖。当前镜像不限制运行 UID，以避免
-为宿主挂载目录引入额外的所有权配置；需要强化容器隔离时，再由部署环境统一配置非 root 用户和匹配的数据目录权限。
-容器内固定使用：
-
-```text
-ContentServer__DatabasePath=/data/content-server.db
-ContentServer__PackageStoragePath=/data
-```
-
-dev 主机不需要修改自身 hostname。客户端需要将部署服务器 IP 映射到配置的域名，例如在 hosts 中加入
-`192.168.160.164 content.dev.scnet`。首次启动后，`deploy.sh` 会把 Caddy 内部 CA 根证书复制为
-`caddy-root.crt`；每台访问设备需要将该根证书安装到系统信任库。`CaddyData` 和 `CaddyConfig` 必须持久化，
-否则重建 Caddy 时会生成新的 CA，客户端需要重新建立信任。公网部署时将 Caddyfile 中的 `tls internal` 移除并使用
-可公开解析的域名，由 Caddy 申请公开可信证书。
-
-Chiseled 镜像没有 shell、curl 或包管理器；健康检查由宿主、反向代理或集群通过所选 HTTP(S) 入口请求
-`/api/v1/health`。启用 HTTPS 时 TLS 在 Caddy 终止，ContentServer 应用和镜像不管理证书。
-
-SQLite 数据库与 `Data/packages/` 必须作为同一个持久化单元备份和恢复。当前存储模型只支持单副本部署；
-在迁移到外部数据库和对象存储前，不得让多个容器或 Pod 并发写入同一份数据。集群可以使用单副本工作负载和
-RWO 持久卷，但仓库暂不维护 Kubernetes 清单。
-
-升级时传输并解压新版本 bundle，然后执行其中的 `deploy.sh`。不要依赖隐式 `latest` 标签。未来接入镜像仓库时，
-只需用 `podman push` / `docker pull` 替代归档传输，运行配置不变。
+ContentServer 的 portable 包、容器镜像、HTTP/HTTPS 配置、持久化、备份和升级方式见
+[ContentServer 部署](ContentServerDeployment.md)。日常开发使用 `dotnet build`；只有明确创建发行物时才运行仓库发布脚本。
 
 ## 游戏客户端
 
-游戏在实例的 `ContentRepositories.xml` 中保存有序的内容仓库集合，每个仓库包含稳定 ID、名称、规范 HTTP(S) 基础地址、启用状态、默认标记和优先级。
+游戏在实例的 `ContentRepositories.xml` 中保存有序的内容仓库集合，每个仓库包含稳定 ID、名称、规范 HTTP(S) 基础地址、启用状态和优先级。
+公告与版本来源由根元素的 `GameInformationSourceId` 单独记录，它引用一个已启用的持久仓库，不是仓库自身的属性。
 “内容仓库”页负责增删改、启停、排序和健康检查，不浏览包；删除或禁用仓库不会删除缓存、Profile 或安装资产。
 
 “在线内容”页通过共享 ClientPool 并发读取所有选定仓库，按 `ContentType + Identifier` 聚合目录，提供搜索、类型、仓库和状态

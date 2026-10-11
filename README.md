@@ -118,12 +118,12 @@ dotnet test Survivalcraft.Test/
 - [构建与共享配置](Doc/BuildAndConfig.md) — 构建流程、共享属性与打包行为
 - [模组使用说明](Doc/Mods.md) — `.scpkg`、本地缓存、profile、仓库和联机 required mods
 - [模组开发](Doc/Modding.md) — 模组模板、`.scpkg` 构建、示例模组与 NuGet 包边界
-- [内容服务](Doc/ContentServer.md) — 内容发布、审核、匿名目录、包分发及内置服务器源
+- [ContentServer](Doc/ContentServer.md) — 内容发布、审核、匿名目录、包分发、公告与游戏版本
+- [ContentServer 部署](Doc/ContentServerDeployment.md) — 发行物、容器、HTTP/HTTPS、持久化与升级
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问
 - [外部依赖](Doc/Dependencies.md) — 工具链、运行时包与测试依赖
 - [网络稳定性与容量测试](Doc/NetworkTesting.md) — UDP 损伤代理、弱网实验与并发容量测试边界
 - [地形内容分发架构](Doc/TerrainDistribution.md) — 权威内容、客户端派生、版本门禁与线程所有权
-- [ContentServer](Doc/ContentServer.md) — 发布者申请、内容与服务器审核、匿名下载和内置服务器目录
 
 ## 版权与法律
 
@@ -135,5 +135,3 @@ dotnet test Survivalcraft.Test/
 2. 基于主分支创建功能分支
 3. 提交代码并推送
 4. 创建 Pull Request
-
-> 本文档由 AI Agent 编写润色，由 `Yunus0712` 审阅

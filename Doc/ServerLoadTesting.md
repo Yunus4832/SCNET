@@ -1,6 +1,6 @@
 # 服务端负载测试
 
-`ServerLoadTool` 是专用协议负载工具，不是新的游戏运行模式，也不是 Agent 客户端。
+`ServerLoadTool` 是专用协议负载工具，不是新的游戏运行模式或完整游戏客户端。
 它复用当前仓库的数据包编码与传输通道，独立建立真实 LiteNetLib 连接，完成 Bootstrap、世界快照确认、玩家创建与进入 Playing。
 不启动窗口、音频或完整客户端世界。协议变化时与仓库一起修改，不提供历史协议兼容。
 
@@ -33,7 +33,7 @@ dotnet build ServerLoadTool
 dotnet run --project ServerLoadTool --no-build -- \
   --host 127.0.0.1 --port 31987 --clients 4 \
   --workload shared --ramp 1 --warmup 10 --duration 30 \
-  --visibility 32 --seed 1 --output .agent-work/load-test/artifacts/shared-4
+  --visibility 32 --seed 1 --output artifacts/load-test/shared-4
 ```
 
 输出目录必须为空，不覆盖以前的结果。`--help` 显示参数与边界。
