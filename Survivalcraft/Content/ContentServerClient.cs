@@ -118,6 +118,37 @@ public sealed class ContentServerClient : IDisposable
         return result.Data;
     }
 
+    public async Task<IReadOnlyList<ContentServerRendezvousService>> ListRendezvousServicesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var services = new List<ContentServerRendezvousService>();
+        var identities = new HashSet<string>(StringComparer.Ordinal);
+        for (var pageIndex = 1; pageIndex <= 100; pageIndex++)
+        {
+            var page = await GetPageAsync<ContentServerRendezvousService>(
+                $"api/v1/rendezvous-services?pageIndex={pageIndex}&pageSize=100", cancellationToken).ConfigureAwait(false);
+            if (page.PageIndex != pageIndex || page.PageSize != 100 || page.Items.Count > 100 || page.Total > 10000 ||
+                page.Items.Any(service => service is null || string.IsNullOrWhiteSpace(service.Id) ||
+                    !identities.Add(service.Id) || string.IsNullOrWhiteSpace(service.Name) || service.Name.Length > 100 ||
+                    service.Description?.Length > 1000 ||
+                    !Uri.TryCreate(service.ControlUrl, UriKind.Absolute, out var url) || url.Scheme != Uri.UriSchemeHttps ||
+                    !string.IsNullOrEmpty(url.UserInfo) || !string.IsNullOrEmpty(url.Query) || !string.IsNullOrEmpty(url.Fragment)))
+            {
+                throw new InvalidDataException("ContentServer returned an invalid signaling service response.");
+            }
+            services.AddRange(page.Items);
+            if (pageIndex * page.PageSize >= page.Total)
+            {
+                return services;
+            }
+            if (page.Items.Count == 0)
+            {
+                throw new InvalidDataException("ContentServer returned an incomplete signaling service page.");
+            }
+        }
+        throw new InvalidDataException("ContentServer signaling service directory exceeds its pagination limit.");
+    }
+
     public Task<ContentServerPageResult<ContentCatalogItem>> ListPageAsync(ContentCatalogQuery query,
         CancellationToken cancellationToken = default)
     {

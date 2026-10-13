@@ -129,6 +129,55 @@ public static class StartupManager
                 continue;
             }
 
+            if (string.Equals(arg, "--p2p", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!bool.TryParse(ReadOptionValue(args, ref i, "--p2p"), out var value))
+                {
+                    throw new ArgumentException("--p2p must be true or false.");
+                }
+
+                request.P2POverrides = request.P2POverrides with { Enabled = value };
+                continue;
+            }
+
+            if (string.Equals(arg, "--room-public", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!bool.TryParse(ReadOptionValue(args, ref i, "--room-public"), out var value))
+                {
+                    throw new ArgumentException("--room-public must be true or false.");
+                }
+
+                request.P2POverrides = request.P2POverrides with { IsPublic = value };
+                continue;
+            }
+
+            if (string.Equals(arg, "--rendezvous", StringComparison.OrdinalIgnoreCase))
+            {
+                request.P2POverrides = request.P2POverrides with
+                {
+                    ControlUrl = ReadOptionValue(args, ref i, "--rendezvous")
+                };
+                continue;
+            }
+
+            if (string.Equals(arg, "--room-name", StringComparison.OrdinalIgnoreCase))
+            {
+                request.P2POverrides = request.P2POverrides with
+                {
+                    Name = ReadOptionValue(args, ref i, "--room-name")
+                };
+                continue;
+            }
+
+            if (string.Equals(arg, "--room-description", StringComparison.OrdinalIgnoreCase))
+            {
+                request.P2POverrides = request.P2POverrides with
+                {
+                    Description = ReadOptionValue(args, ref i, "--room-description")
+                };
+                continue;
+            }
+
             if (string.Equals(arg, "--host", StringComparison.OrdinalIgnoreCase))
             {
                 request.ForceWorldRunServer = true;

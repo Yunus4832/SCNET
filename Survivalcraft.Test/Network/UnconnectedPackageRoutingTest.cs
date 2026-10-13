@@ -1,20 +1,21 @@
+using Engine.Network;
+
 using Game.Network;
 using Game.Network.Packages;
 
-using LiteNetLib;
 
 namespace Survivalcraft.Test.Network;
 
 public sealed class UnconnectedPackageRoutingTest
 {
     [Fact]
-    public void MissingDestinationCannotBecomeLanBroadcast()
+    public async Task MissingDestinationCannotBecomeLanBroadcast()
     {
-        var network = new NetManager(new EventBasedNetListener());
+        await using var network = new NetworkHost();
 
         var exception = Assert.Throws<ArgumentNullException>(() =>
-            NetNode.SendUnconnectedPackage(network, new ServerInfoPackage(true), null!));
+            network.SendDatagram(null!, NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true))));
 
-        Assert.Equal("endPoint", exception.ParamName);
+        Assert.Equal("endpoint", exception.ParamName);
     }
 }

@@ -8,9 +8,11 @@ public static class ModRestartHelper
         SessionInfo remoteSession,
         ModProfile? requiredProfile,
         IReadOnlyList<ContentRepository> temporaryRepositories,
+        CancellationToken cancellationToken,
         Action<string>? log = null)
     {
         ArgumentNullException.ThrowIfNull(remoteSession);
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (requiredProfile is null)
         {
@@ -29,12 +31,14 @@ public static class ModRestartHelper
                                 sessionProfile,
                                 Storage.GetSystemPath(GamePaths.ContentPackageCache),
                                 context,
-                                log);
+                                log,
+                                cancellationToken);
         }
         finally
         {
             ContentServerClientPool.Shared.RemoveScope(scopeId);
         }
+        cancellationToken.ThrowIfCancellationRequested();
         if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
         {
             return RemoteModSessionPreparation.Ready();
@@ -79,16 +83,14 @@ public static class ModRestartHelper
     {
         if (profile.Packages.Count == 0)
         {
-            return "服务器未启用模组，需要重启后卸载当前模组。";
+            return LanguageManager.Get("ModRestart", "ServerNone");
         }
 
         var packages = profile.Packages
             .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
             .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
             .Select(package => $"{package.ModId}@{package.Version}");
-        var prefix = downloadedAny
-            ? "已下载服务器需要的模组，需要重启后启用："
-            : "服务器需要切换到指定模组列表，需要重启后启用：";
+        var prefix = LanguageManager.Get("ModRestart", downloadedAny ? "ServerDownloaded" : "ServerSwitch");
         return $"{prefix}\n{string.Join('\n', packages)}";
     }
 
@@ -96,16 +98,14 @@ public static class ModRestartHelper
     {
         if (profile.Packages.Count == 0)
         {
-            return "该世界不启用模组，需要重启后卸载当前模组。";
+            return LanguageManager.Get("ModRestart", "WorldNone");
         }
 
         var packages = profile.Packages
             .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
             .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
             .Select(package => $"{package.ModId}@{package.Version}");
-        var prefix = downloadedAny
-            ? "已下载该世界需要的模组，需要重启后启用："
-            : "该世界需要切换到指定模组列表，需要重启后启用：";
+        var prefix = LanguageManager.Get("ModRestart", downloadedAny ? "WorldDownloaded" : "WorldSwitch");
         return $"{prefix}\n{string.Join('\n', packages)}";
     }
 }

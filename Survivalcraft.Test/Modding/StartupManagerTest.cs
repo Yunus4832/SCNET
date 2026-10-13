@@ -1,5 +1,6 @@
 using Engine.Core;
 using Engine.FileStorage;
+using Engine.Network;
 
 using Game;
 using Game.Commands;
@@ -18,6 +19,39 @@ public sealed class StartupManagerTest : IDisposable
     {
         DeleteIfExists(RunningSettingManager.RunningSettingPath);
         DeleteIfExists(SessionInfoManager.SessionInfoPath);
+    }
+
+    [Fact]
+    public void RoomOverridesAreTransientUnlessSavedAndPreserveEmptyDescription()
+    {
+        var session = SaveSession("room-overrides");
+        var args = new[]
+        {
+            "--session", "room-overrides", "--p2p", "false",
+            "--rendezvous", "https://signal.example/", "--room-name", "Room",
+            "--room-description", "", "--room-public", "false"
+        };
+        var transient = StartupManager.Load(args);
+        Assert.False(transient.Session.P2POverrides.Enabled);
+        Assert.Equal(string.Empty, transient.Session.P2POverrides.Description);
+        Assert.Null(SessionInfoManager.Load(session.SessionId).P2POverrides.Enabled);
+        StartupManager.Load([.. args, "--save"]);
+        var restored = StartupManager.Load(["--session", "room-overrides"]);
+        Assert.Equal(transient.Session.P2POverrides, restored.Session.P2POverrides);
+        var changed = StartupManager.Load(["--session", "room-overrides", "--p2p", "true"]);
+        Assert.True(changed.Session.P2POverrides.Enabled);
+        Assert.Equal("Room", changed.Session.P2POverrides.Name);
+        Assert.False(SessionInfoManager.Load(session.SessionId).P2POverrides.Enabled);
+        var restart = SessionInfoManager.PrepareRestartSession(changed.Session);
+        Assert.Equal(changed.Session.P2POverrides, SessionInfoManager.Load(restart.SessionId).P2POverrides);
+    }
+
+    [Theory]
+    [InlineData("--p2p")]
+    [InlineData("--room-public")]
+    public void InvalidRoomBooleanIsRejected(string option)
+    {
+        Assert.Throws<ArgumentException>(() => StartupManager.Load([option, "invalid"]));
     }
 
     [Fact]
@@ -103,7 +137,7 @@ public sealed class StartupManagerTest : IDisposable
         ]);
 
         Assert.Equal(SessionTarget.RemoteServer, startup.Session.Target);
-        Assert.Equal("127.0.0.1", startup.Session.ServerHost);
+        Assert.Equal("127.0.0.1", Assert.IsType<AddressNetworkTarget>(startup.Session.RemoteTarget).Host);
         Assert.Equal(28987, startup.Session.ServerPort);
         Assert.Equal("DebugPlayer", startup.Request.AutoJoinPlayerName);
         Assert.Equal("DebugPlayer", startup.Session.AutoJoinPlayerName);
@@ -147,8 +181,8 @@ public sealed class StartupManagerTest : IDisposable
         Assert.NotNull(saved);
         Assert.Equal(startup.Session.SessionId, saved!.SessionId);
         Assert.Equal(SessionTarget.RemoteServer, saved.Target);
-        Assert.Equal("localhost", saved.ServerHost);
-        Assert.Equal(29987, saved.ServerPort);
+        Assert.Equal("localhost", Assert.IsType<AddressNetworkTarget>(saved.RemoteTarget).Host);
+        Assert.Equal(29987, Assert.IsType<AddressNetworkTarget>(saved.RemoteTarget).Port);
         Assert.Equal(GameMode.Challenging, saved.GameMode);
     }
 
@@ -186,8 +220,8 @@ public sealed class StartupManagerTest : IDisposable
 
         Assert.False(startup.Request.ForceWorldRunServer);
         Assert.Equal(SessionTarget.RemoteServer, startup.Session.Target);
-        Assert.Equal("127.0.0.1", startup.Session.ServerHost);
-        Assert.Equal(31987, startup.Session.ServerPort);
+        Assert.Equal("127.0.0.1", Assert.IsType<AddressNetworkTarget>(startup.Session.RemoteTarget).Host);
+        Assert.Equal(31987, Assert.IsType<AddressNetworkTarget>(startup.Session.RemoteTarget).Port);
     }
 
     [Fact]

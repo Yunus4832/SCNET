@@ -86,6 +86,11 @@ public class GameMenuDialog : Dialog
             Margin = new Vector2(0f, 10f),
             Color = white
         });
+        if (CommonLib.WorkType == WorkType.Client && CommonLib.Net.Server?.Peer is { IsConnected: true } connection)
+        {
+            AddStat(stackPanelWidget, LanguageManager.GetContentWidgets(_typeName, "ConnectionPath"),
+                LanguageManager.GetContentWidgets(_typeName, $"Path{connection.PathKind}"));
+        }
         AddStat(stackPanelWidget, LanguageManager.Get(_typeName, 6),
             LanguageManager.Get("GameMode", subsystemGameInfo.WorldSettings.GameMode.ToString()) + ", " +
             LanguageManager.Get("EnvironmentBehaviorMode",
@@ -314,6 +319,12 @@ public class GameMenuDialog : Dialog
                             }
                         }));
                 }));
+            }
+
+            if (CommonLib.Net.IsServer)
+            {
+                list.Add(new Tuple<string, Action>(InvitationStatusDialog.Text("StatusTitle"),
+                    () => DialogsManager.ShowDialog(ParentWidget, new InvitationStatusDialog(CommonLib.Net))));
             }
 
             list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 87),

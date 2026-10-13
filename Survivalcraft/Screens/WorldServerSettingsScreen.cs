@@ -1,6 +1,12 @@
 using System.Globalization;
 using System.Xml.Linq;
 
+using Engine.Network;
+
+using Game.Servers;
+
+using Rendezvous.Protocol;
+
 namespace Game.Screens;
 
 public class WorldServerSettingsScreen : Screen
@@ -24,6 +30,14 @@ public class WorldServerSettingsScreen : Screen
     private readonly SliderWidget _recoverySpeedSlider;
 
     private readonly ButtonWidget _runServerButton;
+    private readonly ContainerWidget _serverOptions;
+    private readonly ButtonWidget _p2pButton;
+    private readonly ContainerWidget _p2pOptions;
+    private readonly InlineSelectionWidget _p2pService;
+    private bool _refreshingP2PServices;
+    private readonly ButtonWidget _p2pPublic;
+    private readonly TextBoxWidget _p2pName;
+    private readonly TextBoxWidget _p2pDescription;
 
     private string _returnScreenName = "NewWorld";
 
@@ -36,6 +50,19 @@ public class WorldServerSettingsScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/WorldServerSettingsScreen");
         LoadContents(this, node);
         _runServerButton = Children.Find<ButtonWidget>("RunServer")!;
+        _serverOptions = Children.Find<ContainerWidget>("ServerOptions")!;
+        _p2pButton = Children.Find<ButtonWidget>("P2P")!;
+        _p2pOptions = Children.Find<ContainerWidget>("P2POptions")!;
+        _p2pService = Children.Find<InlineSelectionWidget>("P2PService")!;
+        _p2pService.ItemTextProvider = item => item is InstalledRendezvousService service
+            ? service.Name
+            : LanguageManager.GetContentWidgets(nameof(ContentScreen), "ManageRendezvous");
+        _p2pService.SelectionChanged += SelectP2PService;
+        _p2pPublic = Children.Find<ButtonWidget>("P2PPublic")!;
+        _p2pName = Children.Find<TextBoxWidget>("P2PName")!;
+        _p2pDescription = Children.Find<TextBoxWidget>("P2PDescription")!;
+        _p2pName.MaximumLength = RendezvousLimits.MaximumRoomNameLength;
+        _p2pDescription.MaximumLength = RendezvousLimits.MaximumRoomDescriptionLength;
         _randomSpawnPositionButton = Children.Find<ButtonWidget>("RandomSpawnPosition")!;
         _maxPlayersSlider = Children.Find<SliderWidget>("MaxPlayers")!;
         _maxPlayersSlider.MaxValue = WorldSettings.MaximumOnlinePlayerCount;
@@ -77,11 +104,23 @@ public class WorldServerSettingsScreen : Screen
         _recoverySpeedSlider.Value = NormalizeRecoverySpeed(_worldSettings.RecoverFactor);
         _disableBlocks.Text = _worldSettings.DisableBlocks;
         _keywordBlocking.Text = _worldSettings.KeywordBlocking;
+        _p2pName.Text = string.IsNullOrEmpty(_worldSettings.P2P.Name) ? _worldSettings.Name : _worldSettings.P2P.Name;
+        _p2pDescription.Text = _worldSettings.P2P.Description;
         _descriptionLabel.Text = GetText("DefaultDescription");
+        RefreshP2PServices();
+        UpdateControlTexts();
     }
 
     public override void Update()
     {
+        if (_p2pButton.IsClicked)
+        {
+            _worldSettings.P2P = _worldSettings.P2P with { Enabled = !_worldSettings.P2P.Enabled };
+        }
+        if (_p2pPublic.IsClicked)
+        {
+            _worldSettings.P2P = _worldSettings.P2P with { IsPublic = !_worldSettings.P2P.IsPublic };
+        }
         if (_runServerButton.IsClicked)
         {
             _worldSettings.RunServer = !_worldSettings.RunServer;
@@ -98,12 +137,75 @@ public class WorldServerSettingsScreen : Screen
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            ScreensManager.SwitchScreen(_returnScreenName, _returnParameters);
+            if (ValidateP2PSettings())
+            {
+                ScreensManager.SwitchScreen(_returnScreenName, _returnParameters);
+            }
+        }
+    }
+
+    private void RefreshP2PServices()
+    {
+        _refreshingP2PServices = true;
+        try
+        {
+            _p2pService.Close();
+            _p2pService.SelectedItem = null;
+            var services = RendezvousManager.Current.Snapshot().Where(item => item.IsEnabled).ToArray();
+            _p2pService.SetItems(services.Cast<object>().Append("manage"));
+            _p2pService.SelectedItem = services.FirstOrDefault(item =>
+                item.ControlUrl == _worldSettings.P2P.ControlUrl && item.Name == _worldSettings.P2P.ServiceName);
+        }
+        finally
+        {
+            _refreshingP2PServices = false;
+        }
+    }
+
+    private void SelectP2PService()
+    {
+        if (_refreshingP2PServices)
+        {
+            return;
+        }
+        if (_p2pService.SelectedItem is InstalledRendezvousService selected)
+        {
+            _worldSettings.P2P = _worldSettings.P2P.SelectService(selected);
+        }
+        else if (_p2pService.SelectedItem is string)
+        {
+            SaveSettings();
+            var arguments = new object[] { _worldSettings, _returnScreenName }.Concat(_returnParameters).ToArray();
+            ScreensManager.SwitchScreen("ManageRendezvous", "WorldServerSettings", arguments);
+        }
+    }
+
+    private bool ValidateP2PSettings()
+    {
+        if (!_worldSettings.RunServer || !_worldSettings.P2P.Enabled)
+        {
+            return true;
+        }
+        try
+        {
+            var address = RendezvousAddress.Normalize(new Uri(_worldSettings.P2P.ControlUrl));
+            if (string.IsNullOrWhiteSpace(_worldSettings.P2P.Name))
+            {
+                throw new ArgumentException("Room name is required.");
+            }
+            _worldSettings.P2P = _worldSettings.P2P with { ControlUrl = address.AbsoluteUri };
+            return true;
+        }
+        catch (Exception exception) when (exception is ArgumentException or UriFormatException)
+        {
+            DialogsManager.Alert(GetText("P2PInvalidSettings"));
+            return false;
         }
     }
 
     private void SaveSettings()
     {
+        _worldSettings.P2P = _worldSettings.P2P with { Name = _p2pName.Text.Trim(), Description = _p2pDescription.Text };
         _worldSettings.MaxOnlinePlayerCount = (ushort)MathUtils.Round(_maxPlayersSlider.Value);
         _worldSettings.DisableBlocks = _disableBlocks.Text;
         _worldSettings.KeywordBlocking = _keywordBlocking.Text;
@@ -114,6 +216,16 @@ public class WorldServerSettingsScreen : Screen
 
     private void UpdateControlTexts()
     {
+        _serverOptions.IsEnabled = _worldSettings.RunServer;
+        _p2pOptions.IsEnabled = _worldSettings.P2P.Enabled;
+        if (!_worldSettings.RunServer || !_worldSettings.P2P.Enabled)
+        {
+            _p2pService.Close();
+        }
+        _p2pPublic.Text = LanguageManager.Get("Usual", _worldSettings.P2P.IsPublic ? "yes" : "no");
+        _p2pService.PlaceholderText = string.IsNullOrEmpty(_worldSettings.P2P.ControlUrl) ? GetText("P2PSelectService") :
+            string.IsNullOrEmpty(_worldSettings.P2P.ServiceName) ? _worldSettings.P2P.ControlUrl : _worldSettings.P2P.ServiceName;
+        _p2pButton.Text = _worldSettings.P2P.Enabled ? LanguageManager.Get("Usual", "on") : LanguageManager.Get("Usual", "off");
         _runServerButton.Text = _worldSettings.RunServer
             ? LanguageManager.Get("Usual", "on")
             : LanguageManager.Get("Usual", "off");

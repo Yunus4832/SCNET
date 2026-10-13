@@ -352,7 +352,7 @@ public class PlayScreen : Screen
     {
         if (worldInfo.WorldSettings.RunServer)
         {
-            if (CommonLib.StartServer())
+            if (CommonLib.StartServer(worldInfo.WorldSettings))
             {
                 ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
             }

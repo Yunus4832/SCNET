@@ -1,24 +1,22 @@
 using Engine.Core;
+using Engine.Network;
 
 using Game.Network;
 using Game.Network.Packages;
 using Game.Network.Serialization;
 using Game.Terrains.Distribution;
 
-using LiteNetLib;
-
 namespace Survivalcraft.Test.Network;
 
 public sealed class TerrainTransportPolicyTest
 {
     [Fact]
-    public void TransportChannelsAreContiguousAndCoveredByNetManager()
+    public void TransportChannelsAreContiguousAndCoveredByEngine()
     {
         var channels = Enum.GetValues<NetworkChannel>();
         Assert.Equal(Enumerable.Range(0, channels.Length).Select(index => (byte)index),
             channels.Select(channel => (byte)channel));
-        var node = new NetNode();
-        Assert.Equal(channels.Length, node.NetManager.ChannelsCount);
+        Assert.InRange(channels.Length, 1, 8);
     }
 
     [Fact]
@@ -36,7 +34,7 @@ public sealed class TerrainTransportPolicyTest
 
         var datagram = CommonLib.GetWriter(writer, out _, CommonLib.CompressionPolicy.None);
 
-        Assert.InRange(datagram.Length, 1, 507);
+        Assert.InRange(datagram.Length, 1, 461);
     }
 
     [Fact]
@@ -49,7 +47,7 @@ public sealed class TerrainTransportPolicyTest
         var transport = PackageTransportPolicy.Get(package);
 
         Assert.Equal(NetworkChannel.TerrainFragment, transport.Channel);
-        Assert.Equal(DeliveryMethod.Unreliable, transport.DeliveryMethod);
+        Assert.Equal(DeliveryMode.Unreliable, transport.Delivery);
     }
 
     [Fact]
@@ -71,6 +69,6 @@ public sealed class TerrainTransportPolicyTest
         var transport = PackageTransportPolicy.Get(package);
 
         Assert.Equal(NetworkChannel.Control, transport.Channel);
-        Assert.Equal(DeliveryMethod.ReliableOrdered, transport.DeliveryMethod);
+        Assert.Equal(DeliveryMode.ReliableOrdered, transport.Delivery);
     }
 }

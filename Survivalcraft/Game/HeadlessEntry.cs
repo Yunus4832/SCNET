@@ -136,7 +136,7 @@ public static class HeadlessEntry
             CommonLib.WorkType = WorkType.Server;
             var gamesWidget = new GamesWidget();
             GameManager.LoadProject(world, gamesWidget);
-            if (!CommonLib.StartServer(startupSession))
+            if (!CommonLib.StartServer(startupSession, world.WorldSettings))
             {
                 Log.Error("Failed to start server (port may be in use).");
                 return 3;

@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Engine.Network;
+
 namespace Game.Screens;
 
 public class SettingsDiagnosticsScreen : Screen
@@ -7,6 +9,8 @@ public class SettingsDiagnosticsScreen : Screen
     private readonly ButtonWidget _displayDebugInfoButton;
 
     private readonly ButtonWidget _displayFpsRibbonButton;
+
+    private readonly ButtonWidget _relayPreference;
 
     private readonly ButtonWidget _resetCompatibilityButton;
 
@@ -22,12 +26,20 @@ public class SettingsDiagnosticsScreen : Screen
         _displayFpsRibbonButton = Children.Find<ButtonWidget>("DisplayFpsRibbonButton")!;
         _viewGameLogButton = Children.Find<ButtonWidget>("ViewGameLogButton")!;
         _useReducedZRangeButton = Children.Find<ButtonWidget>("UseReducedZRangeButton")!;
+        _relayPreference = Children.Find<ButtonWidget>("RelayPreference")!;
         _resetCompatibilityButton = Children.Find<ButtonWidget>("ResetCompatibilityButton")!;
     }
 
     public override void Update()
     {
         GameManager.UpdateProject();
+        if (_relayPreference.IsClicked)
+        {
+            SettingsManager.Current.InvitationRelayPolicy = (RelayPolicy)(
+                ((int)SettingsManager.Current.InvitationRelayPolicy + 1) % Enum.GetValues<RelayPolicy>().Length);
+            SettingsManager.SaveSettings();
+        }
+        _relayPreference.Text = InvitationStatusDialog.Text($"Relay{SettingsManager.Current.InvitationRelayPolicy}");
         if (_displayDebugInfoButton.IsClicked)
         {
             DebugOverlayManager.ToggleVisibility();
@@ -51,6 +63,8 @@ public class SettingsDiagnosticsScreen : Screen
         if (_resetCompatibilityButton.IsClicked)
         {
             SettingsManager.Current.UseReducedZRange = false;
+            SettingsManager.Current.InvitationRelayPolicy = RelayPolicy.Allowed;
+            SettingsManager.SaveSettings();
         }
 
         _displayDebugInfoButton.Text = SettingsManager.Current.DisplayDebugInfo
@@ -62,7 +76,8 @@ public class SettingsDiagnosticsScreen : Screen
         _useReducedZRangeButton.Text = SettingsManager.Current.UseReducedZRange
             ? LanguageManager.On
             : LanguageManager.Off;
-        _resetCompatibilityButton.IsEnabled = SettingsManager.Current.UseReducedZRange;
+        _resetCompatibilityButton.IsEnabled = SettingsManager.Current.UseReducedZRange ||
+                                               SettingsManager.Current.InvitationRelayPolicy != RelayPolicy.Allowed;
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {

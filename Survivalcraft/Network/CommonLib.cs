@@ -1,6 +1,7 @@
 using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
 using Engine.Graphics;
@@ -75,12 +76,13 @@ public static class CommonLib
         }
     }
 
-    public static bool StartServer()
+    public static bool StartServer(WorldSettings worldSettings)
     {
-        return Net.StartServer(SettingsManager.Current.ServerPort, SettingsManager.Current.BroadcastPort);
+        return Net.StartServer(SettingsManager.Current.ServerPort, SettingsManager.Current.BroadcastPort, worldSettings.MaxOnlinePlayerCount,
+            worldSettings.P2P with { Name = string.IsNullOrEmpty(worldSettings.P2P.Name) ? worldSettings.Name : worldSettings.P2P.Name });
     }
 
-    public static bool StartServer(SessionInfo sessionInfo)
+    public static bool StartServer(SessionInfo sessionInfo, WorldSettings worldSettings)
     {
         var serverPort = sessionInfo.ServerPort > 0
             ? sessionInfo.ServerPort
@@ -91,7 +93,8 @@ public static class CommonLib
             > 0 => sessionInfo.BroadcastPort,
             _ => SettingsManager.Current.BroadcastPort
         };
-        return Net.StartServer(serverPort, broadcastPort);
+        return Net.StartServer(serverPort, broadcastPort, worldSettings.MaxOnlinePlayerCount,
+            sessionInfo.P2POverrides.Apply(worldSettings.P2P, worldSettings.Name));
     }
 
     public static NetDataWriter GetWriter(
@@ -106,9 +109,23 @@ public static class CommonLib
         return tmp;
     }
 
-    public static PackageStreamReader GetReader(NetDataReader reader)
+    public static PackageStreamReader GetReader(ReadOnlyMemory<byte> data)
     {
-        return new PackageStreamReader(reader.GetBytesWithLength());
+        if (data.Length < sizeof(int))
+        {
+            throw new InvalidDataException("Package frame is missing its length prefix.");
+        }
+        var reader = MemoryMarshal.TryGetArray(data, out var segment) && segment.Array is not null
+            ? new NetDataReader(segment.Array, segment.Offset, segment.Offset + segment.Count)
+            : new NetDataReader(data.ToArray());
+        var length = reader.GetInt();
+        if (length < 0 || length != data.Length - sizeof(int))
+        {
+            throw new InvalidDataException("Package frame length does not match its payload.");
+        }
+        var payload = new byte[length];
+        reader.GetBytes(payload, length);
+        return new PackageStreamReader(payload);
     }
 
     /// <summary>

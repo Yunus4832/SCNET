@@ -8,6 +8,59 @@ namespace Survivalcraft.Test.Modding;
 
 public sealed class ContentServerClientCatalogTest
 {
+    [Theory]
+    [InlineData("https://signal.example/", true)]
+    [InlineData("http://signal.example/", false)]
+    [InlineData("https://user:password@signal.example/", false)]
+    public async Task SignalingDirectoryValidatesPublicControlAddresses(string address, bool accepted)
+    {
+        Uri? requested = null;
+        using var http = new HttpClient(new StubHandler(request =>
+        {
+            requested = request.RequestUri;
+            var body = new { success = true, data = new { items = new[] { new ContentServerRendezvousService("service", "Signal", address, null) }, total = 1, pageIndex = 1, pageSize = 100 } };
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json")
+            };
+        }));
+        using var client = new ContentServerClient("https://content.example/base", http);
+        if (accepted)
+        {
+            Assert.Equal(address, Assert.Single(await client.ListRendezvousServicesAsync()).ControlUrl);
+        }
+        else
+        {
+            await Assert.ThrowsAsync<InvalidDataException>(() => client.ListRendezvousServicesAsync());
+        }
+        Assert.Equal("https://content.example/base/api/v1/rendezvous-services?pageIndex=1&pageSize=100", requested?.AbsoluteUri);
+    }
+
+    [Fact]
+    public async Task SignalingDirectoryReadsEveryBoundedPage()
+    {
+        var requests = new List<string>();
+        using var http = new HttpClient(new StubHandler(request =>
+        {
+            requests.Add(request.RequestUri!.Query);
+            var second = requests.Count == 2;
+            var items = Enumerable.Range(second ? 100 : 0, second ? 1 : 100)
+                .Select(index => new ContentServerRendezvousService(index.ToString(), $"Signal {index}",
+                    $"https://signal{index}.example/", null)).ToArray();
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(new
+                {
+                    success = true,
+                    data = new { items, total = 101, pageIndex = second ? 2 : 1, pageSize = 100 }
+                }), Encoding.UTF8, "application/json")
+            };
+        }));
+        using var client = new ContentServerClient("https://content.example/", http);
+        Assert.Equal(101, (await client.ListRendezvousServicesAsync()).Count);
+        Assert.Equal(["?pageIndex=1&pageSize=100", "?pageIndex=2&pageSize=100"], requests);
+    }
+
     [Fact]
     public async Task CatalogQueryEscapesFiltersAndUsesBoundedPage()
     {

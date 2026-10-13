@@ -62,7 +62,6 @@ public sealed class ClientPackageHandler : PackageHandlerBase<ClientPackage>
                     if (c.ID == 0)
                     {
                         client = ResolveServerClient(netNode.Server, c, context.Sender);
-                        client.Peer?.Tag = client;
                         netNode.Server = client;
                     }
                     else

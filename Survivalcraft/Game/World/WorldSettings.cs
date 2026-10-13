@@ -8,8 +8,6 @@ public class WorldSettings
 {
     public const ushort MaximumOnlinePlayerCount = 32;
 
-    private ushort _maxOnlinePlayerCount = 20;
-
     public bool AreAdventureSurvivalMechanicsEnabled = true;
 
     public bool AreSeasonsChanging = true;
@@ -62,9 +60,9 @@ public class WorldSettings
 
     public ushort MaxOnlinePlayerCount
     {
-        get => _maxOnlinePlayerCount;
-        set => _maxOnlinePlayerCount = Math.Min(value, MaximumOnlinePlayerCount);
-    }
+        get;
+        set => field = Math.Min(value, MaximumOnlinePlayerCount);
+    } = 20;
 
     public ModProfileResolutionStrategy ModProfileResolutionStrategy = ModProfileResolutionStrategy.GlobalPlusWorld;
 
@@ -77,6 +75,8 @@ public class WorldSettings
     public float RecoverFactor = 1f;
 
     public bool RunServer;
+
+    public P2PRoomSettings P2P = new();
 
     public int SeaLevelOffset;
 
@@ -181,6 +181,7 @@ public class WorldSettings
         SeaLevelOffset = valuesDictionary.GetValue("SeaLevelOffset", 0);
         BiomeSize = valuesDictionary.GetValue("BiomeSize", 1f);
         RunServer = valuesDictionary.GetValue("RunServer", false);
+        P2P = P2PRoomSettings.Load(valuesDictionary.GetValue(nameof(P2P), new ValuesDictionary()));
         MaxOnlinePlayerCount = valuesDictionary.GetValue("MaxOnlinePlayerCount", MaxOnlinePlayerCount);
         ModProfileResolutionStrategy = valuesDictionary.GetValue(
             nameof(ModProfileResolutionStrategy),
@@ -236,6 +237,7 @@ public class WorldSettings
         valuesDictionary.SetValue("AreSupernaturalCreaturesEnabled", AreSupernaturalCreaturesEnabled);
         valuesDictionary.SetValue("IsFriendlyFireEnabled", IsFriendlyFireEnabled);
         valuesDictionary.SetValue("RunServer", RunServer);
+        valuesDictionary.SetValue(nameof(P2P), P2P.Save(Name));
         valuesDictionary.SetValue("KeywordBlocking", XmlConvert.EncodeName(KeywordBlocking));
         valuesDictionary.SetValue(nameof(ModProfileResolutionStrategy), ModProfileResolutionStrategy);
         if (!liveModifiableParametersOnly)

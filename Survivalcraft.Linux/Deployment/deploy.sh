@@ -19,6 +19,14 @@ source ./server.conf
 : "${SERVER_PORT:=28887}"
 : "${CONTENT_SERVER:=}" "${MODS:=}"
 
+: "${P2P:=false}" "${RENDEZVOUS:=}" "${ROOM_NAME:=$WORLD}"
+: "${ROOM_DESCRIPTION:=}" "${ROOM_PUBLIC:=false}"
+for flag in "$P2P" "$ROOM_PUBLIC"; do
+    case "$flag" in true|false) ;; *) echo "P2P and ROOM_PUBLIC must be true or false." >&2; exit 2 ;; esac
+done
+export SCNET_P2P="$P2P" SCNET_RENDEZVOUS="$RENDEZVOUS" SCNET_ROOM_NAME="$ROOM_NAME"
+export SCNET_ROOM_DESCRIPTION="$ROOM_DESCRIPTION" SCNET_ROOM_PUBLIC="$ROOM_PUBLIC"
+
 for name in "$INSTANCE" "$SESSION" "$WORLD"; do
     [[ "$name" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "Invalid instance, session or world name: $name" >&2; exit 2; }
 done

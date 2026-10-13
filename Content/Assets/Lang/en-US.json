@@ -2623,13 +2623,18 @@
         },
         "46": {
             "Title": "Content Servers",
-            "value": "\\n\\nContentServer is an independently hosted community content service. In the game, each ContentServer is saved as a content repository, and you can configure multiple repositories.\\n\\n\\nOpen Content → Community Content to browse and install reviewed mods, worlds, texture packs, skins, and furniture packs. Browsing and downloading do not require a publisher or administrator key.\\n\\n\\nUse Content → Content Repositories to add, edit, disable, or remove repositories. Adding a repository means trusting its operator’s review decisions and downloads. Communication with repositories that use HTTP is not encrypted.\\n\\n\\nA content repository can also provide server sources. A server source supplies server lists to the multiplayer screen and is managed separately from downloadable content. After installation, it can be disabled, reordered, or removed under Manage Server Sources.\\n\\n\\nPublisher and administrator keys are only for the ContentServer web workspace. Do not enter these keys in the game or use them on untrusted networks or websites.\\n "
+            "value": "A content server (ContentServer) is an independently hosted community service. You can add several content servers as repositories in the game. Each instance saves its own repository configuration. Fresh installations and new instances have no preset content server.\\n\\nIn Content Repositories, add a name and HTTP(S) address. Repositories can be edited, tested, enabled, disabled, reordered, or deleted. Enabled repositories are used to browse and download online content. Browsing and downloading do not require a publisher or administrator key.\\n\\nOnline content includes reviewed mods, worlds, block textures, player skins, and furniture packs. After downloading a content package, install it or configure it globally or for a world as appropriate. Content servers also offer installable server sources and signaling servers, managed separately in Manage Server Sources and Manage Signaling Servers. Server sources provide server lists; signaling servers support P2P room discovery and connections. See their help topics for details.\\n\\nAnnouncements and game releases use a separately selected source. Select an enabled repository in the repository list and choose Select Source. Each instance has at most one such source. Disabling or deleting that repository clears the selection without automatically choosing another.\\n\\nAfter startup, the game fetches announcements and checks for releases matching the current platform from the selected source. Click an announcement on the main menu to view the fetched announcements. That area stays blank when none are available. Click the main menu version number to check for updates manually. Without a selected source, automatic checks are skipped. Failed automatic requests only produce a log entry and do not block startup or single-player play.\\n\\nOn desktop, updates provide release notes and an external download link for manual installation. On Android, confirm the source to download the APK, verify its SHA-256, and confirm again to open the system installer. The system decides whether installation is allowed. The hash confirms that the file matches the selected source record; it does not identify an official publisher.\\n\\nAdding a repository means trusting its operator for content, review results, announcements, and update information. HTTP traffic is not encrypted. Publisher and administrator keys are used only in the content server web workspace and are not required in the game."
         },
         "47": {
             "Title": "Server List",
-            "value": "The server list has three categories: Local, LAN, and External. Selecting a category loads its servers and checks their status.\\n\\nLocal servers have one entry per address. Added, Favorite, and Recent are tags that can coexist; use the second filter to view a tag. Favoriting adds the Favorite tag, and connecting adds Recent. Unfavorite removes only the Favorite tag. Delete removes the entire local entry. An entry with no tags is removed automatically.\\n\\nLAN servers come from the current scan and are not saved. Favoriting a LAN server adds it to the Local category. External servers come from installed sources; use the second filter to choose a source. The same address may appear separately in Local, LAN, and External.\\n\\nSearch matches names, addresses, sources, descriptions, and tags. Servers can be sorted by ping, player count, or name."
+            "value": "The multiplayer list has four categories: Local, LAN, External, and Signaling Servers. Selecting a category loads its servers or rooms.\\n\\nLocal servers have one entry per address. Added, Favorite, and Recent are tags that can coexist; use the second filter to view a tag. Favoriting adds the Favorite tag, and connecting adds Recent. Unfavorite removes only the Favorite tag. Delete removes the entire local entry. An entry with no tags is removed automatically.\\n\\nLAN servers come from the current scan and are not saved. Favoriting a LAN server adds it to the Local category. External servers come from installed sources; use the second filter to choose a source. The same address may appear separately in Local, LAN, and External.\\n\\nSearch matches names, addresses, sources, descriptions, and tags. Servers can be sorted by ping, player count, or name."
         },
         "48": {
+            "Name": "P2P",
+            "Title": "P2P Multiplayer",
+            "value": "Preparation: Install a service from Signaling Servers in Community Content, or add its address manually in signaling server management. The host and joining players must use the same signaling service.\\n\\nHosting: Enable the server and P2P in the world server settings, select an installed signaling server, and enter the room name and description. Enable a public room to let other players discover your world in the room list. The world saves a copy of the selected service address and name; editing the installed list does not update existing worlds.\\n\\nJoining: Open the multiplayer list, select Signaling Servers, choose a room, and connect. The second filter selects all installed signaling servers or a specific one. Rooms are temporary and are not added to Favorites or Recent.\\n\\nJoin code: This is an alternative connection option. Select Join Code, enter the signaling address and code provided by the host, and choose the relay policy for this connection. Installing the signaling server first is not required. This option also allows joining rooms that are not public.\\n\\nConnection type: By default, a direct connection is attempted first, with relay available if it fails. Change the room connection relay policy under Diagnostics and Compatibility in Settings; the join code dialog has its own selection. With relay disabled, joining requires a direct connection. Relay-only connections require available relay resources on the service.\\n\\nNetwork tip: Strict NAT can prevent IPv4 hole punching. Try a cellular network with IPv6 support. When both sides have usable public IPv6 addresses and their networks allow UDP traffic, IPv4 NAT restrictions can be bypassed, significantly improving the chance of a direct connection. Cellular networks do not always provide usable IPv6, and IPv6 on only one side is insufficient for an IPv6 direct connection. Keeping relay allowed is recommended.\\n\\nP2P can be enabled alongside connections to the server port. Both sides must be able to reach the signaling service. Direct connectivity depends on the network environment and is not guaranteed by enabling P2P. The room stops accepting connections when the host exits or closes the server."
+        },
+        "49": {
             "Title": "Disclaimer",
             "value": "\\n\\nThis is an unofficial reverse-engineering and refactoring project\\nfor learning and technical research, not for commercial profit.\\n\\n\\nCopyright in the Survivalcraft trademarks, names, artwork, audio,\\nstory settings, and other original content belongs to the original author\\nand the respective rights holders.\\n\\nRepository contributors claim no copyright or trademark rights over the original work.\\n\\n\\nThis non-profit project is not affiliated with, authorized by, or endorsed by\\nthe original author, publisher, or related companies.\\n\\nIts code and documentation are for learning, research, and discussion only\\nand must not be used to infringe legal rights.\\n\\n\\nUsers are responsible for complying with local laws and platform rules\\nand accept the risks and legal responsibility of use.\\n\\nRights holders may report potentially infringing repository content through an Issue\\nor by contacting the maintainers for timely review.\\n "
         }
@@ -2877,7 +2882,11 @@
         "GameMenuDialog": {
             "1": "Resume",
             "2": "Quit",
-            "3": "..."
+            "3": "...",
+            "ConnectionPath": "Connection",
+            "PathDirect": "Direct",
+            "PathHolePunch": "P2P direct",
+            "PathRelay": "Relay"
         },
         "GamepadHelpDialog": {
             "1": "Gamepad Controls",
@@ -3053,7 +3062,11 @@
             "ServerSources": "Install server sources",
             "ServerSourcesDescription": "Browse and install server sources provided by content servers",
             "ManageServerSources": "Manage Sources",
-            "ManageServerSourcesDescription": "Manage installed and manually added server sources"
+            "ManageServerSourcesDescription": "Manage installed and manually added server sources",
+            "RendezvousCatalog": "Signaling services",
+            "RendezvousDescription": "Install signaling services from the community",
+            "ManageRendezvous": "Manage signaling services",
+            "ManageRendezvousDescription": "Add, test and manage installed signaling services"
         },
         "GameLoadingScreen": {
             "1": "Loading World"
@@ -3153,7 +3166,14 @@
             "DisableBlocksDescription": "Enter block ids to disable. Separate multiple ids with semicolons.",
             "RandomSpawnPositionDescription": "When enabled, new players join at a random spawn position.",
             "KeywordBlockingDescription": "Enter chat keywords to block. Separate multiple keywords with semicolons.",
-            "DefaultDescription": "Configure server operation, player limits, and content rules."
+            "DefaultDescription": "Configure server operation, player limits, and content rules.",
+            "P2PTitle": "P2P multiplayer",
+            "P2PService": "Signaling service",
+            "P2PRoomName": "Room name",
+            "P2PDescription": "Description",
+            "P2PPublic": "Public room",
+            "P2PSelectService": "Select a service",
+            "P2PInvalidSettings": "P2P requires a valid signaling address and room name"
         },
         "PlayScreen": {
             "1": "Existing Worlds",
@@ -3466,7 +3486,36 @@
             "CategoryLan": "LAN",
             "AllLocalTags": "All",
             "Unfavorite": "Unfavorite",
-            "DuplicateLocalServer": "This server is already in the local list."
+            "DuplicateLocalServer": "This server is already in the local list.",
+            "JoinCode": "Join code",
+            "SignalError_Unreachable": "Cannot reach the signaling server. Check its address or your connection.",
+            "SignalError_Timeout": "Connection preparation timed out. Please try again.",
+            "SignalError_InvalidResponse": "The signaling server returned invalid data.",
+            "SignalError_InvalidRequest": "Invalid invitation request. Check the join code.",
+            "SignalError_InvitationNotFound": "The invitation is no longer available. Ask the host for a new code.",
+            "SignalError_InvitationFull": "The invitation session is full. Try again later.",
+            "SignalError_CapacityReached": "The signaling server is at capacity. Try again later.",
+            "SignalError_Unauthorized": "Connection authorization has expired. Join again.",
+            "SignalError_RelayUnavailable": "The relay is unavailable. Try later or contact the host.",
+            "SignalError_RateLimited": "Too many requests. Try again later.",
+            "SignalError_Rejected": "The signaling server rejected the connection request.",
+            "SignalError_UdpUnavailable": "The signaling server did not respond over UDP. Check your network or try again later.",
+            "SignalError_HolePunchUnavailable": "A hole-punched connection could not be established. Allow relay and retry, or connect using the server address.",
+            "Disconnect_Timeout": "The server connection timed out. Please rejoin.",
+            "Disconnect_Unreachable": "The server is unreachable. Check your network and retry.",
+            "Disconnect_RemoteClose": "The server closed the connection.",
+            "Disconnect_LocalClose": "The connection was closed.",
+            "Disconnect_Rejected": "The server rejected the connection.",
+            "Disconnect_ProtocolError": "Connection protocol error. Check that both sides use the same version.",
+            "Disconnect_Interrupted": "The connection was interrupted. Please rejoin.",
+            "Disconnect_Failed": "Connection failed. Check your network and retry.",
+            "Disconnect_Unknown": "The connection was lost. Please rejoin.",
+            "ModPreparationFailed": "Could not prepare the server mods. Check your network, content repositories and available storage, then retry.",
+            "CheckingMods": "Checking server mods…",
+            "CategoryRendezvous": "Signaling services",
+            "RoomHolePunch": "Direct P2P",
+            "RoomRelay": "Relay",
+            "AllSignalingServices": "All"
         },
         "ManageServerSourcesScreen": {
             "Title": "Manage Server Sources",
@@ -3512,7 +3561,8 @@
             "View",
             "Use Reduced Z Range",
             "Restore Compatibility Settings",
-            "Reset"
+            "Reset",
+            "Relay policy"
         ],
         "SignViewerWidget": {
             "Title": "Sign",
@@ -3548,6 +3598,52 @@
             "NoInformationSourceTitle": "No announcement and release source",
             "NoInformationSourceBody": "Select an announcement and release source in content repository settings first.",
             "ReleaseCheckFailed": "Could not check game releases from “{0}”. Check the server address and network connection."
+        },
+        "ManageRendezvousScreen": {
+            "Title": "Signaling services",
+            "NoSources": "No signaling services installed",
+            "AddTitle": "Add signaling service",
+            "EditTitle": "Edit signaling service",
+            "NameRequired": "Enter a name",
+            "DuplicateAddress": "This signaling service is already installed",
+            "InvalidAddress": "Enter a valid signaling address",
+            "SaveFailed": "Could not save signaling settings",
+            "ConfirmDelete": "Delete “{0}”? Saved world settings will remain intact",
+            "Testing": "Checking signaling service…",
+            "TestSucceeded": "Connected; room discovery is supported",
+            "TestFailed": "Could not connect or room discovery is unsupported; check the address"
+        },
+        "RendezvousCatalogScreen": {
+            "Title": "Community signaling services",
+            "Install": "Install",
+            "Installed": "Installed",
+            "SearchPlaceholder": "Search name, address or description",
+            "Loading": "Loading signaling services…",
+            "LoadFailed": "Could not load or verify signaling services; check the connection and retry",
+            "Empty": "No matching signaling services",
+            "AllRepositories": "All content servers",
+            "Testing": "Checking signaling service…"
+        },
+        "InvitationStatusDialog": {
+            "Relay": "Joining relay policy",
+            "RelayDisabled": "Disable relay",
+            "RelayAllowed": "Direct first, relay allowed",
+            "RelayRequired": "Relay only",
+            "JoinTitle": "Enter the six-digit join code",
+            "InvalidCode": "The code must contain six digits. Check the signaling address and code.",
+            "StatusTitle": "Invitation status",
+            "Code": "Join code: {0}",
+            "Opening": "Registering invitation…",
+            "Closed": "Invitations are off. Configure them in the world server settings.",
+            "Copy": "Copy",
+            "Retrying": "Invitations are temporarily unavailable. Retrying."
+        },
+        "JoinCodeDialog": {
+            "Title": "Join by Code",
+            "Address": "Signaling URL",
+            "Code": "Join Code",
+            "Relay": "Relay Policy",
+            "InvalidAddress": "Enter a valid HTTPS signaling URL."
         }
     },
     "FireworksBlock": {
@@ -4101,5 +4197,13 @@
         "FurniturePack": "Furniture pack",
         "Summary": "Short summary",
         "Description": "Detailed description"
+    },
+    "ModRestart": {
+        "ServerNone": "The server uses no mods. Restart to unload the active mods.",
+        "ServerDownloaded": "The required server mods have been downloaded. Restart to enable:",
+        "ServerSwitch": "Restart to switch to the mods required by the server:",
+        "WorldNone": "This world uses no mods. Restart to unload the active mods.",
+        "WorldDownloaded": "The required world mods have been downloaded. Restart to enable:",
+        "WorldSwitch": "Restart to switch to the mods required by this world:"
     }
 }

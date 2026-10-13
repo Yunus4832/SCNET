@@ -105,6 +105,10 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
                 }
 
                 netNode.PendingPeer = context.Sender.Request.Accept();
+                if (netNode.PendingPeer is null)
+                {
+                    return;
+                }
                 var addClient = netNode.CreateClient(
                     netNode.PendingPeer,
                     package.TmpToken,
@@ -118,7 +122,7 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
 
                 Log.Information("Received connection request from " + context.Sender.IPPoint + ", accepted");
 
-                netNode.DeliveryEvent(null, null);
+                netNode.DeliveryEvent(null);
             }
         }
         else

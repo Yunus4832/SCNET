@@ -1,11 +1,10 @@
 using Engine.Core;
+using Engine.Network;
 
 using Game;
 using Game.Network;
 using Game.Network.Packages;
 using Game.Network.Serialization;
-
-using LiteNetLib;
 
 namespace Survivalcraft.Test.Network;
 
@@ -41,7 +40,7 @@ public sealed class ListStateTransportTest
         package.WriteData(writer);
         var datagram = CommonLib.GetWriter(writer, out _, CommonLib.CompressionPolicy.None);
         Assert.InRange(datagram.Length, 1, 507);
-        Assert.Equal(DeliveryMethod.Unreliable, PackageTransportPolicy.Get(package).DeliveryMethod);
+        Assert.Equal(DeliveryMode.Unreliable, PackageTransportPolicy.Get(package).Delivery);
         Assert.Equal(NetworkChannel.StateStream, PackageTransportPolicy.Get(package).Channel);
     }
 
@@ -57,7 +56,7 @@ public sealed class ListStateTransportTest
         var datagram = CommonLib.GetWriter(writer, out _, CommonLib.CompressionPolicy.None);
         Assert.True(datagram.Length > 507);
         var transport = PackageTransportPolicy.Get(package);
-        Assert.Equal(DeliveryMethod.ReliableOrdered, transport.DeliveryMethod);
+        Assert.Equal(DeliveryMode.ReliableOrdered, transport.Delivery);
         Assert.True(transport.Coalesce);
     }
 }

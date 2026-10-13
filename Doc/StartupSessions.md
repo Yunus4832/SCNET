@@ -50,6 +50,10 @@
 - `--player <名称>`: 显式请求自动使用当前身份角色；若服务器没有该身份角色则按名称创建
 - `--host`: GUI 模式下强制将目标世界设置为 `WorldSettings.RunServer=true`
 - `--server-port <端口>` / `--broadcast-port <端口>`: 覆盖本次运行端口
+- `--p2p true|false`: 覆盖本次会话的世界P2P开关
+- `--rendezvous <URL>`: 覆盖信令控制地址，单独指定不启用P2P
+- `--room-name <名称>` / `--room-description <简介>`: 覆盖房间资料，空简介表示清除
+- `--room-public true|false`: 覆盖房间公开状态
 - `--http-command`: 为本次有效 session 启用 loopback HTTP 命令宿主
 - `--no-http-command`: 为本次有效 session 禁用 loopback HTTP 命令宿主
 - `--http-command-port <端口>`: 覆盖 loopback HTTP 命令宿主的默认端口 `28889`
@@ -118,7 +122,7 @@ Windows 和 Linux 只在 `RunMode.Gui` 分支注册；Linux 实现通过会话 D
 - `World`
 - `Seed`
 - `GameMode`（可选的运行期覆盖）
-- `ServerHost`
+- `RemoteTarget`（远程地址或邀请会话的逻辑目标）
 - `ServerPort`
 - `BroadcastPort`
 - `AutoJoinPlayerName`（可选的自动进入角色名）
@@ -198,3 +202,18 @@ Starter 会在实例的 `.runtime` 目录登记当前进程的 PID 和启动时�
 远程联机握手中的 `RequiredModProfile` 只包含 Mod requirement；匿名临时候选仓库作为 `ServerInfoPackage` 的独立字段传输。
 连接准备时临时仓库优先，持久仓库随后回退；临时集合不会写入实例配置、Profile、缓存索引或 pending session。GUI 只有在精确包
 全部准备完成后才创建 pending session 并重启，非法 requirement 或全部来源失败不会留下待恢复状态。
+
+
+### 远程目标与连接准备
+
+远程 session 的 `RemoteTarget` 以独立 XML 子元素保存目标类型与逻辑定位字段。
+地址目标保存 DNS 名称或 IP 和目标端口；邀请准备后保存信标控制地址、会话 ID 和中继策略。
+`ServerPort` 继续表示监听端口覆盖，不再承担远程目标端口。不会保存 NAT 映射、中继分配端口、参与凭据或一次性票据。
+
+NetPlay 每次连接或恢复都会重新准备路径并获取 ServerInfo，同一个宿主 socket 保持到正式握手。
+随后核对模组并下载精确包；需要重启时先关闭准备资源，保存逻辑目标与临时 profile。
+恢复后重新协商并重新核对模组要求，不复用旧端点或旧预检结果。无须重启时将宿主和路径一次性转交 NetNode。
+
+### P2P房间会话覆盖
+
+`P2POverrides` 随会话XML保存及重启恢复。有效值按本次请求、已保存会话、世界复制配置的顺序确定；未提供的值保留世界设置。覆盖只用于当前开服，不回写世界，也不读取实例安装列表。`--save` 保存覆盖到会话；世界选择信令服务时仍直接复制地址和名称。

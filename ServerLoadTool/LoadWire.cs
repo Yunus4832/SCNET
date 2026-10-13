@@ -2,8 +2,6 @@ using Game.Network;
 using Game.Network.Packages;
 using Game.Network.Serialization;
 
-using LiteNetLib.Utils;
-
 namespace ServerLoadTool;
 
 /// <summary>Reuse current in-repository codecs without initializing game state or package handlers.</summary>
@@ -13,7 +11,7 @@ public static class LoadWire
         .Where(type => !type.IsAbstract && typeof(IPackage).IsAssignableFrom(type) && type.GetConstructor(Type.EmptyTypes) != null)
         .ToDictionary(type => ((IPackage)Activator.CreateInstance(type)!).ID);
 
-    public static NetDataWriter Encode(IPackage package, byte? playerId = null)
+    public static byte[] Encode(IPackage package, byte? playerId = null)
     {
         using var writer = new PackageStreamWriter();
         writer.Write((byte)0x88);
@@ -24,10 +22,10 @@ public static class LoadWire
         }
 
         package.WriteData(writer);
-        return CommonLib.GetWriter(writer, out _);
+        return CommonLib.GetWriter(writer, out _).CopyData();
     }
 
-    public static IReadOnlyList<IPackage> Decode(NetDataReader data)
+    public static IReadOnlyList<IPackage> Decode(ReadOnlyMemory<byte> data)
     {
         using var reader = CommonLib.GetReader(data);
         var packages = new List<IPackage>();

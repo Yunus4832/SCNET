@@ -127,7 +127,7 @@ public sealed class SubsystemBodyPackageHandler : PackageHandlerBase<SubsystemBo
     }
 
     /// <summary>无符号回绕安全的大小比较：value 是否比 previous 更新。</summary>
-    private static bool IsNewer(uint value, uint previous)
+    internal static bool IsNewer(uint value, uint previous)
     {
         return unchecked((int)(value - previous)) > 0;
     }

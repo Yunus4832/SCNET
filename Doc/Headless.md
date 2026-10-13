@@ -274,3 +274,20 @@ Headless 启动后会：
 Headless 进程运行期间不会像 GUI 一样在进入 world 前弹窗请求重启；如果要切换模组组合，需要用新的 session/profile 重新启动进程。
 
 可以通过 `Ctrl+C` 终止进程。
+
+## 邀请联机
+
+邀请是现有监听 Host 上的可选能力，开启后仍接受 IP/DNS 直连及已启用的 LAN 发现。游戏不内置
+信令地址。房主配置保存在世界的 `P2P` 值组中，包含 `Enabled`、`ControlUrl`、`ServiceName`、
+`Name`、`Description` 和 `IsPublic`。GUI 的世界服务器设置在页面末尾提供 P2P 开关，信令服务、房间名称、简介和公开房间选项始终显示，服务器总开关关闭时禁用全部服务器配置，开启后再由 P2P 开关控制其配置项，已有值保留。
+选择实例已安装的信令服务会复制其地址和名称；
+修改或删除安装记录不会改变世界配置。Headless 与 GUI 共用这份世界开服配置。
+
+默认 P2P 关闭且房间不公开。开服注册成功会在日志中输出六位联机码；公开房间进入信令服务的房间目录。
+信令失败不停止游戏监听，服务恢复后房主会退避重试，重新注册时重新提交房间资料并可能取得新码。
+实例中的 `InvitationRelayPolicy` 只供加入端选择是否允许中继，房主仍为授权加入者接收中继路径。
+信令服务、HTTPS 和 UDP 端口配置见 [信令服务部署](RendezvousDeployment.md)。
+
+### 容器的信令房间
+
+`server.conf` 的 `P2P` 默认 `false`，`ROOM_PUBLIC` 默认 `false`。设置 `P2P=true`、`RENDEZVOUS=https://signal.example/`，并填写 `ROOM_NAME`、`ROOM_DESCRIPTION` 后部署，即可尝试注册信令房间。公开房间还需 `ROOM_PUBLIC=true`。这些字段映射为会话启动覆盖，由现有 `--save` 保存到会话，不修改世界配置或实例安装列表。信令失败不关闭普通游戏端口。

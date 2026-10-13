@@ -1,10 +1,10 @@
 using System.Net;
 
+using Engine.Network;
+
 using EntitySystem.Core;
 
 using Game.Network.Enums;
-
-using LiteNetLib;
 
 namespace Game.Network;
 
@@ -28,7 +28,7 @@ public class Client
     /// <param name="guid">客户端Guid</param>
     /// <param name="project">Project</param>
     public Client(
-        NetPeer? netPeer,
+        NetworkConnection? netPeer,
         byte id,
         Guid tokenId,
         Guid guid,
@@ -49,14 +49,14 @@ public class Client
         State = ClientState.NotConnected;
     }
 
-    public Client(ConnectionRequest request)
+    public Client(NetworkConnectionRequest request)
     {
         Request = request;
-        IPPoint = request.RemoteEndPoint;
+        IPPoint = request.TransportEndpoint;
         State = ClientState.NotConnected;
     }
 
-    public Client(NetPeer peer)
+    public Client(NetworkConnection peer)
     {
         Peer = peer;
         State = ClientState.NotConnected;
@@ -73,9 +73,9 @@ public class Client
 
     public bool Granted { get; internal set; }
 
-    public NetPeer? Peer { get; internal set; }
+    public NetworkConnection? Peer { get; internal set; }
 
-    public ConnectionRequest? Request { get; internal set; }
+    public NetworkConnectionRequest? Request { get; internal set; }
 
     public IPEndPoint? IPPoint { get; internal set; }
 
@@ -83,7 +83,7 @@ public class Client
 
     private SubsystemPlayers SubsystemPlayers { get; set; } = null!;
 
-    public bool IsConnected => Peer != null && Peer.ConnectionState != ConnectionState.Disconnected;
+    public bool IsConnected => Peer != null && Peer.IsConnected;
 
     public ClientState State { get; set; }
 

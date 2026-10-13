@@ -88,7 +88,7 @@ public static class DialogsManager
 
     public static void Alert(string msg, ContainerWidget? parentWidget = null)
     {
-        Alert("提示", msg, parentWidget);
+        Alert(LanguageManager.Info, msg, parentWidget);
     }
 
     public static void Confirm(string msg, Action<MessageDialogButton> clickEvent, ContainerWidget? parentWidget = null)

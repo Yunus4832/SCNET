@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 
 using Engine.FileStorage;
+using Engine.Network;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
@@ -58,8 +59,10 @@ public sealed class ModProfileManagerTest : IDisposable
         Assert.Equal(_packageHash, package.PackageHash);
     }
 
-    [Fact]
-    public void RemoteServerSessionProfileDoesNotMergeGlobalProfile()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RemoteServerSessionProfileDoesNotMergeGlobalProfile(bool invitation)
     {
         SaveGlobalProfile("""
                           <ModProfile Id="global">
@@ -85,8 +88,9 @@ public sealed class ModProfileManagerTest : IDisposable
         var profile = ModProfileManager.LoadEffectiveProfile("remote-session", new SessionInfo
         {
             Target = SessionTarget.RemoteServer,
-            ServerHost = "127.0.0.1",
-            ServerPort = 28887
+            RemoteTarget = invitation
+                ? new InvitationSessionNetworkTarget(new Uri("https://signal.example/"), Guid.NewGuid(), RelayPolicy.Required)
+                : new AddressNetworkTarget("127.0.0.1", 28887)
         });
 
         Assert.Equal("remote-session", profile.Id);

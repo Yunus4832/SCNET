@@ -1,4 +1,4 @@
-using LiteNetLib;
+using Engine.Network;
 
 namespace Game.Network;
 
@@ -52,7 +52,7 @@ public enum TransportMode
 
 public readonly record struct PackageTransport(
     NetworkChannel Channel,
-    DeliveryMethod DeliveryMethod,
+    DeliveryMode Delivery,
     double FlushInterval,
     bool Coalesce = false
 )
@@ -60,10 +60,10 @@ public readonly record struct PackageTransport(
     public byte ChannelNumber => (byte)Channel;
 
     /// <summary>传输方式语义分类，由通道与投递方式推导。</summary>
-    public TransportMode Mode => DeliveryMethod switch
+    public TransportMode Mode => Delivery switch
     {
-        DeliveryMethod.Sequenced => TransportMode.Snapshot,
-        DeliveryMethod.Unreliable =>
+        DeliveryMode.Sequenced => TransportMode.Snapshot,
+        DeliveryMode.Unreliable =>
             Channel == NetworkChannel.StateStream ? TransportMode.StateStream : TransportMode.Effect,
         _ => TransportMode.Reliable
     };

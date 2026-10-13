@@ -1,10 +1,5 @@
-using System.Net;
-
 using Game.Network.Packages;
 using Game.Network.Packages.Handlers;
-
-using LiteNetLib;
-using LiteNetLib.Utils;
 
 namespace Game.Network.Serialization;
 
@@ -203,63 +198,31 @@ public class PackageManager
 
     public static (T Package, PackageReceiveContext Context) DecodePackage<T>(
         NetNode? netNode,
-        NetDataReader reader,
-        NetPeer? netPeer = null,
-        ConnectionRequest? request = null,
-        IPEndPoint? iPEndPoint = null
+        ReadOnlyMemory<byte> payload,
+        Client? sender = null
     ) where T : class, IPackage
     {
-        var obj = DecodePackages(netNode, reader, netPeer, request, iPEndPoint)[0];
+        var obj = DecodePackages(netNode, payload, sender)[0];
         return ((T)obj.Package, obj.Context);
     }
 
     public static List<ReceivedPackage> DecodePackages(
         NetNode? netNode,
-        NetDataReader reader,
-        NetPeer? netPeer = null,
-        ConnectionRequest? request = null,
-        IPEndPoint? iPEndPoint = null
+        ReadOnlyMemory<byte> payload,
+        Client? sender = null
     )
     {
-        Client? from = null;
-        if (netNode != null)
-        {
-            from = netNode.Clients.Values
-                .FirstOrDefault(client => (client.Peer != null && client.Peer == netPeer) ||
-                                          (client.Request != null && client.Request == request) ||
-                                          (client.IPPoint != null &&
-                                           Equals(client.IPPoint, iPEndPoint)));
-        }
-
-        if (from == null)
-        {
-            if (netPeer != null)
-            {
-                from = new Client(netPeer);
-            }
-
-            if (request != null)
-            {
-                from = new Client(request);
-            }
-
-            if (iPEndPoint != null)
-            {
-                from = new Client(iPEndPoint);
-            }
-        }
-
         var packages = new List<ReceivedPackage>();
-        var context = new PackageReceiveContext(netNode, netNode?.IsServer ?? false, from);
+        var context = new PackageReceiveContext(netNode, netNode?.IsServer ?? false, sender);
         byte packageID = 99;
-        if (reader.AvailableBytes == 0)
+        if (payload.IsEmpty)
         {
             return packages;
         }
 
         try
         {
-            var packageReader = CommonLib.GetReader(reader);
+            using var packageReader = CommonLib.GetReader(payload);
             IPackage? last = null;
             while (packageReader.BaseStream.Position < packageReader.BaseStream.Length)
             {

@@ -12,8 +12,8 @@ public readonly record struct EncodedTerrainChunkFragment(
 
 public static class EncodedTerrainChunkFragmenter
 {
-    // 完整包还包含分片元数据、包标识和帧头，必须适配安全MTU的507字节可用预算。
-    public const int DefaultFragmentPayloadSize = 448;
+    // 完整包还包含分片元数据、包标识和帧头，必须适配 Engine 预留中继头部后的安全 MTU（461 字节）。
+    public const int DefaultFragmentPayloadSize = 400;
 
     public const int MaximumPayloadLength = 2 * 1024 * 1024;
 

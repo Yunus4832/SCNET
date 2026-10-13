@@ -1,9 +1,7 @@
-using System.Net;
 using System.Xml.Linq;
 
-using Game.Content;
-using Game.Managers;
-using Game.Network;
+using Engine.Network;
+
 using Game.Servers;
 
 namespace Game.Screens;
@@ -13,6 +11,7 @@ public sealed class NetPlayScreen : Screen
     private enum ServerAction
     {
         Connect,
+        JoinCode,
         Add,
         Favorite,
         Refresh,
@@ -31,12 +30,18 @@ public sealed class NetPlayScreen : Screen
     {
         Local,
         Lan,
-        External
+        External,
+        Rendezvous
     }
 
-    private sealed record SourceFilterOption(IServerSource? Source, LocalServerTag Tag = LocalServerTag.None);
+    private sealed record SourceFilterOption(
+        IServerSource? Source,
+        LocalServerTag Tag = LocalServerTag.None,
+        InstalledRendezvousService? Rendezvous = null);
 
     private sealed record ServerLoadResult(IReadOnlyList<ServerItem> Items, bool HadSourceErrors);
+
+    private static readonly HttpClient _connectionHttp = new();
 
     private readonly ActionPanelWidget _actionPanel;
     private readonly ServerDiscoveryService _discoveryService = new();
@@ -48,7 +53,11 @@ public sealed class NetPlayScreen : Screen
     private readonly SelectionDrawerWidget _sortDrawer;
     private readonly LabelWidget _statusLabel;
     private CancellationTokenSource? _refreshCancellation;
+    private CancellableProgress? _connectionProgress;
     private IReadOnlyList<ServerItem> _loadedServers = [];
+    private IReadOnlyList<RendezvousRoom> _loadedRooms = [];
+
+    private bool IsRoomCategory => _sourceCategoryDrawer.SelectedItem is SourceCategory.Rendezvous;
     private IReadOnlyList<IServerSource> _sources = [];
     private bool _busy;
     private bool _hadSourceErrors;
@@ -104,7 +113,7 @@ public sealed class NetPlayScreen : Screen
         _actionPanel.SetPrimaryItems(
             [ServerAction.Connect, ServerAction.Add, ServerAction.Favorite, ServerAction.Refresh],
             [3f, 2f, 2f, 2f]);
-        _actionPanel.SetSecondaryItems([ServerAction.Delete]);
+        _actionPanel.SetSecondaryItems([ServerAction.JoinCode, ServerAction.Delete]);
 
         GameEntry.HandleUri += uri =>
         {
@@ -116,7 +125,7 @@ public sealed class NetPlayScreen : Screen
             var address = uri.Uri.AbsolutePath.TrimStart('/');
             if (!string.IsNullOrWhiteSpace(address))
             {
-                ConnectToAddress(address, address, null);
+                ConnectToAddress(address, address);
             }
 
             uri.IsHandle = true;
@@ -130,16 +139,13 @@ public sealed class NetPlayScreen : Screen
         UpdateSearchPlaceholder();
         _sourceCategoryDrawer.RefreshItems();
         _sortDrawer.RefreshItems();
-        _updatingSourceOptions = true;
-        _sourceCategoryDrawer.SelectedItem = SourceCategory.Local;
-        _updatingSourceOptions = false;
         ReloadSources();
     }
 
     public override void Leave()
     {
+        _connectionProgress?.Cancel();
         _refreshCancellation?.Cancel();
-        _refreshCancellation?.Dispose();
         _refreshCancellation = null;
         _busy = false;
         _sourceCategoryDrawer.Close();
@@ -147,6 +153,7 @@ public sealed class NetPlayScreen : Screen
         _sortDrawer.Close();
         _actionPanel.ShowPrimaryItems();
         _loadedServers = [];
+        _loadedRooms = [];
         _hadSourceErrors = false;
         _serverList.SelectedItem = null;
     }
@@ -162,6 +169,30 @@ public sealed class NetPlayScreen : Screen
 
     private static Widget CreateServerWidget(object item)
     {
+        if (item is RendezvousRoom room)
+        {
+            var row = new StackPanelWidget
+            {
+                Direction = LayoutDirection.Vertical,
+                Margin = new Vector2(12f, 0f),
+                VerticalAlignment = WidgetAlignment.Center
+            };
+            row.Children.Add(new LabelWidget
+            { Text = room.Summary.Name, FontScale = 0.8f, Ellipsis = true, MaxLines = 1 });
+            row.Children.Add(new LabelWidget
+            {
+                Text = $"{room.ServiceName} | {room.Summary.JoinCode} | " +
+                       string.Join(" / ", room.Summary.ConnectionMethods.Select(method =>
+                           Text(method == "holePunch" ? "RoomHolePunch" : "RoomRelay"))) +
+                       $" | {room.Summary.Description}",
+                FontScale = 0.55f,
+                Color = new Color(170, 170, 170),
+                Ellipsis = true,
+                MaxLines = 1
+            });
+            return row;
+        }
+
         var server = (ServerItem)item;
         var panel = new StackPanelWidget
         {
@@ -259,10 +290,16 @@ public sealed class NetPlayScreen : Screen
             return;
         }
 
+        if (IsRoomCategory)
+        {
+            RefreshRooms(option.Rendezvous);
+            return;
+        }
+
+        _loadedRooms = [];
         var sources = option.Source is null ? GetCategorySources() : [option.Source];
 
         _refreshCancellation?.Cancel();
-        _refreshCancellation?.Dispose();
         var cancellation = new CancellationTokenSource();
         _refreshCancellation = cancellation;
         _busy = true;
@@ -271,8 +308,95 @@ public sealed class NetPlayScreen : Screen
         _hadSourceErrors = false;
         _serverList.ClearItems();
         _actionPanel.Refresh();
-        Task.Run(() => LoadAndProbeAsync(sources, cancellation.Token), cancellation.Token)
-            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteRefresh(cancellation, task)), cancellation.Token);
+        Task.Run(() => LoadAndProbeAsync(sources, cancellation.Token))
+            .ContinueWith(task => Dispatcher.Dispatch(() => CompleteRefresh(cancellation, task)));
+    }
+
+    private void RefreshRooms(InstalledRendezvousService? service)
+    {
+        _refreshCancellation?.Cancel();
+        _loadedServers = [];
+        _loadedRooms = [];
+        _hadSourceErrors = false;
+        _serverList.ClearItems();
+        var services = service is null
+            ? RendezvousManager.Current.Snapshot().Where(item => item.IsEnabled).ToArray()
+            : [service];
+        if (services.Length == 0)
+        {
+            _refreshCancellation = null;
+            _busy = false;
+            _statusLabel.Text = LanguageManager.GetContentWidgets("ManageRendezvousScreen", "NoSources");
+            _actionPanel.Refresh();
+            return;
+        }
+
+        var cancellation = new CancellationTokenSource();
+        _refreshCancellation = cancellation;
+        _busy = true;
+        ApplyView();
+        Task.Run(() => LoadRoomsAsync(services, cancellation.Token))
+            .ContinueWith(task => Dispatcher.Dispatch(() =>
+            {
+                if (!ReferenceEquals(_refreshCancellation, cancellation))
+                {
+                    _ = task.Exception;
+                    cancellation.Dispose();
+                    return;
+                }
+
+                _refreshCancellation = null;
+                var canceled = cancellation.IsCancellationRequested;
+                cancellation.Dispose();
+                _busy = false;
+                if (canceled)
+                {
+                    _ = task.Exception;
+                    return;
+                }
+
+                if (task.IsCompletedSuccessfully)
+                {
+                    _loadedRooms = task.Result.Rooms;
+                    _hadSourceErrors = task.Result.HadErrors;
+                }
+                else
+                {
+                    _hadSourceErrors = true;
+                    Log.Warning($"Could not load signaling rooms: {task.Exception?.GetBaseException().Message}");
+                }
+
+                ApplyView();
+            }));
+    }
+
+    private async Task<(IReadOnlyList<RendezvousRoom> Rooms, bool HadErrors)> LoadRoomsAsync(
+        IReadOnlyList<InstalledRendezvousService> services, CancellationToken cancellationToken)
+    {
+        using var concurrency = new SemaphoreSlim(8);
+        var results = await Task.WhenAll(services.Select(async service =>
+        {
+            await concurrency.WaitAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                return (Rooms: await RendezvousRoomDirectory.LoadAsync(_connectionHttp, service, cancellationToken)
+                    .ConfigureAwait(false), Failed: false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception)
+            {
+                Log.Warning($"Could not load signaling rooms from '{service.Name}': {exception.Message}");
+                return (Rooms: (IReadOnlyList<RendezvousRoom>)Array.Empty<RendezvousRoom>(), Failed: true);
+            }
+            finally
+            {
+                concurrency.Release();
+            }
+        })).ConfigureAwait(false);
+        return (results.SelectMany(result => result.Rooms).ToArray(), results.Any(result => result.Failed));
     }
 
     private async Task<ServerLoadResult> LoadAndProbeAsync(IReadOnlyList<IServerSource> sources,
@@ -318,14 +442,16 @@ public sealed class NetPlayScreen : Screen
     {
         if (!ReferenceEquals(_refreshCancellation, cancellation))
         {
+            _ = task.Exception;
             cancellation.Dispose();
             return;
         }
 
         _refreshCancellation = null;
+        var canceled = cancellation.IsCancellationRequested;
         cancellation.Dispose();
         _busy = false;
-        if (task.IsCanceled)
+        if (task.IsCanceled || canceled)
         {
             return;
         }
@@ -346,6 +472,42 @@ public sealed class NetPlayScreen : Screen
 
     private void ApplyView()
     {
+        if (IsRoomCategory)
+        {
+            var selectedRoom = _serverList.SelectedItem as RendezvousRoom;
+            var searchText = _searchTextBox.Text.Trim();
+            var rooms = _loadedRooms.Where(room =>
+                room.Summary.Name.Contains(searchText, StringComparison.CurrentCultureIgnoreCase) ||
+                room.Summary.Description.Contains(searchText, StringComparison.CurrentCultureIgnoreCase) ||
+                room.Summary.JoinCode.Contains(searchText, StringComparison.Ordinal));
+            if (_sortDrawer.SelectedItem is ServerSortOrder.Name)
+            {
+                rooms = rooms.OrderBy(room => room.Summary.Name, StringComparer.CurrentCultureIgnoreCase);
+            }
+
+            var visible = rooms.ToArray();
+            _serverList.ClearItems();
+            foreach (var room in visible)
+            {
+                _serverList.AddItem(room);
+            }
+
+            _serverList.SelectedItem = visible.FirstOrDefault(room =>
+                selectedRoom is not null && room.Summary.Id == selectedRoom.Summary.Id &&
+                room.ControlUrl == selectedRoom.ControlUrl);
+            _statusLabel.Text = _busy
+                ? Text("Loading")
+                : _hadSourceErrors
+                    ? Text("LoadFailed")
+                    : !RendezvousManager.Current.Snapshot().Any(service => service.IsEnabled)
+                        ? LanguageManager.GetContentWidgets("ManageRendezvousScreen", "NoSources")
+                        : visible.Length == 0
+                            ? Text("Empty")
+                            : string.Empty;
+            _actionPanel.Refresh();
+            return;
+        }
+
         var selectedIdentity = (_serverList.SelectedItem as ServerItem)?.Identity;
         var search = _searchTextBox.Text.Trim();
         IEnumerable<ServerItem> servers = _loadedServers;
@@ -425,10 +587,14 @@ public sealed class NetPlayScreen : Screen
         var selected = _serverList.SelectedItem as ServerItem;
         return action switch
         {
-            ServerAction.Connect => selected?.RuntimeStatus.Availability == ServerAvailability.Available,
-            ServerAction.Add or ServerAction.Refresh => true,
-            ServerAction.Favorite => selected is not null,
-            ServerAction.Delete => selected?.SourceKind == ServerSourceKind.Local,
+            ServerAction.Connect => IsRoomCategory
+                ? _serverList.SelectedItem is RendezvousRoom
+                : selected?.RuntimeStatus.Availability == ServerAvailability.Available,
+            ServerAction.Add => _sourceCategoryDrawer.SelectedItem is SourceCategory.Local,
+            ServerAction.Refresh or ServerAction.JoinCode => true,
+            ServerAction.Favorite => !IsRoomCategory && selected is not null,
+            ServerAction.Delete => _sourceCategoryDrawer.SelectedItem is SourceCategory.Local &&
+                                   selected?.SourceKind == ServerSourceKind.Local,
             _ => false
         };
     }
@@ -446,6 +612,9 @@ public sealed class NetPlayScreen : Screen
             case ServerAction.Connect:
                 ConnectSelected();
                 break;
+            case ServerAction.JoinCode:
+                ShowJoinCodeDialog();
+                break;
             case ServerAction.Add:
                 ShowAddDialog();
                 break;
@@ -459,6 +628,12 @@ public sealed class NetPlayScreen : Screen
                 ConfirmDelete(selected);
                 break;
         }
+    }
+
+    private void ShowJoinCodeDialog()
+    {
+        DialogsManager.ShowDialog(this, new JoinCodeDialog(SettingsManager.Current.InvitationRelayPolicy,
+            ConnectToRemoteSession));
     }
 
     private void ShowAddDialog()
@@ -538,45 +713,97 @@ public sealed class NetPlayScreen : Screen
 
     private void ConnectSelected()
     {
+        if (IsRoomCategory && _serverList.SelectedItem is RendezvousRoom room)
+        {
+            ConnectToRemoteSession(room.CreateTarget(SettingsManager.Current.InvitationRelayPolicy));
+            return;
+        }
+
         if (_serverList.SelectedItem is not ServerItem server ||
             server.RuntimeStatus.Availability != ServerAvailability.Available)
         {
             return;
         }
 
-        ConnectToAddress(server.DisplayName, server.Address, server.RuntimeStatus);
+        ConnectToAddress(server.DisplayName, server.Address);
     }
 
-    public void ConnectToRemoteSession(IPEndPoint endPoint)
+    public void ConnectToRemoteSession(NetworkTarget target)
     {
-        var busyDialog = new BusyDialog(Text("Connect"), Text("Loading"));
-        DialogsManager.ShowDialog(null, busyDialog);
-        var address = endPoint.ToString();
-        Task.Run(() => _discoveryService.ProbeAsync(address, TimeSpan.FromSeconds(2), CancellationToken.None))
-            .ContinueWith(task => Dispatcher.Dispatch(() =>
-            {
-                DialogsManager.HideDialog(busyDialog);
-                if (!task.IsCompletedSuccessfully ||
-                    task.Result.Availability != ServerAvailability.Available)
-                {
-                    DialogsManager.Alert(Text("LoadFailed"));
-                    return;
-                }
-
-                ConnectToAddress(address, address, task.Result);
-            }));
-    }
-
-    private void ConnectToAddress(string name, string address, ServerRuntimeStatus? status)
-    {
-        if (!CommonLib.Resolve(address, out var endpoint))
+        if (_connectionProgress is not null)
         {
-            DialogsManager.Alert(LanguageManager.Get("Usual", "error"));
             return;
         }
 
-        ServerDirectoryManager.Current.RecordConnectionAttempt(name, address, DateTimeOffset.UtcNow);
-        PrepareRemoteSessionAndConnect(endpoint!, status?.RequiredModProfile, status?.TemporaryRepositories ?? []);
+        var busyDialog = new CancellableBusyDialog(Text("Connect"), false)
+        {
+            SmallMessage = Text("Loading"),
+            ShowProgressMessage = false,
+            CancelOnBack = true
+        };
+        _connectionProgress = busyDialog.Progress;
+        var cancellationToken = busyDialog.Progress.CancellationToken;
+        DialogsManager.ShowDialog(null, busyDialog);
+        Task.Run(() => ServerConnectionPreparation.PrepareAsync(target, _connectionHttp, cancellationToken),
+                cancellationToken)
+            .ContinueWith(task => Dispatcher.Dispatch(() =>
+            {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    _ = task.Exception;
+                    if (task.IsCompletedSuccessfully)
+                    {
+                        ReleasePrepared(task.Result, () => FinishConnectionPreparation(busyDialog));
+                    }
+                    else
+                    {
+                        FinishConnectionPreparation(busyDialog);
+                    }
+
+                    return;
+                }
+
+                if (!task.IsCompletedSuccessfully)
+                {
+                    FinishConnectionPreparation(busyDialog);
+                    var exception = task.Exception?.GetBaseException();
+                    Log.Warning($"Server connection preparation failed: {exception?.Message}");
+                    DialogsManager.Alert(exception is RendezvousException failure
+                        ? Text($"SignalError_{failure.Kind}")
+                        : exception?.Message ?? Text("LoadFailed"));
+                    return;
+                }
+
+                PrepareRemoteSessionAndConnect(task.Result, busyDialog);
+            }), cancellationToken);
+    }
+
+    private void FinishConnectionPreparation(CancellableBusyDialog dialog)
+    {
+        DialogsManager.HideDialog(dialog);
+        if (ReferenceEquals(_connectionProgress, dialog.Progress))
+        {
+            _connectionProgress = null;
+        }
+
+        dialog.Progress.CancellationTokenSource.Dispose();
+    }
+
+    private void ConnectToAddress(string name, string address)
+    {
+        try
+        {
+            var normalized = ServerAddress.Normalize(address);
+            var uri = new Uri("tcp://" + normalized);
+            var target = new AddressNetworkTarget(uri.DnsSafeHost,
+                uri.Port > 0 ? uri.Port : SettingsManager.Current.ServerPort);
+            ServerDirectoryManager.Current.RecordConnectionAttempt(name, normalized, DateTimeOffset.UtcNow);
+            ConnectToRemoteSession(target);
+        }
+        catch (ArgumentException)
+        {
+            DialogsManager.Alert(LanguageManager.Get("Usual", "error"));
+        }
     }
 
     private void SelectLocalTagAndRefresh(LocalServerTag tag)
@@ -596,6 +823,7 @@ public sealed class NetPlayScreen : Screen
     {
         var selectedId = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Source?.Id;
         var selectedTag = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Tag ?? LocalServerTag.None;
+        var selectedServiceId = (_sourceDrawer.SelectedItem as SourceFilterOption)?.Rendezvous?.Id;
         var options = _sourceCategoryDrawer.SelectedItem switch
         {
             SourceCategory.Local =>
@@ -606,6 +834,9 @@ public sealed class NetPlayScreen : Screen
                 new SourceFilterOption(null, LocalServerTag.Recent)
             ],
             SourceCategory.Lan => [new SourceFilterOption(null)],
+            SourceCategory.Rendezvous => new[] { new SourceFilterOption(null) }
+                .Concat(RendezvousManager.Current.Snapshot().Where(service => service.IsEnabled)
+                    .Select(service => new SourceFilterOption(null, Rendezvous: service))).ToArray(),
             _ => new[] { new SourceFilterOption(null) }
                 .Concat(GetCategorySources().Select(source => new SourceFilterOption(source))).ToArray()
         };
@@ -614,9 +845,19 @@ public sealed class NetPlayScreen : Screen
         {
             _sourceDrawer.SetItems(options);
             _sourceDrawer.SelectedItem = options.FirstOrDefault(option => option.Source?.Id == selectedId &&
-                                                                          option.Tag == selectedTag) ??
+                                                                          option.Tag == selectedTag &&
+                                                                          option.Rendezvous?.Id == selectedServiceId) ??
                                          options[0];
             _sourceDrawer.IsEnabled = options.Length > 1;
+            var sort = _sortDrawer.SelectedItem as ServerSortOrder? ?? ServerSortOrder.None;
+            _sortDrawer.SetItems(IsRoomCategory
+                ? new object[] { ServerSortOrder.None, ServerSortOrder.Name }
+                : Enum.GetValues<ServerSortOrder>().Cast<object>().ToArray());
+            _sortDrawer.SelectedItem = IsRoomCategory && sort is not (ServerSortOrder.None or ServerSortOrder.Name)
+                ? ServerSortOrder.None
+                : sort;
+            _sortDrawer.IsEnabled = true;
+            _actionPanel.Refresh();
         }
         finally
         {
@@ -662,6 +903,11 @@ public sealed class NetPlayScreen : Screen
 
     private string GetSourceName(SourceFilterOption option)
     {
+        if (option.Rendezvous is { } service)
+        {
+            return service.Name;
+        }
+
         var source = option.Source;
         if (option.Tag != LocalServerTag.None)
         {
@@ -674,6 +920,7 @@ public sealed class NetPlayScreen : Screen
             {
                 SourceCategory.Local => Text("AllLocalTags"),
                 SourceCategory.Lan => "—",
+                SourceCategory.Rendezvous => Text("AllSignalingServices"),
                 _ => Text("AllExternalSources")
             };
         }
@@ -725,50 +972,91 @@ public sealed class NetPlayScreen : Screen
             entry.Address == address && entry.Tags.HasFlag(LocalServerTag.Favorite));
     }
 
-    private void PrepareRemoteSessionAndConnect(IPEndPoint endPoint, ModProfile? requiredProfile,
-        IReadOnlyList<ContentRepository> temporaryRepositories)
+    private void PrepareRemoteSessionAndConnect(ServerConnectionPreparation prepared, CancellableBusyDialog busyDialog)
     {
+        var requiredProfile = prepared.Status.RequiredModProfile;
         if (requiredProfile is null)
         {
-            ConnectPreparedRemoteSession(endPoint);
+            FinishConnectionPreparation(busyDialog);
+            ConnectPreparedRemoteSession(prepared);
             return;
         }
 
-        var busyDialog = new BusyDialog("准备服务器模组", "正在核对服务器模组...");
-        DialogsManager.ShowDialog(null, busyDialog);
-        Task.Run(() => ModRestartHelper.PrepareRemoteSession(SessionInfoManager.CreateRemoteClientSession(endPoint),
-                requiredProfile, temporaryRepositories,
+        busyDialog.SmallMessage = Text("CheckingMods");
+        var cancellationToken = busyDialog.Progress.CancellationToken;
+        Task.Run(() => ModRestartHelper.PrepareRemoteSession(
+                SessionInfoManager.CreateRemoteClientSession(prepared.Target),
+                requiredProfile, prepared.Status.TemporaryRepositories, cancellationToken,
                 message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)))
             .ContinueWith(task => Dispatcher.Dispatch(() =>
             {
-                DialogsManager.HideDialog(busyDialog);
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    _ = task.Exception;
+                    ReleasePrepared(prepared, () => FinishConnectionPreparation(busyDialog));
+                    return;
+                }
+
                 if (!task.IsCompletedSuccessfully)
                 {
-                    Log.Error($"Remote mod session preparation failed: {task.Exception}");
-                    DialogsManager.Alert(LanguageManager.Get("Usual", "error"));
+                    ReleasePrepared(prepared, () =>
+                    {
+                        FinishConnectionPreparation(busyDialog);
+                        if (!cancellationToken.IsCancellationRequested)
+                        {
+                            Log.Error($"Remote mod session preparation failed: {task.Exception}");
+                            DialogsManager.Alert(Text("ModPreparationFailed"));
+                        }
+                        else
+                        {
+                            _ = task.Exception;
+                        }
+                    });
                     return;
                 }
 
                 if (!task.Result.RequiresRestart)
                 {
-                    ConnectPreparedRemoteSession(endPoint);
+                    FinishConnectionPreparation(busyDialog);
+                    ConnectPreparedRemoteSession(prepared);
                     return;
                 }
 
-                ConfirmRemoteModRestart(task.Result);
+                ReleasePrepared(prepared, () =>
+                {
+                    FinishConnectionPreparation(busyDialog);
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        ConfirmRemoteModRestart(task.Result);
+                    }
+                });
             }));
     }
 
-    private static void ConnectPreparedRemoteSession(IPEndPoint endPoint)
+    private static void ReleasePrepared(ServerConnectionPreparation prepared, Action completed)
+    {
+        Task.Run(async () => await prepared.DisposeAsync()).ContinueWith(task => Dispatcher.Dispatch(() =>
+        {
+            if (task.IsFaulted)
+            {
+                Log.Warning($"Could not release server preparation: {task.Exception!.GetBaseException().Message}");
+            }
+
+            completed();
+        }));
+    }
+
+    private static void ConnectPreparedRemoteSession(ServerConnectionPreparation prepared)
     {
         DialogsManager.HideAllDialogs();
-        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, endPoint);
+        ScreensManager.SwitchScreen("GameLoading", string.Empty, string.Empty, prepared);
     }
 
     private static void ConfirmRemoteModRestart(RemoteModSessionPreparation result)
     {
-        DialogsManager.ShowDialog(null, new MessageDialog("需要重启游戏",
-            $"{result.RestartReason}\n\n是否现在重启？", "重启", "取消", button =>
+        DialogsManager.ShowDialog(null, new MessageDialog(LanguageManager.GetContentWidgets(nameof(PlayScreen), 16),
+            string.Format(LanguageManager.GetContentWidgets(nameof(PlayScreen), 17), result.RestartReason),
+            LanguageManager.GetContentWidgets(nameof(PlayScreen), 18), LanguageManager.Get("Usual", "cancel"), button =>
             {
                 if (button == MessageDialogButton.Button1)
                 {

@@ -1,8 +1,12 @@
 using Engine.Core;
 using Engine.FileStorage;
+using Engine.Network;
 
 using Game;
 using Game.Managers;
+using Game.Servers;
+
+using Rendezvous.Protocol;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -17,6 +21,66 @@ public sealed class SessionInfoManagerTest : IDisposable
         {
             Storage.DeleteFile(SessionInfoManager.SessionInfoPath);
         }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RoomRestartPreservesLogicalInvitationTarget(bool prepared)
+    {
+        var room = new RendezvousRoom(new Uri("https://signal.example.test/"), "Installed service",
+            new RoomSummary(Guid.NewGuid(), "Room", "Description", "001234", ["holePunch", "relay"]));
+        NetworkTarget target = prepared
+            ? new InvitationSessionNetworkTarget(room.ControlUrl, room.Summary.Id, RelayPolicy.Required)
+            : room.CreateTarget(RelayPolicy.Required);
+        var restart = SessionInfoManager.PrepareRestartSession(new SessionInfo
+        {
+            Target = SessionTarget.RemoteServer,
+            RemoteTarget = target
+        });
+        var restored = SessionInfoManager.Load(restart.SessionId);
+        Assert.Equal(SessionTarget.RemoteServer, restored.Target);
+        Assert.Equal(target, restored.RemoteTarget);
+        var xml = Storage.ReadAllText(SessionInfoManager.SessionInfoPath);
+        Assert.DoesNotContain("Credential", xml);
+        Assert.DoesNotContain("Ticket", xml);
+        Assert.DoesNotContain("Description", xml);
+    }
+
+    [Fact]
+    public void InvitationSessionRoundTripPreservesLocatorAndRelayPolicy()
+    {
+        var target = new InvitationSessionNetworkTarget(new Uri("https://signal.example.test/"), Guid.NewGuid(), RelayPolicy.Required);
+        var session = new SessionInfo
+        {
+            SessionId = Guid.NewGuid().ToString("N"),
+            Name = "Invitation",
+            Target = SessionTarget.RemoteServer,
+            RemoteTarget = target
+        };
+        SessionInfoManager.Save(session);
+        var restored = SessionInfoManager.LoadByName("Invitation");
+        Assert.NotNull(restored);
+        Assert.Equal(target, restored.RemoteTarget);
+        Assert.Equal(SessionTarget.RemoteServer, restored.Target);
+    }
+
+    [Fact]
+    public void DnsTargetRoundTripDoesNotResolveOrStoreAListenerPortOverride()
+    {
+        var target = new AddressNetworkTarget("unresolved.example.test", 28887);
+        SessionInfoManager.Save(new SessionInfo
+        {
+            SessionId = Guid.NewGuid().ToString("N"),
+            Name = "DnsClient",
+            Target = SessionTarget.RemoteServer,
+            RemoteTarget = target,
+            ServerPort = 31987
+        });
+        var restored = SessionInfoManager.LoadByName("DnsClient");
+        Assert.NotNull(restored);
+        Assert.Equal(target, restored.RemoteTarget);
+        Assert.Equal(31987, restored.ServerPort);
     }
 
     [Fact]
@@ -112,12 +176,12 @@ public sealed class SessionInfoManagerTest : IDisposable
         ]);
 
         var restartSession = SessionInfoManager.CreateRemoteClientSession(
-            new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 30987));
+            new AddressNetworkTarget("127.0.0.1", 30987));
 
         Assert.Equal(startup.Session.SessionId, restartSession.SessionId);
         Assert.Equal(SessionTarget.RemoteServer, restartSession.Target);
-        Assert.Equal("127.0.0.1", restartSession.ServerHost);
-        Assert.Equal(30987, restartSession.ServerPort);
+        Assert.Equal("127.0.0.1", Assert.IsType<AddressNetworkTarget>(restartSession.RemoteTarget).Host);
+        Assert.Equal(30987, Assert.IsType<AddressNetworkTarget>(restartSession.RemoteTarget).Port);
         Assert.Equal("DebugPlayer", restartSession.AutoJoinPlayerName);
         Assert.True(restartSession.HttpCommandEnabled);
         Assert.Equal(30989, restartSession.HttpCommandPort);

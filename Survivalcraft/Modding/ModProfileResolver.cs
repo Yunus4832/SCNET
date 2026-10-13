@@ -1,5 +1,4 @@
 using Game.Content;
-using Game.Managers;
 
 namespace Game.Modding;
 
@@ -19,7 +18,7 @@ public static class ModProfileResolver
         var resolvedSources = new List<ModPackageSource>();
         foreach (var requirement in profile.Packages)
         {
-            var localEntry = ResolveEntry(requirement, repository, download, context, log, out _);
+            var localEntry = ResolveEntry(requirement, repository, download, context, log, CancellationToken.None, out _);
             resolvedSources.Add(new ModPackageSource(localEntry.FileName, () => File.OpenRead(localEntry.Path)));
         }
 
@@ -39,10 +38,12 @@ public static class ModProfileResolver
         ModProfile profile,
         string localRepositoryPath,
         ContentSourceContext context,
-        Action<string>? log = null)
+        Action<string>? log = null,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentNullException.ThrowIfNull(context);
+        cancellationToken.ThrowIfCancellationRequested();
         ModProfileValidation.Validate(profile);
         Directory.CreateDirectory(localRepositoryPath);
         var repository = new LocalModRepository(localRepositoryPath);
@@ -50,7 +51,8 @@ public static class ModProfileResolver
         var downloadedAny = false;
         foreach (var requirement in profile.Packages)
         {
-            _ = ResolveEntry(requirement, repository, download, context, log, out var downloaded);
+            cancellationToken.ThrowIfCancellationRequested();
+            _ = ResolveEntry(requirement, repository, download, context, log, cancellationToken, out var downloaded);
             downloadedAny |= downloaded;
         }
 
@@ -59,7 +61,7 @@ public static class ModProfileResolver
 
     private static LocalModPackageEntry ResolveEntry(ModPackageRequirement requirement,
         LocalModRepository repository, ContentDownloadService download, ContentSourceContext context,
-        Action<string>? log, out bool downloaded)
+        Action<string>? log, CancellationToken cancellationToken, out bool downloaded)
     {
         log?.Invoke($"检查模组 {requirement.ModId}@{requirement.Version} ({requirement.PackageHash})");
         var localEntry = repository.Find(requirement);
@@ -74,7 +76,7 @@ public static class ModProfileResolver
         try
         {
             var result = download.DownloadExactModAsync(context, requirement.ModId, requirement.Version,
-                    requirement.PackageHash)
+                    requirement.PackageHash, cancellationToken)
                 .ConfigureAwait(false).GetAwaiter().GetResult();
             foreach (var failure in result.PriorFailures)
             {

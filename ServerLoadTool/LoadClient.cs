@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
 using Engine.Core;
+using Engine.Network;
 
 using EntitySystem.TemplatesDatabase;
 
@@ -14,19 +15,20 @@ using Game.Network.Serialization;
 using Game.Terrains;
 using Game.Terrains.Distribution;
 
-using LiteNetLib;
 
 namespace ServerLoadTool;
 
 public sealed class LoadClient : IDisposable
 {
     private readonly LoadOptions _options;
-    private readonly NetManager _network;
+    private readonly NetworkHost _network;
+    private readonly CancellationTokenSource _stop = new();
+    private readonly Task<NetworkConnection> _connecting;
     private readonly Guid _identity = Guid.NewGuid();
     private readonly Guid _token = Guid.NewGuid();
     private readonly Dictionary<Point2, Chunk> _chunks = [];
     private readonly Stopwatch _clock = Stopwatch.StartNew();
-    private NetPeer? _peer;
+    private NetworkConnection? _peer;
     private byte? _id;
     private Guid _epoch;
     private bool _hasEntity;
@@ -60,28 +62,20 @@ public sealed class LoadClient : IDisposable
     public long RetriedChunks { get; private set; }
     public List<double> ChunkMilliseconds { get; } = [];
     public int PendingChunks => _chunks.Values.Count(chunk => !chunk.Completed);
-    public int Ping => _peer?.Ping ?? 0;
+    public int Ping => _peer?.RoundTripMilliseconds ?? 0;
 
     public LoadClient(LoadOptions options, int index, string runName)
     {
         _options = options;
         Index = index;
         Name = $"Load{runName}{index:D3}";
-        var listener = new EventBasedNetListener();
-        _network = new NetManager(listener)
-        {
-            ChannelsCount = 7,
-            UseSafeMtu = true,
-            DisconnectTimeout = 15000,
-            AutoRecycle = true,
-            EnableStatistics = true
-        };
-        listener.NetworkReceiveEvent += (_, reader, _) =>
+        _network = new NetworkHost(options: new NetworkHostOptions { DisconnectTimeout = TimeSpan.FromSeconds(15) });
+        _network.Received += (_, message) =>
         {
             try
             {
-                ReceivedBytes += reader.AvailableBytes;
-                foreach (var package in LoadWire.Decode(reader))
+                ReceivedBytes += message.Payload.Length;
+                foreach (var package in LoadWire.Decode(message.Payload))
                 {
                     ReceivedPackages++;
                     Receive(package);
@@ -92,42 +86,37 @@ public sealed class LoadClient : IDisposable
                 Fail($"protocol: {exception.Message}");
             }
         };
-        listener.PeerDisconnectedEvent += (_, info) =>
+        _network.Disconnected += (_, information) =>
         {
             if (!_stopping && Error == null)
             {
-                var reason = info.Reason.ToString();
-                if (info.Reason == DisconnectReason.ConnectionRejected && info.AdditionalData?.AvailableBytes > 0)
-                {
-                    try
-                    {
-                        reason = LoadWire.Decode(info.AdditionalData).OfType<ConnectionRejectPackage>().FirstOrDefault()?.Reason ?? reason;
-                    }
-                    catch (Exception)
-                    {
-                        // Transport rejection without a game payload still remains a failed run.
-                    }
-                }
-
-                Fail($"disconnected: {reason}");
+                Fail($"disconnected: {Describe(information)}");
             }
         };
-        listener.NetworkErrorEvent += (_, error) => Fail($"socket: {error}");
-        if (!_network.StartInManualMode(0))
-        {
-            throw new IOException("Cannot bind load-client UDP socket.");
-        }
+        _connecting = ConnectAsync();
+    }
 
+    private async Task<NetworkConnection> ConnectAsync()
+    {
+        await using var preparation = await _network.PrepareAddressAsync(_options.Host, _options.Port, _stop.Token);
         var request = new ConnectionRequestPackage(_token, VersionsManager.ProtocolVersion, _identity, ModProfileManager.EmptyDataHash);
-        try
+        return await preparation.ConnectAsync(LoadWire.Encode(request), _stop.Token);
+    }
+
+    private static string Describe(NetworkDisconnectInfo information)
+    {
+        if (information.Reason == NetworkDisconnectReason.Rejected && !information.Data.IsEmpty)
         {
-            _peer = _network.Connect(options.Host, options.Port, LoadWire.Encode(request));
+            try
+            {
+                return LoadWire.Decode(information.Data).OfType<ConnectionRejectPackage>().FirstOrDefault()?.Reason ?? information.Reason.ToString();
+            }
+            catch (Exception)
+            {
+                // A transport rejection without a game payload still represents a failed run.
+            }
         }
-        catch
-        {
-            _network.Stop();
-            throw;
-        }
+        return information.Reason.ToString();
     }
 
     private void Fail(string error)
@@ -145,7 +134,12 @@ public sealed class LoadClient : IDisposable
 
         var data = LoadWire.Encode(package, _id);
         var transport = PackageTransportPolicy.Get(package);
-        _peer.Send(data, transport.ChannelNumber, transport.DeliveryMethod);
+        var result = _peer.TrySend(data, transport.ChannelNumber, transport.Delivery);
+        if (result != NetworkSendResult.Accepted)
+        {
+            Fail($"send: {result}");
+            return;
+        }
         SentBytes += data.Length;
     }
 
@@ -251,10 +245,28 @@ public sealed class LoadClient : IDisposable
         }
     }
 
-    public void Update(int elapsedMilliseconds, bool move)
+    public void Update(bool move)
     {
-        _network.ManualReceive();
-        _network.ManualUpdate(elapsedMilliseconds);
+        if (_peer is null && _connecting.IsCompleted && Error is null)
+        {
+            try
+            {
+                _peer = _connecting.GetAwaiter().GetResult();
+            }
+            catch (NetworkConnectionException exception)
+            {
+                Fail($"connect: {Describe(exception.Information)}");
+            }
+            catch (Exception exception)
+            {
+                Fail($"connect: {exception.Message}");
+            }
+        }
+        if (_network.Failure is { } failure)
+        {
+            Fail($"transport: {failure.Message}");
+        }
+        _network.DispatchEvents();
         if (Error != null)
         {
             return;
@@ -388,8 +400,23 @@ public sealed class LoadClient : IDisposable
     {
         _stopping = true;
         _peer?.Disconnect();
-        _network.ManualUpdate(1);
-        _network.Stop();
+        _stop.Cancel();
+        try
+        {
+            _network.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            try
+            {
+                _connecting.GetAwaiter().GetResult();
+            }
+            catch (Exception) when (_connecting.IsCanceled || _connecting.IsFaulted)
+            {
+                // Observe the canceled/failed attempt while disposing this load client.
+            }
+        }
+        finally
+        {
+            _stop.Dispose();
+        }
     }
 
     private sealed class Chunk(ChunkAllocationId allocation, double now)

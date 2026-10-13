@@ -44,6 +44,16 @@
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                        <CanvasWidget Size="310, 60" HorizontalAlignment="Far" VerticalAlignment="Near"
+                                      Margin="20, 0">
+                            <LabelWidget Text="[SettingsDiagnosticsScreen:8]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center"/>
+                        </CanvasWidget>
+                        <BevelledButtonWidget Name="RelayPreference" Style="{Styles/ButtonStyle_310x60}"
+                                              VerticalAlignment="Near" Margin="20, 0"/>
+                    </UniformSpacingPanelWidget>
+
+                    <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
                         <LabelWidget Text="[SettingsDiagnosticsScreen:6]" HorizontalAlignment="Far"
                                      VerticalAlignment="Center" Margin="20, 0"/>
                         <BevelledButtonWidget Name="ResetCompatibilityButton" Style="{Styles/ButtonStyle_310x60}"

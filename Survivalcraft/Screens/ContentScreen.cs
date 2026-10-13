@@ -19,6 +19,8 @@ public class ContentScreen : Screen
     private readonly ButtonWidget _serverSourcesButton;
 
     private readonly ButtonWidget _manageServerSourcesButton;
+    private readonly ButtonWidget _rendezvousCatalogButton;
+    private readonly ButtonWidget _manageRendezvousButton;
 
     public ContentScreen()
     {
@@ -31,6 +33,8 @@ public class ContentScreen : Screen
         _repositoriesButton = Children.Find<ButtonWidget>("Repositories")!;
         _serverSourcesButton = Children.Find<ButtonWidget>("ServerSources")!;
         _manageServerSourcesButton = Children.Find<ButtonWidget>("ManageServerSources")!;
+        _rendezvousCatalogButton = Children.Find<ButtonWidget>("RendezvousCatalog")!;
+        _manageRendezvousButton = Children.Find<ButtonWidget>("ManageRendezvous")!;
     }
 
     public void OpenManageSelectDialog()
@@ -70,6 +74,14 @@ public class ContentScreen : Screen
             ScreensManager.SwitchScreen("ManageServerSources");
         }
 
+        if (_rendezvousCatalogButton.IsClicked)
+        {
+            ScreensManager.SwitchScreen("RendezvousCatalog");
+        }
+        if (_manageRendezvousButton.IsClicked)
+        {
+            ScreensManager.SwitchScreen("ManageRendezvous");
+        }
         if (_manageButton.IsClicked)
         {
             OpenManageSelectDialog();

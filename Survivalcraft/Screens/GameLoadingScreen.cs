@@ -1,13 +1,14 @@
-using System.Net;
 using System.Text;
 using System.Xml.Linq;
 
 using Engine.Graphics;
 using Engine.Media;
+using Engine.Network;
 
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
+using Game.Servers;
 
 using static Game.Network.NetNode;
 
@@ -31,7 +32,7 @@ public class GameLoadingScreen : Screen
 
     private byte[] _projectXmlData = [];
 
-    private IPEndPoint? _serverEndPoint;
+    private ServerConnectionPreparation? _serverPreparation;
 
     private readonly StateMachine _stateMachine = new();
 
@@ -43,9 +44,9 @@ public class GameLoadingScreen : Screen
 
     private Stopwatch _timer = null!;
 
-    public WorldInfo? CurrentWorldInfo => _serverEndPoint == null ? _worldInfo : null;
+    public WorldInfo? CurrentWorldInfo => _serverPreparation == null ? _worldInfo : null;
 
-    public IPEndPoint? CurrentServerEndPoint => _serverEndPoint;
+    public NetworkTarget? CurrentRemoteTarget => _serverPreparation?.Target;
 
     public GameLoadingScreen()
     {
@@ -64,9 +65,9 @@ public class GameLoadingScreen : Screen
                 if (string.IsNullOrEmpty(_worldSnapshotName))
                 {
                     SetSpawnDialogMessage("连接服务器", 0.2f);
-                    if (_serverEndPoint != null)
+                    if (_serverPreparation != null)
                     {
-                        CommonLib.Net.ConnectServer(_serverEndPoint);
+                        CommonLib.Net.ConnectServer(_serverPreparation);
                         DialogsManager.ShowDialog(this, SpawnDialog);
                         _stateMachine.TransitionTo("WaitServerReply");
                         // 客户端开启包处理
@@ -121,7 +122,7 @@ public class GameLoadingScreen : Screen
             Actions.Empty,
             delegate
             {
-                if (_serverEndPoint != null)
+                if (_serverPreparation != null)
                 {
                     SetSpawnDialogMessage("等待Project和材质", 0.4f);
                     if (_isServerReply)
@@ -316,6 +317,17 @@ public class GameLoadingScreen : Screen
     public override void Leave()
     {
         DialogsManager.HideDialog(SpawnDialog);
+        if (_serverPreparation is not null)
+        {
+            var prepared = _serverPreparation;
+            Task.Run(async () => await prepared.DisposeAsync()).ContinueWith(task =>
+            {
+                if (task.IsFaulted)
+                {
+                    Log.Warning($"Could not close loading preparation: {task.Exception!.GetBaseException().Message}");
+                }
+            });
+        }
     }
 
     public override void Enter(object[] parameters)
@@ -331,13 +343,13 @@ public class GameLoadingScreen : Screen
         {
             _worldInfo = (WorldInfo)parameters[0];
             _worldSnapshotName = (string)parameters[1];
-            _serverEndPoint = null;
+            _serverPreparation = null;
             _isAdventureRestart = _worldSnapshotName == "AdventureRestart";
         }
         else
         {
             _worldSnapshotName = string.Empty;
-            _serverEndPoint = (IPEndPoint)parameters[2];
+            _serverPreparation = (ServerConnectionPreparation)parameters[2];
         }
 
         _stateMachine.TransitionTo("WaitingForFadeIn");

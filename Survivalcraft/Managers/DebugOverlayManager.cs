@@ -108,8 +108,8 @@ public static class DebugOverlayManager
         lines.Add($"Mode        {CommonLib.WorkType}");
         if (CommonLib.WorkType == WorkType.Client && CommonLib.Net.Server?.Peer is { } peer)
         {
-            lines.Add($"Ping        {peer.Ping} ms");
-            lines.Add($"Packet Loss {peer.Statistics.PacketLossPercent:0.##}%");
+            lines.Add($"Ping        {peer.RoundTripMilliseconds} ms");
+            lines.Add($"Packet Loss {peer.PacketLossPercent:0.##}%");
         }
         else if (CommonLib.WorkType == WorkType.Server)
         {

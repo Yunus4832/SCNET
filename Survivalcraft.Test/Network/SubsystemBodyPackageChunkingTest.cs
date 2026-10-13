@@ -2,6 +2,7 @@ using Engine.Core;
 
 using Game.Network;
 using Game.Network.Packages;
+using Game.Network.Packages.Handlers;
 using Game.Network.Serialization;
 
 namespace Survivalcraft.Test.Network;
@@ -46,13 +47,16 @@ public sealed class SubsystemBodyPackageChunkingTest
         Assert.Equal(new Vector3(7f, 8f, 9f), item.FlyOrder);
     }
 
-    [Fact]
-    public void FullBodySnapshotExceedingMtuCanBeSplitIntoFittingChunks()
+    [Theory]
+    [InlineData(461)]
+    [InlineData(508)]
+    [InlineData(1428)]
+    public void FullBodySnapshotExceedingMtuCanBeSplitIntoFittingChunks(int maxPacketSize)
     {
-        const int maxPacketSize = 1428;
         var full = new SubsystemBodyPackage
         {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
+            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
+            StateTick = 12345u
         };
         for (var i = 0; i < 80; i++)
         {
@@ -74,44 +78,17 @@ public sealed class SubsystemBodyPackageChunkingTest
 
         Assert.True(SerializeSize([full]) > maxPacketSize);
 
-        var chunks = Split(full, maxPacketSize);
+        var chunks = new NetNode().SplitOversizedBodyPackage(full, PackageTransportPolicy.StateStream, maxPacketSize);
 
         Assert.True(chunks.Count > 1);
         Assert.Equal(80, chunks.Sum(chunk => chunk.BodyList.Count));
+        Assert.All(chunks, chunk =>
+        {
+            Assert.Equal(full.StateTick, chunk.StateTick);
+            Assert.True(SubsystemBodyPackageHandler.IsNewer(chunk.StateTick, 0));
+            Assert.True(SubsystemBodyPackageHandler.IsNewer(chunk.StateTick, full.StateTick - 1));
+        });
         Assert.All(chunks, chunk => Assert.True(SerializeSize([chunk]) <= maxPacketSize));
-    }
-
-    private static List<SubsystemBodyPackage> Split(SubsystemBodyPackage bodyPackage, int maxPacketSize)
-    {
-        var chunks = new List<SubsystemBodyPackage>();
-        var chunk = new SubsystemBodyPackage
-        {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
-        };
-
-        foreach (var item in bodyPackage.BodyList)
-        {
-            chunk.BodyList.Add(item);
-            if (SerializeSize([chunk]) <= maxPacketSize)
-            {
-                continue;
-            }
-
-            chunk.BodyList.RemoveAt(chunk.BodyList.Count - 1);
-            chunks.Add(chunk);
-            chunk = new SubsystemBodyPackage
-            {
-                PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
-            };
-            chunk.BodyList.Add(item);
-        }
-
-        if (chunk.BodyList.Count > 0)
-        {
-            chunks.Add(chunk);
-        }
-
-        return chunks;
     }
 
     private static int SerializeSize(IEnumerable<IPackage> packages)
@@ -122,11 +99,11 @@ public sealed class SubsystemBodyPackageChunkingTest
         };
         foreach (var package in packages)
         {
-            writer.Write(0x5A);
+            writer.Write((byte)0x88);
             writer.Write(package.ID);
             package.WriteData(writer);
         }
 
-        return writer.Data(CommonLib.CompressionPolicy.None).Length;
+        return writer.Data(CommonLib.CompressionPolicy.None).Length + sizeof(int);
     }
 }

@@ -1,5 +1,6 @@
-using System.Net;
 using System.Xml.Linq;
+
+using Engine.Network;
 
 using Game.Network;
 using Game.Network.Enums;
@@ -138,6 +139,7 @@ public static class SessionInfoManager
     {
         var sessionInfo = Load(StartupManager.Current.Session.SessionId);
         sessionInfo.SessionId = NormalizeSessionId(StartupManager.Current.Session.SessionId);
+        sessionInfo.P2POverrides = StartupManager.Current.Session.P2POverrides;
         PopulateFromCurrentState(sessionInfo);
         Normalize(sessionInfo);
         return sessionInfo;
@@ -153,12 +155,11 @@ public static class SessionInfoManager
         return effective;
     }
 
-    public static SessionInfo CreateRemoteClientSession(IPEndPoint endPoint)
+    public static SessionInfo CreateRemoteClientSession(NetworkTarget target)
     {
         var sessionInfo = Clone(StartupManager.Current.Session);
         sessionInfo.Target = SessionTarget.RemoteServer;
-        sessionInfo.ServerHost = endPoint.Address.ToString();
-        sessionInfo.ServerPort = endPoint.Port;
+        sessionInfo.RemoteTarget = target;
         return sessionInfo;
     }
 
@@ -277,11 +278,10 @@ public static class SessionInfoManager
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            if (TryGetCurrentRemoteConnectionContext(out var host, out var port))
+            if (CommonLib.Net.RemoteTarget is { } remoteTarget)
             {
                 sessionInfo.Target = SessionTarget.RemoteServer;
-                sessionInfo.ServerHost = host;
-                sessionInfo.ServerPort = port;
+                sessionInfo.RemoteTarget = remoteTarget;
             }
             else
             {
@@ -333,11 +333,10 @@ public static class SessionInfoManager
             return false;
         }
 
-        if (loadingScreen.CurrentServerEndPoint != null)
+        if (loadingScreen.CurrentRemoteTarget != null)
         {
             sessionInfo.Target = SessionTarget.RemoteServer;
-            sessionInfo.ServerHost = loadingScreen.CurrentServerEndPoint.Address.ToString();
-            sessionInfo.ServerPort = loadingScreen.CurrentServerEndPoint.Port;
+            sessionInfo.RemoteTarget = loadingScreen.CurrentRemoteTarget;
             return true;
         }
 
@@ -351,21 +350,6 @@ public static class SessionInfoManager
         sessionInfo.Seed = loadingScreen.CurrentWorldInfo.WorldSettings.Seed;
         sessionInfo.GameMode = loadingScreen.CurrentWorldInfo.WorldSettings.GameMode;
 
-        return true;
-    }
-
-    private static bool TryGetCurrentRemoteConnectionContext(out string host, out int port)
-    {
-        host = string.Empty;
-        port = 0;
-        var endPoint = CommonLib.Net.Server?.IPPoint;
-        if (endPoint == null)
-        {
-            return false;
-        }
-
-        host = endPoint.Address.ToString();
-        port = endPoint.Port;
         return true;
     }
 
@@ -405,7 +389,7 @@ public static class SessionInfoManager
         var startServer = CommonLib.WorkType == WorkType.Server || worldInfo!.WorldSettings.RunServer;
         if (startServer)
         {
-            if (!CommonLib.StartServer(sessionInfo))
+            if (!CommonLib.StartServer(sessionInfo, worldInfo!.WorldSettings))
             {
                 Log.Warning("Cannot restore hosted world: server port is already in use.");
                 DialogsManager.Alert("恢复联机世界失败：端口被占用");
@@ -420,7 +404,7 @@ public static class SessionInfoManager
 
     private static bool RestoreRemoteClientSession(SessionInfo sessionInfo)
     {
-        if (!TryCreateEndpoint(sessionInfo, out var endPoint))
+        if (sessionInfo.RemoteTarget is not { } target)
         {
             Log.Warning($"Cannot restore remote session \"{sessionInfo.SessionId}\": invalid server endpoint.");
             ScreensManager.SwitchScreen("NetPlay");
@@ -429,31 +413,7 @@ public static class SessionInfoManager
 
         var netPlayScreen = ScreensManager.FindScreen<NetPlayScreen>("NetPlay", true)!;
         ScreensManager.SwitchScreen("NetPlay");
-        netPlayScreen.ConnectToRemoteSession(endPoint);
-        return true;
-    }
-
-    private static bool TryCreateEndpoint(SessionInfo sessionInfo, out IPEndPoint endPoint)
-    {
-        endPoint = null!;
-        if (string.IsNullOrWhiteSpace(sessionInfo.ServerHost) || sessionInfo.ServerPort <= 0)
-        {
-            return false;
-        }
-
-        if (IPAddress.TryParse(sessionInfo.ServerHost, out var address))
-        {
-            endPoint = new IPEndPoint(address, sessionInfo.ServerPort);
-            return true;
-        }
-
-        if (!CommonLib.Resolve($"{sessionInfo.ServerHost}:{sessionInfo.ServerPort}", out var resolvedEndPoint) ||
-            resolvedEndPoint == null)
-        {
-            return false;
-        }
-
-        endPoint = resolvedEndPoint;
+        netPlayScreen.ConnectToRemoteSession(target);
         return true;
     }
 
@@ -592,9 +552,12 @@ public static class SessionInfoManager
             new XAttribute(nameof(SessionInfo.Target), sessionInfo.Target),
             new XAttribute(nameof(SessionInfo.World), sessionInfo.World),
             new XAttribute(nameof(SessionInfo.Seed), sessionInfo.Seed),
-            new XAttribute(nameof(SessionInfo.ServerHost), sessionInfo.ServerHost),
             new XAttribute(nameof(SessionInfo.ServerPort), sessionInfo.ServerPort),
             new XAttribute(nameof(SessionInfo.BroadcastPort), sessionInfo.BroadcastPort));
+        if (sessionInfo.RemoteTarget is not null)
+        {
+            element.Add(CreateRemoteTargetElement(sessionInfo.RemoteTarget));
+        }
         if (sessionInfo.GameMode is { } gameMode)
         {
             element.Add(new XAttribute(nameof(SessionInfo.GameMode), gameMode));
@@ -608,6 +571,37 @@ public static class SessionInfoManager
         if (sessionInfo.TerrainLevel is { } level)
         {
             element.Add(new XAttribute(nameof(SessionInfo.TerrainLevel), level));
+        }
+
+        var p2p = new XElement(nameof(SessionInfo.P2POverrides));
+        if (sessionInfo.P2POverrides.Enabled is { } enabled)
+        {
+            p2p.Add(new XAttribute(nameof(P2PRoomOverrides.Enabled), enabled));
+        }
+
+        if (sessionInfo.P2POverrides.ControlUrl is { } controlUrl)
+        {
+            p2p.Add(new XAttribute(nameof(P2PRoomOverrides.ControlUrl), controlUrl));
+        }
+
+        if (sessionInfo.P2POverrides.Name is { } name)
+        {
+            p2p.Add(new XAttribute(nameof(P2PRoomOverrides.Name), name));
+        }
+
+        if (sessionInfo.P2POverrides.Description is { } description)
+        {
+            p2p.Add(new XAttribute(nameof(P2PRoomOverrides.Description), description));
+        }
+
+        if (sessionInfo.P2POverrides.IsPublic is { } isPublic)
+        {
+            p2p.Add(new XAttribute(nameof(P2PRoomOverrides.IsPublic), isPublic));
+        }
+
+        if (p2p.HasAttributes)
+        {
+            element.Add(p2p);
         }
 
         if (sessionInfo.HttpCommandEnabled is { } httpCommandEnabled)
@@ -652,7 +646,16 @@ public static class SessionInfoManager
         sessionInfo.TerrainLevel = element.Attribute(nameof(SessionInfo.TerrainLevel)) is { } level
             ? int.Parse(level.Value)
             : null;
-        sessionInfo.ServerHost = element.Attribute(nameof(SessionInfo.ServerHost))?.Value ?? string.Empty;
+        var p2p = element.Element(nameof(SessionInfo.P2POverrides));
+        sessionInfo.P2POverrides = new P2PRoomOverrides
+        {
+            Enabled = (bool?)p2p?.Attribute(nameof(P2PRoomOverrides.Enabled)),
+            ControlUrl = (string?)p2p?.Attribute(nameof(P2PRoomOverrides.ControlUrl)),
+            Name = (string?)p2p?.Attribute(nameof(P2PRoomOverrides.Name)),
+            Description = (string?)p2p?.Attribute(nameof(P2PRoomOverrides.Description)),
+            IsPublic = (bool?)p2p?.Attribute(nameof(P2PRoomOverrides.IsPublic))
+        };
+        sessionInfo.RemoteTarget = element.Element("RemoteTarget") is { } remote ? ReadRemoteTarget(remote) : null;
         sessionInfo.ServerPort = ParseServerPort(element.Attribute(nameof(SessionInfo.ServerPort))?.Value);
         sessionInfo.BroadcastPort = ParseServerPort(element.Attribute(nameof(SessionInfo.BroadcastPort))?.Value);
         sessionInfo.HttpCommandEnabled = ParseOptionalBoolean(
@@ -674,7 +677,7 @@ public static class SessionInfoManager
             Target = SessionTarget.MainMenu,
             World = "World",
             Seed = string.Empty,
-            ServerHost = string.Empty
+            RemoteTarget = null
         };
     }
 
@@ -712,12 +715,12 @@ public static class SessionInfoManager
             request.ConnectPort is > 0)
         {
             sessionInfo.Target = SessionTarget.RemoteServer;
-            sessionInfo.ServerHost = request.ConnectHost;
-            sessionInfo.ServerPort = request.ConnectPort.Value;
+            sessionInfo.RemoteTarget = new AddressNetworkTarget(request.ConnectHost, request.ConnectPort.Value);
         }
         else if (request.HasExplicitSession)
         {
             sessionInfo.Target = SessionTarget.World;
+            sessionInfo.RemoteTarget = null;
         }
 
         if (!string.IsNullOrWhiteSpace(request.World))
@@ -760,6 +763,8 @@ public static class SessionInfoManager
             sessionInfo.AutoJoinPlayerName = request.AutoJoinPlayerName;
         }
 
+        sessionInfo.P2POverrides = sessionInfo.P2POverrides.Merge(request.P2POverrides);
+
         if (request.HttpCommandEnabled is { } httpCommandEnabled)
         {
             sessionInfo.HttpCommandEnabled = httpCommandEnabled;
@@ -800,6 +805,11 @@ public static class SessionInfoManager
 
     private static void Normalize(SessionInfo sessionInfo)
     {
+        if (sessionInfo.Target != SessionTarget.RemoteServer)
+        {
+            sessionInfo.RemoteTarget = null;
+        }
+
         if (sessionInfo.TerrainGenerationMode is { } terrain &&
             (!Enum.IsDefined(terrain) || TerrainGenerationModes.IsLegacy(terrain)))
         {
@@ -887,6 +897,33 @@ public static class SessionInfoManager
         return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
+    private static XElement CreateRemoteTargetElement(NetworkTarget target) => target switch
+    {
+        AddressNetworkTarget address => new XElement("RemoteTarget", new XAttribute("Kind", "Address"),
+            new XAttribute("Host", address.Host), new XAttribute("Port", address.Port)),
+        InvitationCodeNetworkTarget code => new XElement("RemoteTarget", new XAttribute("Kind", "InvitationCode"),
+            new XAttribute("ControlAddress", code.ControlAddress), new XAttribute("Code", code.JoinCode),
+            new XAttribute("RelayPolicy", code.RelayPolicy)),
+        InvitationSessionNetworkTarget session => new XElement("RemoteTarget", new XAttribute("Kind", "InvitationSession"),
+            new XAttribute("ControlAddress", session.ControlAddress), new XAttribute("SessionId", session.SessionId),
+            new XAttribute("RelayPolicy", session.RelayPolicy)),
+        _ => throw new InvalidOperationException("Unknown remote target.")
+    };
+
+    private static NetworkTarget ReadRemoteTarget(XElement element)
+    {
+        string Required(string name) => element.Attribute(name)?.Value ?? throw new FormatException($"Missing remote target {name}.");
+        return Required("Kind") switch
+        {
+            "Address" => new AddressNetworkTarget(Required("Host"), int.Parse(Required("Port"))),
+            "InvitationCode" => new InvitationCodeNetworkTarget(new Uri(Required("ControlAddress")), Required("Code"),
+                Enum.Parse<RelayPolicy>(Required("RelayPolicy"))),
+            "InvitationSession" => new InvitationSessionNetworkTarget(new Uri(Required("ControlAddress")), Guid.Parse(Required("SessionId")),
+                Enum.Parse<RelayPolicy>(Required("RelayPolicy"))),
+            _ => throw new FormatException("Unknown remote target kind.")
+        };
+    }
+
     private static SessionInfo Clone(SessionInfo source)
     {
         return new SessionInfo
@@ -899,7 +936,8 @@ public static class SessionInfoManager
             GameMode = source.GameMode,
             TerrainGenerationMode = source.TerrainGenerationMode,
             TerrainLevel = source.TerrainLevel,
-            ServerHost = source.ServerHost,
+            RemoteTarget = source.RemoteTarget,
+            P2POverrides = source.P2POverrides,
             ServerPort = source.ServerPort,
             BroadcastPort = source.BroadcastPort,
             AutoJoinPlayerName = source.AutoJoinPlayerName,

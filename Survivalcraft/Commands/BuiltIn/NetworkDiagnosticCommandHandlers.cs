@@ -1,6 +1,7 @@
 using System.Text.Json;
 
 using Game.Network;
+using Game.Terrains.Distribution;
 
 namespace Game.Commands;
 
@@ -12,6 +13,7 @@ internal static class NetworkDiagnosticCommandHandlers
         var snapshot = new
         {
             Terrain = CaptureTerrainBacklog(context),
+            ClientTerrain = CaptureClientTerrain(context),
             HeadlessTicks = RunMode.Value == RunModeType.HeadlessServer ? HeadlessEntry.TickStatistics : null,
             Interest = context.Project?.FindSubsystem<SubsystemNetworkInterest>()?.Statistics,
             Routing = statistics.GetRouting(),
@@ -27,16 +29,19 @@ internal static class NetworkDiagnosticCommandHandlers
                     item.MaximumFanout
                 }).ToArray(),
             PendingPackages = CommonLib.Net.PendingPackageCount,
+            Invitation = new
+            {
+                Starting = CommonLib.Net.IsInvitationStarting,
+                Code = CommonLib.Net.InvitationCode,
+                Error = CommonLib.Net.InvitationError
+            },
             ReliableQueues = CommonLib.Net.Clients.Values.Where(client => client.IsConnected && client.Peer != null)
                 .Select(client => new
                 {
                     ClientId = client.ID,
-                    Channels = Enum.GetValues<NetworkChannel>().Select(channel => new
-                    {
-                        Channel = channel.ToString(),
-                        Ordered = client.Peer!.GetPacketsCountInReliableQueue((byte)channel, true),
-                        Unordered = client.Peer!.GetPacketsCountInReliableQueue((byte)channel, false)
-                    }).ToArray()
+                    Path = client.Peer!.PathKind.ToString(),
+                    AddressFamily = client.Peer.TransportEndpoint.AddressFamily.ToString(),
+                    PendingBytes = client.Peer!.PendingReliableBytes
                 }).ToArray(),
             Channels = statistics.GetChannels().OrderBy(item => item.Key).Select(item => new
             {
@@ -79,6 +84,37 @@ internal static class NetworkDiagnosticCommandHandlers
             AllocatedStates = terrain.Terrain.AllocatedChunks.GroupBy(chunk => chunk.WorkerState)
                 .ToDictionary(group => group.Key.ToString(), group => group.Count()),
             SaveOutstanding = terrain.TerrainSaveCoordinator?.OutstandingCount
+        };
+    }
+
+    private static object? CaptureClientTerrain(CommandContext context)
+    {
+        var terrain = context.Project?.FindSubsystem<SubsystemTerrain>();
+        if (terrain?.ChunkContentTransport is not NetworkChunkContentTransport transport)
+        {
+            return null;
+        }
+        var locations = terrain.TerrainUpdater.UpdateLocations.Values.ToArray();
+        return new
+        {
+            transport.PendingTransferCount,
+            transport.FragmentsReceived,
+            transport.TransfersCompleted,
+            transport.FullChunkRequestsSent,
+            transport.MissingFragmentRequestsSent,
+            Chunks = terrain.Terrain.AllocatedChunks.Select(chunk => new
+            {
+                X = chunk.Coords.X,
+                Z = chunk.Coords.Y,
+                Visible = locations.Any(location => Vector2.DistanceSquared(chunk.Center, location.Center) <=
+                                                    location.VisibilityDistance * location.VisibilityDistance),
+                chunk.IsLoaded,
+                Drawable = ClientChunkDerivationPipeline.CanDraw(TerrainContentRole.Replica, chunk),
+                MainState = chunk.MainThreadState.ToString(),
+                WorkerState = chunk.WorkerState.ToString(),
+                chunk.NetworkContentVersion,
+                chunk.ClientGeometryContentVersion
+            }).ToArray()
         };
     }
 }

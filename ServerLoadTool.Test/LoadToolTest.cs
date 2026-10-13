@@ -8,8 +8,6 @@ using Game;
 
 using Game.Network.Packages;
 
-using LiteNetLib.Utils;
-
 namespace ServerLoadTool.Test;
 
 public class LoadToolTest
@@ -47,7 +45,7 @@ public class LoadToolTest
             PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange | ComponentPlayerPackage.ChangFlag.VelocityChange
         };
         var encoded = LoadWire.Encode(package, 7);
-        var decoded = Assert.IsType<ComponentPlayerPackage>(Assert.Single(LoadWire.Decode(new NetDataReader(encoded.CopyData()))));
+        var decoded = Assert.IsType<ComponentPlayerPackage>(Assert.Single(LoadWire.Decode(encoded)));
         Assert.Equal(7, decoded.FromPlayerId);
         Assert.Equal(package.Position, decoded.Position);
         Assert.Equal(package.PackageChangeFlag, decoded.PackageChangeFlag);
@@ -57,7 +55,7 @@ public class LoadToolTest
     public void ChunkRequestCodecUsesCurrentAllocationContract()
     {
         var package = new SubsystemTerrainPackage([new(new(new Point2(-2, 4), 7), 99)]);
-        var decoded = Assert.IsType<SubsystemTerrainPackage>(Assert.Single(LoadWire.Decode(new NetDataReader(LoadWire.Encode(package).CopyData()))));
+        var decoded = Assert.IsType<SubsystemTerrainPackage>(Assert.Single(LoadWire.Decode(LoadWire.Encode(package))));
         Assert.Equal(package.ChunkRequests, decoded.ChunkRequests);
     }
 

@@ -1,3 +1,5 @@
+using Engine.Network;
+
 namespace Game;
 
 public enum SessionTarget
@@ -27,7 +29,7 @@ public sealed class SessionInfo
 
     public int? TerrainLevel { get; set; }
 
-    public string ServerHost { get; set; } = string.Empty;
+    public NetworkTarget? RemoteTarget { get; set; }
 
     public int ServerPort { get; set; }
 
@@ -35,6 +37,8 @@ public sealed class SessionInfo
 
     /// <summary>Optional player name used to automatically enter a world after startup.</summary>
     public string? AutoJoinPlayerName { get; set; }
+
+    public P2PRoomOverrides P2POverrides { get; set; } = new();
 
     /// <summary>Optional HTTP command host enablement override restored with this startup session.</summary>
     public bool? HttpCommandEnabled { get; set; }

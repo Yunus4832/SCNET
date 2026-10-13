@@ -1,15 +1,13 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
-using System.Text;
 
 using Engine.Graphics;
 using Engine.Input;
+using Engine.Network;
 
 using Game.Automation;
 using Game.Commands;
 using Game.Network;
-
-using LiteNetLib;
 
 namespace Game;
 
@@ -42,7 +40,24 @@ public static class GameEntry
     {
         var runningSetting = startup.Settings;
         GameExitManager.BeginSession();
-        NetDebug.Logger = new LiteNetLog();
+        NetworkLogging.Configure((level, message) =>
+        {
+            switch (level)
+            {
+                case NetworkLogLevel.Debug:
+                    Log.Debug(message);
+                    break;
+                case NetworkLogLevel.Warning:
+                    Log.Warning(message);
+                    break;
+                case NetworkLogLevel.Error:
+                    Log.Error(message);
+                    break;
+                default:
+                    Log.Information(message);
+                    break;
+            }
+        });
         CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
         CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 
@@ -152,6 +167,7 @@ public static class GameEntry
         SettingsManager.Initialize();
         ContentRepositoryManager.Initialize();
         ServerDirectoryManager.Initialize();
+        RendezvousManager.Initialize();
         ContentManager.Initialize();
         ScreensManager.Initialize();
     }
@@ -248,78 +264,4 @@ public static class GameEntry
         public readonly Uri Uri = uri;
     }
 
-    private class LiteNetLog : INetLogger
-    {
-        public void WriteNet(NetLogLevel level, string str, params object[] args)
-        {
-            var logType = MapLogType(level);
-            var builder = new StringBuilder();
-            builder.Append("[LiteNetLib]");
-            builder.Append(level);
-            builder.Append(' ');
-            builder.Append(FormatMessage(str, args));
-            Write(logType, builder.ToString());
-        }
-
-        private static string FormatMessage(string message, object[] args)
-        {
-            if (args.Length == 0)
-            {
-                return message;
-            }
-
-            try
-            {
-                return string.Format(message, args);
-            }
-            catch
-            {
-                var builder = new StringBuilder(message);
-                foreach (var arg in args)
-                {
-                    builder.Append(' ');
-                    builder.Append(arg);
-                }
-
-                return builder.ToString();
-            }
-        }
-
-        private static LogType MapLogType(NetLogLevel level)
-        {
-            return level switch
-            {
-                NetLogLevel.Trace => LogType.Debug,
-                NetLogLevel.Info => LogType.Information,
-                NetLogLevel.Warning => LogType.Warning,
-                NetLogLevel.Error => LogType.Error,
-                _ => LogType.Information
-            };
-        }
-
-        private static void Write(LogType logType, string message)
-        {
-            switch (logType)
-            {
-                case LogType.Debug:
-                    Log.Debug(message);
-                    break;
-                case LogType.Verbose:
-                    Log.Verbose(message);
-                    break;
-                case LogType.Information:
-                    Log.Information(message);
-                    break;
-                case LogType.Warning:
-                    Log.Warning(message);
-                    break;
-                case LogType.Error:
-                    Log.Error(message);
-                    break;
-                default:
-                    Log.Information(message);
-                    break;
-            }
-        }
-    }
 }

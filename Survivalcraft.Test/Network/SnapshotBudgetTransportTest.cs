@@ -4,14 +4,13 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using Engine.Core;
+using Engine.Network;
 
 using Game;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
 using Game.Network.Serialization;
-
-using LiteNetLib;
 
 using Survivalcraft.Test.Modding;
 
@@ -21,27 +20,23 @@ namespace Survivalcraft.Test.Network;
 public sealed class SnapshotBudgetTransportTest
 {
     [Fact]
-    public void OversizedSnapshotBatchDefersWithoutBlockingLifecycleAndThenDrains()
+    public async Task OversizedSnapshotBatchDefersWithoutBlockingLifecycleAndThenDrains()
     {
         var node = new NetNode();
-        var receiverListener = new EventBasedNetListener();
-        var receiver = new NetManager(receiverListener)
-        {
-            ChannelsCount = node.NetManager.ChannelsCount,
-            UseSafeMtu = true
-        };
+        await using var sender = new NetworkHost();
+        await using var receiver = new NetworkHost();
         var previousClients = CommonLib.Net.Clients;
         var previousMode = CommonLib.WorkType;
         var receivedPlayers = new HashSet<byte>();
         var receivedRemovals = new List<int>();
         var receivedDatagrams = 0;
-        NetPeer? senderPeer = null;
-        node.Listener.ConnectionRequestEvent += request => request.AcceptIfKey("snapshot-budget-test");
-        node.Listener.PeerConnectedEvent += peer => senderPeer = peer;
-        receiverListener.NetworkReceiveEvent += (_, data, _) =>
+        NetworkConnection? senderPeer = null;
+        sender.ConnectionRequested += request => request.Accept();
+        sender.Connected += peer => senderPeer = peer;
+        receiver.Received += (_, data) =>
         {
             receivedDatagrams++;
-            using var reader = CommonLib.GetReader(data);
+            using var reader = CommonLib.GetReader(data.Payload);
             while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
                 Assert.Equal(0x88, reader.ReadByte());
@@ -61,7 +56,6 @@ public sealed class SnapshotBudgetTransportTest
                     receivedRemovals.Add(package.EntityId);
                 }
             }
-            data.Recycle();
         };
 
         void PumpUntil(Func<bool> condition)
@@ -69,8 +63,8 @@ public sealed class SnapshotBudgetTransportTest
             var timer = Stopwatch.StartNew();
             while (!condition() && timer.Elapsed < TimeSpan.FromSeconds(5))
             {
-                node.NetManager.PollEvents();
-                receiver.PollEvents();
+                sender.DispatchEvents();
+                receiver.DispatchEvents();
                 Thread.Sleep(5);
             }
             Assert.True(condition(), "Loopback transport did not reach the expected state within five seconds.");
@@ -78,10 +72,10 @@ public sealed class SnapshotBudgetTransportTest
 
         try
         {
-            Assert.True(node.NetManager.Start(0));
-            Assert.True(receiver.Start(0));
-            receiver.Connect(new IPEndPoint(IPAddress.Loopback, node.NetManager.LocalPort), "snapshot-budget-test");
-            PumpUntil(() => senderPeer is not null);
+            var connecting = receiver.ConnectAsync(new IPEndPoint(IPAddress.Loopback, sender.LocalPort),
+                ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+            PumpUntil(() => senderPeer is not null && connecting.IsCompleted);
+            await connecting;
             var observer = new Client(senderPeer, 1, Guid.NewGuid(), Guid.NewGuid(), null)
             {
                 State = ClientState.Playing,
@@ -124,8 +118,8 @@ public sealed class SnapshotBudgetTransportTest
             {
                 Thread.Sleep(60);
                 flush.Invoke(node, null);
-                node.NetManager.PollEvents();
-                receiver.PollEvents();
+                sender.DispatchEvents();
+                receiver.DispatchEvents();
             }
             Assert.Equal(0, node.PendingPackageCount);
             PumpUntil(() => receivedPlayers.SetEquals(expectedPlayers));
@@ -138,8 +132,6 @@ public sealed class SnapshotBudgetTransportTest
         }
         finally
         {
-            receiver.Stop();
-            node.NetManager.Stop();
             CommonLib.Net.Clients = previousClients;
             CommonLib.WorkType = previousMode;
         }

@@ -1,7 +1,7 @@
+using Engine.Network;
+
 using Game.Network;
 using Game.Network.Packages;
-
-using LiteNetLib;
 
 namespace Survivalcraft.Test.Network;
 
@@ -38,7 +38,7 @@ public sealed class InventoryTransportPolicyTest
 
         Assert.Equal(PackageTransportPolicy.Bulk, entityTransport);
         Assert.Equal(entityTransport, inventoryTransport);
-        Assert.Equal(DeliveryMethod.ReliableOrdered, entityTransport.DeliveryMethod);
+        Assert.Equal(DeliveryMode.ReliableOrdered, entityTransport.Delivery);
     }
 
     [Theory]

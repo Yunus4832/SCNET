@@ -34,6 +34,8 @@ public static class GamePaths
 
     public static string ServerDirectoryFile => "config:ServerDirectory.xml";
 
+    public static string RendezvousFile => "config:RendezvousServices.xml";
+
     public static string GlobalModProfileFile => "config:ModProfile.xml";
 
     public static string SessionProfilesDirectory => Storage.CombinePaths(Config, "SessionProfiles");

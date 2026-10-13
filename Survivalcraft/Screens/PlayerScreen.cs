@@ -137,7 +137,7 @@ public class PlayerScreen : Screen
         }
 
         if (Time.RealTime - EnterTime > 120 && CommonLib.WorkType == WorkType.Client &&
-            CommonLib.Net.NetManager.IsRunning)
+            CommonLib.Net.IsTransportRunning)
         //客户端卡在新增玩家界面两分钟自动中断连接
         {
             CommonLib.Net.Stop("客户端主动关闭连接");

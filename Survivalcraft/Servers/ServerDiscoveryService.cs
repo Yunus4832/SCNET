@@ -1,10 +1,11 @@
 using System.Net.Sockets;
 
+using Engine.Network;
+
 using Game.Network;
 using Game.Network.Packages;
 using Game.Network.Serialization;
 
-using LiteNetLib;
 
 namespace Game.Servers;
 
@@ -22,7 +23,7 @@ public sealed class ServerDiscoveryService
         return Task.Run(() => DiscoverLan(timeout, cancellationToken), cancellationToken);
     }
 
-    private static ServerRuntimeStatus Probe(string address, TimeSpan timeout,
+    private static async Task<ServerRuntimeStatus> Probe(string address, TimeSpan timeout,
         CancellationToken cancellationToken)
     {
         if (!CommonLib.Resolve(address, out var endpoint))
@@ -30,26 +31,25 @@ public sealed class ServerDiscoveryService
             return new ServerRuntimeStatus { Availability = ServerAvailability.Unavailable };
         }
 
-        var listener = new EventBasedNetListener();
-        var network = new NetManager(listener) { ReuseAddress = true, UnconnectedMessagesEnabled = true };
+        await using var network = new NetworkHost(options: new NetworkHostOptions { ReuseAddress = true });
         ServerRuntimeStatus? status = null;
         try
         {
-            network.Start();
             var stopwatch = Stopwatch.StartNew();
-            listener.NetworkReceiveUnconnectedEvent += (remote, reader, _) =>
+            network.DatagramReceived += (source, payload) =>
             {
+                var remote = source.TransportEndpoint;
                 if (!remote.Equals(endpoint))
                 {
                     return;
                 }
 
-                var package = PackageManager.DecodePackage<ServerInfoPackage>(null, reader, null, null, remote);
-                status = CreateStatus(package.Package, stopwatch.ElapsedMilliseconds);
+                var package = PackageManager.DecodePackage<ServerInfoPackage>(null, payload, new Client(remote));
+                status = ServerRuntimeStatus.FromPackage(package.Package, stopwatch.ElapsedMilliseconds);
             };
-            void SendProbe() => NetNode.SendUnconnectedPackage(network, new ServerInfoPackage(true), endpoint!);
+            void SendProbe() => network.SendDatagram(endpoint!, NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)));
             SendProbe();
-            Poll(network, timeout, cancellationToken, () => status is not null, SendProbe);
+            await PollAsync(network, timeout, cancellationToken, () => status is not null, SendProbe).ConfigureAwait(false);
             return status ?? new ServerRuntimeStatus { Availability = ServerAvailability.Unavailable };
         }
         catch (OperationCanceledException)
@@ -61,23 +61,18 @@ public sealed class ServerDiscoveryService
             Log.Warning($"Server probe failed for '{address}': {exception.Message}");
             return new ServerRuntimeStatus { Availability = ServerAvailability.Unavailable };
         }
-        finally
-        {
-            network.Stop();
-        }
     }
 
-    private static IReadOnlyList<ServerItem> DiscoverLan(TimeSpan timeout, CancellationToken cancellationToken)
+    private static async Task<IReadOnlyList<ServerItem>> DiscoverLan(TimeSpan timeout, CancellationToken cancellationToken)
     {
-        var listener = new EventBasedNetListener();
-        var network = new NetManager(listener) { ReuseAddress = true, UnconnectedMessagesEnabled = true };
+        await using var network = new NetworkHost(options: new NetworkHostOptions { ReuseAddress = true });
         var items = new Dictionary<string, ServerItem>(StringComparer.Ordinal);
         try
         {
-            network.Start();
             var stopwatch = Stopwatch.StartNew();
-            listener.NetworkReceiveUnconnectedEvent += (remote, reader, _) =>
+            network.DatagramReceived += (source, payload) =>
             {
+                var remote = source.TransportEndpoint;
                 if (remote.Address.AddressFamily != AddressFamily.InterNetwork)
                 {
                     return;
@@ -85,7 +80,7 @@ public sealed class ServerDiscoveryService
 
                 try
                 {
-                    var package = PackageManager.DecodePackage<ServerInfoPackage>(null, reader, null, null, remote);
+                    var package = PackageManager.DecodePackage<ServerInfoPackage>(null, payload, new Client(remote));
                     var address = remote.ToString();
                     items[address] = new ServerItem
                     {
@@ -96,7 +91,7 @@ public sealed class ServerDiscoveryService
                         Address = address,
                         DisplayName = address,
                         Order = items.Count,
-                        RuntimeStatus = CreateStatus(package.Package, stopwatch.ElapsedMilliseconds)
+                        RuntimeStatus = ServerRuntimeStatus.FromPackage(package.Package, stopwatch.ElapsedMilliseconds)
                     };
                 }
                 catch (Exception exception)
@@ -104,8 +99,8 @@ public sealed class ServerDiscoveryService
                     Log.Warning($"Ignored invalid LAN discovery response from '{remote}': {exception.Message}");
                 }
             };
-            NetNode.BroadcastServerDiscovery(network);
-            Poll(network, timeout, cancellationToken, () => false);
+            network.BroadcastDatagram(NetNode.CreateUnconnectedPayload(new ServerInfoPackage(true)), SettingsManager.Current.BroadcastPort);
+            await PollAsync(network, timeout, cancellationToken, () => false).ConfigureAwait(false);
             return items.Values.ToArray();
         }
         catch (OperationCanceledException)
@@ -117,13 +112,9 @@ public sealed class ServerDiscoveryService
             Log.Warning($"LAN discovery failed: {exception.Message}");
             return [];
         }
-        finally
-        {
-            network.Stop();
-        }
     }
 
-    internal static void Poll(NetManager network, TimeSpan timeout, CancellationToken cancellationToken,
+    internal static async Task PollAsync(NetworkHost network, TimeSpan timeout, CancellationToken cancellationToken,
         Func<bool> completed, Action? retry = null)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -131,7 +122,7 @@ public sealed class ServerDiscoveryService
         while (stopwatch.Elapsed < timeout && !completed())
         {
             cancellationToken.ThrowIfCancellationRequested();
-            network.PollEvents();
+            network.DispatchEvents();
             if (retry is not null && !completed() && stopwatch.Elapsed < timeout && stopwatch.Elapsed >= nextRetry)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -139,25 +130,8 @@ public sealed class ServerDiscoveryService
                 nextRetry = stopwatch.Elapsed + TimeSpan.FromMilliseconds(250);
             }
 
-            Thread.Sleep(2);
+            await Task.Delay(2, cancellationToken).ConfigureAwait(false);
         }
     }
 
-    private static ServerRuntimeStatus CreateStatus(ServerInfoPackage package, long pingMilliseconds)
-    {
-        return new ServerRuntimeStatus
-        {
-            Availability = ServerAvailability.Available,
-            PingMilliseconds = pingMilliseconds,
-            GameMode = package.GameMode,
-            MaxPlayerCount = package.MaxPlayerCount,
-            PlayerCount = package.ClientCount,
-            Version = package.Version,
-            TimeOfDay = package.TimeOfDay,
-            TemporaryRepositories = package.TemporaryRepositories,
-            RequiredModProfile = package.RequiredModProfile,
-            Season = package.Season,
-            TimeOfSeason = package.TimeOfSeason
-        };
-    }
 }

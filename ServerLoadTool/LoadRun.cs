@@ -46,7 +46,6 @@ public sealed class LoadRun(LoadOptions options)
         double? measurementAt = null;
         double? drainAt = null;
         var lastSample = -1d;
-        var previousTick = 0d;
         var phase = "joining";
         string? failure = null;
         var runName = Guid.NewGuid().ToString("N")[..6];
@@ -57,8 +56,6 @@ public sealed class LoadRun(LoadOptions options)
             while (!cancellation.IsCancellationRequested)
             {
                 var tick = clock.Elapsed.TotalSeconds;
-                var elapsedMs = Math.Max(1, (int)((tick - previousTick) * 1000));
-                previousTick = tick;
                 var loopStarted = Stopwatch.GetTimestamp();
                 if (clients.Count < options.Clients && tick >= clients.Count * options.RampSeconds)
                 {
@@ -67,7 +64,7 @@ public sealed class LoadRun(LoadOptions options)
 
                 foreach (var client in clients)
                 {
-                    client.Update(elapsedMs, phase is "warmup" or "measurement");
+                    client.Update(phase is "warmup" or "measurement");
                     if (!states.TryGetValue(client.Index, out var state) || state != client.State)
                     {
                         states[client.Index] = client.State;

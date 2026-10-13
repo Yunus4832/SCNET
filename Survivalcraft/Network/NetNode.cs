@@ -1,14 +1,17 @@
 using System.Net;
 
+using Engine.Network;
+
 using EntitySystem.Core;
 
-using Game.Managers;
 using Game.Network.Enums;
 using Game.Network.Packages;
 using Game.Network.Serialization;
+using Game.Servers;
 
-using LiteNetLib;
 using LiteNetLib.Utils;
+
+using Rendezvous.Protocol;
 
 namespace Game.Network;
 
@@ -36,13 +39,41 @@ public class NetNode
 
     private const byte _verifyByte = 0x88;
 
-    private readonly NetManager _broadcastNetManager;
+    private NetworkHost? _broadcastHost;
 
     private readonly Dictionary<Client, string> _clientsToRemove = new(ReferenceEqualityComparer.Instance);
 
-    public readonly EventBasedNetListener Listener;
+    private HttpClient? _invitationHttp;
+    private CancellationTokenSource? _invitationCancellation;
+    private Task<NetworkInvitation>? _invitationStarting;
+    private NetworkInvitation? _invitation;
+    private Task? _invitationClosing;
+    private int _invitationCapacity;
+    private RoomPublication _invitationPublication = new(string.Empty, string.Empty, false);
+    private int _invitationRetryCount;
+    private DateTimeOffset _invitationRetryAt;
 
-    public readonly NetManager NetManager;
+    public Uri? InvitationControlAddress { get; private set; }
+
+    public string? InvitationCode => _invitation?.IsActive == true ? _invitation.JoinCode : null;
+
+    public bool IsInvitationStarting => InvitationControlAddress is not null && _invitation?.IsActive != true;
+
+    public string InvitationError { get; private set; } = string.Empty;
+
+    private NetworkHost? _host;
+    private CancellationTokenSource? _connectingCancellation;
+    private Task<NetworkConnection>? _connecting;
+    private ConnectionPreparation? _preparedPath;
+    private Task? _pathClosing;
+
+    public NetworkTarget? RemoteTarget { get; private set; }
+    private readonly Dictionary<Guid, Client> _transportClients = new();
+    private readonly List<(Client Client, Task Completion)> _deliveryReceipts = [];
+
+    public bool IsTransportRunning => _host is not null;
+
+    public int? LocalPort => _host?.LocalPort;
 
     /// <summary>
     ///     包处理队列
@@ -77,35 +108,13 @@ public class NetNode
 
     public Action<Client>? OnClientBecameLive;
 
-    public NetPeer? PendingPeer;
+    public NetworkConnection? PendingPeer;
 
     public Guid TokenId;
 
     public Guid ConnectionEpoch { get; set; }
 
     public ConnectionPhase CurrentConnectionPhase { get; set; }
-
-    public NetNode()
-    {
-        Listener = new EventBasedNetListener();
-        NetManager = new NetManager(Listener)
-        {
-            MaxConnectAttempts = 6,
-            DisconnectTimeout = CommonLib.DisconnectTimeout,
-            UnconnectedMessagesEnabled = true,
-            ChannelsCount = (byte)(Enum.GetValues<NetworkChannel>().Max(channel => (byte)channel) + 1),
-            UseSafeMtu = true,
-            UpdateTime = 25,
-            ReuseAddress = true
-        };
-        var broadcastListener = new EventBasedNetListener();
-        broadcastListener.NetworkReceiveUnconnectedEvent += HandleBroadcastUnconnectedEvent;
-        _broadcastNetManager = new NetManager(broadcastListener)
-        {
-            UnconnectedMessagesEnabled = true,
-            BroadcastReceiveEnabled = true
-        };
-    }
 
     public Client? Self { get; set; }
 
@@ -121,7 +130,21 @@ public class NetNode
 
     public int ClientCount => Peers.Count() + 1;
 
-    private Client? PendingClient => (Client?)PendingPeer?.Tag;
+    private Client? ResolveSender(NetworkConnection? peer = null, NetworkConnectionRequest? request = null, IPEndPoint? endpoint = null)
+    {
+        if (peer is not null)
+        {
+            if (!_transportClients.TryGetValue(peer.Id, out var client))
+            {
+                client = new Client(peer);
+                _transportClients.Add(peer.Id, client);
+            }
+            return client;
+        }
+        return request is not null ? new Client(request) : endpoint is not null ? new Client(endpoint) : null;
+    }
+
+    private Client? PendingClient => PendingPeer is null ? null : ResolveSender(peer: PendingPeer);
 
     public IEnumerable<Client> Peers => Clients.Values.Where(c => c != Self);
 
@@ -166,7 +189,7 @@ public class NetNode
     /// <summary>
     ///     创建客户端
     /// </summary>
-    public Client CreateClient(NetPeer peer, Guid tokenId, Guid guid)
+    public Client CreateClient(NetworkConnection peer, Guid tokenId, Guid guid)
     {
         if (!IsServer)
         {
@@ -185,13 +208,17 @@ public class NetNode
         }
 
         var client = new Client(peer, FindUnusedIndex(), tokenId, guid, GameManager.Project);
-        peer.Tag = client;
+        _transportClients[peer.Id] = client;
         return client;
     }
 
     public void AddClient(Client client)
     {
         Clients[client.ID] = client;
+        if (client.Peer is not null && (IsServer || client.ID == 0))
+        {
+            _transportClients[client.Peer.Id] = client;
+        }
     }
 
     public void RemoveClient(Client? client, string reason = "")
@@ -222,7 +249,7 @@ public class NetNode
             return;
         }
 
-        if (client.Peer != null && client.Peer.ConnectionState != ConnectionState.Disconnected)
+        if (client.Peer != null && client.Peer.IsConnected)
         {
             if (string.IsNullOrEmpty(reason))
             {
@@ -230,7 +257,7 @@ public class NetNode
             }
             else
             {
-                client.Peer.Disconnect(NetDataWriter.FromString(reason));
+                client.Peer.Disconnect(EncodeDisconnectReason(reason));
             }
         }
 
@@ -267,11 +294,11 @@ public class NetNode
                 continue;
             }
 
-            if (client.Peer != null && client.Peer.ConnectionState != ConnectionState.Disconnected)
+            if (client.Peer != null && client.Peer.IsConnected)
             {
                 if (reason != null)
                 {
-                    client.Peer.Disconnect(NetDataWriter.FromString(reason));
+                    client.Peer.Disconnect(EncodeDisconnectReason(reason));
                 }
                 else
                 {
@@ -300,33 +327,23 @@ public class NetNode
         return client;
     }
 
-    public void HandleUnconnectedEvent(IPEndPoint ip, NetPacketReader reader, UnconnectedMessageType messageType)
+    private void HandleDatagram(NetworkDatagramEndpoint source, byte[] payload)
     {
-        UnconnectedReceiveEvent(ip, reader, false);
+        UnconnectedReceiveEvent(source.TransportEndpoint, payload, false);
     }
 
-    public void HandleBroadcastUnconnectedEvent(IPEndPoint ip, NetPacketReader reader,
-        UnconnectedMessageType messageType)
+    private void HandleBroadcastDatagram(NetworkDatagramEndpoint source, byte[] payload)
     {
-        UnconnectedReceiveEvent(ip, reader, true);
+        UnconnectedReceiveEvent(source.TransportEndpoint, payload, true);
     }
 
     /// <summary>
     ///     连接断开事件 服务端
     /// </summary>
-    private void PeerDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo)
+    private void PeerDisconnectedEvent(NetworkConnection peer, NetworkDisconnectInfo disconnectInfo)
     {
-        Log.Information($"{peer.EndPoint}连接关闭: " + disconnectInfo.Reason);
-        if (disconnectInfo.AdditionalData != null && disconnectInfo.AdditionalData.TryGetString(out var str))
-        {
-            Log.Information("----Additional message----");
-            Log.Information(str);
-            Log.Information("----End of message----");
-        }
-        else
-        {
-            str = disconnectInfo.Reason.ToString();
-        }
+        Log.Information($"{peer.TransportEndpoint}连接关闭: " + disconnectInfo.Reason);
+        var str = DecodeDisconnectReason(disconnectInfo);
 
         if (CommonLib.WorkType == WorkType.Client)
         {
@@ -334,7 +351,7 @@ public class NetNode
         }
         else
         {
-            if (peer.Tag is not Client client)
+            if (!_transportClients.Remove(peer.Id, out var client))
             {
                 return;
             }
@@ -352,7 +369,7 @@ public class NetNode
             else
             {
                 AgreeOnPendingPeer.Remove(client.ID);
-                DeliveryEvent(null, null);
+                DeliveryEvent(null);
             }
         }
     }
@@ -361,38 +378,27 @@ public class NetNode
     ///     连接断开事件 客户端
     /// </summary>
     /// <param name="remoteEndPoint"></param>
-    /// <param name="reader"></param>
+    /// <param name="payload"></param>
     /// <param name="fromBroadcast"></param>
-    private void UnconnectedReceiveEvent(IPEndPoint remoteEndPoint, NetPacketReader reader, bool fromBroadcast)
+    private void UnconnectedReceiveEvent(IPEndPoint remoteEndPoint, ReadOnlyMemory<byte> payload, bool fromBroadcast)
     {
         if (CurrentStage == Stage.NotConnected)
         {
             return;
         }
 
-        var list = PackageManager.DecodePackages(this, reader, null, null, remoteEndPoint);
-        try
+        var list = PackageManager.DecodePackages(this, payload, ResolveSender(endpoint: remoteEndPoint));
+        foreach (var packageItem in list)
         {
-            foreach (var packageItem in list)
+            packageItem.Context.Sender?.IsLocalRemote = fromBroadcast;
+            try
             {
-                packageItem.Context.Sender?.IsLocalRemote = fromBroadcast;
-                try
-                {
-                    PackageDispatcher.Handle(packageItem);
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"[{packageItem.Package.GetType().Name}]{e.Message}");
-                }
+                PackageDispatcher.Handle(packageItem);
             }
-        }
-        catch
-        {
-            // ignored
-        }
-        finally
-        {
-            reader.Recycle();
+            catch (Exception e)
+            {
+                Log.Error($"[{packageItem.Package.GetType().Name}]{e.Message}");
+            }
         }
     }
 
@@ -406,17 +412,16 @@ public class NetNode
     ///     数据接收事件
     /// </summary>
     /// <param name="peer"></param>
-    /// <param name="reader"></param>
-    /// <param name="deliveryMethod"></param>
-    private void NetworkReceiveEvent(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
+    /// <param name="message"></param>
+    private void NetworkReceiveEvent(NetworkConnection peer, NetworkMessage message)
     {
         if (CurrentStage == Stage.NotConnected)
         {
             return;
         }
 
-        var fromClient = peer.Tag as Client;
-        var list = PackageManager.DecodePackages(this, reader, peer);
+        var fromClient = ResolveSender(peer: peer);
+        var list = PackageManager.DecodePackages(this, message.Payload, fromClient);
         list.InsertRange(0, _pendingHandlePackages);
         _pendingHandlePackages.Clear();
         try
@@ -436,38 +441,15 @@ public class NetNode
             Log.Error(e);
             RemoveClient(fromClient, "Error On ReceiveEvent:\n" + e);
         }
-        finally
-        {
-            reader.Recycle();
-        }
-    }
-
-    /// <summary>
-    ///     连接被拒绝事件
-    /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="reader"></param>
-    /// <param name="type"></param>
-    public void HandleConnectionReject(IPEndPoint sender, NetDataReader reader, UnconnectedMessageType type)
-    {
-        try
-        {
-            var rejectPackage = PackageManager.DecodePackage<ConnectionRejectPackage>(this, reader, null, null, sender);
-            PackageDispatcher.Handle(rejectPackage.Package, rejectPackage.Context);
-        }
-        catch
-        {
-            // ignored
-        }
     }
 
     /// <summary>
     ///     新客户端连接事件
     /// </summary>
     /// <param name="request"></param>
-    private void ConnectionRequestEvent(ConnectionRequest request)
+    private void ConnectionRequestEvent(NetworkConnectionRequest request)
     {
-        Log.Information("接收到连接请求 " + request.RemoteEndPoint);
+        Log.Information("接收到连接请求 " + request.TransportEndpoint);
 
         if (GameManager.Project == null)
         {
@@ -475,7 +457,7 @@ public class NetNode
         }
         else if (PendingClient != null)
         {
-            Log.Information($"Too Many Request And Reject Current Request:{request.RemoteEndPoint}");
+            Log.Information($"Too Many Request And Reject Current Request:{request.TransportEndpoint}");
             Log.Information($"Current Pending Client:{PendingClient}");
             SendWriterFromPackage(new ConnectionRejectPackage($"当前服务器连接请求太多，请稍候再试，等待客户端回应数{AgreeOnPendingPeer.Count}"),
                 request, true);
@@ -485,7 +467,7 @@ public class NetNode
             try
             {
                 var requestPackage =
-                    PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Data, null, request);
+                    PackageManager.DecodePackage<ConnectionRequestPackage>(this, request.Handshake, ResolveSender(request: request));
                 PackageDispatcher.Handle(requestPackage.Package, requestPackage.Context);
             }
             catch (Exception e)
@@ -517,6 +499,25 @@ public class NetNode
         AddClient(Self);
     }
 
+    private NetworkHost CreateHost(int port)
+    {
+        var host = new NetworkHost(port, new NetworkHostOptions
+        {
+            ReuseAddress = true,
+            DisconnectTimeout = TimeSpan.FromMilliseconds(CommonLib.DisconnectTimeout)
+        });
+        AttachHostEvents(host);
+        return host;
+    }
+
+    private void AttachHostEvents(NetworkHost host)
+    {
+        host.ConnectionRequested += ConnectionRequestEvent;
+        host.DatagramReceived += HandleDatagram;
+        host.Received += NetworkReceiveEvent;
+        host.Disconnected += PeerDisconnectedEvent;
+    }
+
     /// <summary>
     ///     开启服务器
     /// </summary>
@@ -524,49 +525,45 @@ public class NetNode
     /// <param name="broadcastPort"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public bool StartServer(int port, int? broadcastPort)
+    public bool StartServer(int port, int? broadcastPort, int maxParticipants, P2PRoomSettings room)
     {
-        if (NetManager.IsRunning)
+        if (_host is not null)
         {
-            StopImmediate();
             throw new InvalidOperationException("已经开启服务器");
         }
-
         try
         {
             _isStopping = false;
             StartLocal();
-            var flag = NetManager.Start(port);
+            _host = CreateHost(port);
             if (broadcastPort.HasValue)
             {
-                flag &= _broadcastNetManager.Start(broadcastPort.Value);
-            }
-
-            if (flag)
-            {
-                var repositoryCount = ContentRepositoryManager.Current.Snapshot().Count(repository =>
-                    repository.IsEnabled);
-                if (repositoryCount > 0)
+                _broadcastHost = new NetworkHost(broadcastPort.Value, new NetworkHostOptions
                 {
-                    Log.Information($"已配置 {repositoryCount} 个可分发内容的仓库");
-                }
-
-                Log.Information($"开启服务器成功，端口 {NetManager.LocalPort}");
-                Window.Frame += Update;
-                Window.Closed += StopImmediate;
-                Listener.ConnectionRequestEvent += ConnectionRequestEvent;
-                Listener.NetworkReceiveUnconnectedEvent += HandleUnconnectedEvent;
-                Listener.NetworkReceiveEvent += NetworkReceiveEvent;
-                Listener.PeerDisconnectedEvent += PeerDisconnectedEvent;
-                Listener.DeliveryEvent += DeliveryEvent;
-                CurrentStage = Stage.Connected;
-                Server = Self;
-                CommonLib.WorkType = WorkType.Server;
+                    ReceiveBroadcasts = true
+                });
+                _broadcastHost.DatagramReceived += HandleBroadcastDatagram;
             }
-            else
+            Log.Information($"开启服务器成功，端口 {_host.LocalPort}");
+            Window.Frame += Update;
+            Window.Closed += StopImmediate;
+            CurrentStage = Stage.Connected;
+            Server = Self;
+            CommonLib.WorkType = WorkType.Server;
+            if (room.Enabled)
             {
-                StopImmediate();
+                try
+                {
+                    StartInvitation(new Uri(room.ControlUrl), Math.Clamp(maxParticipants, 1, 32),
+                        new RoomPublication(room.Name, room.Description, room.IsPublic));
+                }
+                catch (Exception e)
+                {
+                    InvitationError = e.Message;
+                    Log.Warning($"Could not start invitation: {e.Message}");
+                }
             }
+            return true;
         }
         catch (Exception e)
         {
@@ -574,63 +571,114 @@ public class NetNode
             Log.Error($"Failed to start server: {e}");
             throw;
         }
-
-        return CurrentStage == Stage.Connected;
     }
 
-    /// <summary>
-    ///     连接服务器
-    /// </summary>
-    /// <param name="ep"></param>
-    /// <returns></returns>
-    public void ConnectServer(IPEndPoint ep)
+    public void StartInvitation(Uri controlAddress, int capacity, RoomPublication publication)
     {
+        if (!IsServer || _host is null)
+        {
+            throw new InvalidOperationException("Invitations require an active server listener.");
+        }
+        if (InvitationControlAddress is not null)
+        {
+            throw new InvalidOperationException("Invitation already started.");
+        }
+        if (!publication.IsValid)
+        {
+            throw new ArgumentException("Invalid room publication.", nameof(publication));
+        }
+        _invitationPublication = publication;
+        InvitationControlAddress = RendezvousAddress.Normalize(controlAddress);
+        InvitationError = string.Empty;
+        _invitationHttp?.Dispose();
+        _invitationCancellation?.Dispose();
+        _invitationHttp = new HttpClient();
+        _invitationCancellation = new CancellationTokenSource();
+        _invitationCapacity = capacity;
+        _invitationRetryCount = 0;
+        _invitationRetryAt = DateTimeOffset.MinValue;
+        BeginInvitationRegistration();
+    }
+
+    private void BeginInvitationRegistration()
+    {
+        _invitationStarting = RegisterInvitationAsync(_host!, InvitationControlAddress!, _invitationHttp!, _invitationCapacity,
+            _invitationPublication, _invitationCancellation!.Token);
+    }
+
+    private static async Task<NetworkInvitation> RegisterInvitationAsync(NetworkHost host, Uri address, HttpClient http,
+        int capacity, RoomPublication publication, CancellationToken cancellationToken)
+    {
+        var invitation = await host.CreateInvitationAsync(address, http, capacity, cancellationToken).ConfigureAwait(false);
         try
         {
-            _isStopping = false;
-            Log.Information($"connecting to server at {ep.Address}");
-            Clients.Clear();
-            NetManager.Start();
-            TokenId = Guid.NewGuid();
-            SendWriterFromPackage(
-                new ConnectionRequestPackage(
-                    TokenId,
-                    VersionsManager.ProtocolVersion,
-                    SettingsManager.Current.MultiplayerClientId,
-                    CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash
-                ),
-                ep,
-                false
-            );
-            Listener.NetworkReceiveUnconnectedEvent -= HandleConnectionReject;
-            Listener.NetworkReceiveEvent += NetworkReceiveEvent;
-            Listener.ConnectionRequestEvent += ConnectionRequestEvent;
-            Listener.NetworkReceiveUnconnectedEvent += HandleUnconnectedEvent;
-            Listener.PeerDisconnectedEvent += PeerDisconnectedEvent;
-            Listener.NetworkErrorEvent += (_, arg) =>
-            {
-                Log.Information("连接错误" + arg);
-                Stop(arg.ToString());
-            };
-            CurrentStage = Stage.Bootstrapping;
-            CommonLib.WorkType = WorkType.Client;
-            Window.Frame += Update;
-            Window.Closed += StopImmediate;
+            await invitation.UpdateRoomAsync(publication, cancellationToken).ConfigureAwait(false);
+            return invitation;
         }
         catch
         {
-            CurrentStage = Stage.NotConnected;
+            try
+            {
+                await invitation.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                Log.Warning($"Could not close failed room registration: {exception.Message}");
+            }
+            throw;
+        }
+    }
+
+    private void ScheduleInvitationRetry(Exception exception)
+    {
+        InvitationError = exception.Message;
+        _invitationRetryCount = Math.Min(_invitationRetryCount + 1, 4);
+        var delay = Math.Min(30, 2 << _invitationRetryCount);
+        _invitationRetryAt = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(delay);
+        Log.Warning($"Invitation unavailable; retrying in {delay}s: {exception.Message}");
+    }
+
+    public void ConnectServer(ServerConnectionPreparation prepared)
+    {
+        if (_host is not null)
+        {
+            throw new InvalidOperationException("连接已启动");
+        }
+        var transport = prepared.Consume();
+        try
+        {
+            _isStopping = false;
+            Log.Information("Connecting to prepared server");
+            Clients.Clear();
+            _host = transport.Host;
+            _preparedPath = transport.Path;
+            RemoteTarget = prepared.Target;
+            AttachHostEvents(_host);
+            _connectingCancellation = new CancellationTokenSource();
+            TokenId = Guid.NewGuid();
+            var request = new ConnectionRequestPackage(TokenId, VersionsManager.ProtocolVersion,
+                SettingsManager.Current.MultiplayerClientId,
+                CurrentModRuntime.Value?.ModDataHash ?? ModProfileManager.EmptyDataHash);
+            CurrentStage = Stage.Bootstrapping;
+            CommonLib.WorkType = WorkType.Client;
+            _connecting = _preparedPath.ConnectAsync(CreateUnconnectedPayload(request), _connectingCancellation.Token);
+            Window.Frame += Update;
+            Window.Closed += StopImmediate;
+        }
+        catch (Exception e)
+        {
+            Error = e.Message;
+            StopImmediate();
         }
     }
 
     /// <summary>
     ///     发送回调事件
     /// </summary>
-    /// <param name="peer"></param>
-    /// <param name="userData"></param>
-    public void DeliveryEvent(NetPeer? peer, object? userData)
+    /// <param name="client"></param>
+    public void DeliveryEvent(Client? client)
     {
-        if (userData is NetPeer { Tag: Client client })
+        if (client is not null)
         {
             AgreeOnPendingPeer.Remove(client.ID);
             Log.Debug($"Client[{client.ID}]已收到Client[{PendingClient?.ID}]加入通知");
@@ -655,6 +703,20 @@ public class NetNode
         Error = error;
     }
 
+    private static void StopHost(ref NetworkHost? host)
+    {
+        var closing = host;
+        host = null;
+        try
+        {
+            closing?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+        }
+        catch (Exception e)
+        {
+            Log.Warning($"Transport stopped with an error: {e.Message}");
+        }
+    }
+
     public void StopImmediate()
     {
         var wasClient = CommonLib.WorkType == WorkType.Client;
@@ -673,10 +735,7 @@ public class NetNode
             }
 
             _lastPackageFlushTimes.Clear();
-            if (_broadcastNetManager.IsRunning)
-            {
-                _broadcastNetManager.Stop();
-            }
+            StopHost(ref _broadcastHost);
 
             // 先发送提示，然后再关闭服务器
             if (CommonLib.WorkType == WorkType.Server)
@@ -684,10 +743,78 @@ public class NetNode
                 RemoveAllClients("服务器主动关闭");
             }
 
-            if (NetManager.IsRunning)
+            _invitationCancellation?.Cancel();
+            _connectingCancellation?.Cancel();
+            StopHost(ref _host);
+            if (_invitationStarting is not null)
             {
-                NetManager.Stop(true);
+                try
+                {
+                    _invitationStarting.GetAwaiter().GetResult().DisposeAsync().AsTask().GetAwaiter().GetResult();
+                }
+                catch (Exception e)
+                {
+                    Log.Warning($"Invitation stopped: {e.Message}");
+                }
+                _invitationStarting = null;
             }
+            _invitation = null;
+            if (_invitationClosing is not null)
+            {
+                try
+                {
+                    _invitationClosing.GetAwaiter().GetResult();
+                }
+                catch (Exception exception)
+                {
+                    Log.Warning($"Could not close retired invitation: {exception.Message}");
+                }
+                _invitationClosing = null;
+            }
+            InvitationControlAddress = null;
+            _invitationRetryCount = 0;
+            _invitationCancellation?.Dispose();
+            _invitationCancellation = null;
+            _invitationHttp?.Dispose();
+            _invitationHttp = null;
+            if (_connecting is not null)
+            {
+                try
+                {
+                    _connecting.GetAwaiter().GetResult();
+                }
+                catch (Exception)
+                {
+                    // Closing cancels any unfinished attempt; the normal update path reports failures.
+                }
+                _connecting = null;
+            }
+            if (_preparedPath is not null)
+            {
+                _pathClosing = _preparedPath.DisposeAsync().AsTask();
+                _preparedPath = null;
+            }
+            if (_pathClosing is not null)
+            {
+                try
+                {
+                    _pathClosing.GetAwaiter().GetResult();
+                }
+                catch (Exception e)
+                {
+                    Log.Warning($"Could not release connection preparation: {e.Message}");
+                }
+                _pathClosing = null;
+            }
+            RemoteTarget = null;
+            _connectingCancellation?.Dispose();
+            _connectingCancellation = null;
+            foreach (var receipt in _deliveryReceipts)
+            {
+                _ = receipt.Completion.Exception;
+            }
+            _deliveryReceipts.Clear();
+            _transportClients.Clear();
         }
         catch (Exception e)
         {
@@ -697,12 +824,6 @@ public class NetNode
         {
             Window.Closed -= StopImmediate;
             Window.Frame -= Update;
-            Listener.ClearConnectionRequestEvent();
-            Listener.ClearNetworkReceiveUnconnectedEvent();
-            Listener.ClearNetworkReceiveEvent();
-            Listener.ClearPeerDisconnectedEvent();
-            Listener.ClearDeliveryEvent();
-            Listener.ClearPeerConnectedEvent();
             OnReceive = null;
             OnClientStateChanged = null;
             OnClientTransportConnected = null;
@@ -728,7 +849,7 @@ public class NetNode
 
             if (!string.IsNullOrEmpty(Error))
             {
-                DialogsManager.Confirm(Error, _ => { });
+                DialogsManager.Alert(Error);
             }
         }
     }
@@ -759,7 +880,7 @@ public class NetNode
         SendWriterFromPackages([package], null, null, endPoint, isSend);
     }
 
-    public void SendWriterFromPackage(IPackage package, NetPeer? netPeer, bool useDeliveryEvent = false)
+    public void SendWriterFromPackage(IPackage package, NetworkConnection? netPeer, bool useDeliveryEvent = false)
     {
         SendWriterFromPackages([package], netPeer, null, null, useDeliveryEvent);
     }
@@ -770,14 +891,16 @@ public class NetNode
     /// <param name="package">数据包</param>
     /// <param name="request">远程连接请求</param>
     /// <param name="reject">发送后是否拒绝连接 true拒绝 false不拒绝</param>
-    public void SendWriterFromPackage(IPackage package, ConnectionRequest request, bool reject)
+    public void SendWriterFromPackage(IPackage package, NetworkConnectionRequest request, bool reject)
     {
         if (reject)
         {
-            request.Reject();
+            request.Reject(CreateUnconnectedPayload(package));
         }
-
-        SendWriterFromPackages([package], null, request);
+        else
+        {
+            SendWriterFromPackages([package], null, request);
+        }
     }
 
     /// <summary>
@@ -790,8 +913,8 @@ public class NetNode
     /// <param name="useDeliveryEvent">true 使用delivery事件回调 true 发送消息 false 发送连接消息</param>
     public void SendWriterFromPackages(
         IEnumerable<IPackage> packages,
-        NetPeer? netPeer = null,
-        ConnectionRequest? request = null,
+        NetworkConnection? netPeer = null,
+        NetworkConnectionRequest? request = null,
         IPEndPoint? iPEndPoint = null,
         bool useDeliveryEvent = false
     )
@@ -812,11 +935,12 @@ public class NetNode
                 : transport;
             if (!useDeliveryEvent)
             {
-                netPeer.Send(w, transport.ChannelNumber, transport.DeliveryMethod);
+                netPeer.Send(w.Data.AsSpan(0, w.Length), transport.ChannelNumber, transport.Delivery);
             }
             else
             {
-                netPeer.SendWithDeliveryEvent(w, transport.ChannelNumber, transport.DeliveryMethod, netPeer);
+                var receipt = netPeer.SendWithReceipt(w.Data.AsSpan(0, w.Length), transport.ChannelNumber, transport.Delivery);
+                _deliveryReceipts.Add((ResolveSender(peer: netPeer)!, receipt.Completion));
             }
 
             SendStatistics.Record(transport.Channel, w.Length, measurements);
@@ -827,42 +951,28 @@ public class NetNode
         }
         else if (request != null)
         {
-            NetManager.SendUnconnectedMessage(w, request.RemoteEndPoint);
+            _host!.SendDatagram(request.TransportEndpoint, w.Data.AsSpan(0, w.Length));
         }
         else if (iPEndPoint != null)
         {
             if (!useDeliveryEvent)
             {
-                NetManager.Connect(iPEndPoint, w);
+                throw new InvalidOperationException("Use ConnectServer to start a connection.");
             }
             else
             {
-                NetManager.SendUnconnectedMessage(w, iPEndPoint);
+                _host!.SendDatagram(iPEndPoint, w.Data.AsSpan(0, w.Length));
             }
         }
     }
 
-    public static int SendUnconnectedPackage(NetManager netManager, IPackage package, IPEndPoint endPoint)
-    {
-        ArgumentNullException.ThrowIfNull(endPoint);
-        var writer = CreateUnconnectedWriter(package, out var size);
-        netManager.SendUnconnectedMessage(writer, endPoint);
-        return size;
-    }
-
-    public static void BroadcastServerDiscovery(NetManager netManager)
-    {
-        var writer = CreateUnconnectedWriter(new ServerInfoPackage(true), out _);
-        netManager.SendBroadcast(writer, SettingsManager.Current.BroadcastPort);
-    }
-
-    private static NetDataWriter CreateUnconnectedWriter(IPackage package, out int size)
+    internal static byte[] CreateUnconnectedPayload(IPackage package)
     {
         using var writer = new PackageStreamWriter { IsServer = false };
         writer.Write(_verifyByte);
         writer.Write(package.ID);
         package.WriteData(writer);
-        return CommonLib.GetWriter(writer, out size);
+        return CommonLib.GetWriter(writer, out _).CopyData();
     }
 
     public void Update()
@@ -892,12 +1002,132 @@ public class NetNode
         }
         else
         {
-            NetManager.PollEvents();
-            if (_broadcastNetManager.IsRunning)
+            UpdateTransport();
+        }
+    }
+
+    private void UpdateTransport()
+    {
+        if (_invitationStarting is { IsCompleted: true } opening)
+        {
+            _invitationStarting = null;
+            try
             {
-                _broadcastNetManager.PollEvents();
+                _invitation = opening.GetAwaiter().GetResult();
+                InvitationError = string.Empty;
+                _invitationRetryCount = 0;
+                Log.Information(RunMode.Value == RunModeType.HeadlessServer
+                    ? $"Invitation code: {_invitation.JoinCode}"
+                    : "Invitation registered");
+            }
+            catch (Exception e)
+            {
+                ScheduleInvitationRetry(e);
             }
         }
+        if (_invitation is { } invitation && !invitation.IsActive)
+        {
+            _invitation = null;
+            _invitationClosing = invitation.DisposeAsync().AsTask();
+            ScheduleInvitationRetry(invitation.Failure ?? new TimeoutException("Invitation registration expired."));
+        }
+        if (_invitationClosing is { IsCompleted: true } retired)
+        {
+            _invitationClosing = null;
+            if (retired.IsFaulted)
+            {
+                Log.Warning($"Could not close retired invitation: {retired.Exception!.GetBaseException().Message}");
+            }
+        }
+        if (InvitationControlAddress is not null && _host is not null && _invitation is null &&
+            _invitationStarting is null && _invitationClosing is null && DateTimeOffset.UtcNow >= _invitationRetryAt)
+        {
+            BeginInvitationRegistration();
+        }
+        _host?.DispatchEvents();
+        _broadcastHost?.DispatchEvents();
+        if (_host?.Failure is { } failure)
+        {
+            Stop(failure.Message);
+        }
+        if (_connecting is { IsCompleted: true } connecting)
+        {
+            _connecting = null;
+            try
+            {
+                ResolveSender(peer: connecting.GetAwaiter().GetResult());
+            }
+            catch (NetworkConnectionException e)
+            {
+                Stop(DecodeDisconnectReason(e.Information));
+            }
+            catch (Exception e)
+            {
+                Stop(e.Message);
+            }
+        }
+        if (_connecting is null && _preparedPath is not null)
+        {
+            _pathClosing = _preparedPath.DisposeAsync().AsTask();
+            _preparedPath = null;
+        }
+        if (_pathClosing is { IsCompleted: true } closed)
+        {
+            _pathClosing = null;
+            if (closed.IsFaulted)
+            {
+                Log.Warning($"Could not release connection preparation: {closed.Exception!.GetBaseException().Message}");
+            }
+        }
+        for (var index = _deliveryReceipts.Count - 1; index >= 0; index--)
+        {
+            var receipt = _deliveryReceipts[index];
+            if (!receipt.Completion.IsCompleted)
+            {
+                continue;
+            }
+            _deliveryReceipts.RemoveAt(index);
+            if (receipt.Completion.IsCompletedSuccessfully)
+            {
+                DeliveryEvent(receipt.Client);
+            }
+            else
+            {
+                _ = receipt.Completion.Exception;
+                RemoveClient(receipt.Client, "传输确认失败");
+            }
+        }
+    }
+
+    private static byte[] EncodeDisconnectReason(string reason)
+    {
+        var writer = NetDataWriter.FromString(reason);
+        if (writer.Length <= 256)
+        {
+            return writer.CopyData();
+        }
+        return NetDataWriter.FromString("连接已关闭").CopyData();
+    }
+
+    private string DecodeDisconnectReason(NetworkDisconnectInfo information)
+    {
+        if (!information.Data.IsEmpty)
+        {
+            try
+            {
+                var reject = PackageManager.DecodePackage<ConnectionRejectPackage>(this, information.Data);
+                return reject.Package.Reason;
+            }
+            catch (Exception)
+            {
+                var reader = new NetDataReader(information.Data.ToArray());
+                if (reader.TryGetString(out var reason))
+                {
+                    return reason;
+                }
+            }
+        }
+        return LanguageManager.GetContentWidgets("NetPlayScreen", $"Disconnect_{information.Reason}");
     }
 
     private void FlushPendingPackages()
@@ -1010,7 +1240,7 @@ public class NetNode
         bool checkClientState,
         HashSet<OutboundPackage> deferredSnapshots)
     {
-        if (client.Peer == null)
+        if (client.Peer is not { IsConnected: true })
         {
             return;
         }
@@ -1047,7 +1277,18 @@ public class NetNode
                 continue;
             }
 
-            foreach (var outboundPackage in SendPackageBatches(client, channelPackages, transport.Value))
+            List<OutboundPackage> deferredPackages;
+            try
+            {
+                deferredPackages = SendPackageBatches(client, channelPackages, transport.Value);
+            }
+            catch (NetworkSendException exception) when (exception.Result == NetworkSendResult.Closed)
+            {
+                // The transport pump can close a connection before the game dispatches its disconnect event.
+                return;
+            }
+
+            foreach (var outboundPackage in deferredPackages)
             {
                 deferredSnapshots.Add(outboundPackage with { Audience = PackageAudience.To(client) });
             }
@@ -1066,7 +1307,7 @@ public class NetNode
             {
                 var measurements = new List<(Type PackageType, int PayloadBytes)>();
                 var chunkWriter = CreatePackageWriter([outboundPackage.Package], transport, out _, measurements);
-                peer.Send(chunkWriter, transport.ChannelNumber, transport.DeliveryMethod);
+                peer.Send(chunkWriter.Data.AsSpan(0, chunkWriter.Length), transport.ChannelNumber, transport.Delivery);
                 SendStatistics.Record(transport.Channel, chunkWriter.Length, measurements);
                 outboundPackage.Fanout!.DeliveredTo(client);
             }
@@ -1074,7 +1315,7 @@ public class NetNode
             return [];
         }
 
-        var maxPacketSize = peer.GetMaxSinglePacketSize(transport.DeliveryMethod);
+        var maxPacketSize = peer.GetMaxPayloadSize(transport.Delivery);
         var remainingPackages = new List<OutboundPackage>(packages.Count);
         foreach (var outboundPackage in packages)
         {
@@ -1091,7 +1332,7 @@ public class NetNode
                     {
                         var measurements = new List<(Type PackageType, int PayloadBytes)>();
                         var chunkWriter = CreatePackageWriter([chunk], transport, out _, measurements);
-                        peer.Send(chunkWriter, transport.ChannelNumber, transport.DeliveryMethod);
+                        peer.Send(chunkWriter.Data.AsSpan(0, chunkWriter.Length), transport.ChannelNumber, transport.Delivery);
                         SendStatistics.Record(transport.Channel, chunkWriter.Length, measurements);
                     }
 
@@ -1115,9 +1356,9 @@ public class NetNode
         var remainingMeasurements = new List<(Type PackageType, int PayloadBytes)>();
         var writer = CreatePackageWriter(remainingPackages.Select(item => item.Package), transport, out var packetSize,
             remainingMeasurements);
-        if (packetSize <= maxPacketSize || CanFragment(transport.DeliveryMethod))
+        if (packetSize <= maxPacketSize || CanFragment(transport.Delivery))
         {
-            peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
+            peer.Send(writer.Data.AsSpan(0, writer.Length), transport.ChannelNumber, transport.Delivery);
             SendStatistics.Record(transport.Channel, writer.Length, remainingMeasurements);
             foreach (var outboundPackage in remainingPackages)
             {
@@ -1184,7 +1425,7 @@ public class NetNode
 
         var measurements = new List<(Type PackageType, int PayloadBytes)>();
         var writer = CreatePackageWriter(selectedPackages.Select(item => item.Package), transport, out _, measurements);
-        peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
+        peer.Send(writer.Data.AsSpan(0, writer.Length), transport.ChannelNumber, transport.Delivery);
         SendStatistics.Record(transport.Channel, writer.Length, measurements);
         foreach (var outboundPackage in selectedPackages)
         {
@@ -1193,7 +1434,7 @@ public class NetNode
         return deferredPackages;
     }
 
-    private List<SubsystemBodyPackage> SplitOversizedBodyPackage(
+    internal List<SubsystemBodyPackage> SplitOversizedBodyPackage(
         SubsystemBodyPackage bodyPackage,
         PackageTransport transport,
         int maxPacketSize)
@@ -1201,7 +1442,8 @@ public class NetNode
         var chunks = new List<SubsystemBodyPackage>();
         var chunk = new SubsystemBodyPackage
         {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
+            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
+            StateTick = bodyPackage.StateTick
         };
 
         foreach (var item in bodyPackage.BodyList)
@@ -1217,7 +1459,8 @@ public class NetNode
             chunks.Add(chunk);
             chunk = new SubsystemBodyPackage
             {
-                PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
+                PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
+                StateTick = bodyPackage.StateTick
             };
             chunk.BodyList.Add(item);
         }
@@ -1247,12 +1490,12 @@ public class NetNode
         if (packetSize > maxPacketSize)
         {
             Log.Error(
-                $"Dropping oversized {transport.DeliveryMethod} package batch " +
+                $"Dropping oversized {transport.Delivery} package batch " +
                 $"({packetSize}/{maxPacketSize} bytes): {string.Join(", ", packages.Select(p => p.Package.GetType().Name))}");
             return;
         }
 
-        peer.Send(writer, transport.ChannelNumber, transport.DeliveryMethod);
+        peer.Send(writer.Data.AsSpan(0, writer.Length), transport.ChannelNumber, transport.Delivery);
         SendStatistics.Record(transport.Channel, writer.Length, measurements);
         foreach (var outboundPackage in packages)
         {
@@ -1314,9 +1557,9 @@ public class NetNode
             Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment
         };
 
-    private static bool CanFragment(DeliveryMethod deliveryMethod)
+    private static bool CanFragment(DeliveryMode deliveryMethod)
     {
-        return deliveryMethod is DeliveryMethod.ReliableOrdered or DeliveryMethod.ReliableUnordered;
+        return deliveryMethod is DeliveryMode.ReliableOrdered or DeliveryMode.ReliableUnordered;
     }
 
     private void RecordDeferredSnapshot(IPackage package, int packetSize, int maxPacketSize)

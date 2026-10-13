@@ -13,7 +13,7 @@ public sealed class ContentRepositoryDialog : Dialog
     private readonly ButtonWidget _saveButton;
 
     public ContentRepositoryDialog(string title, string nameLabel, string addressLabel, string saveButtonText,
-        string name, string address, Func<string, string, bool> handler)
+        string name, string address, Func<string, string, bool> handler, int nameMaximumLength = 64)
     {
         ArgumentNullException.ThrowIfNull(handler);
         _handler = handler;
@@ -27,7 +27,7 @@ public sealed class ContentRepositoryDialog : Dialog
         _saveButton = Children.Find<ButtonWidget>("ContentRepositoryDialog.Save")!;
         _cancelButton = Children.Find<ButtonWidget>("ContentRepositoryDialog.Cancel")!;
 
-        _nameTextBox.MaximumLength = 64;
+        _nameTextBox.MaximumLength = nameMaximumLength;
         _nameTextBox.Text = name;
         _addressTextBox.MaximumLength = TemporaryContentRepositories.MaximumUrlLength;
         _addressTextBox.Text = address;

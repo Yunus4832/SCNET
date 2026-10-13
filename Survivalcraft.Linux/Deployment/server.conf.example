@@ -12,3 +12,10 @@ CONTENT_SERVER=
 # One "mod-id version" pair per line. Empty means no mods.
 MODS='
 '
+
+# Optional signaling room. This does not replace the ordinary game port.
+P2P=false
+RENDEZVOUS=
+ROOM_NAME=World
+ROOM_DESCRIPTION=
+ROOM_PUBLIC=false

@@ -80,16 +80,18 @@ public class CancellableBusyDialog : Dialog
 
     public bool ShowProgressMessage { get; set; }
 
+    public bool CancelOnBack { get; set; }
+
     public override void Update()
     {
         if (ShowProgressMessage)
         {
-            SmallMessage = Progress.Completed > 0f && Progress.Total > 0f
+            SmallMessage = Progress is { Completed: > 0f, Total: > 0f }
                 ? $"{Progress.Completed / Progress.Total * 100f:0}%"
                 : string.Empty;
         }
 
-        if (_cancelButtonWidget.IsClicked)
+        if (_cancelButtonWidget.IsClicked || CancelOnBack && Input.Cancel && IsCancelButtonEnabled)
         {
             Progress.Cancel();
             if (_autoHideOnCancel)

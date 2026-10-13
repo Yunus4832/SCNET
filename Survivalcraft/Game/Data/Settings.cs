@@ -1,4 +1,5 @@
 using Engine.Graphics;
+using Engine.Network;
 
 namespace Game;
 
@@ -7,6 +8,8 @@ public class Settings
     public int ServerPort { get; set; } = 28887;
 
     public int BroadcastPort { get; set; } = 28888;
+
+    public RelayPolicy InvitationRelayPolicy { get; set; } = RelayPolicy.Allowed;
 
     /// <summary>Whether to start the loopback HTTP command host for this instance.</summary>
     public bool HttpCommandEnabled { get; set; }

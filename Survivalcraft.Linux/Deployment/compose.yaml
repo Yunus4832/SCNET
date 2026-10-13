@@ -22,3 +22,13 @@ services:
       - ${SCNET_SERVER_PORT:-28887}
       - --no-broadcast
       - --save
+      - --p2p
+      - "${SCNET_P2P:-false}"
+      - --rendezvous
+      - "${SCNET_RENDEZVOUS:-}"
+      - --room-name
+      - "${SCNET_ROOM_NAME:-World}"
+      - --room-description
+      - "${SCNET_ROOM_DESCRIPTION:-}"
+      - --room-public
+      - "${SCNET_ROOM_PUBLIC:-false}"

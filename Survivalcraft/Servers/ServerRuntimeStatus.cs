@@ -1,4 +1,5 @@
 using Game.Content;
+using Game.Network.Packages;
 
 namespace Game.Servers;
 
@@ -25,4 +26,22 @@ public sealed record ServerRuntimeStatus
     public ModProfile? RequiredModProfile { get; init; }
 
     public IReadOnlyList<ContentRepository> TemporaryRepositories { get; init; } = [];
+
+    public static ServerRuntimeStatus FromPackage(ServerInfoPackage package, long pingMilliseconds)
+    {
+        return new ServerRuntimeStatus
+        {
+            Availability = ServerAvailability.Available,
+            PingMilliseconds = pingMilliseconds,
+            GameMode = package.GameMode,
+            MaxPlayerCount = package.MaxPlayerCount,
+            PlayerCount = package.ClientCount,
+            Version = package.Version,
+            TimeOfDay = package.TimeOfDay,
+            TemporaryRepositories = package.TemporaryRepositories,
+            RequiredModProfile = package.RequiredModProfile,
+            Season = package.Season,
+            TimeOfSeason = package.TimeOfSeason
+        };
+    }
 }

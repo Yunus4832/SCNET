@@ -181,7 +181,7 @@ public class NewWorldScreen : Screen
     {
         if (runServer)
         {
-            if (CommonLib.StartServer())
+            if (CommonLib.StartServer(worldInfo.WorldSettings))
             {
                 ScreensManager.SwitchScreen("GameLoading", worldInfo, string.Empty);
             }
