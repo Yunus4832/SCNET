@@ -21,6 +21,7 @@ Treat the repository scripts as the canonical inventory and ordering. Read the r
 - Android release publishing includes Arm64 and Arm32 only. Do not add X64 or X86 unless the user changes the supported release set.
 - ContentServer Release publish creates the portable archive and, on Linux, a container image bundle. It requires Podman or Docker and the configured base image policy; report an unavailable container engine or base image as an environmental publishing failure.
 - Survivalcraft.Linux Release publish creates the desktop ZIP and, on Linux, a game server container bundle from the same binary. It also requires Podman or Docker and a locally available .NET runtime base image unless `IMAGE_PULL_POLICY` permits a pull.
+- RendezvousServer Release publish keeps the portable ZIP and, on Linux, also creates a signaling server container bundle. It requires Podman or Docker and a locally available ASP.NET Core base image unless `IMAGE_PULL_POLICY` permits a pull.
 - Never move release-copy or packaging targets back to `Build`. Ordinary builds must not update the repository `Publish/` directory.
 
 ## Execute and verify

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Engine.Network</PackageId>
+        <Description>SCNET transport hosts, connection lifecycle and invitation paths.</Description>
+        <PackageTags>scnet;engine;network</PackageTags>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
+        <ProjectReference Include="../Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
+        <InternalsVisibleTo Include="Engine.Network.Test"/>
+        <InternalsVisibleTo Include="RendezvousServer.Test"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="README.md" Pack="true" PackagePath="/"/>
+    </ItemGroup>
+</Project>

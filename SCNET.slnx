@@ -5,6 +5,10 @@
     </Configurations>
 
     <Folder Name="/01 Engine/">
+        <Project Path="Engine.Network/Engine.Network.csproj"/>
+        <Project Path="Engine.Network.Test/Engine.Network.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="Engine\Engine.csproj"/>
         <Project Path="Engine.Core/Engine.Core.csproj"/>
         <Project Path="Engine.Core.Benchmarks/Engine.Core.Benchmarks.csproj">
@@ -24,6 +28,10 @@
     </Folder>
 
     <Folder Name="/03 Protocol/">
+        <Project Path="Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
+        <Project Path="Rendezvous.Protocol.Test/Rendezvous.Protocol.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="Content.Packaging\Content.Packaging.csproj"/>
         <Project Path="Content.Packaging.Test\Content.Packaging.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
@@ -63,6 +71,10 @@
     </Folder>
 
     <Folder Name="/08 ContentServer/">
+        <Project Path="RendezvousServer/RendezvousServer.csproj"/>
+        <Project Path="RendezvousServer.Test/RendezvousServer.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="ContentWebUI\ContentWebUI.esproj"/>
         <Project Path="ContentServer\ContentServer.csproj"/>
         <Project Path="ContentServer.Test\ContentServer.Test.csproj">
@@ -71,6 +83,7 @@
     </Folder>
 
     <Folder Name="/09 Tools/">
+        <Project Path="NetworkProbe/NetworkProbe.csproj"/>
         <Project Path="ServerLoadTool/ServerLoadTool.csproj"/>
         <Project Path="ServerLoadTool.Test/ServerLoadTool.Test.csproj">
             <Build Solution="Release|*" Project="false"/>

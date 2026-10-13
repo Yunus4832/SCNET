@@ -1,0 +1,19 @@
+# Bash 配置文件，由 deploy.sh 读取。首次部署复制为 server.conf，之后更新保留该文件。
+# HTTP 只供本机测试或同机 HTTPS 反向代理使用。公网游戏客户端要求可信 HTTPS。
+CONTROL_URLS='http://127.0.0.1:31991'
+UDP_PORT=31990
+# 公网部署必须将下面两个地址改为实际可达的地址。中继地址必须是 IP。
+UDP_ADVERTISED_HOST='127.0.0.1'
+RELAY_ADVERTISED_ADDRESS='127.0.0.1'
+RELAY_FIRST_PORT=32000
+RELAY_PORT_COUNT=4
+# 每路由双向流量预算，不是整个服务的带宽上限。
+RELAY_BYTES_PER_SECOND=1048576
+INVITATION_CAPACITY=1000
+TRUSTED_PROXY='127.0.0.1'
+# 如需直接 HTTPS，设置 CONTROL_URLS='https://0.0.0.0:9520'，并挂载可信证书。
+# 证书文件放到 Certificates 下，容器路径为 /certificates；支持 PFX 或 PEM + 私钥。
+# 文件需要对容器运行用户 UID 1654 可读。
+TLS_CERTIFICATE_PATH=''
+TLS_CERTIFICATE_KEY_PATH=''
+TLS_CERTIFICATE_PASSWORD=''

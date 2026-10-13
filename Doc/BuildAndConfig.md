@@ -134,14 +134,15 @@ dotnet run --configuration Release --project Engine.Core.Benchmarks/Engine.Core.
 - 测试工程在 `Release` 下会被排除，部分 Android 变体也会在 `Release` 下被排除
 - 当前代码库大量使用反射，因此不启用 `trim`，也不支持通过裁剪方式进行发布优化
 
-`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、Windows、Android Arm64、Android Arm32 和 ContentServer。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
+`Scripts/publish.sh` 和 `Scripts/publish.ps1` 会依次发布各发行入口，并为每个入口启动独立、串行的 `dotnet publish`，避免多目标共享项目在并行还原和发布时竞争中间文件。当前包含 Linux、Windows、Android Arm64、Android Arm32、ContentServer、RendezvousServer 和 NetworkProbe。各项目使用独立命令，便于以后配置平台专属参数；任一项目失败时，脚本会立即停止并返回失败。
 
-不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32` 和 `ContentServer`。例如：
+不指定项目时发布全部。指定项目时只发布选中的入口；多个项目仍按脚本中的固定顺序发布。项目名称为 `Survivalcraft.Linux`、`Survivalcraft.Windows`、`Survivalcraft.Android`（Arm64）、`Survivalcraft.Android.Arm32`、`ContentServer`、`RendezvousServer` 和 `NetworkProbe`。例如：
 
 ```bash
 ./Scripts/publish.sh --project ContentServer
 ./Scripts/publish.sh --project Survivalcraft.Linux --project ContentServer
 ./Scripts/publish.sh --project ContentServer -- --no-restore
+./Scripts/publish.sh --project RendezvousServer --project NetworkProbe
 ```
 
 ```powershell
@@ -193,3 +194,14 @@ dotnet run --project GuiAtlasTool/GuiAtlasTool.csproj -- generate \
 
 启用了 `UsePackResourceTarget` 的平台项目会在 `PackResource` 前自动执行相同流程。MSBuild 使用
 SVG、PNG 和工具源码作为输入、图集文件作为输出，因此输入没有变化时不会重复生成。
+
+### 信令服务与探针
+
+`RendezvousServer` 和 `NetworkProbe` 发布为依赖 .NET 10 运行时的可移植 ZIP，分别为
+`Publish/rendezvous-server-<版本>-portable.zip` 和 `Publish/network-probe-<版本>-portable.zip`。
+信令服务 portable ZIP 需要 ASP.NET Core 运行时，探针需要 .NET 运行时；ZIP 不携带运行时或平台 apphost。
+Linux 发布信令服务还生成 `Publish/rendezvous-server-<版本>-linux-amd64.tar.gz`，包含运行时镜像、Compose、
+部署脚本和配置模板，需要本机容器引擎及 ASP.NET Core 基础镜像；其他平台跳过容器打包。
+服务包含 `appsettings.json` 和 `Deployment/run.sh`；探针包含 `README.md` 及 `scripts/` 下的本机、地址族隔离与 NAT 场景工具。
+脚本使用 Python 3 标准库；隔离场景还需要文档中列出的 Linux 网络工具。配置、HTTPS/UDP 开放与探针使用见
+[信令服务部署](RendezvousDeployment.md)。普通 `dotnet build` 不生成这些发行物。

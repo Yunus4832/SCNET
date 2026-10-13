@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [ValidateSet("Survivalcraft.Linux", "Survivalcraft.Windows", "Survivalcraft.Android", "Survivalcraft.Android.Arm32", "ContentServer")]
+    [ValidateSet("Survivalcraft.Linux", "Survivalcraft.Windows", "Survivalcraft.Android", "Survivalcraft.Android.Arm32", "ContentServer", "RendezvousServer", "NetworkProbe")]
     [string[]]$Project = @(),
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$AdditionalArguments
@@ -48,6 +48,21 @@ try {
         & dotnet publish "ContentServer/ContentServer.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) {
             throw "Publishing ContentServer failed with exit code $LASTEXITCODE."
+        }
+    }
+    if ($Project.Count -eq 0 -or $Project -contains "RendezvousServer") {
+        Write-Host "[SCNET Publish] Publishing RendezvousServer (portable ZIP and container bundle on Linux)"
+        & dotnet publish "RendezvousServer/RendezvousServer.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "Publishing RendezvousServer failed with exit code $LASTEXITCODE."
+        }
+    }
+
+    if ($Project.Count -eq 0 -or $Project -contains "NetworkProbe") {
+        Write-Host "[SCNET Publish] Publishing NetworkProbe"
+        & dotnet publish "NetworkProbe/NetworkProbe.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) {
+            throw "Publishing NetworkProbe failed with exit code $LASTEXITCODE."
         }
     }
 }

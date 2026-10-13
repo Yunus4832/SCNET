@@ -1,0 +1,21 @@
+services:
+  rendezvous-server:
+    image: __RENDEZVOUSSERVER_IMAGE__
+    restart: unless-stopped
+    network_mode: host
+    command: ["--urls", "${CONTROL_URLS:-http://127.0.0.1:31991}"]
+    environment:
+      - Rendezvous__UdpPort=${UDP_PORT:-31990}
+      - Rendezvous__UdpAdvertisedHost=${UDP_ADVERTISED_HOST:-127.0.0.1}
+      - Rendezvous__RelayAdvertisedAddress=${RELAY_ADVERTISED_ADDRESS:-127.0.0.1}
+      - Rendezvous__RelayFirstPort=${RELAY_FIRST_PORT:-32000}
+      - Rendezvous__RelayPortCount=${RELAY_PORT_COUNT:-4}
+      - Rendezvous__RelayBytesPerSecond=${RELAY_BYTES_PER_SECOND:-1048576}
+      - Rendezvous__InvitationCapacity=${INVITATION_CAPACITY:-1000}
+      - Rendezvous__TrustedProxies__0=${TRUSTED_PROXY:-127.0.0.1}
+      - Rendezvous__TrustedProxies__1=::1
+      - Kestrel__Certificates__Default__Path
+      - Kestrel__Certificates__Default__KeyPath
+      - Kestrel__Certificates__Default__Password
+    volumes:
+      - ./Certificates:/certificates:ro

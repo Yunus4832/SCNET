@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Rendezvous.Protocol</PackageId>
+        <Description>SCNET invitation signaling and authenticated relay datagram contracts.</Description>
+        <PackageTags>scnet;network;rendezvous</PackageTags>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Include="../README.md" Pack="true" PackagePath="/"/>
+    </ItemGroup>
+</Project>

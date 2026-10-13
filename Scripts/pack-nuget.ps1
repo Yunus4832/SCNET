@@ -17,6 +17,14 @@ try {
     & dotnet pack "Engine.Serialization/Engine.Serialization.csproj" --configuration $Configuration @AdditionalArguments
     if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Engine.Serialization failed with exit code $LASTEXITCODE." }
 
+    Write-Host "[SCNET Pack] Packing SCNET.Rendezvous.Protocol"
+    & dotnet pack "Rendezvous.Protocol/Rendezvous.Protocol.csproj" --configuration $Configuration @AdditionalArguments
+    if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Rendezvous.Protocol failed with exit code $LASTEXITCODE." }
+
+    Write-Host "[SCNET Pack] Packing SCNET.Engine.Network"
+    & dotnet pack "Engine.Network/Engine.Network.csproj" --configuration $Configuration @AdditionalArguments
+    if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Engine.Network failed with exit code $LASTEXITCODE." }
+
     Write-Host "[SCNET Pack] Packing SCNET.Engine"
     & dotnet pack "Engine/Engine.csproj" --configuration $Configuration @AdditionalArguments
     if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Engine failed with exit code $LASTEXITCODE." }

@@ -10,6 +10,8 @@ publish_windows=false
 publish_android_arm64=false
 publish_android_arm32=false
 publish_content_server=false
+publish_rendezvous_server=false
+publish_network_probe=false
 additional_arguments=()
 
 select_project() {
@@ -20,6 +22,8 @@ select_project() {
         Survivalcraft.Android) publish_android_arm64=true ;;
         Survivalcraft.Android.Arm32) publish_android_arm32=true ;;
         ContentServer) publish_content_server=true ;;
+        RendezvousServer) publish_rendezvous_server=true ;;
+        NetworkProbe) publish_network_probe=true ;;
         *) echo "Unknown project: $1" >&2; exit 2 ;;
     esac
 }
@@ -69,6 +73,16 @@ fi
 if ! $selected || $publish_content_server; then
     echo "[SCNET Publish] Publishing ContentServer"
     dotnet publish "ContentServer/ContentServer.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+fi
+
+if ! $selected || $publish_rendezvous_server; then
+    echo "[SCNET Publish] Publishing RendezvousServer (portable ZIP and container bundle on Linux)"
+    dotnet publish "RendezvousServer/RendezvousServer.csproj" --configuration "$configuration" "${additional_arguments[@]}"
+fi
+
+if ! $selected || $publish_network_probe; then
+    echo "[SCNET Publish] Publishing NetworkProbe"
+    dotnet publish "NetworkProbe/NetworkProbe.csproj" --configuration "$configuration" "${additional_arguments[@]}"
 fi
 
 echo "[SCNET Publish] Requested projects published successfully."

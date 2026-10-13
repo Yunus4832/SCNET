@@ -40,6 +40,10 @@
 | `Survivalcraft.Android.X64/` | Android x64 变体 |
 | `Survivalcraft.Android.X86/` | Android x86 变体 |
 | `Engine.Test/`、`EntitySystem.Test/`、`Survivalcraft.Test/` | 单元测试工程 |
+| `Engine.Network/` | 独立网络宿主、连接生命周期、邀请与中继路径 |
+| `Rendezvous.Protocol/` | 邀请信令及认证中继报文契约 |
+| `RendezvousServer/` | 独立信令与中继服务 |
+| `NetworkProbe/` | 基于 Engine API 的网络验证驱动器 |
 | `NetworkDamageTool/` | 本机 UDP 网络损伤代理，用于弱网集成实验 |
 
 ## 快速开始
@@ -119,6 +123,7 @@ dotnet test Survivalcraft.Test/
 - [模组使用说明](Doc/Mods.md) — `.scpkg`、本地缓存、profile、仓库和联机 required mods
 - [模组开发](Doc/Modding.md) — 模组模板、`.scpkg` 构建、示例模组与 NuGet 包边界
 - [ContentServer](Doc/ContentServer.md) — 内容发布、审核、匿名目录、包分发、公告与游戏版本
+- [信令服务部署](Doc/RendezvousDeployment.md) — 邀请、中继、可移植发行物和网络探针
 - [ContentServer 部署](Doc/ContentServerDeployment.md) — 发行物、容器、HTTP/HTTPS、持久化与升级
 - [文件定位](Doc/FileStorage.md) — 逻辑路径系统与跨平台文件访问
 - [外部依赖](Doc/Dependencies.md) — 工具链、运行时包与测试依赖

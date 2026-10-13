@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <UseAppHost>false</UseAppHost>
+        <SelfContained>false</SelfContained>
+        <UsePackOutputTarget Condition="'$(Configuration)' == 'Release'">true</UsePackOutputTarget>
+        <OutputFileName>network-probe-$(ScnetVersion)-portable.zip</OutputFileName>
+        <OutputType>Exe</OutputType>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../Engine.Network/Engine.Network.csproj"/>
+        <None Update="README.md" CopyToPublishDirectory="PreserveNewest"/>
+        <None Update="scripts/*.py;scripts/*.sh" CopyToPublishDirectory="PreserveNewest"/>
+    </ItemGroup>
+</Project>

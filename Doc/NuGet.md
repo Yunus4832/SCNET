@@ -9,6 +9,8 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 | --- | --- | --- |
 | `SCNET.Engine.Core` | `Engine.Core` | 不依赖引擎的基础工具。 |
 | `SCNET.Engine.Serialization` | `Engine.Serialization` | 基于 Engine.Core 构建的序列化支持。 |
+| `SCNET.Rendezvous.Protocol` | `Rendezvous.Protocol` | 邀请信令契约及认证中继报文编码。 |
+| `SCNET.Engine.Network` | `Engine.Network` | 独立传输宿主、连接生命周期与邀请路径；内部使用 LiteNetLib。 |
 | `SCNET.Engine` | `Engine` | 跨平台图形、音频、输入、存储和窗口运行时。 |
 | `SCNET.EntitySystem` | `EntitySystem` | 实体、组件、子系统和模板数据库运行时。 |
 | `SCNET.Content.Packaging` | `Content.Packaging` | 统一内容包协议、读写和验证。 |
@@ -39,6 +41,7 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 - 平台启动项目（`Survivalcraft.Windows`、`Survivalcraft.Linux` 和 Android 项目）
   属于应用程序，应以对应平台的产物形式分发。
+- `RendezvousServer` 是独立信令服务，`NetworkProbe` 是网络测试驱动器，两者通过应用发布脚本分发。
 - 测试项目仅用于验证实现。
 - `TerritoryStoneMod` 是实际模组，产物为 `.scpkg`，而不是 NuGet 包。
 - `Survivalcraft.ModTemplates/Survivalcraft.Mod/` 是模板源代码；只有对应的模板打包

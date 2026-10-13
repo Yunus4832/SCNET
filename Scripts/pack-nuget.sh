@@ -13,6 +13,12 @@ dotnet pack "Engine.Core/Engine.Core.csproj" --configuration "$configuration" "$
 echo "[SCNET Pack] Packing SCNET.Engine.Serialization"
 dotnet pack "Engine.Serialization/Engine.Serialization.csproj" --configuration "$configuration" "$@"
 
+echo "[SCNET Pack] Packing SCNET.Rendezvous.Protocol"
+dotnet pack "Rendezvous.Protocol/Rendezvous.Protocol.csproj" --configuration "$configuration" "$@"
+
+echo "[SCNET Pack] Packing SCNET.Engine.Network"
+dotnet pack "Engine.Network/Engine.Network.csproj" --configuration "$configuration" "$@"
+
 echo "[SCNET Pack] Packing SCNET.Engine"
 dotnet pack "Engine/Engine.csproj" --configuration "$configuration" "$@"
 
