@@ -107,8 +107,6 @@ public class Project : IDisposable
             }
 
             OnProjectLoad?.Invoke(this);
-
-            OnProjectLoad?.Invoke(this);
         }
         catch (Exception)
         {

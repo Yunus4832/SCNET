@@ -74,6 +74,28 @@ public class ProjectExtensionDataTest
             .GetValue<ValuesDictionary>("example").GetValue<ValuesDictionary>("secret").GetValue<string>("value"));
     }
 
+    [Fact]
+    public void ProjectNotifiesLoadOnceAfterInitialization()
+    {
+        var (database, template) = CreateDatabase();
+        var notifications = new List<Project>();
+        Project.OnProjectLoad += OnLoaded;
+        try
+        {
+            using var project = new Project(database, new ProjectData(database, template, null));
+            Assert.Same(project, Assert.Single(notifications));
+        }
+        finally
+        {
+            Project.OnProjectLoad -= OnLoaded;
+        }
+
+        void OnLoaded(Project project)
+        {
+            notifications.Add(project);
+        }
+    }
+
     private static ProjectData RoundTrip(GameDatabase database, ProjectData saved, bool messagePack)
     {
         if (messagePack)
