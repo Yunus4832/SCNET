@@ -2,7 +2,7 @@ namespace Game.Network;
 
 internal sealed class NetworkMessageFanout(NetworkSendStatistics statistics, Type packageType, NetworkChannel channel)
 {
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
     private Client? _firstRecipient;
     private HashSet<Client>? _otherRecipients;
     private int _pending = 1;

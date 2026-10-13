@@ -180,7 +180,7 @@ public static class ServerAdministrationBootstrap
 
     private sealed class BootstrapState
     {
-        public object SyncRoot { get; } = new();
+        public Lock SyncRoot { get; } = new();
 
         public string? ClaimCode { get; set; }
     }

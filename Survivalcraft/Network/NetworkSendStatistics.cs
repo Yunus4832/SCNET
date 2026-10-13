@@ -7,7 +7,7 @@ public readonly record struct NetworkPackageSendStatistics(
 
 public sealed class NetworkSendStatistics
 {
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
 
     private readonly Dictionary<NetworkChannel, NetworkChannelSendStatistics> _channels = [];
 

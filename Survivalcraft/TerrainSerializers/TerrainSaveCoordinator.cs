@@ -7,6 +7,7 @@ internal sealed class TerrainSaveCoordinator : IDisposable
 {
     private const int _defaultQueueCapacity = 4;
 
+    // Monitor.Wait/PulseAll require the monitor used by lock(object), not System.Threading.Lock.
     private readonly object _gate = new();
 
     private readonly Dictionary<Point2, TerrainSaveSnapshot> _latestSnapshots = new();
