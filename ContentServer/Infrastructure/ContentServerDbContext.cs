@@ -4,6 +4,7 @@ using ContentServer.Domain.Contents;
 using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
 using ContentServer.Domain.Releases;
+using ContentServer.Domain.RendezvousServices;
 using ContentServer.Domain.Reviews;
 using ContentServer.Domain.ServerDirectory;
 using ContentServer.Domain.ServerSources;
@@ -30,6 +31,7 @@ public sealed partial class ContentServerDbContext(
     public DbSet<PackageBlob> PackageBlobs => Set<PackageBlob>();
     public DbSet<ReviewRecord> ReviewRecords => Set<ReviewRecord>();
     public DbSet<ServerSourceRegistration> ServerSources => Set<ServerSourceRegistration>();
+    public DbSet<RendezvousServiceRegistration> RendezvousServices => Set<RendezvousServiceRegistration>();
     public DbSet<DirectoryServer> DirectoryServers => Set<DirectoryServer>();
     public DbSet<GameAnnouncement> GameAnnouncements => Set<GameAnnouncement>();
     public DbSet<GameRelease> GameReleases => Set<GameRelease>();

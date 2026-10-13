@@ -19,6 +19,7 @@ import { contentTypeLabel } from '../contentTypes';
 import ContentSubmissionDialog from '../components/ContentSubmissionDialog.vue';
 import ServerSourceSubmissionDialog from '../components/ServerSourceSubmissionDialog.vue';
 import ServerSubmissionDialog from '../components/ServerSubmissionDialog.vue';
+import RendezvousServicesPanel from '../components/RendezvousServicesPanel.vue';
 
 interface Publisher {
   publisherId: string;
@@ -99,7 +100,7 @@ const showServerSourceForm = ref(false);
 const showServerForm = ref(false);
 const serverTarget = ref<DirectoryServer>();
 const submissionTarget = ref<ContentItem>();
-const view = ref<'content' | 'versions' | 'servers' | 'serverSources'>('content');
+const view = ref<'content' | 'versions' | 'servers' | 'serverSources' | 'rendezvous'>('content');
 const copiedVersionId = ref('');
 function removeKey() {
   clearAccess('publisher', getAccess('publisher')?.apiKey);
@@ -209,6 +210,9 @@ async function setServerEnabled(item: DirectoryServer) {
           <button :class="{ active: view === 'serverSources' }" @click="view = 'serverSources'">
             服务器源
           </button>
+          <button :class="{ active: view === 'rendezvous' }" @click="view = 'rendezvous'">
+            信令服务器
+          </button>
         </div>
         <button
           v-if="view === 'content' || view === 'versions'"
@@ -227,7 +231,7 @@ async function setServerEnabled(item: DirectoryServer) {
           <RadioTower :size="17" />提交服务器
         </button>
         <button
-          v-else
+          v-else-if="view === 'serverSources'"
           class="button primary"
           :disabled="self.data.value?.status !== 'active'"
           @click="showServerSourceForm = true"
@@ -414,6 +418,12 @@ async function setServerEnabled(item: DirectoryServer) {
           </article>
         </div>
         <div v-else class="state">暂无服务器提交记录</div>
+      </template>
+      <template v-else-if="view === 'rendezvous'">
+        <RendezvousServicesPanel
+          mode="publisher"
+          :can-submit="self.data.value?.status === 'active'"
+        />
       </template>
       <template v-else>
         <div v-if="serverSources.data.value?.length" class="content-grid">

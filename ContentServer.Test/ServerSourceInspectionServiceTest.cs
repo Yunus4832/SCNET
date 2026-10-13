@@ -22,7 +22,7 @@ public sealed class ServerSourceInspectionServiceTest
     [InlineData("2001:db8::1")]
     public void RejectsNonPublicAddresses(string value)
     {
-        Assert.False(ServerSourceInspectionService.IsPublicAddress(IPAddress.Parse(value)));
+        Assert.False(PublicEndpointAddress.IsPublicAddress(IPAddress.Parse(value)));
     }
 
     [Theory]
@@ -31,6 +31,6 @@ public sealed class ServerSourceInspectionServiceTest
     [InlineData("2606:4700:4700::1111")]
     public void AcceptsPublicAddresses(string value)
     {
-        Assert.True(ServerSourceInspectionService.IsPublicAddress(IPAddress.Parse(value)));
+        Assert.True(PublicEndpointAddress.IsPublicAddress(IPAddress.Parse(value)));
     }
 }

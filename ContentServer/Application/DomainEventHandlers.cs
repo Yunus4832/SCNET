@@ -2,6 +2,7 @@ using ContentServer.Application.Commands;
 using ContentServer.Domain.Administration;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Publishers;
+using ContentServer.Domain.RendezvousServices;
 using ContentServer.Domain.ServerDirectory;
 using ContentServer.Domain.ServerSources;
 using ContentServer.Infrastructure;
@@ -181,4 +182,15 @@ public sealed class DirectoryServerSuspensionChangedHandler(IMediator mediator)
         domainEvent.AdministratorId, "DirectoryServer", domainEvent.Server.Id.ToString(),
         domainEvent.Suspended ? "Suspended" : "Restored", domainEvent.Reason, domainEvent.OccurredAt),
         cancellationToken);
+}
+
+public sealed class RendezvousServiceReviewedHandler(IMediator mediator)
+    : IDomainEventHandler<RendezvousServiceReviewedDomainEvent>
+{
+    public Task Handle(RendezvousServiceReviewedDomainEvent domainEvent, CancellationToken cancellationToken)
+    {
+        return mediator.Send(new CreateReviewRecordCommand(domainEvent.AdministratorId, "RendezvousService",
+            domainEvent.Source.Id.ToString(), domainEvent.Status.ToString(), domainEvent.Message,
+            domainEvent.OccurredAt), cancellationToken);
+    }
 }

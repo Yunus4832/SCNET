@@ -63,6 +63,7 @@ builder.Services.AddSingleton<ContentPackageStore>();
 builder.Services.AddSingleton<ContentSubmissionLock>();
 builder.Services.AddSingleton<ImageContentPackageBuilder>();
 builder.Services.AddSingleton<IServerSourceInspectionService, ServerSourceInspectionService>();
+builder.Services.AddSingleton<RendezvousInspectionClient>();
 builder.Services.AddScoped<ApiKeyAuthenticationContext>();
 builder.Services.AddScoped<ApiKeyAuthenticationMiddleware>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

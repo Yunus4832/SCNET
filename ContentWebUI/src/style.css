@@ -1486,3 +1486,39 @@ input:-webkit-autofill:focus {
   color: #ef9a8a;
   border-color: #8d4540;
 }
+
+.rendezvous-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 760px) {
+  .rendezvous-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .rendezvous-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rendezvous-card .card-bottom {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rendezvous-heading .review-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+}
+
+.review-section + .review-section {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.review-section > .section-heading {
+  margin-bottom: 14px;
+}

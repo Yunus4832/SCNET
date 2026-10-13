@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
-import { ArrowLeftRight, Check, Download, LogOut, Search, Trash2, X } from 'lucide-vue-next';
+import { ArrowLeftRight, LogOut, Search, Trash2 } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import {
@@ -11,10 +11,13 @@ import {
   queryString,
   type ContentVersion,
   type PagedData,
+  type RendezvousService,
 } from '../api';
 import { contentTypeLabel } from '../contentTypes';
 import GameInformationManagement from '../components/GameInformationManagement.vue';
 import ServerSubmissionDialog from '../components/ServerSubmissionDialog.vue';
+import RendezvousServicesPanel from '../components/RendezvousServicesPanel.vue';
+import ReviewApplications, { type ReviewApplication } from '../components/ReviewApplications.vue';
 
 interface Applicant {
   administratorId?: string;
@@ -25,6 +28,8 @@ interface Applicant {
   description?: string;
   status: string;
   createdAt: string;
+  reviewMessage?: string;
+  reviewedAt?: string;
   isSuperAdministrator?: boolean;
   hasActiveKey?: boolean;
 }
@@ -79,9 +84,9 @@ interface DirectoryServer {
 const router = useRouter();
 const client = useQueryClient();
 const mode = ref<'review' | 'manage' | 'gameInformation'>('review');
-const tab = ref<'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources'>(
-  'content',
-);
+const tab = ref<
+  'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources' | 'rendezvous'
+>('content');
 const actionError = ref('');
 const serverTarget = ref<DirectoryServer>();
 const accessCacheKey = getAccess('administrator')?.apiKey.slice(0, 18) ?? 'anonymous';
@@ -91,9 +96,6 @@ const contentType = ref('');
 const contentPage = ref(1);
 const publisherPage = ref(1);
 const administratorPage = ref(1);
-const reviewVersionsPage = ref(1);
-const reviewPublishersPage = ref(1);
-const reviewAdministratorsPage = ref(1);
 const contentTypes = [
   ['', '全部'],
   ['Mod', '模组'],
@@ -126,39 +128,53 @@ const statusDescription = computed(
       ? '审核通过后即可处理申请与内容。'
       : '请联系服务器管理员，或提交新的管理员申请。'),
 );
+async function loadReviewApplications<T>(path: string, signal: AbortSignal): Promise<PagedData<T>> {
+  const items: T[] = [];
+  let pageIndex = 1;
+  while (true) {
+    const page = await api<PagedData<T>>(`${path}?pageIndex=${pageIndex}&pageSize=100`, { signal });
+    items.push(...page.items);
+    if (pageIndex * page.pageSize >= page.total) return { ...page, items };
+    if (!page.items.length) throw new Error('申请记录分页不完整');
+    pageIndex++;
+  }
+}
 const versions = useQuery({
-  queryKey: ['admin-versions', accessCacheKey, reviewVersionsPage],
+  queryKey: ['admin-versions', accessCacheKey],
   enabled: isActive,
-  queryFn: () =>
-    api<PagedData<ContentVersion>>(
-      `/api/v1/admin/submissions?status=Pending&pageIndex=${reviewVersionsPage.value}&pageSize=6`,
-    ),
+  queryFn: ({ signal }) =>
+    loadReviewApplications<ContentVersion>('/api/v1/admin/submissions', signal),
 });
 const publishers = useQuery({
-  queryKey: ['admin-publishers', accessCacheKey, reviewPublishersPage],
+  queryKey: ['admin-publishers', accessCacheKey],
   enabled: isActive,
-  queryFn: () =>
-    api<PagedData<Applicant>>(
-      `/api/v1/admin/publishers?status=Pending&pageIndex=${reviewPublishersPage.value}&pageSize=6`,
-    ),
+  queryFn: ({ signal }) => loadReviewApplications<Applicant>('/api/v1/admin/publishers', signal),
 });
 const administrators = useQuery({
-  queryKey: ['admin-applications', accessCacheKey, reviewAdministratorsPage],
+  queryKey: ['admin-applications', accessCacheKey],
   enabled: isActive,
-  queryFn: () =>
-    api<PagedData<Applicant>>(
-      `/api/v1/admin/administrator-applications?status=Pending&pageIndex=${reviewAdministratorsPage.value}&pageSize=6`,
-    ),
+  queryFn: ({ signal }) =>
+    loadReviewApplications<Applicant>('/api/v1/admin/administrator-applications', signal),
 });
 const serverSourceApplications = useQuery({
   queryKey: ['admin-server-source-applications', accessCacheKey],
   enabled: isActive,
-  queryFn: () => api<ServerSourceRegistration[]>('/api/v1/admin/server-sources?status=Pending'),
+  queryFn: () => api<ServerSourceRegistration[]>('/api/v1/admin/server-sources'),
+});
+const rendezvousApplications = useQuery({
+  queryKey: ['rendezvous-services', 'review', accessCacheKey],
+  enabled: isActive,
+  queryFn: () => api<RendezvousService[]>('/api/v1/admin/rendezvous-services'),
+});
+const managedRendezvousServices = useQuery({
+  queryKey: ['rendezvous-services', 'manage', accessCacheKey],
+  enabled: isActive,
+  queryFn: () => api<RendezvousService[]>('/api/v1/admin/rendezvous-services'),
 });
 const serverApplications = useQuery({
   queryKey: ['admin-server-applications', accessCacheKey],
   enabled: isActive,
-  queryFn: () => api<DirectoryServer[]>('/api/v1/admin/servers?status=Pending'),
+  queryFn: () => api<DirectoryServer[]>('/api/v1/admin/servers'),
 });
 const managedContent = useQuery({
   queryKey: computed(() => [
@@ -226,6 +242,66 @@ const administratorKeyCount = useQuery({
   queryFn: () =>
     api<PagedData<Applicant>>('/api/v1/admin/administrator-applications?pageIndex=1&pageSize=1'),
 });
+const reviewItems = computed<ReviewApplication[]>(() => {
+  if (tab.value === 'content')
+    return (versions.data.value?.items ?? []).map((item) => ({
+      id: item.versionId,
+      name: item.name,
+      identity: item.identifier,
+      summary: item.summary,
+      description: item.description,
+      status: item.status,
+      reviewMessage: item.reviewMessage,
+      createdAt: item.createdAt,
+      reviewedAt: item.publishedAt,
+      badge: `${contentTypeLabel(item.type)} · v${item.version}`,
+      packageId: item.versionId,
+      path: `/api/v1/admin/submissions/${item.versionId}`,
+    }));
+  if (tab.value === 'servers')
+    return (serverApplications.data.value ?? []).map((item) => ({
+      ...item,
+      identity: item.address,
+      status: item.reviewStatus,
+      summary: item.publisherName ? `发布者 ${item.publisherName}` : undefined,
+      path: `/api/v1/admin/servers/${item.id}`,
+    }));
+  if (tab.value === 'serverSources')
+    return (serverSourceApplications.data.value ?? []).map((item) => ({
+      ...item,
+      identity: item.apiUrl,
+      summary: item.publisherName ? `发布者 ${item.publisherName}` : undefined,
+      path: `/api/v1/admin/server-sources/${item.id}`,
+    }));
+  if (tab.value === 'rendezvous')
+    return (rendezvousApplications.data.value ?? []).map((item) => ({
+      ...item,
+      identity: item.controlUrl,
+      status: item.status!,
+      summary: item.publisherName ? `发布者 ${item.publisherName}` : undefined,
+      path: `/api/v1/admin/rendezvous-services/${item.id}`,
+    }));
+  const applicants =
+    tab.value === 'publishers' ? publishers.data.value?.items : administrators.data.value?.items;
+  return (applicants ?? []).map((item) => ({
+    ...item,
+    id: (item.publisherId ?? item.administratorId)!,
+    name: item.displayName || item.name || '',
+    identity: item.contact,
+    path: `/api/v1/admin/${tab.value === 'publishers' ? 'publishers' : 'administrator-applications'}/${item.publisherId ?? item.administratorId}`,
+  }));
+});
+const reviewQuery = computed(
+  () =>
+    ({
+      content: versions,
+      servers: serverApplications,
+      serverSources: serverSourceApplications,
+      rendezvous: rendezvousApplications,
+      publishers,
+      administrators,
+    })[tab.value],
+);
 function removeKey() {
   clearAccess('administrator', getAccess('administrator')?.apiKey);
   router.push('/admin/access');
@@ -350,7 +426,7 @@ function switchMode(value: 'review' | 'manage' | 'gameInformation') {
     tab.value = 'content';
 }
 function selectManageTab(
-  value: 'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources',
+  value: 'content' | 'publishers' | 'administrators' | 'servers' | 'serverSources' | 'rendezvous',
 ) {
   tab.value = value;
   manageSearchInput.value = '';
@@ -399,14 +475,18 @@ function selectContentType(value: string) {
         ><div class="stats">
           <button :class="{ active: tab === 'content' }" @click="tab = 'content'">
             <b>{{ versions.data.value?.total ?? 0 }}</b
-            ><span>待审内容</span></button
+            ><span>内容申请</span></button
           ><button :class="{ active: tab === 'servers' }" @click="tab = 'servers'">
             <b>{{ serverApplications.data.value?.length ?? 0 }}</b
-            ><span>待审服务器</span>
+            ><span>服务器申请</span>
           </button>
           <button :class="{ active: tab === 'serverSources' }" @click="tab = 'serverSources'">
             <b>{{ serverSourceApplications.data.value?.length ?? 0 }}</b
-            ><span>待审服务器源</span>
+            ><span>服务器源申请</span>
+          </button>
+          <button :class="{ active: tab === 'rendezvous' }" @click="tab = 'rendezvous'">
+            <b>{{ rendezvousApplications.data.value?.length ?? 0 }}</b
+            ><span>信令服务器申请</span>
           </button>
           <button :class="{ active: tab === 'publishers' }" @click="tab = 'publishers'">
             <b>{{ publishers.data.value?.total ?? 0 }}</b
@@ -417,221 +497,15 @@ function selectContentType(value: string) {
           </button>
         </div>
         <p v-if="actionError" class="form-error">{{ actionError }}</p>
-        <div v-if="tab === 'content'">
-          <h2>内容审核</h2>
-          <div v-if="versions.data.value?.items.length" class="content-grid">
-            <article
-              v-for="item in versions.data.value?.items"
-              :key="item.versionId"
-              class="content-card"
-            >
-              <div class="card-top">
-                <span class="type-pill">{{ contentTypeLabel(item.type) }}</span
-                ><span class="version">v{{ item.version }}</span>
-              </div>
-              <div>
-                <h3>{{ item.name }}</h3>
-                <code>{{ item.identifier }}</code>
-                <p>{{ item.summary }}</p>
-                <details class="card-details">
-                  <summary>详细描述</summary>
-                  <p class="package-description">{{ item.description }}</p>
-                </details>
-              </div>
-              <div class="card-bottom">
-                <div class="card-actions">
-                  <button class="button ghost" @click="downloadPackage(item.versionId)">
-                    <Download :size="16" />测试包
-                  </button>
-                  <div class="review-actions">
-                    <button
-                      class="icon-button reject"
-                      @click="review(`/api/v1/admin/submissions/${item.versionId}`, false)"
-                    >
-                      <X /></button
-                    ><button
-                      class="icon-button approve"
-                      @click="review(`/api/v1/admin/submissions/${item.versionId}`, true)"
-                    >
-                      <Check />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          </div>
-          <div v-else class="state">没有待审核内容</div>
-          <div v-if="(versions.data.value?.total ?? 0) > 6" class="pager">
-            <button :disabled="reviewVersionsPage <= 1" @click="reviewVersionsPage--">上一页</button
-            ><span
-              >{{ reviewVersionsPage }} /
-              {{ Math.ceil((versions.data.value?.total ?? 0) / 6) }}</span
-            ><button
-              :disabled="reviewVersionsPage * 6 >= (versions.data.value?.total ?? 0)"
-              @click="reviewVersionsPage++"
-            >
-              下一页
-            </button>
-          </div>
-        </div>
-        <div v-else-if="tab === 'servers'">
-          <h2>服务器审核</h2>
-          <div v-if="serverApplications.data.value?.length" class="content-grid">
-            <article
-              v-for="item in serverApplications.data.value"
-              :key="item.id"
-              class="content-card"
-            >
-              <div class="card-top">
-                <span class="eyebrow">发布者 {{ item.publisherName }}</span>
-              </div>
-              <div>
-                <h3>{{ item.name }}</h3>
-                <code>{{ item.address }}</code>
-                <p>{{ item.description || '未提供服务器说明' }}</p>
-              </div>
-              <div class="card-bottom">
-                <span>待审核</span>
-                <div class="review-actions">
-                  <button
-                    class="icon-button reject"
-                    @click="review(`/api/v1/admin/servers/${item.id}`, false)"
-                  >
-                    <X />
-                  </button>
-                  <button
-                    class="icon-button approve"
-                    @click="review(`/api/v1/admin/servers/${item.id}`, true)"
-                  >
-                    <Check />
-                  </button>
-                </div>
-              </div>
-            </article>
-          </div>
-          <div v-else class="state">没有待审核服务器</div>
-        </div>
-        <div v-else-if="tab === 'serverSources'">
-          <h2>服务器源审核</h2>
-          <div v-if="serverSourceApplications.data.value?.length" class="content-grid">
-            <article
-              v-for="item in serverSourceApplications.data.value"
-              :key="item.id"
-              class="content-card"
-            >
-              <div class="card-top">
-                <span class="eyebrow">发布者 {{ item.publisherName }}</span>
-              </div>
-              <div>
-                <h3>{{ item.name }}</h3>
-                <code>{{ item.apiUrl }}</code>
-                <p>{{ item.description || '未提供来源说明' }}</p>
-              </div>
-              <div class="card-bottom">
-                <span>待审核</span>
-                <div class="review-actions">
-                  <button
-                    class="icon-button reject"
-                    @click="review(`/api/v1/admin/server-sources/${item.id}`, false)"
-                  >
-                    <X /></button
-                  ><button
-                    class="icon-button approve"
-                    @click="review(`/api/v1/admin/server-sources/${item.id}`, true)"
-                  >
-                    <Check />
-                  </button>
-                </div>
-              </div>
-            </article>
-          </div>
-          <div v-else class="state">没有待审核服务器源</div>
-        </div>
-        <div v-else>
-          <h2>{{ tab === 'publishers' ? '发布者申请审核' : '管理员申请审核' }}</h2>
-          <div
-            v-if="
-              (tab === 'publishers'
-                ? publishers.data.value?.items
-                : administrators.data.value?.items
-              )?.length
-            "
-            class="content-grid"
-          >
-            <article
-              v-for="item in tab === 'publishers'
-                ? publishers.data.value?.items
-                : administrators.data.value?.items"
-              :key="item.publisherId || item.administratorId"
-              class="content-card"
-            >
-              <div class="card-top">
-                <span class="eyebrow">{{ item.contact }}</span>
-              </div>
-              <div>
-                <h3>{{ item.displayName || item.name }}</h3>
-                <p>{{ item.description || '未提供申请说明' }}</p>
-              </div>
-              <div class="card-bottom">
-                <span>待审核</span>
-                <div class="review-actions">
-                  <button
-                    class="icon-button reject"
-                    @click="
-                      review(
-                        `/api/v1/admin/${tab === 'publishers' ? 'publishers' : 'administrator-applications'}/${item.publisherId || item.administratorId}`,
-                        false,
-                      )
-                    "
-                  >
-                    <X /></button
-                  ><button
-                    class="icon-button approve"
-                    @click="
-                      review(
-                        `/api/v1/admin/${tab === 'publishers' ? 'publishers' : 'administrator-applications'}/${item.publisherId || item.administratorId}`,
-                        true,
-                      )
-                    "
-                  >
-                    <Check />
-                  </button>
-                </div>
-              </div>
-            </article>
-          </div>
-          <div v-else class="state">没有待审核申请</div>
-          <div v-if="tab === 'publishers' && (publishers.data.value?.total ?? 0) > 6" class="pager">
-            <button :disabled="reviewPublishersPage <= 1" @click="reviewPublishersPage--">
-              上一页</button
-            ><span
-              >{{ reviewPublishersPage }} /
-              {{ Math.ceil((publishers.data.value?.total ?? 0) / 6) }}</span
-            ><button
-              :disabled="reviewPublishersPage * 6 >= (publishers.data.value?.total ?? 0)"
-              @click="reviewPublishersPage++"
-            >
-              下一页
-            </button>
-          </div>
-          <div
-            v-if="tab === 'administrators' && (administrators.data.value?.total ?? 0) > 6"
-            class="pager"
-          >
-            <button :disabled="reviewAdministratorsPage <= 1" @click="reviewAdministratorsPage--">
-              上一页</button
-            ><span
-              >{{ reviewAdministratorsPage }} /
-              {{ Math.ceil((administrators.data.value?.total ?? 0) / 6) }}</span
-            ><button
-              :disabled="reviewAdministratorsPage * 6 >= (administrators.data.value?.total ?? 0)"
-              @click="reviewAdministratorsPage++"
-            >
-              下一页
-            </button>
-          </div>
-        </div></template
-      >
+        <ReviewApplications
+          :key="tab"
+          :items="reviewItems"
+          :loading="reviewQuery.isPending.value"
+          :error="reviewQuery.error.value?.message"
+          @review="review"
+          @download="downloadPackage"
+        />
+      </template>
       <div v-else-if="mode === 'manage'">
         <div class="stats">
           <button :class="{ active: tab === 'content' }" @click="selectManageTab('content')">
@@ -648,6 +522,10 @@ function selectContentType(value: string) {
           >
             <b>{{ managedServerSources.data.value?.length ?? 0 }}</b
             ><span>服务器源</span>
+          </button>
+          <button :class="{ active: tab === 'rendezvous' }" @click="selectManageTab('rendezvous')">
+            <b>{{ managedRendezvousServices.data.value?.length ?? 0 }}</b
+            ><span>信令服务器</span>
           </button>
           <button :class="{ active: tab === 'publishers' }" @click="selectManageTab('publishers')">
             <b>{{ publisherKeyCount.data.value?.total ?? 0 }}</b
@@ -707,8 +585,8 @@ function selectContentType(value: string) {
               <div class="card-bottom">
                 <span>{{
                   item.updatedAt ? new Date(item.updatedAt).toLocaleDateString() : ''
-                }}</span
-                ><div class="card-actions">
+                }}</span>
+                <div class="card-actions">
                   <button
                     class="button ghost content-status-button"
                     @click="setContentStatus(item.contentId, item.status !== 'active')"
@@ -830,6 +708,9 @@ function selectContentType(value: string) {
             </article>
           </div>
           <div v-else class="state compact-state">没有服务器源记录</div>
+        </div>
+        <div v-else-if="tab === 'rendezvous'" class="review-list">
+          <RendezvousServicesPanel mode="manage" :search="manageSearch" />
         </div>
         <div v-else class="review-list">
           <h2>

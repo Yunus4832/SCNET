@@ -3,6 +3,7 @@ using ContentServer.Domain.Announcements;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Publishers;
 using ContentServer.Domain.Releases;
+using ContentServer.Domain.RendezvousServices;
 using ContentServer.Domain.Reviews;
 using ContentServer.Domain.ServerDirectory;
 using ContentServer.Domain.ServerSources;
@@ -133,5 +134,27 @@ public sealed class DirectoryServerRepository(
         CancellationToken cancellationToken) =>
         _context.DirectoryServers.AnyAsync(server => server.Id != excludedId && server.Address == address &&
             server.ReviewStatus != DirectoryServerReviewStatus.Rejected, cancellationToken);
+
+}
+
+public sealed class RendezvousServiceRegistrationRepository(
+    ContentServerDbContext context
+) : RepositoryBase<RendezvousServiceRegistration, RendezvousServiceRegistrationId, ContentServerDbContext>(context)
+{
+    private readonly ContentServerDbContext _context = context;
+
+    public Task<RendezvousServiceRegistration?> FindAsync(RendezvousServiceRegistrationId id,
+        CancellationToken cancellationToken)
+    {
+        return _context.RendezvousServices.FirstOrDefaultAsync(source => source.Id == id, cancellationToken);
+    }
+
+    public Task<bool> HasPendingOrActiveUrlAsync(string controlUrl, CancellationToken cancellationToken,
+        RendezvousServiceRegistrationId? excludedId = null)
+    {
+        return _context.RendezvousServices.AnyAsync(source => source.Id != excludedId && source.ControlUrl == controlUrl &&
+                                                        source.Status != RendezvousServiceRegistrationStatus.Rejected,
+            cancellationToken);
+    }
 
 }

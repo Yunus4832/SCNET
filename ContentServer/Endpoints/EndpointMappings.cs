@@ -3,6 +3,7 @@ using System.Text.Json;
 using ContentServer.Application.Commands;
 using ContentServer.Application.Queries;
 using ContentServer.Endpoints.Admin.Administrators;
+using ContentServer.Endpoints.Public.RendezvousServices;
 using ContentServer.Endpoints.Public.ServerSources;
 using ContentServer.Endpoints.Publisher.Servers;
 
@@ -31,6 +32,11 @@ internal static class EndpointMappings
         new(source.Id.ToString(), source.PublisherId.ToString(), source.PublisherName,
             source.Name, source.ApiUrl, source.Description,
             source.Status.ToString().ToLowerInvariant(), source.ReviewMessage, source.CreatedAt, source.ReviewedAt);
+
+    public static RendezvousServiceRegistrationResponse RendezvousService(RendezvousServiceDto source) =>
+        new(source.Id.ToString(), source.PublisherId.ToString(), source.PublisherName,
+            source.Name, source.ControlUrl, source.Description, source.Status.ToString().ToLowerInvariant(),
+            source.ReviewMessage, source.CreatedAt, source.ReviewedAt);
 
     public static bool IsValidAddress(string value) => ServerSourceValidator.IsValidServerAddress(value);
 

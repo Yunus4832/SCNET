@@ -238,3 +238,14 @@ export function queryString(values: Record<string, string | number | undefined>)
     if (value !== undefined && value !== '') search.set(key, String(value));
   return search.toString();
 }
+
+export interface RendezvousService {
+  id: string;
+  name: string;
+  controlUrl: string;
+  description?: string;
+  publisherName?: string;
+  status?: string;
+  reviewMessage?: string;
+  createdAt?: string;
+}

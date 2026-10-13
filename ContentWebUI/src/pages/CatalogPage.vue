@@ -16,10 +16,11 @@ import { api, queryString, type ContentVersion, type PagedData } from '../api';
 import { copyText } from '../clipboard';
 import { getRuntimeConfig } from '../config';
 import { contentTypeLabel } from '../contentTypes';
+import RendezvousServicesPanel from '../components/RendezvousServicesPanel.vue';
 
 const search = ref('');
 const appliedSearch = ref('');
-const catalogView = ref<'content' | 'serverSources' | 'gameInformation'>('content');
+const catalogView = ref<'content' | 'serverSources' | 'rendezvous' | 'gameInformation'>('content');
 const type = ref('');
 const page = ref(1);
 const selectedContent = ref<ContentVersion>();
@@ -84,8 +85,9 @@ const filteredReleases = computed(() => {
   const query = appliedSearch.value.toLocaleLowerCase();
   if (!query) return releases.data.value ?? [];
   return (releases.data.value ?? []).filter((item) =>
-    [item.version, item.description, ...item.artifacts.map((artifact) => artifact.platform)]
-      .some((value) => value.toLocaleLowerCase().includes(query)),
+    [item.version, item.description, ...item.artifacts.map((artifact) => artifact.platform)].some(
+      (value) => value.toLocaleLowerCase().includes(query),
+    ),
   );
 });
 const types = [
@@ -163,7 +165,7 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
 <template>
   <section class="hero shell">
     <h1>社区内容</h1>
-    <p>集中浏览经审核的游戏内容与服务器源；所有公开内容均可匿名访问。</p>
+    <p>集中浏览经审核的游戏内容、服务器源与信令服务；公开内容可匿名访问。</p>
     <div class="workspace-tabs catalog-tabs">
       <button :class="{ active: catalogView === 'content' }" @click="catalogView = 'content'">
         内容广场
@@ -173,6 +175,9 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
         @click="catalogView = 'serverSources'"
       >
         服务器源
+      </button>
+      <button :class="{ active: catalogView === 'rendezvous' }" @click="catalogView = 'rendezvous'">
+        信令服务器
       </button>
       <button
         :class="{ active: catalogView === 'gameInformation' }"
@@ -187,8 +192,8 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
         :placeholder="
           catalogView === 'content'
             ? '搜索名称、标识符或简介'
-            : catalogView === 'serverSources'
-              ? '搜索服务器源名称、地址或说明'
+            : catalogView === 'serverSources' || catalogView === 'rendezvous'
+              ? '搜索名称、地址或说明'
               : '搜索公告、版本号、平台或说明'
         "
       />
@@ -340,6 +345,9 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
         </article>
       </div>
     </template>
+    <template v-else-if="catalogView === 'rendezvous'">
+      <RendezvousServicesPanel mode="public" :search="appliedSearch" />
+    </template>
     <template v-else>
       <div v-if="announcements.isPending.value || releases.isPending.value" class="state">
         <span class="spinner" />正在取得公告与游戏版本…
@@ -350,14 +358,19 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
       <div v-else class="game-information-sections">
         <section class="public-information-section">
           <div class="section-title-row">
-            <div><Megaphone :size="19" /><h2>游戏公告</h2></div>
+            <div>
+              <Megaphone :size="19" />
+              <h2>游戏公告</h2>
+            </div>
             <span class="count">{{ filteredAnnouncements.length }} 条公告</span>
           </div>
           <div v-if="filteredAnnouncements.length" class="information-list">
             <article v-for="item in filteredAnnouncements" :key="item.id" class="information-card">
               <div class="information-card-head">
                 <h3>{{ item.title }}</h3>
-                <time v-if="item.publishedAt">{{ new Date(item.publishedAt).toLocaleDateString() }}</time>
+                <time v-if="item.publishedAt">{{
+                  new Date(item.publishedAt).toLocaleDateString()
+                }}</time>
               </div>
               <p>{{ item.body }}</p>
             </article>
@@ -366,19 +379,40 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
         </section>
         <section class="public-information-section">
           <div class="section-title-row">
-            <div><Rocket :size="19" /><h2>游戏版本</h2></div>
+            <div>
+              <Rocket :size="19" />
+              <h2>游戏版本</h2>
+            </div>
             <span class="count">{{ filteredReleases.length }} 个版本</span>
           </div>
           <div v-if="filteredReleases.length" class="information-list release-information-list">
-            <article v-for="item in filteredReleases" :key="item.id" class="information-card release-card">
+            <article
+              v-for="item in filteredReleases"
+              :key="item.id"
+              class="information-card release-card"
+            >
               <div class="information-card-head">
-                <div><h3>v{{ item.version }}</h3><span class="platform-label">{{ item.artifacts.map((artifact) => artifact.platform).join(' · ') }}</span></div>
-                <time v-if="item.publishedAt">{{ new Date(item.publishedAt).toLocaleDateString() }}</time>
+                <div>
+                  <h3>v{{ item.version }}</h3>
+                  <span class="platform-label">{{
+                    item.artifacts.map((artifact) => artifact.platform).join(' · ')
+                  }}</span>
+                </div>
+                <time v-if="item.publishedAt">{{
+                  new Date(item.publishedAt).toLocaleDateString()
+                }}</time>
               </div>
               <p>{{ item.description || '未提供版本说明。' }}</p>
               <div class="artifact-downloads">
-                <a v-for="artifact in item.artifacts" :key="artifact.platform" :href="artifact.downloadUrl" target="_blank" rel="noreferrer">
-                  <span>{{ artifact.platform }}</span><ArrowDownToLine :size="16" />下载
+                <a
+                  v-for="artifact in item.artifacts"
+                  :key="artifact.platform"
+                  :href="artifact.downloadUrl"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span>{{ artifact.platform }}</span
+                  ><ArrowDownToLine :size="16" />下载
                 </a>
               </div>
             </article>
@@ -391,27 +425,99 @@ onUnmounted(() => window.removeEventListener('keydown', closeOnEscape));
 </template>
 
 <style scoped>
-.game-information-sections { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; align-items: start; }
-.public-information-section { min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--surface) 86%, transparent); }
-.section-title-row, .section-title-row > div, .information-card-head {
+.game-information-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.public-information-section {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 86%, transparent);
+}
+.section-title-row,
+.section-title-row > div,
+.information-card-head {
   display: flex;
   align-items: center;
 }
-.section-title-row { justify-content: space-between; gap: 16px; margin-bottom: 10px; }
-.section-title-row > div { gap: 8px; }
-.section-title-row h2 { margin: 0; font-size: 18px; }
-.information-list { display: grid; gap: 10px; }
-.information-card { min-width: 0; padding: 17px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
-.information-card-head { align-items: flex-start; justify-content: space-between; gap: 14px; }
-.information-card h3 { margin: 0; font-size: 17px; }
-.information-card time, .platform-label { color: var(--muted); font-size: 12px; }
-.information-card p { margin: 12px 0 0; color: #bdc6c0; line-height: 1.6; white-space: pre-wrap; }
-.platform-label { display: block; margin-top: 4px; }
-.artifact-downloads { display: grid; gap: 7px; margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); }
-.artifact-downloads a { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--text); font-size: 12px; font-weight: 600; }
-.artifact-downloads a span { min-width: 0; margin-right: auto; color: var(--muted); }
-.artifact-downloads a:hover { color: var(--accent); }
+.section-title-row {
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+}
+.section-title-row > div {
+  gap: 8px;
+}
+.section-title-row h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.information-list {
+  display: grid;
+  gap: 10px;
+}
+.information-card {
+  min-width: 0;
+  padding: 17px 18px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.information-card-head {
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.information-card h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.information-card time,
+.platform-label {
+  color: var(--muted);
+  font-size: 12px;
+}
+.information-card p {
+  margin: 12px 0 0;
+  color: #bdc6c0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+.platform-label {
+  display: block;
+  margin-top: 4px;
+}
+.artifact-downloads {
+  display: grid;
+  gap: 7px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.artifact-downloads a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+}
+.artifact-downloads a span {
+  min-width: 0;
+  margin-right: auto;
+  color: var(--muted);
+}
+.artifact-downloads a:hover {
+  color: var(--accent);
+}
 @media (max-width: 720px) {
-  .game-information-sections { grid-template-columns: 1fr; }
+  .game-information-sections {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

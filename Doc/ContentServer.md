@@ -78,6 +78,7 @@ Key 的随机生成、显示前缀和 SHA-256 计算集中在 `Utils/ApiKeyUtili
 ContentServer 不提供登录或服务端会话。Web UI 在浏览器 `localStorage` 中缓存用户主动保存的 API Key，
 每次请求显式发送 Bearer Key；退出工作台只清除当前 Key 的本地缓存。游戏客户端同样自行负责 Key 的安全存储。
 公共内容、发布者申请、首次初始化、工作台入口、发布者工作台和管理员工作台使用独立页面。
+管理员审核页的分类统计包含全部申请；各分类依次展示待审核列表和已审核历史，分别分页。历史显示审核结果及审核意见，不再提供批准或拒绝操作。
 
 命令由 `AddUnitOfWorkBehaviors` 自动开启事务并在处理器成功后保存工作单元，因此命令处理器不得自行调用
 `SaveChangesAsync`。聚合的写入通过 `RepositoryBase` 仓储完成；认证使用时间和启动初始化不属于命令流程，可以显式保存。
@@ -420,3 +421,24 @@ Profile/当前会话引用、缓存、缺失、大小、来源和部分仓库失
 Mod 管理页不访问 ContentServer。它只合并缓存和 Profile/Runtime requirement，缺失项通过完整
 `ModId + Version + PackageHash` 导航到在线内容页。启动补全使用同一个缓存优先下载服务；联机临时仓库优先于持久仓库但不被
 持久化。单仓库部署只是集合中只有一项的普通配置，不存在单地址专用客户端路径。
+
+## 信令服务登记
+
+信令服务登记独立于普通服务器源协议和内容包。ContentServer 保存服务名称、控制地址、说明及审核状态，
+不保存该服务的临时房间或联机码。社区页面的“信令服务器”板块展示已批准记录；发布者可以在弹窗中投稿或修改，
+管理员可以审核、停用和删除。修改后重新进入待审核状态并从公开目录隐藏，批准后重新公开。
+
+- 公开目录：`GET /api/v1/rendezvous-services`。
+- 发布者列表及投稿：`GET/POST /api/v1/publisher/rendezvous-services`。
+- 发布者修改：`POST /api/v1/publisher/rendezvous-services/{id}/edit`；删除：`DELETE /api/v1/publisher/rendezvous-services/{id}`。
+- 管理员列表：`GET /api/v1/admin/rendezvous-services`，可使用 `status=Pending`。
+- 管理员审核：`POST /api/v1/admin/rendezvous-services/{id}/approve` 或 `/reject`；拒绝请求提供 `message`。
+- 管理员停用：`POST /api/v1/admin/rendezvous-services/{id}/disable`；删除：`DELETE /api/v1/admin/rendezvous-services/{id}`。
+
+投稿和修改包含 `name`、`controlUrl`、可选 `description`。公开控制地址必须使用 HTTPS；服务描述须支持 SCNET
+公开房间发现。HTTP 探测有时间和响应大小限制，禁止自动重定向和连接非公共地址。审核事件在事务中记录审核结果，
+删除设置登记的软删除字段。服务目录中的“已审核”不代表官方认证，也不保证服务始终可访问。
+
+### 公开信令服务目录分页
+
+`GET /api/v1/rendezvous-services` 使用现有 `pageIndex`（从1开始）、`pageSize`（最多100）查询参数，响应数据为 `items`、`total`、`pageIndex`、`pageSize`。公开查询只返回有效已批准登记；发布者和管理员的管理列表仍按其场景返回记录。游戏及社区页面逐页读取目录，每次读取最多100页；房间的临时目录仍使用独立信令协议游标，不与此目录合并。

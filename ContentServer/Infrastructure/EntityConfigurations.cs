@@ -4,6 +4,7 @@ using ContentServer.Domain.Contents;
 using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
 using ContentServer.Domain.Releases;
+using ContentServer.Domain.RendezvousServices;
 using ContentServer.Domain.Reviews;
 using ContentServer.Domain.ServerDirectory;
 using ContentServer.Domain.ServerSources;
@@ -177,5 +178,20 @@ public sealed class GameReleaseArtifactConfiguration : IEntityTypeConfiguration<
         b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
         b.HasIndex(x => new { x.GameReleaseId, x.Platform }).IsUnique().HasFilter("\"Deleted\" = 0");
         b.HasIndex(x => x.Platform);
+    }
+}
+
+public sealed class RendezvousServiceRegistrationConfiguration : IEntityTypeConfiguration<RendezvousServiceRegistration>
+{
+    public void Configure(EntityTypeBuilder<RendezvousServiceRegistration> b)
+    {
+        b.ConfigureSoftDelete();
+        b.HasKey(x => x.Id);
+        b.Property(x => x.Id).UseGuidVersion7ValueGenerator();
+        b.Property(x => x.Status).HasConversion<string>();
+        b.HasOne<Publisher>().WithMany().HasForeignKey(x => x.PublisherId).OnDelete(DeleteBehavior.Restrict);
+        b.HasIndex(x => x.PublisherId);
+        b.HasIndex(x => x.ControlUrl);
+        b.HasIndex(x => x.Status);
     }
 }

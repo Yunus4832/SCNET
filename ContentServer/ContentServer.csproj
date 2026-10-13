@@ -8,6 +8,7 @@
     <ItemGroup>
         <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
         <ProjectReference Include="..\ServerSource.Protocol\ServerSource.Protocol.csproj"/>
+        <ProjectReference Include="../Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

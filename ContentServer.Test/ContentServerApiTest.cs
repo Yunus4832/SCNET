@@ -10,10 +10,15 @@ using ContentServer.Application.Commands;
 using ContentServer.Domain.Contents;
 using ContentServer.Domain.Packages;
 using ContentServer.Domain.Publishers;
+using ContentServer.Domain.RendezvousServices;
 using ContentServer.Domain.ServerSources;
 using ContentServer.Infrastructure;
 
+using Game;
+using Game.Content;
+using Game.Managers;
 using Game.Modding;
+using Game.Servers;
 
 using MediatR;
 
@@ -24,6 +29,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using NetCorePal.Extensions.Domain;
+
+using Rendezvous.Protocol;
 
 using ServerSource.Protocol;
 
@@ -804,6 +811,152 @@ public sealed class ContentServerApiTest : IDisposable
     }
 
     [Fact]
+    public async Task RendezvousServiceSubmissionReviewQueryAndDeleteFormOneFlow()
+    {
+        await using var factory = CreateFactory(useStubRendezvousInspection: true);
+        using var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/api/v1/administrators/initialize", new
+        {
+            name = "Administrator",
+            apiKey = _administratorKey
+        });
+
+        using var publisherApplicationResponse = await client.PostAsJsonAsync("/api/v1/publishers", new
+        {
+            displayName = "Rendezvous Publisher",
+            contact = "publisher@example.test"
+        });
+        var publisherApplication = await ReadDataAsync(publisherApplicationResponse);
+        var publisherId = publisherApplication.GetProperty("publisherId").GetString()!;
+        var publisherKey = publisherApplication.GetProperty("apiKey").GetString()!;
+        using var approvePublisher = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/publishers/{publisherId}/approve", _administratorKey);
+        approvePublisher.Content = JsonContent.Create(new { });
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approvePublisher)).StatusCode);
+
+        using var submissionRequest = CreateAuthorizedRequest(HttpMethod.Post,
+            "/api/v1/publisher/rendezvous-services", publisherKey);
+        submissionRequest.Content = JsonContent.Create(new
+        {
+            name = "Community",
+            controlUrl = "https://source.example/servers",
+            description = "Community servers"
+        });
+        using var submissionResponse = await client.SendAsync(submissionRequest);
+        Assert.Equal(HttpStatusCode.Created, submissionResponse.StatusCode);
+        var submission = await ReadDataAsync(submissionResponse);
+        var id = submission.GetProperty("id").GetString();
+        Assert.Equal("pending", submission.GetProperty("status").GetString());
+        Assert.Equal(publisherId, submission.GetProperty("publisherId").GetString());
+        Assert.DoesNotContain((await ReadDataAsync(await client.GetAsync("/api/v1/rendezvous-services"))).GetProperty("items").EnumerateArray(),
+            item => item.GetProperty("id").GetString() == id);
+
+        using var publisherSourcesRequest = CreateAuthorizedRequest(HttpMethod.Get,
+            "/api/v1/publisher/rendezvous-services", publisherKey);
+        var publisherSources = await ReadDataAsync(await client.SendAsync(publisherSourcesRequest));
+        Assert.Equal(id, Assert.Single(publisherSources.EnumerateArray()).GetProperty("id").GetString());
+
+        using var listRequest = CreateAuthorizedRequest(HttpMethod.Get,
+            "/api/v1/admin/rendezvous-services?status=Pending", _administratorKey);
+        var pending = await ReadDataAsync(await client.SendAsync(listRequest));
+        var pendingSource = Assert.Single(pending.EnumerateArray());
+        Assert.Equal(id, pendingSource.GetProperty("id").GetString());
+        Assert.Equal("Rendezvous Publisher", pendingSource.GetProperty("publisherName").GetString());
+
+        using var approveRequest = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/rendezvous-services/{id}/approve", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approveRequest)).StatusCode);
+        var publicSources = await ReadDataAsync(await client.GetAsync("/api/v1/rendezvous-services"));
+        Assert.Contains(publicSources.GetProperty("items").EnumerateArray(), item => item.GetProperty("name").GetString() == "Community");
+
+        using var gameHttp = factory.CreateClient();
+        using var gameClient = new ContentServerClient(gameHttp.BaseAddress!.AbsoluteUri, gameHttp);
+        var publicRecord = Assert.Single(await gameClient.ListRendezvousServicesAsync());
+        Assert.Equal(id, publicRecord.Id);
+        var installedManager = new RendezvousManager(new RendezvousSettings(), _ => { });
+        var installedService = new InstalledRendezvousService
+        {
+            Name = publicRecord.Name,
+            ControlUrl = publicRecord.ControlUrl,
+            RegistrationId = publicRecord.Id
+        };
+        installedManager.Add(installedService);
+        var installedSettings = RendezvousManager.Read(RendezvousManager.Write(new RendezvousSettings { Services = installedManager.Snapshot() }));
+        Assert.Equal(installedService.ControlUrl, Assert.Single(installedSettings.Services).ControlUrl);
+        var roomSettings = new P2PRoomSettings { Enabled = true }.SelectService(installedService);
+        installedManager.Delete(installedService.Id);
+        Assert.Equal(publicRecord.ControlUrl, roomSettings.ControlUrl);
+        Assert.Equal(publicRecord.Name, roomSettings.ServiceName);
+
+        using var otherApplicationResponse = await client.PostAsJsonAsync("/api/v1/publishers", new
+        {
+            displayName = "Other publisher",
+            contact = "other@example.test"
+        });
+        var otherApplication = await ReadDataAsync(otherApplicationResponse);
+        var otherKey = otherApplication.GetProperty("apiKey").GetString()!;
+        using var approveOther = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/publishers/{otherApplication.GetProperty("publisherId").GetString()}/approve", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approveOther)).StatusCode);
+        using var foreignEdit = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/publisher/rendezvous-services/{id}/edit", otherKey);
+        foreignEdit.Content = JsonContent.Create(new { name = "Hijacked", controlUrl = "https://source.example/servers" });
+        Assert.Equal(HttpStatusCode.NotFound, (await client.SendAsync(foreignEdit)).StatusCode);
+        using var foreignDelete = CreateAuthorizedRequest(HttpMethod.Delete,
+            $"/api/v1/publisher/rendezvous-services/{id}", otherKey);
+        Assert.Equal(HttpStatusCode.NotFound, (await client.SendAsync(foreignDelete)).StatusCode);
+        using var unauthorizedDisable = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/rendezvous-services/{id}/disable", publisherKey);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.SendAsync(unauthorizedDisable)).StatusCode);
+        using var duplicate = CreateAuthorizedRequest(HttpMethod.Post,
+            "/api/v1/publisher/rendezvous-services", publisherKey);
+        duplicate.Content = JsonContent.Create(new { name = "Duplicate", controlUrl = "https://source.example/servers/" });
+        Assert.Equal(HttpStatusCode.Conflict, (await client.SendAsync(duplicate)).StatusCode);
+
+        using var secondSubmission = CreateAuthorizedRequest(HttpMethod.Post,
+            "/api/v1/publisher/rendezvous-services", publisherKey);
+        secondSubmission.Content = JsonContent.Create(new { name = "Second", controlUrl = "https://second.example/" });
+        var secondId = (await ReadDataAsync(await client.SendAsync(secondSubmission))).GetProperty("id").GetString();
+        using var approveSecond = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/rendezvous-services/{secondId}/approve", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(approveSecond)).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await client.GetAsync("/api/v1/rendezvous-services?pageIndex=101")).StatusCode);
+        var firstPage = await ReadDataAsync(await client.GetAsync("/api/v1/rendezvous-services?pageIndex=1&pageSize=1"));
+        var secondPage = await ReadDataAsync(await client.GetAsync("/api/v1/rendezvous-services?pageIndex=2&pageSize=1"));
+        Assert.Equal(2, firstPage.GetProperty("total").GetInt32());
+        Assert.Equal(1, firstPage.GetProperty("pageSize").GetInt32());
+        Assert.NotEqual(Assert.Single(firstPage.GetProperty("items").EnumerateArray()).GetProperty("id").GetString(),
+            Assert.Single(secondPage.GetProperty("items").EnumerateArray()).GetProperty("id").GetString());
+
+        using var edit = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/publisher/rendezvous-services/{id}/edit", publisherKey);
+        edit.Content = JsonContent.Create(new { name = "Edited", controlUrl = "https://edited.example/", description = "Changed" });
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(edit)).StatusCode);
+        Assert.DoesNotContain((await ReadDataAsync(await client.GetAsync("/api/v1/rendezvous-services")))
+            .GetProperty("items").EnumerateArray(), item => item.GetProperty("id").GetString() == id);
+        using var reapprove = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/rendezvous-services/{id}/approve", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(reapprove)).StatusCode);
+        using var disable = CreateAuthorizedRequest(HttpMethod.Post,
+            $"/api/v1/admin/rendezvous-services/{id}/disable", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(disable)).StatusCode);
+        Assert.DoesNotContain((await ReadDataAsync(await client.GetAsync("/api/v1/rendezvous-services")))
+            .GetProperty("items").EnumerateArray(), item => item.GetProperty("id").GetString() == id);
+
+        using var deleteRequest = CreateAuthorizedRequest(HttpMethod.Delete,
+            $"/api/v1/admin/rendezvous-services/{id}", _administratorKey);
+        Assert.Equal(HttpStatusCode.OK, (await client.SendAsync(deleteRequest)).StatusCode);
+        Assert.DoesNotContain((await ReadDataAsync(await client.GetAsync("/api/v1/rendezvous-services"))).GetProperty("items").EnumerateArray(),
+            item => item.GetProperty("id").GetString() == id);
+
+        await using var scope = factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<ContentServerDbContext>();
+        Assert.True(await db.RendezvousServices.WhereDeleted(new Deleted(true)).AnyAsync(source =>
+            source.Id == new RendezvousServiceRegistrationId(Guid.Parse(id!))));
+        Assert.Contains(await db.ReviewRecords.ToArrayAsync(), record => record.TargetType == "RendezvousService");
+    }
+
+    [Fact]
     public async Task BuiltInServerDirectorySupportsPublisherAndAdministratorWorkflow()
     {
         await using var factory = CreateFactory();
@@ -949,7 +1102,8 @@ public sealed class ContentServerApiTest : IDisposable
         }
     }
 
-    private WebApplicationFactory<Program> CreateFactory(bool useStubServerSourceInspection = false)
+    private WebApplicationFactory<Program> CreateFactory(bool useStubServerSourceInspection = false,
+        bool useStubRendezvousInspection = false)
     {
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
@@ -960,6 +1114,11 @@ public sealed class ContentServerApiTest : IDisposable
                     ["ContentServer:DatabasePath"] = _databasePath,
                     ["ContentServer:PackageStoragePath"] = _storagePath
                 }));
+            if (useStubRendezvousInspection)
+            {
+                builder.ConfigureServices(services => services.AddSingleton(_ =>
+                    new RendezvousInspectionClient(new HttpClient(new RendezvousDescriptorHandler()))));
+            }
             if (useStubServerSourceInspection)
             {
                 builder.ConfigureServices(services =>
@@ -1025,6 +1184,15 @@ public sealed class ContentServerApiTest : IDisposable
         {
             return Task.FromResult(new ServerSourceSnapshot(new ServerSourceDescriptor("source", "Source"), []));
         }
+    }
+
+    private sealed class RendezvousDescriptorHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
+            Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = JsonContent.Create(new RendezvousDescriptor(9521, null, "rooms"))
+            });
     }
 
 }

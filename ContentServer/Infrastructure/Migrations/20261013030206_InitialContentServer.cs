@@ -291,6 +291,33 @@ public partial class InitialContentServer : Migration
             });
 
         migrationBuilder.CreateTable(
+            name: "RendezvousServices",
+            columns: table => new
+            {
+                Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                Deleted = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: false),
+                Name = table.Column<string>(type: "TEXT", nullable: false),
+                ControlUrl = table.Column<string>(type: "TEXT", nullable: false),
+                PublisherId = table.Column<Guid>(type: "TEXT", nullable: false),
+                Description = table.Column<string>(type: "TEXT", nullable: true),
+                Status = table.Column<string>(type: "TEXT", nullable: false),
+                ReviewMessage = table.Column<string>(type: "TEXT", nullable: true),
+                CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                UpdatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                ReviewedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true)
+            },
+            constraints: table =>
+            {
+                table.PrimaryKey("PK_RendezvousServices", x => x.Id);
+                table.ForeignKey(
+                    name: "FK_RendezvousServices_Publishers_PublisherId",
+                    column: x => x.PublisherId,
+                    principalTable: "Publishers",
+                    principalColumn: "Id",
+                    onDelete: ReferentialAction.Restrict);
+            });
+
+        migrationBuilder.CreateTable(
             name: "ServerSources",
             columns: table => new
             {
@@ -414,6 +441,21 @@ public partial class InitialContentServer : Migration
             column: "Status");
 
         migrationBuilder.CreateIndex(
+            name: "IX_RendezvousServices_ControlUrl",
+            table: "RendezvousServices",
+            column: "ControlUrl");
+
+        migrationBuilder.CreateIndex(
+            name: "IX_RendezvousServices_PublisherId",
+            table: "RendezvousServices",
+            column: "PublisherId");
+
+        migrationBuilder.CreateIndex(
+            name: "IX_RendezvousServices_Status",
+            table: "RendezvousServices",
+            column: "Status");
+
+        migrationBuilder.CreateIndex(
             name: "IX_ServerSources_ApiUrl",
             table: "ServerSources",
             column: "ApiUrl");
@@ -449,6 +491,9 @@ public partial class InitialContentServer : Migration
 
         migrationBuilder.DropTable(
             name: "PublisherKeys");
+
+        migrationBuilder.DropTable(
+            name: "RendezvousServices");
 
         migrationBuilder.DropTable(
             name: "ReviewRecords");
