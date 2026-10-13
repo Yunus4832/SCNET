@@ -1,6 +1,9 @@
+using System.Net.Sockets;
+
 using Engine.Graphics;
 using Engine.Input;
 using Engine.Media;
+using Engine.Network;
 
 using Game.Network;
 using Game.Network.Enums;
@@ -45,20 +48,45 @@ public static class DebugOverlayManager
 
         var scale = new Vector2(MathUtils.Round(MathUtils.Clamp(ScreensManager.RootWidget.GlobalScale, 1f, 4f)));
         var margin = 4f * scale.X;
-        var contextSize = MeasurePanel(_contextText, scale);
-        var worldSize = string.IsNullOrEmpty(_worldText) ? Vector2.Zero : MeasurePanel(_worldText, scale);
-        var minimumPanelWidth = MeasurePanel(new string('W', 36), scale).X;
+        var maximumPanelWidth = MathUtils.Min(MeasurePanel(new string('W', 42), scale).X, Display.Viewport.Width * 0.45f);
+        var contentWidth = MathUtils.Max(1f, maximumPanelWidth - 10f * scale.X);
+        var contextText = WrapPanelText(_contextText, contentWidth, scale.X);
+        var worldText = WrapPanelText(_worldText, contentWidth, scale.X);
+        var contextSize = MeasurePanel(contextText, scale);
+        var worldSize = string.IsNullOrEmpty(worldText) ? Vector2.Zero : MeasurePanel(worldText, scale);
+        var minimumPanelWidth = MathUtils.Min(MeasurePanel(new string('W', 36), scale).X, maximumPanelWidth);
         var panelWidth = MathUtils.Max(minimumPanelWidth, MathUtils.Max(contextSize.X, worldSize.X));
+        var stackedHeight = contextSize.Y + worldSize.Y + (worldSize.Y > 0f ? 3f : 2f) * margin;
+        var fit = MathUtils.Min(1f, MathUtils.Min((Display.Viewport.Width - 2f * margin) / panelWidth,
+            Display.Viewport.Height / stackedHeight));
+        var sideBySide = false;
+        if (worldSize.Y > 0f && fit < 1f)
+        {
+            var sideFit = MathUtils.Min(1f, MathUtils.Min((Display.Viewport.Width - 3f * margin) / (2f * panelWidth),
+                (Display.Viewport.Height - 2f * margin) / MathUtils.Max(contextSize.Y, worldSize.Y)));
+            if (sideFit > fit)
+            {
+                sideBySide = true;
+                fit = sideFit;
+            }
+        }
+        fit = MathUtils.Max(0.01f, fit);
+        scale *= fit;
+        margin *= fit;
+        contextSize *= fit;
+        worldSize *= fit;
+        panelWidth *= fit;
         contextSize.X = panelWidth;
         worldSize.X = panelWidth;
         var contextPosition = new Vector2(Display.Viewport.Width - margin - contextSize.X, margin);
-        DrawPanel(_contextText, contextPosition, contextSize, scale);
+        DrawPanel(contextText, contextPosition, contextSize, scale);
 
         if (!string.IsNullOrEmpty(_worldText))
         {
-            var worldPosition = new Vector2(Display.Viewport.Width - margin - worldSize.X,
-                contextPosition.Y + contextSize.Y + margin);
-            DrawPanel(_worldText, worldPosition, worldSize, scale);
+            var worldPosition = sideBySide
+                ? new Vector2(margin, margin)
+                : new Vector2(contextPosition.X, contextPosition.Y + contextSize.Y + margin);
+            DrawPanel(worldText, worldPosition, worldSize, scale);
         }
 
         _primitivesRenderer.Flush();
@@ -106,16 +134,84 @@ public static class DebugOverlayManager
         lines.Add(string.Empty);
         lines.Add("NETWORK");
         lines.Add($"Mode        {CommonLib.WorkType}");
-        if (CommonLib.WorkType == WorkType.Client && CommonLib.Net.Server?.Peer is { } peer)
+        var node = CommonLib.Net;
+        if (CommonLib.WorkType == WorkType.Client && node.Server?.Peer is { } peer)
         {
+            lines.Add($"Path        {GetPathText(peer.PathKind)}");
+            lines.Add($"IP          {(peer.TransportEndpoint.AddressFamily == AddressFamily.InterNetworkV6 ? "IPv6" : "IPv4")}");
+            lines.Add($"{(peer.PathKind == NetworkPathKind.Relay ? "Relay peer" : "Server peer"),-12}{peer.TransportEndpoint}");
+            var signalingAddress = node.RemoteTarget switch
+            {
+                InvitationCodeNetworkTarget target => target.ControlAddress,
+                InvitationSessionNetworkTarget target => target.ControlAddress,
+                _ => null
+            };
+            if (signalingAddress is not null)
+            {
+                lines.Add($"Signaling   {signalingAddress.AbsoluteUri}");
+            }
             lines.Add($"Ping        {peer.RoundTripMilliseconds} ms");
             lines.Add($"Packet Loss {peer.PacketLossPercent:0.##}%");
+            lines.Add($"Pending ACK {peer.PendingReliableBytes / 1024f:0.##} KB");
         }
         else if (CommonLib.WorkType == WorkType.Server)
         {
-            lines.Add($"Clients     {CommonLib.Net.ClientCount - 1}");
+            var connections = node.Peers.Select(client => client.Peer).Where(peer => peer?.IsConnected == true).ToArray();
+            lines.Add($"Listen UDP  {node.LocalPort?.ToString() ?? "--"}");
+            lines.Add($"Clients     {connections.Length}");
+            lines.Add($"Direct      {connections.Count(peer => peer!.PathKind == NetworkPathKind.Direct)}");
+            lines.Add($"P2P direct  {connections.Count(peer => peer!.PathKind == NetworkPathKind.HolePunch)}");
+            lines.Add($"Relay       {connections.Count(peer => peer!.PathKind == NetworkPathKind.Relay)}");
+            var roomState = "Off";
+            if (node.InvitationControlAddress is not null)
+            {
+                roomState = node.InvitationCode is not null ? "Registered" :
+                    string.IsNullOrEmpty(node.InvitationError) ? "Registering" : "Retrying";
+            }
+            lines.Add($"P2P room    {roomState}");
+            if (node.InvitationControlAddress is { } signalingAddress)
+            {
+                lines.Add($"Signaling   {signalingAddress.AbsoluteUri}");
+            }
+            if (!string.IsNullOrEmpty(node.InvitationError))
+            {
+                lines.Add($"P2P error   {node.InvitationError}");
+            }
         }
 
+        return string.Join('\n', lines);
+    }
+
+    private static string GetPathText(NetworkPathKind kind) => kind switch
+    {
+        NetworkPathKind.Direct => "Address direct",
+        NetworkPathKind.HolePunch => "P2P direct",
+        NetworkPathKind.Relay => "Relay",
+        _ => kind.ToString()
+    };
+
+    private static string WrapPanelText(string text, float width, float scale)
+    {
+        var lines = new List<string>();
+        foreach (var line in text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))
+        {
+            var offset = 0;
+            var indent = line.Length > 12 && line[11] == ' ' ? new string(' ', 12) : string.Empty;
+            do
+            {
+                var prefix = offset == 0 ? string.Empty : indent;
+                var available = width - BitmapFont.DebugFont.MeasureText(prefix, new Vector2(scale), Vector2.Zero).X;
+                if (available <= 0f)
+                {
+                    prefix = string.Empty;
+                    available = width;
+                }
+                var count = BitmapFont.DebugFont.FitText(available, line, offset, line.Length - offset, scale, 0f);
+                count = MathUtils.Min(line.Length - offset, MathUtils.Max(1, count));
+                lines.Add(prefix + line.Substring(offset, count));
+                offset += count;
+            } while (offset < line.Length);
+        }
         return string.Join('\n', lines);
     }
 

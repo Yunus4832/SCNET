@@ -17,6 +17,11 @@ For text input, discover and tap the TextBoxWidget, send input/text, then read i
 Unnamed textboxes are discoverable too. After closing a modal panel, wait until gameplay context
 reports ModalPanel=null; key processing and panel animations are asynchronous.
 
+For list selection, prefer the exact `Item[index]` target returned by `context/get` and invoke `tap`.
+Only currently visible rows whose centers are inside the list are exposed; scroll and rediscover
+targets for other rows. Rediscover after refreshing, filtering or reordering a list; do not reuse
+old indexes or selectors.
+
 Prefer `durationSeconds` for walking, flying and sustained digging. A frame count is not a fixed
 time interval: uncapped desktop runs can execute hundreds of frames before the next HTTP request.
 Relative mouse delta is delivered once, not every frame of the gesture. Adjust from observed camera

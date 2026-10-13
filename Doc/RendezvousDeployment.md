@@ -158,6 +158,9 @@ dotnet NetworkProbe.dll client https://signal.example/ auto 012345 0 Allowed
 按需要调整 `Logging:LogLevel`。诊断保留阶段、分类和错误码；不要记录或公开票据、主机/参与者凭据、
 中继密钥和完整请求正文。六位码只是定位方式，不能代替游戏身份验证或中继认证。
 
+GUI 的 F3 网络面板显示客户端实际连接方式（地址直连、P2P 直连或中继）、IPv4/IPv6、传输端点、信令地址、延迟、丢包率及待确认可靠数据量。
+中继端点明确标为 `Relay peer`，不是房主地址。房主端显示实际 UDP 监听端口、各连接方式的人数、P2P 房间注册状态及失败原因。
+面板限制宽度，较长的地址和错误会换行，续行与字段值对齐。面板不展示联机码、票据或密钥。
 
 UDP 请求未收到应答报告 `UdpUnavailable`；中继探测未收到应答报告 `RelayUnavailable`；
 候选打洞超时或房主尚未注册报告 `HolePunchUnavailable`。诊断中的 Operation 与 ErrorCode 标明失败阶段。

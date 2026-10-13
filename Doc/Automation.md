@@ -14,7 +14,7 @@ GUI 命令不会在 Headless 宿主上发现或执行。
 | --- | --- |
 | `automation/ui/context/get` | 当前 Screen、Dialog、可交互控件的 selector、文本、边界和 actions；库存槽位还包含库存 ID、索引、物品值和数量 |
 | `automation/gameplay/context/get` | 本地角色位置、速度、相机、准星目标、区块状态、生命、飞行/浸水/着地、暂停与面板状态、库存 |
-| `automation/ui/screenshot` | 保存实际渲染截图，返回资源路径和尺寸 |
+| `automation/ui/screenshot` | 保存实际渲染截图（包含已开启的 F3 调试面板），返回资源路径和尺寸 |
 | `automation/input/run` | 同时按住键和鼠标按钮，并发送一次相对鼠标移动 |
 | `automation/input/status` | 最近的组合输入 ID、状态、累计帧数/秒数与取消原因 |
 | `automation/input/cancel` | 松开组合输入所持有的合成键和按钮 |
@@ -100,3 +100,5 @@ Status 为 turning、aligned、failed 或 cancelled，ErrorDegrees 给出最新�
 gameplay/context/get 返回 CameraType、YawDegrees、PitchDegrees；出生过场还未结束时应等待 FppCamera。
 视角控制、导航和组合输入互斥；新的键鼠动作、手动移动/转向/交互、相机变化、面板、死亡或睡眠
 会取消视角控制。其他相机仍可使用原始鼠标输入，切换相机仍可使用 V；天气键盘操作不变。
+
+列表中当前可见且中心位于列表范围内的可选行以 `Item[index]` 目标提供 `tap`。索引属于当前列表，刷新后必须重新发现目标；点击经正常输入处理，不直接修改选中项。

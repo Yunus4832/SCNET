@@ -76,6 +76,31 @@ public static class AutomationUiContext
                 GetActions(widget), slot, widget.HitTestGlobal((bounds.Min + bounds.Max) / 2f)?.GetType().Name);
         }
 
+        if (widget is ListPanelWidget { IsSelectionEnabled: true, IsVisibleGlobal: true, IsEnabledGlobal: true } list)
+        {
+            foreach (var (index, row) in list.WidgetsByIndex.OrderBy(item => item.Key))
+            {
+                if (row.ParentWidget != list || !row.IsVisibleGlobal)
+                {
+                    continue;
+                }
+                var bounds = row.GlobalBounds;
+                var center = (bounds.Min + bounds.Max) / 2f;
+                if (bounds.Max.X <= bounds.Min.X || bounds.Max.Y <= bounds.Min.Y ||
+                    center.X < list.GlobalBounds.Min.X || center.X > list.GlobalBounds.Max.X ||
+                    center.Y < list.GlobalBounds.Min.Y || center.Y > list.GlobalBounds.Max.Y)
+                {
+                    continue;
+                }
+                var text = row is LabelWidget label ? label.Text : row is ContainerWidget panel
+                    ? string.Join(" | ", panel.Children.OfType<LabelWidget>().Select(item => item.Text))
+                    : row.Title;
+                yield return new AutomationTarget($"{path}/Item[{index}]", row.GetType().Name, text,
+                    bounds.Min.X, bounds.Min.Y, bounds.Max.X - bounds.Min.X, bounds.Max.Y - bounds.Min.Y,
+                    true, ["tap"], HitTargetType: list.GetType().Name);
+            }
+        }
+
         if (widget is not ContainerWidget container)
         {
             yield break;

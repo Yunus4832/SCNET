@@ -26,6 +26,7 @@ public static class AutomationScreenshot
         {
             Display.RenderTarget = target;
             ScreensManager.Draw();
+            DebugOverlayManager.Draw();
         }
         finally
         {
