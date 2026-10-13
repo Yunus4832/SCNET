@@ -4,16 +4,13 @@
         <AssemblyName>TerritoryStoneMod</AssemblyName>
         <RootNamespace>TerritoryStoneMod</RootNamespace>
         <SurvivalcraftModId>scnet.territory</SurvivalcraftModId>
-        <SurvivalcraftContentTool>$(MSBuildThisFileDirectory)../ContentTool/bin/$(Configuration)/$(GlobalTargetFramework)/SCNET.ContentTool.dll</SurvivalcraftContentTool>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj" Private="false"/>
-        <ProjectReference Include="..\ContentTool\ContentTool.csproj" ReferenceOutputAssembly="false"/>
+        <PackageReference Include="SCNET.Survivalcraft" Version="$(ScnetVersion)" ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.ContentTool" Version="$(ScnetVersion)" PrivateAssets="all"/>
         <EmbeddedResource Include="Resources\TerritoryDatabase.xml"/>
         <EmbeddedResource Include="Resources\BlocksData.txt"/>
         <EmbeddedResource Include="Resources\Lang\*.json" WithCulture="false"/>
     </ItemGroup>
-
-    <Import Project="..\ContentTool\SCNET.ContentTool.targets"/>
 </Project>

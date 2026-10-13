@@ -5,7 +5,8 @@ profile 中安装同一模组；游戏不会自动启用它。
 
 ## 开发构建
 
-在仓库根目录执行：
+模组通过 `SCNET.Survivalcraft` 和 `SCNET.ContentTool` NuGet 包构建。
+在仓库根目录先按 [NuGet 包文档](../Doc/NuGet.md)生成当前 SDK 包，再执行：
 
 ```sh
 dotnet build TerritoryStoneMod/TerritoryStoneMod.csproj
