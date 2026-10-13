@@ -128,22 +128,6 @@ public static class CommonLib
         return new PackageStreamReader(payload);
     }
 
-    /// <summary>
-    ///     写入服务器信息
-    /// </summary>
-    /// <param name="w"></param>
-    public static void WriteServerInfo(NetDataWriter w)
-    {
-        var subsystemGameInfo = GameManager.Project!.FindSubsystem<SubsystemGameInfo>(true)!;
-        var subsystemTimeOfDay = GameManager.Project!.FindSubsystem<SubsystemTimeOfDay>(true)!;
-
-        w.Put(VersionsManager.ProtocolVersion);
-        w.Put((ushort)Net.ClientCount);
-        w.Put(subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount);
-        w.Put((byte)subsystemGameInfo.WorldSettings.GameMode);
-        w.Put(subsystemTimeOfDay.CalculateTimeOfDay());
-    }
-
     public static string GetInnerIp()
     {
         var ipHost = Dns.GetHostAddresses(Dns.GetHostName());

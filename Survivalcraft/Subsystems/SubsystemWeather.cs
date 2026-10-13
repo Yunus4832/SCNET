@@ -529,17 +529,6 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                 FreezeThawAndDepositSnow(chunk, 0.66f, 0.66f, false); //new,冻结方法有更新
             }
         };
-        SubsystemTerrain.TerrainUpdater.ChunkInitialized += delegate (TerrainChunk chunk) //new
-        {
-            if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != EnvironmentBehaviorMode.Living)
-            {
-                return;
-            }
-
-            FreezeThawAndDepositSnow(chunk, 1f, 1f, _subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled);
-            FreezeThawAndDepositSnow(chunk, 0.66f, 0.66f,
-                _subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled);
-        };
     }
 
     public override void Save(ValuesDictionary valuesDictionary)

@@ -14,7 +14,7 @@ public sealed class ContentServerClientModTest : IDisposable
     private readonly string _root = Path.Combine(Path.GetTempPath(), $"scnet-modrepo-{Guid.NewGuid():N}");
 
     [Fact]
-    public void ClientParsesVersionResponseAndDownloadsIntoLocalRepository()
+    public async Task DownloadServiceParsesVersionResponseAndDownloadsIntoLocalRepository()
     {
         Directory.CreateDirectory(_root);
         var packageBytes = CreatePackageBytes("example.test", "1.0.0");
@@ -50,14 +50,17 @@ public sealed class ContentServerClientModTest : IDisposable
 
             return new HttpResponseMessage(HttpStatusCode.NotFound);
         }));
-        using var client = new ContentServerClient("https://mods.example/", httpClient);
+        var source = new ContentRepository { Name = "Mods", BaseUrl = "https://mods.example/" };
+        using var pool = new ContentServerClientPool(new TestClientFactory(httpClient));
+        var cache = new ContentPackageCache(_root);
+        var service = new ContentDownloadService(pool, cache);
+        var context = ContentSourceContext.Persistent([source]);
+        var result = await service.DownloadExactModAsync(context, "example.test", "1.0.0", packageHash);
         var repository = new LocalModRepository(_root);
+        var localEntry = Assert.Single(repository.ListAll());
 
-        var package = client.FindMod("example.test", "1.0.0");
-        var localEntry = client.DownloadMod(package!, repository);
-
-        Assert.Equal("example.test", package!.ModId);
-        Assert.Equal("1.0.0", package.Version);
+        Assert.False(result.WasCached);
+        Assert.Equal(new ContentSourceId(Guid.Empty, source.Id), result.Source);
         Assert.Equal("example.test", localEntry.ModId);
         Assert.Equal("1.0.0", localEntry.Version);
         Assert.Equal(packageHash, localEntry.PackageHash);
@@ -126,12 +129,13 @@ public sealed class ContentServerClientModTest : IDisposable
     }
 
     [Fact]
-    public void ClientLoadsAllPagedRepositoryResults()
+    public async Task ClientLoadsCurrentCatalogPages()
     {
         var packages = Enumerable.Range(1, 11)
-            .Select(index => new ContentServerModPackage
+            .Select(index => new ContentCatalogItem
             {
-                ModId = $"example.{index}",
+                Identifier = $"example.{index}",
+                Type = "Mod",
                 Version = "1.0.0",
                 PackageHash = index.ToString("x64"),
                 FileName = $"example.{index}.scpkg",
@@ -158,11 +162,13 @@ public sealed class ContentServerClientModTest : IDisposable
         }));
         using var client = new ContentServerClient("https://mods.example", httpClient);
 
-        var result = client.ListMods();
+        var first = await client.ListPageAsync(new ContentCatalogQuery(Type: "Mod", PageSize: 10));
+        var second = await client.ListPageAsync(new ContentCatalogQuery(Type: "Mod", PageIndex: 2, PageSize: 10));
 
-        Assert.Equal(11, result.Count);
-        Assert.Equal("example.1", result[0].ModId);
-        Assert.Equal("example.11", result[10].ModId);
+        Assert.Equal(11, first.Total);
+        Assert.Equal(10, first.Items.Count);
+        Assert.Equal("example.1", first.Items[0].Identifier);
+        Assert.Equal("example.11", Assert.Single(second.Items).Identifier);
     }
 
     public void Dispose()
@@ -192,6 +198,14 @@ public sealed class ContentServerClientModTest : IDisposable
                                                      """,
             new Dictionary<string, string> { ["data/marker.txt"] = "data" });
         return stream.ToArray();
+    }
+
+    private sealed class TestClientFactory(HttpClient httpClient) : ContentServerClientFactory
+    {
+        public override ContentServerClient Create(ContentRepository repository)
+        {
+            return new ContentServerClient(repository.BaseUrl, httpClient);
+        }
     }
 
     private sealed class StubHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> handler)

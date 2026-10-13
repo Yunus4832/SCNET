@@ -223,36 +223,6 @@ public sealed class ContentServerClient : IDisposable
         throw new InvalidDataException("ContentServer version history exceeds the client paging limit.");
     }
 
-    public IReadOnlyList<ContentServerModPackage> ListMods() => RunSync(ListModsAsync);
-
-    public ContentServerModPackage? FindMod(string modId, string version) =>
-        RunSync(cancellationToken => FindModAsync(modId, version, cancellationToken));
-
-    public LocalModPackageEntry DownloadMod(ContentServerModPackage package, LocalModRepository repository) =>
-        RunSync(cancellationToken => DownloadModAsync(package, repository, cancellationToken));
-
-    private async Task<IReadOnlyList<ContentServerModPackage>> ListModsAsync(CancellationToken cancellationToken)
-    {
-        var items = new List<ContentServerModPackage>();
-        for (var pageIndex = 1; pageIndex <= _maximumCatalogPages; pageIndex++)
-        {
-            var page = await GetPageAsync<ContentServerModPackage>(
-                $"api/v1/mods?pageIndex={pageIndex}&pageSize=10", cancellationToken).ConfigureAwait(false);
-            if (page.Items.Count == 0)
-            {
-                return items;
-            }
-
-            items.AddRange(page.Items);
-            if (items.Count >= page.Total)
-            {
-                return items;
-            }
-        }
-
-        throw new InvalidDataException("ContentServer mod catalog exceeds the client paging limit.");
-    }
-
     public async Task<ContentServerModPackage?> FindModAsync(string modId, string version,
         CancellationToken cancellationToken = default)
     {
@@ -270,25 +240,6 @@ public sealed class ContentServerClient : IDisposable
         var result = await ReadJsonAsync<ContentServerResponse<ContentServerModPackage>>(response,
             cancellationToken).ConfigureAwait(false);
         return result?.Data;
-    }
-
-    private async Task<LocalModPackageEntry> DownloadModAsync(ContentServerModPackage package,
-        LocalModRepository repository, CancellationToken cancellationToken)
-    {
-        ArgumentNullException.ThrowIfNull(package);
-        ArgumentNullException.ThrowIfNull(repository);
-        var existing = repository.FindByHash(package.PackageHash);
-        if (existing is not null)
-        {
-            return existing;
-        }
-
-        using var response = await _httpClient.GetAsync(package.DownloadUrl,
-            HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
-        response.EnsureSuccessStatusCode();
-        EnsurePackageSize(response);
-        await using var content = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        return repository.AddPackageExact(content, package.ModId, package.Version, package.PackageHash);
     }
 
     public async Task<ContentPackageCacheEntry> DownloadToCacheAsync(
@@ -384,9 +335,6 @@ public sealed class ContentServerClient : IDisposable
         return await JsonSerializer.DeserializeAsync<T>(buffer, JsonSerializerOptions.Web, cancellationToken)
             .ConfigureAwait(false);
     }
-
-    private static T RunSync<T>(Func<CancellationToken, Task<T>> action) =>
-        action(CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
 }
 
 public sealed record ContentServerHealth(string Name, string Version);

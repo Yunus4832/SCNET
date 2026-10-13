@@ -12,7 +12,6 @@
 代码库当前显式引用的主要外部包包括：
 
 - `LiteNetLib`：网络通信
-- `Newtonsoft.Json`：JSON 读写
 - `MessagePack`：实体系统相关序列化
 - `NAudio.Core`、`NAudio.Flac.Unknown`、`NLayer.NAudioSupport`、`NVorbis`：音频解码与播放
 - `Silk.NET.OpenAL`、`Silk.NET.OpenGLES`、`Silk.NET.OpenGL`、`Silk.NET.Input`、`Silk.NET.Windowing`：窗口、输入与图形抽象

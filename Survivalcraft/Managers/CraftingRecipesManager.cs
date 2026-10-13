@@ -9,10 +9,6 @@ public static class CraftingRecipesManager
 {
     private static readonly List<CraftingRecipe> _recipes = [];
 
-    private static Action _initialize1 = Actions.Empty;
-
-    private static Action? _initialized = Actions.Empty;
-
     private const string _typeName = nameof(CraftingRecipesManager);
 
     public static ReadOnlyList<CraftingRecipe> ReadonlyRecipes => new(_recipes);
@@ -25,11 +21,6 @@ public static class CraftingRecipesManager
     }
 
     public static void Initialize(XElement source)
-    {
-        Initialize(source, false);
-    }
-
-    private static void Initialize(XElement source, bool useLegacyHooks)
     {
         _recipes.Clear();
         var source2 = source.Descendants("Recipe");
@@ -44,12 +35,12 @@ public static class CraftingRecipesManager
                     string.Concat("CRDescription:", desc.AsSpan(1, desc.Length - 2)));
             }
 
-            craftingRecipe.ResultValue = DecodeResult(attributeValue, useLegacyHooks);
+            craftingRecipe.ResultValue = DecodeResult(attributeValue);
             craftingRecipe.ResultCount = XmlUtils.GetAttributeValue<int>(item, "ResultCount");
             var attributeValue2 = XmlUtils.GetAttributeValue(item, "Remains", string.Empty);
             if (!string.IsNullOrEmpty(attributeValue2))
             {
-                craftingRecipe.RemainsValue = DecodeResult(attributeValue2, useLegacyHooks);
+                craftingRecipe.RemainsValue = DecodeResult(attributeValue2);
                 craftingRecipe.RemainsCount = XmlUtils.GetAttributeValue<int>(item, "RemainsCount");
             }
 
@@ -76,7 +67,7 @@ public static class CraftingRecipesManager
                                   where a.Name.LocalName.Length == 1 && char.IsLower(a.Name.LocalName[0])
                                   select a)
             {
-                DecodeIngredient(item2.Value, useLegacyHooks, out var craftingId, out var data);
+                DecodeIngredient(item2.Value, out var craftingId, out var data);
                 if (BlocksManager.FindBlocksByCraftingId(craftingId).Length == 0)
                 {
                     throw new InvalidOperationException($"Block with craftingId \"{item2.Value}\" not found.");
@@ -124,7 +115,6 @@ public static class CraftingRecipesManager
             _recipes.AddRange(block.GetProceduralCraftingRecipes());
         }
 
-        _initialized?.Invoke();
         _recipes.Sort(delegate (CraftingRecipe r1, CraftingRecipe r2)
         {
             var y = r1.Ingredients.Count(s => !string.IsNullOrEmpty(s));
@@ -215,11 +205,6 @@ public static class CraftingRecipesManager
 
     public static int DecodeResult(string result)
     {
-        return DecodeResult(result, true);
-    }
-
-    private static int DecodeResult(string result, bool useLegacyHooks)
-    {
         if (string.IsNullOrEmpty(result))
         {
             return 0;
@@ -233,15 +218,6 @@ public static class CraftingRecipesManager
     }
 
     public static void DecodeIngredient(string ingredient, out string craftingId, out int? data)
-    {
-        DecodeIngredient(ingredient, true, out craftingId, out data);
-    }
-
-    private static void DecodeIngredient(
-        string ingredient,
-        bool useLegacyHooks,
-        out string craftingId,
-        out int? data)
     {
         var array = ingredient.Split([':'], StringSplitOptions.None);
         craftingId = array[0];

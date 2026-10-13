@@ -185,13 +185,6 @@ public class TerrainUpdater
     /// </summary>
     public event Action<TerrainChunk>? OnChunkDiscard;
 
-#pragma warning disable CS0067 // Event is never used
-    /// <summary>
-    ///     区块初始化事件（已弃用）
-    /// </summary>
-    public event Action<TerrainChunk>? ChunkInitialized;
-#pragma warning restore CS0067 // Event is never used
-
     /// <summary>
     ///     地形更新进度完成事件
     /// </summary>

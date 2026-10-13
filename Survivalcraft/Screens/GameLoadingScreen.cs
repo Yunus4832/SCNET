@@ -20,15 +20,11 @@ public class GameLoadingScreen : Screen
 
     private readonly StringBuilder _builder = new();
 
-    public bool ExistBlockTexture;
-
     private bool _isAdventureRestart;
 
     private bool _isServerReply;
 
     private bool _isWorldSnapshotApplied;
-
-    private byte[] _blockTextureData = [];
 
     private byte[] _projectXmlData = [];
 
@@ -167,9 +163,7 @@ public class GameLoadingScreen : Screen
                     ScreensManager.FindScreen<GameScreen>("Game", true)!.Children
                         .Find<ContainerWidget>("GamesWidget")!);
                 _projectXmlData = [];
-                _blockTextureData = [];
                 _isServerReply = false;
-                ExistBlockTexture = false;
                 _stateMachine.TransitionTo("WaitWorldSnapshot");
             },
             Actions.Empty

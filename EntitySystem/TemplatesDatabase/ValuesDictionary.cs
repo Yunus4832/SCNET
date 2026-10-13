@@ -294,19 +294,6 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
         }
     }
 
-    public string ToJsonText()
-    {
-        var jsonText = MessagePackSerializer.ConvertToJson(ToMessagePack());
-        return jsonText;
-    }
-
-    public void ApplyOverridesUseJson(string jsonText, out byte[] data)
-    {
-        jsonText = jsonText.Replace("Infinity", "999999999");
-        data = MessagePackSerializer.ConvertFromJson(jsonText);
-        ApplyOverridesUseMessagePack(data);
-    }
-
     public byte[] ToMessagePack()
     {
         var dic = new Dictionary<object, object>();
