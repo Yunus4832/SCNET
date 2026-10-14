@@ -2,7 +2,6 @@ using System.Runtime.InteropServices;
 
 using Engine.Core;
 using Engine.FileStorage;
-using Engine.Media;
 
 using Silk.NET.OpenGLES;
 
@@ -238,26 +237,6 @@ public class Texture2D : GraphicsResource
         }
 
         return num;
-    }
-
-    public static Texture2D Load(LegacyImage image, int mipLevelsCount = 1)
-    {
-        var texture2D = new Texture2D(image.Width, image.Height, mipLevelsCount, ColorFormat.Rgba8888);
-        if (mipLevelsCount > 1)
-        {
-            var array = LegacyImage.GenerateMipmaps(image, mipLevelsCount).ToArray();
-            for (var i = 0; i < array.Length; i++)
-            {
-                texture2D.SetData(i, array[i].Pixels);
-            }
-        }
-        else
-        {
-            texture2D.SetData(0, image.Pixels);
-        }
-
-        texture2D.Tag = image;
-        return texture2D;
     }
 
     public static Texture2D Load(Image image, int mipLevelsCount = 1)

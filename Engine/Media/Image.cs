@@ -97,22 +97,6 @@ public class Image
         TrueImage = image;
     }
 
-    public Image(LegacyImage image)
-    {
-        ArgumentNullException.ThrowIfNull(image);
-        TrueImage = new Image<Rgba32>(DefaultImageSharpConfiguration, image.Width, image.Height);
-        ProcessPixelRows(accessor =>
-            {
-                var pixels = image.Pixels.AsSpan();
-                for (var y = 0; y < accessor.Height; y++)
-                {
-                    MemoryMarshal.Cast<Color, Rgba32>(pixels.Slice(y * image.Width, image.Height))
-                        .CopyTo(accessor.GetRowSpan(y));
-                }
-            }
-        );
-    }
-
     public Image(int width, int height)
     {
         if (width < 0)
