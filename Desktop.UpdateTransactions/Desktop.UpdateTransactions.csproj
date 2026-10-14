@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>SCNET.Desktop.UpdateTransactions</AssemblyName>
+        <RootNamespace>Scnet.Desktop.Updates</RootNamespace>
+    </PropertyGroup>
+</Project>

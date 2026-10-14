@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<DesktopReleaseManifest>
+    <Platform>windows-x64</Platform>
+    <Files>
+        <string>SurvivalcraftStarter.exe</string>
+        <string>Content.zip</string>
+        <string>SDL2.dll</string>
+        <string>soft_oal.dll</string>
+    </Files>
+</DesktopReleaseManifest>

@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+<DesktopReleaseManifest>
+    <Platform>linux-x64</Platform>
+    <Files>
+        <string>SurvivalcraftStarter</string>
+        <string>Content.zip</string>
+        <string>libSDL2-2.0.so</string>
+        <string>libopenal.so</string>
+    </Files>
+</DesktopReleaseManifest>

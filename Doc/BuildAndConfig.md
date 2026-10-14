@@ -205,3 +205,39 @@ Linux 发布信令服务还生成 `Publish/rendezvous-server-<版本>-linux-amd6
 服务包含 `appsettings.json` 和 `Deployment/run.sh`；探针包含 `README.md` 及 `scripts/` 下的本机、地址族隔离与 NAT 场景工具。
 脚本使用 Python 3 标准库；隔离场景还需要文档中列出的 Linux 网络工具。配置、HTTPS/UDP 开放与探针使用见
 [信令服务部署](RendezvousDeployment.md)。普通 `dotnet build` 不生成这些发行物。
+
+### 桌面更新包
+
+Windows/Linux 的便携 ZIP 包携带 `DesktopRelease.xml`，声明平台和由更新管理的根目录发行文件。
+解决方案的 Desktop 分组包含共享库 `Desktop.UpdateTransactions` 和测试项目
+`Desktop.UpdateTransactions.Test`。共享库使用命名空间 `Scnet.Desktop.Updates`，负责清单验证、暂存、进程交接、
+文件更新事务、回滚和中断恢复，不依赖游戏或 Engine。Windows/Linux Starter 通过项目引用调用共享库，
+平台文件替换和通知保留在各自项目中。游戏通过退出动作提交更新请求，由 Starter 在游戏运行结束后接管。类库随单文件发布合并，不额外发布更新器或依赖 shell/PowerShell。
+当前 Linux 集合为 `SurvivalcraftStarter`、`Content.zip`、`libSDL2-2.0.so`、`libopenal.so`；Windows 集合为
+`SurvivalcraftStarter.exe`、`Content.zip`、`SDL2.dll`、`soft_oal.dll`。修改发行文件集合时须同步对应清单。
+
+ContentServer 的 `linux-x64`/`windows-x64` 版本下载地址应指向完整便携 ZIP。客户端验证 SHA-256 后检查清单、平台与
+ZIP 文件集合，拒绝目录穿越、符号链接、实例/配置覆盖及清单外文件。执行和恢复顺序见 [启动会话](./StartupSessions.md#桌面程序更新)。
+
+清单使用 XML，`Files` 只列更新管理的根目录文件，清单自身由更新流程统一处理，不列入 `Files`：
+
+```xml
+<DesktopReleaseManifest>
+    <Platform>linux-x64</Platform>
+    <Files>
+        <string>SurvivalcraftStarter</string>
+        <string>Content.zip</string>
+        <string>libSDL2-2.0.so</string>
+        <string>libopenal.so</string>
+    </Files>
+</DesktopReleaseManifest>
+```
+
+更新事务的聚焦测试：
+
+```bash
+dotnet test Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.csproj
+```
+
+测试覆盖清单校验、文件替换、回滚、恢复、其他实例运行时的阻止行为和清理。
+真实进程交接还需通过隔离安装目录验证；Windows 文件锁行为需在 Windows 上验证。

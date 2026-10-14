@@ -10,12 +10,20 @@ using Engine.Windowing;
 using Game;
 using Game.Managers;
 
+using Scnet.Desktop.Updates;
+
 namespace Survivalcraft.Windows;
 
 public class Starter
 {
     public static void Main(string[] args)
     {
+        if (DesktopUpdateCoordinator.HandleStartup(args, AppContext.BaseDirectory, "windows-x64",
+                DesktopUpdateFiles.Replace, DesktopUpdateFiles.Notify))
+        {
+            return;
+        }
+
         var instance = RegisterStorageRoots(args);
         PlatformManager.RegisterPlatform(Platform.Desktop);
         PlatformManager.RegisterWebBrowserLauncher(OpenUrl);
@@ -35,6 +43,8 @@ public class Starter
             return;
         }
 
+        PlatformManager.RegisterUpdateSupport(Path.Combine(Path.GetTempPath(), "scnet-updates"),
+            ".zip", "ConfirmDesktopInstall");
         RunMode.Value = RunModeType.Gui;
         PlatformManager.RegisterTextInput(new SdlTextInputBackend());
         PlatformManager.RegisterClipboard(new SdlClipboardBackend());
@@ -42,11 +52,41 @@ public class Starter
         Window.IconStream = LoadWindowIcon();
         PlatformManager.QueueLaunchUris(runningSetting.RemainingArgs);
         var exitAction = GameEntry.EntryPoint(startup);
+        if (exitAction is GameExitAction.Update)
+        {
+            InstallDesktopUpdate(GameExitManager.UpdatePackagePath);
+            return;
+        }
+
         if (exitAction is GameExitAction.Restart or GameExitAction.SwitchInstance)
         {
             Restart(exitAction is GameExitAction.SwitchInstance
                 ? GameExitManager.SwitchInstanceId
                 : instance.Id);
+        }
+    }
+
+    private static void InstallDesktopUpdate(string path)
+    {
+        try
+        {
+            var task = DesktopUpdateCoordinator.Prepare(path, AppContext.BaseDirectory, "windows-x64");
+            DesktopUpdateCoordinator.Launch(task);
+        }
+        catch (Exception exception)
+        {
+            Console.Error.WriteLine($"Could not start desktop update: {exception}");
+            DesktopUpdateFiles.Notify($"{LanguageManager.GetContentWidgets("GameInformationManager", "DesktopInstallFailed")}\n{GameExitManager.UpdateDownloadUrl}\n{exception.Message}", true);
+            return;
+        }
+
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            Console.Error.WriteLine($"Could not remove downloaded update: {exception.Message}");
         }
     }
 

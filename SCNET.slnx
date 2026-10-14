@@ -50,6 +50,10 @@
     </Folder>
 
     <Folder Name="/05 Desktop/">
+        <Project Path="Desktop.UpdateTransactions/Desktop.UpdateTransactions.csproj"/>
+        <Project Path="Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="Survivalcraft.Linux\Survivalcraft.Linux.csproj"/>
         <Project Path="Survivalcraft.Windows\Survivalcraft.Windows.csproj"/>
     </Folder>

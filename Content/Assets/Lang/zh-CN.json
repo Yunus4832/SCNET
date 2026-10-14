@@ -3597,7 +3597,9 @@
             "DownloadFailed": "下载或校验失败，请重试",
             "NoInformationSourceTitle": "未选择公告与版本来源",
             "NoInformationSourceBody": "请先在内容仓库管理中选择公告与版本来源。",
-            "ReleaseCheckFailed": "无法从“{0}”检查游戏版本，请检查服务器地址和网络连接。"
+            "ReleaseCheckFailed": "无法从“{0}”检查游戏版本，请检查服务器地址和网络连接。",
+            "ConfirmDesktopInstall": "已校验来自 {0} 的 {1} 更新包。关闭其他实例后，退出并更新？完成后请重新启动游戏。",
+            "DesktopInstallFailed": "无法执行自动更新。请关闭其他实例，并确认安装目录可写。也可以打开下载链接手动更新，保留实例和配置。"
         },
         "ManageRendezvousScreen": {
             "Title": "管理信令服务器",

@@ -3597,7 +3597,9 @@
             "DownloadFailed": "Falha no download ou verificação. Tente novamente.",
             "NoInformationSourceTitle": "Sem fonte de anúncios e versões",
             "NoInformationSourceBody": "Selecione primeiro uma fonte de anúncios e versões nas configurações de repositórios.",
-            "ReleaseCheckFailed": "Não foi possível verificar as versões do jogo em “{0}”. Verifique o endereço do servidor e a conexão de rede."
+            "ReleaseCheckFailed": "Não foi possível verificar as versões do jogo em “{0}”. Verifique o endereço do servidor e a conexão de rede.",
+            "ConfirmDesktopInstall": "A atualização {1} de {0} foi verificada. Feche as outras instâncias e saia para atualizar? Inicie o jogo novamente quando terminar.",
+            "DesktopInstallFailed": "Não foi possível iniciar a atualização automática. Feche as outras instâncias e confirme que a pasta de instalação permite escrita. Pode abrir a ligação e atualizar manualmente, mantendo as instâncias e definições."
         },
         "ManageRendezvousScreen": {
             "Title": "Serviços de sinalização",

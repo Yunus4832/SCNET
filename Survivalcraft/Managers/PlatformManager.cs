@@ -8,9 +8,11 @@ public static class PlatformManager
 
     private static Action<string>? _instanceLauncher;
 
-    private static Action<string>? _apkInstaller;
+    private static string? _updateDownloadExtension;
 
-    private static string? _apkDownloadDirectory;
+    private static string? _updateConfirmationKey;
+
+    private static string? _updateDownloadDirectory;
 
     public static Platform Platform { get; private set; } = Platform.Desktop;
 
@@ -57,21 +59,23 @@ public static class PlatformManager
         _instanceLauncher = launcher;
     }
 
-    public static void RegisterApkInstaller(Action<string> installer, string downloadDirectory)
+    public static void RegisterUpdateSupport(string downloadDirectory, string extension, string confirmationKey)
     {
-        _apkInstaller = installer;
-        _apkDownloadDirectory = downloadDirectory;
+        _updateDownloadDirectory = downloadDirectory;
+        _updateDownloadExtension = extension;
+        _updateConfirmationKey = confirmationKey;
     }
 
-    public static bool CanInstallApk => _apkInstaller is not null;
+    public static bool CanRequestUpdate => _updateDownloadDirectory is not null;
 
-    public static string ApkDownloadDirectory => _apkDownloadDirectory
-        ?? throw new InvalidOperationException("APK download directory is unavailable.");
+    public static string UpdateDownloadDirectory => _updateDownloadDirectory
+        ?? throw new InvalidOperationException("Update download directory is unavailable.");
 
-    public static void InstallApk(string path)
-    {
-        (_apkInstaller ?? throw new InvalidOperationException("APK installation is unavailable."))(path);
-    }
+    public static string UpdateDownloadExtension => _updateDownloadExtension
+        ?? throw new InvalidOperationException("Update download extension is unavailable.");
+
+    public static string UpdateConfirmationKey => _updateConfirmationKey
+        ?? throw new InvalidOperationException("Update confirmation is unavailable.");
 
     public static bool CanLaunchInstance => _instanceLauncher != null;
 

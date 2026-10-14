@@ -165,7 +165,7 @@ Headless 不使用这个机制准备模组。它在启动阶段直接解析 prof
 
 ## 应用生命周期命令
 
-主菜单的电源菜单通过应用域命令请求重新启动、切换实例、切换运行模式或退出，不直接关闭窗口。`GameExitManager` 统一产生 `Exit`、`Restart` 或 `SwitchInstance` 动作，再由 Windows、Linux 或 Android Starter 完成平台级退出和重启。
+主菜单的电源菜单通过应用域命令请求重新启动、切换实例、切换运行模式或退出，不直接关闭窗口。`GameExitManager` 统一产生 `Exit`、`Restart`、`SwitchInstance` 或 `Update` 动作，再由 Windows、Linux 或 Android Starter 完成平台级退出和重启。
 
 `SetRunModeCommand` 可以携带可选的重启 session。提供 session 时，下一次启动恢复到其中描述的世界或目标；不提供时，不会临时询问用户，而是继续使用 pending、default 或 Headless 自身的默认解析逻辑。主菜单若让用户选择了 Headless 存档，会在执行命令前构造对应的 `World` session。
 
@@ -217,3 +217,31 @@ NetPlay 每次连接或恢复都会重新准备路径并获取 ServerInfo，同�
 ### P2P房间会话覆盖
 
 `P2POverrides` 随会话XML保存及重启恢复。有效值按本次请求、已保存会话、世界复制配置的顺序确定；未提供的值保留世界设置。覆盖只用于当前开服，不回写世界，也不读取实例安装列表。`--save` 保存覆盖到会话；世界选择信令服务时仍直接复制地址和名称。
+
+## 桌面程序更新
+
+Windows/Linux Starter 在注册 Storage、选择实例和加载游戏之前检查更新任务。`--apply-update <绝对任务路径>`
+和 `--recover-update <绝对任务路径>` 仅供暂存发行包的 Starter 使用，不进入普通 `StartupRequest` 或 session。
+正常启动时，Starter 先处理安装目录下 `.update/task.xml`；更新资料不写入实例配置或 `.runtime`。
+
+游戏确认安装后调用 `GameExitManager.RequestUpdate`，以 `GameExitAction.Update` 结束游戏运行并将控制权交回 Starter。
+已校验包路径和原下载地址只保存在本进程的临时请求中，不写入配置或 session；下次游戏初始化时清空。
+平台注册下载目录、包后缀和确认文案，游戏不调用平台安装器，也不处理安装失败后的平台行为。
+桌面 Starter 在游戏退出后准备更新事务和启动暂存进程；Android GameActivity 返回更新结果，
+由 MainActivity 调用系统安装器并结束应用进程。安装请求失败由平台启动器反馈，旧发行文件保留。
+
+- 正常：没有更新任务，按现有流程启动。
+- 更新中：游戏下载并校验 ZIP，用户确认后游戏结束运行，Starter 核对 `DesktopRelease.xml` 和发行文件集合，解压到
+  `.update/staged`，启动其中的新 Starter。新进程确认接手后，旧进程正常退出；新 Starter 等待旧 PID
+  和启动时间对应的进程结束，再完整备份到 `.update/backup` 并替换发行文件。
+- 已更新未清理：完成记录保留，用户重新启动正式目录中的 Starter 时清理暂存包、备份和任务，再进入游戏。
+  清理失败只记录日志，下次重试，不阻塞正常启动。
+
+同一安装目录的其他实例必须先退出，不强制结束它们。更新不修改 `Instances`、`Starter.xml` 或用户自建文件。
+替换失败时恢复旧发行文件并删除本次新增的文件；回滚失败保留任务和备份。发现中断的替换任务时，正式 Starter
+启动暂存 Starter 执行恢复并退出，恢复完成后请用户重新启动。准备阶段尚未修改正式文件的遗留任务可直接清理。
+回滚仅覆盖文件替换失败或中断，不自动判断新版本的业务功能是否正常。
+
+桌面安装需要可写的便携安装目录，不自动提权。无法执行自动更新时提供原下载链接；手动关闭所有实例并替换发行文件，
+保留实例和配置。更新完成后不自动启动游戏。Headless 不检查版本、不注册游戏内更新入口，但首次启动仍会处理安装目录的
+恢复或清理任务。

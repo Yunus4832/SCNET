@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk" InitialTargets="PackResource">
+<Project Sdk="Microsoft.NET.Sdk" InitialTargets="PackResource">
 
     <PropertyGroup>
         <AssemblyName>SurvivalcraftStarter</AssemblyName>
@@ -20,6 +20,12 @@
     <PropertyGroup>
         <UsePackResourceTarget>true</UsePackResourceTarget>
     </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Desktop.UpdateTransactions\Desktop.UpdateTransactions.csproj"/>
+        <None Update="DesktopRelease.xml" CopyToOutputDirectory="PreserveNewest"
+              CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true"/>
+    </ItemGroup>
 
     <ItemGroup>
         <None Include="Content.zip">

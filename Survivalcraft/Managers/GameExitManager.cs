@@ -1,11 +1,4 @@
-namespace Game;
-
-public enum GameExitAction
-{
-    Exit,
-    Restart,
-    SwitchInstance
-}
+namespace Game.Managers;
 
 public static class GameExitManager
 {
@@ -14,6 +7,21 @@ public static class GameExitManager
     public static event Action<GameExitAction>? ExitRequested;
 
     public static string SwitchInstanceId { get; private set; } = string.Empty;
+
+    public static string UpdatePackagePath { get; private set; } = string.Empty;
+
+    public static string UpdateDownloadUrl { get; private set; } = string.Empty;
+
+    public static void RequestUpdate(string packagePath, string downloadUrl)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(packagePath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(downloadUrl);
+        UpdatePackagePath = packagePath;
+        UpdateDownloadUrl = downloadUrl;
+        ExitAction = GameExitAction.Update;
+        ExitRequested?.Invoke(ExitAction);
+        RequestApplicationExit();
+    }
 
     public static void RequestRestart(SessionInfo? sessionInfo = null)
     {
@@ -45,6 +53,8 @@ public static class GameExitManager
     {
         ExitAction = GameExitAction.Exit;
         SwitchInstanceId = string.Empty;
+        UpdatePackagePath = string.Empty;
+        UpdateDownloadUrl = string.Empty;
     }
 
     private static void RequestRestartInternal(SessionInfo? sessionInfo, ModProfile? sessionProfile)

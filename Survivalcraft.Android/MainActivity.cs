@@ -4,12 +4,16 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Runtime;
 
+using AndroidX.Core.Content;
+
 using Game;
 using Game.Commands;
+using Game.Managers;
 
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
 using AndroidProviderSettings = Android.Provider.Settings;
+using AndroidUri = Android.Net.Uri;
 using GamePlatformManager = Game.Managers.PlatformManager;
 using Permission = Android.Content.PM.Permission;
 
@@ -42,6 +46,7 @@ public class MainActivity : BlackActivity
     internal const int exitResultCode = 100;
     internal const int restartResultCode = 101;
     internal const int switchInstanceResultCode = 102;
+    internal const int updateResultCode = 103;
     internal const string instanceIdExtra = "Survivalcraft.Android.InstanceId";
     internal const string commandLineExtra = "Survivalcraft.Android.CommandLine";
     internal const string gameArgumentsExtra = "Survivalcraft.Android.GameArguments";
@@ -133,10 +138,47 @@ public class MainActivity : BlackActivity
             case switchInstanceResultCode:
                 RestartApplication(GameExitManager.SwitchInstanceId, _commandLine);
                 break;
+            case updateResultCode:
+                InstallUpdate();
+                break;
             default:
                 ExitApplication();
                 break;
         }
+    }
+
+    private void InstallUpdate()
+    {
+        try
+        {
+            InstallApk(GameExitManager.UpdatePackagePath);
+            ExitApplication();
+        }
+        catch (Exception exception)
+        {
+            global::Android.Util.Log.Error("SCNET", $"Update installation request failed: {exception}");
+            var dialog = new global::Android.App.AlertDialog.Builder(this);
+            dialog.SetTitle(LanguageManager.GetContentWidgets("GameInformationManager", "Install"));
+            dialog.SetMessage($"{LanguageManager.GetContentWidgets("GameInformationManager", "InstallFailed")}\n{exception.Message}");
+            dialog.SetPositiveButton(LanguageManager.Get("Usual", "ok"), (_, _) => ExitApplication());
+            dialog.SetCancelable(false);
+            dialog.Show();
+        }
+    }
+
+    private void InstallApk(string path)
+    {
+        var file = new Java.IO.File(path);
+        if (!file.Exists())
+        {
+            throw new FileNotFoundException("Verified APK was not found.", path);
+        }
+
+        var uri = FileProvider.GetUriForFile(this, $"{PackageName}.updates", file);
+        var intent = new Intent(Intent.ActionInstallPackage);
+        intent.SetData(uri);
+        intent.AddFlags(ActivityFlags.GrantReadUriPermission);
+        StartActivity(intent);
     }
 
     private void ExitApplication()

@@ -189,12 +189,12 @@ public static class GameInformationManager
         var message = string.Format(Text("ReleaseDetails"), source.Name, release.Version,
             release.Description, downloadUri.Host);
         DialogsManager.ShowDialog(null, new MessageDialog(Text("Updates"), message,
-            PlatformManager.CanInstallApk ? Text("Download") : Text("OpenLink"),
+            PlatformManager.CanRequestUpdate ? Text("Download") : Text("OpenLink"),
             LanguageManager.Get("Usual", "no"), button =>
             {
                 if (button == MessageDialogButton.Button1)
                 {
-                    if (PlatformManager.CanInstallApk)
+                    if (PlatformManager.CanRequestUpdate)
                     {
                         ConfirmDownload(source, release);
                     }
@@ -241,9 +241,10 @@ public static class GameInformationManager
                 throw new InvalidDataException("Invalid release metadata.");
             }
 
-            var directory = PlatformManager.ApkDownloadDirectory;
+            var directory = PlatformManager.UpdateDownloadDirectory;
             Directory.CreateDirectory(directory);
-            path = Path.Combine(directory, $"{Guid.NewGuid():N}.apk");
+            var extension = PlatformManager.UpdateDownloadExtension;
+            path = Path.Combine(directory, $"{Guid.NewGuid():N}{extension}");
             using var client = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
             using var response = await client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead,
                 cancellation.Token);
@@ -286,20 +287,13 @@ public static class GameInformationManager
             {
                 DialogsManager.HideDialog(dialog);
                 DialogsManager.ShowDialog(null, new MessageDialog(Text("Install"),
-                    string.Format(Text("ConfirmInstall"), source.Name, release.Version),
+                    string.Format(Text(PlatformManager.UpdateConfirmationKey),
+                        source.Name, release.Version),
                     LanguageManager.Get("Usual", "yes"), LanguageManager.Get("Usual", "no"), button =>
                     {
                         if (button == MessageDialogButton.Button1)
                         {
-                            try
-                            {
-                                PlatformManager.InstallApk(verifiedPath);
-                            }
-                            catch (Exception exception)
-                            {
-                                Log.Error($"APK installation request failed: {exception}");
-                                DialogsManager.Alert(Text("Install"), Text("InstallFailed"));
-                            }
+                            GameExitManager.RequestUpdate(verifiedPath, release.DownloadUrl);
                         }
                         else
                         {
@@ -309,7 +303,7 @@ public static class GameInformationManager
                             }
                             catch (Exception exception)
                             {
-                                Log.Warning($"Could not remove unused APK '{verifiedPath}': {exception}");
+                                Log.Warning($"Could not remove unused update '{verifiedPath}': {exception}");
                             }
                         }
                     }));
@@ -353,7 +347,7 @@ public static class GameInformationManager
                 }
                 catch (Exception exception)
                 {
-                    Log.Warning($"Could not remove partial APK download '{path}': {exception}");
+                    Log.Warning($"Could not remove partial update download '{path}': {exception}");
                 }
             }
 
