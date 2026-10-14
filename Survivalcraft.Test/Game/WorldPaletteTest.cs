@@ -1,6 +1,6 @@
 using Game;
 
-namespace Survivalcraft.Test.Worlds;
+namespace Survivalcraft.Test;
 
 public class WorldPaletteTest
 {
@@ -15,8 +15,13 @@ public class WorldPaletteTest
     [Fact]
     public void SavePreservesOnlyCustomNameOverrides()
     {
-        var palette = new WorldPalette();
-        palette.Names[3] = "Ocean";
+        var palette = new WorldPalette
+        {
+            Names =
+            {
+                [3] = "Ocean"
+            }
+        };
 
         var restored = new WorldPalette(palette.Save());
 

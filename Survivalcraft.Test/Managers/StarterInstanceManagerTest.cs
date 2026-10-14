@@ -5,9 +5,9 @@ using Engine.FileStorage;
 
 using Game.Managers;
 
-namespace Game.Tests;
+namespace Survivalcraft.Test.Managers;
 
-[Collection(Survivalcraft.Test.Modding.ConfigFileCollection.Name)]
+[Collection(Modding.ConfigFileCollection.Name)]
 public sealed class StarterInstanceManagerTest : IDisposable
 {
     private readonly string _directory = Path.Combine(Path.GetTempPath(), $"scnet-starter-{Guid.NewGuid():N}");

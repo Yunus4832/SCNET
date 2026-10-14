@@ -2,7 +2,7 @@ using Engine.Core;
 
 using Game;
 
-namespace Survivalcraft.Test.Lifecycle;
+namespace Survivalcraft.Test;
 
 public sealed class GameExitManagerTest
 {

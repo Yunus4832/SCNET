@@ -1,6 +1,6 @@
 using Game;
 
-namespace Survivalcraft.Test.World;
+namespace Survivalcraft.Test;
 
 public sealed class WorldSeedConverterTest
 {

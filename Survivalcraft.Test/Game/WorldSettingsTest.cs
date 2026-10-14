@@ -2,7 +2,7 @@ using EntitySystem.TemplatesDatabase;
 
 using Game;
 
-namespace Survivalcraft.Test.World;
+namespace Survivalcraft.Test;
 
 public sealed class WorldSettingsTest
 {
