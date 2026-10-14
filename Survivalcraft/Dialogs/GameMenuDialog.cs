@@ -323,8 +323,8 @@ public class GameMenuDialog : Dialog
 
             if (CommonLib.Net.IsServer)
             {
-                list.Add(new Tuple<string, Action>(InvitationStatusDialog.Text("StatusTitle"),
-                    () => DialogsManager.ShowDialog(ParentWidget, new InvitationStatusDialog(CommonLib.Net))));
+                list.Add(new Tuple<string, Action>(P2PRoomStatusDialog.Text("StatusTitle"),
+                    () => DialogsManager.ShowDialog(ParentWidget, new P2PRoomStatusDialog(CommonLib.Net))));
             }
 
             list.Add(new Tuple<string, Action>(LanguageManager.Get(_typeName, 87),

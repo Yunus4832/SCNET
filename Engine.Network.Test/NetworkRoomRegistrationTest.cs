@@ -2,14 +2,14 @@ using Rendezvous.Protocol;
 
 namespace Engine.Network.Test;
 
-public sealed class NetworkInvitationTest
+public sealed class NetworkRoomRegistrationTest
 {
     [Fact]
     public async Task DisposeCancelsPublicationBeforeClosingAndRejectsLaterUpdates()
     {
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var closed = false;
-        var invitation = new NetworkInvitation(Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
+        var invitation = new NetworkRoomRegistration(Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
             CancellationToken.None, _ => Task.FromResult(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5)),
             _ => { closed = true; return Task.CompletedTask; }, (_, _) => { },
             async (_, token) =>
@@ -31,7 +31,7 @@ public sealed class NetworkInvitationTest
     {
         var failure = new HttpRequestException("Control endpoint unavailable.");
         var notified = new TaskCompletionSource<Exception>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var invitation = new NetworkInvitation(Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
+        var invitation = new NetworkRoomRegistration(Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
             CancellationToken.None, _ => Task.FromResult(DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5)),
             _ => Task.CompletedTask, (_, exception) => notified.TrySetResult(exception), (_, _) => Task.CompletedTask,
             _ => Task.FromException(failure));
@@ -47,7 +47,7 @@ public sealed class NetworkInvitationTest
     {
         var renewedUntil = DateTimeOffset.UtcNow + TimeSpan.FromMinutes(10);
         var closed = 0;
-        var invitation = new NetworkInvitation(Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
+        var invitation = new NetworkRoomRegistration(Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
             CancellationToken.None, _ => Task.FromResult(renewedUntil), _ =>
             {
                 Interlocked.Increment(ref closed);
@@ -69,7 +69,7 @@ public sealed class NetworkInvitationTest
     {
         var started = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var closed = false;
-        var invitation = new NetworkInvitation(Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
+        var invitation = new NetworkRoomRegistration(Guid.NewGuid(), "012345", DateTimeOffset.UtcNow + TimeSpan.FromMinutes(5),
             CancellationToken.None, async token =>
             {
                 started.TrySetResult();

@@ -2,14 +2,14 @@ using Rendezvous.Protocol;
 
 namespace Engine.Network;
 
-/// <summary>Maintains an optional invitation without owning the game listener or its connections.</summary>
-public sealed class NetworkInvitation : IAsyncDisposable
+/// <summary>Maintains an optional room registration without owning the game listener or its connections.</summary>
+public sealed class NetworkRoomRegistration : IAsyncDisposable
 {
     private readonly Func<CancellationToken, Task<DateTimeOffset>> _renew;
     private readonly Func<CancellationToken, Task> _close;
     private readonly Func<CancellationToken, Task>? _receiveOffers;
     private readonly Func<RoomPublication, CancellationToken, Task> _updateRoom;
-    private readonly Action<NetworkInvitation, Exception> _failed;
+    private readonly Action<NetworkRoomRegistration, Exception> _failed;
     private readonly CancellationTokenSource _lifetime;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly Task _maintenance;
@@ -18,9 +18,9 @@ public sealed class NetworkInvitation : IAsyncDisposable
     private Exception? _failure;
     private long _expiresAtTicks;
 
-    internal NetworkInvitation(Guid sessionId, string joinCode, DateTimeOffset expiresAt, CancellationToken hostLifetime,
+    internal NetworkRoomRegistration(Guid sessionId, string joinCode, DateTimeOffset expiresAt, CancellationToken hostLifetime,
         Func<CancellationToken, Task<DateTimeOffset>> renew, Func<CancellationToken, Task> close,
-        Action<NetworkInvitation, Exception> failed, Func<RoomPublication, CancellationToken, Task> updateRoom,
+        Action<NetworkRoomRegistration, Exception> failed, Func<RoomPublication, CancellationToken, Task> updateRoom,
         Func<CancellationToken, Task>? receiveOffers = null)
     {
         SessionId = sessionId;

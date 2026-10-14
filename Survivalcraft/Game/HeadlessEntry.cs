@@ -385,6 +385,7 @@ public static class HeadlessEntry
     {
         SettingsManager.Initialize();
         ContentRepositoryManager.Initialize();
+        RendezvousManager.Initialize();
         ServerDirectoryManager.Initialize();
         ContentManager.Initialize();
         PackageManager.Initialize();

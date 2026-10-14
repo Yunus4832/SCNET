@@ -14,8 +14,8 @@ internal sealed class ProbeRunner(Uri control, IPEndPoint? beacon, ProbeBinding 
         var host = session.Host;
         report.Record("bound", new { host.LocalPort });
         await using var invitation = beacon is null
-            ? await host.CreateInvitationAsync(control, http, 8, cancellationToken)
-            : await host.CreateInvitationAsync(signaling, [beacon], 8, cancellationToken);
+            ? await host.RegisterRoomAsync(control, http, 8, cancellationToken)
+            : await host.RegisterRoomAsync(signaling, [beacon], 8, cancellationToken);
         await invitation.RenewAsync(cancellationToken);
         report.Record("invitation-ready");
         host.DatagramReceived += (source, payload) => source.Send(payload);

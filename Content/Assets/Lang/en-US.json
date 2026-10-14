@@ -2632,7 +2632,7 @@
         "48": {
             "Name": "P2P",
             "Title": "P2P Multiplayer",
-            "value": "Preparation: Install a service from Signaling Servers in Community Content, or add its address manually in signaling server management. The host and joining players must use the same signaling service.\\n\\nHosting: Enable the server and P2P in the world server settings, select an installed signaling server, and enter the room name and description. Enable a public room to let other players discover your world in the room list. The world saves a copy of the selected service address and name; editing the installed list does not update existing worlds.\\n\\nJoining: Open the multiplayer list, select Signaling Servers, choose a room, and connect. The second filter selects all installed signaling servers or a specific one. Rooms are temporary and are not added to Favorites or Recent.\\n\\nJoin code: This is an alternative connection option. Select Join Code, enter the signaling address and code provided by the host, and choose the relay policy for this connection. Installing the signaling server first is not required. This option also allows joining rooms that are not public.\\n\\nConnection type: By default, a direct connection is attempted first, with relay available if it fails. Change the room connection relay policy under Diagnostics and Compatibility in Settings; the join code dialog has its own selection. With relay disabled, joining requires a direct connection. Relay-only connections require available relay resources on the service.\\n\\nNetwork tip: Strict NAT can prevent IPv4 hole punching. Try a cellular network with IPv6 support. When both sides have usable public IPv6 addresses and their networks allow UDP traffic, IPv4 NAT restrictions can be bypassed, significantly improving the chance of a direct connection. Cellular networks do not always provide usable IPv6, and IPv6 on only one side is insufficient for an IPv6 direct connection. Keeping relay allowed is recommended.\\n\\nP2P can be enabled alongside connections to the server port. Both sides must be able to reach the signaling service. Direct connectivity depends on the network environment and is not guaranteed by enabling P2P. The room stops accepting connections when the host exits or closes the server."
+            "value": "Preparation: Install a service from Signaling Servers in Community Content, or add its address manually in signaling server management. The host and joining players must use the same signaling service.\\n\\nHosting: Enable the server and P2P in the world server settings, select an installed signaling server, and enter the room name and description. Enable a public room to let other players discover your world in the room list. The world saves a copy of the selected service address and name; editing the installed list does not update existing worlds.\\n\\nJoining: Open the multiplayer list, select Signaling Servers, choose a room, and connect. The second filter selects all installed signaling servers or a specific one. Rooms are temporary and are not added to Favorites or Recent.\\n\\nJoin code: This is an alternative connection option. Select Join Code, enter the signaling address and code provided by the host, and choose the relay policy for this connection. Installing the signaling server first is not required. This option also allows joining rooms that are not public.\\n\\nConnection type: By default, a direct connection is attempted first, with relay available if it fails. Change the room connection relay policy under Diagnostics and Compatibility in Settings; the join code dialog has its own selection. With relay disabled, joining requires a direct connection. Relay-only connections require available relay resources on the service.\\n\\nNetwork tip: Strict NAT can prevent IPv4 hole punching. Try a cellular network with IPv6 support. When both sides have usable public IPv6 addresses and their networks allow UDP traffic, IPv4 NAT restrictions can be bypassed, significantly improving the chance of a direct connection. Cellular networks do not always provide usable IPv6, and IPv6 on only one side is insufficient for an IPv6 direct connection. Keeping relay allowed is recommended.\\n\\nP2P can be enabled alongside connections to the server port. Both sides must be able to reach the signaling service. Direct connectivity depends on the network environment and is not guaranteed by enabling P2P. The room stops accepting connections when the host exits or closes the server.\\n\\nRuntime management: configure the signaling service and room in the world server settings first. Use p2p start, p2p status, and p2p stop. Starting without configuration is rejected. Players need game:server.p2p.manage; the local console can execute directly. Commands do not edit or save configuration. Stopping preserves the game port and existing direct or relay connections."
         },
         "49": {
             "Title": "Disclaimer",
@@ -3628,7 +3628,14 @@
             "AllRepositories": "All content servers",
             "Testing": "Checking signaling service…"
         },
-        "InvitationStatusDialog": {
+        "JoinCodeDialog": {
+            "Title": "Join by Code",
+            "Address": "Signaling URL",
+            "Code": "Join Code",
+            "Relay": "Relay Policy",
+            "InvalidAddress": "Enter a valid HTTPS signaling URL."
+        },
+        "P2PRoomStatusDialog": {
             "Relay": "Joining relay policy",
             "RelayDisabled": "Disable relay",
             "RelayAllowed": "Direct first, relay allowed",
@@ -3641,13 +3648,6 @@
             "Closed": "Invitations are off. Configure them in the world server settings.",
             "Copy": "Copy",
             "Retrying": "Invitations are temporarily unavailable. Retrying."
-        },
-        "JoinCodeDialog": {
-            "Title": "Join by Code",
-            "Address": "Signaling URL",
-            "Code": "Join Code",
-            "Relay": "Relay Policy",
-            "InvalidAddress": "Enter a valid HTTPS signaling URL."
         }
     },
     "FireworksBlock": {
@@ -4140,7 +4140,26 @@
         "MarkMissing_Message": "No mark {0} exists in this scope.",
         "TeleportUnchanged_Message": "The destination is the player being teleported. No teleport was performed.",
         "PermissionManageStandard_Description": "Manage standard command permissions",
-        "TeleportOtherMark_Description": "Teleport another player to a mark"
+        "TeleportOtherMark_Description": "Teleport another player to a mark",
+        "P2PManage_Description": "Manage P2P rooms",
+        "P2P_Description": "Manage P2P rooms",
+        "P2PStart_Description": "Start a P2P room",
+        "P2PStop_Description": "Stop the P2P room",
+        "P2PStatus_Description": "Show P2P room status",
+        "P2PListenerRequired_Message": "The game server is not listening yet.",
+        "P2PWorldRequired_Message": "The server world has not finished loading.",
+        "P2PStopping_Message": "The P2P room is stopping. Try again shortly.",
+        "P2PActive_Message": "The P2P room is active. Join code: {0}.",
+        "P2PRequested_Message": "P2P request accepted. Current state: {0}.",
+        "P2PStopRequested_Message": "P2P stop request accepted. Current state: {0}.",
+        "P2PStatus_Message": "State: {0}\nSignaling: {1}\nRoom: {2}\nJoin code: {3}\nError: {4}",
+        "P2PInvalid_Message": "Invalid P2P configuration. Check the signaling address and room details.",
+        "P2PServiceRequired_Message": "Configure a signaling service in the world server settings first.",
+        "P2PState_Disabled": "Disabled",
+        "P2PState_Registering": "Registering",
+        "P2PState_Active": "Active",
+        "P2PState_RetryWaiting": "Waiting to retry",
+        "P2PState_Stopping": "Stopping"
     },
     "AndroidServer": {
         "Title": "Server Log",

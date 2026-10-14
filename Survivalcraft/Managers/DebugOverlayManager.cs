@@ -162,21 +162,17 @@ public static class DebugOverlayManager
             lines.Add($"Direct      {connections.Count(peer => peer!.PathKind == NetworkPathKind.Direct)}");
             lines.Add($"P2P direct  {connections.Count(peer => peer!.PathKind == NetworkPathKind.HolePunch)}");
             lines.Add($"Relay       {connections.Count(peer => peer!.PathKind == NetworkPathKind.Relay)}");
-            var roomState = "Off";
-            if (node.InvitationControlAddress is not null)
+            var room = node.GetP2PStatus();
+            lines.Add($"P2P room    {room.State}");
+            if (!string.IsNullOrEmpty(room.ControlUrl))
             {
-                roomState = node.InvitationCode is not null ? "Registered" :
-                    string.IsNullOrEmpty(node.InvitationError) ? "Registering" : "Retrying";
+                lines.Add($"Signaling   {room.ControlUrl}");
             }
-            lines.Add($"P2P room    {roomState}");
-            if (node.InvitationControlAddress is { } signalingAddress)
+            if (!string.IsNullOrEmpty(room.LastError))
             {
-                lines.Add($"Signaling   {signalingAddress.AbsoluteUri}");
+                lines.Add($"P2P error   {room.LastError}");
             }
-            if (!string.IsNullOrEmpty(node.InvitationError))
-            {
-                lines.Add($"P2P error   {node.InvitationError}");
-            }
+
         }
 
         return string.Join('\n', lines);

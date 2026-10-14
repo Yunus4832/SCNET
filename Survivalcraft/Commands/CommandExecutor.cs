@@ -58,6 +58,11 @@ public static class CommandExecutor
             correlationId);
     }
 
+    internal static CommandResult ExecuteSystem(IGameCommand command, Project? project)
+    {
+        return Execute(command, CommandInvocationChannel.Internal, CommandPrincipal.System, project, null);
+    }
+
     private static CommandResult Execute(
         string input,
         CommandInvocationChannel channel,

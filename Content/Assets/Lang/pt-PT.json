@@ -2632,7 +2632,7 @@
         "48": {
             "Name": "P2P",
             "Title": "Multijogador P2P",
-            "value": "Preparação: Instale um serviço em Servidores de sinalização, no Conteúdo da comunidade, ou adicione o endereço manualmente na gestão de servidores de sinalização. O anfitrião e os jogadores têm de usar o mesmo serviço.\\n\\nCriar uma sala: Nas definições do servidor do mundo, ative o servidor e o P2P, escolha um servidor de sinalização instalado e preencha o nome e a descrição da sala. Ative a sala pública para que outros jogadores encontrem o mundo na lista de salas. O mundo guarda uma cópia do endereço e do nome do serviço; alterar a lista de serviços instalados não atualiza os mundos existentes.\\n\\nEntrar: Abra a lista multijogador, escolha Servidores de sinalização, selecione uma sala e ligue-se. O segundo filtro permite escolher todos os servidores de sinalização instalados ou apenas um. As salas são temporárias e não são adicionadas aos Favoritos nem aos Recentes.\\n\\nCódigo de ligação: É uma opção alternativa. Escolha Código de ligação, introduza o endereço de sinalização e o código fornecidos pelo anfitrião e selecione a política de retransmissão para esta ligação. Não é necessário instalar o servidor de sinalização primeiro. Também permite entrar em salas não públicas.\\n\\nTipo de ligação: Por predefinição, tenta-se primeiro uma ligação direta e, se falhar, pode usar-se retransmissão. Altere a política para entrar em salas em Diagnóstico e compatibilidade, nas definições; o diálogo do código permite uma escolha independente. Sem retransmissão, é necessária uma ligação direta. A opção de usar apenas retransmissão exige recursos disponíveis no serviço.\\n\\nSugestão de rede: Um NAT restritivo pode impedir a ligação direta por IPv4. Experimente uma rede móvel com suporte IPv6. Quando ambos os lados têm endereços IPv6 públicos utilizáveis e as redes permitem tráfego UDP, é possível evitar as restrições do NAT IPv4 e aumentar significativamente a probabilidade de ligação direta. Nem todas as redes móveis fornecem IPv6 utilizável; apenas um dos lados ter IPv6 não basta para uma ligação direta IPv6. Recomenda-se manter a retransmissão permitida.\\n\\nO P2P pode funcionar em simultâneo com ligações à porta do servidor. Ambos os lados têm de conseguir aceder ao serviço de sinalização. A ligação direta depende da rede e não é garantida ao ativar P2P. A sala deixa de aceitar ligações quando o anfitrião sai ou fecha o servidor."
+            "value": "Preparação: Instale um serviço em Servidores de sinalização, no Conteúdo da comunidade, ou adicione o endereço manualmente na gestão de servidores de sinalização. O anfitrião e os jogadores têm de usar o mesmo serviço.\\n\\nCriar uma sala: Nas definições do servidor do mundo, ative o servidor e o P2P, escolha um servidor de sinalização instalado e preencha o nome e a descrição da sala. Ative a sala pública para que outros jogadores encontrem o mundo na lista de salas. O mundo guarda uma cópia do endereço e do nome do serviço; alterar a lista de serviços instalados não atualiza os mundos existentes.\\n\\nEntrar: Abra a lista multijogador, escolha Servidores de sinalização, selecione uma sala e ligue-se. O segundo filtro permite escolher todos os servidores de sinalização instalados ou apenas um. As salas são temporárias e não são adicionadas aos Favoritos nem aos Recentes.\\n\\nCódigo de ligação: É uma opção alternativa. Escolha Código de ligação, introduza o endereço de sinalização e o código fornecidos pelo anfitrião e selecione a política de retransmissão para esta ligação. Não é necessário instalar o servidor de sinalização primeiro. Também permite entrar em salas não públicas.\\n\\nTipo de ligação: Por predefinição, tenta-se primeiro uma ligação direta e, se falhar, pode usar-se retransmissão. Altere a política para entrar em salas em Diagnóstico e compatibilidade, nas definições; o diálogo do código permite uma escolha independente. Sem retransmissão, é necessária uma ligação direta. A opção de usar apenas retransmissão exige recursos disponíveis no serviço.\\n\\nSugestão de rede: Um NAT restritivo pode impedir a ligação direta por IPv4. Experimente uma rede móvel com suporte IPv6. Quando ambos os lados têm endereços IPv6 públicos utilizáveis e as redes permitem tráfego UDP, é possível evitar as restrições do NAT IPv4 e aumentar significativamente a probabilidade de ligação direta. Nem todas as redes móveis fornecem IPv6 utilizável; apenas um dos lados ter IPv6 não basta para uma ligação direta IPv6. Recomenda-se manter a retransmissão permitida.\\n\\nO P2P pode funcionar em simultâneo com ligações à porta do servidor. Ambos os lados têm de conseguir aceder ao serviço de sinalização. A ligação direta depende da rede e não é garantida ao ativar P2P. A sala deixa de aceitar ligações quando o anfitrião sai ou fecha o servidor.\\n\\nGestão em execução: configure primeiro o serviço de sinalização e a sala nas definições do servidor do mundo. Use p2p start, p2p status e p2p stop. Sem configuração, o início é recusado. Os jogadores precisam de game:server.p2p.manage; a consola local pode executar diretamente. Os comandos não alteram nem guardam configurações. A paragem mantém a porta do jogo e as ligações existentes."
         },
         "49": {
             "Title": "Aviso legal",
@@ -3628,7 +3628,14 @@
             "AllRepositories": "Todos os servidores de conteúdo",
             "Testing": "A verificar o serviço…"
         },
-        "InvitationStatusDialog": {
+        "JoinCodeDialog": {
+            "Title": "Ligar por código",
+            "Address": "URL de sinalização",
+            "Code": "Código",
+            "Relay": "Política de retransmissão",
+            "InvalidAddress": "Introduza um URL HTTPS de sinalização válido."
+        },
+        "P2PRoomStatusDialog": {
             "Relay": "Política de retransmissão",
             "RelayDisabled": "Sem retransmissão",
             "RelayAllowed": "Direta, com retransmissão",
@@ -3641,13 +3648,6 @@
             "Closed": "Os convites estão desligados. Configure-os nas definições do servidor do mundo.",
             "Copy": "Copiar",
             "Retrying": "Os convites estão temporariamente indisponíveis. A tentar novamente."
-        },
-        "JoinCodeDialog": {
-            "Title": "Ligar por código",
-            "Address": "URL de sinalização",
-            "Code": "Código",
-            "Relay": "Política de retransmissão",
-            "InvalidAddress": "Introduza um URL HTTPS de sinalização válido."
         }
     },
     "FireworksBlock": {
@@ -4140,7 +4140,26 @@
         "MarkMissing_Message": "A marca {0} não existe neste âmbito.",
         "TeleportUnchanged_Message": "O destino é o próprio jogador a teleportar. Não foi efetuado qualquer teletransporte.",
         "PermissionManageStandard_Description": "Gerir permissões de comandos padrão",
-        "TeleportOtherMark_Description": "Teleportar outro jogador para uma marca"
+        "TeleportOtherMark_Description": "Teleportar outro jogador para uma marca",
+        "P2PManage_Description": "Gerir salas P2P",
+        "P2P_Description": "Gerir salas P2P",
+        "P2PStart_Description": "Iniciar uma sala P2P",
+        "P2PStop_Description": "Parar a sala P2P",
+        "P2PStatus_Description": "Ver estado da sala P2P",
+        "P2PListenerRequired_Message": "O servidor de jogo ainda não está a escutar.",
+        "P2PWorldRequired_Message": "O mundo do servidor ainda não terminou de carregar.",
+        "P2PStopping_Message": "A sala P2P está a parar. Tente novamente em breve.",
+        "P2PActive_Message": "A sala P2P está ativa. Código: {0}.",
+        "P2PRequested_Message": "Pedido P2P aceite. Estado atual: {0}.",
+        "P2PStopRequested_Message": "Pedido de paragem P2P aceite. Estado atual: {0}.",
+        "P2PStatus_Message": "Estado: {0}\nSinalização: {1}\nSala: {2}\nCódigo: {3}\nErro: {4}",
+        "P2PInvalid_Message": "Configuração P2P inválida. Verifique o endereço de sinalização e os dados da sala.",
+        "P2PServiceRequired_Message": "Configure primeiro um serviço de sinalização nas definições do servidor do mundo.",
+        "P2PState_Disabled": "Desativada",
+        "P2PState_Registering": "A registar",
+        "P2PState_Active": "Ativa",
+        "P2PState_RetryWaiting": "A aguardar nova tentativa",
+        "P2PState_Stopping": "A parar"
     },
     "AndroidServer": {
         "Title": "Registo do servidor",

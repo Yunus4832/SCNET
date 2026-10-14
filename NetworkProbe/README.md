@@ -216,7 +216,7 @@ UDP 控制入口每 IP 每秒最多接受 120 个报文、总计 4096 个，待�
 
 准备对象只能执行一次连接操作，释放会取消其未完成握手；成功连接由宿主持有，释放准备对象不关闭连接或共享宿主。邀请候选验证后每两秒发送一次已认证挑战以保持路径，准备对象期限为两分钟；超期拒绝应用数据报和握手。正式连接时或释放准备对象时回收对应保活状态。等待期间通过 `ExtendLeaseAsync` 周期续约，规则见后文“准备租约”。
 
-房主通过 `CreateInvitationAsync` 获取 `NetworkInvitation`，Engine 每 20 秒续约会话并重新完成 UDP 端点注册。探针在输出 READY 前也显式执行一次续约。邀请的 `Failure`、`Maintenance` 和宿主的 `InvitationFailed` 通知可用于观察后台失败；通知仍由 `DispatchEvents` 派发。关闭邀请取消维护任务并撤销会话，宿主关闭时也回收其邀请；邀请本身不拥有游戏监听或已建立连接。
+房主通过 `RegisterRoomAsync` 获取 `NetworkRoomRegistration`，Engine 每 20 秒续约会话并重新完成 UDP 端点注册。探针在输出 READY 前也显式执行一次续约。邀请的 `Failure`、`Maintenance` 和宿主的 `RoomRegistrationFailed` 通知可用于观察后台失败；通知仍由 `DispatchEvents` 派发。关闭邀请取消维护任务并撤销会话，宿主关闭时也回收其邀请；邀请本身不拥有游戏监听或已建立连接。
 
 Engine 通过失败通知报告邀请维护终止；Game 保留现有监听和连接，并按 4、8、16、30 秒退避重新注册。游戏模组准备期间每 20 秒续约路径，重启只保存逻辑目标，并重新获取路径和 ServerInfo。探针不包含这套 Game 模组业务。
 

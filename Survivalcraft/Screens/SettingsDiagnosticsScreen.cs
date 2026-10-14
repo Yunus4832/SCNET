@@ -39,7 +39,7 @@ public class SettingsDiagnosticsScreen : Screen
                 ((int)SettingsManager.Current.InvitationRelayPolicy + 1) % Enum.GetValues<RelayPolicy>().Length);
             SettingsManager.SaveSettings();
         }
-        _relayPreference.Text = InvitationStatusDialog.Text($"Relay{SettingsManager.Current.InvitationRelayPolicy}");
+        _relayPreference.Text = P2PRoomStatusDialog.Text($"Relay{SettingsManager.Current.InvitationRelayPolicy}");
         if (_displayDebugInfoButton.IsClicked)
         {
             DebugOverlayManager.ToggleVisibility();

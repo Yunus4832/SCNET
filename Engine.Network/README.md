@@ -61,9 +61,9 @@ HTTP 客户端须保持有效直到相关准备和邀请释放完成。
 
 ## 邀请、中继与诊断
 
-`CreateInvitationAsync` 返回 `NetworkInvitation`，后台维护邀请租约与端点注册。
-关闭邀请禁止后续加入，已有连接按自身生命周期继续运行。
-维护失败由 `InvitationFailed` 通知调用方；Game 在业务层实现退避重新注册。
+`RegisterRoomAsync` 返回 `NetworkRoomRegistration`，后台维护房间租约与端点注册。
+关闭注册停止新的信令加入，清理对应会话的端点、候选和未连接中继准备；已有连接按自身生命周期继续运行。普通监听不关闭，已知直连端点仍可使用。
+维护失败由 `RoomRegistrationFailed` 通知调用方；Game 在业务层实现退避重新注册。
 
 中继数据报绑定路由、双方身份及密钥，验证来源和重放序号，计入 MTU 开销。
 地址变化后重新协商。关闭通知与空闲回收共同管理路由释放。

@@ -4,14 +4,13 @@ using Engine.Network;
 
 using EntitySystem.Core;
 
+using Game.Commands;
 using Game.Network.Enums;
 using Game.Network.Packages;
 using Game.Network.Serialization;
 using Game.Servers;
 
 using LiteNetLib.Utils;
-
-using Rendezvous.Protocol;
 
 namespace Game.Network;
 
@@ -43,23 +42,21 @@ public class NetNode
 
     private readonly Dictionary<Client, string> _clientsToRemove = new(ReferenceEqualityComparer.Instance);
 
-    private HttpClient? _invitationHttp;
-    private CancellationTokenSource? _invitationCancellation;
-    private Task<NetworkInvitation>? _invitationStarting;
-    private NetworkInvitation? _invitation;
-    private Task? _invitationClosing;
-    private int _invitationCapacity;
-    private RoomPublication _invitationPublication = new(string.Empty, string.Empty, false);
-    private int _invitationRetryCount;
-    private DateTimeOffset _invitationRetryAt;
+    private P2PRoomController _p2p = new();
 
-    public Uri? InvitationControlAddress { get; private set; }
+    public P2PRoomSettings P2PConfiguration => _p2p.Configuration;
 
-    public string? InvitationCode => _invitation?.IsActive == true ? _invitation.JoinCode : null;
+    public P2PRoomStatus GetP2PStatus() => new(
+        _p2p.State, _p2p.DesiredEnabled, IsServer && _host is not null,
+        IsServer && GameManager.Project is not null,
+        _p2p.Configuration.ServiceName, _p2p.Configuration.ControlUrl,
+        _p2p.Configuration.Name, _p2p.Configuration.Description, _p2p.Configuration.IsPublic,
+        _p2p.Capacity, _p2p.Registration?.SessionId, _p2p.Registration?.JoinCode,
+        _p2p.LastError, _p2p.NextRetryAt);
 
-    public bool IsInvitationStarting => InvitationControlAddress is not null && _invitation?.IsActive != true;
+    public void StartP2P(P2PRoomSettings configuration) => _p2p.Start(configuration);
 
-    public string InvitationError { get; private set; } = string.Empty;
+    public void StopP2P() => _p2p.Stop();
 
     private NetworkHost? _host;
     private CancellationTokenSource? _connectingCancellation;
@@ -550,19 +547,7 @@ public class NetNode
             CurrentStage = Stage.Connected;
             Server = Self;
             CommonLib.WorkType = WorkType.Server;
-            if (room.Enabled)
-            {
-                try
-                {
-                    StartInvitation(new Uri(room.ControlUrl), Math.Clamp(maxParticipants, 1, 32),
-                        new RoomPublication(room.Name, room.Description, room.IsPublic));
-                }
-                catch (Exception e)
-                {
-                    InvitationError = e.Message;
-                    Log.Warning($"Could not start invitation: {e.Message}");
-                }
-            }
+            _p2p.Bind(_host, room, maxParticipants);
             return true;
         }
         catch (Exception e)
@@ -571,71 +556,6 @@ public class NetNode
             Log.Error($"Failed to start server: {e}");
             throw;
         }
-    }
-
-    public void StartInvitation(Uri controlAddress, int capacity, RoomPublication publication)
-    {
-        if (!IsServer || _host is null)
-        {
-            throw new InvalidOperationException("Invitations require an active server listener.");
-        }
-        if (InvitationControlAddress is not null)
-        {
-            throw new InvalidOperationException("Invitation already started.");
-        }
-        if (!publication.IsValid)
-        {
-            throw new ArgumentException("Invalid room publication.", nameof(publication));
-        }
-        _invitationPublication = publication;
-        InvitationControlAddress = RendezvousAddress.Normalize(controlAddress);
-        InvitationError = string.Empty;
-        _invitationHttp?.Dispose();
-        _invitationCancellation?.Dispose();
-        _invitationHttp = new HttpClient();
-        _invitationCancellation = new CancellationTokenSource();
-        _invitationCapacity = capacity;
-        _invitationRetryCount = 0;
-        _invitationRetryAt = DateTimeOffset.MinValue;
-        BeginInvitationRegistration();
-    }
-
-    private void BeginInvitationRegistration()
-    {
-        _invitationStarting = RegisterInvitationAsync(_host!, InvitationControlAddress!, _invitationHttp!, _invitationCapacity,
-            _invitationPublication, _invitationCancellation!.Token);
-    }
-
-    private static async Task<NetworkInvitation> RegisterInvitationAsync(NetworkHost host, Uri address, HttpClient http,
-        int capacity, RoomPublication publication, CancellationToken cancellationToken)
-    {
-        var invitation = await host.CreateInvitationAsync(address, http, capacity, cancellationToken).ConfigureAwait(false);
-        try
-        {
-            await invitation.UpdateRoomAsync(publication, cancellationToken).ConfigureAwait(false);
-            return invitation;
-        }
-        catch
-        {
-            try
-            {
-                await invitation.DisposeAsync().ConfigureAwait(false);
-            }
-            catch (Exception exception)
-            {
-                Log.Warning($"Could not close failed room registration: {exception.Message}");
-            }
-            throw;
-        }
-    }
-
-    private void ScheduleInvitationRetry(Exception exception)
-    {
-        InvitationError = exception.Message;
-        _invitationRetryCount = Math.Min(_invitationRetryCount + 1, 4);
-        var delay = Math.Min(30, 2 << _invitationRetryCount);
-        _invitationRetryAt = DateTimeOffset.UtcNow + TimeSpan.FromSeconds(delay);
-        Log.Warning($"Invitation unavailable; retrying in {delay}s: {exception.Message}");
     }
 
     public void ConnectServer(ServerConnectionPreparation prepared)
@@ -743,40 +663,10 @@ public class NetNode
                 RemoveAllClients("服务器主动关闭");
             }
 
-            _invitationCancellation?.Cancel();
+            _ = _p2p.ShutdownAsync();
+            _p2p = new P2PRoomController();
             _connectingCancellation?.Cancel();
             StopHost(ref _host);
-            if (_invitationStarting is not null)
-            {
-                try
-                {
-                    _invitationStarting.GetAwaiter().GetResult().DisposeAsync().AsTask().GetAwaiter().GetResult();
-                }
-                catch (Exception e)
-                {
-                    Log.Warning($"Invitation stopped: {e.Message}");
-                }
-                _invitationStarting = null;
-            }
-            _invitation = null;
-            if (_invitationClosing is not null)
-            {
-                try
-                {
-                    _invitationClosing.GetAwaiter().GetResult();
-                }
-                catch (Exception exception)
-                {
-                    Log.Warning($"Could not close retired invitation: {exception.Message}");
-                }
-                _invitationClosing = null;
-            }
-            InvitationControlAddress = null;
-            _invitationRetryCount = 0;
-            _invitationCancellation?.Dispose();
-            _invitationCancellation = null;
-            _invitationHttp?.Dispose();
-            _invitationHttp = null;
             if (_connecting is not null)
             {
                 try
@@ -1008,41 +898,16 @@ public class NetNode
 
     private void UpdateTransport()
     {
-        if (_invitationStarting is { IsCompleted: true } opening)
+        _p2p.Update();
+        if (_p2p.AutomaticPending && _p2p.State is P2PRoomState.Disabled &&
+            IsServer && GameManager.Project is { } project && CurrentModRuntime.Value is not null)
         {
-            _invitationStarting = null;
-            try
+            _p2p.ConsumeAutomaticRequest();
+            var result = CommandExecutor.ExecuteSystem(new StartP2PCommand(), project);
+            if (!result.Success)
             {
-                _invitation = opening.GetAwaiter().GetResult();
-                InvitationError = string.Empty;
-                _invitationRetryCount = 0;
-                Log.Information(RunMode.Value == RunModeType.HeadlessServer
-                    ? $"Invitation code: {_invitation.JoinCode}"
-                    : "Invitation registered");
+                Log.Warning($"Could not automatically start P2P room: {CommandText.Resolve(result)}");
             }
-            catch (Exception e)
-            {
-                ScheduleInvitationRetry(e);
-            }
-        }
-        if (_invitation is { } invitation && !invitation.IsActive)
-        {
-            _invitation = null;
-            _invitationClosing = invitation.DisposeAsync().AsTask();
-            ScheduleInvitationRetry(invitation.Failure ?? new TimeoutException("Invitation registration expired."));
-        }
-        if (_invitationClosing is { IsCompleted: true } retired)
-        {
-            _invitationClosing = null;
-            if (retired.IsFaulted)
-            {
-                Log.Warning($"Could not close retired invitation: {retired.Exception!.GetBaseException().Message}");
-            }
-        }
-        if (InvitationControlAddress is not null && _host is not null && _invitation is null &&
-            _invitationStarting is null && _invitationClosing is null && DateTimeOffset.UtcNow >= _invitationRetryAt)
-        {
-            BeginInvitationRegistration();
         }
         _host?.DispatchEvents();
         _broadcastHost?.DispatchEvents();

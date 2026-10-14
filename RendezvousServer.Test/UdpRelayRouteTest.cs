@@ -28,7 +28,7 @@ public sealed class UdpRelayRouteTest
         server.SendDatagram(route.Endpoint, "register"u8);
         client.SendDatagram(route.Endpoint, "register"u8);
         var connecting = client.ConnectAsync(route.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
-        await PumpUntilAsync(new[] { server, client }, () => connecting.IsCompleted && oldServerConnection is not null);
+        await PumpUntilAsync([server, client], () => connecting.IsCompleted && oldServerConnection is not null);
         var oldConnection = await connecting;
         var fakeOffer = new RelayAllocation(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), route.Endpoint.ToString(),
             new RelayRouteCredentials(Guid.NewGuid(), 0, RandomNumberGenerator.GetBytes(32)), DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1));
@@ -36,10 +36,10 @@ public sealed class UdpRelayRouteTest
         var oldEcho = false;
         client.Received += (_, message) => oldEcho = message.Payload.Span.SequenceEqual("old-route-still-works"u8);
         oldConnection.Send("old-route-still-works"u8);
-        await PumpUntilAsync(new[] { server, client }, () => oldEcho);
+        await PumpUntilAsync([server, client], () => oldEcho);
         Assert.Null(server.Failure);
         oldConnection.Disconnect();
-        await PumpUntilAsync(new[] { server, client }, () => !oldServerConnection!.IsConnected);
+        await PumpUntilAsync([server, client], () => !oldServerConnection!.IsConnected);
         await route.DisposeAsync();
 
         await using var replacement = new UdpRelayRoute(route.Endpoint);
@@ -58,6 +58,40 @@ public sealed class UdpRelayRouteTest
         await PumpUntilAsync(new[] { server, newClient }, () => newEcho);
         Assert.NotEqual(oldServerConnection!.Id, newServerConnection!.Id);
         Assert.Null(server.Failure);
+    }
+
+    [Fact]
+    public async Task RoomCleanupPreservesConnectedRelayAndOnlyRemovesItsUnusedPreparations()
+    {
+        await using var active = new UdpRelayRoute(new IPEndPoint(IPAddress.Loopback, 0));
+        await using var unused = new UdpRelayRoute(new IPEndPoint(IPAddress.Loopback, 0));
+        await using var otherRoom = new UdpRelayRoute(new IPEndPoint(IPAddress.Loopback, 0));
+        await using var server = new NetworkHost();
+        await using var client = new NetworkHost();
+        var session = Guid.NewGuid();
+        var otherSession = Guid.NewGuid();
+        RelayAllocation Offer(UdpRelayRoute route, Guid room) => new(room, Guid.NewGuid(), Guid.NewGuid(),
+            route.Endpoint.ToString(), route.GetCredentials(0), DateTimeOffset.UtcNow + TimeSpan.FromMinutes(1));
+        Assert.NotNull(server.TryInstallRelay(Offer(active, session)));
+        client.RegisterRelayRoute(active.Endpoint, active.GetCredentials(1));
+        client.SendDatagram(active.Endpoint, "register"u8);
+        server.ConnectionRequested += request => request.Accept();
+        server.Received += (connection, message) => connection.Send(message.Payload.Span);
+        var connecting = client.ConnectAsync(active.Endpoint, ReadOnlyMemory<byte>.Empty, CancellationToken.None);
+        await PumpUntilAsync(new[] { server, client }, () => connecting.IsCompleted);
+        Assert.NotNull(server.TryInstallRelay(Offer(unused, session)));
+        Assert.NotNull(server.TryInstallRelay(Offer(otherRoom, otherSession)));
+        Assert.Equal(3, server.Resources.RelayRoutes);
+        server.ReleaseRoomPreparations(session);
+        Assert.Equal(2, server.Resources.RelayRoutes);
+        Assert.Equal(1, server.Resources.RelayPreparations);
+        var echoed = false;
+        client.Received += (_, message) => echoed = message.Payload.Span.SequenceEqual("room-stopped"u8);
+        (await connecting).Send("room-stopped"u8);
+        await PumpUntilAsync(new[] { server, client }, () => echoed);
+        server.ReleaseRoomPreparations(otherSession);
+        Assert.Equal(1, server.Resources.RelayRoutes);
+        Assert.Equal(0, server.Resources.RelayPreparations);
     }
 
     [Theory]

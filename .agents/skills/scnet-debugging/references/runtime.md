@@ -119,6 +119,17 @@ Expected result lines start with:
 COMMAND OK
 ```
 
+## P2P runtime commands
+
+Use `p2p start`, `p2p status`, and `p2p stop`. Start requires a valid room configuration
+prepared in the world/server settings or startup arguments; commands cannot edit it.
+The standard permission is `game:server.p2p.manage`; a claimed player must still obtain its use grant.
+HTTP identities are `game:server/p2p/{start,status,stop}`. Use the local or player endpoint
+for the intended identity. Poll status `data.state` for Active/Disabled after Pending; do not infer
+registration success from request acceptance. Runtime changes do not persist and stop preserves
+existing direct/relay connections and the game port. Use separate instances and a loopback signaling
+server to verify these boundaries; screenshots are unnecessary for command-only assertions.
+
 ## GUI player HTTP commands
 
 Use `GET /player/commands` to discover World/Server bindings available to the current GUI player,

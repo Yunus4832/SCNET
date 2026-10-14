@@ -29,12 +29,7 @@ internal static class NetworkDiagnosticCommandHandlers
                     item.MaximumFanout
                 }).ToArray(),
             PendingPackages = CommonLib.Net.PendingPackageCount,
-            Invitation = new
-            {
-                Starting = CommonLib.Net.IsInvitationStarting,
-                Code = CommonLib.Net.InvitationCode,
-                Error = CommonLib.Net.InvitationError
-            },
+            P2P = CommonLib.Net.GetP2PStatus(),
             ReliableQueues = CommonLib.Net.Clients.Values.Where(client => client.IsConnected && client.Peer != null)
                 .Select(client => new
                 {

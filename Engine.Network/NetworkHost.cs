@@ -30,14 +30,14 @@ public sealed class NetworkHost : IAsyncDisposable
     private readonly ConcurrentDictionary<NetPeer, TaskCompletionSource<NetworkConnection>> _connects = new();
     private readonly ConcurrentDictionary<(IPEndPoint Beacon, Guid Session), (Guid Participant, DateTimeOffset ExpiresAt)> _registrations = new();
     private readonly ConcurrentDictionary<Guid, CandidateProbe> _probes = new();
-    private readonly ConcurrentDictionary<Guid, NetworkInvitation> _invitations = new();
+    private readonly ConcurrentDictionary<Guid, NetworkRoomRegistration> _roomRegistrations = new();
     private readonly ConcurrentDictionary<Guid, RelayPreparation> _relayPreparations = new();
     private readonly Lock _relayGate = new();
     private readonly Lock _signalGate = new();
     private readonly ConcurrentDictionary<NetPeer, Guid> _peerRelays = new();
     private readonly ConcurrentDictionary<Guid, IPEndPoint> _installedRelays = new();
 
-    public event Action<NetworkInvitation, Exception>? InvitationFailed;
+    public event Action<NetworkRoomRegistration, Exception>? RoomRegistrationFailed;
 
     public event Action<NetworkDatagramEndpoint, byte[]>? DatagramReceived;
 
@@ -185,12 +185,16 @@ public sealed class NetworkHost : IAsyncDisposable
             {
                 _probes.TryRemove(pair.Key, out _);
             }
-            foreach (var pair in _relayPreparations.Where(item => item.Value.Endpoint.Equals(peer.EndPoint)))
+            NetworkConnection connection;
+            lock (_relayGate)
             {
-                _relayPreparations.TryRemove(pair.Key, out _);
+                foreach (var pair in _relayPreparations.Where(item => item.Value.Endpoint.Equals(peer.EndPoint)))
+                {
+                    _relayPreparations.TryRemove(pair.Key, out _);
+                }
+                connection = GetConnection(peer);
+                connection.PathKind = pathKind;
             }
-            var connection = GetConnection(peer);
-            connection.PathKind = pathKind;
             if (_connects.TryRemove(peer, out var completion))
             {
                 completion.TrySetResult(connection);
@@ -329,10 +333,10 @@ public sealed class NetworkHost : IAsyncDisposable
     public int PendingPathCount => _probes.Count;
 
     public NetworkHostResources Resources => new(_connections.Count, _connects.Count, _requests.Count,
-        _probes.Count, _registrations.Count, _invitations.Count, _relayPreparations.Count,
+        _probes.Count, _registrations.Count, _roomRegistrations.Count, _relayPreparations.Count,
         _installedRelays.Count, _notifications.Count);
 
-    public async Task<NetworkInvitation> CreateInvitationAsync(RendezvousClient signaling, IReadOnlyList<IPEndPoint> beacons,
+    public async Task<NetworkRoomRegistration> RegisterRoomAsync(RendezvousClient signaling, IReadOnlyList<IPEndPoint> beacons,
         int maxParticipants, CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
@@ -349,15 +353,15 @@ public sealed class NetworkHost : IAsyncDisposable
         {
             var ticket = await signaling.IssueTicketAsync(registration.SessionId, Guid.Empty,
                 registration.HostCredential, deadline.Token).ConfigureAwait(false);
-            await RegisterInvitationEndpointsAsync(endpoints, registration.SessionId, ticket.Token, deadline.Token).ConfigureAwait(false);
+            await RegisterRoomEndpointsAsync(endpoints, registration.SessionId, ticket.Token, deadline.Token).ConfigureAwait(false);
             deadline.Token.ThrowIfCancellationRequested();
-            var invitation = new NetworkInvitation(registration.SessionId, registration.JoinCode, registration.ExpiresAt, _stop.Token,
+            var invitation = new NetworkRoomRegistration(registration.SessionId, registration.JoinCode, registration.ExpiresAt, _stop.Token,
                 async token =>
                 {
                     var renewal = await signaling.RenewAsync(registration.SessionId, registration.HostCredential, token).ConfigureAwait(false);
                     var renewedTicket = await signaling.IssueTicketAsync(registration.SessionId, Guid.Empty,
                         registration.HostCredential, token).ConfigureAwait(false);
-                    await RegisterInvitationEndpointsAsync(endpoints, registration.SessionId, renewedTicket.Token, token).ConfigureAwait(false);
+                    await RegisterRoomEndpointsAsync(endpoints, registration.SessionId, renewedTicket.Token, token).ConfigureAwait(false);
                     return renewal.ExpiresAt;
                 },
                 async token =>
@@ -368,14 +372,11 @@ public sealed class NetworkHost : IAsyncDisposable
                     }
                     finally
                     {
-                        _invitations.TryRemove(registration.SessionId, out _);
-                        foreach (var endpoint in endpoints)
-                        {
-                            _registrations.TryRemove((endpoint, registration.SessionId), out _);
-                        }
+                        _roomRegistrations.TryRemove(registration.SessionId, out _);
+                        ReleaseRoomPreparations(registration.SessionId);
                     }
                 },
-                (item, exception) => EnqueueControl(() => InvitationFailed?.Invoke(item, exception)),
+                (item, exception) => EnqueueControl(() => RoomRegistrationFailed?.Invoke(item, exception)),
                 (publication, token) => signaling.UpdateRoomAsync(registration.SessionId, registration.HostCredential, publication, token),
                 async token =>
                 {
@@ -403,15 +404,12 @@ public sealed class NetworkHost : IAsyncDisposable
                         await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
                     }
                 });
-            _invitations.TryAdd(registration.SessionId, invitation);
+            _roomRegistrations.TryAdd(registration.SessionId, invitation);
             return invitation;
         }
         catch
         {
-            foreach (var endpoint in endpoints)
-            {
-                _registrations.TryRemove((endpoint, registration.SessionId), out _);
-            }
+            ReleaseRoomPreparations(registration.SessionId);
             using var closeDeadline = new CancellationTokenSource(TimeSpan.FromSeconds(3));
             try
             {
@@ -466,7 +464,7 @@ public sealed class NetworkHost : IAsyncDisposable
         }
     }
 
-    public async Task<NetworkInvitation> CreateInvitationAsync(Uri controlAddress, HttpClient http,
+    public async Task<NetworkRoomRegistration> RegisterRoomAsync(Uri controlAddress, HttpClient http,
         int maxParticipants, CancellationToken cancellationToken)
     {
         var address = RendezvousAddress.Normalize(controlAddress);
@@ -474,7 +472,7 @@ public sealed class NetworkHost : IAsyncDisposable
         deadline.CancelAfter(_preparationTimeout);
         var signaling = new RendezvousClient(http, address);
         var beacons = await ResolveBeaconsAsync(signaling, address, deadline.Token).ConfigureAwait(false);
-        return await CreateInvitationAsync(signaling, beacons, maxParticipants, deadline.Token).ConfigureAwait(false);
+        return await RegisterRoomAsync(signaling, beacons, maxParticipants, deadline.Token).ConfigureAwait(false);
     }
 
     private static async Task<IPEndPoint[]> ResolveBeaconsAsync(RendezvousClient signaling, Uri controlAddress,
@@ -712,7 +710,7 @@ public sealed class NetworkHost : IAsyncDisposable
             {
                 _relayLayer.Add(endpoint, allocation.Credentials.RouteId, allocation.Credentials.Side, allocation.Credentials.Key);
                 _installedRelays.TryAdd(allocation.Credentials.RouteId, endpoint);
-                _relayPreparations.TryAdd(allocation.Credentials.RouteId, new RelayPreparation(endpoint, allocation.ExpiresAt));
+                _relayPreparations.TryAdd(allocation.Credentials.RouteId, new RelayPreparation(endpoint, allocation.ExpiresAt, allocation.SessionId));
             }
             else if (!_relayLayer.Matches(endpoint, allocation.Credentials.RouteId, allocation.Credentials.Side, allocation.Credentials.Key))
             {
@@ -724,6 +722,35 @@ public sealed class NetworkHost : IAsyncDisposable
             }
             SendSignal(new SignalMessage("relay-enroll", Guid.NewGuid()), endpoint);
             return endpoint;
+        }
+    }
+
+    internal void ReleaseRoomPreparations(Guid sessionId)
+    {
+        lock (_signalGate)
+        {
+            foreach (var pair in _registrations.Where(item => item.Key.Item2 == sessionId).ToArray())
+            {
+                _registrations.TryRemove(pair);
+            }
+            foreach (var pair in _probes.Where(item => item.Value.Candidate.SessionId == sessionId).ToArray())
+            {
+                if (_probes.TryRemove(pair.Key, out var probe))
+                {
+                    probe.Completion.TrySetCanceled();
+                }
+            }
+        }
+        lock (_relayGate)
+        {
+            foreach (var pair in _relayPreparations.Where(item => item.Value.SessionId == sessionId).ToArray())
+            {
+                if (!_connections.Values.Any(connection => connection.IsConnected &&
+                        connection.TransportEndpoint.Equals(pair.Value.Endpoint)))
+                {
+                    ReleaseRelay(pair.Key, pair.Value.Endpoint);
+                }
+            }
         }
     }
 
@@ -804,7 +831,7 @@ public sealed class NetworkHost : IAsyncDisposable
         }
     }
 
-    private async Task RegisterInvitationEndpointsAsync(IReadOnlyList<IPEndPoint> endpoints, Guid sessionId,
+    private async Task RegisterRoomEndpointsAsync(IReadOnlyList<IPEndPoint> endpoints, Guid sessionId,
         string ticket, CancellationToken cancellationToken)
     {
         async Task<Exception?> RegisterEndpointAsync(IPEndPoint endpoint)
@@ -1092,7 +1119,7 @@ public sealed class NetworkHost : IAsyncDisposable
             }
             _requests.Clear();
             _registrations.Clear();
-            _invitations.Clear();
+            _roomRegistrations.Clear();
             _relayPreparations.Clear();
 
             foreach (var connection in _connections.Values)
@@ -1114,9 +1141,11 @@ public sealed class NetworkHost : IAsyncDisposable
         }
     }
 
-    private sealed class RelayPreparation(IPEndPoint endpoint, DateTimeOffset expiresAt)
+    private sealed class RelayPreparation(IPEndPoint endpoint, DateTimeOffset expiresAt, Guid sessionId)
     {
         public IPEndPoint Endpoint { get; } = endpoint;
+
+        public Guid SessionId { get; } = sessionId;
 
         private long _expiresAtTicks = expiresAt.UtcTicks;
 
@@ -1139,7 +1168,7 @@ public sealed class NetworkHost : IAsyncDisposable
 
         try
         {
-            await Task.WhenAll(_invitations.Values.Select(item => item.DisposeAsync().AsTask())).ConfigureAwait(false);
+            await Task.WhenAll(_roomRegistrations.Values.Select(item => item.DisposeAsync().AsTask())).ConfigureAwait(false);
         }
         finally
         {

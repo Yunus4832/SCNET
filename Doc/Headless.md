@@ -85,6 +85,28 @@ Android 同样通过 `RunningSettingManager` 选择 GUI 或 Headless。正常应
 ./SurvivalcraftStarter --instance server --server --session survival
 ```
 
+## P2P 房间运行时管理
+
+服务器监听和世界加载就绪后，已启用的世界／会话配置通过 System 命令自动注册房间。GUI 与 Headless 使用同一流程；未启用的服务器也可在运行中开启，无需重新加载世界。
+
+```text
+p2p start
+p2p status
+p2p stop
+```
+
+`p2p start` 使用启动时捕获的存档／会话配置；没有预先配置有效信令地址和房间信息时拒绝执行。命令不提供服务选择或配置修改参数，配置通过 GUI 存档服务器设置或启动参数完成。
+
+三项命令使用 Server 域及标准权限 `game:server.p2p.manage`。本地控制台和控制 HTTP 使用 LocalOperator；GUI 房主玩家与远程玩家同等授权，认领权限管理能力不会自动授予该使用权。
+
+本地进程使用 GET/POST /commands，GUI 玩家使用 GET/POST /player/commands；identity 分别为 `game:server/p2p/start`、`game:server/p2p/status`、`game:server/p2p/stop`。先通过对应入口发现命令及参数。
+
+start／stop 的 Pending 表示注册或清理尚未完成，通过 status 的 Data.state 确认 Active／Disabled。重复开启幂等；Stopping 期间拒绝再次开启。HTTP 超时不撤销已经受理的操作，应先查询实际状态。
+
+运行时启停不写回世界、会话或实例设置。下次启动仍按原世界设置和会话覆盖决定是否自动启用；当前没有独立的保存命令。
+
+停止撤销房间和新的信令协商，取消重试，保留普通游戏监听及已建立的直连、中继玩家。已获知普通服务器地址的玩家仍可直连。注销失败时状态保留错误，远端房间可能保留至租约到期；这不是禁止新玩家进入服务器的准入开关。
+
 ## HTTP 命令宿主
 
 HTTP 命令宿主默认关闭；`Settings.xml` 的 `HttpCommandEnabled` 是实例默认开关，启动参数或保存的 session 可以覆盖它。启用后默认使用 `28889`，并且当前只监听 `127.0.0.1`。可以为多实例指定其他端口：

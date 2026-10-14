@@ -152,6 +152,22 @@ public static class BuiltInCommands
             PermissionGrantPolicy.NonGrantable,
             description: CommandDescription("PlayerProfileServer_Description", "管理玩家资料"));
 
+        var p2pManage = new ResourceId(owner, "server.p2p.manage");
+        RegisterPermission(commands, p2pManage, CommandDomain.Server,
+            description: CommandDescription("P2PManage_Description", "管理 P2P 房间"));
+        commands.Register(new ResourceId(owner, "server/p2p/start"),
+            new CommandDefinition<StartP2PCommand>(P2PCommandHandlers.Start, CommandDomain.Server,
+                CommandDescription("P2PStart_Description", "开启 P2P 房间"), p2pManage,
+                write: static (_, _) => { }, read: static _ => new StartP2PCommand()));
+        commands.Register(new ResourceId(owner, "server/p2p/stop"),
+            new CommandDefinition<StopP2PCommand>(P2PCommandHandlers.Stop, CommandDomain.Server,
+                CommandDescription("P2PStop_Description", "停止 P2P 房间"), p2pManage,
+                write: static (_, _) => { }, read: static _ => new StopP2PCommand()));
+        commands.Register(new ResourceId(owner, "server/p2p/status"),
+            new CommandDefinition<GetP2PStatusCommand>(P2PCommandHandlers.Status, CommandDomain.Server,
+                CommandDescription("P2PStatus_Description", "查询 P2P 房间状态"), p2pManage,
+                write: static (_, _) => { }, read: static _ => new GetP2PStatusCommand()));
+
         commands.Register(
             new ResourceId(owner, "help"),
             new CommandDefinition<ShowCommandHelpCommand>(
@@ -636,6 +652,11 @@ public static class BuiltInCommands
                 CommandDescription("AutomationUiScreenshot_Description", "捕获自动化 UI 截图"),
                 hostRequirement: CommandHostRequirement.Gui));
 
+        commands.Adapters.Register(new ResourceId(owner, "server/p2p/start"), HttpCommandBinding.Create(_ => new StartP2PCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "server/p2p/stop"), HttpCommandBinding.Create(_ => new StopP2PCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "server/p2p/status"), HttpCommandBinding.Create(_ => new GetP2PStatusCommand()));
+        commands.Adapters.Register(new ResourceId(owner, "text/p2p"), CreateP2PText());
+
         commands.Adapters.Register(new ResourceId(owner, "text/help"), CreateHelpText());
         commands.Adapters.Register(new ResourceId(owner, "text/time"), CreateTimeText());
         commands.Adapters.Register(new ResourceId(owner, "text/tp"), CreateTeleportText());
@@ -915,6 +936,20 @@ public static class BuiltInCommands
             new CommandRoute([self, new CommandLiteral("position"), .. coordinates], typeof(TeleportSelfCommand),
                 arguments => new TeleportSelfCommand(Position(arguments)), CommandDescription("TeleportSelfPosition_Description", "传送自己到坐标"))
         ]);
+    }
+
+    internal static TextCommand CreateP2PText()
+    {
+        var routes = new List<CommandRoute>
+        {
+            new([new CommandLiteral("status")], typeof(GetP2PStatusCommand), _ => new GetP2PStatusCommand(),
+                CommandDescription("P2PStatus_Description", "查询 P2P 房间状态")),
+            new([new CommandLiteral("stop")], typeof(StopP2PCommand), _ => new StopP2PCommand(),
+                CommandDescription("P2PStop_Description", "停止 P2P 房间")),
+            new([new CommandLiteral("start")], typeof(StartP2PCommand), _ => new StartP2PCommand(),
+                CommandDescription("P2PStart_Description", "开启 P2P 房间"))
+        };
+        return new TextCommand("p2p", CommandDescription("P2P_Description", "管理 P2P 房间"), routes);
     }
 
     internal static TextCommand CreateTimeText()

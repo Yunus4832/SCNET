@@ -39,7 +39,7 @@ public sealed class JoinCodeDialog : Dialog
         {
             _relayPolicy = (RelayPolicy)(((int)_relayPolicy + 1) % Enum.GetValues<RelayPolicy>().Length);
         }
-        _relay.Text = InvitationStatusDialog.Text($"Relay{_relayPolicy}");
+        _relay.Text = P2PRoomStatusDialog.Text($"Relay{_relayPolicy}");
         _error.IsVisible = !string.IsNullOrEmpty(_error.Text);
         _surface.Size = new Vector2(560f, _error.IsVisible ? 352f : 324f);
         if (Children.Find<ButtonWidget>("Connect")!.IsClicked)
@@ -71,7 +71,7 @@ public sealed class JoinCodeDialog : Dialog
         }
         catch (ArgumentException)
         {
-            _error.Text = InvitationStatusDialog.Text("InvalidCode");
+            _error.Text = P2PRoomStatusDialog.Text("InvalidCode");
             return;
         }
         DialogsManager.HideDialog(this);

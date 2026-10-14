@@ -10,6 +10,7 @@
         <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
         <ProjectReference Include="../Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
         <InternalsVisibleTo Include="Engine.Network.Test"/>
+        <InternalsVisibleTo Include="Survivalcraft.Test"/>
         <InternalsVisibleTo Include="RendezvousServer.Test"/>
     </ItemGroup>
     <ItemGroup>

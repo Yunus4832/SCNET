@@ -7,7 +7,7 @@ public readonly record struct NetworkHostResources(
     int PendingSignals,
     int CandidatePaths,
     int Registrations,
-    int Invitations,
+    int RoomRegistrations,
     int RelayPreparations,
     int RelayRoutes,
     int Notifications);
