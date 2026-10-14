@@ -14,6 +14,12 @@ public sealed class ContentRepositoryManager
     private Guid? _gameInformationSourceId;
     private IReadOnlyList<ContentRepository> _repositories;
 
+    internal event Action? GameInformationSourceChanged;
+
+    private long _gameInformationSourceRevision;
+
+    internal long GameInformationSourceRevision => Interlocked.Read(ref _gameInformationSourceRevision);
+
     public static void Initialize()
     {
         Current = new ContentRepositoryManager(LoadOrDefault(), Save);
@@ -126,9 +132,17 @@ public sealed class ContentRepositoryManager
             GameInformationSourceId = gameInformationSourceId,
             Repositories = repositories.ToArray()
         });
+        var previous = GameInformationSource;
         _save(normalized);
         _repositories = normalized.Repositories;
         _gameInformationSourceId = normalized.GameInformationSourceId;
+        var current = GameInformationSource;
+        if (previous?.Id != current?.Id || previous?.BaseUrl != current?.BaseUrl ||
+            previous?.Name != current?.Name || previous?.IsEnabled != current?.IsEnabled)
+        {
+            Interlocked.Increment(ref _gameInformationSourceRevision);
+            GameInformationSourceChanged?.Invoke();
+        }
     }
 
     public static ContentRepositorySettings Load()

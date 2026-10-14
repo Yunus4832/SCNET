@@ -3599,7 +3599,9 @@
             "NoInformationSourceBody": "Select an announcement and release source in content repository settings first.",
             "ReleaseCheckFailed": "Could not check game releases from “{0}”. Check the server address and network connection.",
             "ConfirmDesktopInstall": "The {1} update from {0} has been verified. Close other instances, then exit and update? Start the game again when finished.",
-            "DesktopInstallFailed": "Automatic updating could not start. Close other instances and check that the installation directory is writable. You can also open the download link and update manually, keeping your instances and settings."
+            "DesktopInstallFailed": "Automatic updating could not start. Close other instances and check that the installation directory is writable. You can also open the download link and update manually, keeping your instances and settings.",
+            "NoPublishedRelease": "This source has not published a game release for this platform.",
+            "UnsupportedPlatform": "Automatic updates are not supported for this platform or architecture."
         },
         "ManageRendezvousScreen": {
             "Title": "Signaling services",
