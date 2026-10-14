@@ -18,7 +18,7 @@
 - `Silk.NET.OpenAL.Soft.Native`：桌面端音频补充
 - `Silk.NET.SDL`：Android 平台窗口/输入适配
 - `SixLabors.ImageSharp`：图片处理；游戏不支持 TIFF 读写，内容服务器图片上传在解析元数据前限定为 PNG
-- `Svg.Skia`、`SkiaSharp`：构建期 SVG 栅格化与 GUI 图集生成；PNG 源由 `ImageSharp` 直接合入
+- `Svg.Skia`、`SkiaSharp`：构建期 SVG 栅格化、PNG 处理与 GUI 图集生成
 - `Xamarin.AndroidX.Core`：Android 兼容支持
 
 ## 测试依赖

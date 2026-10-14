@@ -1,5 +1,8 @@
 # GUI 图集源文件
 
+工具使用 SkiaSharp 完成栅格图片处理和 PNG 编解码，Svg.Skia 负责 SVG 解析。
+SVG 以两倍尺寸栅格化后使用 SkiaSharp 线性采样缩小；PNG 源按原始像素合入。
+
 `Assets/` 中的每个 SVG 或 PNG 都是一个完整、独立且背景透明的图集条目。文件名会直接成为
 `Textures/Atlas/` 后的资源名。
 

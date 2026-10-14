@@ -2,11 +2,6 @@ using System.Globalization;
 using System.Xml;
 using System.Xml.Linq;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Png;
-using SixLabors.ImageSharp.PixelFormats;
-using SixLabors.ImageSharp.Processing;
-
 using SkiaSharp;
 
 using Svg.Skia;
@@ -53,7 +48,7 @@ internal static class GuiAtlasProgram
     private static void PreparePng(string inputPath, string outputPath, string[] options)
     {
         var (premultiplied, overwrite) = ParsePrepareOptions(options);
-        using var image = Image.Load<Rgba32>(inputPath);
+        using var image = LoadPng(inputPath);
         if (premultiplied)
         {
             UnpremultiplyAlpha(image);
@@ -80,7 +75,7 @@ internal static class GuiAtlasProgram
         }
 
         var regions = ReadDefinition(definitionPath);
-        using var atlas = Image.Load<Rgba32>(texturePath);
+        using var atlas = LoadPng(texturePath);
         var selections = names.Select(name =>
         {
             ValidateEntryName(name);
@@ -107,9 +102,9 @@ internal static class GuiAtlasProgram
 
         foreach (var selection in selections)
         {
-            using var image = atlas.Clone(context => context.Crop(
-                new Rectangle(selection.Region.X, selection.Region.Y, selection.Region.Width,
-                    selection.Region.Height)));
+            using var image = CreateBitmap(selection.Region.Width, selection.Region.Height);
+            CopyImage(atlas, image, 0, 0, SKRectI.Create(selection.Region.X, selection.Region.Y,
+                selection.Region.Width, selection.Region.Height));
             UnpremultiplyAlpha(image);
             SaveSourcePng(image, selection.OutputPath, overwrite);
             Console.WriteLine($"Extracted PNG source: {Path.GetFullPath(selection.OutputPath)}");
@@ -162,12 +157,13 @@ internal static class GuiAtlasProgram
             throw new InvalidDataException($"Atlas height {atlasHeight} exceeds the 4096 pixel limit.");
         }
 
-        using var atlas = new Image<Rgba32>(_atlasWidth, atlasHeight);
+        using var atlas = CreateBitmap(_atlasWidth, atlasHeight);
+        atlas.Erase(SKColors.Transparent);
         foreach (var entry in entries)
         {
             using var image = Render(entry.Source);
             PremultiplyAlpha(image);
-            CopyImage(image, atlas, entry.X, entry.Y);
+            CopyImage(image, atlas, entry.X, entry.Y, SKRectI.Create(image.Width, image.Height));
         }
 
         var definition = string.Join('\n', entries.OrderBy(entry => entry.Source.Name, StringComparer.Ordinal)
@@ -218,8 +214,8 @@ internal static class GuiAtlasProgram
 
     private static AtlasSource ReadPngSource(string name, string path)
     {
-        var info = Image.Identify(path) ?? throw new InvalidDataException($"Unable to read PNG: {path}");
-        return new AtlasSource(name, path, info.Width, info.Height, AtlasSourceKind.Png);
+        using var codec = OpenPng(path);
+        return new AtlasSource(name, path, codec.Info.Width, codec.Info.Height, AtlasSourceKind.Png);
     }
 
     private static SKRect ParseViewBox(string? value, int width, int height, string path)
@@ -287,17 +283,17 @@ internal static class GuiAtlasProgram
         return [.. entries];
     }
 
-    private static Image<Rgba32> Render(AtlasSource source)
+    private static SKBitmap Render(AtlasSource source)
     {
         return source.Kind switch
         {
             AtlasSourceKind.Svg => RenderSvg(source),
-            AtlasSourceKind.Png => Image.Load<Rgba32>(source.Path),
+            AtlasSourceKind.Png => LoadPng(source.Path),
             _ => throw new InvalidDataException($"Unsupported atlas source: {source.Path}")
         };
     }
 
-    private static Image<Rgba32> RenderSvg(AtlasSource source)
+    private static SKBitmap RenderSvg(AtlasSource source)
     {
         using var svg = new SKSvg();
         using var stream = File.OpenRead(source.Path);
@@ -324,55 +320,78 @@ internal static class GuiAtlasProgram
         canvas.Flush();
 
         using var snapshot = surface.Snapshot();
-        using var data = snapshot.Encode(SKEncodedImageFormat.Png, 100) ??
-                         throw new InvalidDataException($"Unable to encode SVG: {source.Path}");
-        using var encoded = data.AsStream();
-        var image = Image.Load<Rgba32>(encoded);
-        image.Mutate(context => context.Resize(source.Width, source.Height, KnownResamplers.Bicubic));
+        using var rendered = CreateBitmap(renderWidth, renderHeight);
+        if (!snapshot.ReadPixels(rendered.Info, rendered.GetPixels(), rendered.RowBytes, 0, 0))
+        {
+            throw new InvalidDataException($"Unable to read SVG pixels: {source.Path}");
+        }
+
+        return rendered.Resize(new SKSizeI(source.Width, source.Height),
+                   new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear)) ??
+               throw new InvalidDataException($"Unable to resize SVG: {source.Path}");
+    }
+
+    private static SKBitmap CreateBitmap(int width, int height) =>
+        new(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Unpremul));
+
+    private static SKCodec OpenPng(string path)
+    {
+        var codec = SKCodec.Create(path) ?? throw new InvalidDataException($"Unable to read PNG: {path}");
+        if (codec.EncodedFormat != SKEncodedImageFormat.Png)
+        {
+            codec.Dispose();
+            throw new InvalidDataException($"Image source is not PNG: {path}");
+        }
+
+        return codec;
+    }
+
+    private static SKBitmap LoadPng(string path)
+    {
+        using var codec = OpenPng(path);
+        var image = CreateBitmap(codec.Info.Width, codec.Info.Height);
+        if (codec.GetPixels(image.Info, image.GetPixels()) != SKCodecResult.Success)
+        {
+            image.Dispose();
+            throw new InvalidDataException($"Unable to decode PNG: {path}");
+        }
+
         return image;
     }
 
-    private static void PremultiplyAlpha(Image<Rgba32> image)
+    private static void PremultiplyAlpha(SKBitmap image)
     {
-        image.ProcessPixelRows(accessor =>
+        var pixels = image.GetPixelSpan();
+        for (var y = 0; y < image.Height; y++)
         {
-            for (var y = 0; y < accessor.Height; y++)
+            var row = pixels.Slice(y * image.RowBytes, image.Width * 4);
+            for (var x = 0; x < row.Length; x += 4)
             {
-                var row = accessor.GetRowSpan(y);
-                foreach (ref var pixel in row)
+                var alpha = row[x + 3];
+                for (var channel = 0; channel < 3; channel++)
                 {
-                    pixel.R = (byte)((pixel.R * pixel.A + 127) / 255);
-                    pixel.G = (byte)((pixel.G * pixel.A + 127) / 255);
-                    pixel.B = (byte)((pixel.B * pixel.A + 127) / 255);
+                    row[x + channel] = (byte)((row[x + channel] * alpha + 127) / 255);
                 }
             }
-        });
+        }
     }
 
-    private static void UnpremultiplyAlpha(Image<Rgba32> image)
+    private static void UnpremultiplyAlpha(SKBitmap image)
     {
-        image.ProcessPixelRows(accessor =>
+        var pixels = image.GetPixelSpan();
+        for (var y = 0; y < image.Height; y++)
         {
-            for (var y = 0; y < accessor.Height; y++)
+            var row = pixels.Slice(y * image.RowBytes, image.Width * 4);
+            for (var x = 0; x < row.Length; x += 4)
             {
-                var row = accessor.GetRowSpan(y);
-                foreach (ref var pixel in row)
+                var alpha = row[x + 3];
+                for (var channel = 0; channel < 3; channel++)
                 {
-                    if (pixel.A == 0)
-                    {
-                        pixel.R = 0;
-                        pixel.G = 0;
-                        pixel.B = 0;
-                    }
-                    else
-                    {
-                        pixel.R = (byte)Math.Min(255, (pixel.R * 255 + pixel.A / 2) / pixel.A);
-                        pixel.G = (byte)Math.Min(255, (pixel.G * 255 + pixel.A / 2) / pixel.A);
-                        pixel.B = (byte)Math.Min(255, (pixel.B * 255 + pixel.A / 2) / pixel.A);
-                    }
+                    row[x + channel] = alpha == 0 ? (byte)0 :
+                        (byte)Math.Min(255, (row[x + channel] * 255 + alpha / 2) / alpha);
                 }
             }
-        });
+        }
     }
 
     private static Dictionary<string, AtlasRegion> ReadDefinition(string definitionPath)
@@ -404,7 +423,7 @@ internal static class GuiAtlasProgram
         return regions;
     }
 
-    private static void SaveSourcePng(Image<Rgba32> image, string outputPath, bool overwrite)
+    private static void SaveSourcePng(SKBitmap image, string outputPath, bool overwrite)
     {
         var fullOutputPath = Path.GetFullPath(outputPath);
         if (!overwrite && File.Exists(fullOutputPath))
@@ -416,11 +435,7 @@ internal static class GuiAtlasProgram
         var temporaryPath = $"{fullOutputPath}.{Guid.NewGuid():N}.tmp";
         try
         {
-            image.Save(temporaryPath, new PngEncoder
-            {
-                ColorType = PngColorType.RgbWithAlpha,
-                CompressionLevel = PngCompressionLevel.BestCompression
-            });
+            SavePng(image, temporaryPath);
             File.Move(temporaryPath, fullOutputPath, overwrite);
         }
         finally
@@ -429,18 +444,33 @@ internal static class GuiAtlasProgram
         }
     }
 
-    private static void CopyImage(Image<Rgba32> source, Image<Rgba32> target, int targetX, int targetY)
+    private static void SavePng(SKBitmap image, string path)
     {
-        source.ProcessPixelRows(target, (sourceAccessor, targetAccessor) =>
+        // Keep Unpremul storage even for atlas pixels: they have already been premultiplied
+        // explicitly and must be written without another alpha conversion.
+        using var pixels = image.PeekPixels();
+        using var output = File.Create(path);
+        using var stream = new SKManagedWStream(output);
+        if (!pixels.Encode(stream, new SKPngEncoderOptions(SKPngEncoderFilterFlags.AllFilters, 9)))
         {
-            for (var y = 0; y < sourceAccessor.Height; y++)
-            {
-                sourceAccessor.GetRowSpan(y).CopyTo(targetAccessor.GetRowSpan(targetY + y)[targetX..]);
-            }
-        });
+            throw new InvalidDataException($"Unable to encode PNG: {path}");
+        }
     }
 
-    private static void WriteOutputs(Image<Rgba32> atlas, string definition, string texturePath,
+    private static void CopyImage(SKBitmap source, SKBitmap target, int targetX, int targetY,
+        SKRectI sourceRegion)
+    {
+        var sourcePixels = source.GetPixelSpan();
+        var targetPixels = target.GetPixelSpan();
+        for (var y = 0; y < sourceRegion.Height; y++)
+        {
+            sourcePixels.Slice((sourceRegion.Top + y) * source.RowBytes + sourceRegion.Left * 4,
+                    sourceRegion.Width * 4)
+                .CopyTo(targetPixels.Slice((targetY + y) * target.RowBytes + targetX * 4));
+        }
+    }
+
+    private static void WriteOutputs(SKBitmap atlas, string definition, string texturePath,
         string definitionPath)
     {
         var fullTexturePath = Path.GetFullPath(texturePath);
@@ -451,11 +481,7 @@ internal static class GuiAtlasProgram
         var definitionTemporaryPath = $"{fullDefinitionPath}.{Guid.NewGuid():N}.tmp";
         try
         {
-            atlas.Save(textureTemporaryPath, new PngEncoder
-            {
-                ColorType = PngColorType.RgbWithAlpha,
-                CompressionLevel = PngCompressionLevel.BestCompression
-            });
+            SavePng(atlas, textureTemporaryPath);
             File.WriteAllText(definitionTemporaryPath, definition);
             File.Move(textureTemporaryPath, fullTexturePath, true);
             File.Move(definitionTemporaryPath, fullDefinitionPath, true);

@@ -11,7 +11,6 @@
         <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4"/>
         <PackageReference Include="SkiaSharp.NativeAssets.macOS" Version="3.119.4"/>
         <PackageReference Include="SkiaSharp.NativeAssets.Win32" Version="3.119.4"/>
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12"/>
         <PackageReference Include="Svg.Skia" Version="4.9.1"/>
     </ItemGroup>
 
