@@ -46,6 +46,39 @@ public sealed class ContentServerApiTest : IDisposable
     private readonly string _storagePath = Path.Combine(Path.GetTempPath(), $"content-server-files-{Guid.NewGuid():N}");
 
     [Fact]
+    public async Task ImageUploadAcceptsPngAfterFormatDetection()
+    {
+        await using var factory = CreateFactory();
+        var builder = factory.Services.GetRequiredService<ImageContentPackageBuilder>();
+        using var input = new MemoryStream(CreatePng());
+        var inspection = await builder.ValidateSourceAsync(input, ContentPackageType.BlocksTexture,
+            1024 * 1024, CancellationToken.None);
+
+        Assert.Equal(16, inspection.Width);
+        Assert.Equal(16, inspection.Height);
+        Assert.Equal("image/png", inspection.MediaType);
+    }
+
+    [Fact]
+    public async Task ImageUploadRejectsTiffBeforeReadingImageMetadata()
+    {
+        await using var factory = CreateFactory();
+        var builder = factory.Services.GetRequiredService<ImageContentPackageBuilder>();
+        // A recognizable but incomplete BigTIFF must be rejected by format detection.
+        // Parsing this fixture would fail with an ImageSharp exception instead.
+        using var input = new MemoryStream(new byte[]
+        {
+            0x49, 0x49, 0x2b, 0, 8, 0, 0, 0,
+            16, 0, 0, 0, 0, 0, 0, 0,
+            1, 0, 0, 0, 0, 0, 0, 0
+        });
+        var exception = await Assert.ThrowsAsync<ContentPackageException>(() =>
+            builder.ValidateSourceAsync(input, ContentPackageType.BlocksTexture, 1024, CancellationToken.None));
+
+        Assert.Equal("Image source must be PNG.", exception.Message);
+    }
+
+    [Fact]
     public async Task AnnouncementsAndReleasesArePublicOnlyWhenPublished()
     {
         await using var factory = CreateFactory();

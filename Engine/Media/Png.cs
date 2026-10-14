@@ -32,13 +32,12 @@ public static class Png
     public static PngInfo GetInfo(Stream stream)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        var info = SixLabors.ImageSharp.Image.Identify(stream);
-        if (info.Metadata.DecodedImageFormat?.Name != "PNG")
+        if (!IsPngStream(stream))
         {
-            throw new FormatException(
-                $"Image format({info.Metadata.DecodedImageFormat?.Name ?? string.Empty}) is not Png");
+            throw new FormatException("Image format is not PNG.");
         }
 
+        var info = SixLabors.ImageSharp.Image.Identify(stream);
         PngInfo result = default;
         result.Width = info.Width;
         result.Height = info.Height;

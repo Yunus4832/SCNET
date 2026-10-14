@@ -9,7 +9,6 @@ public enum ImageFileFormat
     Gif,
     Pbm, //纯黑白格式
     Qoi,
-    Tiff,
     Tga,
     WebP
 }

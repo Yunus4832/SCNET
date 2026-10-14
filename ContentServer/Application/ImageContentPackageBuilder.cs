@@ -122,12 +122,14 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         CancellationToken cancellationToken)
     {
         await using var input = File.OpenRead(path);
-        var imageInfo = await Image.IdentifyAsync(input, cancellationToken);
-        if (imageInfo.Metadata.DecodedImageFormat is not PngFormat)
+        var format = await Image.DetectFormatAsync(input, cancellationToken);
+        if (format is not PngFormat)
         {
             throw new ContentPackageException("Image source must be PNG.");
         }
 
+        input.Position = 0;
+        var imageInfo = await Image.IdentifyAsync(input, cancellationToken);
         input.Position = 0;
         using (var image = await Image.LoadAsync(input, cancellationToken))
         {

@@ -11,7 +11,6 @@ using SixLabors.ImageSharp.Formats.Pbm;
 using SixLabors.ImageSharp.Formats.Png;
 using SixLabors.ImageSharp.Formats.Qoi;
 using SixLabors.ImageSharp.Formats.Tga;
-using SixLabors.ImageSharp.Formats.Tiff;
 using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
 
@@ -30,7 +29,6 @@ public class Image
         new PngConfigurationModule(),
         new QoiConfigurationModule(),
         new TgaConfigurationModule(),
-        new TiffConfigurationModule(),
         new WebpConfigurationModule()
     ];
 
@@ -282,21 +280,6 @@ public class Image
 
                     break;
                 }
-            case ImageFileFormat.Tiff:
-                {
-                    TiffEncoder encoder = new()
-                    { BitsPerPixel = saveAlpha ? TiffBitsPerPixel.Bit32 : TiffBitsPerPixel.Bit24 };
-                    if (sync)
-                    {
-                        image.TrueImage.SaveAsTiff(stream, encoder);
-                    }
-                    else
-                    {
-                        image.TrueImage.SaveAsTiffAsync(stream, encoder);
-                    }
-
-                    break;
-                }
             case ImageFileFormat.Tga:
                 {
                     TgaEncoder encoder = new()
@@ -400,7 +383,6 @@ public class Image
         { "gif", ImageFileFormat.Gif },
         { "pbm", ImageFileFormat.Pbm },
         { "qoi", ImageFileFormat.Qoi },
-        { "tiff", ImageFileFormat.Tiff },
         { "tga", ImageFileFormat.Tga },
         { "webp", ImageFileFormat.WebP }
     };
