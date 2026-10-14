@@ -31,17 +31,6 @@ public sealed class LocalModRepository(string directoryPath)
             string.Equals(entry.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase));
     }
 
-    public string GetTargetPath(string fileName)
-    {
-        var sanitized = Path.GetFileName(fileName);
-        return Path.Combine(directoryPath, sanitized);
-    }
-
-    public string GetCachePath(string packageHash)
-    {
-        return Path.Combine(directoryPath, $"{packageHash.ToLowerInvariant()}{ModPackage.FileExtension}");
-    }
-
     public LocalModPackageEntry AddPackage(Stream content)
     {
         var entry = _cache.ImportAsync(content).GetAwaiter().GetResult();
@@ -50,13 +39,6 @@ public sealed class LocalModRepository(string directoryPath)
             throw new ContentPackageException("Only Mod packages can be added through LocalModRepository.");
         }
 
-        return FindByHash(entry.PackageHash)!;
-    }
-
-    internal LocalModPackageEntry AddPackageExact(Stream content, string modId, string version, string packageHash)
-    {
-        var entry = _cache.ImportExactAsync(content, ContentPackageType.Mod, modId, version, packageHash)
-            .ConfigureAwait(false).GetAwaiter().GetResult();
         return FindByHash(entry.PackageHash)!;
     }
 

@@ -79,45 +79,11 @@ public sealed class GameModRuntime : IDisposable
         ModProfile profile,
         string localRepositoryPath,
         ModSide hostSide,
-        Action<string>? log = null,
-        bool fallbackToBuiltInOnFailure = false)
+        Action<string>? log = null)
     {
         var sources = ModProfileResolver.ResolveRequiredPackages(profile, localRepositoryPath, log);
-        return StartFromPackageSources(sources, hostSide, fallbackToBuiltInOnFailure, profile);
-    }
-
-    private static GameModRuntime StartFromPackageSources(
-        IEnumerable<ModPackageSource> sources,
-        ModSide hostSide,
-        bool fallbackToBuiltInOnFailure,
-        ModProfile effectiveProfile)
-    {
-        var materializedSources = sources.ToArray();
-        var externalMods = ModPackageCatalog.CreateLoadPlan(materializedSources, hostSide);
-        if (!fallbackToBuiltInOnFailure)
-        {
-            return StartFromDescriptors(externalMods, effectiveProfile);
-        }
-
-        try
-        {
-            var runtime = StartFromDescriptors(externalMods, effectiveProfile);
-            Log.Information(
-                "Loaded mods for {0}: {1}",
-                hostSide,
-                string.Join(", ", runtime.Host.Runtimes.Select(item => item.Descriptor.Manifest.Id)));
-            return runtime;
-        }
-        catch
-        {
-            foreach (var descriptor in externalMods)
-            {
-                descriptor.Lifetime?.Dispose();
-            }
-
-            Log.Error("Failed to load external mods from package sources; continuing with built-in content only.");
-            return Start();
-        }
+        var externalMods = ModPackageCatalog.CreateLoadPlan(sources, hostSide);
+        return StartFromDescriptors(externalMods, profile);
     }
 
     public void InitializeBlocks()
