@@ -44,10 +44,9 @@ export interface ContentVersion {
 }
 
 interface CredentialStore {
-  publisher?: StoredCredential[] | StoredCredential | string;
-  administrator?: StoredCredential[] | StoredCredential | string;
+  publisher?: StoredCredential[];
+  administrator?: StoredCredential[];
   activeAccess?: { role: AccessRole; apiKey: string };
-  activeRole?: AccessRole;
 }
 interface StoredCredential {
   apiKey: string;
@@ -62,7 +61,14 @@ function getCredentialStore(): CredentialStore {
   const value = localStorage.getItem(credentialsKey);
   if (!value) return {};
   try {
-    return JSON.parse(value) as CredentialStore;
+    const store = JSON.parse(value) as CredentialStore | null;
+    if (!store || typeof store !== 'object' || Array.isArray(store)) return {};
+    if (
+      (store.publisher !== undefined && !Array.isArray(store.publisher)) ||
+      (store.administrator !== undefined && !Array.isArray(store.administrator))
+    )
+      return {};
+    return store;
   } catch {
     return {};
   }
@@ -70,20 +76,14 @@ function getCredentialStore(): CredentialStore {
 function setCredentialStore(store: CredentialStore): void {
   localStorage.setItem(credentialsKey, JSON.stringify(store));
 }
-function getStoredCredentials(store: CredentialStore, role: AccessRole): StoredCredential[] {
-  const value = store[role];
-  if (!value) return [];
-  if (typeof value === 'string') return [{ apiKey: value }];
-  return Array.isArray(value) ? value : [value];
-}
 export function getSavedAccesses(role: AccessRole): StoredAccess[] {
-  return getStoredCredentials(getCredentialStore(), role)
+  return (getCredentialStore()[role] ?? [])
     .map((credential) => ({ role, ...credential }))
     .sort((left, right) => (right.lastUsedAt ?? 0) - (left.lastUsedAt ?? 0));
 }
 export function getAccess(role?: AccessRole): StoredAccess | null {
   const store = getCredentialStore();
-  const selectedRole = role ?? store.activeAccess?.role ?? store.activeRole;
+  const selectedRole = role ?? store.activeAccess?.role;
   if (!selectedRole) return null;
   const credentials = getSavedAccesses(selectedRole).filter((credential) => !credential.invalid);
   const selectedKey =
@@ -94,13 +94,11 @@ export function getAccess(role?: AccessRole): StoredAccess | null {
 }
 export function getSavedRoles(): AccessRole[] {
   const store = getCredentialStore();
-  return (['publisher', 'administrator'] as const).filter(
-    (role) => getStoredCredentials(store, role).length > 0,
-  );
+  return (['publisher', 'administrator'] as const).filter((role) => (store[role] ?? []).length > 0);
 }
 export function setAccess(access: StoredAccess): void {
   const store = getCredentialStore();
-  const credentials = getStoredCredentials(store, access.role);
+  const credentials = store[access.role] ?? [];
   const existingIndex = credentials.findIndex((item) => item.apiKey === access.apiKey);
   const credential = {
     apiKey: access.apiKey,
@@ -113,12 +111,11 @@ export function setAccess(access: StoredAccess): void {
   else credentials.push(credential);
   store[access.role] = credentials;
   store.activeAccess = { role: access.role, apiKey: access.apiKey };
-  delete store.activeRole;
   setCredentialStore(store);
 }
 export function setActiveRole(role: AccessRole, apiKey?: string): void {
   const store = getCredentialStore();
-  const credentials = getStoredCredentials(store, role);
+  const credentials = store[role] ?? [];
   const selected = apiKey
     ? credentials.find((item) => item.apiKey === apiKey && !item.invalid)
     : getAccess(role);
@@ -127,7 +124,6 @@ export function setActiveRole(role: AccessRole, apiKey?: string): void {
   credentials[index] = { ...credentials[index], lastUsedAt: Date.now() };
   store[role] = credentials;
   store.activeAccess = { role, apiKey: selected.apiKey };
-  delete store.activeRole;
   setCredentialStore(store);
 }
 export function updateAccessLabel(
@@ -136,7 +132,7 @@ export function updateAccessLabel(
   label: string | undefined,
 ): void {
   const store = getCredentialStore();
-  const credentials = getStoredCredentials(store, role);
+  const credentials = store[role] ?? [];
   const index = credentials.findIndex((item) => item.apiKey === apiKey);
   if (index < 0) return;
   credentials[index] = {
@@ -153,19 +149,18 @@ export function clearAccess(role?: AccessRole, apiKey?: string): void {
     return;
   }
   const store = getCredentialStore();
-  const credentials = getStoredCredentials(store, role);
+  const credentials = store[role] ?? [];
   const remaining = apiKey ? credentials.filter((item) => item.apiKey !== apiKey) : [];
   if (remaining.length) store[role] = remaining;
   else delete store[role];
   if (store.activeAccess?.role === role && (!apiKey || store.activeAccess.apiKey === apiKey))
     delete store.activeAccess;
-  if (store.activeRole === role) delete store.activeRole;
   setCredentialStore(store);
 }
 
 export function markAccessInvalid(role: AccessRole, apiKey: string): boolean {
   const store = getCredentialStore();
-  const credentials = getStoredCredentials(store, role);
+  const credentials = store[role] ?? [];
   const index = credentials.findIndex((item) => item.apiKey === apiKey);
   if (index < 0) return false;
   credentials[index] = { ...credentials[index], invalid: true };
