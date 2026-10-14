@@ -6,6 +6,12 @@ SEED=123456
 GAME_MODE=Survival
 SERVER_PORT=28887
 
+# Optional HTTP control on the host loopback interface; use SSH forwarding remotely.
+HTTP_COMMAND=false
+HTTP_COMMAND_PORT=28889
+# At least 32 non-whitespace characters. Empty uses the persistent instance token.
+HTTP_COMMAND_ACCESS_TOKEN=''
+
 # Required only when MODS is nonempty. The URL must be reachable from the container.
 CONTENT_SERVER=
 

@@ -107,6 +107,27 @@ start／stop 的 Pending 表示注册或清理尚未完成，通过 status 的 D
 
 停止撤销房间和新的信令协商，取消重试，保留普通游戏监听及已建立的直连、中继玩家。已获知普通服务器地址的玩家仍可直连。注销失败时状态保留错误，远端房间可能保留至租约到期；这不是禁止新玩家进入服务器的准入开关。
 
+### 容器 HTTP 远程控制
+
+在 `server.conf` 中配置：
+
+```bash
+HTTP_COMMAND=true
+HTTP_COMMAND_PORT=28889
+HTTP_COMMAND_ACCESS_TOKEN=''  # 留空使用实例自动生成并持久保存的 Token
+```
+
+重新运行 `./deploy.sh` 后生效。开关和端口通过启动参数覆盖并保存到部署会话；Token 非空时同样作为会话覆盖，须至少 32 个非空白字符；留空会清除该会话的 Token 覆盖，使用实例 `Config/Settings.xml` 中的 `HttpCommandAccessToken`。脚本不输出 Token。
+
+容器采用宿主网络，无需 Compose `ports` 映射。HTTP 仅监听宿主机 `127.0.0.1`，通过 SSH 隧道访问：
+
+```bash
+ssh -N -L 29889:127.0.0.1:28889 dev
+curl -H "Authorization: Bearer <token>" http://127.0.0.1:29889/commands
+```
+
+将 `dev` 替换为部署主机，将隧道目标端口改为配置的 `HTTP_COMMAND_PORT`。本地转发端口可自行选择；不需要对外开放 HTTP 端口。设为 `HTTP_COMMAND=false` 并重新部署即可关闭。
+
 ## HTTP 命令宿主
 
 HTTP 命令宿主默认关闭；`Settings.xml` 的 `HttpCommandEnabled` 是实例默认开关，启动参数或保存的 session 可以覆盖它。启用后默认使用 `28889`，并且当前只监听 `127.0.0.1`。可以为多实例指定其他端口：

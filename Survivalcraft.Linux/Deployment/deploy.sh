@@ -17,12 +17,13 @@ source ./server.conf
 : "${INSTANCE:=server}" "${SESSION:=survival}" "${WORLD:=World}"
 : "${SEED:=123456}" "${GAME_MODE:=Survival}"
 : "${SERVER_PORT:=28887}"
+: "${HTTP_COMMAND:=false}" "${HTTP_COMMAND_PORT:=28889}" "${HTTP_COMMAND_ACCESS_TOKEN:=}"
 : "${CONTENT_SERVER:=}" "${MODS:=}"
 
 : "${P2P:=false}" "${RENDEZVOUS:=}" "${ROOM_NAME:=$WORLD}"
 : "${ROOM_DESCRIPTION:=}" "${ROOM_PUBLIC:=false}"
-for flag in "$P2P" "$ROOM_PUBLIC"; do
-    case "$flag" in true|false) ;; *) echo "P2P and ROOM_PUBLIC must be true or false." >&2; exit 2 ;; esac
+for flag in "$P2P" "$ROOM_PUBLIC" "$HTTP_COMMAND"; do
+    case "$flag" in true|false) ;; *) echo "P2P, ROOM_PUBLIC and HTTP_COMMAND must be true or false." >&2; exit 2 ;; esac
 done
 export SCNET_P2P="$P2P" SCNET_RENDEZVOUS="$RENDEZVOUS" SCNET_ROOM_NAME="$ROOM_NAME"
 export SCNET_ROOM_DESCRIPTION="$ROOM_DESCRIPTION" SCNET_ROOM_PUBLIC="$ROOM_PUBLIC"
@@ -33,6 +34,18 @@ done
 [[ "$SEED" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "Invalid seed: $SEED" >&2; exit 2; }
 case "$GAME_MODE" in Creative|Harmless|Survival|Challenging|Cruel|Adventure) ;; *) echo "Invalid GAME_MODE" >&2; exit 2 ;; esac
 [[ "$SERVER_PORT" =~ ^[0-9]+$ ]] && ((10#$SERVER_PORT >= 1 && 10#$SERVER_PORT <= 65535)) || { echo "Invalid port: $SERVER_PORT" >&2; exit 2; }
+
+[[ "$HTTP_COMMAND_PORT" =~ ^[0-9]+$ ]] && ((10#$HTTP_COMMAND_PORT >= 1 && 10#$HTTP_COMMAND_PORT <= 65535)) || { echo "Invalid HTTP command port: $HTTP_COMMAND_PORT" >&2; exit 2; }
+if [[ -n "$HTTP_COMMAND_ACCESS_TOKEN" ]] && { (( ${#HTTP_COMMAND_ACCESS_TOKEN} < 32 )) || [[ "$HTTP_COMMAND_ACCESS_TOKEN" =~ [[:space:]] ]]; }; then
+    echo "HTTP_COMMAND_ACCESS_TOKEN must have at least 32 characters and contain no whitespace, or be empty to use the instance token." >&2
+    exit 2
+fi
+SCNET_HTTP_COMMAND_SWITCH=--no-http-command
+if [[ "$HTTP_COMMAND" == true ]]; then
+    SCNET_HTTP_COMMAND_SWITCH=--http-command
+fi
+export SCNET_HTTP_COMMAND_SWITCH SCNET_HTTP_COMMAND_PORT="$HTTP_COMMAND_PORT"
+export SCNET_HTTP_COMMAND_ACCESS_TOKEN="$HTTP_COMMAND_ACCESS_TOKEN"
 
 if [[ -n "${CONTAINER_ENGINE:-}" ]]; then
     case "$CONTAINER_ENGINE" in podman|docker) engine="$CONTAINER_ENGINE" ;; *) echo "Invalid CONTAINER_ENGINE" >&2; exit 2 ;; esac
@@ -74,3 +87,6 @@ export SCNET_INSTANCES_DIR SCNET_INSTANCE="$INSTANCE" SCNET_SESSION="$SESSION" S
 export SCNET_SEED="$SEED" SCNET_GAME_MODE="$GAME_MODE" SCNET_SERVER_PORT="$SERVER_PORT"
 "${compose[@]}" -f compose.yaml up -d --force-recreate game-server
 echo "[SCNET] Game server started: $INSTANCE/$SESSION ($WORLD) on UDP $SERVER_PORT"
+if [[ "$HTTP_COMMAND" == true ]]; then
+    echo "[SCNET] HTTP control listening on 127.0.0.1:$HTTP_COMMAND_PORT; access remotely through an SSH tunnel."
+fi
