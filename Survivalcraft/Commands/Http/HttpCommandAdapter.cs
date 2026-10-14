@@ -1,17 +1,22 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
+using EntitySystem.Core;
+
+using Game.Network;
+
 namespace Game.Commands;
 
 /// <summary>
-///     Protocol contract reserved for a future HTTP frontend. Every command uses
-///     one endpoint and is selected by its stable command identity.
+///     HTTP command envelopes select commands by their stable identity.
 /// </summary>
 public static class HttpCommandProtocol
 {
     public const int DefaultPort = 28889;
 
     public const string Endpoint = "/commands";
+
+    public const string PlayerEndpoint = "/player/commands";
 
     public const string IdentityProperty = "identity";
 
@@ -163,6 +168,26 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
 {
     private readonly CommandRegistry _registry =
         registry ?? throw new ArgumentNullException(nameof(registry));
+
+    public IReadOnlyList<HttpDiscoveredCommand> Discover(
+        CommandPrincipal principal,
+        Project? project,
+        bool playerScope = false)
+    {
+        return _registry.Adapters.Get<HttpCommandBinding>()
+            .Where(entry => _registry.TryGetDefinition(entry.Id, out var command) &&
+                            command is not null &&
+                            (!playerScope || command.Definition.Domain is not CommandDomain.Application) &&
+                            command.Definition.CanInvoke(principal, project) &&
+                            command.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) &&
+                            command.Definition.IsPotentiallyAuthorized(_registry.Permissions, principal, project))
+            .Select(entry =>
+            {
+                _registry.TryGetDefinition(entry.Id, out var command);
+                return new HttpDiscoveredCommand(entry.Id.ToString(),
+                    command!.Definition.Description.Resolve(), entry.Binding.Arguments);
+            }).ToArray();
+    }
 
     public CommandResult Execute(
         HttpCommandRequest request,

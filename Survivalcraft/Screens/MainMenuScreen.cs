@@ -235,7 +235,7 @@ public class MainMenuScreen : Screen
 
     private static void ExecuteApplicationCommand(IGameCommand command)
     {
-        var result = CommandExecutor.ExecuteApplication(command, GameManager.Project);
+        var result = CommandExecutor.ExecuteLocal(command, GameManager.Project);
         if (!result.Success)
         {
             DialogsManager.ShowDialog(

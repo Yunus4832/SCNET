@@ -44,7 +44,7 @@ public static class HeadlessEntry
 
     /// <summary>
     ///     Enqueues a trusted host-console command for execution on the Headless
-    ///     server thread. The command uses the ServerOperator principal.
+    ///     server thread. The command uses the LocalOperator principal.
     /// </summary>
     public static Task<CommandResult> SubmitConsoleCommandAsync(string input)
     {
@@ -145,7 +145,7 @@ public static class HeadlessEntry
             SetCommandConsoleReady(true);
             HttpCommandHostManager.Start(
                 startup.Session,
-                CommandPrincipal.ServerOperator);
+                CommandPrincipal.LocalOperator);
             Log.Information("Headless server started. Press Ctrl+C to stop.");
             WriteAdministrationBootstrapInstructions();
             StartConsoleReader();
@@ -266,7 +266,7 @@ public static class HeadlessEntry
     {
         while (_consoleCommands.TryDequeue(out var request))
         {
-            var result = CommandExecutor.ExecuteServerOperator(
+            var result = CommandExecutor.ExecuteLocal(
                 request.Input,
                 GameManager.Project);
             if (GameManager.Project is { } project)
@@ -313,16 +313,15 @@ public static class HeadlessEntry
                     var adapter = new TextCommandAdapter(runtime.Commands);
                     var items = adapter.Suggest(
                             request.Input,
-                            CommandPrincipal.ServerOperator,
-                            CommandInvocationChannel.ServerControl)
+                            CommandPrincipal.LocalOperator,
+                            CommandInvocationChannel.Console)
                         .OrderBy(item => item.Value, StringComparer.OrdinalIgnoreCase)
                         .ToArray();
                     result = new HeadlessCommandSuggestions(
                         items,
                         adapter.CanExecute(
                             request.Input,
-                            CommandPrincipal.ServerOperator,
-                            CommandInvocationChannel.ServerControl));
+                            CommandPrincipal.LocalOperator));
                 }
             }
             catch (Exception exception)

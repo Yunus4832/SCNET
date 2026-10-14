@@ -4,19 +4,6 @@ namespace Game.Commands;
 
 public static class CommandExecutor
 {
-    public static CommandResult ExecuteApplication(
-        string input,
-        Project? project,
-        string? correlationId = null)
-    {
-        return Execute(
-            input,
-            CommandInvocationChannel.Text,
-            CommandPrincipal.ApplicationUser,
-            project,
-            correlationId);
-    }
-
     public static CommandResult ExecutePlayer(
         string input,
         PlayerData player,
@@ -31,15 +18,15 @@ public static class CommandExecutor
             correlationId);
     }
 
-    public static CommandResult ExecuteServerOperator(
+    public static CommandResult ExecuteLocal(
         string input,
         Project? project,
         string? correlationId = null)
     {
         return Execute(
             input,
-            CommandInvocationChannel.ServerControl,
-            CommandPrincipal.ServerOperator,
+            CommandInvocationChannel.Console,
+            CommandPrincipal.LocalOperator,
             project,
             correlationId);
     }
@@ -58,7 +45,7 @@ public static class CommandExecutor
             correlationId);
     }
 
-    public static CommandResult ExecuteApplication(
+    public static CommandResult ExecuteLocal(
         IGameCommand command,
         Project? project,
         string? correlationId = null)
@@ -66,20 +53,7 @@ public static class CommandExecutor
         return Execute(
             command,
             CommandInvocationChannel.UserInterface,
-            CommandPrincipal.ApplicationUser,
-            project,
-            correlationId);
-    }
-
-    public static CommandResult ExecuteServerOperator(
-        IGameCommand command,
-        Project? project,
-        string? correlationId = null)
-    {
-        return Execute(
-            command,
-            CommandInvocationChannel.ServerControl,
-            CommandPrincipal.ServerOperator,
+            CommandPrincipal.LocalOperator,
             project,
             correlationId);
     }

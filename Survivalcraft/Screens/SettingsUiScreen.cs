@@ -172,7 +172,7 @@ public class SettingsUiScreen : Screen
             return;
         }
 
-        var result = CommandExecutor.ExecuteApplication(
+        var result = CommandExecutor.ExecuteLocal(
             new SetLanguageCommand(languageType),
             GameManager.Project);
         if (!result.Success)

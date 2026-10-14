@@ -105,7 +105,7 @@ Content-Type: application/json
 {"identity":"game:world/time/get","arguments":{}}
 ```
 
-HTTP 只暴露显式注册了 `HttpCommandBinding` 的命令。Headless HTTP 请求以 `ServerOperator` 执行，但仍受命令域、宿主要求和权限规则约束。当前监听仅限本机；跨主机管理应通过 SSH 隧道等受保护的传输访问，不应直接公开端口。
+HTTP 只暴露显式注册了 `HttpCommandBinding` 的命令。Headless HTTP 请求以 `LocalOperator` 执行，但仍受命令域、宿主要求和权限规则约束。当前监听仅限本机；跨主机管理应通过 SSH 隧道等受保护的传输访问，不应直接公开端口。
 
 认证后可通过 `GET /commands` 发现当前宿主实际可执行的 HTTP 命令。返回值包含稳定 identity、本地化说明和显式声明的参数名、类型与必填状态；它已按当前运行模式、宿主主体和权限过滤。客户端应先发现命令，再以同一 identity 向 `POST /commands` 发送调用请求。
 
@@ -163,7 +163,7 @@ X/Z 范围为 ±1000000，Y 为 0–255，不接受非有限数值。传送前�
 远程玩家通过原请求的关联 ID 收到最终结果，本地调用者通过消息系统收到结果。HTTP 调用遇到未加载落点时返回 Pending，不保持 HTTP 连接等待，最终结果记录在服务端日志中。
 
 Headless HTTP 提供 `game:player/teleport/other`，必填 `player`，另选完整的 `x`,`y`,`z` 或 `destination` 玩家名称。
-遵守相同权限与执行范围；GUI HTTP 的 ApplicationUser 不具备世界操作权限，不暴露传送入口。
+GUI 和 Headless HTTP 都以 LocalOperator 在本进程执行。GUI 承载世界时可以执行显式注册的世界管理命令；GUI 客户端不会将 `/commands` 请求转发到远程服务器。需要代表当前玩家调试时使用 GUI 专有的 `/player/commands`，由服务器检查真实玩家权限。Headless 没有该入口。依赖具体玩家身份的个人操作仍要求 Player。
 
 ## 数据实例
 

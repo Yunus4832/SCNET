@@ -45,6 +45,7 @@ public static class HttpCommandExecutionQueue
 
     public static void Update()
     {
+        HttpPlayerCommandAdapter.Update();
         while (_requests.TryDequeue(out var request))
         {
             try
@@ -85,25 +86,8 @@ public static class HttpCommandExecutionQueue
                     continue;
                 }
 
-                var project = GameManager.Project;
-                var commands = runtime.Commands.Adapters.Get<HttpCommandBinding>()
-                    .Where(entry => runtime.Commands.TryGetDefinition(entry.Id, out var command) &&
-                                    command is not null &&
-                                    command.Definition.CanInvoke(request.Principal, project) &&
-                                    command.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) &&
-                                    command.Definition.IsPotentiallyAuthorized(
-                                        runtime.Commands.Permissions,
-                                        request.Principal,
-                                        project))
-                    .Select(entry =>
-                    {
-                        runtime.Commands.TryGetDefinition(entry.Id, out var command);
-                        return new HttpDiscoveredCommand(
-                            entry.Id.ToString(),
-                            command!.Definition.Description.Resolve(),
-                            entry.Binding.Arguments);
-                    })
-                    .ToArray();
+                var commands = new HttpCommandAdapter(runtime.Commands)
+                    .Discover(request.Principal, GameManager.Project);
                 request.Completion.TrySetResult(commands);
             }
             catch (Exception exception)
@@ -116,6 +100,7 @@ public static class HttpCommandExecutionQueue
 
     public static void FailPending()
     {
+        HttpPlayerCommandAdapter.FailPending();
         while (_requests.TryDequeue(out var request))
         {
             request.Completion.TrySetResult(CommandResult.Fail(

@@ -1003,8 +1003,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         }
         else
         {
-            var isAdmin = ComponentPlayer.PlayerData is { ServerManager: true } or { ServerMaster: true };
-            if ((SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative || isAdmin) &&
+            if (SubsystemGameInfo.WorldSettings.GameMode == GameMode.Creative &&
                 gameWidget.ActiveCamera is FixedCamera)
             {
                 gameWidget.ActiveCamera = gameWidget.FindCamera<DebugCamera>()!;

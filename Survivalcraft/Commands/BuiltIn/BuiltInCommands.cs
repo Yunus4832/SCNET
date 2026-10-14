@@ -38,7 +38,7 @@ public static class BuiltInCommands
             commands,
             permissionGrant,
             CommandDomain.Server,
-            PermissionGrantPolicy.OperatorOnly,
+            PermissionGrantPolicy.NonGrantable,
             description: CommandDescription("PermissionGrant_Description", "授予玩家命令权限"),
             implicitGrant: (principal, _) =>
                 principal.DelegablePermissions.Count > 0 ||
@@ -64,19 +64,19 @@ public static class BuiltInCommands
         commands.Register(new ResourceId(owner, "player/mark/private"),
             new CommandDefinition<MarkPrivatePositionCommand>(TeleportCommandHandlers.MarkPrivate, CommandDomain.World,
                 CommandDescription("MarkPrivate_Description", "保存个人标记"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) => writer.Write(command.Name),
                 read: static reader => new MarkPrivatePositionCommand(reader.ReadString())));
         commands.Register(new ResourceId(owner, "world/mark/public"),
             new CommandDefinition<MarkPublicPositionCommand>(TeleportCommandHandlers.MarkPublic, CommandDomain.World,
                 CommandDescription("MarkPublic_Description", "保存公共标记"), publicMark,
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) => writer.Write(command.Name),
                 read: static reader => new MarkPublicPositionCommand(reader.ReadString())));
         commands.Register(new ResourceId(owner, "player/teleport/mark"),
             new CommandDefinition<TeleportMarkCommand>(TeleportCommandHandlers.MarkTeleport, CommandDomain.World,
                 CommandDescription("TeleportMark_Description", "传送到命名标记"), teleportSelf,
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.Name);
@@ -98,7 +98,7 @@ public static class BuiltInCommands
         commands.Register(new ResourceId(owner, "player/teleport/self"),
             new CommandDefinition<TeleportSelfCommand>(TeleportCommandHandlers.Self, CommandDomain.World,
                 CommandDescription("TeleportSelf_Description", "传送自己"), teleportSelf,
-                allowedPrincipals: CommandPrincipalKind.Player | CommandPrincipalKind.System,
+                allowedPrincipals: CommandPrincipalKinds.Player | CommandPrincipalKinds.System,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.Position.HasValue);
@@ -137,19 +137,19 @@ public static class BuiltInCommands
             commands,
             serverStop,
             CommandDomain.Server,
-            PermissionGrantPolicy.OperatorOnly,
+            PermissionGrantPolicy.NonGrantable,
             description: CommandDescription("StopAction_Description", "停止 Headless 服务端"));
         RegisterPermission(
             commands,
             serverAuthManage,
             CommandDomain.Server,
-            PermissionGrantPolicy.OperatorOnly,
+            PermissionGrantPolicy.NonGrantable,
             description: CommandDescription("Auth_Description", "认领服务器管理员身份"));
         RegisterPermission(
             commands,
             playerProfileManage,
             CommandDomain.Server,
-            PermissionGrantPolicy.OperatorOnly,
+            PermissionGrantPolicy.NonGrantable,
             description: CommandDescription("PlayerProfileServer_Description", "管理玩家资料"));
 
         commands.Register(
@@ -225,7 +225,7 @@ public static class BuiltInCommands
                     "LightningPlayer_Description",
                     "在玩家注视位置附近触发闪电"),
                 worldLightningTrigger,
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (_, _) => { },
                 read: static _ => new TriggerPlayerLightningCommand(),
                 panelBehavior: CommandPanelBehavior.CloseOnSuccess));
@@ -353,7 +353,7 @@ public static class BuiltInCommands
                 CommandDescription(
                     "AuthClaim_Description",
                     "使用认领码初始化在线玩家的管理权限"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) => writer.Write(command.Code),
                 read: static reader => new ClaimServerAdministrationCommand(reader.ReadString())));
         commands.Register(
@@ -403,7 +403,7 @@ public static class BuiltInCommands
                 ExecutePermissionListSelf,
                 CommandDomain.Server,
                 CommandDescription("PermissionListSelf_Description", "查看自己的命令权限"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (_, _) => { },
                 read: static _ => new ListOwnPermissionsCommand()));
         commands.Register(
@@ -457,7 +457,7 @@ public static class BuiltInCommands
                 CommandDescription(
                     "PlayerProfileSelf_Description",
                     "更新自己的玩家资料"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.Name);
@@ -483,7 +483,7 @@ public static class BuiltInCommands
                 PlayerAndMessageCommandHandlers.SendChatMessage,
                 CommandDomain.World,
                 CommandDescription("ChatSend_Description", "发送聊天消息"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) =>
                 {
                     writer.WriteEnum(command.Channel);
@@ -498,7 +498,7 @@ public static class BuiltInCommands
                 GroupCommandHandlers.CreateTeam,
                 CommandDomain.World,
                 CommandDescription("TeamCreate_Description", "创建队伍"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) => writer.Write(command.Name),
                 read: static reader => new CreateTeamCommand(reader.ReadString())));
         commands.Register(
@@ -507,7 +507,7 @@ public static class BuiltInCommands
                 GroupCommandHandlers.RequestJoin,
                 CommandDomain.World,
                 CommandDescription("TeamJoin_Description", "申请加入队伍"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) => writer.Write(command.TeamId),
                 read: static reader => new RequestJoinTeamCommand(reader.ReadGuid())));
         commands.Register(
@@ -516,7 +516,7 @@ public static class BuiltInCommands
                 GroupCommandHandlers.InvitePlayer,
                 CommandDomain.World,
                 CommandDescription("TeamInvite_Description", "邀请玩家加入队伍"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) => writer.Write(command.PlayerId),
                 read: static reader => new InvitePlayerToTeamCommand(reader.ReadGuid())));
         commands.Register(
@@ -525,7 +525,7 @@ public static class BuiltInCommands
                 GroupCommandHandlers.Respond,
                 CommandDomain.World,
                 CommandDescription("TeamRespond_Description", "响应队伍请求"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (writer, command) =>
                 {
                     writer.Write(command.OperationId);
@@ -540,14 +540,14 @@ public static class BuiltInCommands
                 GroupCommandHandlers.LeaveTeam,
                 CommandDomain.World,
                 CommandDescription("TeamLeave_Description", "退出当前队伍"),
-                allowedPrincipals: CommandPrincipalKind.Player,
+                allowedPrincipals: CommandPrincipalKinds.Player,
                 write: static (_, _) => { },
                 read: static _ => new LeaveTeamCommand()));
         commands.Register(new ResourceId(owner, "diagnostics/network/get"),
             new CommandDefinition<GetNetworkSendStatisticsCommand>(NetworkDiagnosticCommandHandlers.GetSendStatistics,
                 CommandDomain.Application,
                 LocalizedText.Literal("读取连接内网络发送统计"),
-                allowedPrincipals: CommandPrincipalKind.ApplicationUser | CommandPrincipalKind.ServerOperator));
+                allowedPrincipals: CommandPrincipalKinds.LocalOperator));
         commands.Register(new ResourceId(owner, "automation/ui/context/get"),
             new CommandDefinition<GetAutomationUiContextCommand>(AutomationCommandHandlers.GetContext,
                 CommandDomain.Application,
@@ -677,6 +677,12 @@ public static class BuiltInCommands
             HttpCommandBinding.Create(static arguments =>
                     new SetWorldTimeCommand(arguments.Get<string>("preset")),
                 new HttpCommandArgumentDefinition("preset", "string")));
+        commands.Adapters.Register(new ResourceId(owner, "world/weather/precipitation/set"),
+            HttpCommandBinding.Create(arguments => new SetPrecipitationCommand(arguments.Get<bool>("enabled")),
+                new HttpCommandArgumentDefinition("enabled", "boolean")));
+        commands.Adapters.Register(new ResourceId(owner, "world/weather/fog/set"),
+            HttpCommandBinding.Create(arguments => new SetFogCommand(arguments.Get<bool>("enabled")),
+                new HttpCommandArgumentDefinition("enabled", "boolean")));
         commands.Adapters.Register(
             new ResourceId(owner, "player/list"),
             HttpCommandBinding.Create(static _ => new ListPlayersCommand()));
@@ -1888,7 +1894,7 @@ public static class BuiltInCommands
                 "auth.claimed",
                 "AuthClaimed_Message",
                 "服务器管理员已经完成首次认领。")
-            : context.Principal.Is(CommandPrincipalKind.ServerOperator)
+            : context.Principal.Is(CommandPrincipalKind.LocalOperator)
                 ? CommandResult.LocalizedHistoryOk(
                     "auth.unclaimed",
                     "AuthUnclaimedConsole_Message",

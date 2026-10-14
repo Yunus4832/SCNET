@@ -27,7 +27,7 @@ public class TeleportCompletionTest
             new ResourceId(new ModId("game"), "player.teleport.self"),
             new ResourceId(new ModId("game"), "world.mark.manage")
         };
-        var principal = new CommandPrincipal("Tester", player: player, permissions: permissions);
+        var principal = CommandPrincipal.CreatePlayer("Tester", player: player, permissions: permissions);
         var adapter = new TextCommandAdapter(Registry());
         foreach (var command in new[] { "/tp self", "/mark" })
         {
@@ -36,7 +36,7 @@ public class TeleportCompletionTest
             Assert.DoesNotContain(adapter.Suggest(command + " private ", principal), suggestion => suggestion.Value == "Secret");
         }
 
-        var otherPrincipal = new CommandPrincipal("Other", player: other, permissions: permissions);
+        var otherPrincipal = CommandPrincipal.CreatePlayer("Other", player: other, permissions: permissions);
         Assert.Equal("Secret", Assert.Single(adapter.Suggest("/tp self private ", otherPrincipal)).Value);
     }
 
@@ -47,7 +47,7 @@ public class TeleportCompletionTest
         var project = new CompletionProject();
         var player = CreatePlayer(project, "spawn");
         project.Players.PublicMarks.Set("spawn", new Vector3(10f, 65f, 10f));
-        var principal = new CommandPrincipal("Tester", player: player, permissions:
+        var principal = CommandPrincipal.CreatePlayer("Tester", player: player, permissions:
             [new ResourceId(new ModId("game"), "player.teleport.self")]);
         Assert.Equal("self", Assert.Single(adapter.Suggest("/tp ", principal)).Value);
         var suggestions = adapter.Suggest("/tp self ", principal).Select(suggestion => suggestion.Value).ToArray();
@@ -87,7 +87,7 @@ public class TeleportCompletionTest
         players.AddRange([player, other]);
         var selfPermission = new ResourceId(new ModId("game"), "player.teleport.self");
         var othersPermission = new ResourceId(new ModId("game"), "player.teleport.others");
-        var principal = new CommandPrincipal("Tester", player: player, permissions: [selfPermission, othersPermission]);
+        var principal = CommandPrincipal.CreatePlayer("Tester", player: player, permissions: [selfPermission, othersPermission]);
         var adapter = new TextCommandAdapter(Registry());
         Assert.Equal(new[] { "player", "self" }, adapter.Suggest("/tp ", principal).Select(item => item.Value));
         Assert.Equal("TeleportSelf_Description", Assert.Single(adapter.Suggest("/tp ", principal), item => item.Value == "self").DescriptionSource!.Key);
@@ -103,7 +103,7 @@ public class TeleportCompletionTest
         Assert.Equal("Player One", Assert.Single(adapter.Suggest("/tp PLAYER OTHER player ", principal)).Value);
         Assert.Equal("Other", Assert.Single(adapter.Suggest("/tp self player ", principal)).Value);
         Assert.Equal("Player One", Assert.Single(adapter.Suggest($"/tp player {other.PlayerGUID} player ", principal)).Value);
-        var selfOnly = new CommandPrincipal("Tester", player: player, permissions: [selfPermission]);
+        var selfOnly = CommandPrincipal.CreatePlayer("Tester", player: player, permissions: [selfPermission]);
         Assert.Equal("self", Assert.Single(adapter.Suggest("/tp ", selfOnly)).Value);
         Assert.Empty(adapter.Suggest("/tp player ", selfOnly));
         Assert.Empty(adapter.Suggest("/tp player Other private ", selfOnly));
@@ -133,7 +133,7 @@ public class TeleportCompletionTest
             ComponentHealth = new ComponentHealth { Health = 1f },
             ComponentBody = new ComponentBody()
         };
-        var context = new CommandContext(CommandInvocationChannel.Text, new CommandPrincipal("Caller", player: caller), project);
+        var context = new CommandContext(CommandInvocationChannel.Text, CommandPrincipal.CreatePlayer("Caller", player: caller), project);
         Assert.Equal("mark.missing", TeleportCommandHandlers.PlayerMarkTeleport(context,
             new TeleportPlayerMarkCommand("Target", "CallerOnly", isPublic)).Code);
         var marks = isPublic ? project.Players.PublicMarks : target.PrivateMarks;
@@ -169,7 +169,7 @@ public class TeleportCompletionTest
         };
         var previous = new Vector3(100f, 65f, 100f);
         player.PrivateMarks.Set("previous", previous);
-        var context = new CommandContext(CommandInvocationChannel.Text, new CommandPrincipal("Tester", player: player), project);
+        var context = new CommandContext(CommandInvocationChannel.Text, CommandPrincipal.CreatePlayer("Tester", player: player), project);
         var destination = useGuid ? player.PlayerGUID.ToString() : "TESTER";
         var result = TeleportCommandHandlers.Self(context, new TeleportSelfCommand(DestinationPlayer: destination));
         Assert.Equal("teleport.unchanged", result.Code);

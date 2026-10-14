@@ -64,7 +64,7 @@ dotnet run --project ServerLoadTool --no-build -- \
 
 本机测试推荐同时提供 `--server-pid` 和 `--server-http-port`。HTTP token 从对应实例的 `Config/Settings.xml` 获取后放入环境，
 不要把 token 写进命令参数、报告或 Git 文件。该端口必须对应本次被测试的服务器；远程测试可通过 SSH 转发诊断端口。
-HTTP 首先发现命令，再使用只读 `game:diagnostics/network/get`，沿用原有 ServerOperator 认证与权限边界。
+HTTP 首先发现命令，再使用只读 `game:diagnostics/network/get`，沿用原有 LocalOperator 认证与权限边界。
 异步采样不会让客户端主循环等待 HTTP 响应。
 
 网络诊断新增 `HeadlessTicks`：累计 tick 数、累计工作毫秒、超过 50ms 的 tick 数、最大工作耗时、最大起始迟到时间。

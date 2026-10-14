@@ -271,7 +271,7 @@ public class CommandDispatcherTest
             permission,
             new CommandPermissionDefinition(
                 CommandDomain.World,
-                PermissionGrantPolicy.OperatorOnly,
+                PermissionGrantPolicy.NonGrantable,
                 implicitGrant: static (principal, _) =>
                     principal.Name == "CreativePlayer"));
         registry.Register(
@@ -291,7 +291,7 @@ public class CommandDispatcherTest
             Player("SurvivalPlayer")));
         Assert.True(registry.CanInvoke(
             typeof(CreativeActionCommand),
-            CommandPrincipal.ServerOperator));
+            CommandPrincipal.LocalOperator));
     }
 
     [Fact]
@@ -308,11 +308,11 @@ public class CommandDispatcherTest
             CommandDomain.Server,
             hostRequirement: CommandHostRequirement.HeadlessServer);
 
-        Assert.True(application.CanInvoke(CommandPrincipal.ApplicationUser, null));
+        Assert.True(application.CanInvoke(CommandPrincipal.LocalOperator, null));
         Assert.False(application.CanInvoke(Player("Player"), null));
         Assert.True(world.CanInvoke(Player("Player"), null));
-        Assert.False(server.CanInvoke(CommandPrincipal.ApplicationUser, null));
-        Assert.False(server.CanInvoke(CommandPrincipal.ServerOperator, null));
+        Assert.False(server.CanInvoke(CommandPrincipal.LocalOperator, null));
+        Assert.False(server.CanInvoke(CommandPrincipal.LocalOperator, null));
     }
 
     [Fact]
@@ -410,12 +410,12 @@ public class CommandDispatcherTest
             stop!.Definition.RequiredPermission);
         Assert.True(registry.Permissions.TryGet(stopPermission, out var registered));
         Assert.Equal(
-            PermissionGrantPolicy.OperatorOnly,
+            PermissionGrantPolicy.NonGrantable,
             registered!.Definition.GrantPolicy);
     }
 
     [Fact]
-    public void BuiltInApplicationAndWorldSuggestionsAreSeparatedByPrincipal()
+    public void PlayerApplicationSuggestionsUseAnExplicitScopeFilter()
     {
         var originalLanguageTypes = LanguageManager.LanguageTypes.ToArray();
         try
@@ -428,12 +428,15 @@ public class CommandDispatcherTest
                 ["en-US", "zh-CN"],
                 adapter.Suggest(
                         "/language ",
-                        CommandPrincipal.ApplicationUser)
+                        CommandPrincipal.LocalOperator)
                     .Select(item => item.Value));
             Assert.Empty(adapter.Suggest("/language", Player("Player")));
             Assert.Empty(adapter.Suggest(
                 "/time",
-                CommandPrincipal.ApplicationUser));
+                CommandPrincipal.LocalOperator,
+                domain: CommandDomain.Application));
+            Assert.Contains(adapter.Suggest("/time", CommandPrincipal.LocalOperator),
+                item => item.Value == "time");
             Assert.Contains(
                 adapter.Suggest("/", Player("Player")),
                 item => item.Value == "time");
@@ -731,8 +734,8 @@ public class CommandDispatcherTest
         Assert.True(adapter.Execute(
             "/echo console",
             Context(
-                CommandPrincipal.ServerOperator,
-                CommandInvocationChannel.ServerControl)).Success);
+                CommandPrincipal.LocalOperator,
+                CommandInvocationChannel.Console)).Success);
     }
 
     [Fact]
@@ -833,7 +836,7 @@ public class CommandDispatcherTest
     [InlineData("/tp player \"Player One\" public spawn")]
     public void TeleportTextRoutesReachTheWorldHandler(string text)
     {
-        var principal = new CommandPrincipal("Operator", CommandPrincipalKind.ServerOperator | CommandPrincipalKind.Player);
+        var principal = Player("Authorized player", BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id));
         var result = new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal));
         Assert.Equal("teleport.no_world", result.Code);
     }
@@ -855,7 +858,7 @@ public class CommandDispatcherTest
     [InlineData("/tp Codex 1 64 -2")]
     public void TeleportRejectsIncompleteAndImplicitRoutes(string text)
     {
-        var principal = new CommandPrincipal("Operator", CommandPrincipalKind.ServerOperator | CommandPrincipalKind.Player);
+        var principal = Player("Authorized player", BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id));
         Assert.Equal("command.usage", new TextCommandAdapter(BuiltInRegistry()).Execute(text, Context(principal)).Code);
     }
 
@@ -870,7 +873,7 @@ public class CommandDispatcherTest
         Assert.False(self!.Definition.IsPotentiallyAuthorized(registry.Permissions, ordinary, null));
         Assert.True(self.Definition.IsPotentiallyAuthorized(registry.Permissions, authorized, null));
         Assert.False(other!.Definition.IsPotentiallyAuthorized(registry.Permissions, authorized, null));
-        Assert.False(self.Definition.CanInvoke(new CommandPrincipal("Console", CommandPrincipalKind.ServerOperator), null));
+        Assert.False(self.Definition.CanInvoke(CommandPrincipal.LocalOperator, null));
     }
 
     [Fact]
@@ -880,7 +883,7 @@ public class CommandDispatcherTest
         Assert.True(registry.TryGetDefinition<MarkPrivatePositionCommand>(out var mark));
         Assert.Equal(CommandDomain.World, mark!.Definition.Domain);
         Assert.True(mark.Definition.IsPotentiallyAuthorized(registry.Permissions, Player("Player"), null));
-        Assert.False(mark.Definition.CanInvoke(CommandPrincipal.ServerOperator, null));
+        Assert.False(mark.Definition.CanInvoke(CommandPrincipal.LocalOperator, null));
         Assert.True(registry.TryEncode(new MarkPrivatePositionCommand("previous"), out var id, out var payload, out _));
         Assert.True(registry.TryDecode(id, payload, out var decoded, out _));
         Assert.Equal(new MarkPrivatePositionCommand("previous"), decoded);
@@ -919,7 +922,7 @@ public class CommandDispatcherTest
         Assert.False(shared!.Definition.IsPotentiallyAuthorized(registry.Permissions, Player("Player"), null));
         Assert.True(shared.Definition.IsPotentiallyAuthorized(registry.Permissions,
             Player("Admin", [new ResourceId(new ModId("game"), "world.mark.manage")]), null));
-        Assert.False(personal.Definition.CanInvoke(CommandPrincipal.ServerOperator, null));
+        Assert.False(personal.Definition.CanInvoke(CommandPrincipal.LocalOperator, null));
         IGameCommand[] commands =
         [
             new MarkPrivatePositionCommand("My home"),
@@ -936,7 +939,7 @@ public class CommandDispatcherTest
             Assert.Equal(command, decoded);
         }
 
-        var principal = new CommandPrincipal("Operator", CommandPrincipalKind.ServerOperator | CommandPrincipalKind.Player);
+        var principal = Player("Authorized player", BuiltInRegistry().Permissions.Definitions.Select(entry => entry.Id));
         var adapter = new TextCommandAdapter(registry);
         Assert.Equal("teleport.no_world", adapter.Execute("/mark private \"My home\"", Context(principal)).Code);
         Assert.Equal("teleport.no_world", adapter.Execute("/mark public home", Context(principal)).Code);
@@ -967,7 +970,7 @@ public class CommandDispatcherTest
 
     private static CommandContext Context(
         CommandPrincipal? principal = null,
-        CommandInvocationChannel channel = CommandInvocationChannel.Mod)
+        CommandInvocationChannel channel = CommandInvocationChannel.Internal)
     {
         return new CommandContext(
             channel,
@@ -981,7 +984,7 @@ public class CommandDispatcherTest
         IEnumerable<ResourceId>? permissions = null,
         IEnumerable<ResourceId>? delegablePermissions = null)
     {
-        return new CommandPrincipal(
+        return CommandPrincipal.CreatePlayer(
             name,
             permissions: permissions,
             delegablePermissions: delegablePermissions);

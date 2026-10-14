@@ -49,7 +49,7 @@ public class CommandPermissionSetTest
     }
 
     [Fact]
-    public void RegistrySeparatesStandardOperatorManagedAndOperatorOnly()
+    public void RegistrySeparatesStandardOperatorManagedAndNonGrantable()
     {
         var registry = new CommandPermissionRegistry();
         var standard = Permission("world.time.set");
@@ -70,8 +70,8 @@ public class CommandPermissionSetTest
             operatorOnly,
             new CommandPermissionDefinition(
                 CommandDomain.Server,
-                PermissionGrantPolicy.OperatorOnly));
-        var delegator = new CommandPrincipal(
+                PermissionGrantPolicy.NonGrantable));
+        var delegator = CommandPrincipal.CreatePlayer(
             "Delegator",
             permissions: [standard],
             delegablePermissions: [standard]);
@@ -81,16 +81,16 @@ public class CommandPermissionSetTest
         Assert.False(registry.CanGrant(operatorOnly, delegator, null));
         Assert.True(registry.CanGrant(
             managed,
-            CommandPrincipal.ServerOperator,
+            CommandPrincipal.LocalOperator,
             null));
         Assert.False(registry.CanGrant(
             operatorOnly,
-            CommandPrincipal.ServerOperator,
+            CommandPrincipal.LocalOperator,
             null));
     }
 
     [Fact]
-    public void OperatorOnlyPermissionCannotBeSmuggledThroughPlayerGrant()
+    public void NonGrantablePermissionCannotBeSmuggledThroughPlayerGrant()
     {
         var registry = new CommandPermissionRegistry();
         var permission = Permission("server.stop");
@@ -99,15 +99,15 @@ public class CommandPermissionSetTest
             permission,
             new CommandPermissionDefinition(
                 CommandDomain.Server,
-                PermissionGrantPolicy.OperatorOnly));
-        var player = new CommandPrincipal(
+                PermissionGrantPolicy.NonGrantable));
+        var player = CommandPrincipal.CreatePlayer(
             "Player",
             permissions: [permission]);
 
         Assert.False(registry.HasEffectivePermission(permission, player, null));
         Assert.True(registry.HasEffectivePermission(
             permission,
-            CommandPrincipal.ServerOperator,
+            CommandPrincipal.LocalOperator,
             null));
     }
 
@@ -127,10 +127,10 @@ public class CommandPermissionSetTest
             _owner,
             target,
             new CommandPermissionDefinition(CommandDomain.World));
-        var useOnlyManager = new CommandPrincipal(
+        var useOnlyManager = CommandPrincipal.CreatePlayer(
             "Manager",
             permissions: [managerPermission]);
-        var delegatingManager = new CommandPrincipal(
+        var delegatingManager = CommandPrincipal.CreatePlayer(
             "DelegatingManager",
             permissions: [managerPermission],
             delegablePermissions: [managerPermission]);

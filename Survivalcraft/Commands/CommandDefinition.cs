@@ -26,7 +26,7 @@ public interface ICommandDefinition
 
     CommandHostRequirement HostRequirement { get; }
 
-    CommandPrincipalKind AllowedPrincipals { get; }
+    CommandPrincipalKinds AllowedPrincipals { get; }
 
     bool CanInvoke(CommandPrincipal principal, Project? project);
 
@@ -67,7 +67,7 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
 
     public CommandHostRequirement HostRequirement { get; }
 
-    public CommandPrincipalKind AllowedPrincipals { get; }
+    public CommandPrincipalKinds AllowedPrincipals { get; }
 
     public bool SupportsRemoteInvocation => _write is not null && _read is not null;
 
@@ -77,7 +77,7 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         LocalizedText? description = null,
         ResourceId? requiredPermission = null,
         CommandHostRequirement hostRequirement = CommandHostRequirement.None,
-        CommandPrincipalKind? allowedPrincipals = null,
+        CommandPrincipalKinds? allowedPrincipals = null,
         Action<PackageStreamWriter, TCommand>? write = null,
         Func<PackageStreamReader, TCommand>? read = null,
         CommandPanelBehavior panelBehavior = CommandPanelBehavior.ReturnToMessage)
@@ -102,7 +102,7 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
     public bool CanInvoke(CommandPrincipal principal, Project? project)
     {
         ArgumentNullException.ThrowIfNull(principal);
-        if ((AllowedPrincipals & principal.Kind) == 0)
+        if (!Allows(principal.Kind))
         {
             return false;
         }
@@ -120,22 +120,19 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
             return false;
         }
 
-        return Domain switch
+        return true;
+    }
+
+    private bool Allows(CommandPrincipalKind kind)
+    {
+        var flag = kind switch
         {
-            CommandDomain.Application =>
-                principal.Is(CommandPrincipalKind.ApplicationUser) ||
-                principal.Is(CommandPrincipalKind.System),
-            CommandDomain.World =>
-                principal.Is(CommandPrincipalKind.Player) ||
-                principal.Is(CommandPrincipalKind.ServerOperator) ||
-                principal.Is(CommandPrincipalKind.System),
-            CommandDomain.Server =>
-                CommonLib.WorkType is WorkType.Client or WorkType.Server &&
-                (principal.Is(CommandPrincipalKind.Player) ||
-                 principal.Is(CommandPrincipalKind.ServerOperator) ||
-                 principal.Is(CommandPrincipalKind.System)),
-            _ => false
+            CommandPrincipalKind.LocalOperator => CommandPrincipalKinds.LocalOperator,
+            CommandPrincipalKind.Player => CommandPrincipalKinds.Player,
+            CommandPrincipalKind.System => CommandPrincipalKinds.System,
+            _ => CommandPrincipalKinds.None
         };
+        return (AllowedPrincipals & flag) != 0;
     }
 
     public bool CanExecuteHere(RunModeType runMode, WorkType workType)
@@ -220,19 +217,19 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         return command;
     }
 
-    private static CommandPrincipalKind GetDefaultPrincipals(
+    private static CommandPrincipalKinds GetDefaultPrincipals(
         CommandDomain domain)
     {
         return domain switch
         {
             CommandDomain.Application =>
-                CommandPrincipalKind.ApplicationUser |
-                CommandPrincipalKind.System,
+                CommandPrincipalKinds.LocalOperator |
+                CommandPrincipalKinds.System,
             CommandDomain.World or CommandDomain.Server =>
-                CommandPrincipalKind.Player |
-                CommandPrincipalKind.ServerOperator |
-                CommandPrincipalKind.System,
-            _ => CommandPrincipalKind.None
+                CommandPrincipalKinds.LocalOperator |
+                CommandPrincipalKinds.Player |
+                CommandPrincipalKinds.System,
+            _ => CommandPrincipalKinds.None
         };
     }
 }

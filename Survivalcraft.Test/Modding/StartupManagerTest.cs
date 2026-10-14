@@ -285,7 +285,7 @@ public sealed class StartupManagerTest : IDisposable
             var result = new CommandDispatcher(registry).Execute(
                 new SetRunModeCommand(RunModeType.Gui),
                 new CommandContext(CommandInvocationChannel.UserInterface,
-                    CommandPrincipal.ApplicationUser, null, "run-mode-test"));
+                    CommandPrincipal.LocalOperator, null, "run-mode-test"));
 
             var settings = RunningSettingManager.Load();
             Assert.True(result.Success, result.Message);
@@ -322,7 +322,7 @@ public sealed class StartupManagerTest : IDisposable
                         World = "HeadlessWorld"
                     }),
                 new CommandContext(CommandInvocationChannel.UserInterface,
-                    CommandPrincipal.ApplicationUser, null, "run-mode-session-test"));
+                    CommandPrincipal.LocalOperator, null, "run-mode-session-test"));
 
             var settings = RunningSettingManager.Load();
             var pendingSession = SessionInfoManager.Load(settings.PendingSessionId);

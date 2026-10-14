@@ -89,7 +89,7 @@ auth code
 auth regenerate
 ```
 
-`game:server.stop` is `OperatorOnly` and cannot be granted to a player. `OperatorManaged`
+`game:server.stop` is `NonGrantable` and cannot be granted to a player. `OperatorManaged`
 permissions can be granted for use only by a server operator. Permissions are explicit namespaced
 resources; wildcard permission nodes are not supported.
 
@@ -106,7 +106,7 @@ permission list "Player Name"
 Permission mutations are always executed by the server. Client commands are requests; never mutate
 permission state in client-side diagnostic code.
 
-stdin and the Android Headless management UI both execute as `ServerOperator`; they differ only in
+stdin and the Android Headless management UI both execute as `LocalOperator`; they differ only in
 their frontend. Commands that require an online player are filtered by `AllowedPrincipals` and do
 not appear in server-control suggestions.
 
@@ -118,6 +118,16 @@ Expected result lines start with:
 ```text
 COMMAND OK
 ```
+
+## GUI player HTTP commands
+
+Use `GET /player/commands` to discover World/Server bindings available to the current GUI player,
+then `POST /player/commands` with the same identity/arguments envelope as `/commands`.
+Remote discovery and execution use the server's real player permissions. Use `/commands` for
+local process control and UI automation; it does not forward commands to the remote world.
+Headless exposes only the local endpoint. No active player returns `command.no_player`;
+player/world/server changes invalidate outstanding requests. A 504 timeout does not prove the
+server did not execute the request. Keep `Pending` distinct from final business completion.
 
 ## Process control
 

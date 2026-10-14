@@ -267,7 +267,7 @@ public class InstanceManagementScreen : Screen
 
     private static bool Execute(IGameCommand command)
     {
-        var result = CommandExecutor.ExecuteApplication(command, GameManager.Project);
+        var result = CommandExecutor.ExecuteLocal(command, GameManager.Project);
         if (result.Success)
         {
             return true;
@@ -291,7 +291,7 @@ public class InstanceManagementScreen : Screen
             IsCancelButtonEnabled = false
         };
         DialogsManager.ShowDialog(null, busyDialog);
-        Task.Run(() => CommandExecutor.ExecuteApplication(command, GameManager.Project))
+        Task.Run(() => CommandExecutor.ExecuteLocal(command, GameManager.Project))
             .ContinueWith(task => Dispatcher.Dispatch(() =>
             {
                 DialogsManager.HideDialog(busyDialog);

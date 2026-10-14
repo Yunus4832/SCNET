@@ -4,6 +4,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
+using Engine.Core;
+
 namespace Game.Commands;
 
 /// <summary>
@@ -96,8 +98,11 @@ public sealed class HttpCommandHost : IDisposable
                 return;
             }
 
-            if (!string.Equals(context.Request.Url?.AbsolutePath, HttpCommandProtocol.Endpoint,
-                    StringComparison.Ordinal))
+            var playerEndpoint = string.Equals(context.Request.Url?.AbsolutePath,
+                HttpCommandProtocol.PlayerEndpoint, StringComparison.Ordinal);
+            if ((!playerEndpoint && !string.Equals(context.Request.Url?.AbsolutePath, HttpCommandProtocol.Endpoint,
+                    StringComparison.Ordinal)) ||
+                (playerEndpoint && RunMode.Value is not RunModeType.Gui))
             {
                 await WriteResponseAsync(context.Response, 404, new
                 {
@@ -108,8 +113,19 @@ public sealed class HttpCommandHost : IDisposable
                 return;
             }
 
+            using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            deadline.CancelAfter(TimeSpan.FromSeconds(15));
             if (string.Equals(context.Request.HttpMethod, "GET", StringComparison.OrdinalIgnoreCase))
             {
+                if (playerEndpoint)
+                {
+                    var discovery = await HttpPlayerCommandAdapter.SubmitAsync(null, deadline.Token);
+                    await WriteResponseAsync(context.Response, 200, discovery.Success
+                        ? (object)discovery.Data!
+                        : new { success = false, code = discovery.Code, message = CommandText.Resolve(discovery) }, CancellationToken.None);
+                    return;
+                }
+
                 var commands = await HttpCommandExecutionQueue.DiscoverAsync(_principal)
                     .WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
                 await WriteResponseAsync(context.Response, 200, new { commands }, CancellationToken.None);
@@ -144,10 +160,10 @@ public sealed class HttpCommandHost : IDisposable
 
             var correlationId = context.Request.Headers["X-Correlation-Id"]
                                 ?? Guid.NewGuid().ToString("N");
-            var result = await HttpCommandExecutionQueue.SubmitAsync(
-                command,
-                _principal,
-                correlationId).WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
+            var result = playerEndpoint
+                ? await HttpPlayerCommandAdapter.SubmitAsync(command, deadline.Token)
+                : await HttpCommandExecutionQueue.SubmitAsync(command, _principal, correlationId)
+                    .WaitAsync(TimeSpan.FromSeconds(15), cancellationToken);
             await WriteResponseAsync(context.Response, 200, new
             {
                 correlationId,
@@ -158,7 +174,8 @@ public sealed class HttpCommandHost : IDisposable
                 data = result.Data
             }, CancellationToken.None);
         }
-        catch (TimeoutException)
+        catch (Exception exception) when (exception is TimeoutException ||
+                                          exception is OperationCanceledException && !cancellationToken.IsCancellationRequested)
         {
             await WriteResponseAsync(context.Response, 504, new
             {

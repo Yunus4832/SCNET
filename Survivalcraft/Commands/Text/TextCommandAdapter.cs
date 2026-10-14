@@ -62,7 +62,8 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
     public IReadOnlyList<CommandSuggestion> Suggest(
         string input,
         CommandPrincipal principal,
-        CommandInvocationChannel channel = CommandInvocationChannel.Text)
+        CommandInvocationChannel channel = CommandInvocationChannel.Text,
+        CommandDomain? domain = null)
     {
         ArgumentNullException.ThrowIfNull(principal);
         var line = input.TrimStart();
@@ -76,7 +77,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
         {
             var prefix = tokens.Count == 0 ? string.Empty : tokens[0];
             return Entries
-                .Where(entry => IsVisible(entry.Command, principal))
+                .Where(entry => IsVisible(entry.Command, principal, domain))
                 .Where(entry => entry.Command.Name.StartsWith(
                     prefix,
                     StringComparison.OrdinalIgnoreCase))
@@ -103,7 +104,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             channel,
             completed);
         var matchedRoutes = registered.Command.Routes.Where(route =>
-            _registry.CanInvoke(route.CommandType, principal) && route.Segments.Count >= completed.Length &&
+            MatchesDomain(route, domain) && _registry.CanInvoke(route.CommandType, principal) && route.Segments.Count >= completed.Length &&
             MatchesCompleted(route, completed)).ToArray();
         var specificity = matchedRoutes.Select(route => route.Segments.Take(completed.Length).OfType<CommandLiteral>().Count())
             .DefaultIfEmpty(0).Max();
@@ -170,7 +171,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
     public bool CanExecute(
         string input,
         CommandPrincipal principal,
-        CommandInvocationChannel channel = CommandInvocationChannel.Text)
+        CommandDomain? domain = null)
     {
         ArgumentNullException.ThrowIfNull(principal);
         if (string.IsNullOrWhiteSpace(input))
@@ -194,7 +195,7 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
         var arguments = tokens.Skip(1).ToArray();
         return registered.Command.Routes.Any(route =>
-            _registry.CanInvoke(route.CommandType, principal) &&
+            MatchesDomain(route, domain) && _registry.CanInvoke(route.CommandType, principal) &&
             route.Segments.Count == arguments.Length &&
             MatchesCompleted(route, arguments));
     }
@@ -335,10 +336,18 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
     private bool IsVisible(
         TextCommand command,
-        CommandPrincipal principal)
+        CommandPrincipal principal,
+        CommandDomain? domain)
     {
         return command.Routes.Any(route =>
-            _registry.CanInvoke(route.CommandType, principal));
+            MatchesDomain(route, domain) && _registry.CanInvoke(route.CommandType, principal));
+    }
+
+    private bool MatchesDomain(CommandRoute route, CommandDomain? domain)
+    {
+        return domain is null ||
+               (_registry.TryGetDefinition(route.CommandType, out var command) &&
+                command?.Definition.Domain == domain);
     }
 
     private static bool MatchesCompleted(

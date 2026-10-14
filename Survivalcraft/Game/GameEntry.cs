@@ -156,7 +156,7 @@ public static class GameEntry
         {
             HttpCommandHostManager.Start(
                 StartupManager.Current.Session,
-                CommandPrincipal.ApplicationUser);
+                CommandPrincipal.LocalOperator);
         }
     }
 

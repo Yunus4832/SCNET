@@ -57,7 +57,7 @@ public sealed class CommandPermissionRegistry
             return false;
         }
 
-        if (principal.Is(CommandPrincipalKind.ServerOperator) ||
+        if (principal.Is(CommandPrincipalKind.LocalOperator) ||
             principal.Is(CommandPrincipalKind.System))
         {
             return true;
@@ -68,7 +68,7 @@ public sealed class CommandPermissionRegistry
             return true;
         }
 
-        if (entry.Definition.GrantPolicy is PermissionGrantPolicy.OperatorOnly)
+        if (entry.Definition.GrantPolicy is PermissionGrantPolicy.NonGrantable)
         {
             return false;
         }
@@ -84,12 +84,12 @@ public sealed class CommandPermissionRegistry
     {
         ArgumentNullException.ThrowIfNull(principal);
         if (!_definitions.TryGetValue(id, out var entry) ||
-            entry.Definition.GrantPolicy is PermissionGrantPolicy.OperatorOnly)
+            entry.Definition.GrantPolicy is PermissionGrantPolicy.NonGrantable)
         {
             return false;
         }
 
-        if (principal.Is(CommandPrincipalKind.ServerOperator))
+        if (principal.Is(CommandPrincipalKind.LocalOperator))
         {
             return entry.Definition.GrantPolicy is PermissionGrantPolicy.Standard ||
                    !canDelegate;

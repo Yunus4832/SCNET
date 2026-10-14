@@ -1,3 +1,7 @@
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+
 using EntitySystem.Core;
 
 using Game.Commands;
@@ -55,6 +59,16 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             return;
         }
 
+        if (package.Mode is CommandPackage.CommandPackageMode.HttpResult &&
+            package.Result is { } httpResult)
+        {
+            if (ReferenceEquals(context.Sender, netNode.Server))
+            {
+                HttpPlayerCommandAdapter.Receive(package.CorrelationId, httpResult);
+            }
+            return;
+        }
+
         if (package.Mode is CommandPackage.CommandPackageMode.Suggestions)
         {
             CommonLib.MainPlayer?.GameWidget.MessagePanel?.ReceiveSuggestions(package.Input, package.CorrelationId, package.Suggestions);
@@ -90,7 +104,9 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
     {
         if (package.Mode is not (
                 CommandPackage.CommandPackageMode.Request or
-                CommandPackage.CommandPackageMode.TypedRequest) ||
+                CommandPackage.CommandPackageMode.TypedRequest or
+                CommandPackage.CommandPackageMode.HttpRequest or
+                CommandPackage.CommandPackageMode.HttpDiscoveryRequest) ||
             context.Sender is null)
         {
             return;
@@ -129,6 +145,10 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
                     "CommandTooLong_Message",
                     "指令长度超过限制。");
             }
+            else if (package.Mode is CommandPackage.CommandPackageMode.HttpRequest or CommandPackage.CommandPackageMode.HttpDiscoveryRequest)
+            {
+                result = ExecuteHttp(package, context.Sender.PlayerData);
+            }
             else if (package.Mode is CommandPackage.CommandPackageMode.TypedRequest)
             {
                 result = ExecuteTyped(package, context.Sender.PlayerData);
@@ -146,11 +166,50 @@ public sealed class CommandPackageHandler : PackageHandlerBase<CommandPackage>
             }
         }
 
+        if (package.Mode is CommandPackage.CommandPackageMode.HttpRequest or CommandPackage.CommandPackageMode.HttpDiscoveryRequest)
+        {
+            context.Node!.QueuePackage(CommandPackage.CreateHttpResult(result, package.CorrelationId),
+                PackageAudience.To(context.Sender));
+            return;
+        }
+
         CommandResultPublisher.PublishRemote(
             project,
             result,
             context.Sender,
             package.CorrelationId);
+    }
+
+    internal static CommandResult ExecuteHttp(CommandPackage package, PlayerData player)
+    {
+        if (CurrentModRuntime.Value is not { } runtime)
+        {
+            return CommandResult.Fail("command.unavailable", "Command system is not ready.");
+        }
+
+        HttpCommandRequest? request = null;
+        if (package.Mode is CommandPackage.CommandPackageMode.HttpRequest)
+        {
+            if (Encoding.UTF8.GetByteCount(package.Input) > 64 * 1024)
+            {
+                return CommandResult.Fail("command.too_long", "HTTP command request is too large.");
+            }
+
+            try
+            {
+                if (JsonNode.Parse(package.Input) is not JsonObject envelope ||
+                    !HttpCommandProtocol.TryParseEnvelope(envelope, out request, out _) || request is null)
+                {
+                    return CommandResult.Fail("http.invalid_request", "Invalid player command envelope.");
+                }
+            }
+            catch (JsonException)
+            {
+                return CommandResult.Fail("http.invalid_request", "Invalid player command envelope.");
+            }
+        }
+
+        return HttpPlayerCommandAdapter.Execute(runtime.Commands, request, player, package.CorrelationId);
     }
 
     private static CommandResult ExecuteTyped(

@@ -12,7 +12,7 @@ namespace Game.Commands;
 /// </summary>
 public static class CommandGateway
 {
-    public static string SubmitServerOperator(
+    public static string SubmitLocal(
         Project project,
         IGameCommand command,
         string? correlationId = null)
@@ -22,7 +22,7 @@ public static class CommandGateway
         var requestId = string.IsNullOrWhiteSpace(correlationId)
             ? Guid.NewGuid().ToString("N")
             : correlationId;
-        var result = CommandExecutor.ExecuteServerOperator(
+        var result = CommandExecutor.ExecuteLocal(
             command,
             project,
             requestId);
@@ -45,7 +45,7 @@ public static class CommandGateway
             var adapter = new TextCommandAdapter(runtime.Commands);
             if (adapter.SupportsDomain(input, CommandDomain.Application))
             {
-                var result = CommandExecutor.ExecuteApplication(
+                var result = CommandExecutor.ExecuteLocal(
                     input,
                     player.Project,
                     requestId);
@@ -86,7 +86,7 @@ public static class CommandGateway
                 out var registered) &&
             registered?.Definition.Domain is CommandDomain.Application)
         {
-            var result = CommandExecutor.ExecuteApplication(
+            var result = CommandExecutor.ExecuteLocal(
                 command,
                 player.Project,
                 requestId);
@@ -132,6 +132,22 @@ public static class CommandGateway
         NetworkSender.SendToServer(
             CommandPackage.CreateRequest(commandId, payload, requestId));
         return requestId;
+    }
+
+    internal static CommandResult? SubmitPlayerHttp(
+        PlayerData player,
+        HttpCommandRequest? request,
+        string correlationId)
+    {
+        if (CommonLib.WorkType is WorkType.Client)
+        {
+            NetworkSender.SendToServer(CommandPackage.CreateHttpRequest(request, correlationId));
+            return null;
+        }
+
+        return CurrentModRuntime.Value is { } runtime
+            ? HttpPlayerCommandAdapter.Execute(runtime.Commands, request, player, correlationId)
+            : CommandResult.Fail("command.unavailable", "Command system is not ready.");
     }
 
     private static void PublishLocalFailure(

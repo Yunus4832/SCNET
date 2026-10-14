@@ -155,11 +155,11 @@ public void Configure(IModContext context)
 
 - `Standard`：拥有再授权能力的玩家可以授予。
 - `OperatorManaged`：只能由服务器操作员授予，玩家获得后只能使用。
-- `OperatorOnly`：不能授予玩家。
+- `NonGrantable`：不能授予玩家。
 
 命令入口记录为 `CommandInvocationChannel`，只用于日志和展示，不参与授权。
 如果操作在业务上必须绑定玩家实体，可以通过 `allowedPrincipals:
-CommandPrincipalKind.Player` 声明主体要求；这与命令来自消息面板、HTTP 或 stdin 无关。
+CommandPrincipalKinds.Player` 声明主体要求；这与命令来自消息面板、HTTP 或 stdin 无关。
 
 命令结果通过带有 flags 语义的 `CommandResultPresentation` 声明展示范围。默认结果同时进入
 `History` 消息记录并显示在 `Overlay` HUD；较长的帮助和列表结果应仅使用 `History`；短暂的状态通知可以仅使用 `Toast`；无需向玩家展示时使用 `Silent`。展示范围与
@@ -191,7 +191,11 @@ commands.Adapters.Register(
         new HttpCommandArgumentDefinition("text", "string")));
 ```
 
-`GET /commands` 只返回当前 HTTP 主体在当前运行模式下可能执行的 binding，并提供 identity、本地化说明及参数的 `name`、`valueType`、`required`。只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。HTTP 宿主通过 Bearer Token 认证，并按当前宿主创建可信的 `ApplicationUser` 或 `ServerOperator`；调用入口记录为 `CommandInvocationChannel.HttpApi`，命令仍会执行正常的命令域、权限和宿主环境校验。宿主只监听 loopback，且仅在有效 session 或实例 `Settings.xml` 启用时启动；实例默认配置、启动参数和可保存的 session 覆盖见 [Headless.md](./Headless.md)。
+完整的身份、路由和授权规则见 [命令权限模型](CommandPermissions.md)。
+
+`GET /commands` 只返回当前 HTTP 主体在当前运行模式下可能执行的 binding，并提供 identity、本地化说明及参数的 `name`、`valueType`、`required`。只有注册了同 identity `HttpCommandBinding` 的命令才会暴露。HTTP 宿主通过 Bearer Token 认证，GUI 与 Headless 都使用可信的 `LocalOperator` 身份；调用入口记录为 `CommandInvocationChannel.HttpApi`，命令仍会执行正常的命令域、权限和宿主环境校验。宿主只监听 loopback，且仅在有效 session 或实例 `Settings.xml` 启用时启动；实例默认配置、启动参数和可保存的 session 覆盖见 [Headless.md](./Headless.md)。
+
+GUI 的 `GET/POST /player/commands` 使用当前真实玩家，而不是 LocalOperator。它只开放 World/Server binding；联机客户端的查询与调用发送给权威服务器，按服务器保存的玩家权限处理。命令由模组注册不改变此规则，玩家不能通过 HTTP 自行声明主体或权限。Headless 不提供玩家入口。两组入口的请求格式相同，入口之间不自动回退。
 
 内置 GUI 自动化命令位于 `game:automation/ui/*`，业务实现集中在 `Game.Automation`，命令层只负责参数校验和结果封装。`context/get` 返回目标支持的 `actions`；`tap`、`scroll`（鼠标滚轮）和 `swipe`（跨帧触摸轨迹）都必须通过 `Engine.Input.InputSimulation` 注入，不应直接修改 Widget 状态或调用 Screen 回调。`swipe` 的 `deltaX/deltaY` 表示手指从目标中心移动的方向和距离，例如向上滑动使用负的 `deltaY`。
 

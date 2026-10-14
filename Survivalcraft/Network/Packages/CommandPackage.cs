@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+
 using Game.Commands;
 using Game.Localization;
 using Game.Network.Enums;
@@ -14,7 +16,10 @@ public sealed class CommandPackage : IPackage
         Result,
         PermissionSnapshot,
         SuggestionRequest,
-        Suggestions
+        Suggestions,
+        HttpRequest,
+        HttpDiscoveryRequest,
+        HttpResult
     }
 
     private const int _maximumPermissionCount = 256;
@@ -87,6 +92,20 @@ public sealed class CommandPackage : IPackage
         };
     }
 
+    public static CommandPackage CreateHttpRequest(HttpCommandRequest? request, string correlationId)
+    {
+        return new CommandPackage(request is null ? CommandPackageMode.HttpDiscoveryRequest : CommandPackageMode.HttpRequest,
+            correlationId)
+        {
+            Input = request is null ? string.Empty : HttpCommandProtocol.CreateEnvelope(request.Identity, request.Arguments).ToJsonString()
+        };
+    }
+
+    public static CommandPackage CreateHttpResult(CommandResult result, string correlationId)
+    {
+        return new CommandPackage(CommandPackageMode.HttpResult, correlationId) { Result = result };
+    }
+
     public static CommandPackage CreatePermissionSnapshot(
         Guid playerGuid,
         IEnumerable<CommandPermissionGrant> grants)
@@ -118,6 +137,7 @@ public sealed class CommandPackage : IPackage
         {
             case CommandPackageMode.Request:
             case CommandPackageMode.SuggestionRequest:
+            case CommandPackageMode.HttpRequest:
                 writer.Write(Input);
                 break;
             case CommandPackageMode.Suggestions:
@@ -140,6 +160,7 @@ public sealed class CommandPackage : IPackage
                 writer.WriteBuff(Payload);
                 break;
             case CommandPackageMode.Result:
+            case CommandPackageMode.HttpResult:
                 var result = Result ??
                              throw new InvalidOperationException(
                                  "Command result package has no result.");
@@ -165,6 +186,7 @@ public sealed class CommandPackage : IPackage
                     writer.Write(argument);
                 }
 
+                writer.Write(result.Data?.ToJsonString() ?? string.Empty);
                 break;
             case CommandPackageMode.PermissionSnapshot:
                 writer.Write(PlayerGuid);
@@ -188,6 +210,7 @@ public sealed class CommandPackage : IPackage
         {
             case CommandPackageMode.Request:
             case CommandPackageMode.SuggestionRequest:
+            case CommandPackageMode.HttpRequest:
                 Input = reader.ReadString();
                 break;
             case CommandPackageMode.Suggestions:
@@ -231,6 +254,7 @@ public sealed class CommandPackage : IPackage
 
                 break;
             case CommandPackageMode.Result:
+            case CommandPackageMode.HttpResult:
                 var success = reader.ReadBoolean();
                 var code = reader.ReadString();
                 var message = reader.ReadString();
@@ -253,6 +277,8 @@ public sealed class CommandPackage : IPackage
                     messageArguments[index] = reader.ReadString();
                 }
 
+                var dataText = reader.ReadString();
+                var data = string.IsNullOrEmpty(dataText) ? null : JsonNode.Parse(dataText);
                 Result = new CommandResult(
                     success,
                     code,
@@ -263,6 +289,7 @@ public sealed class CommandPackage : IPackage
                     presentation,
                     messageKey,
                     messageArguments,
+                    Data: data,
                     PanelBehavior: panelBehavior);
                 break;
             case CommandPackageMode.PermissionSnapshot:
