@@ -1,4 +1,5 @@
 using Engine.Core;
+using Engine.FileStorage;
 using Engine.Media;
 
 namespace Engine.Graphics;
@@ -193,7 +194,8 @@ public class Model : IDisposable
 
     public static Model Load(string fileName, bool keepSourceVertexDataInTags = false)
     {
-        return Load(ModelData.Load(fileName), keepSourceVertexDataInTags);
+        using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
+        return Load(ModelData.Load(stream), keepSourceVertexDataInTags);
     }
 
     public void Initialize(ModelData modelData, bool keepSourceVertexDataInTags)

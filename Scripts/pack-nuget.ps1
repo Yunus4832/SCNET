@@ -9,6 +9,14 @@ $ErrorActionPreference = "Stop"
 
 Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
+    Write-Host "[SCNET Pack] Packing SCNET.Native.ImageCodecs"
+    & dotnet pack "Native.ImageCodecs/Native.ImageCodecs.csproj" --configuration $Configuration @AdditionalArguments
+    if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Native.ImageCodecs failed with exit code $LASTEXITCODE." }
+
+    Write-Host "[SCNET Pack] Packing SCNET.Native.OpenAL.Android"
+    & dotnet pack "Native.OpenAL.Android/Native.OpenAL.Android.csproj" --configuration $Configuration @AdditionalArguments
+    if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Native.OpenAL.Android failed with exit code $LASTEXITCODE." }
+
     Write-Host "[SCNET Pack] Packing SCNET.Engine.Core"
     & dotnet pack "Engine.Core/Engine.Core.csproj" --configuration $Configuration @AdditionalArguments
     if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Engine.Core failed with exit code $LASTEXITCODE." }
@@ -16,6 +24,10 @@ try {
     Write-Host "[SCNET Pack] Packing SCNET.Engine.Serialization"
     & dotnet pack "Engine.Serialization/Engine.Serialization.csproj" --configuration $Configuration @AdditionalArguments
     if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Engine.Serialization failed with exit code $LASTEXITCODE." }
+
+    Write-Host "[SCNET Pack] Packing SCNET.Engine.Media"
+    & dotnet pack "Engine.Media/Engine.Media.csproj" --configuration $Configuration @AdditionalArguments
+    if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Engine.Media failed with exit code $LASTEXITCODE." }
 
     Write-Host "[SCNET Pack] Packing SCNET.Rendezvous.Protocol"
     & dotnet pack "Rendezvous.Protocol/Rendezvous.Protocol.csproj" --configuration $Configuration @AdditionalArguments

@@ -4,13 +4,19 @@
         <BuildType Name="Release"/>
     </Configurations>
 
-    <Folder Name="/01 Engine/">
+    <Folder Name="/01 Native Libraries/">
+        <Project Path="Native.ImageCodecs/Native.ImageCodecs.csproj"/>
+        <Project Path="Native.OpenAL.Android/Native.OpenAL.Android.csproj"/>
+    </Folder>
+
+    <Folder Name="/02 Engine/">
         <Project Path="Engine.Network/Engine.Network.csproj"/>
         <Project Path="Engine.Network.Test/Engine.Network.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
         <Project Path="Engine\Engine.csproj"/>
         <Project Path="Engine.Core/Engine.Core.csproj"/>
+        <Project Path="Engine.Media/Engine.Media.csproj"/>
         <Project Path="Engine.Core.Benchmarks/Engine.Core.Benchmarks.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
@@ -20,14 +26,14 @@
         </Project>
     </Folder>
 
-    <Folder Name="/02 EntitySystem/">
+    <Folder Name="/03 EntitySystem/">
         <Project Path="EntitySystem\EntitySystem.csproj"/>
         <Project Path="EntitySystem.Test\EntitySystem.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
 
-    <Folder Name="/03 Protocol/">
+    <Folder Name="/04 Protocol/">
         <Project Path="Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
         <Project Path="Rendezvous.Protocol.Test/Rendezvous.Protocol.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
@@ -42,14 +48,14 @@
         </Project>
     </Folder>
 
-    <Folder Name="/04 Survivalcraft/">
+    <Folder Name="/05 Survivalcraft/">
         <Project Path="Survivalcraft\Survivalcraft.csproj"/>
         <Project Path="Survivalcraft.Test\Survivalcraft.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
         </Project>
     </Folder>
 
-    <Folder Name="/05 Desktop/">
+    <Folder Name="/06 Desktop/">
         <Project Path="Desktop.UpdateTransactions/Desktop.UpdateTransactions.csproj"/>
         <Project Path="Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
@@ -58,7 +64,7 @@
         <Project Path="Survivalcraft.Windows\Survivalcraft.Windows.csproj"/>
     </Folder>
 
-    <Folder Name="/06 Android/">
+    <Folder Name="/07 Android/">
         <Project Path="Survivalcraft.Android\Survivalcraft.Android.csproj"/>
         <Project Path="Survivalcraft.Android.Arm32\Survivalcraft.Android.Arm32.csproj"/>
         <Project Path="Survivalcraft.Android.X64\Survivalcraft.Android.X64.csproj">
@@ -69,12 +75,12 @@
         </Project>
     </Folder>
 
-    <Folder Name="/07 Mod/">
+    <Folder Name="/08 Mod/">
         <Project Path="TerritoryStoneMod/TerritoryStoneMod.csproj"/>
         <Project Path="Survivalcraft.ModTemplates\Survivalcraft.ModTemplates.csproj"/>
     </Folder>
 
-    <Folder Name="/08 ContentServer/">
+    <Folder Name="/09 ContentServer/">
         <Project Path="RendezvousServer/RendezvousServer.csproj"/>
         <Project Path="RendezvousServer.Test/RendezvousServer.Test.csproj">
             <Build Solution="Release|*" Project="false"/>
@@ -86,7 +92,7 @@
         </Project>
     </Folder>
 
-    <Folder Name="/09 Tools/">
+    <Folder Name="/10 Tools/">
         <Project Path="NetworkProbe/NetworkProbe.csproj"/>
         <Project Path="ServerLoadTool/ServerLoadTool.csproj"/>
         <Project Path="ServerLoadTool.Test/ServerLoadTool.Test.csproj">
@@ -105,7 +111,8 @@
         </Project>
     </Folder>
 
-    <Folder Name="/10 SolutionItem/">
+    <Folder Name="/11 SolutionItem/">
+        <File Path="ThirdPartyNotices.txt"/>
         <File Path="SCNET.slnx"/>
         <File Path="README.md"/>
         <File Path=".editorconfig"/>
@@ -115,9 +122,11 @@
         <File Path="Directory.Build.targets"/>
     </Folder>
 
-    <Folder Name="/11 Scripts/">
+    <Folder Name="/12 Scripts/">
         <File Path="Scripts/pack-nuget.ps1"/>
         <File Path="Scripts/pack-nuget.sh"/>
+        <File Path="Scripts/pre-build.ps1"/>
+        <File Path="Scripts/pre-build.sh"/>
         <File Path="Scripts/publish.ps1"/>
         <File Path="Scripts/publish.sh"/>
     </Folder>

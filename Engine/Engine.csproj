@@ -22,15 +22,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="NAudio.Core" Version="2.2.1"/>
-        <PackageReference Include="NAudio.Flac.Unknown" Version="1.0.4"/>
-        <PackageReference Include="NLayer.NAudioSupport" Version="1.4.0"/>
-        <PackageReference Include="NVorbis" Version="0.10.5"/>
         <PackageReference Include="Silk.NET.OpenAL" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.OpenGLES" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.SDL" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.Windowing.Sdl" Version="2.23.0"/>
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12"/>
         <PackageReference Include="Silk.NET.Input.Common" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0"/>
         <PackageReference Include="Silk.NET.Windowing.Common" Version="2.23.0"/>
@@ -43,6 +38,7 @@
 
     <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
         <Compile Remove="**\*.Desktop.cs"/>
+        <PackageReference Include="SCNET.Native.OpenAL.Android" Version="$(ScnetVersion)"/>
         <PackageReference Include="Xamarin.AndroidX.Core" Version="1.17.0.1"/>
     </ItemGroup>
 
@@ -65,11 +61,12 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Engine.Core\Engine.Core.csproj"/>
+        <ProjectReference Include="..\Engine.Media\Engine.Media.csproj"/>
         <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+        <None Include="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
 </Project>

@@ -7,11 +7,20 @@ configuration="${CONFIGURATION:-Release}"
 
 cd "$repository_root"
 
+echo "[SCNET Pack] Packing SCNET.Native.ImageCodecs"
+dotnet pack "Native.ImageCodecs/Native.ImageCodecs.csproj" --configuration "$configuration" "$@"
+
+echo "[SCNET Pack] Packing SCNET.Native.OpenAL.Android"
+dotnet pack "Native.OpenAL.Android/Native.OpenAL.Android.csproj" --configuration "$configuration" "$@"
+
 echo "[SCNET Pack] Packing SCNET.Engine.Core"
 dotnet pack "Engine.Core/Engine.Core.csproj" --configuration "$configuration" "$@"
 
 echo "[SCNET Pack] Packing SCNET.Engine.Serialization"
 dotnet pack "Engine.Serialization/Engine.Serialization.csproj" --configuration "$configuration" "$@"
+
+echo "[SCNET Pack] Packing SCNET.Engine.Media"
+dotnet pack "Engine.Media/Engine.Media.csproj" --configuration "$configuration" "$@"
 
 echo "[SCNET Pack] Packing SCNET.Rendezvous.Protocol"
 dotnet pack "Rendezvous.Protocol/Rendezvous.Protocol.csproj" --configuration "$configuration" "$@"

@@ -30,4 +30,8 @@
         <PackageReference Include="NetCorePal.Extensions.Repository.EntityFrameworkCore" Version="3.2.1"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <Content Include="..\ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
+                 CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest"/>
+    </ItemGroup>
 </Project>

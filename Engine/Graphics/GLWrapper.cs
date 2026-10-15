@@ -1,4 +1,5 @@
 using Engine.Core;
+using Engine.Media;
 using Engine.Windowing;
 
 using Silk.NET.OpenGLES;
@@ -766,7 +767,7 @@ internal static class GLWrapper
 
         UseProgram((uint)shader.Program);
         if (shader != _lastShader || vertexOffset != _lastVertexOffset || arrayBuffer != _lastArrayBuffer ||
-            vertexDeclaration.elements != _lastVertexDeclaration.elements)
+            vertexDeclaration != _lastVertexDeclaration)
         {
             var vertexAttribData = shader.GetVertexAttribData(vertexDeclaration);
             for (var i = 0; i < vertexAttribData.Length; i++)

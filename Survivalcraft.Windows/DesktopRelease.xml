@@ -6,5 +6,10 @@
         <string>Content.zip</string>
         <string>SDL2.dll</string>
         <string>soft_oal.dll</string>
+        <string>libpng16.dll</string>
+        <string>libwebp.dll</string>
+        <string>libsharpyuv.dll</string>
+        <string>turbojpeg.dll</string>
+        <string>ThirdPartyNotices.txt</string>
     </Files>
 </DesktopReleaseManifest>

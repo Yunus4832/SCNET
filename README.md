@@ -31,6 +31,9 @@
 | `Survivalcraft.ModTemplates/` | `dotnet new` 模组模板 |
 | `Engine/` | 平台能力层，负责窗口、渲染、音频和输入 |
 | `Engine.Core/` | 基础类型和运行模式，给各项目共用 |
+| `Engine.Media/` | 独立的图像、音频、模型数据与编解码，使用流接口，无窗口和设备依赖 |
+| `Native.ImageCodecs/` | 图像原生资产 NuGet 包，按 RID 提供依赖 |
+| `Native.OpenAL.Android/` | Android 专用 OpenAL 原生资产 NuGet 包 |
 | `Engine.Serialization/` | 序列化与数据支持 |
 | `EntitySystem/` | 实体、组件和模板数据库 |
 | `Survivalcraft.Windows/` | Windows 启动器，支持客户端和服务器模式 |
@@ -47,6 +50,8 @@
 | `NetworkDamageTool/` | 本机 UDP 网络损伤代理，用于弱网集成实验 |
 
 ## 快速开始
+
+首次从源码运行前，先按下方构建步骤生成本地原生资产和 Mod SDK 包。
 
 ### Headless 启动
 
@@ -84,8 +89,8 @@ dotnet build TerritoryStoneMod/TerritoryStoneMod.csproj -c Debug
 ### 构建
 
 ```bash
-# 还原依赖
-dotnet restore SCNET.slnx
+# 首次构建：准备本地包并还原依赖
+./Scripts/pre-build.sh
 
 # Debug 构建
 dotnet build SCNET.slnx
@@ -100,7 +105,12 @@ dotnet build SCNET.slnx --configuration Release
 ./Scripts/pack-nuget.sh
 ```
 
-PowerShell 分别使用 `./Scripts/publish.ps1` 和 `./Scripts/pack-nuget.ps1`。可选构建配置为 `Debug`
+PowerShell 首次构建运行 `./Scripts/pre-build.ps1`。脚本检查当前版本的本地包，缺包时按顺序打包，
+随后还原解决方案；已有包时直接还原。修改 SDK 或原生依赖后，运行 `./Scripts/pre-build.sh --refresh`
+（PowerShell 为 `./Scripts/pre-build.ps1 -Refresh`），重新打包并刷新这些包的当前版本缓存。
+准备完成后可在 IDE 中构建和调试。
+
+PowerShell 发行脚本分别为 `./Scripts/publish.ps1` 和 `./Scripts/pack-nuget.ps1`。可选构建配置为 `Debug`
 和 `Release`；平台开发和运行通过选择对应的桌面或 Android 启动项目完成。详细说明见
 [构建与共享配置](Doc/BuildAndConfig.md) 和 [NuGet 包](Doc/NuGet.md)。
 

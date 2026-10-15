@@ -2,32 +2,26 @@
 
 该工具使用 Engine.Network 的实际 LiteNetLib socket，验证信令注册、候选挑战、正式握手和可靠回显。无 Game、Window 或世界数据依赖。该工具支持邀请直连及中继准备；游戏本体已有独立接入路径，探针不代替游戏验收。
 
-发布 ZIP 包含本说明与 `scripts/`。下文默认路径适用于仓库 Debug 构建；使用解压后的发行目录时，显式指定程序集路径，例如：
+发布 ZIP 包含探针程序集和本说明。探针使用 .NET 10，可在 Windows、Linux 上运行；
+使用发行包时将下文的构建目录替换为解压目录。
 
-```bash
-python3 scripts/local-lab.py --probe ./NetworkProbe.dll \
-  --server ../rendezvous/RendezvousServer.dll --output /tmp/scnet-package-test
-bash scripts/nat-lab.sh --probe-dir . --server-dir ../rendezvous \
-  --output /tmp/scnet-package-nat
-```
-
-`../rendezvous` 应替换为实际信令服务解压目录。普通使用探针的 `host`、`client`、`scenario` 模式只需要 .NET，维护脚本的系统依赖另见对应章节。
+Agent 的实验选择、进程管理和结果判定由仓库技能
+[scnet-network-probe](../.agents/skills/scnet-network-probe/SKILL.md) 维护。
+技能按宿主使用 Bash 或 PowerShell 操作 .NET 工具，不随探针发布实验脚本。
 
 ## 本机验证
 
-### 无权限验证入口
+### 测试与探针入口
 
-仓库中的 POSIX CI worker 或开发机可运行：
+使用 .NET 10 SDK 运行网络相关测试：
 
 ```bash
-python3 Scripts/test-network.py --output /tmp/scnet-network-gate
+dotnet test Rendezvous.Protocol.Test/Rendezvous.Protocol.Test.csproj
+dotnet test Engine.Network.Test/Engine.Network.Test.csproj
+dotnet test RendezvousServer.Test/RendezvousServer.Test.csproj
 ```
 
-需要 .NET 10 SDK、Python 3 和可用的本机 TCP/UDP 端口，不需要 root、界面、Android workload、Podman 或网络隔离工具。
-依次运行协议、Engine、信令服务三个测试项目，再构建探针并验证候选、中继、会话定位和准备完成后取消。
-保留各步骤日志、TRX、结构化场景证据及总结果，任何一步不符即返回非零。输出目录必须尚不存在；默认使用 39191–39196，可通过 `--base-port` 修改。
-已还原依赖时可加 `--no-restore`；默认允许 `dotnet` 还原项目依赖，不安装 SDK。
-这是一条平台无关的 CI 调用入口，没有自动配置或启用 Gitee 等托管 CI。高权限 NAT 与物理设备验收另行执行。
+以下 `dotnet` 命令可用于 Windows 和 Linux；需要 Linux 内核网络设施的专项实验另见技能。
 
 从仓库根目录编译：
 
@@ -53,38 +47,11 @@ dotnet NetworkProbe/bin/Debug/net10.0/NetworkProbe.dll \
 场景入口连接已运行的信令服务，不负责启动或停止该服务。普通场景预算为 45 秒；显式延长准备的场景预算另计；场景失败或取消后回收两端子进程。看到两端 PASS 且退出码为零，才表示本次场景完成。scenario 使用本机两端，不能作为 NAT 穿透证据。
 父场景通过当前用户专用的本地命名管道请求子进程取消，先等待正常关闭和最终资源样本；控制通道建立最多等待 2 秒，关闭预算为每端 8 秒，超时才强制回收。该通道不参与游戏协议，也不会写入会话恢复信息。
 
-### 自动管理完整本机场景
+### Agent 维护
 
-在 POSIX 主机上，Python 3 标准库脚本可管理临时信令服务和两端探针：
-
-```bash
-python3 NetworkProbe/scripts/local-lab.py --output /tmp/scnet-local-test
-python3 NetworkProbe/scripts/local-lab.py --mode scenario-relay --output /tmp/scnet-relay-test
-```
-
-先执行上面的两个项目构建。脚本不构建、不下载运行时；需要 Python 3 和 .NET 10。
-默认 TCP 控制端口 31991、UDP 信令端口 31990、中继 UDP 32000–32003，可用
-`--http-port`、`--udp-port`、`--relay-port` 修改。控制入口绑定 loopback，UDP 广告地址使用 loopback；UDP socket 沿用信令服务的所有接口绑定。
-`--probe` 和 `--server` 可指定已有程序集。输出目录必须尚不存在。
-`lab-manifest.json` 保存配置和两份入口程序集哈希，`lab-summary.json` 保存退出结果；服务与探针日志及两端结构化结果也保留。
-服务启动失败不启动探针；正常结束、超时、Ctrl+C 或 SIGTERM 后回收本轮创建的进程组。
-原生运行时可用 `--mode scenario-lease --cancel-after-path`：等到准备路径确认后，仅终止父探针，要求父进程通过私有通道正常取消两端，并检查最终资源归零。该选项不等待完整的 70 秒租约场景，也不支持 Podman 模式。
-
-### 隔离地址族验证
-
-Linux 的 `local-lab.sh` 先创建独立网络命名空间，再启动上述场景；需要 `unshare`、`ip` 和 `nft`：
-
-```bash
-bash NetworkProbe/scripts/local-lab.sh --family ipv4 --output /tmp/scnet-ipv4
-bash NetworkProbe/scripts/local-lab.sh --family ipv6 --mode scenario-relay --output /tmp/scnet-ipv6-relay
-bash NetworkProbe/scripts/local-lab.sh --family dual --output /tmp/scnet-dual
-```
-
-IPv4/IPv6 模式阻断另一地址族的输出，并用独立报文及 nft 计数器校准；
-双栈模式允许两族，控制地址使用 `localhost`，UDP 使用 IPv6。它们验证隔离 loopback 下的地址族处理，不能作为公网 IPv6 或跨网打洞证据。
-输出额外保存接口和阻断规则。直接运行 Python 的 `--family` 只选择地址，不执行隔离；`--isolated` 拒绝在原宿主命名空间中运行。
-没有本机 .NET 时，可显式传入 `--runtime-image` 使用缓存的 Podman 镜像，并用 `--probe`、`--server` 指定程序集。
-容器复用实验命名空间，结束时只删除本轮容器；脚本不拉取镜像。容器模式应在 root 专用测试环境使用。
+Agent 的本机与隔离网络实验由仓库的
+[scnet-network-probe 技能](../.agents/skills/scnet-network-probe/SKILL.md) 维护，建议在 Linux 环境执行。
+这些维护脚本不包含在面向用户的探针发行包中。
 
 ## 逻辑目标与自动 UDP 配置
 
@@ -148,61 +115,15 @@ dotnet NetworkProbe/bin/Debug/net10.0/NetworkProbe.dll \
 `--Rendezvous:UdpAdvertisedHost ::1`、`--Rendezvous:RelayAdvertisedAddress ::1`，
 探针使用 `http://[::1]:31991 auto`。IPv6 loopback 握手、回显与关闭验证不代表公网 IPv6 已完成验收。
 
-## 隔离双 NAT 实验室
+## 校准后的 NAT 实验
 
-脚本在新的 network namespace 内创建模拟公网、两台独立 NAT 路由器和两个不同 LAN。
-普通场景的 UDP 使用显式固定端口 SNAT，入站过滤采用 conntrack 来源元组；先校准不同目标观察到的映射一致，
-并确认未联系的来源不能入站，再运行正式 Engine socket 的协商和可靠回显。默认 MASQUERADE 的行为
-可能因内核不同而变化，不能直接当作端点无关映射。
+[探针技能](../.agents/skills/scnet-network-probe/SKILL.md)
+定义隔离 WAN、独立或共享路由器、双层 NAT、映射/过滤校准、故障注入及验收矩阵。
+每轮先用独立 UDP 报文验证实际映射与入站过滤，再运行 Engine 探针，保留规则、
+UDP 包头、进程日志、构建哈希和结构化结果。不能仅凭连接成功推断 NAT 类型。
 
-需要 Python 3、`unshare`、`nsenter`、`ip`、`nft`、`sysctl`、`openssl`、`tcpdump`，以及内核 veth/netfilter 支持。
-已编译的 NetworkProbe、RendezvousServer 可在安装 .NET 的主机直接运行；也可显式指定已缓存的 Podman
-运行时镜像。脚本不拉取镜像。root 启动新的 network namespace，普通用户另外使用 user namespace；
-脚本检查命名空间与调用者不同，拒绝直接更改宿主网络。容器模式应在 root 的专用测试环境使用。
-
-```bash
-bash NetworkProbe/scripts/nat-lab.sh --case punch \
-  --output /tmp/scnet-network/nat-punch
-bash NetworkProbe/scripts/nat-lab.sh --case peer-blocked \
-  --output /tmp/scnet-network/nat-relay
-bash NetworkProbe/scripts/nat-lab.sh --case udp-blocked \
-  --output /tmp/scnet-network/nat-blocked
-bash NetworkProbe/scripts/nat-lab.sh --case endpoint-dependent \
-  --output /tmp/scnet-network/nat-dependent
-bash NetworkProbe/scripts/nat-lab.sh --case double-nat \
-  --output /tmp/scnet-network/nat-double
-bash NetworkProbe/scripts/nat-lab.sh --case hairpin \
-  --output /tmp/scnet-network/nat-hairpin
-```
-
-`punch` 要求 HolePunch 与可靠回显；`peer-blocked` 阻断对端直达、保留信令和中继，要求 Relay 与回显；
-`udp-blocked` 阻断客户端全部 UDP，要求总体准备期限内返回 Timeout。每次在新拓扑中运行一个场景，输出目录不得已存在。
-`endpoint-dependent` 使用受控目标相关映射：信令目标映射到 50000，其他目标映射到 50001；先校准同一 socket 的不同目标映射不一致及未联系来源被阻挡，再要求回退 Relay 并完成可靠回显。
-`double-nat` 为每端增加独立内层路由器，UDP 先映射到内层 45000、再映射到外层 50000。校准最终映射与过滤，并保存内外层 UDP 包头和路由规则，要求 HolePunch 与可靠回显。
-`hairpin` 将两个 LAN 接到同一 NAT，使用固定本地端口 41000 和公网映射 50000/50001，通过显式 DNAT/SNAT 模拟回环。直接跨 LAN 通信被过滤，只允许经公网映射返回；保存两个 LAN 的包头，要求 HolePunch 与可靠回显。
-`hairpin-blocked` 使用相同拓扑但拒绝公网映射回环，默认要求 Relay 与回显。
-`hairpin-local` 同样拒绝公网回环，但允许跨 LAN 路由；禁用中继时仍要求 HolePunch 与回显，用于验证私网候选。该拓扑保留源 NAT，包头可同时出现私网与转换后的源地址。
-`--relay-policy Disabled|Allowed|Required` 选择路径策略，默认 Allowed。Disabled 在对端被阻断或目标相关映射场景要求 HolePunchUnavailable；Required 在 UDP 可用时要求 Relay。
-`beacon-blocked` 只阻断客户端 UDP 信令端口，保留控制 HTTP 和中继：Allowed/Required 要求 Relay，Disabled 要求 UdpUnavailable。
-`relay-blocked` 阻断两端到中继池的 UDP：Allowed/Disabled 要求 HolePunch，Required 要求 RelayUnavailable。
-`address-filter` 使用有期限的已联系地址集合，允许该地址从其他端口发回报文，但拒绝未联系地址；显式固定映射 50000 到本地 41000。普通 `punch` 的 conntrack 配置则按地址和端口过滤。独立校准探针验证两者对“同地址换端口”的不同结果。
-`public-endpoints` 把两端直接接入模拟公网，校准无 NAT、无入站过滤及本地端口与观察端口一致，再完成邀请码候选路径与可靠回显。这是隔离拓扑中的无 NAT 对照，不是实际公网可达性证明。
-每端同时保存阶段与周期采样，成功或按预期失败后均检查最终宿主停止、资源计数归零。失败场景通过终止信号取消仍在等待的房主；POSIX 探针处理 SIGTERM，Ctrl+C 也走取消和关闭流程。
-
-远端机器没有 .NET 时，将普通 Debug 构建目录复制过去，然后使用：
-
-```bash
-bash nat-lab.sh --case punch --probe-dir /path/to/probe --server-dir /path/to/signal \
-  --runtime-image mcr.microsoft.com/dotnet/sdk:10.0 \
-  --output /path/to/new-results
-```
-
-TLS 证书在实验中临时生成，只通过子进程环境或只读容器挂载信任，不修改系统信任库。
-私钥保存在输出目录之外并在结束时删除；输出仅保留公开证书、路由器规则、校准结果、
-UDP 包头（无 payload）、进程日志、构建哈希及 `summary.json`。失败也清理本次创建的容器与命名空间进程。
-
-已验证的矩阵范围是明确配置的 IPv4 固定映射/过滤、双层固定映射、受控目标相关映射、受控回环、直达阻断和 UDP 阻断；
-这不能代表所有 NAT 行为、IPv6、真实运营商或完整游戏体验。
+实验编排由 Agent 根据假设选取，工具本身不更改路由或防火墙。历史固定映射、
+目标相关映射、受控回环等实验结果不代表所有 NAT、真实运营商或游戏体验。
 
 ## 当前信令保护参数
 
@@ -295,38 +216,15 @@ dotnet NetworkProbe/bin/Debug/net10.0/NetworkProbe.dll scenario-lease http://127
 设置 `SCNET_PROBE_TRACE=1` 可输出 Engine EventSource 的中继接收诊断，包括来源端点、
 路由标识和认证/重放/未分配端点结果，不输出凭据或报文内容。默认关闭；开启后日志可能较多。
 
-### 双栈候选与单族信标故障
+### 双栈、MTU 与损伤实验
 
-`local-lab.py --family dual` 以 `localhost` 公告 UDP 信标，房主和加入端解析每种地址族的一个端点。
-加入端共享一次加入登记和票据，并行验证候选；选定成功路径后取消并等待其他尝试清理。
-只有全部直连候选失败后，Allowed 策略才申请中继；Required 策略直接使用中继。
+双栈控制地址与 UDP 广告名使用 `localhost` 时，房主和加入端解析每种地址族的一个端点。
+加入端共享一次加入登记和票据，并行验证候选；选定路径后取消并等待其他尝试清理。
+Required 策略直接申请中继；Allowed 在全部直连候选失败后申请中继。
 
-在隔离 Linux namespace 中，`local-lab.sh --family dual --blocked-beacon-family ipv4`（或 `ipv6`）
-仅丢弃指定地址族发往信标端口的 UDP，保留 HTTP 和另一地址族。脚本保存过滤规则并校准丢弃计数。
-该选项要求隔离双栈实验，不能修改宿主网络，也不能用于推断公网 IPv6 可达性。
-
-`--beacon-block-hook output` 可将同一丢弃规则放在输出链，以验证本地发送拒绝；默认 input 用于静默丢包。驱动器保留就绪前日志并等待明确的 READY 标记，不把第一行日志当作就绪信号。
-
-`scenario-candidate-lease` 与 `scenario-lease` 都在路径确认后等待 70 秒并维护准备租约；
-前者使用 Allowed 策略选择直连候选，后者强制中继。
-`local-lab.py --family dual --mode scenario-candidate-lease --cancel-after-path`
-可在双栈候选确认后取消父探针，并验证两端正常清理；使用原生运行时，无需等待完整租约时长。
-
-### 链路 MTU 与分片恢复
-
-`nat-lab.sh --link-mtu 576 --recovery` 在隔离 IPv4 拓扑的所有非 loopback 接口设置指定 MTU，
-保存实际接口快照，并发送 80 条有序的 1024 字节可靠数据，要求回显、回执及队列最终收敛。
-默认 MTU 为 1500，允许范围 576–9000；对照应使用相同构建和策略。
-加入 `--relay-policy Required` 可验证带认证封装的中继路径。
-这属于传输层验收，不能代替游戏地形收敛测试；链路 MTU 也不等同于应用载荷上限。
-
-### 固定种子的突发丢包
-
-`nat-lab.sh --case punch --recovery --burst-loss --seed 20261012` 在两台实验路由器的 WAN 出口
-配置 `tc netem loss gemodel 2% 25% 100% 0%`，使用同一指定种子，保留配置及丢包统计。
-该模型允许连续丢包；它不保证不同调度下逐包损伤完全相同。脚本要求两侧实际丢包计数大于零。
-使用相同构建、MTU、策略和恢复负载运行无损对照；中继对照加 `--relay-policy Required`。
-环境需要 `tc` 和内核 `sch_netem` 支持；模块未加载时由实验环境管理员配置，脚本不修改宿主模块。
-规则仅在隔离 namespace 内创建，不改变宿主默认路由或 qdisc。
+单族信标阻断、链路 MTU、固定种子的突发丢包、路径确认后取消的操作及独立校准见
+[探针技能](../.agents/skills/scnet-network-probe/SKILL.md)。这些操作不是探针的命令行选项。
+`scenario-candidate-lease` 与 `scenario-lease` 均在确认路径后等待 70 秒并续约；前者验证候选，
+后者强制中继。`client-recovery` 的可靠负载可用于 MTU/丢包对照；探针自身不注入损伤。
 
 连接采样与游戏网络诊断同时记录 `Path` 和 `AddressFamily`（`InterNetwork` / `InterNetworkV6`）。直连或打洞状态本身不能证明使用了 IPv6；公网测试应同时检查地址族与实际游戏就绪状态。

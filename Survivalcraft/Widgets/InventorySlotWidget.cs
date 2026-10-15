@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+using Engine.Graphics;
 using Engine.Media;
 
 using EntitySystem.Core;

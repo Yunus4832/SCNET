@@ -48,4 +48,10 @@
         </ProjectReference>
     </ItemGroup>
 
+    <ItemGroup>
+        <Content Include="..\ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
+                 CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest"
+                 ExcludeFromSingleFile="true"/>
+    </ItemGroup>
+
 </Project>

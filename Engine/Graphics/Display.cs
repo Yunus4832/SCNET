@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 
 using Engine.Core;
+using Engine.Media;
 using Engine.Windowing;
 
 using Silk.NET.OpenGLES;
@@ -9,16 +10,6 @@ namespace Engine.Graphics;
 
 public static class Display
 {
-    private static bool _useReducedZRange;
-
-    private static RenderTarget2D? _renderTarget;
-
-    private static RasterizerState _rasterizerState = RasterizerState.CullCounterClockwise;
-
-    private static DepthStencilState _depthStencilState = DepthStencilState.Default;
-
-    private static BlendState _blendState = BlendState.Opaque;
-
     public static int DrawCallCount;
 
     public static int LastDrawCallCount;
@@ -27,15 +18,15 @@ public static class Display
 
     public static bool UseReducedZRange
     {
-        get => _useReducedZRange;
+        get;
         set
         {
-            if (value == _useReducedZRange)
+            if (value == field)
             {
                 return;
             }
 
-            _useReducedZRange = value;
+            field = value;
             foreach (var resource in GraphicsResource.resources)
             {
                 (resource as Shader)?.CompileShaders();
@@ -51,43 +42,43 @@ public static class Display
 
     public static RasterizerState RasterizerState
     {
-        get => _rasterizerState;
+        get;
         set
         {
             ArgumentNullException.ThrowIfNull(value);
-            _rasterizerState = value;
+            field = value;
             value.isLocked = true;
         }
-    }
+    } = RasterizerState.CullCounterClockwise;
 
     public static DepthStencilState DepthStencilState
     {
-        get => _depthStencilState;
+        get;
         set
         {
             ArgumentNullException.ThrowIfNull(value);
-            _depthStencilState = value;
+            field = value;
             value.isLocked = true;
         }
-    }
+    } = DepthStencilState.Default;
 
     public static BlendState BlendState
     {
-        get => _blendState;
+        get;
         set
         {
             ArgumentNullException.ThrowIfNull(value);
-            _blendState = value;
+            field = value;
             value.isLocked = true;
         }
-    }
+    } = BlendState.Opaque;
 
     public static RenderTarget2D? RenderTarget
     {
-        get => _renderTarget;
+        get;
         set
         {
-            _renderTarget = value;
+            field = value;
             if (value != null)
             {
                 Viewport = new Viewport(0, 0, value.Width, value.Height);

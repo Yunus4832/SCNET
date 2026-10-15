@@ -10,6 +10,6 @@
 
     <ItemGroup>
         <None Include="Schemas\server-source-v1.schema.json" Pack="true" PackagePath="schemas/"/>
-        <None Include="..\README.md" Pack="true" PackagePath="\"/>
+        <None Update="README.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 </Project>

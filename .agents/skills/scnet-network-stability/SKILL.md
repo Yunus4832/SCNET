@@ -13,6 +13,8 @@ Use `scnet-agent-workspace` for retained experiment output: one
 
 ## Select the experiment
 
+- For transport-only signaling, direct/relay paths or calibrated NAT experiments without game
+  players/worlds, use `scnet-network-probe` instead.
 - For latency, jitter, loss, throttling, recovery, chunk convergence, movement, creatures, or hit
   responsiveness, read [references/weak-network.md](references/weak-network.md).
 - For maximum concurrent players, server saturation, or scalability, read

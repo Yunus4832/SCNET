@@ -14,6 +14,9 @@ using ContentServer.Domain.RendezvousServices;
 using ContentServer.Domain.ServerSources;
 using ContentServer.Infrastructure;
 
+using Engine.Core;
+using Engine.Media;
+
 using Game;
 using Game.Content;
 using Game.Managers;
@@ -34,8 +37,6 @@ using Rendezvous.Protocol;
 
 using ServerSource.Protocol;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace ContentServer.Test;
 
@@ -65,7 +66,7 @@ public sealed class ContentServerApiTest : IDisposable
         await using var factory = CreateFactory();
         var builder = factory.Services.GetRequiredService<ImageContentPackageBuilder>();
         // A recognizable but incomplete BigTIFF must be rejected by format detection.
-        // Parsing this fixture would fail with an ImageSharp exception instead.
+        // Parsing this fixture would fail with an image decoder exception instead.
         using var input = new MemoryStream(new byte[]
         {
             0x49, 0x49, 0x2b, 0, 8, 0, 0, 0,
@@ -1187,9 +1188,10 @@ public sealed class ContentServerApiTest : IDisposable
 
     private static byte[] CreatePng()
     {
-        using var image = new Image<Rgba32>(16, 16, new Rgba32(32, 96, 160, 255));
+        using var image = new ImageBuffer(16, 16);
+        Array.Fill(image.Pixels, new Color(32, 96, 160, 255));
         using var output = new MemoryStream();
-        image.SaveAsPng(output);
+        ImageCodec.Encode(image, output, ImageFormat.Png);
         return output.ToArray();
     }
 

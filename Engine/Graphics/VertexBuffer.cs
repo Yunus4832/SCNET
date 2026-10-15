@@ -1,6 +1,7 @@
 using System.Runtime.InteropServices;
 
 using Engine.Core;
+using Engine.Media;
 
 using Silk.NET.OpenGLES;
 

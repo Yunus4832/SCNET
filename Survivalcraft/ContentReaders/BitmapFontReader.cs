@@ -1,10 +1,10 @@
-using Engine.Media;
+using Engine.Graphics;
 
 namespace Game.ContentReaders;
 
 public class BitmapFontReader : IContentReader
 {
-    public override string Type => "Engine.Media.BitmapFont";
+    public override string Type => "Engine.Graphics.BitmapFont";
 
     public override string[] DefaultSuffix => ["lst", "webp"];
 

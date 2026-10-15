@@ -1,5 +1,7 @@
 using Engine.Graphics;
 
+using Engine.Media;
+
 namespace Game.Managers;
 
 public static class InstancedModelsManager

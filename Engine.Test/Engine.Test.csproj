@@ -18,6 +18,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Engine\Engine.csproj"/>
+        <None Include="..\Content\Assets\Models\StoneClub.dae" Link="TestAssets/StoneClub.dae"
+              CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 
 </Project>

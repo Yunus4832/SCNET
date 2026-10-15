@@ -61,7 +61,8 @@ public static class BlocksTexturesManager
         {
             try
             {
-                var image = Image.Load(GetFileName(name));
+                using var stream = Storage.OpenFile(GetFileName(name), OpenFileMode.Read);
+                var image = Image.Load(stream);
                 ValidateBlocksTexture(image);
                 texture2D = Texture2D.Load(image);
                 texture2D.Tag = image;

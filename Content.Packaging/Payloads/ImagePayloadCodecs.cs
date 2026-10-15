@@ -1,4 +1,4 @@
-using SixLabors.ImageSharp;
+using Engine.Media;
 
 namespace Content.Packaging.Payloads;
 
@@ -44,23 +44,15 @@ public abstract class ImagePayloadCodec : IContentPayloadCodec
         try
         {
             using var stream = context.OpenEntry(Entry);
-            using var image = Image.Load(stream);
-            if (image.Width != width || image.Height != height || image.Frames.Count != 1)
+            using var image = ImageCodec.Decode(stream);
+            if (image.Width != width || image.Height != height)
             {
                 throw new ContentPackageException("Decoded image does not match manifest.metadata.");
             }
         }
-        catch (UnknownImageFormatException exception)
+        catch (InvalidDataException exception)
         {
-            throw new ContentPackageException("Image payload cannot be decoded as PNG.", exception);
-        }
-        catch (InvalidImageContentException exception)
-        {
-            throw new ContentPackageException("Image payload contains invalid encoded data.", exception);
-        }
-        catch (ImageFormatException exception)
-        {
-            throw new ContentPackageException("Image payload contains invalid encoded data.", exception);
+            throw new ContentPackageException("Image payload contains invalid encoded PNG data.", exception);
         }
     }
 }

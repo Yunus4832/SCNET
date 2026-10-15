@@ -5,8 +5,7 @@ using Content.Packaging;
 
 using ContentServer.Infrastructure;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Formats.Png;
+using Engine.Media;
 
 namespace ContentServer.Application;
 
@@ -24,7 +23,7 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         try
         {
             await CopySourceAsync(source, path, maximumBytes, cancellationToken);
-            var inspection = await InspectSourceAsync(path, cancellationToken);
+            var inspection = await InspectSourceAsync(path, type, cancellationToken);
             ValidateDimensions(type, inspection.Width, inspection.Height);
             return inspection;
         }
@@ -55,7 +54,7 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
         try
         {
             await CopySourceAsync(source, sourcePath, maximumBytes, cancellationToken);
-            var sourceInspection = await InspectSourceAsync(sourcePath, cancellationToken);
+            var sourceInspection = await InspectSourceAsync(sourcePath, type, cancellationToken);
             ValidateDimensions(type, sourceInspection.Width, sourceInspection.Height);
             var payloadPath = type == ContentPackageType.BlocksTexture
                 ? "payload/texture.png"
@@ -119,29 +118,31 @@ public sealed class ImageContentPackageBuilder(ContentPackageStore packageStore)
 
     private static async Task<ImageSourceInspection> InspectSourceAsync(
         string path,
+        ContentPackageType type,
         CancellationToken cancellationToken)
     {
-        await using var input = File.OpenRead(path);
-        var format = await Image.DetectFormatAsync(input, cancellationToken);
-        if (format is not PngFormat)
+        var data = await File.ReadAllBytesAsync(path, cancellationToken);
+        try
         {
-            throw new ContentPackageException("Image source must be PNG.");
-        }
-
-        input.Position = 0;
-        var imageInfo = await Image.IdentifyAsync(input, cancellationToken);
-        input.Position = 0;
-        using (var image = await Image.LoadAsync(input, cancellationToken))
-        {
-            if (image.Frames.Count != 1)
+            if (!data.AsSpan().StartsWith((ReadOnlySpan<byte>)[137, 80, 78, 71, 13, 10, 26, 10]))
             {
-                throw new ContentPackageException("PNG source must contain exactly one frame.");
+                throw new ContentPackageException("Image source must be PNG.");
             }
+            var info = ImageCodec.Identify(data);
+            if (info.Format != ImageFormat.Png || info.Frames != 1)
+            {
+                throw new ContentPackageException("Image source must be a single-frame PNG.");
+            }
+            ValidateDimensions(type, info.Width, info.Height);
+            using var decoded = ImageCodec.Decode(data);
+            cancellationToken.ThrowIfCancellationRequested();
+            var hash = Convert.ToHexString(SHA256.HashData(data)).ToLowerInvariant();
+            return new ImageSourceInspection(info.Width, info.Height, data.Length, hash, "image/png");
         }
-
-        input.Position = 0;
-        var hash = Convert.ToHexString(await SHA256.HashDataAsync(input, cancellationToken)).ToLowerInvariant();
-        return new ImageSourceInspection(imageInfo.Width, imageInfo.Height, input.Length, hash, "image/png");
+        catch (InvalidDataException exception)
+        {
+            throw new ContentPackageException("Image source contains invalid encoded PNG data.", exception);
+        }
     }
 
     private static void ValidateDimensions(ContentPackageType type, int width, int height)

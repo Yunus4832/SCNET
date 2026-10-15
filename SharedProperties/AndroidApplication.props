@@ -19,5 +19,10 @@
         <AndroidAsset Include="$(MSBuildProjectDirectory)\Content.zip" Link="Assets\Content.zip"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <AndroidAsset Include="$(MSBuildThisFileDirectory)..\ThirdPartyNotices.txt"
+                      Link="Assets\ThirdPartyNotices.txt"/>
+    </ItemGroup>
+
     <Import Project="$(MSBuildThisFileDirectory)GlobalUsing.props"/>
 </Project>

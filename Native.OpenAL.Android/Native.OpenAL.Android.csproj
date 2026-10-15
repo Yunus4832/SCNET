@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Native.OpenAL.Android</PackageId>
+        <Description>Android-only OpenAL Soft native libraries for the four supported ABIs.</Description>
+        <IncludeBuildOutput>false</IncludeBuildOutput>
+        <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+        <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    </PropertyGroup>
+    <ItemGroup>
+        <None Update="README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\ThirdPartyNotices.txt" Pack="true" PackagePath="\"/>
+        <None Update="runtimes/android-arm/native/libopenal.so" Pack="true" PackagePath="runtimes/android-arm/native/libopenal.so"/>
+        <None Update="runtimes/android-arm64/native/libopenal.so" Pack="true" PackagePath="runtimes/android-arm64/native/libopenal.so"/>
+        <None Update="runtimes/android-x86/native/libopenal.so" Pack="true" PackagePath="runtimes/android-x86/native/libopenal.so"/>
+        <None Update="runtimes/android-x64/native/libopenal.so" Pack="true" PackagePath="runtimes/android-x64/native/libopenal.so"/>
+    </ItemGroup>
+</Project>

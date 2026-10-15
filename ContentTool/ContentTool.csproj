@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <OutputType>Exe</OutputType>
+        <UseAppHost>false</UseAppHost>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <AssemblyName>SCNET.ContentTool</AssemblyName>
         <RootNamespace>Scnet.ContentTool</RootNamespace>
@@ -18,11 +19,18 @@
 
     <ItemGroup>
         <None Include="SCNET.ContentTool.targets" Pack="true" PackagePath="build\SCNET.ContentTool.targets"/>
-        <None Include="..\README.md" Pack="true" PackagePath="\"/>
-        <None Include="$(TargetDir)SCNET.ContentTool.dll" Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.dll"/>
-        <None Include="$(TargetDir)SCNET.ContentTool.deps.json" Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.deps.json"/>
-        <None Include="$(TargetDir)SCNET.ContentTool.runtimeconfig.json" Pack="true" PackagePath="tools\net10.0\any\SCNET.ContentTool.runtimeconfig.json"/>
-        <None Include="$(TargetDir)SCNET.Content.Packaging.dll" Pack="true" PackagePath="tools\net10.0\any\SCNET.Content.Packaging.dll"/>
-        <None Include="$(TargetDir)SixLabors.ImageSharp.dll" Pack="true" PackagePath="tools\net10.0\any\SixLabors.ImageSharp.dll"/>
+        <None Update="README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
+              Pack="false"
+              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/>
     </ItemGroup>
+    <PropertyGroup>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeContentToolRuntimeFiles</TargetsForTfmSpecificContentInPackage>
+    </PropertyGroup>
+    <Target Name="IncludeContentToolRuntimeFiles">
+        <ItemGroup>
+            <TfmSpecificPackageFile Include="$(TargetDir)**/*" Exclude="$(TargetDir)**/*.pdb"
+                                    PackagePath="tools/$(TargetFramework)/any/%(RecursiveDir)%(Filename)%(Extension)"/>
+        </ItemGroup>
+    </Target>
 </Project>

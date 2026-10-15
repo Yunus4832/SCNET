@@ -1,13 +1,17 @@
 # NuGet 包
 
 SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设置为 `true`，
-项目才允许打包。
+项目才允许打包。每个包使用其项目目录内的 `README.md`，描述该包的职责、消费方式和依赖边界，
+不使用仓库首页替代包说明。
 
 ## 运行时包
 
 | 包 | 项目 | 用途 |
 | --- | --- | --- |
+| `SCNET.Native.OpenAL.Android` | `Native.OpenAL.Android` | 仅 Android 四种 ABI 的 OpenAL，由 Engine 的 Android 目标依赖。 |
+| `SCNET.Native.ImageCodecs` | `Native.ImageCodecs` | PNG、JPEG、WebP 的标准 RID 原生资产；由 Media 依赖。 |
 | `SCNET.Engine.Core` | `Engine.Core` | 不依赖引擎的基础工具。 |
+| `SCNET.Engine.Media` | `Engine.Media` | 图像、音频、Collada 模型数据与编解码；公共命名空间为 Engine.Media，无窗口、GPU、音频设备及文件存储依赖。 |
 | `SCNET.Engine.Serialization` | `Engine.Serialization` | 基于 Engine.Core 构建的序列化支持。 |
 | `SCNET.Rendezvous.Protocol` | `Rendezvous.Protocol` | 邀请信令契约及认证中继报文编码。 |
 | `SCNET.Engine.Network` | `Engine.Network` | 独立传输宿主、连接生命周期与邀请路径；内部使用 LiteNetLib。 |
@@ -37,6 +41,11 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 `.scpkg` 的 MSBuild Target。生成的 Mod 项目显式引用该包，但不会把它作为运行时
 依赖传递。`SCNET.Survivalcraft` 不依赖或携带构建工具。
 
+`SCNET.Engine.Media` 依赖 `SCNET.Native.ImageCodecs`，图像原生库通过标准
+`runtimes/<rid>/native` 资产传递；应用只引用 Media 或上层库即可。
+`SCNET.ContentTool` 统一将完整运行输出装入 `tools/net10.0/any`，包含托管依赖、
+`.deps.json`、原生资产和许可声明，支持从 NuGet 工具目录独立执行；这些文件不传递到模组输出。
+
 ## 不作为 NuGet 包的项目
 
 - 平台启动项目（`Survivalcraft.Windows`、`Survivalcraft.Linux` 和 Android 项目）
@@ -49,7 +58,20 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 ## 本地打包
 
-从仓库根目录运行统一脚本。脚本按依赖顺序逐个执行可打包项目，任一项目失败时立即停止：
+首次构建或升级原生产物时，先生成本地原生包：
+
+```bash
+dotnet pack Native.ImageCodecs/Native.ImageCodecs.csproj --configuration Release
+dotnet pack Native.OpenAL.Android/Native.OpenAL.Android.csproj --configuration Release
+```
+
+这两个项目只将现有原生文件打包，不编译 C/C++，位于解决方案的 `01 Native Libraries` 逻辑文件夹。
+
+首次开发构建使用 `./Scripts/pre-build.sh`（PowerShell 为 `./Scripts/pre-build.ps1`），自动准备缺失的
+本地包并还原解决方案。SDK 源码或原生资产改变后使用 `--refresh`（PowerShell 为 `-Refresh`），
+清除这些包当前版本的缓存并重新打包。它只负责依赖准备，完成后照常使用 `dotnet build`。
+
+从仓库根目录运行统一打包脚本。脚本先生成图像和 Android OpenAL 原生资产包，再按依赖顺序逐个执行可打包项目，任一项目失败时立即停止：
 
 ```bash
 ./Scripts/pack-nuget.sh

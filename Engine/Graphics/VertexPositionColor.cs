@@ -1,5 +1,7 @@
 using Engine.Core;
 
+using Engine.Media;
+
 namespace Engine.Graphics;
 
 public struct VertexPositionColor(Vector3 position, Color color)

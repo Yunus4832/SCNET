@@ -214,6 +214,9 @@ PublishScripts/
 # NuGet v3's project.json files produces more ignorable files
 *.nuget.props
 *.nuget.targets
+# Microsoft.VisualStudio.JavaScript.Sdk generated package.json properties.
+# Also matches Linux filenames containing literal Windows path separators.
+*package.g.props
 
 # Microsoft Azure Build Output
 csx/

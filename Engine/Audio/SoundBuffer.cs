@@ -1,4 +1,5 @@
 using Engine.Core;
+using Engine.FileStorage;
 using Engine.Media;
 
 using Silk.NET.OpenAL;
@@ -110,7 +111,8 @@ public sealed class SoundBuffer : IDisposable
 
     public static SoundBuffer Load(string fileName, SoundFileFormat format)
     {
-        return Load(SoundData.Load(fileName, format));
+        using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
+        return Load(SoundData.Load(stream, format));
     }
 
     public static SoundBuffer Load(Stream stream)
@@ -120,7 +122,8 @@ public sealed class SoundBuffer : IDisposable
 
     public static SoundBuffer Load(string fileName)
     {
-        return Load(SoundData.Load(fileName));
+        using var stream = Storage.OpenFile(fileName, OpenFileMode.Read);
+        return Load(SoundData.Load(stream));
     }
 
     private void InitializeProperties(int samplesCount, int channelsCount, int samplingFrequency)

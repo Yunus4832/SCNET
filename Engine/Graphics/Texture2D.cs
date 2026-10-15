@@ -5,8 +5,6 @@ using Engine.FileStorage;
 
 using Silk.NET.OpenGLES;
 
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
 
 using Image = Engine.Media.Image;
 
@@ -110,21 +108,23 @@ public class Texture2D : GraphicsResource
         }
     }
 
-    public virtual void SetData(Image<Rgba32> source)
+    public virtual void SetData(Image source)
     {
         SetData(0, source);
     }
 
-    public virtual unsafe void SetData(int mipLevel, Image<Rgba32> source)
+    public virtual unsafe void SetData(int mipLevel, Image source)
     {
-        VerifyParametersSetData(source);
+        VerifyParametersSetData(mipLevel, source);
         if (RunMode.Value == RunModeType.HeadlessServer)
         {
             return;
         }
 
-        source.DangerousTryGetSinglePixelMemory(out var memory);
-        SetDataInternal(mipLevel, memory.Pin().Pointer);
+        fixed (Color* pixels = source.Pixels)
+        {
+            SetDataInternal(mipLevel, pixels);
+        }
     }
 
     public virtual void SetDataInternal(int mipLevel, nint source)
@@ -242,7 +242,7 @@ public class Texture2D : GraphicsResource
     public static Texture2D Load(Image image, int mipLevelsCount = 1)
     {
         var texture2D = new Texture2D(image.Width, image.Height, mipLevelsCount, ColorFormat.Rgba8888);
-        texture2D.SetData(image.TrueImage);
+        texture2D.SetData(image);
         if (RunMode.Value is RunModeType.Gui)
         {
             if (mipLevelsCount > 1)
@@ -324,9 +324,15 @@ public class Texture2D : GraphicsResource
         }
     }
 
-    void VerifyParametersSetData(Image<Rgba32> source)
+    void VerifyParametersSetData(int mipLevel, Image source)
     {
         VerifyNotDisposed();
         ArgumentNullException.ThrowIfNull(source);
+        VerifyParametersSetData(mipLevel, source.Pixels);
+        if (source.Width != MathUtils.Max(Width >> mipLevel, 1) ||
+            source.Height != MathUtils.Max(Height >> mipLevel, 1))
+        {
+            throw new ArgumentException("Image dimensions must match the texture mip level.", nameof(source));
+        }
     }
 }

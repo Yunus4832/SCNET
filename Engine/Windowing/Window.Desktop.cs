@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 using Engine.Core;
@@ -9,7 +8,6 @@ using Silk.NET.Maths;
 using Silk.NET.SDL;
 using Silk.NET.Windowing;
 
-using SixLabors.ImageSharp.PixelFormats;
 
 using Monitor = Silk.NET.Windowing.Monitor;
 
@@ -251,10 +249,16 @@ public static partial class Window
         if (IconStream != null)
         {
             // Silk.NET 2.23's SDL backend creates the icon surface with masks that expect ABGR bytes.
-            using var image =
-                SixLabors.ImageSharp.Image.Load<Abgr32>(Media.Image.DefaultImageSharpDecoderOptions, IconStream);
-            var pixelBytes = new byte[image.Width * image.Height * Unsafe.SizeOf<Abgr32>()];
-            image.CopyPixelDataTo(pixelBytes);
+            using var image = Media.Image.Load(IconStream);
+            var pixelBytes = new byte[image.Width * image.Height * 4];
+            for (var index = 0; index < image.Pixels.Length; index++)
+            {
+                var pixel = image.Pixels[index];
+                pixelBytes[index * 4] = pixel.A;
+                pixelBytes[index * 4 + 1] = pixel.B;
+                pixelBytes[index * 4 + 2] = pixel.G;
+                pixelBytes[index * 4 + 3] = pixel.R;
+            }
             GameWindow.SetWindowIcon([new RawImage(image.Width, image.Height, pixelBytes)]);
         }
 

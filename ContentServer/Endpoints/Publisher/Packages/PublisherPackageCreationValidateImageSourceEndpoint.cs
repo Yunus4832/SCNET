@@ -15,7 +15,6 @@ using Microsoft.Extensions.Options;
 using NetCorePal.Extensions.Dto;
 using NetCorePal.Extensions.Primitives;
 
-using SixLabors.ImageSharp;
 
 namespace ContentServer.Endpoints.Publisher.Packages;
 
@@ -56,7 +55,7 @@ public sealed class PublisherPackageCreationValidateImageSourceEndpoint(
                 input, ParseImageType(form["type"].ToString()), options.Value.MaximumPackageBytes,
                 cancellationToken)).AsResponseData();
         }
-        catch (Exception exception) when (exception is ContentPackageException or UnknownImageFormatException)
+        catch (Exception exception) when (exception is ContentPackageException)
         {
             throw new KnownException("invalid_png_source", 400);
         }

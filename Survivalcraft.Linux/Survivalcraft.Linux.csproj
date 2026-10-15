@@ -56,4 +56,10 @@
               EnvironmentVariables="SCNET_PUBLISH_DIR=$(PublishDir);SCNET_VERSION=$(ScnetVersion);OUTPUT_DIR=$(SolutionRoot)Publish"/>
     </Target>
 
+    <ItemGroup>
+        <Content Include="..\ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt"
+                 CopyToOutputDirectory="Never" CopyToPublishDirectory="PreserveNewest"
+                 ExcludeFromSingleFile="true"/>
+    </ItemGroup>
+
 </Project>

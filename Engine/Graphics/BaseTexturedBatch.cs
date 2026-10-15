@@ -1,5 +1,7 @@
 using Engine.Core;
 
+using Engine.Media;
+
 namespace Engine.Graphics;
 
 public abstract class BaseTexturedBatch : BaseBatch

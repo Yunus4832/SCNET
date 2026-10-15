@@ -84,8 +84,8 @@ Arm32、x64 和 x86 变体通过这份配置链接 `Survivalcraft.Android/` 中�
 ## 构建
 
 ```bash
-# 还原依赖
-dotnet restore SCNET.slnx
+# 首次构建：准备本地 NuGet 包并还原依赖
+./Scripts/pre-build.sh
 
 # Debug 构建
 dotnet build SCNET.slnx
@@ -99,6 +99,16 @@ dotnet build SCNET.slnx --configuration Release
 # PowerShell：顺序生成应用和服务发行产物
 ./Scripts/publish.ps1
 ```
+
+`pre-build.sh` 检查当前版本的完整本地包集合。缺包时调用 `pack-nuget.sh` 按依赖顺序生成到
+`Publish/NuGet`，然后还原解决方案；包齐全时直接还原。PowerShell 使用 `./Scripts/pre-build.ps1`。
+脚本完成后再执行 `dotnet build`，或从 IDE 构建、调试。普通构建不会自动打包。
+
+修改原生资产、Mod SDK 或 ContentTool 后，即使版本号未变，也应执行
+`./Scripts/pre-build.sh --refresh` 或 `./Scripts/pre-build.ps1 -Refresh`。重新打包前仅清除
+本次 SCNET 包集合当前版本的 NuGet 缓存，避免旧 SDK 被再次使用；其他依赖缓存保留。
+打包默认使用 Release，Bash 可通过 `CONFIGURATION` 环境变量调整，PowerShell 使用 `-Configuration`。
+准备工作仍需要安装解决方案使用的 .NET SDK、Android 工作负载及相应构建依赖。
 
 ### 可选构建配置
 
@@ -202,7 +212,9 @@ SVG、PNG 和工具源码作为输入、图集文件作为输出，因此输入�
 信令服务 portable ZIP 需要 ASP.NET Core 运行时，探针需要 .NET 运行时；ZIP 不携带运行时或平台 apphost。
 Linux 发布信令服务还生成 `Publish/rendezvous-server-<版本>-linux-amd64.tar.gz`，包含运行时镜像、Compose、
 部署脚本和配置模板，需要本机容器引擎及 ASP.NET Core 基础镜像；其他平台跳过容器打包。
-服务包含 `appsettings.json` 和 `Deployment/run.sh`；探针包含 `README.md` 及 `scripts/` 下的本机、地址族隔离与 NAT 场景工具。
+服务包含 `appsettings.json` 和 `Deployment/run.sh`；探针包含 `README.md`。
+Agent 使用的本机、地址族隔离与 NAT 实验脚本集中在 `scnet-network-probe` 技能中，建议在 Linux
+环境执行，不随探针发行包分发。
 脚本使用 Python 3 标准库；隔离场景还需要文档中列出的 Linux 网络工具。配置、HTTPS/UDP 开放与探针使用见
 [信令服务部署](RendezvousDeployment.md)。普通 `dotnet build` 不生成这些发行物。
 
@@ -214,7 +226,8 @@ Windows/Linux 的便携 ZIP 包携带 `DesktopRelease.xml`，声明平台和由�
 文件更新事务、回滚和中断恢复，不依赖游戏或 Engine。Windows/Linux Starter 通过项目引用调用共享库，
 平台文件替换和通知保留在各自项目中。游戏通过退出动作提交更新请求，由 Starter 在游戏运行结束后接管。类库随单文件发布合并，不额外发布更新器或依赖 shell/PowerShell。
 当前 Linux 集合为 `SurvivalcraftStarter`、`Content.zip`、`libSDL2-2.0.so`、`libopenal.so`；Windows 集合为
-`SurvivalcraftStarter.exe`、`Content.zip`、`SDL2.dll`、`soft_oal.dll`。修改发行文件集合时须同步对应清单。
+`SurvivalcraftStarter.exe`、`Content.zip`、`SDL2.dll`、`soft_oal.dll`。两平台还包含各自的四个图像原生库和
+`ThirdPartyNotices.txt`，具体文件见对应 `DesktopRelease.xml`。修改发行文件集合时须同步对应清单。
 
 ContentServer 的 `linux-x64`/`windows-x64` 版本下载地址应指向完整便携 ZIP。客户端验证 SHA-256 后检查清单、平台与
 ZIP 文件集合，拒绝目录穿越、符号链接、实例/配置覆盖及清单外文件。执行和恢复顺序见 [启动会话](./StartupSessions.md#桌面程序更新)。
@@ -229,6 +242,11 @@ ZIP 文件集合，拒绝目录穿越、符号链接、实例/配置覆盖及清
         <string>Content.zip</string>
         <string>libSDL2-2.0.so</string>
         <string>libopenal.so</string>
+        <string>libpng.so</string>
+        <string>libwebp.so</string>
+        <string>libsharpyuv.so</string>
+        <string>libturbojpeg.so</string>
+        <string>ThirdPartyNotices.txt</string>
     </Files>
 </DesktopReleaseManifest>
 ```
@@ -241,3 +259,24 @@ dotnet test Desktop.UpdateTransactions.Test/Desktop.UpdateTransactions.Test.cspr
 
 测试覆盖清单校验、文件替换、回滚、恢复、其他实例运行时的阻止行为和清理。
 真实进程交接还需通过隔离安装目录验证；Windows 文件锁行为需在 Windows 上验证。
+
+## 图像编解码原生库
+
+`Engine.Media` 提供图像、音频和模型数据的读取与编解码，供游戏、模组与内容工具共同使用。
+媒体 API 使用流，文件路径和游戏存储由调用方处理；字体纹理、GPU 缓冲和音频播放仍由 Engine 负责。
+图像原生库位于 `Native.ImageCodecs/runtimes/<rid>/native`，Android OpenAL 位于
+`Native.OpenAL.Android/runtimes/<rid>/native`。`Native.ImageCodecs.csproj` 将图像库打包为
+`SCNET.Native.ImageCodecs`，Media 引用该包，由 SDK 按 RID 选择并复制或打包原生资产。
+应用、服务和测试无需导入图像原生库 props；首次构建需先准备本地原生包，见 [NuGet](NuGet.md#本地打包)。
+Android OpenAL 由 Engine 的 Android 目标引用 `SCNET.Native.OpenAL.Android`，
+与图像库一样通过标准 RID 原生资产自动进入 APK；启动器无需文件引用或 ABI 映射。
+ContentTool 将完整运行输出打入工具目录，独立运行时不依赖模组项目的资产。
+许可声明统一维护在根目录的 `ThirdPartyNotices.txt`；桌面应用发布时携带，Android 加入 APK assets。
+
+原生库版本、许可证和重编译方法见 [Native.ImageCodecs](../Native.ImageCodecs/README.md)。
+仓库已包含稳定、验证可用的预编译原生库，日常开发、首次构建和发布均直接复用；
+准备本地 NuGet 包只是打包这些现有文件，不需要重新编译。只有升级版本或明确需要修复、
+补充原生产物时，才执行原生库构建脚本，并在替换前验证对应平台或 ABI。
+该项目的 `Scripts/` 包含 Android 图像库及桌面 PNG/zlib 构建脚本：在临时目录中编译，
+全部成功后复制到项目的 `runtimes` 并更新校验值。成功后清理临时目录，失败时保留日志和中间文件。
+这些项目专用脚本不发布应用，也不注册到解决方案级脚本分组。

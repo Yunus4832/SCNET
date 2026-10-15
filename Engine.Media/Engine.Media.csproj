@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Engine.Media</PackageId>
+        <Description>Image, audio and model data codecs independent of graphics, windowing and file storage.</Description>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\Engine.Core\Engine.Core.csproj"/>
+        <ProjectReference Include="..\Engine.Serialization\Engine.Serialization.csproj"/>
+        <PackageReference Include="NAudio.Core" Version="2.2.1"/>
+        <PackageReference Include="NAudio.Flac.Unknown" Version="1.0.4"/>
+        <PackageReference Include="NLayer.NAudioSupport" Version="1.4.0"/>
+        <PackageReference Include="NVorbis" Version="0.10.5"/>
+        <PackageReference Include="SCNET.Native.ImageCodecs" Version="$(ScnetVersion)"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Update="README.md" Pack="true" PackagePath="\"/>
+        <None Include="..\ThirdPartyNotices.txt" Pack="true" PackagePath="\"/>
+    </ItemGroup>
+</Project>

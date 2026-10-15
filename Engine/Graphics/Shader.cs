@@ -1,6 +1,7 @@
 using System.Xml.Linq;
 
 using Engine.Core;
+using Engine.Media;
 
 using Silk.NET.OpenGLES;
 
@@ -86,7 +87,7 @@ public class Shader : GraphicsResource
         foreach (var shaderAttributeDatum in ShaderAttributeDataList)
         {
             VertexElement? vertexElement = null;
-            foreach (var element in vertexDeclaration.elements)
+            foreach (var element in vertexDeclaration.VertexElements)
             {
                 if (element.Semantic != shaderAttributeDatum.Semantic)
                 {

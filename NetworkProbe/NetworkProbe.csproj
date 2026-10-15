@@ -10,6 +10,5 @@
     <ItemGroup>
         <ProjectReference Include="../Engine.Network/Engine.Network.csproj"/>
         <None Update="README.md" CopyToPublishDirectory="PreserveNewest"/>
-        <None Update="scripts/*.py;scripts/*.sh" CopyToPublishDirectory="PreserveNewest"/>
     </ItemGroup>
 </Project>

@@ -137,6 +137,6 @@ public static class ScreenCaptureManager
 
         using var stream = Storage.OpenFile(Storage.CombinePaths(_screenshotDir, filename),
             OpenFileMode.CreateOrOpen);
-        Image.Save(image, stream, ImageFileFormat.Jpg, false, sync: true);
+        Image.Save(image, stream, ImageFileFormat.Jpg, false);
     }
 }

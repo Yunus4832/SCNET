@@ -1,0 +1,4 @@
+interface:
+  display_name: "SCNET Network Probe"
+  short_description: "Run SCNET transport and NAT probes with Linux maintenance helpers"
+  default_prompt: "Use $scnet-network-probe to run a focused SCNET transport experiment and inspect its evidence."
