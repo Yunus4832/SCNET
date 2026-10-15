@@ -4,7 +4,7 @@
         <BuildType Name="Release"/>
     </Configurations>
 
-    <Folder Name="/01 Native Libraries/">
+    <Folder Name="/01 NativeLibraries/">
         <Project Path="Native.ImageCodecs/Native.ImageCodecs.csproj"/>
         <Project Path="Native.OpenAL.Android/Native.OpenAL.Android.csproj"/>
     </Folder>

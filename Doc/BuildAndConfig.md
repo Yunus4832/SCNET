@@ -185,7 +185,7 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 存在 SVG 和 PNG。不要把 Inkscape 工程文件、隐藏设计图层或背景画布放入该目录。
 
 `GuiAtlasTool` 会按尺寸和名称稳定排序源文件，自动排版、栅格化 SVG，并对所有条目统一预乘
-Alpha，然后生成：
+Alpha。SVG 的缩小采样在预乘状态下完成，避免半透明边缘被压暗，然后生成：
 
 - `Content/Assets/Atlases/AtlasTexture.png`
 - `Content/Assets/Atlases/Atlas.txt`

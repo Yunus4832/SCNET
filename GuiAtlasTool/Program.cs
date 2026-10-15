@@ -320,15 +320,25 @@ internal static class GuiAtlasProgram
         canvas.Flush();
 
         using var snapshot = surface.Snapshot();
-        using var rendered = CreateBitmap(renderWidth, renderHeight);
+        // Filtering must interpolate premultiplied colors along with alpha.
+        using var rendered = new SKBitmap(info);
         if (!snapshot.ReadPixels(rendered.Info, rendered.GetPixels(), rendered.RowBytes, 0, 0))
         {
             throw new InvalidDataException($"Unable to read SVG pixels: {source.Path}");
         }
 
-        return rendered.Resize(new SKSizeI(source.Width, source.Height),
-                   new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear)) ??
-               throw new InvalidDataException($"Unable to resize SVG: {source.Path}");
+        using var resized = rendered.Resize(new SKSizeI(source.Width, source.Height),
+            new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear)) ??
+            throw new InvalidDataException($"Unable to resize SVG: {source.Path}");
+        var image = CreateBitmap(source.Width, source.Height);
+        using var pixels = resized.PeekPixels();
+        if (!pixels.ReadPixels(image.Info, image.GetPixels(), image.RowBytes, 0, 0))
+        {
+            image.Dispose();
+            throw new InvalidDataException($"Unable to convert SVG pixels: {source.Path}");
+        }
+
+        return image;
     }
 
     private static SKBitmap CreateBitmap(int width, int height) =>

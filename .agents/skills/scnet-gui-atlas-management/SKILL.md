@@ -24,6 +24,10 @@ Treat `GuiAtlasTool/Assets/` as the source of truth. `Content/Assets/Atlases/Atl
 Source PNG files must contain standard straight (unassociated) RGBA. The generator premultiplies
 every SVG and PNG exactly once when writing the atlas.
 
+Keep SVG supersampling and resizing in premultiplied space; convert to straight RGBA only after
+resizing for the shared atlas premultiply step. Resizing straight RGB creates dark fringes where
+opaque icons meet translucent backgrounds.
+
 - Normalize an ordinary straight-alpha PNG with `prepare-png`.
 - Pass `--premultiplied` when importing a PNG recovered from an existing game atlas or another
   source known to contain premultiplied channels.
