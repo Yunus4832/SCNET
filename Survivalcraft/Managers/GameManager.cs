@@ -492,5 +492,8 @@ public static class GameManager
 
         project.AddEntity(client.CachePlayerEntity);
         client.CachePlayerEntity = null;
+        // A restored entity may already be attached from world loading. AddEntity then emits
+        // no event, so refresh the connection-dependent player list after the join completes.
+        project.FindSubsystem<SubsystemPlayers>(true)!.UpdateComponentPlayers();
     }
 }

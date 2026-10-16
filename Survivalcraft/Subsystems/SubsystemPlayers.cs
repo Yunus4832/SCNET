@@ -480,7 +480,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         UpdateComponentPlayers();
     }
 
-    private void UpdateComponentPlayers()
+    internal void UpdateComponentPlayers()
     {
         _componentPlayers.Clear();
         foreach (var playersDatum in _playersData)
