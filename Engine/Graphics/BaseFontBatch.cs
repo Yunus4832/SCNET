@@ -1,5 +1,4 @@
 using Engine.Core;
-using Engine.Media;
 
 namespace Engine.Graphics;
 
@@ -11,7 +10,13 @@ public abstract class BaseFontBatch : BaseBatch
 
     public readonly DynamicArray<VertexPositionColorTexture> TriangleVertices = [];
 
-    public BitmapFont Font { get; set; } = BitmapFont.DebugFont;
+    protected BaseFontBatch(BitmapFont font)
+    {
+        ArgumentNullException.ThrowIfNull(font);
+        Font = font;
+    }
+
+    public BitmapFont Font { get; }
 
     public SamplerState SamplerState { get; set; } = SamplerState.LinearClamp;
 

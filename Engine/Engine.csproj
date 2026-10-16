@@ -55,8 +55,6 @@
         <EmbeddedResource Include="..\Engine\Resources\Unlit.psh" LogicalName="Engine.Resources.Unlit.psh"/>
         <EmbeddedResource Include="..\Engine\Resources\Lit.psh" LogicalName="Engine.Resources.Lit.psh"/>
         <EmbeddedResource Include="..\Engine\Resources\Lit.vsh" LogicalName="Engine.Resources.Lit.vsh"/>
-        <EmbeddedResource Include="..\Engine\Resources\DebugFont.lst" LogicalName="Engine.Resources.DebugFont.lst"/>
-        <EmbeddedResource Include="..\Engine\Resources\DebugFont.png" LogicalName="Engine.Resources.DebugFont.png"/>
     </ItemGroup>
 
     <ItemGroup>

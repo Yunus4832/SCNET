@@ -1,13 +1,11 @@
 using Engine.Core;
-using Engine.Media;
 
 namespace Engine.Graphics;
 
 public class FontBatch2D : BaseFontBatch
 {
-    public FontBatch2D()
+    public FontBatch2D(BitmapFont font) : base(font)
     {
-        Font = BitmapFont.DebugFont;
         DepthStencilState = DepthStencilState.None;
         RasterizerState = RasterizerState.CullNoneScissor;
         BlendState = BlendState.AlphaBlend;

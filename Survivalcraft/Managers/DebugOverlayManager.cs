@@ -2,7 +2,6 @@ using System.Net.Sockets;
 
 using Engine.Graphics;
 using Engine.Input;
-using Engine.Media;
 using Engine.Network;
 
 using Game.Network;
@@ -41,12 +40,14 @@ public static class DebugOverlayManager
 
     public static void Draw()
     {
-        if (!IsVisible)
+        if (!IsVisible || !LabelWidget.IsFontInitialized)
         {
             return;
         }
 
-        var scale = new Vector2(MathUtils.Round(MathUtils.Clamp(ScreensManager.RootWidget.GlobalScale, 1f, 4f)));
+        var font = LabelWidget.BitmapFont;
+        var scale = new Vector2(MathUtils.Round(MathUtils.Clamp(ScreensManager.RootWidget.GlobalScale, 1f, 4f)) *
+                                12f / (font.GlyphHeight * font.Scale));
         var margin = 4f * scale.X;
         var maximumPanelWidth = MathUtils.Min(MeasurePanel(new string('W', 42), scale).X, Display.Viewport.Width * 0.45f);
         var contentWidth = MathUtils.Max(1f, maximumPanelWidth - 10f * scale.X);
@@ -196,13 +197,13 @@ public static class DebugOverlayManager
             do
             {
                 var prefix = offset == 0 ? string.Empty : indent;
-                var available = width - BitmapFont.DebugFont.MeasureText(prefix, new Vector2(scale), Vector2.Zero).X;
+                var available = width - LabelWidget.BitmapFont.MeasureText(prefix, new Vector2(scale), Vector2.Zero).X;
                 if (available <= 0f)
                 {
                     prefix = string.Empty;
                     available = width;
                 }
-                var count = BitmapFont.DebugFont.FitText(available, line, offset, line.Length - offset, scale, 0f);
+                var count = LabelWidget.BitmapFont.FitText(available, line, offset, line.Length - offset, scale, 0f);
                 count = MathUtils.Min(line.Length - offset, MathUtils.Max(1, count));
                 lines.Add(prefix + line.Substring(offset, count));
                 offset += count;
@@ -261,7 +262,7 @@ public static class DebugOverlayManager
     private static Vector2 MeasurePanel(string text, Vector2 scale)
     {
         var padding = new Vector2(5f) * scale;
-        return BitmapFont.DebugFont.MeasureText(text, scale, Vector2.Zero) + 2f * padding;
+        return LabelWidget.BitmapFont.MeasureText(text, scale, Vector2.Zero) + 2f * padding;
     }
 
     private static void DrawPanel(string text, Vector2 position, Vector2 size, Vector2 scale)
@@ -269,8 +270,8 @@ public static class DebugOverlayManager
         var padding = new Vector2(5f) * scale;
         _primitivesRenderer.FlatBatch(0, DepthStencilState.None, null, BlendState.AlphaBlend)
             .QueueQuad(position, position + size, 0f, new Color(0, 0, 0, 110));
-        _primitivesRenderer.FontBatch(BitmapFont.DebugFont, 1, DepthStencilState.None, null, BlendState.AlphaBlend,
-                SamplerState.PointClamp)
+        _primitivesRenderer.FontBatch(LabelWidget.BitmapFont, 1, DepthStencilState.None, null, BlendState.AlphaBlend,
+                SamplerState.LinearClamp)
             .QueueText(text, position + padding, 0f, Color.White, TextAnchor.Left, scale, Vector2.Zero);
     }
 }

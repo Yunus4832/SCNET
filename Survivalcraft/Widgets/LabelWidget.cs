@@ -1,5 +1,4 @@
 using Engine.Graphics;
-using Engine.Media;
 
 namespace Game.Widgets;
 
@@ -8,8 +7,15 @@ public class LabelWidget : Widget
     public static BitmapFont BitmapFont
     {
         get => field is not null ? field : throw new InvalidOperationException("BitmapFont is not initialized");
-        set;
+        set
+        {
+            ArgumentNullException.ThrowIfNull(value);
+            field = value;
+            IsFontInitialized = true;
+        }
     } = null!;
+
+    public static bool IsFontInitialized { get; private set; }
 
     private List<string> _lines = [];
 

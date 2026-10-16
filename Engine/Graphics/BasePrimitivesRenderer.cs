@@ -1,12 +1,11 @@
 using Engine.Core;
-using Engine.Media;
 
 namespace Engine.Graphics;
 
-public class BasePrimitivesRenderer<T1, T2, T3>
+public abstract class BasePrimitivesRenderer<T1, T2, T3>
     where T1 : BaseFlatBatch, new()
     where T2 : BaseTexturedBatch, new()
-    where T3 : BaseFontBatch, new()
+    where T3 : BaseFontBatch
 {
     public readonly List<BaseBatch> AllBatches = [];
 
@@ -114,9 +113,12 @@ public class BasePrimitivesRenderer<T1, T2, T3>
         return val;
     }
 
+    protected abstract T3 CreateFontBatch(BitmapFont font);
+
     public T3 FindFontBatch(BitmapFont font, int layer, DepthStencilState depthStencilState,
         RasterizerState rasterizerState, BlendState blendState, SamplerState samplerState)
     {
+        ArgumentNullException.ThrowIfNull(font);
         for (var linkedListNode = _fontBatches.First; linkedListNode != null; linkedListNode = linkedListNode.Next)
         {
             var value = linkedListNode.Value;
@@ -142,15 +144,12 @@ public class BasePrimitivesRenderer<T1, T2, T3>
         }
 
         SortNeeded |= AllBatches.Count > 0 && AllBatches[^1].Layer > layer;
-        var val = new T3
-        {
-            Layer = layer,
-            Font = font,
-            SamplerState = samplerState,
-            DepthStencilState = depthStencilState,
-            RasterizerState = rasterizerState,
-            BlendState = blendState
-        };
+        var val = CreateFontBatch(font);
+        val.Layer = layer;
+        val.SamplerState = samplerState;
+        val.DepthStencilState = depthStencilState;
+        val.RasterizerState = rasterizerState;
+        val.BlendState = blendState;
         _fontBatches.AddFirst(val);
         AllBatches.Add(val);
         return val;

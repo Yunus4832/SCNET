@@ -1,5 +1,3 @@
-using Engine.Media;
-
 namespace Engine.Graphics;
 
 public sealed class PrimitivesRenderer3D : BasePrimitivesRenderer<FlatBatch3D, TexturedBatch3D, FontBatch3D>
@@ -35,8 +33,10 @@ public sealed class PrimitivesRenderer3D : BasePrimitivesRenderer<FlatBatch3D, T
             samplerState);
     }
 
+    protected override FontBatch3D CreateFontBatch(BitmapFont font) => new(font);
+
     public FontBatch3D FontBatch(
-        BitmapFont? font = null,
+        BitmapFont font,
         int layer = 0,
         DepthStencilState? depthStencilState = null,
         RasterizerState? rasterizerState = null,
@@ -44,7 +44,6 @@ public sealed class PrimitivesRenderer3D : BasePrimitivesRenderer<FlatBatch3D, T
         SamplerState? samplerState = null
     )
     {
-        font ??= BitmapFont.DebugFont;
         depthStencilState ??= DepthStencilState.Default;
         rasterizerState ??= RasterizerState.CullNoneScissor;
         blendState ??= BlendState.AlphaBlend;

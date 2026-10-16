@@ -14,3 +14,8 @@ SCNET 的跨平台引擎运行时，提供图形、窗口、输入、音频、�
 本包不包含游戏规则或模组构建工具。编写游戏模组通常引用 `SCNET.Survivalcraft` 即可。
 
 [依赖说明](https://gitee.com/Yunus0712/scnet/blob/main/Doc/Dependencies.md)
+
+## 字体绘制
+
+引擎不内置默认字体。使用者加载 `BitmapFont`，并在调用 `FontBatch` 或构造
+`FontBatch2D` / `FontBatch3D` 时显式传入。字体及其纹理由使用者管理生命周期。

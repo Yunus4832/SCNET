@@ -6,38 +6,9 @@ namespace Engine.Graphics;
 
 public class BitmapFont : IDisposable
 {
-    private static BitmapFont? _debugFont;
-
     internal Glyph[] glyphsByCode = [];
 
     internal Image? image;
-
-    static BitmapFont()
-    {
-        Display.DeviceReset += delegate
-        {
-            if (_debugFont != null)
-            {
-                return;
-            }
-
-            using var stream = typeof(BitmapFont).GetTypeInfo().Assembly
-                .GetManifestResourceStream("Engine.Resources.Debugfont.png");
-            if (stream is null)
-            {
-                throw new InvalidOperationException("Engine.Resources.DebugFont.png not found");
-            }
-
-            using var stream2 = typeof(BitmapFont).GetTypeInfo().Assembly
-                .GetManifestResourceStream("Engine.Resources.Debugfont.lst");
-            if (stream2 is null)
-            {
-                throw new InvalidOperationException("Engine.Resources.DebugFont.lst not found");
-            }
-
-            _debugFont = Initialize(stream, stream2);
-        };
-    }
 
     public BitmapFont(Texture2D texture, IEnumerable<Glyph> glyphs, char fallbackCode, float glyphHeight,
         Vector2 spacing, float scale)
@@ -62,35 +33,6 @@ public class BitmapFont : IDisposable
     public Glyph FallbackGlyph { get; private set; } = null!;
 
     public char MaxGlyphCode { get; private set; }
-
-    public static BitmapFont DebugFont
-    {
-        get
-        {
-            if (_debugFont is not null)
-            {
-                return _debugFont;
-            }
-
-            using var stream = typeof(BitmapFont).GetTypeInfo().Assembly
-                .GetManifestResourceStream("Engine.Resources.DebugFont.png");
-            if (stream is null)
-            {
-                throw new InvalidOperationException("Engine.Resources.DebugFont.png not found");
-            }
-
-            using var stream2 = typeof(BitmapFont).GetTypeInfo().Assembly
-                .GetManifestResourceStream("Engine.Resources.DebugFont.lst");
-            if (stream2 is null)
-            {
-                throw new InvalidOperationException("Engine.Resources.DebugFont.lst not found");
-            }
-
-            _debugFont = Initialize(stream, stream2);
-
-            return _debugFont;
-        }
-    }
 
     public void Dispose()
     {
