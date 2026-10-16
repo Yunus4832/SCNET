@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+
 namespace Game.Dialogs;
 
 public class EditPistonDialog : Dialog
@@ -55,7 +56,7 @@ public class EditPistonDialog : Dialog
         _maxExtension = PistonBlock.GetMaxExtension(data);
         _pullCount = PistonBlock.GetPullCount(data);
         _speed = PistonBlock.GetSpeed(data);
-        _title.Text = "Edit " + BlocksManager.Blocks[237].GetDisplayName(null, Terrain.MakeBlockValue(237, 0, data));
+        _title.Text = "Edit " + CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[237].GetDisplayName(null, Terrain.MakeBlockValue(237, 0, data));
         _slider1.Granularity = 1f;
         _slider1.MinValue = 1f;
         _slider1.MaxValue = 8f;

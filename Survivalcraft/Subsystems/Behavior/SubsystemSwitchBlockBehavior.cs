@@ -7,7 +7,7 @@ namespace Game.Subsystems;
 
 public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
 {
-    public override int[] HandledBlocks => [141];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:switch")];
 
     public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
     {

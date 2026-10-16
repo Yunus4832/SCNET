@@ -3,24 +3,17 @@ using System.Xml.Linq;
 
 using EntitySystem.XmlUtilities;
 
-namespace Game.Managers;
+namespace Game.Modding.Blocks;
 
-public static class CraftingRecipesManager
+public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
 {
-    private static readonly List<CraftingRecipe> _recipes = [];
+    private readonly List<CraftingRecipe> _recipes = [];
 
-    private const string _typeName = nameof(CraftingRecipesManager);
+    private const string _languageSection = "CraftingRecipesManager";
 
-    public static ReadOnlyList<CraftingRecipe> ReadonlyRecipes => new(_recipes);
+    public ReadOnlyList<CraftingRecipe> ReadonlyRecipes => new(_recipes);
 
-    public static void Initialize()
-    {
-        var runtime = CurrentModRuntime.Value
-                      ?? throw new InvalidOperationException("No active game mod runtime.");
-        runtime.InitializeCraftingRecipes();
-    }
-
-    public static void Initialize(XElement source)
+    internal void Initialize(XElement source)
     {
         _recipes.Clear();
         var source2 = source.Descendants("Recipe");
@@ -29,9 +22,12 @@ public static class CraftingRecipesManager
             var craftingRecipe = new CraftingRecipe();
             var attributeValue = XmlUtils.GetAttributeValue<string>(item, "Result");
             var desc = XmlUtils.GetAttributeValue<string>(item, "Description");
-            if (desc.StartsWith('[') && desc.EndsWith(']'))
+            if (desc.StartsWith('[') && desc.EndsWith(']') && !string.IsNullOrEmpty(attributeValue))
             {
-                desc = LanguageManager.GetBlock(attributeValue,
+                var resultParts = attributeValue.Split('@');
+                var languageId = catalog.GetBlock(ResourceId.Parse(resultParts[0])).GetType().Name +
+                                 (resultParts.Length > 1 ? ":" + resultParts[1] : string.Empty);
+                desc = LanguageManager.GetBlock(languageId,
                     string.Concat("CRDescription:", desc.AsSpan(1, desc.Length - 2)));
             }
 
@@ -49,14 +45,14 @@ public static class CraftingRecipesManager
             craftingRecipe.Description = desc;
             craftingRecipe.Message = XmlUtils.GetAttributeValue(item, "Message", string.Empty);
             if (craftingRecipe.ResultCount >
-                BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.ResultValue)].MaxStacking)
+                catalog.Blocks[Terrain.ExtractContents(craftingRecipe.ResultValue)].MaxStacking)
             {
                 throw new InvalidOperationException(
                     $"In recipe for \"{attributeValue}\" ResultCount is larger than max stacking of result block.");
             }
 
             if (craftingRecipe.RemainsValue != 0 && craftingRecipe.RemainsCount >
-                BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking)
+                catalog.Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking)
             {
                 throw new InvalidOperationException(
                     $"In Recipe for \"{attributeValue2}\" RemainsCount is larger than max stacking of remains block.");
@@ -68,7 +64,7 @@ public static class CraftingRecipesManager
                                   select a)
             {
                 DecodeIngredient(item2.Value, out var craftingId, out var data);
-                if (BlocksManager.FindBlocksByCraftingId(craftingId).Length == 0)
+                if (catalog.FindBlocksByCraftingId(craftingId).Length == 0)
                 {
                     throw new InvalidOperationException($"Block with craftingId \"{item2.Value}\" not found.");
                 }
@@ -109,7 +105,7 @@ public static class CraftingRecipesManager
             _recipes.Add(craftingRecipe);
         }
 
-        var blocks = BlocksManager.Blocks;
+        var blocks = catalog.RegisteredBlocks;
         foreach (var block in blocks)
         {
             _recipes.AddRange(block.GetProceduralCraftingRecipes());
@@ -123,7 +119,7 @@ public static class CraftingRecipesManager
         });
     }
 
-    public static CraftingRecipe? FindMatchingRecipe(
+    public CraftingRecipe? FindMatchingRecipe(
         SubsystemTerrain terrain,
         string[] ingredients,
         float heatLevel,
@@ -132,7 +128,7 @@ public static class CraftingRecipesManager
     {
         var playerLevel = componentPlayer?.PlayerData.Level ?? 1f;
         CraftingRecipe? craftingRecipe = null;
-        var blocks = BlocksManager.Blocks;
+        var blocks = catalog.RegisteredBlocks;
         foreach (var block in blocks)
         {
             var adHocCraftingRecipe = block.GetAdHocCraftingRecipe(
@@ -167,11 +163,11 @@ public static class CraftingRecipesManager
                 craftingRecipe = !(heatLevel > 0f)
                     ? new CraftingRecipe
                     {
-                        Message = LanguageManager.Get(_typeName, 0)
+                        Message = LanguageManager.Get(_languageSection, 0)
                     }
                     : new CraftingRecipe
                     {
-                        Message = LanguageManager.Get(_typeName, 1)
+                        Message = LanguageManager.Get(_languageSection, 1)
                     };
             }
             else if (playerLevel < craftingRecipe.RequiredPlayerLevel)
@@ -179,11 +175,11 @@ public static class CraftingRecipesManager
                 craftingRecipe = !(craftingRecipe.RequiredHeatLevel > 0f)
                     ? new CraftingRecipe
                     {
-                        Message = string.Format(LanguageManager.Get(_typeName, 2), craftingRecipe.RequiredPlayerLevel)
+                        Message = string.Format(LanguageManager.Get(_languageSection, 2), craftingRecipe.RequiredPlayerLevel)
                     }
                     : new CraftingRecipe
                     {
-                        Message = string.Format(LanguageManager.Get(_typeName, 3), craftingRecipe.RequiredPlayerLevel)
+                        Message = string.Format(LanguageManager.Get(_languageSection, 3), craftingRecipe.RequiredPlayerLevel)
                     };
             }
         }
@@ -203,15 +199,20 @@ public static class CraftingRecipesManager
         return null;
     }
 
-    public static int DecodeResult(string result)
+    public int DecodeResult(string result)
     {
         if (string.IsNullOrEmpty(result))
         {
             return 0;
         }
 
-        var array = result.Split([':'], StringSplitOptions.None);
-        var block = BlocksManager.FindBlockByTypeName(array[0], true)!;
+        var array = result.Split('@');
+        if (array.Length > 2)
+        {
+            throw new FormatException($"Invalid recipe result \"{result}\".");
+        }
+
+        var block = catalog.GetBlock(ResourceId.Parse(array[0]));
         return Terrain.MakeBlockValue(
             data: array.Length >= 2 ? int.Parse(array[1], CultureInfo.InvariantCulture) : 0,
             contents: block.BlockIndex, light: 0);

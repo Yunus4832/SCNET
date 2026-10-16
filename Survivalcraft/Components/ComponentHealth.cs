@@ -107,7 +107,7 @@ public class ComponentHealth : Component, IUpdateable
                 Terrain.ToCell(_componentCreature.ComponentCreatureModel.EyePosition.Y),
                 Terrain.ToCell(position.Z)
             );
-            Air = BlocksManager.Blocks[cellContents] is FluidBlock || position.Y > 700f
+            Air = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents] is FluidBlock || position.Y > 700f
                 ? MathUtils.Saturate(Air - dt / AirCapacity)
                 : 1f;
         }

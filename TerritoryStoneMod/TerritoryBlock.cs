@@ -4,6 +4,8 @@ using Game;
 using Game.Blocks;
 using Game.Components;
 using Game.Managers;
+using Game.Modding;
+using Game.Modding.Blocks;
 using Game.Subsystems;
 using Game.Terrains;
 
@@ -11,7 +13,7 @@ namespace TerritoryStoneMod;
 
 public class TerritoryBlock : CubeBlock
 {
-    public const int Index = 264;
+    public static ResourceId Id { get; } = new(new ModId(ModEntry.ModId), "territory_stone");
 
     private const int _requiredPlayerLevel = 5;
 
@@ -23,9 +25,9 @@ public class TerritoryBlock : CubeBlock
         CraftingId = "TerritoryBlock";
     }
 
-    public static bool IsTerritoryValue(int value)
+    public static bool IsTerritoryValue(int value, BlockContentCatalog catalog)
     {
-        return Terrain.ExtractContents(value) == Index;
+        return Terrain.ExtractContents(value) == catalog.GetBlock(Id).BlockIndex;
     }
 
     public override int GetFaceTextureSlot(int face, int value)
@@ -37,7 +39,7 @@ public class TerritoryBlock : CubeBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        return [Terrain.MakeBlockValue(Index)];
+        return [Terrain.MakeBlockValue(BlockIndex)];
     }
 
     public override BlockDigMethod GetBlockDigMethod(int value)
@@ -60,7 +62,7 @@ public class TerritoryBlock : CubeBlock
         var userLevel = (int)player.PlayerData.Level;
         if (userLevel < _requiredPlayerLevel)
         {
-            var displayName = GetDisplayName(subsystemTerrain, Terrain.MakeBlockValue(Index));
+            var displayName = GetDisplayName(subsystemTerrain, Terrain.MakeBlockValue(BlockIndex));
             player.ComponentGui.DisplaySmallMessage(
                 string.Format(LanguageManager.Get(nameof(TerritoryBlock), 1), _requiredPlayerLevel, displayName,
                     userLevel),
@@ -73,7 +75,7 @@ public class TerritoryBlock : CubeBlock
 
         return new CraftingRecipe
         {
-            ResultValue = Terrain.MakeBlockValue(Index),
+            ResultValue = Terrain.MakeBlockValue(BlockIndex),
             ResultCount = 1,
             Ingredients = _needIngredients
         };
@@ -87,7 +89,7 @@ public class TerritoryBlock : CubeBlock
         [
             new CraftingRecipe
             {
-                ResultValue = Terrain.MakeBlockValue(Index),
+                ResultValue = Terrain.MakeBlockValue(BlockIndex),
                 ResultCount = 1,
                 Ingredients = _needIngredients,
                 IsAdHocCraftingRecipe = true
@@ -117,7 +119,7 @@ public class TerritoryBlock : CubeBlock
         showDebris = DestructionDebrisScale > 0f;
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(Index),
+            Value = Terrain.MakeBlockValue(BlockIndex),
             Count = 1
         });
     }
@@ -151,15 +153,15 @@ public class TerritoryBlock : CubeBlock
 
         _needIngredients =
         [
-            BlocksManager.Blocks[CopperIngotBlock.Index].CraftingId + ":0",
-            BlocksManager.Blocks[DiamondChunkBlock.Index].CraftingId + ":0",
-            BlocksManager.Blocks[IronIngotBlock.Index].CraftingId + ":0",
-            BlocksManager.Blocks[CopperIngotBlock.Index].CraftingId + ":0",
-            BlocksManager.Blocks[DiamondChunkBlock.Index].CraftingId + ":0",
-            BlocksManager.Blocks[IronIngotBlock.Index].CraftingId + ":0",
-            BlocksManager.Blocks[GraniteBlock.Index].CraftingId + ":0",
-            BlocksManager.Blocks[GraniteBlock.Index].CraftingId + ":0",
-            BlocksManager.Blocks[GraniteBlock.Index].CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:copper_ingot")).CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:diamond_chunk")).CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:iron_ingot")).CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:copper_ingot")).CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:diamond_chunk")).CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:iron_ingot")).CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:granite")).CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:granite")).CraftingId + ":0",
+            Catalog.GetBlock(ResourceId.Parse("game:granite")).CraftingId + ":0",
         ];
     }
 }

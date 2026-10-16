@@ -7,5 +7,4 @@ public class GermaniumChunkBlock() : ChunkBlock(
     false
 )
 {
-    public const int Index = 149;
 }

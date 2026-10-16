@@ -158,6 +158,12 @@ public class NetNode
     {
         lock (_pendingPackages)
         {
+            if (_isStopping)
+            {
+                outboundPackage.Fanout?.Advance(1, 0);
+                return;
+            }
+
             var transport = PackageTransportPolicy.Get(outboundPackage.Package);
             if (transport.Coalesce && SnapshotPackageCoalescer.TryCoalesce(_pendingPackages, outboundPackage))
             {
@@ -477,6 +483,7 @@ public class NetNode
 
     public void StartLocal()
     {
+        _isStopping = false;
         Clients.Clear();
         Guid multiplayerClientId;
         if (RunMode.Value is RunModeType.HeadlessServer)
@@ -640,6 +647,7 @@ public class NetNode
     public void StopImmediate()
     {
         var wasClient = CommonLib.WorkType == WorkType.Client;
+        _isStopping = true;
         try
         {
             PendingPeer = null;
@@ -736,6 +744,11 @@ public class NetNode
 
                 ScreensManager.SwitchScreen("NetPlay");
             }
+
+            Clients.Clear();
+            Self = null;
+            Server = null;
+            _pendingHandlePackages.Clear();
 
             if (!string.IsNullOrEmpty(Error))
             {

@@ -237,7 +237,7 @@ public class SubsystemPathfinding : Subsystem
     public static bool SmoothingRaycastFunction_Obstacle(int value, float distance)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (block.ShouldAvoid(value))
         {
             return true;
@@ -249,7 +249,7 @@ public class SubsystemPathfinding : Subsystem
     public static bool SmoothingRaycastFunction_Support(int value, float distance)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (block.ShouldAvoid(value))
         {
             return true;
@@ -359,7 +359,7 @@ public class SubsystemPathfinding : Subsystem
             var num4 = Terrain.ToCell(p.Z) + dz;
             var cellValue = SubsystemTerrain.Terrain.GetCellValue(num2, num3, num4);
             var num5 = Terrain.ExtractContents(cellValue);
-            var block = BlocksManager.Blocks[num5];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num5];
             if (block.ShouldAvoid(cellValue))
             {
                 return;
@@ -383,7 +383,7 @@ public class SubsystemPathfinding : Subsystem
                 {
                     var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(num2, num3 + num6, num4);
                     var num7 = Terrain.ExtractContents(cellValue2);
-                    var block2 = BlocksManager.Blocks[num7];
+                    var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num7];
                     if (block2.ShouldAvoid(cellValue2))
                     {
                         return;
@@ -468,7 +468,7 @@ public class SubsystemPathfinding : Subsystem
                         var num9 = Terrain.ExtractContents(cellValueFast);
                         if (num9 != 0)
                         {
-                            var block = BlocksManager.Blocks[num9];
+                            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num9];
                             if (block.ShouldAvoid(cellValueFast))
                             {
                                 return true;

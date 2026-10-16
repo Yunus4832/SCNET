@@ -593,10 +593,10 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                     var cellContents2 = terrain.GetCellContents(num5 - 1, num6, num7);
                     var cellContents3 = terrain.GetCellContents(num5, num6, num7 - 1);
                     var cellContents4 = terrain.GetCellContents(num5, num6, num7 + 1);
-                    var num8 = BlocksManager.FluidBlocks[cellContents] == null && cellContents != 0;
-                    var flag = BlocksManager.FluidBlocks[cellContents2] == null && cellContents2 != 0;
-                    var flag2 = BlocksManager.FluidBlocks[cellContents3] == null && cellContents3 != 0;
-                    var flag3 = BlocksManager.FluidBlocks[cellContents4] == null && cellContents4 != 0;
+                    var num8 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents] == null && cellContents != 0;
+                    var flag = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents2] == null && cellContents2 != 0;
+                    var flag2 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents3] == null && cellContents3 != 0;
+                    var flag3 = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents4] == null && cellContents4 != 0;
                     if (num8 || flag || flag2 || flag3)
                     {
                         SubsystemTerrain.ChangeCell(num5, num6, num7, Terrain.MakeBlockValue(62));

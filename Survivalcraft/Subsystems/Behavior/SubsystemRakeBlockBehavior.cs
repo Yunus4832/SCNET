@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemRakeBlockBehavior : SubsystemBlockBehavior
@@ -9,13 +10,8 @@ public class SubsystemRakeBlockBehavior : SubsystemBlockBehavior
     private SubsystemParticles _subsystemParticles = null!;
     private SubsystemTerrain _subsystemTerrain = null!;
 
-    public override int[] HandledBlocks =>
-    [
-        169,
-        219,
-        171,
-        172
-    ];
+    public override ResourceId[] HandledBlocks =>
+    [ResourceId.Parse("game:wooden_rake"), ResourceId.Parse("game:copper_rake"), ResourceId.Parse("game:iron_rake"), ResourceId.Parse("game:diamond_rake")];
 
     public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
     {
@@ -30,7 +26,7 @@ public class SubsystemRakeBlockBehavior : SubsystemBlockBehavior
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(terrainRaycastResult.Value.CellFace.X,
                 terrainRaycastResult.Value.CellFace.Y, terrainRaycastResult.Value.CellFace.Z);
             var num = Terrain.ExtractContents(cellValue);
-            var block = BlocksManager.Blocks[num];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
             switch (num)
             {
                 case 2:

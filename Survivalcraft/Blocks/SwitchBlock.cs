@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class SwitchBlock : MountedElectricElementBlock
 {
-    public const int Index = 141;
-
     public BlockMesh[] BlockMeshesByIndex = new BlockMesh[12];
 
     public BoundingBox[][] CollisionBoxesByIndex = new BoundingBox[12][];

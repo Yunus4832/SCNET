@@ -134,7 +134,7 @@ public class ComponentVitalStats : Component, IUpdateable
     public bool NetEat(IInventory inventory, int slotIndex, int value)
     {
         var num = Terrain.ExtractContents(value);
-        var obj = BlocksManager.Blocks[num];
+        var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         var num2 = obj.GetNutritionalValue(value);
         var sicknessProbability = obj.GetSicknessProbability(value);
         if (!(num2 > 0f))

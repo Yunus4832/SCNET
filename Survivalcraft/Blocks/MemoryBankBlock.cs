@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class MemoryBankBlock() : RotatableMountedElectricElementBlock("Models/Gates", "MemoryBank", 0.875f)
 {
-    public const int Index = 186;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

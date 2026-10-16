@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+
 namespace Game.Screens;
 
 public class RecipaediaScreen : Screen
@@ -35,14 +36,15 @@ public class RecipaediaScreen : Screen
         _detailsButton = Children.Find<ButtonWidget>("DetailsButton")!;
         _recipesButton = Children.Find<ButtonWidget>("RecipesButton")!;
         _categories.Add(string.Empty);
-        _categories.AddRange(BlocksManager.ReadOnlyCategories);
+        _categories.AddRange(CurrentModRuntime.Value!.PreviewCatalog.ReadOnlyCategories);
         _blocksList.ItemWidgetFactory = delegate (object item)
         {
             var value = (int)item;
             var num = Terrain.ExtractContents(value);
-            var block = BlocksManager.Blocks[num];
+            var block = CurrentModRuntime.Value!.PreviewCatalog.Blocks[num];
             var node2 = ContentManager.Get<XElement>("Widgets/RecipaediaItem");
             var obj = (ContainerWidget)LoadWidget(this, node2, null);
+            obj.Children.Find<BlockIconWidget>("RecipaediaItem.Icon")!.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
             obj.Children.Find<BlockIconWidget>("RecipaediaItem.Icon")!.Value = value;
             obj.Children.Find<LabelWidget>("RecipaediaItem.Text")!.Text = block.GetDisplayName(null, value);
             obj.Children.Find<LabelWidget>("RecipaediaItem.Details")!.Text = block.GetDescription(value);
@@ -85,7 +87,7 @@ public class RecipaediaScreen : Screen
         if (_blocksList.SelectedItem is int item)
         {
             value = item;
-            num = CraftingRecipesManager.ReadonlyRecipes.Count(r => r.ResultValue == value);
+            num = CurrentModRuntime.Value!.PreviewCatalog.Recipes.ReadonlyRecipes.Count(r => r.ResultValue == value);
         }
 
         if (num > 0)
@@ -134,7 +136,7 @@ public class RecipaediaScreen : Screen
         _blocksList.ScrollPosition = 0f;
         _blocksList.ClearItems();
 
-        var orders = (from item in BlocksManager.RegisteredBlocks
+        var orders = (from item in CurrentModRuntime.Value!.PreviewCatalog.RegisteredBlocks
                       from creativeValue in item.GetCreativeValues()
                       where string.IsNullOrEmpty(text) || item.GetCategory(creativeValue) == text
                       select new Order(item, item.GetDisplayOrder(creativeValue), creativeValue)).ToList();

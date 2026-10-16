@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class CounterBlock() : RotatableMountedElectricElementBlock("Models/Gates", "Counter", 0.5f)
 {
-    public const int Index = 184;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

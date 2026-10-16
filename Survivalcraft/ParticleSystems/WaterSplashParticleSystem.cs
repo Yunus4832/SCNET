@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.ParticleSystems;
 
 public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSystem.Particle>
@@ -87,7 +88,7 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
                 continue;
             }
 
-            var block = BlocksManager.Blocks[num2];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
             if (block.Collidable)
             {
                 particle.IsActive = true;

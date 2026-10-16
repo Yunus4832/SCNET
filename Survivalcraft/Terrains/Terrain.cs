@@ -567,6 +567,7 @@ public class Terrain : IDisposable
     /// <param name="contents">方块内容类型 ID</param>
     public static int MakeBlockValue(int contents)
     {
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)contents, 1024u);
         return contents & _contentsMask;
     }
 
@@ -578,6 +579,7 @@ public class Terrain : IDisposable
     /// <param name="data">方块数据（18位）</param>
     public static int MakeBlockValue(int contents, int light, int data)
     {
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)contents, 1024u);
         return (contents & _contentsMask) | ((light << _lightShift) & _lightMask) | ((data << _dataShift) & _dataMask);
     }
 
@@ -672,6 +674,7 @@ public class Terrain : IDisposable
     /// </summary>
     public static int ReplaceContents(int value, int contents)
     {
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual((uint)contents, 1024u);
         return value ^ ((value ^ contents) & _contentsMask);
     }
 

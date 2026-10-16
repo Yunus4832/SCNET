@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemTreasureGeneratorBlockBehavior : SubsystemBlockBehavior
@@ -443,7 +444,7 @@ public class SubsystemTreasureGeneratorBlockBehavior : SubsystemBlockBehavior
         _treasureData = array;
     }
 
-    public override int[] HandledBlocks => [190];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:treasure_generator")];
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {

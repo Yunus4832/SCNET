@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock, IPaintableBlock
 {
-    public const int Index = 133;
-
     public static readonly Color WireColor = new(79, 36, 21);
 
     public readonly BoundingBox[] CollisionBoxesByFace = new BoundingBox[6];
@@ -190,7 +189,7 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
         var cellValue = subsystemTerrain.Terrain.GetCellValue(raycastResult.CellFace.X + point.X,
             raycastResult.CellFace.Y + point.Y, raycastResult.CellFace.Z + point.Z);
         var num = Terrain.ExtractContents(cellValue);
-        var block = BlocksManager.Blocks[num];
+        var block = Catalog.Blocks[num];
         var wireFacesBitmask = GetWireFacesBitmask(cellValue);
         var num2 = wireFacesBitmask | (1 << raycastResult.CellFace.Face);
         BlockPlacementData result;
@@ -238,7 +237,7 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
             {
                 dropValues.Add(new BlockDropValue
                 {
-                    Value = Terrain.MakeBlockValue(133, 0, SetColor(0, paintColor)),
+                    Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, paintColor)),
                     Count = 1
                 });
             }
@@ -249,14 +248,14 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(133);
-        yield return Terrain.MakeBlockValue(133, 0, SetColor(0, 0));
-        yield return Terrain.MakeBlockValue(133, 0, SetColor(0, 8));
-        yield return Terrain.MakeBlockValue(133, 0, SetColor(0, 15));
-        yield return Terrain.MakeBlockValue(133, 0, SetColor(0, 11));
-        yield return Terrain.MakeBlockValue(133, 0, SetColor(0, 12));
-        yield return Terrain.MakeBlockValue(133, 0, SetColor(0, 13));
-        yield return Terrain.MakeBlockValue(133, 0, SetColor(0, 14));
+        yield return Terrain.MakeBlockValue(BlockIndex);
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 0));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 8));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 15));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 11));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 12));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 13));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, 14));
     }
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
@@ -265,14 +264,14 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
         return SubsystemPalette.GetName(paintColor, base.GetDisplayName(subsystemTerrain, value));
     }
 
-    public static bool WireExistsOnFace(int value, int face)
+    public bool WireExistsOnFace(int value, int face)
     {
         return (GetWireFacesBitmask(value) & (1 << face)) != 0;
     }
 
-    public static int GetWireFacesBitmask(int value)
+    public int GetWireFacesBitmask(int value)
     {
-        if (Terrain.ExtractContents(value) == 133)
+        if (Terrain.ExtractContents(value) == BlockIndex)
         {
             return Terrain.ExtractData(value) & 0x3F;
         }
@@ -280,12 +279,12 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
         return 0;
     }
 
-    public static int SetWireFacesBitmask(int value, int bitmask)
+    public int SetWireFacesBitmask(int value, int bitmask)
     {
         var num = Terrain.ExtractData(value);
         num &= -64;
         num |= bitmask & 0x3F;
-        return Terrain.ReplaceData(Terrain.ReplaceContents(value, 133), num);
+        return Terrain.ReplaceData(Terrain.ReplaceContents(value, BlockIndex), num);
     }
 
     public static int? GetColor(int data)

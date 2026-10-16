@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentAutoJump : Component, IUpdateable
@@ -86,12 +87,12 @@ public class ComponentAutoJump : Component, IUpdateable
                             Terrain.ToCell(vector3.Y) + 1, Terrain.ToCell(vector3.Z));
                         var cellContents6 = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(vector4.X),
                             Terrain.ToCell(vector4.Y) + 1, Terrain.ToCell(vector4.Z));
-                        var block = BlocksManager.Blocks[cellContents];
-                        var block2 = BlocksManager.Blocks[cellContents2];
-                        var block3 = BlocksManager.Blocks[cellContents3];
-                        var block4 = BlocksManager.Blocks[cellContents4];
-                        var block5 = BlocksManager.Blocks[cellContents5];
-                        var block6 = BlocksManager.Blocks[cellContents6];
+                        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents];
+                        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents2];
+                        var block3 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents3];
+                        var block4 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents4];
+                        var block5 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents5];
+                        var block6 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents6];
                         if (!block.NoAutoJump && ((block.Collidable && !block4.Collidable) ||
                                                   (block2.Collidable && !block5.Collidable) ||
                                                   (block3.Collidable && !block6.Collidable)))

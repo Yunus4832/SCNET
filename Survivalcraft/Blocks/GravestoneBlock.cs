@@ -2,12 +2,11 @@ using System.Globalization;
 
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class GravestoneBlock : Block
 {
-    public const int Index = 189;
-
     public BlockMesh[] BlockMeshes = new BlockMesh[16];
 
     public BoundingBox[][] CollisionBoxes = new BoundingBox[16][];
@@ -73,7 +72,7 @@ public class GravestoneBlock : Block
 
         var num2Value = y > 0 ? generator.Terrain.GetCellValueFast(x, y - 1, z) : 0;
         var num2 = Terrain.ExtractContents(num2Value);
-        var num3 = BlocksManager.Blocks[num2].GetBlockDigMethod(num2Value) != BlockDigMethod.Shovel;
+        var num3 = Catalog.Blocks[num2].GetBlockDigMethod(num2Value) != BlockDigMethod.Shovel;
         var flag = num2 is 7 or 4 or 52;
         var num4 = (int)(MathUtils.Hash((uint)(x + 172 * y + 18271 * z)) & 0xFFFF);
         var value2 = Matrix.Identity;
@@ -139,13 +138,13 @@ public class GravestoneBlock : Block
         if (MathUtils.Abs(Vector3.Dot(forward, Vector3.UnitZ)) > num)
         {
             result = default;
-            result.Value = Terrain.MakeBlockValue(189, 0, SetRotation(data, 0));
+            result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetRotation(data, 0));
             result.CellFace = raycastResult.CellFace;
             return result;
         }
 
         result = default;
-        result.Value = Terrain.MakeBlockValue(189, 0, SetRotation(data, 1));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetRotation(data, 1));
         result.CellFace = raycastResult.CellFace;
         return result;
     }
@@ -156,7 +155,7 @@ public class GravestoneBlock : Block
         while (i < 8)
         {
             var data = SetVariant(0, i);
-            yield return Terrain.MakeBlockValue(189, 0, data);
+            yield return Terrain.MakeBlockValue(BlockIndex, 0, data);
             var num = i + 1;
             i = num;
         }
@@ -168,7 +167,7 @@ public class GravestoneBlock : Block
         showDebris = true;
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(189, 0, Terrain.ExtractData(oldValue)),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, Terrain.ExtractData(oldValue)),
             Count = 1
         });
     }

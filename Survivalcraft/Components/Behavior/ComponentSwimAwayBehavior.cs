@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
@@ -116,7 +117,7 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
                 delegate (int value, float d)
                 {
                     var num3 = Terrain.ExtractContents(value);
-                    return !(BlocksManager.Blocks[num3] is WaterBlock);
+                    return !(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3] is WaterBlock);
                 });
             var vector4 = terrainRaycastResult.HasValue ? vector + v * terrainRaycastResult.Value.Distance : vector3;
             var num2 = ScoreSafePlace(vector, vector4, herdPosition);

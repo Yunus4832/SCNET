@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.ParticleSystems;
 
 public class PrecipitationShaftParticleSystem : ParticleSystemBase
@@ -285,7 +286,7 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
     {
         particle.YLimit = _yLimit;
         particle.GenerateSplash = true;
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(_topmostValue)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(_topmostValue)];
         if (!block.Transparent)
         {
             return;
@@ -301,7 +302,7 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
         }
 
         particle.YLimit -= 1f;
-        if (BlocksManager.Blocks[Terrain.ExtractContents(_topmostBelowValue)]
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(_topmostBelowValue)]
             .IsFaceTransparent(_subsystemWeather.SubsystemTerrain, 4, _topmostBelowValue))
         {
             particle.GenerateSplash = false;

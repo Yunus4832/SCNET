@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class CairnBlock : Block
 {
-    public const int Index = 258;
-
     private readonly BlockMesh _blockMesh = new();
 
     private readonly BlockMesh _standaloneMesh = new();

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class WhistleBlock : Block
 {
-    public const int Index = 160;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

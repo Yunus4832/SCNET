@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class PaintStripperBucketBlock : BucketBlock
 {
-    public const int Index = 128;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

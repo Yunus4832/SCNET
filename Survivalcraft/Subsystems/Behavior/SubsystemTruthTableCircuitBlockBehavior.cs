@@ -1,5 +1,3 @@
-using Game.Network;
-using Game.Network.Enums;
 using Game.Network.Packages;
 using Game.Network.Packages.Handlers;
 
@@ -7,7 +5,7 @@ namespace Game.Subsystems;
 
 public class SubsystemTruthTableCircuitBlockBehavior() : SubsystemEditableItemBehavior<TruthTableData>(188)
 {
-    public override int[] HandledBlocks => [188];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:truth_table_circuit")];
 
     protected override EditableBlockPackage CreateBlockStatePackage(Point3 point, TruthTableData data)
     {
@@ -45,7 +43,7 @@ public class SubsystemTruthTableCircuitBlockBehavior() : SubsystemEditableItemBe
                 return;
             }
 
-            var face = ((TruthTableCircuitBlock)BlocksManager.Blocks[188]).GetFace(value);
+            var face = ((TruthTableCircuitBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[188]).GetFace(value);
             var cell = new CellFace(x, y, z, face);
             var p = new EditableBlockPackage(cell, false, 0, 0, truthTableData);
             EditableBlockPackageHandler.Submit(p);

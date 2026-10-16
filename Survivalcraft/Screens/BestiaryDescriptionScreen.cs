@@ -149,6 +149,7 @@ public class BestiaryDescriptionScreen : Screen
                     {
                         new BlockIconWidget
                         {
+                            Catalog = CurrentModRuntime.Value!.PreviewCatalog,
                             Size = new Vector2(32f),
                             Scale = 1.2f,
                             VerticalAlignment = WidgetAlignment.Center,

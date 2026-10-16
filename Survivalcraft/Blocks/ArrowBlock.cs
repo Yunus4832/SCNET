@@ -17,8 +17,6 @@ public class ArrowBlock : Block
         CopperArrow
     }
 
-    public const int Index = 192;
-
     public static int[] Order = [0, 1, 8, 2, 3, 4, 5, 6, 7];
 
     public static string[] TipNames =
@@ -208,7 +206,7 @@ public class ArrowBlock : Block
         var i = 0;
         while (i < Order.Length)
         {
-            yield return Terrain.MakeBlockValue(192, 0, SetArrowType(0, (ArrowType)Order[i]));
+            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetArrowType(0, (ArrowType)Order[i]));
             var num = i + 1;
             i = num;
         }

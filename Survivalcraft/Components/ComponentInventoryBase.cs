@@ -56,7 +56,7 @@ public abstract class ComponentInventoryBase : Component, IInventory
     {
         if (slotIndex >= 0 && slotIndex < slots.Count)
         {
-            return BlocksManager.Blocks[Terrain.ExtractContents(value)].GetMaxStacking(value);
+            return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].GetMaxStacking(value);
         }
 
         return 0;
@@ -142,7 +142,7 @@ public abstract class ComponentInventoryBase : Component, IInventory
         if (count > 0 && slotIndex >= 0 && slotIndex < slots.Count)
         {
             var slot = slots[slotIndex];
-            if ((GetSlotCount(slotIndex) != 0 && !BlocksManager.Blocks[Terrain.ExtractContents(value)]
+            if ((GetSlotCount(slotIndex) != 0 && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
                     .CanAutoStack(GetSlotValue(slotIndex), value)) ||
                 GetSlotCount(slotIndex) + count > GetSlotCapacity(slotIndex, value))
             {
@@ -207,7 +207,7 @@ public abstract class ComponentInventoryBase : Component, IInventory
     {
         for (var i = 0; i < inventory.SlotsCount; i++)
         {
-            if (inventory.GetSlotCount(i) > 0 && BlocksManager.Blocks[Terrain.ExtractContents(value)]
+            if (inventory.GetSlotCount(i) > 0 && CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
                     .CanAutoStack(inventory.GetSlotValue(i), value) &&
                 inventory.GetSlotCount(i) < inventory.GetSlotCapacity(i, value))
             {

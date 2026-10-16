@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class TreasureGeneratorBlock : Block
 {
-    public const int Index = 190;
-
     public override void GenerateTerrainVertices(
         BlockGeometryGenerator generator,
         TerrainGeometry geometry,

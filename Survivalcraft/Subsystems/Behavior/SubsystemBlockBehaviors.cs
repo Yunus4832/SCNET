@@ -1,6 +1,8 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
+
 namespace Game.Subsystems;
 
 public class SubsystemBlockBehaviors : Subsystem
@@ -15,32 +17,40 @@ public class SubsystemBlockBehaviors : Subsystem
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
-        _blockBehaviorsByContents = new SubsystemBlockBehavior[BlocksManager.Blocks.Length][];
-        var dictionary = new Dictionary<int, List<SubsystemBlockBehavior>>();
-        for (var i = 0; i < _blockBehaviorsByContents.Length; i++)
+        _blockBehaviors.AddRange(Project.FindSubsystems<SubsystemBlockBehavior>());
+        _blockBehaviorsByContents = BuildTable(CurrentModRuntime.Value!.RequireWorldCatalog(), _blockBehaviors,
+            name => Project.FindSubsystem<SubsystemBlockBehavior>(name, true)!);
+    }
+
+    internal static SubsystemBlockBehavior[][] BuildTable(BlockContentCatalog catalog,
+        IEnumerable<SubsystemBlockBehavior> behaviors, Func<string, SubsystemBlockBehavior> findByName)
+    {
+        var table = Enumerable.Range(0, BlockRuntimeCatalog.Capacity)
+            .Select(_ => new List<SubsystemBlockBehavior>()).ToArray();
+        foreach (var block in catalog.RegisteredBlocks)
         {
-            dictionary[i] = [];
-            var array = BlocksManager.Blocks[i].Behaviors.Split([','], StringSplitOptions.RemoveEmptyEntries);
-            foreach (var text in array)
+            foreach (var name in block.Behaviors.Split(',', StringSplitOptions.RemoveEmptyEntries))
             {
-                var item = Project.FindSubsystem<SubsystemBlockBehavior>(text.Trim(), true)!;
-                dictionary[i].Add(item);
+                var behavior = findByName(name.Trim());
+                if (!table[block.BlockIndex].Contains(behavior))
+                {
+                    table[block.BlockIndex].Add(behavior);
+                }
             }
         }
 
-        foreach (var item2 in Project.FindSubsystems<SubsystemBlockBehavior>())
+        foreach (var behavior in behaviors)
         {
-            _blockBehaviors.Add(item2);
-            var handledBlocks = item2.HandledBlocks;
-            foreach (var key in handledBlocks)
+            foreach (var id in behavior.HandledBlocks)
             {
-                dictionary[key].Add(item2);
+                var index = catalog.GetBlock(id).BlockIndex;
+                if (!table[index].Contains(behavior))
+                {
+                    table[index].Add(behavior);
+                }
             }
         }
 
-        for (var k = 0; k < _blockBehaviorsByContents.Length; k++)
-        {
-            _blockBehaviorsByContents[k] = dictionary[k].ToArray();
-        }
+        return table.Select(list => list.ToArray()).ToArray();
     }
 }

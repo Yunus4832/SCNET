@@ -1,3 +1,5 @@
+using Game.Modding.Blocks;
+
 namespace Game.Network.Packages.Handlers;
 
 public sealed class DispenserPackageHandler : PackageHandlerBase<DispenserPackage>
@@ -27,7 +29,7 @@ public sealed class DispenserPackageHandler : PackageHandlerBase<DispenserPackag
 
         var sut = project.FindSubsystem<SubsystemTerrain>(true)!;
         var value = sut.Terrain.GetCellValue(package.Point.X, package.Point.Y, package.Point.Z);
-        if (Terrain.ExtractContents(value) == DispenserBlock.Index)
+        if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<DispenserBlock>())
         {
             var data = Terrain.ExtractData(value);
             data = DispenserBlock.SetMode(data,

@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemIvyBlockBehavior : SubsystemPollableBlockBehavior, IUpdateable
@@ -10,7 +11,7 @@ public class SubsystemIvyBlockBehavior : SubsystemPollableBlockBehavior, IUpdate
 
     private readonly Dictionary<Point3, int> _toUpdate = new();
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -50,7 +51,7 @@ public class SubsystemIvyBlockBehavior : SubsystemPollableBlockBehavior, IUpdate
 
         var point = CellFace.FaceToPoint3(face);
         var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(x + point.X, y + point.Y, z + point.Z);
-        if (!BlocksManager.Blocks[Terrain.ExtractContents(cellValue2)].Collidable)
+        if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue2)].Collidable)
         {
             SubsystemTerrain.DestroyCell(0, x, y, z, 0, true, false);
         }

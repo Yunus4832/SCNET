@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class WaterBucketBlock : BucketBlock
 {
-    public const int Index = 91;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

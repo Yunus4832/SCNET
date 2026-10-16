@@ -4,6 +4,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -22,24 +23,30 @@ public static class GameManager
 
     public static event Action<Project>? ProjectDisposed;
 
-    public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget, bool useNetProj = true)
+    public static void LoadProject(WorldInfo worldInfo, ContainerWidget gamesWidget)
     {
         DisposeProject();
-        if (worldInfo.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
+        try
         {
-            throw new InvalidOperationException(
-                $"Unsupported project format version \"{worldInfo.ProjectFormatVersion}\". Expected \"{WorldVersions.ProjectFormatVersion}\".");
-        }
+            if (worldInfo.ProjectFormatVersion != WorldVersions.ProjectFormatVersion)
+            {
+                throw new InvalidOperationException(
+                    $"Unsupported project format version \"{worldInfo.ProjectFormatVersion}\". Expected \"{WorldVersions.ProjectFormatVersion}\".");
+            }
 
-        var xmlFile = Storage.CombinePaths(worldInfo.DirectoryName, "Project.xml");
+            var xmlFile = Storage.CombinePaths(worldInfo.DirectoryName, "Project.xml");
 
-        if (!Storage.FileExists(xmlFile))
-        {
-            throw new FileNotFoundException("Project file not found.", xmlFile);
-        }
+            if (!Storage.FileExists(xmlFile))
+            {
+                throw new FileNotFoundException("Project file not found.", xmlFile);
+            }
 
-        using (var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read))
-        {
+            XElement projectNode;
+            using (var stream = Storage.OpenFile(xmlFile, OpenFileMode.Read))
+            {
+                projectNode = XmlUtils.LoadXmlFromStream(stream, null, true);
+            }
+
             var valuesDictionary = new ValuesDictionary();
             var valuesDictionary2 = new ValuesDictionary();
             valuesDictionary.SetValue("GameInfo", valuesDictionary2);
@@ -47,54 +54,75 @@ public static class GameManager
             var valuesDictionary3 = new ValuesDictionary();
             valuesDictionary.SetValue("Views", valuesDictionary3);
             valuesDictionary3.SetValue("GamesWidget", gamesWidget);
-            var projectNode = XmlUtils.LoadXmlFromStream(stream, null, true);
+            var catalog = CurrentModRuntime.Value!.CreateWorldCatalog(
+                BlockIndexMapping.FromXml(projectNode.Element("BlockRegistry")
+                    ?? throw new InvalidDataException("World block registry is missing.")));
+            projectNode.Element("BlockRegistry")?.Remove();
+            projectNode.Add(catalog.Registry.Mapping.ToXml());
+            // Persist the registry before any subsystem can write terrain using newly allocated indices.
+            SaveProjectMetadata(worldInfo.DirectoryName, projectNode);
             var projectData = new ProjectData(DatabaseManager.GameDatabase, projectNode, valuesDictionary, true);
             Project = new Project(DatabaseManager.GameDatabase, projectData);
             _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
-        }
 
-        if (Project == null)
-        {
-            throw new Exception("未能加载Project");
-        }
+            if (Project == null)
+            {
+                throw new Exception("未能加载Project");
+            }
 
-        if (worldInfo.GameModeOverride is { } gameModeOverride)
-        {
-            var subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
-            var persistedGameMode = subsystemGameInfo.WorldSettings.GameMode;
-            subsystemGameInfo.ApplyGameModeOverride(gameModeOverride);
-            worldInfo.WorldSettings.GameMode = gameModeOverride;
+            if (worldInfo.GameModeOverride is { } gameModeOverride)
+            {
+                var subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
+                var persistedGameMode = subsystemGameInfo.WorldSettings.GameMode;
+                subsystemGameInfo.ApplyGameModeOverride(gameModeOverride);
+                worldInfo.WorldSettings.GameMode = gameModeOverride;
+                Log.Information(
+                    $"Applied session game mode override: {persistedGameMode} -> {gameModeOverride} (world save remains {persistedGameMode}).");
+            }
+
+            SetupNetworkHandlers(Project);
+            WorldInfo = worldInfo;
             Log.Information(
-                $"Applied session game mode override: {persistedGameMode} -> {gameModeOverride} (world save remains {persistedGameMode}).");
+                "Loaded world, GameMode={0}, StartingPosition={1}, WorldName={2}, VisibilityRange={3}, Resolution={4}",
+                worldInfo.WorldSettings.GameMode, worldInfo.WorldSettings.StartingPositionMode,
+                worldInfo.WorldSettings.Name, SettingsManager.Current.VisibilityRange.ToString(),
+                SettingsManager.Current.ResolutionMode.ToString());
+            GC.Collect();
         }
-
-        SetupNetworkHandlers(Project);
-        WorldInfo = worldInfo;
-        Log.Information(
-            "Loaded world, GameMode={0}, StartingPosition={1}, WorldName={2}, VisibilityRange={3}, Resolution={4}",
-            worldInfo.WorldSettings.GameMode, worldInfo.WorldSettings.StartingPositionMode,
-            worldInfo.WorldSettings.Name, SettingsManager.Current.VisibilityRange.ToString(),
-            SettingsManager.Current.ResolutionMode.ToString());
-        GC.Collect();
+        catch
+        {
+            DisposeProject();
+            throw;
+        }
     }
 
-    public static void LoadProject(byte[] messagePackData, ContainerWidget gamesWidget, bool useNetProj = true)
+    public static void LoadProject(byte[] messagePackData, ContainerWidget gamesWidget,
+        BlockIndexMapping mapping)
     {
         DisposeProject();
-        var valuesDictionary = new ValuesDictionary();
-        var valuesDictionary2 = new ValuesDictionary();
-        valuesDictionary.SetValue("GameInfo", valuesDictionary2);
-        valuesDictionary2.SetValue("WorldDirectoryName", "NetWorld");
-        var valuesDictionary3 = new ValuesDictionary();
-        valuesDictionary.SetValue("Views", valuesDictionary3);
-        valuesDictionary3.SetValue("GamesWidget", gamesWidget);
-        var projectData = new ProjectData(DatabaseManager.GameDatabase, messagePackData, valuesDictionary, true);
-        Project = new Project(DatabaseManager.GameDatabase, projectData);
-        _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
-        SetupNetworkHandlers(Project);
-        WorldInfo = new WorldInfo();
-        Log.Information("加载NetProject");
-        GC.Collect();
+        try
+        {
+            var valuesDictionary = new ValuesDictionary();
+            var valuesDictionary2 = new ValuesDictionary();
+            valuesDictionary.SetValue("GameInfo", valuesDictionary2);
+            valuesDictionary2.SetValue("WorldDirectoryName", "NetWorld");
+            var valuesDictionary3 = new ValuesDictionary();
+            valuesDictionary.SetValue("Views", valuesDictionary3);
+            valuesDictionary3.SetValue("GamesWidget", gamesWidget);
+            CurrentModRuntime.Value!.CreateWorldCatalog(mapping, true);
+            var projectData = new ProjectData(DatabaseManager.GameDatabase, messagePackData, valuesDictionary, true);
+            Project = new Project(DatabaseManager.GameDatabase, projectData);
+            _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
+            SetupNetworkHandlers(Project);
+            WorldInfo = new WorldInfo();
+            Log.Information("加载NetProject");
+            GC.Collect();
+        }
+        catch
+        {
+            DisposeProject();
+            throw;
+        }
     }
 
     public static void SaveProject(bool waitForCompletion, bool showErrorDialog)
@@ -117,6 +145,7 @@ public static class GameManager
         var realTime = Time.RealTime;
 
         var projectData = Project.Save();
+        var blockMapping = CurrentModRuntime.Value!.RequireWorldCatalog().Registry.Mapping;
         _saveCompleted.WaitOne();
         _saveCompleted.Reset();
         var subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
@@ -133,6 +162,7 @@ public static class GameManager
                 var projectNode = new XElement("Project");
                 XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
                 projectData.Save(projectNode);
+                projectNode.Add(blockMapping.ToXml());
                 Storage.CreateDirectory(subsystemGameInfo.DirectoryName);
                 var projectPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml");
                 var temporaryPath = Storage.CombinePaths(subsystemGameInfo.DirectoryName, "Project.xml.tmp");
@@ -190,17 +220,49 @@ public static class GameManager
         _subsystemUpdate?.Update();
     }
 
-    public static void DisposeProject()
+    private static void SaveProjectMetadata(string directory, XElement node)
     {
-        if (Project is not null)
+        var path = Storage.CombinePaths(directory, "Project.xml");
+        var temporary = Storage.CombinePaths(directory, "Project.xml.tmp");
+        using (var stream = Storage.OpenFile(temporary, OpenFileMode.Create))
         {
-            ProjectDisposed?.Invoke(Project);
-            Project.Dispose();
-            Project = null;
+            XmlUtils.SaveXmlToStream(node, stream, null, true);
         }
 
-        _subsystemUpdate = null;
-        WorldInfo = null;
+        if (!WorldsManager.TestProjectFile(temporary))
+        {
+            throw new InvalidDataException("Generated project metadata is invalid.");
+        }
+
+        Storage.MoveFile(temporary, path);
+    }
+
+    public static void DisposeProject()
+    {
+        _saveCompleted.WaitOne();
+        var project = Project;
+        try
+        {
+            if (project is not null)
+            {
+                try
+                {
+                    ProjectDisposed?.Invoke(project);
+                }
+                finally
+                {
+                    project.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            Project = null;
+            CurrentModRuntime.Value?.ReleaseWorldCatalog();
+            _subsystemUpdate = null;
+            WorldInfo = null;
+        }
+
         GC.Collect();
     }
 
@@ -400,7 +462,8 @@ public static class GameManager
 
         client.ConnectionPhase = ConnectionPhase.BootstrapSent;
         net.QueuePackage(
-            new BootstrapPackage(client.ConnectionEpoch, net.Clients.Values, textureData, data),
+            new BootstrapPackage(client.ConnectionEpoch, net.Clients.Values, textureData, data,
+                CurrentModRuntime.Value!.RequireWorldCatalog().Registry.Mapping),
             PackageAudience.To(client));
     }
 

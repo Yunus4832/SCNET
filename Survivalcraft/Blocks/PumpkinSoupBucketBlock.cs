@@ -6,8 +6,6 @@ namespace Game.Blocks;
 
 public class PumpkinSoupBucketBlock : BucketBlock
 {
-    public const int Index = 251;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()
@@ -68,7 +66,7 @@ public class PumpkinSoupBucketBlock : BucketBlock
                 var craftingRecipe = new CraftingRecipe
                 {
                     ResultCount = 1,
-                    ResultValue = 251,
+                    ResultValue = BlockIndex,
                     RequiredHeatLevel = 1f,
                     Description = "烹饪南瓜粥"
                 };

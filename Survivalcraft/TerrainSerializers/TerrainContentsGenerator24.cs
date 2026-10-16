@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 
+
 namespace Game.TerrainSerializers;
 
 public class TerrainContentsGenerator24 : ITerrainContentsGenerator
@@ -756,7 +757,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 while (num4 >= 0)
                 {
                     var num5 = Terrain.ExtractContents(chunk.GetCellValueFast(num3));
-                    if (!BlocksManager.Blocks[num5].Transparent)
+                    if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num5].Transparent)
                     {
                         var num6 = CalculateMountainRangeFactor(num, num2);
                         var temperature = chunk.GetTemperatureFast(i, j);
@@ -1296,13 +1297,13 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                             num11 >= num - 1 ||
                             num12 < y + 1 ||
                             num12 >= num2 - 1 ||
-                            BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
+                            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
                         {
                             flag = false;
                             break;
                         }
 
-                        if (!BlocksManager.Blocks[_terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
+                        if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
                         {
                             continue;
                         }
@@ -1342,36 +1343,31 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                                 continue;
                             }
 
-                            if (random.Bool(0.5f) && !BlocksManager
-                                    .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                            if (random.Bool(0.5f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeLeavesValue);
                             }
 
-                            if (random.Bool(0.05f) && !BlocksManager
-                                    .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                            if (random.Bool(0.05f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeTrunkValue);
                             }
 
-                            if (random.Bool(0.5f) && !BlocksManager
-                                    .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                            if (random.Bool(0.5f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeLeavesValue);
                             }
 
-                            if (random.Bool(0.05f) && !BlocksManager
-                                    .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                            if (random.Bool(0.05f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeTrunkValue);
                             }
 
-                            if (random.Bool(0.5f) && !BlocksManager
-                                    .Blocks[_terrain.GetCellContentsFast(num13, num9 + 1, num14)]
+                            if (random.Bool(0.5f) && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_terrain.GetCellContentsFast(num13, num9 + 1, num14)]
                                     .Collidable)
                             {
                                 _terrain.SetCellValueFast(num13, num9 + 1, num14, treeLeavesValue);
@@ -1512,10 +1508,10 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
 
                     heightLimit++;
 
-                    if (BlocksManager.Blocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
-                        BlocksManager.Blocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
-                        BlocksManager.Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
-                        BlocksManager.Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
+                    if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[chunk.GetCellContentsFast(localX + 1, heightLimit, localZ)].Collidable ||
+                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[chunk.GetCellContentsFast(localX - 1, heightLimit, localZ)].Collidable ||
+                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ + 1)].Collidable ||
+                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[chunk.GetCellContentsFast(localX, heightLimit, localZ - 1)].Collidable)
                     {
                         continue;
                     }
@@ -1641,7 +1637,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                         continue;
                     }
 
-                    if (!(BlocksManager.Blocks[num2] is FluidBlock))
+                    if (!(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2] is FluidBlock))
                     {
                         var temperatureFast = chunk.GetTemperatureFast(i, j);
                         var humidityFast = chunk.GetHumidityFast(i, j);
@@ -1943,7 +1939,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 for (var num12 = 254; num12 >= 0; num12--)
                 {
                     var num13 = Terrain.ExtractContents(chunk.GetCellValueFast(x2, num12, z));
-                    var block = BlocksManager.Blocks[num13];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num13];
                     if (num13 == 0)
                     {
                         continue;
@@ -2250,7 +2246,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                             for (var n = num12; n <= num13; n++)
                             {
                                 var num14 = Terrain.ExtractContents(chunk.GetCellValueFast(l, m, n));
-                                var block = BlocksManager.Blocks[num14];
+                                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num14];
                                 if (m > num7)
                                 {
                                     if (!block.Collidable)
@@ -2473,7 +2469,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                             break;
                         }
 
-                        if (BlocksManager.Blocks[num4] is WaterBlock)
+                        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num4] is WaterBlock)
                         {
                             if (CalculateOceanShoreDistance(num, num2) > -20f)
                             {
@@ -2487,7 +2483,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                                         continue;
                                     }
 
-                                    if (!(BlocksManager.Blocks[
+                                    if (!(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[
                                             chunk.GetCellContentsFast(i, num3 - k, j)] is WaterBlock))
                                     {
                                         break;
@@ -2531,7 +2527,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 while (num3 >= 0)
                 {
                     var num4 = Terrain.ExtractContents(chunk.GetCellValueFast(num));
-                    if (num4 == 0 && num2 != 0 && BlocksManager.FluidBlocks[num2] != null)
+                    if (num4 == 0 && num2 != 0 && CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num2] != null)
                     {
                         chunk.SetCellValueFast(num, num2);
                         num4 = num2;
@@ -2558,7 +2554,7 @@ public class TerrainContentsGenerator24 : ITerrainContentsGenerator
                 {
                     var cellValueFast = chunk.GetCellValueFast(num);
                     var num4 = Terrain.ExtractContents(cellValueFast);
-                    if (num4 != num2 && BlocksManager.FluidBlocks[num4] != null && BlocksManager.FluidBlocks[num2] == null)
+                    if (num4 != num2 && CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num4] != null && CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num2] == null)
                     {
                         var data = Terrain.ExtractData(cellValueFast);
                         chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class BoatBlock : Block
 {
-    public const int Index = 178;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

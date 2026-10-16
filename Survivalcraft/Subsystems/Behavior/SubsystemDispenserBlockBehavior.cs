@@ -16,7 +16,7 @@ public class SubsystemDispenserBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
-    public override int[] HandledBlocks => [216];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:dispenser")];
 
     public override void Load(ValuesDictionary valuesDictionary)
     {

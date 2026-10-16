@@ -1,5 +1,7 @@
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
+
 namespace Game.Subsystems;
 
 public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
@@ -8,18 +10,14 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemElectricity _subsystemElectricity = null!;
 
-    public override int[] HandledBlocks =>
-    [
-        56,
-        57,
-        58
-    ];
+    public override ResourceId[] HandledBlocks =>
+    [ResourceId.Parse("game:wooden_door"), ResourceId.Parse("game:iron_door"), ResourceId.Parse("game:cell_door")];
 
     public bool OpenCloseDoor(int x, int y, int z, bool open)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        if (BlocksManager.Blocks[num] is not DoorBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not DoorBlock)
         {
             return false;
         }
@@ -38,7 +36,7 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (BlocksManager.Blocks[num] is not DoorBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not DoorBlock)
         {
             return false;
         }
@@ -62,7 +60,7 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
         var num = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (num == WoodenDoorBlock.Index || !IsDoorElectricallyConnected(cellFace.X, cellFace.Y, cellFace.Z))
+        if (num == BuiltInBlockRegistry.GetIndex<WoodenDoorBlock>() || !IsDoorElectricallyConnected(cellFace.X, cellFace.Y, cellFace.Z))
         {
             var open = DoorBlock.GetOpen(data);
             return OpenCloseDoor(cellFace.X, cellFace.Y, cellFace.Z, !open);
@@ -75,7 +73,7 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
     {
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
         var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x, y + 1, z);
-        if (!BlocksManager.Blocks[cellContents].Transparent && cellContents2 == 0)
+        if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent && cellContents2 == 0)
         {
             SubsystemTerrain.ChangeCell(x, y + 1, z, value);
         }
@@ -98,7 +96,7 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        var obj = BlocksManager.Blocks[num];
+        var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         var data = Terrain.ExtractData(cellValue);
         if (!(obj is DoorBlock))
         {
@@ -123,7 +121,7 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
         if (DoorBlock.IsBottomPart(SubsystemTerrain.Terrain, x, y, z))
         {
             var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-            if (BlocksManager.Blocks[cellContents].Transparent)
+            if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent)
             {
                 SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
             }

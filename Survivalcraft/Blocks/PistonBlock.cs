@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class PistonBlock : Block, IElectricElementBlock
 {
-    public const int Index = 237;
-
     public readonly BlockMesh[] BlockMeshesByData = new BlockMesh[48];
 
     public readonly BlockMesh[] StandaloneBlockMeshes = new BlockMesh[4];
@@ -171,9 +169,9 @@ public class PistonBlock : Block, IElectricElementBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(237, 0, SetMode(SetMaxExtension(0, 7), PistonMode.Pushing));
-        yield return Terrain.MakeBlockValue(237, 0, SetMode(SetMaxExtension(0, 7), PistonMode.Pulling));
-        yield return Terrain.MakeBlockValue(237, 0, SetMode(SetMaxExtension(0, 7), PistonMode.StrictPulling));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetMode(SetMaxExtension(0, 7), PistonMode.Pushing));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetMode(SetMaxExtension(0, 7), PistonMode.Pulling));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetMode(SetMaxExtension(0, 7), PistonMode.StrictPulling));
     }
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
@@ -228,7 +226,7 @@ public class PistonBlock : Block, IElectricElementBlock
         var data = Terrain.ExtractData(oldValue);
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(237, 0, SetFace(SetIsExtended(data, false), 0)),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetFace(SetIsExtended(data, false), 0)),
             Count = 1
         });
         showDebris = true;

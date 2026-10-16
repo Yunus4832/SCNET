@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class BatteryBlock : Block, IElectricElementBlock
 {
-    public const int Index = 138;
-
     public BlockMesh BlockMesh = new();
 
     public BoundingBox[] CollisionBoxes = new BoundingBox[1];
@@ -79,7 +77,7 @@ public class BatteryBlock : Block, IElectricElementBlock
         var data = Terrain.ExtractData(oldValue);
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(138, 0, data),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
             Count = 1
         });
     }

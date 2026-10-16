@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public abstract class FenceBlock(
@@ -341,7 +342,7 @@ public abstract class FenceBlock(
     public virtual bool ShouldConnectTo(int value)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = Catalog.Blocks[num];
         if (block is not FenceBlock)
         {
             return block is FenceGateBlock;
@@ -381,7 +382,7 @@ public abstract class FenceBlock(
         int attachBlockValue
     )
     {
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(attachBlockValue)];
+        var block = Catalog.Blocks[Terrain.ExtractContents(attachBlockValue)];
         return block is not BasePumpkinBlock &&
                base.IsFaceNonAttachable(subsystemTerrain, face, value, attachBlockValue);
     }

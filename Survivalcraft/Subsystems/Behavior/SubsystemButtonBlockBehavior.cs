@@ -7,7 +7,7 @@ namespace Game.Subsystems;
 
 public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
 {
-    public override int[] HandledBlocks => [142];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:button")];
 
     public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
     {

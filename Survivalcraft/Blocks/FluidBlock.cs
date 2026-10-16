@@ -45,9 +45,9 @@ public abstract class FluidBlock : CubeBlock
             throw new InvalidOperationException("Fluid type not found.");
         }
 
-        for (var i = 0; i < BlocksManager.Blocks.Length; i++)
+        for (var i = 0; i < Catalog.Blocks.Length; i++)
         {
-            var block = BlocksManager.Blocks[i];
+            var block = Catalog.Blocks[i];
             TheSameFluidsByIndex[i] = block.GetType().GetTypeInfo() == typeInfo ||
                                       block.GetType().GetTypeInfo().IsSubclassOf(typeInfo.AsType());
         }

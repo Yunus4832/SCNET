@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class DiamondChunkBlock : Block
 {
-    public const int Index = 111;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

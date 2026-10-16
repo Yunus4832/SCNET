@@ -11,8 +11,6 @@ public class BirchLeavesBlock() : DeciduousLeavesBlock(
     1.25f
 )
 {
-    public const int Index = 13;
-
     public override int GetFaceTextureSlot(int face, int value)
     {
         return GetSeason(Terrain.ExtractData(value)) == Season.Winter ? 106 : base.GetFaceTextureSlot(face, value);

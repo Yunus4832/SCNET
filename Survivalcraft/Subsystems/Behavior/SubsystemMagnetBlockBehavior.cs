@@ -2,6 +2,7 @@ using Engine.Serialization;
 
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemMagnetBlockBehavior : SubsystemBlockBehavior
@@ -12,7 +13,7 @@ public class SubsystemMagnetBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemPlayers _subsystemPlayers = null!;
 
-    public override int[] HandledBlocks => [167];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:magnet")];
 
     public int MagnetsCount => _magnets.Count;
 
@@ -84,7 +85,7 @@ public class SubsystemMagnetBlockBehavior : SubsystemBlockBehavior
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-        if (BlocksManager.Blocks[cellContents].Transparent)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent)
         {
             SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
         }

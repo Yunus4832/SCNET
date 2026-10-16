@@ -7,5 +7,4 @@ public class DoughBlock() : FoodBlock(
     247
 )
 {
-    public const int Index = 176;
 }

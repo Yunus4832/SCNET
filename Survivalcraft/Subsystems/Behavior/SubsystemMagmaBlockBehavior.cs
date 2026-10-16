@@ -1,9 +1,10 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemMagmaBlockBehavior() : SubsystemFluidBlockBehavior(
-    BlocksManager.FluidBlocks[92]!,
+    CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[92]!,
     false), IUpdateable
 {
     private readonly Random _random = new();
@@ -14,7 +15,7 @@ public class SubsystemMagmaBlockBehavior() : SubsystemFluidBlockBehavior(
 
     private SubsystemParticles _subsystemParticles = null!;
 
-    public override int[] HandledBlocks => [92];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:magma")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -66,7 +67,7 @@ public class SubsystemMagmaBlockBehavior() : SubsystemFluidBlockBehavior(
 
     public override bool OnFluidInteract(int interactValue, int x, int y, int z, int fluidValue)
     {
-        if (BlocksManager.Blocks[Terrain.ExtractContents(interactValue)] is WaterBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(interactValue)] is WaterBlock)
         {
             SubsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, _random.Float(-0.1f, 0.1f), new Vector3(x, y, z), 5f,
                 true);

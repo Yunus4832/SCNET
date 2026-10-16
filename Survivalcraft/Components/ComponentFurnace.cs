@@ -72,7 +72,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
                 if (slot.Count > 0)
                 {
                     var num = Terrain.ExtractContents(slot.Value);
-                    heatLevel = BlocksManager.Blocks[num].FuelHeatLevel;
+                    heatLevel = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].FuelHeatLevel;
                 }
             }
 
@@ -96,7 +96,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             if (slot2.Count > 0)
             {
                 var num2 = Terrain.ExtractContents(slot2.Value);
-                var block = BlocksManager.Blocks[num2];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
                 if (block.GetExplosionPressure(slot2.Value) > 0f)
                 {
                     slot2.Count = 0;
@@ -205,7 +205,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
 
     public override int GetSlotCapacity(int slotIndex, int value)
     {
-        if (slotIndex != FuelSlotIndex || BlocksManager.Blocks[Terrain.ExtractContents(value)].FuelHeatLevel > 0f)
+        if (slotIndex != FuelSlotIndex || CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].FuelHeatLevel > 0f)
         {
             return base.GetSlotCapacity(slotIndex, value);
         }
@@ -271,7 +271,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             var num2 = Terrain.ExtractData(slotValue);
             if (GetSlotCount(i) > 0)
             {
-                var block = BlocksManager.Blocks[num];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
                 _matchedIngredients[i] = block.CraftingId + ":" + num2.ToString(CultureInfo.InvariantCulture);
             }
             else
@@ -281,7 +281,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
         }
 
         var componentPlayer = FindInteractingPlayer();
-        var craftingRecipe = CraftingRecipesManager.FindMatchingRecipe(
+        var craftingRecipe = CurrentModRuntime.Value!.RequireWorldCatalog().Recipes.FindMatchingRecipe(
             _subsystemTerrain,
             _matchedIngredients,
             heatLevel,
@@ -300,7 +300,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
                 var num3 = Terrain.ExtractContents(craftingRecipe.ResultValue);
                 if (slot.Count != 0 && (craftingRecipe.ResultValue != slot.Value ||
                                         craftingRecipe.ResultCount + slot.Count >
-                                        BlocksManager.Blocks[num3].MaxStacking))
+                                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3].MaxStacking))
                 {
                     craftingRecipe = null;
                 }
@@ -311,7 +311,7 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
                 if (slots[RemainsSlotIndex].Count == 0 ||
                     slots[RemainsSlotIndex].Value == craftingRecipe.RemainsValue)
                 {
-                    if (BlocksManager.Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking -
+                    if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(craftingRecipe.RemainsValue)].MaxStacking -
                         slots[RemainsSlotIndex].Count < craftingRecipe.RemainsCount)
                     {
                         craftingRecipe = null;

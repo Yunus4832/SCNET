@@ -32,7 +32,7 @@ public sealed class SignBlockPackageHandler : PackageHandlerBase<SignBlockPackag
 
         var value = project.FindSubsystem<SubsystemTerrain>(true)!
             .Terrain.GetCellValue(package.Point.X, package.Point.Y, package.Point.Z);
-        if (isServer && BlocksManager.Blocks[Terrain.ExtractContents(value)] is not SignBlock)
+        if (isServer && CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)] is not SignBlock)
         {
             return;
         }

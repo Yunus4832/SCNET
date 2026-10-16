@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class ButtonBlock : MountedElectricElementBlock
 {
-    public const int Index = 142;
-
     public BlockMesh[] BlockMeshesByFace = new BlockMesh[6];
 
     public BoundingBox[][] CollisionBoxesByFace = new BoundingBox[6][];

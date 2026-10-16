@@ -5,7 +5,7 @@ namespace Game.Subsystems;
 
 public class SubsystemBottomSuckerBlockBehavior : SubsystemInWaterBlockBehavior
 {
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
@@ -35,7 +35,7 @@ public class SubsystemBottomSuckerBlockBehavior : SubsystemInWaterBlockBehavior
 
     public bool IsSupport(int value, int face)
     {
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
         if (block.Collidable)
         {
             return !block.IsFaceTransparent(SubsystemTerrain, CellFace.OppositeFace(face), value);

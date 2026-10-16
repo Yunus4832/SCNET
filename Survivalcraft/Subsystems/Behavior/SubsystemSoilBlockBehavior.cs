@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdateable
@@ -12,7 +13,7 @@ public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdat
 
     private readonly Dictionary<Point3, bool> _toHydrate = new();
 
-    public override int[] HandledBlocks => [168];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:soil")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -106,7 +107,7 @@ public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdat
     private bool DegradesSoilIfOnTopOfIt(int value)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         return !block.IsFaceTransparent(SubsystemTerrain, 5, value) && block.Collidable;
     }
 

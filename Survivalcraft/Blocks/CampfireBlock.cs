@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class CampfireBlock : Block
 {
-    public const int Index = 209;
-
     public readonly BoundingBox[][] CollisionBoxesByData = new BoundingBox[16][];
 
     public readonly BlockMesh[] MeshesByData = new BlockMesh[16];
@@ -124,7 +122,7 @@ public class CampfireBlock : Block
     {
         BlockPlacementData result = default;
         result.CellFace = raycastResult.CellFace;
-        result.Value = Terrain.MakeBlockValue(209, 0, 3);
+        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, 3);
         return result;
     }
 

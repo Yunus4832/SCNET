@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemFallenLeavesBlockBehavior : SubsystemPollableBlockBehavior
@@ -10,7 +11,7 @@ public class SubsystemFallenLeavesBlockBehavior : SubsystemPollableBlockBehavior
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
@@ -43,13 +44,13 @@ public class SubsystemFallenLeavesBlockBehavior : SubsystemPollableBlockBehavior
     public static bool CanSupportFallenLeaves(int value)
     {
         var num = Terrain.ExtractContents(value);
-        return !BlocksManager.Blocks[num].Transparent;
+        return !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].Transparent;
     }
 
     public static bool StopsFallenLeaves(int value)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (block is not AirBlock)
         {
             return block is not LeavesBlock;

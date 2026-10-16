@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public abstract class DoorBlock(string modelName, float pivotDistance) : Block, IElectricElementBlock
@@ -239,7 +240,7 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
         }
 
         var cellValue = subsystemTerrain.Terrain.GetCellValue(leftNeighborX, y, leftNeighborY);
-        var rightHanded = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)].IsNonAttachable(cellValue);
+        var rightHanded = Catalog.Blocks[Terrain.ExtractContents(cellValue)].IsNonAttachable(cellValue);
 
         var data = SetRightHanded(SetOpen(SetRotation(0, rotation), false), rightHanded);
         var result = new BlockPlacementData
@@ -308,12 +309,12 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
 
     public static bool IsTopPart(Terrain terrain, int x, int y, int z)
     {
-        return BlocksManager.Blocks[terrain.GetCellContents(x, y - 1, z)] is DoorBlock;
+        return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[terrain.GetCellContents(x, y - 1, z)] is DoorBlock;
     }
 
     public static bool IsBottomPart(Terrain terrain, int x, int y, int z)
     {
-        return BlocksManager.Blocks[terrain.GetCellContents(x, y + 1, z)] is DoorBlock;
+        return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[terrain.GetCellContents(x, y + 1, z)] is DoorBlock;
     }
 
     public static int GetHingeFace(int data)

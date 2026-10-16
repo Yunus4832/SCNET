@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
 {
-    public const int Index = 139;
-
     public const string TypeName = nameof(LightbulbBlock);
 
     public readonly BlockMesh[] BulbBlockMeshes = new BlockMesh[6];
@@ -80,11 +78,11 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(139);
+        yield return Terrain.MakeBlockValue(BlockIndex);
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(139, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -125,7 +123,7 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
     )
     {
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(139, 0,
+        result.Value = Terrain.MakeBlockValue(BlockIndex, 0,
             SetMountingFace(Terrain.ExtractData(value), raycastResult.CellFace.Face));
         result.CellFace = raycastResult.CellFace;
         return result;
@@ -143,7 +141,7 @@ public class LightbulbBlock : MountedElectricElementBlock, IPaintableBlock
         var color = GetColor(Terrain.ExtractData(oldValue));
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(139, 0, SetColor(0, color)),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
             Count = 1
         });
         showDebris = true;

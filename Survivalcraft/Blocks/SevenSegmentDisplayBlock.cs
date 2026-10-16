@@ -6,8 +6,6 @@ namespace Game.Blocks;
 
 public class SevenSegmentDisplayBlock : MountedElectricElementBlock
 {
-    public const int Index = 185;
-
     public BlockMesh[] BlockMeshesByFace = new BlockMesh[4];
 
     public BoundingBox[][] CollisionBoxesByFace = new BoundingBox[4][];
@@ -47,7 +45,7 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
             var craftingRecipe = new CraftingRecipe
             {
                 ResultCount = 4,
-                ResultValue = Terrain.MakeBlockValue(185, 0, SetColor(0, color)),
+                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
                 RemainsCount = 1,
                 RemainsValue = Terrain.MakeBlockValue(90),
                 RequiredHeatLevel = 0f,
@@ -92,7 +90,7 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
         var i = 0;
         while (i < 8)
         {
-            yield return Terrain.MakeBlockValue(185, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -132,7 +130,7 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
         var color = GetColor(Terrain.ExtractData(oldValue));
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(185, 0, SetColor(0, color)),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
             Count = 1
         });
         showDebris = true;

@@ -7,7 +7,7 @@ namespace Game.Subsystems;
 
 public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<MemoryBankData>(186)
 {
-    public override int[] HandledBlocks => [186];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:memory_bank")];
 
     protected override EditableBlockPackage CreateBlockStatePackage(Point3 point, MemoryBankData data)
     {
@@ -45,7 +45,7 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
                 return;
             }
 
-            var face = ((MemoryBankBlock)BlocksManager.Blocks[186]).GetFace(value);
+            var face = ((MemoryBankBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[186]).GetFace(value);
             var cell = new CellFace(x, y, z, face);
             var p = new EditableBlockPackage(cell, false, 0, 0, memoryBankData);
             EditableBlockPackageHandler.Submit(p);

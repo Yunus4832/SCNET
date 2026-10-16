@@ -751,7 +751,7 @@ public class BlockGeometryGenerator
                 var point = CellFace.FaceToPoint3(j);
                 var cellValueFastChunkExists =
                     Terrain.GetCellValueFastChunkExists(x + point.X, y + point.Y, z + point.Z);
-                _visibleSides[j] = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
+                _visibleSides[j] = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
                     .IsFaceTransparent(_subsystemTerrain, CellFace.OppositeFace(j), cellValueFastChunkExists);
             }
 
@@ -833,7 +833,7 @@ public class BlockGeometryGenerator
                 var point = CellFace.FaceToPoint3(j);
                 var cellValueFastChunkExists =
                     Terrain.GetCellValueFastChunkExists(x + point.X, y + point.Y, z + point.Z);
-                _visibleSides[j] = BlocksManager.Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
+                _visibleSides[j] = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValueFastChunkExists)]
                     .IsFaceTransparent(_subsystemTerrain, CellFace.OppositeFace(j), cellValueFastChunkExists);
             }
 
@@ -1062,7 +1062,7 @@ public class BlockGeometryGenerator
         }
 
         light = Math.Max(light, Terrain.ExtractLight(value));
-        shadow += BlocksManager.Blocks[num].GetShadowStrength(value);
+        shadow += CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].GetShadowStrength(value);
     }
 
     private static int CombineLightAndShadow(int light, int shadow)

@@ -718,7 +718,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                         var num3 = Terrain.ExtractContents(cellValueFast);
                         if (num3 != 0)
                         {
-                            BlocksManager.Blocks[num3].GenerateTerrainVertices(_blockGeometryGenerator,
+                            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3].GenerateTerrainVertices(_blockGeometryGenerator,
                                 movingBlockSet.Geometry, cellValueFast, n, num, num2);
                         }
                     }

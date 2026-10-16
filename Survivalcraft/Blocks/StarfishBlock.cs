@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class StarfishBlock : BottomSuckerBlock
 {
-    public new const int Index = 229;
-
     public static Color[] Colors =
     [
         new(100, 40, 20),

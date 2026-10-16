@@ -7,7 +7,7 @@ namespace Game.Subsystems;
 
 public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
 {
-    public override int[] HandledBlocks => [138];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:battery")];
 
     public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
     {

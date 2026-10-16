@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class LeatherBlock : Block
 {
-    public const int Index = 159;
-
     public readonly BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

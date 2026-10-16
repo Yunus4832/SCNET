@@ -3,6 +3,7 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
@@ -143,7 +144,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 }
 
                 var num6 = Terrain.ExtractContents(_value);
-                var block = BlocksManager.Blocks[num6];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num6];
                 var vector = block.GetFirstPersonRotation(_value) * ((float)Math.PI / 180f) + _itemRotation;
                 var position3 = block.GetFirstPersonOffset(_value) + _itemOffset;
                 position3 += _itemOffset;
@@ -238,7 +239,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
         var activeBlockValue = _componentMiner.ActiveBlockValue;
         if (_swapAnimationTime == 0f && activeBlockValue != _value)
         {
-            if (BlocksManager.Blocks[Terrain.ExtractContents(activeBlockValue)]
+            if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(activeBlockValue)]
                 .IsSwapAnimationNeeded(_value, activeBlockValue))
             {
                 _swapAnimationTime = 0.0001f;

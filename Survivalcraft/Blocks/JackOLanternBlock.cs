@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class JackOLanternBlock : Block
 {
-    public const int Index = 132;
-
     public BlockMesh[] BlockMeshesByData = new BlockMesh[4];
 
     public BoundingBox[] CollisionBoxes = new BoundingBox[1];
@@ -74,7 +72,7 @@ public class JackOLanternBlock : Block
         }
 
         BlockPlacementData result = default;
-        result.Value = Terrain.ReplaceData(Terrain.ReplaceContents(0, 132), data);
+        result.Value = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), data);
         result.CellFace = raycastResult.CellFace;
         return result;
     }

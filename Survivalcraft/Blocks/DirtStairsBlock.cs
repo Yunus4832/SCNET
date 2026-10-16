@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class DirtStairsBlock() : StairsBlock(2)
 {
-    public const int Index = 260;
-
     public override int Paint(SubsystemTerrain? terrain, int value, int? color)
     {
         return value;

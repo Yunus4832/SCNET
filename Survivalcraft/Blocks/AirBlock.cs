@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class AirBlock : Block
 {
-    public const int Index = 0;
-
     public override void DrawBlock(
         PrimitivesRenderer3D primitivesRenderer,
         int value,

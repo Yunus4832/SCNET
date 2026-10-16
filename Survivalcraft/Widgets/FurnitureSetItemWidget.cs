@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using Engine.Graphics;
 
+using Game.Modding.Blocks;
 using Game.Network.Packages;
 using Game.Network.Packages.Handlers;
 
@@ -95,7 +96,7 @@ public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget
         for (var i = 0; i < _furnitureInventoryPanel.ComponentFurnitureInventory.SlotsCount; i++)
         {
             var slotValue = _furnitureInventoryPanel.ComponentFurnitureInventory.GetSlotValue(i);
-            if (Terrain.ExtractContents(slotValue) != FurnitureBlock.Index)
+            if (Terrain.ExtractContents(slotValue) != BuiltInBlockRegistry.GetIndex<FurnitureBlock>())
             {
                 continue;
             }

@@ -5,6 +5,7 @@ using Engine.Graphics;
 using Engine.Media;
 using Engine.Network;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -27,6 +28,8 @@ public class GameLoadingScreen : Screen
     private bool _isWorldSnapshotApplied;
 
     private byte[] _projectXmlData = [];
+
+    private BlockIndexMapping _blockMapping = BlockIndexMapping.Empty;
 
     private ServerConnectionPreparation? _serverPreparation;
 
@@ -161,7 +164,7 @@ public class GameLoadingScreen : Screen
 
                 GameManager.LoadProject(_projectXmlData,
                     ScreensManager.FindScreen<GameScreen>("Game", true)!.Children
-                        .Find<ContainerWidget>("GamesWidget")!);
+                        .Find<ContainerWidget>("GamesWidget")!, _blockMapping);
                 _projectXmlData = [];
                 _isServerReply = false;
                 _stateMachine.TransitionTo("WaitWorldSnapshot");
@@ -236,7 +239,7 @@ public class GameLoadingScreen : Screen
         }
     }
 
-    public void ReplyCall(bool hasTexture, byte[] textureData, byte[] projectData)
+    public void ReplyCall(bool hasTexture, byte[] textureData, byte[] projectData, BlockIndexMapping blockMapping)
     {
         CommonLib.Net.OnReceive -= Handle;
         _isServerReply = true;
@@ -251,6 +254,7 @@ public class GameLoadingScreen : Screen
         }
 
         _projectXmlData = projectData;
+        _blockMapping = blockMapping;
     }
 
     public void WorldSnapshotApplied()
@@ -285,7 +289,8 @@ public class GameLoadingScreen : Screen
     {
         if (Input.Back || Input.Cancel)
         {
-            ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+            AbortLoading();
+            return;
         }
 
         try
@@ -296,7 +301,7 @@ public class GameLoadingScreen : Screen
         catch (Exception e)
         {
             Log.Error(e);
-            ScreensManager.SwitchScreen(ScreensManager.PreviousScreen);
+            AbortLoading();
             DialogsManager.ShowDialog(
                 null,
                 new MessageDialog(
@@ -306,6 +311,14 @@ public class GameLoadingScreen : Screen
                 )
             );
         }
+    }
+
+    private static void AbortLoading()
+    {
+        var previous = ScreensManager.PreviousScreen;
+        CommonLib.Net.StopImmediate();
+        GameManager.DisposeProject();
+        ScreensManager.SwitchScreen(previous);
     }
 
     public override void Leave()

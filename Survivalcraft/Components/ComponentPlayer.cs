@@ -216,7 +216,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                                              ? new Vector2(0f, -1f)
                                              : new Vector2(0f, 1f));
         var num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
 
         if (_subsystemUpdate.IsLastUpdateInFrame && Time.PeriodicEvent(0.1f, 0.0))
         {
@@ -570,7 +570,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         var value3 = terrainRaycastResult3.Value.Value;
         value3 = Terrain.ReplaceLight(value3, 0);
         var num4 = Terrain.ExtractContents(value3);
-        var block2 = BlocksManager.Blocks[num4];
+        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num4];
         var num5 = 0;
         var creativeValues = block2.GetCreativeValues();
         if (block2.GetCreativeValues().Contains(value3))

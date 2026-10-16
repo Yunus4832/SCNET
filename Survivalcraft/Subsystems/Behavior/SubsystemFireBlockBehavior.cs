@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -42,7 +43,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private SubsystemGameWidgets _subsystemViews = null!;
 
-    public override int[] HandledBlocks => [104];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:fire")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -81,7 +82,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         continue;
                     }
 
-                    if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) != FireBlock.Index)
+                    if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) != BuiltInBlockRegistry.GetIndex<FireBlock>())
                     {
                         RemoveFireNet(x, y, z);
                         _copyIndex++;
@@ -93,7 +94,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     if (CommonLib.WorkType != WorkType.Client && HasLoadedFuelNeighbors(x, z))
                     {
                         OnNeighborBlockChanged(x, y, z, x, y, z);
-                        if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) != FireBlock.Index)
+                        if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) != BuiltInBlockRegistry.GetIndex<FireBlock>())
                         {
                             _copyIndex++;
                             continue;
@@ -288,7 +289,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        if (BlocksManager.Blocks[num].FireDuration == 0f)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].FireDuration == 0f)
         {
             return false;
         }
@@ -318,25 +319,25 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         var num = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
         if ((num & 1) != 0 &&
-            BlocksManager.Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z + 1)].FireDuration == 0f)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z + 1)].FireDuration == 0f)
         {
             num &= -2;
         }
 
         if ((num & 2) != 0 &&
-            BlocksManager.Blocks[SubsystemTerrain.Terrain.GetCellContents(x + 1, y, z)].FireDuration == 0f)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x + 1, y, z)].FireDuration == 0f)
         {
             num &= -3;
         }
 
         if ((num & 4) != 0 &&
-            BlocksManager.Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z - 1)].FireDuration == 0f)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z - 1)].FireDuration == 0f)
         {
             num &= -5;
         }
 
         if ((num & 8) != 0 &&
-            BlocksManager.Blocks[SubsystemTerrain.Terrain.GetCellContents(x - 1, y, z)].FireDuration == 0f)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x - 1, y, z)].FireDuration == 0f)
         {
             num &= -9;
         }
@@ -370,7 +371,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         var contents = 104;
-        if (num == 0 && BlocksManager.Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z)].FireDuration ==
+        if (num == 0 && CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z)].FireDuration ==
             0f)
         {
             contents = 0;
@@ -545,7 +546,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var y = fireData.Point.Y + point.Y;
         var z = fireData.Point.Z + point.Z;
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y, z);
-        var block = BlocksManager.Blocks[cellContents];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents];
         switch (face)
         {
             case 4:

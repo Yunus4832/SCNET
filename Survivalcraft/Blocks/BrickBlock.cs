@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class BrickBlock : Block
 {
-    public const int Index = 74;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override bool FurnitureBuilt { get; set; } = true;

@@ -13,7 +13,7 @@ public class SubsystemThrowableBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemProjectiles _subsystemProjectiles = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override bool OnAim(Ray3 aim, ComponentMiner componentMiner, AimState state)
     {
@@ -22,7 +22,7 @@ public class SubsystemThrowableBlockBehavior : SubsystemBlockBehavior
             case AimState.InProgress:
                 {
                     componentMiner.ComponentCreature.ComponentCreatureModel.AimHandAngleOrder = 3.2f;
-                    var block2 = BlocksManager.Blocks[Terrain.ExtractContents(componentMiner.ActiveBlockValue)];
+                    var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(componentMiner.ActiveBlockValue)];
                     var componentFirstPersonModel = componentMiner.Entity.FindComponent<ComponentFirstPersonModel>();
                     if (componentFirstPersonModel != null)
                     {
@@ -53,7 +53,7 @@ public class SubsystemThrowableBlockBehavior : SubsystemBlockBehavior
                     var slotValue = componentMiner.Inventory.GetSlotValue(activeSlotIndex);
                     var slotCount = componentMiner.Inventory.GetSlotCount(activeSlotIndex);
                     var num = Terrain.ExtractContents(slotValue);
-                    var block = BlocksManager.Blocks[num];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
                     if (slotCount <= 0)
                     {
                         return true;

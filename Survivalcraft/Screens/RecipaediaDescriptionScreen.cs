@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Xml.Linq;
 
+
 namespace Game.Screens;
 
 public class RecipaediaDescriptionScreen : Screen
@@ -34,6 +35,7 @@ public class RecipaediaDescriptionScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/RecipaediaDescriptionScreen");
         LoadContents(this, node);
         _blockIconWidget = Children.Find<BlockIconWidget>("Icon")!;
+        _blockIconWidget.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
         _nameWidget = Children.Find<LabelWidget>("Name")!;
         _leftButtonWidget = Children.Find<ButtonWidget>("Left")!;
         _rightButtonWidget = Children.Find<ButtonWidget>("Right")!;
@@ -78,7 +80,7 @@ public class RecipaediaDescriptionScreen : Screen
     {
         var dictionary = new Dictionary<string, string>();
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.PreviewCatalog.Blocks[num];
         if (block.EmittedLightAmount > 0)
         {
             dictionary.Add(LanguageManager.Get(_typeName, 1), block.EmittedLightAmount.ToString());
@@ -183,7 +185,7 @@ public class RecipaediaDescriptionScreen : Screen
 
         if (block is ClothingBlock)
         {
-            var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(value)]
+            var clothingData = CurrentModRuntime.Value!.PreviewCatalog.Blocks[Terrain.ExtractContents(value)]
                 .GetClothingData(Terrain.ExtractData(value));
             dictionary.Add(LanguageManager.Get(_typeName, 19),
                 clothingData.CanBeDyed ? LanguageManager.Yes : LanguageManager.No);
@@ -206,7 +208,7 @@ public class RecipaediaDescriptionScreen : Screen
 
         var value = _valuesList[_index];
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.PreviewCatalog.Blocks[num];
         _blockIconWidget.Value = value;
         _nameWidget.Text = block.GetDisplayName(null, value);
         _descriptionWidget.Text = block.GetDescription(value);

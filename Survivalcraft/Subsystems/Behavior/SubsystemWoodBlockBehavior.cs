@@ -16,7 +16,7 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -42,7 +42,7 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
     public override void OnBlockRemoved(int value, int newValue, int x, int y, int z)
     {
         if (_subsystemGameInfo.WorldSettings.EnvironmentBehaviorMode != 0 || _leavesToCheck.Count >= 5000 ||
-            BlocksManager.Blocks[Terrain.ExtractContents(value)] is not WoodBlock)
+            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)] is not WoodBlock)
         {
             return;
         }
@@ -67,7 +67,7 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 for (var k = num2; k <= num5; k++)
                 {
                     var num8 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num7 + k));
-                    if (num8 != 0 && BlocksManager.Blocks[num8] is LeavesBlock)
+                    if (num8 != 0 && CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num8] is LeavesBlock)
                     {
                         _leavesToCheck.Add(new Point3(i, k, j));
                     }
@@ -120,7 +120,7 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
     private void DecayLeavesIfNeeded(Point3 p)
     {
         _leavesToCheck.Remove(p);
-        if (!(BlocksManager.Blocks[SubsystemTerrain.Terrain.GetCellContents(p.X, p.Y, p.Z)] is LeavesBlock))
+        if (!(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[SubsystemTerrain.Terrain.GetCellContents(p.X, p.Y, p.Z)] is LeavesBlock))
         {
             return;
         }
@@ -147,7 +147,7 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 while (num8 <= num5)
                 {
                     var num9 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num7 + num8));
-                    if (num9 == 0 || BlocksManager.Blocks[num9] is not WoodBlock)
+                    if (num9 == 0 || CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num9] is not WoodBlock)
                     {
                         num8++;
                         continue;

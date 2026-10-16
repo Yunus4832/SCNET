@@ -31,7 +31,7 @@ public class TerritoryRegistrationTest
         runtime.InitializeLanguage(culture);
 
         var block = new TerritoryBlock { DisplayName = "Territory Stone" };
-        var value = Terrain.MakeBlockValue(TerritoryBlock.Index);
+        var value = Terrain.MakeBlockValue(300);
         Assert.Equal(name, block.GetDisplayName(null, value));
         Assert.False(string.IsNullOrWhiteSpace(block.GetDescription(value)));
         Assert.Equal(name, LanguageManager.GetHelpTopic("48", "Title"));
@@ -52,12 +52,12 @@ public class TerritoryRegistrationTest
         {
             var block = Assert.Single(host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName).Entries);
             Assert.Equal(ModEntry.ModId, block.Key.Namespace.Value);
-            Assert.Equal(TerritoryStoneMod.TerritoryBlock.Index, block.Value.LegacyIndex);
+            Assert.Equal(TerritoryBlock.Id, block.Key);
             var territoryBlock = Assert.IsType<TerritoryStoneMod.TerritoryBlock>(block.Value.Factory());
-            Assert.True(territoryBlock.IsEditable(TerritoryStoneMod.TerritoryBlock.Index));
+            Assert.True(territoryBlock.IsEditable(0));
 
             var data = Assert.Single(host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName).Entries);
-            Assert.Contains("TerritoryBlock;Territory Stone;", data.Value.Read());
+            Assert.Contains("scnet.territory:territory_stone;Territory Stone;", data.Value.Read());
 
             var contribution = Assert.Single(host.Extensions.GetRegistry<XmlDataRegistration>(XmlDataExtensions.DatabaseRegistryName).Entries);
             var document = XElement.Load(Path.Combine(AppContext.BaseDirectory, "Fixtures", "Database.xml"));

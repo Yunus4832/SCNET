@@ -2,7 +2,7 @@ namespace Game.Subsystems;
 
 public class SubsystemInWaterBlockBehavior : SubsystemWaterBlockBehavior
 {
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override void OnItemHarvested(int x, int y, int z, int blockValue, ref BlockDropValue dropValue,
         ref int newBlockValue)

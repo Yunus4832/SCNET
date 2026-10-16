@@ -7,5 +7,4 @@ public class CoalChunkBlock() : ChunkBlock(
     false
 )
 {
-    public const int Index = 22;
 }

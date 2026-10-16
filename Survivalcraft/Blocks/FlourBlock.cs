@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class FlourBlock : FlatBlock
 {
-    public const int Index = 175;
-
     public override void DrawBlock(
         PrimitivesRenderer3D primitivesRenderer,
         int value,
@@ -15,7 +14,7 @@ public class FlourBlock : FlatBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

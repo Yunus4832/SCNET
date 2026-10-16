@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class MagnetBlock : Block
 {
-    public const int Index = 167;
-
     public readonly BoundingBox[][] CollisionBoxesByData = new BoundingBox[2][];
 
     public readonly BlockMesh[] MeshesByData = new BlockMesh[2];

@@ -16,7 +16,7 @@ public class SubsystemCactusBlockBehavior : SubsystemPollableBlockBehavior, IUpd
 
     private readonly Dictionary<Point3, int> _toUpdate = new();
 
-    public override int[] HandledBlocks => [127];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:cactus")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

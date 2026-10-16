@@ -281,6 +281,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         _componentPlayer = inventory is Component component
             ? component.Entity.FindComponent<ComponentPlayer>()
             : null;
+        _blockIconWidget.Catalog = CurrentModRuntime.Value!.RequireWorldCatalog();
         _blockIconWidget.DrawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain;
         UpdateEnvironmentData(_blockIconWidget.DrawBlockEnvironmentData);
     }
@@ -296,7 +297,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var viewPlayer = GetViewPlayer();
         var slotValue = _inventory.GetSlotValue(_slotIndex);
         var num = Terrain.ExtractContents(slotValue);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         UpdateEnvironmentData(_blockIconWidget.DrawBlockEnvironmentData);
         if (_componentPlayer != null)
         {
@@ -410,6 +411,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var subsystemTerrain = _inventory.Project.FindSubsystem<SubsystemTerrain>();
         var containerWidget =
             (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/InventoryDragWidget"), null);
+        containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.Catalog =
+            CurrentModRuntime.Value!.RequireWorldCatalog();
         containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.Value =
             Terrain.ReplaceLight(slotValue, 15);
         containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.DrawBlockEnvironmentData
@@ -450,7 +453,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             {
                 var slotValue = _inventory.GetSlotValue(_slotIndex);
                 var num2 = Terrain.ExtractContents(slotValue);
-                var block = BlocksManager.Blocks[num2];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
                 var flag2 = block.GetRotPeriod(slotValue) > 0 && block.GetDamage(slotValue) > 0;
                 _blockIconWidget.Value = Terrain.ReplaceLight(slotValue, 15);
                 _blockIconWidget.IsVisible = !HideBlockIcon;
@@ -617,7 +620,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         }
 
 
-        if (slotCount2 != 0 && !BlocksManager.Blocks[Terrain.ExtractContents(slotValue)]
+        if (slotCount2 != 0 && !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(slotValue)]
                 .CanAutoStack(slotValue, slotValue2))
         {
             return false;
@@ -721,7 +724,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             {
                 case false when
                     (targetCount == 0 ||
-                     BlocksManager.Blocks[Terrain.ExtractContents(sourceValue)]
+                     CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(sourceValue)]
                          .CanAutoStack(sourceValue, targetValue)) &&
                     targetCount < slotCapacity:
                     {

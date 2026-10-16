@@ -5,6 +5,7 @@ using Engine.Serialization;
 
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
@@ -19,7 +20,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
-    public override int[] HandledBlocks => [119];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:sapling")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -48,7 +49,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-        if (BlocksManager.Blocks[cellContents].Transparent)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent)
         {
             SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
         }
@@ -151,7 +152,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         for (var j = z - 1; j <= z + 1; j++)
                         {
                             var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(i, y - 1, j);
-                            if (BlocksManager.Blocks[cellContents2] is not WaterBlock)
+                            if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents2] is not WaterBlock)
                             {
                                 continue;
                             }
@@ -225,7 +226,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 }
 
                 var cellContents = SubsystemTerrain.Terrain.GetCellContents(cell.X + x, cell.Y + y, cell.Z + z);
-                if (cellContents == 0 || BlocksManager.Blocks[cellContents] is LeavesBlock)
+                if (cellContents == 0 || CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents] is LeavesBlock)
                 {
                     continue;
                 }

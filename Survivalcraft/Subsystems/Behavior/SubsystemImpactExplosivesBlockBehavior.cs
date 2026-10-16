@@ -1,12 +1,13 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemImpactExplosivesBlockBehavior : SubsystemBlockBehavior
 {
     private SubsystemExplosions _subsystemExplosions = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)
     {

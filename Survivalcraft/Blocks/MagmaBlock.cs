@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class MagmaBlock() : FluidBlock(MagmaMaxLevel)
 {
-    public const int Index = 92;
-
     public const int MagmaMaxLevel = 4;
 
     public override bool FurnitureBuilt { get; set; } = true;

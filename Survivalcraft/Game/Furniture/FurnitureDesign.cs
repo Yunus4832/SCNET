@@ -3,6 +3,7 @@ using System.Text;
 
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game;
 
 public class FurnitureDesign
@@ -334,7 +335,7 @@ public class FurnitureDesign
         {
             var num = _values[i];
             var num2 = Terrain.ExtractContents(num);
-            var paintableBlock = BlocksManager.Blocks[num2] as IPaintableBlock;
+            var paintableBlock = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2] as IPaintableBlock;
             array[i] = paintableBlock?.Paint(null, num, color) ?? num;
         }
 
@@ -836,7 +837,7 @@ public class FurnitureDesign
                         var z4 = j * point.Z + num12 * point3.Z + num9 * point2.Z + point4.Z;
                         var blockMesh3 = blockMesh;
                         var num13 = Terrain.ExtractContents(value2);
-                        var block = BlocksManager.Blocks[num13];
+                        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num13];
                         var num14 = block.GetFaceTextureSlot(i, value2);
                         var isEmissive = false;
                         var color = Color.White;

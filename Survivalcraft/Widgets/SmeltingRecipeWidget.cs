@@ -1,9 +1,17 @@
 using System.Xml.Linq;
 
+using Game.Modding.Blocks;
+
 namespace Game.Widgets;
 
 public class SmeltingRecipeWidget : CanvasWidget
 {
+    public BlockContentCatalog Catalog
+    {
+        get => field ?? throw new InvalidOperationException("Widget content catalog was not assigned.");
+        set;
+    } = null!;
+
     private readonly LabelWidget _descriptionWidget;
 
     private bool _dirty = true;
@@ -84,7 +92,7 @@ public class SmeltingRecipeWidget : CanvasWidget
         _dirty = false;
         if (_recipe != null)
         {
-            var block = BlocksManager.Blocks[Terrain.ExtractContents(_recipe.ResultValue)];
+            var block = Catalog.Blocks[Terrain.ExtractContents(_recipe.ResultValue)];
             _nameWidget.Text = block.GetDisplayName(null, _recipe.ResultValue) +
                                (!string.IsNullOrEmpty(NameSuffix) ? NameSuffix : string.Empty);
             _descriptionWidget.Text = _recipe.Description;
@@ -94,9 +102,11 @@ public class SmeltingRecipeWidget : CanvasWidget
             {
                 var child = (CraftingRecipeSlotWidget)widget;
                 var widgetCell = _gridWidget.GetWidgetCell(child);
+                child.Catalog = Catalog;
                 child.SetIngredient(_recipe.Ingredients[widgetCell.X + widgetCell.Y * 3]);
             }
 
+            _resultWidget.Catalog = Catalog;
             _resultWidget.SetResult(_recipe.ResultValue, _recipe.ResultCount);
             _fireWidget.ParticlesPerSecond = 40f;
         }
@@ -110,6 +120,7 @@ public class SmeltingRecipeWidget : CanvasWidget
                 child2.SetIngredient(string.Empty);
             }
 
+            _resultWidget.Catalog = Catalog;
             _resultWidget.SetResult(0, 0);
             _fireWidget.ParticlesPerSecond = 0f;
         }

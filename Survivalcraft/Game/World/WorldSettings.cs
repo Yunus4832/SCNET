@@ -2,6 +2,8 @@ using System.Xml;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
+
 namespace Game;
 
 public class WorldSettings
@@ -203,8 +205,8 @@ public class WorldSettings
                 continue;
             }
 
-            CraftingRecipesManager.DecodeIngredient(item, out var craftId, out var data);
-            var blocks = BlocksManager.FindBlocksByCraftingId(craftId);
+            CraftingRecipeCatalog.DecodeIngredient(item, out var craftId, out var data);
+            var blocks = CurrentModRuntime.Value!.RequireWorldCatalog().FindBlocksByCraftingId(craftId);
             foreach (var b in blocks)
             {
                 var vv = Terrain.MakeBlockValue(b.BlockIndex, 0, data ?? 0);

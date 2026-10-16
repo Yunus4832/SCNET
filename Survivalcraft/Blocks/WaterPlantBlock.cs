@@ -14,7 +14,7 @@ public abstract class WaterPlantBlock : WaterBlock
         var num = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
         BlockPlacementData result;
-        if (BlocksManager.Blocks[num] is WaterBlock)
+        if (Catalog.Blocks[num] is WaterBlock)
         {
             result = default;
             result.CellFace = raycastResult.CellFace;

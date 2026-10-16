@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class HygrometerBlock : Block, IElectricElementBlock
 {
-    public const int Index = 121;
-
     public BlockMesh CaseMesh = new();
 
     public BoundingBox[][] CollisionBoxesByData = new BoundingBox[4][];
@@ -95,22 +93,22 @@ public class HygrometerBlock : Block, IElectricElementBlock
         var value2 = 0;
         if (raycastResult.CellFace.Face == 0)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 121), 0);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 0);
         }
 
         if (raycastResult.CellFace.Face == 1)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 121), 1);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 1);
         }
 
         if (raycastResult.CellFace.Face == 2)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 121), 2);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 2);
         }
 
         if (raycastResult.CellFace.Face == 3)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 121), 3);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 3);
         }
 
         BlockPlacementData result = default;

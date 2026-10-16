@@ -142,10 +142,10 @@ public class ComponentMiner : Component, IUpdateable
         var cellFace = raycastResult.CellFace;
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
         var num = Terrain.ExtractContents(cellValue);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         var activeBlockValue = ActiveBlockValue;
         var num2 = Terrain.ExtractContents(activeBlockValue);
-        var block2 = BlocksManager.Blocks[num2];
+        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
         if (!DigCellFace.HasValue || DigCellFace.Value.X != cellFace.X || DigCellFace.Value.Y != cellFace.Y ||
             DigCellFace.Value.Z != cellFace.Z)
         {
@@ -200,7 +200,7 @@ public class ComponentMiner : Component, IUpdateable
             }
             else if (CalculateDigTime(cellValue, Terrain.ExtractContents(num4)) < 0.5f * num3 || flag)
             {
-                var displayName = BlocksManager.Blocks[Terrain.ExtractContents(num4)]
+                var displayName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(num4)]
                     .GetDisplayName(_subsystemTerrain, num4);
                 ComponentPlayer?.ComponentGui.DisplaySmallMessage("使用:" + displayName + "更快挖掘", Color.White, true,
                     true);
@@ -285,12 +285,12 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        if (!BlocksManager.Blocks[num].Placeable)
+        if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].Placeable)
         {
             return false;
         }
 
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         var placementData = block.GetPlacementValue(_subsystemTerrain, this, value, raycastResult);
         if (placementData.Value == 0)
         {
@@ -375,7 +375,7 @@ public class ComponentMiner : Component, IUpdateable
     public bool Use(Ray3 ray)
     {
         var num = Terrain.ExtractContents(ActiveBlockValue);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
 
         var useContext = new BlockUseContext(ray, this, ActiveBlockValue);
         CurrentModRuntime.Value?.BlockBehaviors.Invoke(useContext);
@@ -439,7 +439,7 @@ public class ComponentMiner : Component, IUpdateable
         }
 
         _lastHitTime = _subsystemTime.GameTime;
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(ActiveBlockValue)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(ActiveBlockValue)];
         if (!CanUseTool(ActiveBlockValue))
         {
             ComponentPlayer?.ComponentGui.DisplaySmallMessage(
@@ -508,7 +508,7 @@ public class ComponentMiner : Component, IUpdateable
     public bool Aim(Ray3 aim, AimState state)
     {
         var num = Terrain.ExtractContents(ActiveBlockValue);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (!block.Aimable)
         {
             return false;
@@ -566,7 +566,7 @@ public class ComponentMiner : Component, IUpdateable
                     return false;
                 }
 
-                var block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
                 if (distance == 0f && block is CrossBlock &&
                     Vector3.Dot(direction, new Vector3(startCell) + new Vector3(0.5f) - start) < 0f)
                 {
@@ -635,7 +635,7 @@ public class ComponentMiner : Component, IUpdateable
             return;
         }
 
-        var num = BlocksManager.DamageItem(ActiveBlockValue, damageCount);
+        var num = CurrentModRuntime.Value!.RequireWorldCatalog().DamageItem(ActiveBlockValue, damageCount);
         if (num != 0)
         {
             var slotCount = Inventory.GetSlotCount(Inventory.ActiveSlotIndex);
@@ -856,8 +856,8 @@ public class ComponentMiner : Component, IUpdateable
 
     public float CalculateDigTime(int digValue, int toolContents)
     {
-        var block = BlocksManager.Blocks[toolContents];
-        var block2 = BlocksManager.Blocks[Terrain.ExtractContents(digValue)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[toolContents];
+        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(digValue)];
         var digMethod = block2.GetBlockDigMethod(digValue);
         var digResilience = block2.GetDigResilience(digValue);
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative)
@@ -910,7 +910,7 @@ public class ComponentMiner : Component, IUpdateable
             return true;
         }
 
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(toolValue)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(toolValue)];
         return !(ComponentPlayer.PlayerData.Level < block.PlayerLevelRequired);
     }
 

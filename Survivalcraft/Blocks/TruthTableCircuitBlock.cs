@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class TruthTableCircuitBlock() : RotatableMountedElectricElementBlock("Models/Gates", "TruthTableCircuit", 0.5f)
 {
-    public const int Index = 188;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

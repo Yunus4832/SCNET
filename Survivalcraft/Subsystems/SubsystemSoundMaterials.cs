@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemSoundMaterials : Subsystem
@@ -18,7 +19,7 @@ public class SubsystemSoundMaterials : Subsystem
     public void PlayImpactSound(int value, Vector3 position, float loudnessMultiplier)
     {
         var num = Terrain.ExtractContents(value);
-        var soundMaterialName = BlocksManager.Blocks[num].GetSoundMaterialName(_subsystemTerrain, value);
+        var soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].GetSoundMaterialName(_subsystemTerrain, value);
         if (string.IsNullOrEmpty(soundMaterialName))
         {
             return;
@@ -100,11 +101,10 @@ public class SubsystemSoundMaterials : Subsystem
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(position.X),
             Terrain.ToCell(position.Y + 0.1f), Terrain.ToCell(position.Z));
         var num = Terrain.ExtractContents(cellValue);
-        var soundMaterialName = BlocksManager.Blocks[num].GetSoundMaterialName(_subsystemTerrain, cellValue);
+        var soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].GetSoundMaterialName(_subsystemTerrain, cellValue);
         if (string.IsNullOrEmpty(soundMaterialName) && componentCreature.ComponentBody.StandingOnValue.HasValue)
         {
-            soundMaterialName = BlocksManager
-                .Blocks[Terrain.ExtractContents(componentCreature.ComponentBody.StandingOnValue.Value)]
+            soundMaterialName = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(componentCreature.ComponentBody.StandingOnValue.Value)]
                 .GetSoundMaterialName(_subsystemTerrain, componentCreature.ComponentBody.StandingOnValue.Value);
         }
 

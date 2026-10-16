@@ -31,7 +31,7 @@ public sealed class ModEntry : IMod
         }
 
         context.Extensions.RegisterBlock<TerritoryBlock>(
-            new ResourceId(context.Manifest.ModId, "territory_stone"), TerritoryBlock.Index);
+            TerritoryBlock.Id);
         context.Extensions.RegisterBlockData(
             new ResourceId(context.Manifest.ModId, "territory_stone"), ReadBlockData);
         context.Extensions.RegisterXmlData(

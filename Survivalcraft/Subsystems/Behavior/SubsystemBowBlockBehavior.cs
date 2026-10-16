@@ -29,7 +29,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
         ArrowBlock.ArrowType.FireArrow
     ];
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
     {

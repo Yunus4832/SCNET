@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class PumpkinBlock() : BasePumpkinBlock(false)
 {
-    public const int Index = 131;
-
     public override void GetDropValues(
         SubsystemTerrain subsystemTerrain,
         int oldValue,

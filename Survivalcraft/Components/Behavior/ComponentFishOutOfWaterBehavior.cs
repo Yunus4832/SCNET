@@ -158,7 +158,7 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
                 delegate (int value, float _)
                 {
                     var num = Terrain.ExtractContents(value);
-                    return BlocksManager.Blocks[num] is not WaterBlock;
+                    return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not WaterBlock;
                 }
             );
             if (!terrainRaycastResult.HasValue)

@@ -1752,7 +1752,7 @@ public static class BuiltInCommands
         runtime.InitializeLanguage(languageType);
         if (RunMode.Value is RunModeType.Gui)
         {
-            runtime.InitializeCraftingRecipes();
+            runtime.RefreshRecipeDescriptions();
         }
 
         SettingsManager.SaveSettings();

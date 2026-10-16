@@ -1,4 +1,3 @@
-using System.Text;
 using System.Xml.Linq;
 
 using Game.Commands;
@@ -56,22 +55,7 @@ public sealed class BuiltInContentMod : IMod
             XmlContributionMode.Base,
             static () => ReadBuiltInXml("Clothes"));
 
-        var blockTypes = typeof(Block).Assembly.GetTypes()
-            .Where(type => type.IsSubclassOf(typeof(Block)) && !type.IsAbstract)
-            .OrderBy(type => type.FullName, StringComparer.Ordinal);
-        foreach (var blockType in blockTypes)
-        {
-            var indexField = blockType.GetRuntimeFields()
-                .FirstOrDefault(field => field is { Name: "Index", IsPublic: true, IsStatic: true } &&
-                                         field.FieldType == typeof(int));
-            if (indexField is null)
-            {
-                continue;
-            }
-
-            var id = new ResourceId(context.Manifest.ModId, ToResourcePath(blockType.Name));
-            context.Extensions.RegisterBlock(id, (int)indexField.GetValue(null)!, blockType);
-        }
+        BuiltInBlockRegistry.Register(context.Extensions);
     }
 
     public void Start(IModContext context)
@@ -80,28 +64,6 @@ public sealed class BuiltInContentMod : IMod
 
     public void Stop()
     {
-    }
-
-    internal static string ToResourcePath(string typeName)
-    {
-        var name = typeName.EndsWith("Block", StringComparison.Ordinal)
-            ? typeName[..^"Block".Length]
-            : typeName;
-        var result = new StringBuilder(name.Length + 8);
-        for (var index = 0; index < name.Length; index++)
-        {
-            var character = name[index];
-            if (char.IsUpper(character) && index > 0 &&
-                (char.IsLower(name[index - 1]) ||
-                 index + 1 < name.Length && char.IsLower(name[index + 1])))
-            {
-                result.Append('_');
-            }
-
-            result.Append(char.ToLowerInvariant(character));
-        }
-
-        return result.ToString();
     }
 
     private static XElement ReadBuiltInXml(string name)

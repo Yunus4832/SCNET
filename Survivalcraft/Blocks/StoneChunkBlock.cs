@@ -7,5 +7,4 @@ public class StoneChunkBlock() : ChunkBlock(
     true
 )
 {
-    public const int Index = 79;
 }

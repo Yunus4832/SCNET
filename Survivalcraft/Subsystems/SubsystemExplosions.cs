@@ -124,7 +124,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
     )
     {
         var num = Terrain.ExtractContents(value);
-        var obj = BlocksManager.Blocks[num];
+        var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         var explosionPressure = obj.GetExplosionPressure(value);
         var explosionIncendiary = obj.GetExplosionIncendiary(value);
         if (!(explosionPressure > 0f))
@@ -304,7 +304,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 num3 *= 3f;
             }
 
-            var block = BlocksManager.Blocks[num];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
             var num4 = _pressureByPoint.Get(x - 1, y, z) + _pressureByPoint.Get(x + 1, y, z) +
                        _pressureByPoint.Get(x, y - 1, z) + _pressureByPoint.Get(x, y + 1, z) +
                        _pressureByPoint.Get(x, y, z - 1) + _pressureByPoint.Get(x, y, z + 1);
@@ -349,8 +349,8 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     foreach (var item in list)
                     {
                         var num7 = Terrain.ExtractContents(item.Value);
-                        var block2 = BlocksManager.Blocks[num7];
-                        if (!(BlocksManager.Blocks[num7] is FluidBlock))
+                        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num7];
+                        if (!(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num7] is FluidBlock))
                         {
                             var num8 = _projectilesCount < 40 || block2.ExplosionKeepsPickable ? 1f :
                                 _projectilesCount < 60 ? 0.5f :
@@ -483,7 +483,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
 
             var probability = item2.Value.IsIncendiary ? 0.5f : 0.2f;
-            var block = BlocksManager.Blocks[num6];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num6];
             //方块燃烧
             if (block.FireDuration > 0f && item2.Value.Pressure / block.ExplosionResilience > 0.2f &&
                 SharedRandom.Bool(probability))
@@ -513,7 +513,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
 
         foreach (var pickable in _subsystemPickables.Pickables)
         {
-            var block2 = BlocksManager.Blocks[Terrain.ExtractContents(pickable.Value)];
+            var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(pickable.Value)];
             CalculateImpulseAndDamage(pickable.Position + new Vector3(0f, 0.5f, 0f), 20f, null, out var impulse2,
                 out var damage2);
             if (damage2 / block2.ExplosionResilience > 0.1f)

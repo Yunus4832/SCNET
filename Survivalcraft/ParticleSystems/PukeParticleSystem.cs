@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.ParticleSystems;
 
 public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
@@ -64,7 +65,7 @@ public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
                     var position = particle.Position;
                     var vector = position + particle.Velocity * dt;
                     var terrainRaycastResult = _subsystemTerrain.Raycast(position, vector, false, true,
-                        (value, _) => BlocksManager.Blocks[Terrain.ExtractContents(value)].Collidable);
+                        (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable);
                     if (terrainRaycastResult.HasValue)
                     {
                         var plane = terrainRaycastResult.Value.CellFace.CalculatePlane();

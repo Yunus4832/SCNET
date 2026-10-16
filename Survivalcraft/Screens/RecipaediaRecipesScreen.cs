@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+
 namespace Game.Screens;
 
 public class RecipaediaRecipesScreen : Screen
@@ -21,7 +22,9 @@ public class RecipaediaRecipesScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/RecipaediaRecipesScreen");
         LoadContents(this, node);
         _craftingRecipeWidget = Children.Find<CraftingRecipeWidget>("CraftingRecipe")!;
+        _craftingRecipeWidget.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
         _smeltingRecipeWidget = Children.Find<SmeltingRecipeWidget>("SmeltingRecipe")!;
+        _smeltingRecipeWidget.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
         _prevRecipeButton = Children.Find<ButtonWidget>("PreviousRecipe")!;
         _nextRecipeButton = Children.Find<ButtonWidget>("NextRecipe")!;
     }
@@ -31,7 +34,7 @@ public class RecipaediaRecipesScreen : Screen
         var value = (int)parameters[0];
         _craftingRecipes.Clear();
         _craftingRecipes.AddRange(
-            CraftingRecipesManager.ReadonlyRecipes.Where(r => r.ResultValue == value && r.ResultValue != 0));
+            CurrentModRuntime.Value!.PreviewCatalog.Recipes.ReadonlyRecipes.Where(r => r.ResultValue == value && r.ResultValue != 0));
         _recipeIndex = 0;
     }
 

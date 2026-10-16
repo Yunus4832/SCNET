@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 
@@ -7,8 +8,6 @@ namespace Game.Blocks;
 
 public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 {
-    public const int Index = 227;
-
     public int[][] FacesMaps = new int[][]
     {
         [0, 1, 2, 3, 4, 5],
@@ -82,7 +81,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
         var point = CellFace.FaceToPoint3(face);
         var cellValue = terrain.Terrain.GetCellValue(x - point.X, y - point.Y, z - point.Z);
-        if (BlocksManager.Blocks[Terrain.ExtractContents(cellValue)]
+        if (Catalog.Blocks[Terrain.ExtractContents(cellValue)]
             .IsFaceTransparent(terrain, CellFace.OppositeFace(num), cellValue))
         {
             return null;
@@ -320,7 +319,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
         var mainValue = design.MainValue;
         var num = Terrain.ExtractContents(mainValue);
-        return BlocksManager.Blocks[num].GetSoundMaterialName(subsystemTerrain, mainValue);
+        return Catalog.Blocks[num].GetSoundMaterialName(subsystemTerrain, mainValue);
     }
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain subsystemTerrain, int value)
@@ -369,7 +368,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
         var mainValue = design.MainValue;
         var num = Terrain.ExtractContents(mainValue);
-        return BlocksManager.Blocks[num]
+        return Catalog.Blocks[num]
             .CreateDebrisParticleSystem(subsystemTerrain, position, mainValue, strength);
     }
 
@@ -432,7 +431,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         data = SetRotation(data, 0);
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(Index, 0, data),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
             Count = 1
         });
     }
@@ -479,8 +478,8 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
                 continue;
             }
 
-            CraftingRecipesManager.DecodeIngredient(ingredient, out var craftingId, out var data);
-            if (craftingId == BlocksManager.Blocks[Index].CraftingId)
+            CraftingRecipeCatalog.DecodeIngredient(ingredient, out var craftingId, out var data);
+            if (craftingId == Catalog.Blocks[BlockIndex].CraftingId)
             {
                 var design =
                     terrain.SubsystemFurnitureBlockBehavior.GetDesign(GetDesignIndex(data.GetValueOrDefault()));
@@ -491,17 +490,17 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
                 list.Add(design);
             }
-            else if (craftingId == BlocksManager.Blocks[ButtonBlock.Index].CraftingId)
+            else if (craftingId == Catalog.GetBlock(ResourceId.Parse("game:button")).CraftingId)
             {
                 num++;
             }
-            else if (craftingId == BlocksManager.Blocks[SwitchBlock.Index].CraftingId)
+            else if (craftingId == Catalog.GetBlock(ResourceId.Parse("game:switch")).CraftingId)
             {
                 num2++;
             }
             else
             {
-                if (craftingId != BlocksManager.Blocks[WireBlock.Index].CraftingId)
+                if (craftingId != Catalog.GetBlock(ResourceId.Parse("game:wire")).CraftingId)
                 {
                     return null;
                 }
@@ -523,7 +522,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
             return new CraftingRecipe
             {
-                ResultValue = Terrain.MakeBlockValue(Index, 0,
+                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
                     SetDesignIndex(0, furnitureDesign2.Index, furnitureDesign2.ShadowStrengthFactor,
                         furnitureDesign2.IsLightEmitter)),
                 ResultCount = 1,
@@ -550,7 +549,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
             return new CraftingRecipe
             {
-                ResultValue = Terrain.MakeBlockValue(Index, 0,
+                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
                     SetDesignIndex(0, furnitureDesign3.Index, furnitureDesign3.ShadowStrengthFactor,
                         furnitureDesign3.IsLightEmitter)),
                 ResultCount = 1,
@@ -579,7 +578,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
 
             return new CraftingRecipe
             {
-                ResultValue = Terrain.MakeBlockValue(Index, 0,
+                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
                     SetDesignIndex(0, furnitureDesign4.Index, furnitureDesign4.ShadowStrengthFactor,
                         furnitureDesign4.IsLightEmitter)),
                 ResultCount = 1,

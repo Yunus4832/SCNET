@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class CactusBlock : Block
 {
-    public const int Index = 127;
-
     public BlockMesh BlockMesh = new();
 
     public BlockMesh StandaloneBlockMesh = new();

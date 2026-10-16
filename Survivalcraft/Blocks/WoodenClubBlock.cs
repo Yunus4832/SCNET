@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class WoodenClubBlock : Block
 {
-    public const int Index = 122;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class SeedsBlock : FlatBlock
@@ -16,12 +17,10 @@ public class SeedsBlock : FlatBlock
         Pumpkin
     }
 
-    public const int Index = 173;
-
     public override IEnumerable<int> GetCreativeValues()
     {
         return EnumUtils.GetEnumValues(typeof(SeedType))
-            .Select(enumValue => Terrain.MakeBlockValue(173, 0, enumValue))
+            .Select(enumValue => Terrain.MakeBlockValue(BlockIndex, 0, enumValue))
             .ToList();
     }
 
@@ -109,7 +108,7 @@ public class SeedsBlock : FlatBlock
                 break;
         }
 
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

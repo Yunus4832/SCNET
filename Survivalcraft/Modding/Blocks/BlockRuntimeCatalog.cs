@@ -4,16 +4,13 @@ public sealed class BlockRuntimeCatalog
 {
     public const int Capacity = 1024;
     private readonly IReadOnlyDictionary<ResourceId, BlockEntry> _byId;
-    private readonly BlockEntry?[] _byIndex;
     private readonly IReadOnlyList<BlockDataEntry> _dataEntries;
 
     private BlockRuntimeCatalog(
         IReadOnlyDictionary<ResourceId, BlockEntry> byId,
-        BlockEntry?[] byIndex,
         IReadOnlyList<BlockDataEntry> dataEntries)
     {
         _byId = byId;
-        _byIndex = byIndex;
         _dataEntries = dataEntries;
     }
 
@@ -21,59 +18,84 @@ public sealed class BlockRuntimeCatalog
 
     public IReadOnlyList<BlockDataEntry> DataEntries => _dataEntries;
 
+    public BlockIndexMapping Mapping { get; private init; } = BlockIndexMapping.Empty;
+
     public static BlockRuntimeCatalog Compile(
         NamespacedRegistry<BlockRegistration> registry,
-        NamespacedRegistry<BlockDataRegistration>? dataRegistry = null)
+        NamespacedRegistry<BlockDataRegistration>? dataRegistry = null,
+        BlockIndexMapping? savedMapping = null,
+        bool requireExactMapping = false)
     {
         var byId = new Dictionary<ResourceId, BlockEntry>();
-        var byIndex = new BlockEntry?[Capacity];
-        foreach (var (id, registration) in
-                 registry.Entries.OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal))
+        var saved = savedMapping ?? BlockIndexMapping.Empty;
+        var mapping = BlockIndexMapping.Allocate(registry.Keys, saved);
+        if (requireExactMapping && mapping.Entries.Count != saved.Entries.Count)
         {
-            if (registration.LegacyIndex is < 0 or >= Capacity)
-            {
-                throw new InvalidOperationException(
-                    $"Block {id} uses index {registration.LegacyIndex}, outside the supported range 0-{Capacity - 1}.");
-            }
-
-            if (byIndex[registration.LegacyIndex] is { } conflict)
-            {
-                throw new InvalidOperationException(
-                    $"Blocks {conflict.Id} and {id} both use runtime index {registration.LegacyIndex}.");
-            }
-
-            var block = registration.Factory();
-            block.BlockIndex = registration.LegacyIndex;
-            var entry = new BlockEntry(id, registration.LegacyIndex, block);
-            byId.Add(id, entry);
-            byIndex[registration.LegacyIndex] = entry;
+            throw new InvalidDataException("The server block mapping is incomplete.");
         }
 
-        if (byIndex[0] is null)
+        var fixedIndices = BuiltInBlockRegistry.Entries.ToDictionary(
+            entry => new ResourceId(BuiltInContentMod.Manifest.ModId, entry.Path), entry => entry.Index);
+        var assigned = registry.Keys.ToDictionary(id => id, id =>
+            id.Namespace == BuiltInContentMod.Manifest.ModId
+                ? fixedIndices.TryGetValue(id, out var builtInIndex) ? builtInIndex
+                    : throw new InvalidOperationException($"Unknown built-in block {id}.")
+                : mapping.Entries[id]);
+        if (assigned.Values.Any(index => index is < 0 or >= Capacity) ||
+            assigned.Values.Distinct().Count() != assigned.Count)
         {
-            throw new InvalidOperationException("Block registry does not define runtime index 0.");
+            throw new InvalidOperationException("The block registry contains conflicting or invalid indices.");
+        }
+
+        if (!assigned.ContainsKey(ResourceId.Parse("game:air")))
+        {
+            throw new InvalidOperationException("Block registry does not define air.");
+        }
+
+        try
+        {
+            foreach (var (id, registration) in
+                     registry.Entries.OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal))
+            {
+                var index = assigned[id];
+
+                var block = registration.Factory();
+                if (block.BlockIndex != -1)
+                {
+                    throw new InvalidOperationException($"Factory for {id} reused an already registered block instance.");
+                }
+
+                block.BlockIndex = index;
+                var entry = new BlockEntry(id, index, block);
+                byId.Add(id, entry);
+            }
+        }
+        catch
+        {
+            foreach (var entry in byId.Values)
+            {
+                try
+                {
+                    entry.Block.Dispose();
+                }
+                catch (Exception exception)
+                {
+                    Log.Error($"Could not dispose unbound block {entry.Id}: {exception}");
+                }
+            }
+
+            throw;
         }
 
         var dataEntries = dataRegistry?.Entries
             .OrderBy(pair => pair.Key.ToString(), StringComparer.Ordinal)
             .Select(pair => new BlockDataEntry(pair.Key, pair.Value.Read))
             .ToArray() ?? [];
-        return new BlockRuntimeCatalog(byId, byIndex, dataEntries);
+        return new BlockRuntimeCatalog(byId, dataEntries) { Mapping = mapping };
     }
 
     public bool TryGet(ResourceId id, out BlockEntry? entry) => _byId.TryGetValue(id, out entry);
 
-    public Block[] CreateLegacyBlockArray()
-    {
-        var fallback = _byIndex[0]!.Block;
-        var blocks = new Block[Capacity];
-        for (var index = 0; index < blocks.Length; index++)
-        {
-            blocks[index] = _byIndex[index]?.Block ?? fallback;
-        }
-
-        return blocks;
-    }
 }
 
 public sealed record BlockEntry(ResourceId Id, int RuntimeIndex, Block Block);

@@ -14,6 +14,7 @@
 
     <ItemGroup>
         <Using Include="Xunit"/>
+        <None Update="Fixtures/BuiltInBlocks.txt" CopyToOutputDirectory="PreserveNewest"/>
         <None Include="..\Content\Assets\Database.xml" Link="Fixtures\Database.xml"
               CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>

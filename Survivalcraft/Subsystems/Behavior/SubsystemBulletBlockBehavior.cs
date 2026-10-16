@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
@@ -12,7 +13,7 @@ public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)
     {
@@ -26,7 +27,7 @@ public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
         var cellValue =
             _subsystemTerrain.Terrain.GetCellValue(cellFace.Value.X, cellFace.Value.Y, cellFace.Value.Z);
         var num = Terrain.ExtractContents(cellValue);
-        var obj = BlocksManager.Blocks[num];
+        var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (worldItem.Velocity.Length() > 30f)
         {
             ComponentPlayer? player = null;

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class FurBlock : Block
 {
-    public const int Index = 207;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

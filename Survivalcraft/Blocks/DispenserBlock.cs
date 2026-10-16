@@ -8,8 +8,6 @@ public class DispenserBlock : CubeBlock, IElectricElementBlock
         Shoot
     }
 
-    public const int Index = 216;
-
     public ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,
@@ -88,7 +86,7 @@ public class DispenserBlock : CubeBlock, IElectricElementBlock
         }
 
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(216, 0, SetDirection(0, direction));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetDirection(0, direction));
         result.CellFace = raycastResult.CellFace;
         return result;
     }

@@ -1,5 +1,6 @@
 using EntitySystem.Core;
 
+using Game.Modding.Blocks;
 using Game.Network.Enums;
 
 namespace Game.Network.Packages.Handlers;
@@ -25,13 +26,13 @@ public sealed class EditableBlockPackageHandler : PackageHandlerBase<EditableBlo
     {
         return type switch
         {
-            EditableItemType.MemoryBank => MemoryBankBlock.Index,
-            EditableItemType.TruthTable => TruthTableCircuitBlock.Index,
-            EditableItemType.AdjustableDelayGate => AdjustableDelayGateBlock.Index,
-            EditableItemType.Battery => BatteryBlock.Index,
-            EditableItemType.Piston => PistonBlock.Index,
-            EditableItemType.Switch => SwitchBlock.Index,
-            EditableItemType.Button => ButtonBlock.Index,
+            EditableItemType.MemoryBank => BuiltInBlockRegistry.GetIndex<MemoryBankBlock>(),
+            EditableItemType.TruthTable => BuiltInBlockRegistry.GetIndex<TruthTableCircuitBlock>(),
+            EditableItemType.AdjustableDelayGate => BuiltInBlockRegistry.GetIndex<AdjustableDelayGateBlock>(),
+            EditableItemType.Battery => BuiltInBlockRegistry.GetIndex<BatteryBlock>(),
+            EditableItemType.Piston => BuiltInBlockRegistry.GetIndex<PistonBlock>(),
+            EditableItemType.Switch => BuiltInBlockRegistry.GetIndex<SwitchBlock>(),
+            EditableItemType.Button => BuiltInBlockRegistry.GetIndex<ButtonBlock>(),
             _ => -1
         };
     }

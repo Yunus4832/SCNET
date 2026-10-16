@@ -145,7 +145,7 @@ public class ComponentSleep : Component, IUpdateable
     public bool CanSleep(out string reason)
     {
         var block = _componentPlayer.ComponentBody.StandingOnValue.HasValue
-            ? BlocksManager.Blocks[Terrain.ExtractContents(_componentPlayer.ComponentBody.StandingOnValue.Value)]
+            ? CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(_componentPlayer.ComponentBody.StandingOnValue.Value)]
             : null;
 
         if (block is null || _componentPlayer.ComponentBody.ImmersionDepth > 0f)

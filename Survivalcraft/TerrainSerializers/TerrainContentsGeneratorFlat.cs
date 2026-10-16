@@ -195,7 +195,7 @@ public class TerrainContentsGeneratorFlat : ITerrainContentsGenerator
                 {
                     var cellValueFast = chunk.GetCellValueFast(num);
                     var num4 = Terrain.ExtractContents(cellValueFast);
-                    if (num4 != 0 && num4 != num2 && BlocksManager.Blocks[num4] is FluidBlock)
+                    if (num4 != 0 && num4 != num2 && CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num4] is FluidBlock)
                     {
                         var data = Terrain.ExtractData(cellValueFast);
                         chunk.SetCellValueFast(num, Terrain.MakeBlockValue(num4, 0, FluidBlock.SetIsTop(data, true)));

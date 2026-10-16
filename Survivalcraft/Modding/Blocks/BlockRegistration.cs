@@ -1,6 +1,6 @@
 namespace Game.Modding.Blocks;
 
-public sealed record BlockRegistration(int LegacyIndex, Func<Block> Factory);
+public sealed record BlockRegistration(Func<Block> Factory);
 
 public sealed record BlockDataRegistration(Func<string> Read);
 
@@ -12,31 +12,13 @@ public static class BlockExtensions
 
     public static IDisposable RegisterBlock<TBlock>(
         this IModExtensions extensions,
-        ResourceId id,
-        int legacyIndex
+        ResourceId id
     ) where TBlock : Block, new()
     {
         return extensions.Register(
             RegistryName,
             id,
-            new BlockRegistration(legacyIndex, static () => new TBlock()));
-    }
-
-    internal static IDisposable RegisterBlock(
-        this IModExtensions extensions,
-        ResourceId id,
-        int legacyIndex,
-        Type blockType
-    )
-    {
-        return extensions.Register(
-            RegistryName,
-            id,
-            new BlockRegistration(
-                legacyIndex,
-                () => (Block)(Activator.CreateInstance(blockType)
-                              ?? throw new InvalidOperationException(
-                                  $"Could not create block {blockType.FullName}."))));
+            new BlockRegistration(static () => new TBlock()));
     }
 
     public static IDisposable RegisterBlockData(

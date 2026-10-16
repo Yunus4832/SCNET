@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class XorGateBlock() : RotatableMountedElectricElementBlock("Models/Gates", "XorGate", 0.375f)
 {
-    public const int Index = 156;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public abstract class LeavesBlock : AlphaTestCubeBlock
@@ -33,7 +34,7 @@ public abstract class LeavesBlock : AlphaTestCubeBlock
     )
     {
         color *= GetLeavesItemColor(value, environmentData);
-        BlocksManager.DrawCubeBlock(
+        Catalog.DrawCubeBlock(
             primitivesRenderer,
             value,
             new Vector3(size),

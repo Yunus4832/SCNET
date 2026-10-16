@@ -7,5 +7,4 @@ public class RottenBreadBlock() : FoodBlock(
     CompostValue
 )
 {
-    public const int Index = 242;
 }

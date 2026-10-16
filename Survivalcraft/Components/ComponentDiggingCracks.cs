@@ -71,7 +71,7 @@ public class ComponentDiggingCracks : Component, IDrawable
 
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
         var num = Terrain.ExtractContents(cellValue);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (cellValue != _value || point != _point)
         {
             foreach (var item in _drawItem)

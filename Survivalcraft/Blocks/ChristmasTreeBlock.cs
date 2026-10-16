@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class ChristmasTreeBlock : Block, IElectricElementBlock
 {
-    public const int Index = 63;
-
     public BlockMesh DecorationsBlockMesh = new();
 
     public BlockMesh LeavesBlockMesh = new();

@@ -2,16 +2,8 @@ namespace Game.Subsystems;
 
 public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
 {
-    public SubsystemStairsBlockBehavior()
-    {
-        var list = new List<int>();
-        list.AddRange(from b in BlocksManager.Blocks
-                      where b is StairsBlock
-                      select b.BlockIndex);
-        HandledBlocks = list.ToArray();
-    }
-
-    public override int[] HandledBlocks { get; }
+    public override ResourceId[] HandledBlocks => CurrentModRuntime.Value!.RequireWorldCatalog().Registry.ById.Values
+        .Where(entry => entry.Block is StairsBlock).Select(entry => entry.Id).ToArray();
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
@@ -32,7 +24,7 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
     private void UpdateIsCorner(int value, int x, int y, int z, bool updateModificationCounter)
     {
         var value2 = Terrain.ExtractContents(value);
-        if (!HandledBlocks.Contains(value2))
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[value2] is not StairsBlock)
         {
             return;
         }
@@ -48,7 +40,7 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
         var point = StairsBlock.RotationToDirection(rotation);
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x + point.X, y + point.Y, z + point.Z);
         var num = Terrain.ExtractContents(cellValue);
-        if (BlocksManager.Blocks[num] is StairsBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is StairsBlock)
         {
             var data2 = Terrain.ExtractData(cellValue);
             var isUpsideDown2 = StairsBlock.GetIsUpsideDown(data2);
@@ -113,7 +105,7 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
 
         cellValue = SubsystemTerrain.Terrain.GetCellValue(x - point.X, y - point.Y, z - point.Z);
         num = Terrain.ExtractContents(cellValue);
-        if (BlocksManager.Blocks[num] is not StairsBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not StairsBlock)
         {
             return;
         }

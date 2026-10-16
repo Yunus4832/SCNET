@@ -1,3 +1,4 @@
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -7,7 +8,7 @@ namespace Game.Subsystems;
 
 public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
 {
-    public override int[] HandledBlocks => [224];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:adjustable_delay_gate")];
 
     public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
     {
@@ -47,7 +48,7 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                     }
 
                     var face =
-                        ((AdjustableDelayGateBlock)BlocksManager.Blocks[AdjustableDelayGateBlock.Index]).GetFace(value);
+                        ((AdjustableDelayGateBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[BuiltInBlockRegistry.GetIndex<AdjustableDelayGateBlock>()]).GetFace(value);
                     var cell = new CellFace(x, y, z, face);
                     var p = new EditableBlockPackage(
                         EditableItemType.AdjustableDelayGate,

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class FurnaceBlock : Block
 {
-    public const int Index = 64;
-
     public BlockMesh[] BlockMeshesByData = new BlockMesh[4];
 
     public BlockMesh StandaloneBlockMesh = new();
@@ -108,7 +106,9 @@ public class FurnaceBlock : Block
         }
 
         BlockPlacementData result = default;
-        result.Value = Terrain.ReplaceData(Terrain.ReplaceContents(0, 64), data);
+        // Lit furnaces are placed as their unlit counterpart.
+        result.Value = Terrain.MakeBlockValue(
+            Catalog.GetBlock(ResourceId.Parse("game:furnace")).BlockIndex, 0, data);
         result.CellFace = raycastResult.CellFace;
         return result;
     }

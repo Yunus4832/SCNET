@@ -6,8 +6,6 @@ public class RandomGeneratorBlock() : RotatableMountedElectricElementBlock(
     0.375f
 )
 {
-    public const int Index = 157;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

@@ -476,7 +476,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         DynamicArray<ElectricConnectionPath> list)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        if (BlocksManager.Blocks[Terrain.ExtractContents(cellValue)] is not IElectricElementBlock electricElementBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)] is not IElectricElementBlock electricElementBlock)
         {
             return;
         }
@@ -506,7 +506,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                 var z2 = z + electricConnectionPath.NeighborOffsetZ;
                 var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
                 var electricElementBlock2 =
-                    BlocksManager.Blocks[Terrain.ExtractContents(cellValue2)] as IElectricElementBlock;
+                    CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue2)] as IElectricElementBlock;
                 var connectorType2 = electricElementBlock2?.GetConnectorType(SubsystemTerrain, cellValue2,
                     electricConnectionPath.NeighborFace, electricConnectionPath.NeighborConnectorFace, x2, y2, z2);
                 if (!connectorType2.HasValue ||
@@ -691,7 +691,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
                 var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
                 var num = Terrain.ExtractContents(cellValue);
-                var value2 = ((IElectricElementBlock)BlocksManager.Blocks[num]).GetConnectorType(
+                var value2 = ((IElectricElementBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num]).GetConnectorType(
                     SubsystemTerrain,
                     cellValue,
                     cellFace2.Face,
@@ -702,7 +702,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                 );
                 var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
                 var num2 = Terrain.ExtractContents(cellValue2);
-                var value3 = ((IElectricElementBlock)BlocksManager.Blocks[num2]).GetConnectorType(
+                var value3 = ((IElectricElementBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2]).GetConnectorType(
                     SubsystemTerrain,
                     cellValue2,
                     cellFace.Face,
@@ -788,13 +788,13 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             }
 
             var num = Terrain.ExtractContents(cellValue);
-            if (BlocksManager.Blocks[num] is IElectricWireElementBlock)
+            if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is IElectricWireElementBlock)
             {
                 _wiresToUpdate[key] = true;
             }
             else
             {
-                var electricElementBlock = BlocksManager.Blocks[num] as IElectricElementBlock;
+                var electricElementBlock = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] as IElectricElementBlock;
                 if (electricElementBlock != null)
                 {
                     var electricElement2 =
@@ -897,7 +897,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
             var cellValue = SubsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z);
             var num = Terrain.ExtractContents(cellValue);
-            var electricWireElementBlock = BlocksManager.Blocks[num] as IElectricWireElementBlock;
+            var electricWireElementBlock = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] as IElectricWireElementBlock;
             if (electricWireElementBlock == null)
             {
                 continue;

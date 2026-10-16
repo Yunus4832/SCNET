@@ -59,14 +59,8 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
 
     public bool ShowSignsTexture;
 
-    public override int[] HandledBlocks =>
-    [
-        23,
-        97,
-        98,
-        210,
-        211
-    ];
+    public override ResourceId[] HandledBlocks =>
+    [ResourceId.Parse("game:stick"), ResourceId.Parse("game:wooden_posted_sign"), ResourceId.Parse("game:wooden_attached_sign"), ResourceId.Parse("game:iron_posted_sign"), ResourceId.Parse("game:iron_attached_sign")];
 
     public int[] DrawOrders => _drawOrders;
 
@@ -161,7 +155,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
         var cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(x, y, z);
         var num = Terrain.ExtractContents(cellValueFast);
         var data = Terrain.ExtractData(cellValueFast);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         switch (block)
         {
             case AttachedSignBlock:
@@ -172,7 +166,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
                     var z2 = z - point.Z;
                     var cellValue = SubsystemTerrain.Terrain.GetCellValue(x2, y2, z2);
                     var cellContents = Terrain.ExtractContents(cellValue);
-                    if (!BlocksManager.Blocks[cellContents].IsCollidable(cellValue))
+                    if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].IsCollidable(cellValue))
                     {
                         SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                     }
@@ -185,7 +179,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
                         ? SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z)
                         : SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
 
-                    if (!BlocksManager.Blocks[Terrain.ExtractContents(num2)].IsCollidable(num2))
+                    if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(num2)].IsCollidable(num2))
                     {
                         SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                     }
@@ -615,7 +609,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior, IDrawable, IUp
             var cellValue =
                 _subsystemTerrain.Terrain.GetCellValue(nearText.Point.X, nearText.Point.Y, nearText.Point.Z);
             var num = Terrain.ExtractContents(cellValue);
-            if (BlocksManager.Blocks[num] is not SignBlock signBlock)
+            if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not SignBlock signBlock)
             {
                 continue;
             }

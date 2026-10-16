@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class PhotodiodeBlock : MountedElectricElementBlock
 {
-    public const int Index = 151;
-
     public BlockMesh[] BlockMeshesByData = new BlockMesh[6];
 
     public BoundingBox[][] CollisionBoxesByData = new BoundingBox[6][];

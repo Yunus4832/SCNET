@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class ThermometerBlock : Block, IElectricElementBlock
 {
-    public const int Index = 120;
-
     public BlockMesh CaseMesh = new();
 
     public BoundingBox[][] CollisionBoxesByData = new BoundingBox[4][];
@@ -96,10 +94,10 @@ public class ThermometerBlock : Block, IElectricElementBlock
     {
         var value2 = raycastResult.CellFace.Face switch
         {
-            0 => Terrain.ReplaceData(Terrain.ReplaceContents(0, 120), 0),
-            1 => Terrain.ReplaceData(Terrain.ReplaceContents(0, 120), 1),
-            2 => Terrain.ReplaceData(Terrain.ReplaceContents(0, 120), 2),
-            3 => Terrain.ReplaceData(Terrain.ReplaceContents(0, 120), 3),
+            0 => Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 0),
+            1 => Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 1),
+            2 => Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 2),
+            3 => Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 3),
             _ => 0
         };
         BlockPlacementData result = default;

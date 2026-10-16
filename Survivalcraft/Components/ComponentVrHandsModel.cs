@@ -3,6 +3,7 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
@@ -131,7 +132,7 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
             }
 
             var num4 = Terrain.ExtractContents(activeBlockValue);
-            var block = BlocksManager.Blocks[num4];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num4];
             var vector = block.InHandRotation * ((float)Math.PI / 180f) + _itemRotation;
             var matrix = Matrix.CreateFromYawPitchRoll(vector.Y, vector.X, vector.Z) *
                          Matrix.CreateTranslation(block.InHandOffset) * identity *

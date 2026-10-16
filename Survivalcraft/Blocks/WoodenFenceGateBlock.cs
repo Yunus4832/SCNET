@@ -10,5 +10,4 @@ public class WoodenFenceGateBlock() : FenceGateBlock(
     Color.White
 )
 {
-    public const int Index = 166;
 }

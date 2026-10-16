@@ -193,7 +193,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             if (num24 != 0 || !skipAirBlocks)
             {
                 var ray2 = new Ray3(ray.Position - new Vector3(num2, num3, num4), ray.Direction);
-                var num25 = BlocksManager.Blocks[num24].Raycast(ray2, this, cellValue, useInteractionBoxes,
+                var num25 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num24].Raycast(ray2, this, cellValue, useInteractionBoxes,
                     out var nearestBoxIndex, out var nearestBox);
                 if (num25.HasValue && (!num23.HasValue || num25.Value < num23.Value))
                 {
@@ -523,7 +523,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
         var cellValue = Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (num != 0)
         {
             var showDebris = true;

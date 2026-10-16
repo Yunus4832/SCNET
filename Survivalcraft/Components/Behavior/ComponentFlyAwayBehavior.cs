@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentFlyAwayBehavior : ComponentBehavior, IUpdateable, INoiseListener
@@ -161,7 +162,7 @@ public class ComponentFlyAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
             for (var num4 = 255; num4 >= 0; num4--)
             {
                 var cellContents = _subsystemTerrain.Terrain.GetCellContents(num2, num4, num3);
-                if (!BlocksManager.Blocks[cellContents].Collidable && cellContents != 18)
+                if (!CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Collidable && cellContents != 18)
                 {
                     continue;
                 }

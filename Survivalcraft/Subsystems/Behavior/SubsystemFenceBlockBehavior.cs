@@ -2,7 +2,7 @@ namespace Game.Subsystems;
 
 public class SubsystemFenceBlockBehavior : SubsystemBlockBehavior
 {
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
@@ -18,7 +18,7 @@ public class SubsystemFenceBlockBehavior : SubsystemBlockBehavior
     private void UpdateVariant(int value, int x, int y, int z)
     {
         var num = Terrain.ExtractContents(value);
-        if (BlocksManager.Blocks[num] is not FenceBlock fenceBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not FenceBlock fenceBlock)
         {
             return;
         }

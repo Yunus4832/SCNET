@@ -186,7 +186,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                 var topHeight3 = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
                 return humidity26 > 8 && temperature38 > 4 && num97 > 30f && point.Y >= topHeight3 &&
-                       (BlocksManager.Blocks[num98] is LeavesBlock || num98 == 18 || num98 == 8 || num98 == 2)
+                       (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num98] is LeavesBlock || num98 == 18 || num98 == 8 || num98 == 2)
                     ? 2.5f
                     : 0f;
             },
@@ -203,7 +203,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                 var topHeight2 = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
                 return (humidity25 <= 8 || temperature37 <= 4) && num95 > 30f && point.Y >= topHeight2 &&
-                       (BlocksManager.Blocks[num96] is LeavesBlock || num96 == 62 || num96 == 8 || num96 == 2 ||
+                       (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num96] is LeavesBlock || num96 == 62 || num96 == 8 || num96 == 2 ||
                         num96 == 7)
                     ? 2.5f
                     : 0f;
@@ -1186,7 +1186,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                 var topHeight2 = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
                 return temperature38 > 3 && num95 > 30f && point.Y >= topHeight2 &&
-                       (BlocksManager.Blocks[num96] is LeavesBlock || num96 == 8 || num96 == 2 || num96 == 7)
+                       (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num96] is LeavesBlock || num96 == 8 || num96 == 2 || num96 == 7)
                     ? 1.5f
                     : 0f;
             },
@@ -1203,7 +1203,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z));
                 var topHeight = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
                 return temperature37 > 3 && num93 > 20f && point.Y >= topHeight &&
-                       (BlocksManager.Blocks[num94] is LeavesBlock || num94 == 8 || num94 == 2 || num94 == 7)
+                       (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num94] is LeavesBlock || num94 == 8 || num94 == 2 || num94 == 7)
                     ? 2f
                     : 0f;
             },
@@ -1466,9 +1466,9 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var cellContentsFast7 = _subsystemTerrain.Terrain.GetCellContentsFast(x, y - 1, z);
                     var cellContentsFast8 = _subsystemTerrain.Terrain.GetCellContentsFast(x, y, z);
                     var cellContentsFast9 = _subsystemTerrain.Terrain.GetCellContentsFast(x, y + 1, z);
-                    var block6 = BlocksManager.Blocks[cellContentsFast7];
-                    var block7 = BlocksManager.Blocks[cellContentsFast8];
-                    var block8 = BlocksManager.Blocks[cellContentsFast9];
+                    var block6 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast7];
+                    var block7 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast8];
+                    var block8 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast9];
                     if ((block6.Collidable || block6 is WaterBlock) && !block7.Collidable && block7 is not WaterBlock &&
                         !block8.Collidable)
                     {
@@ -1488,9 +1488,9 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var cellContentsFast4 = _subsystemTerrain.Terrain.GetCellContentsFast(x, y - 1, z);
                     var cellContentsFast5 = _subsystemTerrain.Terrain.GetCellContentsFast(x, y, z);
                     var cellContentsFast6 = _subsystemTerrain.Terrain.GetCellContentsFast(x, y + 1, z);
-                    var block3 = BlocksManager.Blocks[cellContentsFast4];
-                    var block4 = BlocksManager.Blocks[cellContentsFast5];
-                    var block5 = BlocksManager.Blocks[cellContentsFast6];
+                    var block3 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast4];
+                    var block4 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast5];
+                    var block5 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast6];
                     if ((block3.Collidable || block3 is WaterBlock) && !block4.Collidable && block4 is not WaterBlock &&
                         !block5.Collidable)
                     {
@@ -1504,9 +1504,9 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                     var cellContentsFast = _subsystemTerrain.Terrain.GetCellContentsFast(x, y, z);
                     var cellContentsFast2 = _subsystemTerrain.Terrain.GetCellContentsFast(x, y + 1, z);
                     var cellContentsFast3 = _subsystemTerrain.Terrain.GetCellContentsFast(x, y + 2, z);
-                    var obj = BlocksManager.Blocks[cellContentsFast];
-                    var block = BlocksManager.Blocks[cellContentsFast2];
-                    var block2 = BlocksManager.Blocks[cellContentsFast3];
+                    var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast2];
+                    var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContentsFast3];
                     if (obj is WaterBlock && !block.Collidable)
                     {
                         return !block2.Collidable;

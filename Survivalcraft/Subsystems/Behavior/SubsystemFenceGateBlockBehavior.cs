@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
@@ -8,13 +9,13 @@ public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemElectricity _subsystemElectricity = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public bool OpenCloseGate(int x, int y, int z, bool open)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        if (BlocksManager.Blocks[num] is not FenceGateBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not FenceGateBlock)
         {
             return false;
         }
@@ -33,7 +34,7 @@ public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (BlocksManager.Blocks[num] is not FenceGateBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not FenceGateBlock)
         {
             return false;
         }

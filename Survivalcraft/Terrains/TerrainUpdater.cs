@@ -1393,7 +1393,7 @@ public class TerrainUpdater
                 {
                     var cellValueFast2 = chunk.GetCellValueFast(num5);
                     var num6 = Terrain.ExtractContents(cellValueFast2);
-                    if (BlocksManager.Blocks[num6].Transparent)
+                    if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num6].Transparent)
                     {
                         num2 = num4;
                         break;
@@ -1416,7 +1416,7 @@ public class TerrainUpdater
                         var num8 = Terrain.ExtractContents(cellValueFast3);
                         if (num8 != 0)
                         {
-                            var block = BlocksManager.Blocks[num8];
+                            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num8];
                             if (!block.Transparent || block.LightAttenuation >= num7)
                             {
                                 break;
@@ -1458,7 +1458,7 @@ public class TerrainUpdater
     /// </remarks>
     private void GenerateChunkLightSources(TerrainChunk chunk)
     {
-        var blocks = BlocksManager.Blocks;
+        var blocks = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks;
         for (var i = 0; i < 16; i++)
         {
             for (var j = 0; j < 16; j++)
@@ -1599,7 +1599,7 @@ public class TerrainUpdater
             for (var y = chunk.GetBottomHeightFast(x, z); y < (1 << TerrainChunk.HeightBits); y++)
             {
                 var cellValue = chunk.GetCellValueFast(cellIndex + y);
-                var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)];
                 if (!block.Transparent)
                 {
                     continue;
@@ -1644,7 +1644,7 @@ public class TerrainUpdater
         var index = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
         var cellValueFast = chunkAtCell.GetCellValueFast(index);
         var num = Terrain.ExtractContents(cellValueFast);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (!block.Transparent)
         {
             return;
@@ -1824,7 +1824,7 @@ public class TerrainUpdater
                         var num10 = Terrain.ExtractContents(cellValueFast);
                         if (num10 != 0)
                         {
-                            BlocksManager.Blocks[num10].GenerateTerrainVertices(_subsystemTerrain.BlockGeometryGenerator,
+                            CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num10].GenerateTerrainVertices(_subsystemTerrain.BlockGeometryGenerator,
                                 terrainGeometry[i], cellValueFast, num5, m, num6);
                         }
                     }

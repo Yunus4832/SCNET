@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemMatchBlockBehavior : SubsystemBlockBehavior
@@ -14,7 +15,7 @@ public class SubsystemMatchBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
-    public override int[] HandledBlocks => [108];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:match")];
 
     public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
     {

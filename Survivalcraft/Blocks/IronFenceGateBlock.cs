@@ -9,5 +9,4 @@ public class IronFenceGateBlock() : FenceGateBlock(
     new Color(80, 80, 80)
 )
 {
-    public const int Index = 194;
 }

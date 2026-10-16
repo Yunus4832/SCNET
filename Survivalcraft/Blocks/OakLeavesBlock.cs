@@ -8,8 +8,6 @@ public class OakLeavesBlock() : DeciduousLeavesBlock(
     2f
 )
 {
-    public const int Index = 12;
-
     public override int GetFaceTextureSlot(int face, int value)
     {
         var season = GetSeason(Terrain.ExtractData(value));

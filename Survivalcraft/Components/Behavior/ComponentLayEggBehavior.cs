@@ -67,7 +67,7 @@ public class ComponentLayEggBehavior : ComponentBehavior, IUpdateable
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
         _componentPathfinding = Entity.FindComponent<ComponentPathfinding>(true)!;
-        var eggBlock = (EggBlock)BlocksManager.Blocks[118];
+        var eggBlock = (EggBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[118];
         _layFrequency = valuesDictionary.GetValue<float>("LayFrequency");
         _eggType = eggBlock.GetEggTypeByCreatureTemplateName(Entity.ValuesDictionary.DatabaseObject.Name);
         stateMachine.AddState(

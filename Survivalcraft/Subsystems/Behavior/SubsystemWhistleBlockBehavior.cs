@@ -12,7 +12,7 @@ public class SubsystemWhistleBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemNoise _subsystemNoise = null!;
 
-    public override int[] HandledBlocks => [160];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:whistle")];
 
     public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
     {

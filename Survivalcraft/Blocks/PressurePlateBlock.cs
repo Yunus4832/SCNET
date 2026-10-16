@@ -4,17 +4,9 @@ namespace Game.Blocks;
 
 public class PressurePlateBlock : MountedElectricElementBlock
 {
-    public const int Index = 144;
-
     public readonly BlockMesh[] BlockMeshesByData = new BlockMesh[16];
 
     public readonly BoundingBox[][] CollisionBoxesByData = new BoundingBox[16][];
-
-    public readonly int[] CreativeValuesByMaterial =
-    [
-        Terrain.MakeBlockValue(144, 0, 0),
-        Terrain.MakeBlockValue(144, 0, 1)
-    ];
 
     public readonly string[] DisplayNamesByMaterial =
     [
@@ -91,7 +83,8 @@ public class PressurePlateBlock : MountedElectricElementBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        return CreativeValuesByMaterial;
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, 0);
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, 1);
     }
 
     public override BlockDebrisParticleSystem CreateDebrisParticleSystem(
@@ -133,7 +126,7 @@ public class PressurePlateBlock : MountedElectricElementBlock
         var material = GetMaterial(Terrain.ExtractData(oldValue));
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(144, 0, SetMaterial(0, material)),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetMaterial(0, material)),
             Count = 1
         });
         showDebris = true;

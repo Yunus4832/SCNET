@@ -18,7 +18,8 @@ dotnet build TerritoryStoneMod/TerritoryStoneMod.csproj
 
 ## 数据与行为
 
-- 方块运行索引为 264；与其他模组的索引冲突由现有注册目录检查。
+- 方块资源 ID 为 `scnet.territory:territory_stone`；运行索引由目录动态分配，
+  世界映射随存档保存。预览与世界实例分别持有编号，模组不声明固定索引。
 - 领地数据属于当前世界，保存于 `Project.xml` 的
   `ExtensionData/scnet.territory/territories`，不使用跨世界静态字典。
 - 服务端维护权威状态，客户端使用模组消息接收完整快照与增删改。

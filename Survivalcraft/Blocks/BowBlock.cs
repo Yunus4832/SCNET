@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class BowBlock : Block
 {
-    public const int Index = 191;
-
     public BlockMesh[] StandaloneBlockMeshes = new BlockMesh[16];
 
     public override void Initialize()
@@ -71,7 +70,7 @@ public class BowBlock : Block
             var matrix2 = Matrix.CreateRotationX(-(float)Math.PI / 2f) *
                           Matrix.CreateTranslation(0f, 0.4f * size, (-1f + 2f * num) * size) * matrix;
             var value2 = Terrain.MakeBlockValue(192, 0, ArrowBlock.SetArrowType(0, arrowType.Value));
-            BlocksManager.Blocks[192].DrawBlock(primitivesRenderer, value2, color, size, ref matrix2, environmentData);
+            Catalog.Blocks[192].DrawBlock(primitivesRenderer, value2, color, size, ref matrix2, environmentData);
         }
     }
 

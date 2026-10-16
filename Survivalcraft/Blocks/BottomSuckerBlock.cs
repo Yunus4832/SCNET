@@ -13,7 +13,7 @@ public abstract class BottomSuckerBlock : WaterBlock
         var cellValue = subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
         var num = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        var obj = BlocksManager.Blocks[num];
+        var obj = Catalog.Blocks[num];
         var face = Time.FrameIndex % 4;
         BlockPlacementData result;
         if (obj is WaterBlock)

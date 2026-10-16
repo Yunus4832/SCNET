@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class FallenLeavesBlock : CubeBlock
 {
-    public const int Index = 261;
-
     private const float _height = 0.0625f;
 
     private readonly BoundingBox[] _collisionBoxes = [new(new Vector3(0f, 0f, 0f), new Vector3(1f, 0.0625f, 1f))];
@@ -37,7 +36,7 @@ public class FallenLeavesBlock : CubeBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawCubeBlock(
+        Catalog.DrawCubeBlock(
             primitivesRenderer,
             value,
             new Vector3(size),

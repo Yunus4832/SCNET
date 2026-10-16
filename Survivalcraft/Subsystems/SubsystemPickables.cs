@@ -3,6 +3,7 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -85,7 +86,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             }
 
             var num3 = Terrain.ExtractContents(pickable.Value);
-            var block = BlocksManager.Blocks[num3];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3];
             var num4 = (float)(totalElapsedGameTime - pickable.CreationTime);
             if (!pickable.StuckMatrix.HasValue)
             {
@@ -161,7 +162,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 continue;
             }
 
-            var block = BlocksManager.Blocks[Terrain.ExtractContents(pickable.Value)];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(pickable.Value)];
             var num3 = _pickables.Count - PickablesToRemove.Count;
             var num4 = MathUtils.Lerp(300f, 90f, MathUtils.Saturate(num3 / 60f));
             var num5 = totalElapsedGameTime - pickable.CreationTime;
@@ -227,7 +228,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                     if (!pickable.StuckMatrix.HasValue)
                     {
                         var terrainRaycastResult = _subsystemTerrain.Raycast(position, vector, false, true,
-                            (value, _) => BlocksManager.Blocks[Terrain.ExtractContents(value)].Collidable);
+                            (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable);
                         if (terrainRaycastResult.HasValue)
                         {
                             var contents = Terrain.ExtractContents(_subsystemTerrain.Terrain.GetCellValue(
@@ -241,7 +242,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
                             if (_subsystemTerrain.Raycast(position, position, false, true,
                                     (value2, _) =>
-                                        BlocksManager.Blocks[Terrain.ExtractContents(value2)].Collidable)
+                                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value2)].Collidable)
                                 .HasValue)
                             {
                                 var num8 = Terrain.ToCell(position.X);
@@ -257,7 +258,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                                     {
                                         for (var l = -3; l <= 3; l++)
                                         {
-                                            if (BlocksManager.Blocks[
+                                            if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[
                                                     _subsystemTerrain.Terrain.GetCellContents(j + num8, k + num9, l + num10)]
                                                 .Collidable)
                                             {
@@ -332,7 +333,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                                       pickable.StuckMatrix.Value.Up * block.ProjectileTipOffset;
                         if (!_subsystemTerrain.Raycast(vector3, vector3, false, true,
                                 (value, _) =>
-                                    BlocksManager.Blocks[Terrain.ExtractContents(value)].Collidable).HasValue)
+                                    CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable).HasValue)
                         {
                             pickable.Position = pickable.StuckMatrix.Value.Translation;
                             pickable.Velocity = Vector3.Zero;
@@ -459,7 +460,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         {
             pickable.Velocity = velocity.Value;
         }
-        else if (Terrain.ExtractContents(value) == ExperienceBlock.Index)
+        else if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<ExperienceBlock>())
         {
             var vector = _random.Vector2(1.5f, 2f);
             pickable.Velocity = new Vector3(vector.X, 3f, vector.Y);

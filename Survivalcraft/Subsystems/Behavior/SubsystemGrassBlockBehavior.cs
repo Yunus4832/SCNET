@@ -15,7 +15,7 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
 
     private readonly Dictionary<Point3, int> _toUpdate = new();
 
-    public override int[] HandledBlocks => [8];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:grass")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -115,7 +115,7 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
 
     public override void OnExplosion(int value, int x, int y, int z, float damage)
     {
-        if (damage > BlocksManager.Blocks[8].ExplosionResilience * SubsystemExplosions.SharedRandom.Float(0f, 1f))
+        if (damage > CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[8].ExplosionResilience * SubsystemExplosions.SharedRandom.Float(0f, 1f))
         {
             SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(2, 0, 0));
         }
@@ -158,7 +158,7 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
     private bool KillsGrassIfOnTopOfIt(int value)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (block is not FluidBlock)
         {
             return !block.IsFaceTransparent(SubsystemTerrain, 5, value) && block.Collidable;

@@ -18,8 +18,6 @@ public class FireworksBlock : Block
         FlatTrails
     }
 
-    public const int Index = 215;
-
     public static readonly string[] HeadNames =
     [
         "HeadConeSmall",
@@ -177,7 +175,7 @@ public class FireworksBlock : Block
                 {
                     for (var shape = 0; shape < 8; shape = num)
                     {
-                        yield return Terrain.MakeBlockValue(215, 0,
+                        yield return Terrain.MakeBlockValue(BlockIndex, 0,
                             SetColor(SetAltitude(SetShape(SetFlickering(0, flickering != 0), (Shape)shape), altitude),
                                 color));
                         num = shape + 1;
@@ -209,7 +207,7 @@ public class FireworksBlock : Block
                         var craftingRecipe = new CraftingRecipe
                         {
                             ResultCount = 20,
-                            ResultValue = Terrain.MakeBlockValue(215, 0,
+                            ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
                                 SetColor(
                                     SetAltitude(SetShape(SetFlickering(0, flickering != 0), (Shape)shape), altitude),
                                     color)),

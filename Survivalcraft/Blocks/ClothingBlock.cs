@@ -4,12 +4,12 @@ using Engine.Graphics;
 
 using EntitySystem.XmlUtilities;
 
+using Game.Modding.Blocks;
+
 namespace Game.Blocks;
 
 public class ClothingBlock : Block
 {
-    public const int Index = 203;
-
     private static readonly Matrix[] _slotTransforms =
     [
         Matrix.CreateTranslation(0f, -1.5f, 0f) * Matrix.CreateScale(2.7f),
@@ -20,7 +20,7 @@ public class ClothingBlock : Block
 
     private DynamicArray<ClothingData?> _clothingData = [];
 
-    private static XElement? _initializationData;
+    private XElement? _initializationData;
 
     private BlockMesh _innerMesh = null!;
 
@@ -132,7 +132,7 @@ public class ClothingBlock : Block
         base.Initialize();
     }
 
-    internal static void SetInitializationData(XElement data)
+    internal void SetInitializationData(XElement data)
     {
         _initializationData = new XElement(data);
     }
@@ -217,7 +217,7 @@ public class ClothingBlock : Block
             while (color < colorsCount)
             {
                 var data = SetClothingColor(SetClothingIndex(0, clothingData.Index), color);
-                yield return Terrain.MakeBlockValue(203, 0, data);
+                yield return Terrain.MakeBlockValue(BlockIndex, 0, data);
                 var num = color + 1;
                 color = num;
             }
@@ -240,16 +240,16 @@ public class ClothingBlock : Block
             var num3 = 0;
             foreach (var item in list)
             {
-                CraftingRecipesManager.DecodeIngredient(item, out var craftingId, out var data);
-                if (craftingId == BlocksManager.Blocks[203].CraftingId)
+                CraftingRecipeCatalog.DecodeIngredient(item, out var craftingId, out var data);
+                if (craftingId == Catalog.Blocks[BlockIndex].CraftingId)
                 {
-                    num3 = Terrain.MakeBlockValue(203, 0, data ?? 0);
+                    num3 = Terrain.MakeBlockValue(BlockIndex, 0, data ?? 0);
                 }
-                else if (craftingId == BlocksManager.Blocks[129].CraftingId)
+                else if (craftingId == Catalog.Blocks[129].CraftingId)
                 {
                     num = Terrain.MakeBlockValue(129, 0, data ?? 0);
                 }
-                else if (craftingId == BlocksManager.Blocks[128].CraftingId)
+                else if (craftingId == Catalog.Blocks[128].CraftingId)
                 {
                     num2 = Terrain.MakeBlockValue(128, 0, data ?? 0);
                 }
@@ -261,11 +261,11 @@ public class ClothingBlock : Block
                 var clothingColor = GetClothingColor(data2);
                 var clothingIndex = GetClothingIndex(data2);
                 var canBeDyed = GetClothingData(data2).CanBeDyed;
-                var damage = BlocksManager.Blocks[203].GetDamage(num3);
+                var damage = Catalog.Blocks[BlockIndex].GetDamage(num3);
                 var color = PaintBucketBlock.GetColor(Terrain.ExtractData(num));
-                var damage2 = BlocksManager.Blocks[129].GetDamage(num);
-                var block = BlocksManager.Blocks[129];
-                var block2 = BlocksManager.Blocks[203];
+                var damage2 = Catalog.Blocks[129].GetDamage(num);
+                var block = Catalog.Blocks[129];
+                var block2 = Catalog.Blocks[BlockIndex];
                 if (!canBeDyed)
                 {
                     return null;
@@ -279,10 +279,10 @@ public class ClothingBlock : Block
                         ResultCount = 1,
                         ResultValue =
                             block2.SetDamage(
-                                Terrain.MakeBlockValue(203, 0,
+                                Terrain.MakeBlockValue(BlockIndex, 0,
                                     SetClothingIndex(SetClothingColor(0, num4), clothingIndex)), damage),
                         RemainsCount = 1,
-                        RemainsValue = BlocksManager.DamageItem(Terrain.MakeBlockValue(129, 0, color),
+                        RemainsValue = Catalog.DamageItem(Terrain.MakeBlockValue(129, 0, color),
                             damage2 + MathUtils.Max(block.Durability / 4, 1)),
                         RequiredHeatLevel = 1f,
                         Description =
@@ -298,10 +298,10 @@ public class ClothingBlock : Block
                 var clothingColor2 = GetClothingColor(data3);
                 var clothingIndex2 = GetClothingIndex(data3);
                 var canBeDyed2 = GetClothingData(data3).CanBeDyed;
-                var damage3 = BlocksManager.Blocks[203].GetDamage(num3);
-                var damage4 = BlocksManager.Blocks[128].GetDamage(num2);
-                var block3 = BlocksManager.Blocks[128];
-                var block4 = BlocksManager.Blocks[203];
+                var damage3 = Catalog.Blocks[BlockIndex].GetDamage(num3);
+                var damage4 = Catalog.Blocks[128].GetDamage(num2);
+                var block3 = Catalog.Blocks[128];
+                var block4 = Catalog.Blocks[BlockIndex];
                 if (!canBeDyed2)
                 {
                     return null;
@@ -314,10 +314,10 @@ public class ClothingBlock : Block
                         ResultCount = 1,
                         ResultValue =
                             block4.SetDamage(
-                                Terrain.MakeBlockValue(203, 0,
+                                Terrain.MakeBlockValue(BlockIndex, 0,
                                     SetClothingIndex(SetClothingColor(0, 0), clothingIndex2)), damage3),
                         RemainsCount = 1,
-                        RemainsValue = BlocksManager.DamageItem(Terrain.MakeBlockValue(128, 0, 0),
+                        RemainsValue = Catalog.DamageItem(Terrain.MakeBlockValue(128, 0, 0),
                             damage4 + MathUtils.Max(block3.Durability / 4, 1)),
                         RequiredHeatLevel = 1f,
                         Description = LanguageManager.Get("BlocksManager", "Not Dyed") + " " +

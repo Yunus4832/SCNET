@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class GrassBlock : CubeBlock
 {
-    public const int Index = 8;
-
     public override int GetFaceTextureSlot(int face, int value)
     {
         return face switch
@@ -29,7 +28,7 @@ public class GrassBlock : CubeBlock
             environmentData.Temperature,
             environmentData.Humidity
         );
-        BlocksManager.DrawCubeBlock(
+        Catalog.DrawCubeBlock(
             primitivesRenderer,
             value,
             new Vector3(size),

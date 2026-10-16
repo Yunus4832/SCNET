@@ -376,8 +376,8 @@ public class GameMenuDialog : Dialog
             ScreensManager.SwitchScreen("Play");
         }
 
+        CommonLib.Net.StopImmediate();
         GameManager.DisposeProject();
-        CommonLib.Net.Stop();
     }
 
     public static string FormatDistance(double value)

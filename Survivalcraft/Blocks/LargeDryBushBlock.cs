@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class LargeDryBushBlock : CrossBlock
 {
-    public const int Index = 99;
-
     public override void GetDropValues(
         SubsystemTerrain subsystemTerrain,
         int oldValue,

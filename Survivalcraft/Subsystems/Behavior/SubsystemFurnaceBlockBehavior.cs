@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -14,7 +15,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private SubsystemParticles _subsystemParticles = null!;
 
-    public override int[] HandledBlocks => [64, 65];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:furnace"), ResourceId.Parse("game:lit_furnace")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -54,14 +55,14 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnBlockAdded(int value, int oldValue, int x, int y, int z, ComponentMiner miner)
     {
-        if (Terrain.ExtractContents(oldValue) != FurnaceBlock.Index &&
-            Terrain.ExtractContents(oldValue) != LitFurnaceBlock.Index)
+        if (Terrain.ExtractContents(oldValue) != BuiltInBlockRegistry.GetIndex<FurnaceBlock>() &&
+            Terrain.ExtractContents(oldValue) != BuiltInBlockRegistry.GetIndex<LitFurnaceBlock>())
         {
             _subsystemBlockEntities.CreateBlockEntity("Furnace", new Point3(x, y, z), miner);
         }
 
         var content = Terrain.ExtractContents(value);
-        if (content == LitFurnaceBlock.Index)
+        if (content == BuiltInBlockRegistry.GetIndex<LitFurnaceBlock>())
         {
             AddFire(value, x, y, z);
         }
@@ -69,7 +70,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnBlockAdded(int value, int oldValue, int x, int y, int z)
     {
-        if (Terrain.ExtractContents(value) == LitFurnaceBlock.Index)
+        if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<LitFurnaceBlock>())
         {
             AddFire(value, x, y, z);
         }
@@ -77,7 +78,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnBlockRemoved(int value, int newValue, int x, int y, int z)
     {
-        if (Terrain.ExtractContents(value) == LitFurnaceBlock.Index)
+        if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<LitFurnaceBlock>())
         {
             RemoveFire(x, y, z);
         }
@@ -87,8 +88,8 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        if (Terrain.ExtractContents(newValue) == FurnaceBlock.Index ||
-            Terrain.ExtractContents(newValue) == LitFurnaceBlock.Index)
+        if (Terrain.ExtractContents(newValue) == BuiltInBlockRegistry.GetIndex<FurnaceBlock>() ||
+            Terrain.ExtractContents(newValue) == BuiltInBlockRegistry.GetIndex<LitFurnaceBlock>())
         {
             return;
         }
@@ -111,7 +112,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnBlockGenerated(int value, int x, int y, int z, bool isLoaded)
     {
-        if (Terrain.ExtractContents(value) == LitFurnaceBlock.Index)
+        if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<LitFurnaceBlock>())
         {
             AddFire(value, x, y, z);
         }

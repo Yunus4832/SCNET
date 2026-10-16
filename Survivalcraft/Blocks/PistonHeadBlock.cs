@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class PistonHeadBlock : Block
 {
-    public const int Index = 238;
-
     public readonly BlockMesh[] BlockMeshesByData = new BlockMesh[48];
 
     public override void Initialize()

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class GrassTrapBlock : Block
 {
-    public const int Index = 87;
-
     public readonly BlockMesh BlockMesh = new();
 
     public readonly BoundingBox[] CollisionBoxes = new BoundingBox[1];

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class StickBlock : Block
 {
-    public const int Index = 23;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

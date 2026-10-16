@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class SeaUrchinBlock : BottomSuckerBlock
 {
-    public new const int Index = 226;
-
     public static Color[] Colors =
     [
         new(20, 20, 20),

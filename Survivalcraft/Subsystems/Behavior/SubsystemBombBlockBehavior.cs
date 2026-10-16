@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
@@ -16,7 +17,7 @@ public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

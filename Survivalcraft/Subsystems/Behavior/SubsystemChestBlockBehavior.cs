@@ -12,7 +12,7 @@ public class SubsystemChestBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemBlockEntities _subsystemBlockEntities = null!;
 
-    public override int[] HandledBlocks => [45];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:chest")];
 
     public override void Load(ValuesDictionary valuesDictionary)
     {

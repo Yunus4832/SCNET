@@ -25,7 +25,7 @@ public static class TerritoryProtection
             if (territory != null)
             {
                 var player = digging.Miner.ComponentPlayer?.PlayerData;
-                var ownerOnly = Terrain.ExtractContents(digging.CellValue) == TerritoryBlock.Index &&
+                var ownerOnly = Terrain.ExtractContents(digging.CellValue) == CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex &&
                                 !AllowsOwner(territory, player);
                 if (!Allows(territory, player, true) || ownerOnly)
                 {
@@ -54,7 +54,7 @@ public static class TerritoryProtection
                 return;
             }
 
-            if (Terrain.ExtractContents(placing.PlacementData.Value) != TerritoryBlock.Index)
+            if (Terrain.ExtractContents(placing.PlacementData.Value) != CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex)
             {
                 return;
             }
@@ -77,7 +77,7 @@ public static class TerritoryProtection
         });
         context.BlockBehaviors.OnBlockAdded(added =>
         {
-            if (CommonLib.WorkType == WorkType.Client || Terrain.ExtractContents(added.Value) != TerritoryBlock.Index)
+            if (CommonLib.WorkType == WorkType.Client || Terrain.ExtractContents(added.Value) != CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex)
             {
                 return;
             }
@@ -92,7 +92,7 @@ public static class TerritoryProtection
         });
         context.BlockBehaviors.OnBlockRemoved(removed =>
         {
-            if (CommonLib.WorkType != WorkType.Client && Terrain.ExtractContents(removed.Value) == TerritoryBlock.Index)
+            if (CommonLib.WorkType != WorkType.Client && Terrain.ExtractContents(removed.Value) == CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex)
             {
                 var subsystem = removed.Terrain.Project.FindSubsystem<TerritorySubsystem>();
                 var territory = subsystem?.Store.Find(removed.X, removed.Z);
@@ -127,7 +127,7 @@ public static class TerritoryProtection
             var player = changing.Miner?.ComponentPlayer?.PlayerData;
             changing.Cancel |= changing.Miner != null && !Allows(territory, player, true) ||
                 territory.RestrictEntry && territory.IsBorder(changing.X, changing.Z) && !Allows(territory, player, false);
-            changing.Cancel |= changing.Miner != null && Terrain.ExtractContents(changing.OldValue) == TerritoryBlock.Index &&
+            changing.Cancel |= changing.Miner != null && Terrain.ExtractContents(changing.OldValue) == CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex &&
                 !AllowsOwner(territory, player);
         });
         context.Gameplay.OnCellIgniting(igniting =>

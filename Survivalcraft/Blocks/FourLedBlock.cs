@@ -6,8 +6,6 @@ namespace Game.Blocks;
 
 public class FourLedBlock : MountedElectricElementBlock
 {
-    public const int Index = 182;
-
     public BlockMesh[] BlockMeshesByFace = new BlockMesh[6];
 
     public BoundingBox[][] CollisionBoxesByFace = new BoundingBox[6][];
@@ -49,7 +47,7 @@ public class FourLedBlock : MountedElectricElementBlock
             var craftingRecipe = new CraftingRecipe
             {
                 ResultCount = 4,
-                ResultValue = Terrain.MakeBlockValue(182, 0, SetColor(0, color)),
+                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
                 RemainsCount = 1,
                 RemainsValue = Terrain.MakeBlockValue(90),
                 RequiredHeatLevel = 0f,
@@ -95,7 +93,7 @@ public class FourLedBlock : MountedElectricElementBlock
         var i = 0;
         while (i < 8)
         {
-            yield return Terrain.MakeBlockValue(182, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -128,7 +126,7 @@ public class FourLedBlock : MountedElectricElementBlock
         var color = GetColor(Terrain.ExtractData(oldValue));
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(182, 0, SetColor(0, color)),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, color)),
             Count = 1
         });
         showDebris = true;

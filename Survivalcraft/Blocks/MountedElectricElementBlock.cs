@@ -27,7 +27,7 @@ public abstract class MountedElectricElementBlock : Block, IElectricElementBlock
     public override bool IsMovableByPiston(int value, int pistonFace, int y, out bool isEnd)
     {
         isEnd = true;
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
+        var block = Catalog.Blocks[Terrain.ExtractContents(value)];
         return ((MountedElectricElementBlock)block).GetFace(value) == pistonFace;
     }
 }

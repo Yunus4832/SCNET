@@ -5,6 +5,8 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
 
+using Game.Modding.Blocks;
+
 namespace Game.Managers;
 
 public static class WorldsManager
@@ -455,6 +457,7 @@ public static class WorldsManager
         var projectNode = new XElement("Project");
         XmlUtils.SetAttributeValue(projectNode, "Version", WorldVersions.ProjectFormatVersion);
         projectData.Save(projectNode);
+        projectNode.Add(BlockIndexMapping.Empty.ToXml());
         using (var stream = Storage.OpenFile(Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"),
                    OpenFileMode.Create))
         {

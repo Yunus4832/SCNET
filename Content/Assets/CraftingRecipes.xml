@@ -1,232 +1,232 @@
 <Recipes>
     <Smelting>
-        <Recipe Result="CoalChunkBlock" ResultCount="1" RequiredHeatLevel="1" a="wood" Description="[0]">
+        <Recipe Result="game:coal_chunk" ResultCount="1" RequiredHeatLevel="1" a="wood" Description="[0]">
             "aa"
         </Recipe>
-        <Recipe Result="GraniteBlock" ResultCount="1" RequiredHeatLevel="1" a="cobblestone" Description="[0]">
+        <Recipe Result="game:granite" ResultCount="1" RequiredHeatLevel="1" a="cobblestone" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="GlassBlock" ResultCount="1" RequiredHeatLevel="1" a="sand" Description="[0]">
+        <Recipe Result="game:glass" ResultCount="1" RequiredHeatLevel="1" a="sand" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="MarbleBlock" ResultCount="1" RequiredHeatLevel="1" a="limestone" b="sand" Description="[0]">
+        <Recipe Result="game:marble" ResultCount="1" RequiredHeatLevel="1" a="limestone" b="sand" Description="[0]">
             "ab"
         </Recipe>
-        <Recipe Result="IronIngotBlock" ResultCount="1" RequiredHeatLevel="2" a="ironorechunk" Description="[0]">
+        <Recipe Result="game:iron_ingot" ResultCount="1" RequiredHeatLevel="2" a="ironorechunk" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="CopperIngotBlock" ResultCount="1" RequiredHeatLevel="1" a="malachitechunk" Description="[0]">
+        <Recipe Result="game:copper_ingot" ResultCount="1" RequiredHeatLevel="1" a="malachitechunk" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="GermaniumChunkBlock" ResultCount="1" RequiredHeatLevel="1" a="germaniumorechunk"
+        <Recipe Result="game:germanium_chunk" ResultCount="1" RequiredHeatLevel="1" a="germaniumorechunk"
                 Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="BrickBlock" ResultCount="2" RequiredHeatLevel="1" a="clay" Description="[0]">
+        <Recipe Result="game:brick" ResultCount="2" RequiredHeatLevel="1" a="clay" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="RodBlock" ResultCount="4" RequiredHeatLevel="2" a="ironingot" Description="[0]">
+        <Recipe Result="game:rod" ResultCount="4" RequiredHeatLevel="2" a="ironingot" Description="[0]">
             "aa"
         </Recipe>
     </Smelting>
     <Pigments>
-        <Recipe Result="PigmentBlock" ResultCount="2" RequiredHeatLevel="1" a="limestone" Description="[0]">
+        <Recipe Result="game:pigment" ResultCount="2" RequiredHeatLevel="1" a="limestone" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="PaintBucketBlock" ResultCount="1" RequiredHeatLevel="1" a="waterbucket" b="pigment"
+        <Recipe Result="game:paint_bucket" ResultCount="1" RequiredHeatLevel="1" a="waterbucket" b="pigment"
                 Description="[0]">
             "ab"
         </Recipe>
-        <Recipe Result="PaintStripperBucketBlock" ResultCount="1" RequiredHeatLevel="1" a="waterbucket"
+        <Recipe Result="game:paint_stripper_bucket" ResultCount="1" RequiredHeatLevel="1" a="waterbucket"
                 b="saltpeterchunk" Description="[0]">
             "ab"
         </Recipe>
     </Pigments>
     <Food>
-        <Recipe Result="FlourBlock" ResultCount="1" RequiredHeatLevel="0" a="seeds:5" Description="[0]">
+        <Recipe Result="game:flour" ResultCount="1" RequiredHeatLevel="0" a="seeds:5" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="DoughBlock:0" ResultCount="1" Remains="EmptyBucketBlock" RemainsCount="1" RequiredHeatLevel="0"
+        <Recipe Result="game:dough@0" ResultCount="1" Remains="game:empty_bucket" RemainsCount="1" RequiredHeatLevel="0"
                 a="flour" b="waterbucket" Description="[0]">
             "ab"
         </Recipe>
-        <Recipe Result="BreadBlock" ResultCount="1" RequiredHeatLevel="1" a="dough" Description="[0]">
+        <Recipe Result="game:bread" ResultCount="1" RequiredHeatLevel="1" a="dough" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="CookedBirdBlock" ResultCount="1" RequiredHeatLevel="1" a="rawbird" Description="[0]">
+        <Recipe Result="game:cooked_bird" ResultCount="1" RequiredHeatLevel="1" a="rawbird" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="CookedMeatBlock" ResultCount="1" RequiredHeatLevel="1" a="rawmeat" Description="[0]">
+        <Recipe Result="game:cooked_meat" ResultCount="1" RequiredHeatLevel="1" a="rawmeat" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="CookedFishBlock" ResultCount="1" RequiredHeatLevel="1" a="rawfish" Description="[0]">
+        <Recipe Result="game:cooked_fish" ResultCount="1" RequiredHeatLevel="1" a="rawfish" Description="[0]">
             "a"
         </Recipe>
     </Food>
     <Materials>
-        <Recipe Result="PlanksBlock" ResultCount="4" RequiredHeatLevel="0" a="wood" Description="[0]">
+        <Recipe Result="game:planks" ResultCount="4" RequiredHeatLevel="0" a="wood" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="StickBlock" ResultCount="4" RequiredHeatLevel="0" a="planks" Description="[0]">
-            "a"
-            "a"
-        </Recipe>
-        <Recipe Result="StringBlock" ResultCount="1" RequiredHeatLevel="0" a="ivy" Description="[0]">
-            "a"
+        <Recipe Result="game:stick" ResultCount="4" RequiredHeatLevel="0" a="planks" Description="[0]">
             "a"
             "a"
         </Recipe>
-        <Recipe Result="StringBlock" ResultCount="3" RequiredHeatLevel="0" a="cottonwad" Description="[1]">
+        <Recipe Result="game:string" ResultCount="1" RequiredHeatLevel="0" a="ivy" Description="[0]">
             "a"
             "a"
             "a"
         </Recipe>
-        <Recipe Result="CanvasBlock" ResultCount="3" RequiredHeatLevel="0" a="cottonwad" Description="[0]">
+        <Recipe Result="game:string" ResultCount="3" RequiredHeatLevel="0" a="cottonwad" Description="[1]">
+            "a"
+            "a"
+            "a"
+        </Recipe>
+        <Recipe Result="game:canvas" ResultCount="3" RequiredHeatLevel="0" a="cottonwad" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="CarpetBlock" ResultCount="6" RequiredHeatLevel="0" a="canvas" Description="[0]">
+        <Recipe Result="game:carpet" ResultCount="6" RequiredHeatLevel="0" a="canvas" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="BricksBlock" ResultCount="2" RequiredHeatLevel="0" a="brick" Description="[0]">
+        <Recipe Result="game:bricks" ResultCount="2" RequiredHeatLevel="0" a="brick" Description="[0]">
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="StoneBrickBlock" ResultCount="4" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
+        <Recipe Result="game:stone_brick" ResultCount="4" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="FramedGlassBlock" ResultCount="1" RequiredHeatLevel="0" a="glass" b="stick" Description="[0]">
+        <Recipe Result="game:framed_glass" ResultCount="1" RequiredHeatLevel="0" a="glass" b="stick" Description="[0]">
             "bab"
         </Recipe>
-        <Recipe Result="WindowBlock" ResultCount="1" RequiredHeatLevel="0" a="glass" b="stick" Description="[0]">
+        <Recipe Result="game:window" ResultCount="1" RequiredHeatLevel="0" a="glass" b="stick" Description="[0]">
             " b"
             "bab"
             " b"
         </Recipe>
-        <Recipe Result="IronBlock" ResultCount="1" RequiredHeatLevel="0" a="ironingot" Description="[0]">
+        <Recipe Result="game:iron" ResultCount="1" RequiredHeatLevel="0" a="ironingot" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="CopperBlock" ResultCount="1" RequiredHeatLevel="0" a="copperingot" Description="[0]">
+        <Recipe Result="game:copper" ResultCount="1" RequiredHeatLevel="0" a="copperingot" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="SemiconductorBlock" ResultCount="1" RequiredHeatLevel="0" a="germaniumchunk" Description="[0]">
+        <Recipe Result="game:semiconductor" ResultCount="1" RequiredHeatLevel="0" a="germaniumchunk" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="MalachiteBlock" ResultCount="1" RequiredHeatLevel="0" a="malachitechunk" Description="[0]">
+        <Recipe Result="game:malachite" ResultCount="1" RequiredHeatLevel="0" a="malachitechunk" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="DiamondBlock" ResultCount="1" RequiredHeatLevel="0" a="diamond" Description="[0]">
+        <Recipe Result="game:diamond" ResultCount="1" RequiredHeatLevel="0" a="diamond" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="CoalBlock" ResultCount="1" RequiredHeatLevel="0" a="coalchunk" Description="[0]">
+        <Recipe Result="game:coal" ResultCount="1" RequiredHeatLevel="0" a="coalchunk" Description="[0]">
             "aaa"
             "aaa"
             "aaa"
         </Recipe>
     </Materials>
     <Dismantling>
-        <Recipe Result="IronIngotBlock" ResultCount="9" RequiredHeatLevel="0" a="ironblock" Description="[1]">
+        <Recipe Result="game:iron_ingot" ResultCount="9" RequiredHeatLevel="0" a="ironblock" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="CopperIngotBlock" ResultCount="9" RequiredHeatLevel="0" a="copperblock" Description="[1]">
+        <Recipe Result="game:copper_ingot" ResultCount="9" RequiredHeatLevel="0" a="copperblock" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="MalachiteChunkBlock" ResultCount="9" RequiredHeatLevel="0" a="malachiteblock" Description="[0]">
+        <Recipe Result="game:malachite_chunk" ResultCount="9" RequiredHeatLevel="0" a="malachiteblock" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="DiamondChunkBlock" ResultCount="9" RequiredHeatLevel="0" a="diamondblock" Description="[0]">
+        <Recipe Result="game:diamond_chunk" ResultCount="9" RequiredHeatLevel="0" a="diamondblock" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="CoalChunkBlock" ResultCount="9" RequiredHeatLevel="0" a="coalblock" Description="[1]">
+        <Recipe Result="game:coal_chunk" ResultCount="9" RequiredHeatLevel="0" a="coalblock" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="PlanksBlock" ResultCount="1" RequiredHeatLevel="0" a="wickerlamp" Description="[1]">
+        <Recipe Result="game:planks" ResultCount="1" RequiredHeatLevel="0" a="wickerlamp" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="BrickBlock" ResultCount="2" RequiredHeatLevel="0" a="brickblock" Description="[1]">
+        <Recipe Result="game:brick" ResultCount="2" RequiredHeatLevel="0" a="brickblock" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="BrickBlock" ResultCount="2" RequiredHeatLevel="0" a="brickstairs" Description="[2]">
+        <Recipe Result="game:brick" ResultCount="2" RequiredHeatLevel="0" a="brickstairs" Description="[2]">
             "a"
         </Recipe>
-        <Recipe Result="BrickBlock" ResultCount="1" RequiredHeatLevel="0" a="brickslab" Description="[3]">
+        <Recipe Result="game:brick" ResultCount="1" RequiredHeatLevel="0" a="brickslab" Description="[3]">
             "a"
         </Recipe>
-        <Recipe Result="EmptyBucketBlock" ResultCount="1" RequiredHeatLevel="0" a="waterbucket" Description="[1]">
+        <Recipe Result="game:empty_bucket" ResultCount="1" RequiredHeatLevel="0" a="waterbucket" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="EmptyBucketBlock" ResultCount="1" RequiredHeatLevel="0" a="paintstripperbucket"
+        <Recipe Result="game:empty_bucket" ResultCount="1" RequiredHeatLevel="0" a="paintstripperbucket"
                 Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="EmptyBucketBlock" ResultCount="1" RequiredHeatLevel="0" a="paintbucket" Description="[1]">
+        <Recipe Result="game:empty_bucket" ResultCount="1" RequiredHeatLevel="0" a="paintbucket" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="EmptyBucketBlock" ResultCount="1" RequiredHeatLevel="0" a="milkbucket" Description="[1]">
+        <Recipe Result="game:empty_bucket" ResultCount="1" RequiredHeatLevel="0" a="milkbucket" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="EmptyBucketBlock" ResultCount="1" RequiredHeatLevel="0" a="rottenmilkbucket" Description="[1]">
+        <Recipe Result="game:empty_bucket" ResultCount="1" RequiredHeatLevel="0" a="rottenmilkbucket" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="EmptyBucketBlock" ResultCount="1" RequiredHeatLevel="0" a="pumpkinsoupbucket" Description="[1]">
+        <Recipe Result="game:empty_bucket" ResultCount="1" RequiredHeatLevel="0" a="pumpkinsoupbucket" Description="[1]">
             "a"
         </Recipe>
-        <Recipe Result="EmptyBucketBlock" ResultCount="1" RequiredHeatLevel="0" a="rottenpumpkinsoupbucket"
+        <Recipe Result="game:empty_bucket" ResultCount="1" RequiredHeatLevel="0" a="rottenpumpkinsoupbucket"
                 Description="[1]">
             "a"
         </Recipe>
     </Dismantling>
     <Plants>
-        <Recipe Result="SaplingBlock" ResultCount="1" RequiredHeatLevel="0" a="oakleaves" Description="[0]">
+        <Recipe Result="game:sapling" ResultCount="1" RequiredHeatLevel="0" a="oakleaves" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SaplingBlock:1" ResultCount="1" RequiredHeatLevel="0" a="birchleaves" Description="[0]">
+        <Recipe Result="game:sapling@1" ResultCount="1" RequiredHeatLevel="0" a="birchleaves" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SaplingBlock:2" ResultCount="1" RequiredHeatLevel="0" a="spruceleaves" Description="[0]">
+        <Recipe Result="game:sapling@2" ResultCount="1" RequiredHeatLevel="0" a="spruceleaves" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SaplingBlock:3" ResultCount="1" RequiredHeatLevel="0" a="tallspruceleaves" Description="[0]">
+        <Recipe Result="game:sapling@3" ResultCount="1" RequiredHeatLevel="0" a="tallspruceleaves" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SaplingBlock:4" ResultCount="1" RequiredHeatLevel="0" a="mimosaleaves" Description="[0]">
+        <Recipe Result="game:sapling@4" ResultCount="1" RequiredHeatLevel="0" a="mimosaleaves" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SaplingBlock:5" ResultCount="1" RequiredHeatLevel="0" a="poplarleaves" Description="[0]">
+        <Recipe Result="game:sapling@5" ResultCount="1" RequiredHeatLevel="0" a="poplarleaves" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SeedsBlock:0" ResultCount="2" RequiredHeatLevel="0" a="tallgrass" Description="[0]">
+        <Recipe Result="game:seeds@0" ResultCount="2" RequiredHeatLevel="0" a="tallgrass" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SeedsBlock:1" ResultCount="4" RequiredHeatLevel="0" a="redflower" Description="[0]">
+        <Recipe Result="game:seeds@1" ResultCount="4" RequiredHeatLevel="0" a="redflower" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SeedsBlock:2" ResultCount="3" RequiredHeatLevel="0" a="purpleflower" Description="[0]">
+        <Recipe Result="game:seeds@2" ResultCount="3" RequiredHeatLevel="0" a="purpleflower" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SeedsBlock:3" ResultCount="5" RequiredHeatLevel="0" a="whiteflower" Description="[0]">
+        <Recipe Result="game:seeds@3" ResultCount="5" RequiredHeatLevel="0" a="whiteflower" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SeedsBlock:7" ResultCount="3" RequiredHeatLevel="0" a="pumpkin:8" Description="[0]">
+        <Recipe Result="game:seeds@7" ResultCount="3" RequiredHeatLevel="0" a="pumpkin:8" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="SeedsBlock:7" ResultCount="3" RequiredHeatLevel="0" a="pumpkin:24" Description="[1]">
+        <Recipe Result="game:seeds@7" ResultCount="3" RequiredHeatLevel="0" a="pumpkin:24" Description="[1]">
             "a"
         </Recipe>
     </Plants>
@@ -246,42 +246,42 @@
             "ba"
             " a"
         </Recipe>
-        <Recipe Result="WoodenRakeBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="planks" Description="[0]">
+        <Recipe Result="game:wooden_rake" ResultCount="1" RequiredHeatLevel="0" a="stick" b="planks" Description="[0]">
             "b b"
             " a"
             " a"
         </Recipe>
     </WoodenTools>
     <StoneTools>
-        <Recipe Result="StoneAxeBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
+        <Recipe Result="game:stone_axe" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
                 Description="[0]">
             "b"
             "a"
             "a"
         </Recipe>
-        <Recipe Result="StoneAxeBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk" Description="[0]">
+        <Recipe Result="game:stone_axe" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk" Description="[0]">
             "b"
             "a"
             "a"
         </Recipe>
-        <Recipe Result="StoneAxeBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
+        <Recipe Result="game:stone_axe" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
                 Description="[0]">
             "bbb"
             " a"
             " a"
         </Recipe>
-        <Recipe Result="StoneAxeBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk" Description="[0]">
+        <Recipe Result="game:stone_axe" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk" Description="[0]">
             "bbb"
             " a"
             " a"
         </Recipe>
-        <Recipe Result="StoneAxeBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
+        <Recipe Result="game:stone_axe" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
                 Description="[0]">
             "bb"
             "ba"
             " a"
         </Recipe>
-        <Recipe Result="StoneAxeBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk" Description="[0]">
+        <Recipe Result="game:stone_axe" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk" Description="[0]">
             "bb"
             "ba"
             " a"
@@ -294,25 +294,25 @@
         </Recipe>
     </StoneTools>
     <CopperTools>
-        <Recipe Result="CopperShovelBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
+        <Recipe Result="game:copper_shovel" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
                 b="copperingot" Description="[0]">
             "b"
             "a"
             "a"
         </Recipe>
-        <Recipe Result="CopperPickaxeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
+        <Recipe Result="game:copper_pickaxe" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
                 b="copperingot" Description="[0]">
             "bbb"
             " a"
             " a"
         </Recipe>
-        <Recipe Result="CopperAxeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
+        <Recipe Result="game:copper_axe" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
                 b="copperingot" Description="[0]">
             "bb"
             "ba"
             " a"
         </Recipe>
-        <Recipe Result="CopperRakeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
+        <Recipe Result="game:copper_rake" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
                 b="copperingot" Description="[0]">
             "b b"
             " a"
@@ -320,31 +320,31 @@
         </Recipe>
     </CopperTools>
     <IronTools>
-        <Recipe Result="IronShovelBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
+        <Recipe Result="game:iron_shovel" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
                 b="ironingot" Description="[0]">
             "b"
             "a"
             "a"
         </Recipe>
-        <Recipe Result="IronPickaxeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
+        <Recipe Result="game:iron_pickaxe" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
                 b="ironingot" Description="[0]">
             "bbb"
             " a"
             " a"
         </Recipe>
-        <Recipe Result="IronAxeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
+        <Recipe Result="game:iron_axe" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
                 b="ironingot" Description="[0]">
             "bb"
             "ba"
             " a"
         </Recipe>
-        <Recipe Result="IronRakeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
+        <Recipe Result="game:iron_rake" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
                 b="ironingot" Description="[0]">
             "b b"
             " a"
             " a"
         </Recipe>
-        <Recipe Result="IronHammerBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
+        <Recipe Result="game:iron_hammer" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
                 b="ironingot" Description="[0]">
             "bbb"
             "bab"
@@ -352,52 +352,52 @@
         </Recipe>
     </IronTools>
     <DiamondTools>
-        <Recipe Result="DiamondShovelBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironshovel"
+        <Recipe Result="game:diamond_shovel" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironshovel"
                 b="diamond" Description="[0]">
             " b"
             "bab"
         </Recipe>
-        <Recipe Result="DiamondPickaxeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4"
+        <Recipe Result="game:diamond_pickaxe" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4"
                 a="ironpickaxe" b="diamond" Description="[0]">
             " b"
             "bab"
         </Recipe>
-        <Recipe Result="DiamondAxeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironaxe"
+        <Recipe Result="game:diamond_axe" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironaxe"
                 b="diamond" Description="[0]">
             " b"
             "bab"
         </Recipe>
-        <Recipe Result="DiamondRakeBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironrake"
+        <Recipe Result="game:diamond_rake" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironrake"
                 b="diamond" Description="[0]">
             " b"
             "bab"
         </Recipe>
     </DiamondTools>
     <OtherTools>
-        <Recipe Result="EmptyBucketBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
+        <Recipe Result="game:empty_bucket" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
                 Description="[0]">
             "a a"
             " a"
         </Recipe>
-        <Recipe Result="MagnetBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:magnet" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 Description="[0]">
             "a a "
             "a a"
             "aaa "
         </Recipe>
-        <Recipe Result="CompassBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="copperingot"
+        <Recipe Result="game:compass" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="copperingot"
                 b="diamond" Description="[0]">
             " a "
             "aba"
             " a "
         </Recipe>
-        <Recipe Result="ThermometerBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:thermometer" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 b="malachitechunk" Description="[0]">
             " b "
             "aba"
             " b "
         </Recipe>
-        <Recipe Result="HygrometerBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:hygrometer" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 b="malachitechunk" Description="[0]">
             " a "
             "bbb"
@@ -405,838 +405,838 @@
         </Recipe>
     </OtherTools>
     <Weapons>
-        <Recipe Result="WoodenSpearBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="planks" Description="[0]">
+        <Recipe Result="game:wooden_spear" ResultCount="1" RequiredHeatLevel="0" a="stick" b="planks" Description="[0]">
             " b"
             "bab"
             " a"
         </Recipe>
-        <Recipe Result="WoodenClubBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="planks" Description="[0]">
+        <Recipe Result="game:wooden_club" ResultCount="1" RequiredHeatLevel="0" a="stick" b="planks" Description="[0]">
             "b"
             "b"
             "a"
         </Recipe>
-        <Recipe Result="StoneClubBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
-                Description="[0]">
-            "b"
-            "b"
-            "a"
-        </Recipe>
-        <Recipe Result="StoneClubBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk"
+        <Recipe Result="game:stone_club" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
                 Description="[0]">
             "b"
             "b"
             "a"
         </Recipe>
-        <Recipe Result="StoneSpearBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
+        <Recipe Result="game:stone_club" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk"
+                Description="[0]">
+            "b"
+            "b"
+            "a"
+        </Recipe>
+        <Recipe Result="game:stone_spear" ResultCount="1" RequiredHeatLevel="0" a="stick" b="cobblestone"
                 Description="[0]">
             " b"
             "bab"
             " a"
         </Recipe>
-        <Recipe Result="StoneSpearBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk"
+        <Recipe Result="game:stone_spear" ResultCount="1" RequiredHeatLevel="0" a="stick" b="stonechunk"
                 Description="[0]">
             " b"
             "bab"
             " a"
         </Recipe>
-        <Recipe Result="CopperSpearBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
+        <Recipe Result="game:copper_spear" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
                 b="copperingot" Description="[0]">
             " b"
             "bab"
             " a"
         </Recipe>
-        <Recipe Result="CopperMacheteBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
+        <Recipe Result="game:copper_machete" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="stick"
                 b="copperingot" Description="[0]">
             "b"
             "b"
             "a"
         </Recipe>
-        <Recipe Result="IronSpearBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
+        <Recipe Result="game:iron_spear" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
                 b="ironingot" Description="[0]">
             " b"
             "bab"
             " a"
         </Recipe>
-        <Recipe Result="IronMacheteBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
+        <Recipe Result="game:iron_machete" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="stick"
                 b="ironingot" Description="[0]">
             "b"
             "b"
             "a"
         </Recipe>
-        <Recipe Result="DiamondSpearBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironspear"
+        <Recipe Result="game:diamond_spear" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="ironspear"
                 b="diamond" Description="[0]">
             " b"
             "bab"
         </Recipe>
-        <Recipe Result="DiamondMacheteBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4"
+        <Recipe Result="game:diamond_machete" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4"
                 a="ironmachete" b="diamond" Description="[0]">
             " b"
             "bab"
         </Recipe>
-        <Recipe Result="BowBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="string" Description="[0]">
+        <Recipe Result="game:bow" ResultCount="1" RequiredHeatLevel="0" a="stick" b="string" Description="[0]">
             " ab"
             "a b"
             " ab"
         </Recipe>
-        <Recipe Result="CrossbowBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="rod" b="planks"
+        <Recipe Result="game:crossbow" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="rod" b="planks"
                 c="string" Description="[0]">
             " a"
             "acb"
             " a"
         </Recipe>
-        <Recipe Result="MusketBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="planks"
+        <Recipe Result="game:musket" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="planks"
                 b="ironblock" c="rod" Description="[0]">
             "cba"
             " ba"
         </Recipe>
-        <Recipe Result="ArrowBlock:0" ResultCount="4" RequiredHeatLevel="0" b="stick" c="feather" Description="[0]">
+        <Recipe Result="game:arrow@0" ResultCount="4" RequiredHeatLevel="0" b="stick" c="feather" Description="[0]">
             "b"
             "c"
         </Recipe>
-        <Recipe Result="ArrowBlock:1" ResultCount="4" RequiredHeatLevel="0" a="stonechunk" b="stick" c="feather"
+        <Recipe Result="game:arrow@1" ResultCount="4" RequiredHeatLevel="0" a="stonechunk" b="stick" c="feather"
                 Description="[0]">
             "a"
             "b"
             "c"
         </Recipe>
-        <Recipe Result="ArrowBlock:2" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:arrow@2" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 b="stick" c="feather" Description="[0]">
             "a"
             "b"
             "c"
         </Recipe>
-        <Recipe Result="ArrowBlock:3" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
+        <Recipe Result="game:arrow@3" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
                 b="arrow:2" Description="[0]">
             "a"
             "b"
         </Recipe>
-        <Recipe Result="ArrowBlock:4" ResultCount="1" RequiredHeatLevel="0" a="sulphurchunk" b="arrow:0"
+        <Recipe Result="game:arrow@4" ResultCount="1" RequiredHeatLevel="0" a="sulphurchunk" b="arrow:0"
                 Description="[0]">
             "a"
             "b"
         </Recipe>
-        <Recipe Result="ArrowBlock:5" ResultCount="2" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="rod" b="feather"
+        <Recipe Result="game:arrow@5" ResultCount="2" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="rod" b="feather"
                 Description="[0]">
             "a"
             "b"
         </Recipe>
-        <Recipe Result="ArrowBlock:6" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
+        <Recipe Result="game:arrow@6" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
                 b="arrow:5" Description="[0]">
             "a"
             "b"
         </Recipe>
-        <Recipe Result="ArrowBlock:7" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="gunpowder"
+        <Recipe Result="game:arrow@7" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="gunpowder"
                 b="arrow:5" Description="[0]">
             "a"
             "b"
         </Recipe>
-        <Recipe Result="ArrowBlock:8" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
+        <Recipe Result="game:arrow@8" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
                 b="stick" c="feather" Description="[0]">
             "a"
             "b"
             "c"
         </Recipe>
-        <Recipe Result="BulletBlock:0" ResultCount="8" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="rod"
+        <Recipe Result="game:bullet@0" ResultCount="8" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="rod"
                 Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="BulletBlock:1" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="bullet:0"
+        <Recipe Result="game:bullet@1" ResultCount="4" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="bullet:0"
                 Description="[0]">
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="BulletBlock:1" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="bullet:2"
+        <Recipe Result="game:bullet@1" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="bullet:2"
                 Description="[1]">
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="BulletBlock:2" ResultCount="4" RequiredHeatLevel="0" a="bullet:1" Description="[0]">
+        <Recipe Result="game:bullet@2" ResultCount="4" RequiredHeatLevel="0" a="bullet:1" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="BombBlock" ResultCount="6" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:bomb" ResultCount="6" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 b="gunpowder" Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="IncendiaryBombBlock" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="bomb"
+        <Recipe Result="game:incendiary_bomb" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="bomb"
                 b="sulphurchunk" Description="[0]">
             "ab"
         </Recipe>
     </Weapons>
     <Explosives>
-        <Recipe Result="MatchBlock" ResultCount="4" RequiredHeatLevel="0" a="stick" b="sulphurchunk" Description="[0]">
+        <Recipe Result="game:match" ResultCount="4" RequiredHeatLevel="0" a="stick" b="sulphurchunk" Description="[0]">
             "b"
             "a"
         </Recipe>
-        <Recipe Result="GunpowderBlock" ResultCount="6" RequiredHeatLevel="0" a="saltpeterchunk" b="sulphurchunk"
+        <Recipe Result="game:gunpowder" ResultCount="6" RequiredHeatLevel="0" a="saltpeterchunk" b="sulphurchunk"
                 c="coalchunk" Description="[0]">
             "abc"
         </Recipe>
-        <Recipe Result="SmallGunpowderKegBlock" ResultCount="1" RequiredHeatLevel="0" a="planks" b="gunpowder"
+        <Recipe Result="game:small_gunpowder_keg" ResultCount="1" RequiredHeatLevel="0" a="planks" b="gunpowder"
                 Description="[0]">
             "aba"
         </Recipe>
-        <Recipe Result="MediumGunpowderKegBlock" ResultCount="1" RequiredHeatLevel="0" a="planks" b="gunpowder"
+        <Recipe Result="game:medium_gunpowder_keg" ResultCount="1" RequiredHeatLevel="0" a="planks" b="gunpowder"
                 Description="[0]">
             "aba"
             "aba"
         </Recipe>
-        <Recipe Result="LargeGunpowderKegBlock" ResultCount="1" RequiredHeatLevel="0" a="planks" b="gunpowder"
+        <Recipe Result="game:large_gunpowder_keg" ResultCount="1" RequiredHeatLevel="0" a="planks" b="gunpowder"
                 Description="[0]">
             "aba"
             "aba"
             "aba"
         </Recipe>
-        <Recipe Result="SmallIncendiaryKegBlock" ResultCount="1" RequiredHeatLevel="0" a="smallgunpowderkeg"
+        <Recipe Result="game:small_incendiary_keg" ResultCount="1" RequiredHeatLevel="0" a="smallgunpowderkeg"
                 b="sulphurchunk" Description="[0]">
             "ab"
         </Recipe>
-        <Recipe Result="MediumIncendiaryKegBlock" ResultCount="1" RequiredHeatLevel="0" a="mediumgunpowderkeg"
+        <Recipe Result="game:medium_incendiary_keg" ResultCount="1" RequiredHeatLevel="0" a="mediumgunpowderkeg"
                 b="sulphurchunk" Description="[0]">
             "ab"
         </Recipe>
-        <Recipe Result="LargeIncendiaryKegBlock" ResultCount="1" RequiredHeatLevel="0" a="largegunpowderkeg"
+        <Recipe Result="game:large_incendiary_keg" ResultCount="1" RequiredHeatLevel="0" a="largegunpowderkeg"
                 b="sulphurchunk" Description="[0]">
             "ab"
         </Recipe>
     </Explosives>
     <Items>
-        <Recipe Result="TorchBlock" ResultCount="2" RequiredHeatLevel="0" a="stick" b="coalchunk" Description="[0]">
+        <Recipe Result="game:torch" ResultCount="2" RequiredHeatLevel="0" a="stick" b="coalchunk" Description="[0]">
             "b"
             "a"
         </Recipe>
-        <Recipe Result="WickerLampBlock" ResultCount="1" RequiredHeatLevel="0" a="torch" b="planks" c="stick"
+        <Recipe Result="game:wicker_lamp" ResultCount="1" RequiredHeatLevel="0" a="torch" b="planks" c="stick"
                 Description="[0]">
             " b"
             "cac"
             " b"
         </Recipe>
-        <Recipe Result="CraftingTableBlock" ResultCount="1" RequiredHeatLevel="0" a="planks" Description="[0]">
+        <Recipe Result="game:crafting_table" ResultCount="1" RequiredHeatLevel="0" a="planks" Description="[0]">
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="ChestBlock" ResultCount="1" RequiredHeatLevel="0" a="planks" Description="[0]">
+        <Recipe Result="game:chest" ResultCount="1" RequiredHeatLevel="0" a="planks" Description="[0]">
             "aaa"
             "a a"
             "aaa"
         </Recipe>
-        <Recipe Result="DispenserBlock" ResultCount="1" RequiredHeatLevel="0" a="planks" b="bow" c="germaniumchunk"
+        <Recipe Result="game:dispenser" ResultCount="1" RequiredHeatLevel="0" a="planks" b="bow" c="germaniumchunk"
                 Description="[0]">
             "aaa"
             "aba"
             "aca"
         </Recipe>
-        <Recipe Result="FurnaceBlock" ResultCount="1" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
+        <Recipe Result="game:furnace" ResultCount="1" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
             "aaa"
             "a a"
             "aaa"
         </Recipe>
-        <Recipe Result="StoneStairsBlock" ResultCount="6" RequiredHeatLevel="0" a="granite" Description="[0]">
+        <Recipe Result="game:stone_stairs" ResultCount="6" RequiredHeatLevel="0" a="granite" Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="CobblestoneStairsBlock" ResultCount="6" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
+        <Recipe Result="game:cobblestone_stairs" ResultCount="6" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="StoneBrickStairsBlock" ResultCount="6" RequiredHeatLevel="0" a="stonebrickblock"
+        <Recipe Result="game:stone_brick_stairs" ResultCount="6" RequiredHeatLevel="0" a="stonebrickblock"
                 Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="BrickStairsBlock" ResultCount="3" RequiredHeatLevel="0" a="brick" Description="[0]">
+        <Recipe Result="game:brick_stairs" ResultCount="3" RequiredHeatLevel="0" a="brick" Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="SandstoneStairsBlock" ResultCount="6" RequiredHeatLevel="0" a="sandstone" Description="[0]">
+        <Recipe Result="game:sandstone_stairs" ResultCount="6" RequiredHeatLevel="0" a="sandstone" Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="DirtStairsBlock" ResultCount="6" RequiredHeatLevel="0" a="dirt" Description="[0]">
+        <Recipe Result="game:dirt_stairs" ResultCount="6" RequiredHeatLevel="0" a="dirt" Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="WoodenStairsBlock" ResultCount="6" RequiredHeatLevel="0" a="planks" Description="[0]">
+        <Recipe Result="game:wooden_stairs" ResultCount="6" RequiredHeatLevel="0" a="planks" Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="MarbleStairsBlock" ResultCount="6" RequiredHeatLevel="0" a="marble" Description="[0]">
+        <Recipe Result="game:marble_stairs" ResultCount="6" RequiredHeatLevel="0" a="marble" Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="BasaltStairsBlock" ResultCount="6" RequiredHeatLevel="0" a="basalt" Description="[0]">
+        <Recipe Result="game:basalt_stairs" ResultCount="6" RequiredHeatLevel="0" a="basalt" Description="[0]">
             "a"
             "aa"
             "aaa"
         </Recipe>
-        <Recipe Result="DirtSlabBlock" ResultCount="6" RequiredHeatLevel="0" a="dirt"
+        <Recipe Result="game:dirt_slab" ResultCount="6" RequiredHeatLevel="0" a="dirt"
                 Description="Make slabs for decoration purposes">
             "aaa"
         </Recipe>
-        <Recipe Result="StoneSlabBlock" ResultCount="6" RequiredHeatLevel="0" a="granite" Description="[0]">
+        <Recipe Result="game:stone_slab" ResultCount="6" RequiredHeatLevel="0" a="granite" Description="[0]">
             "aaa"
         </Recipe>
-        <Recipe Result="CobblestoneSlabBlock" ResultCount="6" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
+        <Recipe Result="game:cobblestone_slab" ResultCount="6" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
             "aaa"
         </Recipe>
-        <Recipe Result="StoneBrickSlabBlock" ResultCount="6" RequiredHeatLevel="0" a="stonebrickblock"
+        <Recipe Result="game:stone_brick_slab" ResultCount="6" RequiredHeatLevel="0" a="stonebrickblock"
                 Description="[0]">
             "aaa"
         </Recipe>
-        <Recipe Result="BrickSlabBlock" ResultCount="3" RequiredHeatLevel="0" a="brick" Description="[0]">
+        <Recipe Result="game:brick_slab" ResultCount="3" RequiredHeatLevel="0" a="brick" Description="[0]">
             "aaa"
         </Recipe>
-        <Recipe Result="SandstoneSlabBlock" ResultCount="6" RequiredHeatLevel="0" a="sandstone" Description="[0]">
+        <Recipe Result="game:sandstone_slab" ResultCount="6" RequiredHeatLevel="0" a="sandstone" Description="[0]">
             "aaa"
         </Recipe>
-        <Recipe Result="WoodenSlabBlock" ResultCount="6" RequiredHeatLevel="0" a="planks" Description="[0]">
+        <Recipe Result="game:wooden_slab" ResultCount="6" RequiredHeatLevel="0" a="planks" Description="[0]">
             "aaa"
         </Recipe>
-        <Recipe Result="MarbleSlabBlock" ResultCount="6" RequiredHeatLevel="0" a="marble" Description="[0]">
+        <Recipe Result="game:marble_slab" ResultCount="6" RequiredHeatLevel="0" a="marble" Description="[0]">
             "aaa"
         </Recipe>
-        <Recipe Result="BasaltSlabBlock" ResultCount="6" RequiredHeatLevel="0" a="basalt" Description="[0]">
+        <Recipe Result="game:basalt_slab" ResultCount="6" RequiredHeatLevel="0" a="basalt" Description="[0]">
             "aaa"
         </Recipe>
-        <Recipe Result="WoodenDoorBlock" ResultCount="1" RequiredHeatLevel="0" a="planks" Description="[0]">
+        <Recipe Result="game:wooden_door" ResultCount="1" RequiredHeatLevel="0" a="planks" Description="[0]">
             "aa"
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="IronDoorBlock" ResultCount="1" RequiredHeatLevel="0" a="ironingot" Description="[0]">
+        <Recipe Result="game:iron_door" ResultCount="1" RequiredHeatLevel="0" a="ironingot" Description="[0]">
             "aa"
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="CellDoorBlock" ResultCount="1" RequiredHeatLevel="0" a="rod" Description="[0]">
+        <Recipe Result="game:cell_door" ResultCount="1" RequiredHeatLevel="0" a="rod" Description="[0]">
             "aa"
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="WoodenTrapdoorBlock" ResultCount="2" RequiredHeatLevel="0" a="planks" Description="[0]">
+        <Recipe Result="game:wooden_trapdoor" ResultCount="2" RequiredHeatLevel="0" a="planks" Description="[0]">
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="CellTrapdoorBlock" ResultCount="2" RequiredHeatLevel="0" a="ironingot" Description="[0]">
+        <Recipe Result="game:cell_trapdoor" ResultCount="2" RequiredHeatLevel="0" a="ironingot" Description="[0]">
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="WoodenLadderBlock" ResultCount="4" RequiredHeatLevel="0" a="stick" Description="[0]">
+        <Recipe Result="game:wooden_ladder" ResultCount="4" RequiredHeatLevel="0" a="stick" Description="[0]">
             "a a"
             "aaa"
             "a a"
         </Recipe>
-        <Recipe Result="IronLadderBlock" ResultCount="4" RequiredHeatLevel="0" a="rod" Description="[0]">
+        <Recipe Result="game:iron_ladder" ResultCount="4" RequiredHeatLevel="0" a="rod" Description="[0]">
             "a a"
             "aaa"
             "a a"
         </Recipe>
-        <Recipe Result="ChristmasTreeBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" b="spruceleaves" c="planks"
+        <Recipe Result="game:christmas_tree" ResultCount="1" RequiredHeatLevel="0" a="stick" b="spruceleaves" c="planks"
                 Description="[0]">
             "bab"
             "bab"
             "bcb"
         </Recipe>
-        <Recipe Result="SpikedPlankBlock" ResultCount="2" RequiredHeatLevel="0" a="stick" b="woodenslab"
+        <Recipe Result="game:spiked_plank" ResultCount="2" RequiredHeatLevel="0" a="stick" b="woodenslab"
                 Description="[0]">
             "aaa"
             "bbb"
         </Recipe>
-        <Recipe Result="GrassTrapBlock" ResultCount="6" RequiredHeatLevel="0" a="stick" b="oakleaves" Description="[0]">
+        <Recipe Result="game:grass_trap" ResultCount="6" RequiredHeatLevel="0" a="stick" b="oakleaves" Description="[0]">
             "bbb"
             "aaa"
         </Recipe>
-        <Recipe Result="WoodenFenceBlock" ResultCount="2" RequiredHeatLevel="0" a="stick" Description="[0]">
+        <Recipe Result="game:wooden_fence" ResultCount="2" RequiredHeatLevel="0" a="stick" Description="[0]">
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="WoodenFenceGateBlock" ResultCount="2" RequiredHeatLevel="0" a="stick" b="planks"
+        <Recipe Result="game:wooden_fence_gate" ResultCount="2" RequiredHeatLevel="0" a="stick" b="planks"
                 Description="[0]">
             "aba"
             "aba"
         </Recipe>
-        <Recipe Result="IronFenceBlock" ResultCount="2" RequiredHeatLevel="0" a="rod" Description="[0]">
+        <Recipe Result="game:iron_fence" ResultCount="2" RequiredHeatLevel="0" a="rod" Description="[0]">
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="IronFenceGateBlock" ResultCount="2" RequiredHeatLevel="0" a="rod" b="ironingot"
+        <Recipe Result="game:iron_fence_gate" ResultCount="2" RequiredHeatLevel="0" a="rod" b="ironingot"
                 Description="[0]">
             "aba"
             "aba"
         </Recipe>
-        <Recipe Result="StoneFenceBlock" ResultCount="4" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
+        <Recipe Result="game:stone_fence" ResultCount="4" RequiredHeatLevel="0" a="cobblestone" Description="[0]">
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="BrickFenceBlock" ResultCount="4" RequiredHeatLevel="0" a="brickblock" Description="[0]">
+        <Recipe Result="game:brick_fence" ResultCount="4" RequiredHeatLevel="0" a="brickblock" Description="[0]">
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="BasaltFenceBlock" ResultCount="4" RequiredHeatLevel="0" a="basalt" Description="[0]">
+        <Recipe Result="game:basalt_fence" ResultCount="4" RequiredHeatLevel="0" a="basalt" Description="[0]">
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="WoodenPostedSignBlock" ResultCount="2" RequiredHeatLevel="0" a="planks" b="stick"
-                Description="[0]">
-            "aaa"
-            " b"
-        </Recipe>
-        <Recipe Result="IronPostedSignBlock" ResultCount="4" RequiredHeatLevel="0" a="ironingot" b="rod"
+        <Recipe Result="game:wooden_posted_sign" ResultCount="2" RequiredHeatLevel="0" a="planks" b="stick"
                 Description="[0]">
             "aaa"
             " b"
         </Recipe>
-        <Recipe Result="JackOLanternBlock" ResultCount="1" RequiredHeatLevel="0" a="pumpkin:8" b="torch"
+        <Recipe Result="game:iron_posted_sign" ResultCount="4" RequiredHeatLevel="0" a="ironingot" b="rod"
+                Description="[0]">
+            "aaa"
+            " b"
+        </Recipe>
+        <Recipe Result="game:jack_o_lantern" ResultCount="1" RequiredHeatLevel="0" a="pumpkin:8" b="torch"
                 Description="[0]">
             "a"
             "b"
         </Recipe>
-        <Recipe Result="SaddleBlock" ResultCount="1" RequiredHeatLevel="0" a="leather" b="stick" Description="[0]">
+        <Recipe Result="game:saddle" ResultCount="1" RequiredHeatLevel="0" a="leather" b="stick" Description="[0]">
             "aba"
             " a"
             "aba"
         </Recipe>
-        <Recipe Result="BoatBlock" ResultCount="1" RequiredHeatLevel="0" a="planks" Description="[0]">
+        <Recipe Result="game:boat" ResultCount="1" RequiredHeatLevel="0" a="planks" Description="[0]">
             "a a"
             "aaa"
         </Recipe>
-        <Recipe Result="WhistleBlock" ResultCount="1" RequiredHeatLevel="0" a="ironingot" Description="[0]">
+        <Recipe Result="game:whistle" ResultCount="1" RequiredHeatLevel="0" a="ironingot" Description="[0]">
             "aa"
             "a"
         </Recipe>
-        <Recipe Result="GravestoneBlock:0" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
+        <Recipe Result="game:gravestone@0" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
                 Description="[0]">
             " a"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="GravestoneBlock:1" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
+        <Recipe Result="game:gravestone@1" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
                 Description="[0]">
             " b"
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="GravestoneBlock:2" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
+        <Recipe Result="game:gravestone@2" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
                 Description="[0]">
             " a"
             "aba"
             "aaa"
         </Recipe>
-        <Recipe Result="GravestoneBlock:3" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
+        <Recipe Result="game:gravestone@3" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
                 Description="[0]">
             " a"
             "bab"
             "aaa"
         </Recipe>
-        <Recipe Result="GravestoneBlock:4" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
+        <Recipe Result="game:gravestone@4" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
                 Description="[0]">
             " a"
             "aaa"
             "bbb"
         </Recipe>
-        <Recipe Result="GravestoneBlock:5" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
+        <Recipe Result="game:gravestone@5" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
                 Description="[0]">
             " b"
             "aaa"
             "bbb"
         </Recipe>
-        <Recipe Result="GravestoneBlock:6" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
+        <Recipe Result="game:gravestone@6" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
                 Description="[0]">
             " a"
             "aba"
             "bbb"
         </Recipe>
-        <Recipe Result="GravestoneBlock:7" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
+        <Recipe Result="game:gravestone@7" ResultCount="3" RequiredHeatLevel="0" a="stoneslab" b="cobblestone"
                 Description="[0]">
             " a"
             "bab"
             "bbb"
         </Recipe>
-        <Recipe Result="CampfireBlock" ResultCount="1" RequiredHeatLevel="0" a="stick" Description="[0]">
+        <Recipe Result="game:campfire" ResultCount="1" RequiredHeatLevel="0" a="stick" Description="[0]">
             "aa"
             "aa"
         </Recipe>
     </Items>
     <Electrics>
-        <Recipe Result="WireBlock" ResultCount="16" RequiredHeatLevel="0" a="copperingot" Description="[0]">
+        <Recipe Result="game:wire" ResultCount="16" RequiredHeatLevel="0" a="copperingot" Description="[0]">
             "a"
         </Recipe>
-        <Recipe Result="NotGateBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:not_gate" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "aaa"
             "bbb"
         </Recipe>
-        <Recipe Result="AndGateBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:and_gate" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "baa"
             "bbb"
         </Recipe>
-        <Recipe Result="OrGateBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:or_gate" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "aba"
             "bbb"
         </Recipe>
-        <Recipe Result="XorGateBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:xor_gate" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "bba"
             "bbb"
         </Recipe>
-        <Recipe Result="DelayGateBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:delay_gate" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "aab"
             "bbb"
         </Recipe>
-        <Recipe Result="AdjustableDelayGateBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot"
+        <Recipe Result="game:adjustable_delay_gate" ResultCount="4" RequiredHeatLevel="0" a="copperingot"
                 b="germaniumchunk" c="ironingot" Description="[0]">
             "c"
             "aab"
             "bbb"
         </Recipe>
-        <Recipe Result="SRLatchBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:sr_latch" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "bab"
             "bbb"
         </Recipe>
-        <Recipe Result="CounterBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:counter" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "abb"
             "bbb"
         </Recipe>
-        <Recipe Result="MemoryBankBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:memory_bank" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "bbb"
             "bbb"
         </Recipe>
-        <Recipe Result="TruthTableCircuitBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:truth_table_circuit" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "aaa"
             "abb"
         </Recipe>
-        <Recipe Result="RealTimeClockBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:real_time_clock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 c="glass" Description="[0]">
             "c"
             "baa"
             "abb"
         </Recipe>
-        <Recipe Result="RandomGeneratorBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:random_generator" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "aba"
             "abb"
         </Recipe>
-        <Recipe Result="DigitalToAnalogConverterBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot"
+        <Recipe Result="game:digital_to_analog_converter" ResultCount="4" RequiredHeatLevel="0" a="copperingot"
                 b="germaniumchunk" Description="[0]">
             "a"
             "bba"
             "abb"
         </Recipe>
-        <Recipe Result="AnalogToDigitalConverterBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot"
+        <Recipe Result="game:analog_to_digital_converter" ResultCount="4" RequiredHeatLevel="0" a="copperingot"
                 b="germaniumchunk" Description="[0]">
             "a"
             "aab"
             "abb"
         </Recipe>
-        <Recipe Result="SoundGeneratorBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:sound_generator" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 c="ironingot" Description="[0]">
             "c"
             "bab"
             "abb"
         </Recipe>
-        <Recipe Result="NandGateBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:nand_gate" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "abb"
             "abb"
         </Recipe>
-        <Recipe Result="NorGateBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
+        <Recipe Result="game:nor_gate" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="germaniumchunk"
                 Description="[0]">
             "a"
             "bbb"
             "abb"
         </Recipe>
-        <Recipe Result="BatteryBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="coalchunk"
+        <Recipe Result="game:battery" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="coalchunk"
                 Description="[0]">
             "aa"
             "bb"
             "bb"
         </Recipe>
-        <Recipe Result="LightbulbBlock" ResultCount="8" RequiredHeatLevel="0" a="copperingot" b="glass"
+        <Recipe Result="game:lightbulb" ResultCount="8" RequiredHeatLevel="0" a="copperingot" b="glass"
                 Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="DetonatorBlock" ResultCount="10" RequiredHeatLevel="0" a="copperingot" b="gunpowder"
+        <Recipe Result="game:detonator" ResultCount="10" RequiredHeatLevel="0" a="copperingot" b="gunpowder"
                 Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="SwitchBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="stick" Description="[0]">
+        <Recipe Result="game:switch" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="stick" Description="[0]">
             " b"
             "aaa"
         </Recipe>
-        <Recipe Result="ButtonBlock" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="planks" Description="[0]">
+        <Recipe Result="game:button" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="planks" Description="[0]">
             " b"
             "aaa"
         </Recipe>
-        <Recipe Result="PressurePlateBlock:0" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="woodenslab"
+        <Recipe Result="game:pressure_plate@0" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="woodenslab"
                 Description="[0]">
             "bbb"
             "aaa"
         </Recipe>
-        <Recipe Result="PressurePlateBlock:1" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="stoneslab"
+        <Recipe Result="game:pressure_plate@1" ResultCount="4" RequiredHeatLevel="0" a="copperingot" b="stoneslab"
                 Description="[0]">
             "bbb"
             "aaa"
         </Recipe>
-        <Recipe Result="PhotodiodeBlock" ResultCount="2" RequiredHeatLevel="0" a="copperingot" b="glass"
+        <Recipe Result="game:photodiode" ResultCount="2" RequiredHeatLevel="0" a="copperingot" b="glass"
                 Description="[0]">
             " b"
             "aaa"
         </Recipe>
-        <Recipe Result="MotionDetectorBlock" ResultCount="2" RequiredHeatLevel="0" a="copperingot" b="glass" c="marble"
+        <Recipe Result="game:motion_detector" ResultCount="2" RequiredHeatLevel="0" a="copperingot" b="glass" c="marble"
                 Description="[0]">
             " b"
             " c"
             "aaa"
         </Recipe>
-        <Recipe Result="WireThroughPlanksBlock" ResultCount="3" RequiredHeatLevel="0" a="wire" b="planks"
+        <Recipe Result="game:wire_through_planks" ResultCount="3" RequiredHeatLevel="0" a="wire" b="planks"
                 Description="[0]">
             "bab"
             "bab"
             "bab"
         </Recipe>
-        <Recipe Result="WireThroughStoneBlock" ResultCount="3" RequiredHeatLevel="0" a="wire" b="granite"
+        <Recipe Result="game:wire_through_stone" ResultCount="3" RequiredHeatLevel="0" a="wire" b="granite"
                 Description="[0]">
             "bab"
             "bab"
             "bab"
         </Recipe>
-        <Recipe Result="WireThroughBricksBlock" ResultCount="3" RequiredHeatLevel="0" a="wire" b="brickblock"
+        <Recipe Result="game:wire_through_bricks" ResultCount="3" RequiredHeatLevel="0" a="wire" b="brickblock"
                 Description="[0]">
             "bab"
             "bab"
             "bab"
         </Recipe>
-        <Recipe Result="WireThroughSemiconductorBlock" ResultCount="3" RequiredHeatLevel="0" a="wire" b="germaniumchunk"
+        <Recipe Result="game:wire_through_semiconductor" ResultCount="3" RequiredHeatLevel="0" a="wire" b="germaniumchunk"
                 Description="[0]">
             "bab"
             "bab"
             "bab"
         </Recipe>
-        <Recipe Result="WireThroughCobblestoneBlock" ResultCount="3" RequiredHeatLevel="0" a="wire" b="cobblestone"
+        <Recipe Result="game:wire_through_cobblestone" ResultCount="3" RequiredHeatLevel="0" a="wire" b="cobblestone"
                 Description="[0]">
             "bab"
             "bab"
             "bab"
         </Recipe>
-        <Recipe Result="TargetBlock" ResultCount="1" RequiredHeatLevel="0" a="planks:31" b="planks:1" Description="[0]">
+        <Recipe Result="game:target" ResultCount="1" RequiredHeatLevel="0" a="planks:31" b="planks:1" Description="[0]">
             " b"
             "bab"
             " b"
         </Recipe>
-        <Recipe Result="PistonBlock:448" ResultCount="5" RequiredHeatLevel="0" a="semiconductorblock" b="planks"
+        <Recipe Result="game:piston@448" ResultCount="5" RequiredHeatLevel="0" a="semiconductorblock" b="planks"
                 c="copperingot" Description="[0]">
             "bbb"
             "aca"
             "aaa"
         </Recipe>
-        <Recipe Result="PistonBlock:450" ResultCount="1" RequiredHeatLevel="0" a="piston:448" b="ironingot"
+        <Recipe Result="game:piston@450" ResultCount="1" RequiredHeatLevel="0" a="piston:448" b="ironingot"
                 Description="[0]">
             "b"
             "a"
         </Recipe>
-        <Recipe Result="PistonBlock:452" ResultCount="1" RequiredHeatLevel="0" a="piston:448" b="copperingot"
+        <Recipe Result="game:piston@452" ResultCount="1" RequiredHeatLevel="0" a="piston:448" b="copperingot"
                 Description="[0]">
             "b"
             "a"
         </Recipe>
     </Electrics>
     <Clothes>
-        <Recipe Result="ClothingBlock:30" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
+        <Recipe Result="game:clothing@30" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
             " a"
             "aaa"
         </Recipe>
-        <Recipe Result="ClothingBlock:13" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
+        <Recipe Result="game:clothing@13" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
             "aaa"
             "aaa"
         </Recipe>
-        <Recipe Result="ClothingBlock:14" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
+        <Recipe Result="game:clothing@14" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
             "aaa"
             " a"
         </Recipe>
-        <Recipe Result="ClothingBlock:15" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
+        <Recipe Result="game:clothing@15" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
             "a"
             "a"
             "a"
         </Recipe>
-        <Recipe Result="ClothingBlock:24" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
+        <Recipe Result="game:clothing@24" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
             "aa"
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="ClothingBlock:25" ResultCount="1" RequiredHeatLevel="0" a="canvas" b="string" Description="[0]">
+        <Recipe Result="game:clothing@25" ResultCount="1" RequiredHeatLevel="0" a="canvas" b="string" Description="[0]">
             "aa"
             "aa"
             "bb"
         </Recipe>
-        <Recipe Result="ClothingBlock:16" ResultCount="1" RequiredHeatLevel="0" a="canvas" b="string" Description="[0]">
+        <Recipe Result="game:clothing@16" ResultCount="1" RequiredHeatLevel="0" a="canvas" b="string" Description="[0]">
             "bb"
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="ClothingBlock:17" ResultCount="1" RequiredHeatLevel="0" a="canvas" b="string" Description="[0]">
+        <Recipe Result="game:clothing@17" ResultCount="1" RequiredHeatLevel="0" a="canvas" b="string" Description="[0]">
             "bb"
             "aa"
         </Recipe>
-        <Recipe Result="ClothingBlock:26" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
+        <Recipe Result="game:clothing@26" ResultCount="1" RequiredHeatLevel="0" a="canvas" Description="[0]">
             "aa"
         </Recipe>
-        <Recipe Result="ClothingBlock:31" ResultCount="1" RequiredHeatLevel="0" a="leather" Description="[0]">
+        <Recipe Result="game:clothing@31" ResultCount="1" RequiredHeatLevel="0" a="leather" Description="[0]">
             " a"
             "aaa"
         </Recipe>
-        <Recipe Result="ClothingBlock:11" ResultCount="1" RequiredHeatLevel="0" a="leather" Description="[0]">
+        <Recipe Result="game:clothing@11" ResultCount="1" RequiredHeatLevel="0" a="leather" Description="[0]">
             " a"
             "a a"
         </Recipe>
-        <Recipe Result="ClothingBlock:5" ResultCount="1" RequiredHeatLevel="0" a="leather" Description="[0]">
+        <Recipe Result="game:clothing@5" ResultCount="1" RequiredHeatLevel="0" a="leather" Description="[0]">
             "a"
             "a"
             "a"
         </Recipe>
-        <Recipe Result="ClothingBlock:12" ResultCount="1" RequiredHeatLevel="0" a="leather" b="string"
+        <Recipe Result="game:clothing@12" ResultCount="1" RequiredHeatLevel="0" a="leather" b="string"
                 Description="[0]">
             "bb"
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="ClothingBlock:8" ResultCount="1" RequiredHeatLevel="0" a="leather" b="planks" Description="[0]">
+        <Recipe Result="game:clothing@8" ResultCount="1" RequiredHeatLevel="0" a="leather" b="planks" Description="[0]">
             "aa"
             "bb"
         </Recipe>
-        <Recipe Result="ClothingBlock:29" ResultCount="1" RequiredHeatLevel="0" a="leather" b="planks"
+        <Recipe Result="game:clothing@29" ResultCount="1" RequiredHeatLevel="0" a="leather" b="planks"
                 Description="[0]">
             "a"
             "bb"
         </Recipe>
-        <Recipe Result="ClothingBlock:27" ResultCount="1" RequiredHeatLevel="0" a="leather" b="planks"
+        <Recipe Result="game:clothing@27" ResultCount="1" RequiredHeatLevel="0" a="leather" b="planks"
                 Description="[0]">
             "aa"
             "aa"
             "bb"
         </Recipe>
-        <Recipe Result="ClothingBlock:18" ResultCount="1" RequiredHeatLevel="0" a="fur" Description="[0]">
+        <Recipe Result="game:clothing@18" ResultCount="1" RequiredHeatLevel="0" a="fur" Description="[0]">
             " a"
             "a a"
         </Recipe>
-        <Recipe Result="ClothingBlock:6" ResultCount="1" RequiredHeatLevel="0" a="fur" Description="[0]">
+        <Recipe Result="game:clothing@6" ResultCount="1" RequiredHeatLevel="0" a="fur" Description="[0]">
             "aa"
             "aa"
             "aa"
         </Recipe>
-        <Recipe Result="ClothingBlock:7" ResultCount="1" RequiredHeatLevel="0" a="fur" Description="[0]">
+        <Recipe Result="game:clothing@7" ResultCount="1" RequiredHeatLevel="0" a="fur" Description="[0]">
             "a a"
             "a a"
         </Recipe>
-        <Recipe Result="ClothingBlock:23" ResultCount="1" RequiredHeatLevel="0" a="stick" b="string" Description="[0]">
+        <Recipe Result="game:clothing@23" ResultCount="1" RequiredHeatLevel="0" a="stick" b="string" Description="[0]">
             "aba"
             "aba"
         </Recipe>
-        <Recipe Result="ClothingBlock:28" ResultCount="1" RequiredHeatLevel="0" a="stick" b="string" Description="[0]">
+        <Recipe Result="game:clothing@28" ResultCount="1" RequiredHeatLevel="0" a="stick" b="string" Description="[0]">
             "aa"
             "bb"
             "aa"
         </Recipe>
-        <Recipe Result="ClothingBlock:2" ResultCount="1" RequiredHeatLevel="0" a="ironingot" Description="[0]">
+        <Recipe Result="game:clothing@2" ResultCount="1" RequiredHeatLevel="0" a="ironingot" Description="[0]">
             "a a"
             " a"
             "a a"
         </Recipe>
 
-        <Recipe Result="ClothingBlock:33" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
+        <Recipe Result="game:clothing@33" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
                 b="clothing:11" Description="[0]">
             " a"
             "aba"
         </Recipe>
-        <Recipe Result="ClothingBlock:34" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
+        <Recipe Result="game:clothing@34" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
                 b="clothing:5" Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="ClothingBlock:35" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
+        <Recipe Result="game:clothing@35" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
                 b="clothing:7" Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="ClothingBlock:36" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
+        <Recipe Result="game:clothing@36" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="2" a="copperingot"
                 b="clothing:8" Description="[0]">
             " a"
             "aba"
         </Recipe>
 
 
-        <Recipe Result="ClothingBlock:10" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:clothing@10" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 b="clothing:11" Description="[0]">
             " a"
             "aba"
         </Recipe>
-        <Recipe Result="ClothingBlock:3" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:clothing@3" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 b="clothing:5" Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="ClothingBlock:4" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:clothing@4" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 b="clothing:7" Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="ClothingBlock:9" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
+        <Recipe Result="game:clothing@9" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="3" a="ironingot"
                 b="clothing:8" Description="[0]">
             " a"
             "aba"
         </Recipe>
-        <Recipe Result="ClothingBlock:21" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
+        <Recipe Result="game:clothing@21" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
                 b="clothing:10" Description="[0]">
             " a"
             "aba"
         </Recipe>
-        <Recipe Result="ClothingBlock:19" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
+        <Recipe Result="game:clothing@19" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
                 b="clothing:3" Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="ClothingBlock:20" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
+        <Recipe Result="game:clothing@20" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
                 b="clothing:4" Description="[0]">
             " a"
             "aba"
             " a"
         </Recipe>
-        <Recipe Result="ClothingBlock:22" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
+        <Recipe Result="game:clothing@22" ResultCount="1" RequiredHeatLevel="0" RequiredPlayerLevel="4" a="diamond"
                 b="clothing:9" Description="[0]">
             " a"
             "aba"

@@ -2,7 +2,7 @@ namespace Game.Subsystems;
 
 public class SubsystemSnowBlockBehavior : SubsystemBlockBehavior
 {
-    public override int[] HandledBlocks => [61];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:snow")];
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
@@ -15,13 +15,13 @@ public class SubsystemSnowBlockBehavior : SubsystemBlockBehavior
     public static bool CanBeReplacedBySnow(int value)
     {
         var num = Terrain.ExtractContents(value);
-        return BlocksManager.Blocks[num] is FallenLeavesBlock;
+        return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is FallenLeavesBlock;
     }
 
     public static bool CanSupportSnow(int value)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (block.Transparent)
         {
             return block is LeavesBlock;

@@ -146,8 +146,8 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
     {
         var batch = _primitivesRenderer.TexturedBatch(_subsystemBlocksTexture.BlocksTexture, false, 0,
             DepthStencilState.None, null, BlendState.AlphaBlend, SamplerState.PointClamp);
-        var num = BlocksManager.Blocks[18].TextureSlot % 16;
-        var num2 = BlocksManager.Blocks[18].TextureSlot / 16;
+        var num = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[18].TextureSlot % 16;
+        var num2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[18].TextureSlot / 16;
         var num3 = 1.0 * _subsystemTime.GameTime;
         var num4 = 1.0 * (_subsystemTime.GameTime - _subsystemTime.GameTimeDelta);
         var num5 = MathUtils.Min((float)MathUtils.Remainder(num3, 2.0), 1f);
@@ -216,8 +216,8 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
     {
         var batch = _primitivesRenderer.TexturedBatch(_subsystemBlocksTexture.BlocksTexture, false, 0,
             DepthStencilState.None, null, BlendState.AlphaBlend, SamplerState.PointClamp);
-        var num = BlocksManager.Blocks[92].TextureSlot % 16;
-        var num2 = BlocksManager.Blocks[92].TextureSlot / 16;
+        var num = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[92].TextureSlot % 16;
+        var num2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[92].TextureSlot / 16;
         var num3 = 0.5 * _subsystemTime.GameTime;
         var num4 = 0.5 * (_subsystemTime.GameTime - _subsystemTime.GameTimeDelta);
         var num5 = MathUtils.Min((float)MathUtils.Remainder(num3, 2.0), 1f);
@@ -290,7 +290,7 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
             return Rectangle.Empty;
         }
 
-        var defaultTextureSlot = BlocksManager.Blocks[104].TextureSlot;
+        var defaultTextureSlot = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[104].TextureSlot;
         float num = textureWidth / 16;
         var num2 = defaultTextureSlot % 16;
         var num3 = defaultTextureSlot / 16;

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class FireBlock : Block
 {
-    public const int Index = 104;
-
     public override void GenerateTerrainVertices(
         BlockGeometryGenerator generator,
         TerrainGeometry geometry,

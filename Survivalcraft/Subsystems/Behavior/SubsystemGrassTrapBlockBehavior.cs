@@ -6,7 +6,7 @@ public class SubsystemGrassTrapBlockBehavior : SubsystemBlockBehavior, IUpdateab
 
     private readonly Dictionary<Point3, TrapValue> _trapValues = new();
 
-    public override int[] HandledBlocks => [87];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:grass_trap")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 

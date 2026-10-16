@@ -3,6 +3,7 @@ using System.Globalization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentCreativeInventory : Component, IPagedInventory
@@ -152,7 +153,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
         }
 
         var num = Terrain.ExtractContents(_slots[slotIndex]);
-        if (BlocksManager.Blocks[num].NonDuplicable)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].NonDuplicable)
         {
             _slots[slotIndex] = 0;
         }
@@ -234,7 +235,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
 
         if (Project.FindSubsystem<SubsystemGameInfo>(true)!.WorldSettings.GameMode == GameMode.Creative)
         {
-            var creativeValues = BlocksManager.GetCreativeValues().ToArray();
+            var creativeValues = CurrentModRuntime.Value!.RequireWorldCatalog().GetCreativeValues().ToArray();
             foreach (var creativeValue in creativeValues)
             {
                 _slots.Add(creativeValue);
@@ -242,7 +243,7 @@ public class ComponentCreativeInventory : Component, IPagedInventory
 
             var externalValues = creativeValues
                 .Where(creativeValue =>
-                    BlocksManager.TryGetBlockId(Terrain.ExtractContents(creativeValue), out var id) &&
+                    CurrentModRuntime.Value!.RequireWorldCatalog().TryGetBlockId(Terrain.ExtractContents(creativeValue), out var id) &&
                     id.Namespace != new ModId("game"))
                 .ToArray();
             Log.Information(

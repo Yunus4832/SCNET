@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.ParticleSystems;
 
 public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSystem.Particle>
@@ -86,7 +87,7 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
                 continue;
             }
 
-            var block = BlocksManager.Blocks[num2];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
             if (block.Collidable)
             {
                 particle.IsActive = true;

@@ -9,11 +9,9 @@ public class BrickFenceBlock() : FenceBlock(
     Color.White
 )
 {
-    public const int Index = 164;
-
     public override bool ShouldConnectTo(int value)
     {
         var num = Terrain.ExtractContents(value);
-        return !BlocksManager.Blocks[num].Transparent || base.ShouldConnectTo(value);
+        return !Catalog.Blocks[num].Transparent || base.ShouldConnectTo(value);
     }
 }

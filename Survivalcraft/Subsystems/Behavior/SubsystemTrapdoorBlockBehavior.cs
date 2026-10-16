@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
@@ -8,14 +9,14 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemElectricity _subsystemElectricity = null!;
 
-    public override int[] HandledBlocks => [83, 84];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:wooden_trapdoor"), ResourceId.Parse("game:cell_trapdoor")];
 
     public bool IsTrapdoorElectricallyConnected(int x, int y, int z)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (BlocksManager.Blocks[num] is not TrapdoorBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not TrapdoorBlock)
         {
             return false;
         }
@@ -29,7 +30,7 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        if (BlocksManager.Blocks[num] is not TrapdoorBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not TrapdoorBlock)
         {
             return false;
         }
@@ -62,7 +63,7 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        var obj = BlocksManager.Blocks[num];
+        var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         var data = Terrain.ExtractData(cellValue);
         if (obj is not TrapdoorBlock)
         {
@@ -74,20 +75,20 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
         var flag = false;
         var point = CellFace.FaceToPoint3(rotation);
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x - point.X, y - point.Y, z - point.Z);
-        flag |= !BlocksManager.Blocks[cellContents].Transparent;
+        flag |= !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent;
         if (upsideDown)
         {
             var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x, y + 1, z);
-            flag |= !BlocksManager.Blocks[cellContents2].Transparent;
+            flag |= !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents2].Transparent;
             var cellContents3 = SubsystemTerrain.Terrain.GetCellContents(x - point.X, y - point.Y + 1, z - point.Z);
-            flag |= !BlocksManager.Blocks[cellContents3].Transparent;
+            flag |= !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents3].Transparent;
         }
         else
         {
             var cellContents4 = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-            flag |= !BlocksManager.Blocks[cellContents4].Transparent;
+            flag |= !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents4].Transparent;
             var cellContents5 = SubsystemTerrain.Terrain.GetCellContents(x - point.X, y - point.Y - 1, z - point.Z);
-            flag |= !BlocksManager.Blocks[cellContents5].Transparent;
+            flag |= !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents5].Transparent;
         }
 
         if (!flag)

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class RottenMilkBucketBlock : BucketBlock
 {
-    public const int Index = 245;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

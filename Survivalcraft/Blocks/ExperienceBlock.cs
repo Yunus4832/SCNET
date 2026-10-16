@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class ExperienceBlock : Block
 {
-    public const int Index = 248;
-
     public Texture2D Texture
     {
         get => field is not null ? field : throw new InvalidOperationException("Texture  is not initialized");
@@ -48,7 +47,7 @@ public class ExperienceBlock : Block
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawFlatBlock(
+        Catalog.DrawFlatBlock(
             primitivesRenderer,
             value,
             size * 0.18f,

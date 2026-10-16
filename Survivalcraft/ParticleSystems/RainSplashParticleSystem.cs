@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.ParticleSystems;
 
 public class RainSplashParticleSystem : ParticleSystem<RainSplashParticleSystem.Particle>
@@ -23,7 +24,7 @@ public class RainSplashParticleSystem : ParticleSystem<RainSplashParticleSystem.
                 continue;
             }
 
-            var block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
             particle.IsActive = true;
             particle.Position = position;
             particle.BaseColor = color;

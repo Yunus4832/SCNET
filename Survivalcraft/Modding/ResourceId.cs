@@ -18,5 +18,17 @@ public readonly record struct ResourceId
         Path = path;
     }
 
+    public static ResourceId Parse(string text)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(text);
+        var separator = text.IndexOf(':');
+        if (separator <= 0 || separator == text.Length - 1)
+        {
+            throw new ArgumentException($"Invalid resource id \"{text}\".", nameof(text));
+        }
+
+        return new ResourceId(new ModId(text[..separator]), text[(separator + 1)..]);
+    }
+
     public override string ToString() => $"{Namespace}:{Path}";
 }

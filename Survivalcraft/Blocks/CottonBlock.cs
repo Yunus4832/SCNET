@@ -1,16 +1,15 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class CottonBlock : CrossBlock
 {
-    public const int Index = 204;
-
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(204, 0, SetIsWild(SetSize(0, 2), true));
-        yield return Terrain.MakeBlockValue(204, 0, SetIsWild(SetSize(0, 1), false));
-        yield return Terrain.MakeBlockValue(204, 0, SetIsWild(SetSize(0, 2), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 2), true));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 1), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 2), false));
     }
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)
@@ -86,12 +85,12 @@ public class CottonBlock : CrossBlock
         if (GetIsWild(Terrain.ExtractData(value)))
         {
             color *= BlockColorsMap.GrassColorsMap.Lookup(environmentData.Temperature, environmentData.Humidity);
-            BlocksManager.DrawFlatOrImageExtrusionBlock(primitivesRenderer, value, size, ref matrix, null, color, false,
+            Catalog.DrawFlatOrImageExtrusionBlock(primitivesRenderer, value, size, ref matrix, null, color, false,
                 environmentData);
         }
         else
         {
-            BlocksManager.DrawFlatOrImageExtrusionBlock(primitivesRenderer, value, size, ref matrix, null, color, false,
+            Catalog.DrawFlatOrImageExtrusionBlock(primitivesRenderer, value, size, ref matrix, null, color, false,
                 environmentData);
         }
     }

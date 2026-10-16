@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class OrGateBlock() : RotatableMountedElectricElementBlock("Models/Gates", "OrGate", 0.375f)
 {
-    public const int Index = 143;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

@@ -17,7 +17,7 @@ public class BatteryElectricElement(
     {
         var cellValue =
             SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y - 1, cellFace.Z);
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)];
         if (!block.Collidable || block.Transparent)
         {
             SubsystemElectricity.SubsystemTerrain.DestroyCell(0, cellFace.X, cellFace.Y, cellFace.Z, 0, false, false);

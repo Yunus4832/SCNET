@@ -1,7 +1,7 @@
 namespace Game.Subsystems;
 
 public class SubsystemWaterBlockBehavior() : SubsystemFluidBlockBehavior(
-    BlocksManager.FluidBlocks[18]!,
+    CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[18]!,
     true
 ), IUpdateable
 {
@@ -9,7 +9,7 @@ public class SubsystemWaterBlockBehavior() : SubsystemFluidBlockBehavior(
 
     private float _soundVolume;
 
-    public override int[] HandledBlocks => [18];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:water")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -40,7 +40,7 @@ public class SubsystemWaterBlockBehavior() : SubsystemFluidBlockBehavior(
 
     public override bool OnFluidInteract(int interactValue, int x, int y, int z, int fluidValue)
     {
-        if (BlocksManager.Blocks[Terrain.ExtractContents(interactValue)] is not MagmaBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(interactValue)] is not MagmaBlock)
         {
             return base.OnFluidInteract(interactValue, x, y, z, fluidValue);
         }

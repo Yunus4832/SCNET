@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class PigmentBlock : FlatBlock
 {
-    public const int Index = 130;
-
     public override void DrawBlock(
         PrimitivesRenderer3D primitivesRenderer,
         int value,
@@ -16,7 +15,7 @@ public class PigmentBlock : FlatBlock
     )
     {
         var value2 = Terrain.ExtractData(value);
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

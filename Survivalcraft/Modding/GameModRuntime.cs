@@ -12,14 +12,16 @@ public sealed class GameModRuntime : IDisposable
 
     private GameModRuntime(
         ModHost host,
-        BlockRuntimeCatalog blocks,
+        NamespacedRegistry<BlockRegistration> blockRegistry,
+        NamespacedRegistry<BlockDataRegistration> blockDataRegistry,
         GameDataCatalog data,
         ContentCatalog content,
         ModProfile effectiveProfile,
         IReadOnlyList<LoadedModInfo> loadedMods)
     {
         Host = host;
-        Blocks = blocks;
+        _blockRegistry = blockRegistry;
+        _blockDataRegistry = blockDataRegistry;
         Data = data;
         Content = content;
         EffectiveProfile = effectiveProfile;
@@ -29,7 +31,54 @@ public sealed class GameModRuntime : IDisposable
 
     public ModHost Host { get; }
 
-    public BlockRuntimeCatalog Blocks { get; }
+    private readonly NamespacedRegistry<BlockRegistration> _blockRegistry;
+    private readonly NamespacedRegistry<BlockDataRegistration> _blockDataRegistry;
+    private BlockContentCatalog? _previewCatalog;
+
+    public BlockContentCatalog PreviewCatalog => _previewCatalog
+        ?? throw new InvalidOperationException("Preview content has not been initialized.");
+
+    public BlockContentCatalog? WorldCatalog { get; private set; }
+
+    public BlockContentCatalog RequireWorldCatalog() => WorldCatalog
+        ?? throw new InvalidOperationException("No world block catalog is available.");
+
+    public BlockContentCatalog CreateWorldCatalog(BlockIndexMapping mapping, bool requireExactMapping = false)
+    {
+        if (WorldCatalog is not null)
+        {
+            throw new InvalidOperationException("A world catalog is already active.");
+        }
+
+        var catalog = BuildCatalog(mapping, requireExactMapping);
+        WorldCatalog = catalog;
+        return catalog;
+    }
+
+    public void ReleaseWorldCatalog()
+    {
+        var catalog = WorldCatalog;
+        WorldCatalog = null;
+        catalog?.Dispose();
+    }
+
+    private BlockContentCatalog BuildCatalog(BlockIndexMapping mapping, bool requireExactMapping = false)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        InitializeAssets();
+        var registry = BlockRuntimeCatalog.Compile(_blockRegistry, _blockDataRegistry, mapping, requireExactMapping);
+        var catalog = new BlockContentCatalog(registry);
+        try
+        {
+            catalog.Initialize(Data.BuildClothing(), Data.BuildRecipes());
+            return catalog;
+        }
+        catch
+        {
+            catalog.Dispose();
+            throw;
+        }
+    }
 
     public GameDataCatalog Data { get; }
 
@@ -86,29 +135,6 @@ public sealed class GameModRuntime : IDisposable
         return StartFromDescriptors(externalMods, profile);
     }
 
-    public void InitializeBlocks()
-    {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        InitializeAssets();
-        BlocksManager.Initialize(Blocks, Data.BuildClothing());
-        var externalBlocks = Blocks.ById.Values
-            .Where(entry => entry.Id.Namespace != new ModId("game"))
-            .OrderBy(entry => entry.Id.ToString(), StringComparer.Ordinal)
-            .ToArray();
-        foreach (var entry in externalBlocks)
-        {
-            Log.Information(
-                "Initialized mod block {0} at runtime index {1} ({2}), name={3}, category={4}, order={5}, creativeValues={6}.",
-                entry.Id,
-                entry.RuntimeIndex,
-                entry.Block.GetType().FullName ?? entry.Block.GetType().Name,
-                entry.Block.DisplayName,
-                entry.Block.Category,
-                entry.Block.DisplayOrder,
-                string.Join(",", entry.Block.GetCreativeValues()));
-        }
-    }
-
     public void InitializeDatabase()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -118,18 +144,13 @@ public sealed class GameModRuntime : IDisposable
         DatabaseManager.LoadDataBaseFromXml(DatabaseManager.DatabaseNodeField);
     }
 
-    public void InitializeCraftingRecipes()
-    {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        InitializeAssets();
-        CraftingRecipesManager.Initialize(Data.BuildRecipes());
-    }
-
     public void InitializeContentData()
     {
         InitializeDatabase();
-        InitializeBlocks();
-        InitializeCraftingRecipes();
+        if (RunMode.Value == RunModeType.Gui)
+        {
+            _previewCatalog ??= BuildCatalog(BlockIndexMapping.Empty);
+        }
     }
 
     public void InitializeAssets()
@@ -142,6 +163,13 @@ public sealed class GameModRuntime : IDisposable
 
         Content.Install();
         _assetsInitialized = true;
+    }
+
+    public void RefreshRecipeDescriptions()
+    {
+        var recipes = Data.BuildRecipes();
+        _previewCatalog?.Recipes.Initialize(recipes);
+        WorldCatalog?.Recipes.Initialize(recipes);
     }
 
     public void InitializeLanguage(string languageType)
@@ -159,6 +187,9 @@ public sealed class GameModRuntime : IDisposable
         }
 
         _disposed = true;
+        ReleaseWorldCatalog();
+        _previewCatalog?.Dispose();
+        _previewCatalog = null;
         Content.Uninstall();
         Host.StopAll();
     }
@@ -186,13 +217,13 @@ public sealed class GameModRuntime : IDisposable
             host.LoadAndStart(allDescriptors);
             var blockRegistry = host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName);
             var dataRegistry = host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName);
-            var blocks = BlockRuntimeCatalog.Compile(blockRegistry, dataRegistry);
             var data = GameDataCatalog.Compile(host.Extensions);
             var content = ContentCatalog.Compile(host.Extensions);
             var loadedMods = CreateLoadedModInfos(host);
             return new GameModRuntime(
                 host,
-                blocks,
+                blockRegistry,
+                dataRegistry,
                 data,
                 content,
                 CreateEffectiveProfile(loadedMods, effectiveProfile),
@@ -282,7 +313,7 @@ public sealed class GameModRuntime : IDisposable
         lines.AddRange(blocks.Entries
             .Where(entry => entry.Key.Namespace == owner)
             .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
-            .Select(entry => $"block:{entry.Key}:{entry.Value.LegacyIndex}"));
+            .Select(entry => $"block:{entry.Key}"));
         lines.AddRange(blockData.Entries
             .Where(entry => entry.Key.Namespace == owner)
             .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)

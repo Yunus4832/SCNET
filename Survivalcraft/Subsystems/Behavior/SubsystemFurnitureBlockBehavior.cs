@@ -4,6 +4,7 @@ using Engine.Serialization;
 
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -34,7 +35,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemSoundMaterials _subsystemSoundMaterials = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public ReadOnlyList<FurnitureSet> FurnitureSets => new(_furnitureSets);
 
@@ -172,7 +173,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         var point2 = start.Point;
         var startValue = SubsystemTerrain.Terrain.GetCellValue(start.Point.X, start.Point.Y, start.Point.Z);
         var num = Terrain.ExtractContents(startValue);
-        if (BlocksManager.Blocks[num] is FurnitureBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is FurnitureBlock)
         {
             var designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(startValue));
             furnitureDesign = GetDesign(designIndex);
@@ -392,7 +393,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             }
 
             var cellValue = SubsystemTerrain.Terrain.GetCellValue(item.X, item.Y, item.Z);
-            if (Terrain.ExtractContents(cellValue) != FurnitureBlock.Index)
+            if (Terrain.ExtractContents(cellValue) != BuiltInBlockRegistry.GetIndex<FurnitureBlock>())
             {
                 continue;
             }
@@ -730,7 +731,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             .Concat(Project.FindSubsystem<SubsystemPlayers>(true)!.GetOfflineInventoryValues());
         foreach (var value in inventoryValues)
         {
-            if (Terrain.ExtractContents(value) == FurnitureBlock.Index)
+            if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<FurnitureBlock>())
             {
                 var designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(value));
                 var design = GetDesign(designIndex);
@@ -773,7 +774,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
     private static bool IsValueAllowed(int value)
     {
         var contents = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[contents];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[contents];
         return block.GetFurnitureBuilt(value);
     }
 
@@ -786,7 +787,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
     private void AddParticleSystems(int value, int x, int y, int z)
     {
-        if (Terrain.ExtractContents(value) != FurnitureBlock.Index)
+        if (Terrain.ExtractContents(value) != BuiltInBlockRegistry.GetIndex<FurnitureBlock>())
         {
             return;
         }

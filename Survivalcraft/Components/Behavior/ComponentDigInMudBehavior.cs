@@ -87,7 +87,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
         _componentSwimAwayBehavior = Entity.FindComponent<ComponentSwimAwayBehavior>(true)!;
         var digInBlockName = valuesDictionary.GetValue<string>("DigInBlockName");
         _digInBlockIndex = !string.IsNullOrEmpty(digInBlockName)
-            ? BlocksManager.Blocks.First(b => b.GetType().Name == digInBlockName).BlockIndex
+            ? CurrentModRuntime.Value!.RequireWorldCatalog().Blocks.First(b => b.GetType().Name == digInBlockName).BlockIndex
             : 0;
         _maxDigInDepth = valuesDictionary.GetValue<float>("MaxDigInDepth");
         _componentCreature.ComponentBody.CollidedWithBody += delegate (ComponentBody b) { _collidedWithBody = b; };
@@ -190,7 +190,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
                 delegate (int value, float _)
                 {
                     var num = Terrain.ExtractContents(value);
-                    return !(BlocksManager.Blocks[num] is WaterBlock);
+                    return !(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is WaterBlock);
                 }
             );
             if (!terrainRaycastResult.HasValue)

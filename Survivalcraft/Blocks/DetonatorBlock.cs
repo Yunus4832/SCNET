@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class DetonatorBlock : MountedElectricElementBlock
 {
-    public const int Index = 147;
-
     public BlockMesh[] BlockMeshesByData = new BlockMesh[6];
 
     public BoundingBox[][] CollisionBoxesByData = new BoundingBox[6][];

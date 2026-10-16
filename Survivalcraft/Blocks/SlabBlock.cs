@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Block, IPaintableBlock
@@ -117,7 +118,7 @@ public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Bl
                             (!GetIsTop(data2) && raycastResult.CellFace.Face == 4)))
         {
             var value2 = Terrain.MakeBlockValue(FullBlockIndex, 0, 0);
-            if (BlocksManager.Blocks[FullBlockIndex] is IPaintableBlock paintableBlock)
+            if (Catalog.Blocks[FullBlockIndex] is IPaintableBlock paintableBlock)
             {
                 var color = GetColor(data);
                 value2 = paintableBlock.Paint(subsystemTerrain, value2, color);

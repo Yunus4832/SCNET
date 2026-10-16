@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public abstract class PaintedCubeBlock(int coloredTextureSlot) : CubeBlock, IPaintableBlock
@@ -47,7 +48,7 @@ public abstract class PaintedCubeBlock(int coloredTextureSlot) : CubeBlock, IPai
     {
         var data = Terrain.ExtractData(value);
         color *= SubsystemPalette.GetColor(environmentData, GetColor(data));
-        BlocksManager.DrawCubeBlock(
+        Catalog.DrawCubeBlock(
             primitivesRenderer,
             value,
             new Vector3(size),

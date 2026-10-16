@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateable
@@ -37,7 +38,7 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
         }
     }
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -89,7 +90,7 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-        if (BlocksManager.Blocks[cellContents].Transparent)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent)
         {
             SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
         }
@@ -217,7 +218,7 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
         }
 
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (Project.FindSubsystem<SubsystemExplosions>(true)!.TryExplodeBlock(x, y, z, value))
         {
             return true;

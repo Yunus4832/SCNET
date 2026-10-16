@@ -6,8 +6,6 @@ public class AdjustableDelayGateBlock() : RotatableMountedElectricElementBlock(
     0.375f
 )
 {
-    public const int Index = 224;
-
     public override void GetDropValues(
         SubsystemTerrain subsystemTerrain,
         int oldValue,
@@ -27,7 +25,7 @@ public class AdjustableDelayGateBlock() : RotatableMountedElectricElementBlock(
         var data = SetDelay(0, delay);
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(224, 0, data),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
             Count = 1
         });
     }

@@ -7,5 +7,4 @@ public class SulphurChunkBlock() : ChunkBlock(
     true
 )
 {
-    public const int Index = 103;
 }

@@ -3,6 +3,7 @@ using System.Globalization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 
@@ -60,9 +61,9 @@ public class ComponentLoot : Component, IUpdateable
         }
     }
 
-    public static List<Loot> ParseLootList(ValuesDictionary lootVd)
+    public static List<Loot> ParseLootList(ValuesDictionary lootVd, BlockContentCatalog catalog)
     {
-        var list = (from string value in lootVd.Values select ParseLoot(value)).ToList();
+        var list = (from string value in lootVd.Values select ParseLoot(value, catalog)).ToList();
         list.Sort((l1, l2) => l1.Value - l2.Value);
         return list;
     }
@@ -73,8 +74,8 @@ public class ComponentLoot : Component, IUpdateable
         _subsystemPickables = Project.FindSubsystem<SubsystemPickables>(true)!;
         _componentCreature = Entity.FindComponent<ComponentCreature>(true)!;
         _lootDropped = valuesDictionary.GetValue<bool>("LootDropped");
-        _lootList = ParseLootList(valuesDictionary.GetValue<ValuesDictionary>("Loot"));
-        _lootOnFireList = ParseLootList(valuesDictionary.GetValue<ValuesDictionary>("LootOnFire"));
+        _lootList = ParseLootList(valuesDictionary.GetValue<ValuesDictionary>("Loot"), CurrentModRuntime.Value!.RequireWorldCatalog());
+        _lootOnFireList = ParseLootList(valuesDictionary.GetValue<ValuesDictionary>("LootOnFire"), CurrentModRuntime.Value!.RequireWorldCatalog());
     }
 
     public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
@@ -82,7 +83,7 @@ public class ComponentLoot : Component, IUpdateable
         valuesDictionary.SetValue("LootDropped", _lootDropped);
     }
 
-    public static Loot ParseLoot(string lootString)
+    public static Loot ParseLoot(string lootString, BlockContentCatalog catalog)
     {
         var array = lootString.Split([";"], StringSplitOptions.None);
         if (array.Length < 3)
@@ -90,7 +91,7 @@ public class ComponentLoot : Component, IUpdateable
             throw new InvalidOperationException("Invalid loot string.");
         }
 
-        var v = CraftingRecipesManager.DecodeResult(array[0]);
+        var v = catalog.Recipes.DecodeResult(array[0]);
         Loot result = default;
         result.Value = v;
         result.MinCount = int.Parse(array[1], CultureInfo.InvariantCulture);

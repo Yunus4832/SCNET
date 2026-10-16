@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemBlocksScanner : Subsystem, IUpdateable
@@ -117,7 +118,7 @@ public class SubsystemBlocksScanner : Subsystem, IUpdateable
         _pollX = value.X;
         _pollZ = value.Y;
         _pollPass = valuesDictionary.GetValue<int>("PollPass");
-        _pollableBehaviorsByContents = new SubsystemPollableBlockBehavior[BlocksManager.Blocks.Length][];
+        _pollableBehaviorsByContents = new SubsystemPollableBlockBehavior[CurrentModRuntime.Value!.RequireWorldCatalog().Blocks.Length][];
         for (var i = 0; i < _pollableBehaviorsByContents.Length; i++)
         {
             _pollableBehaviorsByContents[i] = (

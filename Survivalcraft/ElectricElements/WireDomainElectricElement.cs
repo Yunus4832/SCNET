@@ -33,19 +33,19 @@ public class WireDomainElectricElement(
     {
         var cellValue = SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
         var num = Terrain.ExtractContents(cellValue);
-        if (!(BlocksManager.Blocks[num] is WireBlock))
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not WireBlock wire)
         {
             return;
         }
 
-        var wireFacesBitmask = WireBlock.GetWireFacesBitmask(cellValue);
+        var wireFacesBitmask = wire.GetWireFacesBitmask(cellValue);
         var num2 = wireFacesBitmask;
-        if (WireBlock.WireExistsOnFace(cellValue, cellFace.Face))
+        if (wire.WireExistsOnFace(cellValue, cellFace.Face))
         {
             var point = CellFace.FaceToPoint3(cellFace.Face);
             var cellValue2 = SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(cellFace.X - point.X,
                 cellFace.Y - point.Y, cellFace.Z - point.Z);
-            var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue2)];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue2)];
             if (!block.Collidable || block.Transparent)
             {
                 num2 &= ~(1 << cellFace.Face);
@@ -58,7 +58,7 @@ public class WireDomainElectricElement(
         }
         else if (num2 != wireFacesBitmask)
         {
-            var newValue = WireBlock.SetWireFacesBitmask(cellValue, num2);
+            var newValue = wire.SetWireFacesBitmask(cellValue, num2);
             SubsystemElectricity.SubsystemTerrain.DestroyCell(0, cellFace.X, cellFace.Y, cellFace.Z, newValue, false,
                 false);
         }

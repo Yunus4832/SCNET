@@ -7,5 +7,4 @@ public class GermaniumOreChunkBlock() : ChunkBlock(
     false
 )
 {
-    public const int Index = 250;
 }

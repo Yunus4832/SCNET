@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentSwimAroundBehavior : ComponentBehavior, IUpdateable
@@ -116,7 +117,7 @@ public class ComponentSwimAroundBehavior : ComponentBehavior, IUpdateable
                 delegate (int value, float d)
                 {
                     var num3 = Terrain.ExtractContents(value);
-                    return !(BlocksManager.Blocks[num3] is WaterBlock);
+                    return !(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3] is WaterBlock);
                 });
             if (!terrainRaycastResult.HasValue)
             {

@@ -668,7 +668,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(x, y, z);
             ImmersionDepth = MathUtils.Max(surfaceHeight.Value - position.Y, 0f);
             ImmersionFactor = MathUtils.Saturate(MathUtils.Pow(ImmersionDepth / StanceBoxSize.Y, 0.7f));
-            ImmersionFluidBlock = BlocksManager.FluidBlocks[Terrain.ExtractContents(cellValue)];
+            ImmersionFluidBlock = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[Terrain.ExtractContents(cellValue)];
         }
         else
         {
@@ -922,7 +922,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         FindTerrainCollisionBoxes(box, _collisionBoxes);
         _collisionBoxes.AddRange(_movingBlocksCollisionBoxes);
         var num = MathUtils.Max(CalculatePushBack(box, 1, _collisionBoxes, out var pushingCollisionBox), 0f);
-        if (BlocksManager.Blocks[Terrain.ExtractContents(pushingCollisionBox.BlockValue)].NoSmoothRise ||
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(pushingCollisionBox.BlockValue)].NoSmoothRise ||
             !(num > 0.04f))
         {
             return false;
@@ -1001,7 +1001,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
             pushingCollisionBox.Collided?.Invoke(this);
             var num3 = Terrain.ExtractContents(pushingCollisionBox.BlockValue);
-            if (BlocksManager.Blocks[num3].HasCollisionBehavior)
+            if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3].HasCollisionBehavior)
             {
                 var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num3);
                 foreach (var behavior in blockBehaviors)
@@ -1114,7 +1114,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             foreach (var movingBlock in movingBlockSet.Blocks)
             {
                 var num = Terrain.ExtractContents(movingBlock.Value);
-                var block = BlocksManager.Blocks[num];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
                 if (!block.Collidable)
                 {
                     continue;
@@ -1169,7 +1169,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     var num3 = Terrain.ExtractContents(cellValueFast);
                     if (num3 != 0)
                     {
-                        var block = BlocksManager.Blocks[num3];
+                        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3];
                         if (block.Collidable)
                         {
                             var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, cellValueFast);
@@ -1198,7 +1198,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         var num = Terrain.ToCell(position.X);
         var num2 = Terrain.ToCell(position.Y);
         var num3 = Terrain.ToCell(position.Z);
-        if (BlocksManager.Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3)].Collidable)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3)].Collidable)
         {
             return;
         }
@@ -1210,12 +1210,9 @@ public class ComponentBody : ComponentFrame, IUpdateable
         {
             if (flag)
             {
-                var isCollidable = BlocksManager
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
-                var isCollidable2 = BlocksManager
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
-                var isCollidable3 = BlocksManager
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 - 1)].Collidable;
+                var isCollidable = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
+                var isCollidable2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
+                var isCollidable3 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 - 1)].Collidable;
                 if ((isCollidable && !isCollidable2) || (!isCollidable && !isCollidable2) & isCollidable3)
                 {
                     item = new CollisionBox
@@ -1251,12 +1248,9 @@ public class ComponentBody : ComponentFrame, IUpdateable
             }
             else
             {
-                var isCollidable4 = BlocksManager
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
-                var isCollidable5 = BlocksManager
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
-                var isCollidable6 = BlocksManager
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 + 1)].Collidable;
+                var isCollidable4 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
+                var isCollidable5 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
+                var isCollidable6 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 + 1)].Collidable;
                 if ((isCollidable4 && !isCollidable5) || (!isCollidable4 && !isCollidable5) & isCollidable6)
                 {
                     item = new CollisionBox
@@ -1293,12 +1287,9 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
         else if (flag)
         {
-            var isCollidable7 = BlocksManager
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
-            var isCollidable8 = BlocksManager
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
-            var isCollidable9 = BlocksManager
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 - 1)].Collidable;
+            var isCollidable7 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
+            var isCollidable8 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
+            var isCollidable9 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 - 1)].Collidable;
             if ((isCollidable7 && !isCollidable8) || (!isCollidable7 && !isCollidable8) & isCollidable9)
             {
                 item = new CollisionBox
@@ -1334,12 +1325,9 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
         else
         {
-            var isCollidable10 = BlocksManager
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
-            var isCollidable11 = BlocksManager
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
-            var isCollidable12 = BlocksManager
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 + 1)].Collidable;
+            var isCollidable10 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
+            var isCollidable11 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
+            var isCollidable12 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 + 1)].Collidable;
             if ((isCollidable10 && !isCollidable11) || (!isCollidable10 && !isCollidable11) & isCollidable12)
             {
                 item = new CollisionBox
@@ -1413,7 +1401,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         var num = 0f;
         for (var i = 0; i < collisionBoxes.Count; i++)
         {
-            var num2 = !BlocksManager.Blocks[Terrain.ExtractContents(collisionBoxes.Array[i].BlockValue)].NoSmoothRise
+            var num2 = !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(collisionBoxes.Array[i].BlockValue)].NoSmoothRise
                 ? CalculateBoxBoxOverlap(ref smoothRiseBox, ref collisionBoxes.Array[i].Box, axis)
                 : CalculateBoxBoxOverlap(ref normalBox, ref collisionBoxes.Array[i].Box, axis);
             if (!(MathUtils.Abs(num2) > MathUtils.Abs(num)))

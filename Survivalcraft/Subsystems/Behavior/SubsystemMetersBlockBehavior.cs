@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
@@ -28,7 +29,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private readonly int[] _visited = new int[8192];
 
-    public override int[] HandledBlocks => [120, 121];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:thermometer"), ResourceId.Parse("game:hygrometer")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -58,7 +59,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         var point = CellFace.FaceToPoint3(Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z)));
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x - point.X, y - point.Y, z - point.Z);
-        if (BlocksManager.Blocks[cellContents].Transparent)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent)
         {
             SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
         }
@@ -184,7 +185,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var z2 = num13 & 0xF;
             var cellValueFast = chunkAtCell.GetCellValueFast(x2, y2, z2);
             var num14 = Terrain.ExtractContents(cellValueFast);
-            var block = BlocksManager.Blocks[num14];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num14];
             //                计算当前坐标在地形块中的局部坐标(x2, y2, z2)。
             //获取该坐标处的块值 cellValueFast。
             //提取块的内容 ID num14，并获取对应的块对象 block。
@@ -307,7 +308,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
                             new Vector3(x + k, y + m, z + l) + new Vector3(0.5f, 0.75f, 0.5f), false, true,
                             delegate (int raycastValue, float _)
                             {
-                                var block2 = BlocksManager.Blocks[Terrain.ExtractContents(raycastValue)];
+                                var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(raycastValue)];
                                 return block2 is { Collidable: true, Transparent: false };
                             }).HasValue)
                     {
@@ -367,7 +368,7 @@ public class SubsystemMetersBlockBehavior : SubsystemBlockBehavior, IUpdateable
     private static float GetHeat(int value)
     {
         var num = Terrain.ExtractContents(value);
-        return BlocksManager.Blocks[num].GetHeat(value);
+        return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].GetHeat(value);
     }
 
     private void SimulateThermometer(int x, int y, int z, bool invalidateTerrainOnChange)

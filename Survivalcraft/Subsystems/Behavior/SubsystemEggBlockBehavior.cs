@@ -1,17 +1,18 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemEggBlockBehavior : SubsystemBlockBehavior
 {
-    private readonly EggBlock _eggBlock = (EggBlock)BlocksManager.Blocks[118];
+    private readonly EggBlock _eggBlock = (EggBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[118];
 
     private readonly Random _random = new();
 
     private SubsystemCreatureSpawn _subsystemCreatureSpawn = null!;
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override bool OnHitAsProjectile(CellFace? cellFace, ComponentBody componentBody, WorldItem worldItem)
     {

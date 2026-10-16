@@ -7,5 +7,4 @@ public class MalachiteChunkBlock() : ChunkBlock(
     false
 )
 {
-    public const int Index = 43;
 }

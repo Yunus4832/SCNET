@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class TallGrassBlock : CrossBlock
 {
-    public const int Index = 19;
-
     public override void GetDropValues(
         SubsystemTerrain subsystemTerrain,
         int oldValue,
@@ -20,7 +19,7 @@ public class TallGrassBlock : CrossBlock
         {
             dropValues.Add(new BlockDropValue
             {
-                Value = Terrain.MakeBlockValue(19, 0, data),
+                Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
                 Count = 1
             });
         }
@@ -42,7 +41,7 @@ public class TallGrassBlock : CrossBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

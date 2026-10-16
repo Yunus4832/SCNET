@@ -83,7 +83,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             var num2 = Terrain.ToCell(position.Y);
             var z = Terrain.ToCell(position.Z);
             var num3 = Terrain.ExtractContents(projectile.Value);
-            var block = BlocksManager.Blocks[num3];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3];
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
             if (chunkAtCell is { MainThreadState: >= TerrainChunkState.InvalidVertices1 } && num2 is >= 0 and < 255)
             {
@@ -139,7 +139,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             }
             else
             {
-                var block = BlocksManager.Blocks[Terrain.ExtractContents(projectile.Value)];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(projectile.Value)];
                 if (totalElapsedGameTime - projectile.CreationTime > 40.0)
                 {
                     projectile.ToRemove = true;
@@ -164,7 +164,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                     var bodyRaycastResult =
                         _subsystemBodies.Raycast(position + v, vector + v, 0.2f, (_, _) => true);
                     var terrainRaycastResult = _subsystemTerrain.Raycast(position + v, vector + v, false, true,
-                        (value, _) => BlocksManager.Blocks[Terrain.ExtractContents(value)].Collidable);
+                        (value, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable);
                     var flag = block.DisintegratesOnHit;
                     if (terrainRaycastResult.HasValue || bodyRaycastResult.HasValue)
                     {
@@ -214,7 +214,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                         var cellFace2 = terrainRaycastResult.Value.CellFace;
                         var cellValue = _subsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
                         var num = Terrain.ExtractContents(cellValue);
-                        var block2 = BlocksManager.Blocks[num];
+                        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
                         var num2 = projectile.Velocity.Length();
                         var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(num);
                         foreach (var behavior in blockBehaviors2)
@@ -302,7 +302,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                         {
                             if (projectile.ProjectileStoppedAction == ProjectileStoppedAction.TurnIntoPickable)
                             {
-                                var num4 = BlocksManager.DamageItem(projectile.Value, 1);
+                                var num4 = CurrentModRuntime.Value!.RequireWorldCatalog().DamageItem(projectile.Value, 1);
                                 if (num4 != 0)
                                 {
                                     if (vector2.HasValue)
@@ -485,7 +485,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                 _subsystemSoundMaterials.PlayImpactSound(value, position, 1f);
                 break;
             case ProjectilePackage.EffectType.Debris:
-                _subsystemParticles.AddParticleSystem(BlocksManager.Blocks[Terrain.ExtractContents(value)]
+                _subsystemParticles.AddParticleSystem(CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
                     .CreateDebrisParticleSystem(_subsystemTerrain, position, value, 1f));
                 break;
             case ProjectilePackage.EffectType.WaterSplash:
@@ -514,7 +514,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                 continue;
             }
 
-            var block = BlocksManager.Blocks[Terrain.ExtractContents(projectile.Value)];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(projectile.Value)];
             projectile.Position += projectile.Velocity * dt;
             projectile.IsInWater = IsWater(projectile.Position);
             var damping = MathUtils.Pow(projectile.IsInWater ? 0.001f : block.ProjectileDamping, dt);
@@ -616,7 +616,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
         int networkId = 0)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         var v = Vector3.Normalize(velocity);
         var vector = position;
         if (owner != null)
@@ -639,7 +639,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
 
         var end = vector + v * block.ProjectileTipOffset;
         if (_subsystemTerrain.Raycast(position, end, false, true,
-                (testValue, _) => BlocksManager.Blocks[Terrain.ExtractContents(testValue)].Collidable)
+                (testValue, _) => CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(testValue)].Collidable)
             .HasValue)
         {
             return null;
@@ -879,14 +879,14 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
     {
         var cellContents = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(position.X),
             Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
-        return BlocksManager.Blocks[cellContents] is WaterBlock;
+        return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents] is WaterBlock;
     }
 
     private bool IsMagma(Vector3 position)
     {
         var cellContents = _subsystemTerrain.Terrain.GetCellContents(Terrain.ToCell(position.X),
             Terrain.ToCell(position.Y), Terrain.ToCell(position.Z));
-        return BlocksManager.Blocks[cellContents] is MagmaBlock;
+        return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents] is MagmaBlock;
     }
 
     private void MakeProjectileNoise(Projectile projectile)

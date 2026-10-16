@@ -3,6 +3,7 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemModelsRenderer : Subsystem, IDrawable
@@ -409,7 +410,7 @@ public class SubsystemModelsRenderer : Subsystem, IDrawable
                 {
                     var cellValueFast = subsystemShadows.SubsystemTerrain.Terrain.GetCellValueFast(i, num11, j);
                     var num12 = Terrain.ExtractContents(cellValueFast);
-                    var block = BlocksManager.Blocks[num12];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num12];
                     if (block.ObjectShadowStrength > 0f)
                     {
                         var customCollisionBoxes =

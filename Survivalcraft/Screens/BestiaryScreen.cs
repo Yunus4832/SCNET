@@ -135,7 +135,7 @@ public class BestiaryScreen : Screen
                 CanBeRidden = valuesDictionary8 != null,
                 HasSpawnerEgg = value2?.GetValue<bool>("ShowEgg") ?? false,
                 Loot = valuesDictionary9 != null
-                    ? ComponentLoot.ParseLootList(valuesDictionary9.GetValue<ValuesDictionary>("Loot"))
+                    ? ComponentLoot.ParseLootList(valuesDictionary9.GetValue<ValuesDictionary>("Loot"), CurrentModRuntime.Value!.PreviewCatalog)
                     : []
             };
 

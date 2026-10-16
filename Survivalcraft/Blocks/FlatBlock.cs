@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public abstract class FlatBlock : Block
@@ -24,7 +25,7 @@ public abstract class FlatBlock : Block
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

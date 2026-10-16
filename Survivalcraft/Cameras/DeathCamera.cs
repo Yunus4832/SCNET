@@ -63,7 +63,7 @@ public class DeathCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
             var v2 = Vector3.Normalize(new Vector3(MathUtils.Sin(x), 0.5f, MathUtils.Cos(x)));
             var vector2 = targetPosition + v2 * distance;
             var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(targetPosition, vector2,
-                false, true, (v, _) => !BlocksManager.Blocks[Terrain.ExtractContents(v)].Transparent);
+                false, true, (v, _) => !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(v)].Transparent);
             Vector3 zero;
             if (terrainRaycastResult.HasValue)
             {

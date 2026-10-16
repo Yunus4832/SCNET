@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpdateable
@@ -14,20 +15,8 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
     private SubsystemTime _subsystemTime = null!;
 
-    public override int[] HandledBlocks =>
-    [
-        19,
-        20,
-        24,
-        25,
-        28,
-        99,
-        131,
-        244,
-        132,
-        174,
-        204
-    ];
+    public override ResourceId[] HandledBlocks =>
+    [ResourceId.Parse("game:tall_grass"), ResourceId.Parse("game:red_flower"), ResourceId.Parse("game:purple_flower"), ResourceId.Parse("game:white_flower"), ResourceId.Parse("game:dry_bush"), ResourceId.Parse("game:large_dry_bush"), ResourceId.Parse("game:pumpkin"), ResourceId.Parse("game:rotten_pumpkin"), ResourceId.Parse("game:jack_o_lantern"), ResourceId.Parse("game:rye"), ResourceId.Parse("game:cotton")];
 
     public override void OnBlockGenerated(int value, int x, int y, int z, bool isLoaded)
     {
@@ -51,7 +40,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
                 break;
             case 132:
                 {
-                    var block = BlocksManager.Blocks[num2];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
                     if (block.IsFaceTransparent(SubsystemTerrain, 4, cellValue) && !(block is FenceBlock))
                     {
                         SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
@@ -97,7 +86,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
         }
 
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (num == 19)
         {
             GrowTallGrass(value, x, y, z, pollPass);

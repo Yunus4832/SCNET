@@ -5,6 +5,7 @@ using EntitySystem.TemplatesDatabase;
 using Game;
 using Game.Components;
 using Game.Managers;
+using Game.Modding;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Subsystems;
@@ -18,7 +19,7 @@ public sealed class TerritoryBlockBehavior : SubsystemBlockBehavior
     private SubsystemModelsRenderer? _models;
     private DrawText? _drawText;
 
-    public override int[] HandledBlocks => [TerritoryBlock.Index];
+    public override ResourceId[] HandledBlocks => [TerritoryBlock.Id];
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
@@ -29,7 +30,7 @@ public sealed class TerritoryBlockBehavior : SubsystemBlockBehavior
 
     public override bool OnEditBlock(int x, int y, int z, int value, ComponentPlayer player)
     {
-        if (!TerritoryBlock.IsTerritoryValue(value))
+        if (!TerritoryBlock.IsTerritoryValue(value, CurrentModRuntime.Value!.RequireWorldCatalog()))
         {
             return false;
         }
@@ -59,12 +60,13 @@ public sealed class TerritoryBlockBehavior : SubsystemBlockBehavior
     public override void OnHitByProjectile(CellFace cellFace, WorldItem worldItem)
     {
         if (CommonLib.WorkType == WorkType.Client || _models == null || worldItem.Value == 0 ||
-            !TerritoryBlock.IsTerritoryValue(SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z)))
+            !TerritoryBlock.IsTerritoryValue(SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z),
+                CurrentModRuntime.Value!.RequireWorldCatalog()))
         {
             return;
         }
 
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(worldItem.Value)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(worldItem.Value)];
         var ingredient = $"{block.CraftingId}:{Terrain.ExtractData(worldItem.Value)}";
         var text = string.Format(LanguageManager.Get("SubsystemTerritoryBlockBehavior", 5), ingredient);
         if (_drawText == null)

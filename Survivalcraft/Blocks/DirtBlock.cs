@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class DirtBlock : CubeBlock
 {
-    public const int Index = 2;
-
     public override void GenerateTerrainVertices(
         BlockGeometryGenerator generator,
         TerrainGeometry geometry,

@@ -443,7 +443,7 @@ public class ComponentHumanModel : ComponentCreatureModel
             _componentMiner.ActiveBlockValue != 0)
         {
             var num = Terrain.ExtractContents(_componentMiner.ActiveBlockValue);
-            var block = BlocksManager.Blocks[num];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
             var m = AbsoluteBoneTransformsForCamera[_hand2Bone.Index];
             m *= camera.InvertedViewMatrix;
             m.Right = Vector3.Normalize(m.Right);

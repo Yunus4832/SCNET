@@ -7,5 +7,4 @@ public class IronOreChunkBlock() : ChunkBlock(
     false
 )
 {
-    public const int Index = 249;
 }

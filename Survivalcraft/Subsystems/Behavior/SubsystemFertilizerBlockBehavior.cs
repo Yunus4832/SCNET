@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemFertilizerBlockBehavior : SubsystemBlockBehavior
@@ -10,7 +11,7 @@ public class SubsystemFertilizerBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
-    public override int[] HandledBlocks => [102];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:saltpeter_chunk")];
 
     public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
     {
@@ -42,7 +43,7 @@ public class SubsystemFertilizerBlockBehavior : SubsystemBlockBehavior
                 terrainRaycastResult.Value.CellFace.Z), 3f, true);
         var position = new Vector3(terrainRaycastResult.Value.CellFace.X + 0.5f,
             terrainRaycastResult.Value.CellFace.Y + 1.5f, terrainRaycastResult.Value.CellFace.Z + 0.5f);
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(componentMiner.ActiveBlockValue)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(componentMiner.ActiveBlockValue)];
         _subsystemParticles.AddParticleSystem(block.CreateDebrisParticleSystem(_subsystemTerrain, position,
             componentMiner.ActiveBlockValue, 1.25f));
         componentMiner.RemoveActiveTool(1);

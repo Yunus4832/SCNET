@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class StoneAxeBlock : Block
 {
-    public const int Index = 29;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

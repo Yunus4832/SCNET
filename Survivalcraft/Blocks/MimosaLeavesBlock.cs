@@ -8,8 +8,6 @@ public class MimosaLeavesBlock() : DeciduousLeavesBlock(
     1.25f
 )
 {
-    public const int Index = 256;
-
     public override int GetFaceTextureSlot(int face, int value)
     {
         return GetSeason(Terrain.ExtractData(value)) == Season.Winter ? 106 : base.GetFaceTextureSlot(face, value);

@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemBoatBlockBehavior : SubsystemBlockBehavior
@@ -14,7 +15,7 @@ public class SubsystemBoatBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemBodies _subsystemBodies = null!;
 
-    public override int[] HandledBlocks => [178];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:boat")];
 
     public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
     {

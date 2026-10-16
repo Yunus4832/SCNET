@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class OneLedBlock : MountedElectricElementBlock
 {
-    public const int Index = 253;
-
     public readonly BlockMesh[] BlockMeshesByFace = new BlockMesh[6];
 
     public readonly BoundingBox[][] CollisionBoxesByFace = new BoundingBox[6][];
@@ -44,7 +42,7 @@ public class OneLedBlock : MountedElectricElementBlock
         var craftingRecipe = new CraftingRecipe
         {
             ResultCount = 4,
-            ResultValue = Terrain.MakeBlockValue(253, 0, 0),
+            ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, 0),
             RequiredHeatLevel = 0f,
             Description = LanguageManager.Get(GetType().Name, 1),
             Ingredients =
@@ -94,7 +92,7 @@ public class OneLedBlock : MountedElectricElementBlock
     {
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(253, 0, 0),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, 0),
             Count = 1
         });
         showDebris = true;

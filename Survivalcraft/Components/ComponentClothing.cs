@@ -139,7 +139,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
     public virtual int GetSlotProcessCapacity(int slotIndex, int value)
     {
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
         if (block.GetNutritionalValue(value) > 0f)
         {
             return 1;
@@ -167,7 +167,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             return;
         }
 
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(value)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)];
         if (block.GetNutritionalValue(value) > 0f)
         {
             if (block is BucketBlock)
@@ -190,7 +190,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
         if (block is ClothingBlock)
         {
-            var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(value)]
+            var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
                 .GetClothingData(Terrain.ExtractData(value));
             var list = new List<int>(GetClothes(clothingData.Slot))
             {
@@ -276,7 +276,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 while (num < _clothesList.Count)
                 {
                     var value = _clothesList[num];
-                    var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(value)]
+                    var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
                         .GetClothingData(Terrain.ExtractData(value));
                     if (clothingData.PlayerLevelRequired > _componentPlayer.PlayerData.Level)
                     {
@@ -321,7 +321,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     for (var i = 0; i < _clothesList.Count; i++)
                     {
                         var value2 = _clothesList[i];
-                        var clothingData2 = BlocksManager.Blocks[Terrain.ExtractContents(value2)]
+                        var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value2)]
                             .GetClothingData(Terrain.ExtractData(value2));
                         var num2 = _componentVitalStats.Wetness > 0f
                             ? 10f * clothingData2.Sturdiness
@@ -330,7 +330,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                         if (MathUtils.Floor(_subsystemGameInfo.TotalElapsedGameTime / num2) > num3 &&
                             _random.Float(0f, 1f) < 0.75f)
                         {
-                            _clothesList[i] = BlocksManager.DamageItem(value2, 1);
+                            _clothesList[i] = CurrentModRuntime.Value!.RequireWorldCatalog().DamageItem(value2, 1);
                             flag2 = true;
                         }
                     }
@@ -477,7 +477,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
     {
         try
         {
-            return BlocksManager.Blocks[Terrain.ExtractContents(value)].GetClothingData(Terrain.ExtractData(value));
+            return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].GetClothingData(Terrain.ExtractData(value));
         }
         catch (Exception ex)
         {
@@ -511,14 +511,14 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         var slot = num < 0.1f ? ClothingSlot.Feet :
             num < 0.3f ? ClothingSlot.Legs :
             num < 0.9f ? ClothingSlot.Torso : ClothingSlot.Head;
-        float num2 = ((ClothingBlock)BlocksManager.Blocks[203]).Durability + 1;
+        float num2 = ((ClothingBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[203]).Durability + 1;
         var list = new List<int>(GetClothes(slot));
         for (var i = 0; i < list.Count; i++)
         {
             var value = list[i];
-            var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(value)]
+            var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
                 .GetClothingData(Terrain.ExtractData(value));
-            var x = (num2 - BlocksManager.Blocks[203].GetDamage(value)) / num2 * clothingData.Sturdiness;
+            var x = (num2 - CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[203].GetDamage(value)) / num2 * clothingData.Sturdiness;
             var num3 = MathUtils.Min(attackPower * MathUtils.Saturate(clothingData.ArmorProtection), x);
             if (!(num3 > 0f))
             {
@@ -531,7 +531,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 var x2 = num3 / clothingData.Sturdiness * num2 + 0.001f;
                 var damageCount =
                     (int)(MathUtils.Floor(x2) + (_random.Bool(MathUtils.Remainder(x2, 1f)) ? 1 : 0));
-                list[i] = BlocksManager.DamageItem(value, damageCount);
+                list[i] = CurrentModRuntime.Value!.RequireWorldCatalog().DamageItem(value, damageCount);
             }
 
             if (!string.IsNullOrEmpty(clothingData.ImpactSoundsFolder))
@@ -644,7 +644,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
 
     public virtual bool CanWearClothing(int value)
     {
-        var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(value)]
+        var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)]
             .GetClothingData(Terrain.ExtractData(value));
         var list = GetClothes(clothingData.Slot);
         if (list.Count == 0)
@@ -653,7 +653,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         }
 
         var v2 = list[^1];
-        var clothingData2 = BlocksManager.Blocks[Terrain.ExtractContents(v2)].GetClothingData(Terrain.ExtractData(v2));
+        var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(v2)].GetClothingData(Terrain.ExtractData(v2));
         return clothingData.Layer > clothingData2.Layer;
     }
 
@@ -732,7 +732,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 foreach (var cloth in GetClothes(slot))
                 {
                     var data = Terrain.ExtractData(cloth);
-                    var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(cloth)].GetClothingData(data);
+                    var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cloth)].GetClothingData(data);
                     var fabricColor =
                         SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data));
                     texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData.Texture, false, num++,
@@ -756,7 +756,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 foreach (var clothe2 in GetClothes(slot2))
                 {
                     var data2 = Terrain.ExtractData(clothe2);
-                    var clothingData2 = BlocksManager.Blocks[Terrain.ExtractContents(clothe2)].GetClothingData(data2);
+                    var clothingData2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(clothe2)].GetClothingData(data2);
                     var fabricColor2 =
                         SubsystemPalette.GetFabricColor(_subsystemTerrain, ClothingBlock.GetClothingColor(data2));
                     texturedBatch2D = _primitivesRenderer.TexturedBatch(clothingData2.Texture, false, num++,

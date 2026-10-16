@@ -1,9 +1,17 @@
 using System.Xml.Linq;
 
+using Game.Modding.Blocks;
+
 namespace Game.Widgets;
 
 public class CraftingRecipeSlotWidget : CanvasWidget
 {
+    public BlockContentCatalog Catalog
+    {
+        get => field ?? throw new InvalidOperationException("Widget content catalog was not assigned.");
+        set;
+    } = null!;
+
     private readonly BlockIconWidget _blockIconWidget;
 
     private string _ingredient = string.Empty;
@@ -39,11 +47,15 @@ public class CraftingRecipeSlotWidget : CanvasWidget
     protected override void MeasureOverride(Vector2 parentAvailableSize)
     {
         _blockIconWidget.IsVisible = false;
+        if (!string.IsNullOrEmpty(_ingredient) || _resultCount != 0)
+        {
+            _blockIconWidget.Catalog = Catalog;
+        }
         _labelWidget.IsVisible = false;
         if (!string.IsNullOrEmpty(_ingredient))
         {
-            CraftingRecipesManager.DecodeIngredient(_ingredient, out var craftingId, out var data);
-            var array = BlocksManager.FindBlocksByCraftingId(craftingId);
+            CraftingRecipeCatalog.DecodeIngredient(_ingredient, out var craftingId, out var data);
+            var array = Catalog.FindBlocksByCraftingId(craftingId);
             if (array.Length != 0)
             {
                 var block = array[(int)(1.0 * Time.RealTime) % array.Length];

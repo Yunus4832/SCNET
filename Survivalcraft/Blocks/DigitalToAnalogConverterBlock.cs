@@ -6,8 +6,6 @@ public class DigitalToAnalogConverterBlock() : RotatableMountedElectricElementBl
     0.375f
 )
 {
-    public const int Index = 180;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

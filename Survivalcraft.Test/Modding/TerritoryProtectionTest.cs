@@ -4,6 +4,7 @@ using Engine.Core;
 
 using Game;
 using Game.Managers;
+using Game.Modding;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Subsystems;
@@ -19,17 +20,19 @@ public class TerritoryProtectionTest
     [Fact]
     public void PistonUsesTheModBlocksMovabilityContractWithoutAKnownIndexCase()
     {
-        var previous = BlocksManager.Blocks[TerritoryBlock.Index];
+        using var scope = new WorldCatalogScope(
+            new ModDescriptor(new ModManifest(ModEntry.ModId, "Territory", "1.0.0"), static () => new ModEntry()));
+        var index = scope.Catalog.GetBlock(TerritoryBlock.Id).BlockIndex;
         try
         {
-            BlocksManager.Blocks[TerritoryBlock.Index] = new TerritoryBlock { Collidable = true };
+            scope.Catalog.Blocks[index] = new TerritoryBlock { Collidable = true };
             Assert.False(SubsystemPistonBlockBehavior.IsBlockMovable(
-                Terrain.MakeBlockValue(TerritoryBlock.Index), 0, 64, out var isEnd));
+                Terrain.MakeBlockValue(index), 0, 64, out var isEnd));
             Assert.False(isEnd);
         }
         finally
         {
-            BlocksManager.Blocks[TerritoryBlock.Index] = previous;
+
         }
     }
 

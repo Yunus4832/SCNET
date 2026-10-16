@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class TorchBlock : Block
 {
-    public const int Index = 31;
-
     public BlockMesh[] BlockMeshesByVariant = new BlockMesh[5];
 
     public BoundingBox[][] CollisionBoxes = new BoundingBox[5][];
@@ -101,27 +99,27 @@ public class TorchBlock : Block
         var value2 = 0;
         if (raycastResult.CellFace.Face == 0)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 31), 0);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 0);
         }
 
         if (raycastResult.CellFace.Face == 1)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 31), 1);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 1);
         }
 
         if (raycastResult.CellFace.Face == 2)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 31), 2);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 2);
         }
 
         if (raycastResult.CellFace.Face == 3)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 31), 3);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 3);
         }
 
         if (raycastResult.CellFace.Face == 4)
         {
-            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, 31), 4);
+            value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), 4);
         }
 
         BlockPlacementData result = default;

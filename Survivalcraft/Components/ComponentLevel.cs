@@ -543,7 +543,7 @@ public class ComponentLevel : Component, IUpdateable
 
     public static void AddClothingFactor(int clothingValue, ref float clothingFactor, ICollection<Factor> factors)
     {
-        var clothingData = BlocksManager.Blocks[Terrain.ExtractContents(clothingValue)]
+        var clothingData = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(clothingValue)]
             .GetClothingData(Terrain.ExtractData(clothingValue));
         if (clothingData.MovementSpeedFactor.CloseTo(1f))
         {

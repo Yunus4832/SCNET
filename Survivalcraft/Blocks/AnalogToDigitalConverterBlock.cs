@@ -3,8 +3,6 @@ namespace Game.Blocks;
 public class AnalogToDigitalConverterBlock()
     : RotatableMountedElectricElementBlock("Models/Gates", "AnalogToDigitalConverter", 0.375f)
 {
-    public const int Index = 181;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

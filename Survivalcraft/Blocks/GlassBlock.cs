@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class GlassBlock : AlphaTestCubeBlock
 {
-    public const int Index = 15;
-
     public bool CollapseSupportBlock = false;
 
     public override bool FurnitureBuilt { get; set; } = true;

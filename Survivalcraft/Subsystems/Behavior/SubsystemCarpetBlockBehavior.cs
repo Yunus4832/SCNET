@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemCarpetBlockBehavior : SubsystemPollableBlockBehavior
@@ -8,7 +9,7 @@ public class SubsystemCarpetBlockBehavior : SubsystemPollableBlockBehavior
 
     private SubsystemWeather _subsystemWeather = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
@@ -19,7 +20,7 @@ public class SubsystemCarpetBlockBehavior : SubsystemPollableBlockBehavior
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-        if (BlocksManager.Blocks[cellContents].Transparent)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent)
         {
             SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
         }

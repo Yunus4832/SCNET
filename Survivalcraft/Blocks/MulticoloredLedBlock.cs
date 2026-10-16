@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class MulticoloredLedBlock : MountedElectricElementBlock
 {
-    public const int Index = 254;
-
     public BlockMesh[] BlockMeshesByData = new BlockMesh[6];
 
     public BoundingBox[][] CollisionBoxesByData = new BoundingBox[6][];
@@ -57,7 +55,7 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
         var craftingRecipe = new CraftingRecipe
         {
             ResultCount = 4,
-            ResultValue = Terrain.MakeBlockValue(254, 0, 0),
+            ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, 0),
             RequiredHeatLevel = 0f,
             Description = LanguageManager.Get(GetType().Name, 1),
             Ingredients =
@@ -79,7 +77,7 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
 
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(254, 0, 0);
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, 0);
     }
 
     public override BlockPlacementData GetPlacementValue(SubsystemTerrain subsystemTerrain,

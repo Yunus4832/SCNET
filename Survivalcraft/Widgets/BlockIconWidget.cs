@@ -1,9 +1,17 @@
 using Engine.Graphics;
 
+using Game.Modding.Blocks;
+
 namespace Game.Widgets;
 
 public class BlockIconWidget : Widget
 {
+    public BlockContentCatalog Catalog
+    {
+        get => field ?? throw new InvalidOperationException("Widget content catalog was not assigned.");
+        set;
+    } = null!;
+
     private Matrix _viewMatrix;
 
     public DrawBlockEnvironmentData DrawBlockEnvironmentData { get; set; }
@@ -27,9 +35,7 @@ public class BlockIconWidget : Widget
             }
 
             field = value;
-            var block = BlocksManager.Blocks[Contents];
-            _viewMatrix = Matrix.CreateLookAt(block.GetIconViewOffset(Value, DrawBlockEnvironmentData),
-                new Vector3(0f, 0f, 0f), Vector3.UnitY);
+
         }
     }
 
@@ -68,7 +74,9 @@ public class BlockIconWidget : Widget
 
     public override void Draw(DrawContext dc)
     {
-        var obj = BlocksManager.Blocks[Contents];
+        var obj = Catalog.Blocks[Contents];
+        _viewMatrix = Matrix.CreateLookAt(obj.GetIconViewOffset(Value, DrawBlockEnvironmentData),
+            Vector3.Zero, Vector3.UnitY);
         _ = DrawBlockEnvironmentData.SubsystemTerrain != null
             ? DrawBlockEnvironmentData.SubsystemTerrain.SubsystemAnimatedTextures.AnimatedBlocksTexture
             : BlocksTexturesManager.DefaultBlocksTexture;
@@ -81,10 +89,10 @@ public class BlockIconWidget : Widget
         DrawBlockEnvironmentData.DrawBlockMode = DrawBlockMode.Ui;
         DrawBlockEnvironmentData.ViewProjectionMatrix =
             (CustomViewMatrix ?? _viewMatrix) * m * m2;
-        var iconViewScale = BlocksManager.Blocks[Contents].GetIconViewScale(Value, DrawBlockEnvironmentData);
+        var iconViewScale = Catalog.Blocks[Contents].GetIconViewScale(Value, DrawBlockEnvironmentData);
         var matrix = CustomViewMatrix.HasValue
             ? Matrix.Identity
-            : Matrix.CreateTranslation(BlocksManager.Blocks[Contents]
+            : Matrix.CreateTranslation(Catalog.Blocks[Contents]
                 .GetIconBlockOffset(Value, DrawBlockEnvironmentData));
         obj.DrawBlock(dc.PrimitivesRenderer3D, Value, GlobalColorTransform, iconViewScale, ref matrix,
             DrawBlockEnvironmentData);

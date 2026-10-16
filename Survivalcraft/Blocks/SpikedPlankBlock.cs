@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class SpikedPlankBlock : MountedElectricElementBlock
 {
-    public const int Index = 86;
-
     public BlockMesh[] BlockMeshesByData = new BlockMesh[12];
 
     public BoundingBox[][] CollisionBoxesByData = new BoundingBox[12][];

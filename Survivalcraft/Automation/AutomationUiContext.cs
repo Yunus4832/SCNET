@@ -68,7 +68,7 @@ public static class AutomationUiContext
                 : null;
             if (slot is { Value: not 0 })
             {
-                text = BlocksManager.Blocks[Terrain.ExtractContents(slot.Value)].GetDisplayName(null, slot.Value);
+                text = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(slot.Value)].GetDisplayName(null, slot.Value);
             }
 
             yield return new AutomationTarget(path, widget.GetType().Name, text,

@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class SnowballBlock : Block
 {
-    public const int Index = 85;
-
     public BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

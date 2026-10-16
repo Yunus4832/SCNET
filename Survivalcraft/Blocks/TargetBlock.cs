@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class TargetBlock : MountedElectricElementBlock
 {
-    public const int Index = 199;
-
     public BoundingBox[][] BoundingBoxes = new BoundingBox[][]
     {
         [new BoundingBox(new Vector3(0f, 0f, 0f), new Vector3(1f, 1f, 0.0625f))],
@@ -36,7 +35,7 @@ public class TargetBlock : MountedElectricElementBlock
         }
 
         result.CellFace = raycastResult.CellFace;
-        result.Value = Terrain.MakeBlockValue(199, 0, SetMountingFace(0, raycastResult.CellFace.Face));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetMountingFace(0, raycastResult.CellFace.Face));
 
         return result;
     }
@@ -166,7 +165,7 @@ public class TargetBlock : MountedElectricElementBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

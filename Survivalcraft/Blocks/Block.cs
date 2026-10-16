@@ -1,8 +1,10 @@
 using Engine.Graphics;
 
+using Game.Modding.Blocks;
+
 namespace Game.Blocks;
 
-public abstract class Block
+public abstract class Block : IDisposable
 {
     private const string _typeName = nameof(Block);
 
@@ -12,7 +14,15 @@ public abstract class Block
 
     public string Behaviors = string.Empty;
 
-    public int BlockIndex;
+    public int BlockIndex { get; internal set; } = -1;
+
+    public BlockContentCatalog Catalog
+    {
+        get => _catalog ?? throw new InvalidOperationException("Block is not bound to a content catalog.");
+        internal set => _catalog = value;
+    }
+
+    private BlockContentCatalog? _catalog;
 
     public string CraftingId = string.Empty;
 
@@ -211,6 +221,10 @@ public abstract class Block
     public virtual float GetFirstPersonScale(int value)
     {
         return FirstPersonScale;
+    }
+
+    public virtual void Dispose()
+    {
     }
 
     public virtual void Initialize()
@@ -460,7 +474,7 @@ public abstract class Block
     public virtual bool ShouldGenerateFace(SubsystemTerrain subsystemTerrain, int face, int value, int neighborValue)
     {
         var num = Terrain.ExtractContents(neighborValue);
-        return BlocksManager.Blocks[num]
+        return Catalog.Blocks[num]
             .IsFaceTransparent(subsystemTerrain, CellFace.OppositeFace(face), neighborValue);
     }
 
@@ -475,7 +489,7 @@ public abstract class Block
     )
     {
         var num = Terrain.ExtractContents(neighborValue);
-        return BlocksManager.Blocks[num]
+        return Catalog.Blocks[num]
             .IsFaceTransparent(subsystemTerrain, CellFace.OppositeFace(face), neighborValue);
     }
 

@@ -9,7 +9,7 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
 {
     public const string IdString = "CollapsingBlock";
 
-    private static readonly int[] _staticHandledBlocks = [7, 6];
+    private readonly HashSet<int> _handledBlocks = [];
 
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
@@ -17,7 +17,7 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemSoundMaterials _subsystemSoundMaterials = null!;
 
-    public override int[] HandledBlocks => _staticHandledBlocks;
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:sand"), ResourceId.Parse("game:gravel")];
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
@@ -30,6 +30,13 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
     public override void Load(ValuesDictionary valuesDictionary)
     {
         base.Load(valuesDictionary);
+        var catalog = CurrentModRuntime.Value!.RequireWorldCatalog();
+        _handledBlocks.Clear();
+        foreach (var id in HandledBlocks)
+        {
+            _handledBlocks.Add(catalog.GetBlock(id).BlockIndex);
+        }
+
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _subsystemSoundMaterials = Project.FindSubsystem<SubsystemSoundMaterials>(true)!;
         _subsystemMovingBlocks = Project.FindSubsystem<SubsystemMovingBlocks>(true)!;
@@ -133,22 +140,22 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
         }
     }
 
-    private static bool IsCollapsibleBlock(int value)
+    private bool IsCollapsibleBlock(int value)
     {
-        return _staticHandledBlocks.Contains(Terrain.ExtractContents(value));
+        return _handledBlocks.Contains(Terrain.ExtractContents(value));
     }
 
     private bool IsCollapseSupportBlock(int value)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         return block.IsCollapseSupportBlock(SubsystemTerrain, value);
     }
 
     private static bool IsCollapseDestructibleBlock(int value)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         return block.IsCollapseDestructibleBlock(value);
     }
 }

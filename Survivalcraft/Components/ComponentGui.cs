@@ -836,7 +836,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             var inventory = ComponentPlayer.ComponentMiner.Inventory;
             var activeSlotIndex = inventory.ActiveSlotIndex;
             var num = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
-            if (BlocksManager.Blocks[num].Editable)
+            if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].Editable)
             {
                 var editInventoryContext =
                     new BlockEditInventoryItemContext(inventory, activeSlotIndex, ComponentPlayer);
@@ -960,7 +960,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         var inventory = ComponentPlayer.ComponentMiner.Inventory;
         var activeSlotIndex = inventory.ActiveSlotIndex;
         var num = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
-        return BlocksManager.Blocks[num].Editable;
+        return CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].Editable;
     }
 
     public class ModalPanelAnimationData

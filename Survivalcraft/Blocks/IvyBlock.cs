@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class IvyBlock : Block
 {
-    public const int Index = 197;
-
     public readonly BoundingBox[][] BoundingBoxes = new BoundingBox[][]
     {
         [new BoundingBox(new Vector3(0f, 0f, 0.9375f), new Vector3(1f, 1f, 1f))],
@@ -34,7 +33,7 @@ public class IvyBlock : Block
         }
 
         result.CellFace = raycastResult.CellFace;
-        result.Value = Terrain.MakeBlockValue(197, 0, SetFace(0, CellFace.OppositeFace(raycastResult.CellFace.Face)));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, 0, SetFace(0, CellFace.OppositeFace(raycastResult.CellFace.Face)));
 
         return result;
     }
@@ -165,7 +164,7 @@ public class IvyBlock : Block
     )
     {
         color *= BlockColorsMap.IvyColorsMap.Lookup(environmentData.Temperature, environmentData.Humidity);
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

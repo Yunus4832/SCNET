@@ -7,5 +7,4 @@ public class GunpowderBlock() : ChunkBlock(
     false
 )
 {
-    public const int Index = 109;
 }

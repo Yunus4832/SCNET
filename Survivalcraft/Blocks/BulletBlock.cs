@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class BulletBlock : FlatBlock
@@ -10,8 +11,6 @@ public class BulletBlock : FlatBlock
         Buckshot,
         BuckshotBall
     }
-
-    public const int Index = 214;
 
     public static readonly string[] DisplayNames =
     [
@@ -65,7 +64,7 @@ public class BulletBlock : FlatBlock
     {
         var bulletType = (int)GetBulletType(Terrain.ExtractData(value));
         var size2 = bulletType >= 0 && bulletType < Sizes.Length ? size * Sizes[bulletType] : size;
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size2,
@@ -102,7 +101,7 @@ public class BulletBlock : FlatBlock
     public override IEnumerable<int> GetCreativeValues()
     {
         return EnumUtils.GetEnumValues(typeof(BulletType)).Select(enumValue =>
-            Terrain.MakeBlockValue(214, 0, SetBulletType(0, (BulletType)enumValue)));
+            Terrain.MakeBlockValue(BlockIndex, 0, SetBulletType(0, (BulletType)enumValue)));
     }
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)

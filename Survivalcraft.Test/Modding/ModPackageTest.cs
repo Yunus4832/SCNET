@@ -136,7 +136,7 @@ public class ModPackageTest
             """,
             new Dictionary<string, string>
             {
-                ["data/blocks/items.csv"] = "Type;DisplayName\nAirBlock;Data Air",
+                ["data/blocks/items.csv"] = "Id;DisplayName\ngame:air;Data Air",
                 ["data/database/entities.xdb"] = "<Patch />",
                 ["data/recipes/items.cr"] = "<Recipes />"
             });
@@ -276,7 +276,7 @@ public class ModPackageTest
             manifest,
             new Dictionary<string, string>
             {
-                ["data/blocks/marker.csv"] = "Type;DisplayName\nAirBlock;Marker"
+                ["data/blocks/marker.csv"] = "Id;DisplayName\ngame:air;Marker"
             });
     }
 

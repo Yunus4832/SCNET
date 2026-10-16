@@ -7,5 +7,4 @@ public class SaltpeterChunkBlock() : ChunkBlock(
     false
 )
 {
-    public const int Index = 102;
 }

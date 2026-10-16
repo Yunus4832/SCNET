@@ -4,6 +4,7 @@ using Engine.Audio;
 
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdateable
@@ -24,7 +25,7 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
 
     private SubsystemTerrain _subsystemTerrain = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -39,7 +40,7 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
                 var point = explosiveData.Point;
                 var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
                 var num2 = Terrain.ExtractContents(cellValue);
-                var block = BlocksManager.Blocks[num2];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
                 if (explosiveData.FuseParticleSystem == null)
                 {
                     if (block is GunpowderKegBlock gunpowderKegBlock)
@@ -78,7 +79,7 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
     public bool IgniteFuse(int x, int y, int z, PlayerData? miner = null)
     {
         var cellContents = _subsystemTerrain.Terrain.GetCellContents(x, y, z);
-        switch (BlocksManager.Blocks[cellContents])
+        switch (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents])
         {
             case GunpowderKegBlock:
                 //延时爆炸
@@ -128,7 +129,7 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
     public override void OnExplosion(int value, int x, int y, int z, float damage)
     {
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (block.GetExplosionPressure(value) > 0f && MathUtils.Saturate(damage / block.ExplosionResilience) > 0.01f &&
             SubsystemExplosions.SharedRandom.Float(0f, 1f) < 0.5f)
         {

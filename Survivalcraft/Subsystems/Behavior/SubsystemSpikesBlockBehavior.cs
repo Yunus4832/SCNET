@@ -18,7 +18,7 @@ public class SubsystemSpikesBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
-    public override int[] HandledBlocks => [86];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:spiked_plank")];
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;
 
@@ -44,7 +44,7 @@ public class SubsystemSpikesBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        if (BlocksManager.Blocks[num] is not SpikedPlankBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not SpikedPlankBlock)
         {
             return false;
         }

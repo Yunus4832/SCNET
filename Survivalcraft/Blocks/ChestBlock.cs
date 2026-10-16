@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class ChestBlock : CubeBlock
 {
-    public const int Index = 45;
-
     public override int GetFaceTextureSlot(int face, int value)
     {
         return face switch
@@ -71,7 +69,7 @@ public class ChestBlock : CubeBlock
         }
 
         BlockPlacementData result = default;
-        result.Value = Terrain.ReplaceData(Terrain.ReplaceContents(0, 45), data);
+        result.Value = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), data);
         result.CellFace = raycastResult.CellFace;
         return result;
     }

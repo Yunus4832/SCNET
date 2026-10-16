@@ -12,8 +12,6 @@ public class MusketBlock : Block
         Loaded
     }
 
-    public const int Index = 212;
-
     public BlockMesh StandaloneBlockMeshLoaded = new();
 
     public BlockMesh StandaloneBlockMeshUnloaded = new();
@@ -78,7 +76,7 @@ public class MusketBlock : Block
 
     public override bool IsSwapAnimationNeeded(int oldValue, int newValue)
     {
-        if (Terrain.ExtractContents(oldValue) != 212)
+        if (Terrain.ExtractContents(oldValue) != BlockIndex)
         {
             return true;
         }

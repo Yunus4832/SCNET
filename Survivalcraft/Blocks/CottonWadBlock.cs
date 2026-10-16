@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class CottonWadBlock : FlatBlock
 {
-    public const int Index = 205;
-
     public override void DrawBlock(
         PrimitivesRenderer3D primitivesRenderer,
         int value,
@@ -15,7 +14,7 @@ public class CottonWadBlock : FlatBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

@@ -6,6 +6,7 @@ using Engine.Core;
 using Game;
 using Game.Blocks;
 using Game.Managers;
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Subsystems;
@@ -22,9 +23,9 @@ public sealed class FireBlockLifecycleTest
     public void ClientTerrainRemovalAndChunkDiscardClearOnlyTheirFireRecords()
     {
         var mode = CommonLib.WorkType;
-        var air = BlocksManager.Blocks[0];
+        using var scope = new WorldCatalogScope();
         CommonLib.WorkType = WorkType.Client;
-        BlocksManager.Blocks[0] = new AirBlock();
+
         try
         {
             using var terrain = new Terrain();
@@ -42,7 +43,7 @@ public sealed class FireBlockLifecycleTest
             subsystem.AddFireNet(33, 10, 1, 1f);
             Assert.Equal(3, records.Count);
 
-            subsystem.OnBlockRemoved(FireBlock.Index, 0, 1, 10, 1);
+            subsystem.OnBlockRemoved(BuiltInBlockRegistry.GetIndex<FireBlock>(), 0, 1, 10, 1);
             Assert.Equal(2, records.Count);
             subsystem.OnChunkDiscarding(chunk);
             Assert.Single(records.Keys.Cast<object>());
@@ -52,7 +53,7 @@ public sealed class FireBlockLifecycleTest
         finally
         {
             CommonLib.WorkType = mode;
-            BlocksManager.Blocks[0] = air;
+
         }
     }
 }

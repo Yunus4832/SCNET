@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using EntitySystem.Core;
 
+
 namespace Game.Widgets;
 
 public class CreativeInventoryWidget : CanvasWidget
@@ -48,7 +49,7 @@ public class CreativeInventoryWidget : CanvasWidget
         };
         _panelContainer.Children.Add(_creativeInventoryPanel);
         _panelContainer.Children.Add(FurnitureInventoryPanel);
-        foreach (var category in BlocksManager.ReadOnlyCategories)
+        foreach (var category in CurrentModRuntime.Value!.RequireWorldCatalog().ReadOnlyCategories)
         {
             _categories.Add(new Category
             {

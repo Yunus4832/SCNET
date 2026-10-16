@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class RealTimeClockBlock() : RotatableMountedElectricElementBlock("Models/Gates", "RealTimeClock", 0.5f)
 {
-    public const int Index = 187;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

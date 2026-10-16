@@ -10,7 +10,7 @@ public class SubsystemCraftingTableBlockBehavior : SubsystemBlockBehavior
 {
     private SubsystemBlockEntities _subsystemBlockEntities = null!;
 
-    public override int[] HandledBlocks => [27];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:crafting_table")];
 
     public override void OnBlockAdded(int value, int oldValue, int x, int y, int z, ComponentMiner miner)
     {

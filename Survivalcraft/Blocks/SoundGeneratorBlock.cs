@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class SoundGeneratorBlock() : RotatableMountedElectricElementBlock("Models/Gates", "SoundGenerator", 0.5f)
 {
-    public const int Index = 183;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

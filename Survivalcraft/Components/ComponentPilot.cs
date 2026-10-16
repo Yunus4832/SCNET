@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentPilot : Component, IUpdateable
@@ -182,7 +183,7 @@ public class ComponentPilot : Component, IUpdateable
                         if (!_subsystemTerrain.Raycast(position + new Vector3(0f, 0.5f, 0f),
                                     v + new Vector3(0f, 0.5f, 0f), false, true,
                                     (value, _) =>
-                                        BlocksManager.Blocks[Terrain.ExtractContents(value)].Collidable)
+                                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Collidable)
                                 .HasValue)
                         {
                             Destination = null;
@@ -286,7 +287,7 @@ public class ComponentPilot : Component, IUpdateable
                 {
                     var cellValue = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(vector.X) + i,
                         Terrain.ToCell(vector.Y) + num, Terrain.ToCell(vector.Z) + j);
-                    var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)];
                     if (block.ShouldAvoid(cellValue))
                     {
                         return false;
@@ -309,7 +310,7 @@ public class ComponentPilot : Component, IUpdateable
         {
             var cellValue2 = _subsystemTerrain.Terrain.GetCellValue(Terrain.ToCell(vector2.X),
                 Terrain.ToCell(vector2.Y) + num3, Terrain.ToCell(vector2.Z));
-            var block2 = BlocksManager.Blocks[Terrain.ExtractContents(cellValue2)];
+            var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue2)];
             if ((!block2.Collidable && block2.BlockIndex != 18) || block2.ShouldAvoid(cellValue2))
             {
                 continue;

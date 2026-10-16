@@ -1,11 +1,12 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public abstract class SubsystemBlockBehavior : Subsystem
 {
-    public abstract int[] HandledBlocks { get; }
+    public abstract ResourceId[] HandledBlocks { get; }
 
     protected SubsystemTerrain SubsystemTerrain { get; private set; } = null!;
 

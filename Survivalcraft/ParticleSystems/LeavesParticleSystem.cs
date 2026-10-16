@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.ParticleSystems;
 
 public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle>
@@ -29,7 +30,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
         _createFallenLeaves = createFallenLeaves;
         Texture = ContentManager.Get<Texture2D>("Textures/LeafParticle");
         TextureSlotsCount = 1;
-        var color = BlocksManager.Blocks[Terrain.ExtractContents(value)] is LeavesBlock leavesBlock
+        var color = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)] is LeavesBlock leavesBlock
             ? leavesBlock.GetLeavesBlockColor(value, _subsystemTerrain.Terrain, point.X, point.Y, point.Z)
             : Color.Transparent;
         foreach (var particle in Particles)
@@ -106,7 +107,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
             {
                 var cellValue = terrain.GetCellValue(num2, num3, num4);
                 var num6 = Terrain.ExtractContents(cellValue);
-                var block = BlocksManager.Blocks[num6];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num6];
                 if (block is WaterBlock)
                 {
                     particle.EndTime = particle.Time;

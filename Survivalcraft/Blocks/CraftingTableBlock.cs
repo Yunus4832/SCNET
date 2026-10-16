@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class CraftingTableBlock : Block
 {
-    public const int Index = 27;
-
     public BlockMesh BlockMesh = new();
 
     public BlockMesh StandaloneBlockMesh = new();

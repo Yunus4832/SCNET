@@ -1,6 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.NetSimulate;
@@ -316,7 +317,7 @@ public class ComponentLocomotion : Component, IUpdateable
             var z = Terrain.ToCell(position.Z);
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(x2, y, z);
             var num = Terrain.ExtractContents(cellValue);
-            var block = BlocksManager.Blocks[num];
+            var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
             if (LadderSpeed > 0f && !LadderValue.HasValue && block is LadderBlock &&
                 _subsystemTime.GameTime >= _ladderActivationTime && !IsCreativeFlyEnabled &&
                 _componentCreature.ComponentBody.ParentBody == null)
@@ -487,8 +488,7 @@ public class ComponentLocomotion : Component, IUpdateable
                 if (_componentCreature.ComponentBody.StandingOnValue.HasValue)
                 {
                     var num3 = MathUtils.Max(
-                        BlocksManager
-                            .Blocks[Terrain.ExtractContents(_componentCreature.ComponentBody.StandingOnValue.Value)]
+                        CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(_componentCreature.ComponentBody.StandingOnValue.Value)]
                             .FrictionFactor, _minFrictionFactor);
                     num4 = MathUtils.Saturate(dt * 6f * AccelerationFactor * num3);
                     if (num3 < 0.25f)
@@ -528,9 +528,9 @@ public class ComponentLocomotion : Component, IUpdateable
                 {
                     var flag = false;
                     var value2 = _componentPlayer.ComponentClothing.GetClothes(ClothingSlot.Feet).LastOrDefault();
-                    if (Terrain.ExtractContents(value2) == ClothingBlock.Index)
+                    if (Terrain.ExtractContents(value2) == BuiltInBlockRegistry.GetIndex<ClothingBlock>())
                     {
-                        flag = BlocksManager.Blocks[Terrain.ExtractContents(value2)]
+                        flag = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value2)]
                             .GetClothingData(Terrain.ExtractData(value2)).MovementSpeedFactor > 1f;
                     }
 
@@ -604,7 +604,7 @@ public class ComponentLocomotion : Component, IUpdateable
         var position = _componentCreature.ComponentBody.Position;
         var velocity = _componentCreature.ComponentBody.Velocity;
         var num = Terrain.ExtractContents(value);
-        if (BlocksManager.Blocks[num] is LadderBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is LadderBlock)
         {
             LadderValue = value;
             if (WalkOrder.HasValue)

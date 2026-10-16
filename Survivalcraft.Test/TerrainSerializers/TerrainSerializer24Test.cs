@@ -49,7 +49,7 @@ public sealed class TerrainSerializer24Test
             {
                 for (var x = 0; x < 16; x++)
                 {
-                    var contents = 1 + (x + 17 * z + 31 * y) % 200;
+                    var contents = 1 + (x + 17 * z + 31 * y) % 1023;
                     source.SetCellValueFast(x, y, z, Terrain.MakeBlockValue(contents, (x + y) & 15, z & 3));
                 }
             }

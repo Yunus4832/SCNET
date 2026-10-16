@@ -17,7 +17,7 @@ public abstract class MountedElectricElement(
         }
 
         var cellValue = SubsystemElectricity.SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)];
         if ((!block.Collidable ||
              block.IsFaceTransparent(SubsystemElectricity.SubsystemTerrain, cellFace.Face, cellValue)) &&
             (cellFace.Face != 4 || block is not FenceBlock))

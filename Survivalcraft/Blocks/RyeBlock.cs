@@ -1,18 +1,17 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class RyeBlock : CrossBlock
 {
-    public const int Index = 174;
-
     public override IEnumerable<int> GetCreativeValues()
     {
-        yield return Terrain.MakeBlockValue(174, 0, SetIsWild(SetSize(0, 7), true));
-        yield return Terrain.MakeBlockValue(174, 0, SetIsWild(SetSize(0, 1), false));
-        yield return Terrain.MakeBlockValue(174, 0, SetIsWild(SetSize(0, 3), false));
-        yield return Terrain.MakeBlockValue(174, 0, SetIsWild(SetSize(0, 5), false));
-        yield return Terrain.MakeBlockValue(174, 0, SetIsWild(SetSize(0, 7), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 7), true));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 1), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 3), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 5), false));
+        yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsWild(SetSize(0, 7), false));
     }
 
     public override void DrawBlock(
@@ -27,7 +26,7 @@ public class RyeBlock : CrossBlock
         if (GetIsWild(Terrain.ExtractData(value)))
         {
             color *= BlockColorsMap.GrassColorsMap.Lookup(environmentData.Temperature, environmentData.Humidity);
-            BlocksManager.DrawFlatOrImageExtrusionBlock(
+            Catalog.DrawFlatOrImageExtrusionBlock(
                 primitivesRenderer,
                 value,
                 size,
@@ -40,7 +39,7 @@ public class RyeBlock : CrossBlock
         }
         else
         {
-            BlocksManager.DrawFlatOrImageExtrusionBlock(
+            Catalog.DrawFlatOrImageExtrusionBlock(
                 primitivesRenderer,
                 value,
                 size,

@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+
 namespace Game.Widgets;
 
 public class CreativeInventoryPanel : CanvasWidget
@@ -78,7 +79,7 @@ public class CreativeInventoryPanel : CanvasWidget
             {
                 var slotValue = _componentCreativeInventory.GetSlotValue(i);
                 var num2 = Terrain.ExtractContents(slotValue);
-                if (BlocksManager.Blocks[num2].GetCategory(slotValue) ==
+                if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2].GetCategory(slotValue) ==
                     _creativeInventoryWidget.GetCategoryName(_componentCreativeInventory.CategoryIndex))
                 {
                     _slotIndices.Add(i);

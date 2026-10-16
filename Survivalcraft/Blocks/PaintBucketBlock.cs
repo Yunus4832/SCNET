@@ -2,12 +2,11 @@ using System.Globalization;
 
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class PaintBucketBlock : BucketBlock
 {
-    public const int Index = 129;
-
     public readonly BlockMesh StandaloneBucketBlockMesh = new();
 
     public readonly BlockMesh StandalonePaintBlockMesh = new();
@@ -68,7 +67,7 @@ public class PaintBucketBlock : BucketBlock
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(129, 0, SetColor(0, i));
+            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetColor(0, i));
             var num = i + 1;
             i = num;
         }
@@ -78,10 +77,10 @@ public class PaintBucketBlock : BucketBlock
     {
         var additives = new[]
         {
-            BlocksManager.Blocks[43].CraftingId,
-            BlocksManager.Blocks[24].CraftingId,
-            BlocksManager.Blocks[103].CraftingId,
-            BlocksManager.Blocks[22].CraftingId
+            Catalog.Blocks[43].CraftingId,
+            Catalog.Blocks[24].CraftingId,
+            Catalog.Blocks[103].CraftingId,
+            Catalog.Blocks[22].CraftingId
         };
         var color = 0;
         while (color < 16)
@@ -95,12 +94,12 @@ public class PaintBucketBlock : BucketBlock
                     var craftingRecipe = new CraftingRecipe
                     {
                         Description = $"制作 {SubsystemPalette.GetName(num)} 颜料",
-                        ResultValue = Terrain.MakeBlockValue(129, 0, num),
+                        ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, num),
                         ResultCount = 1,
                         RequiredHeatLevel = 1f,
                         Ingredients =
                         {
-                            [0] = BlocksManager.Blocks[129].CraftingId + ":" +
+                            [0] = Catalog.Blocks[BlockIndex].CraftingId + ":" +
                                   color.ToString(CultureInfo.InvariantCulture),
                             [1] = additives[additive]
                         }

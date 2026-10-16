@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public abstract class SubsystemFluidBlockBehavior(
@@ -95,11 +96,11 @@ public abstract class SubsystemFluidBlockBehavior(
                 while (y < 255)
                 {
                     var num2 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num + y + 1));
-                    if (BlocksManager.FluidBlocks[num2] == null)
+                    if (CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num2] == null)
                     {
                         var cellValueFast = chunkAtCell.GetCellValueFast(num + y);
                         var num3 = Terrain.ExtractContents(cellValueFast);
-                        var block = BlocksManager.FluidBlocks[num3];
+                        var block = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[num3];
                         if (block != null)
                         {
                             surfaceFluidBlock = block;
@@ -136,7 +137,7 @@ public abstract class SubsystemFluidBlockBehavior(
         y = (int)surfaceHeight.Value;
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
         var num = Terrain.ExtractContents(cellValue);
-        if (BlocksManager.Blocks[num] is not FluidBlock)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num] is not FluidBlock)
         {
             return null;
         }
@@ -314,7 +315,7 @@ public abstract class SubsystemFluidBlockBehavior(
                 var value = item.Value;
                 var contents5 = Terrain.ExtractContents(item.Value);
                 var cellContents = SubsystemTerrain.Terrain.GetCellContents(x2, y2, z2);
-                var block = BlocksManager.FluidBlocks[cellContents];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().FluidBlocks[cellContents];
                 if (block != null && !block.IsTheSameFluid(contents5))
                 {
                     SubsystemTerrain.DestroyCell(0, x2, y2, z2, value, false, false);
@@ -332,7 +333,7 @@ public abstract class SubsystemFluidBlockBehavior(
 
     public virtual bool OnFluidInteract(int interactValue, int x, int y, int z, int fluidValue)
     {
-        if (BlocksManager.Blocks[Terrain.ExtractContents(interactValue)].FluidBlocker)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(interactValue)].FluidBlocker)
         {
             return false;
         }
@@ -464,13 +465,13 @@ public abstract class SubsystemFluidBlockBehavior(
                 return int.MaxValue;
             }
         }
-        else if (BlocksManager.Blocks[num].FluidBlocker)
+        else if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num].FluidBlocker)
         {
             return int.MaxValue;
         }
 
         var num2 = Terrain.ExtractContents(SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z));
-        var block = BlocksManager.Blocks[num2];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
         if (fluidBlock.IsTheSameFluid(num2) || !block.FluidBlocker)
         {
             return level;

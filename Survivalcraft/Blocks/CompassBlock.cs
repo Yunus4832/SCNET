@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class CompassBlock : Block
 {
-    public const int Index = 117;
-
     public BlockMesh CaseMesh = new();
 
     public BlockMesh PointerMesh = new();

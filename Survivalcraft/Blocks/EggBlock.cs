@@ -6,8 +6,6 @@ namespace Game.Blocks;
 
 public class EggBlock : Block
 {
-    public const int Index = 118;
-
     public const string TypeName = nameof(EggBlock);
 
     public readonly DynamicArray<EggType> EggTypes = [];
@@ -176,10 +174,10 @@ public class EggBlock : Block
                 continue;
             }
 
-            yield return Terrain.MakeBlockValue(118, 0, SetEggType(0, eggType.EggTypeIndex));
+            yield return Terrain.MakeBlockValue(BlockIndex, 0, SetEggType(0, eggType.EggTypeIndex));
             if (eggType.NutritionalValue > 0f)
             {
-                yield return Terrain.MakeBlockValue(118, 0, SetIsCooked(SetEggType(0, eggType.EggTypeIndex), true));
+                yield return Terrain.MakeBlockValue(BlockIndex, 0, SetIsCooked(SetEggType(0, eggType.EggTypeIndex), true));
             }
         }
     }
@@ -199,7 +197,7 @@ public class EggBlock : Block
                 var craftingRecipe = new CraftingRecipe
                 {
                     ResultCount = 1,
-                    ResultValue = Terrain.MakeBlockValue(118, 0,
+                    ResultValue = Terrain.MakeBlockValue(BlockIndex, 0,
                         SetEggType(SetIsCooked(0, true), eggType.EggTypeIndex)),
                     RemainsCount = 1,
                     RemainsValue = Terrain.MakeBlockValue(91),
@@ -207,7 +205,7 @@ public class EggBlock : Block
                     Description = LanguageManager.Get(TypeName, 4)
                 };
                 var data = SetEggType(SetIsLaid(0, true), eggType.EggTypeIndex);
-                var value = SetDamage(Terrain.MakeBlockValue(118, 0, data), rot);
+                var value = SetDamage(Terrain.MakeBlockValue(BlockIndex, 0, data), rot);
                 craftingRecipe.Ingredients[0] =
                     "egg:" + Terrain.ExtractData(value).ToString(CultureInfo.InvariantCulture);
                 craftingRecipe.Ingredients[1] = "waterbucket";

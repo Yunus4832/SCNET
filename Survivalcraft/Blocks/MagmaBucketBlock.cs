@@ -4,8 +4,6 @@ namespace Game.Blocks;
 
 public class MagmaBucketBlock : BucketBlock
 {
-    public const int Index = 93;
-
     public readonly BlockMesh StandaloneBlockMesh = new();
 
     public override void Initialize()

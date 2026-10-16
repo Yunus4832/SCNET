@@ -56,6 +56,39 @@ payload/assets/<mod-id>/**
 
 模板资源位于 `Survivalcraft.ModTemplates/Survivalcraft.Mod/`。解决方案里唯一与模板打包直接相关的项目是 `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`，它会把这些资源打包成可发布的 `dotnet new` 模板包。
 
+## 方块注册与内容上下文
+
+模组按稳定的 `ResourceId` 注册方块，不指定数字索引：
+
+```csharp
+context.Extensions.RegisterBlock<MyBlock>(
+    new ResourceId(context.Manifest.ModId, "my_block"));
+```
+
+`BlockIndex` 初始为 `-1`，由注册目录在属性加载和 `Initialize()` 之前赋值，模组不能写入。
+方块生成自身的创造物、放置值或配方产物时使用 `BlockIndex`，通过 `Catalog` 查询同一目录的其他方块；
+不要定义静态数字 `Index`，也不要在模组
+`Configure` 或 `Start` 中缓存尚未分配的编号。构造工厂每次必须返回新实例。方块可覆盖 `Dispose()` 清理自身订阅或资源；
+清理必须允许初始化尚未完成，不得释放内容系统共享的纹理和模型。
+内置方块的固定编号集中维护在游戏的静态注册表中。
+
+GUI 运行时分别提供 `PreviewCatalog` 和 `WorldCatalog`：前者服务帮助、图鉴和创建世界预览，
+后者服务实际游戏。游戏内打开帮助仍使用预览目录。两者共享资源定义、模型与纹理，
+方块实例、数字编号及解析后的配方分别持有；不存在隐式的当前目录或预览回退。
+世界目录不存在时，`RequireWorldCatalog()` 会报告生命周期错误。Headless 不建立预览目录。
+
+`BlocksData.txt` 以分号分隔，首列 `Id` 为完整资源 ID。字段值 `#game:granite` 引用目标
+目录中花岗岩的编号，`#` 引用自身，不包含可写的 `BlockIndex` 列。
+配方 XML 的 `Result` / `Remains` 同样使用资源 ID，可附加 `@data`，如 `game:seeds@7`；
+材料仍使用已有 `CraftingId[:data]` 语义。动物掉落定义的产物使用同一资源 ID 格式。
+XML 源定义可以共享，解析后的 `ResultValue` / `RemainsValue` 不能跨目录传递。
+
+方块行为的 `HandledBlocks` 声明 `ResourceId[]`，世界加载时解析为整数分发表；也可继续
+使用方块属性中的 `Behaviors` 名称绑定，同一行为不会因两种声明重复执行。
+世界映射保存于 `Project.xml` 的 `BlockRegistry` 节点；已有编号保持稳定，新资源使用
+未占用编号。联机在可靠有序的 Bootstrap 中传递服务器映射，建立世界目录后才解析
+Project 并确认完成，不把完整映射放入连接前的服务器发现数据报。
+
 ## 世界操作扩展点
 
 `Gameplay.OnTerrainCellChanging` 在地形写入前运行；通过 `DestroyCell` 破坏方块时，也在掉落物、粒子和收获回调之前运行，取消后不会产生这些副作用。破坏过程只调用一次该钩子。`BlockBehaviors.OnBlockPlaced` 名称虽然是过去式，但实际在放置写入之前调用，提供最终落点，可以取消放置；不要在此回调中假定方块已经写入地形。

@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class DelayGateBlock() : RotatableMountedElectricElementBlock("Models/Gates", "DelayGate", 0.375f)
 {
-    public const int Index = 145;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Xml.Linq;
 
+
 namespace Game.Screens;
 
 public class WorldOptionsScreen : Screen
@@ -153,6 +154,7 @@ public class WorldOptionsScreen : Screen
         _flatTerrainLevelSlider = Children.Find<SliderWidget>("FlatTerrainLevel")!;
         _flatTerrainShoreRoughnessSlider = Children.Find<SliderWidget>("FlatTerrainShoreRoughness")!;
         _flatTerrainBlock = Children.Find<BlockIconWidget>("FlatTerrainBlock")!;
+        _flatTerrainBlock.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
         _flatTerrainBlockLabel = Children.Find<LabelWidget>("FlatTerrainBlockLabel")!;
         _flatTerrainBlockSelector = Children.Find<ClickableWidget>("FlatTerrainBlockSelector")!;
         _flatTerrainMagmaOceanCheckbox = Children.Find<CheckboxWidget>("MagmaOcean")!;
@@ -349,8 +351,9 @@ public class WorldOptionsScreen : Screen
                     {
                         var node2 = ContentManager.Get<XElement>("Widgets/SelectBlockItem");
                         var obj2 = (ContainerWidget)LoadWidget(null, node2, null);
+                        obj2.Children.Find<BlockIconWidget>("SelectBlockItem.Block")!.Catalog = CurrentModRuntime.Value!.PreviewCatalog;
                         obj2.Children.Find<BlockIconWidget>("SelectBlockItem.Block")!.Contents = (int)index;
-                        obj2.Children.Find<LabelWidget>("SelectBlockItem.Text")!.Text = BlocksManager.Blocks[(int)index]
+                        obj2.Children.Find<LabelWidget>("SelectBlockItem.Text")!.Text = CurrentModRuntime.Value!.PreviewCatalog.Blocks[(int)index]
                             .GetDisplayName(null, Terrain.MakeBlockValue((int)index));
                         return obj2;
                     },
@@ -482,7 +485,7 @@ public class WorldOptionsScreen : Screen
         _flatTerrainShoreRoughnessSlider.Text = $"{_worldSettings.ShoreRoughness * 100f:0}%";
         _flatTerrainBlock.Contents = _worldSettings.TerrainBlockIndex;
         _flatTerrainMagmaOceanCheckbox.IsChecked = _worldSettings.TerrainOceanBlockIndex == 92;
-        var text = BlocksManager.Blocks[_worldSettings.TerrainBlockIndex]
+        var text = CurrentModRuntime.Value!.PreviewCatalog.Blocks[_worldSettings.TerrainBlockIndex]
             .GetDisplayName(null, Terrain.MakeBlockValue(_worldSettings.TerrainBlockIndex));
         _flatTerrainBlockLabel.Text = text.Length > 10 ? text[..10] + "..." : text;
         var texture = _blockTexturesCache.GetTexture(_worldSettings.BlocksTextureName);

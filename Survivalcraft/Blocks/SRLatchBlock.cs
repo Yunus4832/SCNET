@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class SRLatchBlock() : RotatableMountedElectricElementBlock("Models/Gates", "SRLatch", 0.375f)
 {
-    public const int Index = 146;
-
     public override ElectricElement CreateElectricElement(
         SubsystemElectricity subsystemElectricity,
         int value,

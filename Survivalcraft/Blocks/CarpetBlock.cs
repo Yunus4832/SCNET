@@ -1,11 +1,11 @@
 using Engine.Graphics;
 
+using Game.Modding.Blocks;
+
 namespace Game.Blocks;
 
 public class CarpetBlock : CubeBlock
 {
-    public const int Index = 208;
-
     public readonly BoundingBox[] CollisionBoxes = [new(new Vector3(0f, 0f, 0f), new Vector3(1f, 0.0625f, 1f))];
 
     public override bool FurnitureBuilt { get; set; } = true;
@@ -41,7 +41,7 @@ public class CarpetBlock : CubeBlock
     {
         var data = Terrain.ExtractData(value);
         color *= SubsystemPalette.GetFabricColor(environmentData, GetColor(data));
-        BlocksManager.DrawCubeBlock(
+        Catalog.DrawCubeBlock(
             primitivesRenderer,
             value,
             new Vector3(size, 0.0625f * size, size),
@@ -57,7 +57,7 @@ public class CarpetBlock : CubeBlock
         var i = 0;
         while (i < 16)
         {
-            yield return Terrain.MakeBlockValue(208, 0, i);
+            yield return Terrain.MakeBlockValue(BlockIndex, 0, i);
             var num = i + 1;
             i = num;
         }
@@ -81,7 +81,7 @@ public class CarpetBlock : CubeBlock
         var data = Terrain.ExtractData(oldValue);
         dropValues.Add(new BlockDropValue
         {
-            Value = Terrain.MakeBlockValue(208, 0, data),
+            Value = Terrain.MakeBlockValue(BlockIndex, 0, data),
             Count = 1
         });
     }
@@ -122,16 +122,16 @@ public class CarpetBlock : CubeBlock
         var num3 = 0;
         foreach (var item in list)
         {
-            CraftingRecipesManager.DecodeIngredient(item, out var craftingId, out var data);
-            if (craftingId == BlocksManager.Blocks[208].CraftingId)
+            CraftingRecipeCatalog.DecodeIngredient(item, out var craftingId, out var data);
+            if (craftingId == Catalog.Blocks[BlockIndex].CraftingId)
             {
-                num3 = Terrain.MakeBlockValue(208, 0, data ?? 0);
+                num3 = Terrain.MakeBlockValue(BlockIndex, 0, data ?? 0);
             }
-            else if (craftingId == BlocksManager.Blocks[129].CraftingId)
+            else if (craftingId == Catalog.Blocks[129].CraftingId)
             {
                 num = Terrain.MakeBlockValue(129, 0, data ?? 0);
             }
-            else if (craftingId == BlocksManager.Blocks[128].CraftingId)
+            else if (craftingId == Catalog.Blocks[128].CraftingId)
             {
                 num2 = Terrain.MakeBlockValue(128, 0, data ?? 0);
             }
@@ -141,17 +141,17 @@ public class CarpetBlock : CubeBlock
         {
             var num4 = Terrain.ExtractData(num3);
             var color = PaintBucketBlock.GetColor(Terrain.ExtractData(num));
-            var damage = BlocksManager.Blocks[129].GetDamage(num);
-            var block = BlocksManager.Blocks[129];
+            var damage = Catalog.Blocks[129].GetDamage(num);
+            var block = Catalog.Blocks[129];
             var num5 = PaintBucketBlock.CombineColors(num4, color);
             if (num5 != num4)
             {
                 return new CraftingRecipe
                 {
                     ResultCount = 1,
-                    ResultValue = Terrain.MakeBlockValue(208, 0, num5),
+                    ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, num5),
                     RemainsCount = 1,
-                    RemainsValue = BlocksManager.DamageItem(Terrain.MakeBlockValue(129, 0, color),
+                    RemainsValue = Catalog.DamageItem(Terrain.MakeBlockValue(129, 0, color),
                         damage + MathUtils.Max(block.Durability / 4, 1)),
                     RequiredHeatLevel = 1f,
                     Description = $"Dye carpet {SubsystemPalette.GetName(color, string.Empty)}",
@@ -166,16 +166,16 @@ public class CarpetBlock : CubeBlock
         }
 
         var num6 = Terrain.ExtractData(num3);
-        var damage2 = BlocksManager.Blocks[128].GetDamage(num2);
-        var block2 = BlocksManager.Blocks[128];
+        var damage2 = Catalog.Blocks[128].GetDamage(num2);
+        var block2 = Catalog.Blocks[128];
         if (num6 != 0)
         {
             return new CraftingRecipe
             {
                 ResultCount = 1,
-                ResultValue = Terrain.MakeBlockValue(208, 0, 0),
+                ResultValue = Terrain.MakeBlockValue(BlockIndex, 0, 0),
                 RemainsCount = 1,
-                RemainsValue = BlocksManager.DamageItem(Terrain.MakeBlockValue(128, 0, 0),
+                RemainsValue = Catalog.DamageItem(Terrain.MakeBlockValue(128, 0, 0),
                     damage2 + MathUtils.Max(block2.Durability / 4, 1)),
                 RequiredHeatLevel = 1f,
                 Description = "Undye carpet",

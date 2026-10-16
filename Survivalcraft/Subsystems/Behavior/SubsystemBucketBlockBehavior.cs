@@ -1,5 +1,7 @@
 using EntitySystem.TemplatesDatabase;
 
+using Game.Modding.Blocks;
+
 namespace Game.Subsystems;
 
 public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
@@ -10,18 +12,8 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemParticles _subsystemParticles = null!;
 
-    public override int[] HandledBlocks =>
-    [
-        90,
-        91,
-        93,
-        110,
-        245,
-        251,
-        252,
-        129,
-        128
-    ];
+    public override ResourceId[] HandledBlocks =>
+    [ResourceId.Parse("game:empty_bucket"), ResourceId.Parse("game:water_bucket"), ResourceId.Parse("game:magma_bucket"), ResourceId.Parse("game:milk_bucket"), ResourceId.Parse("game:rotten_milk_bucket"), ResourceId.Parse("game:pumpkin_soup_bucket"), ResourceId.Parse("game:rotten_pumpkin_soup_bucket"), ResourceId.Parse("game:paint_bucket"), ResourceId.Parse("game:paint_stripper_bucket")];
 
     public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
     {
@@ -30,7 +22,7 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
         var num = Terrain.ExtractContents(activeBlockValue);
         switch (num)
         {
-            case EmptyBucketBlock.Index:
+            case var emptyBucketContents when emptyBucketContents == BuiltInBlockRegistry.GetIndex<EmptyBucketBlock>():
                 var obj = componentMiner.Raycast(ray, RaycastMode.Gathering);
                 if (obj is TerrainRaycastResult result)
                 {
@@ -38,7 +30,7 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                     var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
                     var num2 = Terrain.ExtractContents(cellValue);
                     var data = Terrain.ExtractData(cellValue);
-                    var block = BlocksManager.Blocks[num2];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
                     if (block is WaterBlock && FluidBlock.GetLevel(data) == 0)
                     {
                         var value = Terrain.ReplaceContents(activeBlockValue, 91);
@@ -91,7 +83,7 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                 }
 
                 break;
-            case WaterBucketBlock.Index:
+            case var waterBucketContents when waterBucketContents == BuiltInBlockRegistry.GetIndex<WaterBucketBlock>():
                 var terrainRaycastResult = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Interaction);
                 if (terrainRaycastResult.HasValue &&
                     componentMiner.Place(terrainRaycastResult.Value, Terrain.MakeBlockValue(18)))
@@ -109,7 +101,7 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                 }
 
                 break;
-            case MagmaBucketBlock.Index:
+            case var magmaBucketContents when magmaBucketContents == BuiltInBlockRegistry.GetIndex<MagmaBucketBlock>():
                 var terrainRaycastResult2 = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Interaction);
                 if (terrainRaycastResult2.HasValue)
                 {
@@ -131,14 +123,14 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                 }
 
                 break;
-            case MilkBucketBlock.Index:
-            case RottenMilkBucketBlock.Index:
+            case var milkBucketContents when milkBucketContents == BuiltInBlockRegistry.GetIndex<MilkBucketBlock>():
+            case var rottenMilkBucketContents when rottenMilkBucketContents == BuiltInBlockRegistry.GetIndex<RottenMilkBucketBlock>():
                 return true;
-            case PumpkinSoupBucketBlock.Index:
-            case RottenPumpkinSoupBucketBlock.Index:
+            case var pumpkinSoupBucketContents when pumpkinSoupBucketContents == BuiltInBlockRegistry.GetIndex<PumpkinSoupBucketBlock>():
+            case var rottenPumpkinSoupBucketContents when rottenPumpkinSoupBucketContents == BuiltInBlockRegistry.GetIndex<RottenPumpkinSoupBucketBlock>():
                 return true;
-            case PaintStripperBucketBlock.Index:
-            case PaintBucketBlock.Index:
+            case var paintStripperBucketContents when paintStripperBucketContents == BuiltInBlockRegistry.GetIndex<PaintStripperBucketBlock>():
+            case var paintBucketContents when paintBucketContents == BuiltInBlockRegistry.GetIndex<PaintBucketBlock>():
                 {
                     var terrainRaycastResult3 = componentMiner.Raycast<TerrainRaycastResult>(ray, RaycastMode.Digging);
                     if (terrainRaycastResult3.HasValue)
@@ -146,7 +138,7 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                         var cellFace2 = terrainRaycastResult3.Value.CellFace;
                         var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
                         var num3 = Terrain.ExtractContents(cellValue2);
-                        var block2 = BlocksManager.Blocks[num3];
+                        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3];
                         if (block2 is not IPaintableBlock block)
                         {
                             return true;

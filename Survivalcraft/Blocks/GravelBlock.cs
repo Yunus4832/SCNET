@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class GravelBlock : CubeBlock
 {
-    public const int Index = 6;
-
     public override void GetDropValues(
         SubsystemTerrain subsystemTerrain,
         int oldValue,

@@ -10,7 +10,7 @@ public class SubsystemSaddleBlockBehavior : SubsystemBlockBehavior
     private readonly Random _random = new();
     private SubsystemAudio _subsystemAudio = null!;
 
-    public override int[] HandledBlocks => [158];
+    public override ResourceId[] HandledBlocks => [ResourceId.Parse("game:saddle")];
 
     public override bool OnUse(Ray3 ray, ComponentMiner componentMiner)
     {

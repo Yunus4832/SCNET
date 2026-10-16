@@ -1,11 +1,10 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public class KelpBlock : WaterPlantBlock
 {
-    public new const int Index = 232;
-
     public override int GetFaceTextureSlot(int face, int value)
     {
         return face < 0 ? 104 : base.GetFaceTextureSlot(face, value);
@@ -20,7 +19,7 @@ public class KelpBlock : WaterPlantBlock
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawFlatOrImageExtrusionBlock(
+        Catalog.DrawFlatOrImageExtrusionBlock(
             primitivesRenderer,
             value,
             size,

@@ -1,5 +1,6 @@
 using System.Xml.Linq;
 
+using Game.Modding.Blocks;
 using Game.Network;
 using Game.Network.Enums;
 using Game.Network.Packages;
@@ -271,7 +272,7 @@ public class FurnitureInventoryPanel : CanvasWidget
             var slotCount = ComponentFurnitureInventory.GetSlotCount(i);
             if (slotValue == 0 ||
                 slotCount <= 0 ||
-                Terrain.ExtractContents(slotValue) != FurnitureBlock.Index)
+                Terrain.ExtractContents(slotValue) != BuiltInBlockRegistry.GetIndex<FurnitureBlock>())
             {
                 continue;
             }

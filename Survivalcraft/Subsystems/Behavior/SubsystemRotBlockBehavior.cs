@@ -21,7 +21,7 @@ public class SubsystemRotBlockBehavior : SubsystemPollableBlockBehavior
 
     private SubsystemItemsScanner _subsystemItemsScanner = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
@@ -50,7 +50,7 @@ public class SubsystemRotBlockBehavior : SubsystemPollableBlockBehavior
         }
 
         var num = Terrain.ExtractContents(value);
-        var block = BlocksManager.Blocks[num];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         var rotPeriod = block.GetRotPeriod(value);
         if (rotPeriod <= 0 || pollPass % rotPeriod != 0)
         {
@@ -75,7 +75,7 @@ public class SubsystemRotBlockBehavior : SubsystemPollableBlockBehavior
             foreach (var item in items)
             {
                 var num2 = Terrain.ExtractContents(item.Value);
-                var block = BlocksManager.Blocks[num2];
+                var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num2];
                 var rotPeriod = block.GetRotPeriod(item.Value);
                 if (rotPeriod <= 0)
                 {

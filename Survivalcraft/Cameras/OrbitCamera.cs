@@ -59,7 +59,7 @@ public class OrbitCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
                 var vector5 = vector + v4;
                 var end = vector5 + vector3 + Vector3.Normalize(vector3) * 0.5f;
                 var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(vector5, end, false,
-                    true, (value, _) => !BlocksManager.Blocks[Terrain.ExtractContents(value)].Transparent);
+                    true, (value, _) => !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(value)].Transparent);
                 if (terrainRaycastResult.HasValue)
                 {
                     num = num.HasValue

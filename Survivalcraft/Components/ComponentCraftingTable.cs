@@ -43,7 +43,7 @@ public class ComponentCraftingTable : ComponentInventoryBase
                     if (slots[RemainsSlotIndex].Count == 0 ||
                         slots[RemainsSlotIndex].Value == _matchedRecipe.RemainsValue)
                     {
-                        var num2 = BlocksManager.Blocks[Terrain.ExtractContents(_matchedRecipe.RemainsValue)]
+                        var num2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(_matchedRecipe.RemainsValue)]
                             .GetMaxStacking(_matchedRecipe.RemainsValue) - slots[RemainsSlotIndex].Count;
                         count = MathUtils.Min(count, num2 / _matchedRecipe.RemainsCount * _matchedRecipe.ResultCount);
                     }
@@ -116,7 +116,7 @@ public class ComponentCraftingTable : ComponentInventoryBase
                 var slotCount = GetSlotCount(slotIndex);
                 if (slotCount > 0)
                 {
-                    var block = BlocksManager.Blocks[num3];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num3];
                     _matchedIngredients[num2] = block.CraftingId + ":" + num4.ToString(CultureInfo.InvariantCulture);
                     num = MathUtils.Min(num, slotCount);
                 }
@@ -128,7 +128,7 @@ public class ComponentCraftingTable : ComponentInventoryBase
         }
 
         var componentPlayer = FindInteractingPlayer();
-        var craftingRecipe = CraftingRecipesManager.FindMatchingRecipe(
+        var craftingRecipe = CurrentModRuntime.Value!.RequireWorldCatalog().Recipes.FindMatchingRecipe(
             Project.FindSubsystem<SubsystemTerrain>(true)!,
             _matchedIngredients,
             0f,

@@ -348,7 +348,7 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
 
     public bool TryAddPickable(Pickable pickable)
     {
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(pickable.Value)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(pickable.Value)];
         if (!(_foodFactors[(int)block.FoodType] > 0f) ||
             !(Vector3.DistanceSquared(pickable.Position, _componentCreature.ComponentBody.Position) < 512f))
         {

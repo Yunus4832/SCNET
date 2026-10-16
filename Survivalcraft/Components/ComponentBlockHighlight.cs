@@ -3,6 +3,7 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Components;
 
 public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
@@ -76,7 +77,7 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
 
         var point = terrainRaycastResult.CellFace.Point;
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-        var obj = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
+        var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)];
         if (obj is CrossBlock)
         {
             terrainRaycastResult.Distance = MathUtils.Max(terrainRaycastResult.Distance, 0.1f);
@@ -244,7 +245,7 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
     public BoundingBox GetCellFaceBoundingBox(Point3 point)
     {
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-        var customCollisionBoxes = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)]
+        var customCollisionBoxes = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)]
             .GetCustomCollisionBoxes(_subsystemTerrain, cellValue);
         var vector = new Vector3(point.X, point.Y, point.Z);
         if (customCollisionBoxes.Length == 0)

@@ -2,8 +2,6 @@ namespace Game.Blocks;
 
 public class SnowBlock : CubeBlock
 {
-    public const int Index = 61;
-
     public BoundingBox[] CollisionBoxes = [new(new Vector3(0f, 0f, 0f), new Vector3(1f, 0.125f, 1f))];
 
     public override bool IsFaceTransparent(SubsystemTerrain subsystemTerrain, int face, int value)

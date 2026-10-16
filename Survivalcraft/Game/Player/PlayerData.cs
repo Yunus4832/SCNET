@@ -866,7 +866,7 @@ public partial class PlayerData : IDisposable
         }
 
         var cellContents = _subsystemTerrain.Terrain.GetCellContents(x, num2, z);
-        if (BlocksManager.Blocks[cellContents].Transparent)
+        if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents].Transparent)
         {
             num -= 5f;
         }
@@ -913,9 +913,9 @@ public partial class PlayerData : IDisposable
             num -= 100f;
         }
 
-        var obj = BlocksManager.Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y - 1, z)];
-        var block = BlocksManager.Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y, z)];
-        var block2 = BlocksManager.Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y + 1, z)];
+        var obj = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y - 1, z)];
+        var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y, z)];
+        var block2 = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y + 1, z)];
         if (obj.Transparent)
         {
             num -= 10f;
@@ -958,7 +958,7 @@ public partial class PlayerData : IDisposable
                 for (var num = p.Y; num > 0; num--)
                 {
                     var cellContents = _subsystemTerrain.Terrain.GetCellContents(p.X, num, p.Z);
-                    var block = BlocksManager.Blocks[cellContents];
+                    var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[cellContents];
                     if (block.Collidable)
                     {
                         return false;

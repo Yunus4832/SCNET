@@ -1,5 +1,6 @@
 using EntitySystem.TemplatesDatabase;
 
+
 namespace Game.Subsystems;
 
 public class SubsystemArrowBlockBehavior : SubsystemBlockBehavior
@@ -8,7 +9,7 @@ public class SubsystemArrowBlockBehavior : SubsystemBlockBehavior
 
     private SubsystemProjectiles _subsystemProjectiles = null!;
 
-    public override int[] HandledBlocks => [];
+    public override ResourceId[] HandledBlocks => [];
 
     public override void OnFiredAsProjectile(Projectile projectile)
     {

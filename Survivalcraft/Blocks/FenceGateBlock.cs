@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableBlock
@@ -257,8 +258,8 @@ public abstract class FenceGateBlock : Block, IElectricElementBlock, IPaintableB
 
         var cellValue = subsystemTerrain.Terrain.GetCellValue(num6 + num8, y, num7 + num9);
         var cellValue2 = subsystemTerrain.Terrain.GetCellValue(num6 - num8, y, num7 - num9);
-        var block = BlocksManager.Blocks[Terrain.ExtractContents(cellValue)];
-        var block2 = BlocksManager.Blocks[Terrain.ExtractContents(cellValue2)];
+        var block = Catalog.Blocks[Terrain.ExtractContents(cellValue)];
+        var block2 = Catalog.Blocks[Terrain.ExtractContents(cellValue2)];
         var data = Terrain.ExtractData(cellValue);
         var data2 = Terrain.ExtractData(cellValue2);
         var data3 = SetRightHanded(

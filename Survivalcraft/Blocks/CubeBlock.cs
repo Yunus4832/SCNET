@@ -1,5 +1,6 @@
 using Engine.Graphics;
 
+
 namespace Game.Blocks;
 
 public abstract class CubeBlock : Block
@@ -25,7 +26,7 @@ public abstract class CubeBlock : Block
         DrawBlockEnvironmentData environmentData
     )
     {
-        BlocksManager.DrawCubeBlock(
+        Catalog.DrawCubeBlock(
             primitivesRenderer,
             value,
             new Vector3(size),
