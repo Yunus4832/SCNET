@@ -23,7 +23,7 @@ public static class AutomationUiContext
 {
     public static AutomationUiSnapshot Capture()
     {
-        var dialogs = DialogsManager.ReadOnlyDialogs.ToArray();
+        var dialogs = GetVisibleDialogs();
         var (root, rootSelector) = GetActiveScope(dialogs);
         var targets = root is null ? [] : Enumerate(root, rootSelector).ToArray();
         return new AutomationUiSnapshot(
@@ -35,7 +35,7 @@ public static class AutomationUiContext
 
     public static bool TryFindTarget(string selector, out AutomationTarget target)
     {
-        var (root, rootSelector) = GetActiveScope(DialogsManager.ReadOnlyDialogs.ToArray());
+        var (root, rootSelector) = GetActiveScope(GetVisibleDialogs());
         var candidate = root is null
             ? null
             : Enumerate(root, rootSelector)
@@ -131,6 +131,22 @@ public static class AutomationUiContext
         InventorySlotWidget => ["tap", "drag"],
         _ => ["tap"]
     };
+
+    private static Dialogs.Dialog[] GetVisibleDialogs() => DialogsManager.ReadOnlyDialogs
+        .Where(dialog => dialog.IsVisibleGlobal && IsAttachedToRoot(dialog)).ToArray();
+
+    private static bool IsAttachedToRoot(Widget widget)
+    {
+        for (var ancestor = widget.ParentWidget; ancestor is not null; ancestor = ancestor.ParentWidget)
+        {
+            if (ReferenceEquals(ancestor, ScreensManager.RootWidget))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     private static (Widget? Root, string Selector) GetActiveScope(IReadOnlyList<Dialogs.Dialog> dialogs)
     {
