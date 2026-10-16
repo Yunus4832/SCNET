@@ -53,8 +53,6 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
 
     private static LitShader LitShader =>
         _litShader ??= new LitShader(
-            ShaderCodeManager.GetFast("Shaders/Lit.vsh"),
-            ShaderCodeManager.GetFast("Shaders/Lit.psh"),
             2,
             false,
             false,
