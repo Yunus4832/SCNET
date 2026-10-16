@@ -56,6 +56,16 @@ public class ComponentPlayerPackage : IPackage
 
     public DigEvent DigEvent;
 
+    public int DigRequestId;
+
+    public int DigExpectedValue;
+
+    public int PlacementRequestId;
+
+    public Point3 PlacementCell;
+
+    public int PlacementExpectedValue;
+
     public byte FromPlayerId;
 
     public Vector3 HitDirection;
@@ -154,6 +164,8 @@ public class ComponentPlayerPackage : IPackage
                 break;
             case PlayerAction.DigEvent:
                 DigEvent = player.CurDigEventItem.DigEvent;
+                DigRequestId = player.CurDigEventItem.RequestId;
+                DigExpectedValue = player.CurDigEventItem.ExpectedValue;
                 NetDigRay = player.CurDigEventItem.NetDigRay;
                 NetDigRaycast = player.CurDigEventItem.NetDigRaycast;
                 break;
@@ -163,6 +175,9 @@ public class ComponentPlayerPackage : IPackage
                 break;
             case PlayerAction.InteractEvent:
                 InteractEvent = player.CurInteractEventItem.InteractEvent;
+                PlacementRequestId = player.CurInteractEventItem.RequestId;
+                PlacementCell = player.CurInteractEventItem.PlacementCell;
+                PlacementExpectedValue = player.CurInteractEventItem.ExpectedValue;
                 NetInteractRay = player.CurInteractEventItem.NetInteractRay;
                 NetInteractRaycast = player.CurInteractEventItem.NetPlaceRaycast;
                 break;
@@ -275,6 +290,12 @@ public class ComponentPlayerPackage : IPackage
                 break;
             case PlayerAction.InteractEvent:
                 writer.WriteEnum(InteractEvent);
+                if (InteractEvent == InteractEvent.Place)
+                {
+                    writer.Write(PlacementRequestId);
+                    writer.Write(PlacementCell);
+                    writer.Write(PlacementExpectedValue);
+                }
                 writer.Write(NetInteractRay);
                 writer.Write(NetInteractRaycast);
                 break;
@@ -284,6 +305,8 @@ public class ComponentPlayerPackage : IPackage
                 break;
             case PlayerAction.DigEvent:
                 writer.WriteEnum(DigEvent);
+                writer.Write(DigRequestId);
+                writer.Write(DigExpectedValue);
                 writer.Write(NetDigRay);
                 writer.Write(NetDigRaycast);
                 break;
@@ -376,6 +399,12 @@ public class ComponentPlayerPackage : IPackage
                 break;
             case PlayerAction.InteractEvent:
                 InteractEvent = reader.ReadEnum<InteractEvent>();
+                if (InteractEvent == InteractEvent.Place)
+                {
+                    PlacementRequestId = reader.ReadInt32();
+                    PlacementCell = reader.ReadPoint3();
+                    PlacementExpectedValue = reader.ReadInt32();
+                }
                 NetInteractRay = reader.ReadRay3();
                 NetInteractRaycast = reader.ReadTerrainRaycastResultNullable();
                 break;
@@ -385,6 +414,8 @@ public class ComponentPlayerPackage : IPackage
                 break;
             case PlayerAction.DigEvent:
                 DigEvent = reader.ReadEnum<DigEvent>();
+                DigRequestId = reader.ReadInt32();
+                DigExpectedValue = reader.ReadInt32();
                 NetDigRay = reader.ReadRay3Nullable();
                 NetDigRaycast = reader.ReadTerrainRaycastResultNullable();
                 break;

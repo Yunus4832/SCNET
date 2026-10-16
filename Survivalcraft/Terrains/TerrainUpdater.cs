@@ -1362,7 +1362,7 @@ public class TerrainUpdater
     /// <remarks>
     ///     计算每个列的最高不透明方块高度，并填充天空光照
     /// </remarks>
-    private void GenerateChunkSunLightAndHeight(TerrainChunk chunk, int skylightValue)
+    internal static void GenerateChunkSunLightAndHeight(TerrainChunk chunk, int skylightValue)
     {
         for (var i = 0; i < 16; i++)
         {
@@ -1374,7 +1374,7 @@ public class TerrainUpdater
                 var num5 = TerrainChunk.CalculateCellIndex(i, 255, j);
                 while (num4 >= 0)
                 {
-                    var cellValueFast = chunk.GetCellValueFast(num5);
+                    var cellValueFast = chunk.GetCellValueForGeometry(num5);
                     if (Terrain.ExtractContents(cellValueFast) != 0)
                     {
                         num = num4;
@@ -1382,7 +1382,7 @@ public class TerrainUpdater
                     }
 
                     cellValueFast = Terrain.ReplaceLight(cellValueFast, skylightValue);
-                    chunk.SetCellValueFast(num5, cellValueFast);
+                    chunk.SetCellLightFast(num5, Terrain.ExtractLight(cellValueFast));
                     num4--;
                     num5--;
                 }
@@ -1391,7 +1391,7 @@ public class TerrainUpdater
                 num5 = TerrainChunk.CalculateCellIndex(i, 0, j);
                 while (num4 <= num + 1)
                 {
-                    var cellValueFast2 = chunk.GetCellValueFast(num5);
+                    var cellValueFast2 = chunk.GetCellValueForGeometry(num5);
                     var num6 = Terrain.ExtractContents(cellValueFast2);
                     if (CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num6].Transparent)
                     {
@@ -1400,7 +1400,7 @@ public class TerrainUpdater
                     }
 
                     cellValueFast2 = Terrain.ReplaceLight(cellValueFast2, 0);
-                    chunk.SetCellValueFast(num5, cellValueFast2);
+                    chunk.SetCellLightFast(num5, Terrain.ExtractLight(cellValueFast2));
                     num4++;
                     num5++;
                 }
@@ -1412,7 +1412,7 @@ public class TerrainUpdater
                 {
                     while (num4 >= num2)
                     {
-                        var cellValueFast3 = chunk.GetCellValueFast(num5);
+                        var cellValueFast3 = chunk.GetCellValueForGeometry(num5);
                         var num8 = Terrain.ExtractContents(cellValueFast3);
                         if (num8 != 0)
                         {
@@ -1426,7 +1426,7 @@ public class TerrainUpdater
                         }
 
                         cellValueFast3 = Terrain.ReplaceLight(cellValueFast3, num7);
-                        chunk.SetCellValueFast(num5, cellValueFast3);
+                        chunk.SetCellLightFast(num5, Terrain.ExtractLight(cellValueFast3));
                         num4--;
                         num5--;
                     }
@@ -1435,9 +1435,9 @@ public class TerrainUpdater
                 var num3 = num4 + 1;
                 while (num4 >= num2)
                 {
-                    var cellValueFast4 = chunk.GetCellValueFast(num5);
+                    var cellValueFast4 = chunk.GetCellValueForGeometry(num5);
                     cellValueFast4 = Terrain.ReplaceLight(cellValueFast4, 0);
-                    chunk.SetCellValueFast(num5, cellValueFast4);
+                    chunk.SetCellLightFast(num5, Terrain.ExtractLight(cellValueFast4));
                     num4--;
                     num5--;
                 }
@@ -1497,7 +1497,7 @@ public class TerrainUpdater
                 var num5 = TerrainChunk.CalculateCellIndex(i, bottomHeightFast, j);
                 while (num4 <= topHeightFast)
                 {
-                    var cellValueFast = chunk.GetCellValueFast(num5);
+                    var cellValueFast = chunk.GetCellValueForGeometry(num5);
                     var num6 = 0;
                     var block = blocks[Terrain.ExtractContents(cellValueFast)];
                     if (num4 >= num3 && block.Transparent)
@@ -1517,7 +1517,7 @@ public class TerrainUpdater
 
                     if (num6 > Terrain.ExtractLight(cellValueFast))
                     {
-                        chunk.SetCellValueFast(num5, Terrain.ReplaceLight(cellValueFast, num6));
+                        chunk.SetCellLightFast(num5, num6);
                         _lightSources.Add(new LightSource
                         {
                             X = num,
@@ -1598,20 +1598,20 @@ public class TerrainUpdater
             var neighborCellIndex = TerrainChunk.CalculateCellIndex(neighborX, 0, neighborZ);
             for (var y = chunk.GetBottomHeightFast(x, z); y < (1 << TerrainChunk.HeightBits); y++)
             {
-                var cellValue = chunk.GetCellValueFast(cellIndex + y);
+                var cellValue = chunk.GetCellValueForGeometry(cellIndex + y);
                 var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(cellValue)];
                 if (!block.Transparent)
                 {
                     continue;
                 }
 
-                var light = Terrain.ExtractLight(neighbor.GetCellValueFast(neighborCellIndex + y)) - 1;
+                var light = Terrain.ExtractLight(neighbor.GetCellValueForGeometry(neighborCellIndex + y)) - 1;
                 if (light <= Terrain.ExtractLight(cellValue))
                 {
                     continue;
                 }
 
-                chunk.SetCellValueFast(cellIndex + y, Terrain.ReplaceLight(cellValue, light));
+                chunk.SetCellLightFast(cellIndex + y, light);
                 if (light > 1)
                 {
                     _lightSources.Add(new LightSource
@@ -1642,7 +1642,7 @@ public class TerrainUpdater
         }
 
         var index = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
-        var cellValueFast = chunkAtCell.GetCellValueFast(index);
+        var cellValueFast = chunkAtCell.GetCellValueForGeometry(index);
         var num = Terrain.ExtractContents(cellValueFast);
         var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
         if (!block.Transparent)
@@ -1663,7 +1663,7 @@ public class TerrainUpdater
             Z = z,
             Light = num2
         });
-        chunkAtCell.SetCellValueFast(index, Terrain.ReplaceLight(cellValueFast, num2));
+        chunkAtCell.SetCellLightFast(index, num2);
     }
 
     /// <summary>
@@ -1820,7 +1820,7 @@ public class TerrainUpdater
                     var num9 = TerrainChunk.CalculateCellIndex(k, 0, l);
                     for (var m = num7; m < num8; m++)
                     {
-                        var cellValueFast = chunk.GetCellValueFast(num9 + m);
+                        var cellValueFast = chunk.GetCellValueForGeometry(num9 + m);
                         var num10 = Terrain.ExtractContents(cellValueFast);
                         if (num10 != 0)
                         {
@@ -1869,7 +1869,7 @@ public class TerrainUpdater
                 var num11 = num10 + num9 - num8;
                 while (num10 < num11)
                 {
-                    num += chunkAtCell.GetCellValueFast(num10++);
+                    num += chunkAtCell.GetCellValueForGeometry(num10++);
                     num *= 31;
                 }
 
@@ -1956,7 +1956,7 @@ public class TerrainUpdater
                     var num22 = m + num21 - num20;
                     while (m < num22)
                     {
-                        num19 += chunkAtCell.GetCellValueFast(m++);
+                        num19 += chunkAtCell.GetCellValueForGeometry(m++);
                         num19 *= 31;
                     }
 

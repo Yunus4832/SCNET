@@ -17,6 +17,16 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool DigFaceChange;
 
+    public int DigRequestId { get; private set; }
+
+    public int DigExpectedValue { get; private set; }
+
+    public int PlacementRequestId { get; private set; }
+
+    public Point3 PlacementCell { get; private set; }
+
+    public int PlacementExpectedValue { get; private set; }
+
     private ComponentHealth _componentHealth = null!;
 
     private float _digProgress;
@@ -137,9 +147,19 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Dig(TerrainRaycastResult raycastResult, bool isEnd = false)
     {
+        DigRequestId = 0;
+        DigExpectedValue = 0;
         var result = false;
         _lastDigFrameIndex = Time.FrameIndex;
         var cellFace = raycastResult.CellFace;
+        if (ComponentPlayer is { PlayerData.IsMainPlayer: true } &&
+            _subsystemTerrain.CellPrediction?.IsPending(cellFace.Point) == true)
+        {
+            DigCellFace = null;
+            _digProgress = 0f;
+            return false;
+        }
+
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
         var num = Terrain.ExtractContents(cellValue);
         var block = CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[num];
@@ -223,6 +243,14 @@ public class ComponentMiner : Component, IUpdateable
 
             var digValue = block.GetDigValue(_subsystemTerrain, this, cellValue, activeBlockValue, raycastResult);
 
+            if (CommonLib.WorkType == WorkType.Client && ComponentPlayer is { PlayerData.IsMainPlayer: true } &&
+                digValue.CellFace.Point == cellFace.Point)
+            {
+                DigExpectedValue = cellValue;
+                DigRequestId = _subsystemTerrain.CellPrediction!.Begin(
+                    cellFace.Point, cellValue, digValue.Value, Time.RealTime);
+            }
+
             _subsystemTerrain.DestroyCell(block2.ToolLevel, digValue.CellFace.X, digValue.CellFace.Y,
                 digValue.CellFace.Z, digValue.Value, false, false, this);
             _subsystemSoundMaterials.PlayImpactSound(cellValue, new Vector3(cellFace.X, cellFace.Y, cellFace.Z),
@@ -270,6 +298,9 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Place(TerrainRaycastResult raycastResult, int value)
     {
+        PlacementRequestId = 0;
+        PlacementCell = default;
+        PlacementExpectedValue = 0;
         var placingContext = new BlockPlacingContext(this, raycastResult, value);
         CurrentModRuntime.Value?.Gameplay.Invoke(placingContext);
         if (placingContext.Cancel)
@@ -356,6 +387,14 @@ public class ComponentMiner : Component, IUpdateable
         foreach (var behavior in blockBehaviors)
         {
             behavior.OnBlockPlaced(this, num2, num3, num4, ref placementData, value);
+        }
+
+        if (CommonLib.WorkType == WorkType.Client && ComponentPlayer is { PlayerData.IsMainPlayer: true })
+        {
+            PlacementCell = new Point3(num2, num3, num4);
+            PlacementExpectedValue = _subsystemTerrain.Terrain.GetCellValue(num2, num3, num4);
+            PlacementRequestId = _subsystemTerrain.CellPrediction!.Begin(
+                PlacementCell, PlacementExpectedValue, placementData.Value, Time.RealTime);
         }
 
         _subsystemTerrain.DestroyCell(0, num2, num3, num4, placementData.Value, false, false, this);
@@ -580,7 +619,9 @@ public class ComponentMiner : Component, IUpdateable
                                                block.IsInteractive(_subsystemTerrain, value),
                     _ => mode == RaycastMode.Gathering && block.Gatherable
                 };
-            });
+            },
+            includePredictedBlocks: mode == RaycastMode.Digging &&
+                                    ComponentPlayer is { PlayerData.IsMainPlayer: true });
         var num = bodyRaycastResult?.Distance ?? float.PositiveInfinity;
         var num2 = movingBlocksRaycastResult?.Distance ?? float.PositiveInfinity;
         var num3 = terrainRaycastResult?.Distance ?? float.PositiveInfinity;

@@ -6,6 +6,8 @@ public class Pickable : WorldItem
 
     public float Distance;
 
+    public bool HasLightSample;
+
     public Vector3? FlyToPosition;
 
     public byte? GetPickPlayer;

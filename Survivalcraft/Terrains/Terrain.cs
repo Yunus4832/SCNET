@@ -419,6 +419,11 @@ public class Terrain : IDisposable
     /// <summary>
     ///     快速获取单元格的值（无边界检查）
     /// </summary>
+    public int GetCellValueForGeometry(int x, int y, int z) =>
+        IsCellValid(x, y, z)
+            ? GetChunkAtCell(x, z, false)?.GetCellValueForGeometry(x & _chunkCoordsMask, y, z & _chunkCoordsMask) ?? 0
+            : 0;
+
     public int GetCellValueFast(int x, int y, int z)
     {
         return GetChunkAtCell(x, z, false)?.GetCellValueFast(x & _chunkCoordsMask, y, z & _chunkCoordsMask) ?? 0;

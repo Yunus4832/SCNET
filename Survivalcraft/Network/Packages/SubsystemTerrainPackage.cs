@@ -15,7 +15,8 @@ public class SubsystemTerrainPackage : IPackage
         RequestSyncChunks,
         RequestTerrainChunkFragments,
         SyncTerrainChunkFragment,
-        SyncTerrainCellDelta
+        SyncTerrainCellDelta,
+        CellEditCompleted
     }
 
     public List<ChunkContentRequest> ChunkRequests = [];
@@ -25,6 +26,10 @@ public class SubsystemTerrainPackage : IPackage
     public EncodedTerrainChunkFragment ChunkFragment;
 
     public TerrainCellDelta CellDelta;
+
+    public int EditRequestId;
+    public Point3 EditedCell;
+    public long EditContentVersion;
 
     public DataType Type;
 
@@ -69,6 +74,11 @@ public class SubsystemTerrainPackage : IPackage
         writer.Write((byte)Type);
         switch (Type)
         {
+            case DataType.CellEditCompleted:
+                writer.Write(EditRequestId);
+                writer.Write(EditedCell);
+                writer.Write(EditContentVersion);
+                break;
             case DataType.RequestSyncChunks:
                 writer.Write(ChunkRequests.Count);
                 foreach (var request in ChunkRequests)
@@ -134,6 +144,11 @@ public class SubsystemTerrainPackage : IPackage
         Type = (DataType)reader.ReadByte();
         switch (Type)
         {
+            case DataType.CellEditCompleted:
+                EditRequestId = reader.ReadInt32();
+                EditedCell = reader.ReadPoint3();
+                EditContentVersion = reader.ReadInt64();
+                break;
             case DataType.RequestSyncChunks:
                 ChunkRequests = [];
                 var count = reader.ReadInt32();

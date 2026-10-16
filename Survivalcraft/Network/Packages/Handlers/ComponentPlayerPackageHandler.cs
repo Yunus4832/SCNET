@@ -136,7 +136,8 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
             case ComponentPlayerPackage.PlayerAction.InteractEvent:
                 package.PlayerEvent(player =>
                 {
-                    player.AddInteractEvent(package.InteractEvent, package.NetInteractRay, package.NetInteractRaycast);
+                    player.AddInteractEvent(package.InteractEvent, package.NetInteractRay, package.NetInteractRaycast,
+                        package.PlacementRequestId, package.PlacementCell, package.PlacementExpectedValue);
                     if (!isServer)
                     {
                         return;
@@ -160,7 +161,8 @@ public sealed class ComponentPlayerPackageHandler : PackageHandlerBase<Component
             case ComponentPlayerPackage.PlayerAction.DigEvent:
                 package.PlayerEvent(player =>
                 {
-                    player.AddDigEvent(package.DigEvent, package.NetDigRay, package.NetDigRaycast);
+                    player.AddDigEvent(package.DigEvent, package.NetDigRay, package.NetDigRaycast,
+                        package.DigRequestId, package.DigExpectedValue);
                     if (!isServer)
                     {
                         return;

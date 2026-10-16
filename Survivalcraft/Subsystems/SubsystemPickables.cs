@@ -97,7 +97,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             var num5 = Terrain.ToCell(position.Y);
             var z = Terrain.ToCell(position.Z);
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-            if (chunkAtCell is { MainThreadState: >= TerrainChunkState.InvalidVertices1 } && num5 is >= 0 and < 255)
+            if (chunkAtCell is
+                {
+                    MainThreadState: >= TerrainChunkState.InvalidVertices1,
+                    WorkerState: >= TerrainChunkState.InvalidVertices1
+                } && num5 is >= 0 and < 255 &&
+                !IsInsidePredictedOpaqueBlock(_subsystemTerrain.Terrain, new Point3(x, num5, z)))
             {
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
@@ -106,6 +111,12 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 pickable.Light = (int)MathUtils.Lerp(
                     _subsystemTerrain.Terrain.GetCellLightFast(x, num5, z),
                     _subsystemTerrain.Terrain.GetCellLightFast(x, num5 + 1, z), f);
+                pickable.HasLightSample = true;
+            }
+
+            if (!pickable.HasLightSample)
+            {
+                continue;
             }
 
             _drawBlockEnvironmentData.Light = pickable.Light;
@@ -126,6 +137,14 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         }
 
         _primitivesRenderer.Flush(camera.ViewProjectionMatrix);
+    }
+
+    internal static bool IsInsidePredictedOpaqueBlock(Terrain terrain, Point3 cell)
+    {
+        var actual = terrain.GetCellValue(cell.X, cell.Y, cell.Z);
+        var visual = terrain.GetCellValueForGeometry(cell.X, cell.Y, cell.Z);
+        return Terrain.ReplaceLight(actual, 0) != Terrain.ReplaceLight(visual, 0) &&
+               !CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[Terrain.ExtractContents(visual)].Transparent;
     }
 
     public UpdateOrder UpdateOrder => UpdateOrder.Default;

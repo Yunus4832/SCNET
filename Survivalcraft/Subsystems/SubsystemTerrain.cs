@@ -70,6 +70,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public ClientTerrainDeltaCoordinator? ClientTerrainDeltas { get; private set; }
 
+    public ClientTerrainPrediction? CellPrediction { get; private set; }
+
     public AuthoritativeChunkGenerationPipeline? AuthoritativeChunkGeneration { get; private set; }
 
     public IChunkContentAuthority? ChunkContentAuthority { get; private set; }
@@ -145,7 +147,8 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         Vector3 end,
         bool useInteractionBoxes,
         bool skipAirBlocks,
-        Func<int, float, bool>? action
+        Func<int, float, bool>? action,
+        bool includePredictedBlocks = false
     )
     {
         var num = Vector3.Distance(start, end);
@@ -189,6 +192,14 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
             var collisionBoxIndex = 0;
             float? num23 = null;
             var cellValue = Terrain.GetCellValue(num2, num3, num4);
+            if (includePredictedBlocks)
+            {
+                var predictedValue = Terrain.GetCellValueForGeometry(num2, num3, num4);
+                if (Terrain.ExtractContents(predictedValue) != 0)
+                {
+                    cellValue = predictedValue;
+                }
+            }
             var num24 = Terrain.ExtractContents(cellValue);
             if (num24 != 0 || !skipAirBlocks)
             {
@@ -336,6 +347,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
         ComponentMiner? miner = null
     )
     {
+        CellPrediction?.OnCellChanged(new Point3(x, y, z));
         var authorityChunk = CommonLib.WorkType != WorkType.Client
             ? CellAuthority.Terrain.GetChunkAtCell(x, z, false)
             : null;
@@ -604,6 +616,7 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
     public void Update(float dt)
     {
+        CellPrediction?.Update(Time.RealTime);
         TerrainUpdater.Update();
         ProcessModifiedCells();
     }
@@ -672,6 +685,12 @@ public class SubsystemTerrain : Subsystem, IDrawable, IUpdateable
 
         // Start the worker only after every service it can reach has been composed.
         TerrainUpdater = new TerrainUpdater(this);
+        if (CommonLib.WorkType == WorkType.Client)
+        {
+            CellPrediction = new ClientTerrainPrediction(Terrain, coords =>
+                TerrainUpdater.DowngradeChunkNeighborhoodState(coords, 1, TerrainChunkState.InvalidLight, false));
+            ClientChunkContents!.ContentInstalled += CellPrediction.OnContentInstalled;
+        }
         if (ClientChunkContents != null)
         {
             ClientTerrainDeltas = new ClientTerrainDeltaCoordinator(

@@ -70,6 +70,9 @@ public class TerrainChunk : IDisposable
 
     private long _networkContentRevision;
 
+    // Replaced atomically by the main thread; geometry workers only read snapshots.
+    private Dictionary<int, (int Expected, int Value)>? _geometryPredictions;
+
     public long NetworkContentRevision => Volatile.Read(ref _networkContentRevision);
 
     public volatile bool NewGeometryData;
@@ -229,6 +232,40 @@ public class TerrainChunk : IDisposable
         return Cells[index];
     }
 
+    public int GetCellValueForGeometry(int index)
+    {
+        var value = Cells[index];
+        var predictions = Volatile.Read(ref _geometryPredictions);
+        return predictions is not null && predictions.TryGetValue(index, out var prediction) &&
+               Terrain.ReplaceLight(value, 0) == prediction.Expected
+            ? Terrain.ReplaceLight(prediction.Value, Terrain.ExtractLight(value))
+            : value;
+    }
+
+    public int GetCellValueForGeometry(int x, int y, int z) =>
+        GetCellValueForGeometry(CalculateCellIndex(x, y, z));
+
+    internal void SetGeometryPrediction(int index, int expected, int value)
+    {
+        var snapshot = _geometryPredictions is { } current
+            ? new Dictionary<int, (int Expected, int Value)>(current)
+            : [];
+        snapshot[index] = (Terrain.ReplaceLight(expected, 0), value);
+        Volatile.Write(ref _geometryPredictions, snapshot);
+    }
+
+    internal void RemoveGeometryPrediction(int index)
+    {
+        if (_geometryPredictions is not { } current || !current.ContainsKey(index))
+        {
+            return;
+        }
+
+        var snapshot = new Dictionary<int, (int Expected, int Value)>(current);
+        snapshot.Remove(index);
+        Volatile.Write(ref _geometryPredictions, snapshot.Count == 0 ? null : snapshot);
+    }
+
     public int GetCellValueFast(int x, int y, int z)
     {
         return Cells[y + x * _height + z * _height * _size];
@@ -237,6 +274,12 @@ public class TerrainChunk : IDisposable
     public void SetCellValueFast(int x, int y, int z, int value)
     {
         SetCellValueFast(y + x * _height + z * _height * _size, value);
+    }
+
+    // Lighting is derived from the visual contents, but must never commit a predicted block.
+    public void SetCellLightFast(int index, int light)
+    {
+        Cells[index] = Terrain.ReplaceLight(Cells[index], light);
     }
 
     public void SetCellValueFast(int index, int value)

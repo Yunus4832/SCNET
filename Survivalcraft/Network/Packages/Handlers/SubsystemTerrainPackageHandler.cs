@@ -11,7 +11,8 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
             SubsystemTerrainPackage.DataType.RequestSyncChunks or
                 SubsystemTerrainPackage.DataType.RequestTerrainChunkFragments => isServer,
             SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment or
-                SubsystemTerrainPackage.DataType.SyncTerrainCellDelta => !isServer,
+                SubsystemTerrainPackage.DataType.SyncTerrainCellDelta or
+                SubsystemTerrainPackage.DataType.CellEditCompleted => !isServer,
             _ => false
         };
     }
@@ -28,6 +29,9 @@ public sealed class SubsystemTerrainPackageHandler : PackageHandlerBase<Subsyste
         var subsystemTerrain = project.FindSubsystem<SubsystemTerrain>(true)!;
         switch (package.Type)
         {
+            case SubsystemTerrainPackage.DataType.CellEditCompleted:
+                subsystemTerrain.CellPrediction?.Complete(package.EditRequestId, package.EditedCell, package.EditContentVersion);
+                break;
             case SubsystemTerrainPackage.DataType.RequestSyncChunks:
                 if (context.Sender is null)
                 {
