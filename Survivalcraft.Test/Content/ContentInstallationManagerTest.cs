@@ -207,6 +207,37 @@ public sealed class ContentInstallationManagerTest : IDisposable
     }
 
     [Fact]
+    public void WorldManufactureAndInstallPreserveBlockMappingAndExtensionData()
+    {
+        Storage.CreateDirectory(GamePaths.Worlds);
+        var sourceDirectory = Storage.CombinePaths(GamePaths.Worlds, $"MappedSource{Guid.NewGuid():N}");
+        Storage.CreateDirectory(sourceDirectory);
+        _installedWorlds.Add(sourceDirectory);
+        var project = Encoding.UTF8.GetBytes(
+            "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\">" +
+            "<Subsystems /><Entities /><BlockRegistry><Block Id=\"example.mod:stone\" Index=\"300\" /></BlockRegistry>" +
+            "<ExtensionData><Values Name=\"example.mod\"><Values Name=\"state\">" +
+            "<Value Name=\"marker\" Type=\"string\" Value=\"preserved\" />" +
+            "</Values></Values></ExtensionData></Project>");
+        using (var output = Storage.OpenFile(Storage.CombinePaths(sourceDirectory, "Project.xml"), OpenFileMode.Create))
+        {
+            output.Write(project);
+        }
+
+        using var artifact = ContentPackageCreationManager.CreateWorld(
+            new ContentCreationIdentity("Mapped World", "Summary", "Description", "1.0.0"),
+            Storage.GetFileName(sourceDirectory));
+        using var package = artifact.OpenRead();
+        var installed = ContentInstallationManager.Install(package);
+        var installedDirectory = Storage.CombinePaths(GamePaths.Worlds, installed.AssetKey!);
+        _installedWorlds.Add(installedDirectory);
+        using var input = Storage.OpenFile(Storage.CombinePaths(installedDirectory, "Project.xml"), OpenFileMode.Read);
+        using var restored = new MemoryStream();
+        input.CopyTo(restored);
+        Assert.Equal(project, restored.ToArray());
+    }
+
+    [Fact]
     public async Task LargeWorldManufactureCacheAndInstallRemainStreaming()
     {
         const int regionSize = 8 * 1024 * 1024;
@@ -223,7 +254,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
         using (var writer = new StreamWriter(output))
         {
             writer.Write(
-                "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>");
+                "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /><BlockRegistry /></Project>");
         }
 
         var random = new Random(42);
@@ -318,7 +349,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
             "9e9a67f8-79df-4d05-8cfa-61bd8095661e", "Installed World", "Summary", "Description", "1.0.0",
             new ContentPackagePayload("scnet.world-v1", "payload/world/Project.xml", "application/xml"), metadata);
         var project = Encoding.UTF8.GetBytes(
-            "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /></Project>");
+            "<Project Version=\"SCNET-1\" Guid=\"9e9a67f8-79df-4d05-8cfa-61bd8095661e\" Name=\"GameProject\"><Subsystems /><Entities /><BlockRegistry /></Project>");
         var region = Encoding.UTF8.GetBytes(regionMarker);
         var output = new MemoryStream();
         ContentPackageWriter.Write(output, manifest,

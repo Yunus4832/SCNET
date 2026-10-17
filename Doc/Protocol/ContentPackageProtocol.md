@@ -1,6 +1,6 @@
 # SCNET 统一内容包协议（`.scpkg` v1）
 
-> 状态：**当前正式协议。** 本文是 `Content.Packaging`、ContentServer 和游戏端共同遵循的
+> 状态：**当前未发布实现契约。** 本文是 `Content.Packaging`、ContentServer 和游戏端共同遵循的
 > `.scpkg` v1 契约。Mod 构建、运行时、内容缓存、安装和远程分发统一使用该格式；旧交换格式不属于本协议。
 
 ## 1. 范围和术语
@@ -150,7 +150,8 @@ payload/data/**
 payload/assets/<identifier>/**
 ```
 
-程序集只允许文件名为 `*.dll` 的直接子项；data 与 assets 中只允许文件。`assets/<identifier>/` 的 Identifier 必须与 manifest 精确一致。所有 Mod 贡献的语义、程序集隔离加载和资源命名空间保持现有 Mod 契约，但其权威字段迁移到统一 manifest 和 metadata；不再读取旧 `manifest.json`。
+程序集只允许文件名为 `*.dll` 的直接子项；data 与 assets 中只允许文件。`assets/<identifier>/` 的 Identifier 必须与 manifest 精确一致。模组贡献、程序集加载和资源命名空间见 [模组开发](../Modding.md)；权威字段由
+统一 `manifest.json` 和 metadata 提供，不另外读取旧模组清单格式。
 
 metadata 字段顺序为 `side`、`entrypoints`、`dependencies`。`side` 为 `common`、`client` 或 `server`。`entrypoints` 仅可含 `common`、`client`、`server`，值是非空程序集限定类型名；至少存在适用于声明 side 的入口，或包至少含一项 data/assets 贡献。dependencies 按 identifier ordinal 升序写出；每项字段顺序为 `identifier`、`minimumVersion`、`optional`，不得依赖自身、不得重复，minimumVersion 使用上述 SemVer 规则。
 
@@ -173,7 +174,12 @@ World 只能包含 `payload/world/Project.xml`、`payload/world/Regions/*.dat` �
 
 `scnet-project-xml-v1` 是独立 XML 文件，不是旧 `.scworld` 容器。它使用 UTF-8、无 DTD、无 XML namespace，根节点精确为
 `Project`，并具有 `Version="SCNET-1"`、`Guid="9e9a67f8-79df-4d05-8cfa-61bd8095661e"`、
-`Name="GameProject"`；根节点必须各包含一个 `Subsystems` 和 `Entities` 直接子节点，不能出现其他直接子节点。其内部
+`Name="GameProject"`；根节点必须各包含一个 `Subsystems` 和 `Entities` 直接子节点，
+允许各至多一个 `BlockRegistry` 和 `ExtensionData`，拒绝其他根子节点及重复节点。
+映射条目和扩展数据原样进入包与 PackageHash，不得在导出时删除或重新编号。
+缺少 `BlockRegistry` 时，游戏加载按空映射初始化；空表在正常存档保存时补写，
+实际分配了模组编号时则在写入地形前保存映射；
+不从旧模组的硬编码编号推断资源身份。其内部
 `Values`/`Value` 数据沿用 SCNET-1 项目数据语义，但不得包含指向包内路径、旧内容包、备份或 snapshot 的引用。
 
 共享 World codec 负责上述 XML 外形、路径集合和安全规则；涉及模板数据库、Subsystem、实体字段和当前游戏版本的完整语义预检由
@@ -212,7 +218,7 @@ metadata 字段顺序为 `projectFormat`、`regionsDirectory`。v1 不携带世�
 }
 ```
 
-仅允许 `payload/skin.png`，必须是非交错、无动画 PNG。权威解码宽高必须与 metadata 相同，宽和高均为 1–1024 的 2 的幂。metadata 字段顺序为 `width`、`height`。本提案刻意不以文件名推断男性/女性或皮肤类型；这类显示和选择信息属于安装后的本地资产。
+仅允许 `payload/skin.png`，必须是非交错、无动画 PNG。权威解码宽高必须与 metadata 相同，宽和高均为 1–1024 的 2 的幂。metadata 字段顺序为 `width`、`height`。协议不以文件名推断男性/女性或皮肤类型；这类显示和选择信息属于安装后的本地资产。
 
 ### 6.5 FurniturePack
 

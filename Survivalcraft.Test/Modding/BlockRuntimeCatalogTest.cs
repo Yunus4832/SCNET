@@ -96,6 +96,21 @@ public class BlockRuntimeCatalogTest
     }
 
     [Fact]
+    public void MissingWorldMappingAllocatesAndRoundTripsWithoutChangingAssignedIndices()
+    {
+        var project = XElement.Parse("<Project><Subsystems /><Entities /></Project>");
+        var initial = BlockIndexMapping.FromXml(project.Element("BlockRegistry"));
+        using var first = new BlockContentCatalog(BlockRuntimeCatalog.Compile(Definitions(), savedMapping: initial));
+        project.Add(first.Registry.Mapping.ToXml());
+        var saved = BlockIndexMapping.FromXml(XElement.Parse(project.ToString()).Element("BlockRegistry"));
+        using var restored = new BlockContentCatalog(BlockRuntimeCatalog.Compile(Definitions(), savedMapping: saved));
+
+        var id = ResourceId.Parse("test:machine");
+        Assert.Equal(first.GetBlock(id).BlockIndex, restored.GetBlock(id).BlockIndex);
+        Assert.NotEmpty(saved.Entries);
+    }
+
+    [Fact]
     public void ServerMappingMustIncludeEveryRegisteredModBlock()
     {
         var registry = Definitions();

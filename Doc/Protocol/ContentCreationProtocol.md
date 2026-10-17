@@ -1,6 +1,7 @@
 # SCNET 内容制造与发布契约 v1
 
-> 状态：**当前实现契约。** 本文描述内容制造、浏览器草稿、提交和元数据权限边界。
+本文描述内容制造、浏览器草稿、提交和元数据权限边界。格式校验以
+[内容包协议](ContentPackageProtocol.md)及共享 Reader 为准；下文单独列明当前实现限制。
 
 ## 1. 权限与事实来源
 
@@ -14,8 +15,8 @@
 | payload 字节 | 创作源通过 codec 产生 | 权威校验；不得转码、修复或重打包 | 是 |
 | `PackageHash` | Writer/Reader 计算 | 重算并作为公开制品身份；不接受客户端声明值 | 不作为输入字段 |
 | `ContentId`、`PublisherId`、提交时间 | ContentServer | 服务端生成并保存 | 否 |
-| Pending/Published/Rejected、审核人、审核时间、理由 | ContentServer 审核流程 | 只追加不可变审核事实；当前状态由事实派生 | 否 |
-| 仓库标签、截图、上下架状态 | Publisher 提交，ContentServer 审核/管理 | 独立仓库元数据，可编辑但不能伪装成包内事实 | 否 |
+| Pending/Published/Rejected、审核人、审核时间、理由 | ContentServer 审核流程 | 保存当前状态，并由领域事件追加审核记录 | 否 |
+| 上下架状态 | Publisher 或 Administrator | 独立仓库状态，不修改包内事实；当前不定义内容截图或标签编辑接口 | 否 |
 | `BlobHash` | ContentServer 可选计算 | 仅诊断物理 ZIP，不向客户端充当身份 | 否 |
 
 审核员可以批准、拒绝、下架或恢复仓库记录，不能修改包内字段、payload、Publisher 归属或已发生审核记录。若包错误，Publisher 必须使用新 SemVer 重新制造和提交。
@@ -28,18 +29,24 @@
 |---|---|---|---|
 | Mod MSBuild target | 项目 manifest、程序集、Data、Assets | 使用项目声明的稳定 ModId | 输出并 verify `.scpkg`；不发布、不安装 |
 | ContentTool `pack` | manifest 文件与 payload 目录 | 使用 manifest 中已确认的值 | 输出并 verify `.scpkg`；适用于 CI/高级创作者 |
-| 游戏制造器 | World/Furniture Manager 快照或 FilePicker 图片流 | 新内容生成 UUID；新版本只从用户选择的同类型基线包继承 | 临时生成并 verify，交给 FilePicker 保存；不缓存、不安装、不发布 |
-| WebUI 简单制造 | 浏览器选择的 PNG 与草稿字段 | 新草稿生成 UUID；选择同类型基线包时显式继承 | 后端无状态生成下载包，或同次请求生成后提交 Pending |
+| 游戏制造器 | 未运行的 World/Furniture 本地资产或 FilePicker 图片流 | GUI 新建生成 UUID；底层 API 可显式传入同类型基线包继承 | 临时生成并 verify，交给 FilePicker 保存；不缓存、不安装、不发布 |
+| WebUI 简单制造 | 浏览器选择的 PNG 与草稿字段 | 新草稿生成 UUID；更新目标使用发布者明确选择的既有内容标识 | 后端无状态生成下载包，或同次请求生成后提交 Pending |
 
-`IContentCreationSource` 位于游戏内容层，只投影 manifest 输入和可重开的条目流。World/Furniture 源必须在读取期间获得一致快照；图片源只暴露选中的一个 PNG。取消令牌贯穿源读取、Writer、临时文件刷新和 FilePicker 复制，取消后清理临时制品。
+游戏制造逻辑位于 `ContentPackageCreationManager`，使用 `ContentPackageWriteEntry` 提供条目流。
+World 从未运行的世界目录读取，Furniture 从本地资产读取，图片入口先复制并验证选中的 PNG。
+制造 API 同步执行，GUI 通过后台任务调用，不支持取消已开始的编码；
+临时制品由调用方释放，HTTP 制造入口另使用请求取消令牌。
 
 ## 3. 创建新内容与创建新版本
 
-- “创建新内容”必须生成新的小写 UUID Identifier；Mod 例外，其 Identifier 来自项目配置。
-- “创建新版本”必须由用户显式选择同类型 `.scpkg` 基线，只读取并继承 Identifier；不能从安装资产、名称、ContentId 或历史记录推断。
-- 新版本必须输入不同的合法 SemVer；制造器只做格式和与基线版本不同的检查，Publisher 所有权及仓库版本冲突由 ContentServer 最终裁决。
-- 基线包读取不自动导入缓存、不安装，也不建立资产来源关系。
-- 制造结果保存成功仍不自动导入；用户要使用该包必须走显式导入流程。
+- Mod Identifier 来自项目配置；游戏 GUI 新建非 Mod 内容时生成小写 UUID。
+- 游戏底层 `ContentCreationIdentity.BaselinePackage` 可继承同类型基线包的 Identifier，
+  但当前游戏 GUI 没有选择基线包或“创建新版本”的入口。
+- WebUI 更新已有内容时使用发布者明确选择的目标 Identifier，不从安装资产、显示名称或
+  本地历史推断。完整包投稿仍以包内 Identifier 为准，并在预览时核对更新目标。
+- 版本必须为合法 SemVer；服务端裁决发布者所有权和版本冲突。游戏底层基线 API 目前
+  不额外拒绝与基线相同的版本，不能把“生成成功”当作“可以作为新版本投稿”。
+- 基线读取不自动导入缓存、不安装；制造结果保存成功也不自动导入。
 
 ## 4. 浏览器 IndexedDB 草稿 schema
 
@@ -52,13 +59,13 @@ ContentWebUI 使用数据库 `scnet-content-drafts`，schemaVersion `1`，对象
 ```text
 schemaVersion       固定 1
 draftId             浏览器本地草稿 UUID
-type                仅 blocksTexture / characterSkin
+type                仅 BlocksTexture / CharacterSkin（浏览器草稿类型，非 manifest 的小写枚举）
 identifier          内容 UUID；创建草稿时生成，后续编辑保持不变
 name                manifest 显示名
 version             SemVer 字符串
 summary             必填简短说明，进入 manifest
 description         必填详细描述，进入 manifest
-baselineHash        可选；显式导入基线包时仅用于向用户展示
+baselineHash        可选字段；当前 UI 不写入，也没有基线包导入入口
 sourceBlobId        指向 sources.blobId
 sourceFileName      仅展示，不作为协议字段
 sourceMediaType     必须为 image/png
@@ -87,10 +94,17 @@ updatedAt           ISO 8601 UTC
 3. `submit-generated`：接收与 build 相同的输入；在同一请求内生成一次包，把该制品提交为 Pending，并返回 ContentId、VersionId、PackageHash 和审核状态。不得先返回一个包再用第二次重打包结果提交。
 4. `submit-package`：接收任意官方入口产生的完整 `.scpkg`，返回权威 manifest、PackageHash、冲突或 Pending 结果；不重新制造。
 
-这些操作分别由 `ContentServer.Endpoints.Publisher.Packages` 下的 FastEndpoint 实现；Endpoint 负责读取请求和发送命令，制造与提交规则由应用层和领域层执行。请求取消或连接断开必须停止读取、删除临时文件且不创建 Pending 记录。summary 和 description 均来自包内 manifest，预览和提交响应必须原样展示。
+这些操作分别由 `ContentServer.Endpoints.Publisher.Packages` 下的 FastEndpoint 实现；Endpoint 负责读取请求和发送命令，制造与提交规则由应用层和领域层执行。HTTP 请求取消令牌用于中止读取和构建；临时文件应清理。已经提交的业务事务不因浏览器断开而撤销，
+重试前应查询投稿状态，不能把连接中断等同于未创建 Pending 记录。summary 和 description 均来自包内 manifest，预览和提交响应必须原样展示。
 
 ## 6. 实现约束
 
 Mod MSBuild、ContentTool、游戏制造器和 WebUI 制造入口共享同一 Writer、Reader、codec 与
 PackageHash 定义。平台 FilePicker、浏览器 IndexedDB 和 ContentServer 文件存储只负责各自边界内的
 保存与传输，不能建立第二套包格式、身份算法或隐式安装流程。
+
+## 7. World 数据保留
+
+World 制造器读取存档 `Project.xml`，共享 codec 接受当前根节点结构：必需的 `Subsystems`、
+`Entities`，以及各至多一个可选的 `BlockRegistry`、`ExtensionData`。方块编号映射和世界扩展数据按原始字节
+保留，安装时不重新分配编号，也不剥离模组数据。未知或重复的根节点仍被拒绝。

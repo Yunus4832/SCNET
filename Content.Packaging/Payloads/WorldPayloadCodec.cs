@@ -45,7 +45,10 @@ public sealed class WorldPayloadCodec : IContentPayloadCodec
                 root.Attribute("Name")?.Value != "GameProject" ||
                 root.Elements("Subsystems").Count() != 1 ||
                 root.Elements("Entities").Count() != 1 ||
-                root.Elements().Count() != 2 ||
+                root.Elements("BlockRegistry").Count() > 1 ||
+                root.Elements("ExtensionData").Count() > 1 ||
+                root.Elements().Any(element => element.Name.LocalName is not
+                    ("Subsystems" or "Entities" or "BlockRegistry" or "ExtensionData")) ||
                 root.DescendantsAndSelf().Any(element => element.Name.Namespace != XNamespace.None ||
                                                          element.Attributes().Any(attribute =>
                                                              attribute.Name.Namespace != XNamespace.None)))

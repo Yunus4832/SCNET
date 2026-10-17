@@ -10,5 +10,10 @@ Survivalcraft mod template.
 Build the package with:
 
 ```bash
-dotnet pack Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj -c Release
+./Scripts/pack-nuget.sh --project Survivalcraft.ModTemplates
 ```
+
+Run the command from the repository root after preparing local dependencies. Template packaging
+substitutes the independently managed SDK, ContentTool and initial mod versions from
+`SharedProperties/Versions.props`; generated projects contain literal package versions.
+See [NuGet workflow](https://gitee.com/Yunus0712/scnet/blob/main/Doc/NuGet.md) for local-feed setup.

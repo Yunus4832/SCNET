@@ -54,13 +54,15 @@ public static class GameManager
             var valuesDictionary3 = new ValuesDictionary();
             valuesDictionary.SetValue("Views", valuesDictionary3);
             valuesDictionary3.SetValue("GamesWidget", gamesWidget);
-            var catalog = CurrentModRuntime.Value!.CreateWorldCatalog(
-                BlockIndexMapping.FromXml(projectNode.Element("BlockRegistry")
-                    ?? throw new InvalidDataException("World block registry is missing.")));
-            projectNode.Element("BlockRegistry")?.Remove();
+            var registryNode = projectNode.Element("BlockRegistry");
+            var catalog = CurrentModRuntime.Value!.CreateWorldCatalog(BlockIndexMapping.FromXml(registryNode));
+            registryNode?.Remove();
             projectNode.Add(catalog.Registry.Mapping.ToXml());
-            // Persist the registry before any subsystem can write terrain using newly allocated indices.
-            SaveProjectMetadata(worldInfo.DirectoryName, projectNode);
+            // A missing empty registry can wait for the normal save; allocated mod indices must be durable first.
+            if (registryNode is not null || catalog.Registry.Mapping.Entries.Count > 0)
+            {
+                SaveProjectMetadata(worldInfo.DirectoryName, projectNode);
+            }
             var projectData = new ProjectData(DatabaseManager.GameDatabase, projectNode, valuesDictionary, true);
             Project = new Project(DatabaseManager.GameDatabase, projectData);
             _subsystemUpdate = Project.FindSubsystem<SubsystemUpdate>(true)!;
