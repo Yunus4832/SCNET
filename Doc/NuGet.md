@@ -93,6 +93,21 @@ PowerShell：
 ./Scripts/pack-nuget.ps1
 ```
 
+默认打包全部项目；可按项目名称选择一个或多个项目，执行顺序仍按脚本中的依赖顺序：
+
+```bash
+./Scripts/pack-nuget.sh --project Native.ImageCodecs --project Native.OpenAL.Android
+./Scripts/pack-nuget.sh --project ContentTool -- --no-restore
+```
+
+```powershell
+./Scripts/pack-nuget.ps1 -Project Native.ImageCodecs,Native.OpenAL.Android
+```
+
+选择参数使用项目名称（例如 `Survivalcraft.ModTemplates`），不是 NuGet 包名。
+额外参数传给每个选中项目的 `dotnet pack`。仅打包所选项目，不自动补打包依赖；
+依赖包的新版本需事先准备好。省略项目选择时保留原有全量行为。
+
 包会输出到 `Publish/NuGet`。仓库根目录的 `NuGet.Config` 已将该目录注册为
 `SCNET Local` 文件源，因此 `TerritoryStoneMod` 和仓库内生成的 Mod 项目与外部
 开发者一样，只使用 `PackageReference`，不回退到项目引用或相对路径 Target。

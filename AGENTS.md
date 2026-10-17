@@ -32,6 +32,37 @@ replace this changed-file style check. Keep unrelated legacy formatting out of f
 
 ## Build and release workflows
 
+### Temporary local NuGet prerequisites
+
+SCNET has not yet enabled a remote first-party NuGet feed. As a temporary development workflow,
+packages are prepared in the local `Publish/NuGet` feed configured in `NuGet.Config`; do not assume
+they are available remotely. Generated packages are not distributed through Git, so pulling source
+changes alone may leave required versions missing. This extra preparation step is not the intended
+long-term workflow. Once a remote feed is adopted, update this guidance and the build documentation
+so ordinary development restores published dependencies through the IDE or `dotnet build`, with
+local preparation retained only for developing unpublished packages.
+
+The native asset projects deliberately use NuGet consumption: assets under `runtimes/<rid>/native`
+are selected by the SDK for the application's RID. A direct `ProjectReference` to those packaging
+projects does not provide equivalent native asset propagation. Without an application RID, NuGet
+may copy assets for multiple RIDs into separate runtime directories. Keep ordinary managed source
+dependencies as project references where already used; this does not require converting them to packages.
+
+- Before the first build, or after pulling changes that introduce missing package versions, run
+  `bash Scripts/pre-build.sh` or `pwsh Scripts/pre-build.ps1` from the repository root. These scripts
+  check the required local packages, invoke the canonical pack script when any are missing, and
+  restore the solution. This dependency preparation is an intentional exception to ordinary builds
+  not generating artifacts under `Publish/`.
+- If package contents changed without a version change, use `bash Scripts/pre-build.sh --refresh`
+  or `pwsh Scripts/pre-build.ps1 -Refresh` to repack and refresh the affected package-version caches.
+  Normal preparation checks package presence, not whether source contents changed.
+- Once dependencies are prepared, use normal IDE builds or `dotnet build`. Do not hide package
+  generation inside ordinary build/restore targets or require a remote feed for local development.
+- The native libraries are checked-in precompiled assets; preparing NuGet packages does not require
+  rebuilding C/C++ libraries or installing the NDK.
+
+### Compilation and publishing
+
 Keep ordinary compilation separate from creation of distributable artifacts:
 
 - when the user explicitly requests distributable artifacts, load and follow the repository
