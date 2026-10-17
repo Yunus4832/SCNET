@@ -24,6 +24,15 @@ Treat the repository scripts as the canonical inventory and ordering. Read the r
 - RendezvousServer Release publish keeps the portable ZIP and, on Linux, also creates a signaling server container bundle. It requires Podman or Docker and a locally available ASP.NET Core base image unless `IMAGE_PULL_POLICY` permits a pull.
 - Never move release-copy or packaging targets back to `Build`. Ordinary builds must not update the repository `Publish/` directory.
 
+## Version ownership
+
+Read `SharedProperties/Versions.props` and the selected project's evaluated `Version`/`PackageVersion`.
+Applications, services, SDK packages and native dependencies have independent version streams; never
+infer all artifact names or dependency versions from the game version. Version decisions belong to
+commit preparation; publishing should not silently increment a version again. Verify the assembly
+informational version, actual APK version name/code, package dependency versions and image version
+labels when the affected release path changes.
+
 ## Execute and verify
 
 Run release entries sequentially and stop at the first failure. Preserve the complete failing command and the first actionable error; distinguish restore/network/toolchain failures from repository defects. Do not silently retry with different target frameworks, runtime identifiers, or package sources.

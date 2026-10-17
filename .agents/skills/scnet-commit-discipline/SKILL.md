@@ -1,11 +1,40 @@
 ---
 name: scnet-commit-discipline
-description: "Prepare, review, split, stage, or commit SCNET changes using the repository's focused commit boundaries and `prefix: 中文描述` message convention. Use when the user asks to commit changes, organize commits, propose commit messages, or review whether a pending commit is coherent; do not invoke for ordinary code editing that does not involve commit preparation."
+description: "Prepare, review, split, stage, or commit SCNET changes using the repository's focused commit boundaries, automatic release-version updates, and `prefix: 中文描述` message convention. Use when the user asks to commit changes, organize commits, propose commit messages, or review whether a pending commit is coherent; do not invoke for ordinary code editing that does not involve commit preparation."
 ---
 
 # SCNET Commit Discipline
 
 Inspect the complete working tree and relevant diff before proposing commit boundaries. Preserve unrelated and user-owned changes. Do not stage or commit unless the user authorizes that action.
+
+## Version decisions are part of committing
+
+Before staging, inspect `SharedProperties/Versions.props` and the affected projects' `Version` and
+first-party `PackageReference` properties. Automatically update affected release versions when the
+commit changes shipped behavior, APIs, dependencies, native assets, or packaging output. Keep version
+changes in the same commit as their cause; do not ask for a separate routine version-bump approval.
+
+- During the current unreleased `0.x` phase, ordinary iterations default to the next patch
+  (`0.1.0` → `0.1.1`), without promising compatibility. Advance the minor version for an explicitly
+  chosen new development stage. After `1.0`, use SemVer: compatible fixes PATCH, compatible additions
+  MINOR, breaking public contracts MAJOR.
+- Bump the owning release unit, not every property. Also examine consumers: if this commit changes
+  their published dependency metadata or bundled binaries, their release artifacts need new versions
+  too. Independent version streams must not publish changed artifacts under an unchanged version.
+- Documentation/tests/skills that do not change release artifacts need no version bump. A README
+  included in a NuGet package, template, or deployment bundle is part of that artifact; inspect the
+  packaging rather than deciding solely from file extension.
+- If the relevant version was already explicitly updated in the pending change (including an
+  intentional initial reset), retain it instead of incrementing it again. Preserve a user-selected
+  version. For a prerelease, increment its final numeric identifier rather than silently switching
+  to a stable release; do not infer a new channel.
+- When Android application artifacts change, increment `AndroidReleaseCode` once as well, unless
+  already advanced in the pending change. It is an installation counter, not a SemVer component.
+- Do not derive protocol compatibility identifiers from product bumps. Change `GameProtocolVersion`
+  only for an actual incompatible wire-contract change, or when explicitly resetting versions.
+- Keep numbers in `Versions.props`; update references, template generation and publication names
+  through those properties. Verify impacted project/package versions and describe the bumps in the
+  final commit summary. Version changes do not themselves authorize publishing or deployment.
 
 ## Commit messages
 
