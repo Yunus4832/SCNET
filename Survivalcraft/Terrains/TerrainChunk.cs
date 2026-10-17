@@ -73,7 +73,11 @@ public class TerrainChunk : IDisposable
     // Replaced atomically by the main thread; geometry workers only read snapshots.
     private Dictionary<int, (int Expected, int Value)>? _geometryPredictions;
 
-    public long NetworkContentRevision => Volatile.Read(ref _networkContentRevision);
+    public long NetworkContentRevision
+    {
+        get => Volatile.Read(ref _networkContentRevision);
+        internal init => _networkContentRevision = value;
+    }
 
     public volatile bool NewGeometryData;
 

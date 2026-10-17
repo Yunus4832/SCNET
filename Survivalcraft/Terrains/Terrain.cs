@@ -147,7 +147,7 @@ public class Terrain : IDisposable
 
     private readonly HashSet<TerrainChunk> _allocatedChunks = [];
 
-    private readonly Dictionary<Point2, ulong> _allocationGenerations = [];
+    private readonly Dictionary<Point2, (ulong Generation, long ContentRevision)> _chunkVersions = [];
 
     private TerrainChunk[] _allocatedChunksArray = [];
 
@@ -280,11 +280,18 @@ public class Terrain : IDisposable
             throw new InvalidOperationException("Chunk already allocated.");
         }
 
-        var terrainChunk = new TerrainChunk(this, chunkX, chunkZ);
-        var coords = terrainChunk.Coords;
-        var generation = _allocationGenerations.GetValueOrDefault(coords) + 1;
-        _allocationGenerations[coords] = generation;
-        terrainChunk.AllocationGeneration = generation;
+        var coords = new Point2(chunkX, chunkZ);
+        var previous = _chunkVersions.GetValueOrDefault(coords);
+        var generation = checked(previous.Generation + 1);
+        // A client may retain this coordinate after the authority releases its allocation.
+        // Even an empty reload needs a newer baseline than that client's previous contents.
+        var revision = previous.Generation == 0 ? 0 : checked(previous.ContentRevision + 1);
+        var terrainChunk = new TerrainChunk(this, chunkX, chunkZ)
+        {
+            AllocationGeneration = generation,
+            NetworkContentRevision = revision
+        };
+        _chunkVersions[coords] = (generation, revision);
         _allocatedChunks.Add(terrainChunk);
         _allChunks.Add(chunkX, chunkZ, terrainChunk);
         _allocatedChunksArray = [];
@@ -303,6 +310,7 @@ public class Terrain : IDisposable
             throw new InvalidOperationException("Chunk not allocated.");
         }
 
+        _chunkVersions[chunk.Coords] = (chunk.AllocationGeneration, chunk.NetworkContentRevision);
         _allChunks.Remove(chunk.Coords.X, chunk.Coords.Y);
         _allocatedChunksArray = [];
     }
