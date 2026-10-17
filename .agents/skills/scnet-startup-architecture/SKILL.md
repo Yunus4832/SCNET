@@ -70,6 +70,11 @@ Missing generated instance secrets may be created after settings load and saved 
 explicit configuration must follow the feature's documented failure behavior; do not silently
 choose a different port, target, or credential merely to keep an optional service running.
 
+Content repositories, installed server sources, and installed signaling services have separate settings
+files and owning managers (`ContentRepositoryManager`, `ServerDirectoryManager`, `RendezvousManager`).
+Do not fold their persistence into `SettingsManager` or put network discovery/downloads into configuration
+managers. World signaling selection copies the service URL/name; it does not retain an installation reference.
+
 ### `StartupRequest`
 
 `StartupRequest` is the non-serialized parse result for this process invocation. It records raw
@@ -143,7 +148,7 @@ For every startup-related change:
    path for each new field.
 2. Preserve the `StartupManager` flow: parse request, select session id, load/create session, apply
    overrides, create `StartupContext`, then persist only when requested.
-3. Keep serialization symmetric: add write, read, legacy-default, and normalization behavior
+3. Keep serialization symmetric: add write, read, missing-value defaults, and normalization behavior
    together. A missing value may use the documented fallback; an invalid explicit value must not be
    mistaken for a missing value.
 4. Verify that `--save` changes later named-session startup and that omitting `--save` does not.

@@ -94,7 +94,7 @@ permissions can be granted for use only by a server operator. Permissions are ex
 resources; wildcard permission nodes are not supported.
 
 Use `grant` for a non-delegable grant. A delegated player can grant or revoke only the same
-permission node or a node covered by their wildcard scope:
+permission node, subject to its grant policy and delegation checks:
 
 ```text
 permission grant "Player Name" game:world.time.set

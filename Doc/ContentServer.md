@@ -1,12 +1,12 @@
 # ContentServer
 
 ContentServer 是 SCNET 的独立 ASP.NET Core 内容服务，项目位于 `ContentServer/`，并注册在
-`SCNET.slnx` 的 `08 Content` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询、包下载，
+`SCNET.slnx` 的 `09 ContentServer` 逻辑文件夹中。它负责发布者申请、内容版本审核、匿名目录查询、包下载，
 以及服务器源地址的登记与审核、管理员维护的游戏公告和版本目录；
 玩家身份、联机身份和平台 FilePicker 不属于该服务。
 
-ContentServer 是统一的远程内容协议和部署单元，但一个客户端可以配置多个独立部署作为内容仓库。持久仓库集合保存在客户端
-Settings 中；ModProfile 不保存来源。联机服务器还可以在握手中声明只对本次连接有效的匿名临时候选仓库。所有部署使用相同的
+ContentServer 是统一的远程内容协议和部署单元，但一个客户端可以配置多个独立部署作为内容仓库。持久仓库集合保存在实例的
+`ContentRepositories.xml` 中；ModProfile 不保存来源。联机服务器还可以在握手中声明只对本次连接有效的匿名临时候选仓库。所有部署使用相同的
 公共目录、版本历史、精确 Mod 查询和 `/api/v1/packages/{sha256}` 流式下载协议，下载结果进入统一
 ContentPackageCache。仓库中不再包含独立的模组服务或另一套模组存储协议。
 
@@ -14,7 +14,7 @@ ContentPackageCache。仓库中不再包含独立的模组服务或另一套模�
 
 ## 游戏公告与版本目录
 
-管理员工作台的“公告与游戏版本”页面管理两类独立于 `.scpkg` 内容包的数据。公告草稿可编辑，发布后通过 `GET /api/v1/announcements` 匿名读取，撤回后不再出现在公开列表。版本草稿按版本号和平台记录更新说明、外部下载地址及 SHA-256；发布后通过 `GET /api/v1/game-releases?platform=...` 查询列表，通过 `GET /api/v1/game-releases/latest/{platform}` 查询最新版本，撤回后不再公开。平台标识为 `windows-x64`、`linux-x64`、`android-arm64`、`android-arm32`。ContentServer 不托管游戏安装包，也不会在记录版本时访问下载地址。
+管理员工作台的“公告与游戏版本”页面管理两类独立于 `.scpkg` 内容包的数据。公告草稿可编辑，发布后通过 `GET /api/v1/announcements` 匿名读取，撤回后不再出现在公开列表。每个版本草稿保存统一版本号和更新说明，并包含多个平台安装包的外部下载地址及 SHA-256；发布后通过 `GET /api/v1/game-releases?platform=...` 查询列表，通过 `GET /api/v1/game-releases/latest/{platform}` 查询最新版本，撤回后不再公开。平台标识为 `windows-x64`、`linux-x64`、`android-arm64`、`android-arm32`。ContentServer 不托管游戏安装包，也不会在记录版本时访问下载地址。
 
 游戏 GUI 启动后异步从选定来源获取公告与适用平台的最新版本。未选择来源、请求超时或服务不可用均不阻止进入游戏；失败只写日志。主菜单滚动展示公告标题，点击后展开公告列表；点击版本号手动检查更新。桌面端下载完整便携 ZIP 并校验 SHA-256，经用户确认后由平台 Starter 准备、退出并更新，完成后由用户重新启动；无法自动安装时可打开原下载链接手动替换。桌面安装包格式见 [桌面更新包](./BuildAndConfig.md#桌面更新包)，进程交接与恢复见 [桌面程序更新](./StartupSessions.md#桌面程序更新)。Android 下载 APK 后校验 SHA-256，再交给系统安装器，由用户在系统界面确认。该哈希只验证文件与所选内容服务器记录一致，不证明服务器身份。
 
@@ -51,21 +51,8 @@ Endpoint 将 HTTP Request 映射为 Command 或 Query，并将 Application DTO �
 Command 和 Query 只返回 Application DTO，不返回领域实体、`ResponseData` 或其他 HTTP 类型；
 API 响应外壳由 Endpoint 调用 `AsResponseData()` 创建。跨领域命令由领域事件处理器发送。
 
-除包下载的原始二进制流外，HTTP API 统一返回 NetCorePal `ResponseData<T>`：
-
-```json
-{
-  "success": true,
-  "message": "",
-  "code": 200,
-  "errorData": null,
-  "data": {}
-}
-```
-
-端点使用具体的 `ResponseData<TResponse>` 返回类型，响应载荷使用
-`PublisherResponse`、`ContentVersionResponse`、`ModPackageResponse` 等明确 DTO；列表统一使用
-NetCorePal `PagedData<T>`。包下载端点直接写入文件流，其余端点返回相应的 JSON 契约。
+端点使用明确的响应 DTO 和 NetCorePal `ResponseData<T>`，分页业务列表使用 `PagedData<T>`。
+二进制响应和服务器源协议保持各自契约；完整响应边界见 [HTTP API](ContentServerApi.md#认证与响应)。
 
 业务代码不捕获异常以拼装 HTTP 错误。可预期的请求、认证和业务错误抛出 `KnownException`，状态码写入
 `ErrorCode`；`GlobalExceptionHandler` 在 HTTP 边界统一转换响应。EF 唯一约束冲突统一返回 409，无法识别的异常
@@ -81,8 +68,9 @@ Key 的随机生成、显示前缀和 SHA-256 计算集中在 `Utils/ApiKeyUtili
 管理员 Key 有效但身份尚未 Active 时，身份状态接口仍允许访问，管理操作返回 HTTP 403；只有 Key 不存在或已撤销时
 才返回 HTTP 401。WebUI 仅在 401 时将本地 Key 标记为失效并退回工作台入口，不能把权限不足误判为凭证失效。
 
-ContentServer 不提供登录或服务端会话。Web UI 在浏览器 `localStorage` 中缓存用户主动保存的 API Key，
-每次请求显式发送 Bearer Key；退出工作台只清除当前 Key 的本地缓存。游戏客户端同样自行负责 Key 的安全存储。
+ContentServer 不提供登录或服务端会话。Web UI 在浏览器 `localStorage` 中保存凭据及当前身份，
+每次请求显式发送 Bearer Key；退出当前身份和移除已保存凭据是不同操作。游戏匿名浏览和下载
+不需要发布者或管理员 Key。
 公共内容、发布者申请、首次初始化、工作台入口、发布者工作台和管理员工作台使用独立页面。
 管理员审核页的分类统计包含全部申请；各分类依次展示待审核列表和已审核历史，分别分页。历史显示审核结果及审核意见，不再提供批准或拒绝操作。
 
@@ -111,7 +99,7 @@ WebUI 将提交入口拆分为“创建新内容”和“更新已有内容”�
 或 `WhereDeleted(new Deleted(true))`，供删除后的事件处理等流程使用。
 
 领域事件使用 NetCorePal 自带的 `IDomainEvent`/`IDomainEventHandler`，由 `AppDbContextBase` 协调保存与进程内发布。
-审核类事件处理器发送 Reviews 域命令，并通过独立工作单元持久化审核记录；
+审核类事件处理器发送 Reviews 域命令，在原命令的事务范围内持久化审核记录；
 将来若接入邮件、对象存储或外部消息队列，应增加 Outbox 后再异步投递，不能把“数据库提交后直接发布”误当成可靠消息。
 
 CQRS 在这里表示代码职责分离，而不是把数据拆成两套数据库：命令和查询仍使用同一个 SQLite 数据源，避免当前规模下不必要的最终一致性成本。
@@ -138,7 +126,9 @@ HTTP API 在边界处把强类型 ID 显式输出为字符串，协议不暴露�
 ContentServer/Data/content-server.db
 ```
 
-发布者、Key hash、内容元数据、审核记录和包 BLOB 都保存在该文件中。部署备份时只需一致性备份该数据库文件。
+发布者、Key hash、内容元数据、审核记录和包索引保存在数据库中。原始 `.scpkg` 文件存放于
+`PackageStoragePath/packages/`，按 PackageHash 命名；上传暂存位于同根目录的 `temp/`。
+数据库与包目录必须作为一个持久化单元一致性备份，不能只备份数据库。
 
 核心表：
 
@@ -147,7 +137,8 @@ ContentServer/Data/content-server.db
 - `Contents` / `ContentVersions`
 - `PackageBlobs`
 - `ReviewRecords`
-- `ServerSources`
+- `ServerSources` / `RendezvousServices` / `DirectoryServers`
+- `GameAnnouncements` / `GameReleases` / `GameReleaseArtifacts`
 
 数据库结构由 `Infrastructure/Migrations` 中的一份 EF Core 初始迁移和模型快照维护，服务启动时自动应用迁移。项目发布前，模型发生变化时重新生成初始迁移：
 
@@ -169,6 +160,7 @@ dotnet ef migrations add InitialContentServer \
 {
   "ContentServer": {
     "DatabasePath": "Data/content-server.db",
+    "PackageStoragePath": "Data",
     "MaximumPackageBytes": 268435456,
     "AllowedOrigins": ["https://content-ui.example.com"],
     "BuiltInServerDirectoryEnabled": true,
@@ -192,9 +184,9 @@ ContentServer__DatabasePath
 
 ## 独立 WebUI
 
-`ContentWebUI/` 是注册在 `SCNET.slnx` 的 `08 Content` 逻辑文件夹中的 Vue 3 单页应用。它可以与
+`ContentWebUI/` 是注册在 `SCNET.slnx` 的 `09 ContentServer` 逻辑文件夹中的 Vue 3 单页应用。它可以与
 ContentServer 分别部署，生产构建后的 `runtime-config.json` 配置 API 地址，静态服务器需将未知路由回退到
-`index.html`。WebUI 负责 API Key 的临时缓存和角色导航，不改变 ContentServer 的无账户、无 Cookie 会话模型。
+`index.html`。WebUI 负责 API Key 的本地保存和角色导航，不改变 ContentServer 的无账户、无 Cookie 会话模型。
 
 服务器启动只执行数据库迁移，不隐式创建或修改管理员。空数据库通过
 `POST /api/v1/administrators/initialize` 创建唯一的初始管理员；请求提交管理员名称和 API Key，服务只保存
@@ -220,177 +212,10 @@ Key 的 SHA-256 hash。数据库中一旦存在管理员，该端点固定返回
 
 内容本身可以是 `Active` 或 `Disabled`。匿名 API 只返回 Content 为 `Active` 且版本为 `Published` 的记录。
 
-## API
+## HTTP API
 
-匿名接口：
-
-```text
-GET  /api/v1/health
-GET  /api/v1/server-sources
-GET  /api/v1/server-directory
-GET  /api/v1/content
-GET  /api/v1/content/{contentId}
-GET  /api/v1/content/{contentId}/versions
-GET  /api/v1/packages/{sha256}
-GET  /api/v1/mods
-GET  /api/v1/mods/{modId}
-GET  /api/v1/mods/{modId}/versions/{version}
-```
-
-`GET /api/v1/server-sources` 是内容广场的服务器源板块，返回本站内置来源和审核通过的第三方服务器源地址。
-第三方服务器源由已激活的内容发布者提交并归属于该发布者；发布者工作台可查询自己的全部提交和审核状态。ContentServer 使用
-`SCNET.ServerSource.Protocol` 完整读取分页目录并执行协议校验，
-同时在每次 DNS 解析和重定向连接时拒绝回环、私有、链路本地及保留地址，避免公开校验端点访问内网。
-
-服务器源管理员接口：
-
-```text
-GET    /api/v1/admin/server-sources
-POST   /api/v1/admin/server-sources/{id}/approve
-POST   /api/v1/admin/server-sources/{id}/reject
-DELETE /api/v1/admin/server-sources/{id}
-```
-
-批准前会再次实时读取并验证来源。ContentServer 只管理来源 URL 的生命周期，不复制、聚合或持久化第三方
-来源返回的服务器条目。未指定状态筛选时，管理员列表还会包含一个不可删除的内置服务器源只读项；按状态查询
-待审核来源时不会返回该内置项。
-
-ContentServer 同时提供 `SCNET.ServerSource.Protocol` 的内置参考实现。启用内置服务器目录后，
-`GET /api/v1/server-sources` 会自动附加本站来源，客户端通过 `GET /api/v1/server-directory` 按统一协议分页
-读取已经审核、由发布者启用且未被管理员停用的服务器。内置来源不写入第三方服务器源登记表，也不审核自身。
-
-一次性管理员初始化接口：
-
-```text
-GET  /api/v1/administrators/initialization
-POST /api/v1/administrators/initialize
-```
-
-GET 响应中的 `required` 表示管理员表是否为空，独立 WebUI 据此只在首次运行时显示初始化入口。
-初始化会在同一聚合事务中创建 Active 管理员及其 Key；如果数据库存在管理员但不存在 Key，说明数据库已经
-处于不符合领域不变量的状态，匿名初始化不会为既有管理员补发 Key。未发布阶段的测试数据库应删除后重新初始化。
-
-请求：
-
-```json
-{
-  "name": "Administrator",
-  "apiKey": "replace-with-a-strong-secret"
-}
-```
-
-初始 API Key 必须为 16–128 个字符，只允许 ASCII 字母、数字以及 `. _ ~ -`。WebUI 从初始化状态接口
-读取这些约束，实时显示长度、字符集和两次输入是否一致，并可以在浏览器本地生成 `scadm_` 随机密钥。
-
-该端点不需要认证，但只在管理员表为空时有效；创建成功返回 HTTP 201，之后再次调用返回
-`administrator_already_initialized` 和 HTTP 409。响应不会回显 API Key 明文。
-
-后续管理员通过申请产生，不能由现有管理员直接创建：
-
-```text
-POST /api/v1/administrators/applications
-GET  /api/v1/administrator
-GET  /api/v1/admin/administrator-applications
-POST /api/v1/admin/administrator-applications/{id}/approve
-POST /api/v1/admin/administrator-applications/{id}/reject
-```
-
-申请时提交名称、联系方式和可选说明，服务器生成只显示一次的 Key。未撤销的 Key 可以查询自身状态；
-只有 Active 管理员能访问管理 API。管理员申请只能从 Pending 审核为 Active 或 Rejected，重复审核返回 HTTP 409。
-
-
-所有列表接口接受以下查询参数：
-
-```text
-pageIndex  页码，从 1 开始，默认 1
-pageSize   每页条数，默认 10
-query      可选搜索词
-```
-
-响应 `data` 为 `PagedData<T>`，包含 `items`、`total`、`pageIndex` 和 `pageSize`。适用接口包括匿名内容和
-模组列表、发布者提交列表，以及管理员发布者、提交和内容列表；单项查询和文件下载不分页。
-
-发布者接口：
-
-```text
-POST /api/v1/publishers
-GET  /api/v1/publisher
-GET  /api/v1/publisher/submissions
-GET  /api/v1/publisher/submissions/{versionId}
-POST /api/v1/publisher/submissions
-GET  /api/v1/publisher/server-sources
-POST /api/v1/publisher/server-sources
-GET  /api/v1/publisher/servers
-POST /api/v1/publisher/servers
-PUT  /api/v1/publisher/servers/{id}
-POST /api/v1/publisher/servers/{id}/enable
-POST /api/v1/publisher/servers/{id}/disable
-```
-
-服务器源提交接收名称、服务器源 API URL 和可选说明。`GET /api/v1/publisher/server-sources` 仅返回当前
-发布者拥有的记录，包括待审核、已通过和已拒绝状态及审核意见；非 Active 发布者不能提交服务器源。
-
-内容提交使用 `multipart/form-data`：
-
-```text
-type        Mod / World / BlocksTexture / CharacterSkin / FurniturePack
-identifier  稳定唯一标识
-name        显示名称
-version     版本
-summary     可选简介
-metadata    可选 JSON
-package     内容包文件
-```
-
-发布者接口使用发布者 Bearer Key：
-
-```text
-GET  /api/v1/publisher/content
-POST /api/v1/publisher/content/{id}/disable
-POST /api/v1/publisher/content/{id}/enable
-```
-
-上下架命令会再次校验内容归属，发布者不能操作其他发布者的内容；非 Active 发布者不能改变内容状态。
-
-服务器投稿属于当前发布者，审核状态与发布者上下架状态相互独立。服务器地址必须包含显式端口；审核通过后，
-发布者可以编辑自己的服务器，或将服务器从内置目录下架、重新启用，但不能操作其他发布者的服务器。
-编辑服务器名称、地址、说明或标签后会重新进入待审核状态，审核通过前不会出现在内置目录中。
-
-管理员接口使用配置的 Bearer Key：
-
-```text
-GET  /api/v1/admin/publishers
-POST /api/v1/admin/publishers/{id}/approve
-POST /api/v1/admin/publishers/{id}/reject
-POST /api/v1/admin/publishers/{id}/suspend
-POST /api/v1/admin/publishers/{id}/revoke-key
-POST /api/v1/admin/publishers/{id}/restore-key
-GET    /api/v1/admin/servers
-PUT    /api/v1/admin/servers/{id}
-POST   /api/v1/admin/servers/{id}/approve
-POST   /api/v1/admin/servers/{id}/reject
-POST   /api/v1/admin/servers/{id}/suspend
-POST   /api/v1/admin/servers/{id}/restore
-DELETE /api/v1/admin/servers/{id}
-GET  /api/v1/admin/administrator-applications
-POST /api/v1/admin/administrators/{id}/revoke-key (仅超级管理员)
-POST /api/v1/admin/administrators/{id}/restore-key (仅超级管理员)
-GET  /api/v1/admin/submissions
-GET  /api/v1/admin/content
-GET  /api/v1/admin/submissions/{id}/package
-POST /api/v1/admin/submissions/{id}/approve
-POST /api/v1/admin/submissions/{id}/reject
-POST /api/v1/admin/content/{id}/disable
-POST /api/v1/admin/content/{id}/enable
-```
-
-管理员包下载接口不要求版本已经发布，用于在审核 `Pending` 提交时下载和测试原始文件；它仍要求管理员 Bearer
-Key。匿名 `/api/v1/packages/{sha256}` 继续只允许下载属于 `Published` 版本且内容状态为 `Active` 的包。
-发布者可以按 `versionId` 查询自己的单次提交，响应包含当前审核状态、审核消息和审核时间；不能读取其他发布者的提交。
-发布者申请和内容版本只能从 `Pending` 审核一次，重复通过或拒绝返回 HTTP 409；发布者暂停是独立的管理状态操作。
-所有 Active 管理员都可以撤销或恢复发布者的 Key。首次初始化创建的管理员是唯一的超级管理员；其余审核与普通管理员一致，
-但只有它可以撤销或恢复普通管理员的 Key。撤销只设置 `RevokedAt`，恢复后原 Key 可继续使用；超级管理员 Key
-受领域规则保护，不提供撤销或恢复 API。发布者和管理员列表通过 `hasActiveKey` 返回当前 Key 是否有效。
+接口清单、认证、初始化、分页和投稿格式见 [ContentServer HTTP API](ContentServerApi.md)。
+每个端点的请求与响应定义位于对应的 `ContentServer/Endpoints/` 源文件，管理操作与公开查询分开。
 
 ## 启动
 
@@ -398,9 +223,9 @@ Key。匿名 `/api/v1/packages/{sha256}` 继续只允许下载属于 `Published`
 dotnet run --project ContentServer/ContentServer.csproj
 ```
 
-开发环境前端使用 Vite（`ContentWebUI`）单独运行，端口默认 `5174`，并将 `/api` 代理到 ContentServer
+开发环境前端使用 Vite（`ContentWebUI`）单独运行，端口由 Vite 选择（通常为 `5173`，占用时可能顺延），并将 `/api` 代理到 ContentServer
 （默认 `http://localhost:5000`），改前端代码即时热更新。ContentServer 构建或发布时会通过
-`ContentServer.csproj` 的 build target 自动执行前端构建，并把 `ContentWebUI/dist` 复制到 `wwwroot`，
+`ContentServer/Directory.Build.targets` 中的构建目标 自动执行前端构建，并把 `ContentWebUI/dist` 复制到 `wwwroot`，
 因此调试时用 `npm run dev`，部署时只需发布 ContentServer。
 
 ## 发布与部署

@@ -122,11 +122,11 @@ HTTP_COMMAND_ACCESS_TOKEN=''  # 留空使用实例自动生成并持久保存的
 容器采用宿主网络，无需 Compose `ports` 映射。HTTP 仅监听宿主机 `127.0.0.1`，通过 SSH 隧道访问：
 
 ```bash
-ssh -N -L 29889:127.0.0.1:28889 dev
+ssh -N -L 29889:127.0.0.1:28889 server.example
 curl -H "Authorization: Bearer <token>" http://127.0.0.1:29889/commands
 ```
 
-将 `dev` 替换为部署主机，将隧道目标端口改为配置的 `HTTP_COMMAND_PORT`。本地转发端口可自行选择；不需要对外开放 HTTP 端口。设为 `HTTP_COMMAND=false` 并重新部署即可关闭。
+将 `server.example` 替换为部署主机，将隧道目标端口改为配置的 `HTTP_COMMAND_PORT`。本地转发端口可自行选择；不需要对外开放 HTTP 端口。设为 `HTTP_COMMAND=false` 并重新部署即可关闭。
 
 ## HTTP 命令宿主
 
@@ -158,55 +158,16 @@ curl -H "Authorization: Bearer <token>" http://127.0.0.1:28889/commands
 
 GUI 模式还提供 UI 发现、点击、拖放、滚动、截图、组合键鼠输入、文本输入、角色观测和步行导航，完整合同见 [游戏自动化](Automation.md)。操作通过正常输入和角色运动路径执行。Headless 不会发现或执行这些 GUI 专用命令。
 
-GUI 与 Headless 都提供只读命令 `game:diagnostics/network/get`，无参数。返回当前 NetNode 生命周期内的连接内发送累计统计：通道的应用层发送批次与编码字节，以及各包类型的接收方投递次数与未压缩载荷字节。两次读取的差值可用于比较测试时间段；编码字节不含传输协议头、底层重传与分片开销，载荷字节不含包标记且不能与编码字节相加。未发送或延后的快照不计入，无连接发现消息不计入。该命令仅供应用用户与服务器操作员使用，不向普通联机玩家开放。
+GUI 与 Headless 都提供只读命令 `game:diagnostics/network/get`，无参数。返回当前 NetNode 生命周期内的连接内发送累计统计：通道的应用层发送批次与编码字节，以及各包类型的接收方投递次数与未压缩载荷字节。两次读取的差值可用于比较测试时间段；编码字节不含传输协议头、底层重传与分片开销，载荷字节不含包标记且不能与编码字节相加。未发送或延后的快照不计入，无连接发现消息不计入。该命令仅供本地操作者使用，不向普通联机玩家开放。
 
 Headless 的诊断还返回 `HeadlessTicks`，记录进程内累计 tick 工作耗时与超预算次数；GUI 为 null。
 独立瘦协议客户端负载工具及结果解读见 [服务端负载测试](ServerLoadTesting.md)。
 
-## 玩家传送
+## 玩家与世界命令
 
-内置 `/tp` 命令在本地世界执行，联机时由服务端授权并执行：
-
-```text
-/mark                       # 标记自己的当前位置，也可按键盘 M
-/mark private home          # 保存当前存档内自己的命名标记；同名覆盖
-/mark public spawn         # 保存当前存档内公共命名标记；需要 world.mark.manage 权限
-/tp self private home       # 传送到自己的命名标记
-/tp self public spawn       # 传送到公共命名标记
-/tp                         # 传送到自己的返回点
-/tp self private previous   # 与裸 /tp、键盘 F6 相同
-/tp self private spawn      # 自己的出生位置快照
-/tp self public spawn       # 世界出生位置快照
-/tp self player "Player Name"
-/tp self position 100 70 -200
-/tp player "Player Name" position 100 70 -200
-/tp player "Player Name" player "Destination Player"
-/tp player "Player Name" private spawn
-/tp player "Player Name" public spawn
-```
-
-不带参数的 `/mark` 和键盘 M 都提交与 `/mark private previous` 相同的命令；裸 `/tp` 提交与 `/tp self private previous` 相同的命令。`previous` 就是普通的个人命名标记，没有独立的命令、存储字段或特殊查找路径。M 仅在正常游戏输入中生效，不在聊天、编辑面板或对话框中触发。此点随世界中的玩家数据保存，联机时由服务端维护。`/mark` 不授予传送权限。
-命名标记也随存档保存：private 保存到各玩家数据（包括服务端离线玩家记录），public 保存到世界的玩家子系统。两类标记相互独立，不跨存档共享；名称不区分大小写，允许 1–64 个字符，含空格时使用引号。联机客户端不接收他人的个人标记，标记写入与传送解析均由服务端执行。个人标记无需额外权限；公共标记写入需要 `game:world.mark.manage`（创造模式默认允许，其他模式按标准权限授予），传送使用现有的 `game:player.teleport.self` 权限与同样的落点加载、安全检查。成功传送只更新个人标记 `previous`，不修改其他个人标记或公共标记。
-裸 `/tp` 传送到个人标记 `previous`，尚未记录时返回与其他缺失标记相同的提示。其他格式分别传送调用者或指定玩家。玩家名称不区分大小写，也可以使用玩家 GUID；含空格的名称需要引号。
-F6 直接提交该传送命令，不打开命令面板；与 M 一样，仅在窗口激活、玩家存活且没有 HUD 面板或对话框占用输入时生效，仍遵守传送权限和落点安全检查。
-`/tp` 一级补全只提供 `self` 和 `player`，按各自的传送权限过滤。self 后选择 `position`、`player`、`private` 或 `public`；player 后先选择被传送玩家，再选择同样的四种目的地。private 始终使用被传送玩家自己的个人标记，public 使用当前世界的公共标记。具有传送他人权限的调用者可在对应 private 路线补全该玩家的标记名称，不向其他客户端广播这些名称。`/tp player A` 是不完整命令，不执行传送；这一分组始终要求 `game:player.teleport.others`，即使 A 是调用者自身也不切换权限语义。旧的隐式玩家、裸坐标及独立 spawn/worldspawn 路线不再支持。
-目的玩家候选排除被传送玩家自身，但被传送玩家候选保留调用者自身；名称和 GUID 均可指定玩家。手动指定自己到自己时返回 `teleport.unchanged`，不移动、不取消已有等待请求、不覆盖 previous。self private/public 后补全对应作用域的已有标记，`/mark` 使用相同名称补全便于覆盖。联机命令补全在短暂输入防抖后向服务端查询，服务端按当前连接玩家的权限和作用域生成候选，只回复请求者；候选响应不会执行命令，也不会传输标记坐标，旧输入的迟到响应被忽略。
-任何成功传送都会将被传送玩家实际离开的位置覆盖为其返回点，因此连续裸 `/tp` 可以往返切换；异步等待期间不提前覆盖，失败或取消不覆盖。移动方块或地形变化后，返回点仍需接受同样的安全校验。
-`game:player.teleport.self` 是标准权限，创造模式玩家默认拥有；其他模式需要授权。
-玩家进入 Playing 状态时，服务端在缺失时将已确定的实际出生位置复制到该玩家的 `private spawn`；世界 `public spawn` 保存首次完成该初始化的玩家的实际出生位置，而非可能位于方块内部的粗略世界出生锚点。它们都是普通、可覆盖并随存档保存的坐标标记，不保留特殊解析路径；后续睡觉或重生不会自动更新已有标记，覆盖标记也不会影响真实出生机制。
-`game:player.teleport.others` 是标准权限，但不会因创造模式而默认授予。服务端操作员或具备相应授权能力的玩家可使用 `/permission grant "Player Name" game:player.teleport.others` 授予使用权，或使用 `/permission delegate "Player Name" game:player.teleport.others` 同时授予使用及再授权能力。仅持有使用权不能继续授权他人。
-grant 候选按使用权授权能力筛选，delegate 候选按再授权能力筛选，两者展示权限各自的说明。
-消息面板默认在命令执行后回到消息输入。传送、时间设置/推进、天气和季节设置成功后关闭面板；查询时间、帮助及授权等命令保留消息面板。失败或等待地形加载时不关闭，传送等待实际成功后才关闭。该行为由命令注册声明，本地和联机一致。
-认领服务器不会自动获得传送其他玩家的权限。控制台必须指定被传送玩家。
-
-目标玩家必须在线、进入世界且存活，骑乘时需先离开坐骑。坐标是脚底位置，仅支持绝对坐标；
-X/Z 范围为 ±1000000，Y 为 0–255，不接受非有限数值。传送前按玩家身体大小检查地形及移动方块的实际碰撞盒，空间不足则拒绝传送。落点区块尚未加载时先异步准备小范围地形，返回 `teleport.loading`（Pending）；加载完成后校验并传送，等待期间玩家留在原地，最多等待 30 秒。
-不自动寻找安全落脚点，也不检查坠落、岩浆等危险。传送不改变出生点、朝向或飞行状态；成功后重置速度并同步位置，失败时保持原位置和行动状态。
-每个玩家最多有一个等待请求，新传送替换旧请求；目标死亡、离线、骑乘或角色被替换时取消，等待期间也会重新检查调用者权限。完成、失败、取消及世界退出都会释放临时地形加载位置，不写入存档。
-远程玩家通过原请求的关联 ID 收到最终结果，本地调用者通过消息系统收到结果。HTTP 调用遇到未加载落点时返回 Pending，不保持 HTTP 连接等待，最终结果记录在服务端日志中。
-
-Headless HTTP 提供 `game:player/teleport/other`，必填 `player`，另选完整的 `x`,`y`,`z` 或 `destination` 玩家名称。
-GUI 和 Headless HTTP 都以 LocalOperator 在本进程执行。GUI 承载世界时可以执行显式注册的世界管理命令；GUI 客户端不会将 `/commands` 请求转发到远程服务器。需要代表当前玩家调试时使用 GUI 专有的 `/player/commands`，由服务器检查真实玩家权限。Headless 没有该入口。依赖具体玩家身份的个人操作仍要求 Player。
+玩家标记、传送、授权和消息面板行为不依赖 Headless 模式，见
+[玩家传送与标记](Teleportation.md)。身份、执行域及本地／玩家 HTTP 适配规则见
+[命令权限模型](CommandPermissions.md)。
 
 ## 数据实例
 
@@ -220,7 +181,8 @@ Instances/<实例名>/
 
 ## 配置文件
 
-Headless 启动主要涉及三个配置文件。
+以下列出启动入口与模组配置；游戏设置、内容仓库及信令服务安装列表的路径见
+[文件定位](FileStorage.md)。
 
 ### RunningSetting.xml
 
@@ -270,7 +232,7 @@ Headless 使用的会话通常是：
 </Sessions>
 ```
 
-`GameMode` 是可选字段。旧 session 没有该字段时，不会覆盖存档模式。
+`GameMode` 是可选字段，未指定时不会覆盖存档模式。
 
 ### ModProfile.xml
 

@@ -35,6 +35,7 @@
 - `config:Settings.xml`
 - `config:ContentRepositories.xml`
 - `config:ServerDirectory.xml`
+- `config:RendezvousServices.xml`
 - `config:ModProfile.xml`
 - `config:SessionProfiles/<sessionId>.xml`
 - `<world>/Project.xml`
@@ -42,25 +43,32 @@
 - `GamePaths.ContentPackageCache`: 按 PackageHash 保存所有类型原始 `.scpkg` 的统一缓存
 - `GamePaths.BlockTextures`、`GamePaths.CharacterSkins`、`GamePaths.FurniturePacks`: 已安装资产目录；用户资产以稳定 GUID `AssetKey` 保存，材质和皮肤数据使用 `.png`，家具数据使用 `.xml`，显示名称位于伴随 `.json` 元数据中，与缓存包独立删除
 
+## 内容缓存、制造与安装
+
 材质、皮肤和家具替换先写入并验证临时数据，再保留原 AssetKey 交换数据与元数据；旧 `.scbtex`、`.scskin`、`.scfurniture` 不再作为导入协议或内部资产后缀。World 覆盖使用同一 Worlds 根目录下的 staging/backup 目录完成可恢复替换；旧 World ZIP 导入/导出及嵌入内容分派已删除，`.snapshot` 只作为同一世界目录内的内部恢复制品。材质或皮肤删除前，管理界面要求为所有 World 与当前会话引用选择同类型替代资产，并以暂存 `Project.xml` 批量提交。
 
-游戏内容制造先在 `GamePaths.ContentPackageCreationTemp` 生成并通过共享 Reader 复验临时 `.scpkg`，调用方只获得可读取且可释放的临时制品。GUI 制造向导按“类型、素材、名称、语义版本、清单预览、FilePicker 保存”推进：World/FurniturePack 选择本地资产，BlocksTexture/CharacterSkin 选择并验证 PNG 流，运行中的世界不作为快照源。取消预览、取消保存或保存失败都会释放临时制品。保存制品不写入 ContentPackageCache，也不自动安装；“创建新版本”只从同类型基线包继承 Identifier。
+游戏内容制造先在 `GamePaths.ContentPackageCreationTemp` 生成并通过共享 Reader 复验临时 `.scpkg`，调用方只获得可读取且可释放的临时制品。GUI 制造向导按“类型、素材、名称、语义版本、清单预览、FilePicker 保存”推进：World/FurniturePack 选择本地资产，BlocksTexture/CharacterSkin 选择并验证 PNG 流，运行中的世界不作为快照源。取消预览、取消保存或保存失败都会释放临时制品。保存制品不写入 ContentPackageCache，也不自动安装。游戏底层制造 API 支持从同类型基线包继承 Identifier，
+当前 GUI 尚未提供基线选择入口，见 [内容制造契约](Protocol/ContentCreationProtocol.md)。
 
 本地输入流与 ContentServer 下载统一进入 `ContentPackageWorkflow`：先由 ContentPackageCache 原子提交和复验，再从缓存打开实际文件交给安装器。来源只影响 UI 的信任提示，不改变缓存或安装结果。
 
 GUI 的“内容包缓存”界面只列出非 Mod 缓存制品：FilePicker 多选导入在提交前拒绝 Mod 类型，导出原样复制缓存文件，安装通过共享创建/替换流程派生游戏资产，从缓存移除不会删除已安装资产。Mod 缓存仍由模组管理界面独立展示；两者都不会持久化 FilePicker 的外部路径。FilePicker 不可用时，相关导入和导出按钮禁用并显示原因。
-- `app:Content.zip`
-- `data:` 下的世界、缓存和玩家数据
+
+## 实例与文件选择
 
 Starter 会先注册程序基础目录并读取 `Starter.xml`，再把选中的 `Instances/<name>` 重新注册为当前进程的 `external:`、`data:` 和 `config:`。桌面端可并发运行多个隔离实例；Android 同样隔离实例数据，但单个已安装包不提供并发游戏进程。不同实例拥有彼此隔离的 session、设置、世界、模组和日志；逻辑路径相同并不代表落到同一个物理目录。
 
 `FilePicker` 返回的 `PickedFile` 和 `PickedSaveTarget` 只暴露按需打开的流。Windows/Linux 实现将系统选择结果封装为文件流；Android 实现保留文档 URI 权限并在每次调用时通过 ContentResolver 打开流。取消选择返回空结果或 `null`，各平台实现串行化选择请求。Linux GUI 始终注册实现，通过会话 D-Bus 调用 XDG Desktop Portal `FileChooser`，不依赖 `zenity`；会话总线、portal 服务或桌面 backend 不可用时，请求会返回明确错误。Headless 不注册 `FilePicker`，调用方仍应依据 `FilePicker.IsAvailable` 隐藏或禁用交互功能。
+
+## 世界数据
 
 世界 Project 当前只使用 `Project.xml`。旧的 `Project.json`、`Project.mpk`、`Project.bak` 和 `Project.temp` 不再作为世界 Project 的磁盘序列化或恢复机制使用。保存时会先写入 `Project.xml.tmp`，校验后再替换 `Project.xml`。升级工具仍可在缺少 `Project.xml` 时读取旧 `Project.json` 并转换为 `Project.xml` 后继续升级。
 
 `Project.xml` 的 `ExtensionData` 与 `Subsystems`、`Entities` 同级，用于非实体业务数据，内部按所有者标识和数据标识组织 `ValuesDictionary`。它复用世界保存流程，不产生独立文件；主线程保存时复制嵌套字典，后台写入不会遍历运行时业务字典。客户端世界初始化快照不包含该节点，业务数据需要联机展示时由对应功能显式同步。
 
 内置标记使用 `ExtensionData/game/position-marks`：`Public` 保存公共标记，`Private` 按玩家 GUID（无连字符的 `N` 格式）保存私有标记。标记属于世界，不依赖玩家在线状态或实体生命周期；`PlayerData` 与 `Players` 子系统不再分别保存 `PrivateMarks`、`PublicMarks`。旧开发存档的这些字段不再读取，不提供自动迁移，旧标记需要重新建立。`game` 是核心数据所有者，不能把整个 `ExtensionData` 当作第三方模组数据删除。
+
+### 玩家库存
 
 玩家实体会同时保存普通 `Inventory` 与 `CreativeInventory`，加载时由 `ComponentMiner` 根据世界模式选择当前使用的库存。两套库存都为物品栏预留 `0–29`、为背包预留 `30–45`；世界设置 `SurvivalHotbarSlotsCount` 与 `CreativeHotbarSlotsCount` 分别决定两套库存中前 7–30 个物品栏槽位可用，运行时生成的创造物品目录位于持久化槽位之后。修改世界模式只更新世界设置，不会在两套库存之间复制或转换物品；切回原模式时会恢复该模式上次保存的库存。因此，在一种模式下保存于背包的物品切换模式后不可访问属于预期行为。旧版存档中的普通库存使用不同的槽位布局，不再兼容。
 

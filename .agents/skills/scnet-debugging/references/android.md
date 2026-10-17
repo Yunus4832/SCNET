@@ -60,7 +60,7 @@ The outer double quotes make ADB send one remote shell command, while the inner 
 the complete command line in one Intent Extra. Without this two-level quoting, the device shell can
 misinterpret `--session` and later tokens as `am start` options.
 
-These options use the same `RunningSettingManager` path as desktop startup. They are transient unless
+These options use the same `StartupManager` parsing and session-resolution path as desktop startup. They are transient unless
 the command line explicitly contains `--save`. Without `--player`, the client must return to the
 normal player-selection screen. Use a unique instance, session, and player name for every test device.
 

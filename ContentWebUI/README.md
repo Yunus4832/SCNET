@@ -1,12 +1,15 @@
 # ContentWebUI
 
 ContentWebUI 是 ContentServer 的独立 Vue 3 单页应用，提供匿名内容市场、首次管理员初始化、发布者申请与工作台、管理员申请与审核台。
-API Key 只保存在当前浏览器标签页的 `sessionStorage`，服务器不创建登录会话。
+API Key 与当前选择的身份保存在浏览器 `localStorage`；服务器不创建登录会话。
+仅在可信设备上保存 Key，离开共享设备前从工作台移除凭据。
 
 ## 本地开发
 
+在 `ContentWebUI/` 目录执行（首次运行先安装依赖）：
+
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 

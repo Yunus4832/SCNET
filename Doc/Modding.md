@@ -4,23 +4,17 @@
 
 如果只是配置、下载或启用模组，见 [Mods.md](./Mods.md)。
 
-## 网络消息受众
-
-`context.Network.Send(messageType, payload, audience)` 与消息处理上下文的 `Send`
-要求显式传入 `Game.Network.PackageAudience`，没有默认广播或可选 `to/except` 参数。
-全局消息使用 `PackageAudience.Global`，定向消息使用 `PackageAudience.To(client)`，
-空间消息将统一兴趣查询得到的观察者集合传入 `PackageAudience.To(observers)`。
-集合会在创建受众时复制，空集合不会退回全局广播；连接按对象身份匹配。
-客户端上行消息应显式指定当前服务端连接，不把上行请求描述成全局广播。
-`Reply` 只回复当前接收上下文的原发送者；没有发送者时不发送。
-
 ## 创建项目
 
-Install the published template package:
+当前第一方包暂通过本地源准备。在仓库根目录运行 `./Scripts/pre-build.sh` 后，从本地包目录安装模板：
 
 ```bash
-dotnet new install SCNET.ModTemplates
+dotnet new install ./Publish/NuGet/SCNET.ModTemplates.<模板版本>.nupkg
 ```
+
+将 `<模板版本>` 替换为 `SharedProperties/Versions.props` 的 `ModTemplatesVersion`。
+在仓库外创建模组时，还需将本地 `Publish/NuGet` 的绝对路径加入该项目的 NuGet 源；
+详细配置与依赖边界见 [NuGet 包](NuGet.md)。
 
 创建并构建模组：
 
@@ -88,6 +82,16 @@ XML 源定义可以共享，解析后的 `ResultValue` / `RemainsValue` 不能�
 世界映射保存于 `Project.xml` 的 `BlockRegistry` 节点；已有编号保持稳定，新资源使用
 未占用编号。联机在可靠有序的 Bootstrap 中传递服务器映射，建立世界目录后才解析
 Project 并确认完成，不把完整映射放入连接前的服务器发现数据报。
+
+## 网络消息受众
+
+`context.Network.Send(messageType, payload, audience)` 与消息处理上下文的 `Send`
+要求显式传入 `Game.Network.PackageAudience`，没有默认广播或可选 `to/except` 参数。
+全局消息使用 `PackageAudience.Global`，定向消息使用 `PackageAudience.To(client)`，
+空间消息将统一兴趣查询得到的观察者集合传入 `PackageAudience.To(observers)`。
+集合会在创建受众时复制，空集合不会退回全局广播；连接按对象身份匹配。
+客户端上行消息应显式指定当前服务端连接，不把上行请求描述成全局广播。
+`Reply` 只回复当前接收上下文的原发送者；没有发送者时不发送。
 
 ## 世界操作扩展点
 
@@ -230,9 +234,6 @@ commands.Adapters.Register(
 
 GUI 的 `GET/POST /player/commands` 使用当前真实玩家，而不是 LocalOperator。它只开放 World/Server binding；联机客户端的查询与调用发送给权威服务器，按服务器保存的玩家权限处理。命令由模组注册不改变此规则，玩家不能通过 HTTP 自行声明主体或权限。Headless 不提供玩家入口。两组入口的请求格式相同，入口之间不自动回退。
 
-内置 GUI 自动化命令位于 `game:automation/ui/*`，业务实现集中在 `Game.Automation`，命令层只负责参数校验和结果封装。`context/get` 返回目标支持的 `actions`；`tap`、`scroll`（鼠标滚轮）和 `swipe`（跨帧触摸轨迹）都必须通过 `Engine.Input.InputSimulation` 注入，不应直接修改 Widget 状态或调用 Screen 回调。`swipe` 的 `deltaX/deltaY` 表示手指从目标中心移动的方向和距离，例如向上滑动使用负的 `deltaY`。
-
-相对鼠标输入使用 `game:automation/input/mouse/move`，其 `deltaX/deltaY` 会与同一帧的物理鼠标位移合并，可用于游戏内视角控制。它与用于 UI 命中定位的绝对鼠标坐标是两种不同语义。
-
-普通游玩和交互验证优先使用 [游戏自动化](Automation.md) 的组合输入、库存拖放、角色观测和步行导航。
-Mod 适合准备确定性场景和补充观测，不应通过直接改位置、库存或调用交互回调代替被测操作。
+GUI 自动化的操作合同见 [游戏自动化](Automation.md)，Agent 工作流程见项目的
+`scnet-debugging` 技能。Mod 适合准备确定性场景和补充观测，不应通过直接改位置、库存
+或调用交互回调代替被测操作。

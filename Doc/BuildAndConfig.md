@@ -46,9 +46,10 @@ Android 共享配置把 `GameVersion` 写入版本名称，把 `AndroidReleaseCo
 - 在资源打包前根据独立 SVG 源文件增量生成 GUI 图集
 - 把 `Content/` 打成 `Content.zip`
 - 在 `Publish` 后打包桌面发布输出
-- 在 Android 构建后重命名 APK
+- 在 Android 发布后复制并重命名 APK
 
-也就是说，资源打包和发布产物的处理不再分散在各个项目中，而是统一由这里接管。
+通用资源与压缩包流程由此文件处理；容器镜像、服务发行物等专属行为由各项目的
+`Directory.Build.targets` 和部署脚本负责。
 
 ### `SharedProperties/GlobalUsing.props`
 
@@ -61,7 +62,7 @@ Android 共享配置把 `GameVersion` 写入版本名称，把 `AndroidReleaseCo
 - `Game.Screens`
 - `Game.Subsystems`
 - `Game.Components`
-- `Game.ModManager`
+- `Game.Modding`
 
 这也是仓库里许多代码文件可以省略大量 `using` 声明的原因——目的是降低共享代码中的重复成本。
 
@@ -112,12 +113,15 @@ dotnet build SCNET.slnx
 # Release 构建
 dotnet build SCNET.slnx --configuration Release
 
-# Linux/macOS：顺序生成应用和服务发行产物
+# Bash 主机：顺序生成应用和服务发行产物
 ./Scripts/publish.sh
 
 # PowerShell：顺序生成应用和服务发行产物
 ./Scripts/publish.ps1
 ```
+
+当前尚未配置第一方远程 NuGet 源，本地包准备是过渡流程。配置远程源并上传所需版本后，
+普通开发可恢复 IDE / `dotnet build` 自动还原，本地准备仅用于开发未发布的包。
 
 `pre-build.sh` 检查当前版本的完整本地包集合。缺包时调用 `pack-nuget.sh` 按依赖顺序生成到
 `Publish/NuGet`，然后还原解决方案；包齐全时直接还原。PowerShell 使用 `./Scripts/pre-build.ps1`。
@@ -245,7 +249,7 @@ Windows/Linux 的便携 ZIP 包携带 `DesktopRelease.xml`，声明平台和由�
 文件更新事务、回滚和中断恢复，不依赖游戏或 Engine。Windows/Linux Starter 通过项目引用调用共享库，
 平台文件替换和通知保留在各自项目中。游戏通过退出动作提交更新请求，由 Starter 在游戏运行结束后接管。类库随单文件发布合并，不额外发布更新器或依赖 shell/PowerShell。
 当前 Linux 集合为 `SurvivalcraftStarter`、`Content.zip`、`libSDL2-2.0.so`、`libopenal.so`；Windows 集合为
-`SurvivalcraftStarter.exe`、`Content.zip`、`SDL2.dll`、`soft_oal.dll`。两平台还包含各自的四个图像原生库和
+`SurvivalcraftStarter.exe`、`Content.zip`、`SDL2.dll`、`soft_oal.dll`。两平台还包含各自的三个图像原生库和
 `ThirdPartyNotices.txt`，具体文件见对应 `DesktopRelease.xml`。修改发行文件集合时须同步对应清单。
 
 ContentServer 的 `linux-x64`/`windows-x64` 版本下载地址应指向完整便携 ZIP。客户端验证 SHA-256 后检查清单、平台与

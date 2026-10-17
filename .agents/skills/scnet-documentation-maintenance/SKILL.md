@@ -1,6 +1,6 @@
 ---
 name: scnet-documentation-maintenance
-description: "Assess and maintain SCNET repository documentation and agent guidance when changes may affect documented behavior, configuration, commands, architecture, persistence, networking, modding, build, deployment, platform support, or development workflows. Use while completing such changes or reviewing their documentation impact; do not invoke for edits that clearly cannot affect existing documentation or instructions."
+description: "Audit and maintain SCNET project documentation, README files, links and agent guidance, or assess documentation impact when changes affect documented behavior, configuration, commands, architecture, persistence, networking, modding, build, deployment, platform support, or development workflows. Use while completing such changes or reviewing their documentation impact; do not invoke for edits that clearly cannot affect existing documentation or instructions."
 ---
 
 # SCNET Documentation Maintenance
@@ -38,3 +38,40 @@ Internal refactors, private implementation changes, localized bug fixes that res
 - Use `skill-creator` for material Skill changes and run its structural validation afterward.
 
 After editing, search for stale names and contradictory descriptions in `README.md`, `Doc/`, component-specific README files, `AGENTS.md`, and relevant Skill files. If no update is needed after inspection, report which documentation or agent guidance was checked and why it remains accurate.
+
+## Repository-wide reviews
+
+For an explicit full review, inventory tracked Markdown, project README files, skill entrypoints and
+references, plus non-Markdown specifications or examples. Exclude generated outputs, dependency
+copies, licenses and game data from prose review, but validate referenced schemas/vectors as data.
+Keep coverage and unresolved findings in `.agent-work/`; a successful link scan is not evidence that
+the documents were read or their behavior verified.
+
+Use [Doc/README.md](../../../Doc/README.md) as the human-facing topic index. Keep responsibilities clear:
+root README for orientation, component README for consuming that component, `Doc/` for durable contracts
+and architecture, skills for Agent operation, ignored workspace for environments and execution evidence.
+Put detailed API inventories in their reference page rather than mixing them into deployment instructions.
+Link to the owning source of a rule instead of maintaining multiple copies of constants and procedures.
+
+Trace claims that commonly drift to their actual owners: project versions and package imports,
+MSBuild target timing, CLI parsers, endpoint attributes and response shapes, settings serializers,
+storage locations, lifecycle and permission definitions. Distinguish an implemented capability,
+a lower-level API without a UI entry, and an unimplemented design. If source contradicts itself,
+record the limitation; do not change the business contract merely to make documentation agree.
+
+For references and basic Markdown structure, run from the repository root:
+
+```bash
+python3 .agents/skills/scnet-documentation-maintenance/scripts/check_documents.py
+```
+
+The Python standard-library helper checks common inline/reference links, local heading fragments,
+current-repository `blob/main` targets, fences, heading spacing and trailing whitespace. It reads
+tracked and non-ignored untracked Markdown, excluding code-fenced examples. It is not a complete
+Markdown parser and does not contact external sites; review unusual markup and external references
+separately. Check script behavior with a temporary good/broken fixture after changing it.
+
+Before finishing, reconcile the inventory with coverage, check navigation to every formal topic,
+validate modified skills using `skill-creator`, and inspect the final diff. Package/bundle README edits
+can alter shipped artifacts; apply the commit skill's version rules when preparing a commit rather
+than assuming every documentation edit is outside release versioning.

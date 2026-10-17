@@ -34,8 +34,8 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 `SCNET.ModTemplates` 由 `Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj`
 构建。它包含 `Survivalcraft.ModTemplates/Survivalcraft.Mod/` 中的模板资源，生成的
-项目会引用对应版本的 `SCNET.Survivalcraft` 和 `SCNET.ContentTool` 包。这三个包必须使用相同版本发布；
-发布过程中需要同步更新模板源代码中的运行时包版本。
+项目会引用打包时确定的 `SCNET.Survivalcraft` 和 `SCNET.ContentTool` 版本。模板、游戏 SDK 和
+工具独立维护版本；模板项目从集中版本属性生成引用，不要求三者版本号相同。
 
 `SCNET.ContentTool` 是私有构建工具包，携带 ContentTool CLI、协议依赖和自动生成
 `.scpkg` 的 MSBuild Target。生成的 Mod 项目显式引用该包，但不会把它作为运行时
@@ -68,14 +68,13 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 
 ## 本地打包
 
-首次构建或升级原生产物时，先生成本地原生包：
+仅需准备或更新原生包时，可选择两个原生资产项目：
 
 ```bash
-dotnet pack Native.ImageCodecs/Native.ImageCodecs.csproj --configuration Release
-dotnet pack Native.OpenAL.Android/Native.OpenAL.Android.csproj --configuration Release
+./Scripts/pack-nuget.sh --project Native.ImageCodecs --project Native.OpenAL.Android
 ```
 
-这两个项目只将现有原生文件打包，不编译 C/C++，位于解决方案的 `01 Native Libraries` 逻辑文件夹。
+这两个项目只将现有原生文件打包，不编译 C/C++，位于解决方案的 `01 NativeLibraries` 逻辑文件夹。
 
 首次开发构建使用 `./Scripts/pre-build.sh`（PowerShell 为 `./Scripts/pre-build.ps1`），自动准备缺失的
 本地包并还原解决方案。SDK 源码或原生资产改变后使用 `--refresh`（PowerShell 为 `-Refresh`），

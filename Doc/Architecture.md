@@ -21,6 +21,7 @@
 - `Rendezvous.Protocol/` 定义信令契约与认证中继编码，`RendezvousServer/` 是独立部署的内存会话/中继服务
 - `NetworkProbe/` 通过 Engine 网络 API 验证独立进程连接，不加载游戏世界
 - `Engine.Core/` 和 `Engine.Serialization/` 负责基础类型与序列化
+- `Engine.Media/` 提供独立的图像、音频和模型数据编解码，不依赖窗口、GPU 或音频设备
 - `EntitySystem/` 提供实体与组件系统
 - `Content.Packaging/` 位于解决方案的 Protocol 层，定义与游戏运行时、服务端和工具共享的内容包协议
 - `ServerSource.Protocol/` 位于 Protocol 层，定义游戏客户端、ContentServer 和第三方服务器源共同使用的只读 HTTP 契约与校验规则；ContentServer 是带发布者投稿和管理员审核能力的完整参考实现
@@ -76,7 +77,7 @@ Starter 统一通过 `PlatformManager` 注册平台能力，避免直接操作�
 - `Components/`：玩家、实体、行为、交互、装备、生命等组件
 - `Screens/`：游戏主菜单、加载、设置、联机界面等 UI
 
-内容分发在游戏核心中分成四个边界：仓库配置服务维护多个持久来源；`ContentServerClientPool` 按持久或连接作用域复用客户端；
+内容分发在游戏核心中分成四个边界：`ContentRepositoryManager` 维护多个持久来源；`ContentServerClientPool` 按持久或连接作用域复用客户端；
 目录服务负责分页、跨仓库聚合、版本历史和冲突；下载服务只按精确 PackageHash 写入统一缓存。Screen 不创建单地址客户端，
 Profile 也不保存仓库地址。联机临时仓库是握手提供的短生命周期候选源，不进入 Settings 或 Profile。
 

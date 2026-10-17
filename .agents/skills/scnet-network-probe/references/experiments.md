@@ -2,9 +2,8 @@
 
 Run from the repository root. These scripts are owned by this skill and prefer Linux.
 Use a fresh `.agent-work/network-probe/artifacts/<run-id>/` output directory for each run.
-The helpers preserve the existing Python implementation; only their source-root lookup moved.
 
-### 自动管理完整本机场景
+## 自动管理完整本机场景
 
 在 POSIX 主机上，Python 3 标准库脚本可管理临时信令服务和两端探针：
 
@@ -13,7 +12,7 @@ python3 .agents/skills/scnet-network-probe/scripts/local-lab.py --output .agent-
 python3 .agents/skills/scnet-network-probe/scripts/local-lab.py --mode scenario-relay --output .agent-work/network-probe/artifacts/relay-test
 ```
 
-先执行上面的两个项目构建。脚本不构建、不下载运行时；需要 Python 3 和 .NET 10。
+先按 [探针说明](../../../../NetworkProbe/README.md#测试与探针入口) 构建 NetworkProbe 和 RendezvousServer。脚本不构建、不下载运行时；需要 Python 3 和 .NET 10。
 默认 TCP 控制端口 31991、UDP 信令端口 31990、中继 UDP 32000–32003，可用
 `--http-port`、`--udp-port`、`--relay-port` 修改。控制入口绑定 loopback，UDP 广告地址使用 loopback；UDP socket 沿用信令服务的所有接口绑定。
 `--probe` 和 `--server` 可指定已有程序集。输出目录必须尚不存在。
@@ -21,7 +20,7 @@ python3 .agents/skills/scnet-network-probe/scripts/local-lab.py --mode scenario-
 服务启动失败不启动探针；正常结束、超时、Ctrl+C 或 SIGTERM 后回收本轮创建的进程组。
 原生运行时可用 `--mode scenario-lease --cancel-after-path`：等到准备路径确认后，仅终止父探针，要求父进程通过私有通道正常取消两端，并检查最终资源归零。该选项不等待完整的 70 秒租约场景，也不支持 Podman 模式。
 
-### 隔离地址族验证
+## 隔离地址族验证
 
 Linux 的 `local-lab.sh` 先创建独立网络命名空间，再启动上述场景；需要 `unshare`、`ip` 和 `nft`：
 
@@ -36,7 +35,6 @@ IPv4/IPv6 模式阻断另一地址族的输出，并用独立报文及 nft 计�
 输出额外保存接口和阻断规则。直接运行 Python 的 `--family` 只选择地址，不执行隔离；`--isolated` 拒绝在原宿主命名空间中运行。
 没有本机 .NET 时，可显式传入 `--runtime-image` 使用缓存的 Podman 镜像，并用 `--probe`、`--server` 指定程序集。
 容器复用实验命名空间，结束时只删除本轮容器；脚本不拉取镜像。容器模式应在 root 专用测试环境使用。
-
 
 ## 隔离双 NAT 实验室
 
@@ -91,9 +89,8 @@ TLS 证书在实验中临时生成，只通过子进程环境或只读容器挂�
 私钥保存在输出目录之外并在结束时删除；输出仅保留公开证书、路由器规则、校准结果、
 UDP 包头（无 payload）、进程日志、构建哈希及 `summary.json`。失败也清理本次创建的容器与命名空间进程。
 
-已验证的矩阵范围是明确配置的 IPv4 固定映射/过滤、双层固定映射、受控目标相关映射、受控回环、直达阻断和 UDP 阻断；
-这不能代表所有 NAT 行为、IPv6、真实运营商或完整游戏体验。
-
+这些场景分别覆盖明确配置的 IPv4 映射与过滤，不能代表所有 NAT 行为、真实运营商或完整游戏体验。
+每次结果以该轮校准与保存的证据为准，不将既往通过当作当前构建验证。
 
 ### 双栈候选与单族信标故障
 

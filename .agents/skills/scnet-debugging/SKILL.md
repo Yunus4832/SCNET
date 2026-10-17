@@ -109,18 +109,10 @@ stable name). Without it, a new instance stops at the player setup screen and ad
 to every gameplay test. Do not automate through that screen merely to reach terrain, rendering,
 world-loading, or in-game input behavior.
 
-Discover `game:automation/ui/*` with `GET /commands`. Call `context/get`, select an exact returned
-widget selector, invoke `tap`, then poll `context/get` until the expected Screen appears. Use
-`screenshot` to preserve rendered UI evidence. These commands simulate Engine input; do not replace
-them with direct Screen switches, Widget state mutation, or operating-system input injection. For
-targets whose returned `actions` include `scroll` or `swipe`, use `scroll` to inject a mouse-wheel
-delta, or `swipe` to inject a multi-frame touch gesture. Swipe `deltaX` and `deltaY` describe finger
-movement from the target center (negative `deltaY` swipes up), and `durationFrames` is optional.
-They do not provide 3D player control.
-
-Use `game:automation/input/mouse/move` for relative mouse movement such as changing the in-game
-view direction. Its signed `deltaX` and `deltaY` are merged with physical mouse movement for one
-Engine frame. This is raw input simulation, not a direct camera-state mutation.
+Discover the live command contract, observe structured state, perform bounded input, then confirm
+actual gameplay/UI results. Use screenshots for layout or rendering evidence and when structured
+state is insufficient; avoid a screenshot after every action. Selector validity, list rows, gesture
+completion and semantic aiming are covered by [references/automation.md](references/automation.md).
 
 Do not create Xvfb, a nested or virtual desktop, or use tools such as `wtype`, `xdotool`, or XTest
 when the existing desktop and built-in automation commands can perform the test. Such tools are a

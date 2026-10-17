@@ -49,4 +49,4 @@ POST 使用相同的 identity/arguments 格式；返回 success/code/message/sta
 
 ## 非命令功能的边界
 
-领地保护由领地石模组负责；玩家面板黑名单的重构暂缓。这些功能仍使用 ServerManager／ServerMaster，不参与 CommandPrincipal.FromPlayer 的权限生成，不在本次命令迁移范围内。调试相机不检查玩家管理权限，沿用创造模式的可用条件。
+领地保护由领地石模组负责；玩家面板黑名单的重构暂缓。这些功能的自身授权不参与 `CommandPrincipal.FromPlayer` 的权限生成；黑名单不属于当前统一命令模型。调试相机不检查玩家管理权限，沿用创造模式的可用条件。

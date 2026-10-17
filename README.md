@@ -1,6 +1,6 @@
 # Survivalcraft 联机版
 
-这是一个基于 Survivalcraft 的联机版代码库。它的核心目标不是强化单机客户端，而是让联机服务器稳定运行，同时尽量复用同一套游戏逻辑，减少客户端与服务端之间的代码分叉。
+这是一个基于 Survivalcraft 的联机版代码库。项目以联机服务器的稳定运行和跨平台共享游戏逻辑为重点，减少客户端与服务端之间的代码分叉。
 
 ## 概述
 
@@ -122,9 +122,12 @@ dotnet test EntitySystem.Test/
 dotnet test Survivalcraft.Test/
 ```
 
-测试框架为 xUnit + coverlet，测试项目仅在 `Debug` 配置下编译。
+测试框架为 xUnit + coverlet。解决方案的 `Release` 构建排除测试项目；
+协议、服务、桌面更新事务和工具各有对应的测试项目，可按改动范围选择运行。
 
 ## 详细文档
+
+完整分类导航见 [文档索引](Doc/README.md)，下列链接提供常用入口。
 
 - [结构与分层](Doc/Architecture.md) — 设计重心、分层架构与各层职责
 - [Headless 模式](Doc/Headless.md) — 多实例启动、session 参数、游戏模式覆盖、配置与运行时行为
