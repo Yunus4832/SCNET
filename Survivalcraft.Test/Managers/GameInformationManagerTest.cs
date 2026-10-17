@@ -31,20 +31,31 @@ public sealed class GameInformationManagerTest : IDisposable
     }
 
     [Theory]
-    [InlineData("0.0.0.1", "UpToDate")]
-    [InlineData("0.0.0.0", "UpToDate")]
-    [InlineData("0.0.0.2", "Available")]
+    [InlineData("0.1.0", "UpToDate")]
+    [InlineData("0.0.9", "UpToDate")]
+    [InlineData("0.1.1", "Available")]
     public void ValidReleasesAreComparedWithTheCurrentVersion(string version, string expected)
     {
         Assert.Equal(expected, GameInformationManager.EvaluateRelease(Release() with { Version = version },
-            "linux-x64", "0.0.0.1").ToString());
+            "linux-x64", "0.1.0").ToString());
+    }
+
+    [Theory]
+    [InlineData("0.1.0-alpha.2", "0.1.0-alpha.10", "Available")]
+    [InlineData("0.1.0-alpha.10", "0.1.0", "Available")]
+    [InlineData("0.1.9", "0.1.10", "Available")]
+    [InlineData("0.1.0", "0.1.0-alpha.1", "UpToDate")]
+    public void ReleaseComparisonUsesSemanticVersionOrdering(string current, string available, string expected)
+    {
+        Assert.Equal(expected, GameInformationManager.EvaluateRelease(Release() with { Version = available },
+            "linux-x64", current).ToString());
     }
 
     [Fact]
     public void NoPublishedReleaseIsDistinctFromAlreadyUpToDate()
     {
         Assert.Equal(GameInformationManager.ReleaseCheckResult.NotPublished,
-            GameInformationManager.EvaluateRelease(null, "linux-x64", "0.0.0.1"));
+            GameInformationManager.EvaluateRelease(null, "linux-x64", "0.1.0"));
     }
 
     [Theory]
@@ -57,7 +68,7 @@ public sealed class GameInformationManagerTest : IDisposable
     [InlineData("id", "")]
     public void InvalidMetadataIsRejectedEvenWhenVersionIsNotNewer(string field, string value)
     {
-        var release = Release() with { Version = "0.0.0.0" };
+        var release = Release() with { Version = "0.0.9" };
         release = field switch
         {
             "version" => release with { Version = value },
@@ -68,7 +79,7 @@ public sealed class GameInformationManagerTest : IDisposable
             _ => release with { Id = value }
         };
         Assert.Throws<InvalidDataException>(() =>
-            GameInformationManager.EvaluateRelease(release, "linux-x64", "0.0.0.1"));
+            GameInformationManager.EvaluateRelease(release, "linux-x64", "0.1.0"));
     }
 
     [Fact]
@@ -235,7 +246,7 @@ public sealed class GameInformationManagerTest : IDisposable
         Assert.False(File.Exists(path));
     }
 
-    private static GameRelease Release() => new("release-id", "0.0.0.2", "linux-x64", "Update",
+    private static GameRelease Release() => new("release-id", "0.1.1", "linux-x64", "Update",
         "https://source.example/update.zip", new string('a', 64), "published", DateTimeOffset.UtcNow, null);
 
     private static (ContentRepositoryManager Manager, ContentRepository First, ContentRepository Second) CreateSources()

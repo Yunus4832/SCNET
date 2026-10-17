@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(ContentToolVersion)</Version>
         <OutputType>Exe</OutputType>
         <UseAppHost>false</UseAppHost>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>

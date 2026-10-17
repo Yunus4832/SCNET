@@ -56,7 +56,7 @@ Mod 管理界面以缓存、全局 Profile、全部世界 Profile 和当前 Runt
 ```xml
 <ModProfile Id="default">
   <Packages>
-    <Package ModId="verification.block" Version="1.0.0"
+    <Package ModId="scnet.territory" Version="0.1.0"
              PackageHash="0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" />
   </Packages>
 </ModProfile>

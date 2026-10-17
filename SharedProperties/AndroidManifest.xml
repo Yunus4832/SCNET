@@ -4,7 +4,7 @@
           android:installLocation="preferExternal">
     <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="36"/>
     <application
-        android:label="生存战争 0.0.0.1 联机版"
+        android:label="SCNET"
         android:theme="@style/MainTheme"
         android:icon="@mipmap/icon"
         android:usesCleartextTraffic="true"

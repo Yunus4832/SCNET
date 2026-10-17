@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(EngineVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <IsPackable>true</IsPackable>
         <PackageId>SCNET.Engine.Media</PackageId>
@@ -13,7 +14,7 @@
         <PackageReference Include="NAudio.Flac.Unknown" Version="1.0.4"/>
         <PackageReference Include="NLayer.NAudioSupport" Version="1.4.0"/>
         <PackageReference Include="NVorbis" Version="0.10.5"/>
-        <PackageReference Include="SCNET.Native.ImageCodecs" Version="$(ScnetVersion)"/>
+        <PackageReference Include="SCNET.Native.ImageCodecs" Version="$(ImageCodecsVersion)"/>
     </ItemGroup>
     <ItemGroup>
         <None Update="README.md" Pack="true" PackagePath="\"/>

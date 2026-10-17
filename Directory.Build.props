@@ -1,8 +1,9 @@
 <Project>
+    <Import Project="$(MSBuildThisFileDirectory)SharedProperties/Versions.props"/>
     <!-- 项目全局的配置-->
     <PropertyGroup>
-        <!-- 项目版本号 -->
-        <ScnetVersion>0.0.0.1</ScnetVersion>
+        <!-- 默认用于开发工具和测试项目；发布项目显式选择自己的版本。 -->
+        <Version>$(ToolsVersion)</Version>
         <!-- 全局的 TargetFramewor -->
         <GlobalTargetFramework>net10.0</GlobalTargetFramework>
         <!-- 安卓项目的 TargetFramework -->
@@ -29,7 +30,6 @@
         <Platforms>AnyCPU</Platforms>
         <Configurations>Debug;Release</Configurations>
         <IsPackable>false</IsPackable>
-        <PackageVersion>$(ScnetVersion)</PackageVersion>
         <Authors>SCNET</Authors>
         <Company>SCNET</Company>
         <RepositoryType>git</RepositoryType>

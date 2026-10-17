@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(TerritoryStoneVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <AssemblyName>TerritoryStoneMod</AssemblyName>
         <RootNamespace>TerritoryStoneMod</RootNamespace>
@@ -7,10 +8,18 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="SCNET.Survivalcraft" Version="$(ScnetVersion)" ExcludeAssets="runtime"/>
-        <PackageReference Include="SCNET.ContentTool" Version="$(ScnetVersion)" PrivateAssets="all"/>
+        <PackageReference Include="SCNET.Survivalcraft" Version="$(GameVersion)" ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.ContentTool" Version="$(ContentToolVersion)" PrivateAssets="all"/>
         <EmbeddedResource Include="Resources\TerritoryDatabase.xml"/>
         <EmbeddedResource Include="Resources\BlocksData.txt"/>
         <EmbeddedResource Include="Resources\Lang\*.json" WithCulture="false"/>
     </ItemGroup>
+    <Target Name="GenerateTerritoryManifest" BeforeTargets="PackSurvivalcraftMod">
+        <PropertyGroup>
+            <SurvivalcraftModManifest>$(IntermediateOutputPath)manifest.json</SurvivalcraftModManifest>
+            <_TerritoryManifest>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/manifest.template.json').Replace('__TERRITORY_VERSION__', '$(TerritoryStoneVersion)'))</_TerritoryManifest>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(SurvivalcraftModManifest)" Lines="$(_TerritoryManifest)"
+                          Overwrite="true" WriteOnlyWhenDifferent="true"/>
+    </Target>
 </Project>

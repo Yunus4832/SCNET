@@ -5,7 +5,7 @@ SCNET 内容包命令行工具，以及模组构建时生成 `.scpkg` 的 MSBuil
 ## 模组项目引用
 
 ```xml
-<PackageReference Include="SCNET.ContentTool" Version="0.0.0.1" PrivateAssets="all" />
+<PackageReference Include="SCNET.ContentTool" Version="0.1.0" PrivateAssets="all" />
 ```
 
 NuGet 自动导入 `build/SCNET.ContentTool.targets`。默认在模组构建后读取项目的

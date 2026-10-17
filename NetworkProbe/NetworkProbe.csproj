@@ -4,7 +4,7 @@
         <UseAppHost>false</UseAppHost>
         <SelfContained>false</SelfContained>
         <UsePackOutputTarget Condition="'$(Configuration)' == 'Release'">true</UsePackOutputTarget>
-        <OutputFileName>network-probe-$(ScnetVersion)-portable.zip</OutputFileName>
+        <OutputFileName>network-probe-$(ToolsVersion)-portable.zip</OutputFileName>
         <OutputType>Exe</OutputType>
     </PropertyGroup>
     <ItemGroup>

@@ -23,7 +23,7 @@ public class GameModRuntimeTest
             "example.addon",
             "Addon",
             "1.0.0",
-            [new ModDependency("game", "1.0.0")]);
+            [new ModDependency("game", VersionsManager.Version)]);
         var external = new ModDescriptor(externalManifest, static () => new EmptyMod());
 
         using var runtime = GameModRuntime.Start([external]);

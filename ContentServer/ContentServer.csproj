@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
     <PropertyGroup>
+        <Version>$(ContentServerVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
-        <Version>0.0.1</Version>
         <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
     </PropertyGroup>
 

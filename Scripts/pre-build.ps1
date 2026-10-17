@@ -7,14 +7,29 @@ param(
 $ErrorActionPreference = "Stop"
 Push-Location (Split-Path -Parent $PSScriptRoot)
 try {
-    $version = (& dotnet msbuild Native.ImageCodecs/Native.ImageCodecs.csproj -nologo -getProperty:PackageVersion).Trim()
-    if ($LASTEXITCODE -ne 0) { throw "Could not read the package version." }
-    $packages = @("Native.ImageCodecs", "Native.OpenAL.Android", "Engine.Core", "Engine.Media",
-        "Engine.Serialization", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem",
-        "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Survivalcraft", "ModTemplates")
+    $packages = @(
+        @{ Id = "SCNET.Native.ImageCodecs"; Project = "Native.ImageCodecs/Native.ImageCodecs.csproj" },
+        @{ Id = "SCNET.Native.OpenAL.Android"; Project = "Native.OpenAL.Android/Native.OpenAL.Android.csproj" },
+        @{ Id = "SCNET.Engine.Core"; Project = "Engine.Core/Engine.Core.csproj" },
+        @{ Id = "SCNET.Engine.Media"; Project = "Engine.Media/Engine.Media.csproj" },
+        @{ Id = "SCNET.Engine.Serialization"; Project = "Engine.Serialization/Engine.Serialization.csproj" },
+        @{ Id = "SCNET.Rendezvous.Protocol"; Project = "Rendezvous.Protocol/Rendezvous.Protocol.csproj" },
+        @{ Id = "SCNET.Engine.Network"; Project = "Engine.Network/Engine.Network.csproj" },
+        @{ Id = "SCNET.Engine"; Project = "Engine/Engine.csproj" },
+        @{ Id = "SCNET.EntitySystem"; Project = "EntitySystem/EntitySystem.csproj" },
+        @{ Id = "SCNET.Content.Packaging"; Project = "Content.Packaging/Content.Packaging.csproj" },
+        @{ Id = "SCNET.ServerSource.Protocol"; Project = "ServerSource.Protocol/ServerSource.Protocol.csproj" },
+        @{ Id = "SCNET.ContentTool"; Project = "ContentTool/ContentTool.csproj" },
+        @{ Id = "SCNET.Survivalcraft"; Project = "Survivalcraft/Survivalcraft.csproj" },
+        @{ Id = "SCNET.ModTemplates"; Project = "Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj" }
+    )
     $needsPack = $Refresh.IsPresent
     foreach ($package in $packages) {
-        if (!(Test-Path "Publish/NuGet/SCNET.$package.$version.nupkg" -PathType Leaf)) { $needsPack = $true }
+        $version = (& dotnet msbuild $package.Project -nologo -getProperty:PackageVersion).Trim()
+        if ($LASTEXITCODE -ne 0) { throw "Could not read the package version for $($package.Id)." }
+        if ($version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.-]+)?$') { throw "Invalid package version: $version" }
+        $package.Version = $version
+        if (!(Test-Path "Publish/NuGet/$($package.Id).$version.nupkg" -PathType Leaf)) { $needsPack = $true }
     }
     if ($needsPack) {
         $cacheOutput = & dotnet nuget locals global-packages --list --force-english-output
@@ -23,9 +38,8 @@ try {
         if (![IO.Path]::IsPathRooted($cacheRoot)) {
             throw "Invalid NuGet cache path: $cacheRoot"
         }
-        if ($version -notmatch '^[0-9]+(\.[0-9]+){1,3}(-[A-Za-z0-9.-]+)?$') { throw "Invalid package version: $version" }
         foreach ($package in $packages) {
-            $cacheDirectory = Join-Path $cacheRoot ("scnet.$package".ToLowerInvariant() + "/$version")
+            $cacheDirectory = Join-Path $cacheRoot ($package.Id.ToLowerInvariant() + "/$($package.Version)")
             if (Test-Path -LiteralPath $cacheDirectory) { Remove-Item -LiteralPath $cacheDirectory -Recurse -Force }
         }
         & "$PSScriptRoot/pack-nuget.ps1" -Configuration $Configuration

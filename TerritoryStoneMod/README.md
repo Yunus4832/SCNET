@@ -36,3 +36,5 @@ dotnet build TerritoryStoneMod/TerritoryStoneMod.csproj
 
 卸载模组不等于自动清理存档。原有内置领地数据不自动迁入本模组；旧存档的领地修复仍由
 原有存档升级工具处理。不要只依赖缺失方块回退空气来判断数据已被清理。
+
+模组版本由 `SharedProperties/Versions.props` 的 `TerritoryStoneVersion` 维护；构建会将 `manifest.template.json` 生成到 obj 目录后再打包。

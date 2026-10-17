@@ -8,9 +8,9 @@
         <UsePackResourceTarget>true</UsePackResourceTarget>
         <UseRenameApkTarget Condition="'$(Configuration)' == 'Release'">true</UseRenameApkTarget>
         <AndroidManifest>..\SharedProperties\AndroidManifest.xml</AndroidManifest>
-        <AndroidVersionCode>1</AndroidVersionCode>
-        <AndroidVersionName>$(ScnetVersion)</AndroidVersionName>
-        <Version>$(ScnetVersion)</Version>
+        <ApplicationVersion>$(AndroidReleaseCode)</ApplicationVersion>
+        <ApplicationDisplayVersion>$(GameVersion)</ApplicationDisplayVersion>
+        <Version>$(GameVersion)</Version>
     </PropertyGroup>
 
     <Import Project="$(MSBuildThisFileDirectory)Android.props"/>

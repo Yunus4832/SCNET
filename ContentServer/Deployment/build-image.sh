@@ -13,7 +13,6 @@ PLATFORM="${PLATFORM:-linux/amd64}"
 OUTPUT_DIR="${OUTPUT_DIR:-$ROOT/Publish}"
 PUBLISH_DIR="${CONTENTSERVER_PUBLISH_DIR:?MSBuild 未提供 CONTENTSERVER_PUBLISH_DIR}"
 CONTENT_SERVER_VERSION="${CONTENT_SERVER_VERSION:?MSBuild 未提供 CONTENT_SERVER_VERSION}"
-SCNET_VERSION="${SCNET_VERSION:?MSBuild 未提供 SCNET_VERSION}"
 DOTNET_SDK_VERSION="${DOTNET_SDK_VERSION:?MSBuild 未提供 DOTNET_SDK_VERSION}"
 
 if [ -n "${CONTAINER_ENGINE:-}" ]; then
@@ -97,7 +96,6 @@ trap cleanup EXIT
 
 echo "[ContentServer] Source revision: $source_revision$dirty_suffix"
 echo "[ContentServer] ContentServer version: $CONTENT_SERVER_VERSION"
-echo "[ContentServer] SCNET version: $SCNET_VERSION"
 echo "[ContentServer] .NET SDK version: $DOTNET_SDK_VERSION"
 echo "[ContentServer] Container engine: $container_engine"
 echo "[ContentServer] Base image pull policy: $image_pull_policy"
@@ -124,7 +122,6 @@ echo "[ContentServer] Building image: $image_reference"
   --platform "$PLATFORM" \
   --build-arg "BUILD_DATE=$build_date" \
   --build-arg "CONTENT_SERVER_VERSION=$CONTENT_SERVER_VERSION" \
-  --build-arg "SCNET_VERSION=$SCNET_VERSION" \
   --build-arg "SOURCE_REVISION=$source_revision$dirty_suffix" \
   --label "org.scnet.build.dotnet=$DOTNET_SDK_VERSION" \
   -f "$ROOT/ContentServer/Deployment/Dockerfile" \

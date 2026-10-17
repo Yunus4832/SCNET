@@ -13,7 +13,7 @@ using GamePlatformManager = Game.Managers.PlatformManager;
 namespace Survivalcraft.Android;
 
 [Activity(
-    Label = "生存战争 0.0.0.1 联机版",
+    Label = "SCNET",
     Exported = false,
     Icon = "@mipmap/icon",
     Theme = "@style/MainTheme",

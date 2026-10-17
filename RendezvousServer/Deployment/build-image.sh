@@ -12,8 +12,7 @@ IMAGE_NAME="${IMAGE_NAME:-localhost/scnet/rendezvous-server}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 OUTPUT_DIR="${OUTPUT_DIR:-$ROOT/Publish}"
 PUBLISH_DIR="${RENDEZVOUSSERVER_PUBLISH_DIR:?MSBuild 未提供 RENDEZVOUSSERVER_PUBLISH_DIR}"
-SCNET_VERSION="${SCNET_VERSION:?MSBuild 未提供 SCNET_VERSION}"
-RENDEZVOUS_SERVER_VERSION="$SCNET_VERSION"
+RENDEZVOUS_SERVER_VERSION="${RENDEZVOUS_SERVER_VERSION:?MSBuild 未提供 RENDEZVOUS_SERVER_VERSION}"
 DOTNET_SDK_VERSION="${DOTNET_SDK_VERSION:?MSBuild 未提供 DOTNET_SDK_VERSION}"
 
 if [ -n "${CONTAINER_ENGINE:-}" ]; then
@@ -97,7 +96,6 @@ trap cleanup EXIT
 
 echo "[RendezvousServer] Source revision: $source_revision$dirty_suffix"
 echo "[RendezvousServer] RendezvousServer version: $RENDEZVOUS_SERVER_VERSION"
-echo "[RendezvousServer] SCNET version: $SCNET_VERSION"
 echo "[RendezvousServer] .NET SDK version: $DOTNET_SDK_VERSION"
 echo "[RendezvousServer] Container engine: $container_engine"
 echo "[RendezvousServer] Base image pull policy: $image_pull_policy"
@@ -124,7 +122,6 @@ echo "[RendezvousServer] Building image: $image_reference"
   --platform "$PLATFORM" \
   --build-arg "BUILD_DATE=$build_date" \
   --build-arg "RENDEZVOUS_SERVER_VERSION=$RENDEZVOUS_SERVER_VERSION" \
-  --build-arg "SCNET_VERSION=$SCNET_VERSION" \
   --build-arg "SOURCE_REVISION=$source_revision$dirty_suffix" \
   --label "org.scnet.build.dotnet=$DOTNET_SDK_VERSION" \
   -f "$ROOT/RendezvousServer/Deployment/Dockerfile" \

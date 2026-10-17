@@ -20,7 +20,7 @@ using Permission = Android.Content.PM.Permission;
 namespace Survivalcraft.Android;
 
 [Activity(
-    Label = "生存战争 0.0.0.1 联机版",
+    Label = "SCNET",
     MainLauncher = true,
     Exported = true,
     Icon = "@mipmap/icon",

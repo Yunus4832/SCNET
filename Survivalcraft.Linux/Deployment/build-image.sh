@@ -3,7 +3,7 @@ set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 publish_dir="${SCNET_PUBLISH_DIR:?MSBuild did not provide SCNET_PUBLISH_DIR}"
-version="${SCNET_VERSION:?MSBuild did not provide SCNET_VERSION}"
+version="${GAME_VERSION:?MSBuild did not provide GAME_VERSION}"
 output_dir="${OUTPUT_DIR:-$root/Publish}"
 image_name="${IMAGE_NAME:-localhost/scnet/game-server}"
 image_tag="${IMAGE_TAG:-$version}"
@@ -50,7 +50,7 @@ trap 'rm -rf -- "$temporary_dir"' EXIT
 mkdir -p "$temporary_dir/bundle" "$output_dir"
 
 "${container_command[@]}" build --pull="$pull_policy" --platform linux/amd64 \
-    --build-arg "SCNET_VERSION=$version" --build-arg "SOURCE_REVISION=$revision" \
+    --build-arg "GAME_VERSION=$version" --build-arg "SOURCE_REVISION=$revision" \
     -f "$root/Survivalcraft.Linux/Deployment/Dockerfile" -t "$reference" "$publish_dir"
 
 archive="game-server-image-$image_tag-linux-amd64.tar"

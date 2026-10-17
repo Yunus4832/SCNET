@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(GameVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <AssemblyName>SCNET.Desktop.UpdateTransactions</AssemblyName>
         <RootNamespace>Scnet.Desktop.Updates</RootNamespace>

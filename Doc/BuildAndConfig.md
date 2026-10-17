@@ -11,7 +11,7 @@
 - `GlobalTargetFramework`
 - `AndroidTargetFramework`
 - `MinAndroidApiVersion`
-- `AndroidVersionCode`（发布新版 APK 时递增，且同一签名密钥保持不变）
+- 通过 `SharedProperties/Versions.props` 集中导入发布版本
 - `LangVersion`
 - `Nullable`
 - `WarningsAsErrors`
@@ -19,6 +19,25 @@
 - 解决方案级别的 `Configurations`
 
 这些属性会被大多数项目自动继承，所以单个项目里通常只需要写差异部分。
+
+### `SharedProperties/Versions.props`
+
+所有自主发布单元从 `0.1.0` 开始，使用 `MAJOR.MINOR.PATCH[-prerelease]`。
+游戏、引擎、原生库、内容工具、协议包和服务各自选择独立版本属性；数字只在此文件维护。
+`Version` 用于程序集和 NuGet 默认包版本，消费方通过对应生产者属性引用精确依赖。
+游戏及 Starter 共用 `GameVersion`，`Engine.*` 与 `EntitySystem` 共用 `EngineVersion`；
+其他发行单元使用同名版本属性，开发工具与测试默认使用 `ToolsVersion`。
+ContentWebUI 随 ContentServer 发布，私有 npm 清单不重复定义产品版本。
+
+游戏从自身程序集的 `AssemblyInformationalVersion` 读取显示版本，去掉 `+` 后的构建信息；
+完整标识保留在 `VersionsManager.BuildVersion`。CLR 数值程序集版本由 SDK 生成，不作为产品版本。
+`GameProtocolVersion` 独立注入程序集元数据，只在通信合同不兼容或显式重置时修改。
+发行版本验证和更新排序使用同一语义化比较规则，不接受旧四段式产品版本。
+
+Android 共享配置把 `GameVersion` 写入版本名称，把 `AndroidReleaseCode` 写入系统升级计数。
+升级计数独立递增，同一发行批次各 ABI 共用该计数，签名密钥保持不变。应用标签固定为 SCNET。
+提交代码时按提交技能评估并自动提升受影响的发布版本；已在当前变更中调整的版本不重复提升。
+当前 `0.x` 开发期不提供兼容性保证，常规迭代默认递增补丁版本。
 
 ### `Directory.Build.targets`
 

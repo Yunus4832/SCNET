@@ -9,7 +9,7 @@
             <RendezvousServerPublishDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(PublishDir)'))</RendezvousServerPublishDirectory>
         </PropertyGroup>
         <Exec Command="bash &quot;$(MSBuildProjectDirectory)/Deployment/build-image.sh&quot;"
-              EnvironmentVariables="RENDEZVOUSSERVER_PUBLISH_DIR=$(RendezvousServerPublishDirectory);SCNET_VERSION=$(ScnetVersion);DOTNET_SDK_VERSION=$(NETCoreSdkVersion);PLATFORM=linux/amd64"
+              EnvironmentVariables="RENDEZVOUSSERVER_PUBLISH_DIR=$(RendezvousServerPublishDirectory);RENDEZVOUS_SERVER_VERSION=$(RendezvousServerVersion);DOTNET_SDK_VERSION=$(NETCoreSdkVersion);PLATFORM=linux/amd64"
               Condition="$([MSBuild]::IsOSPlatform('Linux'))"/>
         <Message Text="[RendezvousServer] 当前系统不是 Linux，已跳过容器镜像打包。" Importance="high"
                  Condition="!$([MSBuild]::IsOSPlatform('Linux'))"/>

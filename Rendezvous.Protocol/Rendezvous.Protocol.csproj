@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(RendezvousProtocolVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <IsPackable>true</IsPackable>
         <PackageId>SCNET.Rendezvous.Protocol</PackageId>

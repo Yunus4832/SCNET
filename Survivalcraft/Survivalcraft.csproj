@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(GameVersion)</Version>
         <AssemblyName>Survivalcraft</AssemblyName>
-        <Version>$(ScnetVersion)</Version>
         <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
         <RootNamespace>Game</RootNamespace>
         <IsPackable>true</IsPackable>
@@ -20,6 +20,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <AssemblyMetadata Include="GameProtocolVersion" Value="$(GameProtocolVersion)"/>
         <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
     </ItemGroup>
 

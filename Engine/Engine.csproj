@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(EngineVersion)</Version>
         <AssemblyName>Engine</AssemblyName>
         <TargetFrameworks>$(GlobalTargetFramework);$(AndroidTargetFramework)</TargetFrameworks>
         <IsPackable>true</IsPackable>
@@ -38,7 +39,7 @@
 
     <ItemGroup Condition="'$(TargetFramework)'=='$(AndroidTargetFramework)'">
         <Compile Remove="**\*.Desktop.cs"/>
-        <PackageReference Include="SCNET.Native.OpenAL.Android" Version="$(ScnetVersion)"/>
+        <PackageReference Include="SCNET.Native.OpenAL.Android" Version="$(OpenALAndroidVersion)"/>
         <PackageReference Include="Xamarin.AndroidX.Core" Version="1.17.0.1"/>
     </ItemGroup>
 

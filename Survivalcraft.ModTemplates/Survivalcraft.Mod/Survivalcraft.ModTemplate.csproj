@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>__SCNET_MOD_VERSION__</Version>
         <TargetFramework>net10.0</TargetFramework>
         <AssemblyName>Survivalcraft.ModTemplate</AssemblyName>
         <RootNamespace>Survivalcraft.ModTemplate</RootNamespace>
@@ -8,10 +9,10 @@
 
     <ItemGroup>
         <PackageReference Include="SCNET.Survivalcraft"
-                          Version="0.0.0.1"
+                          Version="__SCNET_GAME_VERSION__"
                           ExcludeAssets="runtime"/>
         <PackageReference Include="SCNET.ContentTool"
-                          Version="0.0.0.1"
+                          Version="__SCNET_CONTENT_TOOL_VERSION__"
                           PrivateAssets="all"/>
     </ItemGroup>
 </Project>

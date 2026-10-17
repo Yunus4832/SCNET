@@ -8,7 +8,7 @@
 
     <!-- Release 配置 -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-        <OutputApkName>SCNET_X86-$(ScnetVersion).apk</OutputApkName>
+        <OutputApkName>SCNET_X86-$(GameVersion).apk</OutputApkName>
     </PropertyGroup>
 
     <ItemGroup>

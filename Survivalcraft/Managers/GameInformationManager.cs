@@ -1,6 +1,8 @@
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
+using Content.Packaging;
+
 using Game.Content;
 
 using Dialog = Game.Dialogs.Dialog;
@@ -307,8 +309,8 @@ public static class GameInformationManager
         }
 
         if (release.Platform != platform || release.Status != "published" ||
-            string.IsNullOrWhiteSpace(release.Id) || !Version.TryParse(release.Version, out var version) ||
-            !Version.TryParse(currentVersion, out var current) ||
+            string.IsNullOrWhiteSpace(release.Id) || !SemanticVersion.TryParse(release.Version, out var version) ||
+            !SemanticVersion.TryParse(currentVersion, out var current) ||
             !Uri.TryCreate(release.DownloadUrl, UriKind.Absolute, out var uri) ||
             uri.Scheme is not ("http" or "https") ||
             release.Sha256 is not { Length: 64 } || !release.Sha256.All(Uri.IsHexDigit))

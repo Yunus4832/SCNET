@@ -56,6 +56,16 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 - `Survivalcraft.ModTemplates/Survivalcraft.Mod/` 是模板源代码；只有对应的模板打包
   项目会生成 NuGet 包。
 
+## 版本归属
+
+版本集中于 `SharedProperties/Versions.props`，各项目显式选择 `Version`，包版本默认跟随该项目。
+不能再用游戏版本推断引擎、原生依赖或工具版本。`pre-build.sh/.ps1` 分别读取白名单项目的
+`PackageVersion`，检查相应文件并精确刷新缓存。修改某组件不要求无关包升版，但发布的依赖
+元数据或内嵌文件变化时，消费者产物也需要新版本，不能重用已发布包的身份。
+
+模板打包时将游戏 SDK、ContentTool 和新模组初始版本写入生成的模板，不把仓库属性引用泄漏
+到用户项目。领地石的 `manifest.template.json` 在构建时用集中定义的模组版本生成有效清单。
+
 ## 本地打包
 
 首次构建或升级原生产物时，先生成本地原生包：

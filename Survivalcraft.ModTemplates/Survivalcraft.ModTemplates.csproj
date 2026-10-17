@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(ModTemplatesVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <IsPackable>true</IsPackable>
         <PackageId>SCNET.ModTemplates</PackageId>
@@ -25,14 +26,28 @@
         <Content Include="Survivalcraft.Mod\ModEntry.cs"
                  Pack="true"
                  PackagePath="content\ModEntry.cs"/>
-        <Content Include="Survivalcraft.Mod\manifest.json"
-                 Pack="true"
-                 PackagePath="content\manifest.json"/>
+
         <Content Include="Survivalcraft.Mod\README.md"
                  Pack="true"
                  PackagePath="content\README.md"/>
-        <Content Include="Survivalcraft.Mod\Survivalcraft.ModTemplate.csproj"
-                 Pack="true"
-                 PackagePath="content\Survivalcraft.ModTemplate.csproj"/>
+
     </ItemGroup>
+    <Target Name="GenerateTemplateVersions" BeforeTargets="_GetPackageFiles">
+        <PropertyGroup>
+            <_GeneratedTemplateDirectory>$(IntermediateOutputPath)template</_GeneratedTemplateDirectory>
+            <_GeneratedTemplateProject>$(_GeneratedTemplateDirectory)/Survivalcraft.ModTemplate.csproj</_GeneratedTemplateProject>
+            <_TemplateProjectText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Survivalcraft.Mod/Survivalcraft.ModTemplate.csproj').Replace('__SCNET_GAME_VERSION__', '$(GameVersion)').Replace('__SCNET_CONTENT_TOOL_VERSION__', '$(ContentToolVersion)').Replace('__SCNET_MOD_VERSION__', '$(InitialModVersion)'))</_TemplateProjectText>
+            <_TemplateManifestText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Survivalcraft.Mod/manifest.json').Replace('__SCNET_MOD_VERSION__', '$(InitialModVersion)'))</_TemplateManifestText>
+        </PropertyGroup>
+        <MakeDir Directories="$(_GeneratedTemplateDirectory)"/>
+        <WriteLinesToFile File="$(_GeneratedTemplateProject)" Lines="$(_TemplateProjectText)"
+                          Overwrite="true" WriteOnlyWhenDifferent="true"/>
+        <WriteLinesToFile File="$(_GeneratedTemplateDirectory)/manifest.json" Lines="$(_TemplateManifestText)"
+                          Overwrite="true" WriteOnlyWhenDifferent="true"/>
+        <ItemGroup>
+            <Content Include="$(_GeneratedTemplateDirectory)/manifest.json" Pack="true" PackagePath="content/manifest.json"/>
+            <Content Include="$(_GeneratedTemplateProject)" Pack="true"
+                     PackagePath="content/Survivalcraft.ModTemplate.csproj"/>
+        </ItemGroup>
+    </Target>
 </Project>

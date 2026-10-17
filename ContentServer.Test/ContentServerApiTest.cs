@@ -47,6 +47,43 @@ public sealed class ContentServerApiTest : IDisposable
     private readonly string _storagePath = Path.Combine(Path.GetTempPath(), $"content-server-files-{Guid.NewGuid():N}");
 
     [Fact]
+    public async Task PublishedGameReleasesUseSemanticPrereleaseOrdering()
+    {
+        await using var factory = CreateFactory();
+        var client = factory.CreateClient();
+        await client.PostAsJsonAsync("/api/v1/administrators/initialize", new
+        {
+            name = "Administrator",
+            apiKey = _administratorKey
+        });
+        foreach (var version in new[] { "0.1.0-alpha.10", "0.1.0-alpha.2", "0.1.0" })
+        {
+            using var create = CreateAuthorizedRequest(HttpMethod.Post,
+                "/api/v1/admin/game-releases", _administratorKey);
+            create.Content = JsonContent.Create(new
+            {
+                version,
+                description = "SemVer update",
+                artifacts = new[]
+                {
+                    new { platform = "linux-x64", downloadUrl = "https://example.test/game.zip", sha256 = new string('a', 64) }
+                }
+            });
+            var created = await ReadDataAsync(await client.SendAsync(create));
+            using var publish = CreateAuthorizedRequest(HttpMethod.Post,
+                $"/api/v1/admin/game-releases/{created.GetProperty("id").GetString()}/publish", _administratorKey);
+            using var published = await client.SendAsync(publish);
+            Assert.True(published.IsSuccessStatusCode, await published.Content.ReadAsStringAsync());
+        }
+
+        var releases = await ReadDataAsync(await client.GetAsync("/api/v1/game-releases"));
+        Assert.Equal(new[] { "0.1.0", "0.1.0-alpha.10", "0.1.0-alpha.2" },
+            releases.EnumerateArray().Select(item => item.GetProperty("version").GetString()));
+        var latest = await ReadDataAsync(await client.GetAsync("/api/v1/game-releases/latest/linux-x64"));
+        Assert.Equal("0.1.0", latest.GetProperty("version").GetString());
+    }
+
+    [Fact]
     public async Task ImageUploadAcceptsPngAfterFormatDetection()
     {
         await using var factory = CreateFactory();

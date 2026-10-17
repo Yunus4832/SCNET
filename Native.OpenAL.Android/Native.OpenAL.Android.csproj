@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(OpenALAndroidVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <IsPackable>true</IsPackable>
         <PackageId>SCNET.Native.OpenAL.Android</PackageId>

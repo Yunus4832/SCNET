@@ -1,3 +1,5 @@
+using Content.Packaging;
+
 using ContentServer.Domain.Releases;
 using ContentServer.Infrastructure;
 
@@ -29,7 +31,7 @@ public sealed class ListGameReleasesQueryHandler(ContentServerDbContext db)
 
         var items = await query.ToArrayAsync(cancellationToken);
         return request.PublicOnly
-            ? items.OrderByDescending(item => System.Version.Parse(item.Version)).ToArray()
+            ? items.OrderByDescending(item => SemanticVersion.Parse(item.Version)).ToArray()
             : items.OrderByDescending(item => item.CreatedAt).ToArray();
     }
 }

@@ -6,8 +6,8 @@ SCNET 游戏运行时及模组开发契约，支持 .NET 10 和 .NET 10 for Andr
 ## 模组引用
 
 ```xml
-<PackageReference Include="SCNET.Survivalcraft" Version="0.0.0.1" ExcludeAssets="runtime" />
-<PackageReference Include="SCNET.ContentTool" Version="0.0.0.1" PrivateAssets="all" />
+<PackageReference Include="SCNET.Survivalcraft" Version="0.1.0" ExcludeAssets="runtime" />
+<PackageReference Include="SCNET.ContentTool" Version="0.1.0" PrivateAssets="all" />
 ```
 
 游戏 SDK 及引擎用于编译；实际运行时由游戏宿主提供，不应复制进 `.scpkg`。

@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(ServerSourceProtocolVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <AssemblyName>SCNET.ServerSource.Protocol</AssemblyName>
         <RootNamespace>ServerSource.Protocol</RootNamespace>

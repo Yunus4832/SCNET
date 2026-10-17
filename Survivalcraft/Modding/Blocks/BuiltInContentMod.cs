@@ -11,7 +11,7 @@ public sealed class BuiltInContentMod : IMod
     public static readonly ModManifest Manifest = new(
         "game",
         "Built-in Game Content",
-        "1.0.0",
+        VersionsManager.Version,
         Side: ModSide.Common);
 
     public static ModDescriptor CreateDescriptor()

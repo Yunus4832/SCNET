@@ -1,5 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <Version>$(ContentPackagingVersion)</Version>
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
         <AssemblyName>SCNET.Content.Packaging</AssemblyName>
         <RootNamespace>Content.Packaging</RootNamespace>
