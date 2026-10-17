@@ -43,7 +43,6 @@ public sealed class Image : IDisposable
     public static ImageFileFormat DetermineFileFormat(string extension) => extension.ToLowerInvariant() switch
     {
         ".png" => ImageFileFormat.Png,
-        ".jpg" or ".jpeg" => ImageFileFormat.Jpg,
         ".webp" => ImageFileFormat.WebP,
         ".bmp" => ImageFileFormat.Bmp,
         _ => throw new InvalidOperationException("Unsupported image file format.")
@@ -58,7 +57,6 @@ public sealed class Image : IDisposable
         return ImageCodec.Identify(stream).Format switch
         {
             ImageFormat.Png => ImageFileFormat.Png,
-            ImageFormat.Jpeg => ImageFileFormat.Jpg,
             ImageFormat.WebP => ImageFileFormat.WebP,
             _ => throw new InvalidDataException("Unsupported image format.")
         };
@@ -102,7 +100,6 @@ public sealed class Image : IDisposable
         var codecFormat = format switch
         {
             ImageFileFormat.Png => ImageFormat.Png,
-            ImageFileFormat.Jpg => ImageFormat.Jpeg,
             ImageFileFormat.WebP => ImageFormat.WebP,
             _ => throw new ArgumentOutOfRangeException(nameof(format))
         };

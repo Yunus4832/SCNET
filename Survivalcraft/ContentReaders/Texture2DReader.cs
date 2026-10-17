@@ -7,7 +7,7 @@ public class Texture2DReader : IContentReader
 {
     public override string Type => "Engine.Graphics.Texture2D";
 
-    public override string[] DefaultSuffix => ["png", "jpg", "jpeg"];
+    public override string[] DefaultSuffix => ["png"];
 
     public override object Get(ContentInfo[] contents)
     {

@@ -264,7 +264,6 @@ ZIP 文件集合，拒绝目录穿越、符号链接、实例/配置覆盖及清
         <string>libpng.so</string>
         <string>libwebp.so</string>
         <string>libsharpyuv.so</string>
-        <string>libturbojpeg.so</string>
         <string>ThirdPartyNotices.txt</string>
     </Files>
 </DesktopReleaseManifest>

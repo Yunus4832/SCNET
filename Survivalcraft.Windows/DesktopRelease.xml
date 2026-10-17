@@ -9,7 +9,6 @@
         <string>libpng16.dll</string>
         <string>libwebp.dll</string>
         <string>libsharpyuv.dll</string>
-        <string>turbojpeg.dll</string>
         <string>ThirdPartyNotices.txt</string>
     </Files>
 </DesktopReleaseManifest>

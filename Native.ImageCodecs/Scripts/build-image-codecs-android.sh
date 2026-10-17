@@ -15,10 +15,9 @@ trap cleanup EXIT
 ndk="${ANDROID_NDK_ROOT:-$HOME/Android/Sdk/ndk/29.0.14206865}"
 toolchain="$ndk/build/cmake/android.toolchain.cmake"
 llvm="$ndk/toolchains/llvm/prebuilt/linux-x86_64/bin"
-nasm="${IMAGE_CODEC_NASM:-$(command -v nasm || true)}"
 mkdir -p "$work/logs" "$work/out"
-[[ -x "$nasm" && -f "$toolchain" ]]
-for repo_tag in libpng:v1.6.59 libwebp:v1.6.0 libjpeg-turbo:3.2.0 zlib:v1.3.2; do
+[[ -f "$toolchain" ]]
+for repo_tag in libpng:v1.6.59 libwebp:v1.6.0 zlib:v1.3.2; do
     repo="${repo_tag%%:*}"
     tag="${repo_tag#*:}"
     [[ -z "$(git -C "$source_root/$repo" status --porcelain)" ]]
@@ -64,19 +63,13 @@ for abi in armeabi-v7a x86 x86_64 arm64-v8a; do
             -Wl,--whole-archive "$work/build/$rid/webp/lib$name.a" -Wl,--no-whole-archive \
             -L"$output" -lwebp -lm -o "$output/lib$name.so"
     done
-    echo "BUILD TurboJPEG $rid"
-    cmake -S "$source_root/libjpeg-turbo" -B "$work/build/$rid/jpeg" "${common[@]}" \
-        -DENABLE_SHARED=ON -DENABLE_STATIC=OFF -DWITH_SIMD=ON \
-        -DCMAKE_ASM_NASM_COMPILER="$nasm" > "$work/logs/$rid-jpeg.log" 2>&1
-    cmake --build "$work/build/$rid/jpeg" --target turbojpeg -j 4 >> "$work/logs/$rid-jpeg.log" 2>&1
-    cp -L "$work/build/$rid/jpeg/libturbojpeg.so" "$output/libturbojpeg.so"
     "$llvm/llvm-strip" --strip-unneeded "$output/"*.so
     echo "COMPLETE $rid"
 done
 for rid in android-arm android-arm64 android-x86 android-x64; do
     destination="$project_root/runtimes/$rid/native"
     mkdir -p "$destination"
-    for library in libpng.so libwebp.so libturbojpeg.so; do
+    for library in libpng.so libwebp.so; do
         cp "$work/out/$rid/native/$library" "$destination/$library"
     done
 done

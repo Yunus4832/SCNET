@@ -3,7 +3,7 @@
 不依赖窗口、GPU、音频设备或游戏文件存储的媒体数据与编解码库。公共类型位于
 `Engine.Media` 命名空间，供游戏、模组和内容工具共同使用：
 
-- 图像：PNG、JPEG、WebP 编解码及 BMP 读写；`Image` 与 `ImageBuffer` 使用
+- 图像：PNG、WebP 编解码及 BMP 读写；`Image` 与 `ImageBuffer` 使用
   `Engine.Core.Color` 连续 RGBA8 数组，采用非预乘 Alpha。
 - 音频：WAV、Ogg、FLAC、MP3 读取和流式解码，WAV 写入；不负责音频播放。
 - 模型：Collada 解析、骨骼、网格和顶点数据描述；不创建 GPU 缓冲。
@@ -26,3 +26,5 @@ Android 图像库通过原生包依赖进入 APK；OpenAL 则通过 Engine 的 A
 
 许可声明统一维护在根目录的 `ThirdPartyNotices.txt`，随 NuGet、桌面发布包和 APK 分发；
 更新依赖时需同步更新。
+
+游戏截图统一保存为不含透明通道的 PNG。媒体接口不提供 JPEG 或 TIFF 编解码。

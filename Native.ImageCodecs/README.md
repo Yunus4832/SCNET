@@ -1,6 +1,6 @@
 # SCNET.Native.ImageCodecs
 
-图像原生资产打包项目，包含 PNG、JPEG、WebP 及桌面 WebP 所需的 SharpYUV。
+图像原生资产打包项目，包含 PNG、WebP 及桌面 WebP 所需的 SharpYUV。
 按 `runtimes/<rid>/native` 存放，支持 Linux x64、Windows x64 和 Android 四种 ABI。
 Engine.Media 引用此包，应用通过 NuGet 标准 RID 机制自动选择和部署原生资产。
 本项目不包含 OpenAL，不分发托管程序集。`dotnet build/pack` 不触发 C/C++ 编译。
@@ -22,16 +22,14 @@ Engine.Media 引用此包，应用通过 NuGet 标准 RID 机制自动选择和�
 | --- | --- | --- |
 | libpng | 自编译 1.6.59 | 四个 ABI 自编译 1.6.59 |
 | libwebp | Imazen.WebP.NativeRuntime 的 Linux x64 / Windows x64 1.6.0 产物 | 1.6.0，四个 ABI 补编译 |
-| libjpeg-turbo | Windows x64 使用 turbojpeg-VC.Redist 3.1.1；Linux x64 编译 3.2.0 | 3.2.0，四个 ABI 补编译 |
 
 Android 使用 NDK r29（29.0.14206865）、API 23。PNG 的 zlib 1.3.2 与 WebP 的
 SharpYUV 静态链接进对应共享库，应用不需要额外部署这些 Android 依赖。
 桌面 WebP 的 SharpYUV 单独部署并预加载。Windows WebP 产物还依赖
 Microsoft Visual C++ 2015–2022 x64 Redistributable（VCRUNTIME140.dll）；该系统运行库
-不是本项目携带的文件，Windows 部署时需确保已安装。Linux JPEG 使用 C17 编译，当前产物的
-最高 glibc 符号要求为 2.14。项目支持的桌面 RID 为 linux-x64 和 win-x64。
+不是本项目携带的文件，Windows 部署时需确保已安装。项目支持的桌面 RID 为 linux-x64 和 win-x64。
 
-PNG、JPEG、WebP 均使用项目内的薄 P/Invoke 绑定；PNG 的所有原生库统一为 1.6.59。
+PNG、WebP 均使用项目内的薄 P/Invoke 绑定；PNG 的所有原生库统一为 1.6.59。
 
 ## 重编译 Android
 
@@ -39,10 +37,9 @@ PNG、JPEG、WebP 均使用项目内的薄 P/Invoke 绑定；PNG 的所有原生
 
 - https://github.com/pnggroup/libpng （v1.6.59）
 - https://github.com/webmproject/libwebp （v1.6.0）
-- https://github.com/libjpeg-turbo/libjpeg-turbo （3.2.0）
 - https://github.com/madler/zlib （v1.3.2）
 
-Linux 构建机需要 Git、CMake、Make、NASM 和 Android NDK：
+Linux 构建机需要 Git、CMake、Make 和 Android NDK：
 
 ```bash
 IMAGE_CODEC_SOURCES=/path/to/sources \
@@ -50,7 +47,7 @@ ANDROID_NDK_ROOT=/path/to/ndk/29.0.14206865 \
 ./Native.ImageCodecs/Scripts/build-image-codecs-android.sh
 ```
 
-四种 ABI 全部构建成功后，脚本自动将 libpng.so、libwebp.so、libturbojpeg.so
+四种 ABI 全部构建成功后，脚本自动将 libpng.so、libwebp.so
 复制到本项目 `runtimes/<rid>/native` 并更新 `SHA256SUMS`；不复制未使用的 demux/mux 库。
 之后仍需核对 ELF 依赖、64 位的 16 KiB 页面对齐、导出函数，并验证 APK 打包与实际加载。
 
@@ -74,10 +71,6 @@ IMAGE_CODEC_WINDOWS_TOOLCHAIN=/path/to/llvm-mingw \
 
 PNG 的 zlib 静态链接进共享库，Windows PNG 不需要单独部署 zlib1.dll。
 编译工具链的许可证也包含在解决方案根目录的 `ThirdPartyNotices.txt` 中。
-
-Linux JPEG 的等价构建参数为 `-DCMAKE_C_STANDARD=17 -DCMAKE_BUILD_TYPE=Release
--DENABLE_SHARED=ON -DENABLE_STATIC=OFF`，构建目标为 `turbojpeg`。不同编译环境可能
-提高 glibc 要求，需要重新检查符号版本，不能仅根据成功编译认定可部署。
 
 校验值见 `SHA256SUMS`；许可声明统一维护在解决方案根目录 `ThirdPartyNotices.txt`。
 打包入口见 [NuGet 文档](https://gitee.com/Yunus0712/scnet/blob/main/Doc/NuGet.md#本地打包)。

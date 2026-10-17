@@ -9,7 +9,6 @@
         <string>libpng.so</string>
         <string>libwebp.so</string>
         <string>libsharpyuv.so</string>
-        <string>libturbojpeg.so</string>
         <string>ThirdPartyNotices.txt</string>
     </Files>
 </DesktopReleaseManifest>

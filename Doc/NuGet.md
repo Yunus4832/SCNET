@@ -9,7 +9,7 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 | 包 | 项目 | 用途 |
 | --- | --- | --- |
 | `SCNET.Native.OpenAL.Android` | `Native.OpenAL.Android` | 仅 Android 四种 ABI 的 OpenAL，由 Engine 的 Android 目标依赖。 |
-| `SCNET.Native.ImageCodecs` | `Native.ImageCodecs` | PNG、JPEG、WebP 的标准 RID 原生资产；由 Media 依赖。 |
+| `SCNET.Native.ImageCodecs` | `Native.ImageCodecs` | PNG、WebP 的标准 RID 原生资产；由 Media 依赖。 |
 | `SCNET.Engine.Core` | `Engine.Core` | 不依赖引擎的基础工具。 |
 | `SCNET.Engine.Media` | `Engine.Media` | 图像、音频、Collada 模型数据与编解码；公共命名空间为 Engine.Media，无窗口、GPU、音频设备及文件存储依赖。 |
 | `SCNET.Engine.Serialization` | `Engine.Serialization` | 基于 Engine.Core 构建的序列化支持。 |

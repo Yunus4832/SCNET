@@ -49,21 +49,15 @@ public class ImageTest
     }
 
     [Fact]
-    public void JpegRoundTripsSizeAndColorWithinLossyTolerance()
+    public void JpegIsRejectedBeforeDecoding()
     {
-        using var image = new ImageBuffer(16, 16);
-        Array.Fill(image.Pixels, new Color(30, 100, 170, 255));
-        var bytes = ImageCodec.Encode(image, ImageFormat.Jpeg, quality: 95);
-        using var result = ImageCodec.Decode(bytes);
-        Assert.Equal(16, result.Width);
-        Assert.Equal(16, result.Height);
-        foreach (var pixel in result.Pixels)
-        {
-            Assert.InRange(System.Math.Abs(pixel.R - 30), 0, 5);
-            Assert.InRange(System.Math.Abs(pixel.G - 100), 0, 5);
-            Assert.InRange(System.Math.Abs(pixel.B - 170), 0, 5);
-            Assert.Equal(255, pixel.A);
-        }
+        byte[] header = [255, 216, 255, 224, 0, 16];
+        Assert.Throws<InvalidDataException>(() => ImageCodec.Identify(header));
+        Assert.Throws<InvalidDataException>(() => ImageCodec.Decode(header));
+        using var stream = new MemoryStream(header);
+        Assert.Throws<InvalidDataException>(() => Image.Load(stream));
+        Assert.Throws<InvalidOperationException>(() => Image.DetermineFileFormat(".jpg"));
+        Assert.Throws<InvalidOperationException>(() => Image.DetermineFileFormat(".jpeg"));
     }
 
     [Fact]

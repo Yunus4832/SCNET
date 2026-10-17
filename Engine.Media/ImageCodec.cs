@@ -14,15 +14,11 @@ public static class ImageCodec
         {
             return ImageFormat.Png;
         }
-        if (data.Length >= 3 && data[0] == 255 && data[1] == 216 && data[2] == 255)
-        {
-            return ImageFormat.Jpeg;
-        }
         if (data.Length >= 12 && data[..4].SequenceEqual("RIFF"u8) && data.Slice(8, 4).SequenceEqual("WEBP"u8))
         {
             return ImageFormat.WebP;
         }
-        throw new InvalidDataException("Unsupported image format. Expected PNG, JPEG or WebP.");
+        throw new InvalidDataException("Unsupported image format. Expected PNG or WebP.");
     }
 
     public static ImageInfo Identify(ReadOnlySpan<byte> data)
@@ -30,7 +26,6 @@ public static class ImageCodec
         var info = DetectFormat(data) switch
         {
             ImageFormat.Png => IdentifyPng(data),
-            ImageFormat.Jpeg => JpegCodec.Identify(data),
             ImageFormat.WebP => WebPCodec.Identify(data),
             _ => throw new InvalidDataException("Unsupported image format.")
         };
@@ -64,7 +59,6 @@ public static class ImageCodec
         return info.Format switch
         {
             ImageFormat.Png => PngCodec.Decode(data),
-            ImageFormat.Jpeg => JpegCodec.Decode(data, info),
             ImageFormat.WebP => WebPCodec.Decode(data, info),
             _ => throw new InvalidDataException("Unsupported image format.")
         };
@@ -72,13 +66,9 @@ public static class ImageCodec
 
     public static ImageBuffer Decode(Stream stream) => Decode(ReadEncoded(stream));
 
-    public static byte[] Encode(ImageBuffer image, ImageFormat format, bool saveAlpha = true, int quality = 95)
+    public static byte[] Encode(ImageBuffer image, ImageFormat format, bool saveAlpha = true)
     {
         ArgumentNullException.ThrowIfNull(image);
-        if (quality is < 0 or > 100)
-        {
-            throw new ArgumentOutOfRangeException(nameof(quality));
-        }
         if (format == ImageFormat.WebP && !saveAlpha)
         {
             using var opaque = image.Clone();
@@ -91,16 +81,15 @@ public static class ImageCodec
         return format switch
         {
             ImageFormat.Png => PngCodec.Encode(image, saveAlpha),
-            ImageFormat.Jpeg => JpegCodec.Encode(image, quality),
             ImageFormat.WebP => WebPCodec.Encode(image),
             _ => throw new ArgumentOutOfRangeException(nameof(format))
         };
     }
 
-    public static void Encode(ImageBuffer image, Stream stream, ImageFormat format, bool saveAlpha = true, int quality = 95)
+    public static void Encode(ImageBuffer image, Stream stream, ImageFormat format, bool saveAlpha = true)
     {
         ArgumentNullException.ThrowIfNull(stream);
-        stream.Write(Encode(image, format, saveAlpha, quality));
+        stream.Write(Encode(image, format, saveAlpha));
     }
 
     private static byte[] ReadEncoded(Stream stream)

@@ -4,6 +4,5 @@ public enum ImageFileFormat
 {
     Bmp,
     Png,
-    Jpg,
     WebP
 }

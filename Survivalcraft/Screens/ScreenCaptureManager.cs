@@ -47,7 +47,7 @@ public static class ScreenCaptureManager
 
             var now = DateTime.Now;
             Capture(num, height,
-                $"Survivalcraft {now.Year:D4}-{now.Month:D2}-{now.Day:D2} {now.Hour:D2}-{now.Minute:D2}-{now.Second:D2}.jpg");
+                $"Survivalcraft {now.Year:D4}-{now.Month:D2}-{now.Day:D2} {now.Hour:D2}-{now.Minute:D2}-{now.Second:D2}.png");
             _successHandler.Invoke();
             GC.Collect();
         }
@@ -137,6 +137,6 @@ public static class ScreenCaptureManager
 
         using var stream = Storage.OpenFile(Storage.CombinePaths(_screenshotDir, filename),
             OpenFileMode.CreateOrOpen);
-        Image.Save(image, stream, ImageFileFormat.Jpg, false);
+        Image.Save(image, stream, ImageFileFormat.Png, false);
     }
 }
