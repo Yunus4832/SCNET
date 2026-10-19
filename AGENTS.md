@@ -23,6 +23,13 @@ runtime compatibility when either approach satisfies the requirement.
 Reassess and update this section when SCNET begins publishing releases, supporting external users,
 or maintaining third-party integrations.
 
+## Version changes
+
+Keep existing release versions unchanged during ordinary development, local builds, and testing.
+Decide and apply the appropriate bump once while preparing the corresponding commit; follow
+`scnet-commit-discipline`. Do not bump on every edit or test restart. New release units retain their
+agreed initial version; an explicitly requested publication may require a version change sooner.
+
 ## C# code quality
 
 Treat `.editorconfig` as authoritative for C# style. Before completing any change that modifies C#,

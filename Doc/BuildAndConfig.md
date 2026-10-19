@@ -29,6 +29,9 @@
 其他发行单元使用同名版本属性，开发工具与测试默认使用 `ToolsVersion`。
 [UI 预览工具](../UiPreviewTool/README.md) 使用独立的 `UiPreviewToolVersion`，从 `0.1.0` 开始。
 ContentWebUI 随 ContentServer 发布，私有 npm 清单不重复定义产品版本。
+开发、构建和本地测试期间保持现有版本号，准备提交时再根据变更统一提升一次；
+新发行单元保留约定的初始版本，明确发布时可按发布需要提前调整。
+本地模组测试构建使用完整包哈希区分，不为了每轮测试递增产品版本。
 
 游戏从自身程序集的 `AssemblyInformationalVersion` 读取显示版本，去掉 `+` 后的构建信息；
 完整标识保留在 `VersionsManager.BuildVersion`。CLR 数值程序集版本由 SDK 生成，不作为产品版本。

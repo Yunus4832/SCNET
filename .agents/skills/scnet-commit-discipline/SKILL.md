@@ -9,6 +9,14 @@ Inspect the complete working tree and relevant diff before proposing commit boun
 
 ## Version decisions are part of committing
 
+Keep existing release versions unchanged during ordinary implementation, local builds, and manual
+test iterations. Decide and apply a version bump once when preparing the corresponding commit,
+using the last committed version as the baseline. Do not increment on each edit, fix, rebuild, or
+test-environment restart. A new release unit still needs its agreed initial version. An explicit
+publication request can require a new version before committing; identify that release boundary.
+Local test content packages can be distinguished by their full package hash; update the test
+profile's exact package identity rather than advancing the product version solely to bypass caches.
+
 Before staging, inspect `SharedProperties/Versions.props` and the affected projects' `Version` and
 first-party `PackageReference` properties. Automatically update affected release versions when the
 commit changes shipped behavior, APIs, dependencies, native assets, or packaging output. Keep version
