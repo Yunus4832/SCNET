@@ -14,6 +14,7 @@
         <ContentServerVersion>0.1.2</ContentServerVersion>
         <RendezvousServerVersion>0.1.0</RendezvousServerVersion>
         <TerritoryStoneVersion>0.1.3</TerritoryStoneVersion>
+        <UiPreviewToolVersion>0.1.0</UiPreviewToolVersion>
         <ToolsVersion>0.1.2</ToolsVersion>
         <GameProtocolVersion>0.1.0</GameProtocolVersion>
         <AndroidReleaseCode>4</AndroidReleaseCode>

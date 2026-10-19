@@ -44,6 +44,7 @@
 - [网络测试](NetworkTesting.md)：传输验证、弱网与容量测试的范围划分。
 - [容量测试](ServerLoadTesting.md)：协议客户端、负载场景和结果解释。
 - [NetworkProbe](../NetworkProbe/README.md)：传输层探针命令与参数。
+- [UI 预览工具](../UiPreviewTool/README.md)：独立组件渲染、语言与尺寸预览、布局报告及最小运行环境验证。
 - [GUI 图集工具](../GuiAtlasTool/README.md)：源资源、生成及 Alpha 处理。
 
 ## 文档维护

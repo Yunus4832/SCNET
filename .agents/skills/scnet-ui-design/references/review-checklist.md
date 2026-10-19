@@ -41,4 +41,6 @@ Use the relevant items; do not turn a small change into a mandatory full-applica
 - Was the fix made at the correct owner: Screen, style, or shared widget?
 - If a shared component changed, were representative Screens inspected for deformation or changed interaction?
 - Were unrelated visual cleanups kept out of the change?
-- Was validation proportional to risk, with runtime visual verification requested when static inspection cannot prove layout quality?
+- When visual evidence was needed, were relevant states rendered with `UiPreviewTool` or the actual game, and were the PNGs inspected alongside layout reports?
+- Were fixture data, automatic-check limits, and any untested input/world/network behavior stated accurately?
+- Was validation proportional to the change, reusing prior evidence rather than automatically repeating a full matrix?

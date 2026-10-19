@@ -1,0 +1,16 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="614, 382" ClampToBounds="true">
+    <BevelledRectangleWidget BevelSize="3"/>
+    <LabelWidget Text="UI Preview" HorizontalAlignment="Center" Margin="0, 16"/>
+    <CanvasWidget CanvasWidget.Position="24, 64" Size="566, 230" ClampToBounds="true">
+        <BevelledRectangleWidget BevelSize="-2"/>
+        <LabelWidget Text="Settings / Definições / Настройки / 设置" CanvasWidget.Position="16, 12"
+                     Size="530, 32" FontScale="0.85" Ellipsis="true"/>
+        <CheckboxWidget Text="Enabled" CanvasWidget.Position="16, 58" Size="530, 44" IsChecked="true"/>
+        <LabelWidget Text="Long identifiers can be truncated without changing row height."
+                     CanvasWidget.Position="16, 118" Size="340, 32" FontScale="0.8" Ellipsis="true"/>
+    </CanvasWidget>
+    <StackPanelWidget Direction="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Far" Margin="0, 16">
+        <BevelledButtonWidget Text="Apply" Size="180, 54" Margin="8, 0"/>
+        <BevelledButtonWidget Text="Close" Size="180, 54" Margin="8, 0"/>
+    </StackPanelWidget>
+</CanvasWidget>

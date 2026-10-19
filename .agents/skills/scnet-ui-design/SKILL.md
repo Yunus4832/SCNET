@@ -1,6 +1,6 @@
 ---
 name: scnet-ui-design
-description: "Design, implement, or review SCNET game UI layouts, shared widgets, dialogs, action areas, responsive behavior, and interaction styling. Use for changes under Survivalcraft UI code or Content/Assets UI XML; do not use for ContentServer web UI."
+description: "Design, implement, preview, or review SCNET game and mod UI layouts, widgets, dialogs, responsive behavior, and interaction styling. Use UiPreviewTool for isolated visual checks of C# or XML components; do not use for ContentServer web UI or shader-only testing."
 ---
 
 # SCNET UI Design
@@ -12,14 +12,21 @@ Preserve a coherent game UI across desktop, Android, window resizing, and locali
 1. Inspect the target Screen or panel and at least one current comparable implementation before choosing a layout.
 2. Identify whether the problem comes from the page, a shared style, or a shared widget. Prefer fixing the shared owner when the behavior should be consistent everywhere, then review its consumers for regressions.
 3. Preserve the established visual hierarchy and interaction semantics. Do not solve one screenshot with arbitrary offsets, duplicated controls, or per-Screen exceptions when a reusable rule exists.
-4. Check compact and wide layouts, long localized text, enabled/disabled states, and any expanded selector or secondary action state affected by the change.
+4. Check the relevant compact/wide layouts, long localized text, enabled/disabled states, and expanded controls. Prefer `UiPreviewTool` for visual evidence when the component can be isolated; use the game when correctness depends on input, world state, or networking.
 5. Keep visual cleanup separate from unrelated gameplay behavior. Follow the repository C# style and proportional validation skills when implementation changes require them.
 
 ## Required references
 
 - Read [references/layout.md](references/layout.md) when changing Screen composition, margins, sizing, alignment, responsive behavior, labels, or form rows.
 - Read [references/components.md](references/components.md) when choosing or changing actions, selectors, dialogs, sliders, text boxes, HUD panels, colors, or input ownership.
+- Read [references/preview.md](references/preview.md) when preparing isolated render scenarios or inspecting preview screenshots and layout reports.
 - Read [references/review-checklist.md](references/review-checklist.md) before completing any material UI change or UI review.
+
+## Visual validation
+
+Use the maintained `UiPreviewTool` rather than recreating window, graphics, font, atlas, and screenshot bootstrap code. The tool provides rendering and basic layout checks; this skill provides scenario selection and visual judgment. Its CLI and factory contract are documented in [UiPreviewTool](../../../UiPreviewTool/README.md).
+
+Choose checks proportional to the change. A successful screenshot or exit code does not prove interaction correctness. State which data was fixture-built and which behavior was actually exercised.
 
 ## Core preferences
 

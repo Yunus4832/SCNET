@@ -27,6 +27,7 @@
 `Version` 用于程序集和 NuGet 默认包版本，消费方通过对应生产者属性引用精确依赖。
 游戏及 Starter 共用 `GameVersion`，`Engine.*` 与 `EntitySystem` 共用 `EngineVersion`；
 其他发行单元使用同名版本属性，开发工具与测试默认使用 `ToolsVersion`。
+[UI 预览工具](../UiPreviewTool/README.md) 使用独立的 `UiPreviewToolVersion`，从 `0.1.0` 开始。
 ContentWebUI 随 ContentServer 发布，私有 npm 清单不重复定义产品版本。
 
 游戏从自身程序集的 `AssemblyInformationalVersion` 读取显示版本，去掉 `+` 后的构建信息；

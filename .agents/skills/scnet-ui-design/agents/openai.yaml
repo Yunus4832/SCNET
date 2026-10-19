@@ -1,4 +1,4 @@
 interface:
   display_name: "SCNET UI Design"
-  short_description: "Keep SCNET game UI layouts and interactions consistent."
-  default_prompt: "Use $scnet-ui-design to design or review this SCNET UI change consistently."
+  short_description: "Design and preview SCNET game UI with real rendering."
+  default_prompt: "Use $scnet-ui-design to implement or review this SCNET UI change and validate its layout with UiPreviewTool when appropriate."
