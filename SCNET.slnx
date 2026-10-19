@@ -76,6 +76,7 @@
     </Folder>
 
     <Folder Name="/08 Mod/">
+        <Project Path="BeaconMod/BeaconMod.csproj"/>
         <Project Path="TerritoryStoneMod/TerritoryStoneMod.csproj"/>
         <Project Path="Survivalcraft.ModTemplates\Survivalcraft.ModTemplates.csproj"/>
     </Folder>

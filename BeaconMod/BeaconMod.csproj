@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(BeaconVersion)</Version>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>BeaconMod</AssemblyName>
+        <RootNamespace>BeaconMod</RootNamespace>
+        <SurvivalcraftModId>scnet.beacon</SurvivalcraftModId>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="SCNET.Survivalcraft" Version="$(GameVersion)" ExcludeAssets="runtime"/>
+        <PackageReference Include="SCNET.ContentTool" Version="$(ContentToolVersion)" PrivateAssets="all"/>
+        <EmbeddedResource Include="Resources\BeaconDatabase.xml"/>
+        <EmbeddedResource Include="Resources\BlocksData.txt"/>
+        <EmbeddedResource Include="Resources\Models\*.dae"/>
+        <EmbeddedResource Include="Resources\Lang\*.json" WithCulture="false"/>
+    </ItemGroup>
+    <Target Name="GenerateBeaconManifest" BeforeTargets="PackSurvivalcraftMod">
+        <PropertyGroup>
+            <SurvivalcraftModManifest>$(IntermediateOutputPath)manifest.json</SurvivalcraftModManifest>
+            <_BeaconManifest>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/manifest.template.json').Replace('__BEACON_VERSION__', '$(BeaconVersion)'))</_BeaconManifest>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(SurvivalcraftModManifest)" Lines="$(_BeaconManifest)"
+                          Overwrite="true" WriteOnlyWhenDifferent="true"/>
+    </Target>
+</Project>

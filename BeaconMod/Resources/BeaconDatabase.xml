@@ -1,0 +1,13 @@
+<DatabasePatch>
+    <Folder Name="Subsystems" Guid="75acb50b-fb75-4c85-af38-a0fb51a9eb90">
+        <SubsystemTemplate Name="BeaconBehavior" Guid="ee7ef72f-02a8-4892-be74-0dcfcf07dcf5" InheritanceParent="fefb9590-4972-4893-b02a-76063611b745">
+            <Parameter Name="Class" Guid="86470fcd-e2dc-41d1-af56-22cebeebc1e0" Value="BeaconMod.BeaconBlockBehavior" Type="string" />
+            <Parameter Name="Dependencies" Guid="adb45084-4599-48c5-8802-579835675e34" Value="Terrain" Type="string" />
+        </SubsystemTemplate>
+    </Folder>
+    <Folder Name="Abstract" Guid="c6ba6a30-5042-4d3d-9bea-199cd4acc3fa">
+        <ProjectTemplate Name="Project" Guid="85023bf8-1c90-4dd1-9442-e6c13691d078">
+            <MemberSubsystemTemplate Name="BeaconBehavior" Guid="80697f2d-8b78-4c61-9b7c-38da5aaaced1" InheritanceParent="ee7ef72f-02a8-4892-be74-0dcfcf07dcf5" />
+        </ProjectTemplate>
+    </Folder>
+</DatabasePatch>

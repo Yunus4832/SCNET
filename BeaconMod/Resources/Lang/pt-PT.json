@@ -1,0 +1,11 @@
+{
+    "Beacon": {
+        "Recipe": "Criar um sinalizador com vidro, lâmpada e ferro"
+    },
+    "Blocks": {
+        "BeaconBlock:0": {
+            "DisplayName": "Sinalizador",
+            "Description": "Ligue a um circuito para emitir um feixe. Mais tensão dá mais brilho. Interaja para mudar a cor. Apaga sem energia; recolher devolve um sinalizador normal empilhável."
+        }
+    }
+}

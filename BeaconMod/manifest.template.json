@@ -1,0 +1,21 @@
+{
+    "formatVersion": 1,
+    "type": "mod",
+    "identifier": "scnet.beacon",
+    "name": "Beacon",
+    "summary": "接入电路供电、交互切换颜色的导航信标。",
+    "description": "使用玻璃、电灯和铁锭合成。通过地面导线连接电池或开关，电压越高亮度越高，断电熄灭。交互轮换颜色，挖掘回收为统一的可堆叠信标。光柱受上方不透明方块遮挡，仅提供导航，不提供传送或增益。",
+    "version": "__BEACON_VERSION__",
+    "payload": {
+        "format": "scnet.mod-v1",
+        "entry": "payload/mod.json",
+        "mediaType": "application/json"
+    },
+    "metadata": {
+        "side": "common",
+        "entrypoints": {
+            "common": "BeaconMod.ModEntry, BeaconMod"
+        },
+        "dependencies": []
+    }
+}

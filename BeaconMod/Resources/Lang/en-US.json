@@ -1,0 +1,11 @@
+{
+    "Beacon": {
+        "Recipe": "Craft a beacon from glass, a lightbulb and iron ingots"
+    },
+    "Blocks": {
+        "BeaconBlock:0": {
+            "DisplayName": "Beacon",
+            "Description": "Connect to a circuit to emit a navigation beam. Higher voltage gives more light. Interact to cycle colors. Turns off without power; mining returns a standard stackable beacon."
+        }
+    }
+}
