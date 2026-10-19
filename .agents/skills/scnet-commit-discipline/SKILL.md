@@ -1,6 +1,6 @@
 ---
 name: scnet-commit-discipline
-description: "Prepare, review, split, stage, or commit SCNET changes using the repository's focused commit boundaries, automatic release-version updates, and `prefix: 中文描述` message convention. Use when the user asks to commit changes, organize commits, propose commit messages, or review whether a pending commit is coherent; do not invoke for ordinary code editing that does not involve commit preparation."
+description: "Prepare, review, split, stage, or commit SCNET changes using the repository's focused commit boundaries, automatic release-version updates, searchable version-change bodies, and `prefix: 中文描述` message convention. Use when the user asks to commit changes, organize commits, propose commit messages, or review whether a pending commit is coherent; do not invoke for ordinary code editing that does not involve commit preparation."
 ---
 
 # SCNET Commit Discipline
@@ -62,6 +62,44 @@ Choose the prefix from the actual change:
 - `docs`: documentation-only changes.
 
 Follow established history when a more specific existing prefix clearly fits. Write a concise Chinese description of the completed outcome; avoid vague messages such as “更新代码”, “优化内容”, or file-name-only descriptions.
+
+### Searchable version records
+
+When a commit adds, changes, or removes a property in `SharedProperties/Versions.props`, include a
+`Versions:` block in its body. Derive entries from the **staged** old/new file, not the whole working
+tree or a remembered version. Use the exact property names, including installation counters or
+protocol identifiers only when they actually changed. Keep the title focused on the behavior.
+
+```text
+feat: 重构领地石范围与玩家授权流程
+
+Versions:
+- TerritoryStoneVersion: 0.1.2 -> 0.1.3
+```
+
+New properties use `initial -> VALUE`; removed properties use `VALUE -> removed`. List each changed
+property once in file order, and record every affected release unit in the same block. For example:
+
+```text
+Versions:
+- UiPreviewToolVersion: initial -> 0.1.0
+```
+
+Do not add a `Versions:` block when the commit has no version-property changes. Do not list unchanged
+versions or advance a version merely to populate the block. Before committing, check that the body
+matches the staged version diff, especially when multiple commits share `Versions.props` hunks.
+
+A version can then be located without relying on its behavioral commit title:
+
+```bash
+git log --all --grep='TerritoryStoneVersion: .* -> 0\.1\.3$'
+git show <commit>:SharedProperties/Versions.props
+```
+
+Release tags can additionally identify published source when publishing is explicitly requested;
+do not create tags for every development commit. Do not rewrite already-pushed history just to add
+metadata. Amend unpublished commit messages only when authorized, preserving their source trees and
+reporting changed commit identities.
 
 ## Commit boundaries
 

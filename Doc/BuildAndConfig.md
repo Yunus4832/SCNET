@@ -43,6 +43,20 @@ Android 共享配置把 `GameVersion` 写入版本名称，把 `AndroidReleaseCo
 提交代码时按提交技能评估并自动提升受影响的发布版本；已在当前变更中调整的版本不重复提升。
 当前 `0.x` 开发期不提供兼容性保证，常规迭代默认递增补丁版本。
 
+涉及 `Versions.props` 变化的提交，正文必须记录以下可检索区块，属性名及前后值以该次暂存差异为准：
+
+```text
+Versions:
+- TerritoryStoneVersion: 0.1.2 -> 0.1.3
+```
+
+新增属性使用 `initial -> 0.1.0`，删除属性使用 `旧值 -> removed`；多项变更逐行列出，
+包括实际变化的 Android 安装计数和协议标识。未改版本的提交不添加该区块。
+例如可用 `git log --all --grep='TerritoryStoneVersion: .* -> 0\.1\.3$'` 定位目标版本的变更提交，
+再通过 `git show <commit>:SharedProperties/Versions.props` 核对完整版本集合。
+正式发布时可另用带发行单元名称的标签定位源码，开发提交不自动打标签。
+
+
 ### `Directory.Build.targets`
 
 这是全局构建目标入口，主要负责：

@@ -29,6 +29,8 @@ Keep existing release versions unchanged during ordinary development, local buil
 Decide and apply the appropriate bump once while preparing the corresponding commit; follow
 `scnet-commit-discipline`. Do not bump on every edit or test restart. New release units retain their
 agreed initial version; an explicitly requested publication may require a version change sooner.
+For commits changing `SharedProperties/Versions.props`, include a `Versions:` body block listing
+exact property names and staged before/after values; omit it when no version properties change.
 
 ## C# code quality
 

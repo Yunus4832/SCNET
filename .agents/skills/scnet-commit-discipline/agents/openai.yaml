@@ -1,4 +1,4 @@
 interface:
   display_name: "SCNET Commit Discipline"
-  short_description: "Keep SCNET commits focused, versioned and consistently named."
-  default_prompt: "Use $scnet-commit-discipline to inspect the current changes, propose focused commit boundaries, and automatically update affected release versions when required, and prepare repository-conforming Chinese commit messages."
+  short_description: "Prepare focused SCNET commits with searchable version records."
+  default_prompt: "Use $scnet-commit-discipline to inspect the current changes, propose focused commit boundaries, and automatically update affected release versions when required, and prepare Chinese commit messages with Versions blocks matching staged version changes."
