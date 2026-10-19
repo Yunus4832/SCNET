@@ -8,7 +8,6 @@ using Game.Managers;
 using Game.Modding;
 using Game.Network;
 using Game.Network.Enums;
-using Game.Subsystems;
 using Game.Terrains;
 
 namespace TerritoryStoneMod;
@@ -27,11 +26,11 @@ public static class TerritoryProtection
                 var player = digging.Miner.ComponentPlayer?.PlayerData;
                 var ownerOnly = Terrain.ExtractContents(digging.CellValue) == CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex &&
                                 !AllowsOwner(territory, player);
-                if (!Allows(territory, player, true) || ownerOnly)
+                if (!CanDig(territory, player) || ownerOnly)
                 {
                     digging.Cancel = true;
                     if (Time.FrameStartTime - lastDigDenialTime >= 2 &&
-                        Notify(digging.Miner, ownerOnly ? "StoneOwnerOnly" : "Protected"))
+                        Notify(digging.Miner, ownerOnly ? "StoneOwnerOnly" : "DiggingRestricted", territory))
                     {
                         lastDigDenialTime = Time.FrameStartTime;
                     }
@@ -47,10 +46,10 @@ public static class TerritoryProtection
             }
 
             var territory = subsystem.Store.Find(placing.X, placing.Z);
-            if (territory != null && !Allows(territory, placing.Miner.ComponentPlayer?.PlayerData, true))
+            if (territory != null && !CanPlace(territory, placing.Miner.ComponentPlayer?.PlayerData))
             {
                 placing.Cancel = true;
-                Notify(placing.Miner, "Protected");
+                Notify(placing.Miner, "PlacingRestricted", territory);
                 return;
             }
 
@@ -68,12 +67,6 @@ public static class TerritoryProtection
                 return;
             }
 
-            if (placing.Miner.Project.FindSubsystem<SubsystemTerrain>(true)!.Terrain
-                    .GetCellContents(placing.X, placing.Y, placing.Z) is 233 or 232 or 229 or 226)
-            {
-                placing.Cancel = true;
-                Notify(placing.Miner, "PlacementBlocked");
-            }
         });
         context.BlockBehaviors.OnBlockAdded(added =>
         {
@@ -102,84 +95,29 @@ public static class TerritoryProtection
                 }
             }
         });
-        context.BlockBehaviors.OnInteract(interacting =>
-        {
-            var point = interacting.RaycastResult.CellFace.Point;
-            var territory = Find(interacting.Miner.Project, point.X, point.Z);
-            interacting.Cancel |= territory != null && !Allows(territory, interacting.Miner.ComponentPlayer?.PlayerData, true);
-        });
-        context.BlockBehaviors.OnUse(usingBlock =>
-        {
-            if (usingBlock.Miner.Raycast(usingBlock.Ray, RaycastMode.Digging) is TerrainRaycastResult hit)
-            {
-                var territory = Find(usingBlock.Miner.Project, hit.CellFace.X, hit.CellFace.Z);
-                usingBlock.Cancel |= territory != null && !Allows(territory, usingBlock.Miner.ComponentPlayer?.PlayerData, true);
-            }
-        });
         context.Gameplay.OnTerrainCellChanging(changing =>
         {
-            var territory = Find(changing.Terrain.Project, changing.X, changing.Z);
-            if (territory == null)
-            {
-                return;
-            }
-
             var player = changing.Miner?.ComponentPlayer?.PlayerData;
-            changing.Cancel |= changing.Miner != null && !Allows(territory, player, true) ||
-                territory.RestrictEntry && territory.IsBorder(changing.X, changing.Z) && !Allows(territory, player, false);
-            changing.Cancel |= changing.Miner != null && Terrain.ExtractContents(changing.OldValue) == CurrentModRuntime.Value!.RequireWorldCatalog().GetBlock(TerritoryBlock.Id).BlockIndex &&
-                !AllowsOwner(territory, player);
-        });
-        context.Gameplay.OnCellIgniting(igniting =>
-        {
-            var territory = Find(igniting.Terrain.Project, igniting.Point.X, igniting.Point.Z);
-            igniting.Cancel |= territory != null && !Allows(territory, igniting.Miner?.ComponentPlayer?.PlayerData, false);
-        });
-        context.Gameplay.OnExplosionPointProcessing(exploding =>
-        {
-            var territory = Find(exploding.Explosions.Project, exploding.Point.X, exploding.Point.Z);
-            exploding.Cancel |= territory != null && !Allows(territory, exploding.Player, false);
-        });
-        context.Gameplay.OnMounting(mounting =>
-        {
-            var position = mounting.Mount.ComponentBody.Position;
-            var territory = Find(mounting.Rider.Project, Terrain.ToCell(position.X), Terrain.ToCell(position.Z));
-            mounting.Cancel |= territory != null && !Allows(territory,
-                mounting.Rider.Entity.FindComponent<ComponentPlayer>()?.PlayerData, true);
-        });
-        context.Gameplay.OnPistonBlockMoving(moving =>
-        {
-            var territory = Find(moving.Pistons.Project, moving.Point.X, moving.Point.Z);
-            moving.Cancel |= territory is { RestrictEntry: true } && territory.IsBorder(moving.Point.X, moving.Point.Z);
-        });
-        context.Gameplay.OnMovingBlockSetTerrainCollision(moving =>
-        {
-            var store = moving.MovingBlocks.Project.FindSubsystem<TerritorySubsystem>()?.Store;
-            if (store == null)
+            var territory = Find(changing.Terrain.Project, changing.X, changing.Z);
+            if (player == null || territory == null)
             {
                 return;
             }
-
-            for (var x = moving.Min.X; x < moving.Max.X; x++)
-            {
-                for (var z = moving.Min.Z; z < moving.Max.Z; z++)
-                {
-                    if (store.Find(x, z) is { RestrictEntry: true } territory && territory.IsBorder(x, z))
-                    {
-                        moving.BlockSet.Stop();
-                        return;
-                    }
-                }
-            }
+            var oldContents = Terrain.ExtractContents(changing.OldValue);
+            var newContents = Terrain.ExtractContents(changing.NewValue);
+            changing.Cancel |= oldContents != 0 && newContents == 0 && !CanDig(territory, player) ||
+                oldContents == 0 && newContents != 0 && !CanPlace(territory, player);
+            changing.Cancel |= oldContents == CurrentModRuntime.Value!.RequireWorldCatalog()
+                .GetBlock(TerritoryBlock.Id).BlockIndex && !AllowsOwner(territory, player);
         });
         var lastBoundaryDenialTime = double.NegativeInfinity;
-        void OnBoundaryCollision(ComponentBody body)
+        void OnBoundaryCollision(ComponentBody body, Territory territory, bool exiting)
         {
             if (Time.FrameStartTime - lastBoundaryDenialTime >= 2 &&
-                body.Player?.PlayerData.IsMainPlayer == true && RunMode.Value is RunModeType.Gui)
+                BodyPlayer(body)?.PlayerData.IsMainPlayer == true && RunMode.Value is RunModeType.Gui)
             {
-                body.Player.ComponentGui.DisplaySmallMessage(
-                    LanguageManager.Get("TerritoryProtection", "EntryRestricted"), Color.Yellow, false, true);
+                Notify(BodyPlayer(body)!.ComponentMiner, exiting ? "ExitRestricted" : "EntryRestricted",
+                    territory);
                 lastBoundaryDenialTime = Time.FrameStartTime;
             }
         }
@@ -187,9 +125,18 @@ public static class TerritoryProtection
         context.Gameplay.OnTerrainCollisionBoxes(collision => AddBoundaryCollisions(collision, OnBoundaryCollision));
     }
 
-    public static bool Allows(Territory territory, PlayerData? player, bool allowAnonymous) =>
-        player == null ? allowAnonymous : AllowsOwner(territory, player) ||
-            territory.ApplyToTeam && player.IsInGroup(territory.Owner);
+    public static bool CanDig(Territory territory, PlayerData? player) => player == null ||
+        AllowsOwner(territory, player) || territory.Settings.AllowDigging ||
+        (territory.PermissionsFor(player.PlayerGUID) & TerritoryPermission.Dig) != 0;
+
+    public static bool CanPlace(Territory territory, PlayerData? player) => player == null ||
+        AllowsOwner(territory, player) || territory.Settings.AllowPlacing ||
+        (territory.PermissionsFor(player.PlayerGUID) & TerritoryPermission.Place) != 0;
+
+    public static bool CanCross(Territory territory, PlayerData player, bool exiting) =>
+        AllowsOwner(territory, player) ||
+        (exiting ? territory.Settings.AllowExit : territory.Settings.AllowEntry) ||
+        (territory.PermissionsFor(player.PlayerGUID) & (exiting ? TerritoryPermission.Exit : TerritoryPermission.Enter)) != 0;
 
     public static bool AllowsOwner(Territory territory, PlayerData? player) => player != null &&
         (player.PlayerGUID == territory.Owner || player.ServerManager || player.ServerMaster);
@@ -197,21 +144,31 @@ public static class TerritoryProtection
     private static Territory? Find(Project project, int x, int z) =>
         project.FindSubsystem<TerritorySubsystem>()?.Store.Find(x, z);
 
-    private static bool Notify(ComponentMiner miner, string key)
+    private static bool Notify(ComponentMiner miner, string key, Territory? territory = null)
     {
         if (RunMode.Value is RunModeType.Gui && miner.ComponentPlayer?.PlayerData.IsMainPlayer == true)
         {
-            miner.ComponentPlayer.ComponentGui.DisplaySmallMessage(
-                LanguageManager.Get("TerritoryProtection", key), Color.Yellow, false, true);
+            var text = LanguageManager.Get("TerritoryProtection", key);
+            if (territory != null)
+            {
+                var world = miner.Project.FindSubsystem<TerritorySubsystem>()!;
+                var hint = key == "StoneOwnerOnly" ? "OwnedBy" :
+                    territory.Grants.ContainsKey(miner.ComponentPlayer.PlayerData.PlayerGUID) ? "AuthorizedHint" : "RequestHint";
+                text += " " + string.Format(LanguageManager.Get("TerritoryAccess", hint), world.OwnerName(territory.Owner));
+            }
+            miner.ComponentPlayer.ComponentGui.DisplaySmallMessage(text, Color.Yellow, false, true);
             return true;
         }
 
         return false;
     }
 
-    private static void AddBoundaryCollisions(TerrainCollisionBoxesContext context, Action<ComponentBody> onCollision)
+    private static ComponentPlayer? BodyPlayer(ComponentBody body) => body.Player ??
+        body.ChildBodies.Select(child => child.Player).FirstOrDefault(player => player != null);
+
+    private static void AddBoundaryCollisions(TerrainCollisionBoxesContext context, Action<ComponentBody, Territory, bool> onCollision)
     {
-        var player = context.Body.Player?.PlayerData;
+        var player = BodyPlayer(context.Body)?.PlayerData;
         var store = context.Body.Project.FindSubsystem<TerritorySubsystem>()?.Store;
         if (player == null || store == null)
         {
@@ -220,21 +177,24 @@ public static class TerritoryProtection
 
         foreach (var territory in store.Territories)
         {
-            if (!territory.RestrictEntry || Allows(territory, player, true) ||
-                territory.Contains(context.Body.Position))
+            var exiting = territory.Contains(context.Body.Position);
+            if (CanCross(territory, player, exiting))
             {
                 continue;
             }
 
-            foreach (var box in territory.GetBoundaryBoxes(context.Bounds.Min.Y - 1, context.Bounds.Max.Y + 1))
+            var movement = context.Bounds.Center() - context.Body.Position;
+            foreach (var box in territory.GetBlockingBoundaryBoxes(
+                         context.Bounds.Min.Y - 1, context.Bounds.Max.Y + 1, movement, exiting))
             {
                 if (context.Bounds.Intersection(box))
                 {
                     context.CollisionBoxes.Add(new ComponentBody.CollisionBox
                     {
                         Box = box,
-                        BlockValue = 46,
-                        Collided = onCollision
+                        BlockValue = Terrain.MakeBlockValue(CurrentModRuntime.Value!.RequireWorldCatalog()
+                            .GetBlock(TerritoryBlock.Id).BlockIndex),
+                        Collided = body => onCollision(body, territory, exiting)
                     });
                 }
             }

@@ -2,7 +2,7 @@
     "Blocks": {
         "TerritoryBlock:0": {
             "DisplayName": "Territory Stone",
-            "Description": "Place it to protect nearby blocks. The owner can set team access, boundary visibility, and whether non-members may enter. Each player can own one territory.",
+            "Description": "Set a horizontal radius centered on the stone, configure default movement and building permissions, and grant individual player access. Covers the full world height; one territory per player.",
             "CRDescription:0": "Craft a Territory Stone from copper ingots, diamond, iron ingots and granite"
         }
     },
@@ -10,33 +10,76 @@
         "1": "You need level {0} or higher to craft {1}. Current level: {2}"
     },
     "SubsystemTerritoryBlockBehavior": {
-        "1": "Show range",
-        "2": "Allow teammates",
-        "3": "You do not have permission to use this Territory Stone",
-        "4": "This Territory Stone is not active",
-        "5": "Disabled block ID {0}",
-        "6": "Another player has territory in this range. Activation failed!"
+        "5": "Disabled block ID {0}"
     },
     "Help": {
         "48": {
             "Name": "TerritoryStone",
             "Title": "Territory Stone",
-            "value": "Place a Territory Stone to protect the surrounding area. Each player can own one territory. Players without permission cannot dig or place blocks inside it; the owner and administrators can. The owner may also allow teammates to enter and build.\\n\\nWhen 'Block entry by non-members' is enabled, the boundary stops unauthorized players walking in from outside. Players already inside can still walk out, so a spawn or respawn cannot trap them. Turning this setting off allows passage, but does not grant digging or building rights. 'Show boundary' only changes visibility, not access. Animals are not blocked by the boundary.\\n\\nThe privileged tp command moves a player directly and bypasses the walking boundary, so it can enter a territory. Command permissions determine who may use tp. Aim at the stone and press G or the edit button to change settings; only the owner can change that territory's settings."
+            "value": "The stone is always at the center, independent of terrain chunks. Choose a radius of 4–32 blocks; the default 16 covers 33×33 blocks and the full world height. Territories cannot overlap. Each player may own one territory.\\n\\nDefault entry, exit, digging and placement permissions are independent; access can also be granted to individual players. Defaults block entry, allow exit, and block digging and placement. The owner and administrators are exempt. Teams do not affect permissions. Only the owner or an administrator may remove the stone; only the owner may edit settings.\\n\\nAim at the stone and press G or the edit button, then choose Apply. An overlapping resize is rejected by the server and the previous settings are restored. Boundary visibility is cosmetic: a faint grid appears on the full-height boundary near the viewer and fades with distance.\\n\\nProtection only concerns player movement, digging and placement. Animals are not blocked. Privileged tp bypasses walking boundaries. PvP, projectiles, fire, explosions and piston damage are not covered by comprehensive territory protection.\\n\\nWhen blocked, the owner and how to request access are shown. Use territory request <owner name or UUID>; no permissions are needed. Quote names containing spaces, or choose an owner from command suggestions. Both players must be online. One pending request per applicant, at least 30 seconds apart; requests expire after two minutes or disconnection. The owner independently selects entry, exit, digging and placement permissions or rejects the request. The applicant is notified and repeats the action. Grants add permission; they do not remove existing access or override allowed defaults, and never allow removing the stone. Grants persist with the world; edit or revoke them through Player access in the G panel.\\n\\nPlayers with an existing grant cannot apply again; contact the owner to change permissions."
         }
     },
     "TerritorySettings": {
         "Title": "Territory settings",
+        "Size": "Radius {0} blocks ({1}×{1})",
+        "AllowEntry": "Allow entry",
+        "AllowExit": "Allow exit",
+        "AllowDigging": "Allow digging",
+        "AllowPlacing": "Allow placement",
         "ShowBoundary": "Show boundary",
-        "RestrictEntry": "Block entry by non-members",
-        "ApplyToTeam": "Allow teammates to enter and build",
+        "Apply": "Apply",
         "Close": "Close",
-        "OwnerOnly": "Only the territory owner can change settings"
+        "OwnerOnly": "Only the owner can change settings",
+        "InvalidSize": "Radius must be between 4 and 32",
+        "Overlaps": "This area overlaps another territory",
+        "MissingTerritory": "This territory no longer exists",
+        "Unavailable": "Settings could not be confirmed; try again",
+        "VisitorPermissions": "Default permissions",
+        "SettingsTab": "Settings"
     },
     "TerritoryProtection": {
-        "EntryRestricted": "You cannot enter this territory. You may leave, or ask the owner to allow entry.",
-        "Protected": "You cannot dig or place blocks in this territory.",
+        "EntryRestricted": "You do not have permission to enter this territory.",
         "StoneOwnerOnly": "Only the owner or an administrator can dig this Territory Stone.",
         "ClaimUnavailable": "You already own a territory, or this area overlaps another territory.",
-        "PlacementBlocked": "A Territory Stone cannot be placed here."
+        "ExitRestricted": "You do not have permission to leave this territory.",
+        "DiggingRestricted": "You do not have permission to dig in this territory.",
+        "PlacingRestricted": "You do not have permission to place blocks in this territory."
+    },
+    "TerritoryAccess": {
+        "ManageGrants": "Player access",
+        "NoGrants": "No players have been granted access.",
+        "EditGrant": "Edit player access",
+        "RequestTitle": "Territory access request",
+        "Confirm": "Confirm access",
+        "Reject": "Reject",
+        "Revoke": "Revoke access",
+        "RequestHint": "Owner: {0}. Request access using a territory command.",
+        "OwnedBy": "Owner: {0}.",
+        "Granted": "{0} approved your territory access: {1}.",
+        "Rejected": "{0} rejected your access request. Try again later or contact the owner.",
+        "GrantChanged": "{0} changed or revoked your territory access.",
+        "Expired": "Your territory request expired. Apply again while both players are online.",
+        "AuthorizedHint": "Owner: {0}. Please contact the owner.",
+        "EditAction": "Edit access",
+        "ConfirmRevoke": "Revoke all territory permissions for {0}?"
+    },
+    "Commands": {
+        "Territory_Description": "Request territory access",
+        "Territory_RequestDescription": "Request access from an owner; the owner chooses permissions",
+        "Territory_DecideDescription": "Approve or reject a territory access request",
+        "Territory_GrantDescription": "Edit or revoke existing player access",
+        "Territory_Unavailable": "Territory access is unavailable.",
+        "Territory_InvalidPermissions": "Use enter,exit,dig,place (comma-separated), all or none.",
+        "Territory_UnknownOwner": "Owner not uniquely found. Use the owner UUID.",
+        "Territory_OwnerOffline": "The owner is offline; access cannot be requested.",
+        "Territory_InvalidRequest": "Cannot request your own territory, or request is invalid.",
+        "Territory_AlreadyPending": "You already have a pending request.",
+        "Territory_RateLimited": "Wait 30 seconds after your last request before applying again.",
+        "Territory_QueueFull": "Request or grant limit reached. Try later or remove old grants.",
+        "Territory_Requested": "Request sent; awaiting owner approval. Expires in two minutes.",
+        "Territory_RequestExpired": "Request expired, or you are not its owner.",
+        "Territory_Processed": "Territory access updated.",
+        "Territory_MissingGrant": "You have no territory, or this player has no grant.",
+        "Territory_AlreadyGranted": "You already have access and cannot apply again. Please contact the owner."
     }
 }

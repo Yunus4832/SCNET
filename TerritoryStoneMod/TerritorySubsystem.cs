@@ -1,11 +1,15 @@
 using Engine.Core;
-using Engine.Graphics;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game;
 using Game.Cameras;
+using Game.Commands;
+using Game.Components;
+using Game.Dialogs;
+using Game.Managers;
+using Game.Messaging;
 using Game.Modding;
 using Game.Network;
 using Game.Network.Enums;
@@ -13,7 +17,7 @@ using Game.Subsystems;
 
 namespace TerritoryStoneMod;
 
-public sealed class TerritorySubsystem : Subsystem, IDrawable
+public sealed class TerritorySubsystem : Subsystem, IDrawable, IUpdateable
 {
     public const string DataKey = "territories";
 
@@ -21,7 +25,9 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable
 
     public int SettingsResponseVersion { get; private set; }
 
-    public (Guid Owner, bool Accepted, bool ApplyToTeam, bool ShowBoundary, bool RestrictEntry)? LastSettingsResponse
+    public int SettingsRequestId { get; private set; }
+
+    public (int RequestId, Guid Owner, bool Accepted, TerritorySettings Settings, string Error)? LastSettingsResponse
     {
         get;
         private set;
@@ -29,31 +35,233 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable
 
     private IModNetwork? _network;
     private NetNode? _node;
-    private PrimitivesRenderer3D? _primitives;
+    private TerritoryBoundaryRenderer? _boundaryRenderer;
 
-    public int[] DrawOrders => [2];
+    public TerritoryAccessRequests AccessRequests { get; } = new();
+    private readonly Dictionary<Guid, TerritoryAccessRequest> _incomingRequests = new();
+    private double _nextRequestCleanup;
+    private readonly Dictionary<Guid, double> _submittedRequests = new();
+    private TerritoryPermissionsDialog? _approvalDialog;
+
+    public UpdateOrder UpdateOrder => UpdateOrder.Default;
+
+    public string OwnerName(Guid owner) => Project.FindSubsystem<SubsystemPlayers>()?.PlayerList
+        .GetValueOrDefault(owner)?.Name ?? OnlinePlayer(owner)?.Name ?? owner.ToString("D");
+
+    private PlayerData? OnlinePlayer(Guid id) => Project.FindSubsystem<SubsystemPlayers>()?.PlayersData
+        .FirstOrDefault(player => player.PlayerGUID == id && player.ComponentPlayer != null &&
+            (player.IsMainPlayer || player.Client?.IsConnected == true));
+
+    public CommandResult RequestAccess(PlayerData player, string ownerName)
+    {
+        var matches = Store.Territories.Where(territory =>
+            Guid.TryParse(ownerName, out var id) ? territory.Owner == id :
+                string.Equals(OwnerName(territory.Owner), ownerName, StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (matches.Length != 1)
+        {
+            return TerritoryCommands.Result("UnknownOwner", false);
+        }
+        var territory = matches[0];
+        if (territory.Grants.ContainsKey(player.PlayerGUID))
+        {
+            return TerritoryCommands.Result("AlreadyGranted", false);
+        }
+        if (OnlinePlayer(territory.Owner) == null)
+        {
+            return TerritoryCommands.Result("OwnerOffline", false);
+        }
+        if (territory.Grants.Count >= 128)
+        {
+            return TerritoryCommands.Result("QueueFull", false);
+        }
+        if (!AccessRequests.TryAdd(territory.Owner, player.PlayerGUID, player.Name, Time.RealTime,
+                out var request, out var error))
+        {
+            return TerritoryCommands.Result(error, false);
+        }
+        SendRequest(request!, false);
+        return TerritoryCommands.Result("Requested", true);
+    }
+
+    public CommandResult DecideAccess(PlayerData owner, Guid id, string permissionText)
+    {
+        if (!TerritoryPermissions.TryParse(permissionText, out var permissions))
+        {
+            return TerritoryCommands.Result("InvalidPermissions", false);
+        }
+        var pending = AccessRequests.Pending.FirstOrDefault(request => request.Id == id);
+        if (pending == null || pending.Owner != owner.PlayerGUID ||
+            !Store.TryGet(owner.PlayerGUID, out var territory) || OnlinePlayer(pending.Player) == null)
+        {
+            return TerritoryCommands.Result("RequestExpired", false);
+        }
+        if (permissions != TerritoryPermission.None && territory!.Grants.Count >= 128 &&
+            !territory.Grants.ContainsKey(pending.Player))
+        {
+            return TerritoryCommands.Result("QueueFull", false);
+        }
+        if (!AccessRequests.TryResolve(id, owner.PlayerGUID, permissions, Time.RealTime, out var resolved))
+        {
+            return TerritoryCommands.Result("RequestExpired", false);
+        }
+        if (permissions != TerritoryPermission.None)
+        {
+            var existing = territory!.PermissionsFor(resolved!.Player);
+            territory.SetGrant(resolved.Player, resolved.PlayerName, existing | permissions);
+            PublishUpdate(territory);
+        }
+        SendRequest(resolved!, true);
+        NotifyPlayer(resolved!.Player, permissions == TerritoryPermission.None ? "Rejected" : "Granted",
+            owner.Name, permissions.ToString().ToLowerInvariant().Replace(" ", ""));
+        return TerritoryCommands.Result("Processed", true);
+    }
+
+    public CommandResult ChangeGrant(PlayerData owner, Guid player, string permissionText)
+    {
+        if (!Store.TryGet(owner.PlayerGUID, out var territory) || !territory!.Grants.TryGetValue(player, out var grant))
+        {
+            return TerritoryCommands.Result("MissingGrant", false);
+        }
+        if (!TerritoryPermissions.TryParse(permissionText, out var permissions))
+        {
+            return TerritoryCommands.Result("InvalidPermissions", false);
+        }
+        territory.SetGrant(player, grant.Name, permissions);
+        PublishUpdate(territory);
+        NotifyPlayer(player, "GrantChanged", owner.Name);
+        return TerritoryCommands.Result("Processed", true);
+    }
+
+    public void ReceiveAccessRequest(TerritoryAccessRequest request, bool removed)
+    {
+        if (removed)
+        {
+            _incomingRequests.Remove(request.Id);
+            _submittedRequests.Remove(request.Id);
+            return;
+        }
+        if (_incomingRequests.Count < 8 && CommonLib.MainPlayer?.PlayerData.PlayerGUID == request.Owner)
+        {
+            _incomingRequests[request.Id] = request;
+        }
+    }
+
+    private void SendRequest(TerritoryAccessRequest request, bool removed)
+    {
+        if (OnlinePlayer(request.Owner) is not { } owner)
+        {
+            return;
+        }
+        if (owner.IsMainPlayer && RunMode.Value == RunModeType.Gui)
+        {
+            ReceiveAccessRequest(request, removed);
+        }
+        else if (owner.Client is { } client)
+        {
+            _network?.Send(removed ? TerritoryMessages.AccessRequestRemoved : TerritoryMessages.AccessRequest, writer =>
+            {
+                writer.Write(request.Id);
+                if (!removed)
+                {
+                    writer.Write(request.Owner);
+                    writer.Write(request.Player);
+                    writer.Write(request.PlayerName);
+                }
+            }, PackageAudience.To(client), ClientState.ProjectLoaded);
+        }
+    }
+
+    private void NotifyPlayer(Guid playerId, string key, params string[] arguments)
+    {
+        if (OnlinePlayer(playerId) is not { } player)
+        {
+            return;
+        }
+        var message = GameMessage.System(key, presentation: GameMessagePresentation.History | GameMessagePresentation.Toast) with
+        {
+            LocalizationSection = "TerritoryAccess",
+            LocalizationKey = key,
+            LocalizationArguments = arguments
+        };
+        var messages = Project.FindSubsystem<SubsystemGameWidgets>(true)!.Messages;
+        if (player.IsMainPlayer && RunMode.Value == RunModeType.Gui)
+        {
+            messages.DisplayLocal(message);
+        }
+        else if (player.Client is { } client)
+        {
+            messages.Publish(message, [client.ID], includePublisher: false);
+        }
+    }
+
+    public void Update(float dt)
+    {
+        if (CommonLib.WorkType != WorkType.Client && Time.RealTime >= _nextRequestCleanup)
+        {
+            _nextRequestCleanup = Time.RealTime + 1;
+            foreach (var request in AccessRequests.Expire(Time.RealTime, request =>
+                         OnlinePlayer(request.Owner) == null || OnlinePlayer(request.Player) == null ||
+                         !Store.TryGet(request.Owner, out _)))
+            {
+                SendRequest(request, true);
+                NotifyPlayer(request.Player, "Expired");
+            }
+        }
+        if (RunMode.Value != RunModeType.Gui || CommonLib.MainPlayer is not { } player ||
+            !ReferenceEquals(player.Project, Project))
+        {
+            return;
+        }
+        foreach (var request in _incomingRequests.Values.Where(request => request.ExpiresAt <= Time.RealTime).ToArray())
+        {
+            _incomingRequests.Remove(request.Id);
+            _submittedRequests.Remove(request.Id);
+        }
+        if (_approvalDialog != null && !_incomingRequests.ContainsKey(_approvalDialog.RequestId))
+        {
+            DialogsManager.HideDialog(_approvalDialog);
+            _approvalDialog = null;
+        }
+        if (_approvalDialog != null && !DialogsManager.ReadOnlyDialogs.Contains(_approvalDialog))
+        {
+            _approvalDialog = null;
+        }
+        if (_approvalDialog == null && _incomingRequests.Values.FirstOrDefault(request =>
+                !_submittedRequests.TryGetValue(request.Id, out var retryAt) || retryAt <= Time.RealTime) is { } next &&
+            !DialogsManager.HasDialogs(null) && !DialogsManager.HasDialogs(player.GameWidget.GuiWidget) &&
+            player.ComponentGui.ModalPanelWidget == null)
+        {
+            _approvalDialog = new TerritoryPermissionsDialog(next.PlayerName, TerritoryPermission.None, TerritoryPermission.All,
+                selected =>
+                {
+                    CommandGateway.Submit(player.PlayerData, new DecideTerritoryAccessCommand(next.Id, selected.ToString().ToLowerInvariant().Replace(" ", "")));
+                    _submittedRequests[next.Id] = Time.RealTime + 10;
+                }, next.Id);
+            DialogsManager.ShowDialog(player.GameWidget.GuiWidget, _approvalDialog);
+        }
+    }
+
+    // Draw after sky (5) and transparent terrain (100), which otherwise cover
+    // this depth-read-only overlay. Keep later weather/screen effects intact.
+    public int[] DrawOrders => [101];
 
     public void Draw(Camera camera, int drawOrder)
     {
         foreach (var territory in Store.Territories)
         {
-            if (!territory.ShowBoundary)
+            if (!territory.Settings.ShowBoundary)
             {
                 continue;
             }
-
-            var min = new Vector3(territory.Origin.X - 16, territory.StonePoint.Y, territory.Origin.Y - 16);
-            var max = new Vector3(territory.Origin.X + 17, territory.StonePoint.Y + 32, territory.Origin.Y + 17);
-            var viewBounds = new BoundingBox(min - new Vector3(16, 0, 16), max + new Vector3(16, 0, 16));
-            if (!viewBounds.Contains(camera.ViewPosition))
+            var bounds = territory.Bounds;
+            var dx = Math.Max(bounds.Min.X - camera.ViewPosition.X, Math.Max(0, camera.ViewPosition.X - bounds.Max.X));
+            var dz = Math.Max(bounds.Min.Z - camera.ViewPosition.Z, Math.Max(0, camera.ViewPosition.Z - bounds.Max.Z));
+            if (dx * dx + dz * dz > 24 * 24 || !camera.ViewFrustum.Intersection(bounds))
             {
                 continue;
             }
-
-            _primitives ??= new PrimitivesRenderer3D();
-            _primitives.FlatBatch().QueueBoundingBox(new BoundingBox(min, max),
-                territory.Owner == camera.GameWidget.PlayerData.PlayerGUID ? Color.Green : Color.Yellow);
-            _primitives.Flush(camera.ViewProjectionMatrix);
+            _boundaryRenderer ??= new TerritoryBoundaryRenderer();
+            _boundaryRenderer.Draw(territory, camera);
         }
     }
 
@@ -102,6 +310,16 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable
     public override void Dispose()
     {
         DetachNetwork();
+        AccessRequests.Clear();
+        _incomingRequests.Clear();
+        _submittedRequests.Clear();
+        if (_approvalDialog != null)
+        {
+            DialogsManager.HideDialog(_approvalDialog);
+            _approvalDialog = null;
+        }
+        _boundaryRenderer?.Dispose();
+        _boundaryRenderer = null;
         Store.Load(new ValuesDictionary());
     }
 
@@ -123,36 +341,40 @@ public sealed class TerritorySubsystem : Subsystem, IDrawable
         }
     }
 
-    public void ChangeSettings(Territory territory, bool applyToTeam, bool showBoundary, bool restrictEntry)
+    public string? ChangeSettings(Territory territory, TerritorySettings settings)
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
             var server = CommonLib.Net.Server;
-            if (server == null)
+            if (server == null || _network == null)
             {
-                return;
+                return "Unavailable";
             }
-
-            _network?.Send(TerritoryMessages.Settings, writer =>
+            SettingsRequestId = SettingsRequestId == int.MaxValue ? 1 : SettingsRequestId + 1;
+            var requestId = SettingsRequestId;
+            _network.Send(TerritoryMessages.Settings, writer =>
             {
+                writer.Write(requestId);
                 writer.Write(territory.Owner);
-                writer.Write(applyToTeam);
-                writer.Write(showBoundary);
-                writer.Write(restrictEntry);
+                TerritoryMessages.WriteSettings(writer, settings);
             }, PackageAudience.To(server), ClientState.ProjectLoaded);
-            return;
+            return null;
         }
-
-        territory.ApplyToTeam = applyToTeam;
-        territory.ShowBoundary = showBoundary;
-        territory.RestrictEntry = restrictEntry;
+        if (!Store.TryChangeSettings(territory.Owner, settings, out var error))
+        {
+            return error;
+        }
         PublishUpdate(territory);
+        return null;
     }
 
-    public void ReceiveSettingsResponse(Guid owner, bool accepted, bool applyToTeam, bool showBoundary,
-        bool restrictEntry)
+    public void ReceiveSettingsResponse(int requestId, Guid owner, bool accepted, TerritorySettings settings, string error)
     {
-        LastSettingsResponse = (owner, accepted, applyToTeam, showBoundary, restrictEntry);
+        if (!settings.IsValid)
+        {
+            throw new InvalidDataException("Invalid territory settings response.");
+        }
+        LastSettingsResponse = (requestId, owner, accepted, settings, error);
         SettingsResponseVersion++;
     }
 

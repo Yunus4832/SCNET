@@ -1,0 +1,20 @@
+#ifdef GLSL
+#ifdef GL_ES
+precision mediump float;
+#endif
+uniform vec3 u_cameraPosition;
+uniform vec4 u_color;
+varying vec3 v_position;
+varying vec2 v_texcoord;
+void main()
+{
+    float fade = 1.0 - smoothstep(4.0, 24.0, distance(v_position, u_cameraPosition));
+    vec2 cell = fract(v_texcoord * 0.5);
+    vec2 edge = min(cell, 1.0 - cell);
+    float grid = 1.0 - smoothstep(0.012, 0.035, min(edge.x, edge.y));
+    float alpha = u_color.a * fade * (0.08 + 0.92 * grid);
+    if (alpha < 0.003)
+        discard;
+    gl_FragColor = vec4(u_color.rgb, alpha);
+}
+#endif

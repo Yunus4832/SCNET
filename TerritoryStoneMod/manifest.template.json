@@ -1,21 +1,21 @@
 {
-  "formatVersion": 1,
-  "type": "mod",
-  "identifier": "scnet.territory",
-  "name": "Territory Stone",
-  "summary": "放置领地石，保护所在区块的建造与通行。",
-  "description": "领地石保护所在区块：非授权玩家不能挖掘或放置方块。领主可单独设置是否禁止非成员步行进入；已在领地内的玩家始终可以离开，传送不受限制。对准领地石按 G 或点击编辑按钮调整设置。",
-  "version": "__TERRITORY_VERSION__",
-  "payload": {
-    "format": "scnet.mod-v1",
-    "entry": "payload/mod.json",
-    "mediaType": "application/json"
-  },
-  "metadata": {
-    "side": "common",
-    "entrypoints": {
-      "common": "TerritoryStoneMod.ModEntry, TerritoryStoneMod"
+    "formatVersion": 1,
+    "type": "mod",
+    "identifier": "scnet.territory",
+    "name": "Territory Stone",
+    "summary": "以领地石为中心，自定义范围和玩家通行、挖掘放置权限。",
+    "description": "领地石可设置 4–32 格水平半径，覆盖整个高度，分别控制进入、离开、挖掘和放置的默认权限。越权时提示领主与申请方式，玩家可通过 territory request 主动申请，领主在审批窗口选择授权，结果通知申请人。授权按玩家保存，与队伍无关，可在领地石 G 编辑面板管理和撤销。靠近边界显示淡网格结界；动物与 tp 不受通行限制，不提供 PvP、火灾、爆炸或机械搬运等全面防破坏保护。",
+    "version": "__TERRITORY_VERSION__",
+    "payload": {
+        "format": "scnet.mod-v1",
+        "entry": "payload/mod.json",
+        "mediaType": "application/json"
     },
-    "dependencies": []
-  }
+    "metadata": {
+        "side": "common",
+        "entrypoints": {
+            "common": "TerritoryStoneMod.ModEntry, TerritoryStoneMod"
+        },
+        "dependencies": []
+    }
 }

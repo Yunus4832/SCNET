@@ -21,8 +21,7 @@ public sealed class TerritoryStore
             return false;
         }
 
-        var candidate = new Territory(owner, point);
-        return !_territories.Values.Any(candidate.Overlaps);
+        return CanAdd(new Territory(owner, point));
     }
 
     public bool TryCreate(Guid owner, Point3 point)
@@ -33,6 +32,32 @@ public sealed class TerritoryStore
         }
 
         _territories.Add(owner, new Territory(owner, point));
+        return true;
+    }
+
+    private bool CanAdd(Territory candidate) => candidate.Owner != Guid.Empty &&
+        !_territories.ContainsKey(candidate.Owner) && !_territories.Values.Any(candidate.Overlaps);
+
+    public bool TryChangeSettings(Guid owner, TerritorySettings settings, out string error)
+    {
+        if (!settings.IsValid)
+        {
+            error = "InvalidSize";
+            return false;
+        }
+        if (!_territories.TryGetValue(owner, out var territory))
+        {
+            error = "MissingTerritory";
+            return false;
+        }
+        var candidate = new Territory(owner, territory.StonePoint, settings);
+        if (_territories.Values.Any(other => other.Owner != owner && candidate.Overlaps(other)))
+        {
+            error = "Overlaps";
+            return false;
+        }
+        territory.ApplySettings(settings);
+        error = string.Empty;
         return true;
     }
 
@@ -49,7 +74,7 @@ public sealed class TerritoryStore
         var replacement = new TerritoryStore();
         foreach (var territory in territories)
         {
-            if (!replacement.TryCreate(territory.Owner, territory.StonePoint))
+            if (!replacement.CanAdd(territory))
             {
                 throw new InvalidDataException("Invalid or overlapping territory snapshot.");
             }
@@ -76,12 +101,17 @@ public sealed class TerritoryStore
         {
             var data = (ValuesDictionary)value;
             var owner = Guid.ParseExact(key, "N");
-            var territory = new Territory(owner, data.GetValue<Point3>("StonePoint"))
+            var settings = new TerritorySettings(data.GetValue<int>("Size"),
+                data.GetValue<bool>("AllowEntry"), data.GetValue<bool>("AllowExit"),
+                data.GetValue<bool>("AllowDigging"), data.GetValue<bool>("AllowPlacing"),
+                data.GetValue<bool>("ShowBoundary"));
+            var territory = new Territory(owner, data.GetValue<Point3>("StonePoint"), settings);
+            foreach (var (player, grantData) in data.GetValue<ValuesDictionary>("Grants"))
             {
-                ApplyToTeam = data.GetValue<bool>("ApplyToTeam"),
-                ShowBoundary = data.GetValue<bool>("ShowBoundary"),
-                RestrictEntry = data.GetValue<bool>("RestrictEntry")
-            };
+                var grant = (ValuesDictionary)grantData;
+                territory.SetGrant(Guid.ParseExact(player, "N"), grant.GetValue<string>("Name"),
+                    (TerritoryPermission)grant.GetValue<int>("Permissions"));
+            }
             territories.Add(territory);
         }
 
@@ -95,9 +125,22 @@ public sealed class TerritoryStore
         {
             var data = new ValuesDictionary();
             data.SetValue("StonePoint", territory.StonePoint);
-            data.SetValue("ApplyToTeam", territory.ApplyToTeam);
-            data.SetValue("ShowBoundary", territory.ShowBoundary);
-            data.SetValue("RestrictEntry", territory.RestrictEntry);
+            var settings = territory.Settings;
+            data.SetValue("Size", settings.Size);
+            data.SetValue("AllowEntry", settings.AllowEntry);
+            data.SetValue("AllowExit", settings.AllowExit);
+            data.SetValue("AllowDigging", settings.AllowDigging);
+            data.SetValue("AllowPlacing", settings.AllowPlacing);
+            var grants = new ValuesDictionary();
+            foreach (var (player, grant) in territory.Grants)
+            {
+                var entry = new ValuesDictionary();
+                entry.SetValue("Name", grant.Name);
+                entry.SetValue("Permissions", (int)grant.Permissions);
+                grants.SetValue(player.ToString("N"), entry);
+            }
+            data.SetValue("Grants", grants);
+            data.SetValue("ShowBoundary", settings.ShowBoundary);
             values.SetValue(territory.Owner.ToString("N"), data);
         }
 

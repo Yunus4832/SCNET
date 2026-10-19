@@ -40,6 +40,26 @@ public sealed class ModEntry : IMod
             XmlContributionMode.Patch,
             ReadDatabasePatch);
         TerritoryProtection.Register(context);
+        TerritoryCommands.Register(context);
+        context.Network.OnMessage(TerritoryMessages.AccessRequest, message =>
+        {
+            if (message.IsServer || ActiveWorld(message) is not { } world)
+            {
+                return;
+            }
+            var request = new TerritoryAccessRequest(message.Reader.ReadGuid(), message.Reader.ReadGuid(),
+                message.Reader.ReadGuid(), message.Reader.ReadString(),
+                Engine.Core.Time.RealTime + TerritoryAccessRequests.Lifetime);
+            world.ReceiveAccessRequest(request, false);
+        });
+        context.Network.OnMessage(TerritoryMessages.AccessRequestRemoved, message =>
+        {
+            if (!message.IsServer && ActiveWorld(message) is { } world)
+            {
+                world.ReceiveAccessRequest(new TerritoryAccessRequest(message.Reader.ReadGuid(), Guid.Empty,
+                    Guid.Empty, string.Empty, 0), true);
+            }
+        });
         context.Network.OnMessage(TerritoryMessages.Snapshot, message =>
         {
             if (message.IsServer || !ReferenceEquals(message.NetNode, Game.Network.CommonLib.Net))
@@ -95,26 +115,27 @@ public sealed class ModEntry : IMod
                 return;
             }
 
+            var requestId = message.Reader.ReadInt32();
             var owner = message.Reader.ReadGuid();
-            var applyToTeam = message.Reader.ReadBoolean();
-            var showBoundary = message.Reader.ReadBoolean();
-            var restrictEntry = message.Reader.ReadBoolean();
+            var settings = TerritoryMessages.ReadSettings(message.Reader);
             var exists = world.Store.TryGet(owner, out var territory);
+            var error = "OwnerOnly";
             var accepted = exists && TerritoryMessages.CanChangeSettings(message.From, owner);
             if (accepted)
             {
-                world.ChangeSettings(territory!, applyToTeam, showBoundary, restrictEntry);
+                error = world.ChangeSettings(territory!, settings) ?? string.Empty;
+                accepted = error.Length == 0;
             }
 
             if (message.From != null)
             {
                 context.Network.Send(TerritoryMessages.SettingsResult, writer =>
                 {
+                    writer.Write(requestId);
                     writer.Write(owner);
                     writer.Write(accepted);
-                    writer.Write(territory?.ApplyToTeam ?? false);
-                    writer.Write(territory?.ShowBoundary ?? false);
-                    writer.Write(territory?.RestrictEntry ?? false);
+                    writer.Write(error);
+                    TerritoryMessages.WriteSettings(writer, territory?.Settings ?? new TerritorySettings());
                 }, Game.Network.PackageAudience.To(message.From), Game.Network.Enums.ClientState.ProjectLoaded);
             }
         });
@@ -125,8 +146,11 @@ public sealed class ModEntry : IMod
                 return;
             }
 
-            world.ReceiveSettingsResponse(message.Reader.ReadGuid(), message.Reader.ReadBoolean(),
-                message.Reader.ReadBoolean(), message.Reader.ReadBoolean(), message.Reader.ReadBoolean());
+            var requestId = message.Reader.ReadInt32();
+            var owner = message.Reader.ReadGuid();
+            var accepted = message.Reader.ReadBoolean();
+            var error = message.Reader.ReadString();
+            world.ReceiveSettingsResponse(requestId, owner, accepted, TerritoryMessages.ReadSettings(message.Reader), error);
         });
     }
 

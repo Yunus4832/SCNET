@@ -24,12 +24,8 @@ public class TerritoryMessagesTest
     [Fact]
     public void SnapshotRoundTripReplacesStaleClientStateIncludingEmptySnapshots()
     {
-        var territory = new Territory(Guid.NewGuid(), new Point3(48, 64, -48))
-        {
-            ApplyToTeam = true,
-            ShowBoundary = false,
-            RestrictEntry = false
-        };
+        var territory = new Territory(Guid.NewGuid(), new Point3(48, 64, -48),
+            new TerritorySettings(9, true, false, true, false, false));
         using var writer = new PackageStreamWriter();
         TerritoryMessages.WriteSnapshot(writer, new[] { territory });
         using var reader = new PackageStreamReader(writer.Data());
@@ -39,9 +35,7 @@ public class TerritoryMessagesTest
         var restored = Assert.Single(store.Territories);
         Assert.Equal(territory.Owner, restored.Owner);
         Assert.Equal(territory.StonePoint, restored.StonePoint);
-        Assert.True(restored.ApplyToTeam);
-        Assert.False(restored.ShowBoundary);
-        Assert.False(restored.RestrictEntry);
+        Assert.Equal(territory.Settings, restored.Settings);
 
         store.ApplySnapshot([]);
         Assert.Empty(store.Territories);
@@ -67,6 +61,18 @@ public class TerritoryMessagesTest
     {
         using var writer = new PackageStreamWriter();
         writer.Write(count);
+        using var reader = new PackageStreamReader(writer.Data());
+        Assert.Throws<InvalidDataException>(() => TerritoryMessages.ReadSnapshot(reader));
+    }
+
+    [Fact]
+    public void SnapshotRejectsInvalidRadiusBeforeReplacingClientState()
+    {
+        using var writer = new PackageStreamWriter();
+        writer.Write(1);
+        writer.Write(Guid.NewGuid());
+        writer.Write(new Point3(0, 64, 0));
+        TerritoryMessages.WriteSettings(writer, new TerritorySettings(Size: 0));
         using var reader = new PackageStreamReader(writer.Data());
         Assert.Throws<InvalidDataException>(() => TerritoryMessages.ReadSnapshot(reader));
     }

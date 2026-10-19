@@ -12,6 +12,8 @@
         <PackageReference Include="SCNET.ContentTool" Version="$(ContentToolVersion)" PrivateAssets="all"/>
         <EmbeddedResource Include="Resources\TerritoryDatabase.xml"/>
         <EmbeddedResource Include="Resources\BlocksData.txt"/>
+        <EmbeddedResource Include="Resources\Shaders\*.vsh"/>
+        <EmbeddedResource Include="Resources\Shaders\*.psh"/>
         <EmbeddedResource Include="Resources\Lang\*.json" WithCulture="false"/>
     </ItemGroup>
     <Target Name="GenerateTerritoryManifest" BeforeTargets="PackSurvivalcraftMod">

@@ -11,6 +11,8 @@ public static class TerritoryMessages
     public const string Update = "update";
     public const string Remove = "remove";
     public const string Settings = "settings";
+    public const string AccessRequest = "access-request";
+    public const string AccessRequestRemoved = "access-request-removed";
     public const string SettingsResult = "settings-result";
 
     public static bool CanChangeSettings(Client? sender, Guid owner) =>
@@ -20,9 +22,14 @@ public static class TerritoryMessages
     {
         writer.Write(territory.Owner);
         writer.Write(territory.StonePoint);
-        writer.Write(territory.ApplyToTeam);
-        writer.Write(territory.ShowBoundary);
-        writer.Write(territory.RestrictEntry);
+        WriteSettings(writer, territory.Settings);
+        writer.Write(territory.Grants.Count);
+        foreach (var (player, grant) in territory.Grants)
+        {
+            writer.Write(player);
+            writer.Write(grant.Name);
+            writer.Write((int)grant.Permissions);
+        }
     }
 
     public static Territory Read(PackageStreamReader reader)
@@ -34,13 +41,37 @@ public static class TerritoryMessages
             throw new InvalidDataException("Invalid territory identity or stone height.");
         }
 
-        return new Territory(owner, point)
+        var territory = new Territory(owner, point, ReadSettings(reader));
+        var count = reader.ReadInt32();
+        if (count is < 0 or > 128)
         {
-            ApplyToTeam = reader.ReadBoolean(),
-            ShowBoundary = reader.ReadBoolean(),
-            RestrictEntry = reader.ReadBoolean()
-        };
+            throw new InvalidDataException("Invalid territory grant count.");
+        }
+        for (var index = 0; index < count; index++)
+        {
+            var player = reader.ReadGuid();
+            if (territory.Grants.ContainsKey(player))
+            {
+                throw new InvalidDataException("Duplicate territory grant.");
+            }
+            territory.SetGrant(player, reader.ReadString(), (TerritoryPermission)reader.ReadInt32());
+        }
+        return territory;
     }
+
+    public static void WriteSettings(PackageStreamWriter writer, TerritorySettings settings)
+    {
+        writer.Write(settings.Size);
+        writer.Write(settings.AllowEntry);
+        writer.Write(settings.AllowExit);
+        writer.Write(settings.AllowDigging);
+        writer.Write(settings.AllowPlacing);
+        writer.Write(settings.ShowBoundary);
+    }
+
+    public static TerritorySettings ReadSettings(PackageStreamReader reader) => new(reader.ReadInt32(),
+        reader.ReadBoolean(), reader.ReadBoolean(), reader.ReadBoolean(), reader.ReadBoolean(),
+        reader.ReadBoolean());
 
     public static void WriteSnapshot(PackageStreamWriter writer, IReadOnlyCollection<Territory> territories)
     {
