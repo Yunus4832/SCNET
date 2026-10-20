@@ -4,7 +4,6 @@ using Engine.Core;
 
 using Game;
 using Game.Network;
-using Game.Network.Enums;
 using Game.Subsystems;
 
 using Survivalcraft.Test.Subsystems;

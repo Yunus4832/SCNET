@@ -1,8 +1,7 @@
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -84,7 +83,7 @@ public class SubsystemCactusBlockBehavior : SubsystemPollableBlockBehavior, IUpd
         }
         else
         {
-            NetworkSender.SendToServer(new ComponentHealthPackage(creature.ComponentHealth, null, amount, cuase,
+            NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(creature.ComponentHealth, null, amount, cuase,
                 false, true, ComponentHealthPackage.RequestInjureType.Cactus));
         }
     }

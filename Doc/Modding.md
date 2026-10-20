@@ -132,6 +132,8 @@ data.SetValue("enabled", true);
 
 ```csharp
 using Game.Localization;
+using Game.Protocol.Localization;
+using Game.Protocol.Commands;
 
 public sealed record EchoCommand(string Text) : IGameCommand;
 
@@ -152,7 +154,9 @@ public void Configure(IModContext context)
         new CommandDefinition<EchoCommand>(
             (_, command) => CommandResult.Ok(command.Text),
             CommandDomain.World,
-            requiredPermission: permission));
+            requiredPermission: permission,
+            write: static (writer, command) => writer.Write(command.Text),
+            read: static reader => new EchoCommand(reader.ReadString())));
 
     context.Commands.Adapters.Register(
         new ResourceId(context.Manifest.ModId, "text/echo"),
@@ -176,6 +180,8 @@ public void Configure(IModContext context)
 }
 ```
 
+HTTP、文本和 UI 入口均先构造命令对象，远程执行共用命令定义的 `write`／`read` 编解码；服务端不会重新解释 HTTP 或文本参数。需要远程调用的命令必须同时提供这两个委托；未提供时仅能在权威进程本地执行。客户端构造和编码不代表授权，服务端仍按实际连接玩家的权限执行。
+
 命令定义拥有执行逻辑、命令域、权限和必要的宿主环境约束。绑定只负责把某个前端的参数转换为命令，不能创建身份或绕过 `CommandDispatcher`。模组也可以实现自己的
 `ICommandAdapterBinding`，通过 `context.Commands.Adapters` 注册、查询，并由对应前端消费。
 
@@ -197,6 +203,8 @@ public void Configure(IModContext context)
 命令入口记录为 `CommandInvocationChannel`，只用于日志和展示，不参与授权。
 如果操作在业务上必须绑定玩家实体，可以通过 `allowedPrincipals:
 CommandPrincipalKinds.Player` 声明主体要求；这与命令来自消息面板、HTTP 或 stdin 无关。
+
+`Game.Commands.CommandResult` 是游戏业务结果，包含本地发布与展示策略。联网时由游戏转换为精简的 `CommandResponse`，不传输 `Audience`、`Sensitive` 或业务工厂逻辑。
 
 命令结果通过带有 flags 语义的 `CommandResultPresentation` 声明展示范围。默认结果同时进入
 `History` 消息记录并显示在 `Overlay` HUD；较长的帮助和列表结果应仅使用 `History`；短暂的状态通知可以仅使用 `Toast`；无需向玩家展示时使用 `Silent`。展示范围与

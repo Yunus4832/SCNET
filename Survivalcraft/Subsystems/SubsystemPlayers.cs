@@ -3,8 +3,7 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Messaging;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -223,7 +222,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             if (client is not null)
             {
                 _subsystemGameWidgets.Messages.Publish(
-                    GameMessage.LocalizedSystem(
+                    GameMessageLocalization.System(
                         "MultiplayerUI",
                         "PlayerJoined",
                         [playerData.Name],
@@ -266,7 +265,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         _startupPlayerCreateRequested = true;
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new PlayerDataPackage(playerData, PlayerDataPackage.DataType.Create));
+            NetworkSender.SendToServer(PlayerPackageBuilder.Capture(playerData, PlayerDataPackage.DataType.Create));
         }
         else
         {
@@ -518,7 +517,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             if (showMsg && CommonLib.WorkType == WorkType.Server)
             {
                 _subsystemGameWidgets.Messages.Publish(
-                    GameMessage.LocalizedSystem(
+                    GameMessageLocalization.System(
                         "MultiplayerUI",
                         "PlayerLeft",
                         [pd.Name],

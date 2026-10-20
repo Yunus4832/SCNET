@@ -11,7 +11,6 @@ using Game.Components;
 using Game.Managers;
 using Game.Modding;
 using Game.Network;
-using Game.Network.Enums;
 using Game.Subsystems;
 
 using TerritoryStoneMod;

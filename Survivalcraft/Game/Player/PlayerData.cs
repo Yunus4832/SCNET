@@ -6,11 +6,9 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Commands;
-using Game.Messaging;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.NetSimulate;
-using Game.Network.Packages;
+using Game.Network.Interpolation;
+using Game.Network.Transport;
 
 namespace Game;
 
@@ -516,7 +514,7 @@ public partial class PlayerData : IDisposable
                 {
                     if (CommonLib.WorkType == WorkType.Client && IsMainPlayer)
                     {
-                        NetworkSender.SendToServer(new ComponentPlayerPackage(this,
+                        NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this,
                             ComponentPlayerPackage.PlayerAction.Restart));
                     }
 

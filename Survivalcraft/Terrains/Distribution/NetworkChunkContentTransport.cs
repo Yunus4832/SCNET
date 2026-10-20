@@ -1,8 +1,7 @@
 using System.Collections.Concurrent;
 
-using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Chunks;
+using Game.Network.Transport;
 
 namespace Game.Terrains.Distribution;
 

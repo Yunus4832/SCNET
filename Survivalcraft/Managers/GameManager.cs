@@ -6,8 +6,8 @@ using EntitySystem.XmlUtilities;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Replication;
+using Game.Network.Transport;
 
 namespace Game.Managers;
 
@@ -292,13 +292,13 @@ public static class GameManager
         project.EntityRemoved += (_, arg) => { entityMaps.Remove(arg.Entity.EntityId); };
         project.EntityAdded += (_, arg) =>
         {
-            if (!EntityPackage.ShouldSendEntityToClients(arg.Entity) || IsInterestManagedBody(arg.Entity) ||
+            if (!EntityPackageBuilder.ShouldSend(arg.Entity) || IsInterestManagedBody(arg.Entity) ||
                 arg.Entity.FindComponent<ComponentBlockEntity>() is not null)
             {
                 return;
             }
 
-            net.QueuePackage(new EntityPackage(arg.Entity), PackageAudience.Global);
+            net.QueuePackage(EntityPackageBuilder.Capture(arg.Entity), PackageAudience.Global);
         };
         project.EntityRemoved += (_, arg) =>
         {
@@ -393,7 +393,7 @@ public static class GameManager
                 project.FindSubsystem<SubsystemNetworkInterest>(true)!.Entities.RemoveClient(client);
                 var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
                 subsystemPlayers.MakePlayerOffline(client.GUID);
-                net.QueuePackage(new PlayerListPackage(subsystemPlayers), PackageAudience.Global);
+                net.QueuePackage(PlayerPackageBuilder.Capture(subsystemPlayers), PackageAudience.Global);
                 GC.Collect();
                 break;
             case ClientState.LoadTerrain:
@@ -434,7 +434,7 @@ public static class GameManager
             if (subsystemPlayers.MakePlayerOnline(client.GUID, out var playerData, out var entity))
             {
                 client.CachePlayerEntity = entity!;
-                net.QueuePackage(new PlayerListPackage(subsystemPlayers), PackageAudience.Global);
+                net.QueuePackage(PlayerPackageBuilder.Capture(subsystemPlayers), PackageAudience.Global);
             }
         }
         catch (Exception ex)
@@ -464,7 +464,7 @@ public static class GameManager
 
         client.ConnectionPhase = ConnectionPhase.BootstrapSent;
         net.QueuePackage(
-            new BootstrapPackage(client.ConnectionEpoch, net.Clients.Values, textureData, data,
+            WorldSnapshotBuilder.Bootstrap(project, client.ConnectionEpoch, net.Clients.Values, textureData, data,
                 CurrentModRuntime.Value!.RequireWorldCatalog().Registry.Mapping),
             PackageAudience.To(client));
     }
@@ -474,13 +474,13 @@ public static class GameManager
         var subsystemPlayers = project.FindSubsystem<SubsystemPlayers>(true)!;
         var subsystemNetworkInterest = project.FindSubsystem<SubsystemNetworkInterest>(true)!;
         var sendList = project.EntityKeys
-            .Where(EntityPackage.ShouldSendEntityToClients)
+            .Where(EntityPackageBuilder.ShouldSend)
             .Where(entity => subsystemNetworkInterest.ShouldIncludeInInitialSnapshot(client, entity))
             .ToList();
         subsystemNetworkInterest.SeedInitialSnapshot(client, sendList);
         client.ConnectionPhase = ConnectionPhase.WorldSnapshotSent;
         net.QueuePackage(
-            new InitialWorldSnapshotPackage(client.ConnectionEpoch, project, net.Clients.Values,
+            WorldSnapshotBuilder.Initial(client.ConnectionEpoch, project, net.Clients.Values,
                 subsystemPlayers.PlayersData, sendList),
             PackageAudience.To(client));
     }

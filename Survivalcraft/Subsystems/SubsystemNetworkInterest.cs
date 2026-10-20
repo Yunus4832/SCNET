@@ -2,8 +2,10 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Chunks;
+using Game.Network.Diagnostics;
+using Game.Network.Replication;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -25,7 +27,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
 
     private readonly SpatialInterestIndex _spatial = new();
 
-    private readonly Dictionary<Client, TerrainUpdater.UpdateLocation> _requestedLocations =
+    private readonly Dictionary<Client, TerrainUpdateLocation> _requestedLocations =
         new(ReferenceEqualityComparer.Instance);
 
     public event Action<Client, Point2>? ChunkEntered;
@@ -93,12 +95,12 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             var changes = _chunks.Synchronize(client, current);
             foreach (var chunk in changes.Left)
             {
-                NetworkSender.SendTo(client, new ChunkStateResetPackage { Chunk = chunk });
+                NetworkSender.SendTo(client, new ChunkStateResetPackage(chunk));
             }
 
             foreach (var chunk in changes.Entered)
             {
-                NetworkSender.SendTo(client, new ChunkStateResetPackage { Chunk = chunk });
+                NetworkSender.SendTo(client, new ChunkStateResetPackage(chunk));
                 ChunkEntered?.Invoke(client, chunk);
             }
         }
@@ -114,7 +116,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         _subsystemBlockEntities = Project.FindSubsystem<SubsystemBlockEntities>(true)!;
     }
 
-    public bool SetRequestedLocation(Client client, PlayerData player, TerrainUpdater.UpdateLocation requested)
+    public bool SetRequestedLocation(Client client, PlayerData player, TerrainUpdateLocation requested)
     {
         if (!ApplyRequestedLocation(client, player, requested))
         {
@@ -125,7 +127,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
         return true;
     }
 
-    private bool ApplyRequestedLocation(Client client, PlayerData player, TerrainUpdater.UpdateLocation requested)
+    private bool ApplyRequestedLocation(Client client, PlayerData player, TerrainUpdateLocation requested)
     {
         if (!NetworkTerrainPolicy.TryClampClientUpdateLocation(requested,
                 SettingsManager.Current.MaxClientVisibilityRange,
@@ -178,7 +180,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
                 blocks.ContainsKey, 1);
             if (changes.Entered.Count > 0)
             {
-                NetworkSender.SendTo(client, new EntityPackage(changes.Entered.Select(id => blocks[id].Entity).ToList()));
+                NetworkSender.SendTo(client, EntityPackageBuilder.Capture(Project, changes.Entered.Select(id => blocks[id].Entity).ToList()));
             }
 
             foreach (var id in changes.Left)
@@ -251,7 +253,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             return;
         }
 
-        NetworkSender.SendTo(client, new EntityPackage(block.Entity));
+        NetworkSender.SendTo(client, EntityPackageBuilder.Capture(block.Entity));
         Entities.AddObserved(client, EntityInterestGroup.BlockEntities, block.Entity.EntityId);
     }
 
@@ -267,7 +269,7 @@ public sealed class SubsystemNetworkInterest : Subsystem, IUpdateable
             return;
         }
 
-        NetworkSender.SendTo(client, new EntityPackage(missing));
+        NetworkSender.SendTo(client, EntityPackageBuilder.Capture(Project, missing));
         foreach (var entity in missing)
         {
             Entities.AddObserved(client, EntityInterestGroup.Creatures, entity.EntityId);

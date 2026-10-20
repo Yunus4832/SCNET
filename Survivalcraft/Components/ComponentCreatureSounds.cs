@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -62,7 +61,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayIdleSoundLocal(skipIfRecentlyPlayed))
         {
-            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 0, skipIfRecentlyPlayed));
+            NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, 0, skipIfRecentlyPlayed));
         }
     }
 
@@ -89,7 +88,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayPainSoundLocal())
         {
-            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 1));
+            NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, 1));
         }
     }
 
@@ -115,7 +114,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayMoanSoundLocal())
         {
-            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 2));
+            NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, 2));
         }
     }
 
@@ -141,7 +140,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlaySneezeSoundLocal())
         {
-            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 3));
+            NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, 3));
         }
     }
 
@@ -167,7 +166,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayCoughSoundLocal())
         {
-            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 4));
+            NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, 4));
         }
     }
 
@@ -193,7 +192,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayPukeSoundLocal())
         {
-            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 5));
+            NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, 5));
         }
     }
 
@@ -219,7 +218,7 @@ public class ComponentCreatureSounds : Component
 
         if (PlayAttackSoundLocal())
         {
-            NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, 6));
+            NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, 6));
         }
     }
 

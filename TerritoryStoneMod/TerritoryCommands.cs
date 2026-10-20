@@ -2,6 +2,9 @@ using Game;
 using Game.Commands;
 using Game.Localization;
 using Game.Modding;
+using Game.Protocol;
+using Game.Protocol.Commands;
+using Game.Protocol.Localization;
 using Game.Subsystems;
 
 namespace TerritoryStoneMod;

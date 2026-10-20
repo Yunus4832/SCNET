@@ -1,7 +1,6 @@
 using Engine.Core;
 using Engine.Graphics;
 
-using Game.Messaging;
 using Game.Widgets;
 
 namespace Survivalcraft.Test.Widgets;

@@ -1,5 +1,3 @@
-using Game.Messaging;
-
 namespace Game.Commands;
 
 public sealed record UpdateOwnPlayerProfileCommand(

@@ -4,8 +4,8 @@ using Game;
 using Game.Blocks;
 using Game.Components;
 using Game.Managers;
-using Game.Modding;
 using Game.Modding.Blocks;
+using Game.Protocol;
 using Game.Subsystems;
 using Game.Terrains;
 

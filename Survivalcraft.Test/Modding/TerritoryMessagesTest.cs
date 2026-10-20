@@ -1,7 +1,6 @@
 using Engine.Core;
 
 using Game.Network;
-using Game.Network.Serialization;
 
 using TerritoryStoneMod;
 
@@ -26,9 +25,9 @@ public class TerritoryMessagesTest
     {
         var territory = new Territory(Guid.NewGuid(), new Point3(48, 64, -48),
             new TerritorySettings(9, true, false, true, false, false));
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         TerritoryMessages.WriteSnapshot(writer, new[] { territory });
-        using var reader = new PackageStreamReader(writer.Data());
+        using var reader = new ProtocolReader(writer.Data());
         var store = new TerritoryStore();
         Assert.True(store.TryCreate(Guid.NewGuid(), new Point3(0, 64, 0)));
         store.ApplySnapshot(TerritoryMessages.ReadSnapshot(reader));
@@ -59,21 +58,21 @@ public class TerritoryMessagesTest
     [InlineData(1025)]
     public void SnapshotRejectsInvalidCountsBeforeReadingEntries(int count)
     {
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         writer.Write(count);
-        using var reader = new PackageStreamReader(writer.Data());
+        using var reader = new ProtocolReader(writer.Data());
         Assert.Throws<InvalidDataException>(() => TerritoryMessages.ReadSnapshot(reader));
     }
 
     [Fact]
     public void SnapshotRejectsInvalidRadiusBeforeReplacingClientState()
     {
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         writer.Write(1);
         writer.Write(Guid.NewGuid());
         writer.Write(new Point3(0, 64, 0));
         TerritoryMessages.WriteSettings(writer, new TerritorySettings(Size: 0));
-        using var reader = new PackageStreamReader(writer.Data());
+        using var reader = new ProtocolReader(writer.Data());
         Assert.Throws<InvalidDataException>(() => TerritoryMessages.ReadSnapshot(reader));
     }
 

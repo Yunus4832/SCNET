@@ -1,8 +1,5 @@
 using Game;
-using Game.Content;
 using Game.Modding;
-using Game.Network.Packages;
-using Game.Network.Serialization;
 
 namespace Survivalcraft.Test.Modding;
 
@@ -21,14 +18,13 @@ public class ConnectionRequestPackageTest
             Guid.NewGuid(),
             "mod-data-hash");
 
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        var prefix = new PackageStreamReader(writer.Data());
-        Assert.Equal(ConnectionRequestPackage.VerifyMagic, prefix.ReadInt32());
+        var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        var prefix = new ProtocolReader(writer.Data());
+        Assert.Equal(GameProtocol.ConnectionMagic, prefix.ReadInt32());
         Assert.Equal(package.ProtocolVersion, prefix.ReadInt32());
-        var reader = new PackageStreamReader(writer.Data());
-        var clone = new ConnectionRequestPackage();
-        clone.ReadData(reader);
+        var reader = new ProtocolReader(writer.Data());
+        var clone = (ConnectionRequestPackage)ProtocolMessageCodec.Read(package.ID, reader);
 
         Assert.Equal(package.ModDataHash, clone.ModDataHash);
         Assert.Equal(package.ProtocolVersion, clone.ProtocolVersion);
@@ -40,11 +36,10 @@ public class ConnectionRequestPackageTest
     {
         var package = new ConnectionRejectPackage("客户端模组与服务器不一致，请刷新服务器信息后重试");
 
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        var reader = new PackageStreamReader(writer.Data());
-        var clone = new ConnectionRejectPackage();
-        clone.ReadData(reader);
+        var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        var reader = new ProtocolReader(writer.Data());
+        var clone = (ConnectionRejectPackage)ProtocolMessageCodec.Read(package.ID, reader);
 
         Assert.Equal(package.Reason, clone.Reason);
     }
@@ -91,36 +86,21 @@ public class ConnectionRequestPackageTest
             ProtocolVersion = 1,
             TemporaryRepositories =
             [
-                new ContentRepository
-                {
-                    Name = "Server",
-                    BaseUrl = "http://127.0.0.1:9527",
-                    Priority = 0
-                }
+                new ContentRepositoryDescriptor(Guid.NewGuid(), "http://127.0.0.1:9527", 0)
             ],
-            RequiredModProfile = new ModProfile
-            {
-                Id = "server",
-                Packages =
+            RequiredModProfile = new RequiredModProfile("server",
                 [
-                    new ModPackageRequirement
-                    {
-                        ModId = "example.addon",
-                        Version = "2.0.0",
-                        PackageHash = _hashA
-                    }
-                ]
-            }
+                    new RequiredModPackage("example.addon", "2.0.0", _hashA)
+                ])
         };
 
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        var reader = new PackageStreamReader(writer.Data());
-        var prefix = new PackageStreamReader(writer.Data());
+        var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        var reader = new ProtocolReader(writer.Data());
+        var prefix = new ProtocolReader(writer.Data());
         Assert.False(prefix.ReadBoolean());
         Assert.Equal(package.ProtocolVersion, prefix.ReadInt32());
-        var clone = new ServerInfoPackage();
-        clone.ReadData(reader);
+        var clone = Assert.IsType<ServerInfoPackage>(ProtocolMessageCodec.Read(package.ID, reader));
 
         Assert.Equal(package.ProtocolVersion, clone.ProtocolVersion);
         var repository = Assert.Single(clone.TemporaryRepositories);
@@ -138,20 +118,13 @@ public class ConnectionRequestPackageTest
     {
         var package = new ServerInfoPackage
         {
-            RequiredModProfile = new ModProfile
-            {
-                Id = "server",
-                Packages =
+            RequiredModProfile = new RequiredModProfile("server",
                 [
-                    new ModPackageRequirement
-                    {
-                        ModId = "example.addon", Version = "1.0.0", PackageHash = string.Empty
-                    }
-                ]
-            }
+                    new RequiredModPackage("example.addon", "1.0.0", string.Empty)
+                ])
         };
 
-        Assert.Throws<ArgumentException>(() => package.WriteData(new PackageStreamWriter()));
+        Assert.Throws<ArgumentException>(() => ProtocolMessageCodec.Write(package, new ProtocolWriter()));
     }
 
     [Fact]
@@ -167,7 +140,7 @@ public class ConnectionRequestPackageTest
         writer.Write(0f);
 
         var package = new ServerInfoPackage();
-        Assert.Throws<InvalidDataException>(() => package.ReadData(new PackageStreamReader(writer.Data())));
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data())));
     }
 
     [Fact]
@@ -185,12 +158,12 @@ public class ConnectionRequestPackageTest
         writer.Write(0f);
 
         var package = new ServerInfoPackage();
-        Assert.Throws<InvalidDataException>(() => package.ReadData(new PackageStreamReader(writer.Data())));
+        Assert.Throws<InvalidDataException>(() => ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data())));
     }
 
-    private static PackageStreamWriter CreateServerInfoPrefix()
+    private static ProtocolWriter CreateServerInfoPrefix()
     {
-        var writer = new PackageStreamWriter();
+        var writer = new ProtocolWriter();
         writer.Write(false);
         writer.Write(1);
         writer.Write((ushort)0);

@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 
 using EntitySystem.Core;
 
+using Game.Localization;
 using Game.Network;
 
 namespace Game.Commands;
@@ -171,13 +172,11 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
 
     public IReadOnlyList<HttpDiscoveredCommand> Discover(
         CommandPrincipal principal,
-        Project? project,
-        bool playerScope = false)
+        Project? project)
     {
         return _registry.Adapters.Get<HttpCommandBinding>()
             .Where(entry => _registry.TryGetDefinition(entry.Id, out var command) &&
                             command is not null &&
-                            (!playerScope || command.Definition.Domain is not CommandDomain.Application) &&
                             command.Definition.CanInvoke(principal, project) &&
                             command.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) &&
                             command.Definition.IsPotentiallyAuthorized(_registry.Permissions, principal, project))
@@ -189,40 +188,49 @@ public sealed class HttpCommandAdapter(CommandRegistry registry)
             }).ToArray();
     }
 
-    public CommandResult Execute(
+    public CommandResult Execute(HttpCommandRequest request, CommandContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        return TryCreate(request, out var command, out var error)
+            ? new CommandDispatcher(_registry).Execute(command!, context)
+            : error!;
+    }
+
+    public bool TryCreate(
         HttpCommandRequest request,
-        CommandContext context)
+        out IGameCommand? command, out CommandResult? error)
     {
         ArgumentNullException.ThrowIfNull(request);
-        ArgumentNullException.ThrowIfNull(context);
+        command = null;
+        error = null;
         if (!_registry.Adapters.TryGet<HttpCommandBinding>(
                 request.Identity,
                 out var binding) ||
             binding is null)
         {
-            return CommandResult.LocalizedFail(
+            error = CommandResult.LocalizedFail(
                 "command.http_not_exposed",
                 "HttpNotExposed_Message",
                 "命令 {0} 未向 HTTP 前端开放。",
                 request.Identity.ToString());
+            return false;
         }
 
         try
         {
-            var command = binding.CreateCommand(
-                new HttpCommandArguments(request.Arguments));
-            context.Registry = _registry;
-            return new CommandDispatcher(_registry).Execute(command, context);
+            command = binding.CreateCommand(new HttpCommandArguments(request.Arguments));
+            return true;
         }
         catch (Exception exception)
         {
             Log.Error(
                 $"HTTP command {request.Identity} binding failed, " +
-                $"principal={context.Principal.Name}, correlation={context.CorrelationId}: {exception}");
-            return CommandResult.LocalizedFail(
+                $"{exception}");
+            error = CommandResult.LocalizedFail(
                 "command.http_invalid_arguments",
                 "HttpInvalidArguments_Message",
                 "HTTP 命令参数无效。");
+            return false;
         }
     }
 }

@@ -1,13 +1,11 @@
 using System.Xml.Linq;
 
 using Engine.Graphics;
-using Engine.Media;
 
 using EntitySystem.Core;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Widgets;
 
@@ -613,7 +611,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            IPackage package = new ComponentInventoryPackage(sourceInventorySlot, targetInventorySlot,
+            IProtocolMessage package = new ComponentInventoryPackage(sourceInventorySlot, targetInventorySlot,
                 ComponentInventoryPackage.EventType.HandleMoveItem);
             NetworkSender.SendToServer(package);
             //return false; // 这样搞的话客户端太难受了
@@ -689,7 +687,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                 targetInventorySlot,
                 ComponentInventoryPackage.EventType.HandleDragDrop)
             {
-                DragMode = dragMode,
+                DragMode = ProtocolEnum.Encode(dragMode),
                 ProcessingOnly = processingOnly
             };
             NetworkSender.SendToServer(package);

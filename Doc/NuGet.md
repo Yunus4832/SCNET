@@ -19,6 +19,7 @@ SCNET 使用显式的包白名单。只有在项目文件中将 `IsPackable` 设
 | `SCNET.EntitySystem` | `EntitySystem` | 实体、组件、子系统和模板数据库运行时。 |
 | `SCNET.Content.Packaging` | `Content.Packaging` | 统一内容包协议、读写和验证。 |
 | `SCNET.ServerSource.Protocol` | `ServerSource.Protocol` | 服务器源 HTTP 契约、验证和标准客户端。 |
+| `SCNET.Game.Protocol` | `Game.Protocol` | 游戏通信契约、协议兼容整数与二进制编解码；独立于游戏运行时和网络传输实现。 |
 | `SCNET.Survivalcraft` | `Survivalcraft` | 游戏运行时和 Mod 编译契约。 |
 
 这些包遵循项目的依赖边界。使用方通常只需引用所需的最高层级包。Mod 应引用

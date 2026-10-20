@@ -1,7 +1,5 @@
-using Engine.Core;
-
 using Game.Network;
-using Game.Network.Serialization;
+using Game.Protocol.Serialization;
 
 namespace TerritoryStoneMod;
 
@@ -18,7 +16,7 @@ public static class TerritoryMessages
     public static bool CanChangeSettings(Client? sender, Guid owner) =>
         sender != null && owner != Guid.Empty && sender.GUID == owner;
 
-    public static void Write(PackageStreamWriter writer, Territory territory)
+    public static void Write(ProtocolWriter writer, Territory territory)
     {
         writer.Write(territory.Owner);
         writer.Write(territory.StonePoint);
@@ -32,7 +30,7 @@ public static class TerritoryMessages
         }
     }
 
-    public static Territory Read(PackageStreamReader reader)
+    public static Territory Read(ProtocolReader reader)
     {
         var owner = reader.ReadGuid();
         var point = reader.ReadPoint3();
@@ -59,7 +57,7 @@ public static class TerritoryMessages
         return territory;
     }
 
-    public static void WriteSettings(PackageStreamWriter writer, TerritorySettings settings)
+    public static void WriteSettings(ProtocolWriter writer, TerritorySettings settings)
     {
         writer.Write(settings.Size);
         writer.Write(settings.AllowEntry);
@@ -69,11 +67,11 @@ public static class TerritoryMessages
         writer.Write(settings.ShowBoundary);
     }
 
-    public static TerritorySettings ReadSettings(PackageStreamReader reader) => new(reader.ReadInt32(),
+    public static TerritorySettings ReadSettings(ProtocolReader reader) => new(reader.ReadInt32(),
         reader.ReadBoolean(), reader.ReadBoolean(), reader.ReadBoolean(), reader.ReadBoolean(),
         reader.ReadBoolean());
 
-    public static void WriteSnapshot(PackageStreamWriter writer, IReadOnlyCollection<Territory> territories)
+    public static void WriteSnapshot(ProtocolWriter writer, IReadOnlyCollection<Territory> territories)
     {
         writer.Write(territories.Count);
         foreach (var territory in territories)
@@ -82,7 +80,7 @@ public static class TerritoryMessages
         }
     }
 
-    public static Territory[] ReadSnapshot(PackageStreamReader reader)
+    public static Territory[] ReadSnapshot(ProtocolReader reader)
     {
         var count = reader.ReadInt32();
         if (count is < 0 or > 1024)

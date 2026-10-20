@@ -4,8 +4,6 @@ using Engine.Network;
 
 using EntitySystem.Core;
 
-using Game.Network.Enums;
-
 namespace Game.Network;
 
 public class Client

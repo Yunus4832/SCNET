@@ -1,9 +1,5 @@
-using System.Runtime.CompilerServices;
-
-using Game;
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 
@@ -12,20 +8,18 @@ public sealed class PlayerSnapshotSizeTest
     [Fact]
     public void AllMovementFieldsFitInitialSafeMtuWithoutCompression()
     {
-        // Serialization only needs ClientId; do not initialize a game world for this size contract.
-        var player = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
-        var package = new ComponentPlayerPackage
+        // A prepared identity byte is sufficient; serialization does not need a game world.
+        var package = new PlayerStatePackage
         {
-            PlayerData = player,
-            Type = ComponentPlayerPackage.PlayerAction.BodyUpdate,
+
             PackageChangeFlag = (ComponentPlayerPackage.ChangFlag)byte.MaxValue
         };
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         writer.Write((byte)0);
         writer.Write(package.ID);
-        package.WriteData(writer);
+        ProtocolMessageCodec.Write(package, writer);
 
-        var datagram = CommonLib.GetWriter(writer, out _, CommonLib.CompressionPolicy.None);
+        var datagram = CommonLib.GetWriter(writer, out _, CompressionPolicy.None);
 
         Assert.InRange(datagram.Length, 1, 507);
         Assert.Equal(PackageTransportPolicy.Snapshot, PackageTransportPolicy.Get(package));

@@ -1,4 +1,3 @@
-using Game.Network.Enums;
 using Game.Subsystems;
 
 namespace Survivalcraft.Test.Network;

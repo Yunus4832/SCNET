@@ -1,6 +1,6 @@
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
+using Game.Network.Transport;
 
 namespace Game.Commands;
 
@@ -198,7 +198,7 @@ internal static class GroupCommandHandlers
         SubsystemPlayers.PendingGroupOperation operation,
         PlayerData responder)
     {
-        var package = GroupManagePackage.CreatePrompt(operation);
+        var package = GroupPackageBuilder.CreatePrompt(operation);
         if (responder.IsMainPlayer)
         {
             GroupManagePackageHandler.ShowPrompt(package, responder);
@@ -245,7 +245,7 @@ internal static class GroupCommandHandlers
         else if (initiator.Client is not null)
         {
             var resultPackage = CommandPackage.CreateResult(
-                result,
+                CommandResponseBuilder.Capture(result),
                 operation.OperationId.ToString("N"));
             CommonLib.Net.QueuePackage(resultPackage, PackageAudience.To(initiator.Client));
         }
@@ -253,7 +253,7 @@ internal static class GroupCommandHandlers
 
     private static void BroadcastSnapshot(SubsystemPlayers players)
     {
-        CommonLib.Net.QueuePackage(GroupManagePackage.CreateSnapshot(players), PackageAudience.Global);
+        CommonLib.Net.QueuePackage(GroupPackageBuilder.CreateSnapshot(players), PackageAudience.Global);
         players.PlayersData
             .Find(player => player.IsMainPlayer)?
             .GameWidget.RefreshPlayerViews();

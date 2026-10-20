@@ -1,7 +1,6 @@
 using Engine.Core;
 
-using Game.Network;
-using Game.Terrains;
+using Game.Network.Chunks;
 
 namespace Survivalcraft.Test.Network;
 
@@ -10,7 +9,7 @@ public sealed class NetworkTerrainPolicyTest
     [Fact]
     public void OriginalRequestCanBeReapprovedAfterDelayedPlayerMovement()
     {
-        var requested = new TerrainUpdater.UpdateLocation
+        var requested = new TerrainUpdateLocation
         {
             Center = new Vector2(600, 0),
             VisibilityDistance = 128f,
@@ -38,7 +37,7 @@ public sealed class NetworkTerrainPolicyTest
     [Fact]
     public void ClientTerrainRequestIsClampedToServerLimit()
     {
-        var requested = new TerrainUpdater.UpdateLocation
+        var requested = new TerrainUpdateLocation
         {
             Center = new Vector2(10f, 20f),
             VisibilityDistance = ushort.MaxValue,
@@ -57,7 +56,7 @@ public sealed class NetworkTerrainPolicyTest
     [Fact]
     public void ContentDistanceCannotBeLowerThanVisibilityDistance()
     {
-        var requested = new TerrainUpdater.UpdateLocation
+        var requested = new TerrainUpdateLocation
         {
             Center = Vector2.Zero,
             VisibilityDistance = 384f,
@@ -75,7 +74,7 @@ public sealed class NetworkTerrainPolicyTest
     [Fact]
     public void NonFiniteCenterIsRejected()
     {
-        var requested = new TerrainUpdater.UpdateLocation
+        var requested = new TerrainUpdateLocation
         {
             Center = new Vector2(float.NaN, 0f),
             VisibilityDistance = 128f,
@@ -92,7 +91,7 @@ public sealed class NetworkTerrainPolicyTest
     [Fact]
     public void ClientCenterIsLimitedAroundAuthoritativePlayerPosition()
     {
-        var requested = new TerrainUpdater.UpdateLocation
+        var requested = new TerrainUpdateLocation
         {
             Center = new Vector2(1000f, 0f),
             VisibilityDistance = 128f,

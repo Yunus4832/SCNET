@@ -3,8 +3,7 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.NetSimulate;
+using Game.Network.Interpolation;
 
 namespace Game.Components;
 

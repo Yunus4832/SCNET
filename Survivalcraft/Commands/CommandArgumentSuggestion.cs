@@ -1,5 +1,3 @@
-using Game.Localization;
-
 namespace Game.Commands;
 
 public sealed record CommandArgumentSuggestion(

@@ -5,9 +5,7 @@ using Engine.Core;
 using Game;
 using Game.ElectricElements;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Replication;
 using Game.Subsystems;
 
 using Survivalcraft.Test.Modding;
@@ -44,7 +42,7 @@ public sealed class ElectricityCatchupTest : IDisposable
         });
         var snapshot = new SubsystemElectricity.NetSimulate { StartStep = 0, IsBaseline = true };
         snapshot.SaveData[point] = 1f;
-        electricity.ReceiveNetworkSnapshot(snapshot);
+        electricity.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(snapshot));
 
         Assert.Equal(0f, element.GetOutputVoltage(0));
         electricity.Update(0.001f);
@@ -96,8 +94,8 @@ public sealed class ElectricityCatchupTest : IDisposable
         var point = new Point3(0, 1, 2);
         var late = new SubsystemElectricity.NetSimulate { StartStep = 5, IsBaseline = true };
         late.SaveData[point] = 1f;
-        electricity.ReceiveNetworkSnapshot(late);
-        electricity.ReceiveNetworkSnapshot(new SubsystemElectricity.NetSimulate { StartStep = 10 });
+        electricity.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(late));
+        electricity.ReceiveNetworkSnapshot(ElectricityTestSnapshots.Capture(new SubsystemElectricity.NetSimulate { StartStep = 10 }));
 
         electricity.Update(0.001f);
 
@@ -114,11 +112,10 @@ public sealed class ElectricityCatchupTest : IDisposable
         }
 
         snapshot.Removed.AddRange(changes.Removed);
-        using var writer = new PackageStreamWriter();
-        new SubsystemElectricityPackage(snapshot).WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var received = new SubsystemElectricityPackage();
-        received.ReadData(reader);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(new SubsystemElectricityPackage(ElectricityTestSnapshots.Capture(snapshot)), writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var received = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader));
         electricity.ReceiveNetworkSnapshot(received.Snapshot);
     }
 

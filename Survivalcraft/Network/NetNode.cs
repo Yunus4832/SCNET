@@ -5,9 +5,9 @@ using Engine.Network;
 using EntitySystem.Core;
 
 using Game.Commands;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Diagnostics;
+using Game.Network.Handling;
+using Game.Network.Transport;
 using Game.Servers;
 
 using LiteNetLib.Utils;
@@ -149,7 +149,7 @@ public class NetNode
     public event Action<NetNode, IEnumerable<ReceivedPackage>>? OnReceive;
 
     //添加到队列
-    public void QueuePackage(IPackage package, PackageAudience audience)
+    public void QueuePackage(IProtocolMessage package, PackageAudience audience)
     {
         QueueOutboundPackage(new OutboundPackage(package, audience));
     }
@@ -778,12 +778,12 @@ public class NetNode
         };
     }
 
-    public void SendWriterFromPackage(IPackage package, IPEndPoint endPoint, bool isSend = true)
+    public void SendWriterFromPackage(IProtocolMessage package, IPEndPoint endPoint, bool isSend = true)
     {
         SendWriterFromPackages([package], null, null, endPoint, isSend);
     }
 
-    public void SendWriterFromPackage(IPackage package, NetworkConnection? netPeer, bool useDeliveryEvent = false)
+    public void SendWriterFromPackage(IProtocolMessage package, NetworkConnection? netPeer, bool useDeliveryEvent = false)
     {
         SendWriterFromPackages([package], netPeer, null, null, useDeliveryEvent);
     }
@@ -794,7 +794,7 @@ public class NetNode
     /// <param name="package">数据包</param>
     /// <param name="request">远程连接请求</param>
     /// <param name="reject">发送后是否拒绝连接 true拒绝 false不拒绝</param>
-    public void SendWriterFromPackage(IPackage package, NetworkConnectionRequest request, bool reject)
+    public void SendWriterFromPackage(IProtocolMessage package, NetworkConnectionRequest request, bool reject)
     {
         if (reject)
         {
@@ -815,14 +815,14 @@ public class NetNode
     /// <param name="iPEndPoint"></param>
     /// <param name="useDeliveryEvent">true 使用delivery事件回调 true 发送消息 false 发送连接消息</param>
     public void SendWriterFromPackages(
-        IEnumerable<IPackage> packages,
+        IEnumerable<IProtocolMessage> packages,
         NetworkConnection? netPeer = null,
         NetworkConnectionRequest? request = null,
         IPEndPoint? iPEndPoint = null,
         bool useDeliveryEvent = false
     )
     {
-        var packageList = packages as IList<IPackage> ?? packages.ToList();
+        var packageList = packages as IList<IProtocolMessage> ?? packages.ToList();
         if (packageList.Count == 0)
         {
             return;
@@ -862,19 +862,17 @@ public class NetNode
             {
                 throw new InvalidOperationException("Use ConnectServer to start a connection.");
             }
-            else
-            {
+
                 _host!.SendDatagram(iPEndPoint, w.Data.AsSpan(0, w.Length));
             }
         }
-    }
 
-    internal static byte[] CreateUnconnectedPayload(IPackage package)
+    internal static byte[] CreateUnconnectedPayload(IProtocolMessage package)
     {
-        using var writer = new PackageStreamWriter { IsServer = false };
+        using var writer = new ProtocolWriter();
         writer.Write(_verifyByte);
         writer.Write(package.ID);
-        package.WriteData(writer);
+        PackageManager.WriteMessage(package, writer);
         return CommonLib.GetWriter(writer, out _).CopyData();
     }
 
@@ -1011,7 +1009,7 @@ public class NetNode
     private void FlushPendingPackages()
     {
         List<OutboundPackage> packages;
-        var deferredSnapshots = new HashSet<OutboundPackage>();
+        var deferredSnapshots = new HashSet<OutboundPackage>(OutboundPackageIdentityComparer.Instance);
         var flushedChannels = new HashSet<NetworkChannel>();
         var now = Time.RealTime;
         lock (_pendingPackages)
@@ -1318,36 +1316,19 @@ public class NetNode
         int maxPacketSize)
     {
         var chunks = new List<SubsystemBodyPackage>();
-        var chunk = new SubsystemBodyPackage
-        {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-            StateTick = bodyPackage.StateTick
-        };
-
+        var items = new List<SubsystemBodyPackage.BodyItem>();
+        var candidate = bodyPackage with { BodyList = items };
         foreach (var item in bodyPackage.BodyList)
         {
-            chunk.BodyList.Add(item);
-            CreatePackageWriter([chunk], transport, out var chunkSize);
-            if (chunkSize <= maxPacketSize)
-            {
-                continue;
-            }
-
-            chunk.BodyList.RemoveAt(chunk.BodyList.Count - 1);
-            chunks.Add(chunk);
-            chunk = new SubsystemBodyPackage
-            {
-                PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-                StateTick = bodyPackage.StateTick
-            };
-            chunk.BodyList.Add(item);
+            items.Add(item);
+            CreatePackageWriter([candidate], transport, out var chunkSize);
+            if (chunkSize <= maxPacketSize) { continue; }
+            items.RemoveAt(items.Count - 1);
+            if (items.Count > 0) { chunks.Add(bodyPackage with { BodyList = items.ToArray() }); }
+            items.Clear();
+            items.Add(item);
         }
-
-        if (chunk.BodyList.Count > 0)
-        {
-            chunks.Add(chunk);
-        }
-
+        if (items.Count > 0) { chunks.Add(bodyPackage with { BodyList = items.ToArray() }); }
         return chunks;
     }
 
@@ -1382,23 +1363,20 @@ public class NetNode
     }
 
     private NetDataWriter CreatePackageWriter(
-        IEnumerable<IPackage> packages,
+        IEnumerable<IProtocolMessage> packages,
         PackageTransport transport,
         out int packetSize,
         List<(Type PackageType, int PayloadBytes)>? measurements = null)
     {
-        var packageList = packages as IReadOnlyCollection<IPackage> ?? packages.ToArray();
+        var packageList = packages as IReadOnlyCollection<IProtocolMessage> ?? packages.ToArray();
         var serializationStarted = Stopwatch.GetTimestamp();
-        using var writer = new PackageStreamWriter
-        {
-            IsServer = IsServer
-        };
+        using var writer = new ProtocolWriter();
         foreach (var package in packageList)
         {
             writer.Write(_verifyByte);
             writer.Write(package.ID);
             var start = writer.BaseStream.Position;
-            package.WriteData(writer);
+            PackageManager.WriteMessage(package, writer);
             measurements?.Add((package.GetType(), checked((int)(writer.BaseStream.Position - start))));
         }
 
@@ -1414,22 +1392,22 @@ public class NetNode
         return netWriter;
     }
 
-    private static CommonLib.CompressionPolicy GetCompressionPolicy(
-        IEnumerable<IPackage> packages,
+    private static CompressionPolicy GetCompressionPolicy(
+        IEnumerable<IProtocolMessage> packages,
         PackageTransport transport)
     {
         if (transport.Mode != TransportMode.Reliable)
         {
-            return CommonLib.CompressionPolicy.None;
+            return CompressionPolicy.None;
         }
 
         // Chunk payloads are independently compressed and cached by the terrain codec.
         return packages.Any(IsTerrainChunkPackage)
-            ? CommonLib.CompressionPolicy.None
-            : CommonLib.CompressionPolicy.Adaptive;
+            ? CompressionPolicy.None
+            : CompressionPolicy.Adaptive;
     }
 
-    private static bool IsTerrainChunkPackage(IPackage package) =>
+    private static bool IsTerrainChunkPackage(IProtocolMessage package) =>
         package is SubsystemTerrainPackage
         {
             Type: SubsystemTerrainPackage.DataType.SyncTerrainChunkFragment
@@ -1440,7 +1418,7 @@ public class NetNode
         return deliveryMethod is DeliveryMode.ReliableOrdered or DeliveryMode.ReliableUnordered;
     }
 
-    private void RecordDeferredSnapshot(IPackage package, int packetSize, int maxPacketSize)
+    private void RecordDeferredSnapshot(IProtocolMessage package, int packetSize, int maxPacketSize)
     {
         _deferredSnapshotPackages++;
         var now = Time.RealTime;
@@ -1476,6 +1454,6 @@ public class NetNode
             return true;
         }
 
-        return client.ConnectionPhase == ConnectionPhase.Live && client.State >= package.MinNeedState;
+        return client.ConnectionPhase == ConnectionPhase.Live && client.State >= PackageManager.MinimumState(package);
     }
 }

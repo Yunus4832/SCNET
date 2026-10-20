@@ -20,11 +20,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <AssemblyMetadata Include="GameProtocolVersion" Value="$(GameProtocolVersion)"/>
         <PackageReference Include="LiteNetLib" Version="0.9.5.2"/>
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="../Game.Protocol/Game.Protocol.csproj"/>
         <ProjectReference Include="..\Content.Packaging\Content.Packaging.csproj"/>
         <ProjectReference Include="..\Engine\Engine.csproj"/>
         <ProjectReference Include="..\Engine.Network\Engine.Network.csproj"/>

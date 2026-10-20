@@ -3,8 +3,7 @@ using System.Xml.Linq;
 using Engine.Graphics;
 
 using Game.Modding.Blocks;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
 
 namespace Game.Widgets;
 
@@ -37,7 +36,7 @@ public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget
             return;
         }
 
-        FurniturePackageHandler.Submit(new FurniturePackage(furnitureDesign, _furnitureSet));
+        FurniturePackageHandler.Submit(FurniturePackageBuilder.Capture(furnitureDesign, _furnitureSet));
     }
 
     public void DragOver(Widget dragWidget, object data)

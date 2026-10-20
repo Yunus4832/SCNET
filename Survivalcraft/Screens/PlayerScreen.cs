@@ -6,8 +6,7 @@ using EntitySystem.Core;
 
 using Game.Commands;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Screens;
 
@@ -268,7 +267,7 @@ public class PlayerScreen : Screen
             {
                 if (CommonLib.WorkType == WorkType.Client)
                 {
-                    NetworkSender.SendToServer(new PlayerDataPackage(_playerData, PlayerDataPackage.DataType.Create));
+                    NetworkSender.SendToServer(PlayerPackageBuilder.Capture(_playerData, PlayerDataPackage.DataType.Create));
                     DialogsManager.ShowDialog(this, _fetchingPlayerDialog);
                 }
                 else

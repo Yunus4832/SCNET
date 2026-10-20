@@ -1,9 +1,8 @@
 using Engine.Core;
 
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
-using Game.Network.Serialization;
+using Game.Network.Handling;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 
@@ -15,9 +14,8 @@ public sealed class SubsystemBodyPackageChunkingTest
         var package = new SubsystemBodyPackage
         {
             PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-            StateTick = 12345u
-        };
-        package.BodyList.Add(new SubsystemBodyPackage.BodyItem
+            StateTick = 12345u,
+            BodyList = [new SubsystemBodyPackage.BodyItem
         {
             CreatureId = 7,
             ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange |
@@ -30,12 +28,12 @@ public sealed class SubsystemBodyPackageChunkingTest
             Velocity = new Vector3(4f, 5f, 6f),
             LookAngles = new Vector2(0.1f, 0.2f),
             FlyOrder = new Vector3(7f, 8f, 9f)
-        });
+            }]
+        };
 
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        var clone = new SubsystemBodyPackage();
-        clone.ReadData(new PackageStreamReader(writer.Data()));
+        var writer = new ProtocolWriter();
+        PackageManager.WriteMessage(package, writer);
+        var clone = Assert.IsType<SubsystemBodyPackage>(ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data())));
 
         Assert.Equal(package.StateTick, clone.StateTick);
         var item = Assert.Single(clone.BodyList);
@@ -53,14 +51,16 @@ public sealed class SubsystemBodyPackageChunkingTest
     [InlineData(1428)]
     public void FullBodySnapshotExceedingMtuCanBeSplitIntoFittingChunks(int maxPacketSize)
     {
+        var items = new List<SubsystemBodyPackage.BodyItem>();
         var full = new SubsystemBodyPackage
         {
             PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
-            StateTick = 12345u
+            StateTick = 12345u,
+            BodyList = items
         };
         for (var i = 0; i < 80; i++)
         {
-            full.BodyList.Add(new SubsystemBodyPackage.BodyItem
+            items.Add(new SubsystemBodyPackage.BodyItem
             {
                 CreatureId = i,
                 ChangeFlag = SubsystemBodyPackage.ChangeFlag.PositionChange |
@@ -91,19 +91,16 @@ public sealed class SubsystemBodyPackageChunkingTest
         Assert.All(chunks, chunk => Assert.True(SerializeSize([chunk]) <= maxPacketSize));
     }
 
-    private static int SerializeSize(IEnumerable<IPackage> packages)
+    private static int SerializeSize(IEnumerable<IProtocolMessage> packages)
     {
-        var writer = new PackageStreamWriter
-        {
-            IsServer = true
-        };
+        var writer = new ProtocolWriter();
         foreach (var package in packages)
         {
             writer.Write((byte)0x88);
             writer.Write(package.ID);
-            package.WriteData(writer);
+            PackageManager.WriteMessage(package, writer);
         }
 
-        return writer.Data(CommonLib.CompressionPolicy.None).Length + sizeof(int);
+        return writer.Data(CompressionPolicy.None).Length + sizeof(int);
     }
 }

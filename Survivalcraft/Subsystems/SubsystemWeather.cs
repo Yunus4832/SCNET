@@ -4,8 +4,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -214,7 +213,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
                 PrecipitationEndTime = PrecipitationStartTime + 60f * _random.Float(3f, 6f);
                 if (CommonLib.WorkType == WorkType.Server)
                 {
-                    CommonLib.Net.QueuePackage(SubsystemWeatherPackage.CreateSnapshot(this), PackageAudience.Global);
+                    CommonLib.Net.QueuePackage(WorldSnapshotBuilder.Capture(this), PackageAudience.Global);
                 }
             }
         }
@@ -452,7 +451,7 @@ public class SubsystemWeather : Subsystem, IDrawable, IUpdateable
 
                 if (CommonLib.WorkType == WorkType.Server)
                 {
-                    CommonLib.Net.QueuePackage(SubsystemWeatherPackage.CreateSnapshot(this), PackageAudience.Global);
+                    CommonLib.Net.QueuePackage(WorldSnapshotBuilder.Capture(this), PackageAudience.Global);
                 }
             }
         }

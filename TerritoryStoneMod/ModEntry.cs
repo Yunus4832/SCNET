@@ -6,6 +6,9 @@ using Game.Modding;
 using Game.Modding.Blocks;
 using Game.Modding.Content;
 using Game.Modding.Data;
+using Game.Network.Transport;
+using Game.Protocol;
+using Game.Protocol.Connection;
 
 namespace TerritoryStoneMod;
 
@@ -136,7 +139,7 @@ public sealed class ModEntry : IMod
                     writer.Write(accepted);
                     writer.Write(error);
                     TerritoryMessages.WriteSettings(writer, territory?.Settings ?? new TerritorySettings());
-                }, Game.Network.PackageAudience.To(message.From), Game.Network.Enums.ClientState.ProjectLoaded);
+                }, PackageAudience.To(message.From), ClientState.ProjectLoaded);
             }
         });
         context.Network.OnMessage(TerritoryMessages.SettingsResult, message =>

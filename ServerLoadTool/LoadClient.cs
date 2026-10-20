@@ -3,23 +3,13 @@ using System.Diagnostics;
 using Engine.Core;
 using Engine.Network;
 
-using EntitySystem.TemplatesDatabase;
-
-using Game;
-using Game.Managers;
-using Game.Modding;
-using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Serialization;
-using Game.Terrains;
-using Game.Terrains.Distribution;
-
-
 namespace ServerLoadTool;
 
 public sealed class LoadClient : IDisposable
 {
+    // The load client creates the default male character (wire value 0).
+    private const byte _defaultPlayerClass = 0;
+
     private readonly LoadOptions _options;
     private readonly NetworkHost _network;
     private readonly CancellationTokenSource _stop = new();
@@ -99,7 +89,7 @@ public sealed class LoadClient : IDisposable
     private async Task<NetworkConnection> ConnectAsync()
     {
         await using var preparation = await _network.PrepareAddressAsync(_options.Host, _options.Port, _stop.Token);
-        var request = new ConnectionRequestPackage(_token, VersionsManager.ProtocolVersion, _identity, ModProfileManager.EmptyDataHash);
+        var request = new ConnectionRequestPackage(_token, GameProtocol.CurrentVersion, _identity, GameProtocol.EmptyModDataHash);
         return await preparation.ConnectAsync(LoadWire.Encode(request), _stop.Token);
     }
 
@@ -125,7 +115,7 @@ public sealed class LoadClient : IDisposable
         State = "failed";
     }
 
-    private void Send(IPackage package)
+    private void Send(IProtocolMessage package)
     {
         if (_peer == null || Error != null)
         {
@@ -133,8 +123,10 @@ public sealed class LoadClient : IDisposable
         }
 
         var data = LoadWire.Encode(package, _id);
-        var transport = PackageTransportPolicy.Get(package);
-        var result = _peer.TrySend(data, transport.ChannelNumber, transport.Delivery);
+        var channel = package is PlayerStatePackage ? NetworkChannel.Snapshot :
+            package is ComponentPlayerPackage ? NetworkChannel.ReliableEvent : NetworkChannel.Control;
+        var delivery = package is PlayerStatePackage ? DeliveryMode.Sequenced : DeliveryMode.ReliableOrdered;
+        var result = _peer.TrySend(data, (byte)channel, delivery);
         if (result != NetworkSendResult.Accepted)
         {
             Fail($"send: {result}");
@@ -143,7 +135,7 @@ public sealed class LoadClient : IDisposable
         SentBytes += data.Length;
     }
 
-    private void Receive(IPackage package)
+    private void Receive(IProtocolMessage package)
     {
         switch (package)
         {
@@ -151,7 +143,7 @@ public sealed class LoadClient : IDisposable
                 Fail($"rejected: {reject.Reason}");
                 break;
             case BootstrapPackage bootstrap:
-                World = LoadWorldInfo.Read(bootstrap.ProjectData);
+                World = LoadWorldInfo.Read(bootstrap.World);
                 _epoch = bootstrap.Epoch;
                 _id = bootstrap.ClientList.List.Single(client => client.TokenId == _token).ID;
                 State = "bootstrap";
@@ -163,7 +155,7 @@ public sealed class LoadClient : IDisposable
                     throw new InvalidDataException("World snapshot epoch mismatch.");
                 }
 
-                ReadEntities(snapshot.EntityData);
+                ReadEntities(snapshot.PlayerEntities);
                 _snapshot = true;
                 Send(new ConnectionPhaseAckPackage(_epoch, ConnectionPhase.WorldSnapshotApplied));
                 Send(new PlayerDataPackage
@@ -171,14 +163,14 @@ public sealed class LoadClient : IDisposable
                     Type = PlayerDataPackage.DataType.Create,
                     PlayerName = Name,
                     SkinName = "$Male1",
-                    PlayerClass = PlayerClass.Male
+                    PlayerClass = _defaultPlayerClass
                 });
                 State = "joining";
                 break;
             case EntityPackage { Type: EntityPackage.EventType.LoadOne or EntityPackage.EventType.LoadList } entities:
-                ReadEntities(entities.EntityData);
+                ReadEntities(entities.PlayerEntities);
                 break;
-            case ComponentPlayerPackage { Type: ComponentPlayerPackage.PlayerAction.PositionSet } position when position.FromPlayerId == _id:
+            case PlayerPositionPackage position when position.FromPlayerId == _id:
                 Position = position.Position;
                 _origin = Position;
                 _movingSeconds = 0;
@@ -221,27 +213,17 @@ public sealed class LoadClient : IDisposable
         }
     }
 
-    private void ReadEntities(byte[] data)
+    private void ReadEntities(IReadOnlyList<PlayerEntitySnapshot> entities)
     {
-        var entities = new ValuesDictionary();
-        entities.ApplyOverridesUseMessagePack(data);
-        foreach (var value in entities.Values.OfType<ValuesDictionary>())
+        foreach (var entity in entities)
         {
-            var components = value.GetValue<ValuesDictionary>("Overrides");
-            if (components.GetValue<ValuesDictionary?>("Player", null)?.GetValue("PlayerGuid", Guid.Empty) != _identity)
-            {
-                continue;
-            }
-
-            if (!_hasEntity)
-            {
-                Position = components.GetValue<ValuesDictionary>("Body").GetValue<Vector3>("Position");
-                _entityId = value.GetValue<int>("Id");
-                _mounted = components.GetValue<ValuesDictionary>("Body").GetValue("ParentBody", 0) != 0;
-                SpawnedMounted = _mounted;
-                _origin = Position;
-                _hasEntity = true;
-            }
+            if (entity.PlayerGuid != _identity || _hasEntity) { continue; }
+            Position = entity.Position;
+            _entityId = entity.EntityId;
+            _mounted = entity.ParentBodyId != 0;
+            SpawnedMounted = _mounted;
+            _origin = Position;
+            _hasEntity = true;
         }
     }
 
@@ -288,7 +270,7 @@ public sealed class LoadClient : IDisposable
         {
             _lastLocation = now;
             _locationCenter = Position.XZ;
-            Send(new PlayerDataPackage(new TerrainUpdater.UpdateLocation
+            Send(new PlayerDataPackage(new TerrainUpdateLocation
             {
                 Center = Position.XZ,
                 ContentDistance = _options.Visibility,
@@ -310,8 +292,8 @@ public sealed class LoadClient : IDisposable
             State = "playing";
             PlayingSeconds = now;
             Send(new ClientPackage(_id!.Value, ClientState.Playing));
-            Send(new ComponentPlayerPackage { Type = ComponentPlayerPackage.PlayerAction.IntoPlaying });
-            Send(new ComponentPlayerPackage { Type = ComponentPlayerPackage.PlayerAction.CreativeFlyChange, IsCreativeFly = true });
+            Send(new PlayerReadyPackage());
+            Send(new PlayerFlightPackage { IsCreativeFly = true });
         }
 
         if (State == "playing" && AuthoritativePosition is { } authoritative)
@@ -341,9 +323,9 @@ public sealed class LoadClient : IDisposable
                 Position = LoadMotion.Position(_origin, _movingSeconds, Index, _options);
             }
 
-            Send(new ComponentPlayerPackage
+            Send(new PlayerStatePackage
             {
-                Type = ComponentPlayerPackage.PlayerAction.BodyUpdate,
+
                 PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange | ComponentPlayerPackage.ChangFlag.VelocityChange |
                     ComponentPlayerPackage.ChangFlag.RotationChange | ComponentPlayerPackage.ChangFlag.LookAnglesChange | ComponentPlayerPackage.ChangFlag.SneakChange,
                 Position = Position,

@@ -1,7 +1,7 @@
 using Engine.Core;
 
 using Game;
-using Game.Network;
+using Game.Network.Chunks;
 using Game.Terrains;
 using Game.Terrains.Distribution;
 

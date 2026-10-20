@@ -5,8 +5,8 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Replication;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -421,7 +421,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
                 if (observers.Length > 0)
                 {
                     CommonLib.Net.QueuePackage(
-                        new PickablePackage(item, PickablePackage.PickType.Delete),
+                        PickablePackageBuilder.Capture(item, PickablePackage.PickType.Delete),
                         PackageAudience.To(observers));
                 }
 
@@ -585,8 +585,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
 
         if (!found && CommonLib.WorkType == WorkType.Client && requestSync)
         {
-            NetworkSender.SendToServer(new PickablePackage(new Pickable { Id = id },
-                PickablePackage.PickType.RequestSync));
+            NetworkSender.SendToServer(new PickablePackage { Type = PickablePackage.PickType.RequestSync, Id = id, StateTick = unchecked((uint)Time.FrameIndex) });
         }
 
         return found;
@@ -597,7 +596,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         return _pickablesById.TryGetValue(id, out pickable!);
     }
 
-    internal void ApplyPositionSnapshot(IEnumerable<Pickable> positions, uint stateTick)
+    internal void ApplyPositionSnapshot(IEnumerable<PickablePosition> positions, uint stateTick)
     {
         foreach (var position in positions)
         {
@@ -608,7 +607,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
         }
     }
 
-    internal static void ApplyMotionSnapshot(Pickable pickable, Pickable snapshot, uint stateTick)
+    internal static void ApplyMotionSnapshot(Pickable pickable, PickablePosition snapshot, uint stateTick)
     {
         if (unchecked((int)(stateTick - pickable.LastStateTick)) <= 0)
         {
@@ -747,7 +746,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             if (entered.Count > 0)
             {
                 CommonLib.Net.QueuePackage(
-                    new PickablePackage(entered, PickablePackage.PickType.CreateList),
+                    PickablePackageBuilder.Capture(entered, PickablePackage.PickType.CreateList),
                     PackageAudience.To(client));
             }
 
@@ -755,7 +754,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             {
                 var left = changes.Left.Select(id => new Pickable { Id = (ushort)id }).ToList();
                 CommonLib.Net.QueuePackage(
-                    new PickablePackage(left, PickablePackage.PickType.DeleteList),
+                    PickablePackageBuilder.Capture(left, PickablePackage.PickType.DeleteList),
                     PackageAudience.To(client));
             }
 
@@ -763,7 +762,7 @@ public class SubsystemPickables : Subsystem, IDrawable, IUpdateable
             for (var i = 0; i < relevant.Count; i += PickablePackage.MaxPositionsPerSnapshot)
             {
                 CommonLib.Net.QueuePackage(
-                    new PickablePackage(relevant.GetRange(i,
+                    PickablePackageBuilder.Capture(relevant.GetRange(i,
                         Math.Min(PickablePackage.MaxPositionsPerSnapshot, relevant.Count - i))),
                     PackageAudience.To(client));
             }

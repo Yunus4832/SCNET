@@ -5,7 +5,7 @@ namespace Game.Modding.Blocks;
 
 public sealed class BlockIndexMapping
 {
-    public const int MaximumResourceIdLength = 256;
+    public const int MaximumResourceIdLength = ProtocolLimits.MaximumResourceIdLength;
 
     public static BlockIndexMapping Empty { get; } = new([]);
 

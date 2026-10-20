@@ -1,5 +1,3 @@
-using Game.Messaging;
-
 namespace Game.ElectricElements;
 
 public class SignElectricElement(

@@ -1,7 +1,5 @@
-using System.IO.Compression;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Xml.Linq;
 
 using Engine.Graphics;
@@ -10,32 +8,12 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 using EntitySystem.XmlUtilities;
 
-using Game.Network.Enums;
-using Game.Network.Serialization;
-
 using LiteNetLib.Utils;
 
 namespace Game.Network;
 
 public static class CommonLib
 {
-    public enum CompressionPolicy : byte
-    {
-        None,
-        Adaptive,
-        Always
-    }
-
-    private enum WireCompression : byte
-    {
-        None,
-        Deflate
-    }
-
-    private const int _compressionThreshold = 256;
-
-    private const int _maxDecompressedPackageSize = 64 * 1024 * 1024;
-
     public const int DisconnectTimeout = 10000;
 
     public static readonly NetNode Net = new();
@@ -98,7 +76,7 @@ public static class CommonLib
     }
 
     public static NetDataWriter GetWriter(
-        PackageStreamWriter writer,
+        ProtocolWriter writer,
         out int size,
         CompressionPolicy compressionPolicy = CompressionPolicy.Adaptive)
     {
@@ -109,24 +87,7 @@ public static class CommonLib
         return tmp;
     }
 
-    public static PackageStreamReader GetReader(ReadOnlyMemory<byte> data)
-    {
-        if (data.Length < sizeof(int))
-        {
-            throw new InvalidDataException("Package frame is missing its length prefix.");
-        }
-        var reader = MemoryMarshal.TryGetArray(data, out var segment) && segment.Array is not null
-            ? new NetDataReader(segment.Array, segment.Offset, segment.Offset + segment.Count)
-            : new NetDataReader(data.ToArray());
-        var length = reader.GetInt();
-        if (length < 0 || length != data.Length - sizeof(int))
-        {
-            throw new InvalidDataException("Package frame length does not match its payload.");
-        }
-        var payload = new byte[length];
-        reader.GetBytes(payload, length);
-        return new PackageStreamReader(payload);
-    }
+    public static ProtocolReader GetReader(ReadOnlyMemory<byte> data) => ProtocolPacketCodec.CreateReader(data);
 
     public static string GetInnerIp()
     {
@@ -181,88 +142,6 @@ public static class CommonLib
         {
             project.SendToClientMode = previousMode;
         }
-    }
-
-    public static byte[] EncodeFrame(Stream stream, CompressionPolicy compressionPolicy)
-    {
-        stream.Position = 0L;
-        var data = new byte[stream.Length];
-        stream.ReadExactly(data, 0, (int)stream.Length);
-        return EncodeFrame(data, compressionPolicy);
-    }
-
-    private static byte[] EncodeFrame(byte[] data, CompressionPolicy compressionPolicy)
-    {
-        var payload = data;
-        var compression = WireCompression.None;
-        if (compressionPolicy != CompressionPolicy.None &&
-            (compressionPolicy == CompressionPolicy.Always || data.Length >= _compressionThreshold))
-        {
-            var compressed = Deflate(data);
-            if (compressionPolicy == CompressionPolicy.Always || compressed.Length + 5 < data.Length * 9 / 10)
-            {
-                payload = compressed;
-                compression = WireCompression.Deflate;
-            }
-        }
-
-        using var frame = new MemoryStream(payload.Length + 5);
-        using var writer = new BinaryWriter(frame);
-        writer.Write((byte)compression);
-        writer.Write(data.Length);
-        writer.Write(payload);
-        return frame.ToArray();
-    }
-
-    private static byte[] Deflate(byte[] data)
-    {
-        using var outStream = new MemoryStream();
-        using (var zipStream = new DeflateStream(outStream, CompressionLevel.Fastest, true))
-        {
-            zipStream.Write(data, 0, data.Length);
-        }
-
-        var streamArray = outStream.ToArray();
-
-        return streamArray;
-    }
-
-    public static byte[] DecodeFrame(byte[] frame)
-    {
-        using var frameStream = new MemoryStream(frame, false);
-        using var reader = new BinaryReader(frameStream);
-        if (frame.Length < 5)
-        {
-            throw new InvalidDataException("Network frame is truncated.");
-        }
-
-        var compression = (WireCompression)reader.ReadByte();
-        var rawLength = reader.ReadInt32();
-        if (rawLength is < 0 or > _maxDecompressedPackageSize)
-        {
-            throw new InvalidDataException($"Invalid network frame size: {rawLength}.");
-        }
-
-        var inputBytes = reader.ReadBytes((int)(frameStream.Length - frameStream.Position));
-        if (compression == WireCompression.None)
-        {
-            return inputBytes.Length != rawLength
-                ? throw new InvalidDataException("Uncompressed network frame length does not match its header.")
-                : inputBytes;
-        }
-
-        if (compression != WireCompression.Deflate)
-        {
-            throw new InvalidDataException($"Unsupported network compression codec: {(byte)compression}.");
-        }
-
-        var output = new byte[rawLength];
-        using var inputStream = new MemoryStream(inputBytes);
-        using var zipStream = new DeflateStream(inputStream, CompressionMode.Decompress);
-        zipStream.ReadExactly(output);
-        return zipStream.ReadByte() != -1
-            ? throw new InvalidDataException("Network frame expands beyond its declared size.")
-            : output;
     }
 
     public static string SerializeVDict(ValuesDictionary dict)

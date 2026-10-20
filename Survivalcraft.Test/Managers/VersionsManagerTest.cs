@@ -9,7 +9,7 @@ namespace Survivalcraft.Test.Managers;
 public sealed class VersionsManagerTest
 {
     [Fact]
-    public void ProductVersionAndProtocolComeFromTheGameAssembly()
+    public void ProductVersionAndProtocolComeFromTheirOwningAssemblies()
     {
         var assembly = typeof(VersionsManager).Assembly;
         var informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()!.InformationalVersion;
@@ -17,8 +17,9 @@ public sealed class VersionsManagerTest
         Assert.Equal(informational.Split('+', 2)[0], VersionsManager.Version);
         Assert.True(SemanticVersion.TryParse(VersionsManager.Version, out _));
         Assert.Equal($"{VersionsManager.GameName}-{VersionsManager.Version}", VersionsManager.Title);
-        Assert.Equal(int.Parse(assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+        Assert.Equal(int.Parse(typeof(GameProtocol).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
             .Single(attribute => attribute.Key == "GameProtocolVersion").Value!), VersionsManager.ProtocolVersion);
         Assert.True(VersionsManager.ProtocolVersion > 0);
+        Assert.DoesNotContain(assembly.GetCustomAttributes<AssemblyMetadataAttribute>(), attribute => attribute.Key == "GameProtocolVersion");
     }
 }

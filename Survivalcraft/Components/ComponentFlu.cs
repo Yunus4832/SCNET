@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -55,7 +54,7 @@ public class ComponentFlu : Component, IUpdateable
         {
             if (_componentPlayer.PlayerData.Client is { } owner)
             {
-                NetworkSender.SendTo(owner, new ComponentFluPackage(this, ComponentFluPackage.EventType.SyncStat));
+                NetworkSender.SendTo(owner, EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.SyncStat));
             }
         }
 
@@ -87,7 +86,7 @@ public class ComponentFlu : Component, IUpdateable
                     FluEffect();
                     NetworkSender.SendToObservers(
                         Entity,
-                        new ComponentFluPackage(this, ComponentFluPackage.EventType.FluEffect));
+                        EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.FluEffect));
                 }
             }
         }
@@ -104,7 +103,7 @@ public class ComponentFlu : Component, IUpdateable
                     {
                         StartFlu();
                         NetworkSender.SendToObservers(Entity,
-                            new ComponentFluPackage(this, ComponentFluPackage.EventType.StartFlu));
+                            EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.StartFlu));
                     }
                 }
 
@@ -125,7 +124,7 @@ public class ComponentFlu : Component, IUpdateable
                     Sneeze();
                     NetworkSender.SendToObservers(
                         Entity,
-                        new ComponentFluPackage(this, ComponentFluPackage.EventType.Sneeze));
+                        EntityStatePackageBuilder.Capture(this, ComponentFluPackage.EventType.Sneeze));
                 }
             }
         }

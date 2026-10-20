@@ -1,9 +1,7 @@
 using Engine.Core;
 
 using Game;
-using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Transport;
 using Game.Subsystems;
 
 namespace Survivalcraft.Test.Network;
@@ -37,14 +35,14 @@ public sealed class ProjectilePackageTest
     [Fact]
     public void MotionUpdatePreservesStateAndUsesUnreliableStateStream()
     {
-        var package = new ProjectilePackage(new Projectile
+        var package = ProjectilePackageBuilder.Capture(new Projectile
         {
             NetworkId = 42,
             Position = new Vector3(1, 2, 3),
             Rotation = new Vector3(4, 5, 6),
             Velocity = new Vector3(7, 8, 9),
             AngularVelocity = new Vector3(10, 11, 12)
-        })
+        }) with
         { Type = ProjectilePackage.EventType.Update, StateTick = 5 };
         var clone = RoundTrip(package);
 
@@ -69,8 +67,7 @@ public sealed class ProjectilePackageTest
 
         Assert.True(SubsystemProjectiles.ApplyNetworkMotion(projectile, update));
         Assert.Equal(update.Position, projectile.Position);
-        update.StateTick = uint.MaxValue;
-        update.Position = Vector3.Zero;
+        update = update with { StateTick = uint.MaxValue, Position = Vector3.Zero };
         Assert.False(SubsystemProjectiles.ApplyNetworkMotion(projectile, update));
         Assert.Equal(new Vector3(1, 2, 3), projectile.Position);
     }
@@ -89,7 +86,7 @@ public sealed class ProjectilePackageTest
             IsFireProjectile = true
         };
 
-        var clone = RoundTrip(new ProjectilePackage(projectile));
+        var clone = RoundTrip(ProjectilePackageBuilder.Capture(projectile));
 
         Assert.Equal(ProjectilePackage.EventType.Add, clone.Type);
         Assert.Equal(projectile.NetworkId, clone.NetworkId);
@@ -105,11 +102,10 @@ public sealed class ProjectilePackageTest
     [Fact]
     public void LeaveMessageContainsOnlyTypeAndIdentity()
     {
-        using var writer = new PackageStreamWriter();
-        new ProjectilePackage(42).WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new ProjectilePackage();
-        clone.ReadData(reader);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(new ProjectilePackage(42), writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<ProjectilePackage>(ProtocolMessageCodec.Read((byte)PackageType.Projectile, reader));
 
         Assert.Equal(ProjectilePackage.EventType.Remove, clone.Type);
         Assert.Equal(42, clone.NetworkId);
@@ -119,11 +115,10 @@ public sealed class ProjectilePackageTest
 
     private static ProjectilePackage RoundTrip(ProjectilePackage package)
     {
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new ProjectilePackage();
-        clone.ReadData(reader);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<ProjectilePackage>(ProtocolMessageCodec.Read((byte)PackageType.Projectile, reader));
         return clone;
     }
 }

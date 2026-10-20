@@ -2,7 +2,7 @@ namespace Game.Modding.Blocks;
 
 public sealed class BlockRuntimeCatalog
 {
-    public const int Capacity = 1024;
+    public const int Capacity = ProtocolLimits.BlockCapacity;
     private readonly IReadOnlyDictionary<ResourceId, BlockEntry> _byId;
     private readonly IReadOnlyList<BlockDataEntry> _dataEntries;
 

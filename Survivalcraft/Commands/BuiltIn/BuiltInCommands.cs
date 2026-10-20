@@ -1,12 +1,12 @@
+using System.Text.Json.Nodes;
+
 using Engine.Input;
 
 using EntitySystem.Core;
 
 using Game.Localization;
-using Game.Messaging;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Commands;
 
@@ -167,6 +167,22 @@ public static class BuiltInCommands
             new CommandDefinition<GetP2PStatusCommand>(P2PCommandHandlers.Status, CommandDomain.Server,
                 CommandDescription("P2PStatus_Description", "查询 P2P 房间状态"), p2pManage,
                 write: static (_, _) => { }, read: static _ => new GetP2PStatusCommand()));
+
+        commands.Register(new ResourceId(owner, "commands/catalog"),
+            new CommandDefinition<GetCommandCatalogCommand>(
+                (context, _) => CommandResult.SilentOk() with
+                {
+                    Data = new JsonObject
+                    {
+                        ["commands"] = new JsonArray(context.Registry.Definitions
+                            .Where(entry => entry.Definition.Domain is not CommandDomain.Application &&
+                                            entry.Definition.CanExecuteHere(RunMode.Value, CommonLib.WorkType) &&
+                                            entry.Definition.IsPotentiallyAuthorized(context.Registry.Permissions,
+                                                context.Principal, context.Project))
+                            .Select(entry => (JsonNode?)JsonValue.Create(entry.Id.ToString())).ToArray())
+                    }
+                }, CommandDomain.World,
+                write: static (_, _) => { }, read: static _ => new GetCommandCatalogCommand()));
 
         commands.Register(
             new ResourceId(owner, "help"),
@@ -354,13 +370,15 @@ public static class BuiltInCommands
                 CommandDomain.Server,
                 CommandDescription("StopAction_Description", "停止 Headless 服务端"),
                 serverStop,
-                CommandHostRequirement.HeadlessServer));
+                CommandHostRequirement.HeadlessServer,
+                write: static (_, _) => { }, read: static _ => new StopServerCommand()));
         commands.Register(
             new ResourceId(owner, "server/auth/help"),
             new CommandDefinition<ShowServerAuthHelpCommand>(
                 ExecuteAuthHelp,
                 CommandDomain.Server,
-                CommandDescription("AuthHelp_Description", "显示服务器认领帮助")));
+                CommandDescription("AuthHelp_Description", "显示服务器认领帮助"),
+                write: static (_, _) => { }, read: static _ => new ShowServerAuthHelpCommand()));
         commands.Register(
             new ResourceId(owner, "server/auth/claim"),
             new CommandDefinition<ClaimServerAdministrationCommand>(
@@ -378,41 +396,47 @@ public static class BuiltInCommands
                 ExecuteAuthStatus,
                 CommandDomain.Server,
                 CommandDescription("AuthStatus_Description", "查看服务器认领状态"),
-                serverAuthManage));
+                serverAuthManage,
+                write: static (_, _) => { }, read: static _ => new GetServerAuthStatusCommand()));
         commands.Register(
             new ResourceId(owner, "server/auth/code"),
             new CommandDefinition<GetServerAuthCodeCommand>(
                 ExecuteAuthCode,
                 CommandDomain.Server,
                 CommandDescription("AuthCode_Description", "显示当前服务器认领码"),
-                serverAuthManage));
+                serverAuthManage,
+                write: static (_, _) => { }, read: static _ => new GetServerAuthCodeCommand()));
         commands.Register(
             new ResourceId(owner, "server/auth/regenerate"),
             new CommandDefinition<RegenerateServerAuthCodeCommand>(
                 ExecuteAuthRegenerate,
                 CommandDomain.Server,
                 CommandDescription("AuthRegenerate_Description", "重新生成服务器认领码"),
-                serverAuthManage));
+                serverAuthManage,
+                write: static (_, _) => { }, read: static _ => new RegenerateServerAuthCodeCommand()));
         commands.Register(
             new ResourceId(owner, "permission/help"),
             new CommandDefinition<ShowPermissionHelpCommand>(
                 ExecutePermissionHelp,
                 CommandDomain.Server,
-                CommandDescription("PermissionHelp_Description", "显示授权命令帮助")));
+                CommandDescription("PermissionHelp_Description", "显示授权命令帮助"),
+                write: static (_, _) => { }, read: static _ => new ShowPermissionHelpCommand()));
         commands.Register(
             new ResourceId(owner, "permission/players"),
             new CommandDefinition<ListPermissionPlayersCommand>(
                 ExecutePermissionPlayers,
                 CommandDomain.Server,
                 CommandDescription("PermissionPlayers_Description", "列出当前可授权玩家"),
-                permissionGrant));
+                permissionGrant,
+                write: static (_, _) => { }, read: static _ => new ListPermissionPlayersCommand()));
         commands.Register(
             new ResourceId(owner, "permission/nodes"),
             new CommandDefinition<ListPermissionNodesCommand>(
                 ExecutePermissionNodes,
                 CommandDomain.Server,
                 CommandDescription("PermissionNodes_Description", "列出当前可授权权限节点"),
-                permissionGrant));
+                permissionGrant,
+                write: static (_, _) => { }, read: static _ => new ListPermissionNodesCommand()));
         commands.Register(
             new ResourceId(owner, "permission/list_self"),
             new CommandDefinition<ListOwnPermissionsCommand>(
@@ -492,7 +516,16 @@ public static class BuiltInCommands
                 CommandDescription(
                     "PlayerProfileServer_Description",
                     "由服务器更新玩家资料"),
-                playerProfileManage));
+                playerProfileManage,
+                write: static (writer, command) =>
+                {
+                    writer.Write(command.PlayerId);
+                    writer.Write(command.Name);
+                    writer.Write(command.SkinName);
+                    writer.WriteEnum(command.PlayerClass);
+                },
+                read: static reader => new UpdatePlayerProfileCommand(reader.ReadGuid(),
+                    reader.ReadString(), reader.ReadString(), reader.ReadEnum<PlayerClass>())));
         commands.Register(
             new ResourceId(owner, "chat/send"),
             new CommandDefinition<SendChatMessageCommand>(
@@ -722,7 +755,7 @@ public static class BuiltInCommands
             HttpCommandBinding.Create(static _ => new GetAutomationUiContextCommand()));
         commands.Adapters.Register(new ResourceId(owner, "automation/input/run"),
             HttpCommandBinding.Create(arguments => new RunAutomationInputCommand(
-                    new Game.Automation.AutomationInputAction(
+                    new Automation.AutomationInputAction(
                         arguments.GetOrDefault<string[]>("keys", []).Select(key => Enum.Parse<Key>(key, true)).ToArray(),
                         arguments.GetOrDefault<string[]>("mouseButtons", []).Select(button => Enum.Parse<MouseButton>(button, true)).ToArray(),
                         arguments.GetOrDefault("durationFrames", 1),
@@ -877,14 +910,14 @@ public static class BuiltInCommands
             ["?"]);
     }
 
-    private static TeleportPlayerCommand ReadTeleportPlayer(Game.Network.Serialization.PackageStreamReader reader)
+    private static TeleportPlayerCommand ReadTeleportPlayer(ProtocolReader reader)
     {
         var player = reader.ReadString();
         var target = ReadTeleportSelf(reader);
         return new TeleportPlayerCommand(player, target.Position, target.DestinationPlayer);
     }
 
-    private static TeleportSelfCommand ReadTeleportSelf(Game.Network.Serialization.PackageStreamReader reader)
+    private static TeleportSelfCommand ReadTeleportSelf(ProtocolReader reader)
     {
         Vector3? position = reader.ReadBoolean() ? reader.ReadVector3() : null;
         var destination = reader.ReadBoolean() ? reader.ReadString() : null;

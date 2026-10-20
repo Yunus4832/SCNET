@@ -3,6 +3,18 @@
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
+        <Using Include="Game.Protocol"/>
+        <Using Include="Game.Protocol.Terrain"/>
+        <Using Include="Game.Protocol.Blocks"/>
+        <Using Include="Game.Protocol.Connection"/>
+        <Using Include="Game.Protocol.Entities"/>
+        <Using Include="Game.Protocol.Mods"/>
+        <Using Include="Game.Protocol.Players"/>
+        <Using Include="Game.Protocol.World"/>
+        <Using Include="Game.Protocol.Commands"/>
+        <Using Include="Game.Protocol.Localization"/>
+        <Using Include="Game.Protocol.Messaging"/>
+        <Using Include="Game.Protocol.Serialization"/>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1"/>
         <PackageReference Include="xunit" Version="2.9.3"/>
         <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4"/>

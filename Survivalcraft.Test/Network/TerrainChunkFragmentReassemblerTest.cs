@@ -1,7 +1,6 @@
 using Engine.Core;
 
-using Game.Network.Serialization;
-using Game.Terrains.Distribution;
+using Game.Network.Chunks;
 
 namespace Survivalcraft.Test.Network;
 

@@ -1,0 +1,43 @@
+using Game.Modding.Blocks;
+using Game.Network.Transport;
+
+namespace Game.Network.Handling;
+
+public sealed class DispenserPackageHandler : PackageHandlerBase<DispenserPackage>
+{
+    public override void Handle(DispenserPackage package, PackageReceiveContext context)
+    {
+        var netNode = context.Node;
+        var isServer = context.IsServer;
+        if (netNode == null)
+        {
+            Log.Information($"Package处理器需要NetNode:{nameof(DispenserPackage)}");
+            return;
+        }
+
+        if (GameManager.Project is null || !isServer)
+        {
+            return;
+        }
+
+        var project = GameManager.Project;
+        if (context.Sender is null ||
+            !project.FindSubsystem<SubsystemNetworkInterest>(true)!.IsPositionRelevant(context.Sender,
+                new Vector2(package.Point.X, package.Point.Z)))
+        {
+            return;
+        }
+
+        var sut = project.FindSubsystem<SubsystemTerrain>(true)!;
+        var value = sut.Terrain.GetCellValue(package.Point.X, package.Point.Y, package.Point.Z);
+        if (Terrain.ExtractContents(value) == BuiltInBlockRegistry.GetIndex<DispenserBlock>())
+        {
+            var data = Terrain.ExtractData(value);
+            data = DispenserBlock.SetMode(data,
+                (package.Flag & 1) != 0 ? DispenserBlock.Mode.Shoot : DispenserBlock.Mode.Dispense);
+            data = DispenserBlock.SetAcceptsDrops(data, (package.Flag & (1 << 1)) != 0);
+            sut.ChangeCell(package.Point.X, package.Point.Y, package.Point.Z, Terrain.ReplaceData(value, data));
+        }
+
+    }
+}

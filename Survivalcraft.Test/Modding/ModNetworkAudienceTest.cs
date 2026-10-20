@@ -2,8 +2,7 @@ using System.Reflection;
 
 using Game.Modding;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Modding;
 

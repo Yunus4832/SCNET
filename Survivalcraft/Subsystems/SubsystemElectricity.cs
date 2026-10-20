@@ -5,8 +5,8 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Replication;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -16,7 +16,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
     private readonly Dictionary<Point3, float> _networkVoltages = [];
 
-    public void ReceiveNetworkSnapshot(NetSimulate snapshot)
+    public void ReceiveNetworkSnapshot(ElectricitySnapshot snapshot)
     {
         if (snapshot.IsBaseline)
         {
@@ -304,19 +304,19 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                 var clients = CommonLib.Net.Clients.Values.Where(client => client != CommonLib.Net.Self &&
                     client.IsConnected && client.State == ClientState.Playing).ToArray();
                 _replication.RetainClients(clients);
-                var snapshots = BuildNetworkSnapshots(CircuitStep, clients, _persistentElementsVoltages,
+                var voltagesByClient = BuildNetworkVoltages(clients, _persistentElementsVoltages,
                     interest.GetChunkObservers);
-                foreach (var (client, snapshot) in snapshots)
+                foreach (var (client, voltages) in voltagesByClient)
                 {
-                    var changes = _replication.Capture(client, snapshot.SaveData);
-                    snapshot.IsBaseline = changes.IsBaseline;
-                    snapshot.SaveData.Clear();
-                    foreach (var (point, voltage) in changes.Voltages)
+                    var changes = _replication.Capture(client, voltages);
+                    // Capture owns these collections; transfer them directly into the queued payload.
+                    var snapshot = new ElectricitySnapshot
                     {
-                        snapshot.SaveData[point] = voltage;
-                    }
-
-                    snapshot.Removed.AddRange(changes.Removed);
+                        StartStep = CircuitStep,
+                        IsBaseline = changes.IsBaseline,
+                        SaveData = changes.Voltages,
+                        Removed = changes.Removed
+                    };
                     NetworkSender.SendTo(client, new SubsystemElectricityPackage(snapshot));
                 }
             }
@@ -396,13 +396,13 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         }
     }
 
-    internal static Dictionary<Client, NetSimulate> BuildNetworkSnapshots(int step, IEnumerable<Client> clients,
+    internal static Dictionary<Client, Dictionary<Point3, float>> BuildNetworkVoltages(IEnumerable<Client> clients,
         IReadOnlyDictionary<Point3, float> voltages, Func<Point2, IEnumerable<Client>> getChunkObservers)
     {
-        var snapshots = new Dictionary<Client, NetSimulate>(ReferenceEqualityComparer.Instance);
+        var snapshots = new Dictionary<Client, Dictionary<Point3, float>>(ReferenceEqualityComparer.Instance);
         foreach (var client in clients)
         {
-            snapshots[client] = new NetSimulate { StartStep = step };
+            snapshots[client] = new Dictionary<Point3, float>();
         }
 
         foreach (var chunk in voltages.GroupBy(value => new Point2(value.Key.X >> 4, value.Key.Z >> 4)))
@@ -416,7 +416,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
                 foreach (var (point, voltage) in chunk)
                 {
-                    snapshot.SaveData[point] = voltage;
+                    snapshot[point] = voltage;
                 }
             }
         }

@@ -1,8 +1,6 @@
 using Engine.Core;
 
-using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Transport;
 using Game.Subsystems;
 
 namespace Survivalcraft.Test.Network;
@@ -23,16 +21,16 @@ public sealed class MovingBlockPackageTest
             Speed = 3,
             Smoothness = new Vector2(4, 5)
         };
-        var package = new MovingBlockPackage(set);
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new MovingBlockPackage();
-        clone.ReadData(reader);
+        var package = MovingBlockPackageBuilder.Capture(set);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<MovingBlockPackage>(ProtocolMessageCodec.Read(package.ID, reader));
         var subsystem = new SubsystemMovingBlocks();
 
-        var restored = Assert.IsType<SubsystemMovingBlocks.MovingBlockSet>(
-            subsystem.LoadAndAddMovingItem(clone.AddData!));
+        var baseline = new EntitySystem.TemplatesDatabase.ValuesDictionary();
+        baseline.ApplyOverridesUseMessagePack(clone.AddData!);
+        var restored = Assert.IsType<SubsystemMovingBlocks.MovingBlockSet>(subsystem.LoadAndAddMovingItem(baseline));
 
         Assert.Equal(set.NetworkId, restored.NetworkId);
         Assert.Equal(set.StartPosition, restored.StartPosition);
@@ -51,11 +49,10 @@ public sealed class MovingBlockPackageTest
             Type = MovingBlockPackage.EventType.PistonSound,
             Position = new Vector3(1, 2, 3)
         };
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new MovingBlockPackage();
-        clone.ReadData(reader);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<MovingBlockPackage>(ProtocolMessageCodec.Read(package.ID, reader));
 
         Assert.Equal(package.Type, clone.Type);
         Assert.Equal(package.Position, clone.Position);
@@ -77,12 +74,11 @@ public sealed class MovingBlockPackageTest
             CurrentVelocity = new Vector3(4, 5, 6),
             Speed = 7
         };
-        var package = new MovingBlockPackage(set, true) { Type = type, StateTick = 10 };
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new MovingBlockPackage();
-        clone.ReadData(reader);
+        var package = MovingBlockPackageBuilder.Capture(set, true) with { Type = type, StateTick = 10 };
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<MovingBlockPackage>(ProtocolMessageCodec.Read(package.ID, reader));
 
         Assert.Equal(type, clone.Type);
         Assert.Equal(42, clone.NetworkId);

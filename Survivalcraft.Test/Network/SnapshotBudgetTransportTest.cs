@@ -1,16 +1,12 @@
 using System.Diagnostics;
 using System.Net;
 using System.Reflection;
-using System.Runtime.CompilerServices;
 
 using Engine.Core;
 using Engine.Network;
 
-using Game;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Transport;
 
 using Survivalcraft.Test.Modding;
 
@@ -43,15 +39,13 @@ public sealed class SnapshotBudgetTransportTest
                 var id = reader.ReadByte();
                 if (id == (byte)PackageType.ComponentPlayer)
                 {
-                    var package = new ComponentPlayerPackage();
-                    package.ReadData(reader);
+                    var package = Assert.IsType<PlayerStatePackage>(ProtocolMessageCodec.Read(id, reader));
                     receivedPlayers.Add(package.FromPlayerId);
                 }
                 else
                 {
                     Assert.Equal((byte)PackageType.Entity, id);
-                    var package = new EntityPackage();
-                    package.ReadData(reader);
+                    var package = (EntityPackage)ProtocolMessageCodec.Read((byte)PackageType.Entity, reader);
                     Assert.Equal(EntityPackage.EventType.Remove, package.Type);
                     receivedRemovals.Add(package.EntityId);
                 }
@@ -91,12 +85,10 @@ public sealed class SnapshotBudgetTransportTest
             {
                 var identity = new Client(null, id, Guid.NewGuid(), Guid.NewGuid(), null);
                 CommonLib.Net.Clients.Add(id, identity);
-                var player = (PlayerData)RuntimeHelpers.GetUninitializedObject(typeof(PlayerData));
-                player.PlayerGUID = identity.GUID;
-                node.QueuePackage(new ComponentPlayerPackage
+                node.QueuePackage(new PlayerStatePackage
                 {
-                    PlayerData = player,
-                    Type = ComponentPlayerPackage.PlayerAction.BodyUpdate,
+                    FromPlayerId = id,
+
                     PackageChangeFlag = (ComponentPlayerPackage.ChangFlag)byte.MaxValue,
                     Position = new Vector3(id, 70f, -id),
                     Rotation = Quaternion.Identity,
@@ -125,7 +117,7 @@ public sealed class SnapshotBudgetTransportTest
             PumpUntil(() => receivedPlayers.SetEquals(expectedPlayers));
             Assert.True(receivedDatagrams > 2);
             var fanout = node.SendStatistics.GetFanout()
-                .Single(statistic => statistic.PackageType == typeof(ComponentPlayerPackage));
+                .Single(statistic => statistic.PackageType == typeof(PlayerStatePackage));
             Assert.Equal(expectedPlayers.Count, fanout.Messages);
             Assert.Equal(expectedPlayers.Count, fanout.RecipientDeliveries);
             Assert.Equal(1, fanout.MaximumFanout);

@@ -1,8 +1,7 @@
 using EntitySystem.Core;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Commands;
 
@@ -40,34 +39,25 @@ public static class CommandGateway
         var requestId = string.IsNullOrWhiteSpace(correlationId)
             ? Guid.NewGuid().ToString("N")
             : correlationId;
-        if (CurrentModRuntime.Value is { } runtime)
+        if (CurrentModRuntime.Value is not { } runtime)
         {
-            var adapter = new TextCommandAdapter(runtime.Commands);
-            if (adapter.SupportsDomain(input, CommandDomain.Application))
-            {
-                var result = CommandExecutor.ExecuteLocal(
-                    input,
-                    player.Project,
-                    requestId);
-                CommandResultPublisher.DisplayLocal(player.Project, result, requestId);
+            CommandResultPublisher.DisplayLocal(player.Project,
+                CommandResult.Fail("command.unavailable", "Command system is not ready."), requestId);
                 return requestId;
             }
-        }
 
-        if (CommonLib.WorkType is WorkType.Local or WorkType.Server)
+        var adapter = new TextCommandAdapter(runtime.Commands);
+        var principal = adapter.SupportsDomain(input, CommandDomain.Application)
+            ? CommandPrincipal.LocalOperator
+            : CommandPrincipal.FromPlayer(player);
+        var context = new CommandContext(CommandInvocationChannel.Text, principal, player.Project, requestId);
+        if (!adapter.TryCreate(input, context, out var command, out var error))
         {
-            var result = CommandExecutor.ExecutePlayer(input, player, requestId);
-            CommandResultPublisher.Publish(
-                player.Project,
-                result,
-                player.Client?.ID,
-                includeServer: player.IsMainPlayer,
-                correlationId: requestId);
+            CommandResultPublisher.DisplayLocal(player.Project, error!, requestId);
             return requestId;
         }
 
-        NetworkSender.SendToServer(CommandPackage.CreateRequest(input, requestId));
-        return requestId;
+        return Submit(player, command!, requestId);
     }
 
     public static string Submit(
@@ -80,83 +70,71 @@ public static class CommandGateway
         var requestId = string.IsNullOrWhiteSpace(correlationId)
             ? Guid.NewGuid().ToString("N")
             : correlationId;
+        var result = ExecuteOrSend(player, command, requestId);
+        if (result is not null)
+        {
         if (CurrentModRuntime.Value is { } runtime &&
-            runtime.Commands.TryGetDefinition(
-                command.GetType(),
-                out var registered) &&
+                runtime.Commands.TryGetDefinition(command.GetType(), out var registered) &&
             registered?.Definition.Domain is CommandDomain.Application)
         {
-            var result = CommandExecutor.ExecuteLocal(
-                command,
-                player.Project,
-                requestId);
             CommandResultPublisher.DisplayLocal(player.Project, result, requestId);
-            return requestId;
         }
-
-        if (CommonLib.WorkType is WorkType.Local or WorkType.Server)
+            else
         {
-            var result = CommandExecutor.ExecutePlayer(command, player, requestId);
-            CommandResultPublisher.Publish(
-                player.Project,
-                result,
-                player.Client?.ID,
-                includeServer: player.IsMainPlayer,
-                correlationId: requestId);
+                CommandResultPublisher.Publish(player.Project, result, player.Client?.ID,
+                    includeServer: player.IsMainPlayer, correlationId: requestId);
+            }
+        }
             return requestId;
         }
 
-        if (CurrentModRuntime.Value is not { } remoteRuntime)
+    internal static CommandResult? ExecuteOrSend(
+        PlayerData player, IGameCommand command, string correlationId)
         {
-            PublishLocalFailure(
-                player,
-                CommandResult.LocalizedFail(
-                    "command.unavailable",
-                    "CommandUnavailable_Message",
-                    "命令系统尚未就绪。"));
-            return requestId;
-        }
-
-        if (!remoteRuntime.Commands.TryEncode(
-                command,
-                out var commandId,
-                out var payload,
-                out var error))
+        if (CurrentModRuntime.Value is not { } runtime)
         {
-            PublishLocalFailure(
-                player,
-                CommandResult.Fail("command.not_remote", error));
-            return requestId;
+            return CommandResult.Fail("command.unavailable", "Command system is not ready.");
         }
 
-        NetworkSender.SendToServer(
-            CommandPackage.CreateRequest(commandId, payload, requestId));
-        return requestId;
+        if (runtime.Commands.TryGetDefinition(command.GetType(), out var registered) &&
+            registered?.Definition.Domain is CommandDomain.Application)
+        {
+            return CommandExecutor.ExecuteLocal(command, player.Project, correlationId);
     }
 
-    internal static CommandResult? SubmitPlayerHttp(
-        PlayerData player,
-        HttpCommandRequest? request,
-        string correlationId)
+        if (CommonLib.WorkType is WorkType.Local or WorkType.Server)
     {
-        if (CommonLib.WorkType is WorkType.Client)
+            return CommandExecutor.ExecutePlayer(command, player, correlationId);
+        }
+
+        if (!TryCreateRequest(runtime.Commands, command, correlationId, out var package, out var error))
         {
-            NetworkSender.SendToServer(CommandPackage.CreateHttpRequest(request, correlationId));
+            return error;
+        }
+
+        NetworkSender.SendToServer(package!);
             return null;
         }
 
-        return CurrentModRuntime.Value is { } runtime
-            ? HttpPlayerCommandAdapter.Execute(runtime.Commands, request, player, correlationId)
-            : CommandResult.Fail("command.unavailable", "Command system is not ready.");
+    internal static bool TryCreateRequest(CommandRegistry registry, IGameCommand command,
+        string correlationId, out CommandPackage? package, out CommandResult? error)
+    {
+        if (!registry.TryEncode(command, out var commandId, out var payload, out var reason))
+        {
+            package = null;
+            error = CommandResult.Fail("command.not_remote", reason);
+            return false;
     }
 
-    private static void PublishLocalFailure(
-        PlayerData player,
-        CommandResult result)
+        if (payload.Length > ProtocolLimits.MaximumCommandPayloadLength)
     {
-        CommandResultPublisher.Publish(
-            player.Project,
-            result,
-            includeServer: true);
+            package = null;
+            error = CommandResult.LocalizedFail("command.too_long", "CommandTooLong_Message", "指令长度超过限制。");
+            return false;
+        }
+
+        package = CommandPackage.CreateRequest(commandId, payload, correlationId);
+        error = null;
+        return true;
     }
 }

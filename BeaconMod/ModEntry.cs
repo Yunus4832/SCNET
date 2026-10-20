@@ -4,6 +4,7 @@ using Game.Modding;
 using Game.Modding.Blocks;
 using Game.Modding.Content;
 using Game.Modding.Data;
+using Game.Protocol;
 
 namespace BeaconMod;
 

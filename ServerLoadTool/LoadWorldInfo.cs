@@ -1,23 +1,16 @@
-using EntitySystem.TemplatesDatabase;
-
-using Game;
-
 namespace ServerLoadTool;
 
 public sealed record LoadWorldInfo(string Name, int Seed, string Mode, ushort MaximumPlayers)
 {
-    public static LoadWorldInfo Read(byte[] projectData)
+    // Creative is represented by 0 in game metadata.
+    private const byte _creativeMode = 0;
+
+    public static LoadWorldInfo Read(WorldMetadata world)
     {
-        var project = new ValuesDictionary();
-        project.ApplyOverridesUseMessagePack(projectData);
-        var info = project.GetValue<ValuesDictionary>("Subsystems").GetValue<ValuesDictionary>("GameInfo");
-        var mode = info.GetValue<GameMode>("GameMode");
-        if (mode != GameMode.Creative)
+        if (world.Mode != _creativeMode)
         {
             throw new InvalidOperationException("Load clients require a Creative test world; other game modes are not supported.");
         }
-
-        return new LoadWorldInfo(info.GetValue<string>("WorldName"), info.GetValue<int>("WorldSeed"), mode.ToString(),
-            info.GetValue<ushort>("MaxOnlinePlayerCount"));
+        return new LoadWorldInfo(world.Name, world.Seed, "Creative", world.MaximumPlayers);
     }
 }

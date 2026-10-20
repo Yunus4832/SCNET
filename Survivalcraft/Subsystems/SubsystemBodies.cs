@@ -2,8 +2,8 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Replication;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -98,7 +98,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
                     var count = Math.Min(_maxBodiesPerSnapshotPackage, bodies.Count - i);
                     var chunk = bodies.GetRange(i, count);
                     CommonLib.Net.QueuePackage(
-                        new SubsystemBodyPackage(chunk) { StateTick = _stateTick },
+                        BodySnapshotBuilder.Capture(chunk, _stateTick),
                         PackageAudience.To(item.Key));
                 }
             }
@@ -327,7 +327,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
 
             if (entered.Count > 0)
             {
-                CommonLib.Net.QueuePackage(new EntityPackage(entered), PackageAudience.To(client));
+                CommonLib.Net.QueuePackage(EntityPackageBuilder.Capture(Project, entered), PackageAudience.To(client));
             }
 
             foreach (var creatureId in changes.Left)

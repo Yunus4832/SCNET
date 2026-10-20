@@ -4,8 +4,6 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using Engine.Core;
-
 namespace Game.Commands;
 
 /// <summary>
@@ -121,7 +119,7 @@ public sealed class HttpCommandHost : IDisposable
                 {
                     var discovery = await HttpPlayerCommandAdapter.SubmitAsync(null, deadline.Token);
                     await WriteResponseAsync(context.Response, 200, discovery.Success
-                        ? (object)discovery.Data!
+                        ? discovery.Data!
                         : new { success = false, code = discovery.Code, message = CommandText.Resolve(discovery) }, CancellationToken.None);
                     return;
                 }

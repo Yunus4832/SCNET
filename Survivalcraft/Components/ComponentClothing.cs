@@ -5,8 +5,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -674,13 +673,13 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 {
                     if (CommonLib.WorkType == WorkType.Client)
                     {
-                        NetworkSender.SendToServer(new ComponentClothingPackage(
+                        NetworkSender.SendToServer(ClothingPackageBuilder.Capture(
                             _componentPlayer.PlayerData.CharacterSkinName,
                             ComponentClothingPackage.DataType.RequestSkin));
                     }
                     else if (CommonLib.WorkType == WorkType.Server)
                     {
-                        CommonLib.Net.QueuePackage(new ComponentClothingPackage(
+                        CommonLib.Net.QueuePackage(ClothingPackageBuilder.Capture(
                             _componentPlayer.PlayerData.CharacterSkinName, ComponentClothingPackage.DataType.WhoHas),
                             PackageAudience.Global);
                     }

@@ -1,9 +1,7 @@
 using Engine.Core;
 
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Chunks;
 using Game.Terrains;
-using Game.Terrains.Distribution;
 
 namespace Survivalcraft.Test.Network;
 
@@ -71,11 +69,10 @@ public sealed class TerrainChunkProtocolTest
 
     private static SubsystemTerrainPackage RoundTrip(SubsystemTerrainPackage package)
     {
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new SubsystemTerrainPackage();
-        clone.ReadData(reader);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<SubsystemTerrainPackage>(ProtocolMessageCodec.Read(package.ID, reader));
         return clone;
     }
 }

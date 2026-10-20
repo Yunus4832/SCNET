@@ -6,7 +6,6 @@ using Game.Components;
 using Game.Dialogs;
 using Game.Managers;
 using Game.Network;
-using Game.Network.Enums;
 using Game.Widgets;
 
 namespace TerritoryStoneMod;

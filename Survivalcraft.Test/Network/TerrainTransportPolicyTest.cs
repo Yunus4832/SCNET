@@ -2,9 +2,8 @@ using Engine.Core;
 using Engine.Network;
 
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
-using Game.Terrains.Distribution;
+using Game.Network.Chunks;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 
@@ -27,12 +26,12 @@ public sealed class TerrainTransportPolicyTest
             new byte[EncodedTerrainChunkFragmenter.DefaultFragmentPayloadSize]);
         var fragment = Assert.Single(EncodedTerrainChunkFragmenter.Split(chunk, allocation));
         var package = new SubsystemTerrainPackage(fragment);
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         writer.Write((byte)0);
         writer.Write(package.ID);
-        package.WriteData(writer);
+        ProtocolMessageCodec.Write(package, writer);
 
-        var datagram = CommonLib.GetWriter(writer, out _, CommonLib.CompressionPolicy.None);
+        var datagram = CommonLib.GetWriter(writer, out _, CompressionPolicy.None);
 
         Assert.InRange(datagram.Length, 1, 461);
     }

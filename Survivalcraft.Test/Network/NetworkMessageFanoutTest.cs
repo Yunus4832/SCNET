@@ -1,7 +1,8 @@
 using System.Reflection;
 
 using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Diagnostics;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 

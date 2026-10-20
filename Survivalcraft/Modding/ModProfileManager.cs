@@ -6,7 +6,7 @@ public static class ModProfileManager
 {
     public static string GlobalProfilePath => GamePaths.GlobalModProfileFile;
 
-    public static string EmptyDataHash { get; } = ComputeDataHash(null);
+    public static string EmptyDataHash => GameProtocol.EmptyModDataHash;
 
     public static string ComputeDataHash(ModProfile? profile)
     {

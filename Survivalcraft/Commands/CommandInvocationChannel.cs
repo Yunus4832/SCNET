@@ -6,5 +6,6 @@ public enum CommandInvocationChannel
     UserInterface,
     Console,
     HttpApi,
-    Internal
+    Internal,
+    Network
 }

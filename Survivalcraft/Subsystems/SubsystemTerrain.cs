@@ -4,8 +4,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 using Game.Terrains.Distribution;
 using Game.TerrainSerializers;
 

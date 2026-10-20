@@ -6,10 +6,10 @@ namespace Game.Modding;
 
 public static partial class ModProfileValidation
 {
-    public const int MaximumRequirements = 256;
-    public const int MaximumProfileIdLength = 128;
-    public const int MaximumModIdLength = 128;
-    public const int MaximumVersionLength = 64;
+    public const int MaximumRequirements = ProtocolLimits.MaximumRequiredMods;
+    public const int MaximumProfileIdLength = ProtocolLimits.MaximumModProfileIdLength;
+    public const int MaximumModIdLength = ProtocolLimits.MaximumModIdLength;
+    public const int MaximumVersionLength = ProtocolLimits.MaximumModVersionLength;
 
     public static void Validate(ModProfile profile)
     {

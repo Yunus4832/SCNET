@@ -5,7 +5,8 @@ using EntitySystem.Core;
 
 using Game.Components;
 using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Replication;
+using Game.Network.Transport;
 using Game.Subsystems;
 
 using Survivalcraft.Test.Modding;
@@ -23,10 +24,13 @@ public sealed class MountDependencyBaselineTest
     public void MissingMountedDependenciesAreQueuedOnceWithoutReplacingObservedEntities(bool riderObserved,
         bool mountObserved)
     {
+        using var project = new CaptureProject();
         var interest = new SubsystemNetworkInterest();
+        typeof(Subsystem).GetProperty(nameof(Subsystem.Project))!.SetValue(interest, project);
+        typeof(Subsystem).GetField("_initialized", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(interest, true);
         var client = new Client(null, 1, Guid.NewGuid(), Guid.NewGuid(), null);
-        var mount = CreateBody(10);
-        var rider = CreateBody(11);
+        var mount = CreateBody(project, 10);
+        var rider = CreateBody(project, 11);
         rider.ParentBody = mount;
         if (riderObserved)
         {
@@ -66,7 +70,8 @@ public sealed class MountDependencyBaselineTest
             {
                 var outbound = Assert.Single(pending.Skip(start));
                 var baseline = Assert.IsType<EntityPackage>(outbound.Package);
-                Assert.Equal(expected, baseline.Entities);
+                Assert.Equal(expected.Select(entity => entity.EntityId), project.CapturedEntityIds);
+                Assert.NotEmpty(baseline.EntityData);
                 Assert.True(outbound.Audience.Includes(client));
                 var mountEvent = new ComponentMountPackage { Type = ComponentMountPackage.EventType.Mount };
                 Assert.Equal(PackageTransportPolicy.Get(mountEvent).Channel,
@@ -82,12 +87,27 @@ public sealed class MountDependencyBaselineTest
         }
     }
 
-    private static ComponentBody CreateBody(int id)
+    private static ComponentBody CreateBody(Project project, int id)
     {
         var entity = (Entity)RuntimeHelpers.GetUninitializedObject(typeof(Entity));
         entity.EntityId = id;
+        typeof(Entity).GetField("<Project>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(entity, project);
         var body = new ComponentBody();
         typeof(Component).GetProperty(nameof(Component.Entity))!.SetValue(body, entity);
+        typeof(Entity).GetField("_components", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(entity, new List<Component> { body });
         return body;
     }
+
+    private sealed class CaptureProject : Project
+    {
+        public int[] CapturedEntityIds { get; private set; } = [];
+
+        public override EntityDataList SaveEntitiesAll(IEnumerable<Entity> entities)
+        {
+            CapturedEntityIds = entities.Select(entity => entity.EntityId).ToArray();
+            return new EntityDataList();
+        }
+    }
+
 }

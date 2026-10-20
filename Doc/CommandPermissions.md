@@ -27,7 +27,7 @@ HTTP 宿主提供两组独立入口，沿用 Bearer、显式启用及 loopback �
 - `GET/POST /commands`：GUI 与 Headless 的本进程控制入口，使用 LocalOperator。客户端不转发此入口的世界／服务器命令。
 - `GET/POST /player/commands`：仅 GUI 提供，要求当前有活动玩家，使用真实 Player。单机／GUI 服务端在本地执行，客户端经 CommandGateway 和 CommandPackage 请求远程服务器。Headless 返回 404，不代表在线的远程玩家调用。
 
-两组入口只暴露显式 HTTP binding。玩家入口只查询及调用 World／Server 命令；远程查询由服务器按该玩家权限返回，远程调用再次校验。请求体不接受身份、权限或玩家 GUID 来替换当前调用者。玩家切换、退出世界或连接断开时尚未完成的请求失效。
+两组入口只暴露显式 HTTP binding。玩家入口只查询及调用 World／Server 命令；远程目录查询通过普通命令取得服务器按该玩家权限过滤的命令标识，再由本地 HTTP 适配器补充参数定义。HTTP 和文本适配器均先构造命令，再通过统一二进制请求发送，服务端按实际连接玩家重新校验。请求体不接受身份、权限或玩家 GUID 来替换当前调用者。玩家切换、退出世界或连接断开时尚未完成的请求失效。
 
 POST 使用相同的 identity/arguments 格式；返回 success/code/message/state/data。Pending 表示业务尚未完成，不表示最终成功。请求最多等待 15 秒，超时返回 504；已经送到服务器的操作不能因为 HTTP 超时而撤销，重试前应查询实际状态。HTTP 请求关联 ID 与内部远程请求 ID 分离，迟到回复不会混入聊天或匹配到新的请求。
 

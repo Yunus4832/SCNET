@@ -6,7 +6,6 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Components;
 using Game.Network;
-using Game.Network.Enums;
 using Game.Subsystems;
 
 using Survivalcraft.Test.Modding;

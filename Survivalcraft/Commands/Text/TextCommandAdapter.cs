@@ -202,13 +202,25 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
     public CommandResult Execute(string input, CommandContext context)
     {
+        return TryCreate(input, context, out var command, out var error)
+            ? new CommandDispatcher(_registry).Execute(command!, context)
+            : error!;
+    }
+
+    public bool TryCreate(
+        string input, CommandContext context,
+        out IGameCommand? command, out CommandResult? error)
+    {
         ArgumentNullException.ThrowIfNull(context);
+        command = null;
+        error = null;
         if (string.IsNullOrWhiteSpace(input))
         {
-            return CommandResult.LocalizedFail(
+            error = CommandResult.LocalizedFail(
                 "command.empty",
                 "CommandEmpty_Message",
                 "请输入指令。");
+            return false;
         }
 
         var line = input.Trim();
@@ -219,33 +231,35 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
 
         if (!CommandLineTokenizer.TryTokenize(line, out var tokens, out var tokenizeError))
         {
-            return CommandResult.LocalizedFail(
+            error = CommandResult.LocalizedFail(
                 "command.syntax",
                 "CommandQuoteUnclosed_Message",
                 string.IsNullOrWhiteSpace(tokenizeError)
                     ? "指令中存在未闭合的引号。"
                     : tokenizeError);
+            return false;
         }
 
         if (tokens.Count == 0)
         {
-            return CommandResult.LocalizedFail(
+            error = CommandResult.LocalizedFail(
                 "command.empty",
                 "CommandEmpty_Message",
                 "请输入指令。");
+            return false;
         }
 
         if (!TryFind(tokens[0], out var registered) || registered is null)
         {
-            return CommandResult.LocalizedFail(
+            error = CommandResult.LocalizedFail(
                 "command.unknown",
                 "CommandUnknown_Message",
                 "未知指令：{0}。输入 /help 查看可用指令。",
                 tokens[0]);
+            return false;
         }
 
         var arguments = tokens.Skip(1).ToArray();
-        var denied = false;
         foreach (var route in registered.Command.Routes)
         {
             if (!TryMatchRoute(route, arguments, out var parsed))
@@ -253,36 +267,22 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
                 continue;
             }
 
-            if (!_registry.CanInvoke(route.CommandType, context.Principal))
-            {
-                denied = true;
-                continue;
-            }
-
             try
             {
-                context.Registry = _registry;
-                var command = route.CreateCommand(new CommandArguments(parsed));
-                return new CommandDispatcher(_registry).Execute(command, context);
+                command = route.CreateCommand(new CommandArguments(parsed));
+                return true;
             }
             catch (Exception exception)
             {
                 Log.Error(
                     $"Command {registered.Id} failed, principal={context.Principal.Name}, " +
                     $"channel={context.Channel}, correlation={context.CorrelationId}: {exception}");
-                return CommandResult.LocalizedFail(
+                error = CommandResult.LocalizedFail(
                     "command.failed",
                     "CommandFailed_Message",
                     "指令执行失败，详细信息已写入服务器日志。");
+                return false;
             }
-        }
-
-        if (denied)
-        {
-            return CommandResult.LocalizedFail(
-                "command.forbidden",
-                "CommandForbidden_Message",
-                "你没有执行该指令的权限。");
         }
 
         var visibleRoutes = registered.Command.Routes
@@ -291,21 +291,23 @@ public sealed class TextCommandAdapter(CommandRegistry registry)
             .ToArray();
         if (visibleRoutes.Length == 0)
         {
-            return CommandResult.LocalizedFail(
+            error = CommandResult.LocalizedFail(
                 "command.forbidden",
                 "CommandForbidden_Message",
                 "你没有执行该指令的权限。");
+            return false;
         }
 
         var usage = string.Join(
             "\n",
             visibleRoutes.Select(route =>
                 $"- {FormatUsage(registered.Command.Name, route)}"));
-        return CommandResult.LocalizedFail(
+        error = CommandResult.LocalizedFail(
             "command.usage",
             "CommandUsage_Message",
             "指令参数不正确。\n用法：\n{0}",
             usage);
+        return false;
     }
 
     internal static bool TryMatchSegment(CommandSegment segment, string token, out object? value)

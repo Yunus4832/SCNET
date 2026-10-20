@@ -1,9 +1,4 @@
 using Engine.Core;
-using Engine.Graphics;
-
-using Game.Messaging;
-using Game.Network.Packages;
-using Game.Network.Serialization;
 
 namespace Survivalcraft.Test.Network;
 
@@ -51,11 +46,10 @@ public class MessagePackageTest
 
     private static MessagePackage RoundTrip(MessagePackage package)
     {
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new MessagePackage();
-        clone.ReadData(reader);
+        var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<MessagePackage>(ProtocolMessageCodec.Read(package.ID, reader));
         return clone;
     }
 }

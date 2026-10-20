@@ -1,7 +1,7 @@
 using System.Xml.Linq;
 
 using Game.Network;
-using Game.Network.Enums;
+using Game.Network.Chunks;
 
 namespace Game.Screens;
 

@@ -2,9 +2,8 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -84,7 +83,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 return;
             }
 
-            var p = new EditableBlockPackage(EditableItemType.Piston, default, true, inventory.Id, slotIndex,
+            var p = new EditableBlockPackage(BuiltInBlockEditKind.Piston, default, true, inventory.Id, slotIndex,
                 newData);
             EditableBlockPackageHandler.Submit(p);
         }));
@@ -103,7 +102,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             }
 
             var cell = new CellFace(x, y, z, 0);
-            var p = new EditableBlockPackage(EditableItemType.Piston, cell, false, 0, 0, newData);
+            var p = new EditableBlockPackage(BuiltInBlockEditKind.Piston, cell, false, 0, 0, newData);
             EditableBlockPackageHandler.Submit(p);
         }));
         return true;

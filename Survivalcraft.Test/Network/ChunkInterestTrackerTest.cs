@@ -1,6 +1,7 @@
 using Engine.Core;
 
 using Game.Network;
+using Game.Network.Replication;
 
 namespace Survivalcraft.Test.Network;
 

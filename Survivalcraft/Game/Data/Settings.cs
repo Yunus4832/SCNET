@@ -1,6 +1,8 @@
 using Engine.Graphics;
 using Engine.Network;
 
+using Game.Network.Chunks;
+
 namespace Game;
 
 public class Settings
@@ -33,7 +35,7 @@ public class Settings
     public int VisibilityRange { get; set; } = 128;
 
     public int MaxClientVisibilityRange { get; set; } =
-        Network.NetworkTerrainPolicy.DefaultMaxClientVisibilityRange;
+        NetworkTerrainPolicy.DefaultMaxClientVisibilityRange;
 
     public bool UseVr { get; set; }
 
@@ -176,10 +178,10 @@ public class Settings
     public float CreatureConstantSpawnIntervalTime { get; set; } = 1f;
 
     public int ServerChunkCountSendPer { get; set; } =
-        Network.NetworkTerrainPolicy.DefaultServerChunkCountSendPer;
+        NetworkTerrainPolicy.DefaultServerChunkCountSendPer;
 
     public int ServerChunkBytesSendPerSecond { get; set; } =
-        Network.NetworkTerrainPolicy.DefaultServerChunkBytesSendPerSecond;
+        NetworkTerrainPolicy.DefaultServerChunkBytesSendPerSecond;
 
     public bool AutoGarbageCollect { get; set; } = true;
 

@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -67,7 +66,7 @@ public class ComponentSickness : Component, IUpdateable
                 if (CommonLib.WorkType != WorkType.Client)
                 {
                     NauseaEffect();
-                    NetworkSender.SendToObservers(Entity, new ComponentSicknessPackage(this));
+                    NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
                 }
             }
         }
@@ -131,7 +130,7 @@ public class ComponentSickness : Component, IUpdateable
             return;
         }
 
-        NetworkSender.SendToObservers(Entity, new ComponentSicknessPackage(this));
+        NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
         SicknessDuration = 0f;
     }
 

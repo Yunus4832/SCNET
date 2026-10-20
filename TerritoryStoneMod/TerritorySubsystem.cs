@@ -6,13 +6,14 @@ using EntitySystem.TemplatesDatabase;
 using Game;
 using Game.Cameras;
 using Game.Commands;
-using Game.Components;
-using Game.Dialogs;
 using Game.Managers;
-using Game.Messaging;
 using Game.Modding;
 using Game.Network;
-using Game.Network.Enums;
+using Game.Network.Transport;
+using Game.Protocol;
+using Game.Protocol.Commands;
+using Game.Protocol.Connection;
+using Game.Protocol.Messaging;
 using Game.Subsystems;
 
 namespace TerritoryStoneMod;

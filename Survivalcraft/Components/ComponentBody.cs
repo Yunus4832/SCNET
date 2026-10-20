@@ -2,9 +2,8 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.NetSimulate;
-using Game.Network.Packages;
+using Game.Network.Interpolation;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -541,7 +540,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             return;
         }
 
-        NetworkSender.SendToObservers(Entity, new SubsystemBodyPackage(this, impulse));
+        NetworkSender.SendToObservers(Entity, new SubsystemBodyPackage { PackageEventType = SubsystemBodyPackage.EventType.ApplyImpulse, CreatureId = Entity.EntityId, Impulse = impulse });
         ApplyImpulseNet(impulse);
     }
 
@@ -1073,7 +1072,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
             if (CommonLib.WorkType == WorkType.Client && Player is { PlayerData.IsMainPlayer: true })
             {
-                NetworkSender.SendToServer(new SubsystemBodyPackage(this, componentBody, componentBody._velocity));
+                NetworkSender.SendToServer(new SubsystemBodyPackage { PackageEventType = SubsystemBodyPackage.EventType.HandleAxisCollision, CreatureId = Entity.EntityId, TargetCreatureId = componentBody.Entity.EntityId, Impulse = componentBody._velocity });
             }
 
             CollidedWithBody?.Invoke(componentBody);

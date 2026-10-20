@@ -1,7 +1,4 @@
-using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
 
 namespace Game.Subsystems;
 
@@ -22,7 +19,7 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
                 var num = Terrain.ReplaceData(value, data2);
                 if (num != value)
                 {
-                    var p = new EditableBlockPackage(EditableItemType.Switch, default, true, inventory.Id, slotIndex,
+                    var p = new EditableBlockPackage(BuiltInBlockEditKind.Switch, default, true, inventory.Id, slotIndex,
                         newVoltageLevel);
                     EditableBlockPackageHandler.Submit(p);
                 }
@@ -47,7 +44,7 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
 
                     const int face = 4;
                     var cell = new CellFace(x, y, z, face);
-                    var p = new EditableBlockPackage(EditableItemType.Switch, cell, false, 0, 0,
+                    var p = new EditableBlockPackage(BuiltInBlockEditKind.Switch, cell, false, 0, 0,
                         newVoltageLevel);
                     EditableBlockPackageHandler.Submit(p);
                 }

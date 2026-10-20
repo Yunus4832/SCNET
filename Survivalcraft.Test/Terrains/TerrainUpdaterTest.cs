@@ -1,7 +1,7 @@
 using Engine.Core;
 
 using Game;
-using Game.Network;
+using Game.Network.Chunks;
 using Game.Terrains;
 using Game.Terrains.Distribution;
 using Game.TerrainSerializers;
@@ -13,14 +13,14 @@ public sealed class TerrainUpdaterTest
     [Fact]
     public void QueuedRemovalDoesNotReuseAnAppliedTeleportLocation()
     {
-        var applied = new TerrainUpdater.UpdateLocation
+        var applied = new TerrainUpdateLocation
         {
             Center = new Vector2(100f, 100f),
             ContentDistance = 16f,
             LastChunksUpdateCenter = new Vector2(100f, 100f)
         };
-        var current = new Dictionary<int, TerrainUpdater.UpdateLocation> { [-2] = applied };
-        var pending = new Dictionary<int, TerrainUpdater.UpdateLocation?> { [-2] = null };
+        var current = new Dictionary<int, TerrainUpdateLocation> { [-2] = applied };
+        var pending = new Dictionary<int, TerrainUpdateLocation?> { [-2] = null };
         Assert.Equal(default, TerrainUpdater.ResolveUpdateLocation(-2, current, pending));
         pending.Clear();
         Assert.Equal(applied, TerrainUpdater.ResolveUpdateLocation(-2, current, pending));
@@ -29,9 +29,9 @@ public sealed class TerrainUpdaterTest
     [Fact]
     public void LatestQueuedLocationWinsBeforeWorkerHandoff()
     {
-        var latest = new TerrainUpdater.UpdateLocation { Center = new Vector2(200f, 200f) };
-        var current = new Dictionary<int, TerrainUpdater.UpdateLocation> { [-2] = new() { Center = Vector2.Zero } };
-        var pending = new Dictionary<int, TerrainUpdater.UpdateLocation?> { [-2] = latest };
+        var latest = new TerrainUpdateLocation { Center = new Vector2(200f, 200f) };
+        var current = new Dictionary<int, TerrainUpdateLocation> { [-2] = new() { Center = Vector2.Zero } };
+        var pending = new Dictionary<int, TerrainUpdateLocation?> { [-2] = latest };
         Assert.Equal(latest, TerrainUpdater.ResolveUpdateLocation(-2, current, pending));
     }
 
@@ -43,7 +43,7 @@ public sealed class TerrainUpdaterTest
     public void ContentOnlyTeleportLocationSchedulesAllChunksAtABoundary(int x, int z)
     {
         using var chunk = new TerrainChunk(null!, x, z);
-        var locations = new Dictionary<int, TerrainUpdater.UpdateLocation>
+        var locations = new Dictionary<int, TerrainUpdateLocation>
         {
             [-2] = new() { Center = Vector2.Zero, VisibilityDistance = 0f, ContentDistance = 16f }
         };
@@ -67,7 +67,7 @@ public sealed class TerrainUpdaterTest
         using var derived = new TerrainChunk(null!, 0, 0) { WorkerState = TerrainChunkState.InvalidLight };
         using var content = new TerrainChunk(null!, 2, 0);
         TerrainChunk[] chunks = reverse ? [content, derived] : [derived, content];
-        var locations = new Dictionary<int, TerrainUpdater.UpdateLocation>
+        var locations = new Dictionary<int, TerrainUpdateLocation>
         {
             [0] = new() { Center = derived.Center, VisibilityDistance = 64f, ContentDistance = 64f }
         };
@@ -83,7 +83,7 @@ public sealed class TerrainUpdaterTest
         using var near = new TerrainChunk(null!, 1, 0);
         using var far = new TerrainChunk(null!, 2, 0);
         using var outside = new TerrainChunk(null!, 10, 0);
-        var locations = new Dictionary<int, TerrainUpdater.UpdateLocation>
+        var locations = new Dictionary<int, TerrainUpdateLocation>
         {
             [0] = new() { Center = new Vector2(8f, 8f), VisibilityDistance = 32f, ContentDistance = 64f }
         };
@@ -100,7 +100,7 @@ public sealed class TerrainUpdaterTest
     {
         using var derived = new TerrainChunk(null!, 0, 0) { WorkerState = TerrainChunkState.InvalidLight };
         using var outside = new TerrainChunk(null!, 10, 0);
-        var locations = new Dictionary<int, TerrainUpdater.UpdateLocation>
+        var locations = new Dictionary<int, TerrainUpdateLocation>
         {
             [0] = new() { Center = derived.Center, VisibilityDistance = 64f, ContentDistance = 64f }
         };
@@ -331,7 +331,7 @@ public sealed class TerrainUpdaterTest
     {
         var locations = new[]
         {
-            new TerrainUpdater.UpdateLocation
+            new TerrainUpdateLocation
             {
                 Center = Vector2.Zero,
                 VisibilityDistance = 128,

@@ -1,8 +1,7 @@
 using Engine.Core;
 
 using Game;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
 using Game.Subsystems;
 
 namespace Survivalcraft.Test.Network;
@@ -19,7 +18,7 @@ public sealed class PickableBaselineTest
             FlyToPosition = new Vector3(10, 10, 10),
             ToRemove = true
         };
-        var snapshot = new Pickable { Position = new Vector3(1, 2, 3) };
+        var snapshot = new PickablePosition(0, new Vector3(1, 2, 3));
 
         SubsystemPickables.ApplyMotionSnapshot(pickable, snapshot, 11);
 
@@ -29,7 +28,7 @@ public sealed class PickableBaselineTest
         Assert.False(pickable.ToRemove);
 
         SubsystemPickables.ApplyMotionSnapshot(pickable,
-            new Pickable { Position = Vector3.Zero, FlyToPosition = Vector3.One }, 10);
+            new PickablePosition(0, Vector3.Zero), 10);
         Assert.Equal(snapshot.Position, pickable.NetworkPosition);
         Assert.Null(pickable.FlyToPosition);
         SubsystemPickables.UpdateClientPosition(pickable, 0.1f);
@@ -53,7 +52,7 @@ public sealed class PickableBaselineTest
         };
 
         PickablePackageHandler.ApplyBaseline(pickable,
-            new PickablePackage(authoritative, PickablePackage.PickType.Create) { StateTick = 42 });
+            PickablePackageBuilder.Capture(authoritative, PickablePackage.PickType.Create) with { StateTick = 42 });
 
         Assert.Equal(authoritative.Id, pickable.Id);
         Assert.Equal(authoritative.Value, pickable.Value);

@@ -1,8 +1,7 @@
 using EntitySystem.Core;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 using Survivalcraft.Test.Modding;
 
@@ -26,7 +25,7 @@ public sealed class NetNodeLifecycleTest
             node.Server = client;
             node.StopImmediate();
             node.StopImmediate();
-            node.QueuePackage(new ConnectionPhaseAckPackage(), PackageAudience.Global);
+            node.QueuePackage(new ConnectionPhaseAckPackage(Guid.Empty, ConnectionPhase.TransportConnected), PackageAudience.Global);
             Assert.Equal(0, node.PendingPackageCount);
             Assert.Empty(node.Clients);
             Assert.Null(node.Self);

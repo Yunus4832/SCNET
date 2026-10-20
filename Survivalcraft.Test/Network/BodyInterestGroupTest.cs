@@ -5,6 +5,7 @@ using Engine.Core;
 using Game;
 using Game.Components;
 using Game.Network;
+using Game.Network.Replication;
 using Game.Subsystems;
 
 using Survivalcraft.Test.Modding;

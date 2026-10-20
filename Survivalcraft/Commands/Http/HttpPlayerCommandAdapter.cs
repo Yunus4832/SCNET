@@ -2,10 +2,8 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-using Engine.Core;
-
+using Game.Localization;
 using Game.Network;
-using Game.Network.Enums;
 
 namespace Game.Commands;
 
@@ -20,10 +18,14 @@ public static class HttpPlayerCommandAdapter
     private sealed record Pending(
         PlayerData Player,
         Client Server,
+        CommandRegistry Registry,
         Request Request);
 
     private static readonly ConcurrentQueue<Request> _requests = new();
     private static readonly ConcurrentDictionary<string, Pending> _pending = new();
+    // Retain recent local routes so canceled or duplicate responses never become UI notifications.
+    private static readonly ConcurrentDictionary<string, byte> _responseRoutes = new();
+    private static readonly ConcurrentQueue<string> _responseOrder = new();
     private static readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
 
     public static Task<CommandResult> SubmitAsync(
@@ -35,34 +37,51 @@ public static class HttpPlayerCommandAdapter
         return completion.Task.WaitAsync(cancellationToken);
     }
 
-    internal static CommandResult Execute(
-        CommandRegistry registry,
-        HttpCommandRequest? request,
-        PlayerData player,
-        string correlationId)
+    internal static bool TryCreateCommand(CommandRegistry registry, HttpCommandRequest? request,
+        out IGameCommand? command, out CommandResult? error)
     {
-        var principal = CommandPrincipal.FromPlayer(player);
-        var adapter = new HttpCommandAdapter(registry);
         if (request is null)
         {
-            return CommandResult.SilentOk() with
-            {
-                Data = new JsonObject
+            command = new GetCommandCatalogCommand();
+            error = null;
+            return true;
+        }
+
+        if (registry.TryGetDefinition(request.Identity, out var registered) &&
+            registered?.Definition.Domain is CommandDomain.Application)
                 {
-                    ["commands"] = JsonSerializer.SerializeToNode(
-                        adapter.Discover(principal, player.Project, playerScope: true), _jsonOptions)
+            command = null;
+            error = CommandResult.Fail("command.player_scope", "Application commands use the local control endpoint.");
+            return false;
                 }
-            };
+
+        return new HttpCommandAdapter(registry).TryCreate(request, out command, out error);
         }
 
-        if (registry.TryGetDefinition(request.Identity, out var command) &&
-            command?.Definition.Domain is CommandDomain.Application)
+    private static CommandResult Complete(Request request, CommandRegistry registry, CommandResult result)
         {
-            return CommandResult.Fail("command.player_scope", "Application commands use the local control endpoint.");
+        if (request.Command is not null || !result.Success)
+        {
+            return result;
         }
 
-        return adapter.Execute(request, new CommandContext(
-            CommandInvocationChannel.HttpApi, principal, player.Project, correlationId));
+        var identities = result.Data?["commands"]?.AsArray()
+            .Select(value => value!.GetValue<string>()).ToHashSet(StringComparer.Ordinal) ?? [];
+        var commands = registry.Adapters.Get<HttpCommandBinding>()
+            .Where(entry => identities.Contains(entry.Id.ToString()) &&
+                            registry.TryGetDefinition(entry.Id, out var registered) &&
+                            registered!.Definition.Domain is not CommandDomain.Application &&
+                            (CommonLib.WorkType is not WorkType.Client || registered.Definition.SupportsRemoteInvocation))
+            .Select(entry =>
+            {
+                registry.TryGetDefinition(entry.Id, out var registered);
+                return new HttpDiscoveredCommand(entry.Id.ToString(),
+                    registered!.Definition.Description.Resolve(), entry.Binding.Arguments);
+            }).ToArray();
+        return result with
+        {
+            Data = new JsonObject { ["commands"] = JsonSerializer.SerializeToNode(commands, _jsonOptions) }
+        };
     }
 
     public static void Update()
@@ -96,6 +115,18 @@ public static class HttpPlayerCommandAdapter
                 continue;
             }
 
+            if (CurrentModRuntime.Value is not { } runtime)
+            {
+                request.Completion.TrySetResult(CommandResult.Fail("command.unavailable", "Command system is not ready."));
+                continue;
+            }
+
+            if (!TryCreateCommand(runtime.Commands, request.Command, out var command, out var error))
+            {
+                request.Completion.TrySetResult(error!);
+                continue;
+            }
+
             var id = Guid.NewGuid().ToString("N");
             if (CommonLib.WorkType is WorkType.Client)
             {
@@ -105,16 +136,22 @@ public static class HttpPlayerCommandAdapter
                     continue;
                 }
 
-                _pending[id] = new Pending(player, server, request);
+                _pending[id] = new Pending(player, server, runtime.Commands, request);
+                _responseRoutes[id] = 0;
+                _responseOrder.Enqueue(id);
+                while (_responseOrder.Count > 1024 && _responseOrder.TryDequeue(out var expired))
+                {
+                    _responseRoutes.TryRemove(expired, out _);
+                }
             }
 
             try
             {
-                var result = CommandGateway.SubmitPlayerHttp(player, request.Command, id);
+                var result = CommandGateway.ExecuteOrSend(player, command!, id);
                 if (result is not null)
                 {
                     _pending.TryRemove(id, out _);
-                    request.Completion.TrySetResult(result);
+                    request.Completion.TrySetResult(Complete(request, runtime.Commands, result));
                 }
             }
             catch (Exception exception)
@@ -126,14 +163,17 @@ public static class HttpPlayerCommandAdapter
         }
     }
 
-    internal static void Receive(string correlationId, CommandResult result)
+    internal static bool TryReceive(string correlationId, CommandResult result)
     {
         if (_pending.TryRemove(correlationId, out var pending))
         {
             pending.Request.Completion.TrySetResult(IsCurrent(pending)
-                ? result
+                ? Complete(pending.Request, pending.Registry, result)
                 : CommandResult.Fail("command.player_changed", "The player or server connection changed."));
+            return true;
         }
+
+        return _responseRoutes.ContainsKey(correlationId);
     }
 
     private static bool IsCurrent(Pending pending)

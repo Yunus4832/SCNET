@@ -24,6 +24,7 @@ packages=(
     "SCNET.Content.Packaging|Content.Packaging/Content.Packaging.csproj"
     "SCNET.ServerSource.Protocol|ServerSource.Protocol/ServerSource.Protocol.csproj"
     "SCNET.ContentTool|ContentTool/ContentTool.csproj"
+    "SCNET.Game.Protocol|Game.Protocol/Game.Protocol.csproj"
     "SCNET.Survivalcraft|Survivalcraft/Survivalcraft.csproj"
     "SCNET.ModTemplates|Survivalcraft.ModTemplates/Survivalcraft.ModTemplates.csproj"
 )

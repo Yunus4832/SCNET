@@ -1,9 +1,6 @@
 using Engine.Core;
 
-using Game;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
-using Game.Network.Serialization;
+using Game.Network.Handling;
 using Game.Subsystems;
 using Game.Terrains;
 using Game.Terrains.Distribution;
@@ -300,11 +297,10 @@ public sealed class ClientTerrainPredictionTest
             EditedCell = _cell,
             EditContentVersion = 789
         };
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var restored = new SubsystemTerrainPackage();
-        restored.ReadData(reader);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var restored = Assert.IsType<SubsystemTerrainPackage>(ProtocolMessageCodec.Read(package.ID, reader));
         Assert.Equal(package.EditRequestId, restored.EditRequestId);
         Assert.Equal(package.EditedCell, restored.EditedCell);
         Assert.Equal(package.EditContentVersion, restored.EditContentVersion);

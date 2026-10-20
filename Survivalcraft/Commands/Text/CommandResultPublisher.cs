@@ -1,8 +1,7 @@
 using EntitySystem.Core;
 
-using Game.Messaging;
 using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Commands;
 
@@ -64,7 +63,7 @@ public static class CommandResultPublisher
             messages.DisplayLocal(message);
         }
 
-        var resultPackage = CommandPackage.CreateResult(result, correlationId);
+        var resultPackage = CommandPackage.CreateResult(CommandResponseBuilder.Capture(result), correlationId);
         CommonLib.Net.QueuePackage(resultPackage, PackageAudience.To(requester));
     }
 

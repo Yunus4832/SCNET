@@ -1,7 +1,5 @@
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
-using Game.Network.Serialization;
+using Game.Network.Handling;
 
 namespace Survivalcraft.Test.Network;
 
@@ -15,15 +13,13 @@ public sealed class PlayerCreationAuthorityTest
             Type = PlayerDataPackage.DataType.Create,
             PlayerName = "Codex",
             SkinName = "$Male1",
-            PlayerClass = Game.PlayerClass.Female,
+            PlayerClass = ProtocolEnum.Encode(Game.PlayerClass.Female),
             PlayerGuid = Guid.NewGuid()
         };
-        using var writer = new PackageStreamWriter();
-        request.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var decoded = new PlayerDataPackage();
-
-        decoded.ReadData(reader);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(request, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var decoded = Assert.IsType<PlayerDataPackage>(ProtocolMessageCodec.Read(request.ID, reader));
 
         Assert.Equal(request.PlayerName, decoded.PlayerName);
         Assert.Equal(request.SkinName, decoded.SkinName);

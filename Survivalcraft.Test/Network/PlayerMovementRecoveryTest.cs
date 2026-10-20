@@ -4,8 +4,6 @@ using Engine.Core;
 
 using Game;
 using Game.Components;
-using Game.Network.Packages;
-using Game.Network.Serialization;
 
 namespace Survivalcraft.Test.Network;
 
@@ -31,14 +29,12 @@ public sealed class PlayerMovementRecoveryTest
             ComponentLocomotion = locomotion
         };
         // Discard the first packet just as a lost datagram would be discarded.
-        _ = new ComponentPlayerPackage(player, ComponentPlayerPackage.PlayerAction.BodyUpdate);
-        var retry = new ComponentPlayerPackage(player, ComponentPlayerPackage.PlayerAction.BodyUpdate);
-        using var writer = new PackageStreamWriter();
-        retry.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var received = new ComponentPlayerPackage();
-
-        received.ReadData(reader);
+        _ = PlayerPackageBuilder.Capture(player, ComponentPlayerPackage.PlayerAction.BodyUpdate);
+        var retry = PlayerPackageBuilder.Capture(player, ComponentPlayerPackage.PlayerAction.BodyUpdate);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(retry, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var received = Assert.IsType<PlayerStatePackage>(ProtocolMessageCodec.Read(retry.ID, reader));
 
         Assert.True(received.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.PositionChange));
         Assert.True(received.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.RotationChange));

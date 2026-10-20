@@ -3,9 +3,39 @@
 本文描述当前代码中的网络边界，不是全部玩法或服务器容量的验收报告。
 可重复的网络实验方法见[网络测试说明](NetworkTesting.md)。
 
+## 游戏网络代码组织
+
+`Game.Network` 根名称空间保留节点、连接、运行角色和 P2P 房间生命周期。其余代码按职责划分：
+
+| 名称空间 | 职责 |
+|---|---|
+| `Game.Network.Handling` | 消息注册、解析入口、分发与业务处理器 |
+| `Game.Network.Transport` | 受众、收发上下文、发送策略、投递统计关联与快照合并 |
+| `Game.Network.Chunks` | 游戏区块编解码、分片生成、缓存、编码队列与传输限制 |
+| `Game.Network.Replication` | 空间兴趣、实体与区块兴趣跟踪、电路变化跟踪 |
+| `Game.Network.Snapshots` | 从游戏对象采集协议快照及恢复游戏数据 |
+| `Game.Network.Diagnostics` | 网络路由、发送、编码与兴趣统计 |
+| `Game.Network.Interpolation` | 远端位置、旋转和速度的插值 |
+
+协议契约与线格式仍由 `Game.Protocol` 提供。玩家离线请求由 `SubsystemPlayers` 收集，在玩家遍历结束后统一处理。
+
 ## 包、受众与接收上下文
 
-`IPackage` 只包含类型ID、最低客户端状态及载荷读写，不携带发送者或收件人。
+`Game.Protocol` 定义 `IProtocolMessage`、消息记录、兼容整数、通道编号和显式二进制编解码。
+`IProtocolMessage` 只包含消息类型编号；最低客户端状态由游戏的 `PackageManager.MinimumState` 决定，
+载荷由协议编解码器处理。协议记录不携带发送连接、收件人、组件或世界对象。
+游戏在允许读取世界的线程采集稳定快照，处理器依据上下文验证并执行业务。
+游戏模式、季节、玩家外观类别和库存拖拽方式的枚举由游戏持有，协议仅传 `byte`；
+游戏通过 `ProtocolEnum` 集中转换和校验，在应用前拒绝未知取值。通信流程与载荷标签枚举仍由协议持有。
+`Engine.Network` 不引用游戏协议；游戏和薄客户端组合协议与传输。
+HTTP、文本和 UI 入口都在客户端适配为命令对象，再共用二进制编码发送命令标识、参数字节和关联编号。服务端解码后按实际连接玩家鉴权执行，不解析 HTTP 请求或待执行的原始文本。命令目录查询同样使用普通命令，仅返回授权后的命令标识；HTTP 参数说明由本地适配器补充。
+游戏根据完整的 `CommandResult` 决定发布范围后转换为 `CommandResponse`；服务端发布策略不上网，
+所有命令请求统一返回关联结果；协议不记录请求入口身份，也不区分 HTTP 与界面的响应模式。客户端依据关联编号匹配本地调用上下文，决定返回给等待中的调用者或展示结果。
+
+应用数据报使用小端 `int32` 长度前缀、压缩应用帧及 `0x88 + 消息编号 + 载荷` 批次。
+`ProtocolPacketCodec`、`ProtocolFrameCodec` 和 `ProtocolMessageCodec` 分别处理这些边界。
+格式错误会拒绝整个批次，不执行已解码的有效前缀。
+纯区块分片重组和缺片位图算法由协议库共用；世界兴趣、缓存、生成/解码、背压与应用仍归游戏。
 
 - 出站使用 `OutboundPackage(Package, Audience)`，由 `PackageAudience` 表达全局、单个连接、连接集合或排除连接。
 - `NetworkSender` 提供按区块、位置及实体观察者选择受众的入口。
@@ -25,7 +55,7 @@
 世界存档加载和实体进入基线仍使用服务端保存的完整玩家数据，不属于客户端创建请求。
 
 `PackageTransportPolicy` 只决定通道、可靠性、压缩和刷新策略，不能决定空间受众。
-投递声明使用 `Engine.Network.DeliveryMode`，`PackageTransport.Delivery` 保存投递方式；通道与包刷新策略仍由游戏定义。
+投递声明使用 `Engine.Network.DeliveryMode`，`PackageTransport.Delivery` 保存投递方式；通道编号由协议共用；投递方式、刷新和合并策略仍由游戏定义。
 包解码入口接收字节载荷和显式发送者上下文；网络层负责关联 Client，解码器不查找传输连接或通过端点推断身份。
 `NetNode.QueuePackage` 必须显式传入受众，不提供单参数默认广播重载。
 

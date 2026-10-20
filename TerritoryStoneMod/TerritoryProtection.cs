@@ -7,7 +7,6 @@ using Game.Components;
 using Game.Managers;
 using Game.Modding;
 using Game.Network;
-using Game.Network.Enums;
 using Game.Terrains;
 
 namespace TerritoryStoneMod;
@@ -64,7 +63,6 @@ public static class TerritoryProtection
             {
                 placing.Cancel = true;
                 Notify(placing.Miner, "ClaimUnavailable");
-                return;
             }
 
         });

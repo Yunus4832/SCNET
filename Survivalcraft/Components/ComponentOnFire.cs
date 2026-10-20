@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -120,7 +119,7 @@ public class ComponentOnFire : Component, IUpdateable
             return;
         }
 
-        NetworkSender.SendToObservers(Entity, new ComponentOnFirePackage(this, attacker, duration));
+        NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this, attacker, duration));
         SetOnFireNet(attacker, duration);
     }
 

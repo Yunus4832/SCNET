@@ -2,9 +2,7 @@ using Engine.Network;
 
 using Game;
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
-using Game.Network.Serialization;
+using Game.Network.Handling;
 using Game.Servers;
 
 using Survivalcraft.Test.Network;
@@ -22,7 +20,7 @@ public sealed class ServerDiscoveryServiceTest
             ProtocolVersion = 1,
             ClientCount = 2,
             MaxPlayerCount = 20,
-            GameMode = GameMode.Creative
+            GameMode = ProtocolEnum.Encode(GameMode.Creative)
         };
         PackageManager.RegisterPackage(() => new ServerInfoPackage(), new ServerInfoPackageHandler());
         await using var server = new NetworkHost();
@@ -48,7 +46,7 @@ public sealed class ServerDiscoveryServiceTest
             Assert.Equal(ServerAvailability.Available, status.Availability);
             Assert.Equal(response.ProtocolVersion, status.ProtocolVersion);
             Assert.Equal(response.ClientCount, status.PlayerCount);
-            Assert.Equal(response.GameMode, status.GameMode);
+            Assert.Equal(GameMode.Creative, status.GameMode);
         }
         finally
         {

@@ -1,5 +1,3 @@
-using Game.Localization;
-
 namespace Game.Commands;
 
 public sealed record CommandLiteral(string Value, LocalizedText? Description = null) : CommandSegment

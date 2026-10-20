@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -72,7 +71,7 @@ public class ComponentHealth : Component, IUpdateable
         {
             if (CommonLib.WorkType != WorkType.Client && Time.PeriodicEvent(2.0, 0.0))
             {
-                NetworkSender.SendToObservers(Entity, new ComponentHealthPackage(this));
+                NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
             }
 
             var num = 0f;
@@ -162,7 +161,7 @@ public class ComponentHealth : Component, IUpdateable
                 //是(主玩家、被主玩家骑乘的生物)计算伤害，请求给服务器
                 if (flagMainPlayer || flagMainRider)
                 {
-                    NetworkSender.SendToServer(new ComponentHealthPackage(this, null, num4, cause, false, true,
+                    NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(this, null, num4, cause, false, true,
                         ComponentHealthPackage.RequestInjureType.Fall));
                 }
             }
@@ -210,7 +209,7 @@ public class ComponentHealth : Component, IUpdateable
             {
                 if (flagMainPlayer || flagMainRider)
                 {
-                    NetworkSender.SendToServer(new ComponentHealthPackage(this, null, num7, cause, false, true,
+                    NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(this, null, num7, cause, false, true,
                         ComponentHealthPackage.RequestInjureType.Fire));
                 }
             }
@@ -342,7 +341,7 @@ public class ComponentHealth : Component, IUpdateable
         NetInjure(amount, attacker, cause);
         NetworkSender.SendToObservers(
             Entity,
-            new ComponentHealthPackage(this, attacker, amount, cause, ignoreInvulnerability));
+            EntityStatePackageBuilder.Capture(this, attacker, amount, cause, ignoreInvulnerability));
     }
 
     public void NetInjure(float amount, ComponentCreature? attacker, string cause)
@@ -365,7 +364,7 @@ public class ComponentHealth : Component, IUpdateable
                 CauseOfDeath = cause;
                 if (CommonLib.WorkType != WorkType.Client)
                 {
-                    var componentHealthPackage = new ComponentHealthPackage(this)
+                    var componentHealthPackage = EntityStatePackageBuilder.Capture(this) with
                     {
                         Cause = CauseOfDeath
                     };

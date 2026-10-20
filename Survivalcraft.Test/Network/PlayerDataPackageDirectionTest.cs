@@ -1,5 +1,4 @@
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
 
 namespace Survivalcraft.Test.Network;
 
@@ -7,12 +6,8 @@ public sealed class PlayerDataPackageDirectionTest
 {
     [Theory]
     [InlineData(PlayerDataPackage.DataType.Create, true)]
-    [InlineData(PlayerDataPackage.DataType.Delete, true)]
     [InlineData(PlayerDataPackage.DataType.SetUpdateLocation, true)]
     [InlineData(PlayerDataPackage.DataType.Modify, false)]
-    [InlineData(PlayerDataPackage.DataType.CloseTime, false)]
-    [InlineData(PlayerDataPackage.DataType.Bugle, false)]
-    [InlineData(PlayerDataPackage.DataType.Count, false)]
     public void PlayerRequestsAndServerResultsHaveExplicitDirections(PlayerDataPackage.DataType type,
         bool acceptedByServer)
     {

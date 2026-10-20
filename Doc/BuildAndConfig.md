@@ -35,7 +35,7 @@ ContentWebUI 随 ContentServer 发布，私有 npm 清单不重复定义产品�
 
 游戏从自身程序集的 `AssemblyInformationalVersion` 读取显示版本，去掉 `+` 后的构建信息；
 完整标识保留在 `VersionsManager.BuildVersion`。CLR 数值程序集版本由 SDK 生成，不作为产品版本。
-`GameProtocolVersion` 是独立的正整数兼容代际（当前为 `1`），注入程序集元数据并在运行时读取为整数。握手与服务器发现均使用 Int32 编码；协议代际必须严格相等才能连接。未发布阶段固定为 `1`，不随开发迭代提升，也不保留旧测试协议兼容。建立正式发布的互操作边界后再约定兼容代际的提升规则；它始终不随产品或协议库的 SemVer 版本自动变化。
+`GameProtocolPackageVersion` 是游戏协议库的独立 SemVer 发布版本。`GameProtocolVersion` 是独立的正整数兼容代际（当前为 `1`），由协议程序集持有元数据并在运行时读取为整数；游戏仅引用该唯一来源。握手与服务器发现均使用 Int32 编码；协议代际必须严格相等才能连接。未发布阶段固定为 `1`，不随开发迭代提升，也不保留旧测试协议兼容。建立正式发布的互操作边界后再约定兼容代际的提升规则；它始终不随产品或协议库的 SemVer 版本自动变化。
 发行版本验证和更新排序使用同一语义化比较规则，不接受旧四段式产品版本。
 
 Android 共享配置把 `GameVersion` 写入版本名称，把 `AndroidReleaseCode` 写入系统升级计数。

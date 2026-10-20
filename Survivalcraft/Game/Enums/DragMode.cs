@@ -2,6 +2,6 @@ namespace Game;
 
 public enum DragMode
 {
-    AllItems,
-    SingleItem
+    AllItems = 0,
+    SingleItem = 1
 }

@@ -1,7 +1,4 @@
-using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
 
 namespace Game.Subsystems;
 
@@ -11,7 +8,7 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
 
     protected override EditableBlockPackage CreateBlockStatePackage(Point3 point, MemoryBankData data)
     {
-        return new EditableBlockPackage(new CellFace(point.X, point.Y, point.Z, 0), false, 0, 0, data);
+        return EditableBlockPackageBuilder.Capture(new CellFace(point.X, point.Y, point.Z, 0), false, 0, 0, data);
     }
 
     public override bool OnEditInventoryItem(IInventory inventory, int slotIndex, ComponentPlayer componentPlayer)
@@ -28,7 +25,7 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
                 return;
             }
 
-            var p = new EditableBlockPackage(default, true, inventory.Id, slotIndex, memoryBankData);
+            var p = EditableBlockPackageBuilder.Capture(default, true, inventory.Id, slotIndex, memoryBankData);
             EditableBlockPackageHandler.Submit(p);
         }, () => componentPlayer.ComponentGui.ModalPanelWidget = null);
         componentPlayer.ComponentGui.ModalPanelWidget = editor;
@@ -47,7 +44,7 @@ public class SubsystemMemoryBankBlockBehavior() : SubsystemEditableItemBehavior<
 
             var face = ((MemoryBankBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[186]).GetFace(value);
             var cell = new CellFace(x, y, z, face);
-            var p = new EditableBlockPackage(cell, false, 0, 0, memoryBankData);
+            var p = EditableBlockPackageBuilder.Capture(cell, false, 0, 0, memoryBankData);
             EditableBlockPackageHandler.Submit(p);
         }, () => componentPlayer.ComponentGui.ModalPanelWidget = null);
         componentPlayer.ComponentGui.ModalPanelWidget = editor;

@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -609,7 +608,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         foreach (var (client, cells) in cellsByClient)
         {
             CommonLib.Net.QueuePackage(
-                new ExplosionsPackage(cells),
+                ExplosionPackageBuilder.Capture(cells),
                 PackageAudience.To(client));
         }
     }

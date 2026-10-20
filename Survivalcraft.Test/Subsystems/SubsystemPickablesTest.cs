@@ -14,9 +14,9 @@ public sealed class SubsystemPickablesTest
         var pickable = subsystem.CreatePickable(1, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
         pickable.LastStateTick = uint.MaxValue - 1;
         var position = new Vector3(4f, 5f, 6f);
-        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = position }], 1);
-        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.Zero }], 1);
-        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.Zero }], uint.MaxValue);
+        subsystem.ApplyPositionSnapshot([new PickablePosition { Id = 1, Position = position }], 1);
+        subsystem.ApplyPositionSnapshot([new PickablePosition { Id = 1, Position = Vector3.Zero }], 1);
+        subsystem.ApplyPositionSnapshot([new PickablePosition { Id = 1, Position = Vector3.Zero }], uint.MaxValue);
         Assert.Equal(position, pickable.NetworkPosition);
         Assert.Equal(1u, pickable.LastStateTick);
     }
@@ -27,8 +27,8 @@ public sealed class SubsystemPickablesTest
         var subsystem = new SubsystemPickables();
         var first = subsystem.CreatePickable(1, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
         var second = subsystem.CreatePickable(2, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
-        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = Vector3.One }], 10);
-        subsystem.ApplyPositionSnapshot([new Pickable { Id = 2, Position = Vector3.One }], 10);
+        subsystem.ApplyPositionSnapshot([new PickablePosition { Id = 1, Position = Vector3.One }], 10);
+        subsystem.ApplyPositionSnapshot([new PickablePosition { Id = 2, Position = Vector3.One }], 10);
         Assert.Equal(Vector3.One, first.NetworkPosition);
         Assert.Equal(Vector3.One, second.NetworkPosition);
     }
@@ -41,7 +41,7 @@ public sealed class SubsystemPickablesTest
         var retained = subsystem.CreatePickable(2, 1, 1, Vector3.Zero, Vector3.Zero, null)!;
         var position = new Vector3(10f, 20f, 30f);
 
-        subsystem.ApplyPositionSnapshot([new Pickable { Id = 1, Position = position }], 1);
+        subsystem.ApplyPositionSnapshot([new PickablePosition { Id = 1, Position = position }], 1);
         subsystem.ApplyPositionSnapshot([], 2);
 
         Assert.Equal(position, updated.NetworkPosition);

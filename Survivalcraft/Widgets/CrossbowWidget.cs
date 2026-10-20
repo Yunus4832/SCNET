@@ -1,8 +1,7 @@
 using System.Xml.Linq;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Widgets;
 
@@ -111,7 +110,7 @@ public class CrossbowWidget : CanvasWidget
                 {
                     if (CommonLib.WorkType == WorkType.Client)
                     {
-                        NetworkSender.SendToServer(new BlockEditPackage(_inventory, _slotIndex,
+                        NetworkSender.SendToServer(new BlockEditPackage(_inventory.Id, _slotIndex,
                             BlockEditPackage.EventType.CrossbowPull));
                     }
 

@@ -1,7 +1,4 @@
-using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
 
 namespace Game.Subsystems;
 
@@ -25,7 +22,7 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
                     return;
                 }
 
-                var p = new EditableBlockPackage(EditableItemType.Battery, default, true, inventory.Id, slotIndex,
+                var p = new EditableBlockPackage(BuiltInBlockEditKind.Battery, default, true, inventory.Id, slotIndex,
                     newVoltageLevel);
                 EditableBlockPackageHandler.Submit(p);
             }));
@@ -48,7 +45,7 @@ public class SubsystemBatteryBlockBehavior : SubsystemBlockBehavior
                 const int face = 4;
                 var cell = new CellFace(x, y, z, face);
                 var p = new EditableBlockPackage(
-                    EditableItemType.Battery,
+                    BuiltInBlockEditKind.Battery,
                     cell,
                     false,
                     0,

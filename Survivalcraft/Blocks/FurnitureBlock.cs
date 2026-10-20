@@ -2,7 +2,6 @@ using Engine.Graphics;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
 
 namespace Game.Blocks;
 

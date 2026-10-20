@@ -1,7 +1,6 @@
 using System.Diagnostics;
 
-using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Diagnostics;
 
 namespace Survivalcraft.Test.Network;
 

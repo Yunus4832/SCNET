@@ -8,30 +8,30 @@ public enum GameMode
     /// <summary>
     ///     创建
     /// </summary>
-    Creative,
+    Creative = 0,
 
     /// <summary>
     ///     无害
     /// </summary>
-    Harmless,
+    Harmless = 1,
 
     /// <summary>
     ///     生存
     /// </summary>
-    Survival,
+    Survival = 2,
 
     /// <summary>
     ///     挑战
     /// </summary>
-    Challenging,
+    Challenging = 3,
 
     /// <summary>
     ///     残酷
     /// </summary>
-    Cruel,
+    Cruel = 4,
 
     /// <summary>
     ///     冒险
     /// </summary>
-    Adventure
+    Adventure = 5
 }

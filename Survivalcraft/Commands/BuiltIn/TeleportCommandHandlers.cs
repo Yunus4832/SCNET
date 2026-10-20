@@ -1,6 +1,5 @@
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Commands;
 
@@ -215,12 +214,12 @@ internal static class TeleportCommandHandlers
             if (target.Client != null)
             {
                 CommonLib.Net.QueuePackage(
-                    new ComponentPlayerPackage(player, ComponentPlayerPackage.PlayerAction.PositionSet),
+                    PlayerPackageBuilder.Capture(player, ComponentPlayerPackage.PlayerAction.PositionSet),
                     PackageAudience.To(target.Client));
             }
 
             NetworkSender.SendToObservers(player.Entity,
-                new ComponentPlayerPackage(player, ComponentPlayerPackage.PlayerAction.PositionSet), target.Client);
+                PlayerPackageBuilder.Capture(player, ComponentPlayerPackage.PlayerAction.PositionSet), target.Client);
         }
 
         return CommandResult.LocalizedOk("teleport.completed", "TeleportCompleted_Message", "已传送 {0} 到 {1}。", target.Name, position.ToString());

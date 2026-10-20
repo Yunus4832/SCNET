@@ -3,8 +3,7 @@ using Engine.Serialization;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -100,12 +99,12 @@ public abstract class SubsystemEditableItemBehavior<T>(
             {
                 if (blockData is MemoryBankData memory)
                 {
-                    CommonLib.Net.QueuePackage(new EditableBlockPackage(num, memory), PackageAudience.Global);
+                    CommonLib.Net.QueuePackage(EditableBlockPackageBuilder.Capture(num, memory), PackageAudience.Global);
                 }
 
                 if (blockData is TruthTableData truthTableData)
                 {
-                    CommonLib.Net.QueuePackage(new EditableBlockPackage(num, truthTableData), PackageAudience.Global);
+                    CommonLib.Net.QueuePackage(EditableBlockPackageBuilder.Capture(num, truthTableData), PackageAudience.Global);
                 }
             }
         }

@@ -6,8 +6,7 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -158,7 +157,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
         if (CommonLib.WorkType == WorkType.Server)
         {
-            NetworkSender.SendGlobal(new FurniturePackage(design));
+            NetworkSender.SendGlobal(FurniturePackageBuilder.Capture(design));
         }
 
         return design;
@@ -301,7 +300,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                     CreateDesign(componentMiner, design, valuesDictionary, start, startValue);
                 }
 
-                var package = new FurniturePackage(
+                var package = FurniturePackageBuilder.Capture(
                         design,
                         valuesDictionary,
                         start,
@@ -322,7 +321,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
     public FurnitureDesign CreateDesign(
         ComponentMiner componentMiner,
         FurnitureDesign design,
-        Dictionary<Point3, int> valuesDictionary,
+        IReadOnlyDictionary<Point3, int> valuesDictionary,
         CellFace start,
         int startValue,
         bool tryAdd = true

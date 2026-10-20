@@ -2,10 +2,10 @@ namespace Game.Content;
 
 public static class TemporaryContentRepositories
 {
-    public const int MaximumCount = 16;
-    public const int MaximumUrlLength = 2048;
-    public const int MinimumPriority = 0;
-    public const int MaximumPriority = 1000;
+    public const int MaximumCount = ProtocolLimits.MaximumTemporaryRepositories;
+    public const int MaximumUrlLength = ProtocolLimits.MaximumRepositoryUrlLength;
+    public const int MinimumPriority = ProtocolLimits.MinimumRepositoryPriority;
+    public const int MaximumPriority = ProtocolLimits.MaximumRepositoryPriority;
 
     public static IReadOnlyList<ContentRepository> Validate(IEnumerable<ContentRepository> repositories)
     {

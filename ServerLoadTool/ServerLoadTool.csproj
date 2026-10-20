@@ -4,6 +4,19 @@
         <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="..\Survivalcraft\Survivalcraft.csproj"/>
+        <Using Include="Game.Protocol"/>
+        <Using Include="Game.Protocol.Terrain"/>
+        <Using Include="Game.Protocol.Blocks"/>
+        <Using Include="Game.Protocol.Connection"/>
+        <Using Include="Game.Protocol.Entities"/>
+        <Using Include="Game.Protocol.Mods"/>
+        <Using Include="Game.Protocol.Players"/>
+        <Using Include="Game.Protocol.World"/>
+        <Using Include="Game.Protocol.Commands"/>
+        <Using Include="Game.Protocol.Localization"/>
+        <Using Include="Game.Protocol.Messaging"/>
+        <Using Include="Game.Protocol.Serialization"/>
+        <ProjectReference Include="..\Game.Protocol\Game.Protocol.csproj"/>
+        <ProjectReference Include="..\Engine.Network\Engine.Network.csproj"/>
     </ItemGroup>
 </Project>

@@ -4,10 +4,7 @@ using Engine.Core;
 
 using Game;
 using Game.Commands;
-using Game.Localization;
 using Game.Managers;
-using Game.Messaging;
-using Game.Modding;
 
 namespace Survivalcraft.Test.Commands;
 
@@ -908,7 +905,7 @@ public class CommandDispatcherTest
         }));
         Assert.Equal(explicitRoute.CommandType, bare.CommandType);
         Assert.Equal(explicitCommand, command);
-        Assert.Equal(name == "mark" ? (IGameCommand)new MarkPrivatePositionCommand("previous") :
+        Assert.Equal(name == "mark" ? new MarkPrivatePositionCommand("previous") :
             new TeleportMarkCommand("previous", false), command);
     }
 

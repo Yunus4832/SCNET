@@ -2,26 +2,14 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Commands;
-using Game.Messaging;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
 public class ComponentGui : Component, IUpdateable, IDrawable
 {
     public const string TypeName = nameof(ComponentGui);
-
-    public int CloseTime;
-
-    private readonly LabelWidget _closeTimeLabel = new()
-    {
-        Name = "CloseTime",
-        HorizontalAlignment = WidgetAlignment.Center,
-        VerticalAlignment = WidgetAlignment.Near,
-        IsVisible = false
-    };
 
     private ButtonWidget _backButtonWidget = null!;
 
@@ -206,22 +194,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             return;
         }
 
-        if (CloseTime > 0)
-        {
-            _closeTimeLabel.IsVisible = true;
-            _closeTimeLabel.Text = "距离服务器关闭还有" + CloseTime + "秒";
-        }
-
-        if (Time.PeriodicEvent(1.0, 0.9))
-        {
-            CloseTime--;
-        }
-
-        if (_closeTimeLabel.IsVisible && CloseTime == 0)
-        {
-            CommonLib.Net.StopImmediate();
-        }
-
         HandleInput();
         UpdateWidgets();
     }
@@ -294,7 +266,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         _subsystemSky = Project.FindSubsystem<SubsystemSky>(true)!;
         _subsystemWeather = Project.FindSubsystem<SubsystemWeather>(true)!;
         var guiWidget = ComponentPlayer.GuiWidget;
-        guiWidget.Children.Insert(0, _closeTimeLabel);
         _backButtonWidget = guiWidget.Children.Find<ButtonWidget>("BackButton")!;
         _inventoryButtonWidget = guiWidget.Children.Find<ButtonWidget>("InventoryButton")!;
         _clothingButtonWidget = guiWidget.Children.Find<ButtonWidget>("ClothingButton")!;
@@ -394,7 +365,6 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             return;
         }
 
-        ComponentPlayer.GuiWidget.Children.Remove(_closeTimeLabel);
         ModalPanelWidget = null;
         _keyboardHelpDialog = null;
         ShortInventoryWidget.AssignComponents(null);
@@ -875,12 +845,12 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             if (CommonLib.WorkType == WorkType.Server)
             {
                 NetworkSender.SendToObservers(ComponentPlayer.Entity,
-                    new ComponentPlayerPackage(ComponentPlayer, ComponentPlayerPackage.PlayerAction.CreativeFlyChange),
+                    PlayerPackageBuilder.Capture(ComponentPlayer, ComponentPlayerPackage.PlayerAction.CreativeFlyChange),
                     ComponentPlayer.PlayerData.Client);
             }
             else if (CommonLib.WorkType == WorkType.Client)
             {
-                NetworkSender.SendToServer(new ComponentPlayerPackage(ComponentPlayer,
+                NetworkSender.SendToServer(PlayerPackageBuilder.Capture(ComponentPlayer,
                     ComponentPlayerPackage.PlayerAction.CreativeFlyChange));
             }
         }

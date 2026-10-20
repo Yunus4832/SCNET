@@ -7,7 +7,8 @@ using Game.Components;
 using Game.Managers;
 using Game.Modding;
 using Game.Network;
-using Game.Network.Enums;
+using Game.Protocol;
+using Game.Protocol.Terrain;
 using Game.Subsystems;
 using Game.Terrains;
 

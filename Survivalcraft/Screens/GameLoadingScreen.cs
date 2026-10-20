@@ -7,8 +7,8 @@ using Engine.Network;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Handling;
+using Game.Network.Transport;
 using Game.Servers;
 
 using static Game.Network.NetNode;
@@ -141,7 +141,7 @@ public class GameLoadingScreen : Screen
                     GameManager.LoadProject(_worldInfo, gamesWidget);
                     if (_isAdventureRestart && CommonLib.WorkType == WorkType.Client)
                     {
-                        NetworkSender.SendToServer(new ComponentPlayerPackage(CommonLib.MainPlayer!,
+                        NetworkSender.SendToServer(PlayerPackageBuilder.Capture(CommonLib.MainPlayer!,
                             ComponentPlayerPackage.PlayerAction.IntoPlaying));
                     }
 

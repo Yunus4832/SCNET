@@ -1,4 +1,4 @@
-using Game.Network;
+using Game.Network.Diagnostics;
 
 namespace Survivalcraft.Test.Network;
 

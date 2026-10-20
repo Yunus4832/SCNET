@@ -2,8 +2,7 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -49,7 +48,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
         foreach (var (client, furnaces) in byClient)
         {
-            NetworkSender.SendTo(client, new ComponentFurnacePackage(furnaces));
+            NetworkSender.SendTo(client, EntityStatePackageBuilder.Capture(furnaces));
         }
     }
 
@@ -140,7 +139,7 @@ public class SubsystemFurnaceBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client && CommonLib.MainPlayer == componentMiner.ComponentPlayer)
         {
-            IPackage package =
+            IProtocolMessage package =
                 new BlockEditPackage(
                     new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
                     BlockEditPackage.EventType.OpenInventoryByPoint);

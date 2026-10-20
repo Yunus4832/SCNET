@@ -6,8 +6,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -112,11 +111,11 @@ public class ComponentVitalStats : Component, IUpdateable
             {
                 if (CommonLib.WorkType == WorkType.Server && _componentPlayer.PlayerData.Client is { } owner)
                 {
-                    NetworkSender.SendTo(owner, new ComponentVitalStatPackage(this));
+                    NetworkSender.SendTo(owner, EntityStatePackageBuilder.Capture(this));
                 }
                 else if (CommonLib.WorkType == WorkType.Client)
                 {
-                    NetworkSender.SendToServer(new ComponentVitalStatPackage(this));
+                    NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(this));
                 }
             }
         }

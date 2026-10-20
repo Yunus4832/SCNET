@@ -1,8 +1,7 @@
 using System.Xml.Linq;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Widgets;
 
@@ -94,7 +93,7 @@ public class ClothingWidget : CanvasWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new ComponentSleepPackage(_componentPlayer.ComponentSleep,
+            NetworkSender.SendToServer(new ComponentSleepPackage(_componentPlayer.ComponentSleep.Entity.EntityId,
                 ComponentSleepPackage.EventType.SleepRequest, true));
         }
         else

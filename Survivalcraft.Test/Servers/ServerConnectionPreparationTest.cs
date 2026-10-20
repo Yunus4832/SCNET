@@ -1,9 +1,7 @@
 using Engine.Network;
 
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
-using Game.Network.Serialization;
+using Game.Network.Handling;
 using Game.Servers;
 
 using Survivalcraft.Test.Network;

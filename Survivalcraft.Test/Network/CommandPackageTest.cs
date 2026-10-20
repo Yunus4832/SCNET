@@ -1,9 +1,6 @@
 using Game.Commands;
 using Game.Localization;
-using Game.Modding;
-using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 
@@ -40,19 +37,20 @@ public class CommandPackageTest
     [Fact]
     public void RequestRoundTrips()
     {
-        var package = CommandPackage.CreateRequest("/time get", "request-1");
+        var package = CommandPackage.CreateRequest(ResourceId.Parse("game:world/time/get"), [], "request-1");
 
         var clone = RoundTrip(package);
 
         Assert.Equal(CommandPackage.CommandPackageMode.Request, clone.Mode);
         Assert.Equal("request-1", clone.CorrelationId);
-        Assert.Equal("/time get", clone.Input);
+        Assert.Equal(ResourceId.Parse("game:world/time/get"), clone.CommandId);
+        Assert.Empty(clone.Payload);
     }
 
     [Fact]
     public void CommandsUseReliableControlTransport()
     {
-        var transport = PackageTransportPolicy.Get(CommandPackage.CreateRequest("/help"));
+        var transport = PackageTransportPolicy.Get(CommandPackage.CreateRequest(ResourceId.Parse("game:help"), []));
 
         Assert.Equal(PackageTransportPolicy.Control, transport);
     }
@@ -90,7 +88,7 @@ public class CommandPackageTest
     }
 
     [Fact]
-    public void TypedRequestRoundTripsCommandIdentityAndPayload()
+    public void RequestRoundTripsCommandIdentityAndPayload()
     {
         var commandId = new ResourceId(new ModId("example.commands"), "world/time/set");
         var package = CommandPackage.CreateRequest(
@@ -100,14 +98,14 @@ public class CommandPackageTest
 
         var clone = RoundTrip(package);
 
-        Assert.Equal(CommandPackage.CommandPackageMode.TypedRequest, clone.Mode);
+        Assert.Equal(CommandPackage.CommandPackageMode.Request, clone.Mode);
         Assert.Equal(commandId, clone.CommandId);
         Assert.Equal([1, 2, 3, 4], clone.Payload);
         Assert.Equal("request-typed", clone.CorrelationId);
     }
 
     [Fact]
-    public void StructuredResultRoundTrips()
+    public void ClientFeedbackRoundTripsWithoutServerPublishingPolicy()
     {
         var result = new CommandResult(
             true,
@@ -120,32 +118,32 @@ public class CommandPackageTest
             "TeamInvitationPending_Message",
             ["Alice"],
             PanelBehavior: CommandPanelBehavior.CloseOnSuccess);
-        var package = CommandPackage.CreateResult(result, "request-result");
+        var package = CommandPackage.CreateResult(CommandResponseBuilder.Capture(result), "request-result");
 
         var clone = RoundTrip(package);
 
         Assert.Equal(CommandPackage.CommandPackageMode.Result, clone.Mode);
         Assert.Equal("request-result", clone.CorrelationId);
         Assert.NotNull(clone.Result);
-        Assert.Equal(result.Success, clone.Result!.Success);
-        Assert.Equal(result.Code, clone.Result.Code);
-        Assert.Equal(result.Message, clone.Result.Message);
-        Assert.Equal(result.Sensitive, clone.Result.Sensitive);
-        Assert.Equal(result.Audience, clone.Result.Audience);
-        Assert.Equal(result.State, clone.Result.State);
-        Assert.Equal(result.Presentation, clone.Result.Presentation);
-        Assert.Equal(result.PanelBehavior, clone.Result.PanelBehavior);
-        Assert.Equal(result.MessageKey, clone.Result.MessageKey);
-        Assert.Equal(result.MessageArguments, clone.Result.MessageArguments);
+        var restored = CommandResponseBuilder.Restore(clone.Result!);
+        Assert.Equal(result.Success, restored.Success);
+        Assert.Equal(result.Code, restored.Code);
+        Assert.Equal(result.Message, restored.Message);
+        Assert.False(restored.Sensitive);
+        Assert.Equal(CommandResultAudience.Requester, restored.Audience);
+        Assert.Equal(result.State, restored.State);
+        Assert.Equal(result.Presentation, restored.Presentation);
+        Assert.Equal(result.PanelBehavior, restored.PanelBehavior);
+        Assert.Equal(result.MessageKey, restored.MessageKey);
+        Assert.Equal(result.MessageArguments, restored.MessageArguments);
     }
 
     private static CommandPackage RoundTrip(CommandPackage package)
     {
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new CommandPackage();
-        clone.ReadData(reader);
+        var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<CommandPackage>(ProtocolMessageCodec.Read(package.ID, reader));
         return clone;
     }
 }

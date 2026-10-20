@@ -1,3 +1,4 @@
+using Game.Protocol;
 using Game.Modding;
 
 namespace Survivalcraft.ModTemplate;

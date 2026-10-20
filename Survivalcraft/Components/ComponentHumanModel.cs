@@ -1,12 +1,10 @@
 using Engine.Graphics;
-using Engine.Media;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -219,12 +217,12 @@ public class ComponentHumanModel : ComponentCreatureModel
             {
                 if (Entity.FindComponent<ComponentPlayer>()?.PlayerData.IsMainPlayer == true)
                 {
-                    NetworkSender.SendToServer(new ComponentBehaviorPackage(this));
+                    NetworkSender.SendToServer(BehaviorPackageBuilder.Capture(this));
                 }
             }
             else if (CommonLib.WorkType == WorkType.Server)
             {
-                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this));
+                NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this));
             }
             _subsystemAudio.PlayRandomSound("Audio/Rowing", random.Float(0.4f, 0.6f), random.Float(-0.3f, 0.2f),
                 ComponentCreature.ComponentBody.Position, 3f, true);

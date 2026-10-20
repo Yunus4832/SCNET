@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -56,7 +55,7 @@ public class ComponentDigInMudBehavior : ComponentBehavior, IUpdateable
             _isDigIn = value;
             if (CommonLib.WorkType == WorkType.Server)
             {
-                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, _isDigIn));
+                NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, _isDigIn));
             }
         }
     }

@@ -1,9 +1,6 @@
 using EntitySystem.Core;
 
-using Game.Localization;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Serialization;
 
 namespace Game.Commands;
 
@@ -52,8 +49,8 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
     where TCommand : IGameCommand
 {
     private readonly Func<CommandContext, TCommand, CommandResult> _handler;
-    private readonly Func<PackageStreamReader, TCommand>? _read;
-    private readonly Action<PackageStreamWriter, TCommand>? _write;
+    private readonly Func<ProtocolReader, TCommand>? _read;
+    private readonly Action<ProtocolWriter, TCommand>? _write;
 
     public Type CommandType => typeof(TCommand);
 
@@ -78,8 +75,8 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
         ResourceId? requiredPermission = null,
         CommandHostRequirement hostRequirement = CommandHostRequirement.None,
         CommandPrincipalKinds? allowedPrincipals = null,
-        Action<PackageStreamWriter, TCommand>? write = null,
-        Func<PackageStreamReader, TCommand>? read = null,
+        Action<ProtocolWriter, TCommand>? write = null,
+        Func<ProtocolReader, TCommand>? read = null,
         CommandPanelBehavior panelBehavior = CommandPanelBehavior.ReturnToMessage)
     {
         _handler = handler ?? throw new ArgumentNullException(nameof(handler));
@@ -193,9 +190,9 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
                 $"Command {typeof(TCommand).Name} does not support remote invocation.");
         }
 
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         _write(writer, (TCommand)command);
-        return writer.Data(CommonLib.CompressionPolicy.None);
+        return writer.Data(CompressionPolicy.None);
     }
 
     public IGameCommand Decode(byte[] payload)
@@ -206,7 +203,7 @@ public sealed class CommandDefinition<TCommand> : ICommandDefinition
                 $"Command {typeof(TCommand).Name} does not support remote invocation.");
         }
 
-        using var reader = new PackageStreamReader(payload);
+        using var reader = new ProtocolReader(payload);
         var command = _read(reader);
         if (reader.BaseStream.Position != reader.BaseStream.Length)
         {

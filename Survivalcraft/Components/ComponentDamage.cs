@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -48,7 +47,7 @@ public class ComponentDamage : Component, IUpdateable
         {
             if (CommonLib.WorkType != WorkType.Client)
             {
-                NetworkSender.SendToObservers(Entity, new ComponentHealthPackage(this));
+                NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
             }
 
             _subsystemParticles.AddParticleSystem(new BlockDebrisParticleSystem(_subsystemTerrain,
@@ -91,7 +90,7 @@ public class ComponentDamage : Component, IUpdateable
             HitPoints = MathUtils.Max(HitPoints - amount, 0f);
         }
 
-        NetworkSender.SendToObservers(Entity, new ComponentHealthPackage(this));
+        NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
     }
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)

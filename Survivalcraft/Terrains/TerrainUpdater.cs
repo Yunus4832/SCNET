@@ -1,5 +1,5 @@
-using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Chunks;
+using Game.Network.Transport;
 using Game.Terrains.Distribution;
 using Game.TerrainSerializers;
 
@@ -45,7 +45,7 @@ public class TerrainUpdater
     /// <summary>
     ///     待处理的 Location 位置字典
     /// </summary>
-    private readonly Dictionary<int, UpdateLocation?> _pendingLocations = new();
+    private readonly Dictionary<int, TerrainUpdateLocation?> _pendingLocations = new();
 
     private readonly SubsystemBlockBehaviors _subsystemBlockBehaviors;
 
@@ -173,7 +173,7 @@ public class TerrainUpdater
     /// <summary>
     ///     更新位置字典
     /// </summary>
-    public Dictionary<int, UpdateLocation> UpdateLocations => _updateParameters.Locations;
+    public Dictionary<int, TerrainUpdateLocation> UpdateLocations => _updateParameters.Locations;
 
     /// <summary>
     ///     区块初始化完成事件
@@ -204,9 +204,9 @@ public class TerrainUpdater
         _subsystemAnimatedTextures = _subsystemTerrain.Project.FindSubsystem<SubsystemAnimatedTextures>(true)!;
         _terrain = subsystemTerrain.Terrain;
         _updateParameters.Chunks = [];
-        _updateParameters.Locations = new Dictionary<int, UpdateLocation>();
+        _updateParameters.Locations = new Dictionary<int, TerrainUpdateLocation>();
         _threadUpdateParameters.Chunks = [];
-        _threadUpdateParameters.Locations = new Dictionary<int, UpdateLocation>();
+        _threadUpdateParameters.Locations = new Dictionary<int, TerrainUpdateLocation>();
         if (_subsystemTerrain.ContentRole == TerrainContentRole.Authority)
         {
             ServerChunkDistribution = new ServerChunkDistributionScheduler(
@@ -310,9 +310,9 @@ public class TerrainUpdater
         _pendingLocations[locationIndex] = null;
     }
 
-    internal static UpdateLocation ResolveUpdateLocation(int locationIndex,
-        IReadOnlyDictionary<int, UpdateLocation> current,
-        IReadOnlyDictionary<int, UpdateLocation?> pending) =>
+    internal static TerrainUpdateLocation ResolveUpdateLocation(int locationIndex,
+        IReadOnlyDictionary<int, TerrainUpdateLocation> current,
+        IReadOnlyDictionary<int, TerrainUpdateLocation?> pending) =>
         pending.TryGetValue(locationIndex, out var queued) ? queued.GetValueOrDefault() : current.GetValueOrDefault(locationIndex);
 
 
@@ -773,7 +773,7 @@ public class TerrainUpdater
     /// <returns>如果在任一位置的 ContentDistance 范围内则返回 true</returns>
     internal static bool IsChunkInRange(
         Vector2 chunkCenter,
-        UpdateLocation[] locations,
+        TerrainUpdateLocation[] locations,
         float distanceMargin = 0f)
     {
         for (var i = 0; i < locations.Length; i++)
@@ -794,7 +794,7 @@ public class TerrainUpdater
     /// </summary>
     /// <param name="locations">更新位置数组</param>
     /// <returns>区块是否发生变化，以及是否需要在后续帧重试</returns>
-    private ChunkAllocationResult AllocateAndFreeChunks(UpdateLocation[] locations)
+    private ChunkAllocationResult AllocateAndFreeChunks(TerrainUpdateLocation[] locations)
     {
         var result = false;
         var hasDeferredChunkDiscards = false;
@@ -1116,7 +1116,7 @@ public class TerrainUpdater
 
     internal static TerrainChunk? SelectChunkToUpdate(
         TerrainChunk[] chunks,
-        Dictionary<int, UpdateLocation>.ValueCollection locations,
+        Dictionary<int, TerrainUpdateLocation>.ValueCollection locations,
         TerrainContentRole role,
         bool preferContent,
         out TerrainChunkState desiredState)
@@ -2033,28 +2033,7 @@ public class TerrainUpdater
         DowngradeAllChunksState(TerrainChunkState.InvalidVertices1, true);
     }
 
-    public struct UpdateLocation
-    {
-        /// <summary>
-        ///     Location 位置中心
-        /// </summary>
-        public Vector2 Center;
 
-        /// <summary>
-        ///     上次更新的位置中心（用于检测位置变化）
-        /// </summary>
-        public Vector2? LastChunksUpdateCenter;
-
-        /// <summary>
-        ///     可视距离
-        /// </summary>
-        public float VisibilityDistance;
-
-        /// <summary>
-        ///     内容加载距离（一般大于等于可视距离）
-        /// </summary>
-        public float ContentDistance;
-    }
 
     /// <summary>
     ///     地形更新参数结构体
@@ -2069,7 +2048,7 @@ public class TerrainUpdater
         /// <summary>
         ///     更新位置索引字典
         /// </summary>
-        public Dictionary<int, UpdateLocation> Locations;
+        public Dictionary<int, TerrainUpdateLocation> Locations;
     }
 
     /// <summary>

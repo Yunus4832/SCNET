@@ -1,7 +1,6 @@
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Handling;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 
@@ -19,7 +18,7 @@ public sealed class PackageReceiveContextTest
             new ReceivedPackage(payload, new PackageReceiveContext(null, false, second))
         };
         var handler = new TestHandler();
-        PackageDispatcher.Register<TestPackage>(handler);
+        PackageDispatcher.Register(handler);
         try
         {
             foreach (var received in queued)
@@ -39,19 +38,9 @@ public sealed class PackageReceiveContextTest
         }
     }
 
-    private sealed class TestPackage : IPackage
+    private sealed record TestPackage : IProtocolMessage
     {
         public byte ID => 250;
-
-        public ClientState MinNeedState => ClientState.ProjectLoaded;
-
-        public void WriteData(PackageStreamWriter writer)
-        {
-        }
-
-        public void ReadData(PackageStreamReader reader)
-        {
-        }
     }
 
     private sealed class TestHandler : PackageHandlerBase<TestPackage>

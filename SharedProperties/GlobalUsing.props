@@ -1,6 +1,19 @@
 <Project>
     <!-- 全局导入的名称空间 -->
     <ItemGroup>
+        <Using Include="Game.Network.Snapshots"/>
+        <Using Include="Game.Protocol"/>
+        <Using Include="Game.Protocol.Terrain"/>
+        <Using Include="Game.Protocol.Blocks"/>
+        <Using Include="Game.Protocol.Connection"/>
+        <Using Include="Game.Protocol.Entities"/>
+        <Using Include="Game.Protocol.Mods"/>
+        <Using Include="Game.Protocol.Players"/>
+        <Using Include="Game.Protocol.World"/>
+        <Using Include="Game.Protocol.Commands"/>
+        <Using Include="Game.Protocol.Localization"/>
+        <Using Include="Game.Protocol.Messaging"/>
+        <Using Include="Game.Protocol.Serialization"/>
         <Using Include="System.Reflection"/>
         <Using Include="System.Diagnostics"/>
         <Using Include="Engine.Core"/>

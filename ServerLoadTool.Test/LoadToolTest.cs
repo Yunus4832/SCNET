@@ -2,12 +2,6 @@ using System.Text.Json;
 
 using Engine.Core;
 
-using EntitySystem.TemplatesDatabase;
-
-using Game;
-
-using Game.Network.Packages;
-
 namespace ServerLoadTool.Test;
 
 public class LoadToolTest
@@ -37,15 +31,15 @@ public class LoadToolTest
     [Fact]
     public void PlayerBodyCodecIncludesConnectionIdentity()
     {
-        var package = new ComponentPlayerPackage
+        var package = new PlayerStatePackage
         {
-            Type = ComponentPlayerPackage.PlayerAction.BodyUpdate,
+
             Position = new Vector3(10, 65, -20),
             Velocity = Vector3.Zero,
             PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange | ComponentPlayerPackage.ChangFlag.VelocityChange
         };
         var encoded = LoadWire.Encode(package, 7);
-        var decoded = Assert.IsType<ComponentPlayerPackage>(Assert.Single(LoadWire.Decode(encoded)));
+        var decoded = Assert.IsType<PlayerStatePackage>(Assert.Single(LoadWire.Decode(encoded)));
         Assert.Equal(7, decoded.FromPlayerId);
         Assert.Equal(package.Position, decoded.Position);
         Assert.Equal(package.PackageChangeFlag, decoded.PackageChangeFlag);
@@ -98,22 +92,19 @@ public class LoadToolTest
     }
 
     [Theory]
-    [InlineData(GameMode.Creative, true)]
-    [InlineData(GameMode.Survival, false)]
-    public void BootstrapWorldMetadataPreventsUnsupportedGameModes(GameMode mode, bool supported)
+    [InlineData((byte)0, true)]
+    [InlineData((byte)2, false)]
+    [InlineData(byte.MaxValue, false)]
+    public void BootstrapWorldMetadataPreventsUnsupportedGameModes(byte mode, bool supported)
     {
-        var info = new ValuesDictionary
-        {
-            { "WorldName", "LoadWorld" }, { "WorldSeed", 123 }, { "GameMode", mode }, { "MaxOnlinePlayerCount", (ushort)20 }
-        };
-        var project = new ValuesDictionary { { "Subsystems", new ValuesDictionary { { "GameInfo", info } } } };
+        var world = new WorldMetadata("LoadWorld", 123, mode, 20);
         if (supported)
         {
-            Assert.Equal(new LoadWorldInfo("LoadWorld", 123, "Creative", 20), LoadWorldInfo.Read(project.ToMessagePack()));
+            Assert.Equal(new LoadWorldInfo("LoadWorld", 123, "Creative", 20), LoadWorldInfo.Read(world));
         }
         else
         {
-            Assert.Throws<InvalidOperationException>(() => LoadWorldInfo.Read(project.ToMessagePack()));
+            Assert.Throws<InvalidOperationException>(() => LoadWorldInfo.Read(world));
         }
     }
 }

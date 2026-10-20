@@ -1,5 +1,3 @@
-using Game.Network.Packages;
-using Game.Network.Serialization;
 using Game.Subsystems;
 
 namespace Survivalcraft.Test.Network;
@@ -17,7 +15,7 @@ public class GroupManagePackageTest
             Guid.NewGuid(),
             Guid.NewGuid(),
             60);
-        var package = GroupManagePackage.CreatePrompt(operation);
+        var package = GroupPackageBuilder.CreatePrompt(operation);
 
         var clone = RoundTrip(package);
 
@@ -48,16 +46,10 @@ public class GroupManagePackageTest
         var secondMember = Guid.NewGuid();
         var package = new GroupManagePackage
         {
-            Command = GroupManagePackage.CommandType.SyncGroups
+            Command = GroupManagePackage.CommandType.SyncGroups,
+            Groups = [new GroupManagePackage.GroupState
+            { GroupKey = groupKey, Name = "Builders", Members = [firstMember, secondMember] }]
         };
-        var group = new GroupManagePackage.GroupState
-        {
-            GroupKey = groupKey,
-            Name = "Builders"
-        };
-        group.Members.Add(firstMember);
-        group.Members.Add(secondMember);
-        package.Groups.Add(group);
 
         var clone = RoundTrip(package);
 
@@ -70,11 +62,10 @@ public class GroupManagePackageTest
 
     private static GroupManagePackage RoundTrip(GroupManagePackage package)
     {
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new GroupManagePackage();
-        clone.ReadData(reader);
+        var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<GroupManagePackage>(ProtocolMessageCodec.Read(package.ID, reader));
         return clone;
     }
 }

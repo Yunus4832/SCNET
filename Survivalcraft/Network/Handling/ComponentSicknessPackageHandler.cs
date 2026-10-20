@@ -1,0 +1,30 @@
+using Game.Network.Transport;
+
+namespace Game.Network.Handling;
+
+public sealed class ComponentSicknessPackageHandler : PackageHandlerBase<ComponentSicknessPackage>
+{
+    public override void Handle(ComponentSicknessPackage package, PackageReceiveContext context)
+    {
+        if (GameManager.Project is null)
+        {
+            return;
+        }
+
+        var project = GameManager.Project;
+        project.FindEntityById(package.EntityId, entity =>
+        {
+            var sickness = entity.FindComponent<ComponentSickness>();
+            if (sickness == null)
+            {
+                return;
+            }
+
+            sickness.SicknessDuration = package.SicknessDuration;
+            if (package.SicknessDuration > 0f)
+            {
+                sickness.NauseaEffect();
+            }
+        });
+    }
+}

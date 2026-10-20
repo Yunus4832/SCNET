@@ -1,8 +1,7 @@
 using Engine.Core;
 
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Replication;
 using Game.Subsystems;
 
 namespace Survivalcraft.Test.Network;
@@ -34,22 +33,15 @@ public sealed class ElectricityBoundaryReplicationTest
 
         void Send(Point2 observedChunk, int step)
         {
-            var snapshot = SubsystemElectricity.BuildNetworkSnapshots(step, [client], authority,
+            var voltages = SubsystemElectricity.BuildNetworkVoltages([client], authority,
                 chunk => chunk == observedChunk ? [client] : [])[client];
-            var changes = tracker.Capture(client, snapshot.SaveData);
-            snapshot.IsBaseline = changes.IsBaseline;
-            snapshot.SaveData.Clear();
-            foreach (var (point, voltage) in changes.Voltages)
-            {
-                snapshot.SaveData.Add(point, voltage);
-            }
-
-            snapshot.Removed.AddRange(changes.Removed);
-            using var writer = new PackageStreamWriter();
-            new SubsystemElectricityPackage(snapshot).WriteData(writer);
-            using var reader = new PackageStreamReader(writer.Data());
-            var received = new SubsystemElectricityPackage();
-            received.ReadData(reader);
+            var changes = tracker.Capture(client, voltages);
+            var snapshot = new ElectricitySnapshot
+            { StartStep = step, IsBaseline = changes.IsBaseline, SaveData = changes.Voltages, Removed = changes.Removed };
+            using var writer = new ProtocolWriter();
+            ProtocolMessageCodec.Write(new SubsystemElectricityPackage(snapshot), writer);
+            using var reader = new ProtocolReader(writer.Data());
+            var received = Assert.IsType<SubsystemElectricityPackage>(ProtocolMessageCodec.Read((byte)PackageType.SubsystemElectricity, reader));
             receiver.ReceiveNetworkSnapshot(received.Snapshot);
         }
     }

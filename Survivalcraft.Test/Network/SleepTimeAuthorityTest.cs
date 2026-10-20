@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 
 using Game.Components;
 using Game.Network;
-using Game.Network.Enums;
 using Game.Subsystems;
 
 using Survivalcraft.Test.Modding;
@@ -60,7 +59,7 @@ public sealed class SleepTimeAuthorityTest
             time.NextFrame();
 
             Assert.Equal(accelerated ? 20 : 1, updates.UpdatesPerFrame);
-            Assert.Equal(accelerated ? 0.05f : (float?)null, time.FixedTimeStep);
+            Assert.Equal(accelerated ? 0.05f : null, time.FixedTimeStep);
         }
         finally
         {

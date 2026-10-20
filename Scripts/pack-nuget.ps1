@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$Configuration = "Release",
-    [ValidateSet("Native.ImageCodecs", "Native.OpenAL.Android", "Engine.Core", "Engine.Serialization", "Engine.Media", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem", "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Survivalcraft", "Survivalcraft.ModTemplates")]
+    [ValidateSet("Native.ImageCodecs", "Native.OpenAL.Android", "Engine.Core", "Engine.Serialization", "Engine.Media", "Rendezvous.Protocol", "Engine.Network", "Engine", "EntitySystem", "Content.Packaging", "ServerSource.Protocol", "ContentTool", "Game.Protocol", "Survivalcraft", "Survivalcraft.ModTemplates")]
     [string[]]$Project = @(),
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$AdditionalArguments
@@ -81,6 +81,12 @@ try {
         Write-Host "[SCNET Pack] Packing SCNET.ContentTool"
         & dotnet pack "ContentTool/ContentTool.csproj" --configuration $Configuration @AdditionalArguments
         if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.ContentTool failed with exit code $LASTEXITCODE." }
+    }
+
+    if ($Project.Count -eq 0 -or $Project -contains "Game.Protocol") {
+        Write-Host "[SCNET Pack] Packing SCNET.Game.Protocol"
+        & dotnet pack "Game.Protocol/Game.Protocol.csproj" --configuration $Configuration @AdditionalArguments
+        if ($LASTEXITCODE -ne 0) { throw "Packing SCNET.Game.Protocol failed with exit code $LASTEXITCODE." }
     }
 
     if ($Project.Count -eq 0 -or $Project -contains "Survivalcraft") {

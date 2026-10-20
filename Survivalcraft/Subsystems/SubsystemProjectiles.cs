@@ -6,8 +6,8 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Replication;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -849,7 +849,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
                 if (projectiles.TryGetValue(networkId, out var projectile))
                 {
                     CommonLib.Net.QueuePackage(
-                        new ProjectilePackage(projectile) { StateTick = _networkStateTick },
+                        ProjectilePackageBuilder.Capture(projectile) with { StateTick = _networkStateTick },
                         PackageAudience.To(client));
                 }
             }
@@ -865,7 +865,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable, IDrawable
             {
                 var projectile = projectiles[networkId];
                 CommonLib.Net.QueuePackage(
-                    new ProjectilePackage(projectile)
+                    ProjectilePackageBuilder.Capture(projectile) with
                     {
                         Type = ProjectilePackage.EventType.Update,
                         StateTick = _networkStateTick

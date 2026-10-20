@@ -1,8 +1,5 @@
 using Game.Modding.Blocks;
-using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
 
 namespace Game.Subsystems;
 
@@ -23,7 +20,7 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                 var num = Terrain.ReplaceData(value, data2);
                 if (num != value)
                 {
-                    var p = new EditableBlockPackage(EditableItemType.AdjustableDelayGate, default, true, inventory.Id,
+                    var p = new EditableBlockPackage(BuiltInBlockEditKind.AdjustableDelayGate, default, true, inventory.Id,
                         slotIndex, newDelay);
                     EditableBlockPackageHandler.Submit(p);
                 }
@@ -51,7 +48,7 @@ public class SubsystemAdjustableDelayGateBlockBehavior : SubsystemBlockBehavior
                         ((AdjustableDelayGateBlock)CurrentModRuntime.Value!.RequireWorldCatalog().Blocks[BuiltInBlockRegistry.GetIndex<AdjustableDelayGateBlock>()]).GetFace(value);
                     var cell = new CellFace(x, y, z, face);
                     var p = new EditableBlockPackage(
-                        EditableItemType.AdjustableDelayGate,
+                        BuiltInBlockEditKind.AdjustableDelayGate,
                         cell,
                         false,
                         0,

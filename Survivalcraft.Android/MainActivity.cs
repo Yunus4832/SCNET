@@ -8,12 +8,10 @@ using AndroidX.Core.Content;
 
 using Game;
 using Game.Commands;
-using Game.Managers;
 
 using AndroidEnvironment = Android.OS.Environment;
 using AndroidProcess = Android.OS.Process;
 using AndroidProviderSettings = Android.Provider.Settings;
-using AndroidUri = Android.Net.Uri;
 using GamePlatformManager = Game.Managers.PlatformManager;
 using Permission = Android.Content.PM.Permission;
 

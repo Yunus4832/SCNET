@@ -5,7 +5,6 @@ using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
 
 namespace Game.Components;
 

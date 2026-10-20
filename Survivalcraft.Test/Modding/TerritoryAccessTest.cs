@@ -1,7 +1,5 @@
 using Engine.Core;
 
-using Game.Network.Serialization;
-
 using TerritoryStoneMod;
 
 namespace Survivalcraft.Test.Modding;
@@ -93,9 +91,9 @@ public class TerritoryAccessTest
         restored.Load(store.Save());
         var saved = Assert.Single(restored.Territories);
         Assert.Equal(territory.Grants[player], saved.Grants[player]);
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         TerritoryMessages.Write(writer, saved);
-        using var reader = new PackageStreamReader(writer.Data());
+        using var reader = new ProtocolReader(writer.Data());
         var received = TerritoryMessages.Read(reader);
         Assert.Equal(saved.Grants[player], received.Grants[player]);
         received.SetGrant(player, "Visitor", TerritoryPermission.None);

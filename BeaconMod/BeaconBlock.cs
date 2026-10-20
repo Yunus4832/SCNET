@@ -6,7 +6,8 @@ using Game.Blocks;
 using Game.Components;
 using Game.ElectricElements;
 using Game.Managers;
-using Game.Modding;
+using Game.Protocol;
+using Game.Protocol.Terrain;
 using Game.Subsystems;
 using Game.Terrains;
 

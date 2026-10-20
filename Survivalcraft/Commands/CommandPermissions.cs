@@ -1,13 +1,7 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game.Localization;
-
 namespace Game.Commands;
-
-public sealed record CommandPermissionGrant(
-    ResourceId Permission,
-    bool CanDelegate);
 
 public sealed class CommandPermissionSet
 {

@@ -34,6 +34,10 @@
     </Folder>
 
     <Folder Name="/04 Protocol/">
+        <Project Path="Game.Protocol/Game.Protocol.csproj"/>
+        <Project Path="Game.Protocol.Test/Game.Protocol.Test.csproj">
+            <Build Solution="Release|*" Project="false"/>
+        </Project>
         <Project Path="Rendezvous.Protocol/Rendezvous.Protocol.csproj"/>
         <Project Path="Rendezvous.Protocol.Test/Rendezvous.Protocol.Test.csproj">
             <Build Solution="Release|*" Project="false"/>

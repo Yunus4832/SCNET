@@ -1,9 +1,8 @@
 using Engine.Core;
 
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
-using Game.Network.Serialization;
+using Game.Network.Handling;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 
@@ -24,7 +23,7 @@ public sealed class FurniturePackageTest
         values.SetValue("0", node);
         var package = new FurniturePackage { AddXml = CommonLib.SerializeVDict(values) };
 
-        var error = Assert.Throws<InvalidOperationException>(() => package.ReadDesignChain(null));
+        var error = Assert.Throws<InvalidOperationException>(() => FurnitureSnapshotSerializer.ReadDesignChain(package.AddXml, null));
 
         Assert.Equal("Invalid furniture design link index.", error.Message);
     }
@@ -38,14 +37,13 @@ public sealed class FurniturePackageTest
         second.SetValues(2, new int[8]);
         first.LinkedDesign = second;
         second.LinkedDesign = first;
-        var package = new FurniturePackage(first);
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new FurniturePackage();
-        clone.ReadData(reader);
+        var package = FurniturePackageBuilder.Capture(first);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(package.ID, reader));
 
-        var chain = clone.ReadDesignChain(null);
+        var chain = FurnitureSnapshotSerializer.ReadDesignChain(clone.AddXml, null);
 
         Assert.Equal(2, chain.Count);
         Assert.Equal(7, chain[0].Index);
@@ -77,13 +75,11 @@ public sealed class FurniturePackageTest
             AddXml = "definition",
             StartValue = 123
         };
-        package.PointDict.Add(new Point3(1, 2, 3), 123);
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new FurniturePackage();
-
-        clone.ReadData(reader);
+        package = package with { PointDict = new Dictionary<Point3, int> { [new Point3(1, 2, 3)] = 123 } };
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(package.ID, reader));
 
         Assert.Equal(7, clone.FurnitureIndex);
         Assert.Equal("definition", clone.AddXml);
@@ -97,12 +93,10 @@ public sealed class FurniturePackageTest
     public void RenamePreservesDistinctOldAndNewNames()
     {
         var package = new FurniturePackage("old", "new");
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new FurniturePackage();
-
-        clone.ReadData(reader);
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(package.ID, reader));
 
         Assert.Equal("old", clone.AddXml);
         Assert.Equal("new", clone.FromName);
@@ -121,14 +115,13 @@ public sealed class FurniturePackageTest
 
         first.LinkedDesign = second;
         second.LinkedDesign = first;
-        var package = new FurniturePackage([first, second, third], "imported");
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new FurniturePackage();
-        clone.ReadData(reader);
+        var package = FurniturePackageBuilder.Capture([first, second, third], "imported");
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = Assert.IsType<FurniturePackage>(ProtocolMessageCodec.Read(package.ID, reader));
 
-        var designs = clone.ReadDesignChain(null);
+        var designs = FurnitureSnapshotSerializer.ReadDesignChain(clone.AddXml, null);
 
         Assert.Equal("imported", clone.FromName);
         Assert.Equal(3, designs.Count);

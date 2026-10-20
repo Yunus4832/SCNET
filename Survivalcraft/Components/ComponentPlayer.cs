@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -117,7 +116,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             _lastActiveSlot != ComponentMiner.Inventory.ActiveSlotIndex)
         {
             _lastActiveSlot = (byte)ComponentMiner.Inventory.ActiveSlotIndex;
-            var package = new ComponentInventoryPackage(ComponentMiner.Inventory,
+            var package = new ComponentInventoryPackage(ComponentMiner.Inventory.Id,
                 ComponentMiner.Inventory.ActiveSlotIndex);
             if (CommonLib.WorkType == WorkType.Server)
             {
@@ -225,13 +224,13 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             {
                 NetworkSender.SendToObservers(
                     Entity,
-                    new ComponentPlayerPackage(this, ComponentPlayerPackage.PlayerAction.BodyUpdate),
+                    PlayerPackageBuilder.Capture(this, ComponentPlayerPackage.PlayerAction.BodyUpdate),
                     PlayerData.Client);
             }
             else if (PlayerData.IsMainPlayer)
             //客户端向服务端提交自己的数据
             {
-                NetworkSender.SendToServer(new ComponentPlayerPackage(this,
+                NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this,
                     ComponentPlayerPackage.PlayerAction.BodyUpdate));
             }
         }
@@ -247,14 +246,14 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 _digEvents.RemoveAt(0);
             }
 
-            if (CurDigEventItem.DigEvent == DigEvent.Start)
+            if (CurDigEventItem.DigEvent == SyncAction.Start)
             {
                 if (CurDigEventItem is { NetDigRay: not null, NetDigRaycast: not null })
                 {
                     ComponentMiner.Dig(CurDigEventItem.NetDigRaycast.Value);
                 }
             }
-            else if (CurDigEventItem.DigEvent == DigEvent.Cancel)
+            else if (CurDigEventItem.DigEvent == SyncAction.Cancel)
             {
                 CurDigEventItem = default;
                 CurDigEventItem.NetDigRaycast = null;
@@ -262,7 +261,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 ComponentMiner.DigCellFace = null;
                 ComponentMiner.DigProgress = 0f;
             }
-            else if (CurDigEventItem.DigEvent == DigEvent.End)
+            else if (CurDigEventItem.DigEvent == SyncAction.Complete)
             {
                 if (CurDigEventItem.NetDigRay.HasValue)
                 {
@@ -294,14 +293,14 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 _aimEvents.RemoveAt(0);
             }
 
-            if (CurAimEventItem.AimEvent == AimEvent.InProgress)
+            if (CurAimEventItem.AimEvent == SyncAction.Start)
             {
                 if (CurAimEventItem.NetAim.HasValue)
                 {
                     ComponentMiner.Aim(CurAimEventItem.NetAim.Value, AimState.InProgress);
                 }
             }
-            else if (CurAimEventItem.AimEvent == AimEvent.Cancel)
+            else if (CurAimEventItem.AimEvent == SyncAction.Cancel)
             {
                 if (CurAimEventItem.NetAim.HasValue)
                 {
@@ -311,7 +310,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 CurAimEventItem.NetAim = null;
                 CurAimEventItem = default;
             }
-            else if (CurAimEventItem.AimEvent == AimEvent.Complete)
+            else if (CurAimEventItem.AimEvent == SyncAction.Complete)
             {
                 if (CurAimEventItem.NetAim.HasValue)
                 {
@@ -329,7 +328,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 _interactEvents.RemoveAt(0);
             }
 
-            if (CurInteractEventItem.InteractEvent == InteractEvent.Start)
+            if (CurInteractEventItem.InteractEvent == InteractionMessageKind.Use)
             {
                 if (!ComponentMiner.Use(CurInteractEventItem.NetInteractRay))
                 {
@@ -341,7 +340,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
                 CurInteractEventItem = default;
             }
-            else if (CurInteractEventItem.InteractEvent == InteractEvent.Place)
+            else if (CurInteractEventItem.InteractEvent == InteractionMessageKind.Place)
             {
                 if (CurInteractEventItem.NetPlaceRaycast.HasValue)
                 {
@@ -377,7 +376,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         if (playerInput.Interact.HasValue && !flag &&
             _subsystemTime.GameTime - _lastActionTime > 0.33000001311302185)
         {
-            CurInteractEventItem.InteractEvent = InteractEvent.Start;
+            CurInteractEventItem.InteractEvent = InteractionMessageKind.Use;
             CurInteractEventItem.NetInteractRay = playerInput.Interact.Value;
             if (!ComponentMiner.Use(CurInteractEventItem.NetInteractRay))
             {
@@ -389,7 +388,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                     CurInteractEventItem.NetPlaceRaycast = terrainRaycastResult.Value;
                     if (!ComponentMiner.Interact(terrainRaycastResult.Value))
                     {
-                        CurInteractEventItem.InteractEvent = InteractEvent.Place;
+                        CurInteractEventItem.InteractEvent = InteractionMessageKind.Place;
                         if (ComponentMiner.Place(terrainRaycastResult.Value))
                         {
                             CurInteractEventItem.RequestId = ComponentMiner.PlacementRequestId;
@@ -429,11 +428,11 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                                                         vector.Y >= size.Y * 0.02f && vector.Y < size.Y * 0.98f))
                 {
                     _aim = value;
-                    CurAimEventItem.AimEvent = AimEvent.InProgress;
+                    CurAimEventItem.AimEvent = SyncAction.Start;
                     CurAimEventItem.NetAim = value;
                     if (ComponentMiner.Aim(value, AimState.InProgress))
                     {
-                        CurAimEventItem.AimEvent = AimEvent.Cancel;
+                        CurAimEventItem.AimEvent = SyncAction.Cancel;
                         ComponentMiner.Aim(_aim.Value, AimState.Cancelled);
                         _aim = null;
                         _isAimBlocked = true;
@@ -460,7 +459,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                 else if (_aim.HasValue)
                 {
                     CurAimEventItem.NetAim = _aim;
-                    CurAimEventItem.AimEvent = AimEvent.Cancel;
+                    CurAimEventItem.AimEvent = SyncAction.Cancel;
                     ComponentMiner.Aim(_aim.Value, AimState.Cancelled);
                     _aim = null;
                     _isAimBlocked = true;
@@ -473,7 +472,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             if (_aim.HasValue)
             {
                 CurAimEventItem.NetAim = _aim;
-                CurAimEventItem.AimEvent = AimEvent.Complete;
+                CurAimEventItem.AimEvent = SyncAction.Complete;
                 ComponentMiner.Aim(_aim.Value, AimState.Completed);
                 _aim = null;
                 _lastActionTime = _subsystemTime.GameTime;
@@ -490,12 +489,12 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             if (terrainRaycastResult2.HasValue &&
                 _subsystemTerrain.CellPrediction?.IsPending(terrainRaycastResult2.Value.CellFace.Point) != true)
             {
-                CurDigEventItem.DigEvent = DigEvent.Start;
+                CurDigEventItem.DigEvent = SyncAction.Start;
                 CurDigEventItem.NetDigRay = playerInput.Dig;
                 CurDigEventItem.NetDigRaycast = terrainRaycastResult2;
                 if (ComponentMiner.Dig(terrainRaycastResult2.Value))
                 {
-                    CurDigEventItem.DigEvent = DigEvent.End;
+                    CurDigEventItem.DigEvent = SyncAction.Complete;
                     CurDigEventItem.RequestId = ComponentMiner.DigRequestId;
                     CurDigEventItem.ExpectedValue = ComponentMiner.DigExpectedValue;
                     _lastActionTime = _subsystemTime.GameTime;
@@ -504,9 +503,9 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             }
         }
 
-        if (_lastDigEvent.DigEvent == DigEvent.Start && CurDigEventItem.DigEvent == DigEvent.None)
+        if (_lastDigEvent.DigEvent == SyncAction.Start && CurDigEventItem.DigEvent == SyncAction.None)
         {
-            CurDigEventItem.DigEvent = DigEvent.Cancel;
+            CurDigEventItem.DigEvent = SyncAction.Cancel;
         }
 
         #region 玩家攻击事件
@@ -526,7 +525,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
                     ComponentMiner.Hit(bodyRaycastResult.Value.ComponentBody, hitPosition, hitDirection);
                     if (CommonLib.WorkType == WorkType.Client)
                     {
-                        NetworkSender.SendToServer(new ComponentPlayerPackage(this,
+                        NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this,
                             bodyRaycastResult.Value.ComponentBody, hitPosition, hitDirection));
                     }
                 }
@@ -548,7 +547,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
             }
             else
             {
-                NetworkSender.SendToServer(new ComponentPlayerPackage(this,
+                NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this,
                     ComponentPlayerPackage.PlayerAction.Drop));
             }
         }
@@ -668,11 +667,11 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Server)
         {
-            NetworkSender.SendToObservers(Entity, new ComponentPlayerPackage(this, action), PlayerData.Client);
+            NetworkSender.SendToObservers(Entity, PlayerPackageBuilder.Capture(this, action), PlayerData.Client);
         }
         else if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new ComponentPlayerPackage(this, action));
+            NetworkSender.SendToServer(PlayerPackageBuilder.Capture(this, action));
         }
     }
 
@@ -693,7 +692,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         });
     }
 
-    public void AddDigEvent(DigEvent digEvent, Ray3? digRay, TerrainRaycastResult? raycastResult,
+    public void AddDigEvent(SyncAction digEvent, Ray3? digRay, TerrainRaycastResult? raycastResult,
         int requestId, int expectedValue)
     {
         _digEvents.Add(new DigEventItem
@@ -706,12 +705,12 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
         });
     }
 
-    public void AddAimEvent(AimEvent aimEvent, Ray3? aimRay)
+    public void AddAimEvent(SyncAction aimEvent, Ray3? aimRay)
     {
         _aimEvents.Add(new AimEventItem { AimEvent = aimEvent, NetAim = aimRay });
     }
 
-    public void AddInteractEvent(InteractEvent interactEvent, Ray3 digRay, TerrainRaycastResult? raycastResult,
+    public void AddInteractEvent(InteractionMessageKind interactEvent, Ray3 digRay, TerrainRaycastResult? raycastResult,
         int requestId, Point3 placementCell, int expectedValue)
     {
         _interactEvents.Add(new InteractEventItem
@@ -791,7 +790,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
         public int ExpectedValue;
 
-        public DigEvent DigEvent;
+        public SyncAction DigEvent;
 
         public Ray3? NetDigRay;
 
@@ -800,7 +799,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
     public struct AimEventItem
     {
-        public AimEvent AimEvent;
+        public SyncAction AimEvent;
 
         public Ray3? NetAim;
     }
@@ -813,7 +812,7 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
 
         public int ExpectedValue;
 
-        public InteractEvent InteractEvent;
+        public InteractionMessageKind InteractEvent;
 
         public Ray3 NetInteractRay;
 

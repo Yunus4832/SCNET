@@ -1,8 +1,7 @@
 using Engine.Core;
 
-using Game;
 using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 
@@ -14,10 +13,10 @@ public class NetNodeSnapshotCoalescingTest
         var packages = new List<OutboundPackage>
         {
             new(
-                new ComponentPlayerPackage
+                new PlayerStatePackage
                 {
                     FromPlayerId = 7,
-                    Type = ComponentPlayerPackage.PlayerAction.BodyUpdate,
+
                     PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange |
                                         ComponentPlayerPackage.ChangFlag.VelocityChange |
                                         ComponentPlayerPackage.ChangFlag.LadderChange,
@@ -27,10 +26,10 @@ public class NetNodeSnapshotCoalescingTest
                 },
                 PackageAudience.Global)
         };
-        var newer = new ComponentPlayerPackage
+        var newer = new PlayerStatePackage
         {
             FromPlayerId = 7,
-            Type = ComponentPlayerPackage.PlayerAction.BodyUpdate,
+
             PackageChangeFlag = ComponentPlayerPackage.ChangFlag.PositionChange |
                                 ComponentPlayerPackage.ChangFlag.VelocityChange,
             Position = new Vector3(10f, 11f, 12f),
@@ -40,7 +39,7 @@ public class NetNodeSnapshotCoalescingTest
             packages,
             new OutboundPackage(newer, PackageAudience.Global)));
 
-        var package = Assert.IsType<ComponentPlayerPackage>(Assert.Single(packages).Package);
+        var package = Assert.IsType<PlayerStatePackage>(Assert.Single(packages).Package);
         Assert.True(package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.PositionChange));
         Assert.True(package.PackageChangeFlag.HasFlag(ComponentPlayerPackage.ChangFlag.VelocityChange));
         Assert.Same(newer, package);
@@ -55,15 +54,15 @@ public class NetNodeSnapshotCoalescingTest
         var packages = new List<OutboundPackage>();
         var older = new SubsystemBodyPackage
         {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
+            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
+            BodyList = [new SubsystemBodyPackage.BodyItem { CreatureId = 1 }]
         };
-        older.BodyList.Add(new SubsystemBodyPackage.BodyItem { CreatureId = 1 });
 
         var newer = new SubsystemBodyPackage
         {
-            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate
+            PackageEventType = SubsystemBodyPackage.EventType.BodyUpdate,
+            BodyList = [new SubsystemBodyPackage.BodyItem { CreatureId = 2 }]
         };
-        newer.BodyList.Add(new SubsystemBodyPackage.BodyItem { CreatureId = 2 });
 
         packages.Add(new OutboundPackage(older, PackageAudience.Global));
         // 生物快照按独立小包发送，不允许合并器吃掉其它分块。
@@ -80,15 +79,15 @@ public class NetNodeSnapshotCoalescingTest
         var packages = new List<OutboundPackage>();
         var older = new PickablePackage
         {
-            Type = PickablePackage.PickType.Update
+            Type = PickablePackage.PickType.Update,
+            Positions = [new PickablePosition(1, new Vector3(1f, 2f, 3f))]
         };
-        older.Pickables.Add(new Pickable { Id = 1, Position = new Vector3(1f, 2f, 3f) });
 
         var newer = new PickablePackage
         {
-            Type = PickablePackage.PickType.Update
+            Type = PickablePackage.PickType.Update,
+            Positions = [new PickablePosition(2, new Vector3(4f, 5f, 6f))]
         };
-        newer.Pickables.Add(new Pickable { Id = 2, Position = new Vector3(4f, 5f, 6f) });
 
         packages.Add(new OutboundPackage(older, PackageAudience.Global));
         Assert.False(SnapshotPackageCoalescer.TryCoalesce(
@@ -96,7 +95,7 @@ public class NetNodeSnapshotCoalescingTest
             new OutboundPackage(newer, PackageAudience.Global)));
 
         var package = Assert.IsType<PickablePackage>(Assert.Single(packages).Package);
-        Assert.Equal((ushort)1, Assert.Single(package.Pickables).Id);
+        Assert.Equal((ushort)1, Assert.Single(package.Positions).Id);
     }
 
     [Fact]

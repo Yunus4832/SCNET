@@ -1,7 +1,7 @@
 using EntitySystem.Core;
 
 using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Messaging;
 

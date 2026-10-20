@@ -1,7 +1,5 @@
 using Engine.Graphics;
 
-using Game.Messaging;
-
 namespace Game.Widgets;
 
 public class ToastWidget : CanvasWidget

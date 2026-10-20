@@ -3,6 +3,7 @@ using Engine.Core;
 using Game;
 using Game.Components;
 using Game.ElectricElements;
+using Game.Protocol.Terrain;
 using Game.Subsystems;
 using Game.Terrains;
 

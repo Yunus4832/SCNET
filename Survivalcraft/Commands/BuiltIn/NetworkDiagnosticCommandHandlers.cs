@@ -99,7 +99,7 @@ internal static class NetworkDiagnosticCommandHandlers
             transport.MissingFragmentRequestsSent,
             Chunks = terrain.Terrain.AllocatedChunks.Select(chunk => new
             {
-                X = chunk.Coords.X,
+                chunk.Coords.X,
                 Z = chunk.Coords.Y,
                 Visible = locations.Any(location => Vector2.DistanceSquared(chunk.Center, location.Center) <=
                                                     location.VisibilityDistance * location.VisibilityDistance),

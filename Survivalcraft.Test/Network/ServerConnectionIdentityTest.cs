@@ -1,6 +1,6 @@
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 

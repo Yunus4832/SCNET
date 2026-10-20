@@ -2,6 +2,8 @@ using Engine.Input;
 
 namespace Game.Commands;
 
+public sealed record GetCommandCatalogCommand : IGameCommand;
+
 public sealed record ShowCommandHelpCommand(string? CommandName = null) : IGameCommand;
 
 public sealed record GetWorldTimeCommand : IGameCommand;
@@ -75,7 +77,7 @@ public sealed record PressAutomationKeyCommand(Key Key) : IGameCommand;
 
 public sealed record CaptureAutomationScreenshotCommand : IGameCommand;
 
-public sealed record RunAutomationInputCommand(Game.Automation.AutomationInputAction Action) : IGameCommand;
+public sealed record RunAutomationInputCommand(Automation.AutomationInputAction Action) : IGameCommand;
 
 public sealed record GetAutomationActionStatusCommand : IGameCommand;
 

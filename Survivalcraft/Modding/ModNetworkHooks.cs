@@ -1,7 +1,5 @@
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Transport;
 
 namespace Game.Modding;
 
@@ -11,7 +9,7 @@ public interface IModNetwork
 
     void Send(
         string messageType,
-        Action<PackageStreamWriter> writePayload,
+        Action<ProtocolWriter> writePayload,
         PackageAudience audience,
         ClientState minNeedState = ClientState.Connected);
 
@@ -56,7 +54,7 @@ public sealed class ModNetworkHooks
         {
             try
             {
-                using var reader = new PackageStreamReader(package.Payload);
+                using var reader = new ProtocolReader(package.Payload);
                 var context = new ModNetworkMessageContext(
                     this,
                     handler.Owner,
@@ -91,14 +89,14 @@ public sealed class ModNetworkHooks
     internal void Send(
         ModId owner,
         string messageType,
-        Action<PackageStreamWriter> writePayload,
+        Action<ProtocolWriter> writePayload,
         PackageAudience audience,
         ClientState minNeedState)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(messageType);
         ArgumentNullException.ThrowIfNull(writePayload);
         ArgumentNullException.ThrowIfNull(audience);
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         writePayload(writer);
         Send(owner, messageType, writer.Data(), audience, minNeedState);
     }
@@ -175,7 +173,7 @@ public sealed class ModNetworkHooks
 
         public void Send(
             string messageType,
-            Action<PackageStreamWriter> writePayload,
+            Action<ProtocolWriter> writePayload,
             PackageAudience audience,
             ClientState minNeedState = ClientState.Connected) =>
             hooks.Send(owner, messageType, writePayload, audience, minNeedState);
@@ -218,7 +216,7 @@ public sealed class ModNetworkMessageContext(
     ModNetworkHooks hooks,
     ModId owner,
     string messageType,
-    PackageStreamReader reader,
+    ProtocolReader reader,
     Client? from,
     NetNode? netNode,
     bool isServer)
@@ -227,7 +225,7 @@ public sealed class ModNetworkMessageContext(
 
     public string MessageType { get; } = messageType;
 
-    public PackageStreamReader Reader { get; } = reader;
+    public ProtocolReader Reader { get; } = reader;
 
     public Client? From { get; } = from;
 
@@ -236,7 +234,7 @@ public sealed class ModNetworkMessageContext(
     public bool IsServer { get; } = isServer;
 
     public void Reply(
-        Action<PackageStreamWriter> writePayload,
+        Action<ProtocolWriter> writePayload,
         ClientState minNeedState = ClientState.Connected)
     {
         if (From == null)
@@ -249,7 +247,7 @@ public sealed class ModNetworkMessageContext(
 
     public void Send(
         string targetMessageType,
-        Action<PackageStreamWriter> writePayload,
+        Action<ProtocolWriter> writePayload,
         PackageAudience audience,
         ClientState minNeedState = ClientState.Connected)
     {

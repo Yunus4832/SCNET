@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -198,7 +197,7 @@ public class ComponentSleep : Component, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.SleepRequest,
+            NetworkSender.SendToServer(new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.SleepRequest,
                 allowManualWakeup));
         }
         else
@@ -206,7 +205,7 @@ public class ComponentSleep : Component, IUpdateable
             NetSleep(allowManualWakeup);
             NetworkSender.SendToObservers(
                 Entity,
-                new ComponentSleepPackage(this, ComponentSleepPackage.EventType.Sleep, allowManualWakeup, true));
+                new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.Sleep, allowManualWakeup, true));
         }
     }
 
@@ -214,14 +213,14 @@ public class ComponentSleep : Component, IUpdateable
     {
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new ComponentSleepPackage(this, ComponentSleepPackage.EventType.WakeupRequest));
+            NetworkSender.SendToServer(new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.WakeupRequest));
         }
         else
         {
             NetWakeUp();
             NetworkSender.SendToObservers(
                 Entity,
-                new ComponentSleepPackage(this, ComponentSleepPackage.EventType.WakeUp));
+                new ComponentSleepPackage(Entity.EntityId, ComponentSleepPackage.EventType.WakeUp));
         }
     }
 

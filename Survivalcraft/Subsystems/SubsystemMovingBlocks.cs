@@ -2,15 +2,14 @@ using System.Globalization;
 using System.Text;
 
 using Engine.Graphics;
-using Engine.Media;
 using Engine.Serialization;
 
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Replication;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -350,7 +349,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
         if (observers.Length > 0)
         {
             CommonLib.Net.QueuePackage(
-                new MovingBlockPackage(movingBlockSet, stopped),
+                MovingBlockPackageBuilder.Capture(movingBlockSet, stopped),
                 PackageAudience.To(observers));
         }
     }
@@ -380,7 +379,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                 if (movingBlocks.TryGetValue(networkId, out var movingBlockSet))
                 {
                     CommonLib.Net.QueuePackage(
-                        new MovingBlockPackage(movingBlockSet) { StateTick = _networkStateTick },
+                        MovingBlockPackageBuilder.Capture(movingBlockSet) with { StateTick = _networkStateTick },
                         PackageAudience.To(client));
                 }
             }
@@ -390,7 +389,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
                 if (movingBlocks.TryGetValue(networkId, out var movingBlockSet))
                 {
                     CommonLib.Net.QueuePackage(
-                        new MovingBlockPackage(movingBlockSet, false),
+                        MovingBlockPackageBuilder.Capture(movingBlockSet, false),
                         PackageAudience.To(client));
                 }
             }
@@ -399,7 +398,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable, IDrawable
             {
                 var movingBlockSet = movingBlocks[networkId];
                 CommonLib.Net.QueuePackage(
-                    new MovingBlockPackage(movingBlockSet, false)
+                    MovingBlockPackageBuilder.Capture(movingBlockSet, false) with
                     {
                         Type = MovingBlockPackage.EventType.Update,
                         StateTick = _networkStateTick

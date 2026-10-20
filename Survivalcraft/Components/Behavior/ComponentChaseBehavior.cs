@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -90,7 +89,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
             _isAttack = value;
             if (CommonLib.WorkType != WorkType.Client)
             {
-                NetworkSender.SendToObservers(Entity, new ComponentBehaviorPackage(this, value));
+                NetworkSender.SendToObservers(Entity, BehaviorPackageBuilder.Capture(this, value));
             }
         }
     }

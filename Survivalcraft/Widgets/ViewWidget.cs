@@ -1,8 +1,7 @@
 using Engine.Graphics;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Widgets;
 
@@ -59,7 +58,7 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
 
         if (CommonLib.WorkType == WorkType.Client)
         {
-            NetworkSender.SendToServer(new ComponentPlayerPackage(GameWidget.PlayerData,
+            NetworkSender.SendToServer(PlayerPackageBuilder.Capture(GameWidget.PlayerData,
                 inventoryDragData.Inventory.Id, inventoryDragData.SlotIndex, worldPos, count));
         }
         else

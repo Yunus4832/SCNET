@@ -1,6 +1,3 @@
-using Game.Network.Packages;
-using Game.Network.Serialization;
-
 namespace Survivalcraft.Test.Network;
 
 public sealed class ComponentHealthPackageTest
@@ -16,10 +13,9 @@ public sealed class ComponentHealthPackageTest
             Cause = "Drowned"
         };
 
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        var clone = new ComponentHealthPackage();
-        clone.ReadData(new PackageStreamReader(writer.Data()));
+        var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        var clone = Assert.IsType<ComponentHealthPackage>(ProtocolMessageCodec.Read(package.ID, new ProtocolReader(writer.Data())));
 
         Assert.Equal(ComponentHealthPackage.EventType.SyncHealth, clone.Type);
         Assert.Equal(42, clone.TargetId);

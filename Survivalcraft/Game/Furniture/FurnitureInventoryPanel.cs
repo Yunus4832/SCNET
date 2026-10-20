@@ -2,9 +2,8 @@ using System.Xml.Linq;
 
 using Game.Modding.Blocks;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
+using Game.Network.Transport;
 
 namespace Game;
 
@@ -289,7 +288,7 @@ public class FurnitureInventoryPanel : CanvasWidget
                                                    select w as InventorySlotWidget
                                                    into w
                                                    where w != null
-                                                   select w).Cast<InventorySlotWidget>());
+                                                   select w));
         var num = ComponentFurnitureInventory.PageIndex * list2.Count;
         foreach (var item in list2)
         {
@@ -318,7 +317,7 @@ public class FurnitureInventoryPanel : CanvasWidget
             20,
             delegate (string s)
             {
-                FurniturePackageHandler.Submit(new FurniturePackage(new FurnitureSet { Name = s }));
+                FurniturePackageHandler.Submit(FurniturePackageBuilder.Capture(new FurnitureSet { Name = s }));
             }
         );
     }
@@ -361,7 +360,7 @@ public class FurnitureInventoryPanel : CanvasWidget
             return;
         }
 
-        FurniturePackageHandler.Submit(new FurniturePackage(furnitureSet, move));
+        FurniturePackageHandler.Submit(FurniturePackageBuilder.Capture(furnitureSet, move));
     }
 
     private void ImportFurnitureSet(SubsystemTerrain subsystemTerrain, string text)
@@ -371,7 +370,7 @@ public class FurnitureInventoryPanel : CanvasWidget
         var designs = FurniturePacksManager.LoadFurniturePack(subsystemTerrain, text);
         if (CommonLib.WorkType == WorkType.Client)
         {
-            FurniturePackageHandler.Submit(new FurniturePackage(designs.ToList(),
+            FurniturePackageHandler.Submit(FurniturePackageBuilder.Capture(designs.ToList(),
                 FurniturePacksManager.GetDisplayName(text)));
             return;
         }
@@ -402,7 +401,7 @@ public class FurnitureInventoryPanel : CanvasWidget
                 SubsystemFurnitureBlockBehavior.NewFurnitureSet(FurniturePacksManager.GetDisplayName(text), text);
             if (CommonLib.WorkType == WorkType.Server)
             {
-                CommonLib.Net.QueuePackage(new FurniturePackage(furnitureSet), PackageAudience.Global);
+                CommonLib.Net.QueuePackage(FurniturePackageBuilder.Capture(furnitureSet), PackageAudience.Global);
             }
 
             foreach (var item2 in list2)
@@ -410,7 +409,7 @@ public class FurnitureInventoryPanel : CanvasWidget
                 SubsystemFurnitureBlockBehavior.AddToFurnitureSet(item2, furnitureSet);
                 if (CommonLib.WorkType == WorkType.Server)
                 {
-                    CommonLib.Net.QueuePackage(new FurniturePackage(item2, furnitureSet), PackageAudience.Global);
+                    CommonLib.Net.QueuePackage(FurniturePackageBuilder.Capture(item2, furnitureSet), PackageAudience.Global);
                 }
             }
 

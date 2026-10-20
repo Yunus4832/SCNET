@@ -2,8 +2,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -174,11 +173,11 @@ public class ComponentRider : Component, IUpdateable
             if (CommonLib.WorkType != WorkType.Client)
             {
                 StartNetMounting(componentMount);
-                NetworkSender.SendToObservers(Entity, new ComponentMountPackage(this, componentMount));
+                NetworkSender.SendToObservers(Entity, new ComponentMountPackage(Entity.EntityId, componentMount.Entity.EntityId));
             }
             else
             {
-                NetworkSender.SendToServer(new ComponentMountPackage(this, componentMount, true));
+                NetworkSender.SendToServer(new ComponentMountPackage(Entity.EntityId, componentMount.Entity.EntityId, true));
             }
         }
     }
@@ -226,11 +225,11 @@ public class ComponentRider : Component, IUpdateable
             if (CommonLib.WorkType != WorkType.Client)
             {
                 StartNetDismounting();
-                NetworkSender.SendToObservers(Entity, new ComponentMountPackage(this));
+                NetworkSender.SendToObservers(Entity, new ComponentMountPackage(Entity.EntityId));
             }
             else
             {
-                NetworkSender.SendToServer(new ComponentMountPackage(this, true));
+                NetworkSender.SendToServer(new ComponentMountPackage(Entity.EntityId, true));
             }
         }
     }

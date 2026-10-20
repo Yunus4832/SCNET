@@ -1,6 +1,4 @@
-using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Transport;
 
 namespace Survivalcraft.Test.Network;
 
@@ -10,12 +8,10 @@ public class SubsystemSeasonPackageTest
     public void RoundTripPreservesTimeOfYear()
     {
         var package = new SubsystemSeasonPackage(0.625f);
-        var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new SubsystemSeasonPackage();
-
-        clone.ReadData(reader);
+        var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = (SubsystemSeasonPackage)ProtocolMessageCodec.Read(package.ID, reader);
 
         Assert.Equal(0.625f, clone.TimeOfYear);
     }

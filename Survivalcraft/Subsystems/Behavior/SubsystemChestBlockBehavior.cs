@@ -1,8 +1,7 @@
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -47,7 +46,7 @@ public class SubsystemChestBlockBehavior : SubsystemBlockBehavior
     {
         if (CommonLib.WorkType == WorkType.Client && CommonLib.MainPlayer == componentMiner.ComponentPlayer)
         {
-            IPackage package =
+            IProtocolMessage package =
                 new BlockEditPackage(
                     new Point3(raycastResult.CellFace.X, raycastResult.CellFace.Y, raycastResult.CellFace.Z),
                     BlockEditPackage.EventType.OpenInventoryByPoint);

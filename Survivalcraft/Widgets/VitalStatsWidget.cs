@@ -2,8 +2,7 @@ using System.Globalization;
 using System.Xml.Linq;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Widgets;
 
@@ -285,7 +284,7 @@ public class VitalStatsWidget : CanvasWidget
         {
             if (CommonLib.WorkType == WorkType.Client)
             {
-                NetworkSender.SendToServer(new ComponentHealthPackage(_componentPlayer.ComponentHealth, null, 0.1f,
+                NetworkSender.SendToServer(EntityStatePackageBuilder.Capture(_componentPlayer.ComponentHealth, null, 0.1f,
                     LanguageManager.GetContentWidgets(_typeName, "Choked"), true, true,
                     ComponentHealthPackage.RequestInjureType.Choke));
             }

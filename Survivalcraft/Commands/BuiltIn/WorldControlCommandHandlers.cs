@@ -2,8 +2,7 @@ using EntitySystem.Core;
 
 using Game.Localization;
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Commands;
 
@@ -208,7 +207,7 @@ internal static class WorldControlCommandHandlers
         if (CommonLib.WorkType is WorkType.Server)
         {
             CommonLib.Net.QueuePackage(
-                SubsystemWeatherPackage.CreateSnapshot(weather), PackageAudience.Global);
+                WorldSnapshotBuilder.Capture(weather), PackageAudience.Global);
         }
     }
 

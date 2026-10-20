@@ -1,8 +1,8 @@
 using EntitySystem.Core;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Replication;
+using Game.Network.Transport;
 
 namespace Game.Subsystems;
 
@@ -55,11 +55,11 @@ public class SubsystemInventories : Subsystem, IUpdateable
                 baseline.Add(inventory, Enumerable.Range(0, inventory.SlotsCount).ToList());
             }
 
-            NetworkSender.SendTo(client, new ComponentInventoryPackage(baseline));
+            NetworkSender.SendTo(client, InventoryPackageBuilder.Capture(baseline));
             foreach (var inventory in baseline.Keys.Where(inventory => inventory.ActiveSlotIndex >= 0))
             {
                 NetworkSender.SendTo(client,
-                    new ComponentInventoryPackage(inventory, inventory.ActiveSlotIndex));
+                    new ComponentInventoryPackage(inventory.Id, inventory.ActiveSlotIndex));
             }
         }
     }
@@ -199,7 +199,7 @@ public class SubsystemInventories : Subsystem, IUpdateable
 
             foreach (var (client, batch) in batches)
             {
-                NetworkSender.SendTo(client, new ComponentInventoryPackage(batch));
+                NetworkSender.SendTo(client, InventoryPackageBuilder.Capture(batch));
             }
         }
 

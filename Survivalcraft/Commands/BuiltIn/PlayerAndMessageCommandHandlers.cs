@@ -1,6 +1,5 @@
-using Game.Messaging;
 using Game.Network;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Commands;
 
@@ -109,8 +108,8 @@ internal static class PlayerAndMessageCommandHandlers
         actor.CharacterSkinName = skinName;
         actor.PlayerClass = playerClass;
         CommonLib.Net.QueuePackage(
-            new PlayerDataPackage(actor, PlayerDataPackage.DataType.Modify), PackageAudience.Global);
-        CommonLib.Net.QueuePackage(new PlayerListPackage(players), PackageAudience.Global);
+            PlayerPackageBuilder.Capture(actor, PlayerDataPackage.DataType.Modify), PackageAudience.Global);
+        CommonLib.Net.QueuePackage(PlayerPackageBuilder.Capture(players), PackageAudience.Global);
         return CommandResult.LocalizedOk(
             "player.profile.updated",
             "PlayerProfileUpdated_Message",
@@ -125,7 +124,7 @@ internal static class PlayerAndMessageCommandHandlers
     {
         if (player.Client is not null)
         {
-            var snapshot = new PlayerDataPackage(
+            var snapshot = PlayerPackageBuilder.Capture(
                 player,
                 PlayerDataPackage.DataType.Modify);
             CommonLib.Net.QueuePackage(snapshot, PackageAudience.To(player.Client));

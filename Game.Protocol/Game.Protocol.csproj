@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <Version>$(GameProtocolPackageVersion)</Version>
+        <TargetFramework>$(GlobalTargetFramework)</TargetFramework>
+        <AssemblyName>SCNET.Game.Protocol</AssemblyName>
+        <RootNamespace>Game.Protocol</RootNamespace>
+        <IsPackable>true</IsPackable>
+        <PackageId>SCNET.Game.Protocol</PackageId>
+        <Description>SCNET game message contracts and binary wire codecs.</Description>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../Engine.Core/Engine.Core.csproj"/>
+        <AssemblyMetadata Include="GameProtocolVersion" Value="$(GameProtocolVersion)"/>
+        <None Include="README.md" Pack="true" PackagePath="/"/>
+    </ItemGroup>
+</Project>

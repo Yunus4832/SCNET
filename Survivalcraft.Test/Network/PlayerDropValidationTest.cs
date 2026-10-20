@@ -1,6 +1,6 @@
 using Engine.Core;
 
-using Game.Network.Packages.Handlers;
+using Game.Network.Handling;
 
 namespace Survivalcraft.Test.Network;
 

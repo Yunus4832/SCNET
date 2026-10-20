@@ -3,9 +3,7 @@ using System.Reflection;
 using Engine.Core;
 
 using Game;
-using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Serialization;
+using Game.Network.Transport;
 using Game.Subsystems;
 
 namespace Survivalcraft.Test.Network;
@@ -15,12 +13,11 @@ public sealed class ChunkStateResetPackageTest
     [Fact]
     public void ResetAndAllChunkBaselineRecordsShareOrderedChannel()
     {
-        var package = new ChunkStateResetPackage { Chunk = new Point2(-2, 3) };
-        using var writer = new PackageStreamWriter();
-        package.WriteData(writer);
-        using var reader = new PackageStreamReader(writer.Data());
-        var clone = new ChunkStateResetPackage();
-        clone.ReadData(reader);
+        var package = new ChunkStateResetPackage(new Point2(-2, 3));
+        using var writer = new ProtocolWriter();
+        ProtocolMessageCodec.Write(package, writer);
+        using var reader = new ProtocolReader(writer.Data());
+        var clone = (ChunkStateResetPackage)ProtocolMessageCodec.Read(package.ID, reader);
 
         Assert.Equal(package.Chunk, clone.Chunk);
         Assert.Equal(reader.BaseStream.Length, reader.BaseStream.Position);

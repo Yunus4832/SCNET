@@ -1,4 +1,4 @@
-using Game.Network;
+using Game.Network.Chunks;
 
 namespace Game.Terrains.Distribution;
 

@@ -4,8 +4,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Network;
-using Game.Network.Enums;
-using Game.Network.Packages;
+using Game.Network.Transport;
 
 namespace Game.Components;
 
@@ -81,7 +80,7 @@ public class ComponentLevel : Component, IUpdateable
         NetAddExperience(count, playSound);
         if (CommonLib.WorkType == WorkType.Server && _componentPlayer.PlayerData.Client is { } owner)
         {
-            NetworkSender.SendTo(owner, new ComponentPlayerPackage(_componentPlayer.PlayerData, count, playSound,
+            NetworkSender.SendTo(owner, PlayerPackageBuilder.Capture(_componentPlayer.PlayerData, count, playSound,
                 _componentPlayer.PlayerData.Level));
         }
     }

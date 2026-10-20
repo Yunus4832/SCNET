@@ -1,9 +1,7 @@
 using System.Net;
 
 using Game.Network;
-using Game.Network.Packages;
-using Game.Network.Packages.Handlers;
-using Game.Network.Serialization;
+using Game.Network.Handling;
 
 namespace Survivalcraft.Test.Network;
 
@@ -13,7 +11,7 @@ public sealed class PackageDecodingTest
     [Fact]
     public void FrameReaderRespectsMemorySliceAndRejectsTruncatedOrTrailingBytes()
     {
-        using var writer = new PackageStreamWriter();
+        using var writer = new ProtocolWriter();
         writer.Write((byte)0x88);
         var frame = CommonLib.GetWriter(writer, out _).CopyData();
         var padded = new byte[frame.Length + 8];
@@ -30,13 +28,13 @@ public sealed class PackageDecodingTest
     {
         Assert.Empty(PackageManager.DecodePackages(null, ReadOnlyMemory<byte>.Empty));
         var package = new ConnectionRejectPackage("world-unavailable");
-        PackageManager.RegisterPackage(() => new ConnectionRejectPackage(), new ConnectionRejectPackageHandler());
+        PackageManager.RegisterPackage(() => new ConnectionRejectPackage(string.Empty), new ConnectionRejectPackageHandler());
         try
         {
-            using var writer = new PackageStreamWriter();
+            using var writer = new ProtocolWriter();
             writer.Write((byte)0x88);
             writer.Write(package.ID);
-            package.WriteData(writer);
+            ProtocolMessageCodec.Write(package, writer);
             var payload = CommonLib.GetWriter(writer, out _).CopyData();
             var sender = new Client(new IPEndPoint(IPAddress.Loopback, 30000));
             var decoded = PackageManager.DecodePackage<ConnectionRejectPackage>(null, payload, sender);
@@ -50,4 +48,26 @@ public sealed class PackageDecodingTest
             PackageManager.UnRegisterPackage(package);
         }
     }
+
+    [Fact]
+    public void InvalidBatchDoesNotDeliverItsValidPrefix()
+    {
+        var package = new ConnectionRejectPackage("valid-prefix");
+        PackageManager.RegisterPackage(() => new ConnectionRejectPackage(string.Empty), new ConnectionRejectPackageHandler());
+        try
+        {
+            using var writer = new ProtocolWriter();
+            writer.Write((byte)0x88);
+            writer.Write(package.ID);
+            ProtocolMessageCodec.Write(package, writer);
+            writer.Write((byte)0x87);
+            var bytes = CommonLib.GetWriter(writer, out _).CopyData();
+            Assert.Empty(PackageManager.DecodePackages(null, bytes));
+        }
+        finally
+        {
+            PackageManager.UnRegisterPackage(package);
+        }
+    }
+
 }

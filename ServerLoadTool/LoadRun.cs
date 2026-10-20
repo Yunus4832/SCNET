@@ -24,10 +24,11 @@ public sealed class LoadRun(LoadOptions options)
             Options = options,
             ToolVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(),
             ToolBinarySha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(Assembly.GetExecutingAssembly().Location))),
-            GameBinarySha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(Game.Network.NetNode).Assembly.Location))),
+            ProtocolBinarySha256 = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(typeof(GameProtocol).Assembly.Location))),
+            ProtocolVersion = GameProtocol.CurrentVersion,
             Runtime = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription,
             OS = System.Runtime.InteropServices.RuntimeInformation.OSDescription,
-            ProcessorCount = Environment.ProcessorCount,
+            Environment.ProcessorCount,
             WorkloadBoundary = "Protocol load only; no rendering, client physics, pathfinding, combat or block interaction. Terrain payload bytes are reassembled, not simulated."
         };
         var manifestNode = JsonSerializer.SerializeToNode(manifest)!;
