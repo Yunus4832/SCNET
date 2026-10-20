@@ -1,3 +1,5 @@
+using Dialog = Game.Dialogs.Dialog;
+
 namespace Game.Automation;
 
 public sealed record AutomationTarget(
@@ -132,7 +134,7 @@ public static class AutomationUiContext
         _ => ["tap"]
     };
 
-    private static Dialogs.Dialog[] GetVisibleDialogs() => DialogsManager.ReadOnlyDialogs
+    private static Dialog[] GetVisibleDialogs() => DialogsManager.ReadOnlyDialogs
         .Where(dialog => dialog.IsVisibleGlobal && IsAttachedToRoot(dialog)).ToArray();
 
     private static bool IsAttachedToRoot(Widget widget)
@@ -148,7 +150,7 @@ public static class AutomationUiContext
         return false;
     }
 
-    private static (Widget? Root, string Selector) GetActiveScope(IReadOnlyList<Dialogs.Dialog> dialogs)
+    private static (Widget? Root, string Selector) GetActiveScope(IReadOnlyList<Dialog> dialogs)
     {
         if (dialogs.Count > 0)
         {

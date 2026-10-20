@@ -49,17 +49,17 @@ public static class HttpPlayerCommandAdapter
 
         if (registry.TryGetDefinition(request.Identity, out var registered) &&
             registered?.Definition.Domain is CommandDomain.Application)
-                {
+        {
             command = null;
             error = CommandResult.Fail("command.player_scope", "Application commands use the local control endpoint.");
             return false;
-                }
-
-        return new HttpCommandAdapter(registry).TryCreate(request, out command, out error);
         }
 
+        return new HttpCommandAdapter(registry).TryCreate(request, out command, out error);
+    }
+
     private static CommandResult Complete(Request request, CommandRegistry registry, CommandResult result)
-        {
+    {
         if (request.Command is not null || !result.Success)
         {
             return result;

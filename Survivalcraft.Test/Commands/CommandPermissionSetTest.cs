@@ -1,5 +1,4 @@
 using Game.Commands;
-using Game.Modding;
 
 namespace Survivalcraft.Test.Commands;
 

@@ -1,5 +1,3 @@
-using Engine.Graphics;
-
 using Engine.Media;
 
 namespace Game.Terrains;

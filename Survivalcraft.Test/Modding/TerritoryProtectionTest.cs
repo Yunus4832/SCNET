@@ -24,11 +24,11 @@ public class TerritoryProtectionTest
         using var scope = new WorldCatalogScope(
             new ModDescriptor(new ModManifest(ModEntry.ModId, "Territory", "1.0.0"), static () => new ModEntry()));
         var index = scope.Catalog.GetBlock(TerritoryBlock.Id).BlockIndex;
-            scope.Catalog.Blocks[index] = new TerritoryBlock { Collidable = true };
-            Assert.False(SubsystemPistonBlockBehavior.IsBlockMovable(
-                Terrain.MakeBlockValue(index), 0, 64, out var isEnd));
-            Assert.False(isEnd);
-        }
+        scope.Catalog.Blocks[index] = new TerritoryBlock { Collidable = true };
+        Assert.False(SubsystemPistonBlockBehavior.IsBlockMovable(
+            Terrain.MakeBlockValue(index), 0, 64, out var isEnd));
+        Assert.False(isEnd);
+    }
 
     [Fact]
     public void OwnerAndAdministratorAreAllowedButUnrelatedPlayerIsDenied()

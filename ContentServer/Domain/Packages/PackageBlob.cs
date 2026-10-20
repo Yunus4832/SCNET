@@ -10,7 +10,7 @@ public sealed class PackageBlob : Entity<PackageBlobId>, IAggregateRoot
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public string Hash { get; private set; } = string.Empty;
 

@@ -22,7 +22,7 @@ public class Publisher : Entity<PublisherId>, IAggregateRoot
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public string DisplayName { get; private set; } = string.Empty;
 
@@ -149,7 +149,7 @@ public class PublisherKey : Entity<PublisherKeyId>
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public PublisherId PublisherId { get; private set; } = null!;
 

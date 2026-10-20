@@ -14,7 +14,7 @@ public sealed class GameRelease : Entity<GameReleaseId>, IAggregateRoot
 
     private GameRelease() { }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
     public string Version { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public IReadOnlyCollection<GameReleaseArtifact> Artifacts => _artifacts;

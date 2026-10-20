@@ -43,8 +43,8 @@ public static class CommandGateway
         {
             CommandResultPublisher.DisplayLocal(player.Project,
                 CommandResult.Fail("command.unavailable", "Command system is not ready."), requestId);
-                return requestId;
-            }
+            return requestId;
+        }
 
         var adapter = new TextCommandAdapter(runtime.Commands);
         var principal = adapter.SupportsDomain(input, CommandDomain.Application)
@@ -73,24 +73,24 @@ public static class CommandGateway
         var result = ExecuteOrSend(player, command, requestId);
         if (result is not null)
         {
-        if (CurrentModRuntime.Value is { } runtime &&
+            if (CurrentModRuntime.Value is { } runtime &&
                 runtime.Commands.TryGetDefinition(command.GetType(), out var registered) &&
-            registered?.Definition.Domain is CommandDomain.Application)
-        {
-            CommandResultPublisher.DisplayLocal(player.Project, result, requestId);
-        }
+                registered?.Definition.Domain is CommandDomain.Application)
+            {
+                CommandResultPublisher.DisplayLocal(player.Project, result, requestId);
+            }
             else
-        {
+            {
                 CommandResultPublisher.Publish(player.Project, result, player.Client?.ID,
                     includeServer: player.IsMainPlayer, correlationId: requestId);
             }
         }
-            return requestId;
-        }
+        return requestId;
+    }
 
     internal static CommandResult? ExecuteOrSend(
         PlayerData player, IGameCommand command, string correlationId)
-        {
+    {
         if (CurrentModRuntime.Value is not { } runtime)
         {
             return CommandResult.Fail("command.unavailable", "Command system is not ready.");
@@ -100,10 +100,10 @@ public static class CommandGateway
             registered?.Definition.Domain is CommandDomain.Application)
         {
             return CommandExecutor.ExecuteLocal(command, player.Project, correlationId);
-    }
+        }
 
         if (CommonLib.WorkType is WorkType.Local or WorkType.Server)
-    {
+        {
             return CommandExecutor.ExecutePlayer(command, player, correlationId);
         }
 
@@ -113,8 +113,8 @@ public static class CommandGateway
         }
 
         NetworkSender.SendToServer(package!);
-            return null;
-        }
+        return null;
+    }
 
     internal static bool TryCreateRequest(CommandRegistry registry, IGameCommand command,
         string correlationId, out CommandPackage? package, out CommandResult? error)
@@ -124,10 +124,10 @@ public static class CommandGateway
             package = null;
             error = CommandResult.Fail("command.not_remote", reason);
             return false;
-    }
+        }
 
         if (payload.Length > ProtocolLimits.MaximumCommandPayloadLength)
-    {
+        {
             package = null;
             error = CommandResult.LocalizedFail("command.too_long", "CommandTooLong_Message", "指令长度超过限制。");
             return false;

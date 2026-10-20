@@ -32,7 +32,7 @@ public class PageIndicatorWidget : Widget
         for (var i = 0; i < PageCount; i++)
         {
             var color = i == PageIndex ? ActiveColor : InactiveColor;
-            flatBatch.QueueDisc(center, new Vector2(_dotDiameter / 2f), 0f, color * GlobalColorTransform, 32);
+            flatBatch.QueueDisc(center, new Vector2(_dotDiameter / 2f), 0f, color * GlobalColorTransform);
             center.X += _dotDiameter + _dotSpacing;
         }
 

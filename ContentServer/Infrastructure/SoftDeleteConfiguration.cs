@@ -12,7 +12,7 @@ internal static class SoftDeleteConfiguration
     {
         builder.Property<Deleted>("Deleted")
             .HasConversion(value => value.Value, value => new Deleted(value))
-            .HasDefaultValue(new Deleted(false));
+            .HasDefaultValue(new Deleted());
         builder.HasQueryFilter(entity => EF.Property<Deleted>(entity, "Deleted") == new Deleted(false));
     }
 }

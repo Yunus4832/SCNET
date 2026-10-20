@@ -42,7 +42,7 @@ internal sealed class ProbeReport : IDisposable
         {
             Mode = mode,
             StartedAt = DateTimeOffset.UtcNow,
-            ProcessId = Environment.ProcessId,
+            Environment.ProcessId,
             Binding = new { IPv4 = binding.IPv4Address.ToString(), IPv6 = binding.IPv6Address.ToString(), binding.Port },
             Binaries = binaries
         });
@@ -82,7 +82,7 @@ internal sealed class ProbeReport : IDisposable
             {
                 Type = failure.GetType().Name,
                 failure.Message,
-                Operation = rendezvous?.Operation,
+                rendezvous?.Operation,
                 Kind = rendezvous?.Kind.ToString(),
                 Code = rendezvous?.ErrorCode,
                 Status = rendezvous?.StatusCode

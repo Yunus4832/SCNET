@@ -1,5 +1,4 @@
 using ContentServer.Application.Queries;
-using ContentServer.Endpoints.Admin.Releases;
 
 using FastEndpoints;
 

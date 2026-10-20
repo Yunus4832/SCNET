@@ -637,19 +637,19 @@ public struct Matrix(
 
     private static void AddColumn(ref float left, ref float right)
     {
-        Vector128.StoreUnsafe(Vector128.LoadUnsafe(ref left) + Vector128.LoadUnsafe(ref right), ref left);
+        (Vector128.LoadUnsafe(ref left) + Vector128.LoadUnsafe(ref right)).StoreUnsafe(ref left);
     }
 
     private static void DivideColumn(ref float left, ref float right)
     {
-        Vector128.StoreUnsafe(Vector128.LoadUnsafe(ref left) / Vector128.LoadUnsafe(ref right), ref left);
+        (Vector128.LoadUnsafe(ref left) / Vector128.LoadUnsafe(ref right)).StoreUnsafe(ref left);
     }
 
     private static void LerpColumn(ref float left, ref float right, Vector128<float> factor)
     {
         var start = Vector128.LoadUnsafe(ref left);
         var end = Vector128.LoadUnsafe(ref right);
-        Vector128.StoreUnsafe(start + (end - start) * factor, ref left);
+        (start + (end - start) * factor).StoreUnsafe(ref left);
     }
 
     private static void MultiplyColumn(Vector128<float> column1, Vector128<float> column2,
@@ -657,22 +657,22 @@ public struct Matrix(
     {
         var result = column1 * Vector128.Create(factors[0]) + column2 * Vector128.Create(factors[1]) +
                      column3 * Vector128.Create(factors[2]) + column4 * Vector128.Create(factors[3]);
-        Vector128.StoreUnsafe(result, ref destination);
+        result.StoreUnsafe(ref destination);
     }
 
     private static void NegateColumn(ref float destination, Vector128<float> zero)
     {
-        Vector128.StoreUnsafe(zero - Vector128.LoadUnsafe(ref destination), ref destination);
+        (zero - Vector128.LoadUnsafe(ref destination)).StoreUnsafe(ref destination);
     }
 
     private static void ScaleColumn(ref float destination, Vector128<float> factor)
     {
-        Vector128.StoreUnsafe(Vector128.LoadUnsafe(ref destination) * factor, ref destination);
+        (Vector128.LoadUnsafe(ref destination) * factor).StoreUnsafe(ref destination);
     }
 
     private static void SubtractColumn(ref float left, ref float right)
     {
-        Vector128.StoreUnsafe(Vector128.LoadUnsafe(ref left) - Vector128.LoadUnsafe(ref right), ref left);
+        (Vector128.LoadUnsafe(ref left) - Vector128.LoadUnsafe(ref right)).StoreUnsafe(ref left);
     }
 
 }

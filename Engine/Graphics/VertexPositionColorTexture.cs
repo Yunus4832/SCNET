@@ -1,5 +1,4 @@
 using Engine.Core;
-
 using Engine.Media;
 
 namespace Engine.Graphics;

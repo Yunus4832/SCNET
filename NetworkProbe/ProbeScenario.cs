@@ -32,7 +32,7 @@ internal static class ProbeScenario
             }
             report.Record("host-ready");
             var code = useSessionLocator
-                ? ready.Split("sessionId=", StringSplitOptions.None)[1]
+                ? ready.Split("sessionId=")[1]
                 : ready.Substring(prefix.Length, 6);
             client = Start("client", control, beacon, binding, report.DirectoryPath, code, requireRelay, preparationDelaySeconds);
             output.Add(host.Process.StandardOutput.ReadToEndAsync());

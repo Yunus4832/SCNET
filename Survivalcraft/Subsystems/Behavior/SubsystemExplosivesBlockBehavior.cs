@@ -4,7 +4,6 @@ using Engine.Audio;
 
 using EntitySystem.TemplatesDatabase;
 
-
 namespace Game.Subsystems;
 
 public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdateable

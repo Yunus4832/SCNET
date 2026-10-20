@@ -1,6 +1,5 @@
 using Engine.Graphics;
 
-
 namespace Game.ParticleSystems;
 
 public class SnowSplashParticleSystem : ParticleSystem<SnowSplashParticleSystem.Particle>

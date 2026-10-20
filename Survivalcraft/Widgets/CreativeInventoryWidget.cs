@@ -2,7 +2,6 @@ using System.Xml.Linq;
 
 using EntitySystem.Core;
 
-
 namespace Game.Widgets;
 
 public class CreativeInventoryWidget : CanvasWidget

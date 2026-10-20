@@ -506,7 +506,7 @@ public sealed class NetworkHost : IAsyncDisposable
         ArgumentOutOfRangeException.ThrowIfGreaterThan(port, 65535);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _stop.Token);
         var addresses = await Dns.GetHostAddressesAsync(address, deadline.Token).ConfigureAwait(false);
-        var endpointAddress = addresses.FirstOrDefault(item => item.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+        var endpointAddress = addresses.FirstOrDefault(item => item.AddressFamily == AddressFamily.InterNetwork)
             ?? addresses.FirstOrDefault() ?? throw new IOException("Address did not resolve.");
         deadline.Token.ThrowIfCancellationRequested();
         return new ConnectionPreparation(this, new IPEndPoint(endpointAddress, port), NetworkPathKind.Direct,

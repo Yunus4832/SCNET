@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 
-
 namespace Game.Widgets;
 
 public class CreativeInventoryPanel : CanvasWidget

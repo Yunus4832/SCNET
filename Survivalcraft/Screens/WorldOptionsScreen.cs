@@ -1,7 +1,6 @@
 using System.Globalization;
 using System.Xml.Linq;
 
-
 namespace Game.Screens;
 
 public class WorldOptionsScreen : Screen

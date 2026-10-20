@@ -29,7 +29,7 @@ public sealed class AStarTest
         var expected = Enumerable.Range(1, Math.Abs(destination - start))
             .Select(offset => start + direction * offset).Reverse().ToArray();
         Assert.Equal(expected, search.Path.ToArray());
-        Assert.Equal((float)expected.Length, search.PathCost);
+        Assert.Equal(expected.Length, search.PathCost);
 
         world.Destination = start;
         search.FindPath(start, start, 0, 100);

@@ -430,7 +430,7 @@ public sealed class ServerDirectoryManager
 
     public static XElement Write(ServerDirectorySettings state)
     {
-        var normalized = ServerDirectoryManager.Normalize(state);
+        var normalized = Normalize(state);
         return new XElement("ServerDirectory",
             WriteServers("LocalServers", normalized.LocalServers),
             new XElement("InstalledSources", normalized.InstalledSources.Select(source =>

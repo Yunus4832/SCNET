@@ -1,6 +1,5 @@
 using Engine.Graphics;
 
-
 namespace Game.Blocks;
 
 public class SoilBlock : CubeBlock

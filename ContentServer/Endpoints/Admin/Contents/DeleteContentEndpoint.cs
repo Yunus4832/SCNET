@@ -1,7 +1,6 @@
 using ContentServer.Application.Commands;
 using ContentServer.Application.Queries;
 using ContentServer.Domain.Contents;
-using ContentServer.Endpoints;
 using ContentServer.Infrastructure;
 using ContentServer.Middlewares;
 

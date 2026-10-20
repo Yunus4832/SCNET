@@ -1,8 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
 
-using Rendezvous.Protocol;
-
 namespace Engine.Network.Test;
 
 public sealed class CandidatePreparationRaceTest

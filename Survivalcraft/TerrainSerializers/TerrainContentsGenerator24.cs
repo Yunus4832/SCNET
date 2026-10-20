@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 
-
 namespace Game.TerrainSerializers;
 
 public class TerrainContentsGenerator24 : ITerrainContentsGenerator

@@ -15,7 +15,6 @@ using Microsoft.Extensions.Options;
 using NetCorePal.Extensions.Dto;
 using NetCorePal.Extensions.Primitives;
 
-
 namespace ContentServer.Endpoints.Publisher.Packages;
 
 [HttpPost("/api/v1/publisher/packages/image/validate-source")]

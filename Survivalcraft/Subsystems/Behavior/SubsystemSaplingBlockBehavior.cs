@@ -5,7 +5,6 @@ using Engine.Serialization;
 
 using EntitySystem.TemplatesDatabase;
 
-
 namespace Game.Subsystems;
 
 public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable

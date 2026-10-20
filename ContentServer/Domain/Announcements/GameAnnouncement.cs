@@ -17,7 +17,7 @@ public sealed class GameAnnouncement : Entity<GameAnnouncementId>, IAggregateRoo
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public string Title { get; private set; } = string.Empty;
 

@@ -20,7 +20,7 @@ public sealed class ServerSourceRegistration : Entity<ServerSourceRegistrationId
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public string Name { get; private set; } = string.Empty;
 

@@ -22,7 +22,7 @@ public sealed class DirectoryServer : Entity<DirectoryServerId>, IAggregateRoot
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public PublisherId PublisherId { get; private set; } = null!;
 

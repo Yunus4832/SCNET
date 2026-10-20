@@ -29,7 +29,7 @@ public class ContentItem : Entity<ContentId>, IAggregateRoot
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public PublisherId PublisherId { get; private set; } = null!;
 
@@ -174,7 +174,7 @@ public class ContentVersion : Entity<ContentVersionId>
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public ContentId ContentId { get; private set; } = null!;
 

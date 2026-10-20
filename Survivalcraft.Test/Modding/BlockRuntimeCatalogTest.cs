@@ -1,10 +1,8 @@
 using System.Runtime.CompilerServices;
 using System.Xml.Linq;
 
-using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Blocks;
 using Game.Modding;
 using Game.Modding.Blocks;

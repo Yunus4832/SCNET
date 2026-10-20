@@ -3,7 +3,6 @@ using System.Globalization;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-
 namespace Game.Components;
 
 public class ComponentCreativeInventory : Component, IPagedInventory

@@ -20,7 +20,7 @@ public class Administrator : Entity<AdministratorId>, IAggregateRoot
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public string Name { get; private set; } = string.Empty;
 
@@ -152,7 +152,7 @@ public class AdministratorKey : Entity<AdministratorKeyId>
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public AdministratorId AdministratorId { get; private set; } = null!;
 

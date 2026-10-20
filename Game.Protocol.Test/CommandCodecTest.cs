@@ -42,7 +42,7 @@ public sealed class CommandCodecTest
     {
         var identity = ResourceId.Parse("game:time");
         var message = new CommandPackage(mode, "request")
-    {
+        {
             CommandId = identity,
             Payload = new byte[maximumLength]
         };

@@ -1,6 +1,5 @@
 using Engine.Graphics;
 
-
 namespace Game.Blocks;
 
 public abstract class SlabBlock(int coloredTextureSlot, int fullBlockIndex) : Block, IPaintableBlock

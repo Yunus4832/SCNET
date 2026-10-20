@@ -863,9 +863,9 @@ public class NetNode
                 throw new InvalidOperationException("Use ConnectServer to start a connection.");
             }
 
-                _host!.SendDatagram(iPEndPoint, w.Data.AsSpan(0, w.Length));
-            }
+            _host!.SendDatagram(iPEndPoint, w.Data.AsSpan(0, w.Length));
         }
+    }
 
     internal static byte[] CreateUnconnectedPayload(IProtocolMessage package)
     {

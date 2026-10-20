@@ -1,6 +1,5 @@
 using EntitySystem.TemplatesDatabase;
 
-
 namespace Game.Subsystems;
 
 public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdateable

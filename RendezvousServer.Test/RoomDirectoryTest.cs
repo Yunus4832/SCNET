@@ -14,7 +14,7 @@ public sealed class RoomDirectoryTest
         var clock = new ManualClock();
         var registry = new InvitationRegistry(clock, TimeSpan.FromSeconds(90), 10);
         var registration = registry.Create(1);
-        var endpoints = new EndpointRegistrations(registry, clock, 60);
+        var endpoints = new EndpointRegistrations(registry, clock);
         var ticket = registry.IssueTicket(registration.SessionId, Guid.Empty, registration.HostCredential);
         var address = new IPEndPoint(IPAddress.Loopback, 41000);
         var challenge = endpoints.Challenge(registration.SessionId, Guid.Empty, ticket.Token, address);

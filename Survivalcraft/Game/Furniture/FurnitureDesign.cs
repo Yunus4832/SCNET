@@ -3,7 +3,6 @@ using System.Text;
 
 using EntitySystem.TemplatesDatabase;
 
-
 namespace Game;
 
 public class FurnitureDesign

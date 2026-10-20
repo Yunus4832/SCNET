@@ -12,7 +12,7 @@ public sealed class ReviewRecord : Entity<ReviewRecordId>, IAggregateRoot
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public AdministratorId AdministratorId { get; private set; } = null!;
 

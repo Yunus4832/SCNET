@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 
-
 namespace Game.Screens;
 
 public class RecipaediaScreen : Screen

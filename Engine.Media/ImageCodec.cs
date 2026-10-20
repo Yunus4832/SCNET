@@ -132,7 +132,7 @@ public static class ImageCodec
         while (offset <= data.Length - 12)
         {
             var length = BinaryPrimitives.ReadUInt32BigEndian(data.Slice(offset, 4));
-            if (length > int.MaxValue || (long)offset + length + 12 > data.Length)
+            if (length > int.MaxValue || offset + length + 12 > data.Length)
             {
                 throw new InvalidDataException("Truncated PNG chunk.");
             }

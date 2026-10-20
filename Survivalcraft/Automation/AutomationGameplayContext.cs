@@ -46,7 +46,7 @@ public static class AutomationGameplayContext
             YawDegrees = MathUtils.RadToDeg(MathF.Atan2(camera.ViewDirection.X, camera.ViewDirection.Z)),
             PitchDegrees = MathUtils.RadToDeg(MathF.Asin(Math.Clamp(camera.ViewDirection.Y, -1f, 1f))),
             CameraDirection = Coordinates(camera.ViewDirection),
-            Health = player.ComponentHealth.Health,
+            player.ComponentHealth.Health,
             Sleeping = player.ComponentSleep.SleepFactor > 0f,
             Flying = player.ComponentLocomotion.IsCreativeFlyEnabled,
             Immersion = player.ComponentBody.ImmersionFactor,
@@ -64,7 +64,7 @@ public static class AutomationGameplayContext
             HitKind = hit?.GetType().Name,
             inventory.ActiveSlotIndex,
             TotalSlotsCount = inventory.SlotsCount,
-            HotbarSlotsCount = (inventory as IPagedInventory)?.HotbarSlotsCount,
+            (inventory as IPagedInventory)?.HotbarSlotsCount,
             inventory.VisibleSlotsCount,
             Slots = Enumerable.Range(0, inventory is ComponentCreativeInventory
                 ? Math.Min(inventory.SlotsCount, PlayerInventoryLayout.StorageSlotsCount)

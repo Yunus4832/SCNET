@@ -37,7 +37,6 @@ using Rendezvous.Protocol;
 
 using ServerSource.Protocol;
 
-
 namespace ContentServer.Test;
 
 public sealed class ContentServerApiTest : IDisposable
@@ -710,7 +709,7 @@ public sealed class ContentServerApiTest : IDisposable
         Assert.Equal(13, await db.ContentVersions.CountAsync());
         var storedPackage = await db.PackageBlobs.SingleAsync(item => item.Hash == packageHash);
         var storedVersion = await db.ContentVersions.SingleAsync(item =>
-            item.Id == new Domain.Contents.ContentVersionId(Guid.Parse(versionId)));
+            item.Id == new ContentVersionId(Guid.Parse(versionId)));
         Assert.Equal(storedPackage.Id, storedVersion.PackageBlobId);
 
         var packageStore = scope.ServiceProvider.GetRequiredService<ContentPackageStore>();
@@ -740,9 +739,9 @@ public sealed class ContentServerApiTest : IDisposable
         }
 
         Assert.True(await db.Contents.AsNoTracking().AnyAsync(item => item.Id ==
-            new Domain.Contents.ContentId(Guid.Parse(contentId))));
+            new ContentId(Guid.Parse(contentId))));
         Assert.True(await db.ContentVersions.AsNoTracking().AnyAsync(item => item.Id ==
-            new Domain.Contents.ContentVersionId(Guid.Parse(versionId))));
+            new ContentVersionId(Guid.Parse(versionId))));
         Assert.True(await db.PackageBlobs.AsNoTracking().AnyAsync(item => item.Hash == packageHash));
         Assert.True(File.Exists(Path.Combine(_storagePath, "packages", packageHash + ".scpkg")));
         await db.Database.ExecuteSqlRawAsync("DROP TRIGGER fail_content_version_update");
@@ -754,15 +753,15 @@ public sealed class ContentServerApiTest : IDisposable
         }
 
         Assert.False(await db.Contents.AsNoTracking().AnyAsync(item => item.Id ==
-            new Domain.Contents.ContentId(Guid.Parse(contentId))));
+            new ContentId(Guid.Parse(contentId))));
         Assert.False(await db.ContentVersions.AsNoTracking().AnyAsync(item => item.Id ==
-            new Domain.Contents.ContentVersionId(Guid.Parse(versionId))));
+            new ContentVersionId(Guid.Parse(versionId))));
         Assert.True(await db.Contents.WhereDeleted(new Deleted(true)).AsNoTracking().AnyAsync(item => item.Id ==
-            new Domain.Contents.ContentId(Guid.Parse(contentId))));
+            new ContentId(Guid.Parse(contentId))));
         Assert.True(await db.ContentVersions.WhereDeleted(new Deleted(true)).AsNoTracking().AnyAsync(item => item.Id ==
-            new Domain.Contents.ContentVersionId(Guid.Parse(versionId))));
+            new ContentVersionId(Guid.Parse(versionId))));
         Assert.True(await db.Contents.IncludeDeleted().AsNoTracking().AnyAsync(item => item.Id ==
-            new Domain.Contents.ContentId(Guid.Parse(contentId))));
+            new ContentId(Guid.Parse(contentId))));
         Assert.False(await db.PackageBlobs.AsNoTracking().AnyAsync(item => item.Hash == packageHash));
         Assert.True(await db.PackageBlobs.WhereDeleted(new Deleted(true)).AsNoTracking()
             .AnyAsync(item => item.Hash == packageHash));

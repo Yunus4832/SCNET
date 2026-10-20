@@ -1,7 +1,6 @@
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-
 namespace Game.Components;
 
 public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseListener

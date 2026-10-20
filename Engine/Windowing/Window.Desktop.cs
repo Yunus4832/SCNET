@@ -8,7 +8,6 @@ using Silk.NET.Maths;
 using Silk.NET.SDL;
 using Silk.NET.Windowing;
 
-
 using Monitor = Silk.NET.Windowing.Monitor;
 
 namespace Engine.Windowing;

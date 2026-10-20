@@ -5,7 +5,6 @@ using Engine.FileStorage;
 
 using Silk.NET.OpenGLES;
 
-
 using Image = Engine.Media.Image;
 
 namespace Engine.Graphics;

@@ -21,7 +21,7 @@ public sealed class RendezvousServiceRegistration : Entity<RendezvousServiceRegi
     {
     }
 
-    public Deleted Deleted { get; private set; } = new(false);
+    public Deleted Deleted { get; private set; } = new();
 
     public string Name { get; private set; } = string.Empty;
 

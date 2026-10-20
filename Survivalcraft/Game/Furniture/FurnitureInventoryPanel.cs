@@ -286,7 +286,7 @@ public class FurnitureInventoryPanel : CanvasWidget
 
         var list2 = new List<InventorySlotWidget>((from w in _inventoryGrid.Children
                                                    select w as InventorySlotWidget
-                                                   into w
+            into w
                                                    where w != null
                                                    select w));
         var num = ComponentFurnitureInventory.PageIndex * list2.Count;

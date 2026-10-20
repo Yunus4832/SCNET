@@ -93,7 +93,7 @@ internal static class GuiAtlasProgram
             var outputPath = Path.Combine(outputDirectory, $"{name}.png");
             if (!overwrite && File.Exists(outputPath))
             {
-                throw new InvalidDataException($"Output already exists; pass --overwrite to replace it: " +
+                throw new InvalidDataException("Output already exists; pass --overwrite to replace it: " +
                                                Path.GetFullPath(outputPath));
             }
 

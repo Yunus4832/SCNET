@@ -1,6 +1,5 @@
 using System.Xml.Linq;
 
-
 namespace Game.Dialogs;
 
 public class EditPistonDialog : Dialog

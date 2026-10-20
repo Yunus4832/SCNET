@@ -2,7 +2,6 @@ using System.Globalization;
 
 using Engine.Graphics;
 
-
 namespace Game.Blocks;
 
 public class PaintBucketBlock : BucketBlock

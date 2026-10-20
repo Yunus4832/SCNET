@@ -3,7 +3,6 @@ using Engine.Graphics;
 using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
-
 namespace Game.Subsystems;
 
 public class SubsystemModelsRenderer : Subsystem, IDrawable

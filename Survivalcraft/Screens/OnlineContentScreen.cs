@@ -424,7 +424,7 @@ public sealed class OnlineContentScreen : Screen
         var cancellation = new CancellationTokenSource();
         _cancellation = cancellation;
         var entry = _selectedEntry;
-        var service = new ContentCatalogService(Game.Content.ContentServerClientPool.Shared);
+        var service = new ContentCatalogService(ContentServerClientPool.Shared);
         Task.Run(() => service.QueryVersionsAsync(CreateContext(), entry, cancellation.Token), cancellation.Token)
             .ContinueWith(task => Dispatcher.Dispatch(() => CompleteVersionRefresh(task, cancellation)),
                 cancellation.Token);
@@ -524,7 +524,7 @@ public sealed class OnlineContentScreen : Screen
         var cancellation = new CancellationTokenSource();
         _cancellation = cancellation;
         var cache = new ContentPackageCache(Storage.GetSystemPath(GamePaths.ContentPackageCache));
-        var service = new ContentDownloadService(Game.Content.ContentServerClientPool.Shared, cache);
+        var service = new ContentDownloadService(ContentServerClientPool.Shared, cache);
         var entry = _selectedEntry;
         Task.Run(() => service.DownloadAsync(CreateContext(), entry, version, null, cancellation.Token),
                 cancellation.Token)
@@ -571,7 +571,7 @@ public sealed class OnlineContentScreen : Screen
 
     private static ContentSourceContext CreateContext()
     {
-        return ContentSourceContext.Persistent(Game.Managers.ContentRepositoryManager.Current.Snapshot());
+        return ContentSourceContext.Persistent(ContentRepositoryManager.Current.Snapshot());
     }
 
     private bool TryUseCachedVersions(AggregatedContentEntry entry)
@@ -633,7 +633,7 @@ public sealed class OnlineContentScreen : Screen
             .Select(type => new ContentTypeOption(type))).ToArray();
         _typeFilterDrawer.SetItems(typeOptions);
         _typeFilterDrawer.SelectedItem = typeOptions.First(option => option.Type == _typeFilter);
-        var repositories = Game.Managers.ContentRepositoryManager.Current.Snapshot()
+        var repositories = ContentRepositoryManager.Current.Snapshot()
             .Where(repository => repository.IsEnabled).ToArray();
         var repositoryOptions = new[] { new RepositoryOption(null, Text("AllRepositories")) }.Concat(
             repositories.Select(repository =>
@@ -688,7 +688,7 @@ public sealed class OnlineContentScreen : Screen
 
     private IReadOnlyList<ContentRepository> GetSelectedRepositories()
     {
-        return Game.Managers.ContentRepositoryManager.Current.Snapshot()
+        return ContentRepositoryManager.Current.Snapshot()
             .Where(repository => repository.IsEnabled &&
                                  (_repositoryId is null || repository.Id == _repositoryId))
             .ToArray();

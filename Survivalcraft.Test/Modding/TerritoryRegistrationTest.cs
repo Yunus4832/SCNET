@@ -2,7 +2,6 @@ using System.Xml.Linq;
 
 using EntitySystem.TemplatesDatabase;
 
-using Game;
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
@@ -53,7 +52,7 @@ public class TerritoryRegistrationTest
             var block = Assert.Single(host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName).Entries);
             Assert.Equal(ModEntry.ModId, block.Key.Namespace.Value);
             Assert.Equal(TerritoryBlock.Id, block.Key);
-            var territoryBlock = Assert.IsType<TerritoryStoneMod.TerritoryBlock>(block.Value.Factory());
+            var territoryBlock = Assert.IsType<TerritoryBlock>(block.Value.Factory());
             Assert.True(territoryBlock.IsEditable(0));
 
             var data = Assert.Single(host.Extensions.GetRegistry<BlockDataRegistration>(BlockExtensions.DataRegistryName).Entries);
