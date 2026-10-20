@@ -11,7 +11,7 @@
         <InitialModVersion>0.1.0</InitialModVersion>
         <ServerSourceProtocolVersion>0.1.0</ServerSourceProtocolVersion>
         <RendezvousProtocolVersion>0.1.1</RendezvousProtocolVersion>
-        <ContentServerVersion>0.1.3</ContentServerVersion>
+        <ContentServerVersion>0.1.4</ContentServerVersion>
         <RendezvousServerVersion>0.1.1</RendezvousServerVersion>
         <TerritoryStoneVersion>0.1.7</TerritoryStoneVersion>
         <BeaconVersion>0.1.4</BeaconVersion>
