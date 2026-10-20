@@ -28,8 +28,11 @@ Treat the repository scripts as the canonical inventory and ordering. Read the r
 
 Read `SharedProperties/Versions.props` and the selected project's evaluated `Version`/`PackageVersion`.
 Applications, services, SDK packages and native dependencies have independent version streams; never
-infer all artifact names or dependency versions from the game version. Version decisions belong to
-commit preparation; publishing should not silently increment a version again. Verify the assembly
+infer all artifact names or dependency versions from the game version. Follow
+`scnet-commit-discipline` for release-intent-based version decisions: ordinary packaging and
+redeployment do not silently increment versions. When preparing a new release, update the root
+`CHANGELOG.md` with cumulative changes for each affected release unit alongside the version updates;
+verify that its version entries match `Versions.props` before packaging. Verify the assembly
 informational version, actual APK version name/code, package dependency versions and image version
 labels when the affected release path changes.
 

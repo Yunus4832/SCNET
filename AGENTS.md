@@ -30,10 +30,16 @@ or maintaining third-party integrations.
 
 ## Version changes
 
-Keep existing release versions unchanged during ordinary development, local builds, and testing.
-Decide and apply the appropriate bump once while preparing the corresponding commit; follow
-`scnet-commit-discipline`. Do not bump on every edit or test restart. New release units retain their
-agreed initial version; an explicitly requested publication may require a version change sooner.
+Keep existing release versions unchanged during ordinary development, builds, tests, commits, and
+pushes. The user determines when to make a new release; then evaluate and apply the appropriate
+bump once for that release batch, following `scnet-commit-discipline`. Rebuilding or redeploying an
+already selected version does not require another bump. Clarify ambiguous release intent before
+changing versions. New release units retain their agreed initial version. Local unpublished packages
+can be refreshed at the same version with `pre-build --refresh`; remotely published package versions
+are immutable. Do not reset existing versions.
+When advancing release versions, summarize cumulative changes since the previous release in the
+root `CHANGELOG.md` (create it on the first such release), identifying each affected release unit
+and its version. Keep the changelog in the same change as the version updates.
 For commits changing `SharedProperties/Versions.props`, include a `Versions:` body block listing
 exact property names and staged before/after values; omit it when no version properties change.
 

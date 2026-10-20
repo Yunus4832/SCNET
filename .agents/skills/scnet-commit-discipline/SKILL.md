@@ -1,48 +1,64 @@
 ---
 name: scnet-commit-discipline
-description: "Prepare, review, split, stage, or commit SCNET changes using the repository's focused commit boundaries, automatic release-version updates, searchable version-change bodies, and `prefix: 中文描述` message convention. Use when the user asks to commit changes, organize commits, propose commit messages, or review whether a pending commit is coherent; do not invoke for ordinary code editing that does not involve commit preparation."
+description: "Prepare, review, split, stage, or commit SCNET changes using the repository's focused commit boundaries, release-intent-based version decisions, searchable version-change bodies, and `prefix: 中文描述` message convention. Use when the user asks to commit changes, organize commits, propose commit messages, or review whether a pending commit is coherent; do not invoke for ordinary code editing that does not involve commit preparation."
 ---
 
 # SCNET Commit Discipline
 
 Inspect the complete working tree and relevant diff before proposing commit boundaries. Preserve unrelated and user-owned changes. Do not stage or commit unless the user authorizes that action.
 
-## Version decisions are part of committing
+## Version decisions follow release intent
 
-Keep existing release versions unchanged during ordinary implementation, local builds, and manual
-test iterations. Decide and apply a version bump once when preparing the corresponding commit,
-using the last committed version as the baseline. Do not increment on each edit, fix, rebuild, or
-test-environment restart. A new release unit still needs its agreed initial version. An explicit
-publication request can require a new version before committing; identify that release boundary.
-Local test content packages can be distinguished by their full package hash; update the test
-profile's exact package identity rather than advancing the product version solely to bypass caches.
+Keep existing versions during ordinary development, fixes, refactoring, builds, tests, commits,
+and pushes. A commit is not a release boundary. Preserve current version numbers; do not reset
+or advance them to reduce local package clutter. New release units use their agreed initial version.
 
-Before staging, inspect `SharedProperties/Versions.props` and the affected projects' `Version` and
-first-party `PackageReference` properties. Automatically update affected release versions when the
-commit changes shipped behavior, APIs, dependencies, native assets, or packaging output. Keep version
-changes in the same commit as their cause; do not ask for a separate routine version-bump approval.
+The user determines when to make a new release; the agent evaluates which release units and version
+increments it needs. An explicit request to release a new version or prepare a new distribution
+triggers that evaluation once for the release batch, covering changes since the previous release.
+Rebuilding or redeploying an already selected version does not trigger another bump. When a request
+such as “package/deploy the latest code” leaves new-release intent unclear, explain the proposed
+version decision and clarify that intent before changing versions. A plain commit request never
+requires this clarification and keeps versions unchanged.
 
-- During the current unreleased `0.x` phase, ordinary iterations default to the next patch
-  (`0.1.0` → `0.1.1`), without promising compatibility. Advance the minor version for an explicitly
-  chosen new development stage. After `1.0`, use SemVer: compatible fixes PATCH, compatible additions
-  MINOR, breaking public contracts MAJOR.
-- Bump the owning release unit, not every property. Also examine consumers: if this commit changes
-  their published dependency metadata or bundled binaries, their release artifacts need new versions
-  too. Independent version streams must not publish changed artifacts under an unchanged version.
-- Documentation/tests/skills that do not change release artifacts need no version bump. A README
-  included in a NuGet package, template, or deployment bundle is part of that artifact; inspect the
-  packaging rather than deciding solely from file extension.
-- If the relevant version was already explicitly updated in the pending change (including an
-  intentional initial reset), retain it instead of incrementing it again. Preserve a user-selected
-  version. For a prerelease, increment its final numeric identifier rather than silently switching
-  to a stable release; do not infer a new channel.
-- When Android application artifacts change, increment `AndroidReleaseCode` once as well, unless
-  already advanced in the pending change. It is an installation counter, not a SemVer component.
-- Do not derive protocol compatibility identifiers from product bumps. Change `GameProtocolVersion`
-  only for an actual incompatible wire-contract change, or when explicitly resetting versions.
-- Keep numbers in `Versions.props`; update references, template generation and publication names
-  through those properties. Verify impacted project/package versions and describe the bumps in the
-  final commit summary. Version changes do not themselves authorize publishing or deployment.
+- At a new release boundary, inspect `SharedProperties/Versions.props`, affected project versions,
+  first-party package references, and bundled outputs. Bump affected release units and consumers
+  whose released dependencies or bundled binaries changed; do not cascade bumps on every commit.
+- During unreleased `0.x` development, a new release batch normally advances PATCH without promising
+  compatibility. Advance MINOR for an explicitly chosen development stage. After `1.0`, apply SemVer:
+  compatible fixes PATCH, compatible additions MINOR, breaking public contracts MAJOR.
+- Preserve user-selected versions and versions already advanced for the same release batch.
+  For prereleases, advance the final numeric identifier without silently changing release channels.
+- Increment `AndroidReleaseCode` once when preparing a new Android distribution, shared by all ABIs
+  in that batch. It is an installation counter, not a SemVer component; ordinary builds do not bump it.
+- During the current unreleased stage, wire-protocol and file-format compatibility integers remain
+  at `1`, independently of product or package releases, as specified in `AGENTS.md`.
+- Local unpublished packages may reuse a version during development. After changing package contents,
+  use `Scripts/pre-build.sh --refresh` or `Scripts/pre-build.ps1 -Refresh` to refresh packages and
+  caches. Local mod test packages use their full package hash. Do not bump solely to bypass caches.
+  Once a package is published to a remote feed, treat that package version as immutable.
+- Documentation/tests/skills alone do not require a new release. At release preparation, account for
+  README files and other documentation actually bundled in changed artifacts.
+- Keep version numbers centralized in `Versions.props`, record changes in the corresponding commit,
+  and verify dependency references and artifact names. Explain the release decision and affected
+  units. Version changes do not themselves authorize publishing, tagging, or deployment.
+
+## Release changelog
+
+Whenever release versions advance, update the root `CHANGELOG.md` in the same change; create it
+on the first such release. Group entries by release batch and date, listing each affected release
+unit with its exact version. Summarize cumulative changes since that unit's previous release,
+using Git history and diffs rather than only the latest commit or copying commit titles.
+
+Include relevant features, fixes, breaking changes and required user/deployment actions. Separate
+independent release units so their version numbers are unambiguous. Group dependency-only changes
+concisely. Do not include temporary test artifacts, credentials, or unsupported claims of validation.
+If the previous release boundary is unclear, establish it from version records/tags and state any
+remaining uncertainty rather than inventing release history. Ordinary commits and same-version
+local repacks do not require changelog entries. Historical backfilling is not required by this rule.
+
+The changelog explains the release to users; the commit's `Versions:` block remains the precise,
+searchable record of changed version properties. Keep both consistent with `Versions.props`.
 
 ## Commit messages
 
