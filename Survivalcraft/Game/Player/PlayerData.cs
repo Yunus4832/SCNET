@@ -1067,7 +1067,6 @@ public partial class PlayerData : IDisposable
                 "Player",
                 new ValuesDictionary
                 {
-                    { "PlayerIndex", PlayerIndex },
                     { "PlayerGuid", PlayerGUID }
                 }
             },

@@ -780,7 +780,6 @@ public class ComponentPlayer : ComponentCreature, IUpdateable
     public override void Save(ValuesDictionary valuesDictionary, EntityToIdMap entityToIdMap)
     {
         base.Save(valuesDictionary, entityToIdMap);
-        valuesDictionary.SetValue("PlayerIndex", PlayerData.PlayerIndex);
         valuesDictionary.SetValue("PlayerGuid", PlayerData.PlayerGUID);
     }
 

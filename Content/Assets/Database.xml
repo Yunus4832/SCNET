@@ -6641,8 +6641,6 @@
                 <ComponentTemplate Name="Player" Description="Takes player inputs and controls a creature with them"
                                    Guid="74a31f2d-3241-4f2e-a6ef-3add252691a7"
                                    InheritanceParent="4c6556e2-af4a-42ae-9543-4f27f9df6f39">
-                    <Parameter Name="PlayerIndex" Description="Index of player"
-                               Guid="03b8fd92-8a23-4c8e-b875-6c1e86638585" Value="1" Type="int"/>
                     <Parameter Name="KillVerbs" Guid="5dc4375c-d47e-4eac-9da0-e30fc2792776" Value="murdered,killed"
                                Type="string"/>
                     <Parameter Name="Class" Guid="7ecfafc4-4603-424c-87dd-1df59e7ef413" Value="Game.Components.ComponentPlayer"
