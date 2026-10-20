@@ -20,6 +20,11 @@ format, protocol, service, or released dependency requires it. Identify that bou
 before implementing compatibility. Prefer a finite migration or upgrade step over indefinite
 runtime compatibility when either approach satisfies the requirement.
 
+During the unreleased stage, wire-protocol and file-format compatibility integers remain at `1`;
+do not increment them for development iterations or preserve old test formats. Keep these integers
+independent from product/library SemVer releases. Reassess compatibility-version increments when
+establishing a published interoperability boundary.
+
 Reassess and update this section when SCNET begins publishing releases, supporting external users,
 or maintaining third-party integrations.
 

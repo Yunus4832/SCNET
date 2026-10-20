@@ -13,7 +13,7 @@ public class ConnectionRequestPackage : IPackage
 
     public Guid MultiplayerClientId;
 
-    public string Version = string.Empty;
+    public int ProtocolVersion;
 
     public string ModDataHash = string.Empty;
 
@@ -30,7 +30,7 @@ public class ConnectionRequestPackage : IPackage
 
     public ConnectionRequestPackage(
         Guid tmpToken,
-        string serverVersion,
+        int protocolVersion,
         Guid multiplayerClientId,
         string modDataHash
     )
@@ -38,7 +38,7 @@ public class ConnectionRequestPackage : IPackage
         Magic = VerifyMagic;
         TmpToken = tmpToken;
         MultiplayerClientId = multiplayerClientId;
-        Version = serverVersion;
+        ProtocolVersion = protocolVersion;
         ModDataHash = modDataHash;
     }
 
@@ -46,7 +46,7 @@ public class ConnectionRequestPackage : IPackage
     public void ReadData(PackageStreamReader reader)
     {
         Magic = reader.ReadInt32();
-        Version = reader.ReadString();
+        ProtocolVersion = reader.ReadInt32();
         TmpToken = reader.ReadGuid();
         MultiplayerClientId = reader.ReadGuid();
         ModDataHash = reader.ReadString();
@@ -55,7 +55,7 @@ public class ConnectionRequestPackage : IPackage
     public void WriteData(PackageStreamWriter writer)
     {
         writer.Write(Magic);
-        writer.Write(Version);
+        writer.Write(ProtocolVersion);
         writer.Write(TmpToken);
         writer.Write(MultiplayerClientId);
         writer.Write(ModDataHash);

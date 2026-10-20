@@ -6,6 +6,8 @@ namespace Rendezvous.Protocol;
 /// <summary>Authenticates a bounded raw transport datagram without exposing its route key.</summary>
 public static class RelayDatagramCodec
 {
+    public const byte CurrentVersion = 1;
+
     private const int _headerSize = 30;
     private const int _tagSize = 16;
     public const int Overhead = _headerSize + _tagSize;
@@ -21,7 +23,7 @@ public static class RelayDatagramCodec
         }
         var result = new byte[Overhead + payload.Length];
         "SCRL"u8.CopyTo(result);
-        result[4] = 1;
+        result[4] = CurrentVersion;
         routeId.TryWriteBytes(result.AsSpan(5, 16), bigEndian: true, out _);
         result[21] = side;
         BinaryPrimitives.WriteUInt64BigEndian(result.AsSpan(22, 8), sequence);
@@ -36,7 +38,7 @@ public static class RelayDatagramCodec
         routeId = Guid.Empty;
         side = 0;
         if (data.Length <= Overhead || data.Length > Overhead + MaxPayloadSize ||
-            !data[..4].SequenceEqual("SCRL"u8) || data[4] != 1 || data[21] > 1 ||
+            !data[..4].SequenceEqual("SCRL"u8) || data[4] != CurrentVersion || data[21] > 1 ||
             BinaryPrimitives.ReadUInt64BigEndian(data.Slice(22, 8)) == 0)
         {
             return false;

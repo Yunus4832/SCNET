@@ -15,7 +15,7 @@ public sealed record ServerRuntimeStatus
 
     public GameMode GameMode { get; init; }
 
-    public string Version { get; init; } = string.Empty;
+    public int ProtocolVersion { get; init; }
 
     public float TimeOfDay { get; init; }
 
@@ -36,7 +36,7 @@ public sealed record ServerRuntimeStatus
             GameMode = package.GameMode,
             MaxPlayerCount = package.MaxPlayerCount,
             PlayerCount = package.ClientCount,
-            Version = package.Version,
+            ProtocolVersion = package.ProtocolVersion,
             TimeOfDay = package.TimeOfDay,
             TemporaryRepositories = package.TemporaryRepositories,
             RequiredModProfile = package.RequiredModProfile,

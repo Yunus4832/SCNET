@@ -2636,7 +2636,13 @@
         },
         "49": {
             "Title": "Aviso legal",
-            "value": "\\n\\nEste é um projeto não oficial de engenharia inversa e refatoração\\npara aprendizagem e investigação técnica, sem fins comerciais.\\n\\n\\nOs direitos sobre as marcas, nomes, recursos gráficos, áudio, ambientação\\ne outros conteúdos originais de Survivalcraft pertencem ao autor original\\ne aos respetivos titulares.\\n\\nOs contribuidores não reivindicam direitos de autor ou de marca sobre a obra original.\\n\\n\\nEste projeto sem fins lucrativos não é afiliado, autorizado nem apoiado\\npelo autor original, editora ou empresas associadas.\\n\\nO código e a documentação destinam-se apenas à aprendizagem, investigação e discussão\\ne não podem ser usados para infringir direitos legítimos.\\n\\n\\nOs utilizadores devem cumprir a legislação local e as regras das plataformas,\\nassumindo os riscos e responsabilidades legais.\\n\\nOs titulares de direitos podem comunicar conteúdo potencialmente infrator\\natravés de uma Issue ou contactando os responsáveis para análise.\\n "
+            "value": "\\n\\nEste é um projeto não oficial de engenharia inversa e refatoração\\npara aprendizagem e investigação técnica, sem fins comerciais.\\n\\n\\nOs direitos sobre as marcas, nomes, recursos gráficos, áudio, ambientação\\ne outros conteúdos originais de Survivalcraft pertencem ao autor original\\ne aos respetivos titulares.\\n\\nOs contribuidores não reivindicam direitos de autor ou de marca sobre a obra original.\\n\\n\\nEste projeto sem fins lucrativos não é afiliado, autorizado nem apoiado\\npelo autor original, editora ou empresas associadas.\\n\\nO código e a documentação destinam-se apenas à aprendizagem, investigação e discussão\\ne não podem ser usados para infringir direitos legítimos.\\n\\n\\nOs utilizadores devem cumprir a legislação local e as regras das plataformas,\\nassumindo os riscos e responsabilidades legais.\\n\\nOs titulares de direitos podem comunicar conteúdo potencialmente infrator\\natravés de uma Issue ou contactando os responsáveis para análise.\\n ",
+            "Name": "Disclaimer"
+        },
+        "50": {
+            "Name": "About",
+            "Title": "Sobre o SCNET",
+            "value": "Versões do jogo, compilação e protocolos"
         }
     },
     "Strings": {
@@ -3515,7 +3521,8 @@
             "CategoryRendezvous": "Serviços de sinalização",
             "RoomHolePunch": "P2P direto",
             "RoomRelay": "Retransmissão",
-            "AllSignalingServices": "Todos"
+            "AllSignalingServices": "Todos",
+            "Protocol": "Protocolo"
         },
         "ManageServerSourcesScreen": {
             "Title": "Gerir fontes de servidores",
@@ -4228,5 +4235,19 @@
         "WorldNone": "Este mundo não usa mods. Reinicie para desativar os mods ativos.",
         "WorldDownloaded": "Os mods necessários deste mundo foram transferidos. Reinicie para ativar:",
         "WorldSwitch": "Reinicie para usar os mods exigidos por este mundo:"
+    },
+    "About": {
+        "Introduction": "SCNET é uma reconstrução multijogador de Survivalcraft para aprendizagem e investigação. Está em desenvolvimento, ainda sem lançamento.",
+        "VersionExplanation": "As versões do jogo e dos protocolos são independentes. Jogos com versões diferentes podem ligar-se. Os números acima identificam formatos de comunicação ou ficheiro, não versões NuGet das bibliotecas. Consulte a gestão de mods para as suas versões.",
+        "GameVersion": "Versão do jogo",
+        "BuildVersion": "Versão da compilação",
+        "EngineVersion": "Versão do motor",
+        "Platform": "Plataforma",
+        "GameProtocol": "Protocolo de jogo",
+        "ServerSourceProtocol": "Protocolo de fontes de servidores",
+        "SignalingProtocol": "Protocolo de datagramas de sinalização P2P",
+        "PackageFormat": "Formato dos pacotes de conteúdo",
+        "Source": "Código-fonte",
+        "RelayProtocol": "Protocolo de datagramas de retransmissão P2P"
     }
 }

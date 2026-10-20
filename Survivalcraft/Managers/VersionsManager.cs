@@ -1,3 +1,5 @@
+using System.Globalization;
+
 namespace Game.Managers;
 
 public static class VersionsManager
@@ -12,8 +14,8 @@ public static class VersionsManager
 
     public static string Title { get; } = $"{GameName}-{Version}";
 
-    public static string ProtocolVersion { get; } = typeof(VersionsManager).Assembly
+    public static int ProtocolVersion { get; } = int.Parse(typeof(VersionsManager).Assembly
         .GetCustomAttributes<AssemblyMetadataAttribute>()
         .Single(attribute => attribute.Key == "GameProtocolVersion").Value
-        ?? throw new InvalidOperationException("The game assembly has no protocol version.");
+        ?? throw new InvalidOperationException("The game assembly has no protocol version."), CultureInfo.InvariantCulture);
 }

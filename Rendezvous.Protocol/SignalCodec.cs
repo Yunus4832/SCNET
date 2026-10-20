@@ -5,6 +5,8 @@ namespace Rendezvous.Protocol;
 /// <summary>Separates versioned rendezvous control messages from application datagrams.</summary>
 public static class SignalCodec
 {
+    public const byte CurrentVersion = 1;
+
     public const int MaxDatagramBytes = 1200;
 
     private static ReadOnlySpan<byte> Magic => "SCRV"u8;
@@ -20,7 +22,7 @@ public static class SignalCodec
 
         var result = new byte[payload.Length + 5];
         Magic.CopyTo(result);
-        result[4] = 1;
+        result[4] = CurrentVersion;
         payload.CopyTo(result, 5);
         return result;
     }
@@ -28,7 +30,7 @@ public static class SignalCodec
     public static bool TryDecode(ReadOnlySpan<byte> payload, out SignalMessage? message)
     {
         message = null;
-        if (payload.Length is <= 5 or > MaxDatagramBytes || !payload[..4].SequenceEqual(Magic) || payload[4] != 1)
+        if (payload.Length is <= 5 or > MaxDatagramBytes || !payload[..4].SequenceEqual(Magic) || payload[4] != CurrentVersion)
         {
             return false;
         }

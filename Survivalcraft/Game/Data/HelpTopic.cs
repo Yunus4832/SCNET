@@ -10,7 +10,7 @@ public class HelpTopic
 
     public string Title => $"[Help:{Key}:Title]";
 
-    public string Text => $"[Help:{Key}:value]";
+    public string Text => Name == "About" ? AboutHelpTopic.GetText() : $"[Help:{Key}:value]";
 
     public static HelpTopic Create(string key, JsonObject item)
     {

@@ -54,7 +54,7 @@ public sealed class ServerConnectionPreparationTest
             inspectedPort = source.TransportEndpoint.Port;
             source.Send(NetNode.CreateUnconnectedPayload(new ServerInfoPackage
             {
-                Version = "preparation-test",
+                ProtocolVersion = 1,
                 ClientCount = 3
             }));
         };
@@ -77,7 +77,7 @@ public sealed class ServerConnectionPreparationTest
             var target = new AddressNetworkTarget("localhost", server.LocalPort);
             await using var prepared = await ServerConnectionPreparation.PrepareAsync(target, http, CancellationToken.None);
             Assert.Equal(target, prepared.Target);
-            Assert.Equal("preparation-test", prepared.Status.Version);
+            Assert.Equal(1, prepared.Status.ProtocolVersion);
             Assert.Equal(3, prepared.Status.PlayerCount);
             var transport = prepared.Consume();
             try

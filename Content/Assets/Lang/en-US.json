@@ -2636,7 +2636,13 @@
         },
         "49": {
             "Title": "Disclaimer",
-            "value": "\\n\\nThis is an unofficial reverse-engineering and refactoring project\\nfor learning and technical research, not for commercial profit.\\n\\n\\nCopyright in the Survivalcraft trademarks, names, artwork, audio,\\nstory settings, and other original content belongs to the original author\\nand the respective rights holders.\\n\\nRepository contributors claim no copyright or trademark rights over the original work.\\n\\n\\nThis non-profit project is not affiliated with, authorized by, or endorsed by\\nthe original author, publisher, or related companies.\\n\\nIts code and documentation are for learning, research, and discussion only\\nand must not be used to infringe legal rights.\\n\\n\\nUsers are responsible for complying with local laws and platform rules\\nand accept the risks and legal responsibility of use.\\n\\nRights holders may report potentially infringing repository content through an Issue\\nor by contacting the maintainers for timely review.\\n "
+            "value": "\\n\\nThis is an unofficial reverse-engineering and refactoring project\\nfor learning and technical research, not for commercial profit.\\n\\n\\nCopyright in the Survivalcraft trademarks, names, artwork, audio,\\nstory settings, and other original content belongs to the original author\\nand the respective rights holders.\\n\\nRepository contributors claim no copyright or trademark rights over the original work.\\n\\n\\nThis non-profit project is not affiliated with, authorized by, or endorsed by\\nthe original author, publisher, or related companies.\\n\\nIts code and documentation are for learning, research, and discussion only\\nand must not be used to infringe legal rights.\\n\\n\\nUsers are responsible for complying with local laws and platform rules\\nand accept the risks and legal responsibility of use.\\n\\nRights holders may report potentially infringing repository content through an Issue\\nor by contacting the maintainers for timely review.\\n ",
+            "Name": "Disclaimer"
+        },
+        "50": {
+            "Name": "About",
+            "Title": "About SCNET",
+            "value": "Game, build and protocol versions"
         }
     },
     "Strings": {
@@ -3515,7 +3521,8 @@
             "CategoryRendezvous": "Signaling services",
             "RoomHolePunch": "Direct P2P",
             "RoomRelay": "Relay",
-            "AllSignalingServices": "All"
+            "AllSignalingServices": "All",
+            "Protocol": "Protocol"
         },
         "ManageServerSourcesScreen": {
             "Title": "Manage Server Sources",
@@ -4228,5 +4235,19 @@
         "WorldNone": "This world uses no mods. Restart to unload the active mods.",
         "WorldDownloaded": "The required world mods have been downloaded. Restart to enable:",
         "WorldSwitch": "Restart to switch to the mods required by this world:"
+    },
+    "About": {
+        "Introduction": "SCNET is a multiplayer reconstruction of Survivalcraft for learning and research. It is currently in unreleased development.",
+        "VersionExplanation": "Game and wire protocol versions are managed independently. Different game versions may still connect. Protocol numbers above identify wire or file formats, not protocol library NuGet releases. See mod management for mod versions.",
+        "GameVersion": "Game version",
+        "BuildVersion": "Build version",
+        "EngineVersion": "Engine version",
+        "Platform": "Platform",
+        "GameProtocol": "Game network protocol",
+        "ServerSourceProtocol": "Server directory protocol",
+        "SignalingProtocol": "P2P signaling datagram protocol",
+        "PackageFormat": "Content package format",
+        "Source": "Project source",
+        "RelayProtocol": "P2P relay datagram protocol"
     }
 }

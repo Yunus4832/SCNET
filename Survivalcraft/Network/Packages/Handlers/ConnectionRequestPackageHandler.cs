@@ -69,9 +69,9 @@ public sealed class ConnectionRequestPackageHandler : PackageHandlerBase<Connect
             {
                 connectionError.AppendLine("你的ID与服务器中某个在线玩家的ID相同");
             }
-            else if (package.Version != VersionsManager.ProtocolVersion)
+            else if (package.ProtocolVersion != VersionsManager.ProtocolVersion)
             {
-                connectionError.AppendLine("客户端和服务器版本不一致");
+                connectionError.AppendLine("客户端和服务器协议版本不一致");
             }
             else if (!string.Equals(package.ModDataHash, serverModDataHash, StringComparison.OrdinalIgnoreCase))
             {

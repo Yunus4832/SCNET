@@ -244,7 +244,7 @@ public sealed class NetPlayScreen : Screen
 
     private static string BuildDetails(ServerRuntimeStatus status)
     {
-        return $"{status.Version} | {Text("Players")}: " +
+        return $"{Text("Protocol")}: {status.ProtocolVersion} | {Text("Players")}: " +
                $"{status.PlayerCount}/{status.MaxPlayerCount} | {Text("Mode")}: " +
                $"{LanguageManager.Get("GameMode", status.GameMode.ToString())} | " +
                $"{Text("Time")}: " +

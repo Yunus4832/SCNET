@@ -19,7 +19,7 @@ public sealed class ServerDiscoveryServiceTest
     {
         var response = new ServerInfoPackage
         {
-            Version = "test-version",
+            ProtocolVersion = 1,
             ClientCount = 2,
             MaxPlayerCount = 20,
             GameMode = GameMode.Creative
@@ -46,7 +46,7 @@ public sealed class ServerDiscoveryServiceTest
             var status = await new ServerDiscoveryService().ProbeAsync($"127.0.0.1:{server.LocalPort}",
                 TimeSpan.FromSeconds(2), CancellationToken.None);
             Assert.Equal(ServerAvailability.Available, status.Availability);
-            Assert.Equal(response.Version, status.Version);
+            Assert.Equal(response.ProtocolVersion, status.ProtocolVersion);
             Assert.Equal(response.ClientCount, status.PlayerCount);
             Assert.Equal(response.GameMode, status.GameMode);
         }

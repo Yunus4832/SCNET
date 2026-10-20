@@ -35,7 +35,7 @@ ContentWebUI 随 ContentServer 发布，私有 npm 清单不重复定义产品�
 
 游戏从自身程序集的 `AssemblyInformationalVersion` 读取显示版本，去掉 `+` 后的构建信息；
 完整标识保留在 `VersionsManager.BuildVersion`。CLR 数值程序集版本由 SDK 生成，不作为产品版本。
-`GameProtocolVersion` 独立注入程序集元数据，只在通信合同不兼容或显式重置时修改。
+`GameProtocolVersion` 是独立的正整数兼容代际（当前为 `1`），注入程序集元数据并在运行时读取为整数。握手与服务器发现均使用 Int32 编码；协议代际必须严格相等才能连接。未发布阶段固定为 `1`，不随开发迭代提升，也不保留旧测试协议兼容。建立正式发布的互操作边界后再约定兼容代际的提升规则；它始终不随产品或协议库的 SemVer 版本自动变化。
 发行版本验证和更新排序使用同一语义化比较规则，不接受旧四段式产品版本。
 
 Android 共享配置把 `GameVersion` 写入版本名称，把 `AndroidReleaseCode` 写入系统升级计数。
@@ -56,6 +56,8 @@ Versions:
 再通过 `git show <commit>:SharedProperties/Versions.props` 核对完整版本集合。
 正式发布时可另用带发行单元名称的标签定位源码，开发提交不自动打标签。
 
+
+游戏帮助中的“关于 SCNET”从运行程序集读取产品与构建版本（页面中的提交 hash 显示前 8 位，日志保留完整值），并展示游戏联机、服务器源、P2P 信令与中继数据报及内容包格式的实际版本。这些协议/格式标识独立于相应 NuGet 包的发布版本，不应混用；页面无需联网。
 
 ### `Directory.Build.targets`
 

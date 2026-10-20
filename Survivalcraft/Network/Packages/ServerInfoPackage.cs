@@ -33,7 +33,7 @@ public class ServerInfoPackage : IPackage
     /// </summary>
     public float TimeOfSeason;
 
-    public string Version = string.Empty;
+    public int ProtocolVersion;
 
     public int Ping;
 
@@ -68,7 +68,7 @@ public class ServerInfoPackage : IPackage
         var subsystemTimeOfDay = project.FindSubsystem<SubsystemTimeOfDay>(true)!;
         var subsystemSeasons = project.FindSubsystem<SubsystemSeasons>(true)!;
 
-        Version = VersionsManager.ProtocolVersion;
+        ProtocolVersion = VersionsManager.ProtocolVersion;
         ClientCount = (ushort)CommonLib.Net.ClientCount;
         MaxPlayerCount = subsystemGameInfo.WorldSettings.MaxOnlinePlayerCount;
         GameMode = subsystemGameInfo.WorldSettings.GameMode;
@@ -89,7 +89,7 @@ public class ServerInfoPackage : IPackage
             return;
         }
 
-        Version = reader.ReadString();
+        ProtocolVersion = reader.ReadInt32();
         ClientCount = reader.ReadUInt16();
         MaxPlayerCount = reader.ReadUInt16();
         GameMode = reader.ReadEnum<GameMode>();
@@ -109,7 +109,7 @@ public class ServerInfoPackage : IPackage
             return;
         }
 
-        writer.Write(Version);
+        writer.Write(ProtocolVersion);
         writer.Write(ClientCount);
         writer.Write(MaxPlayerCount);
         writer.WriteEnum(GameMode);
