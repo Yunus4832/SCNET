@@ -199,7 +199,6 @@ public static class HeadlessEntry
                 HttpCommandExecutionQueue.Update();
                 ExecuteConsoleCommands();
                 ExecuteConsoleSuggestions();
-                AsyncDispatcher.Update();
                 Dispatcher.AfterFrame();
                 Time.AfterFrame();
             }

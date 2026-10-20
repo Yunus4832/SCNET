@@ -197,10 +197,8 @@ public static class ContentManager
             "Engine.Graphics.Texture2D" => Texture2D.Load(stream),
             "System.String" => new StreamReader(stream).ReadToEnd(),
             "Engine.Media.Image" => Image.Load(stream),
-            "Game.ObjModel" => ObjModelReader.Load(stream),
             "System.Xml.Linq.XElement" => XElement.Load(stream),
             "Engine.Graphics.Model" => Model.Load(stream, true),
-            "Game.MtllibStruct" => MtllibStruct.Load(stream),
             _ => throw new InvalidOperationException("Unknown type stream")
         };
     }

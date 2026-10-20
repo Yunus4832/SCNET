@@ -1,24 +1,24 @@
 <Project>
     <!-- Release versions are independent; change only the units being released. -->
     <PropertyGroup>
-        <GameVersion>0.1.4</GameVersion>
+        <GameVersion>0.1.5</GameVersion>
         <EngineVersion>0.1.2</EngineVersion>
         <ImageCodecsVersion>0.1.1</ImageCodecsVersion>
         <OpenALAndroidVersion>0.1.0</OpenALAndroidVersion>
         <ContentPackagingVersion>0.1.3</ContentPackagingVersion>
         <ContentToolVersion>0.1.3</ContentToolVersion>
-        <ModTemplatesVersion>0.1.4</ModTemplatesVersion>
+        <ModTemplatesVersion>0.1.5</ModTemplatesVersion>
         <InitialModVersion>0.1.0</InitialModVersion>
         <ServerSourceProtocolVersion>0.1.0</ServerSourceProtocolVersion>
         <RendezvousProtocolVersion>0.1.1</RendezvousProtocolVersion>
         <ContentServerVersion>0.1.3</ContentServerVersion>
         <RendezvousServerVersion>0.1.1</RendezvousServerVersion>
-        <TerritoryStoneVersion>0.1.5</TerritoryStoneVersion>
-        <BeaconVersion>0.1.2</BeaconVersion>
-        <UiPreviewToolVersion>0.1.2</UiPreviewToolVersion>
+        <TerritoryStoneVersion>0.1.6</TerritoryStoneVersion>
+        <BeaconVersion>0.1.3</BeaconVersion>
+        <UiPreviewToolVersion>0.1.3</UiPreviewToolVersion>
         <ToolsVersion>0.1.4</ToolsVersion>
         <GameProtocolPackageVersion>0.1.0</GameProtocolPackageVersion>
         <GameProtocolVersion>1</GameProtocolVersion>
-        <AndroidReleaseCode>6</AndroidReleaseCode>
+        <AndroidReleaseCode>7</AndroidReleaseCode>
     </PropertyGroup>
 </Project>

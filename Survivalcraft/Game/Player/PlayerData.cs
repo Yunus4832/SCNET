@@ -231,7 +231,7 @@ public partial class PlayerData : IDisposable
         );
         _stateMachine.AddState(
             "MakePlayerOffline",
-            delegate { AsyncDispatcher.Dispatch(() => SubsystemPlayers.MakePlayerOffline(PlayerGUID, false)); },
+            delegate { SubsystemPlayers.QueuePlayerOffline(this); },
             Actions.Empty,
             Actions.Empty
         );

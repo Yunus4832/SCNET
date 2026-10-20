@@ -96,7 +96,7 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
             {
                 if (RunMode.Value is RunModeType.Gui)
                 {
-                    _toRemove.Add(playersDatum);
+                    QueuePlayerOffline(playersDatum);
                 }
             }
             else
@@ -117,6 +117,14 @@ public partial class SubsystemPlayers : Subsystem, IUpdateable
         if (CommonLib.WorkType == WorkType.Server && Time.PeriodicEvent(0.25, 0.0))
         {
             SendOnlinePlayerStates();
+        }
+    }
+
+    internal void QueuePlayerOffline(PlayerData playerData)
+    {
+        if (!_toRemove.Contains(playerData))
+        {
+            _toRemove.Add(playerData);
         }
     }
 

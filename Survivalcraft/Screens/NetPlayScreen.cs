@@ -53,7 +53,7 @@ public sealed class NetPlayScreen : Screen
     private readonly SelectionDrawerWidget _sortDrawer;
     private readonly LabelWidget _statusLabel;
     private CancellationTokenSource? _refreshCancellation;
-    private CancellableProgress? _connectionProgress;
+    private CancellationTokenSource? _connectionCancellation;
     private IReadOnlyList<ServerItem> _loadedServers = [];
     private IReadOnlyList<RendezvousRoom> _loadedRooms = [];
 
@@ -144,7 +144,7 @@ public sealed class NetPlayScreen : Screen
 
     public override void Leave()
     {
-        _connectionProgress?.Cancel();
+        _connectionCancellation?.Cancel();
         _refreshCancellation?.Cancel();
         _refreshCancellation = null;
         _busy = false;
@@ -308,7 +308,7 @@ public sealed class NetPlayScreen : Screen
         _hadSourceErrors = false;
         _serverList.ClearItems();
         _actionPanel.Refresh();
-        Task.Run(() => LoadAndProbeAsync(sources, cancellation.Token))
+        Task.Run(() => LoadAndProbeAsync(sources, cancellation.Token), cancellation.Token)
             .ContinueWith(task => Dispatcher.Dispatch(() => CompleteRefresh(cancellation, task)));
     }
 
@@ -335,7 +335,7 @@ public sealed class NetPlayScreen : Screen
         _refreshCancellation = cancellation;
         _busy = true;
         ApplyView();
-        Task.Run(() => LoadRoomsAsync(services, cancellation.Token))
+        Task.Run(() => LoadRoomsAsync(services, cancellation.Token), cancellation.Token)
             .ContinueWith(task => Dispatcher.Dispatch(() =>
             {
                 if (!ReferenceEquals(_refreshCancellation, cancellation))
@@ -389,7 +389,7 @@ public sealed class NetPlayScreen : Screen
             catch (Exception exception)
             {
                 Log.Warning($"Could not load signaling rooms from '{service.Name}': {exception.Message}");
-                return (Rooms: (IReadOnlyList<RendezvousRoom>)Array.Empty<RendezvousRoom>(), Failed: true);
+                return (Rooms: Array.Empty<RendezvousRoom>(), Failed: true);
             }
             finally
             {
@@ -730,7 +730,7 @@ public sealed class NetPlayScreen : Screen
 
     public void ConnectToRemoteSession(NetworkTarget target)
     {
-        if (_connectionProgress is not null)
+        if (_connectionCancellation is not null)
         {
             return;
         }
@@ -738,11 +738,12 @@ public sealed class NetPlayScreen : Screen
         var busyDialog = new CancellableBusyDialog(Text("Connect"), false)
         {
             SmallMessage = Text("Loading"),
-            ShowProgressMessage = false,
             CancelOnBack = true
         };
-        _connectionProgress = busyDialog.Progress;
-        var cancellationToken = busyDialog.Progress.CancellationToken;
+        var cancellation = new CancellationTokenSource();
+        _connectionCancellation = cancellation;
+        busyDialog.CancelRequested += cancellation.Cancel;
+        var cancellationToken = cancellation.Token;
         DialogsManager.ShowDialog(null, busyDialog);
         Task.Run(() => ServerConnectionPreparation.PrepareAsync(target, _connectionHttp, cancellationToken),
                 cancellationToken)
@@ -753,11 +754,11 @@ public sealed class NetPlayScreen : Screen
                     _ = task.Exception;
                     if (task.IsCompletedSuccessfully)
                     {
-                        ReleasePrepared(task.Result, () => FinishConnectionPreparation(busyDialog));
+                        ReleasePrepared(task.Result, () => FinishConnectionPreparation(busyDialog, cancellation));
                     }
                     else
                     {
-                        FinishConnectionPreparation(busyDialog);
+                        FinishConnectionPreparation(busyDialog, cancellation);
                     }
 
                     return;
@@ -765,7 +766,7 @@ public sealed class NetPlayScreen : Screen
 
                 if (!task.IsCompletedSuccessfully)
                 {
-                    FinishConnectionPreparation(busyDialog);
+                    FinishConnectionPreparation(busyDialog, cancellation);
                     var exception = task.Exception?.GetBaseException();
                     Log.Warning($"Server connection preparation failed: {exception?.Message}");
                     DialogsManager.Alert(exception is RendezvousException failure
@@ -774,19 +775,20 @@ public sealed class NetPlayScreen : Screen
                     return;
                 }
 
-                PrepareRemoteSessionAndConnect(task.Result, busyDialog);
-            }), cancellationToken);
+                PrepareRemoteSessionAndConnect(task.Result, busyDialog, cancellation);
+            }));
     }
 
-    private void FinishConnectionPreparation(CancellableBusyDialog dialog)
+    private void FinishConnectionPreparation(CancellableBusyDialog dialog, CancellationTokenSource cancellation)
     {
         DialogsManager.HideDialog(dialog);
-        if (ReferenceEquals(_connectionProgress, dialog.Progress))
+        if (ReferenceEquals(_connectionCancellation, cancellation))
         {
-            _connectionProgress = null;
+            _connectionCancellation = null;
         }
 
-        dialog.Progress.CancellationTokenSource.Dispose();
+        dialog.CancelRequested -= cancellation.Cancel;
+        cancellation.Dispose();
     }
 
     private void ConnectToAddress(string name, string address)
@@ -972,18 +974,19 @@ public sealed class NetPlayScreen : Screen
             entry.Address == address && entry.Tags.HasFlag(LocalServerTag.Favorite));
     }
 
-    private void PrepareRemoteSessionAndConnect(ServerConnectionPreparation prepared, CancellableBusyDialog busyDialog)
+    private void PrepareRemoteSessionAndConnect(ServerConnectionPreparation prepared, CancellableBusyDialog busyDialog,
+        CancellationTokenSource cancellation)
     {
         var requiredProfile = prepared.Status.RequiredModProfile;
         if (requiredProfile is null)
         {
-            FinishConnectionPreparation(busyDialog);
+            FinishConnectionPreparation(busyDialog, cancellation);
             ConnectPreparedRemoteSession(prepared);
             return;
         }
 
         busyDialog.SmallMessage = Text("CheckingMods");
-        var cancellationToken = busyDialog.Progress.CancellationToken;
+        var cancellationToken = cancellation.Token;
         Task.Run(() => ModRestartHelper.PrepareRemoteSession(
                 SessionInfoManager.CreateRemoteClientSession(prepared.Target),
                 requiredProfile, prepared.Status.TemporaryRepositories, cancellationToken,
@@ -993,7 +996,7 @@ public sealed class NetPlayScreen : Screen
                 if (cancellationToken.IsCancellationRequested)
                 {
                     _ = task.Exception;
-                    ReleasePrepared(prepared, () => FinishConnectionPreparation(busyDialog));
+                    ReleasePrepared(prepared, () => FinishConnectionPreparation(busyDialog, cancellation));
                     return;
                 }
 
@@ -1001,7 +1004,7 @@ public sealed class NetPlayScreen : Screen
                 {
                     ReleasePrepared(prepared, () =>
                     {
-                        FinishConnectionPreparation(busyDialog);
+                        FinishConnectionPreparation(busyDialog, cancellation);
                         if (!cancellationToken.IsCancellationRequested)
                         {
                             Log.Error($"Remote mod session preparation failed: {task.Exception}");
@@ -1017,14 +1020,14 @@ public sealed class NetPlayScreen : Screen
 
                 if (!task.Result.RequiresRestart)
                 {
-                    FinishConnectionPreparation(busyDialog);
+                    FinishConnectionPreparation(busyDialog, cancellation);
                     ConnectPreparedRemoteSession(prepared);
                     return;
                 }
 
                 ReleasePrepared(prepared, () =>
                 {
-                    FinishConnectionPreparation(busyDialog);
+                    FinishConnectionPreparation(busyDialog, cancellation);
                     if (!cancellationToken.IsCancellationRequested)
                     {
                         ConfirmRemoteModRestart(task.Result);

@@ -13,8 +13,6 @@ internal static class BuiltInContentReaders
         ContentManager.RegisterReader(new ImageReader());
         ContentManager.RegisterReader(new JsonArrayReader());
         ContentManager.RegisterReader(new JsonObjectReader());
-        ContentManager.RegisterReader(new MtllibStructReader());
-        ContentManager.RegisterReader(new ObjModelReader());
         ContentManager.RegisterReader(new ShaderReader());
         ContentManager.RegisterReader(new SoundBufferReader());
         ContentManager.RegisterReader(new StreamingSourceReader());

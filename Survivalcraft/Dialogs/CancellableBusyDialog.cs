@@ -30,10 +30,8 @@ public class CancellableBusyDialog : Dialog
             _hideButtonWidget.Size = new Vector2(160, 60);
         }
 
-        Progress = new CancellableProgress();
         _autoHideOnCancel = autoHideOnCancel;
         LargeMessage = largeMessage;
-        ShowProgressMessage = true;
     }
 
     public CancellableBusyDialog(string largeMessage, string hideButtonName, bool autoHideOnCancel)
@@ -48,13 +46,11 @@ public class CancellableBusyDialog : Dialog
         _hideButtonWidget.Text = hideButtonName;
         _cancelButtonWidget.Size = new Vector2(160, 60);
         _hideButtonWidget.Size = new Vector2(160, 60);
-        Progress = new CancellableProgress();
         _autoHideOnCancel = autoHideOnCancel;
         LargeMessage = largeMessage;
-        ShowProgressMessage = true;
     }
 
-    public CancellableProgress Progress { get; set; }
+    public event Action? CancelRequested;
 
     public string LargeMessage
     {
@@ -78,22 +74,21 @@ public class CancellableBusyDialog : Dialog
         set => _cancelButtonWidget.IsEnabled = value;
     }
 
-    public bool ShowProgressMessage { get; set; }
-
     public bool CancelOnBack { get; set; }
+
+    public void SetProgress(long completed, long? total)
+    {
+        SmallMessage = total is > 0
+            ? $"{Math.Clamp((double)completed / total.Value, 0d, 1d) * 100d:0}%"
+            : string.Empty;
+    }
 
     public override void Update()
     {
-        if (ShowProgressMessage)
+        if (IsCancelButtonEnabled && (_cancelButtonWidget.IsClicked || CancelOnBack && Input.Cancel))
         {
-            SmallMessage = Progress is { Completed: > 0f, Total: > 0f }
-                ? $"{Progress.Completed / Progress.Total * 100f:0}%"
-                : string.Empty;
-        }
-
-        if (_cancelButtonWidget.IsClicked || CancelOnBack && Input.Cancel && IsCancelButtonEnabled)
-        {
-            Progress.Cancel();
+            IsCancelButtonEnabled = false;
+            CancelRequested?.Invoke();
             if (_autoHideOnCancel)
             {
                 DialogsManager.HideDialog(this);

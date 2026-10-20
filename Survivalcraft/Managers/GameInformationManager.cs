@@ -391,7 +391,7 @@ public static class GameInformationManager
     private static void StartDownload(UpdateOperation operation, GameRelease release)
     {
         var dialog = new CancellableBusyDialog(Text("Downloading"), true);
-        dialog.Progress.Cancelled += operation.Cancel;
+        dialog.CancelRequested += operation.Cancel;
         ShowUpdateDialog(operation, dialog);
         _ = DownloadAsync(operation, release, dialog);
     }
@@ -404,14 +404,29 @@ public static class GameInformationManager
         try
         {
             using var client = new HttpClient { Timeout = Timeout.InfiniteTimeSpan };
+            var lastPercentage = -2;
             await DownloadPackageAsync(client, release, path, (completed, total) =>
             {
-                dialog.Progress.Total = total ?? 0;
-                dialog.Progress.Completed = completed;
+                var percentage = total is > 0
+                    ? (int)Math.Clamp((double)completed / total.Value * 100d, 0d, 100d)
+                    : -1;
+                if (percentage == lastPercentage)
+                {
+                    return;
+                }
+
+                lastPercentage = percentage;
+                Dispatcher.Dispatch(() =>
+                {
+                    if (IsCurrent(operation) && !operation.Token.IsCancellationRequested)
+                    {
+                        dialog.SetProgress(completed, total);
+                    }
+                });
             }, operation.Token, _downloadTimeout);
             Dispatcher.Dispatch(() =>
             {
-                if (!IsCurrent(operation) || dialog.Progress.CancellationToken.IsCancellationRequested)
+                if (!IsCurrent(operation) || operation.Token.IsCancellationRequested)
                 {
                     DeleteDownload(path);
                     EndUpdate(operation);
@@ -443,7 +458,7 @@ public static class GameInformationManager
             Log.Warning($"Game release download failed: {exception.Message}");
             Dispatcher.Dispatch(() =>
             {
-                if (IsCurrent(operation) && !dialog.Progress.CancellationToken.IsCancellationRequested)
+                if (IsCurrent(operation) && !operation.Token.IsCancellationRequested)
                 {
                     DialogsManager.HideDialog(dialog);
                     ShowUpdateDialog(operation, new MessageDialog(Text("Download"), Text("DownloadFailed"),
@@ -457,7 +472,7 @@ public static class GameInformationManager
         }
         finally
         {
-            dialog.Progress.Cancelled -= operation.Cancel;
+            dialog.CancelRequested -= operation.Cancel;
         }
     }
 

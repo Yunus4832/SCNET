@@ -153,7 +153,8 @@ public sealed class RendezvousCatalogScreen : Screen
         }
 
         var dialog = new CancellableBusyDialog(Text("Testing"), true);
-        var cancellation = dialog.Progress.CancellationTokenSource;
+        var cancellation = new CancellationTokenSource();
+        dialog.CancelRequested += cancellation.Cancel;
         _loadCancellation = cancellation;
         _busyDialog = dialog;
         _busy = true;
@@ -164,6 +165,7 @@ public sealed class RendezvousCatalogScreen : Screen
                 if (!ReferenceEquals(_loadCancellation, cancellation))
                 {
                     _ = task.Exception;
+                    dialog.CancelRequested -= cancellation.Cancel;
                     cancellation.Dispose();
                     return;
                 }
@@ -171,6 +173,7 @@ public sealed class RendezvousCatalogScreen : Screen
                 _busyDialog = null;
                 _busy = false;
                 DialogsManager.HideDialog(dialog);
+                dialog.CancelRequested -= cancellation.Cancel;
                 cancellation.Dispose();
                 if (task.IsCanceled)
                 {

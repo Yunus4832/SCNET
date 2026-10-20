@@ -2,7 +2,6 @@ using System.Xml.Linq;
 
 using Engine.Network;
 
-using Game.Managers;
 using Game.Servers;
 
 namespace Game.Screens;
@@ -253,7 +252,8 @@ public sealed class ManageRendezvousScreen : Screen
             return;
         }
         var dialog = new CancellableBusyDialog(Text("Testing"), true);
-        var cancellation = dialog.Progress.CancellationTokenSource;
+        var cancellation = new CancellationTokenSource();
+        dialog.CancelRequested += cancellation.Cancel;
         _testCancellation = cancellation;
         _busyDialog = dialog;
         _busy = true;
@@ -264,6 +264,7 @@ public sealed class ManageRendezvousScreen : Screen
                 if (!ReferenceEquals(_testCancellation, cancellation))
                 {
                     _ = task.Exception;
+                    dialog.CancelRequested -= cancellation.Cancel;
                     cancellation.Dispose();
                     return;
                 }
@@ -271,6 +272,7 @@ public sealed class ManageRendezvousScreen : Screen
                 _busyDialog = null;
                 _busy = false;
                 DialogsManager.HideDialog(dialog);
+                dialog.CancelRequested -= cancellation.Cancel;
                 cancellation.Dispose();
                 if (task.IsCanceled)
                 {

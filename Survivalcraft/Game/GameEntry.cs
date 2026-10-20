@@ -7,7 +7,6 @@ using Engine.Network;
 
 using Game.Automation;
 using Game.Commands;
-using Game.Network;
 
 namespace Game;
 
@@ -220,7 +219,6 @@ public static class GameEntry
                 DebugOverlayManager.Update();
                 AutomationInputController.Update();
                 HttpCommandExecutionQueue.Update();
-                AsyncDispatcher.Update();
             }
             else
             {
